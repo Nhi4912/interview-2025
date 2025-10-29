@@ -1,0 +1,121 @@
+# Graph Algorithms / Thuật Toán Đồ Thị
+## Computer Science - Chapter 5 / Khoa Học Máy Tính - Chương 5
+
+[Back to Table of Contents](../00-table-of-contents.md)
+
+---
+
+## Graph Representation
+
+```typescript
+// Adjacency List / Danh sách kề
+class Graph {
+  private adjacencyList: Map<string, string[]> = new Map();
+
+  addVertex(vertex: string): void {
+    if (!this.adjacencyList.has(vertex)) {
+      this.adjacencyList.set(vertex, []);
+    }
+  }
+
+  addEdge(v1: string, v2: string): void {
+    this.adjacencyList.get(v1)?.push(v2);
+    this.adjacencyList.get(v2)?.push(v1); // Undirected / Vô hướng
+  }
+
+  getNeighbors(vertex: string): string[] {
+    return this.adjacencyList.get(vertex) || [];
+  }
+}
+```
+
+## BFS - Breadth First Search
+
+```typescript
+function bfs(graph: Graph, start: string): string[] {
+  const visited = new Set<string>();
+  const queue: string[] = [start];
+  const result: string[] = [];
+
+  visited.add(start);
+
+  while (queue.length > 0) {
+    const vertex = queue.shift()!;
+    result.push(vertex);
+
+    for (const neighbor of graph.getNeighbors(vertex)) {
+      if (!visited.has(neighbor)) {
+        visited.add(neighbor);
+        queue.push(neighbor);
+      }
+    }
+  }
+
+  return result;
+}
+```
+
+## DFS - Depth First Search
+
+```typescript
+function dfs(graph: Graph, start: string): string[] {
+  const visited = new Set<string>();
+  const result: string[] = [];
+
+  function dfsHelper(vertex: string): void {
+    visited.add(vertex);
+    result.push(vertex);
+
+    for (const neighbor of graph.getNeighbors(vertex)) {
+      if (!visited.has(neighbor)) {
+        dfsHelper(neighbor);
+      }
+    }
+  }
+
+  dfsHelper(start);
+  return result;
+}
+```
+
+## Dijkstra's Algorithm
+
+```typescript
+function dijkstra(
+  graph: Map<string, Map<string, number>>,
+  start: string
+): Map<string, number> {
+  const distances = new Map<string, number>();
+  const visited = new Set<string>();
+  const pq: Array<[string, number]> = [[start, 0]];
+
+  // Initialize distances / Khởi tạo khoảng cách
+  for (const vertex of graph.keys()) {
+    distances.set(vertex, vertex === start ? 0 : Infinity);
+  }
+
+  while (pq.length > 0) {
+    pq.sort((a, b) => a[1] - b[1]);
+    const [current, currentDist] = pq.shift()!;
+
+    if (visited.has(current)) continue;
+    visited.add(current);
+
+    const neighbors = graph.get(current) || new Map();
+    for (const [neighbor, weight] of neighbors) {
+      const distance = currentDist + weight;
+      
+      if (distance < distances.get(neighbor)!) {
+        distances.set(neighbor, distance);
+        pq.push([neighbor, distance]);
+      }
+    }
+  }
+
+  return distances;
+}
+```
+
+---
+
+[Back to Table of Contents](../00-table-of-contents.md)
