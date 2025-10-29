@@ -1,0 +1,926 @@
+# Event Loop & Asynchronous JavaScript / Vòng Lặp Sự Kiện & JavaScript Bất Đồng Bộ
+## JavaScript Fundamentals - Chapter 6 / Kiến Thức Cơ Bản JavaScript - Chương 6
+
+[← Previous: The `this` Keyword](./05-this-keyword.md) | [Back to Table of Contents](../00-table-of-contents.md) | [Next: ES6+ Features →](./07-es6-features.md)
+
+---
+
+## Overview / Tổng Quan
+
+**English:** Understanding the event loop and asynchronous JavaScript is crucial for building performant applications and acing technical interviews. This chapter covers how JavaScript handles async operations, the event loop mechanism, and modern async patterns.
+
+**Tiếng Việt:** Hiểu về vòng lặp sự kiện và JavaScript bất đồng bộ rất quan trọng để xây dựng ứng dụng hiệu suất cao và vượt qua phỏng vấn kỹ thuật. Chương này bao gồm cách JavaScript xử lý các hoạt động bất đồng bộ, cơ chế vòng lặp sự kiện và các mẫu bất đồng bộ hiện đại.
+
+---
+
+## Table of Contents
+1. [JavaScript Runtime Model](#javascript-runtime-model)
+2. [The Event Loop](#the-event-loop)
+3. [Call Stack](#call-stack)
+4. [Task Queue (Macrotasks)](#task-queue-macrotasks)
+5. [Microtask Queue](#microtask-queue)
+6. [Callbacks](#callbacks)
+7. [Promises](#promises)
+8. [Async/Await](#async-await)
+9. [Common Patterns](#common-patterns)
+10. [Interview Questions](#interview-questions)
+
+---
+
+## JavaScript Runtime Model / Mô Hình Runtime JavaScript
+
+### Single-Threaded Nature / Bản Chất Đơn Luồng
+
+**English Definition:** JavaScript is single-threaded, meaning it can execute one piece of code at a time. This is a fundamental characteristic that affects how JavaScript handles concurrent operations.
+
+**Tiếng Việt:** JavaScript là đơn luồng, có nghĩa là nó chỉ có thể thực thi một đoạn code tại một thời điểm. Đây là đặc điểm cơ bản ảnh hưởng đến cách JavaScript xử lý các hoạt động đồng thời.
+
+```javascript
+// JavaScript executes synchronously / JavaScript thực thi đồng bộ
+console.log('1');
+console.log('2');
+console.log('3');
+// Output: 1, 2, 3 (in order / theo thứ tự)
+
+// Blocking operation / Hoạt động chặn
+function heavyComputation() {
+  let sum = 0;
+  for (let i = 0; i < 1000000000; i++) {
+    sum += i;
+  }
+  return sum;
+}
+
+console.log('Start / Bắt đầu');
+heavyComputation(); // Blocks everything / Chặn mọi thứ
+console.log('End / Kết thúc'); // Waits for computation / Đợi tính toán
+```
+
+### Runtime Components
+
+```
+JavaScript Runtime
+├── Call Stack (Execution context)
+├── Web APIs (Browser/Node.js provided)
+│   ├── setTimeout
+│   ├── fetch
+│   ├── DOM events
+│   └── etc.
+├── Callback Queue (Macrotask Queue)
+└── Microtask Queue
+    └── Event Loop (Coordinator)
+```
+
+---
+
+## The Event Loop
+
+### How It Works
+
+**Definition:** The event loop continuously checks if the call stack is empty and processes tasks from queues.
+
+```javascript
+// Event loop execution order
+console.log('1'); // Synchronous
+
+setTimeout(() => {
+  console.log('2'); // Macrotask
+}, 0);
+
+Promise.resolve().then(() => {
+  console.log('3'); // Microtask
+});
+
+console.log('4'); // Synchronous
+
+// Output: 1, 4, 3, 2
+```
+
+### Execution Order
+
+```
+1. Execute all synchronous code (Call Stack)
+2. Execute all Microtasks
+3. Execute one Macrotask
+4. Execute all Microtasks (again)
+5. Render (if needed)
+6. Repeat from step 3
+```
+
+### Visual Example
+
+```javascript
+console.log('Start'); // 1. Sync
+
+setTimeout(() => {
+  console.log('Timeout 1'); // 7. Macrotask
+}, 0);
+
+Promise.resolve()
+  .then(() => {
+    console.log('Promise 1'); // 3. Microtask
+    return Promise.resolve();
+  })
+  .then(() => {
+    console.log('Promise 2'); // 4. Microtask
+  });
+
+setTimeout(() => {
+  console.log('Timeout 2'); // 8. Macrotask
+}, 0);
+
+Promise.resolve().then(() => {
+  console.log('Promise 3'); // 5. Microtask
+});
+
+console.log('End'); // 2. Sync
+
+// Output:
+// Start
+// End
+// Promise 1
+// Promise 2
+// Promise 3
+// Timeout 1
+// Timeout 2
+```
+
+---
+
+## Call Stack
+
+### Stack Execution
+
+```javascript
+function first() {
+  console.log('First function');
+  second();
+  console.log('First function end');
+}
+
+function second() {
+  console.log('Second function');
+  third();
+  console.log('Second function end');
+}
+
+function third() {
+  console.log('Third function');
+}
+
+first();
+
+// Call Stack visualization:
+// 1. first() pushed
+// 2. second() pushed
+// 3. third() pushed
+// 4. third() popped
+// 5. second() popped
+// 6. first() popped
+
+// Output:
+// First function
+// Second function
+// Third function
+// Second function end
+// First function end
+```
+
+### Stack Overflow
+
+```javascript
+// ❌ Infinite recursion causes stack overflow
+function recursiveFunction() {
+  recursiveFunction();
+}
+
+// recursiveFunction(); // RangeError: Maximum call stack size exceeded
+
+// ✅ Proper recursion with base case
+function countdown(n) {
+  if (n <= 0) return; // Base case
+  console.log(n);
+  countdown(n - 1);
+}
+
+countdown(5); // 5, 4, 3, 2, 1
+```
+
+---
+
+## Task Queue (Macrotasks)
+
+### Macrotask Sources
+
+```javascript
+// setTimeout
+setTimeout(() => {
+  console.log('setTimeout');
+}, 0);
+
+// setInterval
+const intervalId = setInterval(() => {
+  console.log('setInterval');
+}, 1000);
+
+// setImmediate (Node.js only)
+setImmediate(() => {
+  console.log('setImmediate');
+});
+
+// I/O operations
+fs.readFile('file.txt', (err, data) => {
+  console.log('File read');
+});
+
+// UI rendering
+requestAnimationFrame(() => {
+  console.log('Animation frame');
+});
+```
+
+### setTimeout vs setImmediate
+
+```javascript
+// Node.js environment
+setTimeout(() => {
+  console.log('setTimeout');
+}, 0);
+
+setImmediate(() => {
+  console.log('setImmediate');
+});
+
+// Order is non-deterministic in main module
+// But setImmediate is always first in I/O cycle
+
+fs.readFile('file.txt', () => {
+  setTimeout(() => {
+    console.log('setTimeout');
+  }, 0);
+  
+  setImmediate(() => {
+    console.log('setImmediate');
+  });
+  
+  // Output: setImmediate, setTimeout (guaranteed)
+});
+```
+
+---
+
+## Microtask Queue
+
+### Microtask Sources
+
+```javascript
+// Promise callbacks
+Promise.resolve().then(() => {
+  console.log('Promise then');
+});
+
+// queueMicrotask
+queueMicrotask(() => {
+  console.log('queueMicrotask');
+});
+
+// MutationObserver (Browser)
+const observer = new MutationObserver(() => {
+  console.log('DOM mutation');
+});
+
+// process.nextTick (Node.js - highest priority)
+process.nextTick(() => {
+  console.log('nextTick');
+});
+```
+
+### Microtask Priority
+
+```javascript
+// Node.js execution order
+console.log('1');
+
+setTimeout(() => console.log('2'), 0);
+
+Promise.resolve().then(() => console.log('3'));
+
+queueMicrotask(() => console.log('4'));
+
+process.nextTick(() => console.log('5'));
+
+console.log('6');
+
+// Output: 1, 6, 5, 3, 4, 2
+// Explanation:
+// - Sync: 1, 6
+// - process.nextTick: 5 (highest priority microtask)
+// - Promise: 3
+// - queueMicrotask: 4
+// - setTimeout: 2 (macrotask)
+```
+
+### Microtask Starvation
+
+```javascript
+// ⚠️ Infinite microtasks can starve macrotasks
+function addMicrotask() {
+  Promise.resolve().then(() => {
+    console.log('Microtask');
+    addMicrotask(); // Creates another microtask
+  });
+}
+
+setTimeout(() => {
+  console.log('This may never run!');
+}, 0);
+
+addMicrotask();
+
+// Microtasks keep running, setTimeout never executes!
+```
+
+---
+
+## Callbacks
+
+### Basic Callbacks
+
+```javascript
+// Synchronous callback
+function greet(name, callback) {
+  const message = `Hello, ${name}!`;
+  callback(message);
+}
+
+greet('John', (msg) => {
+  console.log(msg); // "Hello, John!"
+});
+
+// Asynchronous callback
+function fetchData(callback) {
+  setTimeout(() => {
+    const data = { id: 1, name: 'John' };
+    callback(null, data);
+  }, 1000);
+}
+
+fetchData((error, data) => {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log(data);
+  }
+});
+```
+
+### Callback Hell (Pyramid of Doom)
+
+```javascript
+// ❌ Callback hell - hard to read and maintain
+getData((error, data) => {
+  if (error) {
+    handleError(error);
+  } else {
+    processData(data, (error, processed) => {
+      if (error) {
+        handleError(error);
+      } else {
+        saveData(processed, (error, result) => {
+          if (error) {
+            handleError(error);
+          } else {
+            sendNotification(result, (error, sent) => {
+              if (error) {
+                handleError(error);
+              } else {
+                console.log('Success!');
+              }
+            });
+          }
+        });
+      }
+    });
+  }
+});
+
+// ✅ Better: Use Promises or async/await
+async function handleData() {
+  try {
+    const data = await getData();
+    const processed = await processData(data);
+    const result = await saveData(processed);
+    const sent = await sendNotification(result);
+    console.log('Success!');
+  } catch (error) {
+    handleError(error);
+  }
+}
+```
+
+---
+
+## Promises
+
+### Promise States
+
+```javascript
+// Three states: pending, fulfilled, rejected
+const promise = new Promise((resolve, reject) => {
+  // pending state
+  
+  setTimeout(() => {
+    const success = Math.random() > 0.5;
+    
+    if (success) {
+      resolve('Success!'); // fulfilled state
+    } else {
+      reject(new Error('Failed!')); // rejected state
+    }
+  }, 1000);
+});
+
+promise
+  .then(result => {
+    console.log(result); // Fulfilled
+  })
+  .catch(error => {
+    console.error(error); // Rejected
+  })
+  .finally(() => {
+    console.log('Cleanup'); // Always runs
+  });
+```
+
+### Promise Chaining
+
+```javascript
+// Sequential operations
+fetch('/api/user')
+  .then(response => response.json())
+  .then(user => {
+    console.log('User:', user);
+    return fetch(`/api/posts/${user.id}`);
+  })
+  .then(response => response.json())
+  .then(posts => {
+    console.log('Posts:', posts);
+    return posts.length;
+  })
+  .then(count => {
+    console.log('Post count:', count);
+  })
+  .catch(error => {
+    console.error('Error:', error);
+  });
+
+// Return value becomes next promise's value
+Promise.resolve(1)
+  .then(x => x + 1)
+  .then(x => x * 2)
+  .then(x => {
+    console.log(x); // 4
+  });
+```
+
+### Promise Combinators
+
+```javascript
+// Promise.all - Wait for all (fails fast)
+const promises = [
+  fetch('/api/users'),
+  fetch('/api/posts'),
+  fetch('/api/comments')
+];
+
+Promise.all(promises)
+  .then(responses => Promise.all(responses.map(r => r.json())))
+  .then(([users, posts, comments]) => {
+    console.log({ users, posts, comments });
+  })
+  .catch(error => {
+    console.error('One failed:', error);
+  });
+
+// Promise.allSettled - Wait for all (never fails)
+Promise.allSettled(promises)
+  .then(results => {
+    results.forEach((result, index) => {
+      if (result.status === 'fulfilled') {
+        console.log(`Promise ${index} succeeded:`, result.value);
+      } else {
+        console.log(`Promise ${index} failed:`, result.reason);
+      }
+    });
+  });
+
+// Promise.race - First to settle wins
+Promise.race([
+  fetch('/api/fast'),
+  fetch('/api/slow'),
+  new Promise((_, reject) => 
+    setTimeout(() => reject(new Error('Timeout')), 5000)
+  )
+])
+  .then(result => console.log('Winner:', result))
+  .catch(error => console.error('Error:', error));
+
+// Promise.any - First to fulfill wins (ignores rejections)
+Promise.any([
+  Promise.reject('Error 1'),
+  Promise.reject('Error 2'),
+  Promise.resolve('Success!')
+])
+  .then(result => console.log(result)) // "Success!"
+  .catch(error => console.error('All failed:', error));
+```
+
+### Creating Promises
+
+```javascript
+// Promisify callback-based function
+function promisify(fn) {
+  return function(...args) {
+    return new Promise((resolve, reject) => {
+      fn(...args, (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      });
+    });
+  };
+}
+
+// Usage
+const fs = require('fs');
+const readFileAsync = promisify(fs.readFile);
+
+readFileAsync('file.txt', 'utf8')
+  .then(content => console.log(content))
+  .catch(error => console.error(error));
+
+// Delay utility
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+delay(1000).then(() => console.log('1 second later'));
+
+// Timeout wrapper
+function timeout(promise, ms) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Timeout')), ms)
+    )
+  ]);
+}
+
+timeout(fetch('/api/slow'), 3000)
+  .then(response => response.json())
+  .catch(error => console.error(error));
+```
+
+---
+
+## Async/Await
+
+### Basic Syntax
+
+```javascript
+// Async function always returns a Promise
+async function fetchUser(id) {
+  const response = await fetch(`/api/users/${id}`);
+  const user = await response.json();
+  return user; // Wrapped in Promise.resolve()
+}
+
+// Equivalent to:
+function fetchUser(id) {
+  return fetch(`/api/users/${id}`)
+    .then(response => response.json());
+}
+
+// Usage
+fetchUser(1)
+  .then(user => console.log(user))
+  .catch(error => console.error(error));
+
+// Or with async/await
+async function main() {
+  try {
+    const user = await fetchUser(1);
+    console.log(user);
+  } catch (error) {
+    console.error(error);
+  }
+}
+```
+
+### Error Handling
+
+```javascript
+// Try-catch for errors
+async function fetchData() {
+  try {
+    const response = await fetch('/api/data');
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Fetch failed:', error);
+    throw error; // Re-throw if needed
+  } finally {
+    console.log('Cleanup');
+  }
+}
+
+// Multiple try-catch blocks
+async function processData() {
+  let data;
+  
+  try {
+    data = await fetchData();
+  } catch (error) {
+    console.error('Fetch error:', error);
+    return null;
+  }
+  
+  try {
+    const processed = await processData(data);
+    return processed;
+  } catch (error) {
+    console.error('Process error:', error);
+    return null;
+  }
+}
+```
+
+### Parallel Execution
+
+```javascript
+// ❌ Sequential (slow)
+async function sequential() {
+  const user = await fetchUser(1);      // Wait 1s
+  const posts = await fetchPosts(1);    // Wait 1s
+  const comments = await fetchComments(1); // Wait 1s
+  // Total: 3s
+  return { user, posts, comments };
+}
+
+// ✅ Parallel (fast)
+async function parallel() {
+  const [user, posts, comments] = await Promise.all([
+    fetchUser(1),
+    fetchPosts(1),
+    fetchComments(1)
+  ]);
+  // Total: 1s (all run simultaneously)
+  return { user, posts, comments };
+}
+
+// Parallel with individual error handling
+async function parallelWithErrors() {
+  const results = await Promise.allSettled([
+    fetchUser(1),
+    fetchPosts(1),
+    fetchComments(1)
+  ]);
+  
+  const [userResult, postsResult, commentsResult] = results;
+  
+  return {
+    user: userResult.status === 'fulfilled' ? userResult.value : null,
+    posts: postsResult.status === 'fulfilled' ? postsResult.value : [],
+    comments: commentsResult.status === 'fulfilled' ? commentsResult.value : []
+  };
+}
+```
+
+### Async Iteration
+
+```javascript
+// For-await-of loop
+async function processItems(items) {
+  for await (const item of items) {
+    await processItem(item);
+  }
+}
+
+// Async generator
+async function* generateNumbers() {
+  for (let i = 0; i < 5; i++) {
+    await delay(1000);
+    yield i;
+  }
+}
+
+async function main() {
+  for await (const num of generateNumbers()) {
+    console.log(num); // 0, 1, 2, 3, 4 (one per second)
+  }
+}
+
+// Async iterator
+const asyncIterable = {
+  [Symbol.asyncIterator]() {
+    let i = 0;
+    return {
+      async next() {
+        if (i < 3) {
+          await delay(1000);
+          return { value: i++, done: false };
+        }
+        return { done: true };
+      }
+    };
+  }
+};
+
+for await (const value of asyncIterable) {
+  console.log(value); // 0, 1, 2
+}
+```
+
+---
+
+## Common Patterns
+
+### Retry with Exponential Backoff
+
+```javascript
+async function retryWithBackoff(
+  fn,
+  maxRetries = 3,
+  delay = 1000,
+  backoff = 2
+) {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (i === maxRetries - 1) throw error;
+      
+      const waitTime = delay * Math.pow(backoff, i);
+      console.log(`Retry ${i + 1} after ${waitTime}ms`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+  }
+}
+
+// Usage
+retryWithBackoff(() => fetch('/api/unstable'))
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('All retries failed:', error));
+```
+
+### Promise Pool (Concurrency Control)
+
+```javascript
+async function promisePool(tasks, concurrency) {
+  const results = [];
+  const executing = [];
+  
+  for (const task of tasks) {
+    const promise = Promise.resolve().then(() => task());
+    results.push(promise);
+    
+    if (concurrency <= tasks.length) {
+      const executing = promise.then(() => 
+        executing.splice(executing.indexOf(executing), 1)
+      );
+      executing.push(executing);
+      
+      if (executing.length >= concurrency) {
+        await Promise.race(executing);
+      }
+    }
+  }
+  
+  return Promise.all(results);
+}
+
+// Usage: Fetch 100 URLs with max 5 concurrent requests
+const urls = Array.from({ length: 100 }, (_, i) => `/api/item/${i}`);
+const tasks = urls.map(url => () => fetch(url));
+
+promisePool(tasks, 5)
+  .then(responses => console.log('All fetched'))
+  .catch(error => console.error(error));
+```
+
+### Debounced Async Function
+
+```javascript
+function debounceAsync(fn, delay) {
+  let timeoutId;
+  let latestResolve;
+  let latestReject;
+  
+  return function(...args) {
+    return new Promise((resolve, reject) => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        latestReject(new Error('Debounced'));
+      }
+      
+      latestResolve = resolve;
+      latestReject = reject;
+      
+      timeoutId = setTimeout(async () => {
+        try {
+          const result = await fn.apply(this, args);
+          latestResolve(result);
+        } catch (error) {
+          latestReject(error);
+        }
+      }, delay);
+    });
+  };
+}
+
+// Usage
+const debouncedSearch = debounceAsync(async (query) => {
+  const response = await fetch(`/api/search?q=${query}`);
+  return response.json();
+}, 300);
+
+// Only last call executes
+debouncedSearch('a');
+debouncedSearch('ab');
+debouncedSearch('abc').then(results => console.log(results));
+```
+
+---
+
+## Interview Questions
+
+### Q1: Explain the event loop
+
+**Answer:**
+The event loop is JavaScript's mechanism for handling asynchronous operations. It continuously checks if the call stack is empty, then processes microtasks, then one macrotask, then microtasks again, and repeats.
+
+### Q2: What's the difference between microtasks and macrotasks?
+
+**Answer:**
+- **Microtasks**: Promise callbacks, queueMicrotask, process.nextTick (Node.js)
+  - Processed after current script, before next macrotask
+  - All microtasks run before any macrotask
+- **Macrotasks**: setTimeout, setInterval, setImmediate, I/O
+  - One macrotask per event loop iteration
+
+### Q3: Predict the output
+
+```javascript
+console.log('1');
+
+setTimeout(() => console.log('2'), 0);
+
+Promise.resolve().then(() => console.log('3'));
+
+console.log('4');
+
+// Answer: 1, 4, 3, 2
+```
+
+### Q4: What's the difference between Promise.all and Promise.allSettled?
+
+**Answer:**
+- **Promise.all**: Fails fast - rejects if any promise rejects
+- **Promise.allSettled**: Waits for all - never rejects, returns status of each
+
+### Q5: How do you handle errors in async/await?
+
+**Answer:**
+Use try-catch blocks:
+```javascript
+async function fetchData() {
+  try {
+    const data = await fetch('/api/data');
+    return data.json();
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
+```
+
+---
+
+## Summary
+
+- JavaScript is single-threaded with an event loop
+- Event loop processes: sync code → microtasks → macrotask → repeat
+- Microtasks have higher priority than macrotasks
+- Promises are better than callbacks (avoid callback hell)
+- Async/await is syntactic sugar over Promises
+- Use Promise.all for parallel execution
+- Understand execution order for interviews
+
+---
+
+[← Previous: The `this` Keyword](./05-this-keyword.md) | [Back to Table of Contents](../00-table-of-contents.md) | [Next: ES6+ Features →](./07-es6-features.md)
