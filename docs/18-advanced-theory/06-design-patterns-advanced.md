@@ -964,3 +964,1044 @@ I'll continue with more patterns:
 <function_calls>
 <invoke name="fsAppend">
 <parameter name="path">docs/18-advanced-theory/06-design-patterns-advanced.md
+
+## B
+ehavioral Patterns
+
+### Chain of Responsibility
+
+**Intent**: Pass request along chain of handlers until one handles it.
+
+```javascript
+class Handler {
+  constructor() {
+    this.nextHandler = null;
+  }
+
+  setNext(handler) {
+    this.nextHandler = handler;
+    return handler;
+  }
+
+  handle(request) {
+    if (this.nextHandler) {
+      return this.nextHandler.handle(request);
+    }
+    return null;
+  }
+}
+
+class AuthenticationHandler extends Handler {
+  handle(request) {
+    if (!request.isAuthenticated) {
+      console.log('Authentication failed');
+      return { status: 401, message: 'Unauthorized' };
+    }
+    console.log('Authentication passed');
+    return super.handle(request);
+  }
+}
+
+class AuthorizationHandler extends Handler {
+  handle(request) {
+    if (!request.hasPermission) {
+      console.log('Authorization failed');
+      return { status: 403, message: 'Forbidden' };
+    }
+    console.log('Authorization passed');
+    return super.handle(request);
+  }
+}
+
+class ValidationHandler extends Handler {
+  handle(request) {
+    if (!request.isValid) {
+      console.log('Validation failed');
+      return { status: 400, message: 'Bad Request' };
+    }
+    console.log('Validation passed');
+    return super.handle(request);
+  }
+}
+
+class ProcessHandler extends Handler {
+  handle(request) {
+    console.log('Processing request');
+    return { status: 200, message: 'Success', data: request.data };
+  }
+}
+
+// Usage
+const auth = new AuthenticationHandler();
+const authz = new AuthorizationHandler();
+const validation = new ValidationHandler();
+const process = new ProcessHandler();
+
+auth.setNext(authz).setNext(validation).setNext(process);
+
+const request1 = {
+  isAuthenticated: true,
+  hasPermission: true,
+  isValid: true,
+  data: { id: 1 }
+};
+
+const result = auth.handle(request1);
+console.log(result);
+```
+
+### Command Pattern
+
+**Intent**: Encapsulate request as object to parameterize clients with different requests.
+
+```javascript
+class Command {
+  execute() {
+    throw new Error('Must implement execute');
+  }
+
+  undo() {
+    throw new Error('Must implement undo');
+  }
+}
+
+class TextEditor {
+  constructor() {
+    this.text = '';
+  }
+
+  getText() {
+    return this.text;
+  }
+
+  setText(text) {
+    this.text = text;
+  }
+
+  insertText(position, text) {
+    this.text = this.text.slice(0, position) + text + this.text.slice(position);
+  }
+
+  deleteText(position, length) {
+    return this.text.slice(position, position + length);
+  }
+}
+
+class InsertCommand extends Command {
+  constructor(editor, position, text) {
+    super();
+    this.editor = editor;
+    this.position = position;
+    this.text = text;
+  }
+
+  execute() {
+    this.editor.insertText(this.position, this.text);
+  }
+
+  undo() {
+    const currentText = this.editor.getText();
+    this.editor.setText(
+      currentText.slice(0, this.position) +
+      currentText.slice(this.position + this.text.length)
+    );
+  }
+}
+
+class DeleteCommand extends Command {
+  constructor(editor, position, length) {
+    super();
+    this.editor = editor;
+    this.position = position;
+    this.length = length;
+    this.deletedText = '';
+  }
+
+  execute() {
+    this.deletedText = this.editor.getText().slice(
+      this.position,
+      this.position + this.length
+    );
+    this.editor.setText(
+      this.editor.getText().slice(0, this.position) +
+      this.editor.getText().slice(this.position + this.length)
+    );
+  }
+
+  undo() {
+    this.editor.insertText(this.position, this.deletedText);
+  }
+}
+
+class CommandManager {
+  constructor() {
+    this.history = [];
+    this.currentIndex = -1;
+  }
+
+  execute(command) {
+    this.history = this.history.slice(0, this.currentIndex + 1);
+    command.execute();
+    this.history.push(command);
+    this.currentIndex++;
+  }
+
+  undo() {
+    if (this.currentIndex >= 0) {
+      this.history[this.currentIndex].undo();
+      this.currentIndex--;
+    }
+  }
+
+  redo() {
+    if (this.currentIndex < this.history.length - 1) {
+      this.currentIndex++;
+      this.history[this.currentIndex].execute();
+    }
+  }
+}
+
+// Usage
+const editor = new TextEditor();
+const manager = new CommandManager();
+
+manager.execute(new InsertCommand(editor, 0, 'Hello'));
+manager.execute(new InsertCommand(editor, 5, ' World'));
+console.log(editor.getText()); // Hello World
+
+manager.undo();
+console.log(editor.getText()); // Hello
+
+manager.redo();
+console.log(editor.getText()); // Hello World
+```
+
+### Iterator Pattern
+
+**Intent**: Provide way to access elements sequentially without exposing underlying representation.
+
+```javascript
+class Iterator {
+  constructor(collection) {
+    this.collection = collection;
+    this.index = 0;
+  }
+
+  hasNext() {
+    return this.index < this.collection.length;
+  }
+
+  next() {
+    return this.hasNext() ? this.collection[this.index++] : null;
+  }
+
+  reset() {
+    this.index = 0;
+  }
+}
+
+class ReverseIterator {
+  constructor(collection) {
+    this.collection = collection;
+    this.index = collection.length - 1;
+  }
+
+  hasNext() {
+    return this.index >= 0;
+  }
+
+  next() {
+    return this.hasNext() ? this.collection[this.index--] : null;
+  }
+
+  reset() {
+    this.index = this.collection.length - 1;
+  }
+}
+
+class FilterIterator {
+  constructor(collection, predicate) {
+    this.collection = collection;
+    this.predicate = predicate;
+    this.index = 0;
+  }
+
+  hasNext() {
+    while (this.index < this.collection.length) {
+      if (this.predicate(this.collection[this.index])) {
+        return true;
+      }
+      this.index++;
+    }
+    return false;
+  }
+
+  next() {
+    if (this.hasNext()) {
+      return this.collection[this.index++];
+    }
+    return null;
+  }
+
+  reset() {
+    this.index = 0;
+  }
+}
+
+// Tree iterator
+class TreeNode {
+  constructor(value) {
+    this.value = value;
+    this.children = [];
+  }
+
+  addChild(node) {
+    this.children.push(node);
+  }
+}
+
+class TreeIterator {
+  constructor(root, traversal = 'dfs') {
+    this.root = root;
+    this.traversal = traversal;
+    this.stack = traversal === 'dfs' ? [root] : [];
+    this.queue = traversal === 'bfs' ? [root] : [];
+  }
+
+  hasNext() {
+    return this.traversal === 'dfs' 
+      ? this.stack.length > 0 
+      : this.queue.length > 0;
+  }
+
+  next() {
+    if (!this.hasNext()) return null;
+
+    if (this.traversal === 'dfs') {
+      const node = this.stack.pop();
+      this.stack.push(...node.children.reverse());
+      return node.value;
+    } else {
+      const node = this.queue.shift();
+      this.queue.push(...node.children);
+      return node.value;
+    }
+  }
+}
+
+// Usage
+const numbers = [1, 2, 3, 4, 5];
+const iterator = new Iterator(numbers);
+
+while (iterator.hasNext()) {
+  console.log(iterator.next());
+}
+
+const evenIterator = new FilterIterator(numbers, n => n % 2 === 0);
+while (evenIterator.hasNext()) {
+  console.log(evenIterator.next()); // 2, 4
+}
+```
+
+### Mediator Pattern
+
+**Intent**: Define object that encapsulates how set of objects interact.
+
+```javascript
+class Mediator {
+  constructor() {
+    this.colleagues = new Map();
+  }
+
+  register(name, colleague) {
+    this.colleagues.set(name, colleague);
+    colleague.setMediator(this);
+  }
+
+  send(message, from, to) {
+    if (to) {
+      const colleague = this.colleagues.get(to);
+      if (colleague) {
+        colleague.receive(message, from);
+      }
+    } else {
+      // Broadcast to all except sender
+      for (const [name, colleague] of this.colleagues) {
+        if (name !== from) {
+          colleague.receive(message, from);
+        }
+      }
+    }
+  }
+}
+
+class Colleague {
+  constructor(name) {
+    this.name = name;
+    this.mediator = null;
+  }
+
+  setMediator(mediator) {
+    this.mediator = mediator;
+  }
+
+  send(message, to) {
+    console.log(`${this.name} sends: ${message}`);
+    this.mediator.send(message, this.name, to);
+  }
+
+  receive(message, from) {
+    console.log(`${this.name} received from ${from}: ${message}`);
+  }
+}
+
+// Chat room example
+class ChatRoom extends Mediator {
+  constructor() {
+    super();
+    this.messageHistory = [];
+  }
+
+  send(message, from, to) {
+    this.messageHistory.push({ from, to, message, timestamp: Date.now() });
+    super.send(message, from, to);
+  }
+
+  getHistory() {
+    return this.messageHistory;
+  }
+}
+
+// Usage
+const chatRoom = new ChatRoom();
+
+const user1 = new Colleague('Alice');
+const user2 = new Colleague('Bob');
+const user3 = new Colleague('Charlie');
+
+chatRoom.register('Alice', user1);
+chatRoom.register('Bob', user2);
+chatRoom.register('Charlie', user3);
+
+user1.send('Hello everyone!'); // Broadcast
+user2.send('Hi Alice!', 'Alice'); // Direct message
+```
+
+### Memento Pattern
+
+**Intent**: Capture and externalize object's internal state for later restoration.
+
+```javascript
+class Memento {
+  constructor(state) {
+    this.state = state;
+    this.timestamp = Date.now();
+  }
+
+  getState() {
+    return this.state;
+  }
+
+  getTimestamp() {
+    return this.timestamp;
+  }
+}
+
+class TextEditor {
+  constructor() {
+    this.content = '';
+    this.cursorPosition = 0;
+  }
+
+  type(text) {
+    this.content = this.content.slice(0, this.cursorPosition) +
+                   text +
+                   this.content.slice(this.cursorPosition);
+    this.cursorPosition += text.length;
+  }
+
+  delete(length) {
+    this.content = this.content.slice(0, this.cursorPosition - length) +
+                   this.content.slice(this.cursorPosition);
+    this.cursorPosition -= length;
+  }
+
+  moveCursor(position) {
+    this.cursorPosition = Math.max(0, Math.min(position, this.content.length));
+  }
+
+  save() {
+    return new Memento({
+      content: this.content,
+      cursorPosition: this.cursorPosition
+    });
+  }
+
+  restore(memento) {
+    const state = memento.getState();
+    this.content = state.content;
+    this.cursorPosition = state.cursorPosition;
+  }
+
+  getContent() {
+    return this.content;
+  }
+}
+
+class History {
+  constructor() {
+    this.mementos = [];
+    this.currentIndex = -1;
+  }
+
+  push(memento) {
+    this.mementos = this.mementos.slice(0, this.currentIndex + 1);
+    this.mementos.push(memento);
+    this.currentIndex++;
+  }
+
+  undo() {
+    if (this.currentIndex > 0) {
+      this.currentIndex--;
+      return this.mementos[this.currentIndex];
+    }
+    return null;
+  }
+
+  redo() {
+    if (this.currentIndex < this.mementos.length - 1) {
+      this.currentIndex++;
+      return this.mementos[this.currentIndex];
+    }
+    return null;
+  }
+
+  getHistory() {
+    return this.mementos.map((m, i) => ({
+      index: i,
+      timestamp: m.getTimestamp(),
+      isCurrent: i === this.currentIndex
+    }));
+  }
+}
+
+// Usage
+const editor = new TextEditor();
+const history = new History();
+
+history.push(editor.save());
+
+editor.type('Hello');
+history.push(editor.save());
+
+editor.type(' World');
+history.push(editor.save());
+
+console.log(editor.getContent()); // Hello World
+
+const memento = history.undo();
+if (memento) editor.restore(memento);
+console.log(editor.getContent()); // Hello
+```
+
+### Observer Pattern
+
+**Intent**: Define one-to-many dependency so when one object changes state, dependents are notified.
+
+```javascript
+class Subject {
+  constructor() {
+    this.observers = new Set();
+  }
+
+  attach(observer) {
+    this.observers.add(observer);
+  }
+
+  detach(observer) {
+    this.observers.delete(observer);
+  }
+
+  notify(data) {
+    this.observers.forEach(observer => {
+      observer.update(data);
+    });
+  }
+}
+
+class Observer {
+  update(data) {
+    throw new Error('Must implement update');
+  }
+}
+
+// Concrete implementation
+class NewsAgency extends Subject {
+  constructor() {
+    super();
+    this.news = null;
+  }
+
+  setNews(news) {
+    this.news = news;
+    this.notify(news);
+  }
+
+  getNews() {
+    return this.news;
+  }
+}
+
+class NewsChannel extends Observer {
+  constructor(name) {
+    super();
+    this.name = name;
+    this.news = null;
+  }
+
+  update(news) {
+    this.news = news;
+    console.log(`${this.name} received news: ${news}`);
+  }
+
+  getNews() {
+    return this.news;
+  }
+}
+
+// Advanced: Observable with filtering
+class FilteredSubject extends Subject {
+  constructor() {
+    super();
+    this.observerFilters = new Map();
+  }
+
+  attach(observer, filter) {
+    super.attach(observer);
+    if (filter) {
+      this.observerFilters.set(observer, filter);
+    }
+  }
+
+  detach(observer) {
+    super.detach(observer);
+    this.observerFilters.delete(observer);
+  }
+
+  notify(data) {
+    this.observers.forEach(observer => {
+      const filter = this.observerFilters.get(observer);
+      if (!filter || filter(data)) {
+        observer.update(data);
+      }
+    });
+  }
+}
+
+// Usage
+const agency = new NewsAgency();
+const channel1 = new NewsChannel('CNN');
+const channel2 = new NewsChannel('BBC');
+
+agency.attach(channel1);
+agency.attach(channel2);
+
+agency.setNews('Breaking: Major event occurred');
+```
+
+### State Pattern
+
+**Intent**: Allow object to alter behavior when internal state changes.
+
+```javascript
+class State {
+  handle(context) {
+    throw new Error('Must implement handle');
+  }
+}
+
+class IdleState extends State {
+  handle(context) {
+    console.log('Player is idle');
+    return this;
+  }
+
+  play(context) {
+    console.log('Starting playback');
+    context.setState(new PlayingState());
+  }
+}
+
+class PlayingState extends State {
+  handle(context) {
+    console.log('Player is playing');
+    return this;
+  }
+
+  pause(context) {
+    console.log('Pausing playback');
+    context.setState(new PausedState());
+  }
+
+  stop(context) {
+    console.log('Stopping playback');
+    context.setState(new IdleState());
+  }
+}
+
+class PausedState extends State {
+  handle(context) {
+    console.log('Player is paused');
+    return this;
+  }
+
+  play(context) {
+    console.log('Resuming playback');
+    context.setState(new PlayingState());
+  }
+
+  stop(context) {
+    console.log('Stopping playback');
+    context.setState(new IdleState());
+  }
+}
+
+class MediaPlayer {
+  constructor() {
+    this.state = new IdleState();
+  }
+
+  setState(state) {
+    this.state = state;
+  }
+
+  play() {
+    if (this.state.play) {
+      this.state.play(this);
+    }
+  }
+
+  pause() {
+    if (this.state.pause) {
+      this.state.pause(this);
+    }
+  }
+
+  stop() {
+    if (this.state.stop) {
+      this.state.stop(this);
+    }
+  }
+
+  getState() {
+    return this.state.constructor.name;
+  }
+}
+
+// Usage
+const player = new MediaPlayer();
+console.log(player.getState()); // IdleState
+
+player.play();
+console.log(player.getState()); // PlayingState
+
+player.pause();
+console.log(player.getState()); // PausedState
+
+player.play();
+console.log(player.getState()); // PlayingState
+
+player.stop();
+console.log(player.getState()); // IdleState
+```
+
+### Strategy Pattern
+
+**Intent**: Define family of algorithms, encapsulate each one, make them interchangeable.
+
+```javascript
+class Strategy {
+  execute(data) {
+    throw new Error('Must implement execute');
+  }
+}
+
+class BubbleSortStrategy extends Strategy {
+  execute(data) {
+    const arr = [...data];
+    for (let i = 0; i < arr.length; i++) {
+      for (let j = 0; j < arr.length - i - 1; j++) {
+        if (arr[j] > arr[j + 1]) {
+          [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
+        }
+      }
+    }
+    return arr;
+  }
+}
+
+class QuickSortStrategy extends Strategy {
+  execute(data) {
+    if (data.length <= 1) return data;
+    
+    const pivot = data[Math.floor(data.length / 2)];
+    const left = data.filter(x => x < pivot);
+    const middle = data.filter(x => x === pivot);
+    const right = data.filter(x => x > pivot);
+    
+    return [...this.execute(left), ...middle, ...this.execute(right)];
+  }
+}
+
+class MergeSortStrategy extends Strategy {
+  execute(data) {
+    if (data.length <= 1) return data;
+    
+    const mid = Math.floor(data.length / 2);
+    const left = this.execute(data.slice(0, mid));
+    const right = this.execute(data.slice(mid));
+    
+    return this.merge(left, right);
+  }
+
+  merge(left, right) {
+    const result = [];
+    let i = 0, j = 0;
+    
+    while (i < left.length && j < right.length) {
+      if (left[i] <= right[j]) {
+        result.push(left[i++]);
+      } else {
+        result.push(right[j++]);
+      }
+    }
+    
+    return result.concat(left.slice(i)).concat(right.slice(j));
+  }
+}
+
+class Sorter {
+  constructor(strategy) {
+    this.strategy = strategy;
+  }
+
+  setStrategy(strategy) {
+    this.strategy = strategy;
+  }
+
+  sort(data) {
+    return this.strategy.execute(data);
+  }
+}
+
+// Usage
+const data = [5, 2, 8, 1, 9, 3];
+
+const sorter = new Sorter(new QuickSortStrategy());
+console.log(sorter.sort(data)); // [1, 2, 3, 5, 8, 9]
+
+sorter.setStrategy(new MergeSortStrategy());
+console.log(sorter.sort(data)); // [1, 2, 3, 5, 8, 9]
+```
+
+### Template Method Pattern
+
+**Intent**: Define skeleton of algorithm, let subclasses override specific steps.
+
+```javascript
+class DataProcessor {
+  process(data) {
+    const loaded = this.loadData(data);
+    const validated = this.validateData(loaded);
+    const transformed = this.transformData(validated);
+    const saved = this.saveData(transformed);
+    return saved;
+  }
+
+  loadData(data) {
+    console.log('Loading data...');
+    return data;
+  }
+
+  validateData(data) {
+    throw new Error('Must implement validateData');
+  }
+
+  transformData(data) {
+    throw new Error('Must implement transformData');
+  }
+
+  saveData(data) {
+    console.log('Saving data...');
+    return data;
+  }
+}
+
+class CSVProcessor extends DataProcessor {
+  validateData(data) {
+    console.log('Validating CSV data');
+    if (!data || data.length === 0) {
+      throw new Error('Invalid CSV data');
+    }
+    return data;
+  }
+
+  transformData(data) {
+    console.log('Transforming CSV to JSON');
+    return data.split('\n').map(row => {
+      const [id, name, value] = row.split(',');
+      return { id, name, value };
+    });
+  }
+}
+
+class JSONProcessor extends DataProcessor {
+  validateData(data) {
+    console.log('Validating JSON data');
+    try {
+      JSON.parse(data);
+      return data;
+    } catch (e) {
+      throw new Error('Invalid JSON data');
+    }
+  }
+
+  transformData(data) {
+    console.log('Transforming JSON');
+    const parsed = JSON.parse(data);
+    return parsed.map(item => ({
+      ...item,
+      processed: true
+    }));
+  }
+}
+
+// Usage
+const csvProcessor = new CSVProcessor();
+const result1 = csvProcessor.process('1,Alice,100\n2,Bob,200');
+
+const jsonProcessor = new JSONProcessor();
+const result2 = jsonProcessor.process('[{"id":1,"name":"Alice"}]');
+```
+
+### Visitor Pattern
+
+**Intent**: Separate algorithm from object structure it operates on.
+
+```javascript
+class Visitor {
+  visitCircle(circle) {
+    throw new Error('Must implement visitCircle');
+  }
+
+  visitRectangle(rectangle) {
+    throw new Error('Must implement visitRectangle');
+  }
+
+  visitTriangle(triangle) {
+    throw new Error('Must implement visitTriangle');
+  }
+}
+
+class Shape {
+  accept(visitor) {
+    throw new Error('Must implement accept');
+  }
+}
+
+class Circle extends Shape {
+  constructor(radius) {
+    super();
+    this.radius = radius;
+  }
+
+  accept(visitor) {
+    return visitor.visitCircle(this);
+  }
+}
+
+class Rectangle extends Shape {
+  constructor(width, height) {
+    super();
+    this.width = width;
+    this.height = height;
+  }
+
+  accept(visitor) {
+    return visitor.visitRectangle(this);
+  }
+}
+
+class Triangle extends Shape {
+  constructor(base, height) {
+    super();
+    this.base = base;
+    this.height = height;
+  }
+
+  accept(visitor) {
+    return visitor.visitTriangle(this);
+  }
+}
+
+class AreaCalculator extends Visitor {
+  visitCircle(circle) {
+    return Math.PI * circle.radius ** 2;
+  }
+
+  visitRectangle(rectangle) {
+    return rectangle.width * rectangle.height;
+  }
+
+  visitTriangle(triangle) {
+    return (triangle.base * triangle.height) / 2;
+  }
+}
+
+class PerimeterCalculator extends Visitor {
+  visitCircle(circle) {
+    return 2 * Math.PI * circle.radius;
+  }
+
+  visitRectangle(rectangle) {
+    return 2 * (rectangle.width + rectangle.height);
+  }
+
+  visitTriangle(triangle) {
+    // Assuming equilateral for simplicity
+    return 3 * triangle.base;
+  }
+}
+
+// Usage
+const shapes = [
+  new Circle(5),
+  new Rectangle(4, 6),
+  new Triangle(3, 4)
+];
+
+const areaCalc = new AreaCalculator();
+const perimeterCalc = new PerimeterCalculator();
+
+shapes.forEach(shape => {
+  console.log(`Area: ${shape.accept(areaCalc)}`);
+  console.log(`Perimeter: ${shape.accept(perimeterCalc)}`);
+});
+```
+
+## Summary
+
+Advanced design patterns provide proven solutions to common software design problems:
+
+**Creational**: Abstract Factory, Builder, Prototype, Object Pool
+**Structural**: Adapter, Bridge, Composite, Decorator, Facade, Flyweight, Proxy
+**Behavioral**: Chain of Responsibility, Command, Iterator, Mediator, Memento, Observer, State, Strategy, Template Method, Visitor
+
+These patterns enable:
+- Code reusability and maintainability
+- Loose coupling and high cohesion
+- Flexibility and extensibility
+- Clear separation of concerns
+- Testable and scalable architectures
+
+Understanding and applying these patterns is essential for building robust, maintainable frontend applications.
