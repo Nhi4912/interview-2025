@@ -674,3 +674,1000 @@ I'll continue with more content:
 <function_calls>
 <invoke name="fsAppend">
 <parameter name="path">docs/19-expert-topics/02-performance-engineering.md
+
+## Me
+mory Optimization
+
+### Memory Leak Detection
+
+```javascript
+class MemoryLeakDetector {
+  constructor() {
+    this.snapshots = [];
+    this.listeners = new WeakMap();
+    this.timers = new Set();
+  }
+
+  takeSnapshot() {
+    if (performance.memory) {
+      this.snapshots.push({
+        timestamp: Date.now(),
+        usedJSHeapSize: performance.memory.usedJSHeapSize,
+        totalJSHeapSize: performance.memory.totalJSHeapSize,
+        jsHeapSizeLimit: performance.memory.jsHeapSizeLimit
+      });
+    }
+  }
+
+  startMonitoring(interval = 5000) {
+    this.monitoringInterval = setInterval(() => {
+      this.takeSnapshot();
+      this.analyze();
+    }, interval);
+  }
+
+  stopMonitoring() {
+    if (this.monitoringInterval) {
+      clearInterval(this.monitoringInterval);
+    }
+  }
+
+  analyze() {
+    if (this.snapshots.length < 3) return;
+
+    const recent = this.snapshots.slice(-10);
+    const trend = this.calculateTrend(recent);
+
+    if (trend > 1000000) { // 1MB growth per snapshot
+      console.warn('Potential memory leak detected!');
+      console.warn('Memory growth rate:', trend, 'bytes per snapshot');
+      this.reportLeak(trend);
+    }
+  }
+
+  calculateTrend(snapshots) {
+    if (snapshots.length < 2) return 0;
+
+    const values = snapshots.map(s => s.usedJSHeapSize);
+    const n = values.length;
+    
+    let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+    
+    for (let i = 0; i < n; i++) {
+      sumX += i;
+      sumY += values[i];
+      sumXY += i * values[i];
+      sumX2 += i * i;
+    }
+    
+    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    return slope;
+  }
+
+  reportLeak(trend) {
+    // Send to monitoring service
+    console.log('Leak report:', {
+      trend,
+      snapshots: this.snapshots.slice(-5),
+      timestamp: Date.now()
+    });
+  }
+
+  trackEventListener(element, event, handler) {
+    if (!this.listeners.has(element)) {
+      this.listeners.set(element, new Map());
+    }
+    
+    const elementListeners = this.listeners.get(element);
+    if (!elementListeners.has(event)) {
+      elementListeners.set(event, new Set());
+    }
+    
+    elementListeners.get(event).add(handler);
+  }
+
+  trackTimer(id) {
+    this.timers.add(id);
+  }
+
+  getReport() {
+    return {
+      snapshots: this.snapshots,
+      trend: this.calculateTrend(this.snapshots),
+      activeTimers: this.timers.size
+    };
+  }
+}
+
+// Usage
+const detector = new MemoryLeakDetector();
+detector.startMonitoring(5000);
+
+// Track event listeners
+const handler = () => console.log('clicked');
+element.addEventListener('click', handler);
+detector.trackEventListener(element, 'click', handler);
+
+// Track timers
+const timerId = setInterval(() => {}, 1000);
+detector.trackTimer(timerId);
+```
+
+### Object Pooling for Memory Efficiency
+
+```javascript
+class AdvancedObjectPool {
+  constructor(factory, reset, options = {}) {
+    this.factory = factory;
+    this.reset = reset;
+    this.maxSize = options.maxSize || 100;
+    this.minSize = options.minSize || 10;
+    this.pool = [];
+    this.inUse = new Set();
+    this.stats = {
+      created: 0,
+      acquired: 0,
+      released: 0,
+      reused: 0
+    };
+    
+    // Pre-allocate minimum objects
+    for (let i = 0; i < this.minSize; i++) {
+      this.pool.push(this.factory());
+      this.stats.created++;
+    }
+  }
+
+  acquire() {
+    let obj;
+    
+    if (this.pool.length > 0) {
+      obj = this.pool.pop();
+      this.stats.reused++;
+    } else if (this.inUse.size < this.maxSize) {
+      obj = this.factory();
+      this.stats.created++;
+    } else {
+      throw new Error('Pool exhausted');
+    }
+    
+    this.inUse.add(obj);
+    this.stats.acquired++;
+    return obj;
+  }
+
+  release(obj) {
+    if (!this.inUse.has(obj)) {
+      throw new Error('Object not from this pool');
+    }
+    
+    this.inUse.delete(obj);
+    this.reset(obj);
+    
+    if (this.pool.length < this.maxSize) {
+      this.pool.push(obj);
+      this.stats.released++;
+    }
+  }
+
+  drain() {
+    this.pool = [];
+    this.inUse.clear();
+  }
+
+  getStats() {
+    return {
+      ...this.stats,
+      poolSize: this.pool.length,
+      inUse: this.inUse.size,
+      reuseRate: this.stats.reused / this.stats.acquired
+    };
+  }
+}
+
+// Usage with DOM elements
+const divPool = new AdvancedObjectPool(
+  () => document.createElement('div'),
+  (div) => {
+    div.className = '';
+    div.textContent = '';
+    div.style.cssText = '';
+  },
+  { maxSize: 50, minSize: 10 }
+);
+
+// Acquire and use
+const div = divPool.acquire();
+div.textContent = 'Hello';
+document.body.appendChild(div);
+
+// Release when done
+div.remove();
+divPool.release(div);
+
+console.log(divPool.getStats());
+```
+
+## Network Optimization
+
+### Request Batching
+
+```javascript
+class RequestBatcher {
+  constructor(options = {}) {
+    this.batchSize = options.batchSize || 10;
+    this.batchDelay = options.batchDelay || 50;
+    this.endpoint = options.endpoint;
+    this.pending = [];
+    this.timer = null;
+  }
+
+  add(request) {
+    return new Promise((resolve, reject) => {
+      this.pending.push({ request, resolve, reject });
+      
+      if (this.pending.length >= this.batchSize) {
+        this.flush();
+      } else if (!this.timer) {
+        this.timer = setTimeout(() => this.flush(), this.batchDelay);
+      }
+    });
+  }
+
+  async flush() {
+    if (this.timer) {
+      clearTimeout(this.timer);
+      this.timer = null;
+    }
+
+    if (this.pending.length === 0) return;
+
+    const batch = this.pending.splice(0, this.batchSize);
+    const requests = batch.map(b => b.request);
+
+    try {
+      const response = await fetch(this.endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requests })
+      });
+
+      const results = await response.json();
+
+      batch.forEach((item, index) => {
+        const result = results[index];
+        if (result.error) {
+          item.reject(new Error(result.error));
+        } else {
+          item.resolve(result.data);
+        }
+      });
+    } catch (error) {
+      batch.forEach(item => item.reject(error));
+    }
+
+    // Process remaining requests
+    if (this.pending.length > 0) {
+      this.flush();
+    }
+  }
+}
+
+// Usage
+const batcher = new RequestBatcher({
+  endpoint: '/api/batch',
+  batchSize: 10,
+  batchDelay: 50
+});
+
+// Multiple requests get batched
+const results = await Promise.all([
+  batcher.add({ type: 'getUser', id: 1 }),
+  batcher.add({ type: 'getUser', id: 2 }),
+  batcher.add({ type: 'getPost', id: 100 })
+]);
+```
+
+### HTTP/2 Server Push Simulation
+
+```javascript
+class ResourcePusher {
+  constructor() {
+    this.pushed = new Set();
+    this.dependencies = new Map();
+  }
+
+  registerDependencies(resource, deps) {
+    this.dependencies.set(resource, deps);
+  }
+
+  async push(resource) {
+    if (this.pushed.has(resource)) return;
+    
+    this.pushed.add(resource);
+    
+    // Get dependencies
+    const deps = this.dependencies.get(resource) || [];
+    
+    // Push dependencies first
+    await Promise.all(
+      deps.map(dep => this.pushResource(dep))
+    );
+    
+    // Push main resource
+    await this.pushResource(resource);
+  }
+
+  async pushResource(url) {
+    if (this.pushed.has(url)) return;
+    
+    this.pushed.add(url);
+    
+    // Use link preload
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.href = url;
+    link.as = this.getResourceType(url);
+    
+    document.head.appendChild(link);
+    
+    // Actually fetch
+    return fetch(url);
+  }
+
+  getResourceType(url) {
+    const ext = url.split('.').pop();
+    const types = {
+      'js': 'script',
+      'css': 'style',
+      'woff': 'font',
+      'woff2': 'font',
+      'jpg': 'image',
+      'png': 'image',
+      'webp': 'image'
+    };
+    return types[ext] || 'fetch';
+  }
+}
+
+// Usage
+const pusher = new ResourcePusher();
+
+// Register dependencies
+pusher.registerDependencies('/app.js', [
+  '/vendor.js',
+  '/polyfills.js'
+]);
+
+pusher.registerDependencies('/app.css', [
+  '/fonts/main.woff2'
+]);
+
+// Push resources with dependencies
+await pusher.push('/app.js');
+await pusher.push('/app.css');
+```
+
+### Adaptive Loading
+
+```javascript
+class AdaptiveLoader {
+  constructor() {
+    this.connection = navigator.connection || navigator.mozConnection;
+    this.deviceMemory = navigator.deviceMemory || 4;
+    this.hardwareConcurrency = navigator.hardwareConcurrency || 4;
+  }
+
+  getDeviceCapability() {
+    const effectiveType = this.connection?.effectiveType || '4g';
+    const saveData = this.connection?.saveData || false;
+    
+    if (saveData) return 'low';
+    
+    // Score based on multiple factors
+    let score = 0;
+    
+    // Network
+    if (effectiveType === '4g') score += 3;
+    else if (effectiveType === '3g') score += 2;
+    else score += 1;
+    
+    // Memory
+    if (this.deviceMemory >= 8) score += 3;
+    else if (this.deviceMemory >= 4) score += 2;
+    else score += 1;
+    
+    // CPU
+    if (this.hardwareConcurrency >= 8) score += 3;
+    else if (this.hardwareConcurrency >= 4) score += 2;
+    else score += 1;
+    
+    // Classify
+    if (score >= 8) return 'high';
+    if (score >= 5) return 'medium';
+    return 'low';
+  }
+
+  async loadImage(src, options = {}) {
+    const capability = this.getDeviceCapability();
+    
+    let actualSrc = src;
+    
+    switch (capability) {
+      case 'low':
+        actualSrc = options.lowQuality || src;
+        break;
+      case 'medium':
+        actualSrc = options.mediumQuality || src;
+        break;
+      case 'high':
+        actualSrc = options.highQuality || src;
+        break;
+    }
+    
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = actualSrc;
+    });
+  }
+
+  async loadComponent(importFn, fallbackFn) {
+    const capability = this.getDeviceCapability();
+    
+    if (capability === 'low' && fallbackFn) {
+      return fallbackFn();
+    }
+    
+    return importFn();
+  }
+
+  shouldLoadFeature(feature) {
+    const capability = this.getDeviceCapability();
+    
+    const features = {
+      animations: ['medium', 'high'],
+      videoAutoplay: ['high'],
+      highResImages: ['medium', 'high'],
+      webWorkers: ['medium', 'high'],
+      serviceWorker: ['medium', 'high']
+    };
+    
+    return features[feature]?.includes(capability) ?? true;
+  }
+}
+
+// Usage
+const loader = new AdaptiveLoader();
+
+// Load appropriate image quality
+const img = await loader.loadImage('/hero.jpg', {
+  lowQuality: '/hero-low.jpg',
+  mediumQuality: '/hero-medium.jpg',
+  highQuality: '/hero-high.jpg'
+});
+
+// Conditionally load features
+if (loader.shouldLoadFeature('animations')) {
+  await import('./animations.js');
+}
+
+// Load component based on capability
+const Component = await loader.loadComponent(
+  () => import('./RichComponent'),
+  () => import('./SimpleComponent')
+);
+```
+
+## Rendering Performance
+
+### Virtual Scrolling
+
+```javascript
+class VirtualScroller {
+  constructor(container, options = {}) {
+    this.container = container;
+    this.itemHeight = options.itemHeight || 50;
+    this.buffer = options.buffer || 5;
+    this.items = [];
+    this.visibleItems = [];
+    this.scrollTop = 0;
+    
+    this.setupContainer();
+    this.attachListeners();
+  }
+
+  setupContainer() {
+    this.container.style.overflow = 'auto';
+    this.container.style.position = 'relative';
+    
+    this.viewport = document.createElement('div');
+    this.viewport.style.position = 'relative';
+    this.container.appendChild(this.viewport);
+  }
+
+  attachListeners() {
+    this.container.addEventListener('scroll', () => {
+      this.scrollTop = this.container.scrollTop;
+      this.render();
+    });
+  }
+
+  setItems(items) {
+    this.items = items;
+    this.viewport.style.height = `${items.length * this.itemHeight}px`;
+    this.render();
+  }
+
+  render() {
+    const startIndex = Math.max(
+      0,
+      Math.floor(this.scrollTop / this.itemHeight) - this.buffer
+    );
+    
+    const endIndex = Math.min(
+      this.items.length,
+      Math.ceil((this.scrollTop + this.container.clientHeight) / this.itemHeight) + this.buffer
+    );
+
+    // Remove items outside visible range
+    this.visibleItems.forEach(item => {
+      if (item.index < startIndex || item.index >= endIndex) {
+        item.element.remove();
+      }
+    });
+
+    // Add items in visible range
+    const newVisibleItems = [];
+    
+    for (let i = startIndex; i < endIndex; i++) {
+      let item = this.visibleItems.find(v => v.index === i);
+      
+      if (!item) {
+        const element = this.createItemElement(this.items[i], i);
+        this.viewport.appendChild(element);
+        item = { index: i, element };
+      }
+      
+      newVisibleItems.push(item);
+    }
+    
+    this.visibleItems = newVisibleItems;
+  }
+
+  createItemElement(data, index) {
+    const element = document.createElement('div');
+    element.style.position = 'absolute';
+    element.style.top = `${index * this.itemHeight}px`;
+    element.style.height = `${this.itemHeight}px`;
+    element.style.width = '100%';
+    element.textContent = data;
+    return element;
+  }
+}
+
+// Usage
+const scroller = new VirtualScroller(
+  document.getElementById('container'),
+  { itemHeight: 50, buffer: 5 }
+);
+
+const items = Array.from({ length: 10000 }, (_, i) => `Item ${i}`);
+scroller.setItems(items);
+```
+
+### RAF Throttling
+
+```javascript
+class RAFThrottler {
+  constructor() {
+    this.rafId = null;
+    this.lastArgs = null;
+  }
+
+  throttle(callback) {
+    return (...args) => {
+      this.lastArgs = args;
+      
+      if (this.rafId === null) {
+        this.rafId = requestAnimationFrame(() => {
+          callback.apply(null, this.lastArgs);
+          this.rafId = null;
+          this.lastArgs = null;
+        });
+      }
+    };
+  }
+
+  cancel() {
+    if (this.rafId !== null) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+      this.lastArgs = null;
+    }
+  }
+}
+
+// Usage
+const throttler = new RAFThrottler();
+
+const handleScroll = throttler.throttle((event) => {
+  console.log('Scroll position:', window.scrollY);
+  // Expensive DOM operations
+});
+
+window.addEventListener('scroll', handleScroll);
+```
+
+### Layout Thrashing Prevention
+
+```javascript
+class LayoutOptimizer {
+  constructor() {
+    this.readQueue = [];
+    this.writeQueue = [];
+    this.scheduled = false;
+  }
+
+  read(fn) {
+    this.readQueue.push(fn);
+    this.schedule();
+  }
+
+  write(fn) {
+    this.writeQueue.push(fn);
+    this.schedule();
+  }
+
+  schedule() {
+    if (this.scheduled) return;
+    
+    this.scheduled = true;
+    
+    requestAnimationFrame(() => {
+      // Batch all reads first
+      this.readQueue.forEach(fn => fn());
+      this.readQueue = [];
+      
+      // Then batch all writes
+      this.writeQueue.forEach(fn => fn());
+      this.writeQueue = [];
+      
+      this.scheduled = false;
+    });
+  }
+
+  measure(element, property) {
+    return new Promise(resolve => {
+      this.read(() => {
+        const value = element[property];
+        resolve(value);
+      });
+    });
+  }
+
+  mutate(element, property, value) {
+    return new Promise(resolve => {
+      this.write(() => {
+        element[property] = value;
+        resolve();
+      });
+    });
+  }
+}
+
+// Usage
+const optimizer = new LayoutOptimizer();
+
+// BAD: Causes layout thrashing
+elements.forEach(el => {
+  const height = el.offsetHeight; // Read
+  el.style.width = height + 'px'; // Write
+});
+
+// GOOD: Batched reads and writes
+elements.forEach(el => {
+  optimizer.read(() => {
+    const height = el.offsetHeight;
+    
+    optimizer.write(() => {
+      el.style.width = height + 'px';
+    });
+  });
+});
+```
+
+## Bundle Optimization
+
+### Code Splitting Strategies
+
+```javascript
+// Route-based splitting
+const routes = [
+  {
+    path: '/',
+    component: () => import('./pages/Home')
+  },
+  {
+    path: '/about',
+    component: () => import('./pages/About')
+  },
+  {
+    path: '/dashboard',
+    component: () => import('./pages/Dashboard')
+  }
+];
+
+// Component-based splitting
+const HeavyComponent = lazy(() => import('./HeavyComponent'));
+
+function App() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <HeavyComponent />
+    </Suspense>
+  );
+}
+
+// Vendor splitting (webpack config)
+module.exports = {
+  optimization: {
+    splitChunks: {
+      cacheGroups: {
+        vendor: {
+          test: /[\\/]node_modules[\\/]/,
+          name: 'vendors',
+          chunks: 'all'
+        },
+        common: {
+          minChunks: 2,
+          priority: -10,
+          reuseExistingChunk: true
+        }
+      }
+    }
+  }
+};
+```
+
+### Dynamic Import Optimization
+
+```javascript
+class DynamicImportOptimizer {
+  constructor() {
+    this.cache = new Map();
+    this.loading = new Map();
+    this.prefetched = new Set();
+  }
+
+  async import(modulePath) {
+    // Return cached module
+    if (this.cache.has(modulePath)) {
+      return this.cache.get(modulePath);
+    }
+
+    // Return in-flight promise
+    if (this.loading.has(modulePath)) {
+      return this.loading.get(modulePath);
+    }
+
+    // Import module
+    const promise = import(modulePath)
+      .then(module => {
+        this.cache.set(modulePath, module);
+        this.loading.delete(modulePath);
+        return module;
+      })
+      .catch(error => {
+        this.loading.delete(modulePath);
+        throw error;
+      });
+
+    this.loading.set(modulePath, promise);
+    return promise;
+  }
+
+  prefetch(modulePath) {
+    if (this.prefetched.has(modulePath)) return;
+    
+    this.prefetched.add(modulePath);
+    
+    // Use link prefetch
+    const link = document.createElement('link');
+    link.rel = 'prefetch';
+    link.href = modulePath;
+    document.head.appendChild(link);
+  }
+
+  preload(modulePath) {
+    // Use link preload for critical resources
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.href = modulePath;
+    link.as = 'script';
+    document.head.appendChild(link);
+  }
+
+  async importWithRetry(modulePath, retries = 3) {
+    for (let i = 0; i < retries; i++) {
+      try {
+        return await this.import(modulePath);
+      } catch (error) {
+        if (i === retries - 1) throw error;
+        
+        // Wait before retry with exponential backoff
+        await new Promise(resolve => 
+          setTimeout(resolve, Math.pow(2, i) * 1000)
+        );
+      }
+    }
+  }
+}
+
+// Usage
+const optimizer = new DynamicImportOptimizer();
+
+// Prefetch on hover
+button.addEventListener('mouseenter', () => {
+  optimizer.prefetch('./heavy-feature.js');
+}, { once: true });
+
+// Import on click
+button.addEventListener('click', async () => {
+  const module = await optimizer.import('./heavy-feature.js');
+  module.initialize();
+});
+```
+
+## Performance Monitoring
+
+### Real User Monitoring (RUM)
+
+```javascript
+class RUMCollector {
+  constructor(endpoint) {
+    this.endpoint = endpoint;
+    this.metrics = {};
+    this.buffer = [];
+    this.flushInterval = 30000; // 30 seconds
+    
+    this.collectMetrics();
+    this.startFlushing();
+  }
+
+  collectMetrics() {
+    // Navigation Timing
+    if (performance.timing) {
+      const timing = performance.timing;
+      this.metrics.navigationTiming = {
+        dns: timing.domainLookupEnd - timing.domainLookupStart,
+        tcp: timing.connectEnd - timing.connectStart,
+        request: timing.responseStart - timing.requestStart,
+        response: timing.responseEnd - timing.responseStart,
+        dom: timing.domComplete - timing.domLoading,
+        load: timing.loadEventEnd - timing.loadEventStart
+      };
+    }
+
+    // Resource Timing
+    const resources = performance.getEntriesByType('resource');
+    this.metrics.resources = resources.map(r => ({
+      name: r.name,
+      duration: r.duration,
+      size: r.transferSize,
+      type: r.initiatorType
+    }));
+
+    // Paint Timing
+    const paintEntries = performance.getEntriesByType('paint');
+    this.metrics.paint = {};
+    paintEntries.forEach(entry => {
+      this.metrics.paint[entry.name] = entry.startTime;
+    });
+
+    // Core Web Vitals
+    this.collectWebVitals();
+  }
+
+  collectWebVitals() {
+    // LCP
+    new PerformanceObserver((list) => {
+      const entries = list.getEntries();
+      const lastEntry = entries[entries.length - 1];
+      this.addMetric('LCP', lastEntry.renderTime || lastEntry.loadTime);
+    }).observe({ entryTypes: ['largest-contentful-paint'] });
+
+    // FID
+    new PerformanceObserver((list) => {
+      const entries = list.getEntries();
+      entries.forEach(entry => {
+        this.addMetric('FID', entry.processingStart - entry.startTime);
+      });
+    }).observe({ entryTypes: ['first-input'] });
+
+    // CLS
+    let clsScore = 0;
+    new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        if (!entry.hadRecentInput) {
+          clsScore += entry.value;
+          this.addMetric('CLS', clsScore);
+        }
+      }
+    }).observe({ entryTypes: ['layout-shift'] });
+  }
+
+  addMetric(name, value, metadata = {}) {
+    this.buffer.push({
+      name,
+      value,
+      metadata,
+      timestamp: Date.now(),
+      url: window.location.href,
+      userAgent: navigator.userAgent
+    });
+  }
+
+  startFlushing() {
+    setInterval(() => this.flush(), this.flushInterval);
+    
+    // Flush on page unload
+    window.addEventListener('beforeunload', () => this.flush());
+  }
+
+  async flush() {
+    if (this.buffer.length === 0) return;
+
+    const data = this.buffer.splice(0);
+    
+    try {
+      // Use sendBeacon for reliability
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(
+          this.endpoint,
+          JSON.stringify(data)
+        );
+      } else {
+        await fetch(this.endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+          keepalive: true
+        });
+      }
+    } catch (error) {
+      console.error('Failed to send metrics:', error);
+      // Re-add to buffer
+      this.buffer.unshift(...data);
+    }
+  }
+
+  trackCustomMetric(name, value, metadata) {
+    this.addMetric(name, value, metadata);
+  }
+}
+
+// Usage
+const rum = new RUMCollector('/api/metrics');
+
+// Track custom metrics
+rum.trackCustomMetric('api-call-duration', 234, {
+  endpoint: '/api/users',
+  method: 'GET'
+});
+```
+
+## Summary
+
+Performance engineering encompasses:
+- **Metrics**: Core Web Vitals (LCP, FID, CLS), custom timing
+- **Critical Rendering Path**: Resource prioritization, preloading
+- **JavaScript**: Code splitting, memoization, Web Workers
+- **Memory**: Leak detection, object pooling, efficient allocation
+- **Network**: Request batching, adaptive loading, HTTP/2
+- **Rendering**: Virtual scrolling, RAF throttling, layout optimization
+- **Bundles**: Code splitting, tree shaking, dynamic imports
+- **Monitoring**: RUM, synthetic monitoring, performance budgets
+
+These techniques are essential for building fast, responsive web applications that provide excellent user experiences across all devices and network conditions.
