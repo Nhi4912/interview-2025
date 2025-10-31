@@ -359,13 +359,284 @@ const { value: isOpen, toggle } = useToggle(false);
 
 ---
 
-## Rivet - Visual Programming
+## Rivet - Visual Programming / Lập Trình Trực Quan
 
-### What is Rivet?
+### What is Rivet? / Rivet là gì?
 
 **Website**: https://www.rivet.dev/
 
-**Definition**: Rivet is a visual programming tool for building AI applications and workflows. It provides a node-based interface for creating complex logic flows, AI chains, and data transformations.
+**English Definition:** Rivet is a visual programming tool for building AI applications and workflows. It provides a node-based interface for creating complex logic flows, AI chains, and data transformations. Think of it as a visual IDE for AI workflows where you connect nodes instead of writing code.
+
+**Định nghĩa (Tiếng Việt):** Rivet là công cụ lập trình trực quan để xây dựng ứng dụng AI và workflows. Nó cung cấp giao diện dựa trên node để tạo luồng logic phức tạp, chuỗi AI và chuyển đổi dữ liệu. Hãy nghĩ về nó như một IDE trực quan cho AI workflows nơi bạn kết nối các nodes thay vì viết code.
+
+### Theoretical Foundation / Nền Tảng Lý Thuyết
+
+**1. Node-Based Programming Paradigm / Mô Hình Lập Trình Dựa Trên Node**
+
+**English:** Node-based programming represents computation as a directed graph where:
+- **Nodes** = Operations/Functions
+- **Edges** = Data flow between operations
+- **Graph** = Complete program/workflow
+
+**Tiếng Việt:** Lập trình dựa trên node biểu diễn tính toán như một đồ thị có hướng trong đó:
+- **Nodes** = Các thao tác/hàm
+- **Edges** = Luồng dữ liệu giữa các thao tác
+- **Graph** = Chương trình/workflow hoàn chỉnh
+
+```typescript
+// Mathematical representation
+// Định nghĩa toán học
+
+interface Node<I, O> {
+  id: string;
+  execute: (input: I) => Promise<O> | O;
+}
+
+interface Edge {
+  from: { nodeId: string; outputPort: string };
+  to: { nodeId: string; inputPort: string };
+}
+
+interface Graph {
+  nodes: Node<any, any>[];
+  edges: Edge[];
+}
+
+// Execution model: Topological sort + Data flow
+// Mô hình thực thi: Sắp xếp topo + Luồng dữ liệu
+
+class GraphExecutor {
+  async execute(graph: Graph, initialData: any) {
+    // 1. Topological sort for execution order
+    // 1. Sắp xếp topo để xác định thứ tự thực thi
+    const sortedNodes = this.topologicalSort(graph);
+    
+    // 2. Execute nodes in order
+    // 2. Thực thi nodes theo thứ tự
+    const results = new Map<string, any>();
+    
+    for (const node of sortedNodes) {
+      const inputs = this.gatherInputs(node, graph, results);
+      const output = await node.execute(inputs);
+      results.set(node.id, output);
+    }
+    
+    return results;
+  }
+  
+  private topologicalSort(graph: Graph): Node<any, any>[] {
+    // Kahn's algorithm for topological sorting
+    // Thuật toán Kahn cho sắp xếp topo
+    const inDegree = new Map<string, number>();
+    const adjList = new Map<string, string[]>();
+    
+    // Initialize
+    graph.nodes.forEach(node => {
+      inDegree.set(node.id, 0);
+      adjList.set(node.id, []);
+    });
+    
+    // Build graph
+    graph.edges.forEach(edge => {
+      adjList.get(edge.from.nodeId)!.push(edge.to.nodeId);
+      inDegree.set(edge.to.nodeId, inDegree.get(edge.to.nodeId)! + 1);
+    });
+    
+    // Find nodes with no dependencies
+    const queue: string[] = [];
+    inDegree.forEach((degree, nodeId) => {
+      if (degree === 0) queue.push(nodeId);
+    });
+    
+    // Process queue
+    const sorted: Node<any, any>[] = [];
+    
+    while (queue.length > 0) {
+      const nodeId = queue.shift()!;
+      const node = graph.nodes.find(n => n.id === nodeId)!;
+      sorted.push(node);
+      
+      adjList.get(nodeId)!.forEach(neighborId => {
+        inDegree.set(neighborId, inDegree.get(neighborId)! - 1);
+        if (inDegree.get(neighborId) === 0) {
+          queue.push(neighborId);
+        }
+      });
+    }
+    
+    if (sorted.length !== graph.nodes.length) {
+      throw new Error('Cycle detected in graph');
+    }
+    
+    return sorted;
+  }
+  
+  private gatherInputs(
+    node: Node<any, any>,
+    graph: Graph,
+    results: Map<string, any>
+  ): any {
+    const inputs: Record<string, any> = {};
+    
+    graph.edges
+      .filter(edge => edge.to.nodeId === node.id)
+      .forEach(edge => {
+        const sourceResult = results.get(edge.from.nodeId);
+        inputs[edge.to.inputPort] = sourceResult?.[edge.from.outputPort];
+      });
+    
+    return inputs;
+  }
+}
+```
+
+**2. Dataflow Programming / Lập Trình Luồng Dữ Liệu**
+
+**English:** Rivet implements dataflow programming where computation is triggered by data availability rather than explicit control flow.
+
+**Tiếng Việt:** Rivet triển khai lập trình luồng dữ liệu nơi tính toán được kích hoạt bởi sự sẵn có của dữ liệu thay vì luồng điều khiển tường minh.
+
+```typescript
+// Dataflow model
+// Mô hình luồng dữ liệu
+
+interface DataflowNode {
+  id: string;
+  type: string;
+  inputs: Map<string, any>;
+  outputs: Map<string, any>;
+  execute: () => Promise<void>;
+  ready: () => boolean; // All inputs available?
+}
+
+class DataflowEngine {
+  private nodes: Map<string, DataflowNode> = new Map();
+  private pendingNodes: Set<string> = new Set();
+  
+  async run() {
+    // Initialize all nodes as pending
+    this.nodes.forEach((_, id) => this.pendingNodes.add(id));
+    
+    // Execute nodes as data becomes available
+    while (this.pendingNodes.size > 0) {
+      const readyNodes = Array.from(this.pendingNodes)
+        .filter(id => this.nodes.get(id)!.ready());
+      
+      if (readyNodes.length === 0) {
+        throw new Error('Deadlock: No nodes ready to execute');
+      }
+      
+      // Execute ready nodes in parallel
+      await Promise.all(
+        readyNodes.map(async (id) => {
+          const node = this.nodes.get(id)!;
+          await node.execute();
+          this.pendingNodes.delete(id);
+          this.propagateData(node);
+        })
+      );
+    }
+  }
+  
+  private propagateData(node: DataflowNode) {
+    // Send outputs to connected nodes
+    // Gửi outputs đến các nodes được kết nối
+    const connections = this.getConnections(node.id);
+    
+    connections.forEach(conn => {
+      const targetNode = this.nodes.get(conn.targetNodeId)!;
+      targetNode.inputs.set(
+        conn.targetPort,
+        node.outputs.get(conn.sourcePort)
+      );
+    });
+  }
+  
+  private getConnections(nodeId: string) {
+    // Return all outgoing connections
+    return []; // Implementation details
+  }
+}
+```
+
+**3. Reactive Execution / Thực Thi Phản Ứng**
+
+**English:** Rivet uses reactive programming principles where changes automatically propagate through the graph.
+
+**Tiếng Việt:** Rivet sử dụng nguyên tắc lập trình phản ứng nơi thay đổi tự động lan truyền qua đồ thị.
+
+```typescript
+// Reactive graph execution
+// Thực thi đồ thị phản ứng
+
+class ReactiveGraph {
+  private nodes: Map<string, ReactiveNode> = new Map();
+  private subscriptions: Map<string, Set<string>> = new Map();
+  
+  // When a node's output changes, notify subscribers
+  // Khi output của node thay đổi, thông báo cho subscribers
+  private notifySubscribers(nodeId: string, output: any) {
+    const subscribers = this.subscriptions.get(nodeId) || new Set();
+    
+    subscribers.forEach(subscriberId => {
+      const subscriber = this.nodes.get(subscriberId);
+      if (subscriber) {
+        subscriber.onInputChange(nodeId, output);
+      }
+    });
+  }
+  
+  // Subscribe to node outputs
+  // Đăng ký nhận outputs của node
+  subscribe(sourceId: string, targetId: string) {
+    if (!this.subscriptions.has(sourceId)) {
+      this.subscriptions.set(sourceId, new Set());
+    }
+    this.subscriptions.get(sourceId)!.add(targetId);
+  }
+}
+
+interface ReactiveNode {
+  id: string;
+  onInputChange: (sourceId: string, value: any) => void;
+  execute: () => Promise<void>;
+}
+
+// Example: Reactive data transformation
+// Ví dụ: Chuyển đổi dữ liệu phản ứng
+class TransformNode implements ReactiveNode {
+  id: string;
+  private input: any = null;
+  private output: any = null;
+  private subscribers: Set<(value: any) => void> = new Set();
+  
+  constructor(id: string) {
+    this.id = id;
+  }
+  
+  onInputChange(sourceId: string, value: any) {
+    this.input = value;
+    this.execute();
+  }
+  
+  async execute() {
+    // Transform data
+    this.output = this.transform(this.input);
+    
+    // Notify subscribers
+    this.subscribers.forEach(callback => callback(this.output));
+  }
+  
+  private transform(input: any): any {
+    // Transformation logic
+    return input?.toUpperCase();
+  }
+  
+  subscribe(callback: (value: any) => void) {
+    this.subscribers.add(callback);
+  }
+}
+```
 
 ### Key Features
 
