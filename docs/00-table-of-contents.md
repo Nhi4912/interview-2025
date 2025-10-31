@@ -25,21 +25,21 @@
 - [05. Configuration & Best Practices](./02-typescript/05-config-best-practices.md)
 
 ### Part 3: React 19 & Modern Patterns
-- [01. React Fundamentals](./03-react/01-react-fundamentals.md)
-- [02. React 19 New Features](./03-react/02-react-19-features.md)
-- [03. Hooks Deep Dive](./03-react/03-hooks-deep-dive.md)
-- [04. Advanced Patterns](./03-react/04-advanced-patterns.md)
-- [05. State Management](./03-react/05-state-management.md)
-- [06. Performance Optimization](./03-react/06-performance-optimization.md)
-- [07. Testing React Applications](./03-react/07-testing.md)
+- [01. React Fundamentals](./03-react/01-react-fundamentals.md) ✅
+- [02. React 19 New Features](./03-react/02-react-19-features.md) ✅
+- [03. Hooks Deep Dive](./03-react/03-hooks-deep-dive.md) ✅
+- [04. Advanced Patterns](./03-react/04-advanced-patterns.md) ✅
+- [05. State Management](./03-react/05-state-management.md) ✅
+- [06. Testing React Applications](./03-react/06-testing.md) ✅
+- [07. Hooks Comprehensive](./03-react/07-hooks-comprehensive.md) ✅
+- [08. React Patterns Advanced](./03-react/08-react-patterns-advanced.md) ✅
+- [09. Performance Optimization](./03-react/09-performance-optimization.md) ✅
 
 ### Part 4: Next.js 16 Advanced
-- [01. App Router & Server Components](./04-nextjs/01-app-router-server-components.md)
-- [02. Data Fetching & Caching](./04-nextjs/02-data-fetching-caching.md)
-- [03. Server Actions](./04-nextjs/03-server-actions.md)
-- [04. Routing & Navigation](./04-nextjs/04-routing-navigation.md)
-- [05. Performance & Optimization](./04-nextjs/05-performance-optimization.md)
-- [06. Deployment & Production](./04-nextjs/06-deployment-production.md)
+- [00. Next.js Fundamentals](./04-nextjs/00-nextjs-fundamentals.md) ✅
+- [01. App Router & Server Components](./04-nextjs/01-app-router-server-components.md) ✅
+- [02. Data Fetching & Caching](./04-nextjs/02-data-fetching.md) ✅
+- [03. Next.js Architecture](./04-nextjs/03-nextjs-architecture.md) ✅
 
 ### Part 5: Web Security
 - [01. Common Vulnerabilities](./05-security/01-common-vulnerabilities.md)
