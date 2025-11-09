@@ -1372,3 +1372,1121 @@ class ASTAnalyzer {
         throw new Error(`Unsupported language: ${language}`);
     }
   }
+
+  
+  private parseJavaScript(code: string): ASTNode {
+    // Simplified JavaScript parser
+    // Parser JavaScript đơn giản hóa
+    return {
+      type: 'Program',
+      loc: { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } },
+      children: [],
+      metadata: {}
+    };
+  }
+  
+  private parsePython(code: string): ASTNode {
+    // Simplified Python parser
+    return {
+      type: 'Module',
+      loc: { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } },
+      children: [],
+      metadata: {}
+    };
+  }
+  
+  // Traverse AST with visitor pattern
+  // Duyệt AST với visitor pattern
+  traverse(ast: ASTNode, visitor: ASTVisitor): void {
+    this.visit(ast, visitor);
+  }
+  
+  private visit(node: ASTNode, visitor: ASTVisitor): void {
+    // Call enter callback
+    if (visitor.enter) {
+      visitor.enter(node);
+    }
+    
+    // Visit children
+    node.children.forEach(child => {
+      this.visit(child, visitor);
+    });
+    
+    // Call exit callback
+    if (visitor.exit) {
+      visitor.exit(node);
+    }
+  }
+  
+  // Find patterns in AST
+  // Tìm patterns trong AST
+  findPattern(ast: ASTNode, pattern: ASTPattern): ASTNode[] {
+    const matches: ASTNode[] = [];
+    
+    this.traverse(ast, {
+      enter: (node) => {
+        if (this.matchesPattern(node, pattern)) {
+          matches.push(node);
+        }
+      }
+    });
+    
+    return matches;
+  }
+  
+  private matchesPattern(node: ASTNode, pattern: ASTPattern): boolean {
+    // Check if node matches pattern
+    if (pattern.type && node.type !== pattern.type) {
+      return false;
+    }
+    
+    if (pattern.properties) {
+      for (const [key, value] of Object.entries(pattern.properties)) {
+        if (node.metadata[key] !== value) {
+          return false;
+        }
+      }
+    }
+    
+    if (pattern.children) {
+      if (node.children.length !== pattern.children.length) {
+        return false;
+      }
+      
+      for (let i = 0; i < pattern.children.length; i++) {
+        if (!this.matchesPattern(node.children[i], pattern.children[i])) {
+          return false;
+        }
+      }
+    }
+    
+    return true;
+  }
+}
+
+interface ASTVisitor {
+  enter?: (node: ASTNode) => void;
+  exit?: (node: ASTNode) => void;
+}
+
+interface ASTPattern {
+  type?: string;
+  properties?: Record<string, any>;
+  children?: ASTPattern[];
+}
+```
+
+### Control Flow Analysis / Phân Tích Luồng Điều Khiển
+
+**English:** Control flow analysis tracks possible execution paths through code.
+
+**Tiếng Việt:** Phân tích luồng điều khiển theo dõi các đường thực thi có thể qua code.
+
+```typescript
+// Control Flow Graph (CFG) implementation
+// Triển khai đồ thị luồng điều khiển
+
+interface CFGNode {
+  id: string;
+  type: 'entry' | 'exit' | 'statement' | 'branch' | 'loop';
+  statement?: string;
+  successors: string[];
+  predecessors: string[];
+}
+
+class ControlFlowGraph {
+  private nodes: Map<string, CFGNode> = new Map();
+  private entry: string;
+  private exit: string;
+  
+  constructor() {
+    // Create entry and exit nodes
+    this.entry = this.createNode('entry');
+    this.exit = this.createNode('exit');
+  }
+  
+  private createNode(type: CFGNode['type']): string {
+    const id = `node_${this.nodes.size}`;
+    this.nodes.set(id, {
+      id,
+      type,
+      successors: [],
+      predecessors: []
+    });
+    return id;
+  }
+  
+  // Build CFG from AST
+  // Xây dựng CFG từ AST
+  buildFromAST(ast: ASTNode): void {
+    let currentNode = this.entry;
+    currentNode = this.processNode(ast, currentNode);
+    this.addEdge(currentNode, this.exit);
+  }
+  
+  private processNode(node: ASTNode, currentNode: string): string {
+    switch (node.type) {
+      case 'IfStatement':
+        return this.processIfStatement(node, currentNode);
+      case 'WhileStatement':
+        return this.processWhileStatement(node, currentNode);
+      case 'ForStatement':
+        return this.processForStatement(node, currentNode);
+      default:
+        return this.processStatement(node, currentNode);
+    }
+  }
+  
+  private processIfStatement(node: ASTNode, currentNode: string): string {
+    // Create branch node
+    const branchNode = this.createNode('branch');
+    this.addEdge(currentNode, branchNode);
+    
+    // Process then branch
+    const thenStart = this.createNode('statement');
+    this.addEdge(branchNode, thenStart);
+    let thenEnd = thenStart;
+    
+    // Process else branch if exists
+    let elseEnd = branchNode;
+    if (node.children.length > 1) {
+      const elseStart = this.createNode('statement');
+      this.addEdge(branchNode, elseStart);
+      elseEnd = elseStart;
+    }
+    
+    // Merge point
+    const mergeNode = this.createNode('statement');
+    this.addEdge(thenEnd, mergeNode);
+    this.addEdge(elseEnd, mergeNode);
+    
+    return mergeNode;
+  }
+  
+  private processWhileStatement(node: ASTNode, currentNode: string): string {
+    // Create loop header
+    const loopHeader = this.createNode('loop');
+    this.addEdge(currentNode, loopHeader);
+    
+    // Process loop body
+    const bodyStart = this.createNode('statement');
+    this.addEdge(loopHeader, bodyStart);
+    
+    // Back edge to loop header
+    this.addEdge(bodyStart, loopHeader);
+    
+    // Exit edge
+    const exitNode = this.createNode('statement');
+    this.addEdge(loopHeader, exitNode);
+    
+    return exitNode;
+  }
+  
+  private processForStatement(node: ASTNode, currentNode: string): string {
+    // Similar to while loop
+    return this.processWhileStatement(node, currentNode);
+  }
+  
+  private processStatement(node: ASTNode, currentNode: string): string {
+    const stmtNode = this.createNode('statement');
+    this.nodes.get(stmtNode)!.statement = node.type;
+    this.addEdge(currentNode, stmtNode);
+    return stmtNode;
+  }
+  
+  private addEdge(from: string, to: string): void {
+    this.nodes.get(from)!.successors.push(to);
+    this.nodes.get(to)!.predecessors.push(from);
+  }
+  
+  // Calculate cyclomatic complexity
+  // Tính độ phức tạp cyclomatic
+  calculateComplexity(): number {
+    // M = E - N + 2P
+    // E = number of edges
+    // N = number of nodes
+    // P = number of connected components (usually 1)
+    
+    let edges = 0;
+    this.nodes.forEach(node => {
+      edges += node.successors.length;
+    });
+    
+    const nodes = this.nodes.size;
+    const components = 1;
+    
+    return edges - nodes + 2 * components;
+  }
+  
+  // Find all paths from entry to exit
+  // Tìm tất cả đường đi từ entry đến exit
+  findAllPaths(): string[][] {
+    const paths: string[][] = [];
+    const currentPath: string[] = [];
+    
+    this.dfs(this.entry, currentPath, paths);
+    
+    return paths;
+  }
+  
+  private dfs(nodeId: string, currentPath: string[], allPaths: string[][]): void {
+    currentPath.push(nodeId);
+    
+    if (nodeId === this.exit) {
+      allPaths.push([...currentPath]);
+    } else {
+      const node = this.nodes.get(nodeId)!;
+      for (const successor of node.successors) {
+        // Avoid infinite loops
+        if (!currentPath.includes(successor) || successor === this.exit) {
+          this.dfs(successor, currentPath, allPaths);
+        }
+      }
+    }
+    
+    currentPath.pop();
+  }
+  
+  // Identify unreachable code
+  // Xác định code không thể đạt được
+  findUnreachableCode(): string[] {
+    const reachable = new Set<string>();
+    const queue: string[] = [this.entry];
+    
+    while (queue.length > 0) {
+      const nodeId = queue.shift()!;
+      if (reachable.has(nodeId)) continue;
+      
+      reachable.add(nodeId);
+      const node = this.nodes.get(nodeId)!;
+      queue.push(...node.successors);
+    }
+    
+    const unreachable: string[] = [];
+    this.nodes.forEach((node, id) => {
+      if (!reachable.has(id) && id !== this.exit) {
+        unreachable.push(id);
+      }
+    });
+    
+    return unreachable;
+  }
+}
+```
+
+---
+
+## Code Quality Metrics / Metrics Chất Lượng Code
+
+### Comprehensive Quality Assessment / Đánh Giá Chất Lượng Toàn Diện
+
+**English:** Multiple metrics provide a holistic view of code quality.
+
+**Tiếng Việt:** Nhiều metrics cung cấp cái nhìn toàn diện về chất lượng code.
+
+```typescript
+// Comprehensive code quality analyzer
+// Bộ phân tích chất lượng code toàn diện
+
+interface QualityReport {
+  overall: number; // 0-100
+  metrics: {
+    complexity: ComplexityMetrics;
+    maintainability: MaintainabilityMetrics;
+    reliability: ReliabilityMetrics;
+    security: SecurityMetrics;
+    performance: PerformanceMetrics;
+  };
+  issues: QualityIssue[];
+  recommendations: string[];
+}
+
+interface ComplexityMetrics {
+  cyclomatic: number;
+  cognitive: number;
+  halstead: HalsteadMetrics;
+  nesting: number;
+}
+
+interface HalsteadMetrics {
+  vocabulary: number;      // n = n1 + n2
+  length: number;          // N = N1 + N2
+  volume: number;          // V = N * log2(n)
+  difficulty: number;      // D = (n1/2) * (N2/n2)
+  effort: number;          // E = D * V
+  time: number;            // T = E / 18
+  bugs: number;            // B = V / 3000
+}
+
+interface MaintainabilityMetrics {
+  index: number;           // 0-100
+  linesOfCode: number;
+  commentRatio: number;
+  duplication: number;
+  coupling: number;
+  cohesion: number;
+}
+
+interface ReliabilityMetrics {
+  testCoverage: number;
+  errorHandling: number;
+  nullSafety: number;
+  typeStrength: number;
+}
+
+interface SecurityMetrics {
+  vulnerabilities: number;
+  securityScore: number;
+  inputValidation: number;
+  authenticationIssues: number;
+}
+
+interface PerformanceMetrics {
+  algorithmicComplexity: string; // O(n), O(n²), etc.
+  memoryUsage: string;
+  optimizationOpportunities: number;
+}
+
+interface QualityIssue {
+  severity: 'critical' | 'high' | 'medium' | 'low';
+  category: string;
+  message: string;
+  location: CodeLocation;
+  suggestion: string;
+}
+
+class CodeQualityAnalyzer {
+  analyze(code: string, context: AnalysisContext): QualityReport {
+    const ast = this.parseCode(code);
+    const cfg = this.buildCFG(ast);
+    
+    // Calculate all metrics
+    const complexity = this.analyzeComplexity(ast, cfg);
+    const maintainability = this.analyzeMaintainability(code, ast);
+    const reliability = this.analyzeReliability(ast, context);
+    const security = this.analyzeSecurity(ast, context);
+    const performance = this.analyzePerformance(ast);
+    
+    // Collect issues
+    const issues = this.collectIssues(
+      complexity,
+      maintainability,
+      reliability,
+      security,
+      performance
+    );
+    
+    // Generate recommendations
+    const recommendations = this.generateRecommendations(issues);
+    
+    // Calculate overall score
+    const overall = this.calculateOverallScore({
+      complexity,
+      maintainability,
+      reliability,
+      security,
+      performance
+    });
+    
+    return {
+      overall,
+      metrics: {
+        complexity,
+        maintainability,
+        reliability,
+        security,
+        performance
+      },
+      issues,
+      recommendations
+    };
+  }
+  
+  private analyzeComplexity(ast: ASTNode, cfg: ControlFlowGraph): ComplexityMetrics {
+    return {
+      cyclomatic: cfg.calculateComplexity(),
+      cognitive: this.calculateCognitiveComplexity(ast),
+      halstead: this.calculateHalsteadMetrics(ast),
+      nesting: this.calculateMaxNesting(ast)
+    };
+  }
+  
+  private calculateCognitiveComplexity(ast: ASTNode): number {
+    // Cognitive complexity measures how difficult code is to understand
+    // Độ phức tạp nhận thức đo lường code khó hiểu như thế nào
+    let complexity = 0;
+    let nestingLevel = 0;
+    
+    const visitor: ASTVisitor = {
+      enter: (node) => {
+        switch (node.type) {
+          case 'IfStatement':
+          case 'ConditionalExpression':
+            complexity += 1 + nestingLevel;
+            nestingLevel++;
+            break;
+          case 'WhileStatement':
+          case 'ForStatement':
+          case 'DoWhileStatement':
+            complexity += 1 + nestingLevel;
+            nestingLevel++;
+            break;
+          case 'SwitchCase':
+            complexity += 1 + nestingLevel;
+            break;
+          case 'LogicalExpression':
+            if (node.metadata.operator === '&&' || node.metadata.operator === '||') {
+              complexity += 1;
+            }
+            break;
+          case 'CatchClause':
+            complexity += 1 + nestingLevel;
+            nestingLevel++;
+            break;
+        }
+      },
+      exit: (node) => {
+        if (['IfStatement', 'WhileStatement', 'ForStatement', 'CatchClause'].includes(node.type)) {
+          nestingLevel--;
+        }
+      }
+    };
+    
+    new ASTAnalyzer().traverse(ast, visitor);
+    
+    return complexity;
+  }
+  
+  private calculateHalsteadMetrics(ast: ASTNode): HalsteadMetrics {
+    const operators = new Set<string>();
+    const operands = new Set<string>();
+    let totalOperators = 0;
+    let totalOperands = 0;
+    
+    const visitor: ASTVisitor = {
+      enter: (node) => {
+        if (this.isOperator(node)) {
+          operators.add(node.type);
+          totalOperators++;
+        } else if (this.isOperand(node)) {
+          operands.add(node.metadata.value);
+          totalOperands++;
+        }
+      }
+    };
+    
+    new ASTAnalyzer().traverse(ast, visitor);
+    
+    const n1 = operators.size;
+    const n2 = operands.size;
+    const N1 = totalOperators;
+    const N2 = totalOperands;
+    
+    const n = n1 + n2;
+    const N = N1 + N2;
+    const V = N * Math.log2(n);
+    const D = (n1 / 2) * (N2 / n2);
+    const E = D * V;
+    const T = E / 18;
+    const B = V / 3000;
+    
+    return {
+      vocabulary: n,
+      length: N,
+      volume: V,
+      difficulty: D,
+      effort: E,
+      time: T,
+      bugs: B
+    };
+  }
+  
+  private calculateMaxNesting(ast: ASTNode): number {
+    let maxNesting = 0;
+    let currentNesting = 0;
+    
+    const visitor: ASTVisitor = {
+      enter: (node) => {
+        if (this.isNestingNode(node)) {
+          currentNesting++;
+          maxNesting = Math.max(maxNesting, currentNesting);
+        }
+      },
+      exit: (node) => {
+        if (this.isNestingNode(node)) {
+          currentNesting--;
+        }
+      }
+    };
+    
+    new ASTAnalyzer().traverse(ast, visitor);
+    
+    return maxNesting;
+  }
+
+  
+  private analyzeMaintainability(code: string, ast: ASTNode): MaintainabilityMetrics {
+    const loc = this.countLinesOfCode(code);
+    const commentRatio = this.calculateCommentRatio(code);
+    const duplication = this.detectDuplication(ast);
+    const coupling = this.calculateCoupling(ast);
+    const cohesion = this.calculateCohesion(ast);
+    
+    // Maintainability Index = 171 - 5.2 * ln(HV) - 0.23 * CC - 16.2 * ln(LOC)
+    const halstead = this.calculateHalsteadMetrics(ast);
+    const complexity = new ControlFlowGraph().calculateComplexity();
+    
+    const index = Math.max(0, Math.min(100,
+      171 - 5.2 * Math.log(halstead.volume) - 0.23 * complexity - 16.2 * Math.log(loc)
+    ));
+    
+    return {
+      index,
+      linesOfCode: loc,
+      commentRatio,
+      duplication,
+      coupling,
+      cohesion
+    };
+  }
+  
+  private analyzeReliability(ast: ASTNode, context: AnalysisContext): ReliabilityMetrics {
+    return {
+      testCoverage: this.calculateTestCoverage(context),
+      errorHandling: this.assessErrorHandling(ast),
+      nullSafety: this.assessNullSafety(ast),
+      typeStrength: this.assessTypeStrength(ast, context)
+    };
+  }
+  
+  private analyzeSecurity(ast: ASTNode, context: AnalysisContext): SecurityMetrics {
+    const vulnerabilities = this.detectVulnerabilities(ast);
+    
+    return {
+      vulnerabilities: vulnerabilities.length,
+      securityScore: Math.max(0, 100 - vulnerabilities.length * 10),
+      inputValidation: this.assessInputValidation(ast),
+      authenticationIssues: this.detectAuthIssues(ast)
+    };
+  }
+  
+  private analyzePerformance(ast: ASTNode): PerformanceMetrics {
+    return {
+      algorithmicComplexity: this.calculateBigO(ast),
+      memoryUsage: this.estimateMemoryUsage(ast),
+      optimizationOpportunities: this.findOptimizations(ast).length
+    };
+  }
+  
+  private calculateOverallScore(metrics: QualityReport['metrics']): number {
+    // Weighted average of all metrics
+    const weights = {
+      complexity: 0.2,
+      maintainability: 0.25,
+      reliability: 0.25,
+      security: 0.2,
+      performance: 0.1
+    };
+    
+    const complexityScore = Math.max(0, 100 - metrics.complexity.cyclomatic * 5);
+    const maintainabilityScore = metrics.maintainability.index;
+    const reliabilityScore = (
+      metrics.reliability.testCoverage * 0.4 +
+      metrics.reliability.errorHandling * 0.3 +
+      metrics.reliability.nullSafety * 0.2 +
+      metrics.reliability.typeStrength * 0.1
+    );
+    const securityScore = metrics.security.securityScore;
+    const performanceScore = Math.max(0, 100 - metrics.performance.optimizationOpportunities * 10);
+    
+    return (
+      complexityScore * weights.complexity +
+      maintainabilityScore * weights.maintainability +
+      reliabilityScore * weights.reliability +
+      securityScore * weights.security +
+      performanceScore * weights.performance
+    );
+  }
+  
+  private collectIssues(...metricGroups: any[]): QualityIssue[] {
+    const issues: QualityIssue[] = [];
+    
+    // Collect issues from each metric group
+    // This would be implemented based on specific thresholds
+    
+    return issues;
+  }
+  
+  private generateRecommendations(issues: QualityIssue[]): string[] {
+    const recommendations: string[] = [];
+    
+    // Group issues by category
+    const byCategory = new Map<string, QualityIssue[]>();
+    issues.forEach(issue => {
+      if (!byCategory.has(issue.category)) {
+        byCategory.set(issue.category, []);
+      }
+      byCategory.get(issue.category)!.push(issue);
+    });
+    
+    // Generate recommendations for each category
+    byCategory.forEach((categoryIssues, category) => {
+      const critical = categoryIssues.filter(i => i.severity === 'critical').length;
+      const high = categoryIssues.filter(i => i.severity === 'high').length;
+      
+      if (critical > 0) {
+        recommendations.push(
+          `Address ${critical} critical ${category} issue(s) immediately`
+        );
+      }
+      if (high > 0) {
+        recommendations.push(
+          `Fix ${high} high-priority ${category} issue(s) soon`
+        );
+      }
+    });
+    
+    return recommendations;
+  }
+  
+  // Helper methods (simplified)
+  private parseCode(code: string): ASTNode { return {} as ASTNode; }
+  private buildCFG(ast: ASTNode): ControlFlowGraph { return new ControlFlowGraph(); }
+  private countLinesOfCode(code: string): number { return code.split('\n').length; }
+  private calculateCommentRatio(code: string): number { return 0.1; }
+  private detectDuplication(ast: ASTNode): number { return 0; }
+  private calculateCoupling(ast: ASTNode): number { return 0; }
+  private calculateCohesion(ast: ASTNode): number { return 0; }
+  private calculateTestCoverage(context: AnalysisContext): number { return 0; }
+  private assessErrorHandling(ast: ASTNode): number { return 0; }
+  private assessNullSafety(ast: ASTNode): number { return 0; }
+  private assessTypeStrength(ast: ASTNode, context: AnalysisContext): number { return 0; }
+  private detectVulnerabilities(ast: ASTNode): any[] { return []; }
+  private assessInputValidation(ast: ASTNode): number { return 0; }
+  private detectAuthIssues(ast: ASTNode): number { return 0; }
+  private calculateBigO(ast: ASTNode): string { return 'O(n)'; }
+  private estimateMemoryUsage(ast: ASTNode): string { return 'O(1)'; }
+  private findOptimizations(ast: ASTNode): any[] { return []; }
+  private isOperator(node: ASTNode): boolean { return false; }
+  private isOperand(node: ASTNode): boolean { return false; }
+  private isNestingNode(node: ASTNode): boolean {
+    return ['IfStatement', 'WhileStatement', 'ForStatement', 'FunctionDeclaration'].includes(node.type);
+  }
+}
+
+interface AnalysisContext {
+  language: string;
+  framework: string;
+  testFiles: string[];
+}
+```
+
+---
+
+## Machine Learning for Code Analysis / Học Máy cho Phân Tích Code
+
+### Neural Code Analysis / Phân Tích Code Bằng Neural
+
+**English:** Machine learning models can learn patterns from large codebases to detect issues and suggest improvements.
+
+**Tiếng Việt:** Các mô hình học máy có thể học patterns từ codebase lớn để phát hiện vấn đề và đề xuất cải tiến.
+
+```typescript
+// Neural network for code analysis
+// Mạng neural cho phân tích code
+
+interface CodeEmbedding {
+  vector: number[];
+  metadata: {
+    language: string;
+    framework: string;
+    complexity: number;
+  };
+}
+
+interface TrainingExample {
+  code: string;
+  label: CodeQualityLabel;
+  features: CodeFeatures;
+}
+
+type CodeQualityLabel = 'excellent' | 'good' | 'fair' | 'poor';
+
+interface CodeFeatures {
+  syntactic: number[];    // AST-based features
+  semantic: number[];     // Meaning-based features
+  structural: number[];   // Architecture features
+  historical: number[];   // Version history features
+}
+
+class NeuralCodeAnalyzer {
+  private model: NeuralNetwork;
+  private embedder: CodeEmbedder;
+  
+  constructor() {
+    this.model = new NeuralNetwork({
+      inputSize: 512,
+      hiddenLayers: [256, 128, 64],
+      outputSize: 4 // 4 quality labels
+    });
+    this.embedder = new CodeEmbedder();
+  }
+  
+  // Train model on labeled examples
+  // Huấn luyện mô hình trên ví dụ có nhãn
+  async train(examples: TrainingExample[]): Promise<void> {
+    const batches = this.createBatches(examples, 32);
+    
+    for (let epoch = 0; epoch < 100; epoch++) {
+      let totalLoss = 0;
+      
+      for (const batch of batches) {
+        // Forward pass
+        const predictions = batch.map(example => {
+          const embedding = this.embedder.embed(example.code);
+          return this.model.forward(embedding.vector);
+        });
+        
+        // Calculate loss
+        const loss = this.calculateLoss(predictions, batch);
+        totalLoss += loss;
+        
+        // Backward pass
+        this.model.backward(loss);
+        
+        // Update weights
+        this.model.updateWeights(0.001); // learning rate
+      }
+      
+      console.log(`Epoch ${epoch}: Loss = ${totalLoss / batches.length}`);
+    }
+  }
+  
+  // Predict code quality
+  // Dự đoán chất lượng code
+  predict(code: string): CodeQualityPrediction {
+    const embedding = this.embedder.embed(code);
+    const output = this.model.forward(embedding.vector);
+    
+    // Softmax to get probabilities
+    const probabilities = this.softmax(output);
+    
+    const labels: CodeQualityLabel[] = ['excellent', 'good', 'fair', 'poor'];
+    const predictions = labels.map((label, i) => ({
+      label,
+      probability: probabilities[i]
+    }));
+    
+    // Sort by probability
+    predictions.sort((a, b) => b.probability - a.probability);
+    
+    return {
+      predicted: predictions[0].label,
+      confidence: predictions[0].probability,
+      allPredictions: predictions
+    };
+  }
+  
+  // Detect anomalies in code
+  // Phát hiện bất thường trong code
+  detectAnomalies(code: string, threshold: number = 0.8): boolean {
+    const embedding = this.embedder.embed(code);
+    
+    // Calculate reconstruction error
+    const reconstructed = this.model.reconstruct(embedding.vector);
+    const error = this.calculateReconstructionError(embedding.vector, reconstructed);
+    
+    return error > threshold;
+  }
+  
+  // Find similar code
+  // Tìm code tương tự
+  findSimilar(code: string, codebase: string[], topK: number = 5): SimilarCode[] {
+    const queryEmbedding = this.embedder.embed(code);
+    
+    const similarities = codebase.map(candidateCode => {
+      const candidateEmbedding = this.embedder.embed(candidateCode);
+      const similarity = this.cosineSimilarity(
+        queryEmbedding.vector,
+        candidateEmbedding.vector
+      );
+      
+      return {
+        code: candidateCode,
+        similarity
+      };
+    });
+    
+    // Sort by similarity and return top K
+    return similarities
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, topK);
+  }
+  
+  private createBatches<T>(items: T[], batchSize: number): T[][] {
+    const batches: T[][] = [];
+    for (let i = 0; i < items.length; i += batchSize) {
+      batches.push(items.slice(i, i + batchSize));
+    }
+    return batches;
+  }
+  
+  private calculateLoss(predictions: number[][], batch: TrainingExample[]): number {
+    // Cross-entropy loss
+    let loss = 0;
+    
+    for (let i = 0; i < predictions.length; i++) {
+      const pred = predictions[i];
+      const label = this.labelToIndex(batch[i].label);
+      
+      // -log(p) where p is predicted probability for correct class
+      loss -= Math.log(pred[label] + 1e-10);
+    }
+    
+    return loss / predictions.length;
+  }
+  
+  private labelToIndex(label: CodeQualityLabel): number {
+    const labels: CodeQualityLabel[] = ['excellent', 'good', 'fair', 'poor'];
+    return labels.indexOf(label);
+  }
+  
+  private softmax(values: number[]): number[] {
+    const expValues = values.map(v => Math.exp(v));
+    const sum = expValues.reduce((a, b) => a + b, 0);
+    return expValues.map(v => v / sum);
+  }
+  
+  private calculateReconstructionError(original: number[], reconstructed: number[]): number {
+    let error = 0;
+    for (let i = 0; i < original.length; i++) {
+      error += Math.pow(original[i] - reconstructed[i], 2);
+    }
+    return Math.sqrt(error / original.length);
+  }
+  
+  private cosineSimilarity(a: number[], b: number[]): number {
+    const dotProduct = a.reduce((sum, val, i) => sum + val * b[i], 0);
+    const magnitudeA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));
+    const magnitudeB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));
+    return dotProduct / (magnitudeA * magnitudeB);
+  }
+}
+
+class CodeEmbedder {
+  embed(code: string): CodeEmbedding {
+    // Extract features from code
+    const syntactic = this.extractSyntacticFeatures(code);
+    const semantic = this.extractSemanticFeatures(code);
+    const structural = this.extractStructuralFeatures(code);
+    
+    // Combine features into single vector
+    const vector = [...syntactic, ...semantic, ...structural];
+    
+    return {
+      vector,
+      metadata: {
+        language: 'typescript',
+        framework: 'unknown',
+        complexity: this.estimateComplexity(code)
+      }
+    };
+  }
+  
+  private extractSyntacticFeatures(code: string): number[] {
+    // Features based on syntax: token types, AST structure, etc.
+    return new Array(128).fill(0).map(() => Math.random());
+  }
+  
+  private extractSemanticFeatures(code: string): number[] {
+    // Features based on meaning: variable names, function purposes, etc.
+    return new Array(256).fill(0).map(() => Math.random());
+  }
+  
+  private extractStructuralFeatures(code: string): number[] {
+    // Features based on structure: nesting, dependencies, etc.
+    return new Array(128).fill(0).map(() => Math.random());
+  }
+  
+  private estimateComplexity(code: string): number {
+    return code.split('\n').length;
+  }
+}
+
+class NeuralNetwork {
+  private layers: Layer[];
+  
+  constructor(config: NetworkConfig) {
+    this.layers = this.buildLayers(config);
+  }
+  
+  forward(input: number[]): number[] {
+    let activation = input;
+    
+    for (const layer of this.layers) {
+      activation = layer.forward(activation);
+    }
+    
+    return activation;
+  }
+  
+  backward(loss: number): void {
+    // Backpropagation (simplified)
+    for (let i = this.layers.length - 1; i >= 0; i--) {
+      this.layers[i].backward(loss);
+    }
+  }
+  
+  updateWeights(learningRate: number): void {
+    for (const layer of this.layers) {
+      layer.updateWeights(learningRate);
+    }
+  }
+  
+  reconstruct(input: number[]): number[] {
+    // Autoencoder reconstruction
+    return this.forward(input);
+  }
+  
+  private buildLayers(config: NetworkConfig): Layer[] {
+    const layers: Layer[] = [];
+    let inputSize = config.inputSize;
+    
+    for (const hiddenSize of config.hiddenLayers) {
+      layers.push(new DenseLayer(inputSize, hiddenSize));
+      inputSize = hiddenSize;
+    }
+    
+    layers.push(new DenseLayer(inputSize, config.outputSize));
+    
+    return layers;
+  }
+}
+
+class DenseLayer implements Layer {
+  private weights: number[][];
+  private bias: number[];
+  
+  constructor(private inputSize: number, private outputSize: number) {
+    this.weights = this.initializeWeights(inputSize, outputSize);
+    this.bias = new Array(outputSize).fill(0);
+  }
+  
+  forward(input: number[]): number[] {
+    const output = new Array(this.outputSize).fill(0);
+    
+    for (let i = 0; i < this.outputSize; i++) {
+      for (let j = 0; j < this.inputSize; j++) {
+        output[i] += input[j] * this.weights[j][i];
+      }
+      output[i] += this.bias[i];
+      output[i] = this.relu(output[i]);
+    }
+    
+    return output;
+  }
+  
+  backward(loss: number): void {
+    // Simplified backpropagation
+  }
+  
+  updateWeights(learningRate: number): void {
+    // Simplified weight update
+  }
+  
+  private initializeWeights(inputSize: number, outputSize: number): number[][] {
+    const weights: number[][] = [];
+    for (let i = 0; i < inputSize; i++) {
+      weights[i] = [];
+      for (let j = 0; j < outputSize; j++) {
+        weights[i][j] = (Math.random() - 0.5) * 0.1;
+      }
+    }
+    return weights;
+  }
+  
+  private relu(x: number): number {
+    return Math.max(0, x);
+  }
+}
+
+interface Layer {
+  forward(input: number[]): number[];
+  backward(loss: number): void;
+  updateWeights(learningRate: number): void;
+}
+
+interface NetworkConfig {
+  inputSize: number;
+  hiddenLayers: number[];
+  outputSize: number;
+}
+
+interface CodeQualityPrediction {
+  predicted: CodeQualityLabel;
+  confidence: number;
+  allPredictions: Array<{
+    label: CodeQualityLabel;
+    probability: number;
+  }>;
+}
+
+interface SimilarCode {
+  code: string;
+  similarity: number;
+}
+```
+
+---
+
+## Summary / Tóm Tắt
+
+This advanced theory document covers:
+
+**1. Dataflow Programming:**
+- Execution engine implementation
+- Priority-based scheduling
+- Critical path analysis
+- Performance optimization
+
+**2. AI Code Generation:**
+- Transformer architecture
+- Attention mechanisms
+- Token generation
+- Context encoding
+
+**3. Prompt Engineering:**
+- Effective prompt structure
+- Optimization techniques
+- Iterative refinement
+
+**4. Code Refactoring:**
+- Pattern detection algorithms
+- Impact analysis
+- Prioritization strategies
+- Multiple refactoring types
+
+**5. Static Analysis:**
+- AST parsing and traversal
+- Control flow graphs
+- Pattern matching
+- Complexity metrics
+
+**6. Code Quality Metrics:**
+- Cyclomatic complexity
+- Cognitive complexity
+- Halstead metrics
+- Maintainability index
+- Comprehensive quality assessment
+
+**7. Machine Learning:**
+- Neural code analysis
+- Code embeddings
+- Anomaly detection
+- Similarity search
+
+These concepts form the theoretical foundation for modern development tools and AI-assisted programming.
+
+---
+
+[← Back to Modern Development Tools](./05-modern-development-tools.md) | [Next: Interview Questions →](./07-tools-interview-questions.md) | [Back to Table of Contents](../00-table-of-contents.md)
