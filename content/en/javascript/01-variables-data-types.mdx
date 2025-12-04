@@ -1,0 +1,657 @@
+---
+id: js-variables-data-types
+slug: javascript-variables-data-types
+title:
+  en: "Variables & Data Types"
+  vi: "Variables & Data Types"
+description:
+  en: "Learn about Variables & Data Types in JavaScript, including core concepts, practical examples, and interview preparation."
+  vi: "Tìm hiểu về Variables & Data Types trong JavaScript, bao gồm các khái niệm cốt lõi, ví dụ thực tế và chuẩn bị phỏng vấn."
+category: javascript
+difficulty: beginner
+estimatedTime: 40
+prerequisites: ["js-basics"]
+relatedTopics: []
+tags: ["javascript","variables","data-types","primitives"]
+interviewCompanies: ["google","meta","amazon"]
+lastUpdated: "2025-11-13T04:31:05.374Z"
+version: "1.0.0"
+hasQuiz: true
+hasCodeExamples: true
+hasDiagrams: false
+---
+
+# Variables & Data Types
+## JavaScript Fundamentals - Chapter 1
+
+[← Back to Table of Contents](../00-table-of-contents.md) | [Next: Scope & Hoisting →](./02-scope-hoisting.md)
+
+## Overview
+
+Understanding variables and data types is fundamental to JavaScript programming. This chapter covers how JavaScript stores and manipulates data, including primitive and reference types, type coercion, and memory management.
+
+## Table of Contents
+1. [Data Types Overview](#data-types-overview)
+2. [Primitive Types](#primitive-types)
+3. [Reference Types](#reference-types)
+4. [Variable Declarations](#variable-declarations)
+5. [Type Coercion](#type-coercion)
+6. [Memory Management](#memory-management)
+7. [Interview Questions](#interview-questions)
+8. [Practice Problems](#practice-problems)
+
+## Data Types Overview
+
+**Definition / Định nghĩa:** JavaScript is a dynamically typed language with 8 data types: 7 primitive types and 1 reference type (Object).
+
+**Định nghĩa:** JavaScript là ngôn ngữ kiểu động với 8 kiểu dữ liệu: 7 kiểu nguyên thủy và 1 kiểu tham chiếu (Object).
+
+### Type Categories
+
+```
+JavaScript Data Types
+├── Primitive Types (Immutable)
+│   ├── number
+│   ├── string
+│   ├── boolean
+│   ├── null
+│   ├── undefined
+│   ├── symbol (ES6)
+│   └── bigint (ES2020)
+└── Reference Type (Mutable)
+    └── object
+        ├── Object
+        ├── Array
+        ├── Function
+        ├── Date
+        ├── RegExp
+        └── Map, Set, WeakMap, WeakSet
+```
+
+## Primitive Types
+
+### 1. Number
+
+**Definition:** Represents both integers and floating-point numbers (IEEE 754 double precision).
+
+```javascript
+// Integer
+const age = 30;
+const negative = -42;
+
+// Floating point
+const price = 19.99;
+const scientific = 2.5e6; // 2,500,000
+
+// Special numeric values
+const infinity = Infinity;
+const negInfinity = -Infinity;
+const notANumber = NaN;
+
+// Number methods
+console.log(Number.isInteger(42)); // true
+console.log(Number.isNaN(NaN)); // true
+console.log(Number.parseFloat('3.14')); // 3.14
+console.log(Number.parseInt('42px')); // 42
+
+// Safe integer range
+console.log(Number.MAX_SAFE_INTEGER); // 9007199254740991
+console.log(Number.MIN_SAFE_INTEGER); // -9007199254740991
+
+// Precision issues
+console.log(0.1 + 0.2); // 0.30000000000000004
+console.log(0.1 + 0.2 === 0.3); // false
+
+// Solution: Use toFixed or compare with epsilon
+const result = 0.1 + 0.2;
+console.log(result.toFixed(2)); // "0.30"
+console.log(Math.abs(result - 0.3) < Number.EPSILON); // true
+```
+
+### 2. String
+
+**Definition:** Represents textual data (UTF-16 encoded).
+
+```javascript
+// String creation
+const single = 'Hello';
+const double = "World";
+const backtick = `Template literal`;
+
+// String concatenation
+const greeting = single + ' ' + double; // "Hello World"
+
+// Template literals (ES6)
+const name = 'John';
+const age = 30;
+const message = `My name is ${name} and I'm ${age} years old`;
+
+// Multi-line strings
+const multiline = `
+  This is a
+  multi-line
+  string
+`;
+
+// String methods
+const text = "JavaScript";
+console.log(text.length); // 10
+console.log(text.toUpperCase()); // "JAVASCRIPT"
+console.log(text.toLowerCase()); // "javascript"
+console.log(text.charAt(0)); // "J"
+console.log(text.indexOf('Script')); // 4
+console.log(text.slice(0, 4)); // "Java"
+console.log(text.substring(4, 10)); // "Script"
+console.log(text.split('')); // ['J','a','v','a','S','c','r','i','p','t']
+
+// String immutability
+let str = "Hello";
+str[0] = "h"; // No effect
+console.log(str); // "Hello" (unchanged)
+
+// String comparison
+console.log('a' < 'b'); // true (lexicographic comparison)
+console.log('apple' < 'banana'); // true
+```
+
+### 3. Boolean
+
+**Definition:** Represents logical values: `true` or `false`.
+
+```javascript
+// Boolean values
+const isActive = true;
+const isCompleted = false;
+
+// Boolean conversion
+console.log(Boolean(1)); // true
+console.log(Boolean(0)); // false
+console.log(Boolean("")); // false
+console.log(Boolean("hello")); // true
+console.log(Boolean(null)); // false
+console.log(Boolean(undefined)); // false
+console.log(Boolean(NaN)); // false
+console.log(Boolean([])); // true (empty array is truthy!)
+console.log(Boolean({})); // true (empty object is truthy!)
+
+// Falsy values (only 6 in JavaScript)
+const falsyValues = [false, 0, "", null, undefined, NaN];
+
+// Truthy values (everything else)
+const truthyValues = [true, 1, "0", "false", [], {}, function(){}];
+
+// Logical operators
+console.log(true && false); // false
+console.log(true || false); // true
+console.log(!true); // false
+
+// Short-circuit evaluation
+const result = null || "default"; // "default"
+const value = "exists" && "returned"; // "returned"
+```
+
+### 4. Null
+
+**Definition:** Represents intentional absence of any object value.
+
+```javascript
+// Null assignment
+let user = null; // Explicitly no value
+
+// Type of null (historical bug)
+console.log(typeof null); // "object" (this is a bug in JavaScript!)
+
+// Null checking
+if (user === null) {
+  console.log("User is null");
+}
+
+// Null vs undefined
+console.log(null == undefined); // true (loose equality)
+console.log(null === undefined); // false (strict equality)
+
+// Nullish coalescing operator (ES2020)
+const username = null ?? "Guest"; // "Guest"
+const count = 0 ?? 10; // 0 (0 is not nullish)
+```
+
+### 5. Undefined
+
+**Definition:** Represents a variable that has been declared but not assigned a value.
+
+```javascript
+// Undefined scenarios
+let x; // Declared but not initialized
+console.log(x); // undefined
+
+function test(param) {
+  console.log(param); // undefined if not passed
+}
+test();
+
+const obj = { name: "John" };
+console.log(obj.age); // undefined (property doesn't exist)
+
+// Checking for undefined
+if (x === undefined) {
+  console.log("x is undefined");
+}
+
+// typeof undefined
+console.log(typeof undefined); // "undefined"
+
+// Void operator
+console.log(void 0); // undefined
+console.log(void(0)); // undefined
+```
+
+### 6. Symbol (ES6)
+
+**Definition:** Represents a unique and immutable identifier.
+
+```javascript
+// Creating symbols
+const sym1 = Symbol();
+const sym2 = Symbol("description");
+const sym3 = Symbol("description");
+
+console.log(sym2 === sym3); // false (each symbol is unique)
+
+// Symbol as object key
+const id = Symbol("id");
+const user = {
+  name: "John",
+  [id]: 123 // Symbol as property key
+};
+
+console.log(user[id]); // 123
+console.log(user.id); // undefined
+
+// Symbols are not enumerable
+console.log(Object.keys(user)); // ["name"] (symbol not included)
+console.log(Object.getOwnPropertySymbols(user)); // [Symbol(id)]
+
+// Well-known symbols
+const arr = [1, 2, 3];
+console.log(arr[Symbol.iterator]); // [Function: values]
+
+// Symbol.for() - global symbol registry
+const globalSym1 = Symbol.for("app.id");
+const globalSym2 = Symbol.for("app.id");
+console.log(globalSym1 === globalSym2); // true
+
+// Get key from global symbol
+console.log(Symbol.keyFor(globalSym1)); // "app.id"
+```
+
+### 7. BigInt (ES2020)
+
+**Definition:** Represents integers larger than 2^53 - 1 (Number.MAX_SAFE_INTEGER).
+
+```javascript
+// Creating BigInt
+const bigInt1 = 1234567890123456789012345678901234567890n;
+const bigInt2 = BigInt("1234567890123456789012345678901234567890");
+
+// BigInt operations
+const sum = 10n + 20n; // 30n
+const product = 5n * 2n; // 10n
+const power = 2n ** 100n; // Very large number
+
+// Cannot mix BigInt with Number
+// const mixed = 10n + 5; // TypeError
+
+// Conversion
+const num = Number(10n); // 10
+const big = BigInt(10); // 10n
+
+// Comparison
+console.log(10n === 10); // false (different types)
+console.log(10n == 10); // true (type coercion)
+console.log(10n < 20); // true
+
+// Use cases
+const largeNumber = 9007199254740991n + 1n; // Precise calculation
+console.log(largeNumber); // 9007199254740992n
+```
+
+## Reference Types
+
+### Object
+
+**Definition:** Collection of key-value pairs (properties and methods).
+
+```javascript
+// Object creation
+const obj1 = {}; // Object literal
+const obj2 = new Object(); // Constructor
+const obj3 = Object.create(null); // No prototype
+
+// Object properties
+const person = {
+  name: "John",
+  age: 30,
+  "full-name": "John Doe", // Property with special characters
+  greet() { // Method shorthand
+    return `Hello, I'm ${this.name}`;
+  }
+};
+
+// Accessing properties
+console.log(person.name); // Dot notation
+console.log(person["age"]); // Bracket notation
+console.log(person["full-name"]); // Required for special characters
+
+// Dynamic property names
+const key = "email";
+person[key] = "john@example.com";
+
+// Computed property names (ES6)
+const propName = "score";
+const game = {
+  [propName]: 100,
+  [`${propName}Multiplier`]: 2
+};
+
+// Object methods
+console.log(Object.keys(person)); // ["name", "age", "full-name", "greet"]
+console.log(Object.values(person)); // Values array
+console.log(Object.entries(person)); // [key, value] pairs
+
+// Object.assign() - shallow copy
+const copy = Object.assign({}, person);
+
+// Spread operator (ES6) - shallow copy
+const copy2 = { ...person };
+
+// Object.freeze() - make immutable
+const frozen = Object.freeze({ name: "John" });
+frozen.name = "Jane"; // No effect in strict mode
+console.log(frozen.name); // "John"
+
+// Object.seal() - prevent adding/removing properties
+const sealed = Object.seal({ name: "John" });
+sealed.name = "Jane"; // Allowed
+sealed.age = 30; // Not allowed
+```
+
+### Array
+
+**Definition:** Ordered collection of values (special type of object).
+
+```javascript
+// Array creation
+const arr1 = []; // Array literal
+const arr2 = new Array(); // Constructor
+const arr3 = Array.of(1, 2, 3); // [1, 2, 3]
+const arr4 = Array.from("hello"); // ['h','e','l','l','o']
+
+// Array methods
+const numbers = [1, 2, 3, 4, 5];
+
+// Mutating methods
+numbers.push(6); // Add to end
+numbers.pop(); // Remove from end
+numbers.unshift(0); // Add to beginning
+numbers.shift(); // Remove from beginning
+numbers.splice(2, 1, 99); // Remove and insert
+
+// Non-mutating methods
+const doubled = numbers.map(n => n * 2);
+const evens = numbers.filter(n => n % 2 === 0);
+const sum = numbers.reduce((acc, n) => acc + n, 0);
+const found = numbers.find(n => n > 3);
+const index = numbers.findIndex(n => n > 3);
+
+// Array iteration
+numbers.forEach((num, index) => {
+  console.log(`${index}: ${num}`);
+});
+
+// Array destructuring
+const [first, second, ...rest] = numbers;
+console.log(first); // 1
+console.log(rest); // [3, 4, 5]
+
+// Spread operator
+const combined = [...numbers, 6, 7, 8];
+const copy = [...numbers];
+```
+
+### Function
+
+**Definition:** Callable object that executes a block of code.
+
+```javascript
+// Function declaration
+function greet(name) {
+  return `Hello, ${name}!`;
+}
+
+// Function expression
+const greet2 = function(name) {
+  return `Hello, ${name}!`;
+};
+
+// Arrow function (ES6)
+const greet3 = (name) => `Hello, ${name}!`;
+
+// Function as object
+console.log(typeof greet); // "function"
+console.log(greet instanceof Object); // true
+
+// Function properties
+greet.customProp = "value";
+console.log(greet.name); // "greet"
+console.log(greet.length); // 1 (number of parameters)
+
+// Higher-order functions
+function createMultiplier(multiplier) {
+  return function(number) {
+    return number * multiplier;
+  };
+}
+
+const double = createMultiplier(2);
+console.log(double(5)); // 10
+```
+
+## Variable Declarations
+
+### var, let, const Comparison
+
+| Feature | var | let | const |
+|---------|-----|-----|-------|
+| Scope | Function | Block | Block |
+| Hoisting | Yes (undefined) | Yes (TDZ) | Yes (TDZ) |
+| Redeclaration | Allowed | Not allowed | Not allowed |
+| Reassignment | Allowed | Allowed | Not allowed |
+| Global object property | Yes | No | No |
+
+```javascript
+// var - function scoped
+function varExample() {
+  var x = 1;
+  if (true) {
+    var x = 2; // Same variable
+    console.log(x); // 2
+  }
+  console.log(x); // 2
+}
+
+// let - block scoped
+function letExample() {
+  let x = 1;
+  if (true) {
+    let x = 2; // Different variable
+    console.log(x); // 2
+  }
+  console.log(x); // 1
+}
+
+// const - block scoped, immutable binding
+const PI = 3.14159;
+// PI = 3.14; // TypeError: Assignment to constant variable
+
+// const with objects (reference is immutable, not content)
+const person = { name: "John" };
+person.name = "Jane"; // Allowed
+person.age = 30; // Allowed
+// person = {}; // TypeError
+
+// const with arrays
+const numbers = [1, 2, 3];
+numbers.push(4); // Allowed
+numbers[0] = 99; // Allowed
+// numbers = []; // TypeError
+```
+
+## Type Coercion
+
+### Implicit Coercion
+
+```javascript
+// String coercion
+console.log("5" + 1); // "51" (number to string)
+console.log("5" + true); // "5true"
+console.log("5" + null); // "5null"
+
+// Number coercion
+console.log("5" - 1); // 4 (string to number)
+console.log("5" * "2"); // 10
+console.log("5" / "2"); // 2.5
+console.log("5" % "2"); // 1
+
+// Boolean coercion
+console.log(!""); // true
+console.log(!0); // true
+console.log(!null); // true
+console.log(!![]); // true
+
+// Comparison coercion
+console.log(5 == "5"); // true (loose equality)
+console.log(5 === "5"); // false (strict equality)
+console.log(null == undefined); // true
+console.log(null === undefined); // false
+```
+
+### Explicit Coercion
+
+```javascript
+// To String
+String(123); // "123"
+(123).toString(); // "123"
+123 + ""; // "123"
+
+// To Number
+Number("123"); // 123
+parseInt("123px"); // 123
+parseFloat("3.14"); // 3.14
++"123"; // 123 (unary plus)
+
+// To Boolean
+Boolean(1); // true
+Boolean(0); // false
+!!1; // true (double negation)
+```
+
+## Memory Management
+
+### Stack vs Heap
+
+```javascript
+// Primitives stored in stack
+let a = 10;
+let b = a; // Copy value
+b = 20;
+console.log(a); // 10 (unchanged)
+
+// Objects stored in heap
+let obj1 = { value: 10 };
+let obj2 = obj1; // Copy reference
+obj2.value = 20;
+console.log(obj1.value); // 20 (changed!)
+
+// Comparison
+console.log(10 === 10); // true (value comparison)
+console.log({ a: 1 } === { a: 1 }); // false (reference comparison)
+
+const obj3 = { a: 1 };
+const obj4 = obj3;
+console.log(obj3 === obj4); // true (same reference)
+```
+
+## Interview Questions
+
+### Q1: What's the difference between `null` and `undefined`?
+
+**Answer:**
+- `undefined`: Variable declared but not assigned
+- `null`: Intentional absence of value
+- `typeof null` returns "object" (bug)
+- `typeof undefined` returns "undefined"
+- `null == undefined` is `true`
+- `null === undefined` is `false`
+
+### Q2: Explain type coercion with examples
+
+**Answer:** See Type Coercion section above.
+
+### Q3: What are falsy values in JavaScript?
+
+**Answer:** Only 6 falsy values:
+1. `false`
+2. `0`
+3. `""` (empty string)
+4. `null`
+5. `undefined`
+6. `NaN`
+
+Everything else is truthy!
+
+## Practice Problems
+
+### Problem 1: Type Checking Function
+
+```javascript
+function getType(value) {
+  if (value === null) return 'null';
+  if (Array.isArray(value)) return 'array';
+  return typeof value;
+}
+
+// Test
+console.log(getType(42)); // "number"
+console.log(getType("hello")); // "string"
+console.log(getType(null)); // "null"
+console.log(getType([])); // "array"
+```
+
+### Problem 2: Deep Clone Object
+
+```javascript
+function deepClone(obj) {
+  if (obj === null || typeof obj !== 'object') return obj;
+  if (obj instanceof Date) return new Date(obj);
+  if (obj instanceof Array) return obj.map(item => deepClone(item));
+  
+  const cloned = {};
+  for (let key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      cloned[key] = deepClone(obj[key]);
+    }
+  }
+  return cloned;
+}
+```
+
+## Summary
+
+- JavaScript has 7 primitive types and 1 reference type
+- Primitives are immutable and compared by value
+- Objects are mutable and compared by reference
+- Use `const` by default, `let` when reassignment needed, avoid `var`
+- Understand type coercion to avoid bugs
+- Be aware of memory management differences
+
+[← Back to Table of Contents](../00-table-of-contents.md) | [Next: Scope & Hoisting →](./02-scope-hoisting.md)

@@ -1,0 +1,124 @@
+{
+  "id": "frontend-basics",
+  "title": {
+    "en": "Frontend Development Fundamentals",
+    "vi": "Kiến Thức Cơ Bản Phát Triển Frontend"
+  },
+  "description": {
+    "en": "Master the fundamentals of frontend development including JavaScript, HTML, CSS, and basic React concepts. Perfect for beginners starting their frontend journey.",
+    "vi": "Nắm vững kiến thức cơ bản về phát triển frontend bao gồm JavaScript, HTML, CSS và các khái niệm React cơ bản. Hoàn hảo cho người mới bắt đầu hành trình frontend."
+  },
+  "targetRole": "frontend",
+  "estimatedDuration": 12,
+  "prerequisites": [],
+  "modules": [
+    {
+      "id": "javascript-fundamentals",
+      "title": {
+        "en": "JavaScript Fundamentals",
+        "vi": "Kiến Thức Cơ Bản JavaScript"
+      },
+      "order": 1,
+      "estimatedTime": 40,
+      "topics": [
+        {
+          "contentId": "js-variables-data-types",
+          "order": 1,
+          "required": true
+        },
+        {
+          "contentId": "js-scope-hoisting",
+          "order": 2,
+          "required": true
+        },
+        {
+          "contentId": "js-closures",
+          "order": 3,
+          "required": true
+        },
+        {
+          "contentId": "js-prototypes",
+          "order": 4,
+          "required": true
+        },
+        {
+          "contentId": "js-this-keyword",
+          "order": 5,
+          "required": true
+        },
+        {
+          "contentId": "js-event-loop",
+          "order": 6,
+          "required": true
+        },
+        {
+          "contentId": "js-es6-features",
+          "order": 7,
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "html-css-basics",
+      "title": {
+        "en": "HTML & CSS Essentials",
+        "vi": "HTML & CSS Cơ Bản"
+      },
+      "order": 2,
+      "estimatedTime": 25,
+      "topics": [
+        {
+          "contentId": "html5-fundamentals",
+          "order": 1,
+          "required": true
+        },
+        {
+          "contentId": "css-fundamentals",
+          "order": 2,
+          "required": true
+        },
+        {
+          "contentId": "css-flexbox-grid",
+          "order": 3,
+          "required": true
+        },
+        {
+          "contentId": "responsive-design",
+          "order": 4,
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "react-basics",
+      "title": {
+        "en": "React Fundamentals",
+        "vi": "Kiến Thức Cơ Bản React"
+      },
+      "order": 3,
+      "estimatedTime": 35,
+      "topics": [
+        {
+          "contentId": "react-fundamentals",
+          "order": 1,
+          "required": true
+        },
+        {
+          "contentId": "react-hooks-basics",
+          "order": 2,
+          "required": true
+        },
+        {
+          "contentId": "react-state-management",
+          "order": 3,
+          "required": true
+        },
+        {
+          "contentId": "react-component-patterns",
+          "order": 4,
+          "required": false
+        }
+      ]
+    }
+  ]
+}

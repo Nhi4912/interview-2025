@@ -1,0 +1,138 @@
+{
+  "id": "closures-quiz",
+  "contentId": "js-closures",
+  "title": {
+    "en": "Closures Quiz",
+    "vi": "Bài kiểm tra Closures"
+  },
+  "description": {
+    "en": "Test your understanding of JavaScript closures",
+    "vi": "Kiểm tra hiểu biết của bạn về closures trong JavaScript"
+  },
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "multiple-choice",
+      "question": {
+        "en": "What is a closure in JavaScript?",
+        "vi": "Closure trong JavaScript là gì?"
+      },
+      "options": {
+        "en": [
+          "A function that has access to variables in its outer scope",
+          "A way to close a function",
+          "A method to prevent memory leaks",
+          "A type of loop"
+        ],
+        "vi": [
+          "Một hàm có quyền truy cập vào các biến trong scope bên ngoài của nó",
+          "Một cách để đóng một hàm",
+          "Một phương pháp để ngăn chặn rò rỉ bộ nhớ",
+          "Một loại vòng lặp"
+        ]
+      },
+      "correctAnswer": 0,
+      "explanation": {
+        "en": "A closure is a function that has access to variables in its outer (enclosing) lexical scope, even after the outer function has returned.",
+        "vi": "Closure là một hàm có quyền truy cập vào các biến trong phạm vi từ vựng bên ngoài của nó, ngay cả sau khi hàm bên ngoài đã kết thúc."
+      }
+    },
+    {
+      "id": "q2",
+      "type": "code",
+      "question": {
+        "en": "What will this code output?",
+        "vi": "Đoạn code này sẽ in ra gì?"
+      },
+      "code": "function outer() {\n  let count = 0;\n  return function() {\n    count++;\n    return count;\n  };\n}\n\nconst counter = outer();\nconsole.log(counter());\nconsole.log(counter());\nconsole.log(counter());",
+      "options": {
+        "en": [
+          "1, 1, 1",
+          "1, 2, 3",
+          "0, 1, 2",
+          "undefined, undefined, undefined"
+        ],
+        "vi": [
+          "1, 1, 1",
+          "1, 2, 3",
+          "0, 1, 2",
+          "undefined, undefined, undefined"
+        ]
+      },
+      "correctAnswer": 1,
+      "explanation": {
+        "en": "The inner function maintains a reference to the count variable through closure. Each call increments and returns the same count variable, resulting in 1, 2, 3.",
+        "vi": "Hàm bên trong duy trì tham chiếu đến biến count thông qua closure. Mỗi lần gọi sẽ tăng và trả về cùng một biến count, kết quả là 1, 2, 3."
+      }
+    },
+    {
+      "id": "q3",
+      "type": "multiple-choice",
+      "question": {
+        "en": "Which of the following is a practical use case for closures?",
+        "vi": "Trường hợp nào sau đây là ứng dụng thực tế của closures?"
+      },
+      "options": {
+        "en": [
+          "Creating private variables",
+          "Improving performance",
+          "Reducing file size",
+          "Preventing errors"
+        ],
+        "vi": [
+          "Tạo các biến private",
+          "Cải thiện hiệu suất",
+          "Giảm kích thước file",
+          "Ngăn chặn lỗi"
+        ]
+      },
+      "correctAnswer": 0,
+      "explanation": {
+        "en": "Closures are commonly used to create private variables that cannot be accessed directly from outside the function, providing data encapsulation.",
+        "vi": "Closures thường được sử dụng để tạo các biến private không thể được truy cập trực tiếp từ bên ngoài hàm, cung cấp tính đóng gói dữ liệu."
+      }
+    },
+    {
+      "id": "q4",
+      "type": "true-false",
+      "question": {
+        "en": "Closures can lead to memory leaks if not managed properly.",
+        "vi": "Closures có thể dẫn đến rò rỉ bộ nhớ nếu không được quản lý đúng cách."
+      },
+      "correctAnswer": true,
+      "explanation": {
+        "en": "True. Closures keep references to variables in their outer scope, which prevents garbage collection. If closures are not properly managed, they can cause memory leaks.",
+        "vi": "Đúng. Closures giữ tham chiếu đến các biến trong scope bên ngoài, điều này ngăn chặn garbage collection. Nếu closures không được quản lý đúng cách, chúng có thể gây rò rỉ bộ nhớ."
+      }
+    },
+    {
+      "id": "q5",
+      "type": "code",
+      "question": {
+        "en": "What will this code output?",
+        "vi": "Đoạn code này sẽ in ra gì?"
+      },
+      "code": "for (var i = 0; i < 3; i++) {\n  setTimeout(function() {\n    console.log(i);\n  }, 1000);\n}",
+      "options": {
+        "en": [
+          "0, 1, 2",
+          "3, 3, 3",
+          "undefined, undefined, undefined",
+          "0, 0, 0"
+        ],
+        "vi": [
+          "0, 1, 2",
+          "3, 3, 3",
+          "undefined, undefined, undefined",
+          "0, 0, 0"
+        ]
+      },
+      "correctAnswer": 1,
+      "explanation": {
+        "en": "The code outputs 3, 3, 3 because var has function scope, not block scope. All callbacks reference the same variable i, which has the value 3 after the loop completes. Using let instead of var would fix this.",
+        "vi": "Code in ra 3, 3, 3 vì var có function scope, không phải block scope. Tất cả các callback đều tham chiếu đến cùng một biến i, có giá trị 3 sau khi vòng lặp kết thúc. Sử dụng let thay vì var sẽ khắc phục điều này."
+      }
+    }
+  ]
+}

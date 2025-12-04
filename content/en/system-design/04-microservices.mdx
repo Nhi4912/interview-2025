@@ -1,0 +1,99 @@
+---
+id: sd-microservices
+slug: microservices
+title:
+  en: "Microservices Architecture / Kiến Trúc Microservices"
+  vi: "Microservices Architecture / Kiến Trúc Microservices"
+description:
+  en: "Master Microservices Architecture / Kiến Trúc Microservices for system design interviews, including real-world examples and best practices for top tech companies."
+  vi: "Làm chủ Microservices Architecture / Kiến Trúc Microservices cho phỏng vấn thiết kế hệ thống, bao gồm ví dụ thực tế và best practices cho các công ty công nghệ hàng đầu."
+category: system-design
+difficulty: advanced
+estimatedTime: 95
+prerequisites: ["sd-architecture-patterns"]
+relatedTopics: []
+tags: ["system-design","microservices","distributed","architecture"]
+interviewCompanies: ["google","meta","amazon","microsoft"]
+lastUpdated: "2025-11-15T10:02:42.984Z"
+version: "1.0.0"
+hasQuiz: false
+hasCodeExamples: true
+hasDiagrams: true
+---
+
+import { CodeExample } from '@/components/mdx/CodeExample';
+import { Diagram } from '@/components/mdx/Diagram';
+import { Quiz } from '@/components/mdx/Quiz';
+import { InteractiveDemo } from '@/components/mdx/InteractiveDemo';
+
+# Microservices Architecture / Kiến Trúc Microservices
+## System Design - Chapter 4 / Thiết Kế Hệ Thống - Chương 4
+
+## Microservices Principles
+
+### Service Communication
+
+```typescript
+// API Gateway Pattern / Mẫu API Gateway
+class APIGateway {
+  private services: Map<string, string> = new Map([
+    ['users', 'http://users-service:3001'],
+    ['orders', 'http://orders-service:3002'],
+    ['products', 'http://products-service:3003']
+  ]);
+
+  async route(serviceName: string, path: string, options?: RequestInit) {
+    const serviceUrl = this.services.get(serviceName);
+    
+    if (!serviceUrl) {
+      throw new Error(`Service ${serviceName} not found`);
+    }
+
+    const response = await fetch(`${serviceUrl}${path}`, options);
+    return response.json();
+  }
+}
+
+// Usage / Sử dụng
+const gateway = new APIGateway();
+
+async function getUserOrders(userId: string) {
+  const [user, orders] = await Promise.all([
+    gateway.route('users', `/users/${userId}`),
+    gateway.route('orders', `/orders?userId=${userId}`)
+  ]);
+
+  return { user, orders };
+}
+```
+
+### Service Discovery
+
+```typescript
+class ServiceRegistry {
+  private services: Map<string, Set<string>> = new Map();
+
+  register(serviceName: string, instance: string): void {
+    if (!this.services.has(serviceName)) {
+      this.services.set(serviceName, new Set());
+    }
+    this.services.get(serviceName)!.add(instance);
+  }
+
+  deregister(serviceName: string, instance: string): void {
+    this.services.get(serviceName)?.delete(instance);
+  }
+
+  discover(serviceName: string): string[] {
+    return Array.from(this.services.get(serviceName) || []);
+  }
+
+  getHealthyInstance(serviceName: string): string | null {
+    const instances = this.discover(serviceName);
+    if (instances.length === 0) return null;
+    
+    // Round-robin selection / Chọn round-robin
+    return instances[Math.floor(Math.random() * instances.length)];
+  }
+}
+```

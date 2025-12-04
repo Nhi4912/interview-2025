@@ -1,0 +1,202 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2024-01-01",
+  "terms": {
+    "closure": {
+      "id": "closure",
+      "term": "Closure",
+      "definition": {
+        "en": "A function that has access to variables in its outer (enclosing) lexical scope, even after the outer function has returned",
+        "vi": "Một hàm có quyền truy cập vào các biến trong phạm vi từ vựng bên ngoài (enclosing), ngay cả sau khi hàm bên ngoài đã trả về"
+      },
+      "category": "javascript",
+      "relatedTerms": ["scope", "lexical-scope", "function"],
+      "examples": [
+        {
+          "en": "function outer() { let count = 0; return function inner() { return ++count; } }",
+          "vi": "function outer() { let count = 0; return function inner() { return ++count; } }"
+        }
+      ]
+    },
+    "scope": {
+      "id": "scope",
+      "term": "Scope",
+      "definition": {
+        "en": "The context in which variables and expressions are accessible",
+        "vi": "Ngữ cảnh mà trong đó các biến và biểu thức có thể được truy cập"
+      },
+      "category": "javascript",
+      "relatedTerms": ["closure", "lexical-scope", "hoisting"]
+    },
+    "lexical-scope": {
+      "id": "lexical-scope",
+      "term": "Lexical Scope",
+      "definition": {
+        "en": "Scope determined by the physical placement of code in the source file",
+        "vi": "Phạm vi được xác định bởi vị trí vật lý của mã trong tệp nguồn"
+      },
+      "category": "javascript",
+      "relatedTerms": ["scope", "closure"]
+    },
+    "hoisting": {
+      "id": "hoisting",
+      "term": "Hoisting",
+      "definition": {
+        "en": "JavaScript's behavior of moving declarations to the top of their scope before code execution",
+        "vi": "Hành vi của JavaScript di chuyển các khai báo lên đầu phạm vi của chúng trước khi thực thi mã"
+      },
+      "category": "javascript",
+      "relatedTerms": ["scope", "var", "let", "const"]
+    },
+    "promise": {
+      "id": "promise",
+      "term": "Promise",
+      "definition": {
+        "en": "An object representing the eventual completion or failure of an asynchronous operation",
+        "vi": "Một đối tượng đại diện cho sự hoàn thành hoặc thất bại cuối cùng của một hoạt động bất đồng bộ"
+      },
+      "category": "javascript",
+      "relatedTerms": ["async", "await", "callback"]
+    },
+    "async-await": {
+      "id": "async-await",
+      "term": "Async/Await",
+      "definition": {
+        "en": "Syntactic sugar for working with Promises, making asynchronous code look synchronous",
+        "vi": "Cú pháp đường để làm việc với Promises, làm cho mã bất đồng bộ trông giống đồng bộ"
+      },
+      "category": "javascript",
+      "relatedTerms": ["promise", "callback"]
+    },
+    "component": {
+      "id": "component",
+      "term": "Component",
+      "definition": {
+        "en": "A reusable piece of UI that can accept inputs (props) and return React elements",
+        "vi": "Một phần giao diện người dùng có thể tái sử dụng, có thể nhận đầu vào (props) và trả về các phần tử React"
+      },
+      "category": "react",
+      "relatedTerms": ["props", "state", "jsx"]
+    },
+    "props": {
+      "id": "props",
+      "term": "Props",
+      "definition": {
+        "en": "Short for properties, data passed from parent to child components",
+        "vi": "Viết tắt của properties, dữ liệu được truyền từ component cha sang component con"
+      },
+      "category": "react",
+      "relatedTerms": ["component", "state"]
+    },
+    "state": {
+      "id": "state",
+      "term": "State",
+      "definition": {
+        "en": "Data that changes over time and triggers re-renders when updated",
+        "vi": "Dữ liệu thay đổi theo thời gian và kích hoạt render lại khi được cập nhật"
+      },
+      "category": "react",
+      "relatedTerms": ["component", "props", "hooks"]
+    },
+    "hooks": {
+      "id": "hooks",
+      "term": "Hooks",
+      "definition": {
+        "en": "Functions that let you use state and other React features in functional components",
+        "vi": "Các hàm cho phép bạn sử dụng state và các tính năng React khác trong functional components"
+      },
+      "category": "react",
+      "relatedTerms": ["state", "useEffect", "useState"]
+    },
+    "jsx": {
+      "id": "jsx",
+      "term": "JSX",
+      "definition": {
+        "en": "JavaScript XML, a syntax extension that allows writing HTML-like code in JavaScript",
+        "vi": "JavaScript XML, một phần mở rộng cú pháp cho phép viết mã giống HTML trong JavaScript"
+      },
+      "category": "react",
+      "relatedTerms": ["component", "react"]
+    },
+    "type-inference": {
+      "id": "type-inference",
+      "term": "Type Inference",
+      "definition": {
+        "en": "TypeScript's ability to automatically determine the type of a variable",
+        "vi": "Khả năng của TypeScript tự động xác định kiểu của một biến"
+      },
+      "category": "typescript",
+      "relatedTerms": ["typescript", "type-annotation"]
+    },
+    "generic": {
+      "id": "generic",
+      "term": "Generic",
+      "definition": {
+        "en": "A way to create reusable components that work with multiple types",
+        "vi": "Một cách để tạo các component có thể tái sử dụng hoạt động với nhiều kiểu"
+      },
+      "category": "typescript",
+      "relatedTerms": ["typescript", "type"]
+    },
+    "interface": {
+      "id": "interface",
+      "term": "Interface",
+      "definition": {
+        "en": "A TypeScript construct for defining the shape of an object",
+        "vi": "Một cấu trúc TypeScript để định nghĩa hình dạng của một đối tượng"
+      },
+      "category": "typescript",
+      "relatedTerms": ["type", "typescript"]
+    },
+    "dom": {
+      "id": "dom",
+      "term": "DOM",
+      "definition": {
+        "en": "Document Object Model, a programming interface for HTML and XML documents",
+        "vi": "Document Object Model, một giao diện lập trình cho các tài liệu HTML và XML"
+      },
+      "category": "web-apis",
+      "relatedTerms": ["html", "javascript"]
+    },
+    "event-loop": {
+      "id": "event-loop",
+      "term": "Event Loop",
+      "definition": {
+        "en": "A mechanism that handles asynchronous operations in JavaScript",
+        "vi": "Một cơ chế xử lý các hoạt động bất đồng bộ trong JavaScript"
+      },
+      "category": "javascript",
+      "relatedTerms": ["async", "callback", "promise"]
+    }
+  },
+  "index": {
+    "byCategory": {
+      "javascript": [
+        "closure",
+        "scope",
+        "lexical-scope",
+        "hoisting",
+        "promise",
+        "async-await",
+        "event-loop"
+      ],
+      "react": ["component", "props", "state", "hooks", "jsx"],
+      "typescript": ["type-inference", "generic", "interface"],
+      "web-apis": ["dom"]
+    },
+    "byInitial": {
+      "a": ["async-await"],
+      "c": ["closure", "component"],
+      "d": ["dom"],
+      "e": ["event-loop"],
+      "g": ["generic"],
+      "h": ["hoisting", "hooks"],
+      "i": ["interface"],
+      "j": ["jsx"],
+      "l": ["lexical-scope"],
+      "p": ["promise", "props"],
+      "s": ["scope", "state"],
+      "t": ["type-inference"]
+    }
+  }
+}

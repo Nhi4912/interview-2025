@@ -1,0 +1,596 @@
+---
+id: ts-basics
+slug: typescript-basics
+title:
+  en: "TypeScript Basics"
+  vi: "Kiến thức cơ bản TypeScript"
+description:
+  en: "Master TypeScript Basics in TypeScript, including type system, best practices, and interview preparation."
+  vi: "Làm chủ Kiến thức cơ bản TypeScript trong TypeScript, bao gồm hệ thống kiểu, best practices và chuẩn bị phỏng vấn."
+category: typescript
+difficulty: beginner
+estimatedTime: 50
+prerequisites: ["js-basics"]
+relatedTopics: ["ts-advanced-types", "ts-generics"]
+tags: ["typescript", "types", "interfaces", "basics"]
+interviewCompanies: ["google", "meta", "amazon", "microsoft"]
+lastUpdated: "2025-11-13T05:00:00.000Z"
+version: "1.0.0"
+hasQuiz: true
+hasCodeExamples: true
+hasDiagrams: true
+---
+
+import { CodeExample } from "@/components/mdx/CodeExample";
+import { Diagram } from "@/components/mdx/Diagram";
+import { Quiz } from "@/components/mdx/Quiz";
+import { InteractiveDemo } from "@/components/mdx/InteractiveDemo";
+
+# Kiến thức cơ bản TypeScript
+
+## Giới thiệu
+
+TypeScript là một superset của JavaScript được phát triển bởi Microsoft. Nó thêm static typing vào JavaScript, giúp phát hiện lỗi sớm hơn và cải thiện trải nghiệm phát triển.
+
+## Tại sao sử dụng TypeScript?
+
+1. **Type Safety**: Phát hiện lỗi tại compile time thay vì runtime
+2. **Better IDE Support**: Autocomplete, refactoring, và navigation tốt hơn
+3. **Self-documenting Code**: Types làm code dễ hiểu hơn
+4. **Scalability**: Dễ dàng maintain code base lớn
+5. **Modern JavaScript Features**: Hỗ trợ ES6+ features
+
+## Các kiểu dữ liệu cơ bản
+
+### Primitive Types
+
+<CodeExample title="Basic Types" language="typescript">
+```typescript
+// String
+let name: string = "Nguyễn Văn A";
+
+// Number
+let age: number = 25;
+let price: number = 99.99;
+
+// Boolean
+let isActive: boolean = true;
+
+// Null và Undefined
+let nothing: null = null;
+let notDefined: undefined = undefined;
+
+// Any - tránh sử dụng khi có thể
+let anything: any = "có thể là bất cứ gì";
+anything = 42;
+anything = true;
+
+````
+</CodeExample>
+
+### Arrays
+
+<CodeExample title="Array Types" language="typescript">
+```typescript
+// Cách 1: Type[]
+let numbers: number[] = [1, 2, 3, 4, 5];
+let names: string[] = ["An", "Bình", "Chi"];
+
+// Cách 2: Array<Type>
+let scores: Array<number> = [90, 85, 95];
+
+// Array với nhiều types (Union)
+let mixed: (string | number)[] = ["hello", 42, "world"];
+
+// Readonly array
+let readonlyNumbers: readonly number[] = [1, 2, 3];
+// readonlyNumbers.push(4); // ❌ Error: không thể modify
+````
+
+</CodeExample>
+
+### Tuples
+
+<CodeExample title="Tuple Types" language="typescript">
+```typescript
+// Tuple: array với số lượng và kiểu phần tử cố định
+let person: [string, number] = ["An", 25];
+
+// Destructuring
+let [name, age] = person;
+
+// Tuple với optional elements
+let coordinate: [number, number, number?] = [10, 20];
+
+// Named tuples (TypeScript 4.0+)
+type Point = [x: number, y: number];
+let point: Point = [10, 20];
+
+````
+</CodeExample>
+
+### Objects
+
+<CodeExample title="Object Types" language="typescript">
+```typescript
+// Object type annotation
+let user: {
+  name: string;
+  age: number;
+  email?: string; // Optional property
+} = {
+  name: "Nguyễn Văn A",
+  age: 25
+};
+
+// Readonly properties
+let config: {
+  readonly apiUrl: string;
+  timeout: number;
+} = {
+  apiUrl: "https://api.example.com",
+  timeout: 5000
+};
+
+// config.apiUrl = "new url"; // ❌ Error: readonly
+````
+
+</CodeExample>
+
+## Interfaces
+
+Interfaces định nghĩa cấu trúc của objects.
+
+<CodeExample title="Interface Examples" language="typescript">
+```typescript
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  age?: number; // Optional
+  readonly createdAt: Date; // Readonly
+}
+
+const user: User = {
+id: 1,
+name: "Nguyễn Văn A",
+email: "a@example.com",
+createdAt: new Date()
+};
+
+// Interface với methods
+interface Calculator {
+add(a: number, b: number): number;
+subtract(a: number, b: number): number;
+}
+
+const calc: Calculator = {
+add: (a, b) => a + b,
+subtract: (a, b) => a - b
+};
+
+````
+</CodeExample>
+
+### Interface Extension
+
+<CodeExample title="Extending Interfaces" language="typescript">
+```typescript
+interface Person {
+  name: string;
+  age: number;
+}
+
+interface Employee extends Person {
+  employeeId: string;
+  department: string;
+}
+
+const employee: Employee = {
+  name: "Nguyễn Văn A",
+  age: 25,
+  employeeId: "EMP001",
+  department: "Engineering"
+};
+
+// Multiple inheritance
+interface Timestamped {
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface Product extends Person, Timestamped {
+  price: number;
+}
+````
+
+</CodeExample>
+
+## Type Aliases
+
+Type aliases tạo tên mới cho types.
+
+<CodeExample title="Type Aliases" language="typescript">
+```typescript
+// Basic type alias
+type ID = string | number;
+
+type User = {
+id: ID;
+name: string;
+email: string;
+};
+
+// Union types
+type Status = "pending" | "approved" | "rejected";
+
+function updateStatus(status: Status) {
+console.log(`Status: ${status}`);
+}
+
+updateStatus("approved"); // ✅
+// updateStatus("invalid"); // ❌ Error
+
+// Intersection types
+type Draggable = {
+drag(): void;
+};
+
+type Resizable = {
+resize(): void;
+};
+
+type UIWidget = Draggable & Resizable;
+
+const widget: UIWidget = {
+drag() {
+console.log("Dragging...");
+},
+resize() {
+console.log("Resizing...");
+}
+};
+
+````
+</CodeExample>
+
+## Functions
+
+<CodeExample title="Function Types" language="typescript">
+```typescript
+// Function với type annotations
+function add(a: number, b: number): number {
+  return a + b;
+}
+
+// Arrow function
+const multiply = (a: number, b: number): number => a * b;
+
+// Optional parameters
+function greet(name: string, greeting?: string): string {
+  return `${greeting || "Hello"}, ${name}!`;
+}
+
+// Default parameters
+function createUser(name: string, role: string = "user") {
+  return { name, role };
+}
+
+// Rest parameters
+function sum(...numbers: number[]): number {
+  return numbers.reduce((total, n) => total + n, 0);
+}
+
+// Function type
+type MathOperation = (a: number, b: number) => number;
+
+const divide: MathOperation = (a, b) => a / b;
+````
+
+</CodeExample>
+
+## Union và Intersection Types
+
+<CodeExample title="Union and Intersection" language="typescript">
+```typescript
+// Union type: có thể là một trong nhiều types
+type StringOrNumber = string | number;
+
+function printId(id: StringOrNumber) {
+if (typeof id === "string") {
+console.log(`ID: ${id.toUpperCase()}`);
+} else {
+console.log(`ID: ${id}`);
+}
+}
+
+// Intersection type: kết hợp nhiều types
+type Person = {
+name: string;
+age: number;
+};
+
+type Employee = {
+employeeId: string;
+department: string;
+};
+
+type EmployeePerson = Person & Employee;
+
+const emp: EmployeePerson = {
+name: "An",
+age: 25,
+employeeId: "E001",
+department: "IT"
+};
+
+````
+</CodeExample>
+
+## Type Assertions
+
+<CodeExample title="Type Assertions" language="typescript">
+```typescript
+// Cách 1: as syntax
+let someValue: unknown = "this is a string";
+let strLength: number = (someValue as string).length;
+
+// Cách 2: angle-bracket syntax (không dùng trong JSX)
+let strLength2: number = (<string>someValue).length;
+
+// Practical example
+const input = document.getElementById("myInput") as HTMLInputElement;
+input.value = "Hello";
+
+// Non-null assertion
+function processValue(value: string | null) {
+  // Chúng ta chắc chắn value không null
+  console.log(value!.toUpperCase());
+}
+````
+
+</CodeExample>
+
+## Literal Types
+
+<CodeExample title="Literal Types" language="typescript">
+```typescript
+// String literal types
+type Direction = "north" | "south" | "east" | "west";
+
+function move(direction: Direction) {
+console.log(`Moving ${direction}`);
+}
+
+move("north"); // ✅
+// move("up"); // ❌ Error
+
+// Numeric literal types
+type DiceRoll = 1 | 2 | 3 | 4 | 5 | 6;
+
+function rollDice(): DiceRoll {
+return (Math.floor(Math.random() \* 6) + 1) as DiceRoll;
+}
+
+// Boolean literal types
+type Success = true;
+type Failure = false;
+
+````
+</CodeExample>
+
+## Enums
+
+<CodeExample title="Enums" language="typescript">
+```typescript
+// Numeric enum
+enum Direction {
+  Up,    // 0
+  Down,  // 1
+  Left,  // 2
+  Right  // 3
+}
+
+let dir: Direction = Direction.Up;
+
+// String enum
+enum Status {
+  Pending = "PENDING",
+  Approved = "APPROVED",
+  Rejected = "REJECTED"
+}
+
+function updateStatus(status: Status) {
+  console.log(`Status: ${status}`);
+}
+
+updateStatus(Status.Approved);
+
+// Const enum (được inline tại compile time)
+const enum Color {
+  Red,
+  Green,
+  Blue
+}
+
+let color = Color.Red;
+````
+
+</CodeExample>
+
+## Type Guards
+
+<CodeExample title="Type Guards" language="typescript">
+```typescript
+// typeof type guard
+function printValue(value: string | number) {
+  if (typeof value === "string") {
+    console.log(value.toUpperCase());
+  } else {
+    console.log(value.toFixed(2));
+  }
+}
+
+// instanceof type guard
+class Dog {
+bark() {
+console.log("Woof!");
+}
+}
+
+class Cat {
+meow() {
+console.log("Meow!");
+}
+}
+
+function makeSound(animal: Dog | Cat) {
+if (animal instanceof Dog) {
+animal.bark();
+} else {
+animal.meow();
+}
+}
+
+// Custom type guard
+interface Fish {
+swim(): void;
+}
+
+interface Bird {
+fly(): void;
+}
+
+function isFish(pet: Fish | Bird): pet is Fish {
+return (pet as Fish).swim !== undefined;
+}
+
+function move(pet: Fish | Bird) {
+if (isFish(pet)) {
+pet.swim();
+} else {
+pet.fly();
+}
+}
+
+````
+</CodeExample>
+
+## Câu hỏi phỏng vấn thường gặp
+
+### Câu 1: TypeScript là gì và tại sao nên sử dụng?
+
+**Trả lời:**
+TypeScript là một superset của JavaScript thêm static typing. Lợi ích:
+- **Type Safety**: Phát hiện lỗi sớm hơn
+- **Better Tooling**: IDE support tốt hơn
+- **Code Documentation**: Types tự document code
+- **Refactoring**: Dễ dàng refactor code
+- **Scalability**: Tốt cho dự án lớn
+
+### Câu 2: Sự khác biệt giữa Interface và Type Alias?
+
+**Trả lời:**
+
+| Interface | Type Alias |
+|-----------|------------|
+| Có thể extend | Có thể dùng union/intersection |
+| Có thể merge declarations | Không thể merge |
+| Chỉ cho objects | Cho mọi type |
+| Tốt cho OOP | Linh hoạt hơn |
+
+```typescript
+// Interface
+interface User {
+  name: string;
+}
+
+interface User {
+  age: number; // Merge với declaration trên
+}
+
+// Type
+type ID = string | number; // Union type
+type Point = { x: number; y: number };
+````
+
+### Câu 3: any vs unknown khác nhau như thế nào?
+
+**Trả lời:**
+
+- **any**: Tắt type checking hoàn toàn, không an toàn
+- **unknown**: Type-safe, phải check type trước khi sử dụng
+
+```typescript
+let anyValue: any = "hello";
+anyValue.toUpperCase(); // ✅ Compile OK (có thể error runtime)
+
+let unknownValue: unknown = "hello";
+// unknownValue.toUpperCase(); // ❌ Error
+if (typeof unknownValue === "string") {
+  unknownValue.toUpperCase(); // ✅ OK sau khi check
+}
+```
+
+### Câu 4: Type assertion là gì?
+
+**Trả lời:**
+Type assertion cho phép bạn override type mà TypeScript infer:
+
+```typescript
+let value: unknown = "hello";
+let length = (value as string).length;
+
+// Hoặc
+let length2 = (<string>value).length;
+```
+
+Chỉ nên dùng khi bạn chắc chắn về type.
+
+### Câu 5: Readonly vs const khác nhau như thế nào?
+
+**Trả lời:**
+
+- **const**: Cho variables, không thể reassign
+- **readonly**: Cho properties, không thể modify sau khi khởi tạo
+
+```typescript
+const x = 10;
+// x = 20; // ❌ Error
+
+interface Config {
+  readonly apiUrl: string;
+}
+
+const config: Config = { apiUrl: "https://api.com" };
+// config.apiUrl = "new"; // ❌ Error
+```
+
+## Best Practices
+
+1. **Tránh any**: Sử dụng unknown hoặc specific types
+2. **Sử dụng strict mode**: Enable trong tsconfig.json
+3. **Prefer interfaces cho objects**: Dễ extend và merge
+4. **Sử dụng type guards**: Thay vì type assertions
+5. **Readonly khi có thể**: Immutability tốt hơn
+6. **Union types cho enums đơn giản**: Nhẹ hơn enums
+7. **Type imports**: Sử dụng `import type` khi chỉ import types
+
+<Quiz id="typescript-basics-quiz" />
+
+## Tóm tắt
+
+- TypeScript thêm static typing vào JavaScript
+- Primitive types: string, number, boolean, null, undefined
+- Complex types: arrays, tuples, objects, functions
+- Interfaces và type aliases định nghĩa custom types
+- Union và intersection types kết hợp types
+- Type guards giúp narrow types
+- Enums cho named constants
+- Type assertions override type inference
+
+## Chủ đề liên quan
+
+- [Advanced Types](./02-advanced-types.mdx)
+- [Generics](./03-generics-deep-dive.mdx)
+- [React with TypeScript](./05-react-typescript.mdx)

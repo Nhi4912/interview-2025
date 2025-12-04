@@ -1,0 +1,177 @@
+.container {
+  width: 100%;
+  margin: 2rem 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.legend {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.legendColor {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+}
+
+.info {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.graphContainer {
+  width: 100%;
+  height: 600px;
+  position: relative;
+  background: #fafafa;
+  overflow: hidden;
+}
+
+.svg {
+  display: block;
+  cursor: grab;
+}
+
+.svg:active {
+  cursor: grabbing;
+}
+
+.node {
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.node:hover {
+  opacity: 0.8;
+}
+
+.nodeCircle {
+  transition: all 0.3s ease;
+}
+
+.node:hover .nodeCircle {
+  filter: brightness(1.1);
+  stroke-width: 3;
+}
+
+.nodeLabel {
+  pointer-events: none;
+  user-select: none;
+}
+
+.difficultyBadge {
+  pointer-events: none;
+  user-select: none;
+  font-style: italic;
+}
+
+.link {
+  transition: stroke-opacity 0.2s;
+}
+
+.link:hover {
+  stroke-opacity: 1;
+}
+
+.selectedInfo {
+  padding: 1rem;
+  background: #eff6ff;
+  border-top: 1px solid #e5e7eb;
+  font-size: 0.875rem;
+  color: #1e40af;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .graphContainer {
+    height: 400px;
+  }
+
+  .controls {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .legend {
+    gap: 1rem;
+  }
+
+  .legendItem {
+    font-size: 0.75rem;
+  }
+
+  .info {
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .graphContainer {
+    height: 300px;
+  }
+
+  .legend {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .container {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .controls {
+    background: #111827;
+    border-bottom-color: #374151;
+  }
+
+  .legendItem {
+    color: #d1d5db;
+  }
+
+  .info {
+    color: #9ca3af;
+  }
+
+  .graphContainer {
+    background: #0f172a;
+  }
+
+  .nodeLabel {
+    fill: #f3f4f6;
+  }
+
+  .selectedInfo {
+    background: #1e3a8a;
+    border-top-color: #374151;
+    color: #93c5fd;
+  }
+}

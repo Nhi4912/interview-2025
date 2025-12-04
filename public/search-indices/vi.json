@@ -1,0 +1,270 @@
+{
+  "version": "1.0.0",
+  "locale": "vi",
+  "lastBuilt": "2025-11-12T17:14:13.292Z",
+  "documents": [
+    {
+      "id": "js-closures-test",
+      "slug": "test-closures",
+      "title": "Hiểu về Closures trong JavaScript",
+      "description": "Tìm hiểu cách closures hoạt động trong JavaScript với các ví dụ thực tế",
+      "content": "Hiểu về Closures trong JavaScript Closures là một trong những khái niệm mạnh mẽ nhất trong JavaScript. Closure là một hàm có quyền truy cập vào các biến trong phạm vi bên ngoài của nó, ngay cả sau khi hàm bên ngoài đã trả về. Ví dụ cơ bản Các khái niệm chính - Phạm vi từ vựng (Lexical scope) - Phạm vi hàm (Function scope) - Quản lý bộ nhớ - Ứng dụng thực tế Closures cho phép bảo mật dữ liệu và thường được kiểm tra trong các cuộc phỏng vấn kỹ thuật.",
+      "category": "javascript",
+      "difficulty": "intermediate",
+      "tags": [
+        "closures",
+        "scope",
+        "functions"
+      ],
+      "tokens": [
+        "hiểu",
+        "closures",
+        "javascript",
+        "tìm",
+        "cách",
+        "hoạt",
+        "động",
+        "thực",
+        "khái",
+        "niệm",
+        "mạnh",
+        "nhất",
+        "closure",
+        "hàm",
+        "quyền",
+        "truy",
+        "cập",
+        "vào",
+        "biến",
+        "phạm",
+        "bên",
+        "ngoài",
+        "ngay",
+        "sau",
+        "trả",
+        "bản",
+        "chính",
+        "vựng",
+        "lexical",
+        "scope",
+        "function",
+        "quản",
+        "nhớ",
+        "ứng",
+        "dụng",
+        "phép",
+        "bảo",
+        "mật",
+        "liệu",
+        "thường",
+        "kiểm",
+        "tra",
+        "cuộc",
+        "phỏng",
+        "vấn",
+        "thuật",
+        "functions"
+      ],
+      "metadata": {
+        "id": "js-closures-test",
+        "slug": "test-closures",
+        "title": {
+          "en": "Understanding Closures in JavaScript",
+          "vi": "Hiểu về Closures trong JavaScript"
+        },
+        "description": {
+          "en": "Learn how closures work in JavaScript with practical examples",
+          "vi": "Tìm hiểu cách closures hoạt động trong JavaScript với các ví dụ thực tế"
+        },
+        "category": "javascript",
+        "difficulty": "intermediate",
+        "estimatedTime": 45,
+        "prerequisites": [
+          "js-scope-fundamentals"
+        ],
+        "relatedTopics": [
+          "js-hoisting",
+          "js-execution-context"
+        ],
+        "tags": [
+          "closures",
+          "scope",
+          "functions"
+        ],
+        "interviewCompanies": [
+          "google",
+          "meta"
+        ],
+        "lastUpdated": "2024-01-15T10:30:00.000Z",
+        "version": "1.0.0",
+        "hasQuiz": true,
+        "hasCodeExamples": true,
+        "hasDiagrams": true
+      }
+    }
+  ],
+  "tokenMap": {
+    "hiểu": [
+      "js-closures-test"
+    ],
+    "closures": [
+      "js-closures-test"
+    ],
+    "javascript": [
+      "js-closures-test"
+    ],
+    "tìm": [
+      "js-closures-test"
+    ],
+    "cách": [
+      "js-closures-test"
+    ],
+    "hoạt": [
+      "js-closures-test"
+    ],
+    "động": [
+      "js-closures-test"
+    ],
+    "thực": [
+      "js-closures-test"
+    ],
+    "khái": [
+      "js-closures-test"
+    ],
+    "niệm": [
+      "js-closures-test"
+    ],
+    "mạnh": [
+      "js-closures-test"
+    ],
+    "nhất": [
+      "js-closures-test"
+    ],
+    "closure": [
+      "js-closures-test"
+    ],
+    "hàm": [
+      "js-closures-test"
+    ],
+    "quyền": [
+      "js-closures-test"
+    ],
+    "truy": [
+      "js-closures-test"
+    ],
+    "cập": [
+      "js-closures-test"
+    ],
+    "vào": [
+      "js-closures-test"
+    ],
+    "biến": [
+      "js-closures-test"
+    ],
+    "phạm": [
+      "js-closures-test"
+    ],
+    "bên": [
+      "js-closures-test"
+    ],
+    "ngoài": [
+      "js-closures-test"
+    ],
+    "ngay": [
+      "js-closures-test"
+    ],
+    "sau": [
+      "js-closures-test"
+    ],
+    "trả": [
+      "js-closures-test"
+    ],
+    "bản": [
+      "js-closures-test"
+    ],
+    "chính": [
+      "js-closures-test"
+    ],
+    "vựng": [
+      "js-closures-test"
+    ],
+    "lexical": [
+      "js-closures-test"
+    ],
+    "scope": [
+      "js-closures-test"
+    ],
+    "function": [
+      "js-closures-test"
+    ],
+    "quản": [
+      "js-closures-test"
+    ],
+    "nhớ": [
+      "js-closures-test"
+    ],
+    "ứng": [
+      "js-closures-test"
+    ],
+    "dụng": [
+      "js-closures-test"
+    ],
+    "phép": [
+      "js-closures-test"
+    ],
+    "bảo": [
+      "js-closures-test"
+    ],
+    "mật": [
+      "js-closures-test"
+    ],
+    "liệu": [
+      "js-closures-test"
+    ],
+    "thường": [
+      "js-closures-test"
+    ],
+    "kiểm": [
+      "js-closures-test"
+    ],
+    "tra": [
+      "js-closures-test"
+    ],
+    "cuộc": [
+      "js-closures-test"
+    ],
+    "phỏng": [
+      "js-closures-test"
+    ],
+    "vấn": [
+      "js-closures-test"
+    ],
+    "thuật": [
+      "js-closures-test"
+    ],
+    "functions": [
+      "js-closures-test"
+    ]
+  },
+  "categoryMap": {
+    "javascript": [
+      "js-closures-test"
+    ]
+  },
+  "tagMap": {
+    "closures": [
+      "js-closures-test"
+    ],
+    "scope": [
+      "js-closures-test"
+    ],
+    "functions": [
+      "js-closures-test"
+    ]
+  },
+  "difficultyMap": {
+    "intermediate": [
+      "js-closures-test"
+    ]
+  }
+}

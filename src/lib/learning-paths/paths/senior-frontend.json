@@ -1,0 +1,135 @@
+{
+  "id": "senior-frontend",
+  "title": {
+    "en": "Senior Frontend Engineer",
+    "vi": "Kỹ Sư Frontend Cấp Cao"
+  },
+  "description": {
+    "en": "Advanced topics for senior frontend engineers including performance optimization, advanced React patterns, system design, and architectural decisions.",
+    "vi": "Các chủ đề nâng cao cho kỹ sư frontend cấp cao bao gồm tối ưu hiệu suất, React patterns nâng cao, thiết kế hệ thống và quyết định kiến trúc."
+  },
+  "targetRole": "senior",
+  "estimatedDuration": 16,
+  "prerequisites": ["fullstack-developer"],
+  "modules": [
+    {
+      "id": "advanced-react",
+      "title": {
+        "en": "Advanced React Patterns",
+        "vi": "React Patterns Nâng Cao"
+      },
+      "order": 1,
+      "estimatedTime": 30,
+      "topics": [
+        {
+          "contentId": "react-hooks-advanced",
+          "order": 1,
+          "required": true
+        },
+        {
+          "contentId": "react-patterns-advanced",
+          "order": 2,
+          "required": true
+        },
+        {
+          "contentId": "react-performance",
+          "order": 3,
+          "required": true
+        },
+        {
+          "contentId": "react-19-features",
+          "order": 4,
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "performance-engineering",
+      "title": {
+        "en": "Performance Engineering",
+        "vi": "Kỹ Thuật Tối Ưu Hiệu Suất"
+      },
+      "order": 2,
+      "estimatedTime": 35,
+      "topics": [
+        {
+          "contentId": "core-web-vitals",
+          "order": 1,
+          "required": true
+        },
+        {
+          "contentId": "bundle-optimization",
+          "order": 2,
+          "required": true
+        },
+        {
+          "contentId": "rendering-optimization",
+          "order": 3,
+          "required": true
+        },
+        {
+          "contentId": "web-performance-comprehensive",
+          "order": 4,
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "frontend-system-design",
+      "title": {
+        "en": "Frontend System Design",
+        "vi": "Thiết Kế Hệ Thống Frontend"
+      },
+      "order": 3,
+      "estimatedTime": 40,
+      "topics": [
+        {
+          "contentId": "frontend-architecture",
+          "order": 1,
+          "required": true
+        },
+        {
+          "contentId": "microfrontends",
+          "order": 2,
+          "required": true
+        },
+        {
+          "contentId": "state-management-patterns",
+          "order": 3,
+          "required": true
+        },
+        {
+          "contentId": "distributed-frontend-systems",
+          "order": 4,
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "security-architecture",
+      "title": {
+        "en": "Security & Architecture",
+        "vi": "Bảo Mật & Kiến Trúc"
+      },
+      "order": 4,
+      "estimatedTime": 25,
+      "topics": [
+        {
+          "contentId": "web-security-comprehensive",
+          "order": 1,
+          "required": true
+        },
+        {
+          "contentId": "authentication-patterns",
+          "order": 2,
+          "required": true
+        },
+        {
+          "contentId": "security-architecture",
+          "order": 3,
+          "required": true
+        }
+      ]
+    }
+  ]
+}

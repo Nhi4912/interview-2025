@@ -1,0 +1,140 @@
+{
+  "id": "fullstack-developer",
+  "title": {
+    "en": "Full-Stack Developer Path",
+    "vi": "Lộ Trình Full-Stack Developer"
+  },
+  "description": {
+    "en": "Comprehensive path covering frontend, backend concepts, system design, and deployment. Build complete web applications from scratch.",
+    "vi": "Lộ trình toàn diện bao gồm frontend, backend, thiết kế hệ thống và triển khai. Xây dựng ứng dụng web hoàn chỉnh từ đầu."
+  },
+  "targetRole": "fullstack",
+  "estimatedDuration": 20,
+  "prerequisites": ["frontend-basics"],
+  "modules": [
+    {
+      "id": "advanced-javascript",
+      "title": {
+        "en": "Advanced JavaScript",
+        "vi": "JavaScript Nâng Cao"
+      },
+      "order": 1,
+      "estimatedTime": 30,
+      "topics": [
+        {
+          "contentId": "js-async-programming",
+          "order": 1,
+          "required": true
+        },
+        {
+          "contentId": "js-functional-programming",
+          "order": 2,
+          "required": true
+        },
+        {
+          "contentId": "js-advanced-patterns",
+          "order": 3,
+          "required": true
+        },
+        {
+          "contentId": "js-metaprogramming",
+          "order": 4,
+          "required": false
+        }
+      ]
+    },
+    {
+      "id": "typescript-essentials",
+      "title": {
+        "en": "TypeScript Essentials",
+        "vi": "TypeScript Cơ Bản"
+      },
+      "order": 2,
+      "estimatedTime": 25,
+      "topics": [
+        {
+          "contentId": "typescript-basics",
+          "order": 1,
+          "required": true
+        },
+        {
+          "contentId": "typescript-advanced-types",
+          "order": 2,
+          "required": true
+        },
+        {
+          "contentId": "typescript-generics",
+          "order": 3,
+          "required": true
+        },
+        {
+          "contentId": "react-typescript",
+          "order": 4,
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "nextjs-framework",
+      "title": {
+        "en": "Next.js Framework",
+        "vi": "Framework Next.js"
+      },
+      "order": 3,
+      "estimatedTime": 30,
+      "topics": [
+        {
+          "contentId": "nextjs-fundamentals",
+          "order": 1,
+          "required": true
+        },
+        {
+          "contentId": "nextjs-app-router",
+          "order": 2,
+          "required": true
+        },
+        {
+          "contentId": "nextjs-data-fetching",
+          "order": 3,
+          "required": true
+        },
+        {
+          "contentId": "nextjs-architecture",
+          "order": 4,
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "system-design-basics",
+      "title": {
+        "en": "System Design Fundamentals",
+        "vi": "Kiến Thức Cơ Bản Thiết Kế Hệ Thống"
+      },
+      "order": 4,
+      "estimatedTime": 35,
+      "topics": [
+        {
+          "contentId": "architecture-patterns",
+          "order": 1,
+          "required": true
+        },
+        {
+          "contentId": "scalability-basics",
+          "order": 2,
+          "required": true
+        },
+        {
+          "contentId": "caching-strategies",
+          "order": 3,
+          "required": true
+        },
+        {
+          "contentId": "database-design",
+          "order": 4,
+          "required": true
+        }
+      ]
+    }
+  ]
+}

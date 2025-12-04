@@ -1,0 +1,10 @@
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/test-diagram/page": "app/test-diagram/page.js",
+  "/test-knowledge-graph/page": "app/test-knowledge-graph/page.js",
+  "/test-interactive-components/page": "app/test-interactive-components/page.js",
+  "/test-knowledge-graph/with-content/page": "app/test-knowledge-graph/with-content/page.js",
+  "/test-search/page": "app/test-search/page.js",
+  "/test-bilingual/page": "app/test-bilingual/page.js",
+  "/test-roadmap/page": "app/test-roadmap/page.js"
+}

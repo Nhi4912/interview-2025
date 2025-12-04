@@ -1,0 +1,135 @@
+---
+id: js-closures-fundamentals
+slug: javascript-closures-fundamentals
+title:
+  en: "Understanding Closures in JavaScript"
+  vi: "Hiểu về Closures trong JavaScript"
+description:
+  en: "Learn how closures work in JavaScript, including lexical scope, execution context, and practical applications in modern development."
+  vi: "Tìm hiểu cách closures hoạt động trong JavaScript, bao gồm lexical scope, execution context và các ứng dụng thực tế trong phát triển hiện đại."
+category: javascript
+difficulty: intermediate
+estimatedTime: 45
+prerequisites: ["js-scope-fundamentals", "js-functions-basics"]
+relatedTopics: ["js-hoisting", "js-execution-context", "js-memory-management"]
+tags: ["closures", "scope", "functions", "lexical-scope"]
+interviewCompanies: ["google", "meta", "amazon"]
+lastUpdated: "2024-01-15T10:30:00.000Z"
+version: "1.0.0"
+hasQuiz: true
+hasCodeExamples: true
+hasDiagrams: true
+---
+
+# Understanding Closures in JavaScript
+
+## Introduction
+
+Closures are one of the most powerful and fundamental concepts in JavaScript. Understanding closures is essential for writing efficient, maintainable code and is a common topic in technical interviews at companies like Google, Meta, and Amazon.
+
+## What is a Closure?
+
+A closure is a function that has access to variables in its outer (enclosing) lexical scope, even after the outer function has returned. In simpler terms, a closure gives you access to an outer function's scope from an inner function.
+
+## Basic Example
+
+Here's a simple example of a closure:
+
+```javascript
+function createCounter() {
+  let count = 0;
+  
+  return function() {
+    count++;
+    return count;
+  };
+}
+
+const counter = createCounter();
+console.log(counter()); // 1
+console.log(counter()); // 2
+console.log(counter()); // 3
+```
+
+In this example, the inner function has access to the `count` variable even after `createCounter()` has finished executing.
+
+## How Closures Work
+
+Closures work because of JavaScript's lexical scoping rules. When a function is created, it maintains a reference to its lexical environment - the environment in which it was created.
+
+## Practical Applications
+
+### 1. Data Privacy
+
+Closures can be used to create private variables:
+
+```javascript
+function createBankAccount(initialBalance) {
+  let balance = initialBalance;
+  
+  return {
+    deposit(amount) {
+      balance += amount;
+      return balance;
+    },
+    withdraw(amount) {
+      if (amount <= balance) {
+        balance -= amount;
+        return balance;
+      }
+      return 'Insufficient funds';
+    },
+    getBalance() {
+      return balance;
+    }
+  };
+}
+
+const account = createBankAccount(1000);
+console.log(account.getBalance()); // 1000
+account.deposit(500);
+console.log(account.getBalance()); // 1500
+```
+
+### 2. Function Factories
+
+Closures enable the creation of specialized functions:
+
+```javascript
+function createMultiplier(multiplier) {
+  return function(number) {
+    return number * multiplier;
+  };
+}
+
+const double = createMultiplier(2);
+const triple = createMultiplier(3);
+
+console.log(double(5));  // 10
+console.log(triple(5));  // 15
+```
+
+## Common Interview Questions
+
+1. **What is a closure?**
+   - A closure is a function that retains access to its lexical scope even when executed outside that scope.
+
+2. **What are practical uses of closures?**
+   - Data privacy, function factories, callbacks, event handlers, and maintaining state.
+
+3. **What are the potential downsides of closures?**
+   - Memory consumption (variables are kept in memory) and potential memory leaks if not managed properly.
+
+## Key Takeaways
+
+- Closures allow functions to access variables from their outer scope
+- They enable data privacy and encapsulation
+- Understanding closures is crucial for advanced JavaScript patterns
+- Closures are commonly tested in technical interviews
+
+## Related Topics
+
+- [Lexical Scope](#)
+- [Execution Context](#)
+- [Memory Management](#)
+- [Function Scope](#)

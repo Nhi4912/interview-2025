@@ -1,0 +1,151 @@
+{
+  "id": "react-fundamentals-quiz",
+  "contentId": "react-fundamentals",
+  "title": {
+    "en": "React Fundamentals Quiz",
+    "vi": "Bài kiểm tra React cơ bản"
+  },
+  "description": {
+    "en": "Test your understanding of React fundamentals",
+    "vi": "Kiểm tra hiểu biết của bạn về React cơ bản"
+  },
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "multiple-choice",
+      "question": {
+        "en": "What is React?",
+        "vi": "React là gì?"
+      },
+      "options": {
+        "en": [
+          "A JavaScript library for building user interfaces",
+          "A full-stack framework",
+          "A database management system",
+          "A CSS preprocessor"
+        ],
+        "vi": [
+          "Một thư viện JavaScript để xây dựng giao diện người dùng",
+          "Một framework full-stack",
+          "Một hệ thống quản lý cơ sở dữ liệu",
+          "Một CSS preprocessor"
+        ]
+      },
+      "correctAnswer": 0,
+      "explanation": {
+        "en": "React is a JavaScript library developed by Meta (Facebook) specifically for building user interfaces. It's not a full framework like Angular.",
+        "vi": "React là một thư viện JavaScript được phát triển bởi Meta (Facebook) đặc biệt để xây dựng giao diện người dùng. Nó không phải là một framework đầy đủ như Angular."
+      }
+    },
+    {
+      "id": "q2",
+      "type": "multiple-choice",
+      "question": {
+        "en": "What is the difference between props and state?",
+        "vi": "Sự khác biệt giữa props và state là gì?"
+      },
+      "options": {
+        "en": [
+          "Props are passed from parent, state is managed internally",
+          "Props can be changed, state cannot",
+          "They are the same thing",
+          "Props are for styling, state is for data"
+        ],
+        "vi": [
+          "Props được truyền từ cha, state được quản lý nội bộ",
+          "Props có thể thay đổi, state thì không",
+          "Chúng là một thứ giống nhau",
+          "Props dùng cho styling, state dùng cho dữ liệu"
+        ]
+      },
+      "correctAnswer": 0,
+      "explanation": {
+        "en": "Props are passed from parent components and are read-only, while state is managed within the component and can be changed using setState or useState.",
+        "vi": "Props được truyền từ component cha và là read-only, trong khi state được quản lý trong component và có thể thay đổi bằng setState hoặc useState."
+      }
+    },
+    {
+      "id": "q3",
+      "type": "code",
+      "question": {
+        "en": "What will this component render?",
+        "vi": "Component này sẽ render gì?"
+      },
+      "code": "function Greeting({ name }) {\n  return <h1>Hello, {name}!</h1>;\n}\n\n<Greeting name=\"World\" />",
+      "options": {
+        "en": [
+          "<h1>Hello, World!</h1>",
+          "<h1>Hello, name!</h1>",
+          "<h1>Hello, {name}!</h1>",
+          "Error"
+        ],
+        "vi": [
+          "<h1>Hello, World!</h1>",
+          "<h1>Hello, name!</h1>",
+          "<h1>Hello, {name}!</h1>",
+          "Lỗi"
+        ]
+      },
+      "correctAnswer": 0,
+      "explanation": {
+        "en": "The component receives 'World' as the name prop and renders it inside the h1 tag, resulting in 'Hello, World!'.",
+        "vi": "Component nhận 'World' làm prop name và render nó bên trong thẻ h1, kết quả là 'Hello, World!'."
+      }
+    },
+    {
+      "id": "q4",
+      "type": "multiple-choice",
+      "question": {
+        "en": "What is the Virtual DOM?",
+        "vi": "Virtual DOM là gì?"
+      },
+      "options": {
+        "en": [
+          "A lightweight copy of the actual DOM kept in memory",
+          "A new browser API",
+          "A CSS framework",
+          "A database"
+        ],
+        "vi": [
+          "Một bản sao nhẹ của DOM thực được giữ trong bộ nhớ",
+          "Một browser API mới",
+          "Một CSS framework",
+          "Một cơ sở dữ liệu"
+        ]
+      },
+      "correctAnswer": 0,
+      "explanation": {
+        "en": "The Virtual DOM is a lightweight representation of the actual DOM. React uses it to efficiently update only the parts of the DOM that have changed.",
+        "vi": "Virtual DOM là một biểu diễn nhẹ của DOM thực. React sử dụng nó để cập nhật hiệu quả chỉ những phần của DOM đã thay đổi."
+      }
+    },
+    {
+      "id": "q5",
+      "type": "multiple-choice",
+      "question": {
+        "en": "Why do we need keys in React lists?",
+        "vi": "Tại sao chúng ta cần keys trong React lists?"
+      },
+      "options": {
+        "en": [
+          "To help React identify which items have changed, added, or removed",
+          "To style the list items",
+          "To make the code run faster",
+          "Keys are optional and not necessary"
+        ],
+        "vi": [
+          "Để giúp React xác định items nào đã thay đổi, được thêm, hoặc bị xóa",
+          "Để style các list items",
+          "Để làm code chạy nhanh hơn",
+          "Keys là tùy chọn và không cần thiết"
+        ]
+      },
+      "correctAnswer": 0,
+      "explanation": {
+        "en": "Keys help React identify which items in a list have changed, been added, or been removed. This helps React optimize re-rendering by only updating the items that have changed.",
+        "vi": "Keys giúp React xác định items nào trong list đã thay đổi, được thêm, hoặc bị xóa. Điều này giúp React tối ưu re-rendering bằng cách chỉ cập nhật các items đã thay đổi."
+      }
+    }
+  ]
+}

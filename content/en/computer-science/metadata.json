@@ -1,0 +1,40 @@
+{
+  "category": "computer-science",
+  "title": {
+    "en": "Computer Science Fundamentals",
+    "vi": "Kiến thức cơ bản Khoa học máy tính"
+  },
+  "description": {
+    "en": "Master computer science fundamentals including data structures, algorithms, complexity analysis, design patterns, and graph algorithms.",
+    "vi": "Làm chủ kiến thức cơ bản khoa học máy tính bao gồm cấu trúc dữ liệu, thuật toán, phân tích độ phức tạp, mẫu thiết kế và thuật toán đồ thị."
+  },
+  "order": 10,
+  "icon": "computer-science",
+  "topics": [
+    {
+      "id": "cs-data-structures",
+      "order": 1,
+      "featured": true
+    },
+    {
+      "id": "cs-algorithms",
+      "order": 2,
+      "featured": true
+    },
+    {
+      "id": "cs-complexity-analysis",
+      "order": 3,
+      "featured": true
+    },
+    {
+      "id": "cs-design-patterns",
+      "order": 4,
+      "featured": true
+    },
+    {
+      "id": "cs-graph-algorithms",
+      "order": 5,
+      "featured": true
+    }
+  ]
+}

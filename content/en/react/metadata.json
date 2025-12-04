@@ -1,0 +1,40 @@
+{
+  "category": "react",
+  "title": {
+    "en": "React",
+    "vi": "React"
+  },
+  "description": {
+    "en": "Master React from fundamentals to advanced patterns, including hooks, state management, performance optimization, and modern React features.",
+    "vi": "Làm chủ React từ cơ bản đến các mẫu nâng cao, bao gồm hooks, quản lý state, tối ưu hiệu suất và các tính năng React hiện đại."
+  },
+  "order": 3,
+  "icon": "react",
+  "topics": [
+    {
+      "id": "react-fundamentals",
+      "order": 1,
+      "featured": true
+    },
+    {
+      "id": "react-hooks-deep-dive",
+      "order": 2,
+      "featured": true
+    },
+    {
+      "id": "react-advanced-patterns",
+      "order": 3,
+      "featured": true
+    },
+    {
+      "id": "react-state-management",
+      "order": 4,
+      "featured": true
+    },
+    {
+      "id": "react-performance-optimization",
+      "order": 5,
+      "featured": true
+    }
+  ]
+}

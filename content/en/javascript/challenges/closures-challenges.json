@@ -1,0 +1,128 @@
+{
+  "id": "closures-challenges",
+  "contentId": "js-closures",
+  "title": {
+    "en": "Closures Coding Challenges",
+    "vi": "Thử thách lập trình Closures"
+  },
+  "description": {
+    "en": "Practice your closure skills with these coding challenges",
+    "vi": "Luyện tập kỹ năng closure với các thử thách lập trình này"
+  },
+  "challenges": [
+    {
+      "id": "counter-challenge",
+      "title": {
+        "en": "Create a Counter",
+        "vi": "Tạo một Counter"
+      },
+      "difficulty": "easy",
+      "description": {
+        "en": "Create a function `createCounter()` that returns an object with methods to increment, decrement, get value, and reset a counter.",
+        "vi": "Tạo một hàm `createCounter()` trả về một object với các phương thức để tăng, giảm, lấy giá trị và reset một counter."
+      },
+      "starterCode": "function createCounter() {\n  // Your code here\n}\n\nconst counter = createCounter();\ncounter.increment();\ncounter.increment();\nconsole.log(counter.getValue()); // Should output: 2",
+      "solution": "function createCounter() {\n  let count = 0;\n  \n  return {\n    increment() {\n      count++;\n      return this;\n    },\n    decrement() {\n      count--;\n      return this;\n    },\n    getValue() {\n      return count;\n    },\n    reset() {\n      count = 0;\n      return this;\n    }\n  };\n}",
+      "testCases": [
+        {
+          "input": "counter.increment().increment().getValue()",
+          "expected": 2
+        },
+        {
+          "input": "counter.decrement().getValue()",
+          "expected": 1
+        },
+        {
+          "input": "counter.reset().getValue()",
+          "expected": 0
+        }
+      ],
+      "hints": {
+        "en": [
+          "Use a private variable to store the count",
+          "Return an object with methods that access the private variable",
+          "Return 'this' from methods to enable chaining"
+        ],
+        "vi": [
+          "Sử dụng một biến private để lưu trữ count",
+          "Trả về một object với các phương thức truy cập biến private",
+          "Trả về 'this' từ các phương thức để cho phép chaining"
+        ]
+      }
+    },
+    {
+      "id": "memoization-challenge",
+      "title": {
+        "en": "Implement Memoization",
+        "vi": "Triển khai Memoization"
+      },
+      "difficulty": "medium",
+      "description": {
+        "en": "Create a `memoize()` function that caches the results of expensive function calls.",
+        "vi": "Tạo một hàm `memoize()` lưu cache kết quả của các lần gọi hàm tốn kém."
+      },
+      "starterCode": "function memoize(fn) {\n  // Your code here\n}\n\nconst slowFunction = (n) => {\n  console.log('Computing...');\n  return n * 2;\n};\n\nconst memoized = memoize(slowFunction);\nconsole.log(memoized(5)); // Computing... 10\nconsole.log(memoized(5)); // 10 (from cache)",
+      "solution": "function memoize(fn) {\n  const cache = {};\n  \n  return function(...args) {\n    const key = JSON.stringify(args);\n    \n    if (cache[key] !== undefined) {\n      return cache[key];\n    }\n    \n    const result = fn(...args);\n    cache[key] = result;\n    return result;\n  };\n}",
+      "testCases": [
+        {
+          "description": "First call should compute",
+          "input": "memoized(5)",
+          "expected": 10
+        },
+        {
+          "description": "Second call should use cache",
+          "input": "memoized(5)",
+          "expected": 10
+        }
+      ],
+      "hints": {
+        "en": [
+          "Use an object to store cached results",
+          "Create a key from the function arguments",
+          "Check if the result exists in cache before computing"
+        ],
+        "vi": [
+          "Sử dụng một object để lưu trữ kết quả đã cache",
+          "Tạo một key từ các tham số của hàm",
+          "Kiểm tra xem kết quả có tồn tại trong cache trước khi tính toán"
+        ]
+      }
+    },
+    {
+      "id": "function-composition-challenge",
+      "title": {
+        "en": "Function Composition",
+        "vi": "Kết hợp hàm"
+      },
+      "difficulty": "hard",
+      "description": {
+        "en": "Create a `compose()` function that takes multiple functions and returns a new function that executes them from right to left.",
+        "vi": "Tạo một hàm `compose()` nhận nhiều hàm và trả về một hàm mới thực thi chúng từ phải sang trái."
+      },
+      "starterCode": "function compose(...fns) {\n  // Your code here\n}\n\nconst add5 = x => x + 5;\nconst multiply2 = x => x * 2;\nconst subtract3 = x => x - 3;\n\nconst combined = compose(subtract3, multiply2, add5);\nconsole.log(combined(10)); // (10 + 5) * 2 - 3 = 27",
+      "solution": "function compose(...fns) {\n  return function(initialValue) {\n    return fns.reduceRight((acc, fn) => fn(acc), initialValue);\n  };\n}",
+      "testCases": [
+        {
+          "input": "combined(10)",
+          "expected": 27
+        },
+        {
+          "input": "combined(5)",
+          "expected": 17
+        }
+      ],
+      "hints": {
+        "en": [
+          "Use reduceRight to execute functions from right to left",
+          "Return a function that takes the initial value",
+          "Pass the result of each function to the next"
+        ],
+        "vi": [
+          "Sử dụng reduceRight để thực thi các hàm từ phải sang trái",
+          "Trả về một hàm nhận giá trị ban đầu",
+          "Truyền kết quả của mỗi hàm cho hàm tiếp theo"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,177 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px 0;
+  align-items: center;
+}
+
+.info {
+  text-align: center;
+}
+
+.infoText {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.navigation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  padding: 0 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.button:hover:not(:disabled) {
+  color: #1f2937;
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.button:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.button:disabled {
+  color: #d1d5db;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.navButton {
+  gap: 6px;
+}
+
+.navButtonText {
+  display: none;
+}
+
+.pages {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pageButton {
+  min-width: 40px;
+}
+
+.pageButtonActive {
+  color: #ffffff;
+  background: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.pageButtonActive:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.ellipsis {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  font-size: 14px;
+  color: #9ca3af;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  .infoText {
+    color: #9ca3af;
+  }
+
+  .button {
+    color: #d1d5db;
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .button:hover:not(:disabled) {
+    color: #f3f4f6;
+    background: #374151;
+    border-color: #4b5563;
+  }
+
+  .button:disabled {
+    color: #4b5563;
+  }
+
+  .pageButtonActive {
+    color: #ffffff;
+    background: #3b82f6;
+    border-color: #3b82f6;
+  }
+
+  .pageButtonActive:hover {
+    background: #2563eb;
+    border-color: #2563eb;
+  }
+
+  .ellipsis {
+    color: #6b7280;
+  }
+}
+
+/* Responsive */
+@media (min-width: 640px) {
+  .navButtonText {
+    display: inline;
+  }
+
+  .navButton {
+    min-width: auto;
+    padding: 0 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .container {
+    gap: 12px;
+    padding: 16px 0;
+  }
+
+  .navigation {
+    gap: 4px;
+  }
+
+  .button {
+    min-width: 36px;
+    height: 36px;
+    padding: 0 8px;
+    font-size: 13px;
+  }
+
+  .pageButton {
+    min-width: 36px;
+  }
+
+  .ellipsis {
+    min-width: 36px;
+    height: 36px;
+  }
+
+  .pages {
+    gap: 2px;
+  }
+}

@@ -1,0 +1,412 @@
+---
+id: js-closures
+slug: javascript-closures
+title:
+  en: "Closures"
+  vi: "Closures trong JavaScript"
+description:
+  en: "Learn about Closures in JavaScript, including core concepts, practical examples, and interview preparation."
+  vi: "Tìm hiểu về Closures trong JavaScript, bao gồm các khái niệm cốt lõi, ví dụ thực tế và chuẩn bị phỏng vấn."
+category: javascript
+difficulty: intermediate
+estimatedTime: 50
+prerequisites: ["js-scope-hoisting", "js-functions-basics"]
+relatedTopics: []
+tags: ["javascript", "closures", "scope", "functions", "lexical-scope"]
+interviewCompanies: ["google", "meta", "amazon", "microsoft"]
+lastUpdated: "2025-11-13T04:31:05.377Z"
+version: "1.0.0"
+hasQuiz: true
+hasCodeExamples: true
+hasDiagrams: true
+---
+
+# Closures trong JavaScript
+
+## Kiến thức cơ bản JavaScript - Chương 3
+
+## Tổng quan
+
+Closures là một trong những khái niệm mạnh mẽ và thường bị hiểu nhầm nhất trong JavaScript. Closure cho phép bạn truy cập vào phạm vi (scope) của hàm bên ngoài từ một hàm bên trong, ngay cả sau khi hàm bên ngoài đã kết thúc thực thi.
+
+## Mục lục
+
+1. [Closure là gì?](#closure-là-gì)
+2. [Cách Closures hoạt động](#cách-closures-hoạt-động)
+3. [Các trường hợp sử dụng thực tế](#các-trường-hợp-sử-dụng-thực-tế)
+4. [Các mẫu phổ biến](#các-mẫu-phổ-biến)
+5. [Những lỗi thường gặp với Closure](#những-lỗi-thường-gặp-với-closure)
+6. [Cân nhắc về bộ nhớ](#cân-nhắc-về-bộ-nhớ)
+7. [Câu hỏi phỏng vấn](#câu-hỏi-phỏng-vấn)
+8. [Bài tập thực hành](#bài-tập-thực-hành)
+
+## Closure là gì?
+
+**Định nghĩa:** Closure là một hàm có quyền truy cập vào các biến trong phạm vi từ vựng (lexical scope) bên ngoài của nó, ngay cả sau khi hàm bên ngoài đã kết thúc thực thi.
+
+### Ví dụ đơn giản
+
+```javascript
+function outerFunction(outerVariable) {
+  return function innerFunction(innerVariable) {
+    console.log(`Outer: ${outerVariable}`);
+    console.log(`Inner: ${innerVariable}`);
+  };
+}
+
+const newFunction = outerFunction("outside");
+newFunction("inside");
+// Kết quả:
+// Outer: outside
+// Inner: inside
+```
+
+**Điểm chính:**
+
+- `innerFunction` có quyền truy cập vào `outerVariable`
+- `outerVariable` vẫn tồn tại ngay cả sau khi `outerFunction` kết thúc
+- Đây chính là một closure!
+
+## Cách Closures hoạt động
+
+### Lexical Scoping (Phạm vi từ vựng)
+
+```javascript
+const globalVar = "global";
+
+function outer() {
+  const outerVar = "outer";
+
+  function middle() {
+    const middleVar = "middle";
+
+    function inner() {
+      const innerVar = "inner";
+
+      // Hàm inner có quyền truy cập tất cả các scope bên ngoài
+      console.log(innerVar); // 'inner'
+      console.log(middleVar); // 'middle'
+      console.log(outerVar); // 'outer'
+      console.log(globalVar); // 'global'
+    }
+
+    return inner;
+  }
+
+  return middle;
+}
+
+const middleFn = outer();
+const innerFn = middleFn();
+innerFn(); // Tất cả các biến đều có thể truy cập!
+```
+
+### Hình ảnh hóa Scope Chain
+
+```
+Scope Chain cho inner():
+inner() scope → middle() scope → outer() scope → global scope
+```
+
+## Các trường hợp sử dụng thực tế
+
+### 1. Tính riêng tư của dữ liệu (Data Privacy)
+
+Closures có thể được sử dụng để tạo các biến private:
+
+```javascript
+function createBankAccount(initialBalance) {
+  let balance = initialBalance;
+
+  return {
+    deposit(amount) {
+      balance += amount;
+      return balance;
+    },
+    withdraw(amount) {
+      if (amount <= balance) {
+        balance -= amount;
+        return balance;
+      }
+      return "Số dư không đủ";
+    },
+    getBalance() {
+      return balance;
+    },
+  };
+}
+
+const account = createBankAccount(1000);
+console.log(account.getBalance()); // 1000
+account.deposit(500);
+console.log(account.getBalance()); // 1500
+// Không thể truy cập trực tiếp vào biến balance
+```
+
+### 2. Function Factories (Nhà máy hàm)
+
+Closures cho phép tạo các hàm chuyên biệt:
+
+```javascript
+function createMultiplier(multiplier) {
+  return function (number) {
+    return number * multiplier;
+  };
+}
+
+const double = createMultiplier(2);
+const triple = createMultiplier(3);
+
+console.log(double(5)); // 10
+console.log(triple(5)); // 15
+```
+
+### 3. Event Handlers và Callbacks
+
+```javascript
+function setupButton(buttonId, message) {
+  const button = document.getElementById(buttonId);
+
+  button.addEventListener("click", function () {
+    // Closure giữ tham chiếu đến message
+    alert(message);
+  });
+}
+
+setupButton("btn1", "Nút 1 được nhấn!");
+setupButton("btn2", "Nút 2 được nhấn!");
+```
+
+## Các mẫu phổ biến
+
+### Module Pattern
+
+```javascript
+const calculator = (function () {
+  // Biến private
+  let result = 0;
+
+  // Public API
+  return {
+    add(x) {
+      result += x;
+      return this;
+    },
+    subtract(x) {
+      result -= x;
+      return this;
+    },
+    multiply(x) {
+      result *= x;
+      return this;
+    },
+    getResult() {
+      return result;
+    },
+    reset() {
+      result = 0;
+      return this;
+    },
+  };
+})();
+
+calculator.add(5).multiply(2).subtract(3);
+console.log(calculator.getResult()); // 7
+```
+
+### Memoization
+
+```javascript
+function memoize(fn) {
+  const cache = {};
+
+  return function (...args) {
+    const key = JSON.stringify(args);
+
+    if (cache[key]) {
+      console.log("Lấy từ cache");
+      return cache[key];
+    }
+
+    console.log("Tính toán kết quả");
+    const result = fn(...args);
+    cache[key] = result;
+    return result;
+  };
+}
+
+const fibonacci = memoize(function (n) {
+  if (n <= 1) return n;
+  return fibonacci(n - 1) + fibonacci(n - 2);
+});
+
+console.log(fibonacci(10)); // Tính toán
+console.log(fibonacci(10)); // Lấy từ cache
+```
+
+## Những lỗi thường gặp với Closure
+
+### 1. Vòng lặp với var
+
+```javascript
+// ❌ Sai
+for (var i = 0; i < 3; i++) {
+  setTimeout(function () {
+    console.log(i); // In ra 3, 3, 3
+  }, 1000);
+}
+
+// ✅ Đúng - Sử dụng let
+for (let i = 0; i < 3; i++) {
+  setTimeout(function () {
+    console.log(i); // In ra 0, 1, 2
+  }, 1000);
+}
+
+// ✅ Đúng - Sử dụng IIFE
+for (var i = 0; i < 3; i++) {
+  (function (j) {
+    setTimeout(function () {
+      console.log(j); // In ra 0, 1, 2
+    }, 1000);
+  })(i);
+}
+```
+
+### 2. Rò rỉ bộ nhớ (Memory Leaks)
+
+```javascript
+// ❌ Có thể gây rò rỉ bộ nhớ
+function createHeavyClosure() {
+  const largeData = new Array(1000000).fill("data");
+
+  return function () {
+    // Closure giữ tham chiếu đến largeData
+    console.log(largeData[0]);
+  };
+}
+
+// ✅ Tốt hơn - Chỉ giữ những gì cần thiết
+function createOptimizedClosure() {
+  const largeData = new Array(1000000).fill("data");
+  const firstItem = largeData[0];
+
+  return function () {
+    console.log(firstItem);
+  };
+}
+```
+
+## Cân nhắc về bộ nhớ
+
+Closures giữ tham chiếu đến các biến trong scope bên ngoài, điều này có nghĩa là:
+
+1. **Bộ nhớ được giữ lại**: Các biến không bị garbage collected cho đến khi closure không còn được tham chiếu
+2. **Hiệu suất**: Quá nhiều closures có thể ảnh hưởng đến hiệu suất
+3. **Best practices**: Chỉ giữ những gì thực sự cần thiết trong closure
+
+## Câu hỏi phỏng vấn
+
+### Câu 1: Closure là gì?
+
+**Trả lời:** Closure là một hàm có quyền truy cập vào các biến trong phạm vi từ vựng bên ngoài của nó, ngay cả sau khi hàm bên ngoài đã kết thúc thực thi.
+
+### Câu 2: Các ứng dụng thực tế của closures là gì?
+
+**Trả lời:**
+
+- Tính riêng tư của dữ liệu (data privacy)
+- Function factories
+- Event handlers và callbacks
+- Module pattern
+- Memoization
+- Duy trì state trong async operations
+
+### Câu 3: Nhược điểm tiềm ẩn của closures là gì?
+
+**Trả lời:**
+
+- Tiêu thụ bộ nhớ (các biến được giữ trong bộ nhớ)
+- Có thể gây rò rỉ bộ nhớ nếu không được quản lý đúng cách
+- Có thể làm code khó debug hơn
+
+### Câu 4: Giải thích đoạn code sau
+
+```javascript
+for (var i = 0; i < 3; i++) {
+  setTimeout(function () {
+    console.log(i);
+  }, 1000);
+}
+```
+
+**Trả lời:** Code này sẽ in ra `3, 3, 3` thay vì `0, 1, 2` vì:
+
+- `var` có function scope, không phải block scope
+- Tất cả các callback đều tham chiếu đến cùng một biến `i`
+- Khi callbacks chạy, vòng lặp đã kết thúc và `i` có giá trị 3
+
+**Giải pháp:**
+
+- Sử dụng `let` thay vì `var` (tạo block scope mới cho mỗi iteration)
+- Sử dụng IIFE để tạo scope mới
+- Sử dụng `.forEach()` hoặc các phương thức array khác
+
+## Bài tập thực hành
+
+### Bài 1: Tạo Counter với Closure
+
+Tạo một hàm `createCounter()` trả về một object với các phương thức:
+
+- `increment()`: Tăng counter lên 1
+- `decrement()`: Giảm counter xuống 1
+- `getValue()`: Lấy giá trị hiện tại
+- `reset()`: Reset về 0
+
+```javascript
+function createCounter() {
+  // Code của bạn ở đây
+}
+
+const counter = createCounter();
+counter.increment();
+counter.increment();
+console.log(counter.getValue()); // 2
+counter.decrement();
+console.log(counter.getValue()); // 1
+counter.reset();
+console.log(counter.getValue()); // 0
+```
+
+### Bài 2: Function Composition với Closure
+
+Tạo một hàm `compose()` nhận nhiều hàm và trả về một hàm mới thực thi chúng từ phải sang trái.
+
+```javascript
+function compose(...fns) {
+  // Code của bạn ở đây
+}
+
+const add5 = (x) => x + 5;
+const multiply2 = (x) => x * 2;
+const subtract3 = (x) => x - 3;
+
+const combined = compose(subtract3, multiply2, add5);
+console.log(combined(10)); // (10 + 5) * 2 - 3 = 27
+```
+
+## Tóm tắt
+
+- Closures là một tính năng mạnh mẽ của JavaScript cho phép hàm truy cập scope bên ngoài
+- Chúng cho phép data privacy và encapsulation
+- Hiểu closures là rất quan trọng cho các pattern JavaScript nâng cao
+- Closures thường được kiểm tra trong các buổi phỏng vấn kỹ thuật
+- Cần cẩn thận với memory leaks và performance khi sử dụng closures
+
+## Chủ đề liên quan
+
+- [Lexical Scope](#)
+- [Execution Context](#)
+- [Memory Management](#)
+- [Function Scope](#)
+- [Event Loop](#)

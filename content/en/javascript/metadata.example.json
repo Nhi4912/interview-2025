@@ -1,0 +1,40 @@
+{
+  "id": "js-closures-fundamentals",
+  "slug": "javascript-closures-fundamentals",
+  "title": {
+    "en": "Understanding Closures in JavaScript",
+    "vi": "Hiểu về Closures trong JavaScript"
+  },
+  "description": {
+    "en": "Learn how closures work in JavaScript, including lexical scope, execution context, and practical applications in modern development.",
+    "vi": "Tìm hiểu cách closures hoạt động trong JavaScript, bao gồm lexical scope, execution context và các ứng dụng thực tế trong phát triển hiện đại."
+  },
+  "category": "javascript",
+  "difficulty": "intermediate",
+  "estimatedTime": 45,
+  "prerequisites": [
+    "js-scope-fundamentals",
+    "js-functions-basics"
+  ],
+  "relatedTopics": [
+    "js-hoisting",
+    "js-execution-context",
+    "js-memory-management"
+  ],
+  "tags": [
+    "closures",
+    "scope",
+    "functions",
+    "lexical-scope"
+  ],
+  "interviewCompanies": [
+    "google",
+    "meta",
+    "amazon"
+  ],
+  "lastUpdated": "2024-01-15T10:30:00.000Z",
+  "version": "1.0.0",
+  "hasQuiz": true,
+  "hasCodeExamples": true,
+  "hasDiagrams": true
+}
