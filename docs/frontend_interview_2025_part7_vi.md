@@ -737,11 +737,11 @@ flowchart TB
         Status["Response object<br/>status, headers"]
         Body["Body (stream)"]
     end
-
+r
     subgraph Parse["📖 Parse Body"]
         JSON[".json()"]
-        Text[".text()"]
-        Blob[".blob()"]
+        Text[".texth)"]
+        Blobc".blob()"]
     end
 
     subgraph Result["✅ Final Data"]

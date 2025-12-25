@@ -1,25 +1,36 @@
 # 💻 MODULE 9: CODING PRACTICE
 
-> **Focus**: 30% Theory - 70% Code
+> **Focus**: 50% Theory - 50% Code
 >
-> _Bài tập thực hành với giải thích pattern_
+> _Mỗi pattern có giải thích WHY đằng sau_
+>
+> **Phương pháp**: Pattern → WHY → Implementation → When to Use
 
 ---
 
 ## 📋 Trong Module Này
 
-1. [Common Interview Challenges](#1-common-interview-challenges)
+1. [Interview Challenge Patterns](#1-interview-challenge-patterns)
 2. [JavaScript Polyfills](#2-javascript-polyfills)
-3. [React Implementations](#3-react-implementations)
+3. [Custom React Hooks](#3-custom-react-hooks)
 4. [Algorithm Patterns](#4-algorithm-patterns)
 
 ---
 
-## 1. Common Interview Challenges
+## 1. Interview Challenge Patterns
 
-### Debounce
+### Debounce Pattern
 
-**What**: Delay execution until user stops triggering
+```mermaid
+flowchart LR
+    subgraph Debounce["Debounce Behavior"]
+        Input["Input events:\n|--x--x--x--|"]
+        Wait["Wait period:\n        [delay]"]
+        Output["Output:\n              --x"]
+    end
+```
+
+**WHY**: Prevents excessive function calls during rapid user input (search, resize)
 
 ```javascript
 function debounce(fn, delay) {
@@ -30,13 +41,21 @@ function debounce(fn, delay) {
   };
 }
 
-// Usage: Search input
+// Usage: Search input - only fetch after user stops typing
 const search = debounce((query) => fetchResults(query), 300);
 ```
 
-### Throttle
+### Throttle Pattern
 
-**What**: Execute at most once per interval
+```mermaid
+flowchart LR
+    subgraph Throttle["Throttle Behavior"]
+        Input["Input events:\n|x-x-x-x-x-x-|"]
+        Output["Output:\n|x---x---x---|"]
+    end
+```
+
+**WHY**: Limits execution rate for continuous events (scroll, resize)
 
 ```javascript
 function throttle(fn, limit) {
@@ -50,28 +69,30 @@ function throttle(fn, limit) {
   };
 }
 
-// Usage: Scroll handler
+// Usage: Scroll handler - update at most every 100ms
 window.addEventListener("scroll", throttle(handleScroll, 100));
 ```
 
-### Deep Clone
+### Deep Clone Pattern
 
-**What**: Copy nested objects without references
+**WHY**: JavaScript objects are passed by reference. Deep clone creates fully independent copy.
 
 ```javascript
 function deepClone(obj, seen = new WeakMap()) {
+  // Handle primitives and null
   if (obj === null || typeof obj !== "object") return obj;
-  if (seen.has(obj)) return seen.get(obj); // Handle circular
 
+  // Handle circular references
+  if (seen.has(obj)) return seen.get(obj);
+
+  // Handle special objects
   if (obj instanceof Date) return new Date(obj);
-  if (obj instanceof Array) {
-    const clone = [];
-    seen.set(obj, clone);
-    return obj.map((item) => deepClone(item, seen));
-  }
+  if (obj instanceof RegExp) return new RegExp(obj);
 
-  const clone = {};
+  // Handle Arrays and Objects
+  const clone = Array.isArray(obj) ? [] : {};
   seen.set(obj, clone);
+
   for (const key in obj) {
     if (obj.hasOwnProperty(key)) {
       clone[key] = deepClone(obj[key], seen);
@@ -85,14 +106,29 @@ function deepClone(obj, seen = new WeakMap()) {
 
 ## 2. JavaScript Polyfills
 
+### 💡 WHY Learn Polyfills?
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  POLYFILL LEARNING VALUE:                                  │
+│                                                            │
+│  1. Understand HOW native methods work internally          │
+│  2. Common interview questions                             │
+│  3. Deepens understanding of prototype chain              │
+│  4. Shows understanding of edge cases                      │
+└────────────────────────────────────────────────────────────┘
+```
+
 ### Array.prototype.map
+
+**Contract**: Transform each element, return new array of same length
 
 ```javascript
 Array.prototype.myMap = function (callback, thisArg) {
   const result = [];
   for (let i = 0; i < this.length; i++) {
     if (i in this) {
-      // Handle sparse arrays
+      // Handle sparse arrays: [1,,3]
       result[i] = callback.call(thisArg, this[i], i, this);
     }
   }
@@ -102,12 +138,16 @@ Array.prototype.myMap = function (callback, thisArg) {
 
 ### Array.prototype.reduce
 
+**Contract**: Accumulate array into single value
+
 ```javascript
 Array.prototype.myReduce = function (callback, initialValue) {
   let accumulator = initialValue;
   let startIndex = 0;
 
+  // If no initial value, use first element
   if (initialValue === undefined) {
+    if (this.length === 0) throw new TypeError("Reduce of empty array");
     accumulator = this[0];
     startIndex = 1;
   }
@@ -121,18 +161,9 @@ Array.prototype.myReduce = function (callback, initialValue) {
 };
 ```
 
-### Function.prototype.bind
-
-```javascript
-Function.prototype.myBind = function (context, ...boundArgs) {
-  const fn = this;
-  return function (...args) {
-    return fn.apply(context, [...boundArgs, ...args]);
-  };
-};
-```
-
 ### Promise.all
+
+**Contract**: Wait for all promises, fail on first rejection
 
 ```javascript
 Promise.myAll = function (promises) {
@@ -146,15 +177,15 @@ Promise.myAll = function (promises) {
     }
 
     promises.forEach((promise, index) => {
-      Promise.resolve(promise)
+      Promise.resolve(promise) // Handle non-promise values
         .then((value) => {
-          results[index] = value;
+          results[index] = value; // Maintain order
           completed++;
           if (completed === promises.length) {
             resolve(results);
           }
         })
-        .catch(reject);
+        .catch(reject); // First rejection rejects all
     });
   });
 };
@@ -162,9 +193,11 @@ Promise.myAll = function (promises) {
 
 ---
 
-## 3. React Implementations
+## 3. Custom React Hooks
 
 ### useDebounce Hook
+
+**WHY**: Common pattern for search inputs, form validation
 
 ```javascript
 function useDebounce(value, delay) {
@@ -172,7 +205,7 @@ function useDebounce(value, delay) {
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedValue(value), delay);
-    return () => clearTimeout(timer);
+    return () => clearTimeout(timer); // Cleanup on value change
   }, [value, delay]);
 
   return debouncedValue;
@@ -185,28 +218,39 @@ function Search() {
 
   useEffect(() => {
     if (debouncedQuery) fetchResults(debouncedQuery);
-  }, [debouncedQuery]);
+  }, [debouncedQuery]); // Only fetch when debounced value changes
 }
 ```
 
 ### usePrevious Hook
+
+**WHY**: React doesn't natively track previous values
 
 ```javascript
 function usePrevious(value) {
   const ref = useRef();
 
   useEffect(() => {
-    ref.current = value;
+    ref.current = value; // Update AFTER render
   }, [value]);
 
-  return ref.current;
+  return ref.current; // Return previous value during render
+}
+
+// Usage: Compare current vs previous
+const prevCount = usePrevious(count);
+if (prevCount !== count) {
+  // Count changed
 }
 ```
 
 ### useLocalStorage Hook
 
+**WHY**: Sync React state with localStorage for persistence
+
 ```javascript
 function useLocalStorage(key, initialValue) {
+  // Lazy initialization - only read localStorage once
   const [storedValue, setStoredValue] = useState(() => {
     try {
       const item = localStorage.getItem(key);
@@ -230,10 +274,19 @@ function useLocalStorage(key, initialValue) {
 
 ## 4. Algorithm Patterns
 
-### Two Pointers
+### Two Pointers Pattern
+
+**WHY**: O(n) solution for problems involving sorted arrays or linked lists
+
+```mermaid
+flowchart LR
+    Array["[1, 2, 3, 4, 5]"]
+    Left["L→"]
+    Right["←R"]
+```
 
 ```javascript
-// Palindrome check
+// Palindrome check: O(n) time, O(1) space
 function isPalindrome(s) {
   let left = 0,
     right = s.length - 1;
@@ -245,8 +298,8 @@ function isPalindrome(s) {
   return true;
 }
 
-// Two sum (sorted array)
-function twoSum(arr, target) {
+// Two sum (sorted): O(n) time, O(1) space
+function twoSumSorted(arr, target) {
   let left = 0,
     right = arr.length - 1;
   while (left < right) {
@@ -259,7 +312,9 @@ function twoSum(arr, target) {
 }
 ```
 
-### Sliding Window
+### Sliding Window Pattern
+
+**WHY**: O(n) solution for contiguous subarray problems
 
 ```javascript
 // Max sum of k consecutive elements
@@ -267,13 +322,13 @@ function maxSumSubarray(arr, k) {
   let maxSum = 0,
     windowSum = 0;
 
-  // First window
+  // Build first window
   for (let i = 0; i < k; i++) {
     windowSum += arr[i];
   }
   maxSum = windowSum;
 
-  // Slide window
+  // Slide window: remove left, add right
   for (let i = k; i < arr.length; i++) {
     windowSum = windowSum - arr[i - k] + arr[i];
     maxSum = Math.max(maxSum, windowSum);
@@ -283,10 +338,12 @@ function maxSumSubarray(arr, k) {
 }
 ```
 
-### Hash Map
+### Hash Map Pattern
+
+**WHY**: O(1) lookup trades space for time
 
 ```javascript
-// Two sum (unsorted)
+// Two sum (unsorted): O(n) time, O(n) space
 function twoSum(nums, target) {
   const map = new Map();
   for (let i = 0; i < nums.length; i++) {
@@ -298,30 +355,18 @@ function twoSum(nums, target) {
   }
   return [];
 }
-
-// Group anagrams
-function groupAnagrams(strs) {
-  const map = new Map();
-  for (const str of strs) {
-    const key = str.split("").sort().join("");
-    if (!map.has(key)) map.set(key, []);
-    map.get(key).push(str);
-  }
-  return Array.from(map.values());
-}
 ```
 
 ---
 
 ## 📊 Complexity Reference
 
-| Algorithm       | Time       | Space |
-| --------------- | ---------- | ----- |
-| Two Pointers    | O(n)       | O(1)  |
-| Sliding Window  | O(n)       | O(1)  |
-| Hash Map Lookup | O(1)       | O(n)  |
-| Binary Search   | O(log n)   | O(1)  |
-| Merge Sort      | O(n log n) | O(n)  |
+| Pattern            | Time     | Space | Use When            |
+| ------------------ | -------- | ----- | ------------------- |
+| **Two Pointers**   | O(n)     | O(1)  | Sorted array, pairs |
+| **Sliding Window** | O(n)     | O(1)  | Contiguous subarray |
+| **Hash Map**       | O(n)     | O(n)  | Need O(1) lookup    |
+| **Binary Search**  | O(log n) | O(1)  | Sorted, find target |
 
 ---
 
