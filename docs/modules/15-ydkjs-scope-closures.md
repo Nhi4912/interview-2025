@@ -2132,3 +2132,1862 @@ Lỗi TDZ (temporal dead zone) rất lạ và gây nản lòng khi gặp phải.
 Khi bạn điều hướng thành công những khúc quanh và ngã rẽ này của variable scope, chương tiếp theo sẽ đưa ra các yếu tố hướng dẫn các quyết định của chúng ta để đặt các khai báo trong các scopes khác nhau, đặc biệt là các nested blocks.
 
 ---
+
+## Chương 6: Giới Hạn Sự Phơi Bày Của Scope (Limiting Scope Exposure)
+
+Cho đến nay trọng tâm của chúng ta là giải thích cơ chế hoạt động của scopes và các biến. Với nền tảng đó giờ đây đã vững chắc, sự chú ý của chúng ta nâng lên một cấp độ tư duy cao hơn: các quyết định và mô hình chúng ta áp dụng trên toàn bộ chương trình.
+
+Để bắt đầu, chúng ta sẽ xem xét cách thức và lý do tại sao chúng ta nên sử dụng các cấp độ scope khác nhau (hàm và blocks) để tổ chức các biến của chương trình, cụ thể là để giảm sự phơi bày quá mức của scope.
+
+### Phơi Bày Ít Nhất (Least Exposure)
+
+Việc các hàm định nghĩa scopes riêng của chúng là hợp lý. Nhưng tại sao chúng ta cũng cần các blocks để tạo ra scopes?
+
+Kỹ thuật phần mềm nêu rõ một kỷ luật cơ bản, thường được áp dụng cho bảo mật phần mềm, được gọi là "Nguyên tắc Đặc quyền Ít nhất" (The Principle of Least Privilege - POLP). [^POLP] Và một biến thể của nguyên tắc này áp dụng cho cuộc thảo luận hiện tại của chúng ta thường được dán nhãn là "Phơi bày Ít nhất" (Least Exposure - POLE).
+
+POLP thể hiện một tư thế phòng thủ đối với kiến trúc phần mềm: các thành phần của hệ thống nên được thiết kế để hoạt động với ít đặc quyền nhất, ít quyền truy cập nhất, ít sự phơi bày nhất. Nếu mỗi mảnh được kết nối với các khả năng tối thiểu cần thiết, hệ thống tổng thể sẽ mạnh hơn từ quan điểm bảo mật, bởi vì sự thỏa hiệp hoặc thất bại của một mảnh có tác động giảm thiểu đến phần còn lại của hệ thống.
+
+Nếu POLP tập trung vào thiết kế thành phần cấp hệ thống, biến thể POLE _Exposure_ tập trung vào cấp độ thấp hơn; chúng ta sẽ áp dụng nó vào cách các scopes tương tác với nhau.
+
+Khi tuân theo POLE, chúng ta muốn giảm thiểu sự phơi bày của cái gì? Đơn giản là: các biến được đăng ký trong mỗi scope.
+
+Hãy nghĩ theo cách này: tại sao bạn không nên chỉ đặt tất cả các biến của chương trình của mình ra ngoài global scope? Điều đó có lẽ ngay lập tức cảm thấy giống như một ý tưởng tồi, nhưng đáng để xem xét lý do tại sao lại như vậy. Khi các biến được sử dụng bởi một phần của chương trình được phơi bày cho một phần khác của chương trình, thông qua scope, có ba mối nguy hiểm chính thường phát sinh:
+
+- **Xung đột Tên (Naming Collisions)**: nếu bạn sử dụng một tên biến/hàm phổ biến và hữu ích trong hai phần khác nhau của chương trình, nhưng định danh đến từ một scope được chia sẻ (như global scope), thì xung đột tên xảy ra, và rất có thể các lỗi sẽ xảy ra khi một phần sử dụng biến/hàm theo cách mà phần kia không mong đợi.
+
+  Ví dụ, hãy tưởng tượng nếu tất cả các vòng lặp của bạn sử dụng một biến index `i` toàn cục duy nhất, và sau đó xảy ra trường hợp một vòng lặp trong một hàm đang chạy trong một lần lặp của một vòng lặp từ một hàm khác, và bây giờ biến `i` được chia sẻ nhận một giá trị không mong muốn.
+
+- **Hành vi Không mong muốn (Unexpected Behavior)**: nếu bạn phơi bày các biến/hàm mà việc sử dụng chúng nếu không sẽ là _riêng tư_ (private) cho một phần của chương trình, nó cho phép các nhà phát triển khác sử dụng chúng theo những cách bạn không dự định, điều này có thể vi phạm hành vi mong đợi và gây ra lỗi.
+
+  Ví dụ, nếu phần chương trình của bạn giả định một mảng chứa tất cả các số, nhưng code của người khác truy cập và sửa đổi mảng để bao gồm booleans và chuỗi, code của bạn sau đó có thể hoạt động sai theo những cách không mong muốn.
+
+  Tệ hơn, việc phơi bày các chi tiết _riêng tư_ mời gọi những người có ý đồ xấu cố gắng lách qua các giới hạn bạn đã áp đặt, để làm những điều với phần mềm của bạn mà không nên được phép.
+
+- **Sự phụ thuộc Không chủ ý (Unintended Dependency)**: nếu bạn phơi bày các biến/hàm một cách không cần thiết, nó mời gọi các nhà phát triển khác sử dụng và phụ thuộc vào những phần _riêng tư_ đó. Mặc dù điều đó không phá vỡ chương trình của bạn ngày hôm nay, nó tạo ra một mối nguy hiểm tái cấu trúc trong tương lai, bởi vì bây giờ bạn không thể dễ dàng tái cấu trúc biến hoặc hàm đó mà không có khả năng phá vỡ các phần khác của phần mềm mà bạn không kiểm soát.
+
+  Ví dụ, nếu code của bạn dựa vào một mảng các số, và sau đó bạn quyết định tốt hơn là nên sử dụng một cấu trúc dữ liệu khác thay vì mảng, bây giờ bạn phải chịu trách nhiệm điều chỉnh các phần bị ảnh hưởng khác của phần mềm.
+
+POLE, khi áp dụng cho scoping của biến/hàm, về cơ bản nói rằng, mặc định là phơi bày mức tối thiểu cần thiết, giữ mọi thứ khác riêng tư nhất có thể. Khai báo các biến trong các scopes càng nhỏ và lồng nhau càng sâu càng tốt, thay vì đặt mọi thứ trong global (hoặc thậm chí outer function) scope.
+
+Nếu bạn thiết kế phần mềm của mình phù hợp, bạn có cơ hội lớn hơn nhiều để tránh (hoặc ít nhất là giảm thiểu) ba mối nguy hiểm này.
+
+Xem xét:
+
+```js
+function diff(x, y) {
+  if (x > y) {
+    let tmp = x;
+    x = y;
+    y = tmp;
+  }
+
+  return y - x;
+}
+
+diff(3, 7); // 4
+diff(7, 5); // 2
+```
+
+Trong hàm `diff(..)` này, chúng ta muốn đảm bảo rằng `y` lớn hơn hoặc bằng `x`, để khi chúng ta trừ (`y - x`), kết quả là `0` hoặc lớn hơn. Nếu `x` ban đầu lớn hơn (kết quả sẽ là âm!), chúng ta hoán đổi `x` và `y` bằng cách sử dụng một biến `tmp`, để giữ cho kết quả dương.
+
+Trong ví dụ đơn giản này, có vẻ không quan trọng liệu `tmp` nằm bên trong blocks `if` hay nó thuộc về cấp độ hàm—nó chắc chắn không nên là một biến toàn cục! Tuy nhiên, theo nguyên tắc POLE, `tmp` nên được ẩn trong scope càng nhiều càng tốt. Vì vậy, chúng ta block scope `tmp` (sử dụng `let`) vào block `if`.
+
+### Ẩn Trong Scope (Hàm) Đơn Giản (Hiding in Plain (Function) Scope)
+
+Bây giờ hẳn đã rõ tại sao việc ẩn các khai báo biến và hàm của chúng ta trong các scopes thấp nhất (lồng nhau sâu nhất) có thể là quan trọng. Nhưng chúng ta làm điều đó như thế nào?
+
+Chúng ta đã thấy các từ khóa `let` và `const`, là các bộ khai báo block scoped; chúng ta sẽ quay lại với chúng chi tiết hơn ngay sau đây. Nhưng trước tiên, còn về việc ẩn các khai báo `var` hoặc `function` trong scopes thì sao? Điều đó có thể dễ dàng được thực hiện bằng cách bao bọc một `function` scope xung quanh một khai báo.
+
+Hãy xem xét một ví dụ nơi `function` scoping có thể hữu ích.
+
+Phép toán "giai thừa" (ký hiệu là "6!") là phép nhân của một số nguyên nhất định với tất cả các số nguyên thấp hơn liên tiếp xuống đến `1`—thực ra, bạn có thể dừng ở `2` vì nhân với `1` không làm gì cả. Nói cách khác, "6!" giống như "6 _ 5!", giống như "6 _ 5 \* 4!", và cứ thế. Do bản chất của toán học liên quan, một khi giai thừa của bất kỳ số nguyên nào (như "4!") đã được tính toán, chúng ta không cần phải làm lại công việc đó nữa, vì nó sẽ luôn là cùng một câu trả lời.
+
+Vì vậy, nếu bạn tính giai thừa một cách ngây thơ cho `6`, sau đó muốn tính giai thừa cho `7`, bạn có thể tính toán lại một cách không cần thiết các giai thừa của tất cả các số nguyên từ 2 đến 6. Nếu bạn sẵn sàng đánh đổi bộ nhớ lấy tốc độ, bạn có thể giải quyết việc tính toán lãng phí đó bằng cách lưu trữ (caching) giai thừa của mỗi số nguyên khi nó được tính toán:
+
+```js
+var cache = {};
+
+function factorial(x) {
+  if (x < 2) return 1;
+  if (!(x in cache)) {
+    cache[x] = x * factorial(x - 1);
+  }
+  return cache[x];
+}
+
+factorial(6);
+// 720
+
+cache;
+// {
+//     "2": 2,
+//     "3": 6,
+//     "4": 24,
+//     "5": 120,
+//     "6": 720
+// }
+
+factorial(7);
+// 5040
+```
+
+Chúng ta đang lưu trữ tất cả các giai thừa đã tính toán trong `cache` để qua nhiều lần gọi đến `factorial(..)`, các tính toán trước đó vẫn còn. Nhưng biến `cache` khá rõ ràng là một chi tiết _riêng tư_ về cách `factorial(..)` hoạt động, không phải là thứ nên được phơi bày trong một outer scope—đặc biệt không phải là global scope.
+
+> **LƯU Ý:** `factorial(..)` ở đây là đệ quy—một cuộc gọi đến chính nó được thực hiện từ bên trong—nhưng đó chỉ là vì sự ngắn gọn của code; một triển khai không đệ quy sẽ mang lại phân tích scoping tương tự đối với `cache`.
+
+Tuy nhiên, việc sửa vấn đề phơi bày quá mức này không đơn giản như việc ẩn biến `cache` bên trong `factorial(..)`, như vẻ ngoài của nó. Vì chúng ta cần `cache` tồn tại qua nhiều lần gọi, nó phải được đặt trong một scope bên ngoài hàm đó. Vì vậy, chúng ta có thể làm gì?
+
+Định nghĩa một middle scope khác (giữa outer/global scope và bên trong của `factorial(..)`) để `cache` được đặt ở đó:
+
+```js
+// outer/global scope
+
+function hideTheCache() {
+  // "middle scope", nơi chúng ta ẩn `cache`
+  var cache = {};
+
+  return factorial;
+
+  // **********************
+
+  function factorial(x) {
+    // inner scope
+    if (x < 2) return 1;
+    if (!(x in cache)) {
+      cache[x] = x * factorial(x - 1);
+    }
+    return cache[x];
+  }
+}
+
+var factorial = hideTheCache();
+
+factorial(6);
+// 720
+
+factorial(7);
+// 5040
+```
+
+Hàm `hideTheCache()` không phục vụ mục đích nào khác ngoài việc tạo một scope để `cache` tồn tại trong đó qua nhiều lần gọi đến `factorial(..)`. Nhưng để `factorial(..)` có quyền truy cập vào `cache`, chúng ta phải định nghĩa `factorial(..)` bên trong cùng scope đó. Sau đó, chúng ta trả về tham chiếu hàm, như một giá trị từ `hideTheCache()`, và lưu trữ nó trong một biến outer scope, cũng được đặt tên là `factorial`. Bây giờ khi chúng ta gọi `factorial(..)` (nhiều lần!), `cache` bền bỉ của nó vẫn được ẩn nhưng chỉ có thể truy cập được đối với `factorial(..)`!
+
+OK, nhưng... sẽ thật tẻ nhạt khi phải định nghĩa (và đặt tên!) một `hideTheCache(..)` function scope mỗi khi nhu cầu ẩn biến/hàm như vậy xảy ra, đặc biệt là vì chúng ta có thể sẽ muốn tránh xung đột tên với hàm này bằng cách đặt cho mỗi lần xuất hiện một cái tên duy nhất. Ugh.
+
+> **LƯU Ý:** Kỹ thuật được minh họa—lưu trữ đầu ra đã tính toán của một hàm để tối ưu hóa hiệu suất khi các cuộc gọi lặp lại của cùng đầu vào được mong đợi—khá phổ biến trong thế giới Lập trình Hàm (Functional Programming - FP), thường được gọi là "memoization"; việc lưu trữ này dựa vào closure (xem Chương 7). Ngoài ra, có những lo ngại về sử dụng bộ nhớ (được giải quyết trong "A Word About Memory" trong Phụ lục B). Các thư viện FP thường sẽ cung cấp một tiện ích được tối ưu hóa và kiểm tra kỹ lưỡng cho việc memoization của các hàm, sẽ thay thế cho `hideTheCache(..)` ở đây. Memoization nằm ngoài _scope_ (chơi chữ!) của cuộc thảo luận của chúng ta, nhưng hãy xem cuốn sách _Functional-Light JavaScript_ của tôi để biết thêm thông tin.
+
+Thay vì định nghĩa một hàm mới và được đặt tên duy nhất mỗi khi một trong những tình huống scope-chỉ-dành-cho-mục-đích-ẩn-một-biến đó xảy ra, một giải pháp có lẽ tốt hơn là sử dụng một biểu thức hàm (function expression):
+
+```js
+var factorial = (function hideTheCache() {
+  var cache = {};
+
+  function factorial(x) {
+    if (x < 2) return 1;
+    if (!(x in cache)) {
+      cache[x] = x * factorial(x - 1);
+    }
+    return cache[x];
+  }
+
+  return factorial;
+})();
+
+factorial(6);
+// 720
+
+factorial(7);
+// 5040
+```
+
+Đợi đã! Điều này vẫn đang sử dụng một hàm để tạo scope cho việc ẩn `cache`, và trong trường hợp này, hàm vẫn được đặt tên là `hideTheCache`, vậy nó giải quyết được gì?
+
+Hãy nhớ lại từ "Function Name Scope" (trong Chương 3), những gì xảy ra với định danh tên từ một biểu thức `function`. Vì `hideTheCache(..)` được định nghĩa là một biểu thức `function` thay vì một khai báo `function`, tên của nó nằm trong scope riêng của nó—về cơ bản là cùng scope với `cache`—thay vì trong outer/global scope.
+
+Điều đó có nghĩa là chúng ta có thể đặt tên cho mỗi lần xuất hiện của một biểu thức hàm như vậy cùng một cái tên chính xác, và không bao giờ có bất kỳ xung đột nào. Thích hợp hơn, chúng ta có thể đặt tên cho mỗi lần xuất hiện theo ngữ nghĩa dựa trên bất cứ điều gì chúng ta đang cố gắng ẩn, và không lo lắng rằng bất kỳ cái tên nào chúng ta chọn sẽ xung đột với bất kỳ biểu thức `function` scope nào khác trong chương trình.
+
+Trên thực tế, chúng ta _có thể_ chỉ cần bỏ qua tên hoàn toàn—do đó định nghĩa một "biểu thức `function` ẩn danh" thay vào đó. Nhưng Phụ lục A sẽ thảo luận về tầm quan trọng của tên ngay cả đối với các hàm chỉ dành cho scope như vậy.
+
+#### Gọi Ngay Lập Tức Các Biểu Thức Hàm (Invoking Function Expressions Immediately)
+
+Có một chút quan trọng khác trong chương trình đệ quy giai thừa trước đó mà dễ bị bỏ lỡ: dòng ở cuối biểu thức `function` chứa `})();`.
+
+Lưu ý rằng chúng ta đã bao quanh toàn bộ biểu thức `function` trong một cặp `( .. )`, và sau đó ở cuối, chúng ta đã thêm cặp ngoặc đơn `()` thứ hai đó; đó thực sự là gọi biểu thức `function` mà chúng ta vừa định nghĩa. Hơn nữa, trong trường hợp này, cặp `( .. )` bao quanh đầu tiên xung quanh biểu thức hàm không thực sự cần thiết (sẽ nói thêm về điều đó trong giây lát), nhưng chúng ta đã sử dụng chúng để dễ đọc dù sao đi nữa.
+
+Vì vậy, nói cách khác, chúng ta đang định nghĩa một biểu thức `function` sau đó được gọi ngay lập tức. Mô hình phổ biến này có một cái tên (rất sáng tạo!): Biểu thức Hàm được Gọi Ngay lập tức (Immediately Invoked Function Expression - IIFE).
+
+Một IIFE hữu ích khi chúng ta muốn tạo một scope để ẩn các biến/hàm. Vì nó là một biểu thức, nó có thể được sử dụng ở **bất kỳ** nơi nào trong một chương trình JS nơi một biểu thức được cho phép. Một IIFE có thể được đặt tên, như với `hideTheCache()`, hoặc (phổ biến hơn nhiều!) không tên/ẩn danh. Và nó có thể đứng một mình hoặc, như trước đây, là một phần của một câu lệnh khác—`hideTheCache()` trả về tham chiếu hàm `factorial()` sau đó được `=` gán cho biến `factorial`.
+
+Để so sánh, đây là một ví dụ về một IIFE đứng một mình:
+
+```js
+// outer scope
+
+(function () {
+  // inner hidden scope
+})();
+
+// more outer scope
+```
+
+Không giống như trước đó với `hideTheCache()`, nơi `(..)` bao quanh bên ngoài được ghi chú là một lựa chọn phong cách tùy chọn, đối với một IIFE đứng một mình, chúng là **bắt buộc**; chúng phân biệt `function` như một biểu thức, không phải một câu lệnh. Tuy nhiên, để nhất quán, hãy luôn bao quanh một `function` IIFE với `( .. )`.
+
+> **LƯU Ý:** Về mặt kỹ thuật, `( .. )` bao quanh không phải là cách cú pháp duy nhất để đảm bảo `function` trong một IIFE được trình phân tích cú pháp JS coi là một biểu thức hàm. Chúng ta sẽ xem xét một số tùy chọn khác trong Phụ lục A.
+
+**Ranh Giới Hàm (Function Boundaries)**
+
+Hãy cẩn thận rằng việc sử dụng một IIFE để định nghĩa một scope có thể có một số hậu quả không chủ ý, tùy thuộc vào code xung quanh nó. Bởi vì một IIFE là một hàm đầy đủ, ranh giới hàm thay đổi hành vi của các câu lệnh/cấu trúc nhất định.
+
+Ví dụ, một câu lệnh `return` trong một đoạn code nào đó sẽ thay đổi ý nghĩa của nó nếu một IIFE được bọc quanh nó, bởi vì bây giờ `return` sẽ tham chiếu đến hàm của IIFE. Các IIFE không phải arrow function cũng thay đổi ràng buộc của một từ khóa `this`—xem thêm về điều đó trong cuốn sách _Objects & Classes_. Và các câu lệnh như `break` và `continue` sẽ không hoạt động qua một ranh giới hàm IIFE để kiểm soát một vòng lặp hoặc block bên ngoài.
+
+Vì vậy, nếu code bạn cần bọc một scope xung quanh có `return`, `this`, `break`, hoặc `continue` trong đó, một IIFE có lẽ không phải là cách tiếp cận tốt nhất. Trong trường hợp đó, bạn có thể tìm cách tạo scope với một block thay vì một hàm.
+
+### Scoping với Blocks (Scoping with Blocks)
+
+Đến điểm này, bạn nên cảm thấy khá thoải mái với những lợi ích của việc tạo scopes để giới hạn sự phơi bày của định danh.
+
+Cho đến nay, chúng ta đã xem xét việc thực hiện điều này thông qua scope `function` (tức là, IIFE). Nhưng bây giờ chúng ta hãy xem xét việc sử dụng các khai báo `let` với các nested blocks. Nói chung, bất kỳ cặp ngoặc nhọn `{ .. }` nào là một câu lệnh sẽ hoạt động như một block, nhưng **không nhất thiết** là một scope.
+
+Một block chỉ trở thành một scope nếu cần thiết, để chứa các khai báo block-scoped của nó (tức là, `let` hoặc `const`). Xem xét:
+
+```js
+{
+  // chưa nhất thiết là một scope
+
+  // ..
+
+  // bây giờ chúng ta biết block cần phải là một scope
+  let thisIsNowAScope = true;
+
+  for (let i = 0; i < 5; i++) {
+    // đây cũng là một scope, được kích hoạt mỗi
+    // lần lặp
+    if (i % 2 == 0) {
+      // đây chỉ là một block, không phải là một scope
+      console.log(i);
+    }
+  }
+}
+// 0 2 4
+```
+
+Không phải tất cả các cặp ngoặc nhọn `{ .. }` đều tạo ra các blocks (và do đó đủ điều kiện để trở thành scopes):
+
+- Object literals sử dụng các cặp ngoặc nhọn `{ .. }` để giới hạn các danh sách key-value của chúng, nhưng các giá trị object như vậy **không phải** là scopes.
+
+- `class` sử dụng ngoặc nhọn `{ .. }` xung quanh định nghĩa thân của nó, nhưng đây không phải là một block hoặc scope.
+
+- Một `function` sử dụng `{ .. } ` xung quanh thân của nó, nhưng về mặt kỹ thuật đây không phải là một block—nó là một câu lệnh đơn cho thân hàm. Tuy nhiên, nó _là_ một (function) scope.
+
+- Cặp ngoặc nhọn `{ .. }` trên một câu lệnh `switch` (xung quanh tập hợp các mệnh đề `case`) không định nghĩa một block/scope.
+
+Ngoài các ví dụ không phải block như vậy, một cặp ngoặc nhọn `{ .. }` có thể định nghĩa một block gắn liền với một câu lệnh (như một `if` hoặc `for`), hoặc đứng một mình—xem cặp ngoặc nhọn `{ .. }` ngoài cùng trong đoạn trích trước. Một block rõ ràng kiểu này—nếu nó không có khai báo nào, nó thực sự không phải là một scope—không phục vụ mục đích hoạt động nào, mặc dù nó vẫn có thể hữu ích như một tín hiệu ngữ nghĩa.
+
+Các blocks `{ .. }` đứng một mình rõ ràng đã luôn là cú pháp JS hợp lệ, nhưng vì chúng không thể là một scope trước `let`/`const` của ES6, chúng khá hiếm. Tuy nhiên, sau ES6, chúng đang bắt đầu trở nên phổ biến một chút.
+
+Trong hầu hết các ngôn ngữ hỗ trợ block scoping, một block scope rõ ràng là một mô hình cực kỳ phổ biến để tạo ra một lát cắt scope hẹp cho một hoặc một vài biến. Vì vậy, theo nguyên tắc POLE, chúng ta cũng nên nắm lấy mô hình này rộng rãi hơn trong JS; sử dụng (explicit) block scoping để thu hẹp sự phơi bày của các định danh đến mức tối thiểu thực tế.
+
+Một explicit block scope có thể hữu ích ngay cả bên trong một block khác (cho dù block bên ngoài có phải là một scope hay không).
+
+Ví dụ:
+
+```js
+if (somethingHappened) {
+  // đây là một block, nhưng không phải là một scope
+
+  {
+    // đây vừa là một block vừa là một
+    // explicit scope
+    let msg = somethingHappened.message();
+    notifyOthers(msg);
+  }
+
+  // ..
+
+  recoverFromSomething();
+}
+```
+
+Ở đây, cặp ngoặc nhọn `{ .. }` **bên trong** câu lệnh `if` là một inner explicit block scope thậm chí còn nhỏ hơn cho `msg`, vì biến đó không cần thiết cho toàn bộ block `if`. Hầu hết các nhà phát triển sẽ chỉ block-scope `msg` cho block `if` và tiếp tục. Và công bằng mà nói, khi chỉ có một vài dòng để xem xét, đó là một cuộc gọi phán xét ngang ngửa. Nhưng khi code phát triển, các vấn đề phơi bày quá mức này trở nên rõ rệt hơn.
+
+Vậy có quan trọng đủ để thêm cặp `{ .. }` phụ và mức thụt lề không? Tôi nghĩ bạn nên tuân theo POLE và luôn luôn (trong giới hạn hợp lý!) định nghĩa block nhỏ nhất cho mỗi biến. Vì vậy, tôi khuyên bạn nên sử dụng scope block rõ ràng bổ sung như được hiển thị.
+
+Hãy nhớ lại cuộc thảo luận về lỗi TDZ từ "Uninitialized Variables (TDZ)" (Chương 5). Gợi ý của tôi ở đó là: để giảm thiểu nguy cơ lỗi TDZ với các khai báo `let`/`const`, hãy luôn đặt các khai báo đó ở đầu scope của chúng.
+
+Nếu bạn thấy mình đặt một khai báo `let` ở giữa một scope, trước tiên hãy nghĩ, "Oh, no! TDZ alert!" Nếu khai báo `let` này không cần thiết trong nửa đầu của block đó, bạn nên sử dụng một inner explicit block scope để thu hẹp hơn nữa sự phơi bày của nó!
+
+Một ví dụ khác với một explicit block scope:
+
+```js
+function getNextMonthStart(dateStr) {
+  var nextMonth, year;
+
+  {
+    let curMonth;
+    [, year, curMonth] = dateStr.match(/(\d{4})-(\d{2})-\d{2}/) || [];
+    nextMonth = (Number(curMonth) % 12) + 1;
+  }
+
+  if (nextMonth == 1) {
+    year++;
+  }
+
+  return `${year}-${String(nextMonth).padStart(2, "0")}-01`;
+}
+getNextMonthStart("2019-12-25"); // 2020-01-01
+```
+
+Đầu tiên hãy xác định các scopes và các định danh của chúng:
+
+1. Outer/global scope có một định danh, hàm `getNextMonthStart(..)`.
+
+2. Function scope cho `getNextMonthStart(..)` có ba: `dateStr` (tham số), `nextMonth`, và `year`.
+
+3. Cặp ngoặc nhọn `{ .. }` định nghĩa một inner block scope bao gồm một biến: `curMonth`.
+
+Vậy tại sao đặt `curMonth` trong một explicit block scope thay vì chỉ cùng với `nextMonth` và `year` trong top-level function scope? Bởi vì `curMonth` chỉ cần thiết cho hai câu lệnh đầu tiên đó; ở cấp độ function scope nó bị phơi bày quá mức.
+
+Ví dụ này nhỏ, vì vậy những nguy hiểm của việc phơi bày quá mức `curMonth` là khá hạn chế. Nhưng lợi ích của nguyên tắc POLE đạt được tốt nhất khi bạn áp dụng tư duy giảm thiểu sự phơi bày scope theo mặc định, như một thói quen. Nếu bạn tuân theo nguyên tắc này một cách nhất quán ngay cả trong các trường hợp nhỏ, nó sẽ phục vụ bạn nhiều hơn khi các chương trình của bạn phát triển.
+
+Bây giờ hãy xem một ví dụ đáng kể hơn nữa:
+
+```js
+function sortNamesByLength(names) {
+  var buckets = [];
+
+  for (let firstName of names) {
+    if (buckets[firstName.length] == null) {
+      buckets[firstName.length] = [];
+    }
+    buckets[firstName.length].push(firstName);
+  }
+
+  // một block để thu hẹp scope
+  {
+    let sortedNames = [];
+
+    for (let bucket of buckets) {
+      if (bucket) {
+        // sắp xếp mỗi bucket theo thứ tự alpha
+        bucket.sort();
+
+        // nối các tên đã sắp xếp vào
+        // danh sách đang chạy của chúng ta
+        sortedNames = [...sortedNames, ...bucket];
+      }
+    }
+
+    return sortedNames;
+  }
+}
+
+sortNamesByLength(["Sally", "Suzy", "Frank", "John", "Jennifer", "Scott"]);
+// [ "John", "Suzy", "Frank", "Sally",
+//   "Scott", "Jennifer" ]
+```
+
+Có sáu định danh được khai báo trên năm scopes khác nhau. Liệu tất cả các biến này có thể tồn tại trong global/outer scope duy nhất không? Về mặt kỹ thuật, có, vì tất cả chúng đều được đặt tên duy nhất và do đó không có xung đột tên. Nhưng điều này sẽ là tổ chức code thực sự kém, và có khả năng dẫn đến cả sự nhầm lẫn và lỗi trong tương lai.
+
+Chúng ta tách chúng ra vào mỗi inner nested scope khi thích hợp. Mỗi biến được định nghĩa ở scope trong cùng nhất có thể để chương trình hoạt động như mong muốn.
+
+`sortedNames` có thể đã được định nghĩa trong top-level function scope, nhưng nó chỉ cần thiết cho nửa sau của hàm này. Để tránh phơi bày quá mức biến đó trong một scope cấp cao hơn, chúng ta lại tuân theo POLE và block-scope nó trong inner explicit block scope.
+
+#### `var` _và_ `let`
+
+Tiếp theo, hãy nói về khai báo `var buckets`. Biến đó được sử dụng trên toàn bộ hàm (ngoại trừ câu lệnh `return` cuối cùng). Bất kỳ biến nào cần thiết trên tất cả (hoặc thậm chí hầu hết) của một hàm nên được khai báo sao cho việc sử dụng như vậy là rõ ràng.
+
+> **LƯU Ý:** Tham số `names` không được sử dụng trên toàn bộ hàm, nhưng không có cách nào giới hạn scope của một tham số, vì vậy nó hoạt động như một khai báo toàn hàm bất kể thế nào.
+
+Vậy tại sao chúng ta sử dụng `var` thay vì `let` để khai báo biến `buckets`? Có cả lý do ngữ nghĩa và kỹ thuật để chọn `var` ở đây.
+
+Về mặt phong cách, `var` luôn luôn, từ những ngày đầu của JS, báo hiệu "biến thuộc về một toàn bộ hàm." Như chúng ta đã khẳng định trong "Lexical Scope" (Chương 1), `var` gắn vào function scope bao quanh gần nhất, bất kể nó xuất hiện ở đâu. Điều đó đúng ngay cả khi `var` xuất hiện bên trong một block:
+
+```js
+function diff(x, y) {
+  if (x > y) {
+    var tmp = x; // `tmp` is function-scoped
+    x = y;
+    y = tmp;
+  }
+
+  return y - x;
+}
+```
+
+Mặc dù `var` nằm trong một block, khai báo của nó là function-scoped (đối với `diff(..)`), không phải block-scoped.
+
+Mặc dù bạn có thể khai báo `var` bên trong một block (và vẫn có nó là function-scoped), tôi khuyên bạn không nên sử dụng cách tiếp cận này ngoại trừ trong một vài trường hợp cụ thể (được thảo luận trong Phụ lục A). Nếu không, `var` nên được dành riêng cho việc sử dụng trong top-level scope của một hàm.
+
+Tại sao không chỉ sử dụng `let` ở cùng vị trí đó? Bởi vì `var` khác biệt về mặt trực quan so với `let` và do đó báo hiệu rõ ràng, "biến này là function-scoped." Việc sử dụng `let` trong top-level scope, đặc biệt nếu không ở trong vài dòng đầu tiên của một hàm, và khi tất cả các khai báo khác trong blocks sử dụng `let`, không thu hút sự chú ý trực quan đến sự khác biệt với khai báo function-scoped.
+
+Nói cách khác, tôi cảm thấy `var` giao tiếp tốt hơn về function-scoped so với `let`, và `let` vừa giao tiếp (vừa đạt được!) block-scoping nơi `var` là không đủ. Miễn là các chương trình của bạn sẽ cần cả các biến function-scoped và block-scoped, cách tiếp cận hợp lý và dễ đọc nhất là sử dụng cả `var` _và_ `let` cùng nhau, mỗi cái cho mục đích tốt nhất của riêng chúng.
+
+Có những lý do ngữ nghĩa và hoạt động khác để chọn `var` hoặc `let` trong các tình huống khác nhau. Chúng ta sẽ khám phá trường hợp cho `var` _và_ `let` chi tiết hơn trong Phụ lục A.
+
+> **CẢNH BÁO:** Khuyến nghị của tôi về việc sử dụng cả `var` _và_ `let` rõ ràng là gây tranh cãi và mâu thuẫn với số đông. Việc nghe những khẳng định như, "var bị hỏng, let sửa nó" và, "đừng bao giờ sử dụng var, let là sự thay thế" phổ biến hơn nhiều. Những ý kiến đó là hợp lệ, nhưng chúng chỉ là ý kiến, giống như của tôi. `var` không thực sự bị hỏng hoặc bị phản đối; nó đã hoạt động từ JS thời kỳ đầu và nó sẽ tiếp tục hoạt động miễn là JS còn tồn tại.
+
+#### _let_ Ở Đâu? (Where To `let`?)
+
+Lời khuyên của tôi để dành riêng `var` cho (hầu hết) chỉ một top-level function scope có nghĩa là hầu hết các khai báo khác nên sử dụng `let`. Nhưng bạn vẫn có thể tự hỏi làm thế nào để quyết định nơi mỗi khai báo trong chương trình của bạn thuộc về?
+
+POLE đã hướng dẫn bạn về những quyết định đó, nhưng hãy chắc chắn rằng chúng ta nêu rõ nó một cách rõ ràng. Cách để quyết định không dựa trên từ khóa nào bạn muốn sử dụng. Cách để quyết định là hỏi, "Sự phơi bày scope tối thiểu nhất là đủ cho biến này là gì?"
+
+Một khi câu hỏi đó được trả lời, bạn sẽ biết liệu một biến thuộc về một block scope hay function scope. Nếu bạn quyết định ban đầu rằng một biến nên được block-scoped, và sau đó nhận ra nó cần được nâng cao để trở thành function-scoped, thì điều đó ra lệnh thay đổi không chỉ ở vị trí khai báo của biến đó, mà còn cả từ khóa khai báo được sử dụng. Quá trình ra quyết định thực sự nên tiến hành như vậy.
+
+Nếu một khai báo thuộc về một block scope, hãy sử dụng `let`. Nếu nó thuộc về function scope, hãy sử dụng `var` (một lần nữa, chỉ là ý kiến của tôi).
+
+Nhưng một cách khác để hình dung việc ra quyết định này là xem xét phiên bản trước ES6 của một chương trình. Ví dụ, hãy nhớ lại `diff(..)` từ trước đó:
+
+```js
+function diff(x, y) {
+  var tmp;
+
+  if (x > y) {
+    tmp = x;
+    x = y;
+    y = tmp;
+  }
+
+  return y - x;
+}
+```
+
+Trong phiên bản này của `diff(..)`, `tmp` rõ ràng được khai báo trong function scope. Liệu điều đó có phù hợp với `tmp` không? Tôi sẽ tranh luận, không. `tmp` chỉ cần thiết cho một vài câu lệnh đó. Nó không cần thiết cho câu lệnh `return`. Do đó, nó nên được block-scoped.
+
+Trước ES6, chúng ta không có `let` nên chúng ta không thể _thực sự_ block-scope nó. Nhưng chúng ta có thể làm điều tốt nhất tiếp theo trong việc báo hiệu ý định của mình:
+
+```js
+function diff(x, y) {
+  if (x > y) {
+    // `tmp` vẫn là function-scoped, nhưng
+    // vị trí ở đây về mặt ngữ nghĩa
+    // báo hiệu block-scoping
+    var tmp = x;
+    x = y;
+    y = tmp;
+  }
+
+  return y - x;
+}
+```
+
+Đặt khai báo `var` cho `tmp` bên trong câu lệnh `if` báo hiệu cho người đọc code rằng `tmp` thuộc về block đó. Mặc dù JS không thực thi scoping đó, tín hiệu ngữ nghĩa vẫn có lợi ích cho người đọc code của bạn.
+
+Theo quan điểm này, bạn có thể tìm bất kỳ `var` nào bên trong một block thuộc loại này và chuyển nó sang `let` để thực thi tín hiệu ngữ nghĩa đã được gửi đi. Đó là cách sử dụng hợp lý của `let` theo ý kiến của tôi.
+
+Một ví dụ khác dựa trên lịch sử của `var` nhưng bây giờ hầu như luôn luôn nên sử dụng `let` là vòng lặp `for`:
+
+```js
+for (var i = 0; i < 5; i++) {
+  // làm gì đó
+}
+```
+
+Bất kể vòng lặp như vậy được định nghĩa ở đâu, `i` về cơ bản luôn chỉ nên được sử dụng bên trong vòng lặp, trong trường hợp đó POLE ra lệnh nó nên được khai báo với `let` thay vì `var`:
+
+```js
+for (let i = 0; i < 5; i++) {
+  // làm gì đó
+}
+```
+
+Hầu như trường hợp duy nhất mà việc chuyển `var` sang `let` theo cách này sẽ "phá vỡ" code của bạn là nếu bạn đang dựa vào việc truy cập iterator của vòng lặp (`i`) bên ngoài/sau vòng lặp, chẳng hạn như:
+
+```js
+for (var i = 0; i < 5; i++) {
+  if (checkValue(i)) {
+    break;
+  }
+}
+
+if (i < 5) {
+  console.log("The loop stopped early!");
+}
+```
+
+Mô hình sử dụng này không phải là hiếm gặp, nhưng hầu hết đều cảm thấy nó có mùi cấu trúc code kém. Một cách tiếp cận thích hợp hơn là sử dụng một biến outer-scoped khác cho mục đích đó:
+
+```js
+var lastI;
+
+for (let i = 0; i < 5; i++) {
+  lastI = i;
+  if (checkValue(i)) {
+    break;
+  }
+}
+
+if (lastI < 5) {
+  console.log("The loop stopped early!");
+}
+```
+
+`lastI` cần thiết trên toàn bộ scope này, vì vậy nó được khai báo với `var`. `i` chỉ cần thiết trong (mỗi) lần lặp vòng lặp, vì vậy nó được khai báo với `let`.
+
+#### Có Gì Khuất Tất? (What's the Catch?)
+
+Cho đến nay, chúng ta đã khẳng định rằng `var` và các tham số là function-scoped, và `let`/`const` báo hiệu các khai báo block-scoped. Có một ngoại lệ nhỏ cần gọi ra: mệnh đề `catch`.
+
+Kể từ khi giới thiệu `try..catch` trở lại trong ES3 (năm 1999), mệnh đề `catch` đã sử dụng một khả năng khai báo block-scoping bổ sung (ít được biết đến):
+
+```js
+try {
+  doesntExist();
+} catch (err) {
+  console.log(err);
+  // ReferenceError: 'doesntExist' is not defined
+  // ^^^^ thông báo in từ exception đã bắt
+
+  let onlyHere = true;
+  var outerVariable = true;
+}
+
+console.log(outerVariable); // true
+
+console.log(err);
+// ReferenceError: 'err' is not defined
+// ^^^^ đây là một exception ném ra (không bắt được) khác
+```
+
+Biến `err` được khai báo bởi mệnh đề `catch` là block-scoped cho block đó. Block mệnh đề `catch` này có thể chứa các khai báo block-scoped khác thông qua `let`. Nhưng một khai báo `var` bên trong block này vẫn gắn vào outer function/global scope.
+
+ES2019 (gần đây, tại thời điểm viết bài) đã thay đổi các mệnh đề `catch` để khai báo của chúng là tùy chọn; nếu khai báo bị bỏ qua, block `catch` không còn (theo mặc định) là một scope; tuy nhiên nó vẫn là một block!
+
+Vì vậy, nếu bạn cần phản ứng với điều kiện _rằng một ngoại lệ đã xảy ra_ (để bạn có thể phục hồi một cách duyên dáng), nhưng bạn không quan tâm đến giá trị lỗi, bạn có thể bỏ qua khai báo `catch`:
+
+```js
+try {
+  doOptionOne();
+} catch {
+  // bỏ qua khai báo catch
+  doOptionTwoInstead();
+}
+```
+
+Đây là một sự đơn giản hóa cú pháp nhỏ nhưng thú vị cho một trường hợp sử dụng khá phổ biến, và cũng có thể hiệu quả hơn một chút trong việc loại bỏ một scope không cần thiết!
+
+### Khai Báo Hàm Trong Blocks (FiB) (Function Declarations in Blocks (FiB))
+
+Bây giờ chúng ta đã thấy rằng các khai báo sử dụng `let` hoặc `const` là block-scoped, và các khai báo `var` là function-scoped. Vậy còn các khai báo `function` xuất hiện trực tiếp bên trong các blocks thì sao? Là một tính năng, điều này được gọi là "FiB."
+
+Chúng ta thường nghĩ về các khai báo `function` giống như chúng tương đương với một khai báo `var`. Vậy chúng có phải là function-scoped giống như `var` không?
+
+Không và có. Tôi biết... điều đó thật khó hiểu. Hãy đào sâu vào:
+
+```js
+if (false) {
+  function ask() {
+    console.log("Does this run?");
+  }
+}
+ask();
+```
+
+Bạn mong đợi chương trình này sẽ làm gì? Ba kết quả hợp lý:
+
+1. Cuộc gọi `ask()` có thể thất bại với một ngoại lệ `ReferenceError`, bởi vì định danh `ask` là block-scoped cho block scope `if` và do đó không có sẵn trong outer/global scope.
+
+2. Cuộc gọi `ask()` có thể thất bại với một ngoại lệ `TypeError`, bởi vì định danh `ask` tồn tại, nhưng nó là `undefined` (vì câu lệnh `if` không chạy) và do đó không phải là một hàm có thể gọi được.
+
+3. Cuộc gọi `ask()` có thể chạy chính xác, in ra thông báo "Does it run?".
+
+Đây là phần khó hiểu: tùy thuộc vào môi trường JS nào bạn thử đoạn code đó, bạn có thể nhận được các kết quả khác nhau! Đây là một trong số ít những khu vực điên rồ nơi hành vi cũ hiện có phản bội một kết quả có thể dự đoán được.
+
+Đặc tả JS nói rằng các khai báo `function` bên trong các blocks là block-scoped, vì vậy câu trả lời nên là (1). Tuy nhiên, hầu hết các JS engines dựa trên trình duyệt (bao gồm v8, đến từ Chrome nhưng cũng được sử dụng trong Node) sẽ hoạt động như (2), có nghĩa là định danh được scoped bên ngoài block `if` nhưng giá trị hàm không được tự động khởi tạo, vì vậy nó vẫn là `undefined`.
+
+Tại sao các trình duyệt JS engines được phép hành xử trái với đặc tả? Bởi vì các engines này đã có các hành vi nhất định xung quanh FiB trước khi ES6 giới thiệu block scoping, và có lo ngại rằng việc thay đổi để tuân thủ đặc tả có thể phá vỡ một số code JS trang web hiện có. Như vậy, một ngoại lệ đã được thực hiện trong Phụ lục B của đặc tả JS, cho phép các sai lệch nhất định đối với các trình duyệt JS engines (chỉ!).
+
+> **LƯU Ý:** Bạn thường sẽ không phân loại Node là một môi trường JS trình duyệt, vì nó thường chạy trên một máy chủ. Nhưng engine v8 của Node được chia sẻ với các trình duyệt Chrome (và Edge). Vì v8 trước tiên là một browser JS engine, nó áp dụng ngoại lệ Phụ lục B này, điều này sau đó có nghĩa là các ngoại lệ trình duyệt được mở rộng sang Node.
+
+Một trong những trường hợp sử dụng phổ biến nhất để đặt một khai báo `function` trong một block là để định nghĩa có điều kiện một hàm theo cách này hay cách khác (như với một câu lệnh `if..else`) tùy thuộc vào một số trạng thái môi trường. Ví dụ:
+
+```js
+if (typeof Array.isArray != "undefined") {
+  function isArray(a) {
+    return Array.isArray(a);
+  }
+} else {
+  function isArray(a) {
+    return Object.prototype.toString.call(a) == "[object Array]";
+  }
+}
+```
+
+Thật hấp dẫn để cấu trúc code theo cách này vì lý do hiệu suất, vì kiểm tra `typeof Array.isArray` chỉ được thực hiện một lần, trái ngược với việc chỉ định nghĩa một `isArray(..)` và đặt câu lệnh `if` bên trong nó—việc kiểm tra sau đó sẽ chạy không cần thiết trên mỗi cuộc gọi.
+
+> **CẢNH BÁO:** Ngoài những rủi ro của các sai lệch FiB, một vấn đề khác với việc định nghĩa có điều kiện các hàm là khó gỡ lỗi một chương trình như vậy hơn. Nếu bạn gặp lỗi trong hàm `isArray(..)`, trước tiên bạn phải tìm ra triển khai `isArray(..)` _nào_ đang thực sự chạy! Đôi khi, lỗi là do cái sai đã được áp dụng vì kiểm tra có điều kiện không chính xác! Nếu bạn định nghĩa nhiều phiên bản của một hàm, chương trình đó luôn khó suy luận và bảo trì hơn.
+
+Ngoài các đoạn trích trước đó, một số trường hợp góc FiB khác đang ẩn nấp; các hành vi như vậy trong các trình duyệt khác nhau và các môi trường JS không phải trình duyệt (các JS engines không dựa trên trình duyệt) có thể sẽ khác nhau. Ví dụ:
+
+```js
+if (true) {
+  function ask() {
+    console.log("Am I called?");
+  }
+}
+
+if (true) {
+  function ask() {
+    console.log("Or what about me?");
+  }
+}
+
+for (let i = 0; i < 5; i++) {
+  function ask() {
+    console.log("Or is it one of these?");
+  }
+}
+
+ask();
+
+function ask() {
+  console.log("Wait, maybe, it's this one?");
+}
+```
+
+Hãy nhớ lại rằng function hoisting như được mô tả trong "Khi Nào Tôi Có Thể Sử Dụng Một Biến?" (trong Chương 5) có thể gợi ý rằng `ask()` cuối cùng trong đoạn trích này, với "Wait, maybe..." là thông báo của nó, sẽ hoist lên trên cuộc gọi đến `ask()`. Vì nó là khai báo hàm cuối cùng của tên đó, nó nên "thắng," đúng không? Thật không may, không.
+
+Tôi không có ý định ghi lại tất cả những trường hợp góc kỳ lạ này, cũng như không cố gắng giải thích tại sao mỗi trường hợp trong số chúng hành xử theo một cách nhất định. Thông tin đó, theo ý kiến của tôi, là những câu đố cũ kỹ arcane.
+
+Mối quan tâm thực sự của tôi với FiB là, tôi có thể đưa ra lời khuyên nào để đảm bảo code của bạn hoạt động có thể dự đoán được trong mọi trường hợp?
+
+Theo như tôi quan tâm, câu trả lời thực tế duy nhất để tránh những thay đổi thất thường của FiB là đơn giản tránh FiB hoàn toàn. Nói cách khác, không bao giờ đặt một khai báo `function` trực tiếp bên trong bất kỳ block nào. Luôn đặt các khai báo `function` ở bất cứ đâu trong top-level scope của một hàm (hoặc trong global scope).
+
+Vì vậy, đối với ví dụ `if..else` trước đó, gợi ý của tôi là tránh định nghĩa có điều kiện các hàm nếu có thể. Vâng, nó có thể kém hiệu quả hơn một chút, nhưng đây là cách tiếp cận tổng thể tốt hơn:
+
+```js
+function isArray(a) {
+  if (typeof Array.isArray != "undefined") {
+    return Array.isArray(a);
+  } else {
+    return Object.prototype.toString.call(a) == "[object Array]";
+  }
+}
+```
+
+Nếu cú đánh hiệu suất đó trở thành vấn đề đường dẫn quan trọng cho ứng dụng của bạn, tôi khuyên bạn nên xem xét cách tiếp cận này:
+
+```js
+var isArray = function isArray(a) {
+  return Array.isArray(a);
+};
+
+// ghi đè định nghĩa, nếu bạn phải làm vậy
+if (typeof Array.isArray == "undefined") {
+  isArray = function isArray(a) {
+    return Object.prototype.toString.call(a) == "[object Array]";
+  };
+}
+```
+
+Điều quan trọng cần lưu ý là ở đây tôi đang đặt một **biểu thức** `function`, không phải một khai báo, bên trong câu lệnh `if`. Điều đó hoàn toàn ổn và hợp lệ, để các biểu thức `function` xuất hiện bên trong các blocks. Cuộc thảo luận của chúng ta về FiB là về việc tránh các **khai báo** `function` trong các blocks.
+
+Ngay cả khi bạn kiểm tra chương trình của mình và nó hoạt động chính xác, lợi ích nhỏ bạn có thể nhận được từ việc sử dụng phong cách FiB trong code của mình bị lu mờ bởi những rủi ro tiềm ẩn trong tương lai về sự nhầm lẫn bởi các nhà phát triển khác, hoặc sự khác biệt trong cách code của bạn chạy trong các môi trường JS khác.
+
+FiB không đáng giá, và nên tránh.
+
+### Kết Thúc (Blocked Over)
+
+Điểm của các quy tắc lexical scoping trong một ngôn ngữ lập trình là để chúng ta có thể tổ chức các biến của chương trình một cách thích hợp, cho cả mục đích hoạt động cũng như giao tiếp code ngữ nghĩa.
+
+Và một trong những kỹ thuật tổ chức quan trọng nhất là đảm bảo rằng không có biến nào bị phơi bày quá mức cho các scopes không cần thiết (POLE). Hy vọng rằng bây giờ bạn đánh giá cao block scoping sâu sắc hơn nhiều so với trước đây.
+
+Hy vọng rằng đến bây giờ bạn cảm thấy như mình đang đứng trên nền tảng vững chắc hơn nhiều với sự hiểu biết về lexical scope. Từ nền tảng đó, chương tiếp theo sẽ nhảy vào chủ đề nặng ký của closure.
+
+[^POLP]: _Principle of Least Privilege_, https://en.wikipedia.org/wiki/Principle_of_least_privilege, 3 March 2020.
+
+---
+
+## Chương 7: Sử Dụng Closures (Using Closures)
+
+Cho đến thời điểm này, chúng ta đã tập trung vào các ngóc ngách của lexical scope, và cách nó ảnh hưởng đến việc tổ chức và sử dụng các biến trong các chương trình của chúng ta.
+
+Sự chú ý của chúng ta lại chuyển sang hướng trừu tượng rộng hơn, đến chủ đề lịch sử có phần đáng sợ của closure. Đừng lo lắng! Bạn không cần một bằng cấp khoa học máy tính cao cấp để hiểu nó. Mục tiêu rộng lớn của chúng ta trong cuốn sách này không chỉ đơn thuần là hiểu scope, mà còn là sử dụng nó hiệu quả hơn trong cấu trúc của các chương trình của chúng ta; closure là trọng tâm của nỗ lực đó.
+
+Hãy nhớ lại kết luận chính của Chương 6: nguyên tắc _phơi bày ít nhất_ (POLE) khuyến khích chúng ta sử dụng block (và function) scoping để giới hạn sự phơi bày scope của các biến. Điều này giúp giữ cho code dễ hiểu và dễ bảo trì, và giúp tránh nhiều cạm bẫy scoping (tức là, xung đột tên, v.v.).
+
+Closure xây dựng dựa trên cách tiếp cận này: đối với các biến chúng ta cần sử dụng theo thời gian, thay vì đặt chúng trong các outer scopes lớn hơn, chúng ta có thể đóng gói (scope hẹp hơn) chúng nhưng vẫn bảo tồn quyền truy cập từ bên trong các hàm, để sử rộng hơn. Các hàm _ghi nhớ_ các biến scoped được tham chiếu này thông qua closure.
+
+Chúng ta đã thấy một ví dụ về loại closure này trong chương trước (`factorial(..)` trong Chương 6), và bạn gần như chắc chắn đã sử dụng nó trong các chương trình của riêng mình. Nếu bạn đã từng viết một callback truy cập các biến bên ngoài scope của chính nó... đoán xem nào!? Đó là closure.
+
+Closure là một trong những đặc điểm ngôn ngữ quan trọng nhất từng được phát minh trong lập trình—nó làm nền tảng cho các mô hình lập trình chính, bao gồm Lập trình Hàm (Functional Programming - FP), modules, và thậm chí một chút thiết kế hướng lớp (class-oriented design). Việc trở nên thoải mái với closure là bắt buộc để làm chủ JS và tận dụng hiệu quả nhiều mẫu thiết kế quan trọng trong code của bạn.
+
+Giải quyết tất cả các khía cạnh của closure đòi hỏi một ngọn núi thảo luận và code đáng sợ trong suốt chương này. Hãy chắc chắn dành thời gian của bạn và đảm bảo bạn thoải mái với từng chút một trước khi chuyển sang phần tiếp theo.
+
+### Nhìn Thấy Closure (See the Closure)
+
+Closure ban đầu là một khái niệm toán học, từ phép tính lambda (lambda calculus). Nhưng tôi sẽ không liệt kê các công thức toán học hoặc sử dụng một loạt các ký hiệu và thuật ngữ chuyên ngành để định nghĩa nó.
+
+Thay vào đó, tôi sẽ tập trung vào một góc nhìn thực tế. Chúng ta sẽ bắt đầu bằng cách định nghĩa closure theo những gì chúng ta có thể quan sát trong các hành vi khác nhau của các chương trình của chúng ta, trái ngược với nếu closure không hiện diện trong JS. Tuy nhiên, sau đó trong chương này, chúng ta sẽ lật ngược closure để nhìn nó từ một _góc nhìn thay thế_.
+
+Closure là một hành vi của các hàm và chỉ các hàm. Nếu bạn không xử lý một hàm, closure không áp dụng. Một object không thể có closure, một class cũng không có closure (mặc dù các hàm/phương thức của nó có thể). Chỉ có các hàm mới có closure.
+
+Để closure được quan sát, một hàm phải được gọi, và cụ thể nó phải được gọi trong một nhánh khác của scope chain so với nơi nó được định nghĩa ban đầu. Một hàm thực thi trong cùng scope nơi nó được định nghĩa sẽ không thể hiện bất kỳ hành vi khác biệt nào có thể quan sát được dù có hay không có closure; theo góc nhìn và định nghĩa quan sát, đó không phải là closure.
+
+Hãy xem xét một số code, được chú thích với các màu bong bóng scope liên quan của nó (xem Chương 2):
+
+```js
+// outer/global scope: RED(1)
+
+function lookupStudent(studentID) {
+  // function scope: BLUE(2)
+
+  var students = [
+    { id: 14, name: "Kyle" },
+    { id: 73, name: "Suzy" },
+    { id: 112, name: "Frank" },
+    { id: 6, name: "Sarah" },
+  ];
+
+  return function greetStudent(greeting) {
+    // function scope: GREEN(3)
+
+    var student = students.find((student) => student.id == studentID);
+
+    return `${greeting}, ${student.name}!`;
+  };
+}
+
+var chosenStudents = [lookupStudent(6), lookupStudent(112)];
+
+// truy cập tên của hàm:
+chosenStudents[0].name;
+// greetStudent
+
+chosenStudents[0]("Hello");
+// Hello, Sarah!
+
+chosenStudents[1]("Howdy");
+// Howdy, Frank!
+```
+
+Điều đầu tiên cần chú ý về code này là outer function `lookupStudent(..)` tạo và trả về một inner function được gọi là `greetStudent(..)`. `lookupStudent(..)` được gọi hai lần, tạo ra hai instance (bản thể) riêng biệt của inner function `greetStudent(..)` của nó, cả hai đều được lưu vào mảng `chosenStudents`.
+
+Chúng ta xác minh trường hợp đó bằng cách kiểm tra thuộc tính `.name` của hàm được trả về được lưu trong `chosenStudents[0]`, và nó thực sự là một instance của `greetStudent(..)` bên trong.
+
+Sau khi mỗi cuộc gọi đến `lookupStudent(..)` kết thúc, có vẻ như tất cả các biến bên trong của nó sẽ bị loại bỏ và GC'd (thu gom rác). Inner function là thứ duy nhất có vẻ được trả về và bảo tồn. Nhưng đây là nơi hành vi khác biệt theo những cách chúng ta có thể bắt đầu quan sát.
+
+Trong khi `greetStudent(..)` nhận một đối số duy nhất làm tham số có tên `greeting`, nó cũng tham chiếu đến cả `students` và `studentID`, các định danh đến từ scope bao quanh của `lookupStudent(..)`. Mỗi tham chiếu đó từ inner function đến biến trong một outer scope được gọi là một _closure_. Theo thuật ngữ học thuật, mỗi instance của `greetStudent(..)` _closes over_ (đóng gói/bao đóng) các biến bên ngoài `students` và `studentID`.
+
+Vậy những closures đó làm gì ở đây, theo một nghĩa cụ thể, có thể quan sát được?
+
+Closure cho phép `greetStudent(..)` tiếp tục truy cập các biến bên ngoài đó ngay cả sau khi outer scope đã kết thúc (khi mỗi cuộc gọi đến `lookupStudent(..)` hoàn thành). Thay vì các instances của `students` và `studentID` bị GC'd, chúng vẫn ở lại trong bộ nhớ. Vào một thời điểm sau đó khi một trong hai instance của hàm `greetStudent(..)` được gọi, các biến đó vẫn ở đó, giữ các giá trị hiện tại của chúng.
+
+Nếu các hàm JS không có closure, việc hoàn thành mỗi cuộc gọi `lookupStudent(..)` sẽ ngay lập tức phá hủy scope của nó và GC các biến `students` và `studentID`. Khi chúng ta gọi một trong các hàm `greetStudent(..)` sau đó, điều gì sẽ xảy ra?
+
+Nếu `greetStudent(..)` cố gắng truy cập những gì nó nghĩ là một viên bi BLUE(2), nhưng viên bi đó thực sự không tồn tại (nữa), giả định hợp lý là chúng ta sẽ nhận được một `ReferenceError`, đúng không?
+
+Nhưng chúng ta không nhận được lỗi. Việc thực thi `chosenStudents[0]("Hello")` hoạt động và trả về cho chúng ta thông báo "Hello, Sarah!", có nghĩa là nó vẫn có thể truy cập các biến `students` và `studentID`. Đây là một quan sát trực tiếp về closure!
+
+#### Closure Chỉ Điểm (Pointed Closure)
+
+Thực ra, chúng ta đã lướt qua một chi tiết nhỏ trong cuộc thảo luận trước mà tôi đoán nhiều độc giả đã bỏ lỡ!
+
+Bởi vì cú pháp cho các mũi tên `=>` quá ngắn gọn, thật dễ quên rằng chúng vẫn tạo ra một scope (như đã khẳng định trong "Arrow Functions" trong Chương 3). Hàm mũi tên `student => student.id == studentID` đang tạo ra một bong bóng scope khác bên trong function scope `greetStudent(..)`.
+
+Xây dựng trên ẩn dụ về các cái xô màu và bong bóng từ Chương 2, nếu chúng ta tạo một sơ đồ màu cho code này, có một scope thứ tư ở cấp độ lồng nhau trong cùng này, vì vậy chúng ta cần một màu thứ tư; có lẽ chúng ta sẽ chọn ORANGE(4) cho scope đó:
+
+```js
+var student = students.find(
+  (student) =>
+    // function scope: ORANGE(4)
+    student.id == studentID
+);
+```
+
+Tham chiếu `studentID` BLUE(2) thực sự nằm bên trong scope ORANGE(4) thay vì scope GREEN(3) của `greetStudent(..)`; ngoài ra, tham số `student` của hàm mũi tên là ORANGE(4), shadowing `student` GREEN(3).
+
+Hậu quả ở đây là hàm mũi tên này được truyền như một callback cho phương thức `find(..)` của mảng phải giữ closure trên `studentID`, thay vì `greetStudent(..)` giữ closure đó. Điều đó không phải là vấn đề quá lớn, vì mọi thứ vẫn hoạt động như mong đợi. Chỉ cần quan trọng là không bỏ qua sự thật rằng ngay cả các hàm mũi tên nhỏ bé cũng có thể tham gia vào bữa tiệc closure.
+
+#### Cộng Dồn Closures (Adding Up Closures)
+
+Hãy xem xét một trong những ví dụ kinh điển thường được trích dẫn cho closure:
+
+```js
+function adder(num1) {
+  return function addTo(num2) {
+    return num1 + num2;
+  };
+}
+
+var add10To = adder(10);
+var add42To = adder(42);
+
+add10To(15); // 25
+add42To(9); // 51
+```
+
+Mỗi instance của inner function `addTo(..)` đang closing over biến `num1` riêng của nó (với các giá trị `10` và `42`, tương ứng), vì vậy những `num1` đó không biến mất chỉ vì `adder(..)` kết thúc. Khi chúng ta gọi một trong những instance `addTo(..)` bên trong đó sau này, chẳng hạn như cuộc gọi `add10To(15)`, biến `num1` đã được closed-over của nó vẫn tồn tại và vẫn giữ giá trị `10` ban đầu. Do đó, phép toán có thể thực hiện `10 + 15` và trả về câu trả lời `25`.
+
+Một chi tiết quan trọng có thể đã quá dễ bị lướt qua trong đoạn trước, vì vậy hãy củng cố nó: closure được liên kết với một instance (bản thể) của một hàm, thay vì định nghĩa lexical duy nhất của nó. Trong đoạn trích trước, chỉ có một hàm `addTo(..)` bên trong được định nghĩa bên trong `adder(..)`, vì vậy có vẻ như điều đó sẽ ngụ ý một closure duy nhất.
+
+Nhưng thực tế, mỗi khi outer function `adder(..)` chạy, một instance function `addTo(..)` bên trong _mới_ được tạo ra, và đối với mỗi instance mới, một closure mới. Vì vậy, mỗi instance function bên trong (được dán nhãn `add10To(..)` và `add42To(..)` trong chương trình của chúng ta) có closure riêng của nó trên instance riêng của nó về môi trường scope từ việc thực thi đó của `adder(..)`.
+
+Mặc dù closure dựa trên lexical scope, được xử lý tại thời điểm biên dịch, closure được quan sát như một đặc điểm runtime của các function instances.
+
+### Liên Kết Sống, Không Phải Ảnh Chụp (Live Link, Not a Snapshot)
+
+Trong cả hai ví dụ từ các phần trước, chúng ta đã **đọc giá trị từ một biến** được giữ trong một closure. Điều đó làm cho cảm giác như closure có thể là một bản chụp (snapshot) của một giá trị tại một thời điểm nhất định. Thật vậy, đó là một quan niệm sai lầm phổ biến.
+
+Closure thực sự là một liên kết sống (live link), bảo tồn quyền truy cập vào chính biến đầy đủ đó. Chúng ta không bị giới hạn chỉ đọc một giá trị; biến được closed-over có thể được cập nhật (gán lại) nữa! Bằng cách closing over một biến trong một hàm, chúng ta có thể tiếp tục sử dụng biến đó (đọc và ghi) miễn là tham chiếu hàm đó tồn tại trong chương trình, và từ bất cứ đâu chúng ta muốn gọi hàm đó. Đây là lý do tại sao closure là một kỹ thuật mạnh mẽ được sử dụng rộng rãi trên rất nhiều lĩnh vực lập trình!
+
+Hình 4 mô tả các function instances và các liên kết scope:
+
+<figure>
+    <img src="https://raw.githubusercontent.com/getify/You-Dont-Know-JS/2nd-ed/scope-closures/images/fig4.png" width="400" alt="Function instances linked to scopes via closure" align="center">
+    <figcaption><em>Fig. 4: Trực Quan Hóa Closures</em></figcaption>
+    <br><br>
+</figure>
+
+Như được hiển thị trong Hình 4, mỗi cuộc gọi đến `adder(..)` tạo ra một scope BLUE(2) mới chứa một biến `num1`, cũng như một instance mới của hàm `addTo(..)` như một scope GREEN(3). Lưu ý rằng các function instances (`addTo10(..)` và `addTo42(..)`) hiện diện trong và được gọi từ scope RED(1).
+
+Bây giờ hãy xem xét một ví dụ nơi biến được closed-over được cập nhật:
+
+```js
+function makeCounter() {
+  var count = 0;
+
+  return function getCurrent() {
+    count = count + 1;
+    return count;
+  };
+}
+
+var hits = makeCounter();
+
+// later
+
+hits(); // 1
+
+// later
+
+hits(); // 2
+hits(); // 3
+```
+
+Biến `count` được closed over bởi hàm `getCurrent()` bên trong, giữ cho nó tồn tại thay vì bị GC. Các cuộc gọi hàm `hits()` truy cập _và_ cập nhật biến này, trả về một bộ đếm tăng dần mỗi lần.
+
+Mặc dù scope bao quanh của một closure thường là từ một hàm, điều đó thực sự không bắt buộc; chỉ cần có một inner function hiện diện bên trong một outer scope:
+
+```js
+var hits;
+{
+  // một outer scope (nhưng không phải là một hàm)
+  let count = 0;
+  hits = function getCurrent() {
+    count = count + 1;
+    return count;
+  };
+}
+hits(); // 1
+hits(); // 2
+hits(); // 3
+```
+
+| LƯU Ý:                                                                                                                                                                                      |
+| :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Tôi đã cố tình định nghĩa `getCurrent()` là một biểu thức `function` thay vì một khai báo `function`. Đây không phải là về closure, mà với những điều kỳ quặc nguy hiểm của FiB (Chương 6). |
+
+Bởi vì rất phổ biến khi nhầm lẫn closure là hướng giá trị thay vì hướng biến, các nhà phát triển đôi khi bị vấp ngã khi cố gắng sử dụng closure để bảo tồn-snapshot một giá trị từ một thời điểm nào đó. Xem xét:
+
+```js
+var studentName = "Frank";
+
+var greeting = function hello() {
+  // chúng ta đang closing over `studentName`,
+  // không phải "Frank"
+  console.log(`Hello, ${studentName}!`);
+};
+
+// later
+
+studentName = "Suzy";
+
+// later
+
+greeting();
+// Hello, Suzy!
+```
+
+Bằng cách định nghĩa `greeting()` (còn gọi là `hello()`) khi `studentName` giữ giá trị `"Frank"` (trước khi gán lại cho `"Suzy"`), giả định sai lầm thường là closure sẽ bắt giữ `"Frank"`. Nhưng `greeting()` được closed over biến `studentName`, không phải giá trị của nó. Bất cứ khi nào `greeting()` được gọi, giá trị hiện tại của biến (`"Suzy"`, trong trường hợp này) được phản ánh.
+
+Minh họa kinh điển về sai lầm này là định nghĩa các hàm bên trong một vòng lặp:
+
+```js
+var keeps = [];
+
+for (var i = 0; i < 3; i++) {
+  keeps[i] = function keepI() {
+    // closure over `i`
+    return i;
+  };
+}
+
+keeps[0](); // 3 -- TẠI SAO!?
+keeps[1](); // 3
+keeps[2](); // 3
+```
+
+| LƯU Ý:                                                                                                                                                                                                                                                                                                                                               |
+| :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Loại minh họa closure này thường sử dụng một `setTimeout(..)` hoặc một callback khác như một trình xử lý sự kiện, bên trong vòng lặp. Tôi đã đơn giản hóa ví dụ bằng cách lưu trữ các tham chiếu hàm trong một mảng, để chúng ta không cần xem xét thời gian bất đồng bộ trong phân tích của mình. Nguyên tắc closure là giống nhau, bất kể thế nào. |
+
+Bạn có thể đã mong đợi cuộc gọi `keeps[0]()` trả về `0`, vì hàm đó được tạo ra trong lần lặp đầu tiên của vòng lặp khi `i` là `0`. Nhưng một lần nữa, giả định đó bắt nguồn từ việc nghĩ về closure là hướng giá trị thay vì hướng biến.
+
+Điều gì đó về cấu trúc của một vòng lặp `for` có thể lừa chúng ta nghĩ rằng mỗi lần lặp nhận được một biến `i` mới của riêng nó; thực tế, chương trình này chỉ có một `i` duy nhất vì nó được khai báo với `var`.
+
+Mỗi hàm đã lưu trả về `3`, bởi vì vào cuối vòng lặp, biến `i` duy nhất trong chương trình đã được gán `3`. Mỗi trong ba hàm trong mảng `keeps` đều có closure riêng lẻ, nhưng tất cả chúng đều closed over cùng một biến `i` được chia sẻ đó.
+
+Tất nhiên, một biến duy nhất chỉ có thể giữ một giá trị tại bất kỳ thời điểm nào. Vì vậy, nếu bạn muốn bảo tồn nhiều giá trị, bạn cần một biến khác nhau cho mỗi giá trị.
+
+Làm thế nào chúng ta có thể làm điều đó trong đoạn trích vòng lặp? Hãy tạo một biến mới cho mỗi lần lặp:
+
+```js
+var keeps = [];
+
+for (var i = 0; i < 3; i++) {
+  // `j` mới được tạo mỗi lần lặp, nó nhận
+  // một bản sao của giá trị của `i` tại thời điểm này
+  let j = i;
+
+  // `i` ở đây không bị closed over, vì vậy
+  // hoàn toàn ổn khi sử dụng ngay lập tức
+  // giá trị hiện tại của nó trong mỗi lần lặp vòng lặp
+  keeps[i] = function keepEachJ() {
+    // close over `j`, không phải `i`!
+    return j;
+  };
+}
+keeps[0](); // 0
+keeps[1](); // 1
+keeps[2](); // 2
+```
+
+Mỗi hàm bây giờ được closed over một biến (mới) riêng biệt từ mỗi lần lặp, mặc dù tất cả chúng đều được đặt tên là `j`. Và mỗi `j` nhận một bản sao của giá trị của `i` tại điểm đó trong lần lặp vòng lặp; `j` đó không bao giờ được gán lại. Vì vậy, tất cả ba hàm bây giờ trả về các giá trị mong đợi của chúng: `0`, `1`, và `2`!
+
+Một lần nữa hãy nhớ rằng, ngay cả khi chúng ta đang sử dụng bất đồng bộ trong chương trình này, chẳng hạn như truyền mỗi inner function `keepEachJ()` vào `setTimeout(..)` hoặc một đăng ký event handler, cùng một loại hành vi closure vẫn sẽ được quan sát.
+
+Hãy nhớ lại phần "Loops" trong Chương 5, minh họa cách một khai báo `let` trong một vòng lặp `for` thực sự tạo ra không chỉ một biến cho vòng lặp, mà thực sự tạo ra một biến mới cho _mỗi lần lặp_ của vòng lặp. Thủ thuật/sự kỳ quặc đó chính xác là những gì chúng ta cần cho các vòng lặp closure của mình:
+
+```js
+var keeps = [];
+
+for (let i = 0; i < 3; i++) {
+  // `let i` cung cấp cho chúng ta một `i` mới cho
+  // mỗi lần lặp, tự động!
+  keeps[i] = function keepEachI() {
+    return i;
+  };
+}
+keeps[0](); // 0
+keeps[1](); // 1
+keeps[2](); // 2
+```
+
+Vì chúng ta đang sử dụng `let`, ba `i` được tạo ra, một cho mỗi vòng lặp, vì vậy mỗi trong ba closure _chỉ hoạt động_ như mong đợi.
+
+### Các Closure Phổ Biến: Ajax và Sự Kiện (Common Closures: Ajax and Events)
+
+Closure thường gặp nhất với các callbacks:
+
+```js
+function lookupStudentRecord(studentID) {
+  ajax(`https://some.api/student/${studentID}`, function onRecord(record) {
+    console.log(`${record.name} (${studentID})`);
+  });
+}
+
+lookupStudentRecord(114);
+// Frank (114)
+```
+
+Callback `onRecord(..)` sẽ được gọi vào một thời điểm nào đó trong tương lai, sau khi phản hồi từ cuộc gọi Ajax quay trở lại. Cuộc gọi này sẽ xảy ra từ bên trong của tiện ích `ajax(..)`, bất kể nó đến từ đâu. Hơn nữa, khi điều đó xảy ra, cuộc gọi `lookupStudentRecord(..)` đã hoàn thành từ lâu.
+
+Tại sao sau đó `studentID` vẫn còn đó và có thể truy cập được đối với callback? Closure.
+
+Các trình xử lý sự kiện (event handlers) là một cách sử dụng phổ biến khác của closure:
+
+```js
+function listenForClicks(btn, label) {
+  btn.addEventListener("click", function onClick() {
+    console.log(`The ${label} button was clicked!`);
+  });
+}
+
+var submitBtn = document.getElementById("submit-btn");
+
+listenForClicks(submitBtn, "Checkout");
+```
+
+Tham số `label` được closed over bởi callback xử lý sự kiện `onClick(..)`. Khi nút được nhấp, `label` vẫn tồn tại để được sử dụng. Đây là closure.
+
+### Điều Gì Sẽ Xảy Ra Nếu Tôi Không Thể Nhìn Thấy Nó? (What If I Can't See It?)
+
+Bạn có lẽ đã nghe câu ngạn ngữ phổ biến này:
+
+> Nếu một cái cây đổ trong rừng nhưng không có ai ở đó để nghe thấy, nó có tạo ra âm thanh không?
+
+Đó là một chút thể dục dụng cụ triết học ngớ ngẩn. Tất nhiên từ góc độ khoa học, sóng âm thanh được tạo ra. Nhưng điểm thực sự là: _có quan trọng không_ nếu âm thanh xảy ra?
+
+Hãy nhớ rằng, trọng tâm trong định nghĩa của chúng ta về closure là khả năng quan sát (observability). Nếu một closure tồn tại (theo nghĩa kỹ thuật, triển khai, hoặc học thuật) nhưng nó không thể được quan sát trong các chương trình của chúng ta, _có quan trọng không?_ Không.
+
+Để củng cố điểm này, hãy xem xét một số ví dụ _không_ dựa trên closure một cách có thể quan sát được.
+
+Ví dụ, gọi một hàm sử dụng tra cứu lexical scope:
+
+```js
+function say(myName) {
+  var greeting = "Hello";
+  output();
+
+  function output() {
+    console.log(`${greeting}, ${myName}!`);
+  }
+}
+
+say("Kyle");
+// Hello, Kyle!
+```
+
+Inner function `output()` truy cập các biến `greeting` và `myName` từ scope bao quanh của nó. Nhưng việc gọi `output()` xảy ra trong cùng scope đó, nơi tất nhiên `greeting` và `myName` vẫn có sẵn; đó chỉ là lexical scope, không phải closure.
+
+Bất kỳ ngôn ngữ lexically scoped nào có các hàm không hỗ trợ closure vẫn sẽ hành xử theo cách tương tự này.
+
+Trên thực tế, các biến global scope về cơ bản không thể được (một cách có thể quan sát) closed over, bởi vì chúng luôn có thể truy cập được từ mọi nơi. Không có hàm nào có thể được gọi trong bất kỳ phần nào của scope chain mà không phải là hậu duệ của global scope.
+
+Xem xét:
+
+```js
+var students = [
+  { id: 14, name: "Kyle" },
+  { id: 73, name: "Suzy" },
+  { id: 112, name: "Frank" },
+  { id: 6, name: "Sarah" },
+];
+
+function getFirstStudent() {
+  return function firstStudent() {
+    return students[0].name;
+  };
+}
+
+var student = getFirstStudent();
+
+student();
+// Kyle
+```
+
+Inner function `firstStudent()` có tham chiếu `students`, là một biến bên ngoài scope của chính nó. Nhưng vì `students` tình cờ đến từ global scope, bất kể hàm đó được gọi ở đâu trong chương trình, khả năng truy cập `students` của nó không có gì đặc biệt hơn lexical scope bình thường.
+
+Tất cả các cuộc gọi hàm đều có thể truy cập các biến toàn cục, bất kể closure có được hỗ trợ bởi ngôn ngữ hay không. Các biến toàn cục không cần phải được closed over.
+
+Các biến chỉ đơn thuần hiện diện nhưng không bao giờ được truy cập không dẫn đến closure:
+
+```js
+function lookupStudent(studentID) {
+  return function nobody() {
+    var msg = "Nobody's here yet.";
+    console.log(msg);
+  };
+}
+
+var student = lookupStudent(112);
+
+student();
+// Nobody's here yet.
+```
+
+Inner function `nobody()` không close over bất kỳ biến bên ngoài nào—nó chỉ sử dụng biến `msg` của chính nó. Mặc dù `studentID` hiện diện trong scope bao quanh, `studentID` không được tham chiếu bởi `nobody()`. JS engine không cần phải giữ `studentID` xung quanh sau khi `lookupStudent(..)` đã chạy xong, vì vậy GC muốn dọn dẹp bộ nhớ đó!
+
+Cho dù các hàm JS có hỗ trợ closure hay không, chương trình này sẽ hành xử như nhau. Do đó, không có closure nào được quan sát ở đây.
+
+Nếu không có cuộc gọi hàm, closure không thể được quan sát:
+
+```js
+function greetStudent(studentName) {
+  return function greeting() {
+    console.log(`Hello, ${studentName}!`);
+  };
+}
+
+greetStudent("Kyle");
+
+// không có gì khác xảy ra
+```
+
+Cái này khó hiểu, bởi vì outer function chắc chắn được gọi. Nhưng inner function là cái _có thể_ đã có closure, nhưng nó không bao giờ được gọi; hàm được trả về ở đây chỉ bị vứt bỏ. Vì vậy, ngay cả nếu về mặt kỹ thuật JS engine đã tạo ra closure trong một khoảnh khắc ngắn ngủi, nó đã không được quan sát theo bất kỳ cách có ý nghĩa nào trong chương trình này.
+
+Một cái cây có thể đã đổ... nhưng chúng ta không nghe thấy nó, vì vậy chúng ta không quan tâm.
+
+#### Định Nghĩa Có Thể Quan Sát Được (Observable Definition)
+
+Bây giờ chúng ta đã sẵn sàng để định nghĩa closure:
+
+> Closure được quan sát khi một hàm sử dụng (các) biến từ outer scope(s) ngay cả khi đang chạy trong một scope nơi (các) biến đó sẽ không thể truy cập được.
+
+Các phần chính của định nghĩa này là:
+
+- Phải có một hàm liên quan
+
+- Phải tham chiếu ít nhất một biến từ một outer scope
+
+- Phải được gọi trong một nhánh khác của scope chain so với (các) biến
+
+Định nghĩa định hướng quan sát này có nghĩa là chúng ta không nên loại bỏ closure như một chuyện tầm phào học thuật, gián tiếp nào đó. Thay vào đó, chúng ta nên xem xét và lập kế hoạch cho các tác động trực tiếp, cụ thể mà closure có đối với hành vi chương trình của chúng ta.
+
+### Vòng Đời Của Closure và Thu Gom Rác (The Closure Lifecycle and Garbage Collection (GC))
+
+Vì closure vốn gắn liền với một function instance (bản thể hàm), closure của nó trên một biến kéo dài chừng nào vẫn còn một tham chiếu đến hàm đó.
+
+Nếu mười hàm đều close over cùng một biến, và theo thời gian chín trong số các tham chiếu hàm này bị loại bỏ, tham chiếu hàm duy nhất còn lại vẫn bảo tồn biến đó. Một khi tham chiếu hàm cuối cùng đó bị loại bỏ, closure cuối cùng trên biến đó biến mất, và chính biến đó được GC'd.
+
+Điều này có tác động quan trọng đến việc xây dựng các chương trình hiệu quả và hiệu năng cao. Closure có thể bất ngờ ngăn chặn GC của một biến mà bạn lẽ ra đã xong việc với nó, dẫn đến việc sử dụng bộ nhớ tăng vọt theo thời gian. Đó là lý do tại sao điều quan trọng là phải loại bỏ các tham chiếu hàm (và do đó là closures của chúng) khi chúng không còn cần thiết nữa.
+
+Xem xét:
+
+```js
+function manageBtnClickEvents(btn) {
+  var clickHandlers = [];
+
+  return function listener(cb) {
+    if (cb) {
+      let clickHandler = function onClick(evt) {
+        console.log("clicked!");
+        cb(evt);
+      };
+      clickHandlers.push(clickHandler);
+      btn.addEventListener("click", clickHandler);
+    } else {
+      // truyền không callback sẽ hủy đăng ký
+      // tất cả các click handlers
+      for (let handler of clickHandlers) {
+        btn.removeEventListener("click", handler);
+      }
+
+      clickHandlers = [];
+    }
+  };
+}
+
+// var mySubmitBtn = ..
+var onSubmit = manageBtnClickEvents(mySubmitBtn);
+
+onSubmit(function checkout(evt) {
+  // handle checkout
+});
+
+onSubmit(function trackAction(evt) {
+  // log action to analytics
+});
+
+// sau đó, hủy đăng ký tất cả handlers:
+onSubmit();
+```
+
+Trong chương trình này, inner function `onClick(..)` giữ một closure trên `cb` được truyền vào (event callback được cung cấp). Điều đó có nghĩa là các tham chiếu biểu thức hàm `checkout()` và `trackAction()` được giữ thông qua closure (và không thể được GC'd) chừng nào các event handlers này còn được đăng ký.
+
+Khi chúng ta gọi `onSubmit()` không có đầu vào ở dòng cuối cùng, tất cả các event handlers được hủy đăng ký, và mảng `clickHandlers` được làm trống. Một khi tất cả các tham chiếu hàm click handler bị loại bỏ, các closures của tham chiếu `cb` đến `checkout()` và `trackAction()` bị loại bỏ.
+
+Khi xem xét sức khỏe tổng thể và hiệu quả của chương trình, việc hủy đăng ký một event handler khi nó không còn cần thiết có thể còn quan trọng hơn cả việc đăng ký ban đầu!
+
+#### Theo Biến Hay Theo Scope? (Per Variable or Per Scope?)
+
+Một câu hỏi khác mà chúng ta cần giải quyết: chúng ta nên nghĩ về closure như chỉ áp dụng cho (các) biến bên ngoài được tham chiếu, hay closure bảo tồn toàn bộ scope chain với tất cả các biến của nó?
+
+Nói cách khác, trong đoạn trích đăng ký sự kiện trước đó, inner function `onClick(..)` có closed over chỉ `cb` không, hay nó cũng closed over `clickHandler`, `clickHandlers`, và `btn`?
+
+Về mặt khái niệm, closure là **theo biến** (per variable) chứ không phải _theo scope_ (per scope). Ajax callbacks, event handlers, và tất cả các hình thức function closures khác thường được giả định chỉ close over những gì chúng tham chiếu rõ ràng.
+
+Nhưng thực tế phức tạp hơn thế.
+
+Một chương trình khác để xem xét:
+
+```js
+function manageStudentGrades(studentRecords) {
+  var grades = studentRecords.map(getGrade);
+
+  return addGrade;
+
+  // ************************
+
+  function getGrade(record) {
+    return record.grade;
+  }
+
+  function sortAndTrimGradesList() {
+    // sắp xếp theo điểm, giảm dần
+    grades.sort(function desc(g1, g2) {
+      return g2 - g1;
+    });
+
+    // chỉ giữ 10 điểm cao nhất
+    grades = grades.slice(0, 10);
+  }
+
+  function addGrade(newGrade) {
+    grades.push(newGrade);
+    sortAndTrimGradesList();
+    return grades;
+  }
+}
+
+var addNextGrade = manageStudentGrades([
+  { id: 14, name: "Kyle", grade: 86 },
+  { id: 73, name: "Suzy", grade: 87 },
+  { id: 112, name: "Frank", grade: 75 },
+  // ..nhiều bản ghi hơn..
+  { id: 6, name: "Sarah", grade: 91 },
+]);
+
+// later
+
+addNextGrade(81);
+addNextGrade(68);
+// [ .., .., ... ]
+```
+
+Outer function `manageStudentGrades(..)` nhận một danh sách các hồ sơ học sinh, và trả về một tham chiếu hàm `addGrade(..)`, mà chúng ta dán nhãn bên ngoài là `addNextGrade(..)`. Mỗi khi chúng ta gọi `addNextGrade(..)` với một điểm số mới, chúng ta nhận lại danh sách hiện tại của 10 điểm cao nhất, được sắp xếp theo thứ tự giảm dần (xem `sortAndTrimGradesList()`).
+
+Từ cuối cuộc gọi `manageStudentGrades(..)` ban đầu, và giữa nhiều cuộc gọi `addNextGrade(..)`, biến `grades` được bảo tồn bên trong `addGrade(..)` thông qua closure; đó là cách danh sách điểm số cao nhất đang chạy được duy trì. Hãy nhớ rằng, đó là một closure trên chính biến `grades`, không phải mảng mà nó giữ.
+
+Tuy nhiên, đó không phải là closure duy nhất liên quan. Bạn có thể phát hiện ra các biến khác đang được closed over không?
+
+Bạn có phát hiện ra rằng `addGrade(..)` tham chiếu đến `sortAndTrimGradesList`? Điều đó có nghĩa là nó cũng closed over định danh đó, mà tình cờ giữ một tham chiếu đến hàm `sortAndTrimGradesList()`. Inner function thứ hai đó phải ở lại để `addGrade(..)` có thể tiếp tục gọi nó, điều này cũng có nghĩa là bất kỳ biến nào _nó_ closes over cũng dính lại—mặc dù, trong trường hợp này, không có gì thêm được closed over ở đó.
+
+Còn gì khác được closed over?
+
+Xem xét biến `getGrade` (và hàm của nó); nó có được closed over không? Nó được tham chiếu trong outer scope của `manageStudentGrades(..)` trong cuộc gọi `.map(getGrade)`. Nhưng nó không được tham chiếu trong `addGrade(..)` hoặc `sortAndTrimGradesList()`.
+
+Còn về danh sách (có khả năng) lớn các hồ sơ học sinh mà chúng ta chuyển vào dưới dạng `studentRecords`? Biến đó có được closed over không? Nếu có, mảng hồ sơ học sinh không bao giờ được GC'd, dẫn đến chương trình này giữ một lượng bộ nhớ lớn hơn chúng ta có thể giả định. Nhưng nếu chúng ta nhìn kỹ lại, không có inner functions nào tham chiếu đến `studentRecords`.
+
+Theo định nghĩa closure _theo biến_, vì `getGrade` và `studentRecords` _không_ được tham chiếu bởi các inner functions, chúng không được closed over. Chúng nên có sẵn miễn phí cho GC ngay sau khi cuộc gọi `manageStudentGrades(..)` hoàn thành.
+
+Quả thực, hãy thử gỡ lỗi code này trong một JS engine gần đây, như v8 trong Chrome, đặt một breakpoint bên trong hàm `addGrade(..)`. Bạn có thể nhận thấy rằng inspector **không** liệt kê biến `studentRecords`. Đó là bằng chứng, về mặt gỡ lỗi, rằng engine không duy trì `studentRecords` thông qua closure. Phù!
+
+Nhưng quan sát này đáng tin cậy đến mức nào như một bằng chứng? Xem xét chương trình (khá gượng ép!) này:
+
+```js
+function storeStudentInfo(id, name, grade) {
+  return function getInfo(whichValue) {
+    // cảnh báo:
+    //   sử dụng `eval(..)` là một ý tưởng tồi!
+    var val = eval(whichValue);
+    return val;
+  };
+}
+
+var info = storeStudentInfo(73, "Suzy", 87);
+
+info("name");
+// Suzy
+
+info("grade");
+// 87
+```
+
+Lưu ý rằng inner function `getInfo(..)` không được closed over một cách rõ ràng bất kỳ biến nào trong số `id`, `name`, hoặc `grade`. Tuy nhiên, các cuộc gọi đến `info(..)` dường như vẫn có thể tiếp cận các biến, mặc dù thông qua việc sử dụng trò gian lận lexical scope `eval(..)` (xem Chương 1).
+
+Vì vậy, tất cả các biến chắc chắn đã được bảo tồn thông qua closure, mặc dù không được tham chiếu rõ ràng bởi inner function. Vậy điều đó có bác bỏ khẳng định _theo biến_ ủng hộ _theo scope_ không? Còn tùy.
+
+Nhiều JS engines hiện đại áp dụng một _tối ưu hóa_ loại bỏ bất kỳ biến nào khỏi closure scope mà không được tham chiếu rõ ràng. Tuy nhiên, như chúng ta thấy với `eval(..)`, có những tình huống mà tối ưu hóa như vậy không thể được áp dụng, và closure scope tiếp tục chứa tất cả các biến ban đầu của nó. Nói cách khác, closure phải là _theo scope_, về mặt triển khai, và sau đó một tối ưu hóa tùy chọn cắt giảm scope xuống chỉ những gì đã được closed over (một kết quả tương tự như closure _theo biến_).
+
+Ngay cả gần đây như một vài năm trước, nhiều JS engines đã không áp dụng tối ưu hóa này; có thể các trang web của bạn vẫn chạy trong các trình duyệt như vậy, đặc biệt là trên các thiết bị cũ hơn hoặc cấp thấp hơn. Điều đó có nghĩa là có thể các closures tồn tại lâu dài như event handlers có thể đang giữ bộ nhớ lâu hơn nhiều so với chúng ta giả định.
+
+Và thực tế là nó là một tối ưu hóa tùy chọn ngay từ đầu, thay vì một yêu cầu của đặc tả, có nghĩa là chúng ta không nên chỉ thản nhiên giả định quá mức khả năng áp dụng của nó.
+
+Trong các trường hợp một biến giữ một giá trị lớn (như một object hoặc array) và biến đó hiện diện trong một closure scope, nếu bạn không cần giá trị đó nữa và không muốn bộ nhớ đó được giữ, an toàn hơn (sử dụng bộ nhớ) là loại bỏ thủ công giá trị thay vì dựa vào tối ưu hóa closure/GC.
+
+Hãy áp dụng một _bản sửa lỗi_ cho ví dụ `manageStudentGrades(..)` trước đó để đảm bảo mảng lớn tiềm năng được giữ trong `studentRecords` không bị bắt trong một closure scope một cách không cần thiết:
+
+```js
+function manageStudentGrades(studentRecords) {
+  var grades = studentRecords.map(getGrade);
+
+  // unset `studentRecords` để ngăn chặn
+  // việc giữ lại bộ nhớ không mong muốn trong closure
+  studentRecords = null;
+
+  return addGrade;
+  // ..
+}
+```
+
+Chúng ta không loại bỏ `studentRecords` khỏi closure scope; điều đó chúng ta không thể kiểm soát. Chúng ta đang đảm bảo rằng ngay cả khi `studentRecords` vẫn còn trong closure scope, biến đó không còn tham chiếu đến mảng dữ liệu lớn tiềm năng nữa; mảng có thể được GC'd.
+
+Một lần nữa, trong nhiều trường hợp JS có thể tự động tối ưu hóa chương trình để có cùng hiệu ứng. Nhưng vẫn là một thói quen tốt để cẩn thận và đảm bảo rõ ràng chúng ta không giữ bất kỳ lượng bộ nhớ thiết bị đáng kể nào lâu hơn mức cần thiết.
+
+Thực tế là, về mặt kỹ thuật chúng ta cũng không cần hàm `getGrade()` nữa sau khi cuộc gọi `.map(getGrade)` hoàn thành. Nếu việc lập hồ sơ (profiling) ứng dụng của chúng ta cho thấy đây là một khu vực quan trọng của việc sử dụng bộ nhớ dư thừa, chúng ta có thể có thể eek out (tiết kiệm) thêm một chút bộ nhớ bằng cách giải phóng tham chiếu đó để giá trị của nó cũng không bị trói buộc. Điều đó có thể không cần thiết trong ví dụ đồ chơi này, nhưng đây là một kỹ thuật chung cần ghi nhớ nếu bạn đang tối ưu hóa dấu ấn bộ nhớ của ứng dụng của mình.
+
+Điểm mấu chốt: điều quan trọng là phải biết closures xuất hiện ở đâu trong các chương trình của chúng ta, và những biến nào được bao gồm. Chúng ta nên quản lý các closures này một cách cẩn thận để chúng ta chỉ giữ lại những gì cần thiết tối thiểu và không lãng phí bộ nhớ.
+
+### Một Góc Nhìn Thay Thế (An Alternative Perspective)
+
+Xem xét lại định nghĩa làm việc của chúng ta về closure, khẳng định là các hàm là "giá trị hạng nhất" (first-class values) có thể được truyền xung quanh chương trình, giống như bất kỳ giá trị nào khác. Closure là sự liên kết-kết hợp kết nối hàm đó với scope/biến bên ngoài chính nó, bất kể hàm đó đi đâu.
+
+Hãy nhớ lại một ví dụ code từ đầu chương này, một lần nữa với các màu bong bóng scope liên quan được chú thích:
+
+```js
+// outer/global scope: RED(1)
+
+function adder(num1) {
+  // function scope: BLUE(2)
+
+  return function addTo(num2) {
+    // function scope: GREEN(3)
+
+    return num1 + num2;
+  };
+}
+
+var add10To = adder(10);
+var add42To = adder(42);
+
+add10To(15); // 25
+add42To(9); // 51
+```
+
+Góc nhìn hiện tại của chúng ta cho thấy rằng bất cứ nơi nào một hàm được truyền và gọi, closure bảo tồn một liên kết ẩn quay trở lại scope ban đầu để tạo điều kiện cho việc truy cập vào các biến được closed-over. Hình 4, lặp lại ở đây để thuận tiện, minh họa khái niệm này:
+
+<figure>
+    <img src="https://raw.githubusercontent.com/getify/You-Dont-Know-JS/2nd-ed/scope-closures/images/fig4.png" width="400" alt="Function instances linked to scopes via closure" align="center">
+    <figcaption><em>Fig. 4 (lặp lại): Trực Quan Hóa Closures</em></figcaption>
+    <br><br>
+</figure>
+
+Nhưng có một cách khác để suy nghĩ về closure, và chính xác hơn là bản chất của các hàm được _truyền xung quanh_ (passed around), có thể giúp làm sâu sắc thêm các mô hình tinh thần.
+
+Mô hình thay thế này giảm bớt sự nhấn mạnh "các hàm như các giá trị hạng nhất," và thay vào đó chấp nhận cách các hàm (giống như tất cả các giá trị không nguyên thủy) được giữ bởi tham chiếu trong JS, và được gán/truyền bởi sao chép tham chiếu—xem Phụ lục A của cuốn sách _Get Started_ để biết thêm thông tin.
+
+Thay vì nghĩ về inner function instance của `addTo(..)` di chuyển đến outer scope RED(1) thông qua `return` và gán, chúng ta có thể hình dung rằng các function instances thực sự chỉ ở lại vị trí trong môi trường scope của riêng chúng, tất nhiên với scope-chain của chúng còn nguyên vẹn.
+
+Những gì được _gửi_ đến RED(1) scope là **chỉ một tham chiếu** đến in-place function instance (bản thể hàm tại chỗ), thay vì chính function instance. Hình 5 mô tả các inner function instances còn lại tại chỗ, được trỏ đến bởi các tham chiếu RED(1) `addTo10` và `addTo42`, tương ứng:
+
+<figure>
+    <img src="https://raw.githubusercontent.com/getify/You-Dont-Know-JS/2nd-ed/scope-closures/images/fig5.png" width="400" alt="Function instances inside scopes via closure, linked to by references" align="center">
+    <figcaption><em>Fig. 5: Trực Quan Hóa Closures (Thay Thế)</em></figcaption>
+    <br><br>
+</figure>
+
+Như được hiển thị trong Hình 5, mỗi cuộc gọi đến `adder(..)` vẫn tạo ra một scope BLUE(2) mới chứa một biến `num1`, cũng như một instance của scope GREEN(3) `addTo(..)`. Nhưng điều khác biệt so với Hình 4 là, bây giờ các instances GREEN(3) này vẫn ở lại tại chỗ, lồng nhau tự nhiên bên trong các instances scope BLUE(2) của chúng. Các tham chiếu `addTo10` và `addTo42` được di chuyển đến outer scope RED(1), không phải các function instances.
+
+Khi `addTo10(15)` được gọi, `addTo(..)` function instance (vẫn tại chỗ trong môi trường scope BLUE(2) ban đầu của nó) được gọi. Vì chính function instance không bao giờ di chuyển, tất nhiên nó vẫn có quyền truy cập tự nhiên vào scope chain của nó. Tương tự với cuộc gọi `addTo42(9)`—không có gì đặc biệt ở đây ngoài lexical scope.
+
+Vậy thì closure _là gì_, nếu không phải là _phép thuật_ cho phép một hàm duy trì một liên kết đến scope chain ban đầu của nó ngay cả khi hàm đó di chuyển xung quanh trong các scopes khác? Trong mô hình thay thế này, các hàm ở lại tại chỗ và tiếp tục truy cập scope chain ban đầu của chúng giống như chúng luôn có thể.
+
+Closure thay vào đó mô tả _phép thuật_ của việc **giữ cho một function instance tồn tại**, cùng với toàn bộ môi trường scope và chuỗi của nó, chừng nào vẫn còn ít nhất một tham chiếu đến function instance đó trôi nổi trong bất kỳ phần nào khác của chương trình.
+
+Định nghĩa đó của closure ít quan sát hơn và nghe có vẻ ít quen thuộc hơn một chút so với quan điểm học thuật truyền thống. Nhưng nó vẫn hữu ích, bởi vì lợi ích là chúng ta đơn giản hóa việc giải thích closure thành một sự kết hợp đơn giản của các tham chiếu và các in-place function instances.
+
+Mô hình trước đó (Hình 4) không phải là _sai_ khi mô tả closure trong JS. Nó chỉ được truyền cảm hứng về mặt khái niệm hơn, một quan điểm học thuật về closure. Ngược lại, mô hình thay thế (Hình 5) có thể được mô tả là tập trung vào triển khai hơn một chút, cách JS thực sự hoạt động.
+
+Cả hai quan điểm/mô hình đều hữu ích trong việc hiểu closure, nhưng người đọc có thể thấy cái này dễ nắm bắt hơn cái kia. Bất kể bạn chọn cái nào, các kết quả có thể quan sát được trong chương trình của chúng ta là giống nhau.
+
+| LƯU Ý:                                                                                                                                                                                             |
+| :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mô hình thay thế này cho closure có ảnh hưởng đến việc liệu chúng ta phân loại các callbacks đồng bộ (synchronous callbacks) là ví dụ của closure hay không. Thêm về sắc thái này trong Phụ lục A. |
+
+### Tại Sao Lại Là Closure? (Why Closure?)
+
+Bây giờ chúng ta đã có một cảm giác toàn diện về closure là gì và cách nó hoạt động, hãy khám phá một số cách nó có thể cải thiện cấu trúc code và tổ chức của một chương trình ví dụ.
+
+Hãy tưởng tượng bạn có một nút trên một trang mà khi được nhấp, nên lấy và gửi một số dữ liệu thông qua một yêu cầu Ajax. Không sử dụng closure:
+
+```js
+var APIendpoints = {
+  studentIDs: "https://some.api/register-students",
+  // ..
+};
+
+var data = {
+  studentIDs: [14, 73, 112, 6],
+  // ..
+};
+
+function makeRequest(evt) {
+  var btn = evt.target;
+  var recordKind = btn.dataset.kind;
+  ajax(APIendpoints[recordKind], data[recordKind]);
+}
+
+// <button data-kind="studentIDs">
+//    Register Students
+// </button>
+btn.addEventListener("click", makeRequest);
+```
+
+Tiện ích `makeRequest(..)` chỉ nhận một object `evt` từ một sự kiện click. Từ đó, nó phải lấy thuộc tính `data-kind` từ phần tử button đích, và sử dụng giá trị đó để tra cứu cả URL cho API endpoint cũng như dữ liệu nào nên được bao gồm trong yêu cầu Ajax.
+
+Điều này hoạt động OK, nhưng thật không may (kém hiệu quả, dễ gây nhầm lẫn hơn) khi event handler phải đọc một thuộc tính DOM mỗi khi nó được kích hoạt. Tại sao một event handler không thể _ghi nhớ_ giá trị này? Hãy thử sử dụng closure để cải thiện code:
+
+```js
+var APIendpoints = {
+  studentIDs: "https://some.api/register-students",
+  // ..
+};
+
+var data = {
+  studentIDs: [14, 73, 112, 6],
+  // ..
+};
+
+function setupButtonHandler(btn) {
+  var recordKind = btn.dataset.kind;
+
+  btn.addEventListener("click", function makeRequest(evt) {
+    ajax(APIendpoints[recordKind], data[recordKind]);
+  });
+}
+
+// <button data-kind="studentIDs">
+//    Register Students
+// </button>
+
+setupButtonHandler(btn);
+```
+
+Với cách tiếp cận `setupButtonHandler(..)`, thuộc tính `data-kind` được lấy một lần và gán cho biến `recordKind` tại thời điểm thiết lập ban đầu. `recordKind` sau đó được closed over bởi inner click handler `makeRequest(..)`, và giá trị của nó được sử dụng trên mỗi lần kích hoạt sự kiện để tra cứu URL và dữ liệu nên được gửi.
+
+| LƯU Ý:                                                                                                                                                          |
+| :-------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `evt` vẫn được truyền cho `makeRequest(..)`, mặc dù trong trường hợp này chúng ta không sử dụng nó nữa. Nó vẫn được liệt kê, để nhất quán với đoạn trích trước. |
+
+Bằng cách đặt `recordKind` bên trong `setupButtonHandler(..)`, chúng ta giới hạn sự phơi bày scope của biến đó vào một tập hợp con thích hợp hơn của chương trình; lưu trữ nó toàn cục sẽ tồi tệ hơn cho tổ chức code và khả năng đọc. Closure cho phép inner function instance `makeRequest()` _ghi nhớ_ biến này và truy cập bất cứ khi nào nó cần.
+
+Xây dựng trên mô hình này, chúng ta có thể đã tra cứu cả URL và dữ liệu một lần, tại thời điểm thiết lập:
+
+```js
+function setupButtonHandler(btn) {
+  var recordKind = btn.dataset.kind;
+  var requestURL = APIendpoints[recordKind];
+  var requestData = data[recordKind];
+
+  btn.addEventListener("click", function makeRequest(evt) {
+    ajax(requestURL, requestData);
+  });
+}
+```
+
+Bây giờ `makeRequest(..)` được closed over `requestURL` và `requestData`, điều này dễ hiểu hơn một chút, và cũng hiệu quả hơn một chút.
+
+Hai kỹ thuật tương tự từ mô hình Lập trình Hàm (FP) dựa vào closure là ứng dụng một phần (partial application) và currying. Tóm tắt, với các kỹ thuật này, chúng ta thay đổi _hình dạng_ của các hàm yêu cầu nhiều đầu vào để một số đầu vào được cung cấp trước, và các đầu vào khác được cung cấp sau; các đầu vào ban đầu được ghi nhớ thông qua closure. Một khi tất cả các đầu vào đã được cung cấp, hành động cơ bản được thực hiện.
+
+Bằng cách tạo một function instance đóng gói một số thông tin bên trong (thông qua closure), hàm-với-thông-tin-được-lưu-trữ sau đó có thể được sử dụng trực tiếp mà không cần phải cung cấp lại đầu vào đó. Điều này làm cho phần đó của code sạch hơn, và cũng cung cấp cơ hội để dán nhãn các hàm được ứng dụng một phần với các tên ngữ nghĩa tốt hơn.
+
+Thích ứng ứng dụng một phần, chúng ta có thể cải thiện thêm code trước đó:
+
+```js
+function defineHandler(requestURL, requestData) {
+  return function makeRequest(evt) {
+    ajax(requestURL, requestData);
+  };
+}
+
+function setupButtonHandler(btn) {
+  var recordKind = btn.dataset.kind;
+  var handler = defineHandler(APIendpoints[recordKind], data[recordKind]);
+  btn.addEventListener("click", handler);
+}
+```
+
+Các đầu vào `requestURL` và `requestData` được cung cấp trước, dẫn đến việc hàm `makeRequest(..)` được ứng dụng một phần, mà chúng ta dán nhãn cục bộ là `handler`. Khi sự kiện cuối cùng kích hoạt, đầu vào cuối cùng (`evt`, mặc dù nó bị bỏ qua) được truyền cho `handler()`, hoàn thành các đầu vào của nó và kích hoạt yêu cầu Ajax cơ bản.
+
+Về mặt hành vi, chương trình này khá giống với chương trình trước đó, với cùng loại closure. Nhưng bằng cách cô lập việc tạo `makeRequest(..)` trong một tiện ích riêng biệt (`defineHandler(..)`), chúng ta làm cho định nghĩa đó có thể tái sử dụng nhiều hơn trên toàn bộ chương trình. Chúng ta cũng giới hạn rõ ràng scope closure chỉ vào hai biến cần thiết.
+
+### Gần Hơn Với Closure (Closer to Closure)
+
+Khi chúng ta khép lại một chương dày đặc, hãy hít thở sâu và để tất cả ngấm vào. Nghiêm túc mà nói, đó là rất nhiều thông tin cho bất kỳ ai tiêu thụ!
+
+Chúng ta đã khám phá hai mô hình để giải quyết closure về mặt tinh thần:
+
+- Quan sát (Observational): closure là một function instance ghi nhớ các biến bên ngoài của nó ngay cả khi hàm đó được truyền đến và **được gọi trong** các scopes khác.
+
+- Triển khai (Implementational): closure là một function instance và môi trường scope của nó được bảo tồn tại chỗ trong khi bất kỳ tham chiếu nào đến nó được truyền xung quanh và **được gọi từ** các scopes khác.
+
+Tóm tắt các lợi ích đối với các chương trình của chúng ta:
+
+- Closure có thể cải thiện hiệu quả bằng cách cho phép một function instance ghi nhớ thông tin đã được xác định trước đó thay vì phải tính toán lại mỗi lần.
+
+- Closure có thể cải thiện khả năng đọc code, giới hạn phơi bày scope bằng cách đóng gói (các) biến bên trong function instances, trong khi vẫn đảm bảo thông tin trong các biến đó có thể truy cập được cho việc sử dụng trong tương lai. Các function instances hẹp hơn, chuyên biệt hơn kết quả dễ tương tác hơn, vì thông tin được bảo tồn không cần phải được truyền vào mỗi lần gọi.
+
+Trước khi bạn tiếp tục, hãy dành chút thời gian để trình bày lại tóm tắt này _bằng lời của riêng bạn_, giải thích closure là gì và tại sao nó hữu ích trong các chương trình của bạn. Văn bản cuốn sách chính kết thúc với một chương cuối cùng xây dựng trên đỉnh của closure với mô hình module.
+
+---
+
+## Chương 8: Mẫu Module (The Module Pattern)
+
+Trong chương này, chúng ta sẽ kết thúc văn bản chính của cuốn sách bằng cách khám phá một trong những mẫu tổ chức code quan trọng nhất trong tất cả các lập trình: module. Như chúng ta sẽ thấy, các module vốn dĩ được xây dựng từ những gì chúng ta đã đề cập: phần thưởng cho những nỗ lực của bạn trong việc tìm hiểu lexical scope và closure.
+
+Chúng ta đã kiểm tra mọi góc độ của lexical scope, từ bề rộng của global scope xuống qua các block scopes lồng nhau, vào những sự phức tạp của vòng đời biến. Sau đó, chúng ta đã tận dụng lexical scope để hiểu toàn bộ sức mạnh của closure.
+
+Hãy dành một chút thời gian để suy ngẫm xem bạn đã đi bao xa trong hành trình này cho đến nay; bạn đã thực hiện những bước tiến lớn trong việc hiểu sâu hơn về JS!
+
+Chủ đề trung tâm của cuốn sách này là việc hiểu và làm chủ scope và closure là chìa khóa để cấu trúc và tổ chức code của chúng ta một cách đúng đắn, đặc biệt là các quyết định về nơi lưu trữ thông tin trong các biến.
+
+Mục tiêu của chúng ta trong chương cuối cùng này là đánh giá cao cách các modules hiện thân cho tầm quan trọng của các chủ đề này, nâng tầm chúng từ các khái niệm trừu tượng lên thành các cải tiến cụ thể, thiết thực trong việc xây dựng các chương trình.
+
+### Đóng Gói và Phơi Bày Ít Nhất (Encapsulation and Least Exposure - POLE)
+
+Đóng gói (Encapsulation) thường được trích dẫn như một nguyên tắc của lập trình hướng đối tượng (OO), nhưng nó cơ bản hơn và áp dụng rộng rãi hơn thế. Mục tiêu của đóng gói là việc bó, nhóm hoặc đồng vị trí thông tin (dữ liệu) và hành vi (hàm) cùng phục vụ một mục đích chung.
+
+Độc lập với bất kỳ cú pháp hoặc cơ chế code nào, tinh thần của đóng gói có thể được nhận ra trong một cái gì đó đơn giản như sử dụng các file riêng biệt để giữ các bit của chương trình tổng thể với mục đích chung. Nếu chúng ta nhóm mọi thứ hỗ trợ một danh sách kết quả tìm kiếm vào một file duy nhất gọi là "search-list.js", chúng ta đang đóng gói phần đó của chương trình.
+
+Xu hướng gần đây trong lập trình front-end hiện đại để tổ chức các ứng dụng xung quanh kiến trúc Component đẩy đóng gói đi xa hơn nữa. Đối với nhiều người, cảm giác tự nhiên là hợp nhất mọi thứ cấu thành danh sách kết quả tìm kiếm—thậm chí ngoài code, bao gồm markup trình bày và styling—vào một đơn vị logic chương trình duy nhất, một cái gì đó hữu hình mà chúng ta có thể tương tác. Và sau đó chúng ta dán nhãn bộ sưu tập đó là component "SearchList".
+
+Một mục tiêu quan trọng khác là kiểm soát khả năng hiển thị của một số khía cạnh của dữ liệu và chức năng được đóng gói. Hãy nhớ lại từ Chương 6 nguyên tắc _phơi bày ít nhất_ (POLE), tìm cách bảo vệ một cách phòng thủ chống lại các _nguy hiểm_ khác nhau của việc phơi bày scope quá mức; những điều này ảnh hưởng đến cả biến và hàm. Trong JS, chúng ta thường triển khai kiểm soát khả năng hiển thị thông qua cơ chế của lexical scope.
+
+Ý tưởng là nhóm các bit chương trình giống nhau lại với nhau, và giới hạn quyền truy cập lập trình một cách chọn lọc vào các phần mà chúng ta coi là chi tiết _riêng tư_ (private). Những gì không được coi là _riêng tư_ sau đó được đánh dấu là _công khai_ (public), có thể truy cập được cho toàn bộ chương trình.
+
+Hiệu quả tự nhiên của nỗ lực này là tổ chức code tốt hơn. Dễ dàng hơn để xây dựng và bảo trì phần mềm khi chúng ta biết mọi thứ ở đâu, với ranh giới và điểm kết nối rõ ràng và hiển nhiên. Nó cũng dễ dàng hơn để duy trì chất lượng nếu chúng ta tránh những cạm bẫy của dữ liệu và chức năng bị phơi bày quá mức.
+
+Đây là một số lợi ích chính của việc tổ chức các chương trình JS thành các modules.
+
+### Module Là Gì? (What Is a Module?)
+
+Một module là một bộ sưu tập các dữ liệu và hàm liên quan (thường được gọi là phương thức (methods) trong ngữ cảnh này), được đặc trưng bởi sự phân chia giữa các chi tiết _riêng tư_ ẩn và các chi tiết _công khai_ có thể truy cập, thường được gọi là "public API."
+
+Một module cũng có trạng thái (stateful): nó duy trì một số thông tin theo thời gian, cùng với chức năng để truy cập và cập nhật thông tin đó.
+
+| LƯU Ý:                                                                                                                                                                                                                                                                                                                                   |
+| :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Một mối quan tâm rộng hơn của mẫu module là hoàn toàn nắm lấy việc mô-đun hóa ở cấp hệ thống (system-level modularization) thông qua loose-coupling (ghép lỏng lẻo) và các kỹ thuật kiến trúc chương trình khác. Đó là một chủ đề phức tạp nằm ngoài giới hạn thảo luận của chúng ta, nhưng đáng để nghiên cứu thêm ngoài cuốn sách này. |
+
+Để có cảm nhận tốt hơn về module là gì, hãy so sánh một số đặc điểm của module với các mẫu code hữu ích không hẳn là modules.
+
+#### Namespaces (Nhóm Không Trạng Thái)
+
+Nếu bạn nhóm một tập hợp các hàm liên quan lại với nhau, mà không có dữ liệu, thì bạn thực sự không có sự đóng gói mong đợi mà một module ngụ ý. Thuật ngữ tốt hơn cho nhóm các hàm _không trạng thái_ (stateless) này là một namespace:
+
+```js
+// namespace, không phải module
+var Utils = {
+  cancelEvt(evt) {
+    evt.preventDefault();
+    evt.stopPropagation();
+    evt.stopImmediatePropagation();
+  },
+  wait(ms) {
+    return new Promise(function c(res) {
+      setTimeout(res, ms);
+    });
+  },
+  isValidEmail(email) {
+    return /[^@]+@[^@.]+\\.[^@.]+/.test(email);
+  },
+};
+```
+
+`Utils` ở đây là một bộ sưu tập các tiện ích hữu ích, nhưng chúng đều là các hàm độc lập với trạng thái. Việc tập hợp chức năng lại với nhau nói chung là thực hành tốt, nhưng điều đó không làm cho cái này thành một module. Thay vào đó, chúng ta đã định nghĩa một `Utils` namespace và tổ chức các hàm dưới nó.
+
+#### Cấu Trúc Dữ Liệu (Nhóm Có Trạng Thái)
+
+Ngay cả khi bạn nhóm dữ liệu và các hàm có trạng thái lại với nhau, nếu bạn không giới hạn khả năng hiển thị của bất kỳ cái nào trong số đó, thì bạn đang dừng lại ngay trước khía cạnh POLE của việc đóng gói; dán nhãn đó là một module không thực sự hữu ích.
+
+Xem xét:
+
+```js
+// cấu trúc dữ liệu, không phải module
+var Student = {
+  records: [
+    { id: 14, name: "Kyle", grade: 86 },
+    { id: 73, name: "Suzy", grade: 87 },
+    { id: 112, name: "Frank", grade: 75 },
+    { id: 6, name: "Sarah", grade: 91 },
+  ],
+  getName(studentID) {
+    var student = this.records.find((student) => student.id == studentID);
+    return student.name;
+  },
+};
+
+Student.getName(73);
+// Suzy
+```
+
+Vì `records` là dữ liệu có thể truy cập công khai, không bị ẩn sau một public API, `Student` ở đây thực sự không phải là một module.
+
+`Student` có khía cạnh dữ liệu-và-chức năng của việc đóng gói, nhưng không có khía cạnh kiểm soát khả năng hiển thị. Tốt nhất là dán nhãn cái này là một instance của một cấu trúc dữ liệu.
+
+#### Modules (Kiểm Soát Truy Cập Có Trạng Thái)
+
+Để hiện thân hóa toàn bộ tinh thần của mẫu module, chúng ta không chỉ cần nhóm và trạng thái, mà còn cần kiểm soát truy cập thông qua khả năng hiển thị (riêng tư vs. công khai).
+
+Hãy biến `Student` từ phần trước thành một module. Chúng ta sẽ bắt đầu với một hình thức tôi gọi là "module cổ điển" (classic module), ban đầu được gọi là "module bộc lộ" (revealing module) khi nó mới xuất hiện vào đầu những năm 2000. Xem xét:
+
+```js
+var Student = (function defineStudent(){\n    var records = [
+        { id: 14, name: "Kyle", grade: 86 },
+        { id: 73, name: "Suzy", grade: 87 },
+        { id: 112, name: "Frank", grade: 75 },
+        { id: 6, name: "Sarah", grade: 91 }
+    ];
+
+    var publicAPI = {
+        getName
+    };\n\n    return publicAPI;
+
+    // ************************
+
+    function getName(studentID) {
+        var student = records.find(
+            student => student.id == studentID
+        );
+        return student.name;
+    }
+})();\n\nStudent.getName(73);   // Suzy
+```
+
+`Student` bây giờ là một instance của một module. Nó có một public API với một phương thức duy nhất: `getName(..)`. Phương thức này có thể truy cập dữ liệu `records` ẩn riêng tư.
+
+| CẢNH BÁO:                                                                                                                                                                                                                                                                                                                                                                                                           |
+| :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Tôi nên chỉ ra rằng dữ liệu sinh viên rõ ràng được hard-coded vào định nghĩa module này chỉ là cho mục đích minh họa của chúng ta. Một module điển hình trong chương trình của bạn sẽ nhận dữ liệu này từ một nguồn bên ngoài, thường được tải từ cơ sở dữ liệu, file dữ liệu JSON, cuộc gọi Ajax, v.v. Dữ liệu sau đó được tiêm vào module instance thường thông qua (các) phương thức trên public API của module. |
+
+Định dạng module cổ điển hoạt động như thế nào?
+
+Lưu ý rằng instance của module được tạo ra bởi IIFE `defineStudent()` được thực thi. IIFE này trả về một object (có tên `publicAPI`) có một thuộc tính trên đó tham chiếu đến inner function `getName(..)`.
+
+Đặt tên object là `publicAPI` là sở thích phong cách của tôi. Object có thể được đặt tên bất cứ thứ gì bạn thích (JS không quan tâm), hoặc bạn có thể chỉ trả về một object trực tiếp mà không gán nó cho bất kỳ biến được đặt tên nội bộ nào. Thêm về lựa chọn này trong Phụ lục A.
+
+Từ bên ngoài, `Student.getName(..)` gọi inner function được phơi bày này, duy trì quyền truy cập vào biến `records` bên trong thông qua closure.
+
+Bạn không _buộc phải_ trả về một object với một hàm là một trong các thuộc tính của nó. Bạn có thể chỉ trả về một hàm trực tiếp, thay cho object. Điều đó vẫn thỏa mãn tất cả các phần cốt lõi của một module cổ điển.
+
+Nhờ vào cách lexical scope hoạt động, việc định nghĩa các biến và hàm bên trong hàm định nghĩa module bên ngoài của bạn làm cho mọi thứ _theo mặc định_ là riêng tư. Chỉ các thuộc tính được thêm vào object public API được trả về từ hàm mới được xuất khẩu (exported) để sử dụng công khai bên ngoài.
+
+Việc sử dụng một IIFE ngụ ý rằng chương trình của chúng ta chỉ bao giờ cần một instance trung tâm duy nhất của module, thường được gọi là "singleton" (đơn thể). Quả thực, ví dụ cụ thể này đủ đơn giản để không có lý do rõ ràng nào chúng ta cần bất cứ điều gì hơn chỉ là một instance của module `Student`.
+
+**Nhà Máy Module (Nhiều Instance)**
+
+Nhưng nếu chúng ta muốn định nghĩa một module hỗ trợ nhiều instances (bản thể) trong chương trình của mình, chúng ta có thể chỉnh sửa code một chút:
+
+```js
+// hàm factory, không phải singleton IIFE
+function defineStudent() {
+    var records = [
+        { id: 14, name: "Kyle", grade: 86 },
+        { id: 73, name: "Suzy", grade: 87 },
+        { id: 112, name: "Frank", grade: 75 },
+        { id: 6, name: "Sarah", grade: 91 }
+    ];
+
+    var publicAPI = {
+        getName
+    };\n\n    return publicAPI;
+
+    // ************************
+
+    function getName(studentID) {
+        var student = records.find(
+            student => student.id == studentID
+        );
+        return student.name;
+    }
+}
+
+var fullTime = defineStudent();
+fullTime.getName(73);            // Suzy
+```
+
+Thay vì chỉ định `defineStudent()` như một IIFE, chúng ta chỉ định nghĩa nó như một hàm độc lập bình thường, thường được gọi trong ngữ cảnh này là một hàm "module factory" (nhà máy module).
+
+Sau đó chúng ta gọi module factory, tạo ra một instance của module mà chúng ta dán nhãn `fullTime`. Module instance này ngụ ý một instance mới của inner scope, và do đó một closure mới mà `getName(..)` giữ trên `records`. `fullTime.getName(..)` bây giờ gọi phương thức trên instance cụ thể đó.
+
+**Định Nghĩa Module Cổ Điển**
+
+Vì vậy, để làm rõ điều gì làm cho một cái gì đó trở thành một module cổ điển:
+
+- Phải có một outer scope, thường là từ một hàm module factory chạy ít nhất một lần.
+
+- Inner scope của module phải có ít nhất một thông tin ẩn đại diện cho trạng thái của module.
+
+- Module phải trả về trên public API của nó một tham chiếu đến ít nhất một hàm có closure trên trạng thái module ẩn (để trạng thái này thực sự được bảo tồn).
+
+Bạn có thể sẽ bắt gặp các biến thể khác về cách tiếp cận module cổ điển này, chúng ta sẽ xem xét chi tiết hơn trong Phụ lục A.
+
+### Các Module Node CommonJS (Node CommonJS Modules)
+
+Trong Chương 4, chúng ta đã giới thiệu định dạng module CommonJS được sử dụng bởi Node. Không giống như định dạng module cổ điển được mô tả trước đó, nơi bạn có thể nhóm module factory hoặc IIFE cùng với bất kỳ code nào khác bao gồm các module khác, các module CommonJS dựa trên file (file-based); một module mỗi file.
+
+Hãy chỉnh sửa ví dụ module của chúng ta để tuân thủ định dạng đó:
+
+```js
+module.exports.getName = getName;
+
+// ************************
+
+var records = [
+  { id: 14, name: "Kyle", grade: 86 },
+  { id: 73, name: "Suzy", grade: 87 },
+  { id: 112, name: "Frank", grade: 75 },
+  { id: 6, name: "Sarah", grade: 91 },
+];
+
+function getName(studentID) {
+  var student = records.find((student) => student.id == studentID);
+  return student.name;
+}
+```
+
+Các định danh `records` và `getName` nằm trong scope cấp cao nhất (top-level scope) của module này, nhưng đó không phải là global scope (như đã giải thích trong Chương 4). Như vậy, mọi thứ ở đây _theo mặc định_ là riêng tư đối với module.
+
+Để phơi bày một cái gì đó trên public API của một module CommonJS, bạn thêm một thuộc tính vào object trống được cung cấp dưới dạng `module.exports`. Trong một số code cũ (legacy), bạn có thể bắt gặp các tham chiếu chỉ đến `exports` trần trụi, nhưng để code rõ ràng, bạn nên luôn luôn định danh đầy đủ tham chiếu đó với tiền tố `module.`.
+
+Đối với mục đích phong cách, tôi thích đặt "exports" của mình ở đầu và việc triển khai module của mình ở dưới cùng. Nhưng những exports này có thể được đặt ở bất cứ đâu. Tôi thực sự khuyên bạn nên thu thập tất cả chúng lại với nhau, hoặc ở đầu hoặc cuối file của bạn.
+
+Một số nhà phát triển có thói quen thay thế object exports mặc định, như thế này:
+
+```js
+// định nghĩa một object mới cho API
+module.exports = {
+  // ..exports..
+};
+```
+
+Có một số điều kỳ quặc với cách tiếp cận này, bao gồm hành vi không mong muốn nếu nhiều modules như vậy phụ thuộc vòng tròn vào nhau. Như vậy, tôi khuyên không nên thay thế object. Nếu bạn muốn gán nhiều exports cùng một lúc, sử dụng định nghĩa kiểu object literal, bạn có thể làm điều này thay thế:
+
+```js
+Object.assign(module.exports, {
+  // .. exports ..
+});
+```
+
+Điều đang xảy ra ở đây là định nghĩa object literal `{ .. }` với public API của module của bạn được chỉ định, và sau đó `Object.assign(..)` đang thực hiện sao chép nông (shallow copy) tất cả các thuộc tính đó vào object `module.exports` hiện có, thay vì thay thế nó. Đây là một sự cân bằng tốt giữa sự tiện lợi và hành vi module an toàn hơn.
+
+Để bao gồm một instance module khác vào module/chương trình của bạn, sử dụng phương thức `require(..)` của Node. Giả sử module này nằm tại "/path/to/student.js", đây là cách chúng ta có thể truy cập nó:
+
+```js
+var Student = require("/path/to/student.js");
+
+Student.getName(73);
+// Suzy
+```
+
+`Student` bây giờ tham chiếu đến public API của module ví dụ của chúng ta.
+
+Các modules CommonJS hoạt động như các instances singleton, tương tự như phong cách định nghĩa module IIFE được trình bày trước đó. Bất kể bạn `require(..)` cùng một module bao nhiêu lần, bạn chỉ nhận được các tham chiếu bổ sung đến instance module được chia sẻ duy nhất.
+
+`require(..)` là một cơ chế tất cả hoặc không có gì (all-or-nothing); nó bao gồm một tham chiếu của toàn bộ public API được phơi bày của module. Để truy cập hiệu quả chỉ một phần của API, cách tiếp cận điển hình trông giống như thế này:
+
+```js
+var getName = require("/path/to/student.js").getName;
+
+// hoặc thay vào đó:
+
+var { getName } = require("/path/to/student.js");
+```
+
+Tương tự như định dạng module cổ điển, các phương thức được xuất khẩu công khai của API của một module CommonJS giữ các closures trên các chi tiết module bên trong. Đó là cách trạng thái singleton của module được duy trì qua vòng đời của chương trình của bạn.
+
+| LƯU Ý:                                                                                                                                                         |
+| :------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Trong các câu lệnh `require("student")` của Node, các đường dẫn không tuyệt đối (`"student"`) giả định một phần mở rộng file ".js" và tìm kiếm "node_modules". |
+
+### Các ES Modules Hiện Đại (Modern ES Modules - ESM)
+
+Định dạng ESM chia sẻ một số điểm tương đồng với định dạng CommonJS. ESM dựa trên file, và các module instances là singletons, với mọi thứ riêng tư _theo mặc định_. Một sự khác biệt đáng chú ý là các file ESM được giả định là strict-mode (chế độ nghiêm ngặt), mà không cần một chỉ thị `\"use strict\"` ở đầu. Không có cách nào để định nghĩa một ESM là non-strict-mode.
+
+Thay vì `module.exports` trong CommonJS, ESM sử dụng từ khóa `export` để phơi bày một cái gì đó trên public API của module. Từ khóa `import` thay thế câu lệnh `require(..)`. Hãy điều chỉnh "students.js" để sử dụng định dạng ESM:
+
+```js
+export { getName };
+
+// ************************
+
+var records = [
+  { id: 14, name: "Kyle", grade: 86 },
+  { id: 73, name: "Suzy", grade: 87 },
+  { id: 112, name: "Frank", grade: 75 },
+  { id: 6, name: "Sarah", grade: 91 },
+];
+
+function getName(studentID) {
+  var student = records.find((student) => student.id == studentID);
+  return student.name;
+}
+```
+
+Thay đổi duy nhất ở đây là câu lệnh `export { getName }`. Như trước đây, các câu lệnh `export` có thể xuất hiện ở bất cứ đâu trong file, mặc dù `export` phải ở top-level scope; nó không thể ở bên trong bất kỳ block hoặc hàm nào khác.
+
+ESM cung cấp một chút biến thể về cách các câu lệnh `export` có thể được chỉ định. Ví dụ:
+
+```js
+export function getName(studentID) {
+  // ..
+}
+```
+
+Mặc dù `export` xuất hiện trước từ khóa `function` ở đây, hình thức này vẫn là một khai báo `function` cũng tình cờ được xuất khẩu. Nghĩa là, định danh `getName` được _function hoisted_ (xem Chương 5), vì vậy nó có sẵn trong toàn bộ scope của module.
+
+Một biến thể được phép khác:
+
+```js
+export default function getName(studentID) {
+  // ..
+}
+```
+
+Đây là cái được gọi là "default export" (xuất khẩu mặc định), có các ngữ nghĩa khác với các exports khác. Về bản chất, một "default export" là một cách viết tắt cho những người tiêu dùng của module khi họ `import`, cung cấp cho họ một cú pháp ngắn gọn hơn khi họ chỉ cần thành viên API mặc định duy nhất này.
+
+Các exports không phải `default` được gọi là "named exports" (xuất khẩu được đặt tên).
+
+Từ khóa `import`—giống như `export`, nó phải được sử dụng chỉ ở cấp cao nhất (top level) của một ESM bên ngoài bất kỳ blocks hoặc hàm nào—cũng có một số biến thể trong cú pháp. Cái đầu tiên được gọi là "named import" (nhập khẩu được đặt tên):
+
+```js
+import { getName } from "/path/to/students.js";
+
+getName(73); // Suzy
+```
+
+Như bạn có thể thấy, hình thức này chỉ nhập khẩu các thành viên public API được đặt tên cụ thể từ một module (bỏ qua bất cứ thứ gì không được đặt tên rõ ràng), và nó thêm các định danh đó vào top-level scope của module hiện tại. Loại nhập khẩu này là một phong cách quen thuộc với những người đã quen đóng gói các nhập khẩu trong các ngôn ngữ như Java.
+
+Nhiều thành viên API có thể được liệt kê bên trong tập hợp `{ .. }`, được phân tách bằng dấu phẩy. Một named import cũng có thể được _đổi tên_ với từ khóa `as`:
+
+```js
+import { getName as getStudentName } from "/path/to/students.js";
+
+getStudentName(73);
+// Suzy
+```
+
+Nếu `getName` là một "default export" của module, chúng ta có thể nhập khẩu nó như thế này:
+
+```js
+import getName from "/path/to/students.js";
+
+getName(73); // Suzy
+```
+
+Sự khác biệt duy nhất ở đây là bỏ `{ }` xung quanh ràng buộc nhập khẩu. Nếu bạn muốn trộn một default import với các named imports khác:
+
+```js
+import { default as getName /* .. others .. */ } from "/path/to/students.js";
+
+getName(73); // Suzy
+```
+
+Ngược lại, biến thể chính khác trên `import` được gọi là "namespace import":
+
+```js
+import * as Student from "/path/to/students.js";
+
+Student.getName(73); // Suzy
+```
+
+Như có thể thấy rõ, `*` nhập khẩu mọi thứ được xuất khẩu sang API, default và named, và lưu trữ tất cả dưới định danh namespace duy nhất như được chỉ định. Cách tiếp cận này khớp chặt chẽ nhất với hình thức của các module cổ điển trong phần lớn lịch sử JS.
+
+| LƯU Ý:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Vào thời điểm viết cuốn sách này, các trình duyệt hiện đại đã hỗ trợ ESM trong vài năm nay, nhưng hỗ trợ ổn định của Node cho ESM là khá gần đây, và đã phát triển trong một thời gian khá dài. Sự phát triển có khả năng tiếp tục trong một năm nữa hoặc hơn; việc giới thiệu ESM vào JS trở lại trong ES6 đã tạo ra một số lo ngại tương thích đầy thách thức cho khả năng tương tác của Node với các module CommonJS. Tham khảo tài liệu ESM của Node để biết tất cả các chi tiết mới nhất: https://nodejs.org/api/esm.html |
+
+### Thoát Khỏi Scope (Exit Scope)
+
+Cho dù bạn sử dụng định dạng module cổ điển (trình duyệt hoặc Node), định dạng CommonJS (trong Node), hoặc định dạng ESM (trình duyệt hoặc Node), các module là một trong những cách hiệu quả nhất để cấu trúc và tổ chức chức năng và dữ liệu của chương trình của bạn.
+
+Mẫu module là kết luận của hành trình của chúng ta trong cuốn sách này về việc học cách chúng ta có thể sử dụng các quy tắc của lexical scope để đặt các biến và hàm vào các vị trí thích hợp. POLE là tư thế phòng thủ _riêng tư theo mặc định_ mà chúng ta luôn thực hiện, đảm bảo chúng ta tránh phơi bày quá mức và chỉ tương tác với diện tích bề mặt public API tối thiểu cần thiết.
+
+Và bên dưới các module, _phép thuật_ của cách tất cả trạng thái module của chúng ta được duy trì là các closures tận dụng hệ thống lexical scope.
+
+Đó là tất cả cho văn bản chính. Chúc mừng bạn đã có một hành trình khá dài cho đến nay! Như tôi đã nói nhiều lần trong suốt cuốn sách, đó là một ý tưởng thực sự tốt để tạm dừng, suy ngẫm, và thực hành những gì chúng ta vừa thảo luận.
+
+Khi bạn thoải mái và sẵn sàng, hãy kiểm tra các phụ lục, khám phá sâu hơn vào một số góc của các chủ đề này, và cũng thách thức bạn với một số bài tập thực hành để củng cố những gì bạn đã học.
+
+---
