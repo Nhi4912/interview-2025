@@ -2692,13 +2692,501 @@ Bạn mong đợi chương trình này sẽ làm gì? Ba kết quả hợp lý:
 
 Đây là phần khó hiểu: tùy thuộc vào môi trường JS nào bạn thử đoạn code đó, bạn có thể nhận được các kết quả khác nhau! Đây là một trong số ít những khu vực điên rồ nơi hành vi cũ hiện có phản bội một kết quả có thể dự đoán được.
 
-Đặc tả JS nói rằng các khai báo `function` bên trong các blocks là block-scoped, vì vậy câu trả lời nên là (1). Tuy nhiên, hầu hết các JS engines dựa trên trình duyệt (bao gồm v8, đến từ Chrome nhưng cũng được sử dụng trong Node) sẽ hoạt động như (2), có nghĩa là định danh được scoped bên ngoài block `if` nhưng giá trị hàm không được tự động khởi tạo, vì vậy nó vẫn là `undefined`.
+Đặc tả JS nói rằng các khai báo `function` bên trong các blocks là block-scoped, vì vậy câu trả lời nên là (1). Tuy nhiên, hầu hết các JS engines dựa trên trình duyệt (bao gồm v8, đến từ Chrome nhưng cũng được sử dụng trong Node) sẽ hoạt động như (2), có nghĩa là định danh được scoped bên ngoài block `if` nhưng giá trị hàm không được tự động khởi tạo, vì vậy nó vẫn là `undefined`. Trường hợp góc cạnh của việc không truyền giá trị nào vào `toggle(..)` không quan trọng lắm; một instance toggler như vậy có thể chỉ luôn trả về `undefined`.
 
-Tại sao các trình duyệt JS engines được phép hành xử trái với đặc tả? Bởi vì các engines này đã có các hành vi nhất định xung quanh FiB trước khi ES6 giới thiệu block scoping, và có lo ngại rằng việc thay đổi để tuân thủ đặc tả có thể phá vỡ một số code JS trang web hiện có. Như vậy, một ngoại lệ đã được thực hiện trong Phụ lục B của đặc tả JS, cho phép các sai lệch nhất định đối với các trình duyệt JS engines (chỉ!).
+Hãy tự mình thử bài tập, sau đó xem giải pháp được đề xuất ở cuối phụ lục này.
+
+### Closure (PHẦN 3)
+
+Trong bài tập thứ ba và cuối cùng về closure này, chúng ta sẽ triển khai một máy tính cơ bản. Hàm `calculator()` sẽ tạo ra một instance của một máy tính duy trì trạng thái riêng của nó, dưới dạng một hàm (`calc(..)`, bên dưới):
+
+```js
+function calculator() {
+  // ..
+}
+
+var calc = calculator();
+```
+
+Mỗi lần `calc(..)` được gọi, bạn sẽ truyền vào một ký tự duy nhất đại diện cho một lần nhấn phím của một nút máy tính. Để giữ mọi thứ đơn giản hơn, chúng ta sẽ giới hạn máy tính của mình chỉ hỗ trợ nhập các chữ số (0-9), các phép toán số học (+, -, \*, /), và "=" để tính toán phép toán. Các phép toán được xử lý nghiêm ngặt theo thứ tự đã nhập; không có nhóm "( )" hoặc ưu tiên toán tử.
+
+Chúng ta không hỗ trợ nhập số thập phân, nhưng phép chia có thể dẫn đến chúng. Chúng ta không hỗ trợ nhập số âm, nhưng phép toán "-" có thể dẫn đến chúng. Vì vậy, bạn sẽ có thể tạo ra bất kỳ số âm hoặc số thập phân nào bằng cách trước tiên nhập một phép toán để tính toán nó. Sau đó, bạn có thể tiếp tục tính toán với giá trị đó.
+
+Giá trị trả về của các cuộc gọi `calc(..)` nên bắt chước những gì sẽ được hiển thị trên một máy tính thực, như phản ánh những gì vừa được nhấn, hoặc tính toán tổng khi nhấn "=".
+
+Ví dụ:
+
+```js
+calc("4"); // 4
+calc("+"); // +
+calc("7"); // 7
+calc("3"); // 3
+calc("-"); // -
+calc("2"); // 2
+calc("="); // 75
+calc("*"); // *
+calc("4"); // 4
+calc("="); // 300
+calc("5"); // 5
+calc("-"); // -
+calc("5"); // 5
+calc("="); // 0
+```
+
+Vì cách sử dụng này hơi vụng về, đây là một trợ giúp `useCalc(..)`, chạy máy tính với các ký tự mỗi lần một ký tự từ một chuỗi, và tính toán màn hình hiển thị mỗi lần:
+
+```js
+function useCalc(calc, keys) {
+  return [...keys].reduce(function showDisplay(display, key) {
+    var ret = String(calc(key));
+    return display + (ret != "" && key == "=" ? "=" : "") + ret;
+  }, "");
+}
+
+useCalc(calc, "4+3="); // 4+3=7
+useCalc(calc, "+9="); // +9=16
+useCalc(calc, "*8="); // *5=128
+useCalc(calc, "7*2*3="); // 7*2*3=42
+useCalc(calc, "1/0="); // 1/0=ERR
+useCalc(calc, "+3="); // +3=ERR
+useCalc(calc, "51="); // 51
+```
+
+Cách sử dụng hợp lý nhất của trợ giúp `useCalc(..)` này là luôn có "=" là ký tự cuối cùng được nhập.
+
+Một số định dạng của tổng số được hiển thị bởi máy tính yêu cầu xử lý đặc biệt. Tôi đang cung cấp hàm `formatTotal(..)` này, mà máy tính của bạn nên sử dụng bất cứ khi nào nó sẽ trả về tổng số được tính toán hiện tại (sau khi một `"="` được nhập):
+
+```js
+function formatTotal(display) {
+  if (Number.isFinite(display)) {
+    // giới hạn hiển thị tối đa 11 ký tự
+    let maxDigits = 11;
+    // dành không gian cho ký hiệu "e+"?
+    if (Math.abs(display) > 99999999999) {
+      maxDigits -= 6;
+    }
+    // dành không gian cho "-"?
+    if (display < 0) {
+      maxDigits--;
+    }
+
+    // số nguyên?
+    if (Number.isInteger(display)) {
+      display = display.toPrecision(maxDigits).replace(/\.0+$/, "");
+    }
+    // số thập phân
+    else {
+      // dành không gian cho "."
+      maxDigits--;
+      // dành không gian cho số "0" dẫn đầu?
+      if (Math.abs(display) >= 0 && Math.abs(display) < 1) {
+        maxDigits--;
+      }
+      display = display.toPrecision(maxDigits).replace(/0+$/, "");
+    }
+  } else {
+    display = "ERR";
+  }
+  return display;
+}
+```
+
+Đừng lo lắng quá nhiều về cách `formatTotal(..)` hoạt động. Hầu hết logic của nó là một loạt các xử lý để giới hạn màn hình máy tính tối đa 11 ký tự, ngay cả khi số âm, số thập phân lặp lại, hoặc thậm chí ký hiệu mũ "e+" là bắt buộc.
+
+Một lần nữa, đừng quá sa lầy vào bùn xung quanh hành vi cụ thể của máy tính. Tập trung vào _bộ nhớ_ (memory) của closure.
+
+Hãy tự mình thử bài tập, sau đó xem giải pháp được đề xuất ở cuối phụ lục này.
+
+### Modules
+
+Bài tập này là chuyển đổi máy tính từ Closure (PHẦN 3) thành một module.
+
+Chúng ta không thêm bất kỳ chức năng bổ sung nào vào máy tính, chỉ thay đổi giao diện của nó. Thay vì gọi một hàm duy nhất `calc(..)`, chúng ta sẽ gọi các phương thức cụ thể trên public API cho mỗi lần "nhấn phím" của máy tính của chúng ta. Các đầu ra vẫn giữ nguyên.
+
+Module này nên được thể hiện như một hàm factory module cổ điển được gọi là `calculator()`, thay vì một singleton IIFE, để nhiều máy tính có thể được tạo ra nếu muốn.
+
+Public API nên bao gồm các phương thức sau:
+
+- `number(..)` (đầu vào: ký tự/số "được nhấn")
+- `plus()`
+- `minus()`
+- `mult()`
+- `div()`
+- `eq()`
+
+Cách sử dụng sẽ giống như:
+
+```js
+var calc = calculator();
+
+calc.number("4"); // 4
+calc.plus(); // +
+calc.number("7"); // 7
+calc.number("3"); // 3
+calc.minus(); // -
+calc.number("2"); // 2
+calc.eq(); // 75
+```
+
+`formatTotal(..)` vẫn giữ nguyên từ bài tập trước đó. Nhưng trợ giúp `useCalc(..)` cần được điều chỉnh để làm việc với API của module:
+
+```js
+function useCalc(calc, keys) {
+  var keyMappings = {
+    "+": "plus",
+    "-": "minus",
+    "*": "mult",
+    "/": "div",
+    "=": "eq",
+  };
+
+  return [...keys].reduce(function showDisplay(display, key) {
+    var fn = keyMappings[key] || "number";
+    var ret = String(calc[fn](key));
+    return display + (ret != "" && key == "=" ? "=" : "") + ret;
+  }, "");
+}
+
+useCalc(calc, "4+3="); // 4+3=7
+useCalc(calc, "+9="); // +9=16
+useCalc(calc, "*8="); // *5=128
+useCalc(calc, "7*2*3="); // 7*2*3=42
+useCalc(calc, "1/0="); // 1/0=ERR
+useCalc(calc, "+3="); // +3=ERR
+useCalc(calc, "51="); // 51
+```
+
+Hãy tự mình thử bài tập, sau đó xem giải pháp được đề xuất ở cuối phụ lục này.
+
+Khi bạn làm bài tập này, cũng hãy dành chút thời gian xem xét ưu/nhược điểm của việc thể hiện máy tính dưới dạng một module trái ngược với cách tiếp cận hàm closure từ bài tập trước.
+
+BONUS: viết ra một vài câu giải thích suy nghĩ của bạn.
+
+BONUS #2: thử chuyển đổi module của bạn sang các định dạng module khác, bao gồm: UMD, CommonJS, và ESM (ES Modules).
+
+## Các Giải Pháp Được Đề Xuất (Suggested Solutions)
+
+Hy vọng rằng bạn đã thử các bài tập trước khi bạn đọc đến đây. Không được gian lận!
+
+Hãy nhớ rằng, mỗi giải pháp được đề xuất chỉ là một trong số rất nhiều cách khác nhau để tiếp cận các vấn đề. Chúng không phải là "câu trả lời đúng", nhưng chúng minh họa một cách hợp lý để tiếp cận mỗi bài tập.
+
+Lợi ích quan trọng nhất bạn có thể nhận được từ việc đọc các giải pháp được đề xuất này là so sánh chúng với code của bạn và phân tích lý do tại sao mỗi chúng ta lại đưa ra những lựa chọn tương tự hoặc khác nhau. Đừng đi quá sâu vào chuyện vụn vặt; hãy cố gắng tập trung vào chủ đề chính hơn là các chi tiết nhỏ.
+
+### Đề Xuất: Những Xô Bi (Suggested: Buckets of Marbles)
+
+_Bài Tập Những Xô Bi_ có thể được giải quyết như thế này:
+
+```js
+// RED(1)
+const howMany = 100;
+
+// Sieve of Eratosthenes
+function findPrimes(howMany) {
+  // BLUE(2)
+  var sieve = Array(howMany).fill(true);
+  var max = Math.sqrt(howMany);
+
+  for (let i = 2; i < max; i++) {
+    // GREEN(3)
+    if (sieve[i]) {
+      // ORANGE(4)
+      let j = Math.pow(i, 2);
+      for (let k = j; k < howMany; k += i) {
+        // PURPLE(5)
+        sieve[k] = false;
+      }
+    }
+  }
+
+  return sieve
+    .map(function getPrime(flag, prime) {
+      // PINK(6)
+      if (flag) return prime;
+      return flag;
+    })
+    .filter(function onlyPrimes(v) {
+      // YELLOW(7)
+      return !!v;
+    })
+    .slice(1);
+}
+
+findPrimes(howMany);
+// [
+//    2, 3, 5, 7, 11, 13, 17,
+//    19, 23, 29, 31, 37, 41,
+//    43, 47, 53, 59, 61, 67,
+//    71, 73, 79, 83, 89, 97
+// ]
+```
+
+### Đề Xuất: Closure (PHẦN 1) (Suggested: Closure (PART 1))
+
+_Bài Tập Closure (PHẦN 1)_ cho `isPrime(..)` và `factorize(..)`, có thể được giải quyết như thế này:
+
+```js
+var isPrime = (function isPrime(v) {
+  var primes = {};
+
+  return function isPrime(v) {
+    if (v in primes) {
+      return primes[v];
+    }
+    if (v <= 3) {
+      return (primes[v] = v > 1);
+    }
+    if (v % 2 == 0 || v % 3 == 0) {
+      return (primes[v] = false);
+    }
+    let vSqrt = Math.sqrt(v);
+    for (let i = 5; i <= vSqrt; i += 6) {
+      if (v % i == 0 || v % (i + 2) == 0) {
+        return (primes[v] = false);
+      }
+    }
+    return (primes[v] = true);
+  };
+})();
+
+var factorize = (function factorize(v) {
+  var factors = {};
+
+  return function findFactors(v) {
+    if (v in factors) {
+      return factors[v];
+    }
+    if (!isPrime(v)) {
+      let i = Math.floor(Math.sqrt(v));
+      while (v % i != 0) {
+        i--;
+      }
+      return (factors[v] = [...findFactors(i), ...findFactors(v / i)]);
+    }
+    return (factors[v] = [v]);
+  };
+})();
+```
+
+Các bước chung tôi đã sử dụng cho mỗi tiện ích:
+
+1. Bọc một IIFE để định nghĩa scope cho biến cache cư trú.
+
+2. Trong cuộc gọi cơ bản, trước tiên hãy kiểm tra bộ nhớ cache, và nếu kết quả đã được biết, hãy trả về.
+
+3. Tại mỗi nơi mà một `return` đang xảy ra ban đầu, hãy gán cho bộ nhớ cache và chỉ trả về kết quả của hoạt động gán đó—đây là một thủ thuật tiết kiệm không gian chủ yếu chỉ để ngắn gọn trong cuốn sách.
+
+Tôi cũng đã đổi tên hàm bên trong từ `factorize(..)` thành `findFactors(..)`. Điều đó về mặt kỹ thuật không cần thiết, nhưng nó giúp làm rõ hơn hàm nào mà các cuộc gọi đệ quy gọi.
+
+### Đề Xuất: Closure (PHẦN 2) (Suggested: Closure (PART 2))
+
+_Bài Tập Closure (PHẦN 2)_ `toggle(..)` có thể được giải quyết như thế này:
+
+```js
+function toggle(...vals) {
+  var unset = {};
+  var cur = unset;
+
+  return function next() {
+    // lưu giá trị trước đó trở lại
+    // cuối danh sách
+    if (cur != unset) {
+      vals.push(cur);
+    }
+    cur = vals.shift();
+    return cur;
+  };
+}
+
+var hello = toggle("hello");
+var onOff = toggle("on", "off");
+var speed = toggle("slow", "medium", "fast");
+
+hello(); // "hello"
+hello(); // "hello"
+
+onOff(); // "on"
+onOff(); // "off"
+onOff(); // "on"
+
+speed(); // "slow"
+speed(); // "medium"
+speed(); // "fast"
+speed(); // "slow"
+```
+
+### Đề Xuất: Closure (PHẦN 3) (Suggested: Closure (PART 3))
+
+_Bài Tập Closure (PHẦN 3)_ `calculator()` có thể được giải quyết như thế này:
+
+```js
+// từ trước đó:
+//
+// function useCalc(..) { .. }
+// function formatTotal(..) { .. }
+
+function calculator() {
+  var currentTotal = 0;
+  var currentVal = "";
+  var currentOper = "=";
+
+  return pressKey;
+
+  // ********************
+
+  function pressKey(key) {
+    // phím số?
+    if (/\d/.test(key)) {
+      currentVal += key;
+      return key;
+    }
+    // phím toán tử?
+    else if (/[+*/-]/.test(key)) {
+      // nhiều phép toán trong một chuỗi?
+      if (currentOper != "=" && currentVal != "") {
+        // phím '=' ngụ ý
+        pressKey("=");
+      } else if (currentVal != "") {
+        currentTotal = Number(currentVal);
+      }
+      currentOper = key;
+      currentVal = "";
+      return key;
+    }
+    // phím =?
+    else if (key == "=" && currentOper != "=") {
+      currentTotal = op(currentTotal, currentOper, Number(currentVal));
+      currentOper = "=";
+      currentVal = "";
+      return formatTotal(currentTotal);
+    }
+    return "";
+  }
+
+  function op(val1, oper, val2) {
+    var ops = {
+      // LƯU Ý: sử dụng arrow functions
+      // chỉ để ngắn gọn trong cuốn sách
+      "+": (v1, v2) => v1 + v2,
+      "-": (v1, v2) => v1 - v2,
+      "*": (v1, v2) => v1 * v2,
+      "/": (v1, v2) => v1 / v2,
+    };
+    return ops[oper](val1, val2);
+  }
+}
+
+var calc = calculator();
+
+useCalc(calc, "4+3="); // 4+3=7
+useCalc(calc, "+9="); // +9=16
+useCalc(calc, "*8="); // *5=128
+useCalc(calc, "7*2*3="); // 7*2*3=42
+useCalc(calc, "1/0="); // 1/0=ERR
+useCalc(calc, "+3="); // +3=ERR
+useCalc(calc, "51="); // 51
+```
+
+| LƯU Ý:                                                                                                                                                                                                           |
+| :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Hãy nhớ: bài tập này là về closure. Đừng tập trung quá nhiều vào các cơ chế thực tế của một máy tính, mà thay vào đó là liệu bạn có đang _ghi nhớ_ trạng thái máy tính đúng cách qua các cuộc gọi hàm hay không. |
+
+### Đề Xuất: Modules (Suggested: Modules)
+
+_Bài Tập Modules_ `calculator()` có thể được giải quyết như thế này:
+
+```js
+// từ trước đó:
+//
+// function useCalc(..) { .. }
+// function formatTotal(..) { .. }
+
+function calculator() {
+  var currentTotal = 0;
+  var currentVal = "";
+  var currentOper = "=";
+
+  var publicAPI = {
+    number,
+    eq,
+    plus() {
+      return operator("+");
+    },
+    minus() {
+      return operator("-");
+    },
+    mult() {
+      return operator("*");
+    },
+    div() {
+      return operator("/");
+    },
+  };
+
+  return publicAPI;
+
+  // ********************
+
+  function number(key) {
+    // phím số?
+    if (/\d/.test(key)) {
+      currentVal += key;
+      return key;
+    }
+  }
+
+  function eq() {
+    // phím =?
+    if (currentOper != "=") {
+      currentTotal = op(currentTotal, currentOper, Number(currentVal));
+      currentOper = "=";
+      currentVal = "";
+      return formatTotal(currentTotal);
+    }
+    return "";
+  }
+
+  function operator(key) {
+    // nhiều phép toán trong một chuỗi?
+    if (currentOper != "=" && currentVal != "") {
+      // phím '=' ngụ ý
+      eq();
+    } else if (currentVal != "") {
+      currentTotal = Number(currentVal);
+    }
+    currentOper = key;
+    currentVal = "";
+    return key;
+  }
+
+  function op(val1, oper, val2) {
+    var ops = {
+      // LƯU Ý: sử dụng arrow functions
+      // chỉ để ngắn gọn trong cuốn sách
+      "+": (v1, v2) => v1 + v2,
+      "-": (v1, v2) => v1 - v2,
+      "*": (v1, v2) => v1 * v2,
+      "/": (v1, v2) => v1 / v2,
+    };
+    return ops[oper](val1, val2);
+  }
+}
+
+var calc = calculator();
+
+useCalc(calc, "4+3="); // 4+3=7
+useCalc(calc, "+9="); // +9=16
+useCalc(calc, "*8="); // *5=128
+useCalc(calc, "7*2*3="); // 7*2*3=42
+useCalc(calc, "1/0="); // 1/0=ERR
+useCalc(calc, "+3="); // +3=ERR
+useCalc(calc, "51="); // 51
+```
+
+Đó là kết thúc cho cuốn sách này, chúc mừng thành tích của bạn! Khi bạn đã sẵn sàng, hãy chuyển sang Cuốn 3, _Objects & Classes_.
+
+[^MathJSisPrime]: _Math.js: isPrime(..)_, https://github.com/josdejong/mathjs/blob/develop/src/function/utils/isPrime.js, 3 March 2020.tả? Bởi vì các engines này đã có các hành vi nhất định xung quanh FiB trước khi ES6 giới thiệu block scoping, và có lo ngại rằng việc thay đổi để tuân thủ đặc tả có thể phá vỡ một số code JS trang web hiện có. Như vậy, một ngoại lệ đã được thực hiện trong Phụ lục B của đặc tả JS, cho phép các sai lệch nhất định đối với các trình duyệt JS engines (chỉ!).
 
 > **LƯU Ý:** Bạn thường sẽ không phân loại Node là một môi trường JS trình duyệt, vì nó thường chạy trên một máy chủ. Nhưng engine v8 của Node được chia sẻ với các trình duyệt Chrome (và Edge). Vì v8 trước tiên là một browser JS engine, nó áp dụng ngoại lệ Phụ lục B này, điều này sau đó có nghĩa là các ngoại lệ trình duyệt được mở rộng sang Node.
-
-Một trong những trường hợp sử dụng phổ biến nhất để đặt một khai báo `function` trong một block là để định nghĩa có điều kiện một hàm theo cách này hay cách khác (như với một câu lệnh `if..else`) tùy thuộc vào một số trạng thái môi trường. Ví dụ:
 
 ```js
 if (typeof Array.isArray != "undefined") {
