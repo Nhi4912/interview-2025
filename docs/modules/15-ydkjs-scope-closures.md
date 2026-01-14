@@ -4415,6 +4415,288 @@ Lợi ích của `void` là, nó truyền đạt rõ ràng ở đầu hàm rằn
 
 Dù bạn định nghĩa IIFEs của mình như thế nào, hãy thể hiện chút tình yêu bằng cách đặt tên cho chúng.
 
----
+### Hoisting: Hàm và Biến (Hoisting: Functions and Variables)
+
+Chương 5 đã làm rõ cả _function hoisting_ (hoisting hàm) và _variable hoisting_ (hoisting biến). Vì hoisting thường được trích dẫn như một sai lầm trong thiết kế của JS, tôi muốn khám phá ngắn gọn tại sao cả hai hình thức hoisting này _có thể_ có lợi và vẫn nên được xem xét.
+
+Hãy dành cho hoisting một mức độ cân nhắc sâu hơn bằng cách xem xét những điểm mạnh của:
+
+- Code thực thi được đặt trước, khai báo hàm đặt sau
+- Vị trí ngữ nghĩa của các khai báo biến
+
+#### Hoisting Hàm (Function Hoisting)
+
+Để ôn lại, chương trình này hoạt động nhờ vào _function hoisting_:
+
+```js
+getStudents();
+
+// ..
+
+function getStudents() {
+  // ..
+}
+```
+
+Khai báo `function` được hoisting trong quá trình biên dịch, có nghĩa là `getStudents` là một định danh được khai báo cho toàn bộ scope. Ngoài ra, định danh `getStudents` được tự động khởi tạo với tham chiếu hàm, một lần nữa ở đầu scope.
+
+Tại sao điều này hữu ích? Lý do tôi thích tận dụng _function hoisting_ là nó đặt _code thực thi_ trong bất kỳ scope nào lên đầu, và bất kỳ khai báo nào khác (hàm) ở dưới. Điều này có nghĩa là dễ dàng hơn để tìm code sẽ chạy trong bất kỳ khu vực nhất định nào, thay vì phải cuộn và cuộn, hy vọng tìm thấy dấu `}` cuối cùng đánh dấu sự kết thúc của một scope/hàm ở đâu đó.
+
+Tôi tận dụng vị trí đảo ngược này ở tất cả các cấp độ của scope:
+
+```js
+getStudents();
+
+// *************
+
+function getStudents() {
+  var whatever = doSomething();
+
+  // những thứ khác
+
+  return whatever;
+
+  // *************
+
+  function doSomething() {
+    // ..
+  }
+}
+```
+
+Khi tôi mở một file như thế lần đầu tiên, dòng đầu tiên là code thực thi khởi động hành vi của nó. Điều đó rất dễ nhận ra! Sau đó, nếu tôi cần tìm và kiểm tra `getStudents()`, tôi thích việc dòng đầu tiên của nó cũng là code thực thi. Chỉ khi tôi cần xem chi tiết của `doSomething()` tôi mới đi và tìm định nghĩa của nó ở bên dưới.
+
+Nói cách khác, tôi nghĩ _function hoisting_ làm cho code dễ đọc hơn thông qua một thứ tự đọc trôi chảy, tiến bộ, từ trên xuống dưới.
+
+#### Hoisting Biến (Variable Hoisting)
+
+Còn về _variable hoisting_ thì sao?
+
+Mặc dù `let` và `const` có hoisting, bạn không thể sử dụng các biến đó trong TDZ của chúng (xem Chương 5). Vì vậy, cuộc thảo luận sau đây chỉ áp dụng cho các khai báo `var`. Trước khi tôi tiếp tục, tôi sẽ thừa nhận: trong hầu hết các trường hợp, tôi hoàn toàn đồng ý rằng _variable hoisting_ là một ý tưởng tồi:
+
+```js
+pleaseDontDoThis = "bad idea";
+
+// much later
+var pleaseDontDoThis;
+```
+
+Trong khi loại thứ tự đảo ngược đó hữu ích cho _function hoisting_, ở đây tôi nghĩ nó thường làm cho code khó suy luận hơn.
+
+Nhưng có một ngoại lệ mà tôi đã tìm thấy, hơi hiếm, trong code của riêng tôi. Nó liên quan đến nơi tôi đặt các khai báo `var` của mình bên trong một định nghĩa module CommonJS.
+
+Đây là cách tôi thường cấu trúc các định nghĩa module của mình trong Node:
+
+```js
+// dependencies
+var aModuleINeed = require("very-helpful");
+var anotherModule = require("kinda-helpful");
+
+// public API
+var publicAPI = Object.assign(module.exports, {
+  getStudents,
+  addStudents,
+  // ..
+});
+
+// ********************************
+// private implementation
+
+var cache = {};
+var otherData = [];
+
+function getStudents() {
+  // ..
+}
+
+function addStudents() {
+  // ..
+}
+```
+
+Chú ý cách các biến `cache` và `otherData` nằm trong phần "private" (riêng tư) của bố cục module? Đó là vì tôi không định phơi bày chúng công khai. Vì vậy, tôi tổ chức module để chúng được đặt cùng với các chi tiết triển khai ẩn khác của module.
+
+Nhưng tôi đã có một vài trường hợp hiếm hoi nơi tôi cần các phép gán của những giá trị đó xảy ra ở _phía trên_, trước khi tôi khai báo public API được xuất khẩu của module. Ví dụ:
+
+```js
+// public API
+var publicAPI = Object.assign(module.exports, {
+  getStudents,
+  addStudents,
+  refreshData: refreshData.bind(null, cache),
+});
+```
+
+Tôi cần biến `cache` đã được gán một giá trị, bởi vì giá trị đó được sử dụng trong việc khởi tạo public API (ứng dụng một phần `.bind(..)`).
+
+Tôi có nên chỉ chuyển `var cache = { .. }` lên đầu, phía trên việc khởi tạo public API này không? Có lẽ. Nhưng bây giờ ít rõ ràng hơn rằng `var cache` là một chi tiết triển khai _riêng tư_. Đây là sự thỏa hiệp mà tôi (hơi hiếm khi) đã sử dụng:
+
+```js
+cache = {}; // được sử dụng ở đây, nhưng khai báo ở dưới
+
+// public API
+var publicAPI = Object.assign(module.exports, {
+  getStudents,
+  addStudents,
+  refreshData: refreshData.bind(null, cache),
+});
+
+// ********************************
+// private implementation
+
+var cache /* = {}*/;
+```
+
+Bạn thấy _variable hoisting_ chứ? Tôi đã khai báo `cache` ở dưới nơi nó thuộc về, về mặt logic, nhưng trong trường hợp hiếm hoi này tôi đã sử dụng nó sớm hơn ở phía trên, trong khu vực mà việc khởi tạo của nó là cần thiết. Tôi thậm chí đã để lại một gợi ý về giá trị được gán cho `cache` trong một chú thích code.
+
+Đó thực sự là trường hợp duy nhất tôi từng tìm thấy để tận dụng _variable hoisting_ để gán một biến sớm hơn trong một scope so với khai báo của nó. Nhưng tôi nghĩ đó là một ngoại lệ hợp lý để áp dụng với sự thận trọng.
+
+### Trường Hợp Cho `var` (The Case for `var`)
+
+Nói về _variable hoisting_, hãy nói chuyện thẳng thắn một chút về `var`, một nhân vật phản diện yêu thích mà các devs thích đổ lỗi cho nhiều nỗi đau khổ của việc phát triển JS. Trong Chương 5, chúng ta đã khám phá `let`/`const` và hứa rằng chúng ta sẽ xem xét lại vị trí của `var` trong toàn bộ hỗn hợp.
+
+Khi tôi trình bày trường hợp, đừng bỏ lỡ:
+
+- `var` chưa bao giờ bị hỏng
+- `let` là bạn của bạn
+- `const` có tiện ích hạn chế
+- Tốt nhất của cả hai thế giới: `var` _và_ `let`
+
+#### Đừng Vứt Bỏ `var` (Don't Throw Out `var`)
+
+`var` vẫn ổn, và hoạt động hoàn toàn tốt. Nó đã tồn tại trong 25 năm, và nó sẽ tồn tại và hữu ích và hoạt động trong 25 năm nữa hoặc hơn. Những tuyên bố rằng `var` bị hỏng, lỗi thời, nguy hiểm, hoặc thiết kế kém là sự hùa theo phong trào (bandwagoning) giả tạo.
+
+Điều đó có nghĩa là `var` là từ khóa khai báo đúng cho mọi khai báo duy nhất trong chương trình của bạn? Chắc chắn là không. Nhưng nó vẫn có chỗ đứng trong các chương trình của bạn. Từ chối sử dụng nó vì ai đó trong team đã chọn một ý kiến linter hung hăng nghẹn họng với `var` là đang tự làm hại mình.
+
+OK, bây giờ tôi đã làm bạn thực sự tức giận, hãy để tôi cố gắng giải thích quan điểm của mình.
+
+Để ghi lại, tôi là một fan của `let`, cho các khai báo phạm vi khối (block-scoped). Tôi thực sự không thích TDZ và tôi nghĩ đó là một sai lầm. Nhưng bản thân `let` rất tuyệt. Tôi sử dụng nó thường xuyên. Trên thực tế, tôi có lẽ sử dụng nó nhiều bằng hoặc nhiều hơn tôi sử dụng `var`.
+
+#### `const`-antly Bối Rối (`const`-antly Confused)
+
+`const` mặt khác, tôi không sử dụng thường xuyên. Tôi sẽ không đào sâu vào tất cả các lý do tại sao, nhưng nó quy về việc `const` không _mang lại lợi ích tương xứng_ (carrying its own weight). Nghĩa là, trong khi có một chút lợi ích nhỏ của `const` trong một số trường hợp, lợi ích đó bị lu mờ bởi lịch sử dài của những rắc rối xung quanh sự nhầm lẫn về `const` trong nhiều ngôn ngữ, rất lâu trước khi nó xuất hiện trong JS.
+
+`const` giả vờ tạo ra các giá trị không thể bị thay đổi (mutate)—một quan niệm sai lầm cực kỳ phổ biến trong cộng đồng nhà phát triển trên nhiều ngôn ngữ—trong khi những gì nó thực sự làm là ngăn chặn việc gán lại (re-assignment).
+
+```js
+const studentIDs = [14, 73, 112];
+
+// later
+
+studentIDs.push(6); // whoa, chờ đã... cái gì!?
+```
+
+Sử dụng một `const` với một giá trị có thể thay đổi (như một mảng hoặc object) là đang yêu cầu một nhà phát triển tương lai (hoặc người đọc code của bạn) rơi vào cái bẫy bạn đã đặt, đó là họ hoặc không biết, hoặc đại loại là quên, rằng _tính bất biến của giá trị_ (value immutability) hoàn toàn không giống với _tính bất biến của phép gán_ (assignment immutability).
+
+Tôi chỉ không nghĩ chúng ta nên đặt những cái bẫy đó. Lần duy nhất tôi sử dụng `const` là khi tôi đang gán một giá trị đã bất biến (như `42` hoặc `"Hello, friends!"`), và khi nó rõ ràng là một "hằng số" (constant) theo nghĩa là một tên giữ chỗ cho một giá trị literal, cho mục đích ngữ nghĩa. Đó là những gì `const` được sử dụng tốt nhất. Tuy nhiên, điều đó khá hiếm trong code của tôi.
+
+Nếu việc gán lại biến là một vấn đề lớn, thì `const` sẽ hữu ích hơn. Nhưng việc gán lại biến chỉ không phải là vấn đề lớn như vậy trong việc gây ra lỗi. Có một danh sách dài những thứ dẫn đến lỗi trong các chương trình, nhưng "vô tình gán lại" nằm ở vị trí rất, rất thấp trong danh sách đó.
+
+Kết hợp điều đó với thực tế là `const` (và `let`) được cho là sử dụng trong các blocks, và các blocks được cho là ngắn, và bạn có một khu vực thực sự nhỏ trong code của bạn nơi một khai báo `const` thậm chí có thể áp dụng. Một `const` ở dòng 1 của block mười dòng của bạn chỉ cho bạn biết điều gì đó về chín dòng tiếp theo. Và điều nó cho bạn biết đã rõ ràng bằng cách liếc xuống chín dòng đó: biến không bao giờ ở phía bên trái của một dấu `=`; nó không được gán lại.
+
+Đó là nó, đó là tất cả những gì `const` thực sự làm. Ngoài điều đó ra, nó không hữu ích lắm. Xếp chồng lên sự nhầm lẫn đáng kể của tính bất biến giá trị vs. phép gán, `const` mất đi nhiều vẻ hào nhoáng của nó.
+
+Một `let` (hoặc `var`!) không bao giờ được gán lại đã hoạt động về mặt hành vi như một "hằng số", ngay cả khi nó không có sự đảm bảo của trình biên dịch. Điều đó là đủ tốt trong hầu hết các trường hợp.
+
+#### `var` _và_ `let` (`var` _and_ `let`)
+
+Trong tâm trí tôi, `const` khá hiếm khi hữu ích, vì vậy đây chỉ là cuộc đua song mã giữa `let` và `var`. Nhưng nó cũng không thực sự là một cuộc đua, bởi vì không nhất thiết chỉ có một người chiến thắng. Cả hai đều có thể thắng... các cuộc đua khác nhau.
+
+Thực tế là, bạn nên sử dụng cả `var` và `let` trong các chương trình của mình. Chúng không thể thay thế cho nhau: bạn không nên sử dụng `var` ở nơi `let` được yêu cầu, nhưng bạn cũng không nên sử dụng `let` ở nơi `var` là thích hợp nhất.
+
+Vậy chúng ta vẫn nên sử dụng `var` ở đâu? Trong những trường hợp nào nó là một lựa chọn tốt hơn `let`?
+
+Thứ nhất, tôi luôn sử dụng `var` trong top-level scope của bất kỳ hàm nào, bất kể đó là ở đầu, giữa, hay cuối hàm. Tôi cũng sử dụng `var` trong global scope, mặc dù tôi cố gắng giảm thiểu việc sử dụng global scope.
+
+Tại sao sử dụng `var` cho scope hàm? Bởi vì đó chính xác là những gì `var` làm. Theo nghĩa đen, không có công cụ nào tốt hơn cho công việc scoping hàm một khai báo hơn một từ khóa khai báo mà, trong 25 năm, đã làm chính xác điều đó.
+
+Bạn _có thể_ sử dụng `let` trong top-level scope này, nhưng nó không phải là công cụ tốt nhất cho công việc đó. Tôi cũng thấy rằng nếu bạn sử dụng `let` ở mọi nơi, thì ít rõ ràng hơn những khai báo nào được thiết kế để được bản địa hóa (localized) và những cái nào được dự định sử dụng trong toàn bộ hàm.
+
+Ngược lại, tôi hiếm khi sử dụng một `var` bên trong một block. Đó là những gì `let` dành cho. Sử dụng công cụ tốt nhất cho công việc. Nếu bạn thấy một `let`, nó cho bạn biết rằng bạn đang đối phó với một khai báo được bản địa hóa. Nếu bạn thấy `var`, nó cho bạn biết rằng bạn đang đối phó với một khai báo toàn hàm (function-wide). Đơn giản như vậy.
+
+```js
+function getStudents(data) {
+    var studentRecords = [];
+
+    for (let record of data.records) {
+        let id = `student-${ record.id }`;
+        studentRecords.push({
+            id,
+            record.name
+        });
+    }
+
+    return studentRecords;
+}
+```
+
+Biến `studentRecords` được dự định để sử dụng trên toàn bộ hàm. `var` là từ khóa khai báo tốt nhất để nói với người đọc điều đó. Ngược lại, `record` và `id` được dự định chỉ sử dụng trong scope hẹp hơn của vòng lặp, vì vậy `let` là công cụ tốt nhất cho công việc đó.
+
+Ngoài lập luận ngữ nghĩa _công cụ tốt nhất_ này, `var` có một vài đặc điểm khác mà, trong những trường hợp hạn chế nhất định, làm cho nó mạnh mẽ hơn.
+
+Một ví dụ là khi một vòng lặp đang sử dụng độc quyền một biến, nhưng mệnh đề điều kiện của nó không thể nhìn thấy các khai báo trong block bên trong vòng lặp:
+
+```js
+function commitAction() {
+  do {
+    let result = commit();
+    var done = result && result.code == 1;
+  } while (!done);
+}
+```
+
+Ở đây, `result` rõ ràng chỉ được sử dụng bên trong block, vì vậy chúng ta sử dụng `let`. Nhưng `done` thì khác một chút. Nó chỉ hữu ích cho vòng lặp, nhưng mệnh đề `while` không thể thấy các khai báo `let` xuất hiện bên trong vòng lặp. Vì vậy chúng ta thỏa hiệp và sử dụng `var`, để `done` được hoisted lên outer scope nơi nó có thể được nhìn thấy.
+
+Giải pháp thay thế—khai báo `done` bên ngoài vòng lặp—tách biệt nó khỏi nơi nó được sử dụng đầu tiên, và hoặc cần phải chọn một giá trị mặc định để gán, hoặc tệ hơn, để nó không được gán và do đó trông mơ hồ đối với người đọc. Tôi nghĩ `var` bên trong vòng lặp là thích hợp hơn ở đây.
+
+Một đặc điểm hữu ích khác của `var` được nhìn thấy với các khai báo bên trong các blocks không chủ ý (unintended blocks). Các blocks không chủ ý là các blocks được tạo ra bởi vì cú pháp yêu cầu một block, nhưng nơi mục đích của nhà phát triển không thực sự là tạo ra một scope được bản địa hóa. Minh họa tốt nhất về scope không chủ ý là câu lệnh `try..catch`:
+
+```js
+function getStudents() {
+  try {
+    // không thực sự là một block scope
+    var records = fromCache("students");
+  } catch (err) {
+    // oops, dự phòng về một mặc định
+    var records = [];
+  }
+  // ..
+}
+```
+
+Có những cách khác để cấu trúc code này, có. Nhưng tôi nghĩ đây là cách _tốt nhất_, dựa trên các sự đánh đổi khác nhau.
+
+Tôi không muốn khai báo `records` (với `var` hoặc `let`) bên ngoài block `try`, và sau đó gán cho nó trong một hoặc cả hai blocks. Tôi thích các khai báo ban đầu luôn ở càng gần càng tốt (lý tưởng là cùng dòng) với lần sử dụng đầu tiên của biến. Trong ví dụ đơn giản này, khoảng cách đó chỉ là một vài dòng, nhưng trong code thực tế nó có thể phát triển thành nhiều dòng hơn nữa. Khoảng cách càng lớn, càng khó để tìm ra biến nào từ scope nào bạn đang gán cho. `var` được sử dụng tại phép gán thực tế làm cho nó bớt mơ hồ hơn.
+
+Cũng lưu ý tôi đã sử dụng `var` trong cả hai blocks `try` và `catch`. Đó là vì tôi muốn báo hiệu cho người đọc rằng bất kể con đường nào được thực hiện, `records` luôn được khai báo. Về mặt kỹ thuật, điều đó hoạt động vì `var` được hoisted một lần lên function scope. Nhưng nó vẫn là một tín hiệu ngữ nghĩa tốt để nhắc nhở người đọc `var` đảm bảo điều gì. Nếu `var` chỉ được sử dụng trong một trong các blocks, và bạn chỉ đang đọc block kia, bạn sẽ không dễ dàng khám phá ra `records` đến từ đâu.
+
+Đây là, theo ý kiến của tôi, một siêu năng lực nhỏ của `var`. Nó không chỉ có thể thoát khỏi các blocks `try..catch` không chủ ý, mà nó còn được phép xuất hiện nhiều lần trong scope của một hàm. Bạn không thể làm điều đó với `let`. Nó không tệ, nó thực sự là một tính năng hữu ích nhỏ. Hãy nghĩ về `var` giống như một chú thích khai báo nhắc nhở bạn, mỗi lần sử dụng, biến đến từ đâu. "À ha, đúng rồi, nó thuộc về toàn bộ hàm."
+
+Siêu năng lực chú thích lặp lại này hữu ích trong các trường hợp khác:
+
+```js
+function getStudents() {
+  var data = [];
+
+  // làm gì đó với data
+  // .. 50 dòng code nữa ..
+
+  // hoàn toàn là một chú thích để nhắc nhở chúng ta
+  var data;
+
+  // sử dụng data lần nữa
+  // ..
+}
+```
+
+`var data` thứ hai không phải là khai báo lại `data`, nó chỉ đang chú thích cho lợi ích của người đọc rằng `data` là một khai báo toàn hàm. Bằng cách đó, người đọc không cần phải cuộn lên 50+ dòng code để tìm khai báo ban đầu.
+
+Tôi hoàn toàn ổn với việc sử dụng lại các biến cho nhiều mục đích trong suốt một function scope. Tôi cũng hoàn toàn ổn với việc có hai lần sử dụng của một biến được tách biệt bởi khá nhiều dòng code. Trong cả hai trường hợp, khả năng "khai báo lại" (chú thích) một cách an toàn với `var` giúp đảm bảo tôi có thể biết `data` của tôi đến từ đâu, bất kể tôi đang ở đâu trong hàm.
+
+Một lần nữa, đáng buồn thay, `let` không thể làm điều này.
+
+Có những sắc thái và kịch bản khác khi `var` hóa ra cung cấp một số sự hỗ trợ, nhưng tôi sẽ không bàn thêm về điểm này nữa. Bài học rút ra là `var` có thể hữu ích trong các chương trình của chúng ta cùng với `let` (và thỉnh thoảng là `const`). Bạn có sẵn sàng sử dụng một cách sáng tạo các công cụ mà ngôn ngữ JS cung cấp để kể một câu chuyện phong phú hơn cho độc giả của bạn không?
+
+Đừng chỉ vứt bỏ một công cụ hữu ích như `var` vì ai đó đã xấu hổ bạn nghĩ rằng nó không còn hay ho nữa. Đừng tránh `var` vì bạn đã từng bối rối một lần cách đây nhiều năm. Học các công cụ này và sử dụng chúng mỗi cái cho những gì chúng giỏi nhất.
 
 ---
