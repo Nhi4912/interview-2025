@@ -4699,4 +4699,218 @@ Có những sắc thái và kịch bản khác khi `var` hóa ra cung cấp mộ
 
 Đừng chỉ vứt bỏ một công cụ hữu ích như `var` vì ai đó đã xấu hổ bạn nghĩ rằng nó không còn hay ho nữa. Đừng tránh `var` vì bạn đã từng bối rối một lần cách đây nhiều năm. Học các công cụ này và sử dụng chúng mỗi cái cho những gì chúng giỏi nhất.
 
+### Vấn Đề Với TDZ Là Gì? (What's the Deal with TDZ?)
+
+TDZ (vùng chết thời gian - temporal dead zone) đã được giải thích trong Chương 5. Chúng ta đã minh họa cách nó xảy ra, nhưng chúng ta đã lướt qua bất kỳ lời giải thích nào về việc _tại sao_ việc giới thiệu nó ngay từ đầu là cần thiết. Hãy xem xét ngắn gọn các động lực của TDZ.
+
+Một số mảnh vụn trong câu chuyện nguồn gốc của TDZ:
+
+- `const` không bao giờ nên thay đổi
+- Tất cả là về thời gian
+- `let` nên hành xử giống `const` hay `var` hơn?
+
+#### Nơi Tất Cả Bắt Đầu (Where It All Started)
+
+TDZ thực sự đến từ `const`.
+
+Trong quá trình phát triển ES6 ban đầu, TC39 đã phải quyết định xem `const` (và `let`) có được hoisting lên đầu block của chúng hay không. Họ đã quyết định các khai báo này sẽ hoisting, tương tự như cách `var` làm. Nếu điều đó không xảy ra, tôi nghĩ một số nỗi sợ hãi là sự nhầm lẫn với việc shadowing giữa scope, chẳng hạn như:
+
+```js
+let greeting = "Hi!";
+
+{
+  // cái gì nên in ra ở đây?
+  console.log(greeting);
+
+  // .. một loạt các dòng code ..
+
+  // bây giờ shadowing biến `greeting`
+  let greeting = "Hello, friends!";
+
+  // ..
+}
+```
+
+Chúng ta nên làm gì với câu lệnh `console.log(..)` đó? Liệu có ý nghĩa gì đối với các nhà phát triển JS nếu nó in ra "Hi!" không? Có vẻ như đó có thể là một cú lừa (gotcha), khi shadowing chỉ có hiệu lực cho nửa sau của block, nhưng không phải nửa đầu. Đó không phải là hành vi trực quan, giống JS lắm. Vì vậy `let` và `const` phải hoisting lên đầu block, hiển thị xuyên suốt.
+
+Nhưng nếu `let` và `const` hoisting lên đầu block (giống như `var` hoisting lên đầu hàm), tại sao `let` và `const` không tự động khởi tạo (thành `undefined`) theo cách `var` làm? Đây là mối quan tâm chính:
+
+```js
+{
+  // cái gì nên in ra ở đây?
+  console.log(studentName);
+
+  // later
+
+  const studentName = "Frank";
+
+  // ..
+}
+```
+
+Hãy tưởng tượng rằng `studentName` không chỉ hoisting lên đầu block này, mà còn được tự động khởi tạo thành `undefined`. Trong nửa đầu của block, `studentName` có thể được quan sát là có giá trị `undefined`, chẳng hạn như với câu lệnh `console.log(..)` của chúng ta. Khi câu lệnh `const studentName = ..` được tiếp cận, bây giờ `studentName` được gán `\"Frank\"`. Từ thời điểm đó trở đi, `studentName` không bao giờ có thể được gán lại.
+
+Nhưng, có kỳ lạ hay đáng ngạc nhiên không khi một hằng số có thể quan sát được hai giá trị khác nhau, đầu tiên là `undefined`, sau đó là `\"Frank\"`? Điều đó dường như đi ngược lại những gì chúng ta nghĩ một hằng số (constant) nghĩa là; nó chỉ nên bao giờ quan sát được với một giá trị.
+
+Vì vậy... bây giờ chúng ta có một vấn đề. Chúng ta không thể tự động khởi tạo `studentName` thành `undefined` (hoặc bất kỳ giá trị nào khác cho vấn đề đó). Nhưng biến phải tồn tại trong suốt scope. Chúng ta làm gì với khoảng thời gian từ khi nó tồn tại lần đầu (đầu scope) và khi nó được gán giá trị của nó?
+
+Chúng ta gọi khoảng thời gian này là "vùng chết" (dead zone), như trong "vùng chết thời gian" (temporal dead zone - TDZ). Để ngăn ngừa sự nhầm lẫn, người ta đã xác định rằng bất kỳ loại truy cập nào vào một biến trong khi ở trong TDZ của nó là bất hợp pháp và phải dẫn đến lỗi TDZ.
+
+OK, dòng suy luận đó có ý nghĩa, tôi phải thừa nhận.
+
+#### Ai Đã `let` (Thả) TDZ Ra? (Who `let` the TDZ Out?)
+
+Nhưng đó chỉ là `const`. Còn `let` thì sao?
+
+Chà, TC39 đã đưa ra quyết định: vì chúng ta cần một TDZ cho `const`, chúng ta cũng có thể có một TDZ cho `let`. _Trên thực tế, nếu chúng ta làm cho let có một TDZ, thì chúng ta không khuyến khích tất cả việc hoisting biến xấu xí mà mọi người làm._ Vì vậy, có một quan điểm nhất quán và, có lẽ, một chút kỹ thuật xã hội để thay đổi hành vi của các nhà phát triển.
+
+Phản biện của tôi sẽ là: nếu bạn đang ủng hộ sự nhất quán, hãy nhất quán với `var` thay vì `const`; `let` chắc chắn giống `var` hơn là `const`. Điều đó đặc biệt đúng vì họ đã chọn sự nhất quán với `var` cho toàn bộ việc hoisting-lên-đầu-scope. Hãy để `const` là thỏa thuận độc đáo của riêng nó với một TDZ, và hãy để câu trả lời cho TDZ hoàn toàn là: chỉ cần tránh TDZ bằng cách luôn khai báo các hằng số của bạn ở đầu scope. Tôi nghĩ điều này sẽ hợp lý hơn.
+
+Nhưng than ôi, đó không phải là cách nó hạ cánh. `let` có một TDZ bởi vì `const` cần một TDZ, bởi vì `let` và `const` bắt chước `var` trong việc hoisting của chúng lên đầu (block) scope. Đó bạn đã có nó. Quá vòng vo? Đọc lại một vài lần.
+
+### Các Callbacks Đồng Bộ Có Còn Là Closures Không? (Are Synchronous Callbacks Still Closures?)
+
+Chương 7 đã trình bày hai mô hình khác nhau để giải quyết closure:
+
+- Closure là một function instance ghi nhớ các biến bên ngoài của nó ngay cả khi hàm đó được truyền xung quanh và **được gọi trong** các scopes khác.
+
+- Closure là một function instance và môi trường scope của nó được bảo tồn tại chỗ trong khi bất kỳ tham chiếu nào đến nó được truyền xung quanh và **được gọi từ** các scopes khác.
+
+Các mô hình này không khác biệt quá mức, nhưng chúng tiếp cận từ một góc nhìn khác. Và góc nhìn khác đó thay đổi những gì chúng ta xác định là một closure.
+
+Đừng bị lạc khi đi theo dấu vết thỏ này qua closures và callbacks:
+
+- Gọi lại (Calling back) cái gì (hoặc ở đâu)?
+- Có lẽ "callback đồng bộ" không phải là nhãn tốt nhất
+- Các hàm **_IIF_** không di chuyển xung quanh, tại sao chúng cần closure?
+- Trì hoãn theo thời gian là chìa khóa của closure
+
+#### Callback Là Gì? (What is a Callback?)
+
+Trước khi chúng ta xem xét lại closure, hãy để tôi dành một chút thời gian ngắn giải quyết từ "callback." Đó là một quy tắc thường được chấp nhận rằng nói "callback" đồng nghĩa với cả _asynchronous callbacks_ (callbacks bất đồng bộ) và _synchronous callbacks_ (callbacks đồng bộ). Tôi không nghĩ rằng tôi đồng ý rằng đây là một ý tưởng hay, vì vậy tôi muốn giải thích tại sao và đề xuất chúng ta chuyển từ đó sang một thuật ngữ khác.
+
+Đầu tiên hãy xem xét một _asynchronous callback_, một tham chiếu hàm sẽ được gọi tại một thời điểm _sau này_ trong tương lai. "Callback" có nghĩa là gì, trong trường hợp này?
+
+Nó có nghĩa là code hiện tại đã hoàn thành hoặc tạm dừng, tự treo mình, và khi hàm đang được đề cập được gọi sau đó, việc thực thi đang nhập trở lại vào chương trình bị treo, tiếp tục nó. Cụ thể, điểm nhập lại (re-entry) là code được bao bọc trong tham chiếu hàm:
+
+```js
+setTimeout(function waitForASecond() {
+  // đây là nơi JS nên gọi lại vào (call back into)
+  // chương trình khi bộ hẹn giờ đã trôi qua
+}, 1000);
+
+// đây là nơi chương trình hiện tại kết thúc
+// hoặc tạm dừng
+```
+
+Trong ngữ cảnh này, "gọi lại" (calling back) rất có ý nghĩa. JS engine đang tiếp tục chương trình bị treo của chúng ta bằng cách _gọi lại vào_ tại một vị trí cụ thể. OK, vậy một callback là bất đồng bộ.
+
+#### Callback Đồng Bộ? (Synchronous Callback?)
+
+Nhưng còn về _synchronous callbacks_ thì sao? Xem xét:
+
+```js
+function getLabels(studentIDs) {
+  return studentIDs.map(function formatIDLabel(id) {
+    return `Student ID: ${String(id).padStart(6)}`;
+  });
+}
+
+getLabels([14, 73, 112, 6]);
+// [
+//    "Student ID: 000014",
+//    "Student ID: 000073",
+//    "Student ID: 000112",
+//    "Student ID: 000006"
+// ]
+```
+
+Chúng ta có nên gọi `formatIDLabel(..)` là một callback không? Tiện ích `map(..)` có thực sự _gọi lại vào_ chương trình của chúng ta bằng cách gọi hàm chúng ta đã cung cấp không?
+
+Không có gì để _gọi lại vào_ theo đúng nghĩa, bởi vì chương trình chưa tạm dừng hoặc thoát. Chúng ta đang truyền một hàm (tham chiếu) từ một phần của chương trình sang một phần khác của chương trình, và sau đó nó được gọi ngay lập tức.
+
+Có những thuật ngữ được thiết lập khác có thể phù hợp với những gì chúng ta đang làm—truyền vào một hàm (tham chiếu) để một phần khác của chương trình có thể gọi nó thay mặt chúng ta. Bạn có thể nghĩ về điều này như _Dependency Injection_ (DI - Tiêm Phụ Thuộc) hoặc _Inversion of Control_ (IoC - Đảo Ngược Điều Khiển).
+
+DI có thể được tóm tắt là truyền vào (các) phần cần thiết của chức năng cho một phần khác của chương trình để nó có thể gọi chúng để hoàn thành công việc của mình. Đó là một mô tả khá tốt cho cuộc gọi `map(..)` ở trên, phải không? Tiện ích `map(..)` biết lặp qua các giá trị của danh sách, nhưng nó không biết phải _làm gì_ với các giá trị đó. Đó là lý do tại sao chúng ta truyền cho nó hàm `formatIDLabel(..)`. Chúng ta truyền vào phụ thuộc (dependency).
+
+IoC là một khái niệm khá tương tự, liên quan. Đảo ngược điều khiển có nghĩa là thay vì khu vực hiện tại của chương trình của bạn kiểm soát những gì đang xảy ra, bạn trao quyền kiểm soát cho một phần khác của chương trình. Chúng ta đã bọc logic để tính toán một chuỗi nhãn trong hàm `formatIDLabel(..)`, sau đó trao quyền kiểm soát lời gọi cho tiện ích `map(..)`.
+
+Đáng chú ý, Martin Fowler trích dẫn IoC là sự khác biệt giữa một framework và một library (thư viện): với một library, bạn gọi các hàm của nó; với một framework, nó gọi các hàm của bạn. [^fowlerIOC]
+
+Trong ngữ cảnh thảo luận của chúng ta, cả DI hoặc IoC đều có thể hoạt động như một nhãn thay thế cho một _synchronous callback_.
+
+Nhưng tôi có một đề xuất khác. Hãy gọi (các hàm trước đây được gọi là) _synchronous callbacks_, là _inter-invoked functions_ (IIFs - các hàm được gọi lẫn nhau/gọi chéo). Vâng, chính xác, tôi đang chơi chữ với IIFEs. Những loại hàm này được _inter-invoked_, có nghĩa là: một thực thể khác gọi chúng, trái ngược với IIFEs, tự gọi chúng ngay lập tức.
+
+Mối quan hệ giữa một _asynchronous callback_ và một IIF là gì? Một _asynchronous callback_ là một IIF được gọi bất đồng bộ thay vì đồng bộ.
+
+#### Closure Đồng Bộ? (Synchronous Closure?)
+
+Bây giờ chúng ta đã gán nhãn lại _synchronous callbacks_ là IIFs, chúng ta có thể quay lại câu hỏi chính của mình: IIFs có phải là ví dụ về closure không? Rõ ràng, IIF sẽ phải tham chiếu biến từ một outer scope để nó có bất kỳ cơ hội nào là một closure. IIF `formatIDLabel(..)` từ trước đó không tham chiếu bất kỳ biến nào bên ngoài scope của chính nó, vì vậy nó chắc chắn không phải là một closure.
+
+Còn về một IIF có tham chiếu bên ngoài, đó có phải là closure không?
+
+```js
+function printLabels(labels) {
+    var list = document.getElementById("labelsList");\n\n    labels.forEach(\n        function renderLabel(label){\n            var li = document.createElement("li");\n            li.innerText = label;\n            list.appendChild(li);\n        }\n    );\n}
+```
+
+Inner IIF `renderLabel(..)` tham chiếu `list` từ enclosing scope, vì vậy nó là một IIF _có thể_ có closure. Nhưng đây là nơi định nghĩa/mô hình chúng ta chọn cho closure quan trọng:
+
+- Nếu `renderLabel(..)` là một **hàm được truyền đến nơi khác**, và hàm đó sau đó được gọi, thì có, `renderLabel(..)` đang thực hiện một closure, bởi vì closure là thứ đã bảo tồn quyền truy cập của nó vào scope chain ban đầu của nó.
+
+- Nhưng nếu, như trong mô hình khái niệm thay thế từ Chương 7, `renderLabel(..)` ở nguyên tại chỗ, và chỉ một tham chiếu đến nó được truyền cho `forEach(..)`, liệu có cần thiết phải có closure để bảo tồn scope chain của `renderLabel(..)`, trong khi nó thực thi đồng bộ ngay bên trong scope của chính nó?
+
+Không. Đó chỉ là lexical scope bình thường.
+
+Để hiểu tại sao, hãy xem xét dạng thay thế này của `printLabels(..)`:
+
+```js
+function printLabels(labels) {
+  var list = document.getElementById("labelsList");
+
+  for (let label of labels) {
+    // chỉ là một cuộc gọi hàm bình thường trong scope
+    // của chính nó, phải không? Đó không thực sự là closure!
+    renderLabel(label);
+  }
+
+  // **************
+
+  function renderLabel(label) {
+    var li = document.createElement("li");
+    li.innerText = label;
+    list.appendChild(li);
+  }
+}
+```
+
+Hai phiên bản này của `printLabels(..)` về cơ bản là giống nhau.
+
+Cái sau chắc chắn không phải là một ví dụ về closure, ít nhất không theo bất kỳ nghĩa hữu ích hoặc quan sát được nào. Nó chỉ là lexical scope. Phiên bản trước, với `forEach(..)` gọi tham chiếu hàm của chúng ta, về cơ bản là cùng một thứ. Nó cũng không phải là closure, mà thay vào đó chỉ là một cuộc gọi hàm lexical scope cũ kỹ bình thường.
+
+#### Trì Hoãn Đến Closure (Defer to Closure)
+
+Nhân tiện, Chương 7 đã đề cập ngắn gọn đến ứng dụng một phần (partial application) và currying (những thứ _có_ dựa vào closure!). Đây là một kịch bản thú vị nơi currying thủ công (manual currying) có thể được sử dụng:
+
+```js
+function printLabels(labels) {
+    var list = document.getElementById("labelsList");
+    var renderLabel = renderTo(list);
+
+    // chắc chắn là closure lần này!
+    labels.forEach( renderLabel );
+
+    // **************
+
+    function renderTo(list) {
+        return function createLabel(label){
+            var li = document.createElement("li");
+            li.innerText = label;
+            list.appendChild(li);\n        };\n    }\n}
+```
+
+Hàm bên trong `createLabel(..)`, mà chúng ta gán cho `renderLabel`, được closed over `list`, vì vậy closure chắc chắn đang được sử dụng.
+
+Closure cho phép chúng ta ghi nhớ `list` cho sau này, trong khi chúng ta trì hoãn việc thực thi logic tạo nhãn thực tế từ cuộc gọi `renderTo(..)` đến các lần gọi `forEach(..)` tiếp theo của IIF `createLabel(..)`. Đó có thể chỉ là một khoảnh khắc ngắn ngủi ở đây, nhưng bất kỳ khoảng thời gian nào cũng có thể trôi qua, khi cầu nối closure từ cuộc gọi đến cuộc gọi.
+
 ---
