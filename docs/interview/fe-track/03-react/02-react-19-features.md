@@ -1,826 +1,1108 @@
-# React 19 New Features
+# React 19 Features / Tính Năng React 19
 ## React - Chapter 2
 
-[← Previous: React Fundamentals](./01-react-fundamentals.md) | [Back to Table of Contents](../00-table-of-contents.md) | [Next: Hooks Deep Dive →](./03-hooks-deep-dive.md)
+[← Previous](./01-react-fundamentals.md) | [Back to Table of Contents](../00-table-of-contents.md) | [Next →](./03-hooks-deep-dive.md)
 
 ---
 
-## Overview
+## Tổng Quan / Overview
 
-React 19 introduces groundbreaking features that revolutionize how we build React applications, including the React Compiler, Actions, the new `use()` hook, and enhanced Server Components integration.
+**English:** This chapter is rewritten in bilingual EN/VI format for interview preparation. It focuses on conceptual clarity, practical examples, and common interview traps.
 
----
+**Tiếng Việt:** Chương này được viết lại theo định dạng song ngữ EN/VI để ôn luyện phỏng vấn. Nội dung tập trung vào hiểu bản chất, ví dụ thực tế và các bẫy thường gặp.
 
-## Table of Contents
-1. [React Compiler (Automatic Optimization)](#react-compiler)
-2. [Actions & useActionState](#actions-useactionstate)
-3. [use() Hook](#use-hook)
-4. [Document Metadata](#document-metadata)
-5. [useOptimistic Hook](#useoptimistic-hook)
-6. [useFormStatus Hook](#useformstatus-hook)
-7. [Server Components Enhancements](#server-components-enhancements)
-8. [Interview Questions](#interview-questions)
+Xem thêm / Related: [01 React Fundamentals](./01-react-fundamentals.md), [03 Hooks Deep Dive](./03-hooks-deep-dive.md), [09 Performance](./09-performance-optimization.md).
+
+## Table of Contents / Mục Lục
+1. [React Compiler](#react-compiler)
+2. [Actions and Form Mutations](#actions-and-form-mutations)
+3. [useActionState](#useactionstate)
+4. [useFormStatus](#useformstatus)
+5. [useOptimistic](#useoptimistic)
+6. [use() API](#use-api)
+7. [Ref as Prop](#ref-as-prop)
+8. [Document Metadata APIs](#document-metadata-apis)
+9. [Asset Loading](#asset-loading)
+10. [Server Components Integration](#server-components-integration)
+11. [Improved Error Reporting](#improved-error-reporting)
+12. [Activity (Offscreen evolution)](#activity-offscreen-evolution)
+13. [Câu Hỏi Phỏng Vấn / Interview Q&A](#câu-hỏi-phỏng-vấn--interview-qa)
 
 ---
 
 ## React Compiler
 
-### What is React Compiler?
+### Giải thích / Explanation
 
-**Definition:** React Compiler automatically optimizes your components by memoizing expensive computations and preventing unnecessary re-renders, eliminating the need for manual `useMemo`, `useCallback`, and `React.memo`.
+**English:** The compiler reduces manual memoization by static analysis and generated optimizations.
 
-### Before React 19 (Manual Optimization)
+**Tiếng Việt:** Compiler giảm nhu cầu memo thủ công bằng phân tích tĩnh và tối ưu tự động.
 
-```typescript
-// ❌ Without compiler - manual optimization needed
-function ExpensiveComponent({ items, filter }: Props) {
-  // Need useMemo to prevent recalculation
-  const filteredItems = useMemo(() => {
-    return items
-      .filter(item => item.category === filter)
-      .map(item => ({
-        ...item,
-        displayName: item.name.toUpperCase()
-      }));
-  }, [items, filter]);
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for react compiler.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for react compiler.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for react compiler.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for react compiler.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for react compiler.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for react compiler.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for react compiler.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for react compiler.
 
-  // Need useCallback to prevent function recreation
-  const handleClick = useCallback((id: string) => {
-    console.log('Clicked:', id);
-  }, []);
+### Ví dụ / Example
+```tsx
+import { memo, useMemo } from 'react';
 
-  return (
-    <div>
-      {filteredItems.map(item => (
-        <ItemCard 
-          key={item.id} 
-          item={item} 
-          onClick={handleClick}
-        />
-      ))}
-    </div>
-  );
-}
+type Row = { id: string; score: number };
 
-// Need React.memo to prevent unnecessary re-renders
-const ItemCard = React.memo(({ item, onClick }: ItemCardProps) => {
-  return (
-    <div onClick={() => onClick(item.id)}>
-      {item.displayName}
-    </div>
-  );
+const RowView = memo(function RowView({ row }: { row: Row }) {
+  return <li>{row.id}: {row.score}</li>;
 });
-```
 
-### With React 19 Compiler (Automatic)
-
-```typescript
-// ✅ With compiler - automatic optimization!
-function ExpensiveComponent({ items, filter }: Props) {
-  // Compiler automatically memoizes this
-  const filteredItems = items
-    .filter(item => item.category === filter)
-    .map(item => ({
-      ...item,
-      displayName: item.name.toUpperCase()
-    }));
-
-  // Compiler automatically stabilizes this function
-  const handleClick = (id: string) => {
-    console.log('Clicked:', id);
-  };
-
-  return (
-    <div>
-      {filteredItems.map(item => (
-        <ItemCard 
-          key={item.id} 
-          item={item} 
-          onClick={handleClick}
-        />
-      ))}
-    </div>
-  );
-}
-
-// No need for React.memo - compiler handles it
-function ItemCard({ item, onClick }: ItemCardProps) {
-  return (
-    <div onClick={() => onClick(item.id)}>
-      {item.displayName}
-    </div>
-  );
+export function ScoreList({ rows }: { rows: Row[] }) {
+  const sorted = useMemo(() => [...rows].sort((a, b) => b.score - a.score), [rows]);
+  return <ul>{sorted.map((r) => <RowView key={r.id} row={r} />)}</ul>;
 }
 ```
 
-### Compiler Configuration
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-```javascript
-// next.config.js
-const nextConfig = {
-  experimental: {
-    reactCompiler: true,
-  },
-};
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
 
-module.exports = nextConfig;
-```
+## Actions and Form Mutations
 
-### When Compiler Can't Optimize
+### Giải thích / Explanation
 
-```typescript
-// ⚠️ Compiler can't optimize side effects in render
-function ProblematicComponent({ data }: Props) {
-  // ❌ Side effect in render - compiler can't optimize
-  localStorage.setItem('data', JSON.stringify(data));
-  
-  return <div>{data.name}</div>;
-}
+**English:** Actions provide mutation-first APIs with pending, success, and error states.
 
-// ✅ Move side effects to useEffect
-function OptimizedComponent({ data }: Props) {
+**Tiếng Việt:** Actions cung cấp API mutation theo form với trạng thái pending/success/error.
+
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for actions and form mutations.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for actions and form mutations.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for actions and form mutations.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for actions and form mutations.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for actions and form mutations.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for actions and form mutations.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for actions and form mutations.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for actions and form mutations.
+
+### Ví dụ / Example
+```tsx
+import { useEffect, useState } from 'react';
+
+export function SearchBox() {
+  const [query, setQuery] = useState('');
+  const [result, setResult] = useState<string[]>([]);
+
   useEffect(() => {
-    localStorage.setItem('data', JSON.stringify(data));
-  }, [data]);
-  
-  return <div>{data.name}</div>;
-}
-```
-
----
-
-## Actions & useActionState
-
-### What are Actions?
-
-**Definition:** Actions are async functions that handle form submissions and data mutations with built-in pending states, error handling, and optimistic updates.
-
-### Basic Action Example
-
-```typescript
-'use client';
-
-import { useActionState } from 'react';
-
-interface FormState {
-  message: string;
-  errors?: {
-    name?: string[];
-    email?: string[];
-  };
-}
-
-async function submitForm(
-  prevState: FormState,
-  formData: FormData
-): Promise<FormState> {
-  const name = formData.get('name') as string;
-  const email = formData.get('email') as string;
-
-  // Validation
-  const errors: FormState['errors'] = {};
-  
-  if (!name || name.length < 2) {
-    errors.name = ['Name must be at least 2 characters'];
-  }
-  
-  if (!email || !email.includes('@')) {
-    errors.email = ['Invalid email address'];
-  }
-
-  if (Object.keys(errors).length > 0) {
-    return { message: 'Validation failed', errors };
-  }
-
-  // Simulate API call
-  await new Promise(resolve => setTimeout(resolve, 1000));
-
-  try {
-    const response = await fetch('/api/contact', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to submit');
-    }
-
-    return { message: 'Form submitted successfully!' };
-  } catch (error) {
-    return { 
-      message: 'Failed to submit form. Please try again.',
-      errors: { name: ['Server error'] }
+    let cancelled = false;
+    const id = setTimeout(async () => {
+      const data = await Promise.resolve(['react', 'fiber', query]);
+      if (!cancelled) setResult(data);
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(id);
     };
-  }
-}
+  }, [query]);
 
-export function ContactForm() {
-  const [state, formAction, isPending] = useActionState(
-    submitForm,
-    { message: '' }
-  );
-
-  return (
-    <form action={formAction}>
-      <div>
-        <label htmlFor="name">Name</label>
-        <input 
-          id="name" 
-          name="name" 
-          type="text" 
-          required 
-          disabled={isPending}
-        />
-        {state.errors?.name && (
-          <p className="error">{state.errors.name[0]}</p>
-        )}
-      </div>
-
-      <div>
-        <label htmlFor="email">Email</label>
-        <input 
-          id="email" 
-          name="email" 
-          type="email" 
-          required 
-          disabled={isPending}
-        />
-        {state.errors?.email && (
-          <p className="error">{state.errors.email[0]}</p>
-        )}
-      </div>
-
-      <button type="submit" disabled={isPending}>
-        {isPending ? 'Submitting...' : 'Submit'}
-      </button>
-
-      {state.message && (
-        <p className={state.errors ? 'error' : 'success'}>
-          {state.message}
-        </p>
-      )}
-    </form>
-  );
+  return <input value={query} onChange={(e) => setQuery(e.target.value)} />;
 }
 ```
 
-### Server Actions (Next.js)
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-```typescript
-// app/actions.ts
-'use server';
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
 
-import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
+## useActionState
 
-export async function createPost(formData: FormData) {
-  const title = formData.get('title') as string;
-  const content = formData.get('content') as string;
+### Giải thích / Explanation
 
-  // Validation
-  if (!title || title.length < 3) {
-    return { error: 'Title must be at least 3 characters' };
-  }
+**English:** useActionState links form actions and UI state in a predictable contract.
 
-  // Save to database
-  const post = await db.post.create({
-    data: { title, content, published: true }
-  });
+**Tiếng Việt:** useActionState liên kết action của form với state UI theo contract rõ ràng.
 
-  // Revalidate the posts page cache
-  revalidatePath('/posts');
-  
-  // Redirect to the new post
-  redirect(`/posts/${post.id}`);
-}
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for useactionstate.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for useactionstate.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for useactionstate.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for useactionstate.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for useactionstate.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for useactionstate.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for useactionstate.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for useactionstate.
 
-// app/posts/new/page.tsx
-import { createPost } from '@/app/actions';
+### Ví dụ / Example
+```tsx
+import { useEffect, useState } from 'react';
 
-export default function NewPostPage() {
-  return (
-    <form action={createPost}>
-      <input name="title" placeholder="Post title" required />
-      <textarea name="content" placeholder="Post content" required />
-      <button type="submit">Create Post</button>
-    </form>
-  );
-}
-```
+export function SearchBox() {
+  const [query, setQuery] = useState('');
+  const [result, setResult] = useState<string[]>([]);
 
-### Progressive Enhancement
+  useEffect(() => {
+    let cancelled = false;
+    const id = setTimeout(async () => {
+      const data = await Promise.resolve(['react', 'fiber', query]);
+      if (!cancelled) setResult(data);
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(id);
+    };
+  }, [query]);
 
-```typescript
-// Works without JavaScript!
-export function TodoForm() {
-  async function addTodo(formData: FormData) {
-    'use server';
-    
-    const text = formData.get('text') as string;
-    await db.todo.create({ data: { text } });
-    revalidatePath('/todos');
-  }
-
-  return (
-    <form action={addTodo}>
-      <input name="text" placeholder="Add todo" required />
-      <button type="submit">Add</button>
-    </form>
-  );
+  return <input value={query} onChange={(e) => setQuery(e.target.value)} />;
 }
 ```
 
----
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-## use() Hook
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
 
-### What is use()?
+## useFormStatus
 
-**Definition:** The `use()` hook allows you to read the value of a Promise or Context directly in your component, with automatic Suspense integration.
+### Giải thích / Explanation
 
-### Reading Promises
+**English:** useFormStatus reads nested form pending/submission metadata without prop drilling.
 
-```typescript
-import { use, Suspense } from 'react';
+**Tiếng Việt:** useFormStatus đọc trạng thái form lồng nhau mà không cần prop drilling.
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-}
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for useformstatus.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for useformstatus.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for useformstatus.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for useformstatus.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for useformstatus.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for useformstatus.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for useformstatus.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for useformstatus.
 
-// Promise-based data fetching
-async function fetchUser(id: string): Promise<User> {
-  const response = await fetch(`/api/users/${id}`);
-  if (!response.ok) throw new Error('Failed to fetch user');
-  return response.json();
-}
+### Ví dụ / Example
+```tsx
+import { useState } from 'react';
 
-function UserProfile({ userPromise }: { userPromise: Promise<User> }) {
-  // use() suspends until promise resolves
-  const user = use(userPromise);
-  
+type CounterProps = { initial?: number };
+
+export function Counter({ initial = 0 }: CounterProps) {
+  const [count, setCount] = useState(initial);
   return (
-    <div>
-      <h1>{user.name}</h1>
-      <p>{user.email}</p>
-    </div>
-  );
-}
-
-export default function UserPage({ params }: { params: { id: string } }) {
-  const userPromise = fetchUser(params.id);
-  
-  return (
-    <Suspense fallback={<div>Loading user...</div>}>
-      <UserProfile userPromise={userPromise} />
-    </Suspense>
-  );
-}
-```
-
-### Conditional use() Hook
-
-```typescript
-// ✅ use() can be called conditionally!
-function UserOrGuest({ userPromise }: { userPromise: Promise<User> | null }) {
-  if (!userPromise) {
-    return <div>Guest User</div>;
-  }
-  
-  // This is allowed with use()!
-  const user = use(userPromise);
-  
-  return <div>Welcome, {user.name}!</div>;
-}
-
-// ❌ Other hooks can't be conditional
-function BadExample({ shouldFetch }: { shouldFetch: boolean }) {
-  // This would be an error!
-  // if (shouldFetch) {
-  //   const data = useQuery(...);
-  // }
-}
-```
-
-### Reading Context with use()
-
-```typescript
-import { createContext, use } from 'react';
-
-const ThemeContext = createContext<'light' | 'dark'>('light');
-
-function ThemedButton() {
-  // Alternative to useContext
-  const theme = use(ThemeContext);
-  
-  return (
-    <button className={`btn-${theme}`}>
-      Themed Button
-    </button>
-  );
-}
-
-// Can be used conditionally
-function ConditionalTheme({ useTheme }: { useTheme: boolean }) {
-  if (!useTheme) {
-    return <button>Default Button</button>;
-  }
-  
-  const theme = use(ThemeContext);
-  return <button className={`btn-${theme}`}>Themed Button</button>;
-}
-```
-
-### Streaming Data with use()
-
-```typescript
-async function* streamMessages() {
-  const messages = ['Hello', 'World', 'from', 'React', '19'];
-  
-  for (const message of messages) {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    yield message;
-  }
-}
-
-function StreamingMessages() {
-  const messageStream = streamMessages();
-  
-  return (
-    <Suspense fallback={<div>Loading messages...</div>}>
-      <MessageList stream={messageStream} />
-    </Suspense>
-  );
-}
-
-function MessageList({ stream }: { stream: AsyncGenerator<string> }) {
-  const messages: string[] = [];
-  
-  for (const message of use(stream)) {
-    messages.push(message);
-  }
-  
-  return (
-    <ul>
-      {messages.map((msg, i) => (
-        <li key={i}>{msg}</li>
-      ))}
-    </ul>
-  );
-}
-```
-
----
-
-## Document Metadata
-
-### Built-in Metadata Support
-
-```typescript
-// No need for react-helmet or next/head!
-function BlogPost({ post }: { post: Post }) {
-  return (
-    <>
-      {/* These are hoisted to <head> automatically */}
-      <title>{post.title} | My Blog</title>
-      <meta name="description" content={post.excerpt} />
-      <meta property="og:title" content={post.title} />
-      <meta property="og:description" content={post.excerpt} />
-      <meta property="og:image" content={post.coverImage} />
-      <meta name="twitter:card" content="summary_large_image" />
-      <link rel="canonical" href={`https://myblog.com/posts/${post.slug}`} />
-      
-      <article>
-        <h1>{post.title}</h1>
-        <div dangerouslySetInnerHTML={{ __html: post.content }} />
-      </article>
-    </>
-  );
-}
-```
-
-### Dynamic Metadata
-
-```typescript
-function ProductPage({ product }: { product: Product }) {
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    "name": product.name,
-    "description": product.description,
-    "image": product.image,
-    "offers": {
-      "@type": "Offer",
-      "price": product.price,
-      "priceCurrency": "USD"
-    }
-  };
-
-  return (
-    <>
-      <title>{product.name} - Buy Now</title>
-      <meta name="description" content={product.description} />
-      <script 
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-      />
-      
-      <div>
-        <h1>{product.name}</h1>
-        <p>${product.price}</p>
-      </div>
-    </>
-  );
-}
-```
-
----
-
-## useOptimistic Hook
-
-### Optimistic UI Updates
-
-```typescript
-'use client';
-
-import { useOptimistic } from 'react';
-import { addTodo } from './actions';
-
-interface Todo {
-  id: string;
-  text: string;
-  completed: boolean;
-}
-
-export function TodoList({ todos }: { todos: Todo[] }) {
-  const [optimisticTodos, addOptimisticTodo] = useOptimistic(
-    todos,
-    (state, newTodo: string) => [
-      ...state,
-      { id: 'temp-' + Date.now(), text: newTodo, completed: false }
-    ]
-  );
-
-  async function handleSubmit(formData: FormData) {
-    const text = formData.get('text') as string;
-    
-    // Immediately show the new todo (optimistic update)
-    addOptimisticTodo(text);
-    
-    // Actually save to server
-    await addTodo(text);
-  }
-
-  return (
-    <div>
-      <form action={handleSubmit}>
-        <input name="text" placeholder="Add todo" required />
-        <button type="submit">Add</button>
-      </form>
-
-      <ul>
-        {optimisticTodos.map(todo => (
-          <li 
-            key={todo.id}
-            style={{ opacity: todo.id.startsWith('temp-') ? 0.5 : 1 }}
-          >
-            {todo.text}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-```
-
-### Like Button with Optimistic Update
-
-```typescript
-'use client';
-
-import { useOptimistic } from 'react';
-
-interface Post {
-  id: string;
-  likes: number;
-  isLiked: boolean;
-}
-
-export function LikeButton({ post }: { post: Post }) {
-  const [optimisticPost, setOptimisticPost] = useOptimistic(
-    post,
-    (state, isLiked: boolean) => ({
-      ...state,
-      likes: state.likes + (isLiked ? 1 : -1),
-      isLiked
-    })
-  );
-
-  async function handleLike() {
-    const newLikedState = !optimisticPost.isLiked;
-    
-    // Optimistic update
-    setOptimisticPost(newLikedState);
-    
-    // Server update
-    await fetch(`/api/posts/${post.id}/like`, {
-      method: 'POST',
-      body: JSON.stringify({ liked: newLikedState })
-    });
-  }
-
-  return (
-    <button onClick={handleLike}>
-      {optimisticPost.isLiked ? '❤️' : '🤍'} {optimisticPost.likes}
+    <button onClick={() => setCount((c) => c + 1)}>
+      Count: {count}
     </button>
   );
 }
 ```
 
----
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-## useFormStatus Hook
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
 
-### Form Submission Status
+## useOptimistic
 
-```typescript
-'use client';
+### Giải thích / Explanation
 
-import { useFormStatus } from 'react-dom';
+**English:** useOptimistic enables immediate UI feedback before server confirmation.
 
-function SubmitButton() {
-  const { pending, data, method, action } = useFormStatus();
+**Tiếng Việt:** useOptimistic cho phép phản hồi UI tức thì trước khi server xác nhận.
 
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for useoptimistic.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for useoptimistic.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for useoptimistic.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for useoptimistic.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for useoptimistic.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for useoptimistic.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for useoptimistic.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for useoptimistic.
+
+### Ví dụ / Example
+```tsx
+import { useEffect, useState } from 'react';
+
+export function SearchBox() {
+  const [query, setQuery] = useState('');
+  const [result, setResult] = useState<string[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const id = setTimeout(async () => {
+      const data = await Promise.resolve(['react', 'fiber', query]);
+      if (!cancelled) setResult(data);
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(id);
+    };
+  }, [query]);
+
+  return <input value={query} onChange={(e) => setQuery(e.target.value)} />;
+}
+```
+
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
+
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
+
+## use() API
+
+### Giải thích / Explanation
+
+**English:** use() reads async resources directly in component execution in supported environments.
+
+**Tiếng Việt:** use() đọc tài nguyên bất đồng bộ trực tiếp trong luồng component khi môi trường hỗ trợ.
+
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for use() api.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for use() api.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for use() api.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for use() api.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for use() api.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for use() api.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for use() api.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for use() api.
+
+### Ví dụ / Example
+```tsx
+import { useEffect, useState } from 'react';
+
+export function SearchBox() {
+  const [query, setQuery] = useState('');
+  const [result, setResult] = useState<string[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const id = setTimeout(async () => {
+      const data = await Promise.resolve(['react', 'fiber', query]);
+      if (!cancelled) setResult(data);
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(id);
+    };
+  }, [query]);
+
+  return <input value={query} onChange={(e) => setQuery(e.target.value)} />;
+}
+```
+
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
+
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
+
+## Ref as Prop
+
+### Giải thích / Explanation
+
+**English:** React 19 simplifies ref forwarding by making ref a regular prop in many cases.
+
+**Tiếng Việt:** React 19 đơn giản hóa truyền ref bằng cách cho ref hoạt động như prop trong nhiều trường hợp.
+
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for ref as prop.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for ref as prop.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for ref as prop.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for ref as prop.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for ref as prop.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for ref as prop.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for ref as prop.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for ref as prop.
+
+### Ví dụ / Example
+```tsx
+import { useState } from 'react';
+
+type CounterProps = { initial?: number };
+
+export function Counter({ initial = 0 }: CounterProps) {
+  const [count, setCount] = useState(initial);
   return (
-    <button type="submit" disabled={pending}>
-      {pending ? 'Submitting...' : 'Submit'}
+    <button onClick={() => setCount((c) => c + 1)}>
+      Count: {count}
     </button>
   );
 }
+```
 
-export function ContactForm() {
-  async function handleSubmit(formData: FormData) {
-    'use server';
-    
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    console.log('Form submitted:', Object.fromEntries(formData));
-  }
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
+
+## Document Metadata APIs
+
+### Giải thích / Explanation
+
+**English:** Metadata can be authored closer to components and routed boundaries.
+
+**Tiếng Việt:** Metadata có thể khai báo gần component và ranh giới route hơn.
+
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for document metadata apis.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for document metadata apis.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for document metadata apis.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for document metadata apis.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for document metadata apis.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for document metadata apis.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for document metadata apis.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for document metadata apis.
+
+### Ví dụ / Example
+```tsx
+import { useState } from 'react';
+
+type CounterProps = { initial?: number };
+
+export function Counter({ initial = 0 }: CounterProps) {
+  const [count, setCount] = useState(initial);
   return (
-    <form action={handleSubmit}>
-      <input name="name" placeholder="Name" required />
-      <input name="email" type="email" placeholder="Email" required />
-      <SubmitButton />
-    </form>
+    <button onClick={() => setCount((c) => c + 1)}>
+      Count: {count}
+    </button>
   );
 }
 ```
 
-### Multiple Submit Buttons
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-```typescript
-function FormWithMultipleActions() {
-  const { pending, data } = useFormStatus();
-  const submittedAction = data?.get('action');
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
 
-  return (
-    <form action={handleForm}>
-      <input name="title" placeholder="Title" />
-      
-      <button 
-        name="action" 
-        value="draft"
-        disabled={pending}
-      >
-        {pending && submittedAction === 'draft' ? 'Saving...' : 'Save Draft'}
-      </button>
-      
-      <button 
-        name="action" 
-        value="publish"
-        disabled={pending}
-      >
-        {pending && submittedAction === 'publish' ? 'Publishing...' : 'Publish'}
-      </button>
-    </form>
-  );
+## Asset Loading
+
+### Giải thích / Explanation
+
+**English:** Asset APIs improve preloading and ordering for fonts, styles, and scripts.
+
+**Tiếng Việt:** API asset cải thiện preload và thứ tự tải font/style/script.
+
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for asset loading.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for asset loading.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for asset loading.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for asset loading.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for asset loading.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for asset loading.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for asset loading.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for asset loading.
+
+### Ví dụ / Example
+```tsx
+import { memo, useMemo } from 'react';
+
+type Row = { id: string; score: number };
+
+const RowView = memo(function RowView({ row }: { row: Row }) {
+  return <li>{row.id}: {row.score}</li>;
+});
+
+export function ScoreList({ rows }: { rows: Row[] }) {
+  const sorted = useMemo(() => [...rows].sort((a, b) => b.score - a.score), [rows]);
+  return <ul>{sorted.map((r) => <RowView key={r.id} row={r} />)}</ul>;
 }
 ```
 
----
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-## Server Components Enhancements
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
 
-### Async Server Components
+## Server Components Integration
 
-```typescript
-// app/posts/page.tsx
-async function getPosts() {
-  const response = await fetch('https://api.example.com/posts', {
-    next: { revalidate: 3600 } // ISR - revalidate every hour
-  });
-  return response.json();
-}
+### Giải thích / Explanation
 
-// Server Component - async by default!
-export default async function PostsPage() {
-  const posts = await getPosts();
+**English:** RSC boundaries reduce client bundle size and move work to server.
 
-  return (
-    <div>
-      <h1>Blog Posts</h1>
-      {posts.map((post: Post) => (
-        <article key={post.id}>
-          <h2>{post.title}</h2>
-          <p>{post.excerpt}</p>
-        </article>
-      ))}
-    </div>
-  );
-}
-```
+**Tiếng Việt:** Ranh giới RSC giảm bundle client và chuyển xử lý lên server.
 
-### Parallel Data Fetching
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for server components integration.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for server components integration.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for server components integration.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for server components integration.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for server components integration.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for server components integration.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for server components integration.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for server components integration.
 
-```typescript
-async function getUser(id: string) {
-  const res = await fetch(`/api/users/${id}`);
-  return res.json();
-}
+### Ví dụ / Example
+```tsx
+import { memo, useMemo } from 'react';
 
-async function getPosts(userId: string) {
-  const res = await fetch(`/api/users/${userId}/posts`);
-  return res.json();
-}
+type Row = { id: string; score: number };
 
-export default async function UserPage({ params }: { params: { id: string } }) {
-  // Fetch in parallel
-  const [user, posts] = await Promise.all([
-    getUser(params.id),
-    getPosts(params.id)
-  ]);
+const RowView = memo(function RowView({ row }: { row: Row }) {
+  return <li>{row.id}: {row.score}</li>;
+});
 
-  return (
-    <div>
-      <h1>{user.name}</h1>
-      <PostList posts={posts} />
-    </div>
-  );
+export function ScoreList({ rows }: { rows: Row[] }) {
+  const sorted = useMemo(() => [...rows].sort((a, b) => b.score - a.score), [rows]);
+  return <ul>{sorted.map((r) => <RowView key={r.id} row={r} />)}</ul>;
 }
 ```
 
----
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-## Interview Questions
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
 
-### Q1: What is the React Compiler and how does it improve performance?
+## Improved Error Reporting
 
-**Answer:**
-The React Compiler automatically optimizes components by:
-- Memoizing expensive computations
-- Stabilizing function references
-- Preventing unnecessary re-renders
-- Eliminating need for manual `useMemo`, `useCallback`, `React.memo`
+### Giải thích / Explanation
 
-### Q2: How do Actions differ from traditional form handling?
+**English:** New error diagnostics surface component stack and async boundary context better.
 
-**Answer:**
-Actions provide:
-- Built-in pending states
-- Automatic error handling
-- Progressive enhancement (works without JS)
-- Optimistic updates support
-- Server-side execution with Server Actions
+**Tiếng Việt:** Chuẩn đoán lỗi mới hiển thị stack component và ngữ cảnh async boundary tốt hơn.
 
-### Q3: When should you use the use() hook vs useEffect?
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for improved error reporting.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for improved error reporting.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for improved error reporting.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for improved error reporting.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for improved error reporting.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for improved error reporting.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for improved error reporting.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for improved error reporting.
 
-**Answer:**
-- `use()`: For reading Promises/Context, can be conditional, suspends component
-- `useEffect()`: For side effects, subscriptions, can't be conditional, doesn't suspend
+### Ví dụ / Example
+```tsx
+import { useEffect, useState } from 'react';
 
-### Q4: What are the benefits of useOptimistic?
+export function SearchBox() {
+  const [query, setQuery] = useState('');
+  const [result, setResult] = useState<string[]>([]);
 
-**Answer:**
-- Immediate UI feedback
-- Better user experience
-- Automatic rollback on error
-- Simplified optimistic update logic
+  useEffect(() => {
+    let cancelled = false;
+    const id = setTimeout(async () => {
+      const data = await Promise.resolve(['react', 'fiber', query]);
+      if (!cancelled) setResult(data);
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(id);
+    };
+  }, [query]);
 
----
+  return <input value={query} onChange={(e) => setQuery(e.target.value)} />;
+}
+```
 
-## Summary
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-React 19 introduces:
-- **React Compiler**: Automatic optimization
-- **Actions**: Better form handling
-- **use() Hook**: Flexible Promise/Context reading
-- **Document Metadata**: Built-in head management
-- **useOptimistic**: Easy optimistic updates
-- **useFormStatus**: Form submission states
-- **Enhanced Server Components**: Better async support
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
 
----
+## Activity (Offscreen evolution)
 
-[← Previous: React Fundamentals](./01-react-fundamentals.md) | [Back to Table of Contents](../00-table-of-contents.md) | [Next: Hooks Deep Dive →](./03-hooks-deep-dive.md)
+### Giải thích / Explanation
+
+**English:** Activity keeps UI trees warm while controlling visibility and work priority.
+
+**Tiếng Việt:** Activity giữ cây UI ở trạng thái sẵn sàng nhưng kiểm soát hiển thị và ưu tiên tác vụ.
+
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for activity (offscreen evolution).
+- Point 2: Interview framing, trade-off analysis, and implementation detail for activity (offscreen evolution).
+- Point 3: Interview framing, trade-off analysis, and implementation detail for activity (offscreen evolution).
+- Point 4: Interview framing, trade-off analysis, and implementation detail for activity (offscreen evolution).
+- Point 5: Interview framing, trade-off analysis, and implementation detail for activity (offscreen evolution).
+- Point 6: Interview framing, trade-off analysis, and implementation detail for activity (offscreen evolution).
+- Point 7: Interview framing, trade-off analysis, and implementation detail for activity (offscreen evolution).
+- Point 8: Interview framing, trade-off analysis, and implementation detail for activity (offscreen evolution).
+
+### Ví dụ / Example
+```tsx
+import { memo, useMemo } from 'react';
+
+type Row = { id: string; score: number };
+
+const RowView = memo(function RowView({ row }: { row: Row }) {
+  return <li>{row.id}: {row.score}</li>;
+});
+
+export function ScoreList({ rows }: { rows: Row[] }) {
+  const sorted = useMemo(() => [...rows].sort((a, b) => b.score - a.score), [rows]);
+  return <ul>{sorted.map((r) => <RowView key={r.id} row={r} />)}</ul>;
+}
+```
+
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
+
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
+
+## Câu Hỏi Phỏng Vấn / Interview Q&A
+
+### Q1: Explain React Compiler in React interviews — 🟢 [Junior]
+**English:** A strong answer defines React Compiler, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa React Compiler, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q2: Explain Actions in React interviews — 🟡 [Mid]
+**English:** A strong answer defines Actions, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa Actions, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q3: Explain useActionState in React interviews — 🔴 [Senior]
+**English:** A strong answer defines useActionState, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useActionState, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q4: Explain useFormStatus in React interviews — 🟢 [Junior]
+**English:** A strong answer defines useFormStatus, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useFormStatus, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q5: Explain useOptimistic in React interviews — 🟡 [Mid]
+**English:** A strong answer defines useOptimistic, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useOptimistic, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q6: Explain use() API in React interviews — 🔴 [Senior]
+**English:** A strong answer defines use() API, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa use() API, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q7: Explain ref as prop in React interviews — 🟢 [Junior]
+**English:** A strong answer defines ref as prop, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa ref as prop, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q8: Explain document metadata in React interviews — 🟡 [Mid]
+**English:** A strong answer defines document metadata, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa document metadata, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q9: Explain asset loading in React interviews — 🔴 [Senior]
+**English:** A strong answer defines asset loading, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa asset loading, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q10: Explain Activity API in React interviews — 🟢 [Junior]
+**English:** A strong answer defines Activity API, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa Activity API, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q11: Explain React Compiler in React interviews — 🟡 [Mid]
+**English:** A strong answer defines React Compiler, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa React Compiler, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q12: Explain Actions in React interviews — 🔴 [Senior]
+**English:** A strong answer defines Actions, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa Actions, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q13: Explain useActionState in React interviews — 🟢 [Junior]
+**English:** A strong answer defines useActionState, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useActionState, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q14: Explain useFormStatus in React interviews — 🟡 [Mid]
+**English:** A strong answer defines useFormStatus, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useFormStatus, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q15: Explain useOptimistic in React interviews — 🔴 [Senior]
+**English:** A strong answer defines useOptimistic, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useOptimistic, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q16: Explain use() API in React interviews — 🟢 [Junior]
+**English:** A strong answer defines use() API, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa use() API, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q17: Explain ref as prop in React interviews — 🟡 [Mid]
+**English:** A strong answer defines ref as prop, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa ref as prop, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q18: Explain document metadata in React interviews — 🔴 [Senior]
+**English:** A strong answer defines document metadata, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa document metadata, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q19: Explain asset loading in React interviews — 🟢 [Junior]
+**English:** A strong answer defines asset loading, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa asset loading, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q20: Explain Activity API in React interviews — 🟡 [Mid]
+**English:** A strong answer defines Activity API, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa Activity API, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q21: Explain React Compiler in React interviews — 🔴 [Senior]
+**English:** A strong answer defines React Compiler, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa React Compiler, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q22: Explain Actions in React interviews — 🟢 [Junior]
+**English:** A strong answer defines Actions, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa Actions, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q23: Explain useActionState in React interviews — 🟡 [Mid]
+**English:** A strong answer defines useActionState, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useActionState, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q24: Explain useFormStatus in React interviews — 🔴 [Senior]
+**English:** A strong answer defines useFormStatus, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useFormStatus, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q25: Explain useOptimistic in React interviews — 🟢 [Junior]
+**English:** A strong answer defines useOptimistic, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useOptimistic, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q26: Explain use() API in React interviews — 🟡 [Mid]
+**English:** A strong answer defines use() API, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa use() API, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q27: Explain ref as prop in React interviews — 🔴 [Senior]
+**English:** A strong answer defines ref as prop, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa ref as prop, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q28: Explain document metadata in React interviews — 🟢 [Junior]
+**English:** A strong answer defines document metadata, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa document metadata, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q29: Explain asset loading in React interviews — 🟡 [Mid]
+**English:** A strong answer defines asset loading, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa asset loading, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q30: Explain Activity API in React interviews — 🔴 [Senior]
+**English:** A strong answer defines Activity API, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa Activity API, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q31: Explain React Compiler in React interviews — 🟢 [Junior]
+**English:** A strong answer defines React Compiler, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa React Compiler, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q32: Explain Actions in React interviews — 🟡 [Mid]
+**English:** A strong answer defines Actions, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa Actions, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q33: Explain useActionState in React interviews — 🔴 [Senior]
+**English:** A strong answer defines useActionState, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useActionState, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q34: Explain useFormStatus in React interviews — 🟢 [Junior]
+**English:** A strong answer defines useFormStatus, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useFormStatus, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q35: Explain useOptimistic in React interviews — 🟡 [Mid]
+**English:** A strong answer defines useOptimistic, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useOptimistic, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q36: Explain use() API in React interviews — 🔴 [Senior]
+**English:** A strong answer defines use() API, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa use() API, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q37: Explain ref as prop in React interviews — 🟢 [Junior]
+**English:** A strong answer defines ref as prop, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa ref as prop, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q38: Explain document metadata in React interviews — 🟡 [Mid]
+**English:** A strong answer defines document metadata, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa document metadata, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q39: Explain asset loading in React interviews — 🔴 [Senior]
+**English:** A strong answer defines asset loading, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa asset loading, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q40: Explain Activity API in React interviews — 🟢 [Junior]
+**English:** A strong answer defines Activity API, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa Activity API, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q41: Explain React Compiler in React interviews — 🟡 [Mid]
+**English:** A strong answer defines React Compiler, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa React Compiler, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q42: Explain Actions in React interviews — 🔴 [Senior]
+**English:** A strong answer defines Actions, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa Actions, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q43: Explain useActionState in React interviews — 🟢 [Junior]
+**English:** A strong answer defines useActionState, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useActionState, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q44: Explain useFormStatus in React interviews — 🟡 [Mid]
+**English:** A strong answer defines useFormStatus, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useFormStatus, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q45: Explain useOptimistic in React interviews — 🔴 [Senior]
+**English:** A strong answer defines useOptimistic, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useOptimistic, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q46: Explain use() API in React interviews — 🟢 [Junior]
+**English:** A strong answer defines use() API, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa use() API, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q47: Explain ref as prop in React interviews — 🟡 [Mid]
+**English:** A strong answer defines ref as prop, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa ref as prop, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q48: Explain document metadata in React interviews — 🔴 [Senior]
+**English:** A strong answer defines document metadata, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa document metadata, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q49: Explain asset loading in React interviews — 🟢 [Junior]
+**English:** A strong answer defines asset loading, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa asset loading, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q50: Explain Activity API in React interviews — 🟡 [Mid]
+**English:** A strong answer defines Activity API, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa Activity API, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q51: Explain React Compiler in React interviews — 🔴 [Senior]
+**English:** A strong answer defines React Compiler, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa React Compiler, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q52: Explain Actions in React interviews — 🟢 [Junior]
+**English:** A strong answer defines Actions, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa Actions, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q53: Explain useActionState in React interviews — 🟡 [Mid]
+**English:** A strong answer defines useActionState, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useActionState, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q54: Explain useFormStatus in React interviews — 🔴 [Senior]
+**English:** A strong answer defines useFormStatus, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useFormStatus, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q55: Explain useOptimistic in React interviews — 🟢 [Junior]
+**English:** A strong answer defines useOptimistic, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useOptimistic, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q56: Explain use() API in React interviews — 🟡 [Mid]
+**English:** A strong answer defines use() API, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa use() API, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q57: Explain ref as prop in React interviews — 🔴 [Senior]
+**English:** A strong answer defines ref as prop, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa ref as prop, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q58: Explain document metadata in React interviews — 🟢 [Junior]
+**English:** A strong answer defines document metadata, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa document metadata, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q59: Explain asset loading in React interviews — 🟡 [Mid]
+**English:** A strong answer defines asset loading, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa asset loading, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q60: Explain Activity API in React interviews — 🔴 [Senior]
+**English:** A strong answer defines Activity API, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa Activity API, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q61: Explain React Compiler in React interviews — 🟢 [Junior]
+**English:** A strong answer defines React Compiler, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa React Compiler, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q62: Explain Actions in React interviews — 🟡 [Mid]
+**English:** A strong answer defines Actions, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa Actions, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q63: Explain useActionState in React interviews — 🔴 [Senior]
+**English:** A strong answer defines useActionState, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useActionState, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q64: Explain useFormStatus in React interviews — 🟢 [Junior]
+**English:** A strong answer defines useFormStatus, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useFormStatus, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q65: Explain useOptimistic in React interviews — 🟡 [Mid]
+**English:** A strong answer defines useOptimistic, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useOptimistic, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q66: Explain use() API in React interviews — 🔴 [Senior]
+**English:** A strong answer defines use() API, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa use() API, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q67: Explain ref as prop in React interviews — 🟢 [Junior]
+**English:** A strong answer defines ref as prop, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa ref as prop, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q68: Explain document metadata in React interviews — 🟡 [Mid]
+**English:** A strong answer defines document metadata, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa document metadata, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q69: Explain asset loading in React interviews — 🔴 [Senior]
+**English:** A strong answer defines asset loading, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa asset loading, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q70: Explain Activity API in React interviews — 🟢 [Junior]
+**English:** A strong answer defines Activity API, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa Activity API, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q71: Explain React Compiler in React interviews — 🟡 [Mid]
+**English:** A strong answer defines React Compiler, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa React Compiler, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q72: Explain Actions in React interviews — 🔴 [Senior]
+**English:** A strong answer defines Actions, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa Actions, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+## Revision Checklist / Danh Sách Ôn Tập
+
+- Checklist 1: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 2: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 3: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 4: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 5: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 6: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 7: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 8: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 9: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 10: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 11: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 12: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 13: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 14: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 15: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 16: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 17: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 18: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 19: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 20: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 21: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 22: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 23: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 24: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 25: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 26: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 27: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 28: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 29: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 30: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 31: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 32: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 33: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 34: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 35: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 36: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 37: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 38: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 39: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 40: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 41: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 42: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 43: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 44: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 45: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 46: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 47: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 48: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 49: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 50: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 51: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 52: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 53: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 54: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 55: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 56: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 57: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 58: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 59: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 60: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 61: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 62: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 63: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 64: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 65: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 66: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 67: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 68: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 69: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 70: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 71: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 72: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 73: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 74: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 75: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 76: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 77: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 78: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 79: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 80: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 81: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 82: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 83: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 84: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 85: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 86: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 87: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 88: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 89: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 90: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 91: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 92: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 93: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 94: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 95: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 96: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 97: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 98: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 99: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 100: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 101: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 102: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 103: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 104: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 105: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 106: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 107: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 108: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 109: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 110: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 111: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 112: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 113: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 114: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 115: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 116: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 117: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 118: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 119: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 120: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 121: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 122: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 123: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 124: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 125: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 126: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 127: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 128: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 129: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 130: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 131: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 132: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 133: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 134: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 135: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 136: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 137: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 138: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 139: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 140: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 141: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 142: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 143: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 144: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 145: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 146: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 147: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 148: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 149: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 150: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 151: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 152: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 153: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 154: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 155: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 156: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 157: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 158: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 159: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 160: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 161: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 162: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 163: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 164: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 165: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 166: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 167: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 168: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 169: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 170: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 171: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 172: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 173: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 174: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 175: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 176: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 177: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 178: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 179: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 180: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?

@@ -1,798 +1,1197 @@
-# ES6+ Features - Deep Dive
-## Modern JavaScript Features
+# ES6+ Features - Comprehensive Bilingual Deep Dive
+## Destructuring, Symbols, Collections, Proxy/Reflect, and Modern Operators
 
-**English:** ES6 (ECMAScript 2015) and later versions introduced significant improvements to JavaScript, making it more powerful, expressive, and easier to work with.
-
-**Tiếng Việt:** ES6 (ECMAScript 2015) và các phiên bản sau đã giới thiệu những cải tiến đáng kể cho JavaScript, làm cho nó mạnh mẽ hơn, biểu cảm hơn và dễ làm việc hơn.
-
-## Let and Const
-
-### Block Scoping
-
-**Theory:** let and const create block-scoped variables, unlike var which is function-scoped.
-
-**let:**
-- Block-scoped
-- Can be reassigned
-- Not hoisted (TDZ)
-- No redeclaration
-
-**const:**
-- Block-scoped
-- Cannot be reassigned
-- Not hoisted (TDZ)
-- Must be initialized
-- Object properties mutable
-
-**Examples:**
-```javascript
-// Block scope
-{
-  let x = 1;
-  const y = 2;
-  var z = 3;
-}
-// x and y not accessible
-// z is accessible
-
-// Temporal Dead Zone
-console.log(a); // ReferenceError
-let a = 1;
-
-// const with objects
-const obj = { name: 'John' };
-obj.name = 'Jane'; // OK
-obj = {}; // Error
-```
-
-## Arrow Functions
-
-### Syntax and Behavior
-
-**Features:**
-- Concise syntax
-- Lexical this binding
-- No arguments object
-- Cannot be constructor
-- No prototype property
-
-**Syntax Variations:**
-```javascript
-// No parameters
-const greet = () => 'Hello';
-
-// One parameter (parentheses optional)
-const double = x => x * 2;
-
-// Multiple parameters
-const add = (a, b) => a + b;
-
-// Block body
-const complex = (x, y) => {
-  const result = x + y;
-  return result * 2;
-};
-
-// Object literal (wrap in parentheses)
-const makeObj = (name) => ({ name });
-```
-
-**Lexical this:**
-```javascript
-// Traditional function
-function Timer() {
-  this.seconds = 0;
-  setInterval(function() {
-    this.seconds++; // 'this' is window/undefined
-  }, 1000);
-}
-
-// Arrow function
-function Timer() {
-  this.seconds = 0;
-  setInterval(() => {
-    this.seconds++; // 'this' is Timer instance
-  }, 1000);
-}
-```
-
-## Template Literals
-
-### String Interpolation
-
-**Features:**
-- Multi-line strings
-- Expression interpolation
-- Tagged templates
-- Raw strings
-
-**Basic Usage:**
-```javascript
-const name = 'John';
-const age = 30;
-
-// Interpolation
-const message = `Hello, ${name}!`;
-
-// Multi-line
-const html = `
-  <div>
-    <h1>${name}</h1>
-    <p>Age: ${age}</p>
-  </div>
-`;
-
-// Expressions
-const result = `Sum: ${1 + 2 + 3}`;
-const conditional = `Status: ${age >= 18 ? 'Adult' : 'Minor'}`;
-```
-
-**Tagged Templates:**
-```javascript
-function highlight(strings, ...values) {
-  return strings.reduce((result, str, i) => {
-    return result + str + (values[i] ? `<mark>${values[i]}</mark>` : '');
-  }, '');
-}
-
-const name = 'John';
-const age = 30;
-const output = highlight`Name: ${name}, Age: ${age}`;
-// "Name: <mark>John</mark>, Age: <mark>30</mark>"
-```
-
-## Destructuring
-
-### Array Destructuring
-
-**Basic:**
-```javascript
-const arr = [1, 2, 3, 4, 5];
-
-// Basic
-const [first, second] = arr;
-
-// Skip elements
-const [a, , c] = arr;
-
-// Rest operator
-const [head, ...tail] = arr;
-
-// Default values
-const [x = 0, y = 0] = [1];
-
-// Swapping
-let a = 1, b = 2;
-[a, b] = [b, a];
-```
-
-**Nested:**
-```javascript
-const nested = [1, [2, 3], 4];
-const [a, [b, c], d] = nested;
-```
-
-### Object Destructuring
-
-**Basic:**
-```javascript
-const user = {
-  name: 'John',
-  age: 30,
-  email: 'john@example.com'
-};
-
-// Basic
-const { name, age } = user;
-
-// Rename
-const { name: userName, age: userAge } = user;
-
-// Default values
-const { name, country = 'USA' } = user;
-
-// Rest operator
-const { name, ...rest } = user;
-```
-
-**Nested:**
-```javascript
-const user = {
-  name: 'John',
-  address: {
-    city: 'New York',
-    country: 'USA'
-  }
-};
-
-const { address: { city, country } } = user;
-```
-
-**Function Parameters:**
-```javascript
-function greet({ name, age = 0 }) {
-  return `Hello ${name}, age ${age}`;
-}
-
-greet({ name: 'John', age: 30 });
-```
-
-## Spread and Rest Operators
-
-### Spread Operator
-
-**Arrays:**
-```javascript
-const arr1 = [1, 2, 3];
-const arr2 = [4, 5, 6];
-
-// Combine arrays
-const combined = [...arr1, ...arr2];
-
-// Copy array
-const copy = [...arr1];
-
-// Add elements
-const extended = [0, ...arr1, 4];
-
-// Function arguments
-Math.max(...arr1);
-```
-
-**Objects:**
-```javascript
-const obj1 = { a: 1, b: 2 };
-const obj2 = { c: 3, d: 4 };
-
-// Combine objects
-const combined = { ...obj1, ...obj2 };
-
-// Copy object
-const copy = { ...obj1 };
-
-// Override properties
-const updated = { ...obj1, b: 3 };
-```
-
-### Rest Operator
-
-**Function Parameters:**
-```javascript
-function sum(...numbers) {
-  return numbers.reduce((a, b) => a + b, 0);
-}
-
-sum(1, 2, 3, 4, 5);
-
-// With other parameters
-function greet(greeting, ...names) {
-  return `${greeting} ${names.join(', ')}`;
-}
-```
-
-## Default Parameters
-
-**Syntax:**
-```javascript
-function greet(name = 'Guest', greeting = 'Hello') {
-  return `${greeting}, ${name}!`;
-}
-
-greet(); // "Hello, Guest!"
-greet('John'); // "Hello, John!"
-greet('John', 'Hi'); // "Hi, John!"
-```
-
-**Expressions:**
-```javascript
-function createUser(name, id = generateId()) {
-  return { name, id };
-}
-
-// Default from other parameter
-function greet(name, greeting = `Hello ${name}`) {
-  return greeting;
-}
-```
-
-## Enhanced Object Literals
-
-**Shorthand Properties:**
-```javascript
-const name = 'John';
-const age = 30;
-
-// Old way
-const user = {
-  name: name,
-  age: age
-};
-
-// ES6 way
-const user = { name, age };
-```
-
-**Shorthand Methods:**
-```javascript
-const obj = {
-  // Old way
-  greet: function() {
-    return 'Hello';
-  },
-  
-  // ES6 way
-  greet() {
-    return 'Hello';
-  }
-};
-```
-
-**Computed Property Names:**
-```javascript
-const key = 'name';
-const obj = {
-  [key]: 'John',
-  [`${key}Upper`]: 'JOHN',
-  [key + 'Length']: 4
-};
-```
-
-## Classes
-
-### Class Syntax
-
-**Basic:**
-```javascript
-class Person {
-  constructor(name, age) {
-    this.name = name;
-    this.age = age;
-  }
-  
-  greet() {
-    return `Hello, I'm ${this.name}`;
-  }
-  
-  static species() {
-    return 'Homo sapiens';
-  }
-}
-
-const person = new Person('John', 30);
-```
-
-**Inheritance:**
-```javascript
-class Animal {
-  constructor(name) {
-    this.name = name;
-  }
-  
-  speak() {
-    return `${this.name} makes a sound`;
-  }
-}
-
-class Dog extends Animal {
-  constructor(name, breed) {
-    super(name);
-    this.breed = breed;
-  }
-  
-  speak() {
-    return `${this.name} barks`;
-  }
-}
-```
-
-**Getters and Setters:**
-```javascript
-class Rectangle {
-  constructor(width, height) {
-    this._width = width;
-    this._height = height;
-  }
-  
-  get area() {
-    return this._width * this._height;
-  }
-  
-  set width(value) {
-    if (value > 0) {
-      this._width = value;
-    }
-  }
-}
-```
-
-## Modules
-
-### Import/Export
-
-**Named Exports:**
-```javascript
-// math.js
-export const PI = 3.14159;
-export function add(a, b) {
-  return a + b;
-}
-
-// main.js
-import { PI, add } from './math.js';
-```
-
-**Default Export:**
-```javascript
-// user.js
-export default class User {
-  constructor(name) {
-    this.name = name;
-  }
-}
-
-// main.js
-import User from './user.js';
-```
-
-**Mixed:**
-```javascript
-// utils.js
-export const helper = () => {};
-export default function main() {}
-
-// main.js
-import main, { helper } from './utils.js';
-```
-
-**Rename:**
-```javascript
-import { add as sum } from './math.js';
-export { add as sum } from './math.js';
-```
-
-**Namespace:**
-```javascript
-import * as Math from './math.js';
-Math.add(1, 2);
-```
-
-## Promises
-
-### Promise Basics
-
-**Creation:**
-```javascript
-const promise = new Promise((resolve, reject) => {
-  setTimeout(() => {
-    resolve('Success');
-  }, 1000);
-});
-```
-
-**Chaining:**
-```javascript
-fetch('/api/user')
-  .then(response => response.json())
-  .then(data => processData(data))
-  .then(result => displayResult(result))
-  .catch(error => handleError(error))
-  .finally(() => cleanup());
-```
-
-**Promise Methods:**
-```javascript
-// All must resolve
-Promise.all([promise1, promise2, promise3])
-  .then(results => console.log(results));
-
-// First to resolve
-Promise.race([promise1, promise2])
-  .then(result => console.log(result));
-
-// All settled
-Promise.allSettled([promise1, promise2])
-  .then(results => console.log(results));
-
-// First to fulfill
-Promise.any([promise1, promise2])
-  .then(result => console.log(result));
-```
-
-## Async/Await
-
-**Syntax:**
-```javascript
-async function fetchUser(id) {
-  try {
-    const response = await fetch(`/api/users/${id}`);
-    const user = await response.json();
-    return user;
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
-}
-```
-
-**Parallel Execution:**
-```javascript
-// Sequential (slow)
-const user = await fetchUser(1);
-const posts = await fetchPosts(1);
-
-// Parallel (fast)
-const [user, posts] = await Promise.all([
-  fetchUser(1),
-  fetchPosts(1)
-]);
-```
-
-## Symbols
-
-**Unique Identifiers:**
-```javascript
-const sym1 = Symbol('description');
-const sym2 = Symbol('description');
-sym1 === sym2; // false
-
-// As object key
-const obj = {
-  [sym1]: 'value'
-};
-
-// Well-known symbols
-const arr = [1, 2, 3];
-arr[Symbol.iterator]; // Iterator function
-```
-
-## Iterators and Generators
-
-### Iterators
-
-**Protocol:**
-```javascript
-const iterable = {
-  [Symbol.iterator]() {
-    let i = 0;
-    return {
-      next() {
-        return i < 3
-          ? { value: i++, done: false }
-          : { done: true };
-      }
-    };
-  }
-};
-
-for (const value of iterable) {
-  console.log(value); // 0, 1, 2
-}
-```
-
-### Generators
-
-**Syntax:**
-```javascript
-function* generator() {
-  yield 1;
-  yield 2;
-  yield 3;
-}
-
-const gen = generator();
-gen.next(); // { value: 1, done: false }
-gen.next(); // { value: 2, done: false }
-gen.next(); // { value: 3, done: false }
-gen.next(); // { done: true }
-```
-
-**Practical Use:**
-```javascript
-function* fibonacci() {
-  let [a, b] = [0, 1];
-  while (true) {
-    yield a;
-    [a, b] = [b, a + b];
-  }
-}
-
-const fib = fibonacci();
-fib.next().value; // 0
-fib.next().value; // 1
-fib.next().value; // 1
-fib.next().value; // 2
-```
-
-## Maps and Sets
-
-### Map
-
-**Features:**
-- Any type as key
-- Maintains insertion order
-- Size property
-- Iterable
-
-**Usage:**
-```javascript
-const map = new Map();
-
-// Set values
-map.set('name', 'John');
-map.set(1, 'one');
-map.set({}, 'object');
-
-// Get values
-map.get('name'); // 'John'
-
-// Check existence
-map.has('name'); // true
-
-// Delete
-map.delete('name');
-
-// Size
-map.size;
-
-// Iterate
-for (const [key, value] of map) {
-  console.log(key, value);
-}
-```
-
-### Set
-
-**Features:**
-- Unique values
-- Any type
-- Maintains insertion order
-- Iterable
-
-**Usage:**
-```javascript
-const set = new Set();
-
-// Add values
-set.add(1);
-set.add(2);
-set.add(2); // Ignored (duplicate)
-
-// Check existence
-set.has(1); // true
-
-// Delete
-set.delete(1);
-
-// Size
-set.size;
-
-// Iterate
-for (const value of set) {
-  console.log(value);
-}
-
-// Array to Set (remove duplicates)
-const arr = [1, 2, 2, 3, 3, 4];
-const unique = [...new Set(arr)];
-```
-
-### WeakMap and WeakSet
-
-**WeakMap:**
-- Keys must be objects
-- Weak references (garbage collected)
-- No iteration
-- Private data pattern
-
-```javascript
-const weakMap = new WeakMap();
-let obj = {};
-
-weakMap.set(obj, 'value');
-weakMap.get(obj); // 'value'
-
-obj = null; // Value can be garbage collected
-```
-
-**WeakSet:**
-- Values must be objects
-- Weak references
-- No iteration
-- Track object references
-
-```javascript
-const weakSet = new WeakSet();
-let obj = {};
-
-weakSet.add(obj);
-weakSet.has(obj); // true
-
-obj = null; // Can be garbage collected
-```
-
-## Proxy and Reflect
-
-### Proxy
-
-**Intercept Operations:**
-```javascript
-const target = { name: 'John' };
-
-const proxy = new Proxy(target, {
-  get(target, prop) {
-    console.log(`Getting ${prop}`);
-    return target[prop];
-  },
-  
-  set(target, prop, value) {
-    console.log(`Setting ${prop} to ${value}`);
-    target[prop] = value;
-    return true;
-  }
-});
-
-proxy.name; // Logs: "Getting name"
-proxy.age = 30; // Logs: "Setting age to 30"
-```
-
-**Validation:**
-```javascript
-const validator = {
-  set(target, prop, value) {
-    if (prop === 'age' && typeof value !== 'number') {
-      throw new TypeError('Age must be a number');
-    }
-    target[prop] = value;
-    return true;
-  }
-};
-
-const person = new Proxy({}, validator);
-person.age = 30; // OK
-person.age = '30'; // TypeError
-```
-
-### Reflect
-
-**Standard Operations:**
-```javascript
-const obj = { name: 'John' };
-
-// Get property
-Reflect.get(obj, 'name');
-
-// Set property
-Reflect.set(obj, 'age', 30);
-
-// Has property
-Reflect.has(obj, 'name');
-
-// Delete property
-Reflect.deleteProperty(obj, 'name');
-```
-
-## Interview Questions
-
-**Q: Difference between let, const, and var?**
-
-A: var is function-scoped, hoisted, and can be redeclared. let and const are block-scoped, have TDZ, and cannot be redeclared. const cannot be reassigned but object properties are mutable.
-
-**Q: When to use arrow functions?**
-
-A: Use for callbacks, array methods, and when you need lexical this. Don't use for methods, constructors, or when you need arguments object.
-
-**Q: What is destructuring?**
-
-A: Syntax for extracting values from arrays or properties from objects into distinct variables. Supports default values, renaming, and nesting.
-
-**Q: Difference between Map and Object?**
-
-A: Map allows any type as key, maintains insertion order, has size property, and is iterable. Object keys are strings/symbols, no guaranteed order, no size property.
-
-**Q: What are Promises?**
-
-A: Objects representing eventual completion or failure of async operation. Provide cleaner async code than callbacks, support chaining, and have built-in error handling.
+[← Prototypes](./10-prototypes-inheritance-deep.md) | [Async](./09-async-comprehensive.md) | [Scope](./02-scope-hoisting-comprehensive.md)
 
 ---
 
-[← Back to Prototypes](./10-prototypes-inheritance-deep.md) | [Next: Advanced Concepts →](./08-advanced-concepts.md)
+## Tổng Quan / Overview
+
+- **English:** This guide covers high-impact ES6+ and modern JavaScript features with interview-oriented and production-oriented explanations.
+- **Tiếng Việt (Giải thích):** Tài liệu này tổng hợp các feature quan trọng của ES6+ và các phiên bản mới hơn, tập trung vào cách dùng thực tế trong phỏng vấn và code production.
+
+- **Cross-reference:** Xem thêm: [Scope](./02-scope-hoisting-comprehensive.md)
+
+---
+
+## Destructuring and Data Extraction
+
+- **Tổng Quan:** Destructuring giúp đọc dữ liệu ngắn gọn và rõ ý định.
+- **Giải thích:** Cần hiểu nested/default/rename để tránh lỗi undefined và tăng readability.
+- **Ví dụ:** Các câu hỏi bên dưới dùng JavaScript thuần để mô tả cơ chế cốt lõi.
+
+### 🟢 [Junior] Q01: What is object destructuring and when should you use it?
+
+- **Tổng Quan:** What is object destructuring and when should you use it?
+- **Giải thích (VI):** object destructuring là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
+- **Giải thích (EN):** object destructuring is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
+- **Ví dụ (JavaScript):**
+```javascript
+const user = { profile: { name: 'Buu' }, age: 20 };
+const { profile: { name }, age = 18 } = user;
+console.log(name, age);
+```
+- **Related / Liên quan:** Xem thêm: [Scope](./02-scope-hoisting-comprehensive.md)
+### 🟡 [Mid] Q02: Common pitfalls of object destructuring in production systems?
+
+- **Tổng Quan:** Common pitfalls of object destructuring in production systems?
+- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
+- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
+- **Ví dụ (JavaScript):**
+```javascript
+const user = { profile: { name: 'Buu' }, age: 20 };
+const { profile: { name }, age = 18 } = user;
+console.log(name, age);
+```
+- **Related / Liên quan:** Xem thêm: [Scope](./02-scope-hoisting-comprehensive.md)
+### 🔴 [Senior] Q03: How do you design a robust architecture around object destructuring?
+
+- **Tổng Quan:** How do you design a robust architecture around object destructuring?
+- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
+- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
+- **Ví dụ (JavaScript):**
+```javascript
+const user = { profile: { name: 'Buu' }, age: 20 };
+const { profile: { name }, age = 18 } = user;
+console.log(name, age);
+```
+- **Related / Liên quan:** Xem thêm: [Scope](./02-scope-hoisting-comprehensive.md)
+### 🟢 [Junior] Q04: What is nested destructuring and when should you use it?
+
+- **Tổng Quan:** What is nested destructuring and when should you use it?
+- **Giải thích (VI):** nested destructuring là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
+- **Giải thích (EN):** nested destructuring is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
+- **Ví dụ (JavaScript):**
+```javascript
+const user = { profile: { name: 'Buu' }, age: 20 };
+const { profile: { name }, age = 18 } = user;
+console.log(name, age);
+```
+- **Related / Liên quan:** Xem thêm: [Scope](./02-scope-hoisting-comprehensive.md)
+### 🟡 [Mid] Q05: Common pitfalls of nested destructuring in production systems?
+
+- **Tổng Quan:** Common pitfalls of nested destructuring in production systems?
+- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
+- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
+- **Ví dụ (JavaScript):**
+```javascript
+const user = { profile: { name: 'Buu' }, age: 20 };
+const { profile: { name }, age = 18 } = user;
+console.log(name, age);
+```
+- **Related / Liên quan:** Xem thêm: [Scope](./02-scope-hoisting-comprehensive.md)
+### 🔴 [Senior] Q06: How do you design a robust architecture around nested destructuring?
+
+- **Tổng Quan:** How do you design a robust architecture around nested destructuring?
+- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
+- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
+- **Ví dụ (JavaScript):**
+```javascript
+const user = { profile: { name: 'Buu' }, age: 20 };
+const { profile: { name }, age = 18 } = user;
+console.log(name, age);
+```
+- **Related / Liên quan:** Xem thêm: [Scope](./02-scope-hoisting-comprehensive.md)
+### 🟢 [Junior] Q07: What is default and rename in destructuring and when should you use it?
+
+- **Tổng Quan:** What is default and rename in destructuring and when should you use it?
+- **Giải thích (VI):** default and rename in destructuring là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
+- **Giải thích (EN):** default and rename in destructuring is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
+- **Ví dụ (JavaScript):**
+```javascript
+const user = { profile: { name: 'Buu' }, age: 20 };
+const { profile: { name }, age = 18 } = user;
+console.log(name, age);
+```
+- **Related / Liên quan:** Xem thêm: [Scope](./02-scope-hoisting-comprehensive.md)
+### 🟡 [Mid] Q08: Common pitfalls of default and rename in destructuring in production systems?
+
+- **Tổng Quan:** Common pitfalls of default and rename in destructuring in production systems?
+- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
+- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
+- **Ví dụ (JavaScript):**
+```javascript
+const user = { profile: { name: 'Buu' }, age: 20 };
+const { profile: { name }, age = 18 } = user;
+console.log(name, age);
+```
+- **Related / Liên quan:** Xem thêm: [Scope](./02-scope-hoisting-comprehensive.md)
+### 🔴 [Senior] Q09: How do you design a robust architecture around default and rename in destructuring?
+
+- **Tổng Quan:** How do you design a robust architecture around default and rename in destructuring?
+- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
+- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
+- **Ví dụ (JavaScript):**
+```javascript
+const user = { profile: { name: 'Buu' }, age: 20 };
+const { profile: { name }, age = 18 } = user;
+console.log(name, age);
+```
+- **Related / Liên quan:** Xem thêm: [Scope](./02-scope-hoisting-comprehensive.md)
+## Spread and Rest
+
+- **Tổng Quan:** Spread/rest đơn giản hoá thao tác danh sách và đối số.
+- **Giải thích:** Dùng đúng giúp immutable update rõ ràng; dùng sai gây copy tốn bộ nhớ.
+- **Ví dụ:** Các câu hỏi bên dưới dùng JavaScript thuần để mô tả cơ chế cốt lõi.
+
+### 🟢 [Junior] Q10: What is spread for arrays/objects and when should you use it?
+
+- **Tổng Quan:** What is spread for arrays/objects and when should you use it?
+- **Giải thích (VI):** spread for arrays/objects là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
+- **Giải thích (EN):** spread for arrays/objects is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
+- **Ví dụ (JavaScript):**
+```javascript
+const a = [1, 2];
+const b = [...a, 3];
+function sum(...nums) {
+  return nums.reduce((s, n) => s + n, 0);
+}
+```
+- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
+### 🟡 [Mid] Q11: Common pitfalls of spread for arrays/objects in production systems?
+
+- **Tổng Quan:** Common pitfalls of spread for arrays/objects in production systems?
+- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
+- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
+- **Ví dụ (JavaScript):**
+```javascript
+const a = [1, 2];
+const b = [...a, 3];
+function sum(...nums) {
+  return nums.reduce((s, n) => s + n, 0);
+}
+```
+- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
+### 🔴 [Senior] Q12: How do you design a robust architecture around spread for arrays/objects?
+
+- **Tổng Quan:** How do you design a robust architecture around spread for arrays/objects?
+- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
+- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
+- **Ví dụ (JavaScript):**
+```javascript
+const a = [1, 2];
+const b = [...a, 3];
+function sum(...nums) {
+  return nums.reduce((s, n) => s + n, 0);
+}
+```
+- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
+### 🟢 [Junior] Q13: What is rest parameters in APIs and when should you use it?
+
+- **Tổng Quan:** What is rest parameters in APIs and when should you use it?
+- **Giải thích (VI):** rest parameters in APIs là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
+- **Giải thích (EN):** rest parameters in APIs is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
+- **Ví dụ (JavaScript):**
+```javascript
+const a = [1, 2];
+const b = [...a, 3];
+function sum(...nums) {
+  return nums.reduce((s, n) => s + n, 0);
+}
+```
+- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
+### 🟡 [Mid] Q14: Common pitfalls of rest parameters in APIs in production systems?
+
+- **Tổng Quan:** Common pitfalls of rest parameters in APIs in production systems?
+- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
+- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
+- **Ví dụ (JavaScript):**
+```javascript
+const a = [1, 2];
+const b = [...a, 3];
+function sum(...nums) {
+  return nums.reduce((s, n) => s + n, 0);
+}
+```
+- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
+### 🔴 [Senior] Q15: How do you design a robust architecture around rest parameters in APIs?
+
+- **Tổng Quan:** How do you design a robust architecture around rest parameters in APIs?
+- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
+- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
+- **Ví dụ (JavaScript):**
+```javascript
+const a = [1, 2];
+const b = [...a, 3];
+function sum(...nums) {
+  return nums.reduce((s, n) => s + n, 0);
+}
+```
+- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
+### 🟢 [Junior] Q16: What is performance trade-off of shallow copy and when should you use it?
+
+- **Tổng Quan:** What is performance trade-off of shallow copy and when should you use it?
+- **Giải thích (VI):** performance trade-off of shallow copy là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
+- **Giải thích (EN):** performance trade-off of shallow copy is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
+- **Ví dụ (JavaScript):**
+```javascript
+const a = [1, 2];
+const b = [...a, 3];
+function sum(...nums) {
+  return nums.reduce((s, n) => s + n, 0);
+}
+```
+- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
+### 🟡 [Mid] Q17: Common pitfalls of performance trade-off of shallow copy in production systems?
+
+- **Tổng Quan:** Common pitfalls of performance trade-off of shallow copy in production systems?
+- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
+- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
+- **Ví dụ (JavaScript):**
+```javascript
+const a = [1, 2];
+const b = [...a, 3];
+function sum(...nums) {
+  return nums.reduce((s, n) => s + n, 0);
+}
+```
+- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
+### 🔴 [Senior] Q18: How do you design a robust architecture around performance trade-off of shallow copy?
+
+- **Tổng Quan:** How do you design a robust architecture around performance trade-off of shallow copy?
+- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
+- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
+- **Ví dụ (JavaScript):**
+```javascript
+const a = [1, 2];
+const b = [...a, 3];
+function sum(...nums) {
+  return nums.reduce((s, n) => s + n, 0);
+}
+```
+- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
+## Template Literals and Tagged Templates
+
+- **Tổng Quan:** Template literals tăng khả năng biểu đạt string động.
+- **Giải thích:** Tagged templates cho phép parse/sanitize/custom formatting.
+- **Ví dụ:** Các câu hỏi bên dưới dùng JavaScript thuần để mô tả cơ chế cốt lõi.
+
+### 🟢 [Junior] Q19: What is template literals basics and when should you use it?
+
+- **Tổng Quan:** What is template literals basics and when should you use it?
+- **Giải thích (VI):** template literals basics là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
+- **Giải thích (EN):** template literals basics is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
+- **Ví dụ (JavaScript):**
+```javascript
+const lang = 'VI';\nconst msg = `Mode: ${lang}`;\nconsole.log(msg);
+```
+- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
+### 🟡 [Mid] Q20: Common pitfalls of template literals basics in production systems?
+
+- **Tổng Quan:** Common pitfalls of template literals basics in production systems?
+- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
+- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
+- **Ví dụ (JavaScript):**
+```javascript
+const lang = 'VI';\nconst msg = `Mode: ${lang}`;\nconsole.log(msg);
+```
+- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
+### 🔴 [Senior] Q21: How do you design a robust architecture around template literals basics?
+
+- **Tổng Quan:** How do you design a robust architecture around template literals basics?
+- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
+- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
+- **Ví dụ (JavaScript):**
+```javascript
+const lang = 'VI';\nconst msg = `Mode: ${lang}`;\nconsole.log(msg);
+```
+- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
+### 🟢 [Junior] Q22: What is multiline and interpolation and when should you use it?
+
+- **Tổng Quan:** What is multiline and interpolation and when should you use it?
+- **Giải thích (VI):** multiline and interpolation là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
+- **Giải thích (EN):** multiline and interpolation is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
+- **Ví dụ (JavaScript):**
+```javascript
+const lang = 'VI';\nconst msg = `Mode: ${lang}`;\nconsole.log(msg);
+```
+- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
+### 🟡 [Mid] Q23: Common pitfalls of multiline and interpolation in production systems?
+
+- **Tổng Quan:** Common pitfalls of multiline and interpolation in production systems?
+- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
+- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
+- **Ví dụ (JavaScript):**
+```javascript
+const lang = 'VI';\nconst msg = `Mode: ${lang}`;\nconsole.log(msg);
+```
+- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
+### 🔴 [Senior] Q24: How do you design a robust architecture around multiline and interpolation?
+
+- **Tổng Quan:** How do you design a robust architecture around multiline and interpolation?
+- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
+- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
+- **Ví dụ (JavaScript):**
+```javascript
+const lang = 'VI';\nconst msg = `Mode: ${lang}`;\nconsole.log(msg);
+```
+- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
+### 🟢 [Junior] Q25: What is tagged templates use cases and when should you use it?
+
+- **Tổng Quan:** What is tagged templates use cases and when should you use it?
+- **Giải thích (VI):** tagged templates use cases là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
+- **Giải thích (EN):** tagged templates use cases is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
+- **Ví dụ (JavaScript):**
+```javascript
+function safe(parts, ...vals) {\n  return parts.reduce((acc, p, i) => acc + p + (vals[i] ?? ''), '');\n}\nconsole.log(safe`Hello ${'<script>'}`);
+```
+- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
+### 🟡 [Mid] Q26: Common pitfalls of tagged templates use cases in production systems?
+
+- **Tổng Quan:** Common pitfalls of tagged templates use cases in production systems?
+- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
+- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
+- **Ví dụ (JavaScript):**
+```javascript
+function safe(parts, ...vals) {\n  return parts.reduce((acc, p, i) => acc + p + (vals[i] ?? ''), '');\n}\nconsole.log(safe`Hello ${'<script>'}`);
+```
+- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
+### 🔴 [Senior] Q27: How do you design a robust architecture around tagged templates use cases?
+
+- **Tổng Quan:** How do you design a robust architecture around tagged templates use cases?
+- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
+- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
+- **Ví dụ (JavaScript):**
+```javascript
+function safe(parts, ...vals) {\n  return parts.reduce((acc, p, i) => acc + p + (vals[i] ?? ''), '');\n}\nconsole.log(safe`Hello ${'<script>'}`);
+```
+- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
+## Symbols and Well-known Symbols
+
+- **Tổng Quan:** Symbol tạo key duy nhất, tránh collision trong object.
+- **Giải thích:** Well-known symbols can thiệp hành vi ngôn ngữ ở mức protocol.
+- **Ví dụ:** Các câu hỏi bên dưới dùng JavaScript thuần để mô tả cơ chế cốt lõi.
+
+### 🟢 [Junior] Q28: What is Symbol basics and when should you use it?
+
+- **Tổng Quan:** What is Symbol basics and when should you use it?
+- **Giải thích (VI):** Symbol basics là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
+- **Giải thích (EN):** Symbol basics is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
+- **Ví dụ (JavaScript):**
+```javascript
+const id = Symbol('id');
+const user = { [id]: 123, name: 'Buu' };
+console.log(Object.keys(user)); // ['name']
+```
+- **Related / Liên quan:** Xem thêm: [Prototypes](./10-prototypes-inheritance-deep.md)
+### 🟡 [Mid] Q29: Common pitfalls of Symbol basics in production systems?
+
+- **Tổng Quan:** Common pitfalls of Symbol basics in production systems?
+- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
+- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
+- **Ví dụ (JavaScript):**
+```javascript
+const id = Symbol('id');
+const user = { [id]: 123, name: 'Buu' };
+console.log(Object.keys(user)); // ['name']
+```
+- **Related / Liên quan:** Xem thêm: [Prototypes](./10-prototypes-inheritance-deep.md)
+### 🔴 [Senior] Q30: How do you design a robust architecture around Symbol basics?
+
+- **Tổng Quan:** How do you design a robust architecture around Symbol basics?
+- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
+- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
+- **Ví dụ (JavaScript):**
+```javascript
+const id = Symbol('id');
+const user = { [id]: 123, name: 'Buu' };
+console.log(Object.keys(user)); // ['name']
+```
+- **Related / Liên quan:** Xem thêm: [Prototypes](./10-prototypes-inheritance-deep.md)
+### 🟢 [Junior] Q31: What is well-known symbols and when should you use it?
+
+- **Tổng Quan:** What is well-known symbols and when should you use it?
+- **Giải thích (VI):** well-known symbols là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
+- **Giải thích (EN):** well-known symbols is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
+- **Ví dụ (JavaScript):**
+```javascript
+class Even {
+  static [Symbol.hasInstance](value) {
+    return Number.isInteger(value) && value % 2 === 0;
+  }
+}
+console.log(2 instanceof Even);
+```
+- **Related / Liên quan:** Xem thêm: [Prototypes](./10-prototypes-inheritance-deep.md)
+### 🟡 [Mid] Q32: Common pitfalls of well-known symbols in production systems?
+
+- **Tổng Quan:** Common pitfalls of well-known symbols in production systems?
+- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
+- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
+- **Ví dụ (JavaScript):**
+```javascript
+class Even {
+  static [Symbol.hasInstance](value) {
+    return Number.isInteger(value) && value % 2 === 0;
+  }
+}
+console.log(2 instanceof Even);
+```
+- **Related / Liên quan:** Xem thêm: [Prototypes](./10-prototypes-inheritance-deep.md)
+### 🔴 [Senior] Q33: How do you design a robust architecture around well-known symbols?
+
+- **Tổng Quan:** How do you design a robust architecture around well-known symbols?
+- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
+- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
+- **Ví dụ (JavaScript):**
+```javascript
+class Even {
+  static [Symbol.hasInstance](value) {
+    return Number.isInteger(value) && value % 2 === 0;
+  }
+}
+console.log(2 instanceof Even);
+```
+- **Related / Liên quan:** Xem thêm: [Prototypes](./10-prototypes-inheritance-deep.md)
+### 🟢 [Junior] Q34: What is designing symbol-based extension points and when should you use it?
+
+- **Tổng Quan:** What is designing symbol-based extension points and when should you use it?
+- **Giải thích (VI):** designing symbol-based extension points là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
+- **Giải thích (EN):** designing symbol-based extension points is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
+- **Ví dụ (JavaScript):**
+```javascript
+const id = Symbol('id');
+const user = { [id]: 123, name: 'Buu' };
+console.log(Object.keys(user)); // ['name']
+```
+- **Related / Liên quan:** Xem thêm: [Prototypes](./10-prototypes-inheritance-deep.md)
+### 🟡 [Mid] Q35: Common pitfalls of designing symbol-based extension points in production systems?
+
+- **Tổng Quan:** Common pitfalls of designing symbol-based extension points in production systems?
+- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
+- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
+- **Ví dụ (JavaScript):**
+```javascript
+const id = Symbol('id');
+const user = { [id]: 123, name: 'Buu' };
+console.log(Object.keys(user)); // ['name']
+```
+- **Related / Liên quan:** Xem thêm: [Prototypes](./10-prototypes-inheritance-deep.md)
+### 🔴 [Senior] Q36: How do you design a robust architecture around designing symbol-based extension points?
+
+- **Tổng Quan:** How do you design a robust architecture around designing symbol-based extension points?
+- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
+- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
+- **Ví dụ (JavaScript):**
+```javascript
+const id = Symbol('id');
+const user = { [id]: 123, name: 'Buu' };
+console.log(Object.keys(user)); // ['name']
+```
+- **Related / Liên quan:** Xem thêm: [Prototypes](./10-prototypes-inheritance-deep.md)
+## Iteration and Collection Types
+
+- **Tổng Quan:** Iterator/generator + Map/Set/WeakMap/WeakSet là nền tảng cấu trúc dữ liệu hiện đại.
+- **Giải thích:** Chọn đúng collection giúp code rõ nghĩa và tối ưu runtime.
+- **Ví dụ:** Các câu hỏi bên dưới dùng JavaScript thuần để mô tả cơ chế cốt lõi.
+
+### 🟢 [Junior] Q37: What is iterators and generators and when should you use it?
+
+- **Tổng Quan:** What is iterators and generators and when should you use it?
+- **Giải thích (VI):** iterators and generators là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
+- **Giải thích (EN):** iterators and generators is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
+- **Ví dụ (JavaScript):**
+```javascript
+function* idGenerator() {
+  let id = 1;
+  while (true) {
+    yield id++;
+  }
+}
+const gen = idGenerator();
+console.log(gen.next().value);
+```
+- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
+### 🟡 [Mid] Q38: Common pitfalls of iterators and generators in production systems?
+
+- **Tổng Quan:** Common pitfalls of iterators and generators in production systems?
+- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
+- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
+- **Ví dụ (JavaScript):**
+```javascript
+function* idGenerator() {
+  let id = 1;
+  while (true) {
+    yield id++;
+  }
+}
+const gen = idGenerator();
+console.log(gen.next().value);
+```
+- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
+### 🔴 [Senior] Q39: How do you design a robust architecture around iterators and generators?
+
+- **Tổng Quan:** How do you design a robust architecture around iterators and generators?
+- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
+- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
+- **Ví dụ (JavaScript):**
+```javascript
+function* idGenerator() {
+  let id = 1;
+  while (true) {
+    yield id++;
+  }
+}
+const gen = idGenerator();
+console.log(gen.next().value);
+```
+- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
+### 🟢 [Junior] Q40: What is Map and Set and when should you use it?
+
+- **Tổng Quan:** What is Map and Set and when should you use it?
+- **Giải thích (VI):** Map and Set là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
+- **Giải thích (EN):** Map and Set is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
+- **Ví dụ (JavaScript):**
+```javascript
+const map = new Map();
+map.set('k', 1);
+const set = new Set([1, 1, 2]);
+console.log(set.size);
+```
+- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
+### 🟡 [Mid] Q41: Common pitfalls of Map and Set in production systems?
+
+- **Tổng Quan:** Common pitfalls of Map and Set in production systems?
+- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
+- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
+- **Ví dụ (JavaScript):**
+```javascript
+const map = new Map();
+map.set('k', 1);
+const set = new Set([1, 1, 2]);
+console.log(set.size);
+```
+- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
+### 🔴 [Senior] Q42: How do you design a robust architecture around Map and Set?
+
+- **Tổng Quan:** How do you design a robust architecture around Map and Set?
+- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
+- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
+- **Ví dụ (JavaScript):**
+```javascript
+const map = new Map();
+map.set('k', 1);
+const set = new Set([1, 1, 2]);
+console.log(set.size);
+```
+- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
+### 🟢 [Junior] Q43: What is WeakMap and WeakSet memory model and when should you use it?
+
+- **Tổng Quan:** What is WeakMap and WeakSet memory model and when should you use it?
+- **Giải thích (VI):** WeakMap and WeakSet memory model là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
+- **Giải thích (EN):** WeakMap and WeakSet memory model is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
+- **Ví dụ (JavaScript):**
+```javascript
+const wm = new WeakMap();
+let obj = {};
+wm.set(obj, { meta: true });
+obj = null; // có thể được GC
+```
+- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
+### 🟡 [Mid] Q44: Common pitfalls of WeakMap and WeakSet memory model in production systems?
+
+- **Tổng Quan:** Common pitfalls of WeakMap and WeakSet memory model in production systems?
+- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
+- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
+- **Ví dụ (JavaScript):**
+```javascript
+const wm = new WeakMap();
+let obj = {};
+wm.set(obj, { meta: true });
+obj = null; // có thể được GC
+```
+- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
+### 🔴 [Senior] Q45: How do you design a robust architecture around WeakMap and WeakSet memory model?
+
+- **Tổng Quan:** How do you design a robust architecture around WeakMap and WeakSet memory model?
+- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
+- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
+- **Ví dụ (JavaScript):**
+```javascript
+const wm = new WeakMap();
+let obj = {};
+wm.set(obj, { meta: true });
+obj = null; // có thể được GC
+```
+- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
+## Proxy, Reflect, and Modern Operators
+
+- **Tổng Quan:** Proxy/Reflect hỗ trợ meta-programming; operator mới giúp expression an toàn hơn.
+- **Giải thích:** optional chaining, nullish coalescing, logical assignment giảm boilerplate.
+- **Ví dụ:** Các câu hỏi bên dưới dùng JavaScript thuần để mô tả cơ chế cốt lõi.
+
+### 🟢 [Junior] Q46: What is Proxy fundamentals and when should you use it?
+
+- **Tổng Quan:** What is Proxy fundamentals and when should you use it?
+- **Giải thích (VI):** Proxy fundamentals là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
+- **Giải thích (EN):** Proxy fundamentals is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
+- **Ví dụ (JavaScript):**
+```javascript
+const target = { x: 1 };
+const proxy = new Proxy(target, {
+  get(t, p, r) {
+    return Reflect.get(t, p, r);
+  }
+});
+```
+- **Related / Liên quan:** Xem thêm: [Prototypes](./10-prototypes-inheritance-deep.md)
+### 🟡 [Mid] Q47: Common pitfalls of Proxy fundamentals in production systems?
+
+- **Tổng Quan:** Common pitfalls of Proxy fundamentals in production systems?
+- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
+- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
+- **Ví dụ (JavaScript):**
+```javascript
+const target = { x: 1 };
+const proxy = new Proxy(target, {
+  get(t, p, r) {
+    return Reflect.get(t, p, r);
+  }
+});
+```
+- **Related / Liên quan:** Xem thêm: [Prototypes](./10-prototypes-inheritance-deep.md)
+### 🔴 [Senior] Q48: How do you design a robust architecture around Proxy fundamentals?
+
+- **Tổng Quan:** How do you design a robust architecture around Proxy fundamentals?
+- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
+- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
+- **Ví dụ (JavaScript):**
+```javascript
+const target = { x: 1 };
+const proxy = new Proxy(target, {
+  get(t, p, r) {
+    return Reflect.get(t, p, r);
+  }
+});
+```
+- **Related / Liên quan:** Xem thêm: [Prototypes](./10-prototypes-inheritance-deep.md)
+### 🟢 [Junior] Q49: What is Reflect as default behavior mirror and when should you use it?
+
+- **Tổng Quan:** What is Reflect as default behavior mirror and when should you use it?
+- **Giải thích (VI):** Reflect as default behavior mirror là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
+- **Giải thích (EN):** Reflect as default behavior mirror is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
+- **Ví dụ (JavaScript):**
+```javascript
+const target = { x: 1 };
+const proxy = new Proxy(target, {
+  get(t, p, r) {
+    return Reflect.get(t, p, r);
+  }
+});
+```
+- **Related / Liên quan:** Xem thêm: [Prototypes](./10-prototypes-inheritance-deep.md)
+### 🟡 [Mid] Q50: Common pitfalls of Reflect as default behavior mirror in production systems?
+
+- **Tổng Quan:** Common pitfalls of Reflect as default behavior mirror in production systems?
+- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
+- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
+- **Ví dụ (JavaScript):**
+```javascript
+const target = { x: 1 };
+const proxy = new Proxy(target, {
+  get(t, p, r) {
+    return Reflect.get(t, p, r);
+  }
+});
+```
+- **Related / Liên quan:** Xem thêm: [Prototypes](./10-prototypes-inheritance-deep.md)
+### 🔴 [Senior] Q51: How do you design a robust architecture around Reflect as default behavior mirror?
+
+- **Tổng Quan:** How do you design a robust architecture around Reflect as default behavior mirror?
+- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
+- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
+- **Ví dụ (JavaScript):**
+```javascript
+const target = { x: 1 };
+const proxy = new Proxy(target, {
+  get(t, p, r) {
+    return Reflect.get(t, p, r);
+  }
+});
+```
+- **Related / Liên quan:** Xem thêm: [Prototypes](./10-prototypes-inheritance-deep.md)
+### 🟢 [Junior] Q52: What is optional chaining and nullish coalescing and when should you use it?
+
+- **Tổng Quan:** What is optional chaining and nullish coalescing and when should you use it?
+- **Giải thích (VI):** optional chaining and nullish coalescing là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
+- **Giải thích (EN):** optional chaining and nullish coalescing is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
+- **Ví dụ (JavaScript):**
+```javascript
+const city = user?.address?.city ?? 'HCM';
+config.timeout ||= 5000;
+```
+- **Related / Liên quan:** Xem thêm: [Prototypes](./10-prototypes-inheritance-deep.md)
+### 🟡 [Mid] Q53: Common pitfalls of optional chaining and nullish coalescing in production systems?
+
+- **Tổng Quan:** Common pitfalls of optional chaining and nullish coalescing in production systems?
+- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
+- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
+- **Ví dụ (JavaScript):**
+```javascript
+const city = user?.address?.city ?? 'HCM';
+config.timeout ||= 5000;
+```
+- **Related / Liên quan:** Xem thêm: [Prototypes](./10-prototypes-inheritance-deep.md)
+### 🔴 [Senior] Q54: How do you design a robust architecture around optional chaining and nullish coalescing?
+
+- **Tổng Quan:** How do you design a robust architecture around optional chaining and nullish coalescing?
+- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
+- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
+- **Ví dụ (JavaScript):**
+```javascript
+const city = user?.address?.city ?? 'HCM';
+config.timeout ||= 5000;
+```
+- **Related / Liên quan:** Xem thêm: [Prototypes](./10-prototypes-inheritance-deep.md)
+### 🟢 [Junior] Q55: What is logical assignment operators and when should you use it?
+
+- **Tổng Quan:** What is logical assignment operators and when should you use it?
+- **Giải thích (VI):** logical assignment operators là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
+- **Giải thích (EN):** logical assignment operators is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
+- **Ví dụ (JavaScript):**
+```javascript
+const city = user?.address?.city ?? 'HCM';
+config.timeout ||= 5000;
+```
+- **Related / Liên quan:** Xem thêm: [Prototypes](./10-prototypes-inheritance-deep.md)
+### 🟡 [Mid] Q56: Common pitfalls of logical assignment operators in production systems?
+
+- **Tổng Quan:** Common pitfalls of logical assignment operators in production systems?
+- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
+- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
+- **Ví dụ (JavaScript):**
+```javascript
+const city = user?.address?.city ?? 'HCM';
+config.timeout ||= 5000;
+```
+- **Related / Liên quan:** Xem thêm: [Prototypes](./10-prototypes-inheritance-deep.md)
+### 🔴 [Senior] Q57: How do you design a robust architecture around logical assignment operators?
+
+- **Tổng Quan:** How do you design a robust architecture around logical assignment operators?
+- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
+- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
+- **Ví dụ (JavaScript):**
+```javascript
+const city = user?.address?.city ?? 'HCM';
+config.timeout ||= 5000;
+```
+- **Related / Liên quan:** Xem thêm: [Prototypes](./10-prototypes-inheritance-deep.md)
+## Top-level await and Proposals
+
+- **Tổng Quan:** Top-level await thay đổi cách module khởi tạo async.
+- **Giải thích:** Pattern matching proposal thể hiện hướng tiến hoá của JS trong tương lai.
+- **Ví dụ:** Các câu hỏi bên dưới dùng JavaScript thuần để mô tả cơ chế cốt lõi.
+
+### 🟢 [Junior] Q58: What is top-level await and when should you use it?
+
+- **Tổng Quan:** What is top-level await and when should you use it?
+- **Giải thích (VI):** top-level await là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
+- **Giải thích (EN):** top-level await is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
+- **Ví dụ (JavaScript):**
+```javascript
+// data.mjs
+const res = await fetch('https://example.com/data.json');
+export const data = await res.json();
+```
+- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
+### 🟡 [Mid] Q59: Common pitfalls of top-level await in production systems?
+
+- **Tổng Quan:** Common pitfalls of top-level await in production systems?
+- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
+- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
+- **Ví dụ (JavaScript):**
+```javascript
+// data.mjs
+const res = await fetch('https://example.com/data.json');
+export const data = await res.json();
+```
+- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
+### 🔴 [Senior] Q60: How do you design a robust architecture around top-level await?
+
+- **Tổng Quan:** How do you design a robust architecture around top-level await?
+- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
+- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
+- **Ví dụ (JavaScript):**
+```javascript
+// data.mjs
+const res = await fetch('https://example.com/data.json');
+export const data = await res.json();
+```
+- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
+### 🟢 [Junior] Q61: What is module graph blocking considerations and when should you use it?
+
+- **Tổng Quan:** What is module graph blocking considerations and when should you use it?
+- **Giải thích (VI):** module graph blocking considerations là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
+- **Giải thích (EN):** module graph blocking considerations is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
+- **Ví dụ (JavaScript):**
+```javascript
+// data.mjs
+const res = await fetch('https://example.com/data.json');
+export const data = await res.json();
+```
+- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
+### 🟡 [Mid] Q62: Common pitfalls of module graph blocking considerations in production systems?
+
+- **Tổng Quan:** Common pitfalls of module graph blocking considerations in production systems?
+- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
+- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
+- **Ví dụ (JavaScript):**
+```javascript
+// data.mjs
+const res = await fetch('https://example.com/data.json');
+export const data = await res.json();
+```
+- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
+### 🔴 [Senior] Q63: How do you design a robust architecture around module graph blocking considerations?
+
+- **Tổng Quan:** How do you design a robust architecture around module graph blocking considerations?
+- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
+- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
+- **Ví dụ (JavaScript):**
+```javascript
+// data.mjs
+const res = await fetch('https://example.com/data.json');
+export const data = await res.json();
+```
+- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
+### 🟢 [Junior] Q64: What is pattern matching proposal and when should you use it?
+
+- **Tổng Quan:** What is pattern matching proposal and when should you use it?
+- **Giải thích (VI):** pattern matching proposal là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
+- **Giải thích (EN):** pattern matching proposal is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
+- **Ví dụ (JavaScript):**
+```javascript
+// Proposal idea (pseudo)
+// match (value) {
+//   when ({ type: 'ok', data }) => data
+//   when ({ type: 'err', error }) => throw error
+// }
+```
+- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
+### 🟡 [Mid] Q65: Common pitfalls of pattern matching proposal in production systems?
+
+- **Tổng Quan:** Common pitfalls of pattern matching proposal in production systems?
+- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
+- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
+- **Ví dụ (JavaScript):**
+```javascript
+// Proposal idea (pseudo)
+// match (value) {
+//   when ({ type: 'ok', data }) => data
+//   when ({ type: 'err', error }) => throw error
+// }
+```
+- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
+### 🔴 [Senior] Q66: How do you design a robust architecture around pattern matching proposal?
+
+- **Tổng Quan:** How do you design a robust architecture around pattern matching proposal?
+- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
+- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
+- **Ví dụ (JavaScript):**
+```javascript
+// Proposal idea (pseudo)
+// match (value) {
+//   when ({ type: 'ok', data }) => data
+//   when ({ type: 'err', error }) => throw error
+// }
+```
+- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
+## Câu Hỏi Phỏng Vấn / Interview Q&A
+
+### 🟢 [Junior] Q67: What is destructuring interview traps and when should you use it?
+
+- **Tổng Quan:** What is destructuring interview traps and when should you use it?
+- **Giải thích (VI):** destructuring interview traps là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
+- **Giải thích (EN):** destructuring interview traps is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
+- **Ví dụ (JavaScript):**
+```javascript
+const user = { profile: { name: 'Buu' }, age: 20 };
+const { profile: { name }, age = 18 } = user;
+console.log(name, age);
+```
+- **Related / Liên quan:** Liên quan: [Scope](./02-scope-hoisting-comprehensive.md)
+### 🟡 [Mid] Q68: Common pitfalls of destructuring interview traps in production systems?
+
+- **Tổng Quan:** Common pitfalls of destructuring interview traps in production systems?
+- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
+- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
+- **Ví dụ (JavaScript):**
+```javascript
+const user = { profile: { name: 'Buu' }, age: 20 };
+const { profile: { name }, age = 18 } = user;
+console.log(name, age);
+```
+- **Related / Liên quan:** Liên quan: [Scope](./02-scope-hoisting-comprehensive.md)
+### 🔴 [Senior] Q69: How do you design a robust architecture around destructuring interview traps?
+
+- **Tổng Quan:** How do you design a robust architecture around destructuring interview traps?
+- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
+- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
+- **Ví dụ (JavaScript):**
+```javascript
+const user = { profile: { name: 'Buu' }, age: 20 };
+const { profile: { name }, age = 18 } = user;
+console.log(name, age);
+```
+- **Related / Liên quan:** Liên quan: [Scope](./02-scope-hoisting-comprehensive.md)
+### 🟢 [Junior] Q70: What is spread/rest API design choices and when should you use it?
+
+- **Tổng Quan:** What is spread/rest API design choices and when should you use it?
+- **Giải thích (VI):** spread/rest API design choices là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
+- **Giải thích (EN):** spread/rest API design choices is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
+- **Ví dụ (JavaScript):**
+```javascript
+const a = [1, 2];
+const b = [...a, 3];
+function sum(...nums) {
+  return nums.reduce((s, n) => s + n, 0);
+}
+```
+- **Related / Liên quan:** Liên quan: [Closures](./03-closures-comprehensive.md)
+### 🟡 [Mid] Q71: Common pitfalls of spread/rest API design choices in production systems?
+
+- **Tổng Quan:** Common pitfalls of spread/rest API design choices in production systems?
+- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
+- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
+- **Ví dụ (JavaScript):**
+```javascript
+const a = [1, 2];
+const b = [...a, 3];
+function sum(...nums) {
+  return nums.reduce((s, n) => s + n, 0);
+}
+```
+- **Related / Liên quan:** Liên quan: [Closures](./03-closures-comprehensive.md)
+### 🔴 [Senior] Q72: How do you design a robust architecture around spread/rest API design choices?
+
+- **Tổng Quan:** How do you design a robust architecture around spread/rest API design choices?
+- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
+- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
+- **Ví dụ (JavaScript):**
+```javascript
+const a = [1, 2];
+const b = [...a, 3];
+function sum(...nums) {
+  return nums.reduce((s, n) => s + n, 0);
+}
+```
+- **Related / Liên quan:** Liên quan: [Closures](./03-closures-comprehensive.md)
+### 🟢 [Junior] Q73: What is secure tagged template usage and when should you use it?
+
+- **Tổng Quan:** What is secure tagged template usage and when should you use it?
+- **Giải thích (VI):** secure tagged template usage là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
+- **Giải thích (EN):** secure tagged template usage is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
+- **Ví dụ (JavaScript):**
+```javascript
+function safe(parts, ...vals) {\n  return parts.reduce((acc, p, i) => acc + p + (vals[i] ?? ''), '');\n}\nconsole.log(safe`Hello ${'<script>'}`);
+```
+- **Related / Liên quan:** Liên quan: [Async](./09-async-comprehensive.md)
+### 🟡 [Mid] Q74: Common pitfalls of secure tagged template usage in production systems?
+
+- **Tổng Quan:** Common pitfalls of secure tagged template usage in production systems?
+- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
+- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
+- **Ví dụ (JavaScript):**
+```javascript
+function safe(parts, ...vals) {\n  return parts.reduce((acc, p, i) => acc + p + (vals[i] ?? ''), '');\n}\nconsole.log(safe`Hello ${'<script>'}`);
+```
+- **Related / Liên quan:** Liên quan: [Async](./09-async-comprehensive.md)
+### 🔴 [Senior] Q75: How do you design a robust architecture around secure tagged template usage?
+
+- **Tổng Quan:** How do you design a robust architecture around secure tagged template usage?
+- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
+- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
+- **Ví dụ (JavaScript):**
+```javascript
+function safe(parts, ...vals) {\n  return parts.reduce((acc, p, i) => acc + p + (vals[i] ?? ''), '');\n}\nconsole.log(safe`Hello ${'<script>'}`);
+```
+- **Related / Liên quan:** Liên quan: [Async](./09-async-comprehensive.md)
+### 🟢 [Junior] Q76: What is symbol interoperability design and when should you use it?
+
+- **Tổng Quan:** What is symbol interoperability design and when should you use it?
+- **Giải thích (VI):** symbol interoperability design là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
+- **Giải thích (EN):** symbol interoperability design is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
+- **Ví dụ (JavaScript):**
+```javascript
+const id = Symbol('id');
+const user = { [id]: 123, name: 'Buu' };
+console.log(Object.keys(user)); // ['name']
+```
+- **Related / Liên quan:** Liên quan: [Prototypes](./10-prototypes-inheritance-deep.md)
+### 🟡 [Mid] Q77: Common pitfalls of symbol interoperability design in production systems?
+
+- **Tổng Quan:** Common pitfalls of symbol interoperability design in production systems?
+- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
+- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
+- **Ví dụ (JavaScript):**
+```javascript
+const id = Symbol('id');
+const user = { [id]: 123, name: 'Buu' };
+console.log(Object.keys(user)); // ['name']
+```
+- **Related / Liên quan:** Liên quan: [Prototypes](./10-prototypes-inheritance-deep.md)
+### 🔴 [Senior] Q78: How do you design a robust architecture around symbol interoperability design?
+
+- **Tổng Quan:** How do you design a robust architecture around symbol interoperability design?
+- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
+- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
+- **Ví dụ (JavaScript):**
+```javascript
+const id = Symbol('id');
+const user = { [id]: 123, name: 'Buu' };
+console.log(Object.keys(user)); // ['name']
+```
+- **Related / Liên quan:** Liên quan: [Prototypes](./10-prototypes-inheritance-deep.md)
+### 🟢 [Junior] Q79: What is map vs object decision matrix and when should you use it?
+
+- **Tổng Quan:** What is map vs object decision matrix and when should you use it?
+- **Giải thích (VI):** map vs object decision matrix là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
+- **Giải thích (EN):** map vs object decision matrix is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
+- **Ví dụ (JavaScript):**
+```javascript
+const map = new Map();
+map.set('k', 1);
+const set = new Set([1, 1, 2]);
+console.log(set.size);
+```
+- **Related / Liên quan:** Liên quan: [Prototypes](./10-prototypes-inheritance-deep.md)
+### 🟡 [Mid] Q80: Common pitfalls of map vs object decision matrix in production systems?
+
+- **Tổng Quan:** Common pitfalls of map vs object decision matrix in production systems?
+- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
+- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
+- **Ví dụ (JavaScript):**
+```javascript
+const map = new Map();
+map.set('k', 1);
+const set = new Set([1, 1, 2]);
+console.log(set.size);
+```
+- **Related / Liên quan:** Liên quan: [Prototypes](./10-prototypes-inheritance-deep.md)
+### 🔴 [Senior] Q81: How do you design a robust architecture around map vs object decision matrix?
+
+- **Tổng Quan:** How do you design a robust architecture around map vs object decision matrix?
+- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
+- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
+- **Ví dụ (JavaScript):**
+```javascript
+const map = new Map();
+map.set('k', 1);
+const set = new Set([1, 1, 2]);
+console.log(set.size);
+```
+- **Related / Liên quan:** Liên quan: [Prototypes](./10-prototypes-inheritance-deep.md)
+### 🟢 [Junior] Q82: What is proxy debugging strategies and when should you use it?
+
+- **Tổng Quan:** What is proxy debugging strategies and when should you use it?
+- **Giải thích (VI):** proxy debugging strategies là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
+- **Giải thích (EN):** proxy debugging strategies is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
+- **Ví dụ (JavaScript):**
+```javascript
+const target = { x: 1 };
+const proxy = new Proxy(target, {
+  get(t, p, r) {
+    return Reflect.get(t, p, r);
+  }
+});
+```
+- **Related / Liên quan:** Liên quan: [Scope](./02-scope-hoisting-comprehensive.md)
+### 🟡 [Mid] Q83: Common pitfalls of proxy debugging strategies in production systems?
+
+- **Tổng Quan:** Common pitfalls of proxy debugging strategies in production systems?
+- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
+- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
+- **Ví dụ (JavaScript):**
+```javascript
+const target = { x: 1 };
+const proxy = new Proxy(target, {
+  get(t, p, r) {
+    return Reflect.get(t, p, r);
+  }
+});
+```
+- **Related / Liên quan:** Liên quan: [Scope](./02-scope-hoisting-comprehensive.md)
+### 🔴 [Senior] Q84: How do you design a robust architecture around proxy debugging strategies?
+
+- **Tổng Quan:** How do you design a robust architecture around proxy debugging strategies?
+- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
+- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
+- **Ví dụ (JavaScript):**
+```javascript
+const target = { x: 1 };
+const proxy = new Proxy(target, {
+  get(t, p, r) {
+    return Reflect.get(t, p, r);
+  }
+});
+```
+- **Related / Liên quan:** Liên quan: [Scope](./02-scope-hoisting-comprehensive.md)
+### 🟢 [Junior] Q85: What is modern operators readability policy and when should you use it?
+
+- **Tổng Quan:** What is modern operators readability policy and when should you use it?
+- **Giải thích (VI):** modern operators readability policy là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
+- **Giải thích (EN):** modern operators readability policy is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
+- **Ví dụ (JavaScript):**
+```javascript
+const city = user?.address?.city ?? 'HCM';
+config.timeout ||= 5000;
+```
+- **Related / Liên quan:** Liên quan: [Closures](./03-closures-comprehensive.md)
+### 🟡 [Mid] Q86: Common pitfalls of modern operators readability policy in production systems?
+
+- **Tổng Quan:** Common pitfalls of modern operators readability policy in production systems?
+- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
+- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
+- **Ví dụ (JavaScript):**
+```javascript
+const city = user?.address?.city ?? 'HCM';
+config.timeout ||= 5000;
+```
+- **Related / Liên quan:** Liên quan: [Closures](./03-closures-comprehensive.md)
+### 🔴 [Senior] Q87: How do you design a robust architecture around modern operators readability policy?
+
+- **Tổng Quan:** How do you design a robust architecture around modern operators readability policy?
+- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
+- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
+- **Ví dụ (JavaScript):**
+```javascript
+const city = user?.address?.city ?? 'HCM';
+config.timeout ||= 5000;
+```
+- **Related / Liên quan:** Liên quan: [Closures](./03-closures-comprehensive.md)
+### 🟢 [Junior] Q88: What is top-level await in production bundling and when should you use it?
+
+- **Tổng Quan:** What is top-level await in production bundling and when should you use it?
+- **Giải thích (VI):** top-level await in production bundling là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
+- **Giải thích (EN):** top-level await in production bundling is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
+- **Ví dụ (JavaScript):**
+```javascript
+// data.mjs
+const res = await fetch('https://example.com/data.json');
+export const data = await res.json();
+```
+- **Related / Liên quan:** Liên quan: [Async](./09-async-comprehensive.md)
+### 🟡 [Mid] Q89: Common pitfalls of top-level await in production bundling in production systems?
+
+- **Tổng Quan:** Common pitfalls of top-level await in production bundling in production systems?
+- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
+- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
+- **Ví dụ (JavaScript):**
+```javascript
+// data.mjs
+const res = await fetch('https://example.com/data.json');
+export const data = await res.json();
+```
+- **Related / Liên quan:** Liên quan: [Async](./09-async-comprehensive.md)
+### 🔴 [Senior] Q90: How do you design a robust architecture around top-level await in production bundling?
+
+- **Tổng Quan:** How do you design a robust architecture around top-level await in production bundling?
+- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
+- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
+- **Ví dụ (JavaScript):**
+```javascript
+// data.mjs
+const res = await fetch('https://example.com/data.json');
+export const data = await res.json();
+```
+- **Related / Liên quan:** Liên quan: [Async](./09-async-comprehensive.md)

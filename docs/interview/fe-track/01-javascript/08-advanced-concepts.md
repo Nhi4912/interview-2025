@@ -494,9 +494,9 @@ console.log(memoizedAdd(5, 10)); // Returns cached / Trả về từ cache
 
 ---
 
-## Interview Questions / Câu Hỏi Phỏng Vấn
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-### Question 1: Implement a curry function
+### 🔴 [Senior] Question 1: Implement a curry function
 
 **English Answer:**
 ```javascript
@@ -516,7 +516,7 @@ console.log(curriedSum(1)(2)(3)); // 6
 console.log(curriedSum(1, 2)(3)); // 6
 ```
 
-### Question 2: Difference between debounce and throttle?
+### 🟡 [Mid] Question 2: Difference between debounce and throttle?
 
 **English Answer:**
 - **Debounce**: Delays execution until after quiet period
@@ -530,7 +530,7 @@ console.log(curriedSum(1, 2)(3)); // 6
 - **Throttle**: Giới hạn thực thi một lần mỗi khoảng thời gian
   - Dùng cho: Sự kiện scroll, di chuyển chuột
 
-### Question 3: What makes a function pure?
+### 🟢 [Junior] Question 3: What makes a function pure?
 
 **English Answer:**
 A pure function must:

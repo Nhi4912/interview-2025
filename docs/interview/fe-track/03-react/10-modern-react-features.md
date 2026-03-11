@@ -1016,7 +1016,7 @@ function Component({ ref, children }) {
 
 ## Interview Questions / Câu Hỏi Phỏng Vấn
 
-### Q1: Explain React 18 concurrent rendering
+### Q1: Explain React 18 concurrent rendering — 🟡 [Mid]
 
 **English Answer:**
 
@@ -1058,7 +1058,7 @@ function Component({ ref, children }) {
 
 Concurrent rendering cho phép React làm việc trên nhiều updates đồng thời. Key concepts: interruptibility, priority-based, time slicing. Features: automatic batching, transitions, deferred values, Suspense. Benefits: responsive UI, better performance.
 
-### Q2: What are React Server Components?
+### Q2: What are React Server Components? — 🔴 [Senior]
 
 **English Answer:**
 
@@ -1096,7 +1096,7 @@ Concurrent rendering cho phép React làm việc trên nhiều updates đồng t
 
 Server Components chạy trên server, zero client JS. Benefits: zero bundle size, direct backend access, automatic splitting, streaming. Limitations: no hooks, no browser APIs, no event handlers. Architecture: server (default), client ('use client'), shared.
 
-### Q3: Explain React Compiler
+### Q3: Explain React Compiler — 🟡 [Mid]
 
 **English Answer:**
 

@@ -877,9 +877,9 @@ class AsyncIteratorHelpers {
 
 ---
 
-## Interview Questions / Câu Hỏi Phỏng Vấn
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-### Q1: Explain the JavaScript event loop
+### 🟡 [Mid] Q1: Explain the JavaScript event loop
 
 **English Answer:**
 
@@ -912,7 +912,7 @@ console.log('4');
 
 Event loop quản lý thao tác bất đồng bộ. Thứ tự: sync code → microtasks → macrotask → microtasks → render.
 
-### Q2: What are Web Workers and when to use them?
+### 🟡 [Mid] Q2: What are Web Workers and when to use them?
 
 **English Answer:**
 
@@ -940,7 +940,7 @@ Event loop quản lý thao tác bất đồng bộ. Thứ tự: sync code → mi
 
 Web Workers chạy scripts trong luồng nền. Dùng cho tính toán nặng, xử lý ảnh/video, parsing dữ liệu, cryptography.
 
-### Q3: Explain SharedArrayBuffer and Atomics
+### 🔴 [Senior] Q3: Explain SharedArrayBuffer and Atomics
 
 **English Answer:**
 

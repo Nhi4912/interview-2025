@@ -1,736 +1,768 @@
-# Generics Deep Dive / Tìm Hiểu Sâu Generics
-## TypeScript - Chapter 3 / TypeScript - Chương 3
+# Generics Deep Dive / Tìm Hiểu Sâu về Generics
 
-[← Previous: Advanced Types](./02-advanced-types.md) | [Back to Table of Contents](../00-table-of-contents.md) | [Next: Type Inference →](./04-type-inference.md)
-
----
-
-## Overview / Tổng Quan
-
-**English:** Generics enable writing reusable, type-safe code that works with multiple types. Mastering generics is essential for senior TypeScript interviews and building scalable applications.
-
-**Tiếng Việt:** Generics cho phép viết code có thể tái sử dụng, an toàn kiểu hoạt động với nhiều kiểu. Thành thạo generics là cần thiết cho phỏng vấn TypeScript cấp cao và xây dựng ứng dụng có thể mở rộng.
+[← Previous: Advanced Types](./02-advanced-types.md) | [Next: TypeScript Comprehensive](./04-typescript-comprehensive.md)
 
 ---
 
-## Table of Contents / Mục Lục
+## Tổng Quan / Overview
 
-1. [Generic Functions / Hàm Generic](#generic-functions--hàm-generic)
-2. [Generic Interfaces / Interface Generic](#generic-interfaces--interface-generic)
-3. [Generic Classes / Lớp Generic](#generic-classes--lớp-generic)
-4. [Generic Constraints / Ràng Buộc Generic](#generic-constraints--ràng-buộc-generic)
-5. [Multiple Type Parameters / Nhiều Tham Số Kiểu](#multiple-type-parameters--nhiều-tham-số-kiểu)
-6. [Default Generic Types / Kiểu Generic Mặc Định](#default-generic-types--kiểu-generic-mặc-định)
-7. [Generic Utility Functions / Hàm Tiện Ích Generic](#generic-utility-functions--hàm-tiện-ích-generic)
-8. [Advanced Generic Patterns / Mẫu Generic Nâng Cao](#advanced-generic-patterns--mẫu-generic-nâng-cao)
-9. [Interview Questions / Câu Hỏi Phỏng Vấn](#interview-questions--câu-hỏi-phỏng-vấn)
+Generics let you write reusable, type-safe abstractions without sacrificing inference quality. This chapter covers generic functions/interfaces/classes, constraints, conditional generics, `infer`, mapped/template literal interactions, recursive types, and utility types.
 
----
+Bạn nên giải thích được cả mặt thiết kế API lẫn hiệu năng compile-time khi type-level logic quá phức tạp.
 
-## Generic Functions / Hàm Generic
+## Generic Functions
 
-### Basic Generic Functions / Hàm Generic Cơ Bản
+**Giải thích (VI):** Hàm generic tách phần logic chung khỏi kiểu dữ liệu cụ thể.
 
-**English:** Generic functions work with any type while maintaining type safety.
+**English note:** Explain both inferability and constraint intent when presenting this in interview.
 
-**Tiếng Việt:** Hàm generic hoạt động với bất kỳ kiểu nào trong khi duy trì an toàn kiểu.
-
-```typescript
-// Without generics / Không có generics
-function identityAny(arg: any): any {
-  return arg;
-}
-
-const result1 = identityAny('hello'); // Type: any (lost type info)
-const result2 = identityAny(42); // Type: any
-
-// With generics / Với generics
-function identity<T>(arg: T): T {
-  return arg;
-}
-
-const result3 = identity<string>('hello'); // Type: string
-const result4 = identity<number>(42); // Type: number
-const result5 = identity('auto'); // Type inferred as string / Kiểu được suy luận là string
-
-// Array operations / Thao tác mảng
-function firstElement<T>(arr: T[]): T | undefined {
-  return arr[0];
-}
-
-const first1 = firstElement([1, 2, 3]); // Type: number | undefined
-const first2 = firstElement(['a', 'b']); // Type: string | undefined
-
-// Multiple parameters / Nhiều tham số
-function map<T, U>(arr: T[], fn: (item: T) => U): U[] {
-  return arr.map(fn);
-}
-
-const numbers = [1, 2, 3];
-const strings = map(numbers, n => n.toString()); // Type: string[]
-const doubled = map(numbers, n => n * 2); // Type: number[]
+**Ví dụ (TypeScript):**
+```ts
+function identity<T>(v: T): T { return v; }
 ```
 
-### Generic Arrow Functions / Hàm Mũi Tên Generic
+## Generic Interfaces
 
-```typescript
-// Arrow function syntax / Cú pháp hàm mũi tên
-const identity = <T,>(arg: T): T => arg;
-// Note: Comma after T needed in .tsx files to avoid JSX ambiguity
-// Lưu ý: Dấu phẩy sau T cần thiết trong file .tsx để tránh nhầm lẫn JSX
+**Giải thích (VI):** Interface generic định nghĩa contract tái sử dụng theo type parameter.
 
-const filter = <T,>(arr: T[], predicate: (item: T) => boolean): T[] => {
-  return arr.filter(predicate);
-};
+**English note:** Explain both inferability and constraint intent when presenting this in interview.
 
-const numbers = [1, 2, 3, 4, 5];
-const evens = filter(numbers, n => n % 2 === 0); // [2, 4]
-
-// Generic callback / Callback generic
-const forEach = <T,>(arr: T[], callback: (item: T, index: number) => void): void => {
-  arr.forEach(callback);
-};
-
-forEach(['a', 'b', 'c'], (item, index) => {
-  console.log(`${index}: ${item}`);
-});
+**Ví dụ (TypeScript):**
+```ts
+interface ApiResponse<T> { data: T; ok: boolean }
 ```
 
----
+## Generic Classes
 
-## Generic Interfaces / Interface Generic
+**Giải thích (VI):** Class generic áp dụng khi object lưu trữ/biến đổi nhiều kiểu khác nhau.
 
-### Basic Generic Interfaces / Interface Generic Cơ Bản
+**English note:** Explain both inferability and constraint intent when presenting this in interview.
 
-```typescript
-// Generic interface / Interface generic
-interface Box<T> {
-  value: T;
-  getValue: () => T;
-  setValue: (value: T) => void;
-}
-
-const stringBox: Box<string> = {
-  value: 'hello',
-  getValue() {
-    return this.value;
-  },
-  setValue(value) {
-    this.value = value;
-  }
-};
-
-const numberBox: Box<number> = {
-  value: 42,
-  getValue() {
-    return this.value;
-  },
-  setValue(value) {
-    this.value = value;
-  }
-};
-
-// Generic response interface / Interface phản hồi generic
-interface ApiResponse<T> {
-  data: T;
-  status: number;
-  message: string;
-}
-
-interface User {
-  id: number;
-  name: string;
-  email: string;
-}
-
-const userResponse: ApiResponse<User> = {
-  data: { id: 1, name: 'John', email: 'john@example.com' },
-  status: 200,
-  message: 'Success'
-};
-
-const usersResponse: ApiResponse<User[]> = {
-  data: [
-    { id: 1, name: 'John', email: 'john@example.com' },
-    { id: 2, name: 'Jane', email: 'jane@example.com' }
-  ],
-  status: 200,
-  message: 'Success'
-};
+**Ví dụ (TypeScript):**
+```ts
+class Box<T> { constructor(public value: T) {} }
 ```
 
-### Generic Function Interfaces / Interface Hàm Generic
+## Constraints with extends
 
-```typescript
-// Generic function type / Kiểu hàm generic
-interface Transformer<T, U> {
-  (input: T): U;
-}
+**Giải thích (VI):** Ràng buộc đảm bảo type có thuộc tính/hành vi tối thiểu.
 
-const toString: Transformer<number, string> = (n) => n.toString();
-const toNumber: Transformer<string, number> = (s) => parseInt(s, 10);
+**English note:** Explain both inferability and constraint intent when presenting this in interview.
 
-// Generic with multiple methods / Generic với nhiều phương thức
-interface Repository<T> {
-  getAll(): Promise<T[]>;
-  getById(id: string): Promise<T | null>;
-  create(item: Omit<T, 'id'>): Promise<T>;
-  update(id: string, item: Partial<T>): Promise<T>;
-  delete(id: string): Promise<void>;
-}
-
-class UserRepository implements Repository<User> {
-  async getAll(): Promise<User[]> {
-    // Implementation / Triển khai
-    return [];
-  }
-
-  async getById(id: string): Promise<User | null> {
-    // Implementation / Triển khai
-    return null;
-  }
-
-  async create(item: Omit<User, 'id'>): Promise<User> {
-    // Implementation / Triển khai
-    return { id: 1, ...item };
-  }
-
-  async update(id: string, item: Partial<User>): Promise<User> {
-    // Implementation / Triển khai
-    return { id: 1, name: '', email: '', ...item };
-  }
-
-  async delete(id: string): Promise<void> {
-    // Implementation / Triển khai
-  }
-}
+**Ví dụ (TypeScript):**
+```ts
+function getId<T extends { id: string }>(v: T){ return v.id; }
 ```
 
----
+## Conditional Types + Generics
 
-## Generic Classes / Lớp Generic
+**Giải thích (VI):** Conditional types kết hợp generic để branch theo dạng kiểu.
 
-### Basic Generic Classes / Lớp Generic Cơ Bản
+**English note:** Explain both inferability and constraint intent when presenting this in interview.
 
-```typescript
-// Generic class / Lớp generic
-class Stack<T> {
-  private items: T[] = [];
-
-  push(item: T): void {
-    this.items.push(item);
-  }
-
-  pop(): T | undefined {
-    return this.items.pop();
-  }
-
-  peek(): T | undefined {
-    return this.items[this.items.length - 1];
-  }
-
-  isEmpty(): boolean {
-    return this.items.length === 0;
-  }
-
-  size(): number {
-    return this.items.length;
-  }
-}
-
-const numberStack = new Stack<number>();
-numberStack.push(1);
-numberStack.push(2);
-console.log(numberStack.pop()); // 2
-
-const stringStack = new Stack<string>();
-stringStack.push('hello');
-stringStack.push('world');
-console.log(stringStack.pop()); // 'world'
+**Ví dụ (TypeScript):**
+```ts
+type Unwrap<T> = T extends Promise<infer U> ? U : T;
 ```
 
-### Advanced Generic Classes / Lớp Generic Nâng Cao
+## infer Keyword
 
-```typescript
-// Generic class with constraints / Lớp generic với ràng buộc
-class DataStore<T extends { id: string | number }> {
-  private data: Map<string | number, T> = new Map();
+**Giải thích (VI):** infer trích xuất phần kiểu con trong conditional type.
 
-  add(item: T): void {
-    this.data.set(item.id, item);
-  }
+**English note:** Explain both inferability and constraint intent when presenting this in interview.
 
-  get(id: string | number): T | undefined {
-    return this.data.get(id);
-  }
-
-  getAll(): T[] {
-    return Array.from(this.data.values());
-  }
-
-  update(id: string | number, updates: Partial<T>): T | undefined {
-    const item = this.data.get(id);
-    if (item) {
-      const updated = { ...item, ...updates };
-      this.data.set(id, updated);
-      return updated;
-    }
-    return undefined;
-  }
-
-  delete(id: string | number): boolean {
-    return this.data.delete(id);
-  }
-}
-
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-}
-
-const productStore = new DataStore<Product>();
-productStore.add({ id: 1, name: 'Laptop', price: 999 });
-productStore.add({ id: 2, name: 'Mouse', price: 29 });
-
-console.log(productStore.get(1)); // { id: 1, name: 'Laptop', price: 999 }
-productStore.update(1, { price: 899 });
+**Ví dụ (TypeScript):**
+```ts
+type FnReturn<T> = T extends (...a: any[]) => infer R ? R : never;
 ```
 
-### Generic Class with Static Methods / Lớp Generic với Phương Thức Tĩnh
+## Mapped Types + Generics
 
-```typescript
-class Collection<T> {
-  constructor(private items: T[]) {}
+**Giải thích (VI):** Mapped + generic giúp transform hàng loạt key/value của type.
 
-  // Instance method / Phương thức instance
-  map<U>(fn: (item: T) => U): Collection<U> {
-    return new Collection(this.items.map(fn));
-  }
+**English note:** Explain both inferability and constraint intent when presenting this in interview.
 
-  filter(predicate: (item: T) => boolean): Collection<T> {
-    return new Collection(this.items.filter(predicate));
-  }
-
-  toArray(): T[] {
-    return [...this.items];
-  }
-
-  // Static method with its own generic / Phương thức tĩnh với generic riêng
-  static from<U>(items: U[]): Collection<U> {
-    return new Collection(items);
-  }
-
-  static empty<U>(): Collection<U> {
-    return new Collection<U>([]);
-  }
-}
-
-const numbers = Collection.from([1, 2, 3, 4, 5]);
-const doubled = numbers.map(n => n * 2);
-const evens = doubled.filter(n => n % 4 === 0);
-console.log(evens.toArray()); // [4, 8]
+**Ví dụ (TypeScript):**
+```ts
+type Nullable<T> = { [K in keyof T]: T[K] | null };
 ```
 
----
+## Template Literal Types + Generics
 
-## Generic Constraints / Ràng Buộc Generic
+**Giải thích (VI):** Tạo DSL string type-safe từ generic key sets.
 
-### Basic Constraints / Ràng Buộc Cơ Bản
+**English note:** Explain both inferability and constraint intent when presenting this in interview.
 
-**English:** Constraints limit what types can be used with generics.
-
-**Tiếng Việt:** Ràng buộc giới hạn kiểu nào có thể được sử dụng với generics.
-
-```typescript
-// Constraint with extends / Ràng buộc với extends
-function getLength<T extends { length: number }>(item: T): number {
-  return item.length;
-}
-
-getLength('hello'); // ✅ string has length
-getLength([1, 2, 3]); // ✅ array has length
-// getLength(42); // ❌ Error: number doesn't have length
-
-// Constraint with interface / Ràng buộc với interface
-interface HasId {
-  id: number;
-}
-
-function findById<T extends HasId>(items: T[], id: number): T | undefined {
-  return items.find(item => item.id === id);
-}
-
-const users = [
-  { id: 1, name: 'John' },
-  { id: 2, name: 'Jane' }
-];
-
-const user = findById(users, 1); // ✅ Works / Hoạt động
-
-// Multiple constraints / Nhiều ràng buộc
-interface Nameable {
-  name: string;
-}
-
-interface Ageable {
-  age: number;
-}
-
-function describe<T extends Nameable & Ageable>(person: T): string {
-  return `${person.name} is ${person.age} years old`;
-  // ${person.name} ${person.age} tuổi
-}
+**Ví dụ (TypeScript):**
+```ts
+type Getter<T extends string> = `get${Capitalize<T>}`;
 ```
 
-### keyof Constraints / Ràng Buộc keyof
+## Recursive Generic Types
 
-```typescript
-// Get property value safely / Lấy giá trị thuộc tính an toàn
-function getProperty<T, K extends keyof T>(obj: T, key: K): T[K] {
-  return obj[key];
-}
+**Giải thích (VI):** Mô tả dữ liệu lồng nhau như tree/json configs.
 
-const person = {
-  name: 'John',
-  age: 30,
-  email: 'john@example.com'
-};
+**English note:** Explain both inferability and constraint intent when presenting this in interview.
 
-const name = getProperty(person, 'name'); // Type: string
-const age = getProperty(person, 'age'); // Type: number
-// const invalid = getProperty(person, 'invalid'); // ❌ Error
-
-// Update property safely / Cập nhật thuộc tính an toàn
-function setProperty<T, K extends keyof T>(
-  obj: T,
-  key: K,
-  value: T[K]
-): void {
-  obj[key] = value;
-}
-
-setProperty(person, 'name', 'Jane'); // ✅
-setProperty(person, 'age', 31); // ✅
-// setProperty(person, 'age', 'thirty'); // ❌ Error: wrong type
+**Ví dụ (TypeScript):**
+```ts
+type Json = string | number | boolean | null | Json[] | { [k: string]: Json };
 ```
 
----
+## Utility Types in Practice
 
-## Multiple Type Parameters / Nhiều Tham Số Kiểu
+**Giải thích (VI):** Partial/Required/Pick/Omit/Record chuẩn hóa thao tác type hàng ngày.
 
-```typescript
-// Two type parameters / Hai tham số kiểu
-function pair<T, U>(first: T, second: U): [T, U] {
-  return [first, second];
-}
+**English note:** Explain both inferability and constraint intent when presenting this in interview.
 
-const p1 = pair('hello', 42); // Type: [string, number]
-const p2 = pair(true, 'world'); // Type: [boolean, string]
-
-// Map with key-value types / Map với kiểu key-value
-class Dictionary<K extends string | number, V> {
-  private items: Map<K, V> = new Map();
-
-  set(key: K, value: V): void {
-    this.items.set(key, value);
-  }
-
-  get(key: K): V | undefined {
-    return this.items.get(key);
-  }
-
-  has(key: K): boolean {
-    return this.items.has(key);
-  }
-}
-
-const stringDict = new Dictionary<string, number>();
-stringDict.set('age', 30);
-stringDict.set('count', 5);
-
-// Transform function / Hàm biến đổi
-function transform<T, U, V>(
-  input: T,
-  fn1: (x: T) => U,
-  fn2: (x: U) => V
-): V {
-  return fn2(fn1(input));
-}
-
-const result = transform(
-  '42',
-  s => parseInt(s, 10),
-  n => n * 2
-); // Type: number, Value: 84
+**Ví dụ (TypeScript):**
+```ts
+type PublicUser = Omit<{id:string;email:string;password:string}, 'password'>;
 ```
 
----
+## Utility Types Quick Catalog / Danh Mục Utility Types
 
-## Default Generic Types / Kiểu Generic Mặc Định
+- `Partial<T>`: make properties optional
+- `Required<T>`: make properties required
+- `Readonly<T>`: immutable properties
+- `Pick<T, K>`: select subset keys
+- `Omit<T, K>`: remove keys
+- `Record<K, T>`: dictionary type
+- `Extract<T, U>` / `Exclude<T, U>`: union filtering
+- `ReturnType<T>` / `Parameters<T>`: function reflection
 
-```typescript
-// Default type parameter / Tham số kiểu mặc định
-interface ApiResponse<T = unknown> {
-  data: T;
-  status: number;
-}
+## Cross References / Tham Chiếu Liên Quan
 
-const response1: ApiResponse = {
-  data: 'anything',
-  status: 200
-}; // T defaults to unknown / T mặc định là unknown
+- [TypeScript Basics](./01-typescript-basics.md)
+- [Advanced Types](./02-advanced-types.md)
+- [Type Inference Theory](./05-type-inference-theory.md)
 
-const response2: ApiResponse<User> = {
-  data: { id: 1, name: 'John', email: 'john@example.com' },
-  status: 200
-};
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-// Multiple defaults / Nhiều mặc định
-interface Config<T = string, U = number> {
-  value: T;
-  count: U;
-}
+### 🟢 [Junior] Q1. What problem do generics solve?
 
-const config1: Config = {
-  value: 'hello',
-  count: 5
-};
+**Answer (EN):** They avoid duplication while preserving type safety across multiple data types.
 
-const config2: Config<boolean> = {
-  value: true,
-  count: 10
-};
+**Giải thích (VI):** Generics giúp tái sử dụng code mà vẫn giữ type safety.
 
-const config3: Config<boolean, string> = {
-  value: false,
-  count: 'many'
-};
+**Ví dụ (TypeScript):**
+```ts
+function wrap<T>(v:T){ return {v}; }
 ```
 
----
+### 🟡 [Mid] Q2. When to add generic constraints?
 
-## Generic Utility Functions / Hàm Tiện Ích Generic
+**Answer (EN):** Add constraints when logic relies on specific members like `id` or `length`.
 
-### Array Utilities / Tiện Ích Mảng
+**Giải thích (VI):** Dùng constraints khi implementation cần thuộc tính cụ thể.
 
-```typescript
-// Chunk array / Chia mảng thành khối
-function chunk<T>(array: T[], size: number): T[][] {
-  const chunks: T[][] = [];
-  for (let i = 0; i < array.length; i += size) {
-    chunks.push(array.slice(i, i + size));
-  }
-  return chunks;
-}
-
-const numbers = [1, 2, 3, 4, 5, 6, 7];
-const chunked = chunk(numbers, 3); // [[1,2,3], [4,5,6], [7]]
-
-// Group by / Nhóm theo
-function groupBy<T, K extends string | number>(
-  array: T[],
-  getKey: (item: T) => K
-): Record<K, T[]> {
-  return array.reduce((groups, item) => {
-    const key = getKey(item);
-    if (!groups[key]) {
-      groups[key] = [];
-    }
-    groups[key].push(item);
-    return groups;
-  }, {} as Record<K, T[]>);
-}
-
-interface Person {
-  name: string;
-  age: number;
-}
-
-const people: Person[] = [
-  { name: 'John', age: 30 },
-  { name: 'Jane', age: 25 },
-  { name: 'Bob', age: 30 }
-];
-
-const byAge = groupBy(people, p => p.age);
-// { 30: [{name: 'John', age: 30}, {name: 'Bob', age: 30}], 25: [{name: 'Jane', age: 25}] }
-
-// Unique values / Giá trị duy nhất
-function unique<T>(array: T[]): T[] {
-  return Array.from(new Set(array));
-}
-
-const duplicates = [1, 2, 2, 3, 3, 3, 4];
-const uniqueNumbers = unique(duplicates); // [1, 2, 3, 4]
+**Ví dụ (TypeScript):**
+```ts
+function size<T extends {length:number}>(v:T){ return v.length; }
 ```
 
-### Object Utilities / Tiện Ích Object
+### 🟡 [Mid] Q3. How does `infer` differ from explicit indexing?
 
-```typescript
-// Pick properties / Chọn thuộc tính
-function pick<T, K extends keyof T>(obj: T, keys: K[]): Pick<T, K> {
-  const result = {} as Pick<T, K>;
-  keys.forEach(key => {
-    result[key] = obj[key];
-  });
-  return result;
-}
+**Answer (EN):** `infer` extracts unknown inner parts in pattern-matching style conditionals.
 
-const user = {
-  id: 1,
-  name: 'John',
-  email: 'john@example.com',
-  password: 'secret'
-};
+**Giải thích (VI):** infer trích xuất kiểu con khi chưa biết trước cấu trúc cụ thể.
 
-const publicUser = pick(user, ['id', 'name', 'email']);
-// { id: 1, name: 'John', email: 'john@example.com' }
-
-// Omit properties / Bỏ qua thuộc tính
-function omit<T, K extends keyof T>(obj: T, keys: K[]): Omit<T, K> {
-  const result = { ...obj };
-  keys.forEach(key => {
-    delete result[key];
-  });
-  return result;
-}
-
-const safeUser = omit(user, ['password']);
-// { id: 1, name: 'John', email: 'john@example.com' }
-
-// Deep clone / Sao chép sâu
-function deepClone<T>(obj: T): T {
-  if (obj === null || typeof obj !== 'object') {
-    return obj;
-  }
-
-  if (obj instanceof Date) {
-    return new Date(obj.getTime()) as any;
-  }
-
-  if (obj instanceof Array) {
-    return obj.map(item => deepClone(item)) as any;
-  }
-
-  if (obj instanceof Object) {
-    const cloned = {} as T;
-    for (const key in obj) {
-      if (obj.hasOwnProperty(key)) {
-        cloned[key] = deepClone(obj[key]);
-      }
-    }
-    return cloned;
-  }
-
-  return obj;
-}
+**Ví dụ (TypeScript):**
+```ts
+type Arr<T> = T extends (infer U)[] ? U : T;
 ```
 
----
+### 🔴 [Senior] Q4. How to keep generic APIs ergonomic?
 
-## Interview Questions / Câu Hỏi Phỏng Vấn
+**Answer (EN):** Prefer inference-first signatures and minimal explicit type arguments.
 
-### Question 1: Implement a generic Queue
+**Giải thích (VI):** Thiết kế API ưu tiên suy luận để giảm verbose cho người dùng.
 
-**English Answer:**
-```typescript
-class Queue<T> {
-  private items: T[] = [];
-
-  enqueue(item: T): void {
-    this.items.push(item);
-  }
-
-  dequeue(): T | undefined {
-    return this.items.shift();
-  }
-
-  peek(): T | undefined {
-    return this.items[0];
-  }
-
-  isEmpty(): boolean {
-    return this.items.length === 0;
-  }
-
-  size(): number {
-    return this.items.length;
-  }
-}
-
-const queue = new Queue<number>();
-queue.enqueue(1);
-queue.enqueue(2);
-console.log(queue.dequeue()); // 1
+**Ví dụ (TypeScript):**
+```ts
+function first<T>(arr: readonly T[]){ return arr[0]; }
 ```
 
-### Question 2: When to use generic constraints?
+### 🔴 [Senior] Q5. Generic design scenario 5
 
-**English Answer:**
-Use constraints when you need to:
-- Access specific properties of the generic type
-- Ensure the type has certain methods
-- Limit acceptable types
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
 
-**Tiếng Việt:**
-Sử dụng ràng buộc khi bạn cần:
-- Truy cập thuộc tính cụ thể của kiểu generic
-- Đảm bảo kiểu có các phương thức nhất định
-- Giới hạn các kiểu chấp nhận được
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
 
-```typescript
-// Without constraint / Không có ràng buộc
-function log<T>(item: T): void {
-  // console.log(item.name); // ❌ Error: T might not have 'name'
-}
-
-// With constraint / Với ràng buộc
-function logWithName<T extends { name: string }>(item: T): void {
-  console.log(item.name); // ✅ Safe / An toàn
-}
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
 ```
 
-### Question 3: Explain generic type inference
+### 🟢 [Junior] Q6. Generic design scenario 6
 
-**English Answer:**
-TypeScript can infer generic types from arguments, eliminating the need to explicitly specify them. The compiler analyzes the argument types and determines the appropriate generic type.
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
 
-**Tiếng Việt:**
-TypeScript có thể suy luận kiểu generic từ đối số, loại bỏ nhu cầu chỉ định rõ ràng chúng. Trình biên dịch phân tích kiểu đối số và xác định kiểu generic phù hợp.
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
 
-```typescript
-function identity<T>(arg: T): T {
-  return arg;
-}
-
-// Explicit / Rõ ràng
-const result1 = identity<string>('hello');
-
-// Inferred / Được suy luận
-const result2 = identity('hello'); // T inferred as string / T được suy luận là string
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
 ```
 
----
+### 🟡 [Mid] Q7. Generic design scenario 7
 
-## Key Takeaways / Điểm Chính
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
 
-**English:**
-1. Generics enable type-safe reusable code
-2. Use constraints to limit acceptable types
-3. Multiple type parameters enable complex relationships
-4. Default types provide fallback values
-5. Type inference reduces boilerplate
-6. Generic utilities create flexible, reusable functions
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
 
-**Tiếng Việt:**
-1. Generics cho phép code có thể tái sử dụng an toàn kiểu
-2. Sử dụng ràng buộc để giới hạn kiểu chấp nhận được
-3. Nhiều tham số kiểu cho phép mối quan hệ phức tạp
-4. Kiểu mặc định cung cấp giá trị dự phòng
-5. Suy luận kiểu giảm code boilerplate
-6. Tiện ích generic tạo hàm linh hoạt, có thể tái sử dụng
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
 
----
+### 🔴 [Senior] Q8. Generic design scenario 8
 
-[← Previous: Advanced Types](./02-advanced-types.md) | [Back to Table of Contents](../00-table-of-contents.md) | [Next: Type Inference →](./04-type-inference.md)
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟢 [Junior] Q9. Generic design scenario 9
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟡 [Mid] Q10. Generic design scenario 10
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🔴 [Senior] Q11. Generic design scenario 11
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟢 [Junior] Q12. Generic design scenario 12
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟡 [Mid] Q13. Generic design scenario 13
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🔴 [Senior] Q14. Generic design scenario 14
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟢 [Junior] Q15. Generic design scenario 15
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟡 [Mid] Q16. Generic design scenario 16
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🔴 [Senior] Q17. Generic design scenario 17
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟢 [Junior] Q18. Generic design scenario 18
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟡 [Mid] Q19. Generic design scenario 19
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🔴 [Senior] Q20. Generic design scenario 20
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟢 [Junior] Q21. Generic design scenario 21
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟡 [Mid] Q22. Generic design scenario 22
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🔴 [Senior] Q23. Generic design scenario 23
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟢 [Junior] Q24. Generic design scenario 24
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟡 [Mid] Q25. Generic design scenario 25
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🔴 [Senior] Q26. Generic design scenario 26
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟢 [Junior] Q27. Generic design scenario 27
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟡 [Mid] Q28. Generic design scenario 28
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🔴 [Senior] Q29. Generic design scenario 29
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟢 [Junior] Q30. Generic design scenario 30
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟡 [Mid] Q31. Generic design scenario 31
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🔴 [Senior] Q32. Generic design scenario 32
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟢 [Junior] Q33. Generic design scenario 33
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟡 [Mid] Q34. Generic design scenario 34
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🔴 [Senior] Q35. Generic design scenario 35
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟢 [Junior] Q36. Generic design scenario 36
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟡 [Mid] Q37. Generic design scenario 37
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🔴 [Senior] Q38. Generic design scenario 38
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟢 [Junior] Q39. Generic design scenario 39
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟡 [Mid] Q40. Generic design scenario 40
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🔴 [Senior] Q41. Generic design scenario 41
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟢 [Junior] Q42. Generic design scenario 42
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟡 [Mid] Q43. Generic design scenario 43
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🔴 [Senior] Q44. Generic design scenario 44
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟢 [Junior] Q45. Generic design scenario 45
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟡 [Mid] Q46. Generic design scenario 46
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🔴 [Senior] Q47. Generic design scenario 47
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟢 [Junior] Q48. Generic design scenario 48
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟡 [Mid] Q49. Generic design scenario 49
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🔴 [Senior] Q50. Generic design scenario 50
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟢 [Junior] Q51. Generic design scenario 51
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟡 [Mid] Q52. Generic design scenario 52
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🔴 [Senior] Q53. Generic design scenario 53
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟢 [Junior] Q54. Generic design scenario 54
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟡 [Mid] Q55. Generic design scenario 55
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🔴 [Senior] Q56. Generic design scenario 56
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+
+### 🟢 [Junior] Q57. Generic design scenario 57
+
+**Answer (EN):** Discuss constraints, defaults, and inferred call-site experience.
+
+**Giải thích (VI):** Nêu constraints, default type parameters và trải nghiệm call-site.
+
+**Ví dụ (TypeScript):**
+```ts
+type Api<T = unknown> = { data: T; error?: string };
+```
+

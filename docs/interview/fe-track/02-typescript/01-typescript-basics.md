@@ -1,760 +1,722 @@
 # TypeScript Basics / Cơ Bản TypeScript
 ## TypeScript - Chapter 1 / TypeScript - Chương 1
-
-[Back to Table of Contents](../00-table-of-contents.md) | [Next: Advanced Types →](./02-advanced-types.md)
-
----
-
-## Overview / Tổng Quan
-
-**English:** TypeScript is a statically typed superset of JavaScript that compiles to plain JavaScript. It adds optional type annotations, interfaces, and advanced features that help catch errors early and improve code quality. Understanding TypeScript is essential for modern frontend development and technical interviews.
-
-**Tiếng Việt:** TypeScript là một siêu tập hợp có kiểu tĩnh của JavaScript được biên dịch thành JavaScript thuần túy. Nó thêm chú thích kiểu tùy chọn, giao diện và các tính năng nâng cao giúp phát hiện lỗi sớm và cải thiện chất lượng code. Hiểu TypeScript là cần thiết cho phát triển frontend hiện đại và phỏng vấn kỹ thuật.
+[Back to Table of Contents](../00-table-of-contents.md) | [Next: Advanced Types →](./02-advanced-types.md) | [Related: Generics](./03-generics-deep-dive.md)
 
 ---
+## Tổng Quan / Overview
 
-## Table of Contents
-1. [Why TypeScript?](#why-typescript)
-2. [Basic Types](#basic-types)
-3. [Type Annotations](#type-annotations)
-4. [Interfaces](#interfaces)
-5. [Type Aliases](#type-aliases)
-6. [Union and Intersection Types](#union-and-intersection-types)
-7. [Type Assertions](#type-assertions)
-8. [Functions](#functions)
-9. [Arrays and Tuples](#arrays-and-tuples)
-10. [Enums](#enums)
-11. [Interview Questions](#interview-questions)
+TypeScript provides static typing on top of JavaScript. This chapter focuses on foundational concepts used in junior-to-mid frontend interviews: annotations, interfaces vs types, unions/intersections, literal types, enums, assertions, narrowing, and tsconfig setup.
 
----
+Trong chương này bạn cần hiểu cách TypeScript mô hình hóa dữ liệu, cách compiler thu hẹp kiểu qua control-flow, và cách cấu hình strict mode để bắt lỗi sớm.
 
-## Why TypeScript?
+## Learning Path / Lộ Trình Học
 
-### Benefits
-
-```typescript
-// ❌ JavaScript - Runtime error
-function greet(person) {
-  return `Hello, ${person.name}!`;
-}
-
-greet({ age: 30 }); // Runtime error: Cannot read property 'name' of undefined
-
-// ✅ TypeScript - Compile-time error
-interface Person {
-  name: string;
-  age: number;
-}
-
-function greet(person: Person): string {
-  return `Hello, ${person.name}!`;
-}
-
-// greet({ age: 30 }); // ❌ Compile error: Property 'name' is missing
-greet({ name: 'John', age: 30 }); // ✅ Works!
-```
-
-### Key Advantages
-
-1. **Early Error Detection**: Catch bugs at compile time
-2. **Better IDE Support**: Autocomplete, refactoring, navigation
-3. **Self-Documenting Code**: Types serve as documentation
-4. **Safer Refactoring**: Confidence when changing code
-5. **Enhanced Collaboration**: Clear contracts between code
-
----
-
-## Basic Types
-
-### Primitive Types
-
-```typescript
-// String
-let name: string = 'John';
-let message: string = `Hello, ${name}!`;
-
-// Number
-let age: number = 30;
-let price: number = 19.99;
-let hex: number = 0xf00d;
-let binary: number = 0b1010;
-
-// Boolean
-let isActive: boolean = true;
-let isCompleted: boolean = false;
-
-// Null and Undefined
-let nothing: null = null;
-let notDefined: undefined = undefined;
-
-// Symbol
-let sym: symbol = Symbol('unique');
-
-// BigInt
-let bigNumber: bigint = 100n;
-```
-
-### Special Types
-
-```typescript
-// Any - Opt out of type checking (avoid when possible)
-let anything: any = 'hello';
-anything = 42;
-anything = true; // No error
-
-// Unknown - Type-safe version of any
-let userInput: unknown;
-userInput = 'hello';
-userInput = 42;
-
-// Type guard required before use
-if (typeof userInput === 'string') {
-  console.log(userInput.toUpperCase()); // ✅ Safe
-}
-
-// Never - Represents values that never occur
-function throwError(message: string): never {
-  throw new Error(message);
-}
-
-function infiniteLoop(): never {
-  while (true) {}
-}
-
-// Void - Absence of return value
-function logMessage(message: string): void {
-  console.log(message);
-  // No return statement
-}
-```
-
----
+1. Type annotations
+2. Interfaces vs type aliases
+3. Union/intersection/literal types
+4. Enum and assertions
+5. Type guards and narrowing
+6. Strict compiler options
+7. tsconfig essentials and declaration files
 
 ## Type Annotations
 
-### Variable Annotations
+**Giải thích (VI):** Chú thích kiểu giúp compiler kiểm tra dữ liệu ngay khi viết code.
 
-```typescript
-// Explicit type annotation
-let username: string = 'John';
-let age: number = 30;
+**Key points (EN):** Practical interview-level summary with trade-offs and common mistakes.
 
-// Type inference (TypeScript infers the type)
-let inferredString = 'Hello'; // Type: string
-let inferredNumber = 42; // Type: number
-
-// Multiple variables
-let x: number, y: number, z: number;
-x = 1;
-y = 2;
-z = 3;
+**Ví dụ (TypeScript):**
+```ts
+let username: string = 'neo';
+let score: number = 100;
+let active: boolean = true;
 ```
 
-### Object Type Annotations
+**Interview note:** Explain *why* this choice improves safety and maintainability, not just syntax.
 
-```typescript
-// Object type
-let person: {
-  name: string;
-  age: number;
-  email?: string; // Optional property
-} = {
-  name: 'John',
-  age: 30
-};
+## Interfaces vs Type Aliases
 
-// Nested objects
-let company: {
-  name: string;
-  address: {
-    street: string;
-    city: string;
-    country: string;
-  };
-} = {
-  name: 'Tech Corp',
-  address: {
-    street: '123 Main St',
-    city: 'San Francisco',
-    country: 'USA'
-  }
-};
+**Giải thích (VI):** interface phù hợp cho object contract và declaration merging; type mạnh khi cần union/intersection.
+
+**Key points (EN):** Practical interview-level summary with trade-offs and common mistakes.
+
+**Ví dụ (TypeScript):**
+```ts
+interface User { id: string; name: string }
+type UserId = User['id'];
+type Admin = User & { role: 'admin' };
 ```
 
----
+**Interview note:** Explain *why* this choice improves safety and maintainability, not just syntax.
 
-## Interfaces
+## Union and Intersection
 
-### Basic Interface
+**Giải thích (VI):** Union biểu diễn OR, intersection biểu diễn AND.
 
-```typescript
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  age?: number; // Optional property
-  readonly createdAt: Date; // Read-only property
-}
+**Key points (EN):** Practical interview-level summary with trade-offs and common mistakes.
 
-const user: User = {
-  id: 1,
-  name: 'John Doe',
-  email: 'john@example.com',
-  createdAt: new Date()
-};
-
-// user.createdAt = new Date(); // ❌ Error: Cannot assign to 'createdAt'
-user.age = 30; // ✅ OK
+**Ví dụ (TypeScript):**
+```ts
+type ApiResult = { ok: true; data: string } | { ok: false; error: string };
+type WithMeta = { id: string } & { createdAt: Date };
 ```
 
-### Interface Extension
+**Interview note:** Explain *why* this choice improves safety and maintainability, not just syntax.
 
-```typescript
-interface Person {
-  name: string;
-  age: number;
-}
+## Literal Types
 
-interface Employee extends Person {
-  employeeId: string;
-  department: string;
-}
+**Giải thích (VI):** Literal types khóa giá trị vào tập nhỏ, hữu ích cho state machine.
 
-const employee: Employee = {
-  name: 'John',
-  age: 30,
-  employeeId: 'E001',
-  department: 'Engineering'
-};
+**Key points (EN):** Practical interview-level summary with trade-offs and common mistakes.
 
-// Multiple inheritance
-interface Manager extends Employee, Person {
-  teamSize: number;
-}
+**Ví dụ (TypeScript):**
+```ts
+type Size = 'sm' | 'md' | 'lg';
+const defaultSize: Size = 'md';
 ```
 
-### Function Interfaces
-
-```typescript
-// Function type interface
-interface MathOperation {
-  (a: number, b: number): number;
-}
-
-const add: MathOperation = (a, b) => a + b;
-const subtract: MathOperation = (a, b) => a - b;
-
-// Interface with methods
-interface Calculator {
-  add(a: number, b: number): number;
-  subtract(a: number, b: number): number;
-  multiply(a: number, b: number): number;
-  divide(a: number, b: number): number;
-}
-
-const calculator: Calculator = {
-  add: (a, b) => a + b,
-  subtract: (a, b) => a - b,
-  multiply: (a, b) => a * b,
-  divide: (a, b) => a / b
-};
-```
-
-### Index Signatures
-
-```typescript
-// String index signature
-interface StringDictionary {
-  [key: string]: string;
-}
-
-const colors: StringDictionary = {
-  primary: '#007bff',
-  secondary: '#6c757d',
-  success: '#28a745'
-};
-
-// Number index signature
-interface NumberArray {
-  [index: number]: number;
-}
-
-const fibonacci: NumberArray = [0, 1, 1, 2, 3, 5, 8];
-
-// Mixed index signatures
-interface MixedDictionary {
-  [key: string]: string | number;
-  length: number; // Specific property
-}
-```
-
----
-
-## Type Aliases
-
-### Basic Type Alias
-
-```typescript
-// Simple alias
-type ID = string | number;
-type Status = 'pending' | 'approved' | 'rejected';
-
-let userId: ID = '123';
-userId = 456; // Also valid
-
-let orderStatus: Status = 'pending';
-// orderStatus = 'invalid'; // ❌ Error
-
-// Object type alias
-type Point = {
-  x: number;
-  y: number;
-};
-
-const point: Point = { x: 10, y: 20 };
-
-// Function type alias
-type GreetFunction = (name: string) => string;
-
-const greet: GreetFunction = (name) => `Hello, ${name}!`;
-```
-
-### Interface vs Type Alias
-
-```typescript
-// Interface
-interface UserInterface {
-  name: string;
-  age: number;
-}
-
-// Type Alias
-type UserType = {
-  name: string;
-  age: number;
-};
-
-// Key differences:
-
-// 1. Interfaces can be extended
-interface ExtendedUser extends UserInterface {
-  email: string;
-}
-
-// 2. Type aliases can use unions
-type StringOrNumber = string | number;
-
-// 3. Interfaces can be merged (declaration merging)
-interface Window {
-  title: string;
-}
-
-interface Window {
-  version: string;
-}
-
-// Window now has both title and version
-
-// 4. Type aliases can use mapped types
-type Readonly<T> = {
-  readonly [P in keyof T]: T[P];
-};
-```
-
----
-
-## Union and Intersection Types
-
-### Union Types
-
-```typescript
-// Union type - value can be one of several types
-type StringOrNumber = string | number;
-
-let value: StringOrNumber;
-value = 'hello'; // ✅
-value = 42; // ✅
-// value = true; // ❌ Error
-
-// Function with union parameter
-function formatValue(value: string | number): string {
-  if (typeof value === 'string') {
-    return value.toUpperCase();
-  } else {
-    return value.toFixed(2);
-  }
-}
-
-// Union of literal types
-type Direction = 'north' | 'south' | 'east' | 'west';
-
-function move(direction: Direction) {
-  console.log(`Moving ${direction}`);
-}
-
-move('north'); // ✅
-// move('up'); // ❌ Error
-```
-
-### Intersection Types
-
-```typescript
-// Intersection type - combines multiple types
-interface Nameable {
-  name: string;
-}
-
-interface Ageable {
-  age: number;
-}
-
-type Person = Nameable & Ageable;
-
-const person: Person = {
-  name: 'John',
-  age: 30
-};
-
-// Combining type aliases
-type Admin = {
-  role: 'admin';
-  permissions: string[];
-};
-
-type User = {
-  id: string;
-  email: string;
-};
-
-type AdminUser = Admin & User;
-
-const adminUser: AdminUser = {
-  id: '1',
-  email: 'admin@example.com',
-  role: 'admin',
-  permissions: ['read', 'write', 'delete']
-};
-```
-
----
-
-## Type Assertions
-
-### Basic Type Assertions
-
-```typescript
-// Angle-bracket syntax
-let someValue: unknown = 'this is a string';
-let strLength: number = (<string>someValue).length;
-
-// As syntax (preferred in JSX)
-let someValue2: unknown = 'this is a string';
-let strLength2: number = (someValue2 as string).length;
-
-// DOM elements
-const input = document.getElementById('username') as HTMLInputElement;
-input.value = 'John';
-
-// Non-null assertion
-function processValue(value: string | null) {
-  // Tell TypeScript this will never be null
-  console.log(value!.toUpperCase());
-}
-```
-
-### Const Assertions
-
-```typescript
-// Without const assertion
-let colors1 = ['red', 'green', 'blue'];
-// Type: string[]
-
-// With const assertion
-let colors2 = ['red', 'green', 'blue'] as const;
-// Type: readonly ["red", "green", "blue"]
-
-// Object with const assertion
-const config = {
-  apiUrl: 'https://api.example.com',
-  timeout: 5000
-} as const;
-
-// config.apiUrl = 'new url'; // ❌ Error: readonly
-```
-
----
-
-## Functions
-
-### Function Type Annotations
-
-```typescript
-// Named function
-function add(a: number, b: number): number {
-  return a + b;
-}
-
-// Arrow function
-const multiply = (a: number, b: number): number => a * b;
-
-// Optional parameters
-function greet(name: string, greeting?: string): string {
-  return `${greeting || 'Hello'}, ${name}!`;
-}
-
-// Default parameters
-function createUser(name: string, age: number = 18): User {
-  return { name, age };
-}
-
-// Rest parameters
-function sum(...numbers: number[]): number {
-  return numbers.reduce((total, n) => total + n, 0);
-}
-
-console.log(sum(1, 2, 3, 4, 5)); // 15
-```
-
-### Function Overloads
-
-```typescript
-// Overload signatures
-function combine(a: string, b: string): string;
-function combine(a: number, b: number): number;
-
-// Implementation signature
-function combine(a: string | number, b: string | number): string | number {
-  if (typeof a === 'string' && typeof b === 'string') {
-    return a + b;
-  }
-  if (typeof a === 'number' && typeof b === 'number') {
-    return a + b;
-  }
-  throw new Error('Invalid arguments');
-}
-
-const result1 = combine('Hello', 'World'); // Type: string
-const result2 = combine(10, 20); // Type: number
-```
-
-### Generic Functions
-
-```typescript
-// Generic function
-function identity<T>(arg: T): T {
-  return arg;
-}
-
-const str = identity<string>('hello'); // Type: string
-const num = identity<number>(42); // Type: number
-const auto = identity('auto'); // Type inferred as string
-
-// Generic with constraints
-function getProperty<T, K extends keyof T>(obj: T, key: K): T[K] {
-  return obj[key];
-}
-
-const person = { name: 'John', age: 30 };
-const name = getProperty(person, 'name'); // Type: string
-const age = getProperty(person, 'age'); // Type: number
-// const invalid = getProperty(person, 'email'); // ❌ Error
-```
-
----
-
-## Arrays and Tuples
-
-### Arrays
-
-```typescript
-// Array type annotation
-let numbers: number[] = [1, 2, 3, 4, 5];
-let strings: Array<string> = ['a', 'b', 'c'];
-
-// Array of objects
-interface User {
-  id: number;
-  name: string;
-}
-
-let users: User[] = [
-  { id: 1, name: 'John' },
-  { id: 2, name: 'Jane' }
-];
-
-// Readonly arrays
-let readonlyNumbers: readonly number[] = [1, 2, 3];
-// readonlyNumbers.push(4); // ❌ Error
-
-// Multi-dimensional arrays
-let matrix: number[][] = [
-  [1, 2, 3],
-  [4, 5, 6],
-  [7, 8, 9]
-];
-```
-
-### Tuples
-
-```typescript
-// Tuple - fixed-length array with specific types
-let tuple: [string, number] = ['John', 30];
-
-// Accessing tuple elements
-let name: string = tuple[0];
-let age: number = tuple[1];
-
-// Tuple with optional elements
-let optionalTuple: [string, number?] = ['John'];
-
-// Tuple with rest elements
-let restTuple: [string, ...number[]] = ['John', 1, 2, 3, 4];
-
-// Named tuples (TypeScript 4.0+)
-type Point = [x: number, y: number];
-type Range = [start: number, end: number];
-
-const point: Point = [10, 20];
-const range: Range = [0, 100];
-
-// Readonly tuples
-let readonlyTuple: readonly [string, number] = ['John', 30];
-// readonlyTuple[0] = 'Jane'; // ❌ Error
-```
-
----
+**Interview note:** Explain *why* this choice improves safety and maintainability, not just syntax.
 
 ## Enums
 
-### Numeric Enums
+**Giải thích (VI):** Ưu tiên union literals trong FE, enum phù hợp khi cần namespace runtime.
 
-```typescript
-enum Direction {
-  Up,    // 0
-  Down,  // 1
-  Left,  // 2
-  Right  // 3
-}
+**Key points (EN):** Practical interview-level summary with trade-offs and common mistakes.
 
-let dir: Direction = Direction.Up;
-console.log(dir); // 0
+**Ví dụ (TypeScript):**
+```ts
+enum Status { Idle = 'idle', Loading = 'loading', Done = 'done' }
+const s: Status = Status.Idle;
+```
 
-// Custom starting value
-enum Status {
-  Pending = 1,
-  Approved,  // 2
-  Rejected   // 3
-}
+**Interview note:** Explain *why* this choice improves safety and maintainability, not just syntax.
 
-// Custom values
-enum HttpStatus {
-  OK = 200,
-  BadRequest = 400,
-  Unauthorized = 401,
-  NotFound = 404,
-  ServerError = 500
+## Type Assertions
+
+**Giải thích (VI):** Assertion nói với compiler "tôi biết rõ hơn"; tránh lạm dụng.
+
+**Key points (EN):** Practical interview-level summary with trade-offs and common mistakes.
+
+**Ví dụ (TypeScript):**
+```ts
+const el = document.getElementById('app') as HTMLDivElement | null;
+if (el) el.textContent = 'ready';
+```
+
+**Interview note:** Explain *why* this choice improves safety and maintainability, not just syntax.
+
+## Type Guards
+
+**Giải thích (VI):** Guard thu hẹp kiểu an toàn bằng typeof/in/instanceof/custom predicate.
+
+**Key points (EN):** Practical interview-level summary with trade-offs and common mistakes.
+
+**Ví dụ (TypeScript):**
+```ts
+function isString(v: unknown): v is string {
+  return typeof v === 'string';
 }
 ```
 
-### String Enums
+**Interview note:** Explain *why* this choice improves safety and maintainability, not just syntax.
 
-```typescript
-enum Color {
-  Red = 'RED',
-  Green = 'GREEN',
-  Blue = 'BLUE'
-}
+## Control-flow Narrowing
 
-let color: Color = Color.Red;
-console.log(color); // 'RED'
+**Giải thích (VI):** if/switch/early return giúp TS thu hẹp kiểu theo nhánh logic.
 
-// Heterogeneous enums (not recommended)
-enum Mixed {
-  No = 0,
-  Yes = 'YES'
+**Key points (EN):** Practical interview-level summary with trade-offs and common mistakes.
+
+**Ví dụ (TypeScript):**
+```ts
+function print(v: string | number) {
+  if (typeof v === 'string') return v.toUpperCase();
+  return v.toFixed(2);
 }
 ```
 
-### Const Enums
+**Interview note:** Explain *why* this choice improves safety and maintainability, not just syntax.
 
-```typescript
-// Const enum - inlined at compile time
-const enum LogLevel {
-  Debug,
-  Info,
-  Warning,
-  Error
-}
+## Strict Mode Options
 
-let level: LogLevel = LogLevel.Info;
+**Giải thích (VI):** strict bật nhóm kiểm tra mạnh: null safety, function variance, initialization.
 
-// Compiled JavaScript:
-// let level = 1; // Inlined!
-```
+**Key points (EN):** Practical interview-level summary with trade-offs and common mistakes.
 
----
-
-## Interview Questions
-
-### Q1: What's the difference between `interface` and `type`?
-
-**Answer:**
-- **Interface**: Can be extended, supports declaration merging, better for object shapes
-- **Type**: Can use unions/intersections, can't be merged, more flexible
-
-```typescript
-// Interface - can extend
-interface User extends Person {
-  email: string;
-}
-
-// Type - can use unions
-type ID = string | number;
-```
-
-### Q2: What is `unknown` vs `any`?
-
-**Answer:**
-- **any**: Opts out of type checking, unsafe
-- **unknown**: Type-safe, requires type checking before use
-
-```typescript
-let a: any = 'hello';
-a.toUpperCase(); // ✅ No error (but might fail at runtime)
-
-let b: unknown = 'hello';
-// b.toUpperCase(); // ❌ Error
-if (typeof b === 'string') {
-  b.toUpperCase(); // ✅ Safe
+**Ví dụ (TypeScript):**
+```ts
+// tsconfig.json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true
+  }
 }
 ```
 
-### Q3: What are generics and why use them?
+**Interview note:** Explain *why* this choice improves safety and maintainability, not just syntax.
 
-**Answer:**
-Generics allow creating reusable components that work with multiple types while maintaining type safety.
+## tsconfig Essentials
 
-```typescript
-function identity<T>(arg: T): T {
-  return arg;
+**Giải thích (VI):** Cần rõ module target, baseUrl/paths, include/exclude cho dự án lớn.
+
+**Key points (EN):** Practical interview-level summary with trade-offs and common mistakes.
+
+**Ví dụ (TypeScript):**
+```ts
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler"
+  }
 }
-
-// Works with any type, maintains type safety
-const str = identity('hello'); // Type: string
-const num = identity(42); // Type: number
 ```
 
----
+**Interview note:** Explain *why* this choice improves safety and maintainability, not just syntax.
 
-## Summary
+## Declaration Files (.d.ts)
 
-- TypeScript adds static typing to JavaScript
-- Use interfaces for object shapes, types for unions/aliases
-- Leverage type inference when possible
-- Use `unknown` instead of `any` for type safety
-- Generics enable reusable, type-safe code
-- Enums provide named constants
+**Giải thích (VI):** Declaration file mô tả shape của thư viện JS không có type.
 
----
+**Key points (EN):** Practical interview-level summary with trade-offs and common mistakes.
 
-[Back to Table of Contents](../00-table-of-contents.md) | [Next: Advanced Types →](./02-advanced-types.md)
+**Ví dụ (TypeScript):**
+```ts
+declare module 'legacy-lib' {
+  export function format(v: string): string;
+}
+```
+
+**Interview note:** Explain *why* this choice improves safety and maintainability, not just syntax.
+
+## Common Mistakes and Fixes / Lỗi Thường Gặp và Cách Sửa
+
+### Mistake 1: Overusing `any`
+
+**Giải thích (VI):** `any` phá vỡ type safety toàn chuỗi gọi hàm. Chỉ dùng khi biên giới với hệ thống chưa typed và nên thay bằng `unknown` + guard.
+
+**Ví dụ (TypeScript):**
+```ts
+function parsePayload(raw: unknown): { id: string } {
+  if (typeof raw === 'object' && raw !== null && 'id' in raw) {
+    return { id: String((raw as { id: unknown }).id) };
+  }
+  throw new Error('invalid payload');
+}
+```
+
+### Mistake 2: Ignoring strict flags in CI
+
+**Giải thích (VI):** Nhiều team bật strict cục bộ nhưng CI không enforce, dẫn tới regression. Cần chạy `tsc --noEmit` trong pipeline.
+
+**Ví dụ (TypeScript):**
+```ts
+// package.json scripts
+// "typecheck": "tsc --noEmit"
+```
+
+### Mistake 3: Unsafe assertions in DOM code
+
+**Giải thích (VI):** Assert trực tiếp `as HTMLInputElement` có thể crash runtime nếu selector sai. Luôn kiểm tra null.
+
+**Ví dụ (TypeScript):**
+```ts
+const node = document.querySelector('#email');
+if (node instanceof HTMLInputElement) {
+  node.value = 'hello@example.com';
+}
+```
+
+## Cross References / Tham Chiếu Liên Quan
+
+- [Advanced Types](./02-advanced-types.md)
+- [Generics Deep Dive](./03-generics-deep-dive.md)
+- [TypeScript Comprehensive](./04-typescript-comprehensive.md)
+- [Type Inference Theory](./05-type-inference-theory.md)
+
+## Câu Hỏi Phỏng Vấn / Interview Q&A
+
+### 🟢 [Junior] Q1. What is a type annotation?
+
+**Answer (EN):** A type annotation explicitly declares the expected type for a variable, parameter, or return value.
+
+**Giải thích (VI):** Type annotation giúp code rõ ràng, IDE gợi ý tốt hơn, và bắt lỗi sớm.
+
+**Ví dụ (TypeScript):**
+```ts
+function add(a: number, b: number): number { return a + b; }
+```
+
+### 🟢 [Junior] Q2. When should I use interface?
+
+**Answer (EN):** Use interface for object contracts and extension in OOP-like domain models.
+
+**Giải thích (VI):** Dùng interface khi mô tả shape object và cần extends/merge.
+
+**Ví dụ (TypeScript):**
+```ts
+interface Product { id: string; price: number }
+```
+
+### 🟢 [Junior] Q3. When should I use type alias?
+
+**Answer (EN):** Use type for unions, mapped types, conditional types, and composition-heavy models.
+
+**Giải thích (VI):** type mạnh khi ghép kiểu, tạo union/intersection.
+
+**Ví dụ (TypeScript):**
+```ts
+type Result = { ok: true } | { ok: false; error: string };
+```
+
+### 🟢 [Junior] Q4. What is a union type?
+
+**Answer (EN):** A union allows one value to be one of multiple listed types.
+
+**Giải thích (VI):** Union thể hiện lựa chọn OR giữa nhiều kiểu.
+
+**Ví dụ (TypeScript):**
+```ts
+let id: string | number = 'A01'; id = 101;
+```
+
+### 🟢 [Junior] Q5. What is an intersection type?
+
+**Answer (EN):** An intersection combines requirements from multiple types into one.
+
+**Giải thích (VI):** Intersection là AND: phải thỏa tất cả thuộc tính.
+
+**Ví dụ (TypeScript):**
+```ts
+type A = { a: string }; type B = { b: number }; type AB = A & B;
+```
+
+### 🟡 [Mid] Q6. Why are literal types useful in UI state?
+
+**Answer (EN):** Literal unions prevent invalid state transitions by constraining allowed values.
+
+**Giải thích (VI):** Literal type giúp state machine chặt chẽ và tránh typo.
+
+**Ví dụ (TypeScript):**
+```ts
+type View = 'list' | 'detail' | 'edit';
+```
+
+### 🟡 [Mid] Q7. Enum vs string literal union?
+
+**Answer (EN):** String literal unions are lighter and often preferred in frontend; enums provide runtime object.
+
+**Giải thích (VI):** FE thường ưu tiên union literals vì tree-shaking và đơn giản.
+
+**Ví dụ (TypeScript):**
+```ts
+type Role = 'user' | 'admin';
+```
+
+### 🟢 [Junior] Q8. What does `as` do?
+
+**Answer (EN):** `as` performs compile-time assertion only and does not transform runtime values.
+
+**Giải thích (VI):** `as` chỉ ảnh hưởng compile-time, không convert dữ liệu thật.
+
+**Ví dụ (TypeScript):**
+```ts
+const n = '42' as unknown as number; // unsafe
+```
+
+### 🟡 [Mid] Q9. How to write a custom type guard?
+
+**Answer (EN):** Return a predicate signature (`value is T`) and check runtime shape safely.
+
+**Giải thích (VI):** Custom guard kết hợp kiểm tra runtime + predicate type.
+
+**Ví dụ (TypeScript):**
+```ts
+function isError(e: unknown): e is Error { return e instanceof Error; }
+```
+
+### 🟡 [Mid] Q10. How does narrowing work with control flow?
+
+**Answer (EN):** TypeScript narrows by branch conditions, returns, throws, and exhaustive checks.
+
+**Giải thích (VI):** Compiler theo dõi luồng điều khiển để thu hẹp kiểu.
+
+**Ví dụ (TypeScript):**
+```ts
+function f(v: string | null){ if(!v) return; return v.toUpperCase(); }
+```
+
+### 🟡 [Mid] Q11. What does `strictNullChecks` protect?
+
+**Answer (EN):** It prevents using `null`/`undefined` where non-null values are required.
+
+**Giải thích (VI):** Bảo vệ khỏi lỗi null pointer bằng kiểm tra tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+let x: string | undefined; // must check before use
+```
+
+### 🟡 [Mid] Q12. Why enable `noImplicitAny`?
+
+**Answer (EN):** It blocks accidental `any` and forces explicit modeling of unknown values.
+
+**Giải thích (VI):** Tránh kiểu any ngầm làm mất an toàn kiểu.
+
+**Ví dụ (TypeScript):**
+```ts
+function parse(v) { return v; } // error with noImplicitAny
+```
+
+### 🔴 [Senior] Q13. What is declaration file strategy for legacy JS?
+
+**Answer (EN):** Create `.d.ts` wrappers for high-traffic APIs first, then expand coverage incrementally.
+
+**Giải thích (VI):** Bọc type cho API quan trọng trước để giảm rủi ro migration.
+
+**Ví dụ (TypeScript):**
+```ts
+declare module 'legacy' { export function init(): void }
+```
+
+### 🔴 [Senior] Q14. How do you enforce safe indexing?
+
+**Answer (EN):** Enable `noUncheckedIndexedAccess` and model maps with explicit undefined handling.
+
+**Giải thích (VI):** Bật cờ này để tránh assume key luôn tồn tại.
+
+**Ví dụ (TypeScript):**
+```ts
+const map: Record<string, number> = {}; const v = map['x']; // number | undefined
+```
+
+### 🟢 [Junior] Q15. What is `unknown`?
+
+**Answer (EN):** `unknown` is a safe top type that requires narrowing before use.
+
+**Giải thích (VI):** unknown an toàn hơn any vì bắt buộc kiểm tra trước khi dùng.
+
+**Ví dụ (TypeScript):**
+```ts
+function handle(v: unknown){ if(typeof v === 'string') v.toUpperCase(); }
+```
+
+### 🟡 [Mid] Q16. How to configure path aliases?
+
+**Answer (EN):** Use `baseUrl` and `paths` in tsconfig and align with bundler config.
+
+**Giải thích (VI):** Alias giúp import sạch hơn nhưng phải đồng bộ bundler/test.
+
+**Ví dụ (TypeScript):**
+```ts
+// tsconfig paths: "@/*": ["src/*"]
+```
+
+### 🔴 [Senior] Q17. How to explain structural typing in interview?
+
+**Answer (EN):** Compatibility depends on shape, not nominal declarations.
+
+**Giải thích (VI):** TS so khớp theo cấu trúc thuộc tính thay vì tên kiểu.
+
+**Ví dụ (TypeScript):**
+```ts
+type P = { x: number }; const p: P = { x: 1, y: 2 } as any;
+```
+
+### 🟢 [Junior] Q18. What is tuple?
+
+**Answer (EN):** Tuple is a fixed-length array with known element types by position.
+
+**Giải thích (VI):** Tuple phù hợp cho dữ liệu có thứ tự và ý nghĩa theo index.
+
+**Ví dụ (TypeScript):**
+```ts
+const pair: [string, number] = ['age', 30];
+```
+
+### 🟡 [Mid] Q19. How to type function overloads?
+
+**Answer (EN):** Declare overload signatures followed by one implementation signature.
+
+**Giải thích (VI):** Overload hữu ích khi API có nhiều cách gọi rõ ràng.
+
+**Ví dụ (TypeScript):**
+```ts
+function len(v: string): number; function len(v: any[]): number; function len(v: string|any[]){return v.length;}
+```
+
+### 🔴 [Senior] Q20. How do strict options affect refactoring?
+
+**Answer (EN):** They increase upfront friction but dramatically reduce regression risk in large codebases.
+
+**Giải thích (VI):** Strict mode làm migration khó hơn ban đầu nhưng ổn định dài hạn.
+
+**Ví dụ (TypeScript):**
+```ts
+// enable strict suite in stages with CI gates
+```
+
+### 🔴 [Senior] Q21. Practice scenario 21: explain a typing decision
+
+**Answer (EN):** State constraints, model types explicitly, and justify trade-offs.
+
+**Giải thích (VI):** Trình bày ràng buộc nghiệp vụ, chọn type phù hợp và nêu đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Decision = { reason: string; risk: 'low' | 'high' };
+```
+
+### 🟡 [Mid] Q22. Practice scenario 22: explain a typing decision
+
+**Answer (EN):** State constraints, model types explicitly, and justify trade-offs.
+
+**Giải thích (VI):** Trình bày ràng buộc nghiệp vụ, chọn type phù hợp và nêu đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Decision = { reason: string; risk: 'low' | 'high' };
+```
+
+### 🟡 [Mid] Q23. Practice scenario 23: explain a typing decision
+
+**Answer (EN):** State constraints, model types explicitly, and justify trade-offs.
+
+**Giải thích (VI):** Trình bày ràng buộc nghiệp vụ, chọn type phù hợp và nêu đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Decision = { reason: string; risk: 'low' | 'high' };
+```
+
+### 🔴 [Senior] Q24. Practice scenario 24: explain a typing decision
+
+**Answer (EN):** State constraints, model types explicitly, and justify trade-offs.
+
+**Giải thích (VI):** Trình bày ràng buộc nghiệp vụ, chọn type phù hợp và nêu đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Decision = { reason: string; risk: 'low' | 'high' };
+```
+
+### 🟡 [Mid] Q25. Practice scenario 25: explain a typing decision
+
+**Answer (EN):** State constraints, model types explicitly, and justify trade-offs.
+
+**Giải thích (VI):** Trình bày ràng buộc nghiệp vụ, chọn type phù hợp và nêu đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Decision = { reason: string; risk: 'low' | 'high' };
+```
+
+### 🟡 [Mid] Q26. Practice scenario 26: explain a typing decision
+
+**Answer (EN):** State constraints, model types explicitly, and justify trade-offs.
+
+**Giải thích (VI):** Trình bày ràng buộc nghiệp vụ, chọn type phù hợp và nêu đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Decision = { reason: string; risk: 'low' | 'high' };
+```
+
+### 🔴 [Senior] Q27. Practice scenario 27: explain a typing decision
+
+**Answer (EN):** State constraints, model types explicitly, and justify trade-offs.
+
+**Giải thích (VI):** Trình bày ràng buộc nghiệp vụ, chọn type phù hợp và nêu đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Decision = { reason: string; risk: 'low' | 'high' };
+```
+
+### 🟡 [Mid] Q28. Practice scenario 28: explain a typing decision
+
+**Answer (EN):** State constraints, model types explicitly, and justify trade-offs.
+
+**Giải thích (VI):** Trình bày ràng buộc nghiệp vụ, chọn type phù hợp và nêu đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Decision = { reason: string; risk: 'low' | 'high' };
+```
+
+### 🟡 [Mid] Q29. Practice scenario 29: explain a typing decision
+
+**Answer (EN):** State constraints, model types explicitly, and justify trade-offs.
+
+**Giải thích (VI):** Trình bày ràng buộc nghiệp vụ, chọn type phù hợp và nêu đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Decision = { reason: string; risk: 'low' | 'high' };
+```
+
+### 🔴 [Senior] Q30. Practice scenario 30: explain a typing decision
+
+**Answer (EN):** State constraints, model types explicitly, and justify trade-offs.
+
+**Giải thích (VI):** Trình bày ràng buộc nghiệp vụ, chọn type phù hợp và nêu đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Decision = { reason: string; risk: 'low' | 'high' };
+```
+
+### 🟡 [Mid] Q31. Practice scenario 31: explain a typing decision
+
+**Answer (EN):** State constraints, model types explicitly, and justify trade-offs.
+
+**Giải thích (VI):** Trình bày ràng buộc nghiệp vụ, chọn type phù hợp và nêu đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Decision = { reason: string; risk: 'low' | 'high' };
+```
+
+### 🟡 [Mid] Q32. Practice scenario 32: explain a typing decision
+
+**Answer (EN):** State constraints, model types explicitly, and justify trade-offs.
+
+**Giải thích (VI):** Trình bày ràng buộc nghiệp vụ, chọn type phù hợp và nêu đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Decision = { reason: string; risk: 'low' | 'high' };
+```
+
+### 🔴 [Senior] Q33. Practice scenario 33: explain a typing decision
+
+**Answer (EN):** State constraints, model types explicitly, and justify trade-offs.
+
+**Giải thích (VI):** Trình bày ràng buộc nghiệp vụ, chọn type phù hợp và nêu đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Decision = { reason: string; risk: 'low' | 'high' };
+```
+
+### 🟡 [Mid] Q34. Practice scenario 34: explain a typing decision
+
+**Answer (EN):** State constraints, model types explicitly, and justify trade-offs.
+
+**Giải thích (VI):** Trình bày ràng buộc nghiệp vụ, chọn type phù hợp và nêu đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Decision = { reason: string; risk: 'low' | 'high' };
+```
+
+### 🟡 [Mid] Q35. Practice scenario 35: explain a typing decision
+
+**Answer (EN):** State constraints, model types explicitly, and justify trade-offs.
+
+**Giải thích (VI):** Trình bày ràng buộc nghiệp vụ, chọn type phù hợp và nêu đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Decision = { reason: string; risk: 'low' | 'high' };
+```
+
+### 🔴 [Senior] Q36. Practice scenario 36: explain a typing decision
+
+**Answer (EN):** State constraints, model types explicitly, and justify trade-offs.
+
+**Giải thích (VI):** Trình bày ràng buộc nghiệp vụ, chọn type phù hợp và nêu đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Decision = { reason: string; risk: 'low' | 'high' };
+```
+
+### 🟡 [Mid] Q37. Practice scenario 37: explain a typing decision
+
+**Answer (EN):** State constraints, model types explicitly, and justify trade-offs.
+
+**Giải thích (VI):** Trình bày ràng buộc nghiệp vụ, chọn type phù hợp và nêu đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Decision = { reason: string; risk: 'low' | 'high' };
+```
+
+### 🟡 [Mid] Q38. Practice scenario 38: explain a typing decision
+
+**Answer (EN):** State constraints, model types explicitly, and justify trade-offs.
+
+**Giải thích (VI):** Trình bày ràng buộc nghiệp vụ, chọn type phù hợp và nêu đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Decision = { reason: string; risk: 'low' | 'high' };
+```
+
+### 🔴 [Senior] Q39. Practice scenario 39: explain a typing decision
+
+**Answer (EN):** State constraints, model types explicitly, and justify trade-offs.
+
+**Giải thích (VI):** Trình bày ràng buộc nghiệp vụ, chọn type phù hợp và nêu đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Decision = { reason: string; risk: 'low' | 'high' };
+```
+
+### 🟡 [Mid] Q40. Practice scenario 40: explain a typing decision
+
+**Answer (EN):** State constraints, model types explicitly, and justify trade-offs.
+
+**Giải thích (VI):** Trình bày ràng buộc nghiệp vụ, chọn type phù hợp và nêu đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Decision = { reason: string; risk: 'low' | 'high' };
+```
+
+### 🟡 [Mid] Q41. Practice scenario 41: explain a typing decision
+
+**Answer (EN):** State constraints, model types explicitly, and justify trade-offs.
+
+**Giải thích (VI):** Trình bày ràng buộc nghiệp vụ, chọn type phù hợp và nêu đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Decision = { reason: string; risk: 'low' | 'high' };
+```
+
+### 🔴 [Senior] Q42. Practice scenario 42: explain a typing decision
+
+**Answer (EN):** State constraints, model types explicitly, and justify trade-offs.
+
+**Giải thích (VI):** Trình bày ràng buộc nghiệp vụ, chọn type phù hợp và nêu đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Decision = { reason: string; risk: 'low' | 'high' };
+```
+
+### 🟡 [Mid] Q43. Practice scenario 43: explain a typing decision
+
+**Answer (EN):** State constraints, model types explicitly, and justify trade-offs.
+
+**Giải thích (VI):** Trình bày ràng buộc nghiệp vụ, chọn type phù hợp và nêu đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Decision = { reason: string; risk: 'low' | 'high' };
+```
+
+### 🟡 [Mid] Q44. Practice scenario 44: explain a typing decision
+
+**Answer (EN):** State constraints, model types explicitly, and justify trade-offs.
+
+**Giải thích (VI):** Trình bày ràng buộc nghiệp vụ, chọn type phù hợp và nêu đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Decision = { reason: string; risk: 'low' | 'high' };
+```
+

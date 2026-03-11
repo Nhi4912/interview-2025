@@ -1,587 +1,867 @@
 # Functional Programming in JavaScript
-## Principles and Patterns
+## Principles, Patterns, and Interview Practice
 
-**English:** Functional programming is a programming paradigm that treats computation as the evaluation of mathematical functions and avoids changing state and mutable data.
-
-**Tiếng Việt:** Lập trình hàm là mô hình lập trình coi tính toán như việc đánh giá các hàm toán học và tránh thay đổi trạng thái và dữ liệu có thể thay đổi.
-
-## Core Concepts
-
-### Pure Functions
-**Definition:** Functions that always return same output for same input and have no side effects.
-
-**Characteristics:**
-- Deterministic
-- No side effects
-- Referential transparency
-- Testable
-- Cacheable
-
-**Examples:**
-```javascript
-// Pure
-const add = (a, b) => a + b;
-const multiply = (x, y) => x * y;
-
-// Impure
-let count = 0;
-const increment = () => count++; // Modifies external state
-
-const random = () => Math.random(); // Non-deterministic
-```
-
-### Immutability
-**Principle:** Data cannot be changed after creation.
-
-**Benefits:**
-- Predictable code
-- Easier debugging
-- Thread-safe
-- Time-travel debugging
-
-**Techniques:**
-```javascript
-// Arrays
-const arr = [1, 2, 3];
-const newArr = [...arr, 4]; // Don't mutate
-const filtered = arr.filter(x => x > 1);
-const mapped = arr.map(x => x * 2);
-
-// Objects
-const obj = { name: 'John' };
-const updated = { ...obj, age: 30 };
-const modified = Object.assign({}, obj, { age: 30 });
-
-// Deep freeze
-const deepFreeze = (obj) => {
-  Object.freeze(obj);
-  Object.values(obj).forEach(val => {
-    if (typeof val === 'object' && val !== null) {
-      deepFreeze(val);
-    }
-  });
-  return obj;
-};
-```
-
-### First-Class Functions
-**Concept:** Functions are values that can be assigned, passed, and returned.
-
-```javascript
-// Assign to variable
-const greet = function(name) {
-  return `Hello, ${name}`;
-};
-
-// Pass as argument
-const execute = (fn, value) => fn(value);
-execute(greet, 'John');
-
-// Return from function
-const createMultiplier = (factor) => {
-  return (number) => number * factor;
-};
-const double = createMultiplier(2);
-```
-
-### Higher-Order Functions
-**Definition:** Functions that take functions as arguments or return functions.
-
-**Common HOFs:**
-```javascript
-// map
-const numbers = [1, 2, 3, 4, 5];
-const doubled = numbers.map(x => x * 2);
-
-// filter
-const evens = numbers.filter(x => x % 2 === 0);
-
-// reduce
-const sum = numbers.reduce((acc, x) => acc + x, 0);
-
-// Custom HOF
-const withLogging = (fn) => {
-  return (...args) => {
-    console.log(`Calling with ${args}`);
-    const result = fn(...args);
-    console.log(`Result: ${result}`);
-    return result;
-  };
-};
-
-const add = (a, b) => a + b;
-const loggedAdd = withLogging(add);
-```
-
-## Function Composition
-
-### Compose and Pipe
-
-**Compose (right to left):**
-```javascript
-const compose = (...fns) => x =>
-  fns.reduceRight((acc, fn) => fn(acc), x);
-
-const add1 = x => x + 1;
-const multiply2 = x => x * 2;
-const subtract3 = x => x - 3;
-
-const calculate = compose(subtract3, multiply2, add1);
-calculate(5); // ((5 + 1) * 2) - 3 = 9
-```
-
-**Pipe (left to right):**
-```javascript
-const pipe = (...fns) => x =>
-  fns.reduce((acc, fn) => fn(acc), x);
-
-const calculate = pipe(add1, multiply2, subtract3);
-calculate(5); // ((5 + 1) * 2) - 3 = 9
-```
-
-**Practical Example:**
-```javascript
-const users = [
-  { name: 'John', age: 30, active: true },
-  { name: 'Jane', age: 25, active: false },
-  { name: 'Bob', age: 35, active: true }
-];
-
-const getActiveUsers = users => users.filter(u => u.active);
-const getNames = users => users.map(u => u.name);
-const sortAlphabetically = names => names.sort();
-
-const getActiveUserNames = pipe(
-  getActiveUsers,
-  getNames,
-  sortAlphabetically
-);
-
-getActiveUserNames(users); // ['Bob', 'John']
-```
-
-## Currying
-
-### Concept
-**Definition:** Transform function with multiple arguments into sequence of functions with single argument.
-
-**Manual Currying:**
-```javascript
-// Regular function
-const add = (a, b, c) => a + b + c;
-
-// Curried version
-const curriedAdd = a => b => c => a + b + c;
-
-curriedAdd(1)(2)(3); // 6
-
-// Partial application
-const add1 = curriedAdd(1);
-const add1and2 = add1(2);
-add1and2(3); // 6
-```
-
-**Generic Curry:**
-```javascript
-const curry = (fn) => {
-  return function curried(...args) {
-    if (args.length >= fn.length) {
-      return fn.apply(this, args);
-    }
-    return (...moreArgs) => curried(...args, ...moreArgs);
-  };
-};
-
-const add = (a, b, c) => a + b + c;
-const curriedAdd = curry(add);
-
-curriedAdd(1)(2)(3); // 6
-curriedAdd(1, 2)(3); // 6
-curriedAdd(1)(2, 3); // 6
-```
-
-**Practical Use:**
-```javascript
-const map = curry((fn, arr) => arr.map(fn));
-const filter = curry((fn, arr) => arr.filter(fn));
-
-const double = x => x * 2;
-const isEven = x => x % 2 === 0;
-
-const doubleAll = map(double);
-const filterEvens = filter(isEven);
-
-const numbers = [1, 2, 3, 4, 5];
-doubleAll(numbers); // [2, 4, 6, 8, 10]
-filterEvens(numbers); // [2, 4]
-```
-
-## Partial Application
-
-**Concept:** Fix some arguments of function, producing function with fewer arguments.
-
-```javascript
-const partial = (fn, ...fixedArgs) => {
-  return (...remainingArgs) => {
-    return fn(...fixedArgs, ...remainingArgs);
-  };
-};
-
-const greet = (greeting, name) => `${greeting}, ${name}!`;
-
-const sayHello = partial(greet, 'Hello');
-sayHello('John'); // "Hello, John!"
-
-const sayHi = partial(greet, 'Hi');
-sayHi('Jane'); // "Hi, Jane!"
-```
-
-## Recursion
-
-### Basics
-**Definition:** Function that calls itself.
-
-**Structure:**
-- Base case (termination)
-- Recursive case (self-call)
-
-**Examples:**
-```javascript
-// Factorial
-const factorial = n => {
-  if (n <= 1) return 1; // Base case
-  return n * factorial(n - 1); // Recursive case
-};
-
-// Fibonacci
-const fibonacci = n => {
-  if (n <= 1) return n;
-  return fibonacci(n - 1) + fibonacci(n - 2);
-};
-
-// Sum array
-const sum = arr => {
-  if (arr.length === 0) return 0;
-  return arr[0] + sum(arr.slice(1));
-};
-```
-
-### Tail Call Optimization
-**Concept:** Recursive call is last operation in function.
-
-```javascript
-// Not tail recursive
-const factorial = n => {
-  if (n <= 1) return 1;
-  return n * factorial(n - 1); // Multiplication after call
-};
-
-// Tail recursive
-const factorialTail = (n, acc = 1) => {
-  if (n <= 1) return acc;
-  return factorialTail(n - 1, n * acc); // Call is last operation
-};
-```
-
-## Functors and Monads
-
-### Functor
-**Definition:** Object with map method that preserves structure.
-
-```javascript
-// Array is a functor
-[1, 2, 3].map(x => x * 2); // [2, 4, 6]
-
-// Custom functor
-class Box {
-  constructor(value) {
-    this.value = value;
-  }
-  
-  map(fn) {
-    return new Box(fn(this.value));
-  }
-  
-  fold(fn) {
-    return fn(this.value);
-  }
-}
-
-const result = new Box(5)
-  .map(x => x * 2)
-  .map(x => x + 1)
-  .fold(x => x); // 11
-```
-
-### Maybe Monad
-**Purpose:** Handle null/undefined safely.
-
-```javascript
-class Maybe {
-  constructor(value) {
-    this.value = value;
-  }
-  
-  static of(value) {
-    return new Maybe(value);
-  }
-  
-  isNothing() {
-    return this.value === null || this.value === undefined;
-  }
-  
-  map(fn) {
-    return this.isNothing() ? this : Maybe.of(fn(this.value));
-  }
-  
-  flatMap(fn) {
-    return this.isNothing() ? this : fn(this.value);
-  }
-  
-  getOrElse(defaultValue) {
-    return this.isNothing() ? defaultValue : this.value;
-  }
-}
-
-// Usage
-const user = { name: 'John', address: { city: 'NYC' } };
-
-const getCity = user =>
-  Maybe.of(user)
-    .map(u => u.address)
-    .map(a => a.city)
-    .getOrElse('Unknown');
-
-getCity(user); // 'NYC'
-getCity({}); // 'Unknown'
-```
-
-### Either Monad
-**Purpose:** Handle errors functionally.
-
-```javascript
-class Either {
-  constructor(value) {
-    this.value = value;
-  }
-  
-  static left(value) {
-    const either = new Either(value);
-    either.isLeft = true;
-    return either;
-  }
-  
-  static right(value) {
-    const either = new Either(value);
-    either.isLeft = false;
-    return either;
-  }
-  
-  map(fn) {
-    return this.isLeft ? this : Either.right(fn(this.value));
-  }
-  
-  fold(leftFn, rightFn) {
-    return this.isLeft ? leftFn(this.value) : rightFn(this.value);
-  }
-}
-
-// Usage
-const divide = (a, b) =>
-  b === 0
-    ? Either.left('Division by zero')
-    : Either.right(a / b);
-
-divide(10, 2)
-  .map(x => x * 2)
-  .fold(
-    error => `Error: ${error}`,
-    result => `Result: ${result}`
-  ); // "Result: 10"
-
-divide(10, 0)
-  .map(x => x * 2)
-  .fold(
-    error => `Error: ${error}`,
-    result => `Result: ${result}`
-  ); // "Error: Division by zero"
-```
-
-## Lazy Evaluation
-
-**Concept:** Delay computation until result is needed.
-
-```javascript
-class Lazy {
-  constructor(fn) {
-    this.fn = fn;
-    this.evaluated = false;
-  }
-  
-  map(fn) {
-    return new Lazy(() => fn(this.force()));
-  }
-  
-  force() {
-    if (!this.evaluated) {
-      this.value = this.fn();
-      this.evaluated = true;
-    }
-    return this.value;
-  }
-}
-
-// Usage
-const expensive = new Lazy(() => {
-  console.log('Computing...');
-  return 42;
-});
-
-// Nothing computed yet
-const doubled = expensive.map(x => x * 2);
-const added = doubled.map(x => x + 1);
-
-// Computed only when forced
-added.force(); // Logs "Computing...", returns 85
-added.force(); // Returns 85 (cached)
-```
-
-## Transducers
-
-**Concept:** Composable algorithmic transformations.
-
-```javascript
-const map = fn => reducer => (acc, val) =>
-  reducer(acc, fn(val));
-
-const filter = predicate => reducer => (acc, val) =>
-  predicate(val) ? reducer(acc, val) : acc;
-
-const transduce = (xform, reducer, initial, collection) =>
-  collection.reduce(xform(reducer), initial);
-
-// Usage
-const double = x => x * 2;
-const isEven = x => x % 2 === 0;
-const append = (acc, val) => [...acc, val];
-
-const xform = compose(
-  filter(isEven),
-  map(double)
-);
-
-const numbers = [1, 2, 3, 4, 5];
-transduce(xform, append, [], numbers); // [4, 8]
-```
-
-## Point-Free Style
-
-**Concept:** Define functions without mentioning arguments.
-
-```javascript
-// Not point-free
-const double = x => x * 2;
-const doubleAll = arr => arr.map(x => double(x));
-
-// Point-free
-const doubleAll = map(double);
-
-// More examples
-const sum = reduce(add, 0);
-const getNames = map(prop('name'));
-const getActiveUsers = filter(prop('active'));
-```
-
-## Memoization
-
-**Concept:** Cache function results for same inputs.
-
-```javascript
-const memoize = (fn) => {
-  const cache = new Map();
-  
-  return (...args) => {
-    const key = JSON.stringify(args);
-    
-    if (cache.has(key)) {
-      return cache.get(key);
-    }
-    
-    const result = fn(...args);
-    cache.set(key, result);
-    return result;
-  };
-};
-
-// Usage
-const fibonacci = memoize(n => {
-  if (n <= 1) return n;
-  return fibonacci(n - 1) + fibonacci(n - 2);
-});
-
-fibonacci(40); // Fast with memoization
-```
-
-## Practical Patterns
-
-### Data Pipeline
-```javascript
-const processUsers = pipe(
-  filter(user => user.active),
-  map(user => ({ ...user, name: user.name.toUpperCase() })),
-  sortBy('age'),
-  take(10)
-);
-```
-
-### Error Handling
-```javascript
-const safeDiv = (a, b) =>
-  b === 0
-    ? Either.left('Division by zero')
-    : Either.right(a / b);
-
-const calculate = (x, y) =>
-  safeDiv(x, y)
-    .map(result => result * 2)
-    .map(result => result + 1)
-    .fold(
-      error => ({ error }),
-      result => ({ result })
-    );
-```
-
-### Async Operations
-```javascript
-const fetchUser = id =>
-  fetch(`/api/users/${id}`)
-    .then(res => res.json())
-    .then(Either.right)
-    .catch(Either.left);
-
-const processUser = pipe(
-  map(user => user.name),
-  map(name => name.toUpperCase())
-);
-```
-
-## Interview Questions
-
-**Q: What is a pure function?**
-A: Function that always returns same output for same input and has no side effects. Benefits: testable, cacheable, predictable, parallelizable.
-
-**Q: Explain function composition.**
-A: Combining multiple functions to create new function. Compose applies right-to-left, pipe applies left-to-right. Enables building complex operations from simple functions.
-
-**Q: What is currying?**
-A: Transforming function with multiple arguments into sequence of functions with single argument. Enables partial application and function specialization.
-
-**Q: Difference between map, filter, reduce?**
-A: map transforms each element, filter selects elements, reduce accumulates to single value. All are pure, return new arrays/values.
-
-**Q: What is immutability?**
-A: Data cannot be changed after creation. Benefits: predictable code, easier debugging, time-travel debugging, thread-safe operations.
+[← Previous](./11-design-patterns.md) | [Back to Table of Contents](../00-table-of-contents.md) | [Next →](./13-memory-management.md)
 
 ---
 
-[← Back to ES6 Features](./11-es6-features-deep.md) | [Next: Advanced Concepts →](./08-advanced-concepts.md)
+## Tổng Quan / Overview
+
+JavaScript interview prep should be bilingual and practical: explain the concept in English, then reinforce it in Vietnamese with trade-offs and common pitfalls.
+
+Giải thích (VI): Tài liệu này tập trung vào phần cốt lõi thường gặp trong phỏng vấn Frontend. Mỗi mục có định nghĩa, lưu ý và ví dụ JavaScript ngắn gọn để bạn ôn tập nhanh.
+
+### Related Links / Liên Kết Liên Quan
+- [JavaScript Basics](./00-javascript-basics.md)
+- [Closures](./03-closures.md)
+- [Event Loop & Async](./06-event-loop-async.md)
+- [Memory Management](./13-memory-management.md)
+
+---
+
+## Core Concepts
+
+### 1. Functional Programming Mindset
+
+#### Tổng Quan
+Functional programming emphasizes predictable transformations over mutable state changes.
+
+#### Giải thích
+Tư duy FP giúp code dễ test, dễ refactor và giảm bug side effects. Trong frontend, FP rất hữu ích cho data processing và state updates.
+
+#### Ví dụ
+```javascript
+const addTax = (price, taxRate) => price * (1 + taxRate);
+console.log(addTax(100, 0.1));
+```
+
+### 2. Pure Functions
+
+#### Tổng Quan
+A pure function returns the same output for same input and causes no side effects.
+
+#### Giải thích
+Hàm thuần không đọc/ghi trạng thái bên ngoài. Đây là nền tảng để test đơn giản và cache kết quả.
+
+#### Ví dụ
+```javascript
+const pureSum = (a, b) => a + b;
+
+let count = 0;
+const impureInc = () => ++count;
+```
+
+### 3. Immutability
+
+#### Tổng Quan
+Instead of mutating existing data, return new data structures.
+
+#### Giải thích
+Bất biến giúp theo dõi state transitions rõ ràng. Trong React, immutable update hỗ trợ so sánh tham chiếu tối ưu render.
+
+#### Ví dụ
+```javascript
+const user = { name: 'Linh', skills: ['JS'] };
+const nextUser = { ...user, skills: [...user.skills, 'TS'] };
+
+console.log(user, nextUser);
+```
+
+### 4. First-Class and Higher-Order Functions
+
+#### Tổng Quan
+Functions can be passed, returned, and composed as values.
+
+#### Giải thích
+Higher-order function nhận hàm khác làm input hoặc trả về hàm. Đây là mô hình chung của map/filter/reduce.
+
+#### Ví dụ
+```javascript
+const apply = (fn, value) => fn(value);
+const double = x => x * 2;
+console.log(apply(double, 5));
+```
+
+### 5. map, filter, reduce Essentials
+
+#### Tổng Quan
+These array operators are core FP tools for transformation pipelines.
+
+#### Giải thích
+map biến đổi từng phần tử, filter chọn phần tử theo điều kiện, reduce gộp danh sách thành một giá trị.
+
+#### Ví dụ
+```javascript
+const nums = [1, 2, 3, 4];
+const result = nums
+  .map(n => n * 2)
+  .filter(n => n > 4)
+  .reduce((sum, n) => sum + n, 0);
+
+console.log(result);
+```
+
+### 6. Function Composition
+
+#### Tổng Quan
+Composition chains small functions to build complex behavior.
+
+#### Giải thích
+Composition giúp tách logic thành bước nhỏ dễ đọc. Thường dùng `compose` hoặc `pipe` trong codebase FP.
+
+#### Ví dụ
+```javascript
+const trim = s => s.trim();
+const lower = s => s.toLowerCase();
+const toSlug = s => s.replace(/\s+/g, '-');
+
+const pipe = (...fns) => input => fns.reduce((v, fn) => fn(v), input);
+const slugify = pipe(trim, lower, toSlug);
+console.log(slugify('  Hello FP World  '));
+```
+
+### 7. Currying in FP
+
+#### Tổng Quan
+Currying enables reusable partially-applied functions and cleaner composition.
+
+#### Giải thích
+Currying tạo hàm chuyên biệt từ hàm tổng quát. Ví dụ tạo `addVAT` từ hàm `addRate`.
+
+#### Ví dụ
+```javascript
+const addRate = rate => amount => amount * (1 + rate);
+const addVAT = addRate(0.1);
+console.log(addVAT(200));
+```
+
+### 8. Point-Free Style
+
+#### Tổng Quan
+Point-free style defines transformations without explicitly naming data arguments.
+
+#### Giải thích
+Phong cách này gọn nhưng có thể khó đọc nếu lạm dụng. Hãy ưu tiên readability hơn "đẹp cú pháp".
+
+#### Ví dụ
+```javascript
+const pipe = (...fns) => x => fns.reduce((v, fn) => fn(v), x);
+const exclaim = s => `${s}!`;
+const upper = s => s.toUpperCase();
+
+const shout = pipe(upper, exclaim);
+console.log(shout('fp'));
+```
+
+### 9. Functor Basics
+
+#### Tổng Quan
+A functor is a container-like structure with map that preserves context.
+
+#### Giải thích
+Nói đơn giản: nếu có `map` để biến đổi value bên trong mà giữ nguyên "vỏ" thì đó là functor (ví dụ Array, Promise theo nghĩa thực hành).
+
+#### Ví dụ
+```javascript
+const box = value => ({
+  map: fn => box(fn(value)),
+  fold: fn => fn(value)
+});
+
+const output = box(2).map(x => x + 3).map(x => x * 10).fold(x => x);
+console.log(output);
+```
+
+### 10. Monad Basics (Interview Level)
+
+#### Tổng Quan
+A monad extends functor with flatMap/chain to avoid nested contexts.
+
+#### Giải thích
+Trong phỏng vấn JS, bạn không cần quá học thuật; chỉ cần giải thích flatMap giúp tránh nested container (Promise<Promise<T>>...).
+
+#### Ví dụ
+```javascript
+const result = Promise.resolve(5)
+  .then(x => Promise.resolve(x + 1))
+  .then(x => x * 2);
+
+result.then(console.log);
+```
+
+### 11. FP Error Handling with Result-like Pattern
+
+#### Tổng Quan
+Instead of throwing everywhere, represent success/failure explicitly in data.
+
+#### Giải thích
+Mẫu Result/Either giúp pipeline an toàn và dễ test. Bạn xử lý lỗi như dữ liệu thay vì exception side-channel.
+
+#### Ví dụ
+```javascript
+const ok = value => ({ ok: true, value });
+const err = error => ({ ok: false, error });
+
+function parseNumber(input) {
+  const n = Number(input);
+  return Number.isFinite(n) ? ok(n) : err('Invalid number');
+}
+
+console.log(parseNumber('42'));
+```
+
+### 12. FP vs OOP Trade-offs
+
+#### Tổng Quan
+FP favors transformations and immutability; OOP favors stateful objects and encapsulation.
+
+#### Giải thích
+Không có mô hình nào luôn tốt hơn. Thực tế thường là hybrid: FP cho data flow, OOP cho domain model/lifecycle phức tạp.
+
+#### Ví dụ
+```javascript
+// FP style
+const withDiscount = (price, discount) => price * (1 - discount);
+
+// OOP style
+class Cart {
+  constructor(items = []) { this.items = items; }
+  total() { return this.items.reduce((s, i) => s + i.price, 0); }
+}
+```
+
+### 13. Performance and Readability Balance
+
+#### Tổng Quan
+FP chains are expressive but may allocate intermediate arrays; optimize only where needed.
+
+#### Giải thích
+Đừng tối ưu sớm. Trước hết viết rõ ràng, đo hiệu năng, rồi mới cân nhắc loop hoặc transducer khi pipeline rất lớn.
+
+#### Ví dụ
+```javascript
+const items = Array.from({ length: 5 }, (_, i) => i + 1);
+const total = items.map(x => x * 2).filter(x => x > 5).reduce((a, b) => a + b, 0);
+console.log(total);
+```
+
+### 14. Interview Strategy for FP Questions
+
+#### Tổng Quan
+Define concept, show tiny transformation pipeline, then discuss trade-offs.
+
+#### Giải thích
+Với câu FP, bạn nên trả lời theo khung: định nghĩa -> code ngắn -> lợi ích -> giới hạn.
+
+#### Ví dụ
+```javascript
+const pipeline = value => [value]
+  .map(x => x + 1)
+  .map(x => x * 2)[0];
+
+console.log(pipeline(5));
+```
+
+---
+
+## Câu Hỏi Phỏng Vấn / Interview Q&A
+
+### 🟢 [Junior] Q1. What is functional programming in JavaScript?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🟡 [Mid] Q2. What defines a pure function?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🔴 [Senior] Q3. Why are side effects problematic?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🟢 [Junior] Q4. How does immutability help debugging?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🟡 [Mid] Q5. How to update nested objects immutably?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🔴 [Senior] Q6. What are first-class functions?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🟢 [Junior] Q7. Define higher-order function with example.
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🟡 [Mid] Q8. When to use map vs forEach?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🔴 [Senior] Q9. How does filter differ from find?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🟢 [Junior] Q10. How does reduce work conceptually?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🟡 [Mid] Q11. What mistakes happen with reduce initial value?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🔴 [Senior] Q12. What is function composition?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🟢 [Junior] Q13. Difference between compose and pipe?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🟡 [Mid] Q14. How does currying improve reuse?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🔴 [Senior] Q15. Currying vs partial application?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🟢 [Junior] Q16. What is point-free style?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🟡 [Mid] Q17. When does point-free hurt readability?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🔴 [Senior] Q18. What is referential transparency?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🟢 [Junior] Q19. How does memoization relate to purity?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🟡 [Mid] Q20. What is a functor (practical explanation)?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🔴 [Senior] Q21. What is a monad in interview-friendly terms?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🟢 [Junior] Q22. Why does flatMap matter?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🟡 [Mid] Q23. How do Promise chains resemble monadic bind?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🔴 [Senior] Q24. How to model errors functionally?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🟢 [Junior] Q25. Result/Either vs throw: trade-offs?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🟡 [Mid] Q26. FP vs OOP: when choose which?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🔴 [Senior] Q27. Can FP be used with React effectively?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🟢 [Junior] Q28. How do reducers reflect FP principles?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🟡 [Mid] Q29. How to avoid accidental mutation in teams?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🔴 [Senior] Q30. What libraries support FP in JS ecosystems?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🟢 [Junior] Q31. How to benchmark FP pipelines?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🟡 [Mid] Q32. What are transducers at high level?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🔴 [Senior] Q33. What anti-patterns appear in over-engineered FP code?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🟢 [Junior] Q34. How to teach FP to OOP-first teams?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🟡 [Mid] Q35. What senior-level FP trade-offs to mention?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🔴 [Senior] Q36. How to keep FP code readable for interviews?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🟢 [Junior] Q37. How does lazy evaluation appear in JS?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🟡 [Mid] Q38. How to compose async functions functionally?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🔴 [Senior] Q39. How to refactor imperative loops into FP style?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+### 🟢 [Junior] Q40. What interview exercise commonly tests FP basics?
+
+**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
+
+**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
+
+**Ví dụ:**
+```javascript
+const numbers = [1, 2, 3];
+const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
+console.log(out);
+```
+
+**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).

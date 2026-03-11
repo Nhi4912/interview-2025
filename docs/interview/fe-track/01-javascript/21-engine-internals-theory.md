@@ -566,9 +566,9 @@ function process(x) {
 
 ---
 
-## Interview Questions / Câu Hỏi Phỏng Vấn
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-### Q1: Explain how JavaScript engines optimize code
+### 🔴 [Senior] Q1: Explain how JavaScript engines optimize code
 
 **English Answer:**
 
@@ -598,7 +598,7 @@ function process(x) {
 
 Engines tối ưu qua: interpretation → profiling → hot code detection → JIT compilation → optimization. Kỹ thuật: inlining, hidden classes, inline caching, type specialization.
 
-### Q2: What are hidden classes and why are they important?
+### 🔴 [Senior] Q2: What are hidden classes and why are they important?
 
 **English Answer:**
 
@@ -636,7 +636,7 @@ Engines tối ưu qua: interpretation → profiling → hot code detection → J
 
 Hidden classes theo dõi cấu trúc object. Cho phép truy cập thuộc tính O(1) thay vì O(n). Best practices: khởi tạo tất cả properties, cùng thứ tự, không xóa properties.
 
-### Q3: Explain inline caching and its states
+### 🔴 [Senior] Q3: Explain inline caching and its states
 
 **English Answer:**
 
@@ -677,7 +677,7 @@ Hidden classes theo dõi cấu trúc object. Cho phép truy cập thuộc tính 
 
 Inline caching cache kết quả lookup. States: Uninitialized → Monomorphic (tốt nhất) → Polymorphic (tốt) → Megamorphic (tệ). Giữ functions monomorphic để tối ưu.
 
-### Q4: What is JIT compilation and how does it work?
+### 🔴 [Senior] Q4: What is JIT compilation and how does it work?
 
 **English Answer:**
 

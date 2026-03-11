@@ -682,7 +682,7 @@ function getPost(id: PostId) {}
 
 ## Interview Questions / Câu Hỏi Phỏng Vấn
 
-### Q1: Explain template literal types
+### 🟡 [Mid] Q1: Explain template literal types
 
 **English Answer:**
 
@@ -717,7 +717,7 @@ type Variant = `${Size}-${Color}`;
 
 Template literal types tạo types từ template strings. Use cases: event names, CSS variables, API endpoints. Intrinsic helpers: Uppercase, Lowercase, Capitalize, Uncapitalize.
 
-### Q2: What are const type parameters?
+### 🔴 [Senior] Q2: What are const type parameters?
 
 **English Answer:**
 
@@ -757,7 +757,7 @@ const arr = identity([1, 2, 3]);  // readonly [1, 2, 3]
 
 const type parameters suy luận kiểu cụ thể nhất. Benefits: preserve literal types, readonly inference, better type safety. Use cases: tuples, config objects, const assertions.
 
-### Q3: Explain using declarations
+### 🟢 [Junior] Q3: Explain using declarations
 
 **English Answer:**
 

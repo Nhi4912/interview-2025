@@ -523,10 +523,10 @@ for (var j = 0; j < 5; j++) {
 
 ---
 
-## Interview Questions / Câu Hỏi Phỏng Vấn
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-### Q1: What is the difference between var, let, and const?
-### C1: Sự khác biệt giữa var, let, và const là gì?
+### 🟢 [Junior] Q1: What is the difference between var, let, and const?
+### 🟢 [Junior] C1: Sự khác biệt giữa var, let, và const là gì?
 
 **English Answer:**
 - `var`: Function-scoped, hoisted and initialized as undefined, can be redeclared
@@ -538,8 +538,8 @@ for (var j = 0; j < 5; j++) {
 - `let`: Phạm vi khối, được kéo lên nhưng không khởi tạo (TDZ), không thể khai báo lại
 - `const`: Phạm vi khối, được kéo lên nhưng không khởi tạo (TDZ), không thể khai báo lại hoặc gán lại
 
-### Q2: What is hoisting?
-### C2: Kéo lên là gì?
+### 🟢 [Junior] Q2: What is hoisting?
+### 🟢 [Junior] C2: Kéo lên là gì?
 
 **English Answer:**
 Hoisting is JavaScript's behavior of moving variable and function declarations to the top of their scope before code execution. However, only declarations are hoisted, not initializations.
@@ -547,8 +547,8 @@ Hoisting is JavaScript's behavior of moving variable and function declarations t
 **Câu Trả Lời Tiếng Việt:**
 Kéo lên là hành vi của JavaScript di chuyển các khai báo biến và hàm lên đầu phạm vi của chúng trước khi thực thi code. Tuy nhiên, chỉ có khai báo được kéo lên, không phải khởi tạo.
 
-### Q3: What is the Temporal Dead Zone?
-### C3: Vùng Chết Tạm Thời là gì?
+### 🟡 [Mid] Q3: What is the Temporal Dead Zone?
+### 🟡 [Mid] C3: Vùng Chết Tạm Thời là gì?
 
 **English Answer:**
 The Temporal Dead Zone (TDZ) is the period between entering a scope and the actual declaration of a `let` or `const` variable, during which the variable cannot be accessed.
@@ -556,7 +556,7 @@ The Temporal Dead Zone (TDZ) is the period between entering a scope and the actu
 **Câu Trả Lời Tiếng Việt:**
 Vùng Chết Tạm Thời (TDZ) là khoảng thời gian giữa việc vào một phạm vi và khai báo thực tế của biến `let` hoặc `const`, trong thời gian đó biến không thể được truy cập.
 
-### Q4: Predict the output / Dự đoán kết quả
+### 🟡 [Mid] Q4: Predict the output / Dự đoán kết quả
 
 ```javascript
 var x = 1;

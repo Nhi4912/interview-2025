@@ -655,9 +655,9 @@ class ThisBindingExamples {
 
 ---
 
-## Interview Questions / Câu Hỏi Phỏng Vấn
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-### Q1: Explain execution context and call stack
+### 🟡 [Mid] Q1: Explain execution context and call stack
 
 **English Answer:**
 
@@ -688,7 +688,7 @@ class ThisBindingExamples {
 
 Execution context chứa Variable Environment, Lexical Environment và This binding. Call stack quản lý các contexts theo LIFO.
 
-### Q2: What is the difference between scope and context?
+### 🟡 [Mid] Q2: What is the difference between scope and context?
 
 **English Answer:**
 

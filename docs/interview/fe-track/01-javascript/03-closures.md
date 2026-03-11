@@ -1,699 +1,1039 @@
 # Closures
 ## JavaScript Fundamentals - Chapter 3
 
-[← Previous: Scope & Hoisting](./02-scope-hoisting.md) | [Back to Table of Contents](../00-table-of-contents.md) | [Next: Prototypes & Inheritance →](./04-prototypes-inheritance.md)
+[← Previous](./02-scope-hoisting.md) | [Back to Table of Contents](../00-table-of-contents.md) | [Next →](./04-prototypes-inheritance.md)
 
 ---
 
-## Overview
+## Tổng Quan / Overview
 
-Closures are one of the most powerful and frequently misunderstood concepts in JavaScript. A closure gives you access to an outer function's scope from an inner function, even after the outer function has returned.
+JavaScript interview prep should be bilingual and practical: explain the concept in English, then reinforce it in Vietnamese with trade-offs and common pitfalls.
 
----
+Giải thích (VI): Tài liệu này tập trung vào phần cốt lõi thường gặp trong phỏng vấn Frontend. Mỗi mục có định nghĩa, lưu ý và ví dụ JavaScript ngắn gọn để bạn ôn tập nhanh.
 
-## Table of Contents
-1. [What is a Closure?](#what-is-a-closure)
-2. [How Closures Work](#how-closures-work)
-3. [Practical Use Cases](#practical-use-cases)
-4. [Common Patterns](#common-patterns)
-5. [Closure Pitfalls](#closure-pitfalls)
-6. [Memory Considerations](#memory-considerations)
-7. [Interview Questions](#interview-questions)
-8. [Practice Problems](#practice-problems)
+### Related Links / Liên Kết Liên Quan
+- [Scope & Hoisting](./02-scope-hoisting.md)
+- [Variables & Data Types](./01-variables-data-types.md)
+- [Event Loop & Async](./06-event-loop-async.md)
+- [Functional Programming](./12-functional-programming.md)
 
 ---
 
-## What is a Closure?
+## Core Concepts
 
-**Definition / Định nghĩa:** A closure is a function that has access to variables in its outer (enclosing) lexical scope, even after the outer function has returned.
+### 1. Lexical Scope Foundation
 
-**Định nghĩa:** Closure là một hàm có quyền truy cập vào các biến trong phạm vi từ vựng bên ngoài (enclosing), ngay cả sau khi hàm bên ngoài đã kết thúc.
+#### Tổng Quan
+Lexical scope means variable visibility is determined by where code is written, not where it is called.
 
-### Simple Example
+#### Giải thích
+Scope từ vựng là nền tảng để hiểu closure. Hàm con truy cập được biến ở các scope bao ngoài theo vị trí khai báo.
 
+#### Ví dụ
 ```javascript
-function outerFunction(outerVariable) {
-  return function innerFunction(innerVariable) {
-    console.log(`Outer: ${outerVariable}`);
-    console.log(`Inner: ${innerVariable}`);
-  };
-}
-
-const newFunction = outerFunction('outside');
-newFunction('inside');
-// Output:
-// Outer: outside
-// Inner: inside
-```
-
-**Key Points:**
-- `innerFunction` has access to `outerVariable`
-- `outerVariable` persists even after `outerFunction` returns
-- This is a closure!
-
----
-
-## How Closures Work
-
-### Lexical Scoping
-
-```javascript
-const globalVar = 'global';
+const globalName = 'global';
 
 function outer() {
-  const outerVar = 'outer';
-  
-  function middle() {
-    const middleVar = 'middle';
-    
-    function inner() {
-      const innerVar = 'inner';
-      
-      // Inner function has access to all outer scopes
-      console.log(innerVar);   // 'inner'
-      console.log(middleVar);  // 'middle'
-      console.log(outerVar);   // 'outer'
-      console.log(globalVar);  // 'global'
-    }
-    
-    return inner;
+  const outerName = 'outer';
+  function inner() {
+    console.log(globalName, outerName);
   }
-  
-  return middle;
+  return inner;
 }
 
-const middleFn = outer();
-const innerFn = middleFn();
-innerFn(); // All variables accessible!
+outer()();
 ```
 
-### Scope Chain Visualization
+### 2. Closure Definition and Mechanics
 
-```
-Scope Chain for inner():
-inner() scope → middle() scope → outer() scope → global scope
-```
+#### Tổng Quan
+A closure is a function bundled with references to its lexical environment.
 
----
+#### Giải thích
+Closure giữ tham chiếu đến biến ngoài, nên biến vẫn "sống" sau khi hàm cha kết thúc. Đây là hành vi bình thường của runtime.
 
-## Practical Use Cases
-
-### 1. Data Privacy / Encapsulation
-
+#### Ví dụ
 ```javascript
-function createBankAccount(initialBalance) {
-  let balance = initialBalance; // Private variable
-  
+function makeCounter() {
+  let count = 0;
+  return function increment() {
+    count += 1;
+    return count;
+  };
+}
+
+const counter = makeCounter();
+console.log(counter());
+console.log(counter());
+```
+
+### 3. Data Privacy with Closures
+
+#### Tổng Quan
+Closures can emulate private state without exposing direct mutation.
+
+#### Giải thích
+Đây là pattern phỏng vấn rất phổ biến: đóng gói state bằng closure thay vì public field có thể sửa tùy ý.
+
+#### Ví dụ
+```javascript
+function createBankAccount(initialBalance = 0) {
+  let balance = initialBalance;
+
   return {
-    deposit(amount) {
-      if (amount > 0) {
-        balance += amount;
-        return balance;
-      }
-      throw new Error('Amount must be positive');
-    },
-    
-    withdraw(amount) {
-      if (amount > 0 && amount <= balance) {
-        balance -= amount;
-        return balance;
-      }
-      throw new Error('Invalid withdrawal amount');
-    },
-    
-    getBalance() {
-      return balance;
-    }
+    deposit(amount) { balance += amount; },
+    withdraw(amount) { if (amount <= balance) balance -= amount; },
+    getBalance() { return balance; }
   };
 }
 
-const account = createBankAccount(1000);
-console.log(account.getBalance()); // 1000
-account.deposit(500); // 1500
-account.withdraw(200); // 1300
-console.log(account.balance); // undefined (private!)
+const account = createBankAccount(100);
 ```
 
-### 2. Function Factories
+### 4. Partial Application
 
+#### Tổng Quan
+Partial application pre-fills some arguments and returns a new function.
+
+#### Giải thích
+Kỹ thuật này giúp tái sử dụng logic và tạo API dễ đọc hơn, đặc biệt trong validation hoặc formatting.
+
+#### Ví dụ
 ```javascript
-function createMultiplier(multiplier) {
-  return function(number) {
-    return number * multiplier;
+function multiply(a, b) {
+  return a * b;
+}
+
+function partialMultiply(a) {
+  return function (b) {
+    return multiply(a, b);
   };
 }
 
-const double = createMultiplier(2);
-const triple = createMultiplier(3);
-const quadruple = createMultiplier(4);
-
-console.log(double(5)); // 10
-console.log(triple(5)); // 15
-console.log(quadruple(5)); // 20
+const double = partialMultiply(2);
+console.log(double(8));
 ```
 
-### 3. Event Handlers
+### 5. Currying
 
+#### Tổng Quan
+Currying transforms a multi-argument function into chained unary functions.
+
+#### Giải thích
+Currying khác partial application ở chỗ luôn tách thành chuỗi hàm 1 tham số. Nó hữu ích cho composition.
+
+#### Ví dụ
 ```javascript
-function setupButtons() {
-  const buttons = document.querySelectorAll('.btn');
-  
-  buttons.forEach((button, index) => {
-    button.addEventListener('click', function() {
-      // Closure captures 'index' for each button
-      console.log(`Button ${index} clicked`);
-    });
-  });
-}
+const curriedAdd = a => b => c => a + b + c;
+
+console.log(curriedAdd(1)(2)(3));
 ```
 
-### 4. Memoization / Caching
+### 6. Module Pattern via Closure
 
+#### Tổng Quan
+IIFE + closure can create private members and public methods.
+
+#### Giải thích
+Trước ES module, module pattern dùng nhiều trong code cũ. Biết pattern này giúp đọc legacy code dễ hơn.
+
+#### Ví dụ
 ```javascript
-function memoize(fn) {
-  const cache = {}; // Closure variable
-  
-  return function(...args) {
-    const key = JSON.stringify(args);
-    
-    if (key in cache) {
-      console.log('Returning cached result');
-      return cache[key];
-    }
-    
-    console.log('Computing result');
-    const result = fn(...args);
-    cache[key] = result;
-    return result;
-  };
-}
+const TodoModule = (function () {
+  const todos = [];
 
-// Expensive function
-function fibonacci(n) {
-  if (n <= 1) return n;
-  return fibonacci(n - 1) + fibonacci(n - 2);
-}
-
-const memoizedFib = memoize(fibonacci);
-console.log(memoizedFib(10)); // Computing result: 55
-console.log(memoizedFib(10)); // Returning cached result: 55
-```
-
-### 5. Partial Application & Currying
-
-```javascript
-// Partial application
-function partial(fn, ...fixedArgs) {
-  return function(...remainingArgs) {
-    return fn(...fixedArgs, ...remainingArgs);
-  };
-}
-
-function greet(greeting, name) {
-  return `${greeting}, ${name}!`;
-}
-
-const sayHello = partial(greet, 'Hello');
-console.log(sayHello('John')); // "Hello, John!"
-console.log(sayHello('Jane')); // "Hello, Jane!"
-
-// Currying
-function curry(fn) {
-  return function curried(...args) {
-    if (args.length >= fn.length) {
-      return fn.apply(this, args);
-    } else {
-      return function(...nextArgs) {
-        return curried.apply(this, args.concat(nextArgs));
-      };
-    }
-  };
-}
-
-function add(a, b, c) {
-  return a + b + c;
-}
-
-const curriedAdd = curry(add);
-console.log(curriedAdd(1)(2)(3)); // 6
-console.log(curriedAdd(1, 2)(3)); // 6
-console.log(curriedAdd(1)(2, 3)); // 6
-```
-
----
-
-## Common Patterns
-
-### Module Pattern
-
-```javascript
-const Calculator = (function() {
-  // Private variables and functions
-  let result = 0;
-  
-  function log(operation, value) {
-    console.log(`${operation}: ${value}`);
-  }
-  
-  // Public API
   return {
-    add(x) {
-      result += x;
-      log('Add', x);
-      return this;
-    },
-    
-    subtract(x) {
-      result -= x;
-      log('Subtract', x);
-      return this;
-    },
-    
-    multiply(x) {
-      result *= x;
-      log('Multiply', x);
-      return this;
-    },
-    
-    divide(x) {
-      if (x !== 0) {
-        result /= x;
-        log('Divide', x);
-      }
-      return this;
-    },
-    
-    getResult() {
-      return result;
-    },
-    
-    clear() {
-      result = 0;
-      return this;
-    }
+    add(todo) { todos.push(todo); },
+    list() { return [...todos]; }
   };
 })();
 
-// Usage with method chaining
-Calculator
-  .add(10)
-  .multiply(2)
-  .subtract(5)
-  .divide(3);
-
-console.log(Calculator.getResult()); // 5
+TodoModule.add('Study closures');
 ```
 
-### Counter Pattern
+### 7. Memoization with Closures
 
+#### Tổng Quan
+Memoization caches results for repeated inputs and reduces recomputation.
+
+#### Giải thích
+Khi bài toán lặp input nhiều lần, closure cache giúp tăng hiệu năng đáng kể. Nhưng phải cân nhắc memory growth.
+
+#### Ví dụ
 ```javascript
-function createCounter(initialValue = 0, step = 1) {
-  let count = initialValue;
-  
-  return {
-    increment() {
-      count += step;
-      return count;
-    },
-    
-    decrement() {
-      count -= step;
-      return count;
-    },
-    
-    reset() {
-      count = initialValue;
-      return count;
-    },
-    
-    getValue() {
-      return count;
-    },
-    
-    setStep(newStep) {
-      step = newStep;
-    }
-  };
-}
-
-const counter = createCounter(0, 5);
-console.log(counter.increment()); // 5
-console.log(counter.increment()); // 10
-console.log(counter.decrement()); // 5
-counter.setStep(10);
-console.log(counter.increment()); // 15
-```
-
-### Debounce Function
-
-```javascript
-function debounce(func, delay) {
-  let timeoutId; // Closure variable
-  
-  return function(...args) {
-    clearTimeout(timeoutId);
-    
-    timeoutId = setTimeout(() => {
-      func.apply(this, args);
-    }, delay);
-  };
-}
-
-// Usage
-const searchInput = document.querySelector('#search');
-const debouncedSearch = debounce((query) => {
-  console.log(`Searching for: ${query}`);
-  // API call here
-}, 300);
-
-searchInput.addEventListener('input', (e) => {
-  debouncedSearch(e.target.value);
-});
-```
-
-### Throttle Function
-
-```javascript
-function throttle(func, limit) {
-  let inThrottle; // Closure variable
-  
-  return function(...args) {
-    if (!inThrottle) {
-      func.apply(this, args);
-      inThrottle = true;
-      
-      setTimeout(() => {
-        inThrottle = false;
-      }, limit);
-    }
-  };
-}
-
-// Usage
-const throttledScroll = throttle(() => {
-  console.log('Scroll event');
-}, 100);
-
-window.addEventListener('scroll', throttledScroll);
-```
-
----
-
-## Closure Pitfalls
-
-### Problem 1: Loop with var
-
-```javascript
-// ❌ Problem: All functions share same 'i'
-for (var i = 0; i < 3; i++) {
-  setTimeout(function() {
-    console.log(i); // Prints: 3, 3, 3
-  }, 100);
-}
-
-// ✅ Solution 1: Use let (block scope)
-for (let i = 0; i < 3; i++) {
-  setTimeout(function() {
-    console.log(i); // Prints: 0, 1, 2
-  }, 100);
-}
-
-// ✅ Solution 2: IIFE (Immediately Invoked Function Expression)
-for (var i = 0; i < 3; i++) {
-  (function(index) {
-    setTimeout(function() {
-      console.log(index); // Prints: 0, 1, 2
-    }, 100);
-  })(i);
-}
-
-// ✅ Solution 3: Pass parameter to setTimeout
-for (var i = 0; i < 3; i++) {
-  setTimeout(function(index) {
-    console.log(index); // Prints: 0, 1, 2
-  }, 100, i);
-}
-```
-
-### Problem 2: Accidental Global Variables
-
-```javascript
-function createCounter() {
-  count = 0; // ❌ Missing 'let/const' creates global variable!
-  
-  return {
-    increment() {
-      return ++count;
-    }
-  };
-}
-
-const counter1 = createCounter();
-const counter2 = createCounter();
-
-console.log(counter1.increment()); // 1
-console.log(counter2.increment()); // 2 (shares same global count!)
-
-// ✅ Solution: Always use let/const
-function createCounter() {
-  let count = 0; // ✅ Proper closure variable
-  
-  return {
-    increment() {
-      return ++count;
-    }
-  };
-}
-```
-
-### Problem 3: Memory Leaks
-
-```javascript
-// ❌ Potential memory leak
-function attachHandler() {
-  const largeData = new Array(1000000).fill('data');
-  
-  document.getElementById('button').addEventListener('click', function() {
-    console.log('Button clicked');
-    // largeData is kept in memory even if not used!
-  });
-}
-
-// ✅ Solution: Only close over what you need
-function attachHandler() {
-  const largeData = new Array(1000000).fill('data');
-  const summary = largeData.length; // Extract only what's needed
-  
-  document.getElementById('button').addEventListener('click', function() {
-    console.log(`Button clicked, data size: ${summary}`);
-    // largeData can be garbage collected
-  });
-}
-```
-
----
-
-## Memory Considerations
-
-### Understanding Closure Memory
-
-```javascript
-function heavyFunction() {
-  const largeArray = new Array(1000000).fill('data'); // ~8MB
-  
-  return function() {
-    // largeArray is kept in memory as long as this function exists
-    return largeArray.length;
-  };
-}
-
-const fn = heavyFunction();
-// largeArray is still in memory!
-
-// To free memory:
-fn = null; // Now largeArray can be garbage collected
-```
-
-### Best Practices
-
-```javascript
-// ✅ Good: Minimal closure scope
-function createHandler(id) {
-  return function() {
-    console.log(`Handler for ${id}`);
-  };
-}
-
-// ❌ Bad: Unnecessary large closure
-function createHandler(id) {
-  const largeData = fetchLargeData(); // Kept in memory
-  const processedData = process(largeData); // Kept in memory
-  
-  return function() {
-    console.log(`Handler for ${id}`); // Only needs id!
-  };
-}
-
-// ✅ Better: Extract only what's needed
-function createHandler(id) {
-  const largeData = fetchLargeData();
-  const summary = extractSummary(largeData); // Small data
-  
-  return function() {
-    console.log(`Handler for ${id}: ${summary}`);
-  };
-}
-```
-
----
-
-## Interview Questions
-
-### Q1: What is a closure and how does it work?
-
-**Answer:**
-A closure is a function that has access to variables in its outer lexical scope, even after the outer function has returned. It works because JavaScript maintains a reference to the outer scope's variables as long as the inner function exists.
-
-```javascript
-function outer() {
-  const message = "Hello";
-  
-  return function inner() {
-    console.log(message); // Accesses outer variable
-  };
-}
-
-const fn = outer();
-fn(); // "Hello" - closure in action!
-```
-
-### Q2: Explain the loop closure problem
-
-**Answer:** See "Problem 1: Loop with var" in Closure Pitfalls section.
-
-### Q3: What are practical uses of closures?
-
-**Answer:**
-1. Data privacy / encapsulation
-2. Function factories
-3. Memoization / caching
-4. Event handlers
-5. Partial application / currying
-6. Module pattern
-7. Debounce / throttle functions
-
-### Q4: Can closures cause memory leaks?
-
-**Answer:**
-Yes, if not careful. Closures keep references to outer scope variables, preventing garbage collection. Always close over only what you need and set references to null when done.
-
----
-
-## Practice Problems
-
-### Problem 1: Create a Private Counter
-
-```javascript
-function createPrivateCounter() {
-  let count = 0;
-  
-  return {
-    increment() {
-      return ++count;
-    },
-    decrement() {
-      return --count;
-    },
-    getCount() {
-      return count;
-    }
-  };
-}
-
-// Test
-const counter = createPrivateCounter();
-console.log(counter.increment()); // 1
-console.log(counter.increment()); // 2
-console.log(counter.getCount()); // 2
-console.log(counter.count); // undefined (private!)
-```
-
-### Problem 2: Implement once() Function
-
-```javascript
-function once(fn) {
-  let called = false;
-  let result;
-  
-  return function(...args) {
-    if (!called) {
-      called = true;
-      result = fn.apply(this, args);
-    }
+function memoize(fn) {
+  const cache = new Map();
+  return function (arg) {
+    if (cache.has(arg)) return cache.get(arg);
+    const result = fn(arg);
+    cache.set(arg, result);
     return result;
   };
 }
 
-// Test
-const initialize = once(() => {
-  console.log('Initialized!');
-  return 'Done';
-});
-
-console.log(initialize()); // "Initialized!" then "Done"
-console.log(initialize()); // "Done" (no log)
-console.log(initialize()); // "Done" (no log)
+const square = memoize(n => n * n);
 ```
 
-### Problem 3: Create a Function Queue
+### 8. Closures in Loops Trap
 
+#### Tổng Quan
+Using var in loops can cause all closures to capture the same final value.
+
+#### Giải thích
+Đây là câu hỏi kinh điển. Cách fix: dùng let hoặc IIFE để tạo scope mới cho mỗi vòng lặp.
+
+#### Ví dụ
 ```javascript
-function createQueue() {
-  const queue = [];
-  
+const fns = [];
+for (var i = 0; i < 3; i++) {
+  fns.push(() => i);
+}
+console.log(fns[0](), fns[1](), fns[2]()); // 3 3 3
+
+const safeFns = [];
+for (let j = 0; j < 3; j++) safeFns.push(() => j);
+```
+
+### 9. Memory Implications
+
+#### Tổng Quan
+Closures retain references, so large captured objects may stay in memory longer than expected.
+
+#### Giải thích
+Nếu closure giữ DOM node hoặc object lớn không còn dùng, bạn có thể gây memory leak. Hãy cleanup reference khi cần.
+
+#### Ví dụ
+```javascript
+function attachHandler() {
+  let largeData = new Array(10000).fill('x');
+  return function onClick() {
+    console.log(largeData.length);
+  };
+}
+
+const handler = attachHandler();
+```
+
+### 10. Closure with Async Operations
+
+#### Tổng Quan
+Closures pair naturally with async callbacks and promise chains.
+
+#### Giải thích
+Trong async code, closure giữ state context theo từng request. Cần tránh shared mutable state ngoài ý muốn.
+
+#### Ví dụ
+```javascript
+function createFetcher(baseUrl) {
+  return async function fetchUser(id) {
+    const res = await fetch(`${baseUrl}/users/${id}`);
+    return res.json();
+  };
+}
+
+const fetchFromApi = createFetcher('https://api.example.com');
+```
+
+### 11. Factory Functions and Closures
+
+#### Tổng Quan
+Factory functions return objects that close over internal settings.
+
+#### Giải thích
+Factory + closure thường thay thế class cho các object đơn giản, ít ceremony và dễ test.
+
+#### Ví dụ
+```javascript
+function createLogger(prefix) {
   return {
-    enqueue(item) {
-      queue.push(item);
-      return queue.length;
-    },
-    
-    dequeue() {
-      return queue.shift();
-    },
-    
-    peek() {
-      return queue[0];
-    },
-    
-    size() {
-      return queue.length;
-    },
-    
-    isEmpty() {
-      return queue.length === 0;
+    info(message) {
+      console.log(`[${prefix}] ${message}`);
     }
   };
 }
 
-// Test
-const q = createQueue();
-q.enqueue('first');
-q.enqueue('second');
-console.log(q.peek()); // "first"
-console.log(q.dequeue()); // "first"
-console.log(q.size()); // 1
+createLogger('AUTH').info('Login success');
+```
+
+### 12. Common Interview Traps
+
+#### Tổng Quan
+Typical traps include loop capture, stale closures in UI frameworks, and hidden memory retention.
+
+#### Giải thích
+Khi trả lời, bạn nên nêu ít nhất 1 ví dụ thực tế (React stale state, setTimeout trong vòng lặp, cache không giới hạn).
+
+#### Ví dụ
+```javascript
+function createTimer() {
+  let count = 0;
+  return function tick() {
+    count += 1;
+    return count;
+  };
+}
+
+const tick = createTimer();
+```
+
+### 13. How to Explain Closure in Interview
+
+#### Tổng Quan
+Use three steps: lexical scope, returned inner function, and preserved outer variables.
+
+#### Giải thích
+Cách nói ngắn gọn: "Closure là hàm + môi trường lexical của nó". Sau đó show counter 5 dòng là đủ thuyết phục.
+
+#### Ví dụ
+```javascript
+function explainClosure() {
+  let value = 1;
+  return () => ++value;
+}
+
+const next = explainClosure();
+console.log(next());
+```
+
+### 14. When Not to Use Closures
+
+#### Tổng Quan
+Avoid unnecessary nested functions when plain objects/classes are simpler and clearer.
+
+#### Giải thích
+Closure rất mạnh nhưng không phải lúc nào cũng cần. Nếu logic cần lifecycle rõ ràng và state nhiều, class hoặc module tường minh dễ bảo trì hơn.
+
+#### Ví dụ
+```javascript
+// Prefer straightforward data model when closure adds no value
+class Counter {
+  #count = 0;
+  inc() { this.#count += 1; return this.#count; }
+}
+
+console.log(new Counter().inc());
 ```
 
 ---
 
-## Summary
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-- Closures allow functions to access outer scope variables
-- Created automatically when functions are defined
-- Powerful for data privacy, factories, and functional programming
-- Be aware of memory implications
-- Common in modern JavaScript patterns (React hooks, etc.)
+### 🟢 [Junior] Q1. Define closure in one sentence.
 
----
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
 
-[← Previous: Scope & Hoisting](./02-scope-hoisting.md) | [Back to Table of Contents](../00-table-of-contents.md) | [Next: Prototypes & Inheritance →](./04-prototypes-inheritance.md)
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🟡 [Mid] Q2. How does lexical scope enable closure?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🔴 [Senior] Q3. Why do closures keep variables alive?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🟢 [Junior] Q4. What is the classic counter closure example?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🟡 [Mid] Q5. How can closure provide data privacy?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🔴 [Senior] Q6. Closure vs class private field: when to choose each?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🟢 [Junior] Q7. What is partial application?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🟡 [Mid] Q8. How is currying different from partial application?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🔴 [Senior] Q9. How do closures support function factories?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🟢 [Junior] Q10. Explain module pattern with IIFE.
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🟡 [Mid] Q11. How does memoization use closure?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🔴 [Senior] Q12. What cache invalidation strategy can be used?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🟢 [Junior] Q13. What memory risks come from large captured objects?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🟡 [Mid] Q14. How do you prevent closure-based memory leaks?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🔴 [Senior] Q15. Explain the var-in-loop closure bug.
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🟢 [Junior] Q16. How does let fix loop capture?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🟡 [Mid] Q17. How can IIFE fix loop capture in ES5 code?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🔴 [Senior] Q18. What are stale closures in React hooks?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🟢 [Junior] Q19. How to avoid stale closures with dependencies?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🟡 [Mid] Q20. How do closures behave with setTimeout?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🔴 [Senior] Q21. Do closures copy values or references?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🟢 [Junior] Q22. How do closures interact with garbage collection?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🟡 [Mid] Q23. Why can debugging closures be hard?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🔴 [Senior] Q24. How do you inspect closure scope in DevTools?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🟢 [Junior] Q25. Can closure hurt performance?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🟡 [Mid] Q26. When is closure the cleanest approach?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🔴 [Senior] Q27. What anti-patterns involve deeply nested closures?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🟢 [Junior] Q28. How to test closure-heavy functions?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🟡 [Mid] Q29. How do closures help dependency injection?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🔴 [Senior] Q30. What interview follow-up often appears after closure definition?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🟢 [Junior] Q31. How do closures relate to function purity?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🟡 [Mid] Q32. How to explain closure to beginners quickly?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🔴 [Senior] Q33. What are practical closure examples in frontend apps?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🟢 [Junior] Q34. How do event handlers rely on closure?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🟡 [Mid] Q35. Can closure be serialized? why not?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🔴 [Senior] Q36. How does closure differ in arrow vs regular functions?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🟢 [Junior] Q37. What senior-level closure trade-offs should you mention?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🟡 [Mid] Q38. How to design bounded memoization with LRU?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🔴 [Senior] Q39. Why should caches inside closure be observable?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.
+
+### 🟢 [Junior] Q40. How to avoid hidden shared state in closures?
+
+**Answer (EN):** Anchor your answer on lexical environment and retained references, then discuss one practical use case and one pitfall.
+
+**Giải thích (VI):** Hãy neo câu trả lời vào môi trường lexical và tham chiếu được giữ lại, sau đó nêu một ứng dụng thực tế và một rủi ro.
+
+**Ví dụ:**
+```javascript
+function makeAdder(a) {
+  return function (b) {
+    return a + b;
+  };
+}
+console.log(makeAdder(10)(5));
+```
+
+**Interview Tip:** Mention memory and loop-capture traps to signal deeper understanding.

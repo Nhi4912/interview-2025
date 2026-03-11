@@ -1,1088 +1,1066 @@
-# JavaScript Basics - Complete Theory
-## Understanding JavaScript from First Principles
+# JavaScript Basics Theory / Lý Thuyết JavaScript Cơ Bản
+## JavaScript Fundamentals - Chapter 13 / Kiến Thức JavaScript Nền Tảng - Chương 13
 
-**English:** JavaScript is a high-level, interpreted programming language that conforms to the ECMAScript specification, enabling interactive web pages and forming an essential part of web applications.
-
-**Tiếng Việt:** JavaScript là ngôn ngữ lập trình cấp cao, thông dịch tuân theo đặc tả ECMAScript, cho phép tạo trang web tương tác và là phần thiết yếu của ứng dụng web.
-
-## Table of Contents
-1. [What is JavaScript](#what-is-javascript)
-2. [Variables and Data Types](#variables-and-data-types)
-3. [Operators](#operators)
-4. [Control Flow](#control-flow)
-5. [Functions](#functions)
-6. [Objects and Arrays](#objects-and-arrays)
-7. [Type Coercion](#type-coercion)
-8. [Equality and Comparison](#equality-and-comparison)
-9. [Truthy and Falsy](#truthy-and-falsy)
-10. [Basic Patterns](#basic-patterns)
-
-## What is JavaScript
-
-### History
-
-**Timeline:**
-```
-1995: Created by Brendan Eich at Netscape (10 days)
-1996: Submitted to ECMA for standardization
-1997: ECMAScript 1 released
-1999: ECMAScript 3 (widely adopted)
-2009: ECMAScript 5 (strict mode, JSON)
-2015: ECMAScript 6/ES2015 (major update)
-2016+: Yearly releases (ES2016, ES2017, etc.)
-```
-
-### JavaScript vs ECMAScript
-
-**ECMAScript:** Specification/standard
-**JavaScript:** Implementation of ECMAScript
-
-**Other Implementations:**
-- JScript (Microsoft)
-- ActionScript (Adobe)
-
-### JavaScript Engines
-
-**V8:** Chrome, Node.js, Edge
-**SpiderMonkey:** Firefox
-**JavaScriptCore:** Safari
-**Chakra:** Old Edge (deprecated)
-
-### Execution Environment
-
-**Browser:**
-```javascript
-// Global object: window
-console.log(window);
-
-// DOM access
-document.getElementById('app');
-
-// Browser APIs
-fetch('/api/data');
-localStorage.setItem('key', 'value');
-```
-
-**Node.js:**
-```javascript
-// Global object: global
-console.log(global);
-
-// File system access
-const fs = require('fs');
-fs.readFileSync('file.txt');
-
-// No DOM
-// No window
-```
-
-## Variables and Data Types
-
-### Variable Declaration
-
-**var (old, avoid):**
-```javascript
-var name = 'John';
-var age = 30;
-
-// Function-scoped
-// Hoisted
-// Can redeclare
-// Can reassign
-```
-
-**let (modern):**
-```javascript
-let name = 'John';
-let age = 30;
-
-// Block-scoped
-// Hoisted but not initialized (TDZ)
-// Cannot redeclare
-// Can reassign
-```
-
-**const (modern, preferred):**
-```javascript
-const name = 'John';
-const age = 30;
-
-// Block-scoped
-// Hoisted but not initialized (TDZ)
-// Cannot redeclare
-// Cannot reassign
-// Must initialize
-
-const person = { name: 'John' };
-person.name = 'Jane'; // OK (object is mutable)
-person = {}; // Error (cannot reassign)
-```
-
-### Primitive Data Types
-
-**Number:**
-```javascript
-const integer = 42;
-const float = 3.14;
-const negative = -10;
-const scientific = 1e6; // 1000000
-const binary = 0b1010; // 10
-const octal = 0o12; // 10
-const hex = 0xFF; // 255
-
-// Special values
-const infinity = Infinity;
-const negInfinity = -Infinity;
-const notANumber = NaN;
-
-// Check
-typeof 42; // "number"
-Number.isInteger(42); // true
-Number.isNaN(NaN); // true
-Number.isFinite(42); // true
-```
-
-**String:**
-```javascript
-const single = 'Hello';
-const double = "World";
-const template = `Hello ${name}`;
-
-// Escape sequences
-const newline = 'Line 1\nLine 2';
-const tab = 'Col1\tCol2';
-const quote = 'It\'s a string';
-
-// Properties and methods
-'hello'.length; // 5
-'hello'.toUpperCase(); // 'HELLO'
-'hello'.charAt(0); // 'h'
-'hello'.substring(1, 4); // 'ell'
-'hello'.indexOf('l'); // 2
-'hello'.split(''); // ['h','e','l','l','o']
-
-typeof 'hello'; // "string"
-```
-
-**Boolean:**
-```javascript
-const isTrue = true;
-const isFalse = false;
-
-// Boolean conversion
-Boolean(1); // true
-Boolean(0); // false
-Boolean('hello'); // true
-Boolean(''); // false
-
-typeof true; // "boolean"
-```
-
-**Undefined:**
-```javascript
-let x;
-console.log(x); // undefined
-
-function noReturn() {}
-console.log(noReturn()); // undefined
-
-const obj = {};
-console.log(obj.missing); // undefined
-
-typeof undefined; // "undefined"
-```
-
-**Null:**
-```javascript
-const empty = null;
-
-// Represents intentional absence of value
-// Different from undefined (uninitialized)
-
-typeof null; // "object" (historical bug)
-```
-
-**Symbol (ES6):**
-```javascript
-const sym1 = Symbol();
-const sym2 = Symbol('description');
-const sym3 = Symbol('description');
-
-sym2 === sym3; // false (always unique)
-
-// Use case: unique object keys
-const obj = {
-  [Symbol('id')]: 123
-};
-
-typeof Symbol(); // "symbol"
-```
-
-**BigInt (ES2020):**
-```javascript
-const big = 9007199254740991n;
-const alsoB big = BigInt(9007199254740991);
-
-// For integers larger than Number.MAX_SAFE_INTEGER
-const huge = 123456789012345678901234567890n;
-
-typeof 123n; // "bigint"
-```
-
-### Reference Types
-
-**Object:**
-```javascript
-const person = {
-  name: 'John',
-  age: 30,
-  greet: function() {
-    return `Hello, ${this.name}`;
-  }
-};
-
-typeof {}; // "object"
-```
-
-**Array:**
-```javascript
-const numbers = [1, 2, 3, 4, 5];
-const mixed = [1, 'two', true, null, { key: 'value' }];
-
-typeof []; // "object"
-Array.isArray([]); // true
-```
-
-**Function:**
-```javascript
-function add(a, b) {
-  return a + b;
-}
-
-const multiply = function(a, b) {
-  return a * b;
-};
-
-const divide = (a, b) => a / b;
-
-typeof function() {}; // "function"
-```
-
-## Operators
-
-### Arithmetic Operators
-
-```javascript
-// Addition
-5 + 3; // 8
-'Hello' + ' ' + 'World'; // 'Hello World'
-
-// Subtraction
-10 - 3; // 7
-
-// Multiplication
-4 * 5; // 20
-
-// Division
-20 / 4; // 5
-5 / 2; // 2.5
-
-// Modulo (remainder)
-10 % 3; // 1
--10 % 3; // -1
-
-// Exponentiation
-2 ** 3; // 8
-Math.pow(2, 3); // 8
-
-// Increment
-let x = 5;
-x++; // x = 6 (post-increment)
-++x; // x = 7 (pre-increment)
-
-// Decrement
-x--; // x = 6 (post-decrement)
---x; // x = 5 (pre-decrement)
-```
-
-### Assignment Operators
-
-```javascript
-let x = 10;
-
-x += 5; // x = x + 5 = 15
-x -= 3; // x = x - 3 = 12
-x *= 2; // x = x * 2 = 24
-x /= 4; // x = x / 4 = 6
-x %= 4; // x = x % 4 = 2
-x **= 3; // x = x ** 3 = 8
-```
-
-### Comparison Operators
-
-```javascript
-// Equal (loose)
-5 == '5'; // true (type coercion)
-0 == false; // true
-
-// Equal (strict)
-5 === '5'; // false (no type coercion)
-5 === 5; // true
-
-// Not equal (loose)
-5 != '5'; // false
-5 != 6; // true
-
-// Not equal (strict)
-5 !== '5'; // true
-5 !== 5; // false
-
-// Greater than
-10 > 5; // true
-5 > 10; // false
-
-// Less than
-5 < 10; // true
-10 < 5; // false
-
-// Greater than or equal
-10 >= 10; // true
-10 >= 5; // true
-
-// Less than or equal
-5 <= 10; // true
-5 <= 5; // true
-```
-
-### Logical Operators
-
-```javascript
-// AND
-true && true; // true
-true && false; // false
-false && true; // false
-
-// OR
-true || false; // true
-false || true; // true
-false || false; // false
-
-// NOT
-!true; // false
-!false; // true
-
-// Short-circuit evaluation
-const result = value || 'default'; // Use default if value is falsy
-const check = condition && doSomething(); // Only call if condition is true
-```
-
-### Bitwise Operators
-
-```javascript
-// AND
-5 & 3; // 1 (0101 & 0011 = 0001)
-
-// OR
-5 | 3; // 7 (0101 | 0011 = 0111)
-
-// XOR
-5 ^ 3; // 6 (0101 ^ 0011 = 0110)
-
-// NOT
-~5; // -6 (inverts bits)
-
-// Left shift
-5 << 1; // 10 (0101 << 1 = 1010)
-
-// Right shift
-5 >> 1; // 2 (0101 >> 1 = 0010)
-
-// Unsigned right shift
--5 >>> 1; // 2147483645
-```
-
-### Ternary Operator
-
-```javascript
-const age = 20;
-const status = age >= 18 ? 'adult' : 'minor';
-
-// Nested ternary (avoid if complex)
-const grade = score >= 90 ? 'A' :
-              score >= 80 ? 'B' :
-              score >= 70 ? 'C' : 'F';
-```
-
-### Nullish Coalescing (??)
-
-```javascript
-const value = null ?? 'default'; // 'default'
-const value2 = undefined ?? 'default'; // 'default'
-const value3 = 0 ?? 'default'; // 0 (not null/undefined)
-const value4 = '' ?? 'default'; // '' (not null/undefined)
-
-// vs OR operator
-const a = 0 || 'default'; // 'default' (0 is falsy)
-const b = 0 ?? 'default'; // 0 (0 is not null/undefined)
-```
-
-### Optional Chaining (?.)
-
-```javascript
-const user = {
-  name: 'John',
-  address: {
-    city: 'New York'
-  }
-};
-
-// Without optional chaining
-const city = user && user.address && user.address.city;
-
-// With optional chaining
-const city = user?.address?.city; // 'New York'
-const missing = user?.contact?.phone; // undefined (no error)
-
-// With arrays
-const firstItem = array?.[0];
-
-// With functions
-const result = obj.method?.();
-```
-
-## Control Flow
-
-### If Statement
-
-```javascript
-const age = 20;
-
-if (age >= 18) {
-  console.log('Adult');
-}
-
-if (age >= 18) {
-  console.log('Adult');
-} else {
-  console.log('Minor');
-}
-
-if (age < 13) {
-  console.log('Child');
-} else if (age < 18) {
-  console.log('Teenager');
-} else {
-  console.log('Adult');
-}
-```
-
-### Switch Statement
-
-```javascript
-const day = 'Monday';
-
-switch (day) {
-  case 'Monday':
-    console.log('Start of week');
-    break;
-  case 'Friday':
-    console.log('End of week');
-    break;
-  case 'Saturday':
-  case 'Sunday':
-    console.log('Weekend');
-    break;
-  default:
-    console.log('Midweek');
-}
-
-// Without break (fall-through)
-switch (value) {
-  case 1:
-  case 2:
-  case 3:
-    console.log('1, 2, or 3');
-    break;
-  case 4:
-    console.log('4');
-    // Falls through to case 5
-  case 5:
-    console.log('4 or 5');
-    break;
-}
-```
-
-### For Loop
-
-```javascript
-// Traditional for loop
-for (let i = 0; i < 5; i++) {
-  console.log(i); // 0, 1, 2, 3, 4
-}
-
-// Multiple variables
-for (let i = 0, j = 10; i < 5; i++, j--) {
-  console.log(i, j);
-}
-
-// Infinite loop (avoid)
-for (;;) {
-  // Runs forever
-  break; // Need break to exit
-}
-```
-
-### While Loop
-
-```javascript
-let i = 0;
-while (i < 5) {
-  console.log(i);
-  i++;
-}
-
-// Infinite loop
-while (true) {
-  // Runs forever
-  break; // Need break to exit
-}
-```
-
-### Do-While Loop
-
-```javascript
-let i = 0;
-do {
-  console.log(i);
-  i++;
-} while (i < 5);
-
-// Executes at least once
-let x = 10;
-do {
-  console.log(x); // Prints 10
-} while (x < 5); // Condition false, but already executed once
-```
-
-### For...of Loop
-
-```javascript
-const array = [1, 2, 3, 4, 5];
-
-for (const value of array) {
-  console.log(value); // 1, 2, 3, 4, 5
-}
-
-// With strings
-for (const char of 'hello') {
-  console.log(char); // 'h', 'e', 'l', 'l', 'o'
-}
-
-// With index
-for (const [index, value] of array.entries()) {
-  console.log(index, value);
-}
-```
-
-### For...in Loop
-
-```javascript
-const obj = { a: 1, b: 2, c: 3 };
-
-for (const key in obj) {
-  console.log(key, obj[key]); // 'a' 1, 'b' 2, 'c' 3
-}
-
-// With arrays (not recommended)
-const array = [1, 2, 3];
-for (const index in array) {
-  console.log(index, array[index]); // '0' 1, '1' 2, '2' 3
-}
-```
-
-### Break and Continue
-
-```javascript
-// Break: exit loop
-for (let i = 0; i < 10; i++) {
-  if (i === 5) break;
-  console.log(i); // 0, 1, 2, 3, 4
-}
-
-// Continue: skip iteration
-for (let i = 0; i < 5; i++) {
-  if (i === 2) continue;
-  console.log(i); // 0, 1, 3, 4
-}
-
-// Labeled break
-outer: for (let i = 0; i < 3; i++) {
-  for (let j = 0; j < 3; j++) {
-    if (i === 1 && j === 1) break outer;
-    console.log(i, j);
-  }
-}
-```
-
-## Functions
-
-### Function Declaration
-
-```javascript
-function add(a, b) {
-  return a + b;
-}
-
-// Hoisted (can call before declaration)
-console.log(add(2, 3)); // 5
-
-function add(a, b) {
-  return a + b;
-}
-```
-
-### Function Expression
-
-```javascript
-const add = function(a, b) {
-  return a + b;
-};
-
-// Not hoisted
-console.log(add(2, 3)); // Error: add is not defined
-
-const add = function(a, b) {
-  return a + b;
-};
-```
-
-### Arrow Function
-
-```javascript
-const add = (a, b) => a + b;
-
-// With block
-const multiply = (a, b) => {
-  const result = a * b;
-  return result;
-};
-
-// Single parameter (parentheses optional)
-const square = x => x * x;
-
-// No parameters
-const greet = () => 'Hello';
-
-// Returning object (wrap in parentheses)
-const createPerson = (name, age) => ({ name, age });
-```
-
-### Parameters
-
-**Default Parameters:**
-```javascript
-function greet(name = 'Guest') {
-  return `Hello, ${name}`;
-}
-
-greet(); // 'Hello, Guest'
-greet('John'); // 'Hello, John'
-```
-
-**Rest Parameters:**
-```javascript
-function sum(...numbers) {
-  return numbers.reduce((total, n) => total + n, 0);
-}
-
-sum(1, 2, 3, 4, 5); // 15
-```
-
-**Destructuring Parameters:**
-```javascript
-function greet({ name, age }) {
-  return `${name} is ${age} years old`;
-}
-
-greet({ name: 'John', age: 30 });
-
-// With defaults
-function greet({ name = 'Guest', age = 0 } = {}) {
-  return `${name} is ${age} years old`;
-}
-```
-
-### Return Statement
-
-```javascript
-function add(a, b) {
-  return a + b;
-  console.log('Never executed'); // Unreachable
-}
-
-// Implicit return (undefined)
-function noReturn() {
-  // No return statement
-}
-console.log(noReturn()); // undefined
-
-// Early return
-function validate(value) {
-  if (!value) return false;
-  if (value < 0) return false;
-  return true;
-}
-```
-
-## Objects and Arrays
-
-### Object Basics
-
-**Creation:**
-```javascript
-// Object literal
-const person = {
-  name: 'John',
-  age: 30,
-  greet: function() {
-    return `Hello, ${this.name}`;
-  }
-};
-
-// Constructor
-const person2 = new Object();
-person2.name = 'Jane';
-person2.age = 25;
-
-// Object.create
-const person3 = Object.create(null);
-person3.name = 'Bob';
-```
-
-**Accessing Properties:**
-```javascript
-const person = { name: 'John', age: 30 };
-
-// Dot notation
-console.log(person.name); // 'John'
-
-// Bracket notation
-console.log(person['age']); // 30
-
-// Dynamic property
-const prop = 'name';
-console.log(person[prop]); // 'John'
-```
-
-**Adding/Modifying Properties:**
-```javascript
-const person = { name: 'John' };
-
-person.age = 30; // Add
-person.name = 'Jane'; // Modify
-
-// Computed property names
-const key = 'email';
-person[key] = 'john@example.com';
-```
-
-**Deleting Properties:**
-```javascript
-const person = { name: 'John', age: 30 };
-
-delete person.age;
-console.log(person); // { name: 'John' }
-```
-
-### Array Basics
-
-**Creation:**
-```javascript
-// Array literal
-const numbers = [1, 2, 3, 4, 5];
-
-// Constructor
-const numbers2 = new Array(1, 2, 3);
-
-// Array.of
-const numbers3 = Array.of(1, 2, 3);
-
-// Array.from
-const numbers4 = Array.from('hello'); // ['h','e','l','l','o']
-```
-
-**Accessing Elements:**
-```javascript
-const numbers = [1, 2, 3, 4, 5];
-
-console.log(numbers[0]); // 1
-console.log(numbers[numbers.length - 1]); // 5
-console.log(numbers[10]); // undefined
-```
-
-**Modifying Arrays:**
-```javascript
-const numbers = [1, 2, 3];
-
-// Add to end
-numbers.push(4); // [1, 2, 3, 4]
-
-// Remove from end
-numbers.pop(); // [1, 2, 3]
-
-// Add to beginning
-numbers.unshift(0); // [0, 1, 2, 3]
-
-// Remove from beginning
-numbers.shift(); // [1, 2, 3]
-
-// Splice (remove/add)
-numbers.splice(1, 1); // Remove at index 1: [1, 3]
-numbers.splice(1, 0, 2); // Add at index 1: [1, 2, 3]
-```
-
-## Type Coercion
-
-### Implicit Coercion
-
-**String Coercion:**
-```javascript
-'5' + 3; // '53' (number to string)
-'5' + true; // '5true'
-'5' + null; // '5null'
-'5' + undefined; // '5undefined'
-```
-
-**Number Coercion:**
-```javascript
-'5' - 3; // 2 (string to number)
-'5' * 2; // 10
-'5' / 2; // 2.5
-'5' % 2; // 1
-
-true + 1; // 2 (true = 1)
-false + 1; // 1 (false = 0)
-null + 1; // 1 (null = 0)
-undefined + 1; // NaN
-```
-
-**Boolean Coercion:**
-```javascript
-if ('hello') {} // true (non-empty string)
-if (0) {} // false
-if ([]) {} // true (empty array is truthy)
-if ({}) {} // true (empty object is truthy)
-```
-
-### Explicit Coercion
-
-**To String:**
-```javascript
-String(123); // '123'
-String(true); // 'true'
-String(null); // 'null'
-String(undefined); // 'undefined'
-
-(123).toString(); // '123'
-true.toString(); // 'true'
-```
-
-**To Number:**
-```javascript
-Number('123'); // 123
-Number('12.34'); // 12.34
-Number('hello'); // NaN
-Number(true); // 1
-Number(false); // 0
-Number(null); // 0
-Number(undefined); // NaN
-
-parseInt('123'); // 123
-parseInt('12.34'); // 12
-parseInt('12px'); // 12
-parseFloat('12.34'); // 12.34
-
-+'123'; // 123 (unary plus)
-```
-
-**To Boolean:**
-```javascript
-Boolean(1); // true
-Boolean(0); // false
-Boolean('hello'); // true
-Boolean(''); // false
-Boolean(null); // false
-Boolean(undefined); // false
-
-!!value; // Double negation
-```
-
-## Equality and Comparison
-
-### Loose Equality (==)
-
-```javascript
-5 == '5'; // true (type coercion)
-0 == false; // true
-'' == false; // true
-null == undefined; // true
-[] == false; // true
-[] == ''; // true
-
-// Avoid using ==
-```
-
-### Strict Equality (===)
-
-```javascript
-5 === '5'; // false (no type coercion)
-5 === 5; // true
-0 === false; // false
-null === undefined; // false
-
-// Always use ===
-```
-
-### Object Comparison
-
-```javascript
-const obj1 = { a: 1 };
-const obj2 = { a: 1 };
-const obj3 = obj1;
-
-obj1 === obj2; // false (different references)
-obj1 === obj3; // true (same reference)
-
-// Deep equality (need custom function or library)
-JSON.stringify(obj1) === JSON.stringify(obj2); // true (simple cases)
-```
-
-## Truthy and Falsy
-
-### Falsy Values
-
-```javascript
-// Only 8 falsy values in JavaScript:
-false
-0
--0
-0n (BigInt zero)
-'' (empty string)
-null
-undefined
-NaN
-
-// All falsy
-if (false) {} // false
-if (0) {} // false
-if ('') {} // false
-if (null) {} // false
-if (undefined) {} // false
-if (NaN) {} // false
-```
-
-### Truthy Values
-
-```javascript
-// Everything else is truthy:
-true
-1, -1, 3.14 (any non-zero number)
-'hello', '0', 'false' (any non-empty string)
-[], [1, 2, 3] (any array)
-{}, { a: 1 } (any object)
-function() {} (any function)
-
-// All truthy
-if (true) {} // true
-if (1) {} // true
-if ('hello') {} // true
-if ([]) {} // true (empty array is truthy!)
-if ({}) {} // true (empty object is truthy!)
-```
-
-## Basic Patterns
-
-### Guard Clauses
-
-```javascript
-// Bad: nested if
-function process(value) {
-  if (value) {
-    if (value > 0) {
-      if (value < 100) {
-        return value * 2;
-      }
-    }
-  }
-  return 0;
-}
-
-// Good: early return
-function process(value) {
-  if (!value) return 0;
-  if (value <= 0) return 0;
-  if (value >= 100) return 0;
-  return value * 2;
-}
-```
-
-### Default Values
-
-```javascript
-// Old way
-function greet(name) {
-  name = name || 'Guest';
-  return `Hello, ${name}`;
-}
-
-// Modern way
-function greet(name = 'Guest') {
-  return `Hello, ${name}`;
-}
-
-// Nullish coalescing
-function greet(name) {
-  name = name ?? 'Guest';
-  return `Hello, ${name}`;
-}
-```
-
-### Swapping Variables
-
-```javascript
-// Old way
-let a = 1, b = 2;
-let temp = a;
-a = b;
-b = temp;
-
-// Modern way
-let a = 1, b = 2;
-[a, b] = [b, a];
-```
-
-## Interview Questions
-
-**Q: What's the difference between var, let, and const?**
-
-A: var is function-scoped, hoisted, can redeclare. let is block-scoped, hoisted but not initialized (TDZ), cannot redeclare. const is like let but cannot reassign (though objects/arrays are mutable). Use const by default, let when reassignment needed, avoid var.
-
-**Q: Explain type coercion in JavaScript.**
-
-A: Type coercion is automatic conversion between types. Implicit coercion happens in operations ('5' + 3 = '53'). Explicit coercion uses functions (Number('5') = 5). Use strict equality (===) to avoid unexpected coercion. Understanding coercion prevents bugs.
-
-**Q: What are falsy values in JavaScript?**
-
-A: Eight falsy values: false, 0, -0, 0n, '' (empty string), null, undefined, NaN. Everything else is truthy, including empty arrays [] and empty objects {}. Important for conditional logic and default values.
-
-**Q: What's the difference between == and ===?**
-
-A: == performs type coercion before comparison (5 == '5' is true). === checks type and value without coercion (5 === '5' is false). Always use === to avoid unexpected behavior. Only exception: checking null/undefined together.
-
-**Q: Explain the difference between function declaration and function expression.**
-
-A: Function declarations are hoisted (can call before definition), have name. Function expressions are not hoisted, can be anonymous. Arrow functions are expressions with concise syntax and lexical this. Choose based on hoisting needs and this binding requirements.
+[← Back to Functional Programming](./12-functional-programming.md) | [Next: JavaScript Type System Theory →](./14-javascript-type-system-theory.md)
 
 ---
 
-[← Back to Functional Programming](./12-functional-programming.md) | [Next: Type System Theory →](./14-type-system-theory.md)
+## Overview / Tổng Quan
+
+**English:** This chapter explains JavaScript basics from the ECMAScript specification perspective: execution context, variable environment, scope chain, hoisting, type internals, and coercion abstract operations.
+
+**Tiếng Việt:** Chương này giải thích nền tảng JavaScript theo góc nhìn đặc tả ECMAScript: execution context, variable environment, scope chain, hoisting, nội bộ kiểu dữ liệu, và các thao tác chuyển đổi kiểu trừu tượng.
+
+**English:** Goal: build interview-ready mental models, not only syntax memorization.
+
+**Tiếng Việt:** Mục tiêu: xây dựng mô hình tư duy sẵn sàng cho phỏng vấn, không chỉ ghi nhớ cú pháp.
+
+---
+
+## Table of Contents / Mục Lục
+1. [Specification Types vs Language Types / Kiểu Đặc Tả vs Kiểu Ngôn Ngữ](#1-specification-types-vs-language-types--kiểu-đặc-tả-vs-kiểu-ngôn-ngữ)
+2. [Execution Context Theory / Lý Thuyết Execution Context](#2-execution-context-theory--lý-thuyết-execution-context)
+3. [Variable Environment and Lexical Environment / Môi Trường Biến và Môi Trường Từ Vựng](#3-variable-environment-and-lexical-environment--môi-trường-biến-và-môi-trường-từ-vựng)
+4. [Scope Chain Theory / Lý Thuyết Scope Chain](#4-scope-chain-theory--lý-thuyết-scope-chain)
+5. [Hoisting Mechanism / Cơ Chế Hoisting](#5-hoisting-mechanism--cơ-chế-hoisting)
+6. [Type System Internals / Nội Bộ Hệ Thống Kiểu](#6-type-system-internals--nội-bộ-hệ-thống-kiểu)
+7. [Coercion Rules and Abstract Operations / Quy Tắc Coercion và Thao Tác Trừu Tượng](#7-coercion-rules-and-abstract-operations--quy-tắc-coercion-và-thao-tác-trừu-tượng)
+8. [Equality Algorithms / Thuật Toán So Sánh Bằng](#8-equality-algorithms--thuật-toán-so-sánh-bằng)
+9. [Interview Traps and Best Practices / Bẫy Phỏng Vấn và Thực Hành Tốt](#9-interview-traps-and-best-practices--bẫy-phỏng-vấn-và-thực-hành-tốt)
+10. [Câu Hỏi Phỏng Vấn / Interview Q&A](#câu-hỏi-phỏng-vấn--interview-qa)
+11. [Appendix: Quick Reference / Phụ Lục: Tóm Tắt Nhanh](#appendix-quick-reference--phụ-lục-tóm-tắt-nhanh)
+
+---
+
+## 1. Specification Types vs Language Types / Kiểu Đặc Tả vs Kiểu Ngôn Ngữ
+
+### 🟢 [Junior] Language Types in JavaScript / Kiểu Ngôn Ngữ Trong JavaScript
+
+**English:** JavaScript language values are what developers can directly create and manipulate.
+
+**Tiếng Việt:** Kiểu ngôn ngữ JavaScript là các giá trị mà lập trình viên có thể tạo và thao tác trực tiếp.
+
+- Undefined
+- Null
+- Boolean
+- Number
+- BigInt
+- String
+- Symbol
+- Object
+
+```javascript
+const v1 = undefined;
+const v2 = null;
+const v3 = true;
+const v4 = 42;
+const v5 = 42n;
+const v6 = 'hello';
+const v7 = Symbol('id');
+const v8 = { key: "value" };
+```
+
+### 🟡 [Mid] Specification Types / Kiểu Đặc Tả ECMAScript
+
+**English:** Specification Types are internal model types used by the ECMAScript spec. They are not direct runtime values in user code.
+
+**Tiếng Việt:** Kiểu đặc tả là mô hình nội bộ được dùng trong tài liệu ECMAScript. Chúng không phải giá trị runtime trực tiếp trong code người dùng.
+
+- **Reference**
+- **List**
+- **Completion Record**
+- **Property Descriptor**
+- **Lexical Environment**
+- **Environment Record**
+- **Data Block**
+- **Job Record**
+
+**English:** Example: assignment uses internal `Reference` records (`base`, `referencedName`, `strict`).
+
+**Tiếng Việt:** Ví dụ: phép gán dùng `Reference` nội bộ (`base`, `referencedName`, `strict`).
+
+### 🔴 [Senior] Why Interviewers Ask This / Vì Sao Nhà Tuyển Dụng Hỏi Phần Này
+
+**English:** This distinction helps explain behavior that appears “magical,” especially hoisting, TDZ, `this` binding, and coercion.
+
+**Tiếng Việt:** Phân biệt này giúp giải thích các hành vi tưởng như “ma thuật”, đặc biệt là hoisting, TDZ, ràng buộc `this`, và coercion.
+
+---
+
+## 2. Execution Context Theory / Lý Thuyết Execution Context
+
+### 🟢 [Junior] What Is an Execution Context? / Execution Context Là Gì?
+
+**English:** An execution context is the environment in which JavaScript code is evaluated and executed.
+
+**Tiếng Việt:** Execution context là môi trường nơi code JavaScript được đánh giá và thực thi.
+
+Three main types / Ba loại chính:
+- Global Execution Context
+- Function Execution Context
+- Eval Execution Context (rare / hiếm gặp)
+
+### 🟡 [Mid] Creation Phase and Execution Phase / Pha Tạo và Pha Thực Thi
+
+**English:** Every context runs in 2 conceptual phases.
+
+**Tiếng Việt:** Mỗi context chạy qua 2 pha khái niệm.
+
+1. **Creation phase**: allocate bindings, setup scope, determine `this`.
+2. **Execution phase**: run statements line by line.
+
+```javascript
+console.log(a); // undefined (var binding exists in creation phase)
+var a = 10;
+
+foo(); // works (function declaration hoisted)
+function foo() {
+  console.log('foo');
+}
+```
+
+### 🔴 [Senior] Context Stack vs Call Stack / Context Stack và Call Stack
+
+**English:** The call stack stores execution contexts in LIFO order. Recursive overgrowth causes stack overflow.
+
+**Tiếng Việt:** Call stack lưu execution context theo thứ tự LIFO. Đệ quy quá sâu gây stack overflow.
+
+```javascript
+function recurse(n) {
+  if (n === 0) return 0;
+  return recurse(n - 1) + 1;
+}
+
+console.log(recurse(5)); // 5
+```
+
+---
+
+## 3. Variable Environment and Lexical Environment / Môi Trường Biến và Môi Trường Từ Vựng
+
+### 🟢 [Junior] Variable Environment / Môi Trường Biến
+
+**English:** Historically associated with `var` and function declarations.
+
+**Tiếng Việt:** Về lịch sử, thường gắn với `var` và function declaration.
+
+### 🟢 [Junior] Lexical Environment / Môi Trường Từ Vựng
+
+**English:** Associated with block-scoped declarations (`let`, `const`, class declarations).
+
+**Tiếng Việt:** Gắn với khai báo phạm vi khối (`let`, `const`, class declaration).
+
+### 🟡 [Mid] Environment Record / Bản Ghi Môi Trường
+
+**English:** Environment record maps identifiers to bindings (`mutable`, `initialized`, `value`).
+
+**Tiếng Việt:** Environment record ánh xạ định danh tới binding (`mutable`, `initialized`, `value`).
+
+Pseudo model / Mô hình giả lập:
+```text
+Binding {
+  name: string,
+  mutable: boolean,
+  initialized: boolean,
+  value: any
+}
+```
+
+### 🔴 [Senior] Temporal Dead Zone / Vùng Chết Tạm Thời
+
+**English:** `let`/`const` bindings exist during creation but remain uninitialized until declaration execution.
+
+**Tiếng Việt:** Binding `let`/`const` tồn tại từ pha tạo nhưng chưa khởi tạo cho đến khi chạy tới dòng khai báo.
+
+```javascript
+{
+  // console.log(x); // ReferenceError
+  let x = 1;
+  console.log(x); // 1
+}
+```
+
+---
+
+## 4. Scope Chain Theory / Lý Thuyết Scope Chain
+
+### 🟢 [Junior] Lexical Scope / Phạm Vi Từ Vựng
+
+**English:** Scope is decided by where code is written, not where function is called.
+
+**Tiếng Việt:** Scope được quyết định bởi vị trí code được viết, không phải nơi hàm được gọi.
+
+```javascript
+const a = "global";
+function outer() {
+  const b = "outer";
+  function inner() {
+    const c = "inner";
+    console.log(a, b, c);
+  }
+  inner();
+}
+outer();
+```
+
+### 🟡 [Mid] Identifier Resolution / Cơ Chế Tra Cứu Định Danh
+
+**English:** Resolution searches current environment first, then outer environments recursively until global or failure.
+
+**Tiếng Việt:** Quá trình tra cứu tìm môi trường hiện tại trước, sau đó lên môi trường cha cho đến global hoặc thất bại.
+
+Search order / Thứ tự tìm:
+1. Local bindings
+2. Enclosing function bindings
+3. Global bindings
+4. `ReferenceError`
+
+### 🔴 [Senior] Closures Preserve Environment / Closure Giữ Lại Môi Trường
+
+**English:** A closure captures references to outer bindings, not copies of values at declaration time.
+
+**Tiếng Việt:** Closure bắt giữ tham chiếu đến binding bên ngoài, không phải bản sao giá trị tại thời điểm khai báo.
+
+```javascript
+function createCounter() {
+  let count = 0;
+  return function increment() {
+    count += 1;
+    return count;
+  };
+}
+
+const c = createCounter();
+console.log(c()); // 1
+console.log(c()); // 2
+```
+
+---
+
+## 5. Hoisting Mechanism / Cơ Chế Hoisting
+
+### 🟢 [Junior] What Is Hoisting? / Hoisting Là Gì?
+
+**English:** Hoisting is a teaching term describing how declarations are handled before execution.
+
+**Tiếng Việt:** Hoisting là thuật ngữ mô tả việc khai báo được xử lý trước khi chạy code.
+
+### 🟢 [Junior] `var` Hoisting / Hoisting của `var`
+
+```javascript
+console.log(v); // undefined
+var v = 10;
+```
+
+**English:** `var` is created and initialized to `undefined` in creation phase.
+
+**Tiếng Việt:** `var` được tạo và khởi tạo thành `undefined` trong pha tạo.
+
+### 🟡 [Mid] Function Declaration Hoisting / Hoisting của Function Declaration
+
+```javascript
+sayHi(); // works
+function sayHi() {
+  console.log('hi');
+}
+```
+
+### 🟡 [Mid] Function Expression and Arrow / Function Expression và Arrow
+
+```javascript
+// hello(); // TypeError or ReferenceError depending declaration
+var hello = function () {
+  console.log('hello');
+};
+
+// greet(); // ReferenceError (TDZ)
+const greet = () => {
+  console.log('greet');
+};
+```
+
+### 🔴 [Senior] Hoisting + Shadowing / Hoisting kết hợp Shadowing
+
+```javascript
+var name = "global";
+function demo() {
+  console.log(name); // undefined
+  var name = "local";
+  console.log(name); // local
+}
+demo();
+```
+
+---
+
+## 6. Type System Internals / Nội Bộ Hệ Thống Kiểu
+
+### 🟢 [Junior] Primitive vs Object / Primitive và Object
+
+**English:** Primitives are immutable values; objects are mutable collections with identity and prototype linkage.
+
+**Tiếng Việt:** Primitive là giá trị bất biến; object là tập thuộc tính có thể thay đổi, có danh tính và liên kết prototype.
+
+```javascript
+const s = "abc";
+// s[0] = "x"; // no effect
+
+const obj = { a: 1 };
+obj.a = 2; // mutable
+```
+
+### 🟡 [Mid] Wrapper Objects / Đối Tượng Bao
+
+**English:** JavaScript temporarily boxes primitives when calling methods (`"abc".toUpperCase()`).
+
+**Tiếng Việt:** JavaScript tạm “đóng gói” primitive thành wrapper khi gọi method (`"abc".toUpperCase()`).
+
+### 🟡 [Mid] Internal Slots / Internal Slots
+
+**English:** Objects in spec have internal slots like `[[Prototype]]`, `[[Extensible]]`, function `[[Call]]`, etc.
+
+**Tiếng Việt:** Trong đặc tả, object có internal slot như `[[Prototype]]`, `[[Extensible]]`, function `[[Call]]`, ...
+
+### 🔴 [Senior] Why `typeof null` is `"object"` / Vì Sao `typeof null` là `"object"`
+
+**English:** Historical design bug for backward compatibility. `null` is still a primitive semantic type.
+
+**Tiếng Việt:** Đây là lỗi lịch sử được giữ lại vì tương thích ngược. Về ngữ nghĩa, `null` vẫn là primitive.
+
+---
+
+## 7. Coercion Rules and Abstract Operations / Quy Tắc Coercion và Thao Tác Trừu Tượng
+
+### 🟢 [Junior] ToBoolean / Chuyển sang Boolean
+
+Falsy values / Giá trị falsy:
+- `false`
+- `0`
+- `-0`
+- `0n`
+- `""`
+- `null`
+- `undefined`
+- `NaN`
+
+```javascript
+Boolean(0); // false
+Boolean([]); // true
+Boolean({}); // true
+```
+
+### 🟡 [Mid] ToNumber / Chuyển sang Number
+
+```javascript
+Number(undefined); // NaN
+Number(null); // 0
+Number(true); // 1
+Number(false); // 0
+Number("  42  "); // 42
+Number(""); // 0
+Number("0x10"); // 16
+```
+
+### 🟡 [Mid] ToString / Chuyển sang String
+
+```javascript
+String(undefined); // "undefined"
+String(null); // "null"
+String(true); // "true"
+String(123); // "123"
+```
+
+### 🔴 [Senior] ToPrimitive / Chuyển sang Primitive
+
+**English:** For object-to-primitive conversion, JS checks `Symbol.toPrimitive`, then `valueOf`/`toString` by hint.
+
+**Tiếng Việt:** Khi chuyển object sang primitive, JS kiểm tra `Symbol.toPrimitive`, sau đó `valueOf`/`toString` tùy hint.
+
+```javascript
+const item = {
+  valueOf() { return 100; },
+  toString() { return "item"; }
+};
+
+console.log(item + 1); // 101 (number hint path)
+console.log(String(item)); // "item" (string hint path)
+```
+
+### 🔴 [Senior] Coercion in Operators / Coercion Trong Toán Tử
+
+```javascript
+// "5" + 1 => "51"
+// "5" - 1 => 4
+// "5" * "2" => 10
+// "5" / "2" => 2.5
+// [] + {} => "[object Object]" (environment-dependent formatting)
+// {} + [] => 0 or "[object Object]" depending parse context
+```
+
+---
+
+## 8. Equality Algorithms / Thuật Toán So Sánh Bằng
+
+### 🟢 [Junior] Strict Equality (`===`) / So Sánh Nghiêm Ngặt
+
+**English:** No coercion. Types must match first.
+
+**Tiếng Việt:** Không coercion. Kiểu phải khớp trước.
+
+```javascript
+5 === "5"; // false
+5 === 5; // true
+NaN === NaN; // false
+```
+
+### 🟡 [Mid] Abstract Equality (`==`) / So Sánh Trừu Tượng
+
+**English:** Coercion-based algorithm with specific ECMAScript rules.
+
+**Tiếng Việt:** Thuật toán dựa trên coercion với quy tắc cụ thể trong ECMAScript.
+
+```javascript
+0 == false; // true
+"" == 0; // true
+null == undefined; // true
+[] == ""; // true
+```
+
+### 🔴 [Senior] `Object.is` vs `===` / `Object.is` so với `===`
+
+```javascript
+Object.is(NaN, NaN); // true
+NaN === NaN; // false
+
+Object.is(+0, -0); // false
++0 === -0; // true
+```
+
+---
+
+## 9. Interview Traps and Best Practices / Bẫy Phỏng Vấn và Thực Hành Tốt
+
+### 🟡 [Mid] Practice 1 / Thực Hành 1
+
+- **English:** Avoid `var` in modern code / Tránh `var` trong code hiện đại
+- **Tiếng Việt:** Use `const` by default, `let` when reassignment needed / Dùng `const` mặc định, `let` khi cần gán lại
+
+### 🟡 [Mid] Practice 2 / Thực Hành 2
+
+- **English:** Prefer `===` over `==` / Ưu tiên `===` thay vì `==`
+- **Tiếng Việt:** Only use `x == null` when intentionally matching null+undefined / Chỉ dùng `x == null` khi cố ý gom null+undefined
+
+### 🟡 [Mid] Practice 3 / Thực Hành 3
+
+- **English:** Do not rely on implicit coercion in critical logic / Không dựa vào coercion ngầm ở logic quan trọng
+- **Tiếng Việt:** Convert explicitly with Number/String/Boolean / Chuyển đổi rõ ràng bằng Number/String/Boolean
+
+### 🟡 [Mid] Practice 4 / Thực Hành 4
+
+- **English:** Understand TDZ before using `let`/`const` everywhere / Hiểu TDZ trước khi dùng `let`/`const` toàn bộ
+- **Tiếng Việt:** Prevents runtime ReferenceError surprises / Tránh lỗi ReferenceError bất ngờ
+
+### 🟡 [Mid] Practice 5 / Thực Hành 5
+
+- **English:** Be careful with object mutation / Cẩn thận với thay đổi object
+- **Tiếng Việt:** Use immutable patterns in state management / Ưu tiên pattern bất biến khi quản lý state
+
+### 🔴 [Senior] Architecture-Level Advice / Lời Khuyên Cấp Kiến Trúc
+
+- Keep domain logic free from coercion ambiguity.
+- Isolate parsing/validation at boundaries (API, form, storage).
+- Model `null` vs `undefined` intentionally in contracts.
+- Write tests for conversion edge cases.
+
+- Giữ logic domain không mơ hồ bởi coercion.
+- Cô lập parse/validation ở ranh giới (API, form, storage).
+- Mô hình hóa `null` và `undefined` có chủ đích trong contract.
+- Viết test cho các trường hợp chuyển đổi biên.
+
+---
+
+## Câu Hỏi Phỏng Vấn / Interview Q&A
+
+### 🟢 [Junior] Q1: What is execution context? / Execution context là gì?
+
+**English Answer:**
+Execution context is the runtime environment for executing code, including scope bindings and `this`.
+
+**Trả Lời Tiếng Việt:**
+Execution context là môi trường runtime để thực thi code, gồm binding phạm vi và `this`.
+
+### 🟢 [Junior] Q2: Difference between `var`, `let`, `const`? / Khác biệt giữa `var`, `let`, `const`?
+
+**English Answer:**
+`var` is function-scoped and initialized as undefined; `let/const` are block-scoped and subject to TDZ.
+
+**Trả Lời Tiếng Việt:**
+`var` có phạm vi hàm và khởi tạo undefined; `let/const` có phạm vi khối và chịu TDZ.
+
+### 🟢 [Junior] Q3: What is scope chain? / Scope chain là gì?
+
+**English Answer:**
+A lookup chain from current lexical environment to outer environments until global scope.
+
+**Trả Lời Tiếng Việt:**
+Là chuỗi tra cứu từ môi trường từ vựng hiện tại ra môi trường cha đến global.
+
+### 🟢 [Junior] Q4: Why does `typeof null` return `"object"`? / Vì sao `typeof null` trả về `"object"`?
+
+**English Answer:**
+Historical bug retained for web compatibility.
+
+**Trả Lời Tiếng Việt:**
+Lỗi lịch sử được giữ lại để tương thích ngược trên web.
+
+### 🟡 [Mid] Q5: Explain hoisting precisely. / Giải thích hoisting chính xác.
+
+**English Answer:**
+Declarations are processed during creation phase; `var` gets `undefined`, function declarations get function objects, `let/const` remain uninitialized until execution reaches declaration.
+
+**Trả Lời Tiếng Việt:**
+Khai báo được xử lý ở pha tạo; `var` nhận `undefined`, function declaration nhận function object, `let/const` chưa khởi tạo cho đến khi chạy đến dòng khai báo.
+
+### 🟡 [Mid] Q6: Why is `[] == false` true? / Vì sao `[] == false` là true?
+
+**English Answer:**
+`false` becomes 0, `[]` becomes "" then 0; finally 0 == 0.
+
+**Trả Lời Tiếng Việt:**
+`false` thành 0, `[]` thành "" rồi thành 0; cuối cùng so sánh 0 == 0.
+
+### 🟡 [Mid] Q7: Compare `==`, `===`, `Object.is`. / So sánh `==`, `===`, `Object.is`.
+
+**English Answer:**
+`==` uses coercion, `===` compares type+value without coercion, `Object.is` differs for NaN and signed zero.
+
+**Trả Lời Tiếng Việt:**
+`==` có coercion, `===` so sánh kiểu+giá trị không coercion, `Object.is` khác ở NaN và signed zero.
+
+### 🟡 [Mid] Q8: What is TDZ and why useful? / TDZ là gì và vì sao hữu ích?
+
+**English Answer:**
+TDZ catches early access bugs before initialization, making code safer and clearer.
+
+**Trả Lời Tiếng Việt:**
+TDZ bắt lỗi truy cập sớm trước khởi tạo, giúp code an toàn và rõ ràng hơn.
+
+### 🟡 [Mid] Q9: Explain ToPrimitive algorithm. / Giải thích thuật toán ToPrimitive.
+
+**English Answer:**
+Check `Symbol.toPrimitive`; otherwise use `valueOf/toString` order based on preferred hint.
+
+**Trả Lời Tiếng Việt:**
+Kiểm tra `Symbol.toPrimitive`; nếu không có thì dùng thứ tự `valueOf/toString` theo hint.
+
+### 🟡 [Mid] Q10: Why prefer explicit conversion? / Vì sao nên chuyển đổi kiểu tường minh?
+
+**English Answer:**
+It prevents hidden bugs and makes intent reviewable in PRs and interviews.
+
+**Trả Lời Tiếng Việt:**
+Giúp tránh lỗi ẩn và thể hiện rõ ý đồ khi review PR hoặc phỏng vấn.
+
+### 🔴 [Senior] Q11: How do closures affect memory? / Closure ảnh hưởng bộ nhớ thế nào?
+
+**English Answer:**
+Closures can retain outer environments; unnecessary captured references may increase memory retention.
+
+**Trả Lời Tiếng Việt:**
+Closure giữ lại môi trường bên ngoài; tham chiếu bắt giữ không cần thiết có thể giữ bộ nhớ lâu hơn.
+
+### 🔴 [Senior] Q12: How to design APIs around null/undefined? / Thiết kế API quanh null/undefined ra sao?
+
+**English Answer:**
+Use clear contracts: missing field as undefined, explicit empty value as null, and validate at boundaries.
+
+**Trả Lời Tiếng Việt:**
+Dùng contract rõ ràng: thiếu trường dùng undefined, giá trị rỗng có chủ đích dùng null, và validate ở ranh giới hệ thống.
+
+### 🔴 [Senior] Q13: Why does static analysis help with coercion? / Vì sao static analysis giúp xử lý coercion?
+
+**English Answer:**
+It flags suspicious implicit conversions and enforces stricter typing assumptions earlier.
+
+**Trả Lời Tiếng Việt:**
+Nó cảnh báo chuyển đổi ngầm đáng ngờ và cưỡng bức giả định kiểu chặt chẽ sớm hơn.
+
+### 🔴 [Senior] Q14: Explain one production bug from coercion. / Nêu một lỗi production do coercion.
+
+**English Answer:**
+Example: `if (price)` rejected valid `0` prices; fix with `price != null` and numeric validation.
+
+**Trả Lời Tiếng Việt:**
+Ví dụ: `if (price)` loại nhầm giá `0`; sửa bằng `price != null` và validate số.
+
+### 🔴 [Senior] Q15: How does this theory improve debugging speed? / Lý thuyết này giúp debug nhanh hơn thế nào?
+
+**English Answer:**
+You can reason from spec-level phases (creation/execution) and conversion operations to locate root causes deterministically.
+
+**Trả Lời Tiếng Việt:**
+Bạn có thể suy luận theo pha đặc tả (tạo/thực thi) và thao tác chuyển đổi để tìm nguyên nhân gốc một cách xác định.
+
+---
+
+## Appendix: Quick Reference / Phụ Lục: Tóm Tắt Nhanh
+
+### A. Conversion Table / Bảng Chuyển Đổi
+
+| Value | ToNumber | ToString | ToBoolean |
+|---|---:|---|---|
+| `undefined` | `NaN` | `"undefined"` | `false` |
+| `null` | `0` | `"null"` | `false` |
+| `true` | `1` | `"true"` | `true` |
+| `false` | `0` | `"false"` | `false` |
+| `""` | `0` | `""` | `false` |
+| `"42"` | `42` | `"42"` | `true` |
+| `[]` | `0` | `""` | `true` |
+| `{}` | `NaN` | `"[object Object]"` | `true` |
+
+### B. Mini Drills / Bài Tập Nhanh
+
+#### 🟢 [Junior] Drill 1
+
+**English Prompt:** Predict output for coercion case #1.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #1; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log("5" - true);
+```
+
+#### 🟢 [Junior] Drill 2
+
+**English Prompt:** Predict output for coercion case #2.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #2; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log([] == 0);
+```
+
+#### 🟢 [Junior] Drill 3
+
+**English Prompt:** Predict output for coercion case #3.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #3; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log(null == undefined);
+```
+
+#### 🟢 [Junior] Drill 4
+
+**English Prompt:** Predict output for coercion case #4.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #4; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log(Boolean({}));
+```
+
+#### 🟢 [Junior] Drill 5
+
+**English Prompt:** Predict output for coercion case #5.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #5; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log("5" - true);
+```
+
+#### 🟢 [Junior] Drill 6
+
+**English Prompt:** Predict output for coercion case #6.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #6; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log([] == 0);
+```
+
+#### 🟢 [Junior] Drill 7
+
+**English Prompt:** Predict output for coercion case #7.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #7; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log(null == undefined);
+```
+
+#### 🟢 [Junior] Drill 8
+
+**English Prompt:** Predict output for coercion case #8.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #8; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log(Boolean({}));
+```
+
+#### 🟢 [Junior] Drill 9
+
+**English Prompt:** Predict output for coercion case #9.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #9; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log("5" - true);
+```
+
+#### 🟢 [Junior] Drill 10
+
+**English Prompt:** Predict output for coercion case #10.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #10; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log([] == 0);
+```
+
+#### 🟢 [Junior] Drill 11
+
+**English Prompt:** Predict output for coercion case #11.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #11; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log(null == undefined);
+```
+
+#### 🟢 [Junior] Drill 12
+
+**English Prompt:** Predict output for coercion case #12.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #12; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log(Boolean({}));
+```
+
+#### 🟢 [Junior] Drill 13
+
+**English Prompt:** Predict output for coercion case #13.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #13; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log("5" - true);
+```
+
+#### 🟢 [Junior] Drill 14
+
+**English Prompt:** Predict output for coercion case #14.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #14; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log([] == 0);
+```
+
+#### 🟢 [Junior] Drill 15
+
+**English Prompt:** Predict output for coercion case #15.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #15; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log(null == undefined);
+```
+
+#### 🟢 [Junior] Drill 16
+
+**English Prompt:** Predict output for coercion case #16.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #16; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log(Boolean({}));
+```
+
+#### 🟢 [Junior] Drill 17
+
+**English Prompt:** Predict output for coercion case #17.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #17; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log("5" - true);
+```
+
+#### 🟢 [Junior] Drill 18
+
+**English Prompt:** Predict output for coercion case #18.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #18; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log([] == 0);
+```
+
+#### 🟢 [Junior] Drill 19
+
+**English Prompt:** Predict output for coercion case #19.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #19; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log(null == undefined);
+```
+
+#### 🟢 [Junior] Drill 20
+
+**English Prompt:** Predict output for coercion case #20.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #20; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log(Boolean({}));
+```
+
+#### 🟢 [Junior] Drill 21
+
+**English Prompt:** Predict output for coercion case #21.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #21; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log("5" - true);
+```
+
+#### 🟢 [Junior] Drill 22
+
+**English Prompt:** Predict output for coercion case #22.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #22; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log([] == 0);
+```
+
+#### 🟢 [Junior] Drill 23
+
+**English Prompt:** Predict output for coercion case #23.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #23; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log(null == undefined);
+```
+
+#### 🟢 [Junior] Drill 24
+
+**English Prompt:** Predict output for coercion case #24.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #24; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log(Boolean({}));
+```
+
+#### 🟢 [Junior] Drill 25
+
+**English Prompt:** Predict output for coercion case #25.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #25; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log("5" - true);
+```
+
+#### 🟢 [Junior] Drill 26
+
+**English Prompt:** Predict output for coercion case #26.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #26; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log([] == 0);
+```
+
+#### 🟢 [Junior] Drill 27
+
+**English Prompt:** Predict output for coercion case #27.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #27; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log(null == undefined);
+```
+
+#### 🟢 [Junior] Drill 28
+
+**English Prompt:** Predict output for coercion case #28.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #28; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log(Boolean({}));
+```
+
+#### 🟢 [Junior] Drill 29
+
+**English Prompt:** Predict output for coercion case #29.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #29; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log("5" - true);
+```
+
+#### 🟢 [Junior] Drill 30
+
+**English Prompt:** Predict output for coercion case #30.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #30; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log([] == 0);
+```
+
+#### 🟢 [Junior] Drill 31
+
+**English Prompt:** Predict output for coercion case #31.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #31; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log(null == undefined);
+```
+
+#### 🟢 [Junior] Drill 32
+
+**English Prompt:** Predict output for coercion case #32.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #32; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log(Boolean({}));
+```
+
+#### 🟢 [Junior] Drill 33
+
+**English Prompt:** Predict output for coercion case #33.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #33; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log("5" - true);
+```
+
+#### 🟢 [Junior] Drill 34
+
+**English Prompt:** Predict output for coercion case #34.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #34; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log([] == 0);
+```
+
+#### 🟢 [Junior] Drill 35
+
+**English Prompt:** Predict output for coercion case #35.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #35; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log(null == undefined);
+```
+
+#### 🟢 [Junior] Drill 36
+
+**English Prompt:** Predict output for coercion case #36.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #36; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log(Boolean({}));
+```
+
+#### 🟢 [Junior] Drill 37
+
+**English Prompt:** Predict output for coercion case #37.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #37; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log("5" - true);
+```
+
+#### 🟢 [Junior] Drill 38
+
+**English Prompt:** Predict output for coercion case #38.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #38; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log([] == 0);
+```
+
+#### 🟢 [Junior] Drill 39
+
+**English Prompt:** Predict output for coercion case #39.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #39; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log(null == undefined);
+```
+
+#### 🟢 [Junior] Drill 40
+
+**English Prompt:** Predict output for coercion case #40.
+
+**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #40; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
+
+```javascript
+console.log(Boolean({}));
+```
+
+### C. Glossary / Thuật Ngữ
+
+- **Execution Context**: Môi trường thực thi hiện tại của code.
+- **Lexical Environment**: Môi trường từ vựng chứa binding và liên kết outer.
+- **Environment Record**: Bản ghi binding định danh.
+- **Hoisting**: Cách xử lý khai báo trước khi chạy code.
+- **TDZ**: Vùng trước khi binding let/const được khởi tạo.
+- **Reference Type (spec)**: Bản ghi nội bộ đại diện truy cập biến/thuộc tính.
+- **ToPrimitive**: Thuật toán chuyển object sang primitive.
+- **ToNumber**: Thuật toán chuẩn hóa sang số.
+- **ToString**: Thuật toán chuẩn hóa sang chuỗi.
+- **ToBoolean**: Thuật toán chuẩn hóa sang boolean.
+- **Abstract Equality**: Thuật toán `==` có coercion.
+- **Strict Equality**: Thuật toán `===` không coercion.
+- **SameValue**: Ngữ nghĩa `Object.is`.
+- **Scope Chain**: Chuỗi tra cứu binding theo lexical scope.
+- **Closure**: Hàm giữ tham chiếu tới môi trường bao ngoài.
+- **Shadowing**: Biến cục bộ che biến bên ngoài cùng tên.
+- **Global Object**: Đối tượng toàn cục của runtime.
+- **Primitive**: Giá trị bất biến không có danh tính object.
+- **Object Identity**: So sánh object theo tham chiếu.
+- **Wrapper Object**: Đối tượng bao primitive tạm thời.
+- **Internal Slot**: Thuộc tính nội bộ chỉ đặc tả dùng.
+- **Call Stack**: Ngăn xếp context khi gọi hàm.
+- **Creation Phase**: Pha thiết lập binding/context.
+- **Execution Phase**: Pha thực thi từng câu lệnh.
+- **Nullish**: Chỉ gồm null và undefined.
+- **Falsy**: Giá trị chuyển thành false trong ToBoolean.
+- **Truthy**: Giá trị chuyển thành true trong ToBoolean.
+- **Spec Algorithm**: Thuật toán chính thức trong ECMAScript.
+- **Deterministic Debugging**: Debug dựa trên mô hình đặc tả rõ ràng.
+- **Boundary Validation**: Kiểm tra dữ liệu tại biên hệ thống.
+
+---
+
+## Summary / Tóm Tắt
+
+**English:** JavaScript basics become interview strength when explained from execution contexts, environments, scope resolution, and abstract conversion algorithms.
+
+**Tiếng Việt:** Nền tảng JavaScript trở thành lợi thế phỏng vấn khi bạn giải thích được bằng execution context, environment, scope resolution, và các thuật toán chuyển đổi trừu tượng.
+
+---
+
+[← Back to Functional Programming](./12-functional-programming.md) | [Next: JavaScript Type System Theory →](./14-javascript-type-system-theory.md)

@@ -915,9 +915,9 @@ console.log(Symbol.keyFor(globalSym1)); // 'app.id'
 
 ---
 
-## Interview Questions / Câu Hỏi Phỏng Vấn
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-### Q1: Explain decorators and their use cases
+### 🔴 [Senior] Q1: Explain decorators and their use cases
 
 **English Answer:**
 
@@ -947,7 +947,7 @@ async fetchData(id: number) {
 
 Decorators là hàm sửa đổi classes, methods, properties hoặc parameters. Dùng cho logging, validation, memoization, authorization, timing, retry logic.
 
-### Q2: What are mixins and when to use them?
+### 🔴 [Senior] Q2: What are mixins and when to use them?
 
 **English Answer:**
 
@@ -974,7 +974,7 @@ Decorators là hàm sửa đổi classes, methods, properties hoặc parameters.
 
 Mixins thêm chức năng qua composition thay vì inheritance. Dùng khi cần đa kế thừa, chia sẻ hành vi, tránh hierarchy sâu.
 
-### Q3: Explain Proxy and its use cases
+### 🔴 [Senior] Q3: Explain Proxy and its use cases
 
 **English Answer:**
 

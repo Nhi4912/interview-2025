@@ -791,7 +791,7 @@ function Header() {
 
 ## Interview Questions / Câu Hỏi Phỏng Vấn
 
-### Question 1: When to use Compound Components?
+### Question 1: When to use Compound Components? — 🟢 [Junior]
 
 **English Answer:**
 Use compound components when you need:
@@ -807,7 +807,7 @@ Sử dụng compound components khi bạn cần:
 - API sạch, khai báo
 - Ví dụ: Tabs, Accordion, Select/Dropdown
 
-### Question 2: Render Props vs Custom Hooks?
+### Question 2: Render Props vs Custom Hooks? — 🟡 [Mid]
 
 **English Answer:**
 - **Render Props**: Good for sharing render logic, but can lead to "wrapper hell"
@@ -819,7 +819,7 @@ Sử dụng compound components khi bạn cần:
 - **Custom Hooks**: Cách tiếp cận hiện đại, cú pháp sạch hơn, kết hợp tốt hơn
 - **Khuyến nghị**: Sử dụng custom hooks cho code mới
 
-### Question 3: HOC vs Hooks?
+### Question 3: HOC vs Hooks? — 🔴 [Senior]
 
 **English Answer:**
 - **HOCs**: Legacy pattern, can cause prop naming collisions, harder to type

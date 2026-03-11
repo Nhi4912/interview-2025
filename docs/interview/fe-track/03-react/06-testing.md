@@ -768,7 +768,7 @@ test('example test', async () => {
 
 ## Interview Questions / Câu Hỏi Phỏng Vấn
 
-### Q1: What is the difference between unit, integration, and E2E tests?
+### Q1: What is the difference between unit, integration, and E2E tests? — 🟢 [Junior]
 
 **English Answer:**
 - **Unit tests**: Test individual components/functions in isolation
@@ -785,7 +785,7 @@ test('example test', async () => {
 /   Unit     \ (Many, fast, cheap)
 ```
 
-### Q2: How do you test async code in React?
+### Q2: How do you test async code in React? — 🟡 [Mid]
 
 **English Answer:**
 Use `waitFor`, `findBy` queries, or `act`:
@@ -805,7 +805,7 @@ act(() => {
 });
 ```
 
-### Q3: What is the difference between getBy, queryBy, and findBy?
+### Q3: What is the difference between getBy, queryBy, and findBy? — 🟢 [Junior]
 
 **English Answer:**
 - **getBy**: Throws error if not found (use for elements that should exist)
@@ -823,7 +823,7 @@ expect(screen.queryByText('Error')).not.toBeInTheDocument();
 const message = await screen.findByText('Success');
 ```
 
-### Q4: How do you test custom hooks?
+### Q4: How do you test custom hooks? — 🟡 [Mid]
 
 **English Answer:**
 Use `renderHook` from React Testing Library:
@@ -841,7 +841,7 @@ act(() => {
 expect(result.current.count).toBe(1);
 ```
 
-### Q5: What is snapshot testing and when to use it?
+### Q5: What is snapshot testing and when to use it? — 🔴 [Senior]
 
 **English Answer:**
 Snapshot testing captures component output and compares it to a saved snapshot. Use for:
