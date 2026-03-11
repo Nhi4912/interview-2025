@@ -1,4 +1,10 @@
-# Go Backend Interview Study Roadmap
+# Go Backend Interview Study Roadmap / Lộ Trình Học
+
+## Tổng Quan / Overview
+
+- Lộ trình này ưu tiên kiến thức cho Go Backend Middle/Senior.
+- Sắp theo phase để học tuần tự từ nền tảng đến system design.
+- Có thể điều chỉnh theo công ty mục tiêu và thời gian chuẩn bị.
 
 ## Lộ trình ôn tập phỏng vấn Go Backend Developer (Middle/Senior)
 
@@ -9,9 +15,9 @@
 
 ---
 
-## Study Order (Thứ tự ôn tập)
+## Study Order / Thứ tự ôn tập
 
-### Phase 1: CS Fundamentals (2-3 tuần)
+### Phase 1: CS Fundamentals / Nền Tảng CS (2-3 tuần)
 
 > Nền tảng bắt buộc cho mọi vòng phỏng vấn
 
@@ -22,7 +28,7 @@
 | 3   | Operating Systems | `01-cs-fundamentals/03-operating-systems.md` | High     |
 | 4   | Networking        | `01-cs-fundamentals/04-networking.md`        | High     |
 
-### Phase 2: Backend Knowledge (2-3 tuần)
+### Phase 2: Backend Knowledge / Kiến Thức Backend (2-3 tuần)
 
 > Kiến thức backend cốt lõi, đặc biệt quan trọng cho Senior
 
@@ -33,7 +39,7 @@
 | 7   | Distributed Systems | `02-backend-knowledge/03-distributed-systems.md` | High     |
 | 8   | Auth & Security     | `02-backend-knowledge/04-auth-security.md`       | Medium   |
 
-### Phase 3: Database (1-2 tuần)
+### Phase 3: Database / Cơ Sở Dữ Liệu (1-2 tuần)
 
 > Kiến thức database thực chiến
 
@@ -44,7 +50,7 @@
 | 11  | NoSQL (Redis, MongoDB)  | `03-database/03-nosql-redis-mongo.md`     | High     |
 | 12  | Caching Patterns        | `03-database/04-caching-patterns.md`      | High     |
 
-### Phase 4: Golang Deep Dive (2-3 tuần)
+### Phase 4: Golang Deep Dive / Chuyên Sâu Golang (2-3 tuần)
 
 > Kiến thức Go chuyên sâu, rất quan trọng cho Go-specific roles
 
@@ -56,7 +62,7 @@
 | 16  | Memory & GC           | `04-golang/04-memory-gc.md`             | High     |
 | 17  | Testing & Profiling   | `04-golang/05-testing-profiling.md`     | Medium   |
 
-### Phase 5: System Design (2-3 tuần)
+### Phase 5: System Design / Thiết Kế Hệ Thống (2-3 tuần)
 
 > Bắt buộc cho Senior, quan trọng cho Middle
 
@@ -67,7 +73,7 @@
 | 20  | Advanced Problems    | `04-be-system-design/03-advanced-problems.md`    | High     |
 | 21  | Distributed Patterns | `04-be-system-design/04-distributed-patterns.md` | High     |
 
-### Phase 6: DevOps & Infrastructure (1 tuần)
+### Phase 6: DevOps & Infrastructure / Hạ Tầng & DevOps (1 tuần)
 
 > Kiến thức DevOps cơ bản cho backend developer
 
@@ -75,7 +81,7 @@
 | --- | ----------------------- | ----------------------------- | -------- |
 | 22  | DevOps & Infrastructure | `06-devops-infrastructure.md` | Medium   |
 
-### Phase 7: AI & Agentic Systems (1-2 tuần)
+### Phase 7: AI & Agentic Systems / AI & Hệ Thống Agent (1-2 tuần)
 
 > Kiến thức AI ngày càng quan trọng cho phỏng vấn 2025-2026
 
@@ -87,7 +93,7 @@
 | 26  | RAG & Embeddings    | `shared/06-ai-and-agents/04-rag-and-embeddings.md`   | Medium   |
 | 27  | AI System Design    | `shared/06-ai-and-agents/06-ai-system-design.md`     | Medium   |
 
-### Phase 8: Software Engineering Practices (1 tuần)
+### Phase 8: Software Engineering Practices / Thực Hành Kỹ Thuật Phần Mềm (1 tuần)
 
 > Kiến thức design patterns và architecture
 
@@ -96,7 +102,7 @@
 | 28  | SOLID & Design Patterns | `shared/05-software-engineering/01-solid-and-design-patterns.md` | High     |
 | 29  | Architecture Styles     | `shared/05-software-engineering/02-architecture-styles.md`       | Medium   |
 
-### Reference
+### Reference / Tài Liệu Tham Chiếu
 
 | #   | Topic                     | File                              |
 | --- | ------------------------- | --------------------------------- |
@@ -106,7 +112,7 @@
 
 ---
 
-## Company-Specific Focus Matrix
+## Company-Specific Focus Matrix / Ma Trận Trọng Tâm Theo Công Ty
 
 | Topic           | Zalo      | Grab      | Axon      | EH        | Microsoft | Google    |
 | --------------- | --------- | --------- | --------- | --------- | --------- | --------- |
@@ -130,7 +136,7 @@
 
 ---
 
-## Daily Study Template
+## Daily Study Template / Mẫu Học Hằng Ngày
 
 ```
 Morning (2h):   Algorithm practice (LeetCode in Go)
