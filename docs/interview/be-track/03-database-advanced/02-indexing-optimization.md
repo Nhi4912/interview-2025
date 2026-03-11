@@ -7,7 +7,7 @@
 
 ## 1. Index Fundamentals
 
-### 🟢 Q: Index là gì? Tại sao nó giúp query nhanh hơn?
+### 🟢 Q: Index là gì? Tại sao nó giúp query nhanh hơn? 🟢 [Junior]
 
 Index là một **cấu trúc dữ liệu phụ** (auxiliary data structure) được tạo từ một hoặc nhiều cột của bảng, giúp database tìm kiếm dữ liệu mà **không cần quét toàn bộ bảng** (full table scan).
 
@@ -34,7 +34,7 @@ With Index (B+ Tree Lookup):
 
 ---
 
-### 🟢 Q: Index là một trade-off như thế nào?
+### 🟢 Q: Index là một trade-off như thế nào? 🟢 [Junior]
 
 Index **không phải miễn phí**. Đây là trade-off kinh điển trong database:
 
@@ -55,7 +55,7 @@ Index **không phải miễn phí**. Đây là trade-off kinh điển trong data
 
 ---
 
-### 🟡 Q: Khi nào nên tạo index? Khi nào KHÔNG nên?
+### 🟡 Q: Khi nào nên tạo index? Khi nào KHÔNG nên? 🟡 [Mid]
 
 **NÊN tạo index khi:**
 - Cột thường xuyên xuất hiện trong **WHERE**, **JOIN ON**, **ORDER BY**
@@ -75,7 +75,7 @@ Index **không phải miễn phí**. Đây là trade-off kinh điển trong data
 
 ## 2. B+ Tree Index (Most Important)
 
-### 🟡 Q: Giải thích cấu trúc B+ Tree trong database?
+### 🟡 Q: Giải thích cấu trúc B+ Tree trong database? 🟡 [Mid]
 
 B+ Tree là cấu trúc index **mặc định và quan trọng nhất** trong hầu hết database (MySQL InnoDB, PostgreSQL). Đây là biến thể của B-Tree được tối ưu cho disk I/O.
 
@@ -129,7 +129,7 @@ Level 2 (Leaf Nodes — keys + row pointers + linked list):
 
 ---
 
-### 🟡 Q: Khi query thực thi, B+ Tree được traverse như thế nào?
+### 🟡 Q: Khi query thực thi, B+ Tree được traverse như thế nào? 🟡 [Mid]
 
 Ví dụ: `SELECT * FROM users WHERE id = 45`
 
@@ -160,7 +160,7 @@ Step 5:   Key 45 found, next key > 45 → stop scanning
 
 ---
 
-### 🔴 Q: Phân biệt Clustered Index vs Non-Clustered Index?
+### 🔴 Q: Phân biệt Clustered Index vs Non-Clustered Index? 🔴 [Senior]
 
 Đây là khái niệm **cực kỳ quan trọng**, đặc biệt khi hiểu InnoDB (MySQL).
 
@@ -228,7 +228,7 @@ Step 2: Use PK=42 to traverse clustered index (primary key B+ Tree)
 
 ## 3. Index Types
 
-### 🟡 Q: Có bao nhiêu loại index? Khi nào dùng loại nào?
+### 🟡 Q: Có bao nhiêu loại index? Khi nào dùng loại nào? 🟡 [Mid]
 
 #### B+ Tree Index (Default)
 
@@ -328,7 +328,7 @@ Bitmap Index:
 
 ## 4. Composite Index (Multi-column)
 
-### 🟡 Q: Leftmost Prefix Rule là gì? Tại sao column ordering quan trọng?
+### 🟡 Q: Leftmost Prefix Rule là gì? Tại sao column ordering quan trọng? 🟡 [Mid]
 
 Composite index là index trên **nhiều cột**. B+ Tree sắp xếp theo thứ tự cột từ trái sang phải — giống phonebook: **last name → first name → middle name**.
 
@@ -361,7 +361,7 @@ Think of it as: a phone book sorted by (City, LastName, FirstName)
 
 ---
 
-### 🔴 Q: Làm sao chọn thứ tự cột trong composite index?
+### 🔴 Q: Làm sao chọn thứ tự cột trong composite index? 🔴 [Senior]
 
 **Quy tắc ERS (Equality → Range → Sort):**
 
@@ -400,7 +400,7 @@ gender          | 3              | 0.000003     | Poor (alone)
 
 ## 5. Covering Index
 
-### 🟡 Q: Covering Index là gì? Tại sao nó nhanh?
+### 🟡 Q: Covering Index là gì? Tại sao nó nhanh? 🟡 [Mid]
 
 Covering index là index **chứa tất cả cột** mà query cần — database không cần truy cập table data (heap/clustered index).
 
@@ -448,7 +448,7 @@ CREATE INDEX idx_email_incl ON users(email) INCLUDE (name);
 
 ## 6. Partial Index / Filtered Index
 
-### 🟡 Q: Partial Index là gì? Khi nào dùng?
+### 🟡 Q: Partial Index là gì? Khi nào dùng? 🟡 [Mid]
 
 Partial index chỉ index **một subset rows** thỏa mãn điều kiện — giảm index size đáng kể.
 
@@ -496,7 +496,7 @@ SELECT * FROM orders WHERE status = 'cancelled' AND created_at > '2024-06-01';
 
 ## 7. EXPLAIN / EXPLAIN ANALYZE
 
-### 🟡 Q: Cách đọc query plan trong PostgreSQL?
+### 🟡 Q: Cách đọc query plan trong PostgreSQL? 🟡 [Mid]
 
 `EXPLAIN` cho estimated plan. `EXPLAIN ANALYZE` thực thi query và cho **actual execution statistics**.
 
@@ -571,7 +571,7 @@ Index Scan using idx_email on users  (cost=0.42..8.44 rows=1 width=256)
 
 ---
 
-### 🟡 Q: Cách đọc EXPLAIN trong MySQL?
+### 🟡 Q: Cách đọc EXPLAIN trong MySQL? 🟡 [Mid]
 
 ```sql
 EXPLAIN SELECT * FROM users WHERE email = 'alice@example.com';
@@ -605,7 +605,7 @@ ALL       → Full table scan. ĐỎ FLAG.
 
 ---
 
-### 🔴 Q: Cho ví dụ phân tích EXPLAIN output thực tế?
+### 🔴 Q: Cho ví dụ phân tích EXPLAIN output thực tế? 🔴 [Senior]
 
 **Ví dụ 1: Slow query — missing index**
 
@@ -656,7 +656,7 @@ EXPLAIN SELECT * FROM orders
 
 ## 8. Query Optimization Strategies
 
-### 🟡 Q: Những patterns nào khiến index không được sử dụng?
+### 🟡 Q: Những patterns nào khiến index không được sử dụng? 🟡 [Mid]
 
 **Đây là kiến thức quan trọng nhất cho interview — Employment Hero, Grab hỏi rất nhiều.**
 
@@ -725,7 +725,7 @@ WHERE co.order_id IS NULL
 
 ---
 
-### 🔴 Q: Pagination optimization — tại sao OFFSET chậm?
+### 🔴 Q: Pagination optimization — tại sao OFFSET chậm? 🔴 [Senior]
 
 **OFFSET problem — một trong những câu hỏi phổ biến nhất:**
 
@@ -801,7 +801,7 @@ Subquery chỉ scan index (lightweight), sau đó join 20 rows → fetch 20 full
 
 ---
 
-### 🔴 Q: N+1 Query Problem là gì? Cách giải quyết?
+### 🔴 Q: N+1 Query Problem là gì? Cách giải quyết? 🔴 [Senior]
 
 **Problem:** Fetch N parent records, rồi loop N lần để fetch child records → N+1 queries tổng.
 
@@ -848,7 +848,7 @@ Solution 3: Subquery Preloading (ORMs)
 
 ---
 
-### 🟡 Q: Subquery vs JOIN — khi nào subquery chậm hơn?
+### 🟡 Q: Subquery vs JOIN — khi nào subquery chậm hơn? 🟡 [Mid]
 
 **Subquery chậm khi:** database thực thi subquery **cho mỗi row** của outer query (correlated subquery).
 
@@ -876,7 +876,7 @@ GROUP BY u.id, u.name;
 
 ## 9. Table Partitioning
 
-### 🔴 Q: Partitioning là gì? Khi nào cần?
+### 🔴 Q: Partitioning là gì? Khi nào cần? 🔴 [Senior]
 
 Partitioning chia một bảng logic thành **nhiều bảng vật lý** (partitions), nhưng application vẫn thấy như **một bảng duy nhất**.
 
@@ -905,7 +905,7 @@ Query: SELECT * FROM orders WHERE created_at = '2024-08-15'
 
 ---
 
-### 🔴 Q: Các loại partitioning?
+### 🔴 Q: Các loại partitioning? 🔴 [Senior]
 
 #### Range Partitioning (phổ biến nhất)
 
@@ -963,7 +963,7 @@ CREATE TABLE events_p1 PARTITION OF events
 
 ---
 
-### 🔴 Q: Partition Pruning hoạt động như thế nào?
+### 🔴 Q: Partition Pruning hoạt động như thế nào? 🔴 [Senior]
 
 Partition pruning là quá trình query optimizer **loại bỏ partitions không liên quan** trước khi thực thi.
 
@@ -1004,7 +1004,7 @@ With pruning:
 
 ## 10. Database Performance Monitoring
 
-### 🟡 Q: Những metrics nào quan trọng nhất?
+### 🟡 Q: Những metrics nào quan trọng nhất? 🟡 [Mid]
 
 ```
 Key Database Metrics Dashboard:
@@ -1037,7 +1037,7 @@ Key Database Metrics Dashboard:
 
 ---
 
-### 🔴 Q: PostgreSQL monitoring tools?
+### 🔴 Q: PostgreSQL monitoring tools? 🔴 [Senior]
 
 **pg_stat_statements** — Top slow queries:
 
@@ -1081,7 +1081,7 @@ ORDER BY dead_pct DESC;
 
 ---
 
-### 🟡 Q: MySQL monitoring?
+### 🟡 Q: MySQL monitoring? 🟡 [Mid]
 
 **Slow Query Log:**
 
@@ -1117,7 +1117,7 @@ SELECT * FROM sys.schema_redundant_indexes;
 
 ## 11. Write Optimization
 
-### 🔴 Q: Làm sao tối ưu write performance?
+### 🔴 Q: Làm sao tối ưu write performance? 🔴 [Senior]
 
 #### Batch Inserts
 
@@ -1292,7 +1292,7 @@ Additional decisions:
 
 ---
 
-## Interview Questions
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
 ### Employment Hero / Grab Focus Areas
 

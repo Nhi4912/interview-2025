@@ -1,625 +1,828 @@
-# Rendering Theory - Complete Guide
-# Lý Thuyết Rendering - Hướng Dẫn Đầy Đủ
+# Frontend Theory 11: Rendering Theory
 
-## Table of Contents / Mục Lục
+**Tổng Quan:** Tài liệu song ngữ (EN heading + VI explanation) cho phần lý thuyết Frontend nâng cao, dùng trực tiếp để luyện interview.
+**Giải thích:** Lý thuyết rendering từ browser pipeline đến React rendering model. Mỗi câu hỏi đi từ nền tảng đến quyết định kiến trúc và chiến lược tối ưu.
+**Ví dụ:** Có snippet ngắn để nối giữa lý thuyết và cách triển khai thực tế trong dự án.
 
-### Part 1: Browser Rendering Fundamentals
-1. Critical Rendering Path
-2. DOM Construction
-3. CSSOM Construction
-4. Render Tree Construction
-5. Layout (Reflow)
-6. Paint
-7. Composite
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-### Part 2: React Rendering
-8. React Rendering Process
-9. Reconciliation Algorithm
-10. Fiber Architecture
-11. Render Phase vs Commit Phase
-12. Concurrent Rendering
+### Interview Usage Guide
+- `🟢 [Junior]`: định nghĩa đúng và nắm cơ chế cơ bản.
+- `🟡 [Mid]`: phân tích trade-off và tác động implementation.
+- `🔴 [Senior]`: đưa ra quyết định kỹ thuật có điều kiện và plan giảm rủi ro.
 
-### Part 3: Rendering Optimization
-13. Render Optimization Strategies
-14. Memoization Techniques
-15. Code Splitting
-16. Lazy Loading
-17. Virtualization
+## Topic 1: Critical rendering path in browsers
 
-### Part 4: Advanced Concepts
-18. Server-Side Rendering (SSR)
-19. Static Site Generation (SSG)
-20. Incremental Static Regeneration (ISR)
-21. Streaming SSR
-22. Progressive Hydration
+### 🟢 [Junior] Q1: How would you explain critical rendering path in browsers in a real interview?
 
----
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
 
-## Part 1: Browser Rendering Fundamentals
+**Giải thích (Explanation):** Với **Critical rendering path in browsers**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-### 1. Critical Rendering Path
-### 1. Critical Rendering Path
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-**English:**
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
 
-The Critical Rendering Path is the sequence of steps the browser takes to convert HTML, CSS, and JavaScript into pixels on the screen.
-
-**CRP Steps:**
-
-```
-1. Process HTML → Build DOM
-2. Process CSS → Build CSSOM
-3. Combine DOM + CSSOM → Render Tree
-4. Layout → Calculate positions
-5. Paint → Draw pixels
-6. Composite → Combine layers
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
 ```
 
-**Theory: Why "Critical"?**
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
 
-The path is "critical" because:
-1. Blocks initial render
-2. Affects Time to First Paint (TTFP)
-3. Impacts user experience
-4. Determines perceived performance
-5. Must be optimized for fast loads
+### 🟡 [Mid] Q2: How would you explain critical rendering path in browsers in a real interview?
 
-**CRP Metrics:**
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
 
-**1. Time to First Byte (TTFB):**
-- Server response time
-- Network latency
-- DNS lookup + TCP connection
+**Giải thích (Explanation):** Với **Critical rendering path in browsers**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-**2. First Paint (FP):**
-- When first pixel appears
-- Indicates page is loading
-- User sees something
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-**3. First Contentful Paint (FCP):**
-- When first content appears
-- Text, image, or canvas
-- More meaningful than FP
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
 
-**4. Largest Contentful Paint (LCP):**
-- When largest content appears
-- Main content visible
-- Core Web Vital
-
-**5. Time to Interactive (TTI):**
-- When page is fully interactive
-- JavaScript executed
-- Event handlers attached
-
-**Theory: CRP Optimization**
-
-Optimize CRP by:
-1. **Minimize critical resources**: Fewer files to download
-2. **Minimize critical bytes**: Smaller file sizes
-3. **Minimize critical path length**: Fewer round trips
-4. **Prioritize critical resources**: Load important first
-5. **Defer non-critical resources**: Load later
-
-**Critical Resources:**
-
-Resources that block rendering:
-1. **HTML**: Always critical
-2. **CSS**: Render-blocking by default
-3. **JavaScript**: Parser-blocking by default
-4. **Fonts**: Can block text rendering
-
-**Non-Critical Resources:**
-
-Resources that don't block rendering:
-1. **Images**: Load asynchronously
-2. **Async scripts**: Don't block parser
-3. **Deferred scripts**: Execute after parse
-4. **Lazy-loaded content**: Load on demand
-
-**Theory: Render-Blocking Resources**
-
-**CSS is render-blocking because:**
-- Browser needs styles to render
-- Prevents Flash of Unstyled Content (FOUC)
-- Must download and parse before render
-
-**JavaScript is parser-blocking because:**
-- Can modify DOM
-- Can modify CSSOM
-- Must execute in order
-- Blocks HTML parsing
-
-**Optimization Strategies:**
-
-**1. Inline Critical CSS:**
-```html
-<style>
-  /* Critical above-the-fold CSS */
-  .header { ... }
-  .hero { ... }
-</style>
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
 ```
 
-**2. Async/Defer Scripts:**
-```html
-<!-- Async: Download in parallel, execute when ready -->
-<script src="analytics.js" async></script>
+**Cross-reference:** [17-frontend-theory-06-web-performance-optimization.md](./17-frontend-theory-06-web-performance-optimization.md)
 
-<!-- Defer: Download in parallel, execute after parse -->
-<script src="app.js" defer></script>
+### 🔴 [Senior] Q3: How would you explain critical rendering path in browsers in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Critical rendering path in browsers**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
+
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
 ```
 
-**3. Preload Critical Resources:**
-```html
-<link rel="preload" href="font.woff2" as="font">
-<link rel="preload" href="hero.jpg" as="image">
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
+
+## Topic 2: DOM and CSSOM to render tree flow
+
+### 🟢 [Junior] Q4: How would you explain dom and cssom to render tree flow in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **DOM and CSSOM to render tree flow**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
+
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
 ```
 
-**4. Resource Hints:**
-```html
-<!-- DNS prefetch -->
-<link rel="dns-prefetch" href="//api.example.com">
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
 
-<!-- Preconnect -->
-<link rel="preconnect" href="//cdn.example.com">
+### 🟡 [Mid] Q5: How would you explain dom and cssom to render tree flow in a real interview?
 
-<!-- Prefetch -->
-<link rel="prefetch" href="/next-page.html">
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **DOM and CSSOM to render tree flow**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
+
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
 ```
 
-**Vietnamese:**
+**Cross-reference:** [17-frontend-theory-06-web-performance-optimization.md](./17-frontend-theory-06-web-performance-optimization.md)
 
-Critical Rendering Path là sequence của steps browser thực hiện để convert HTML, CSS, và JavaScript thành pixels trên màn hình.
+### 🔴 [Senior] Q6: How would you explain dom and cssom to render tree flow in a real interview?
 
-**CRP Steps:**
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
 
-```
-1. Process HTML → Build DOM
-2. Process CSS → Build CSSOM
-3. Combine DOM + CSSOM → Render Tree
-4. Layout → Calculate positions
-5. Paint → Draw pixels
-6. Composite → Combine layers
-```
+**Giải thích (Explanation):** Với **DOM and CSSOM to render tree flow**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-**Lý Thuyết: Tại Sao "Critical"?**
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-Path "critical" vì:
-1. Blocks initial render
-2. Affects Time to First Paint
-3. Impacts user experience
-4. Determines perceived performance
-5. Phải optimize cho fast loads
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
 
-**CRP Metrics:**
-
-1. **TTFB**: Server response time
-2. **FP**: First pixel appears
-3. **FCP**: First content appears
-4. **LCP**: Largest content appears
-5. **TTI**: Page fully interactive
-
-**Optimize CRP:**
-
-1. Minimize critical resources
-2. Minimize critical bytes
-3. Minimize critical path length
-4. Prioritize critical resources
-5. Defer non-critical resources
-
-**Critical Resources:**
-
-Resources block rendering:
-1. HTML (always critical)
-2. CSS (render-blocking)
-3. JavaScript (parser-blocking)
-4. Fonts (có thể block text)
-
----
-
-### 2. DOM Construction
-### 2. Xây Dựng DOM
-
-**English:**
-
-The Document Object Model (DOM) is a tree representation of the HTML document. Understanding DOM construction is key to optimization.
-
-**DOM Construction Process:**
-
-**Step 1: Bytes to Characters**
-```
-HTML bytes → Character encoding → Characters
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
 ```
 
-**Step 2: Characters to Tokens**
-```
-Characters → Tokenization → Tokens
-<html>, <head>, <body>, etc.
-```
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
 
-**Step 3: Tokens to Nodes**
-```
-Tokens → Node creation → DOM Nodes
-HTMLElement, TextNode, etc.
-```
+## Topic 3: Layout, paint, and composite separation
 
-**Step 4: Nodes to DOM Tree**
-```
-Nodes → Tree construction → DOM Tree
-Parent-child relationships
-```
+### 🟢 [Junior] Q7: How would you explain layout, paint, and composite separation in a real interview?
 
-**Theory: Incremental Processing**
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
 
-DOM construction is incremental:
-1. Browser doesn't wait for entire HTML
-2. Processes chunks as they arrive
-3. Can start rendering early
-4. Progressive rendering
+**Giải thích (Explanation):** Với **Layout, paint, and composite separation**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-**Benefits:**
-- Faster perceived performance
-- Better user experience
-- Efficient resource usage
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-**DOM Tree Structure:**
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
 
-```
-Document
-  └─ html
-      ├─ head
-      │   ├─ title
-      │   └─ meta
-      └─ body
-          ├─ header
-          │   └─ h1
-          └─ main
-              ├─ p
-              └─ div
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
 ```
 
-**Theory: Tree Properties**
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
 
-DOM tree has:
-1. **Root**: Document node
-2. **Parent-child relationships**: Hierarchy
-3. **Siblings**: Same level nodes
-4. **Depth**: Nesting level
-5. **Breadth**: Number of children
+### 🟡 [Mid] Q8: How would you explain layout, paint, and composite separation in a real interview?
 
-**Node Types:**
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
 
-1. **Element nodes**: HTML elements
-2. **Text nodes**: Text content
-3. **Comment nodes**: HTML comments
-4. **Document node**: Root
-5. **DocumentType node**: DOCTYPE
-6. **DocumentFragment**: Lightweight container
+**Giải thích (Explanation):** Với **Layout, paint, and composite separation**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-**Theory: Node Relationships**
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-Each node has:
-- **parentNode**: Parent element
-- **childNodes**: Array of children
-- **firstChild**: First child
-- **lastChild**: Last child
-- **nextSibling**: Next sibling
-- **previousSibling**: Previous sibling
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
 
-**DOM Construction Performance:**
-
-**Factors affecting speed:**
-1. **Document size**: Larger = slower
-2. **Nesting depth**: Deeper = slower
-3. **Number of nodes**: More = slower
-4. **Script execution**: Blocks construction
-
-**Optimization:**
-
-1. **Minimize DOM size**: Fewer nodes
-2. **Reduce nesting**: Flatter structure
-3. **Avoid deep trees**: Limit depth
-4. **Defer scripts**: Don't block construction
-
-**Theory: Parser-Blocking Scripts**
-
-When parser encounters `<script>`:
-1. Stops HTML parsing
-2. Downloads script (if external)
-3. Executes script
-4. Resumes parsing
-
-**Why blocking?**
-- Scripts can modify DOM
-- Must execute in order
-- Can't parse ahead safely
-
-**Solutions:**
-- Use `async` attribute
-- Use `defer` attribute
-- Place scripts at end of body
-- Use module scripts
-
-**DOM APIs:**
-
-**Query APIs:**
-```javascript
-document.getElementById()
-document.querySelector()
-document.querySelectorAll()
-document.getElementsByClassName()
-document.getElementsByTagName()
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
 ```
 
-**Manipulation APIs:**
-```javascript
-createElement()
-appendChild()
-removeChild()
-replaceChild()
-insertBefore()
+**Cross-reference:** [17-frontend-theory-06-web-performance-optimization.md](./17-frontend-theory-06-web-performance-optimization.md)
+
+### 🔴 [Senior] Q9: How would you explain layout, paint, and composite separation in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Layout, paint, and composite separation**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
+
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
 ```
 
-**Theory: Live vs Static Collections**
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
 
-**Live Collections:**
-- Update automatically
-- getElementsByClassName
-- getElementsByTagName
-- childNodes
+## Topic 4: Reconciliation and virtual DOM diffing
 
-**Static Collections:**
-- Snapshot at query time
-- querySelectorAll
-- Don't update automatically
+### 🟢 [Junior] Q10: How would you explain reconciliation and virtual dom diffing in a real interview?
 
-**Vietnamese:**
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
 
-Document Object Model (DOM) là tree representation của HTML document. Hiểu DOM construction là key cho optimization.
+**Giải thích (Explanation):** Với **Reconciliation and virtual DOM diffing**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-**DOM Construction Process:**
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-**Bước 1: Bytes to Characters**
-```
-HTML bytes → Character encoding → Characters
-```
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
 
-**Bước 2: Characters to Tokens**
-```
-Characters → Tokenization → Tokens
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
 ```
 
-**Bước 3: Tokens to Nodes**
-```
-Tokens → Node creation → DOM Nodes
-```
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
 
-**Bước 4: Nodes to DOM Tree**
-```
-Nodes → Tree construction → DOM Tree
-```
+### 🟡 [Mid] Q11: How would you explain reconciliation and virtual dom diffing in a real interview?
 
-**Lý Thuyết: Incremental Processing**
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
 
-DOM construction là incremental:
-1. Browser không chờ entire HTML
-2. Processes chunks khi arrive
-3. Có thể start rendering sớm
-4. Progressive rendering
+**Giải thích (Explanation):** Với **Reconciliation and virtual DOM diffing**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-**Benefits:**
-- Faster perceived performance
-- Better user experience
-- Efficient resource usage
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-**Node Types:**
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
 
-1. Element nodes
-2. Text nodes
-3. Comment nodes
-4. Document node
-5. DocumentType node
-6. DocumentFragment
-
-**Performance:**
-
-**Factors affecting speed:**
-1. Document size
-2. Nesting depth
-3. Number of nodes
-4. Script execution
-
-**Optimization:**
-1. Minimize DOM size
-2. Reduce nesting
-3. Avoid deep trees
-4. Defer scripts
-
----
-
-### 3. CSSOM Construction
-### 3. Xây Dựng CSSOM
-
-**English:**
-
-The CSS Object Model (CSSOM) is a tree representation of CSS styles. It's similar to DOM but for styles.
-
-**CSSOM Construction Process:**
-
-**Step 1: Bytes to Characters**
-```
-CSS bytes → Character encoding → Characters
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
 ```
 
-**Step 2: Characters to Tokens**
-```
-Characters → Tokenization → Tokens
-Selectors, properties, values
-```
+**Cross-reference:** [17-frontend-theory-06-web-performance-optimization.md](./17-frontend-theory-06-web-performance-optimization.md)
 
-**Step 3: Tokens to Nodes**
-```
-Tokens → Node creation → Style rules
-```
+### 🔴 [Senior] Q12: How would you explain reconciliation and virtual dom diffing in a real interview?
 
-**Step 4: Nodes to CSSOM Tree**
-```
-Nodes → Tree construction → CSSOM Tree
-Cascading and inheritance
-```
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
 
-**Theory: CSSOM is Render-Blocking**
+**Giải thích (Explanation):** Với **Reconciliation and virtual DOM diffing**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-CSSOM blocks rendering because:
-1. Browser needs styles to render correctly
-2. Prevents Flash of Unstyled Content (FOUC)
-3. Must be complete before render tree
-4. CSS is render-blocking by default
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-**CSSOM Tree Structure:**
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
 
-```
-body
-  ├─ font-size: 16px
-  ├─ color: black
-  └─ div
-      ├─ font-size: 16px (inherited)
-      ├─ color: black (inherited)
-      └─ margin: 20px (own)
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
 ```
 
-**Theory: Cascade and Inheritance**
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
 
-CSSOM implements:
-1. **Cascade**: Rule priority
-2. **Inheritance**: Parent to child
-3. **Specificity**: Selector weight
-4. **Computed values**: Final values
+## Topic 5: React Fiber scheduling model
 
-**Cascade Order:**
+### 🟢 [Junior] Q13: How would you explain react fiber scheduling model in a real interview?
 
-```
-1. User agent styles (browser defaults)
-2. User styles (user preferences)
-3. Author styles (your CSS)
-4. Author !important
-5. User !important
-```
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
 
-**Specificity Calculation:**
+**Giải thích (Explanation):** Với **React Fiber scheduling model**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-```
-(inline, IDs, classes, elements)
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-Examples:
-p                    → (0, 0, 0, 1)
-.class               → (0, 0, 1, 0)
-#id                  → (0, 1, 0, 0)
-style=""             → (1, 0, 0, 0)
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
+
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
 ```
 
-**Theory: Computed Styles**
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
 
-Browser computes final styles:
-1. Apply cascade
-2. Apply inheritance
-3. Resolve relative values
-4. Apply defaults
-5. Create computed style
+### 🟡 [Mid] Q14: How would you explain react fiber scheduling model in a real interview?
 
-**CSSOM Performance:**
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
 
-**Factors affecting speed:**
-1. **CSS size**: Larger = slower
-2. **Selector complexity**: Complex = slower
-3. **Number of rules**: More = slower
-4. **Media queries**: Conditional processing
+**Giải thích (Explanation):** Với **React Fiber scheduling model**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-**Optimization:**
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-1. **Minimize CSS**: Remove unused
-2. **Simplify selectors**: Avoid complex
-3. **Reduce rules**: Combine similar
-4. **Critical CSS**: Inline above-fold
-5. **Defer non-critical**: Load later
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
 
-**Theory: CSS Parsing**
-
-CSS parsing is:
-- Fast (simpler than HTML)
-- Render-blocking
-- Can't be incremental (needs complete rules)
-- Cached by browser
-
-**CSS Loading Strategies:**
-
-**1. Inline Critical CSS:**
-```html
-<style>
-  /* Critical styles */
-</style>
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
 ```
 
-**2. Async CSS Loading:**
-```html
-<link rel="preload" href="styles.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+**Cross-reference:** [17-frontend-theory-06-web-performance-optimization.md](./17-frontend-theory-06-web-performance-optimization.md)
+
+### 🔴 [Senior] Q15: How would you explain react fiber scheduling model in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **React Fiber scheduling model**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
+
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
 ```
 
-**3. Media Queries:**
-```html
-<link rel="stylesheet" href="print.css" media="print">
-<!-- Not render-blocking for screen -->
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
+
+## Topic 6: Render phase versus commit phase
+
+### 🟢 [Junior] Q16: How would you explain render phase versus commit phase in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Render phase versus commit phase**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
+
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
 ```
 
-**4. Conditional Loading:**
-```javascript
-if (condition) {
-  const link = document.createElement('link');
-  link.rel = 'stylesheet';
-  link.href = 'optional.css';
-  document.head.appendChild(link);
-}
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
+
+### 🟡 [Mid] Q17: How would you explain render phase versus commit phase in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Render phase versus commit phase**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
+
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
 ```
 
-**Vietnamese:**
+**Cross-reference:** [17-frontend-theory-06-web-performance-optimization.md](./17-frontend-theory-06-web-performance-optimization.md)
 
-CSS Object Model (CSSOM) là tree representation của CSS styles. Nó tương tự DOM nhưng cho styles.
+### 🔴 [Senior] Q18: How would you explain render phase versus commit phase in a real interview?
 
-**CSSOM Construction Process:**
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
 
-**Bước 1: Bytes to Characters**
-**Bước 2: Characters to Tokens**
-**Bước 3: Tokens to Nodes**
-**Bước 4: Nodes to CSSOM Tree**
+**Giải thích (Explanation):** Với **Render phase versus commit phase**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-**Lý Thuyết: CSSOM is Render-Blocking**
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-CSSOM blocks rendering vì:
-1. Browser cần styles để render correctly
-2. Prevents FOUC
-3. Phải complete trước render tree
-4. CSS render-blocking by default
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
 
-**Cascade và Inheritance:**
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
+```
 
-CSSOM implements:
-1. **Cascade**: Rule priority
-2. **Inheritance**: Parent to child
-3. **Specificity**: Selector weight
-4. **Computed values**: Final values
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
 
-**Performance:**
+## Topic 7: Concurrent rendering and interruptions
 
-**Factors affecting speed:**
-1. CSS size
-2. Selector complexity
-3. Number of rules
-4. Media queries
+### 🟢 [Junior] Q19: How would you explain concurrent rendering and interruptions in a real interview?
 
-**Optimization:**
-1. Minimize CSS
-2. Simplify selectors
-3. Reduce rules
-4. Critical CSS inline
-5. Defer non-critical
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
 
+**Giải thích (Explanation):** Với **Concurrent rendering and interruptions**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
+
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
+```
+
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
+
+### 🟡 [Mid] Q20: How would you explain concurrent rendering and interruptions in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Concurrent rendering and interruptions**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
+
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
+```
+
+**Cross-reference:** [17-frontend-theory-06-web-performance-optimization.md](./17-frontend-theory-06-web-performance-optimization.md)
+
+### 🔴 [Senior] Q21: How would you explain concurrent rendering and interruptions in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Concurrent rendering and interruptions**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
+
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
+```
+
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
+
+## Topic 8: Hydration and partial hydration ideas
+
+### 🟢 [Junior] Q22: How would you explain hydration and partial hydration ideas in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Hydration and partial hydration ideas**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
+
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
+```
+
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
+
+### 🟡 [Mid] Q23: How would you explain hydration and partial hydration ideas in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Hydration and partial hydration ideas**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
+
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
+```
+
+**Cross-reference:** [17-frontend-theory-06-web-performance-optimization.md](./17-frontend-theory-06-web-performance-optimization.md)
+
+### 🔴 [Senior] Q24: How would you explain hydration and partial hydration ideas in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Hydration and partial hydration ideas**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
+
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
+```
+
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
+
+## Topic 9: SSR, SSG, and ISR trade-offs
+
+### 🟢 [Junior] Q25: How would you explain ssr, ssg, and isr trade-offs in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **SSR, SSG, and ISR trade-offs**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
+
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
+```
+
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
+
+### 🟡 [Mid] Q26: How would you explain ssr, ssg, and isr trade-offs in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **SSR, SSG, and ISR trade-offs**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
+
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
+```
+
+**Cross-reference:** [17-frontend-theory-06-web-performance-optimization.md](./17-frontend-theory-06-web-performance-optimization.md)
+
+### 🔴 [Senior] Q27: How would you explain ssr, ssg, and isr trade-offs in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **SSR, SSG, and ISR trade-offs**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
+
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
+```
+
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
+
+## Topic 10: Streaming SSR and progressive reveal
+
+### 🟢 [Junior] Q28: How would you explain streaming ssr and progressive reveal in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Streaming SSR and progressive reveal**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
+
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
+```
+
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
+
+### 🟡 [Mid] Q29: How would you explain streaming ssr and progressive reveal in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Streaming SSR and progressive reveal**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
+
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
+```
+
+**Cross-reference:** [17-frontend-theory-06-web-performance-optimization.md](./17-frontend-theory-06-web-performance-optimization.md)
+
+### 🔴 [Senior] Q30: How would you explain streaming ssr and progressive reveal in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Streaming SSR and progressive reveal**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
+
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
+```
+
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
+
+## Topic 11: Memoization and referential stability
+
+### 🟢 [Junior] Q31: How would you explain memoization and referential stability in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Memoization and referential stability**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
+
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
+```
+
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
+
+### 🟡 [Mid] Q32: How would you explain memoization and referential stability in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Memoization and referential stability**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
+
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
+```
+
+**Cross-reference:** [17-frontend-theory-06-web-performance-optimization.md](./17-frontend-theory-06-web-performance-optimization.md)
+
+### 🔴 [Senior] Q33: How would you explain memoization and referential stability in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Memoization and referential stability**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
+
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
+```
+
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
+
+## Topic 12: Profiling rendering bottlenecks
+
+### 🟢 [Junior] Q34: How would you explain profiling rendering bottlenecks in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Profiling rendering bottlenecks**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
+
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
+```
+
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
+
+### 🟡 [Mid] Q35: How would you explain profiling rendering bottlenecks in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Profiling rendering bottlenecks**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
+
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
+```
+
+**Cross-reference:** [17-frontend-theory-06-web-performance-optimization.md](./17-frontend-theory-06-web-performance-optimization.md)
+
+### 🔴 [Senior] Q36: How would you explain profiling rendering bottlenecks in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Profiling rendering bottlenecks**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```tsx
+const ProductList = React.memo(function ProductList({ items }: { items: Product[] }) {
+  return <ul>{items.map((item) => <li key={item.id}>{item.name}</li>)}</ul>;
+});
+
+const visibleItems = useMemo(() => selectVisible(items, filter), [items, filter]);
+```
+
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)

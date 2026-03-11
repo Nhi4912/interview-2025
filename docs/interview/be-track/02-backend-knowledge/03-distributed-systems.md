@@ -4,7 +4,9 @@
 
 ## 1. CAP Theorem
 
-### Q: CAP Theorem là gì? Giải thích chi tiết từng thuộc tính. 🟢
+
+## Câu Hỏi Phỏng Vấn / Interview Q&A
+### Q: CAP Theorem là gì? Giải thích chi tiết từng thuộc tính. 🟢 🟢 [Junior]
 
 **A:**
 
@@ -26,7 +28,7 @@ Khi partition xảy ra, bạn chọn gì?
 └── AP: Vẫn trả response (sacrifice Consistency) nhưng data có thể stale
 ```
 
-### Q: Phân biệt CP và AP systems với ví dụ cụ thể? 🟡
+### Q: Phân biệt CP và AP systems với ví dụ cụ thể? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -83,7 +85,7 @@ Khi partition xảy ra, bạn chọn gì?
 | **DynamoDB** | Eventual consistent reads mặc định, hinted handoff |
 | **CouchDB** | Multi-version concurrency, conflict resolution |
 
-### Q: PACELC Theorem là gì? Tại sao nó mở rộng CAP? 🔴
+### Q: PACELC Theorem là gì? Tại sao nó mở rộng CAP? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -114,7 +116,7 @@ if (Partition) {
 
 ## 2. Consistency Models
 
-### Q: Giải thích các consistency model từ mạnh đến yếu? 🟡
+### Q: Giải thích các consistency model từ mạnh đến yếu? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -159,7 +161,7 @@ Linearizability → Sequential → Causal → Eventual
 - Không đảm bảo khi nào converge hoặc thứ tự nào
 - DNS là ví dụ kinh điển
 
-### Q: Tunable Consistency trong Cassandra hoạt động thế nào? 🔴
+### Q: Tunable Consistency trong Cassandra hoạt động thế nào? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -190,7 +192,7 @@ Rule: W + R > N → Strong consistency
 
 ## 3. Consensus Algorithms
 
-### Q: Tại sao consensus trong distributed systems khó? 🔴
+### Q: Tại sao consensus trong distributed systems khó? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -202,7 +204,7 @@ Rule: W + R > N → Strong consistency
 - **Paxos/Raft**: Dùng timeout để detect failure → có thể "block" nếu timeout sai
 - **Randomized**: Dùng random để phá symmetry → terminate "with probability 1" nhưng không deterministic
 
-### Q: Raft consensus algorithm hoạt động thế nào? (DEEP DIVE) 🔴
+### Q: Raft consensus algorithm hoạt động thế nào? (DEEP DIVE) 🔴 🔴 [Senior]
 
 **A:**
 
@@ -342,7 +344,7 @@ Node C: │t=1 │  │t=1 │  │t=2 │                    (lagging behind)
 
 **etcd & Raft**: etcd (viết bằng Go) là implementation phổ biến nhất của Raft. Kubernetes dùng etcd làm data store → mọi cluster state đều qua Raft consensus.
 
-### Q: So sánh Paxos vs Raft vs ZAB? 🔴
+### Q: So sánh Paxos vs Raft vs ZAB? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -360,7 +362,7 @@ Node C: │t=1 │  │t=1 │  │t=2 │                    (lagging behind)
 
 ## 4. Replication
 
-### Q: So sánh các replication strategies? 🟡
+### Q: So sánh các replication strategies? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -477,7 +479,7 @@ Read:      ✓    ✗    ✓     (R=2 satisfied)
 
 ## 5. Data Partitioning / Sharding
 
-### Q: Tại sao cần sharding? So sánh các partitioning strategies? 🟡
+### Q: Tại sao cần sharding? So sánh các partitioning strategies? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -492,7 +494,7 @@ Read:      ✓    ✗    ✓     (R=2 satisfied)
 | **Hash-based** | hash(key) % N → Node | Phân phối đều | Mất range query capability, thêm/bớt node → reshuffle toàn bộ |
 | **Directory-based** | Lookup table: key → node | Linh hoạt, chuyển data dễ | Single point of failure (lookup service), thêm hop |
 
-### Q: Consistent Hashing hoạt động thế nào? (DEEP DIVE) 🔴
+### Q: Consistent Hashing hoạt động thế nào? (DEEP DIVE) 🔴 🔴 [Senior]
 
 **A:**
 
@@ -579,7 +581,7 @@ Khi Node A down → data phân tán sang B và C (không dồn hết vào 1 node
 - **Redis Cluster**: 16384 hash slots (dạng biến thể), mỗi node quản lý 1 subset
 - **CDN (Akamai)**: Route request tới cache server gần nhất
 
-### Q: Secondary indexes với partitioning? 🔴
+### Q: Secondary indexes với partitioning? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -592,7 +594,7 @@ Khi Node A down → data phân tán sang B và C (không dồn hết vào 1 node
 
 ## 6. Message Queues & Event Streaming
 
-### Q: Message Queue vs Event Stream khác nhau cơ bản thế nào? 🟡
+### Q: Message Queue vs Event Stream khác nhau cơ bản thế nào? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -618,7 +620,7 @@ Producer ──▶ Queue ──▶ Consumer     Producer ──▶ Log ──▶
 | **Ordering** | Toàn queue (hoặc không đảm bảo nếu multiple consumers) | Per-partition ordering |
 | **Use case** | Task distribution, RPC | Event sourcing, analytics, data pipeline |
 
-### Q: Kafka architecture và guarantees? (DEEP DIVE) 🔴
+### Q: Kafka architecture và guarantees? (DEEP DIVE) 🔴 🔴 [Senior]
 
 **A:**
 
@@ -685,7 +687,7 @@ Rules:
 
 **Log Compaction**: Giữ lại **latest value per key** - hữu ích cho changelog topics (KTable).
 
-### Q: RabbitMQ vs Kafka vs NATS - khi nào dùng cái nào? 🟡
+### Q: RabbitMQ vs Kafka vs NATS - khi nào dùng cái nào? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -735,7 +737,7 @@ Simple task queue with ACK?             ──Yes──▶ RabbitMQ
 
 ## 7. Distributed Locking
 
-### Q: Tại sao cần distributed lock? Các cách implement? 🟡
+### Q: Tại sao cần distributed lock? Các cách implement? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -744,7 +746,7 @@ Simple task queue with ACK?             ──Yes──▶ RabbitMQ
 - Avoid duplicate cron job execution
 - Serialize access to external API with rate limit
 
-### Q: Redis-based distributed locking và Redlock controversy? 🔴
+### Q: Redis-based distributed locking và Redlock controversy? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -810,7 +812,7 @@ Kleppmann chỉ ra rằng Redlock vẫn **unsafe** vì:
 
 **Nhưng: Redis không cung cấp fencing token. etcd/ZooKeeper có.**
 
-### Q: So sánh các distributed lock implementations? 🔴
+### Q: So sánh các distributed lock implementations? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -832,7 +834,7 @@ Kleppmann chỉ ra rằng Redlock vẫn **unsafe** vì:
 
 ## 8. Distributed Caching
 
-### Q: Các caching patterns và khi nào dùng? 🟡
+### Q: Các caching patterns và khi nào dùng? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -877,7 +879,7 @@ Kleppmann chỉ ra rằng Redlock vẫn **unsafe** vì:
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Q: Cache invalidation và các vấn đề liên quan? 🔴
+### Q: Cache invalidation và các vấn đề liên quan? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -931,7 +933,7 @@ Challenge: Invalidation across L1 caches on different instances
 
 ## 9. Clock Synchronization
 
-### Q: Tại sao đồng hồ vật lý không đáng tin trong distributed systems? 🟡
+### Q: Tại sao đồng hồ vật lý không đáng tin trong distributed systems? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -942,7 +944,7 @@ Challenge: Invalidation across L1 caches on different instances
 
 **Hệ quả:** Không thể dùng wall clock để ordering events trong distributed system.
 
-### Q: Giải thích Lamport Timestamps, Vector Clocks, và HLC? 🔴
+### Q: Giải thích Lamport Timestamps, Vector Clocks, và HLC? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -1008,7 +1010,7 @@ Comparison:
 
 ## 10. Distributed System Failure Modes
 
-### Q: Các loại failure trong distributed systems? 🟡
+### Q: Các loại failure trong distributed systems? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -1039,7 +1041,7 @@ Comparison:
 └──────────────────────────────────────────────────────────────┘
 ```
 
-### Q: Split brain là gì và cách ngăn chặn? 🔴
+### Q: Split brain là gì và cách ngăn chặn? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -1068,7 +1070,7 @@ DURING partition:
 | **Fencing** | Old leader không thể write vì storage layer reject stale epoch/token |
 | **Lease-based** | Leader phải renew lease periodically. Partition → lease expire → không còn là leader |
 
-### Q: Cascading failures và cách ngăn chặn? 🔴
+### Q: Cascading failures và cách ngăn chặn? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -1119,7 +1121,7 @@ Service C, D, E... (cascade!)
 
 ## 11. Leader Election
 
-### Q: Các phương pháp leader election? 🟡
+### Q: Các phương pháp leader election? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -1169,7 +1171,7 @@ etcd election sử dụng lease:
 
 ## 12. Idempotency in Distributed Systems
 
-### Q: Tại sao idempotency critical trong distributed systems? 🟡
+### Q: Tại sao idempotency critical trong distributed systems? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -1191,7 +1193,7 @@ User bị trừ $200 thay vì $100!
 - Load balancer retry: Retry request khi backend không respond kịp
 - Client retry logic: Mobile app retry khi mạng không ổn định
 
-### Q: Cách implement idempotency? 🔴
+### Q: Cách implement idempotency? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -1235,7 +1237,7 @@ User bị trừ $200 thay vì $100!
 | **Natural idempotency** | PUT (replace), DELETE operations tự idempotent | RESTful APIs |
 | **State machine** | Order: PENDING→PAID→SHIPPED. Chỉ transition nếu current state đúng | Workflow/saga |
 
-### Q: Exactly-once semantics có thực sự khả thi? 🔴
+### Q: Exactly-once semantics có thực sự khả thi? 🔴 🔴 [Senior]
 
 **A:**
 

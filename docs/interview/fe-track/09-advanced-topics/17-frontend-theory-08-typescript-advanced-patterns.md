@@ -1,518 +1,828 @@
-# TypeScript Advanced Patterns - Complete Guide
-# TypeScript Patterns Nâng Cao - Hướng Dẫn Đầy Đủ
+# Frontend Theory 08: TypeScript Advanced Patterns
 
-## Table of Contents / Mục Lục
+**Tổng Quan:** Tài liệu song ngữ (EN heading + VI explanation) cho phần lý thuyết Frontend nâng cao, dùng trực tiếp để luyện interview.
+**Giải thích:** Mẫu TypeScript nâng cao cho codebase frontend lớn. Mỗi câu hỏi đi từ nền tảng đến quyết định kiến trúc và chiến lược tối ưu.
+**Ví dụ:** Có snippet ngắn để nối giữa lý thuyết và cách triển khai thực tế trong dự án.
 
-### Part 1: Type System Fundamentals
-1. Type Inference Deep Dive
-2. Type Narrowing Techniques
-3. Discriminated Unions
-4. Conditional Types
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-### Part 2: Advanced Types
-5. Mapped Types
-6. Template Literal Types
-7. Utility Types Mastery
-8. Generic Constraints
+### Interview Usage Guide
+- `🟢 [Junior]`: định nghĩa đúng và nắm cơ chế cơ bản.
+- `🟡 [Mid]`: phân tích trade-off và tác động implementation.
+- `🔴 [Senior]`: đưa ra quyết định kỹ thuật có điều kiện và plan giảm rủi ro.
 
-### Part 3: Patterns and Best Practices
-9. Builder Pattern with Types
-10. Factory Pattern with Types
-11. Dependency Injection
-12. Type-Safe Event Emitters
+## Topic 1: Type inference boundaries and contextual typing
 
-### Part 4: React with TypeScript
-13. Component Typing Patterns
-14. Hooks with TypeScript
-15. Context API Typing
-16. Form Handling with Types
+### 🟢 [Junior] Q1: How would you explain type inference boundaries and contextual typing in a real interview?
 
----
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
 
-## Part 1: Type System Fundamentals
+**Giải thích (Explanation):** Với **Type inference boundaries and contextual typing**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-### 1. Type Inference Deep Dive
-### 1. Type Inference Tìm Hiểu Sâu
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-**English:**
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
 
-TypeScript's type inference reduces the need for explicit type annotations.
-
-**Basic Inference:**
-
-```typescript
-// Variable inference
-let x = 3; // number
-let y = 'hello'; // string
-let z = true; // boolean
-
-// Array inference
-let numbers = [1, 2, 3]; // number[]
-let mixed = [1, 'two', true]; // (number | string | boolean)[]
-
-// Object inference
-let person = {
-  name: 'John',
-  age: 30
-}; // { name: string; age: number }
-
-// Function return type inference
-function add(a: number, b: number) {
-  return a + b; // Inferred as number
-}
-
-// Arrow function inference
-const multiply = (a: number, b: number) => a * b; // (a: number, b: number) => number
-```
-
-**Contextual Typing:**
-
-```typescript
-// Event handler inference
-button.addEventListener('click', (event) => {
-  // event is inferred as MouseEvent
-  console.log(event.clientX, event.clientY);
-});
-
-// Array method inference
-const numbers = [1, 2, 3, 4, 5];
-
-numbers.map(n => n * 2); // n is inferred as number
-numbers.filter(n => n > 2); // n is inferred as number
-numbers.reduce((acc, n) => acc + n, 0); // acc and n inferred
-
-// Promise inference
-async function fetchUser() {
-  const response = await fetch('/api/user');
-  const data = await response.json(); // any (needs type assertion)
-  return data;
-}
-
-// Better: Explicit return type
-async function fetchUser(): Promise<User> {
-  const response = await fetch('/api/user');
-  const data = await response.json();
-  return data as User;
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
 }
 ```
 
-**Best Common Type:**
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
 
-```typescript
-// TypeScript finds best common type
-let mixed = [1, 'two', true]; // (number | string | boolean)[]
+### 🟡 [Mid] Q2: How would you explain type inference boundaries and contextual typing in a real interview?
 
-// With objects
-let items = [
-  { id: 1, name: 'Item 1' },
-  { id: 2, name: 'Item 2', price: 10 }
-]; // { id: number; name: string; price?: number }[]
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
 
-// Explicit type for better control
-interface Item {
-  id: number;
-  name: string;
-  price?: number;
-}
+**Giải thích (Explanation):** Với **Type inference boundaries and contextual typing**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-let items: Item[] = [
-  { id: 1, name: 'Item 1' },
-  { id: 2, name: 'Item 2', price: 10 }
-];
-```
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-**Vietnamese:**
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
 
-Type inference của TypeScript giảm nhu cầu type annotations tường minh.
-
-**Inference Cơ Bản:**
-
-TypeScript tự động suy luận types từ:
-- Giá trị khởi tạo
-- Return statements
-- Context (event handlers, callbacks)
-
-**Best Practices:**
-
-- Để TypeScript infer khi có thể
-- Explicit types cho public APIs
-- Explicit types cho complex types
-
----
-
-### 2. Type Narrowing Techniques
-### 2. Kỹ Thuật Type Narrowing
-
-**English:**
-
-Type narrowing refines types within conditional blocks.
-
-**typeof Guards:**
-
-```typescript
-function processValue(value: string | number) {
-  if (typeof value === 'string') {
-    // value is string here
-    return value.toUpperCase();
-  } else {
-    // value is number here
-    return value.toFixed(2);
-  }
-}
-
-// Multiple typeof checks
-function format(value: string | number | boolean) {
-  if (typeof value === 'string') {
-    return value.trim();
-  } else if (typeof value === 'number') {
-    return value.toFixed(2);
-  } else {
-    return value ? 'Yes' : 'No';
-  }
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
 }
 ```
 
-**instanceof Guards:**
+**Cross-reference:** [17-frontend-theory-10-async-programming-theory.md](./17-frontend-theory-10-async-programming-theory.md)
 
-```typescript
-class Dog {
-  bark() {
-    console.log('Woof!');
-  }
-}
+### 🔴 [Senior] Q3: How would you explain type inference boundaries and contextual typing in a real interview?
 
-class Cat {
-  meow() {
-    console.log('Meow!');
-  }
-}
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
 
-function makeSound(animal: Dog | Cat) {
-  if (animal instanceof Dog) {
-    animal.bark(); // animal is Dog
-  } else {
-    animal.meow(); // animal is Cat
-  }
+**Giải thích (Explanation):** Với **Type inference boundaries and contextual typing**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
+
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
 }
 ```
 
-**in Operator:**
+**Cross-reference:** [17-frontend-theory-01-javascript-language-theory.md](./17-frontend-theory-01-javascript-language-theory.md)
 
-```typescript
-interface Bird {
-  fly(): void;
-  layEggs(): void;
-}
+## Topic 2: Narrowing with control flow analysis
 
-interface Fish {
-  swim(): void;
-  layEggs(): void;
-}
+### 🟢 [Junior] Q4: How would you explain narrowing with control flow analysis in a real interview?
 
-function move(animal: Bird | Fish) {
-  if ('fly' in animal) {
-    animal.fly(); // animal is Bird
-  } else {
-    animal.swim(); // animal is Fish
-  }
-}
-```
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
 
-**Discriminated Unions:**
+**Giải thích (Explanation):** Với **Narrowing with control flow analysis**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-```typescript
-// Tagged union pattern
-interface Circle {
-  kind: 'circle';
-  radius: number;
-}
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-interface Square {
-  kind: 'square';
-  sideLength: number;
-}
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
 
-interface Rectangle {
-  kind: 'rectangle';
-  width: number;
-  height: number;
-}
-
-type Shape = Circle | Square | Rectangle;
-
-function getArea(shape: Shape): number {
-  switch (shape.kind) {
-    case 'circle':
-      // shape is Circle
-      return Math.PI * shape.radius ** 2;
-    case 'square':
-      // shape is Square
-      return shape.sideLength ** 2;
-    case 'rectangle':
-      // shape is Rectangle
-      return shape.width * shape.height;
-  }
-}
-
-// Exhaustiveness checking
-function assertNever(x: never): never {
-  throw new Error('Unexpected value: ' + x);
-}
-
-function getArea2(shape: Shape): number {
-  switch (shape.kind) {
-    case 'circle':
-      return Math.PI * shape.radius ** 2;
-    case 'square':
-      return shape.sideLength ** 2;
-    case 'rectangle':
-      return shape.width * shape.height;
-    default:
-      return assertNever(shape); // Compile error if not exhaustive
-  }
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
 }
 ```
 
-**Custom Type Guards:**
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
 
-```typescript
-// User-defined type guard
-interface User {
-  id: number;
-  name: string;
-  email: string;
-}
+### 🟡 [Mid] Q5: How would you explain narrowing with control flow analysis in a real interview?
 
-interface Admin extends User {
-  role: 'admin';
-  permissions: string[];
-}
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
 
-// Type predicate
-function isAdmin(user: User | Admin): user is Admin {
-  return 'role' in user && user.role === 'admin';
-}
+**Giải thích (Explanation):** Với **Narrowing with control flow analysis**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-function handleUser(user: User | Admin) {
-  if (isAdmin(user)) {
-    // user is Admin
-    console.log(user.permissions);
-  } else {
-    // user is User
-    console.log(user.name);
-  }
-}
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-// Generic type guard
-function isArray<T>(value: T | T[]): value is T[] {
-  return Array.isArray(value);
-}
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
 
-function process<T>(value: T | T[]) {
-  if (isArray(value)) {
-    // value is T[]
-    value.forEach(item => console.log(item));
-  } else {
-    // value is T
-    console.log(value);
-  }
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
 }
 ```
 
-**Truthiness Narrowing:**
+**Cross-reference:** [17-frontend-theory-10-async-programming-theory.md](./17-frontend-theory-10-async-programming-theory.md)
 
-```typescript
-function printLength(str: string | null | undefined) {
-  // Narrow out null and undefined
-  if (str) {
-    console.log(str.length); // str is string
-  } else {
-    console.log('No string');
-  }
-}
+### 🔴 [Senior] Q6: How would you explain narrowing with control flow analysis in a real interview?
 
-// Be careful with falsy values
-function printValue(value: string | number) {
-  if (value) {
-    console.log(value); // Excludes 0 and ''!
-  }
-}
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
 
-// Better: Explicit checks
-function printValue2(value: string | number) {
-  if (value !== null && value !== undefined) {
-    console.log(value); // Includes 0 and ''
-  }
+**Giải thích (Explanation):** Với **Narrowing with control flow analysis**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
+
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
 }
 ```
 
-**Vietnamese:**
+**Cross-reference:** [17-frontend-theory-01-javascript-language-theory.md](./17-frontend-theory-01-javascript-language-theory.md)
 
-Type narrowing tinh chỉnh types trong các khối điều kiện.
+## Topic 3: Discriminated unions in UI state
 
-**Kỹ Thuật Narrowing:**
+### 🟢 [Junior] Q7: How would you explain discriminated unions in ui state in a real interview?
 
-1. **typeof**: Kiểm tra primitive types
-2. **instanceof**: Kiểm tra class instances
-3. **in**: Kiểm tra property existence
-4. **Discriminated Unions**: Tagged unions với switch
-5. **Custom Type Guards**: User-defined predicates
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
 
-**Best Practices:**
+**Giải thích (Explanation):** Với **Discriminated unions in UI state**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-- Dùng discriminated unions cho complex types
-- Tạo custom type guards cho reusable logic
-- Exhaustiveness checking với assertNever
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
----
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
 
-### 3. Discriminated Unions
-### 3. Discriminated Unions
-
-**English:**
-
-Discriminated unions (tagged unions) are powerful for modeling state.
-
-**Basic Pattern:**
-
-```typescript
-// State machine with discriminated union
-type LoadingState = {
-  status: 'loading';
-};
-
-type SuccessState<T> = {
-  status: 'success';
-  data: T;
-};
-
-type ErrorState = {
-  status: 'error';
-  error: Error;
-};
-
-type AsyncState<T> = LoadingState | SuccessState<T> | ErrorState;
-
-// Usage
-function renderUser(state: AsyncState<User>) {
-  switch (state.status) {
-    case 'loading':
-      return <Spinner />;
-    case 'success':
-      return <UserProfile user={state.data} />;
-    case 'error':
-      return <ErrorMessage error={state.error} />;
-  }
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
 }
 ```
 
-**Complex Example:**
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
 
-```typescript
-// API Response types
-type ApiResponse<T> =
-  | { status: 'idle' }
-  | { status: 'loading'; progress?: number }
-  | { status: 'success'; data: T; timestamp: number }
-  | { status: 'error'; error: string; retryCount: number };
+### 🟡 [Mid] Q8: How would you explain discriminated unions in ui state in a real interview?
 
-// Type-safe state management
-class DataFetcher<T> {
-  private state: ApiResponse<T> = { status: 'idle' };
-  
-  async fetch(url: string) {
-    this.state = { status: 'loading' };
-    
-    try {
-      const response = await fetch(url);
-      const data = await response.json();
-      
-      this.state = {
-        status: 'success',
-        data,
-        timestamp: Date.now()
-      };
-    } catch (error) {
-      this.state = {
-        status: 'error',
-        error: error.message,
-        retryCount: 0
-      };
-    }
-  }
-  
-  getState(): ApiResponse<T> {
-    return this.state;
-  }
-  
-  getData(): T | null {
-    if (this.state.status === 'success') {
-      return this.state.data; // Type-safe access
-    }
-    return null;
-  }
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Discriminated unions in UI state**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
+
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
 }
 ```
 
-**Form Validation:**
+**Cross-reference:** [17-frontend-theory-10-async-programming-theory.md](./17-frontend-theory-10-async-programming-theory.md)
 
-```typescript
-type ValidationResult =
-  | { valid: true; value: string }
-  | { valid: false; errors: string[] };
+### 🔴 [Senior] Q9: How would you explain discriminated unions in ui state in a real interview?
 
-function validateEmail(email: string): ValidationResult {
-  const errors: string[] = [];
-  
-  if (!email) {
-    errors.push('Email is required');
-  }
-  
-  if (!email.includes('@')) {
-    errors.push('Email must contain @');
-  }
-  
-  if (errors.length > 0) {
-    return { valid: false, errors };
-  }
-  
-  return { valid: true, value: email };
-}
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
 
-// Usage
-const result = validateEmail('test@example.com');
+**Giải thích (Explanation):** Với **Discriminated unions in UI state**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-if (result.valid) {
-  console.log('Valid email:', result.value);
-} else {
-  console.log('Errors:', result.errors);
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
+
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
 }
 ```
 
-**Vietnamese:**
+**Cross-reference:** [17-frontend-theory-01-javascript-language-theory.md](./17-frontend-theory-01-javascript-language-theory.md)
 
-Discriminated unions (tagged unions) mạnh mẽ cho modeling state.
+## Topic 4: Conditional types and infer keyword
 
-**Pattern:**
+### 🟢 [Junior] Q10: How would you explain conditional types and infer keyword in a real interview?
 
-```typescript
-type State =
-  | { status: 'loading' }
-  | { status: 'success'; data: T }
-  | { status: 'error'; error: Error };
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Conditional types and infer keyword**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
+
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
+}
 ```
 
-**Lợi Ích:**
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
 
-1. **Type Safety**: Compiler kiểm tra tất cả cases
-2. **Exhaustiveness**: Đảm bảo xử lý tất cả states
-3. **Self-Documenting**: Code tự giải thích
-4. **Refactoring**: Dễ dàng thêm/xóa states
+### 🟡 [Mid] Q11: How would you explain conditional types and infer keyword in a real interview?
 
-**Use Cases:**
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
 
-- State machines
-- API responses
-- Form validation
-- Event handling
+**Giải thích (Explanation):** Với **Conditional types and infer keyword**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
+
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
+}
+```
+
+**Cross-reference:** [17-frontend-theory-10-async-programming-theory.md](./17-frontend-theory-10-async-programming-theory.md)
+
+### 🔴 [Senior] Q12: How would you explain conditional types and infer keyword in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Conditional types and infer keyword**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
+
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
+}
+```
+
+**Cross-reference:** [17-frontend-theory-01-javascript-language-theory.md](./17-frontend-theory-01-javascript-language-theory.md)
+
+## Topic 5: Mapped types for API contracts
+
+### 🟢 [Junior] Q13: How would you explain mapped types for api contracts in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Mapped types for API contracts**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
+
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
+}
+```
+
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
+
+### 🟡 [Mid] Q14: How would you explain mapped types for api contracts in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Mapped types for API contracts**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
+
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
+}
+```
+
+**Cross-reference:** [17-frontend-theory-10-async-programming-theory.md](./17-frontend-theory-10-async-programming-theory.md)
+
+### 🔴 [Senior] Q15: How would you explain mapped types for api contracts in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Mapped types for API contracts**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
+
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
+}
+```
+
+**Cross-reference:** [17-frontend-theory-01-javascript-language-theory.md](./17-frontend-theory-01-javascript-language-theory.md)
+
+## Topic 6: Template literal types for naming safety
+
+### 🟢 [Junior] Q16: How would you explain template literal types for naming safety in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Template literal types for naming safety**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
+
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
+}
+```
+
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
+
+### 🟡 [Mid] Q17: How would you explain template literal types for naming safety in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Template literal types for naming safety**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
+
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
+}
+```
+
+**Cross-reference:** [17-frontend-theory-10-async-programming-theory.md](./17-frontend-theory-10-async-programming-theory.md)
+
+### 🔴 [Senior] Q18: How would you explain template literal types for naming safety in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Template literal types for naming safety**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
+
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
+}
+```
+
+**Cross-reference:** [17-frontend-theory-01-javascript-language-theory.md](./17-frontend-theory-01-javascript-language-theory.md)
+
+## Topic 7: Utility types in refactor-safe code
+
+### 🟢 [Junior] Q19: How would you explain utility types in refactor-safe code in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Utility types in refactor-safe code**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
+
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
+}
+```
+
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
+
+### 🟡 [Mid] Q20: How would you explain utility types in refactor-safe code in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Utility types in refactor-safe code**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
+
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
+}
+```
+
+**Cross-reference:** [17-frontend-theory-10-async-programming-theory.md](./17-frontend-theory-10-async-programming-theory.md)
+
+### 🔴 [Senior] Q21: How would you explain utility types in refactor-safe code in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Utility types in refactor-safe code**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
+
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
+}
+```
+
+**Cross-reference:** [17-frontend-theory-01-javascript-language-theory.md](./17-frontend-theory-01-javascript-language-theory.md)
+
+## Topic 8: Generic constraints and default parameters
+
+### 🟢 [Junior] Q22: How would you explain generic constraints and default parameters in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Generic constraints and default parameters**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
+
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
+}
+```
+
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
+
+### 🟡 [Mid] Q23: How would you explain generic constraints and default parameters in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Generic constraints and default parameters**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
+
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
+}
+```
+
+**Cross-reference:** [17-frontend-theory-10-async-programming-theory.md](./17-frontend-theory-10-async-programming-theory.md)
+
+### 🔴 [Senior] Q24: How would you explain generic constraints and default parameters in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Generic constraints and default parameters**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
+
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
+}
+```
+
+**Cross-reference:** [17-frontend-theory-01-javascript-language-theory.md](./17-frontend-theory-01-javascript-language-theory.md)
+
+## Topic 9: Variance and function type compatibility
+
+### 🟢 [Junior] Q25: How would you explain variance and function type compatibility in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Variance and function type compatibility**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
+
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
+}
+```
+
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
+
+### 🟡 [Mid] Q26: How would you explain variance and function type compatibility in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Variance and function type compatibility**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
+
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
+}
+```
+
+**Cross-reference:** [17-frontend-theory-10-async-programming-theory.md](./17-frontend-theory-10-async-programming-theory.md)
+
+### 🔴 [Senior] Q27: How would you explain variance and function type compatibility in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Variance and function type compatibility**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
+
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
+}
+```
+
+**Cross-reference:** [17-frontend-theory-01-javascript-language-theory.md](./17-frontend-theory-01-javascript-language-theory.md)
+
+## Topic 10: Branded types for domain correctness
+
+### 🟢 [Junior] Q28: How would you explain branded types for domain correctness in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Branded types for domain correctness**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
+
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
+}
+```
+
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
+
+### 🟡 [Mid] Q29: How would you explain branded types for domain correctness in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Branded types for domain correctness**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
+
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
+}
+```
+
+**Cross-reference:** [17-frontend-theory-10-async-programming-theory.md](./17-frontend-theory-10-async-programming-theory.md)
+
+### 🔴 [Senior] Q30: How would you explain branded types for domain correctness in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Branded types for domain correctness**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
+
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
+}
+```
+
+**Cross-reference:** [17-frontend-theory-01-javascript-language-theory.md](./17-frontend-theory-01-javascript-language-theory.md)
+
+## Topic 11: Runtime validation and static type bridge
+
+### 🟢 [Junior] Q31: How would you explain runtime validation and static type bridge in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Runtime validation and static type bridge**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
+
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
+}
+```
+
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
+
+### 🟡 [Mid] Q32: How would you explain runtime validation and static type bridge in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Runtime validation and static type bridge**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
+
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
+}
+```
+
+**Cross-reference:** [17-frontend-theory-10-async-programming-theory.md](./17-frontend-theory-10-async-programming-theory.md)
+
+### 🔴 [Senior] Q33: How would you explain runtime validation and static type bridge in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Runtime validation and static type bridge**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
+
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
+}
+```
+
+**Cross-reference:** [17-frontend-theory-01-javascript-language-theory.md](./17-frontend-theory-01-javascript-language-theory.md)
+
+## Topic 12: React props typing and polymorphic components
+
+### 🟢 [Junior] Q34: How would you explain react props typing and polymorphic components in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **React props typing and polymorphic components**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
+
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
+}
+```
+
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
+
+### 🟡 [Mid] Q35: How would you explain react props typing and polymorphic components in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **React props typing and polymorphic components**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
+
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
+}
+```
+
+**Cross-reference:** [17-frontend-theory-10-async-programming-theory.md](./17-frontend-theory-10-async-programming-theory.md)
+
+### 🔴 [Senior] Q36: How would you explain react props typing and polymorphic components in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **React props typing and polymorphic components**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```ts
+type Result<T, E> = { ok: true; data: T } | { ok: false; error: E };
+
+function mapResult<T, E, U>(input: Result<T, E>, fn: (v: T) => U): Result<U, E> {
+  return input.ok ? { ok: true, data: fn(input.data) } : input;
+}
+```
+
+**Cross-reference:** [17-frontend-theory-01-javascript-language-theory.md](./17-frontend-theory-01-javascript-language-theory.md)

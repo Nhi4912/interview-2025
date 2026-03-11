@@ -19,7 +19,7 @@
 
 ## API Fundamentals
 
-### What is an API?
+### What is an API? 🟢 [Junior]
 
 **Definition:** Contract between software components defining how they interact
 
@@ -1352,7 +1352,7 @@ Use query parameters
 Document available options
 ```
 
-## Interview Questions
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
 **Q: What's the difference between REST and GraphQL?**
 

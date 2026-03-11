@@ -1,1162 +1,829 @@
-# Event-Driven Architecture in Frontend
+# Event-Driven Architecture in Frontend / Kiến Trúc Hướng Sự Kiện Trong Frontend
 
-## Table of Contents
-- [Core Concepts](#core-concepts)
-- [Event Systems](#event-systems)
-- [Event Patterns](#event-patterns)
-- [Event Sourcing](#event-sourcing)
-- [Message Queues](#message-queues)
-- [Pub/Sub Systems](#pubsub-systems)
-- [Event Loop Deep Dive](#event-loop-deep-dive)
-- [Custom Events](#custom-events)
-- [Event Delegation](#event-delegation)
-- [Performance Considerations](#performance-considerations)
+## Tổng Quan / Overview
 
-## Core Concepts
+- Nội dung gồm DOM events, custom bus, pub/sub, command model, event loop và observability.
+- Mục tiêu là giảm coupling giữa module UI và xây dựng event contract rõ ràng khi scale.
+- Q&A tập trung cách xử lý ordering, retry, backpressure, và lỗi trong hệ thống event.
 
-### Event-Driven Programming Paradigm
+### Cross-references / Tài liệu liên quan
+- [Functional Reactive Programming](./17-frontend-theory-14-functional-reactive-programming.md)
+- [Async Programming Theory](./17-frontend-theory-10-async-programming-theory.md)
+- [State Management Theory](./17-frontend-theory-09-state-management-theory.md)
+- [Distributed Frontend Systems](./19-expert-topics-01-distributed-frontend-systems.md)
 
-**Definition**: A programming paradigm where the flow of execution is determined by events - occurrences that happen asynchronously.
+## Key Concepts / Khái Niệm Trọng Tâm
 
-**Key Principles**:
-```
-1. Loose Coupling: Components communicate through events
-2. Asynchronous: Events are handled asynchronously
-3. Reactive: System reacts to events as they occur
-4. Scalable: Easy to add new event handlers
-```
+### 1. Event-driven paradigm
 
-**Event Anatomy**:
-```javascript
-// Event structure
-{
-  type: 'EVENT_TYPE',        // Event identifier
-  target: element,           // Event source
-  currentTarget: element,    // Current handler element
-  timestamp: 1234567890,     // When event occurred
-  payload: { /* data */ },   // Event data
-  bubbles: true,             // Propagation flag
-  cancelable: true,          // Can be prevented
-  defaultPrevented: false    // Prevention status
-}
+**Tổng Quan:** `Event-driven paradigm` là năng lực bắt buộc khi thảo luận kiến trúc hướng sự kiện trong frontend.
+
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName1 = 'ui.event.1';
 ```
 
-### Event Flow Models
+### 2. DOM event phases
 
-**1. Capture Phase**:
-```
-Window → Document → HTML → Body → ... → Target
-```
+**Tổng Quan:** `DOM event phases` là năng lực bắt buộc khi thảo luận kiến trúc hướng sự kiện trong frontend.
 
-**2. Target Phase**:
-```
-Event reaches the target element
-```
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-**3. Bubble Phase**:
-```
-Target → ... → Body → HTML → Document → Window
+**Ví dụ (JS/TS):**
+```ts
+export const eventName2 = 'ui.event.2';
 ```
 
-**Complete Flow**:
-```javascript
-// Demonstrating event phases
-element.addEventListener('click', handler, true);  // Capture
-element.addEventListener('click', handler, false); // Bubble
+### 3. Custom event bus design
 
-function handler(event) {
-  console.log('Phase:', event.eventPhase);
-  // 1 = CAPTURING_PHASE
-  // 2 = AT_TARGET
-  // 3 = BUBBLING_PHASE
-}
+**Tổng Quan:** `Custom event bus design` là năng lực bắt buộc khi thảo luận kiến trúc hướng sự kiện trong frontend.
+
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName3 = 'ui.event.3';
 ```
 
-## Event Systems
+### 4. Pub/Sub channel strategy
 
-### DOM Event System
+**Tổng Quan:** `Pub/Sub channel strategy` là năng lực bắt buộc khi thảo luận kiến trúc hướng sự kiện trong frontend.
 
-**Event Registration**:
-```javascript
-// Method 1: addEventListener (preferred)
-element.addEventListener('click', handler, options);
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-// Method 2: Property assignment
-element.onclick = handler;
-
-// Method 3: HTML attribute (avoid)
-<button onclick="handler()">Click</button>
+**Ví dụ (JS/TS):**
+```ts
+export const eventName4 = 'ui.event.4';
 ```
 
-**Event Options**:
-```javascript
-const options = {
-  capture: false,      // Use capture phase
-  once: true,          // Remove after first invocation
-  passive: true,       // Never call preventDefault()
-  signal: abortSignal  // AbortController for removal
-};
+### 5. Observer pattern in UI
 
-element.addEventListener('scroll', handler, options);
+**Tổng Quan:** `Observer pattern in UI` là năng lực bắt buộc khi thảo luận kiến trúc hướng sự kiện trong frontend.
+
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName5 = 'ui.event.5';
 ```
 
-**Event Removal**:
-```javascript
-// Using AbortController (modern approach)
-const controller = new AbortController();
+### 6. Mediator pattern in UI
 
-element.addEventListener('click', handler, {
-  signal: controller.signal
-});
+**Tổng Quan:** `Mediator pattern in UI` là năng lực bắt buộc khi thảo luận kiến trúc hướng sự kiện trong frontend.
 
-// Remove all listeners with this signal
-controller.abort();
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-// Traditional removal
-element.removeEventListener('click', handler);
+**Ví dụ (JS/TS):**
+```ts
+export const eventName6 = 'ui.event.6';
 ```
 
-### Custom Event System
+### 7. Command pattern usage
 
-**Implementation**:
-```javascript
-class EventEmitter {
-  constructor() {
-    this.events = new Map();
-  }
+**Tổng Quan:** `Command pattern usage` là năng lực bắt buộc khi thảo luận kiến trúc hướng sự kiện trong frontend.
 
-  on(event, handler) {
-    if (!this.events.has(event)) {
-      this.events.set(event, new Set());
-    }
-    this.events.get(event).add(handler);
-    
-    // Return unsubscribe function
-    return () => this.off(event, handler);
-  }
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-  off(event, handler) {
-    const handlers = this.events.get(event);
-    if (handlers) {
-      handlers.delete(handler);
-      if (handlers.size === 0) {
-        this.events.delete(event);
-      }
-    }
-  }
-
-  emit(event, ...args) {
-    const handlers = this.events.get(event);
-    if (handlers) {
-      handlers.forEach(handler => {
-        try {
-          handler(...args);
-        } catch (error) {
-          console.error(`Error in ${event} handler:`, error);
-        }
-      });
-    }
-  }
-
-  once(event, handler) {
-    const wrapper = (...args) => {
-      handler(...args);
-      this.off(event, wrapper);
-    };
-    this.on(event, wrapper);
-  }
-}
+**Ví dụ (JS/TS):**
+```ts
+export const eventName7 = 'ui.event.7';
 ```
 
-**Advanced Features**:
-```javascript
-class AdvancedEventEmitter extends EventEmitter {
-  // Wildcard events
-  onAny(handler) {
-    this.on('*', handler);
-  }
+### 8. Event sourcing basics
 
-  emit(event, ...args) {
-    // Emit to specific handlers
-    super.emit(event, ...args);
-    // Emit to wildcard handlers
-    super.emit('*', event, ...args);
-  }
+**Tổng Quan:** `Event sourcing basics` là năng lực bắt buộc khi thảo luận kiến trúc hướng sự kiện trong frontend.
 
-  // Event namespacing
-  on(event, handler, namespace) {
-    const key = namespace ? `${event}.${namespace}` : event;
-    return super.on(key, handler);
-  }
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-  offNamespace(namespace) {
-    for (const [event] of this.events) {
-      if (event.endsWith(`.${namespace}`)) {
-        this.events.delete(event);
-      }
-    }
-  }
-
-  // Async events
-  async emitAsync(event, ...args) {
-    const handlers = this.events.get(event);
-    if (handlers) {
-      await Promise.all(
-        Array.from(handlers).map(handler => handler(...args))
-      );
-    }
-  }
-
-  // Event piping
-  pipe(targetEmitter, events) {
-    events.forEach(event => {
-      this.on(event, (...args) => {
-        targetEmitter.emit(event, ...args);
-      });
-    });
-  }
-}
+**Ví dụ (JS/TS):**
+```ts
+export const eventName8 = 'ui.event.8';
 ```
 
-## Event Patterns
+### 9. Message queue in frontend
 
-### Observer Pattern
+**Tổng Quan:** `Message queue in frontend` là năng lực bắt buộc khi thảo luận kiến trúc hướng sự kiện trong frontend.
 
-**Implementation**:
-```javascript
-class Subject {
-  constructor() {
-    this.observers = new Set();
-  }
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-  attach(observer) {
-    this.observers.add(observer);
-  }
-
-  detach(observer) {
-    this.observers.delete(observer);
-  }
-
-  notify(data) {
-    this.observers.forEach(observer => {
-      observer.update(data);
-    });
-  }
-}
-
-class Observer {
-  update(data) {
-    // React to changes
-    console.log('Received:', data);
-  }
-}
-
-// Usage
-const subject = new Subject();
-const observer1 = new Observer();
-const observer2 = new Observer();
-
-subject.attach(observer1);
-subject.attach(observer2);
-subject.notify({ message: 'Hello' });
+**Ví dụ (JS/TS):**
+```ts
+export const eventName9 = 'ui.event.9';
 ```
 
-### Mediator Pattern
+### 10. Microtask vs macrotask
 
-**Implementation**:
-```javascript
-class Mediator {
-  constructor() {
-    this.channels = new Map();
-  }
+**Tổng Quan:** `Microtask vs macrotask` là năng lực bắt buộc khi thảo luận kiến trúc hướng sự kiện trong frontend.
 
-  subscribe(channel, subscriber, callback) {
-    if (!this.channels.has(channel)) {
-      this.channels.set(channel, new Map());
-    }
-    this.channels.get(channel).set(subscriber, callback);
-  }
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-  unsubscribe(channel, subscriber) {
-    const subscribers = this.channels.get(channel);
-    if (subscribers) {
-      subscribers.delete(subscriber);
-    }
-  }
-
-  publish(channel, data, sender) {
-    const subscribers = this.channels.get(channel);
-    if (subscribers) {
-      subscribers.forEach((callback, subscriber) => {
-        if (subscriber !== sender) {
-          callback(data);
-        }
-      });
-    }
-  }
-}
-
-// Usage
-const mediator = new Mediator();
-
-class Component {
-  constructor(name, mediator) {
-    this.name = name;
-    this.mediator = mediator;
-  }
-
-  send(channel, data) {
-    this.mediator.publish(channel, data, this);
-  }
-
-  receive(channel, callback) {
-    this.mediator.subscribe(channel, this, callback);
-  }
-}
+**Ví dụ (JS/TS):**
+```ts
+export const eventName10 = 'ui.event.10';
 ```
 
-### Command Pattern
+### 11. Backpressure handling
 
-**Implementation**:
-```javascript
-class Command {
-  constructor(execute, undo) {
-    this.execute = execute;
-    this.undo = undo;
-  }
-}
+**Tổng Quan:** `Backpressure handling` là năng lực bắt buộc khi thảo luận kiến trúc hướng sự kiện trong frontend.
 
-class CommandManager {
-  constructor() {
-    this.history = [];
-    this.currentIndex = -1;
-  }
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-  execute(command) {
-    // Remove any commands after current index
-    this.history = this.history.slice(0, this.currentIndex + 1);
-    
-    command.execute();
-    this.history.push(command);
-    this.currentIndex++;
-  }
-
-  undo() {
-    if (this.currentIndex >= 0) {
-      const command = this.history[this.currentIndex];
-      command.undo();
-      this.currentIndex--;
-    }
-  }
-
-  redo() {
-    if (this.currentIndex < this.history.length - 1) {
-      this.currentIndex++;
-      const command = this.history[this.currentIndex];
-      command.execute();
-    }
-  }
-}
-
-// Usage
-const manager = new CommandManager();
-
-const addTextCommand = new Command(
-  () => editor.addText('Hello'),
-  () => editor.removeText('Hello')
-);
-
-manager.execute(addTextCommand);
-manager.undo();
-manager.redo();
+**Ví dụ (JS/TS):**
+```ts
+export const eventName11 = 'ui.event.11';
 ```
 
-## Event Sourcing
+### 12. Debounce and throttle
 
-### Concept
+**Tổng Quan:** `Debounce and throttle` là năng lực bắt buộc khi thảo luận kiến trúc hướng sự kiện trong frontend.
 
-**Definition**: Storing state changes as a sequence of events rather than storing current state.
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-**Benefits**:
-```
-1. Complete audit trail
-2. Time travel debugging
-3. Event replay
-4. Temporal queries
-5. Easy to add new projections
+**Ví dụ (JS/TS):**
+```ts
+export const eventName12 = 'ui.event.12';
 ```
 
-### Implementation
+### 13. Event delegation optimization
 
-**Event Store**:
-```javascript
-class EventStore {
-  constructor() {
-    this.events = [];
-    this.snapshots = new Map();
-    this.projections = new Map();
-  }
+**Tổng Quan:** `Event delegation optimization` là năng lực bắt buộc khi thảo luận kiến trúc hướng sự kiện trong frontend.
 
-  append(event) {
-    event.id = this.events.length;
-    event.timestamp = Date.now();
-    this.events.push(event);
-    
-    // Update projections
-    this.updateProjections(event);
-    
-    // Create snapshot if needed
-    if (this.events.length % 100 === 0) {
-      this.createSnapshot();
-    }
-  }
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-  getEvents(fromId = 0) {
-    return this.events.slice(fromId);
-  }
-
-  replay(fromId = 0) {
-    const events = this.getEvents(fromId);
-    return events.reduce((state, event) => {
-      return this.applyEvent(state, event);
-    }, this.getInitialState());
-  }
-
-  createSnapshot() {
-    const state = this.replay();
-    this.snapshots.set(this.events.length, state);
-  }
-
-  getState() {
-    // Find latest snapshot
-    const snapshotIds = Array.from(this.snapshots.keys()).sort((a, b) => b - a);
-    const latestSnapshotId = snapshotIds[0] || 0;
-    
-    // Start from snapshot and replay remaining events
-    const baseState = this.snapshots.get(latestSnapshotId) || this.getInitialState();
-    const remainingEvents = this.getEvents(latestSnapshotId);
-    
-    return remainingEvents.reduce((state, event) => {
-      return this.applyEvent(state, event);
-    }, baseState);
-  }
-
-  applyEvent(state, event) {
-    switch (event.type) {
-      case 'USER_CREATED':
-        return { ...state, users: [...state.users, event.payload] };
-      case 'USER_UPDATED':
-        return {
-          ...state,
-          users: state.users.map(u =>
-            u.id === event.payload.id ? { ...u, ...event.payload } : u
-          )
-        };
-      case 'USER_DELETED':
-        return {
-          ...state,
-          users: state.users.filter(u => u.id !== event.payload.id)
-        };
-      default:
-        return state;
-    }
-  }
-
-  getInitialState() {
-    return { users: [] };
-  }
-
-  // Projections for different views
-  addProjection(name, reducer) {
-    this.projections.set(name, { reducer, state: null });
-  }
-
-  updateProjections(event) {
-    this.projections.forEach((projection, name) => {
-      projection.state = projection.reducer(projection.state, event);
-    });
-  }
-
-  getProjection(name) {
-    return this.projections.get(name)?.state;
-  }
-}
+**Ví dụ (JS/TS):**
+```ts
+export const eventName13 = 'ui.event.13';
 ```
 
-**Usage Example**:
-```javascript
-const store = new EventStore();
+### 14. Error channel design
 
-// Add projection for user count
-store.addProjection('userCount', (state = 0, event) => {
-  switch (event.type) {
-    case 'USER_CREATED':
-      return state + 1;
-    case 'USER_DELETED':
-      return state - 1;
-    default:
-      return state;
-  }
-});
+**Tổng Quan:** `Error channel design` là năng lực bắt buộc khi thảo luận kiến trúc hướng sự kiện trong frontend.
 
-// Append events
-store.append({
-  type: 'USER_CREATED',
-  payload: { id: 1, name: 'Alice' }
-});
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-store.append({
-  type: 'USER_CREATED',
-  payload: { id: 2, name: 'Bob' }
-});
-
-// Get current state
-const state = store.getState();
-console.log(state); // { users: [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }] }
-
-// Get projection
-console.log(store.getProjection('userCount')); // 2
-
-// Time travel
-const pastState = store.replay(0);
+**Ví dụ (JS/TS):**
+```ts
+export const eventName14 = 'ui.event.14';
 ```
 
-## Message Queues
+### 15. Event schema versioning
 
-### Queue Implementation
+**Tổng Quan:** `Event schema versioning` là năng lực bắt buộc khi thảo luận kiến trúc hướng sự kiện trong frontend.
 
-**Basic Queue**:
-```javascript
-class MessageQueue {
-  constructor() {
-    this.queue = [];
-    this.processing = false;
-    this.handlers = new Map();
-  }
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-  enqueue(message) {
-    this.queue.push({
-      ...message,
-      id: crypto.randomUUID(),
-      timestamp: Date.now(),
-      retries: 0
-    });
-    
-    this.process();
-  }
-
-  async process() {
-    if (this.processing || this.queue.length === 0) {
-      return;
-    }
-
-    this.processing = true;
-
-    while (this.queue.length > 0) {
-      const message = this.queue.shift();
-      
-      try {
-        await this.handleMessage(message);
-      } catch (error) {
-        await this.handleError(message, error);
-      }
-    }
-
-    this.processing = false;
-  }
-
-  async handleMessage(message) {
-    const handler = this.handlers.get(message.type);
-    
-    if (!handler) {
-      throw new Error(`No handler for message type: ${message.type}`);
-    }
-
-    await handler(message.payload);
-  }
-
-  async handleError(message, error) {
-    console.error(`Error processing message ${message.id}:`, error);
-
-    if (message.retries < 3) {
-      // Retry with exponential backoff
-      const delay = Math.pow(2, message.retries) * 1000;
-      
-      setTimeout(() => {
-        message.retries++;
-        this.queue.unshift(message);
-        this.process();
-      }, delay);
-    } else {
-      // Move to dead letter queue
-      this.deadLetterQueue.push({ message, error });
-    }
-  }
-
-  registerHandler(type, handler) {
-    this.handlers.set(type, handler);
-  }
-}
+**Ví dụ (JS/TS):**
+```ts
+export const eventName15 = 'ui.event.15';
 ```
 
-**Priority Queue**:
-```javascript
-class PriorityQueue extends MessageQueue {
-  constructor() {
-    super();
-    this.queue = [];
-  }
+### 16. Event contract testing
 
-  enqueue(message, priority = 0) {
-    const item = {
-      ...message,
-      priority,
-      id: crypto.randomUUID(),
-      timestamp: Date.now()
-    };
+**Tổng Quan:** `Event contract testing` là năng lực bắt buộc khi thảo luận kiến trúc hướng sự kiện trong frontend.
 
-    // Insert based on priority
-    let inserted = false;
-    for (let i = 0; i < this.queue.length; i++) {
-      if (this.queue[i].priority < priority) {
-        this.queue.splice(i, 0, item);
-        inserted = true;
-        break;
-      }
-    }
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-    if (!inserted) {
-      this.queue.push(item);
-    }
-
-    this.process();
-  }
-}
+**Ví dụ (JS/TS):**
+```ts
+export const eventName16 = 'ui.event.16';
 ```
 
-## Pub/Sub Systems
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-### Implementation
+### 🟢 [Junior] Q01: How would you explain event-driven paradigm in a frontend interview?
 
-**Basic Pub/Sub**:
-```javascript
-class PubSub {
-  constructor() {
-    this.subscribers = new Map();
-    this.messageId = 0;
-  }
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
 
-  subscribe(topic, callback) {
-    if (!this.subscribers.has(topic)) {
-      this.subscribers.set(topic, new Map());
-    }
+**Giải thích (VI):** Với `Event-driven paradigm`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
 
-    const id = ++this.messageId;
-    this.subscribers.get(topic).set(id, callback);
-
-    // Return unsubscribe function
-    return () => {
-      const subscribers = this.subscribers.get(topic);
-      if (subscribers) {
-        subscribers.delete(id);
-        if (subscribers.size === 0) {
-          this.subscribers.delete(topic);
-        }
-      }
-    };
-  }
-
-  publish(topic, data) {
-    const subscribers = this.subscribers.get(topic);
-    
-    if (subscribers) {
-      subscribers.forEach(callback => {
-        // Use setTimeout to make async
-        setTimeout(() => callback(data), 0);
-      });
-    }
-
-    // Support wildcard subscriptions
-    this.publishWildcard(topic, data);
-  }
-
-  publishWildcard(topic, data) {
-    const parts = topic.split('.');
-    
-    // Check for wildcard subscriptions
-    for (let i = 0; i < parts.length; i++) {
-      const pattern = [
-        ...parts.slice(0, i),
-        '*',
-        ...parts.slice(i + 1)
-      ].join('.');
-      
-      const subscribers = this.subscribers.get(pattern);
-      if (subscribers) {
-        subscribers.forEach(callback => {
-          setTimeout(() => callback(data), 0);
-        });
-      }
-    }
-
-    // Check for multi-level wildcard
-    const subscribers = this.subscribers.get('#');
-    if (subscribers) {
-      subscribers.forEach(callback => {
-        setTimeout(() => callback(data), 0);
-      });
-    }
-  }
-
-  subscribeOnce(topic, callback) {
-    const unsubscribe = this.subscribe(topic, (data) => {
-      callback(data);
-      unsubscribe();
-    });
-    return unsubscribe;
-  }
-}
+**Ví dụ (JS/TS):**
+```ts
+export const eventName1 = 'ui.event.1';
 ```
 
-**Advanced Features**:
-```javascript
-class AdvancedPubSub extends PubSub {
-  constructor() {
-    super();
-    this.middleware = [];
-    this.history = [];
-    this.maxHistory = 100;
-  }
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
 
-  use(middleware) {
-    this.middleware.push(middleware);
-  }
+### 🟡 [Mid] Q01: How would you explain event-driven paradigm in a frontend interview?
 
-  async publish(topic, data) {
-    let message = { topic, data, timestamp: Date.now() };
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
 
-    // Apply middleware
-    for (const mw of this.middleware) {
-      message = await mw(message);
-      if (!message) return; // Middleware cancelled publication
-    }
+**Giải thích (VI):** Với `Event-driven paradigm`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
 
-    // Store in history
-    this.history.push(message);
-    if (this.history.length > this.maxHistory) {
-      this.history.shift();
-    }
-
-    // Publish
-    super.publish(message.topic, message.data);
-  }
-
-  replay(topic, fromTimestamp) {
-    const messages = this.history.filter(
-      m => m.topic === topic && m.timestamp >= fromTimestamp
-    );
-
-    messages.forEach(message => {
-      super.publish(message.topic, message.data);
-    });
-  }
-
-  getHistory(topic) {
-    return this.history.filter(m => m.topic === topic);
-  }
-}
-
-// Middleware examples
-const loggingMiddleware = async (message) => {
-  console.log(`Publishing to ${message.topic}:`, message.data);
-  return message;
-};
-
-const validationMiddleware = async (message) => {
-  if (!message.data) {
-    console.error('Invalid message: no data');
-    return null; // Cancel publication
-  }
-  return message;
-};
-
-const transformMiddleware = async (message) => {
-  return {
-    ...message,
-    data: {
-      ...message.data,
-      transformed: true
-    }
-  };
-};
+**Ví dụ (JS/TS):**
+```ts
+export const eventName21 = 'ui.event.21';
 ```
 
-## Event Loop Deep Dive
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
 
-### Microtasks vs Macrotasks
+### 🔴 [Senior] Q01: How would you explain event-driven paradigm in a frontend interview?
 
-**Task Queues**:
-```
-Macrotask Queue (Task Queue):
-- setTimeout
-- setInterval
-- setImmediate (Node.js)
-- I/O operations
-- UI rendering
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
 
-Microtask Queue (Job Queue):
-- Promise callbacks
-- queueMicrotask
-- MutationObserver
-- process.nextTick (Node.js)
+**Giải thích (VI):** Với `Event-driven paradigm`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName41 = 'ui.event.41';
 ```
 
-**Execution Order**:
-```javascript
-console.log('1: Synchronous');
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
 
-setTimeout(() => console.log('2: Macrotask'), 0);
+### 🟢 [Junior] Q02: How would you explain dom event phases in a frontend interview?
 
-Promise.resolve().then(() => console.log('3: Microtask'));
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
 
-queueMicrotask(() => console.log('4: Microtask'));
+**Giải thích (VI):** Với `DOM event phases`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
 
-console.log('5: Synchronous');
-
-// Output:
-// 1: Synchronous
-// 5: Synchronous
-// 3: Microtask
-// 4: Microtask
-// 2: Macrotask
+**Ví dụ (JS/TS):**
+```ts
+export const eventName2 = 'ui.event.2';
 ```
 
-**Event Loop Algorithm**:
-```
-1. Execute all synchronous code
-2. Execute all microtasks
-   - While microtask queue is not empty:
-     - Dequeue and execute microtask
-     - If new microtasks added, execute them too
-3. Render (if needed)
-4. Execute one macrotask
-5. Go to step 2
-```
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
 
-### Custom Event Loop
+### 🟡 [Mid] Q02: How would you explain dom event phases in a frontend interview?
 
-**Implementation**:
-```javascript
-class EventLoop {
-  constructor() {
-    this.macrotasks = [];
-    this.microtasks = [];
-    this.running = false;
-  }
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
 
-  queueMacrotask(task) {
-    this.macrotasks.push(task);
-    this.run();
-  }
+**Giải thích (VI):** Với `DOM event phases`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
 
-  queueMicrotask(task) {
-    this.microtasks.push(task);
-  }
-
-  async run() {
-    if (this.running) return;
-    this.running = true;
-
-    while (this.macrotasks.length > 0 || this.microtasks.length > 0) {
-      // Execute all microtasks
-      while (this.microtasks.length > 0) {
-        const task = this.microtasks.shift();
-        try {
-          await task();
-        } catch (error) {
-          console.error('Microtask error:', error);
-        }
-      }
-
-      // Execute one macrotask
-      if (this.macrotasks.length > 0) {
-        const task = this.macrotasks.shift();
-        try {
-          await task();
-        } catch (error) {
-          console.error('Macrotask error:', error);
-        }
-      }
-    }
-
-    this.running = false;
-  }
-}
+**Ví dụ (JS/TS):**
+```ts
+export const eventName22 = 'ui.event.22';
 ```
 
-## Performance Considerations
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
 
-### Event Throttling
+### 🔴 [Senior] Q02: How would you explain dom event phases in a frontend interview?
 
-**Implementation**:
-```javascript
-function throttle(func, limit) {
-  let inThrottle;
-  let lastResult;
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
 
-  return function(...args) {
-    if (!inThrottle) {
-      lastResult = func.apply(this, args);
-      inThrottle = true;
-      
-      setTimeout(() => {
-        inThrottle = false;
-      }, limit);
-    }
-    
-    return lastResult;
-  };
-}
+**Giải thích (VI):** Với `DOM event phases`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
 
-// Usage
-const throttledScroll = throttle(() => {
-  console.log('Scroll event');
-}, 100);
-
-window.addEventListener('scroll', throttledScroll);
+**Ví dụ (JS/TS):**
+```ts
+export const eventName42 = 'ui.event.42';
 ```
 
-### Event Debouncing
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
 
-**Implementation**:
-```javascript
-function debounce(func, delay) {
-  let timeoutId;
+### 🟢 [Junior] Q03: How would you explain custom event bus design in a frontend interview?
 
-  return function(...args) {
-    clearTimeout(timeoutId);
-    
-    timeoutId = setTimeout(() => {
-      func.apply(this, args);
-    }, delay);
-  };
-}
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
 
-// With immediate execution option
-function debounceImmediate(func, delay, immediate = false) {
-  let timeoutId;
+**Giải thích (VI):** Với `Custom event bus design`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
 
-  return function(...args) {
-    const callNow = immediate && !timeoutId;
-    
-    clearTimeout(timeoutId);
-    
-    timeoutId = setTimeout(() => {
-      timeoutId = null;
-      if (!immediate) {
-        func.apply(this, args);
-      }
-    }, delay);
-    
-    if (callNow) {
-      func.apply(this, args);
-    }
-  };
-}
+**Ví dụ (JS/TS):**
+```ts
+export const eventName3 = 'ui.event.3';
 ```
 
-### Event Delegation
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
 
-**Pattern**:
-```javascript
-class EventDelegator {
-  constructor(root) {
-    this.root = root;
-    this.handlers = new Map();
-  }
+### 🟡 [Mid] Q03: How would you explain custom event bus design in a frontend interview?
 
-  on(selector, eventType, handler) {
-    const key = `${eventType}:${selector}`;
-    
-    if (!this.handlers.has(key)) {
-      const delegatedHandler = (event) => {
-        const target = event.target.closest(selector);
-        if (target && this.root.contains(target)) {
-          handler.call(target, event);
-        }
-      };
-      
-      this.root.addEventListener(eventType, delegatedHandler);
-      this.handlers.set(key, delegatedHandler);
-    }
-  }
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
 
-  off(selector, eventType) {
-    const key = `${eventType}:${selector}`;
-    const handler = this.handlers.get(key);
-    
-    if (handler) {
-      this.root.removeEventListener(eventType, handler);
-      this.handlers.delete(key);
-    }
-  }
-}
+**Giải thích (VI):** Với `Custom event bus design`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
 
-// Usage
-const delegator = new EventDelegator(document.body);
-
-delegator.on('.button', 'click', function(event) {
-  console.log('Button clicked:', this);
-});
+**Ví dụ (JS/TS):**
+```ts
+export const eventName23 = 'ui.event.23';
 ```
 
-### Memory Management
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
 
-**Preventing Memory Leaks**:
-```javascript
-class EventManager {
-  constructor() {
-    this.listeners = new WeakMap();
-  }
+### 🔴 [Senior] Q03: How would you explain custom event bus design in a frontend interview?
 
-  addEventListener(element, type, handler, options) {
-    if (!this.listeners.has(element)) {
-      this.listeners.set(element, new Map());
-    }
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
 
-    const elementListeners = this.listeners.get(element);
-    
-    if (!elementListeners.has(type)) {
-      elementListeners.set(type, new Set());
-    }
+**Giải thích (VI):** Với `Custom event bus design`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
 
-    elementListeners.get(type).add(handler);
-    element.addEventListener(type, handler, options);
-  }
-
-  removeEventListener(element, type, handler) {
-    const elementListeners = this.listeners.get(element);
-    
-    if (elementListeners) {
-      const typeListeners = elementListeners.get(type);
-      
-      if (typeListeners) {
-        typeListeners.delete(handler);
-        element.removeEventListener(type, handler);
-      }
-    }
-  }
-
-  removeAllListeners(element) {
-    const elementListeners = this.listeners.get(element);
-    
-    if (elementListeners) {
-      elementListeners.forEach((handlers, type) => {
-        handlers.forEach(handler => {
-          element.removeEventListener(type, handler);
-        });
-      });
-      
-      this.listeners.delete(element);
-    }
-  }
-
-  cleanup() {
-    // WeakMap automatically cleans up when elements are garbage collected
-    // But we can manually clean up all listeners
-    this.listeners = new WeakMap();
-  }
-}
+**Ví dụ (JS/TS):**
+```ts
+export const eventName43 = 'ui.event.43';
 ```
 
-## Best Practices
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
 
-### Event Naming Conventions
+### 🟢 [Junior] Q04: How would you explain pub/sub channel strategy in a frontend interview?
 
-```javascript
-// Use past tense for events that happened
-'userLoggedIn'
-'dataFetched'
-'formSubmitted'
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
 
-// Use present tense for events about to happen
-'beforeSubmit'
-'willNavigate'
+**Giải thích (VI):** Với `Pub/Sub channel strategy`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
 
-// Use namespacing
-'user:login'
-'data:fetch:success'
-'form:submit:error'
+**Ví dụ (JS/TS):**
+```ts
+export const eventName4 = 'ui.event.4';
 ```
 
-### Error Handling
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
 
-```javascript
-class SafeEventEmitter extends EventEmitter {
-  emit(event, ...args) {
-    const handlers = this.events.get(event);
-    
-    if (handlers) {
-      const errors = [];
-      
-      handlers.forEach(handler => {
-        try {
-          handler(...args);
-        } catch (error) {
-          errors.push({ handler, error });
-        }
-      });
-      
-      if (errors.length > 0) {
-        this.emit('error', { event, errors });
-      }
-    }
-  }
-}
+### 🟡 [Mid] Q04: How would you explain pub/sub channel strategy in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Pub/Sub channel strategy`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName24 = 'ui.event.24';
 ```
 
-### Testing Events
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
 
-```javascript
-class TestableEventEmitter extends EventEmitter {
-  constructor() {
-    super();
-    this.emittedEvents = [];
-  }
+### 🔴 [Senior] Q04: How would you explain pub/sub channel strategy in a frontend interview?
 
-  emit(event, ...args) {
-    if (process.env.NODE_ENV === 'test') {
-      this.emittedEvents.push({ event, args, timestamp: Date.now() });
-    }
-    super.emit(event, ...args);
-  }
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
 
-  getEmittedEvents(event) {
-    return this.emittedEvents.filter(e => e.event === event);
-  }
+**Giải thích (VI):** Với `Pub/Sub channel strategy`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
 
-  clearEmittedEvents() {
-    this.emittedEvents = [];
-  }
-}
-
-// Test
-const emitter = new TestableEventEmitter();
-emitter.emit('test', 'data');
-expect(emitter.getEmittedEvents('test')).toHaveLength(1);
+**Ví dụ (JS/TS):**
+```ts
+export const eventName44 = 'ui.event.44';
 ```
 
-## Summary
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
 
-Event-driven architecture is fundamental to frontend development, enabling:
-- Loose coupling between components
-- Asynchronous communication
-- Reactive user interfaces
-- Scalable application design
+### 🟢 [Junior] Q05: How would you explain observer pattern in ui in a frontend interview?
 
-Key takeaways:
-- Understand event flow and propagation
-- Use appropriate event patterns for different scenarios
-- Implement proper error handling and memory management
-- Optimize performance with throttling and debouncing
-- Follow naming conventions and best practices
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Observer pattern in UI`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName5 = 'ui.event.5';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q05: How would you explain observer pattern in ui in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Observer pattern in UI`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName25 = 'ui.event.25';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q05: How would you explain observer pattern in ui in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Observer pattern in UI`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName45 = 'ui.event.45';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q06: How would you explain mediator pattern in ui in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Mediator pattern in UI`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName6 = 'ui.event.6';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q06: How would you explain mediator pattern in ui in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Mediator pattern in UI`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName26 = 'ui.event.26';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q06: How would you explain mediator pattern in ui in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Mediator pattern in UI`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName46 = 'ui.event.46';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q07: How would you explain command pattern usage in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Command pattern usage`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName7 = 'ui.event.7';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q07: How would you explain command pattern usage in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Command pattern usage`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName27 = 'ui.event.27';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q07: How would you explain command pattern usage in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Command pattern usage`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName47 = 'ui.event.47';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q08: How would you explain event sourcing basics in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Event sourcing basics`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName8 = 'ui.event.8';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q08: How would you explain event sourcing basics in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Event sourcing basics`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName28 = 'ui.event.28';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q08: How would you explain event sourcing basics in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Event sourcing basics`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName48 = 'ui.event.48';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q09: How would you explain message queue in frontend in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Message queue in frontend`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName9 = 'ui.event.9';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q09: How would you explain message queue in frontend in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Message queue in frontend`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName29 = 'ui.event.29';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q09: How would you explain message queue in frontend in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Message queue in frontend`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName49 = 'ui.event.49';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q10: How would you explain microtask vs macrotask in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Microtask vs macrotask`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName10 = 'ui.event.10';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q10: How would you explain microtask vs macrotask in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Microtask vs macrotask`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName30 = 'ui.event.30';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q10: How would you explain microtask vs macrotask in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Microtask vs macrotask`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName50 = 'ui.event.50';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q11: How would you explain backpressure handling in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Backpressure handling`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName11 = 'ui.event.11';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q11: How would you explain backpressure handling in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Backpressure handling`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName31 = 'ui.event.31';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q11: How would you explain backpressure handling in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Backpressure handling`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName51 = 'ui.event.51';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q12: How would you explain debounce and throttle in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Debounce and throttle`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName12 = 'ui.event.12';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q12: How would you explain debounce and throttle in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Debounce and throttle`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName32 = 'ui.event.32';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q12: How would you explain debounce and throttle in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Debounce and throttle`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName52 = 'ui.event.52';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q13: How would you explain event delegation optimization in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Event delegation optimization`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName13 = 'ui.event.13';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q13: How would you explain event delegation optimization in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Event delegation optimization`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName33 = 'ui.event.33';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q13: How would you explain event delegation optimization in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Event delegation optimization`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName53 = 'ui.event.53';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q14: How would you explain error channel design in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Error channel design`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName14 = 'ui.event.14';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q14: How would you explain error channel design in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Error channel design`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName34 = 'ui.event.34';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q14: How would you explain error channel design in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Error channel design`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName54 = 'ui.event.54';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q15: How would you explain event schema versioning in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Event schema versioning`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName15 = 'ui.event.15';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q15: How would you explain event schema versioning in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Event schema versioning`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName35 = 'ui.event.35';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q15: How would you explain event schema versioning in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Event schema versioning`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName55 = 'ui.event.55';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q16: How would you explain event contract testing in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Event contract testing`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName16 = 'ui.event.16';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q16: How would you explain event contract testing in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Event contract testing`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName36 = 'ui.event.36';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q16: How would you explain event contract testing in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Event contract testing`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const eventName56 = 'ui.event.56';
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+## Rapid Review Checklist / Checklist Ôn Tập Nhanh
+
+- Bạn có thể giải thích 16 concept ở cả 3 mức Junior/Mid/Senior?
+- Bạn có ví dụ thực tế về bug/perf/security issue và bài học rút ra?
+- Bạn có thể liên kết chủ đề hiện tại với testing, observability, và delivery?
+- Bạn đã chuẩn bị câu trả lời song ngữ EN heading + VI explanation chưa?
+- Bạn có thể vẽ luồng dữ liệu hoặc kiến trúc trong 2-3 phút trên whiteboard?
+
+## Tóm Tắt / Summary
+
+Tài liệu `Event-Driven Architecture in Frontend` đã được chuyển sang bilingual Q&A format với difficulty tags (`🟢 [Junior]`, `🟡 [Mid]`, `🔴 [Senior]`), chứa marker `Tổng Quan`, `Giải thích`, `Ví dụ`, có cross-reference bằng relative path và code mẫu JS/TS để luyện phỏng vấn.

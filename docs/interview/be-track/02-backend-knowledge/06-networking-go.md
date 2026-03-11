@@ -27,7 +27,9 @@
 
 ## 1. OSI Model & TCP/IP Stack
 
-### Q: Trình bày 7 layers của OSI Model? 🟢
+
+## Câu Hỏi Phỏng Vấn / Interview Q&A
+### Q: Trình bày 7 layers của OSI Model? 🟢 🟢 [Junior]
 
 **A:** OSI (Open Systems Interconnection) chia network communication thành 7 tầng:
 
@@ -57,7 +59,7 @@
 
 ---
 
-### Q: So sánh OSI Model (7 layers) vs TCP/IP Model (4 layers)? 🟢
+### Q: So sánh OSI Model (7 layers) vs TCP/IP Model (4 layers)? 🟢 🟢 [Junior]
 
 **A:**
 
@@ -92,7 +94,7 @@
 
 ---
 
-### Q: Mô tả chi tiết điều gì xảy ra khi bạn gõ URL vào browser? 🟡
+### Q: Mô tả chi tiết điều gì xảy ra khi bạn gõ URL vào browser? 🟡 🟡 [Mid]
 
 **A:** Đây là câu hỏi kinh điển. Full journey:
 
@@ -154,7 +156,7 @@ Content-Length: 1234
 
 ## 2. TCP
 
-### Q: Giải thích TCP 3-Way Handshake? 🟢
+### Q: Giải thích TCP 3-Way Handshake? 🟢 🟢 [Junior]
 
 **A:** TCP 3-way handshake thiết lập connection tin cậy giữa client và server:
 
@@ -180,7 +182,7 @@ Content-Length: 1234
 
 ---
 
-### Q: Giải thích TCP 4-Way Teardown? 🟢
+### Q: Giải thích TCP 4-Way Teardown? 🟢 🟢 [Junior]
 
 **A:** Đóng TCP connection cần 4 bước vì mỗi hướng đóng độc lập (half-close):
 
@@ -207,7 +209,7 @@ Content-Length: 1234
 
 ---
 
-### Q: Giải thích các TCP states quan trọng? 🟡
+### Q: Giải thích các TCP states quan trọng? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -250,7 +252,7 @@ Content-Length: 1234
 
 ---
 
-### Q: TIME_WAIT là gì? Tại sao cần chờ 2*MSL? Ảnh hưởng gì đến high-traffic servers? 🔴
+### Q: TIME_WAIT là gì? Tại sao cần chờ 2*MSL? Ảnh hưởng gì đến high-traffic servers? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -292,7 +294,7 @@ client := &http.Client{Transport: transport}
 
 ---
 
-### Q: Giải thích Flow Control trong TCP? 🟡
+### Q: Giải thích Flow Control trong TCP? 🟡 🟡 [Mid]
 
 **A:** Flow control ngăn sender gửi quá nhanh so với khả năng xử lý của receiver.
 
@@ -316,7 +318,7 @@ Sender's view:
 
 ---
 
-### Q: Giải thích Congestion Control trong TCP? 🔴
+### Q: Giải thích Congestion Control trong TCP? 🔴 🔴 [Senior]
 
 **A:** Congestion control ngăn chặn network bị quá tải. Khác với flow control (bảo vệ receiver), congestion control bảo vệ **network**.
 
@@ -364,7 +366,7 @@ cwnd
 
 ---
 
-### Q: TCP Keepalive là gì? 🟡
+### Q: TCP Keepalive là gì? 🟡 🟡 [Mid]
 
 **A:** TCP keepalive là cơ chế kiểm tra xem connection có còn sống không khi không có data truyền.
 
@@ -387,7 +389,7 @@ if tcpConn, ok := conn.(*net.TCPConn); ok {
 
 ---
 
-### Q: Viết TCP server/client đơn giản bằng Go? 🟡
+### Q: Viết TCP server/client đơn giản bằng Go? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -492,7 +494,7 @@ func main() {
 
 ## 3. UDP
 
-### Q: Đặc điểm chính của UDP? Khi nào dùng UDP? 🟢
+### Q: Đặc điểm chính của UDP? Khi nào dùng UDP? 🟢 🟢 [Junior]
 
 **A:**
 
@@ -524,7 +526,7 @@ func main() {
 
 ---
 
-### Q: So sánh TCP vs UDP? 🟢
+### Q: So sánh TCP vs UDP? 🟢 🟢 [Junior]
 
 **A:**
 
@@ -542,7 +544,7 @@ func main() {
 
 ---
 
-### Q: Viết UDP server/client bằng Go? 🟡
+### Q: Viết UDP server/client bằng Go? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -625,7 +627,7 @@ func main() {
 
 ## 4. HTTP/1.1 vs HTTP/2 vs HTTP/3
 
-### Q: Giải thích sự khác biệt giữa HTTP/1.1, HTTP/2, HTTP/3? 🟡
+### Q: Giải thích sự khác biệt giữa HTTP/1.1, HTTP/2, HTTP/3? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -666,7 +668,7 @@ HTTP/1.1:                    HTTP/2:
 
 ---
 
-### Q: So sánh HTTP/1.1 vs HTTP/2 vs HTTP/3? 🟡
+### Q: So sánh HTTP/1.1 vs HTTP/2 vs HTTP/3? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -684,7 +686,7 @@ HTTP/1.1:                    HTTP/2:
 
 ---
 
-### Q: Viết HTTP server với HTTP/2 support bằng Go? 🟡
+### Q: Viết HTTP server với HTTP/2 support bằng Go? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -752,7 +754,7 @@ func main() {
 
 ## 5. HTTPS / TLS
 
-### Q: Mô tả TLS 1.2 Handshake đầy đủ? 🟡
+### Q: Mô tả TLS 1.2 Handshake đầy đủ? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -800,7 +802,7 @@ Client                                          Server
 
 ---
 
-### Q: TLS 1.3 cải tiến gì so với TLS 1.2? 🟡
+### Q: TLS 1.3 cải tiến gì so với TLS 1.2? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -831,7 +833,7 @@ TLS 1.3 (0-RTT resumption): TCP (1 RTT) + TLS (0 RTT) = 1 RTT
 
 ---
 
-### Q: Giải thích Certificate Chain, CA, Certificate Pinning? 🟡
+### Q: Giải thích Certificate Chain, CA, Certificate Pinning? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -852,7 +854,7 @@ Root CA (self-signed, pre-installed in OS/browser)
 
 ---
 
-### Q: mTLS (Mutual TLS) là gì? Khi nào dùng? 🔴
+### Q: mTLS (Mutual TLS) là gì? Khi nào dùng? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -944,7 +946,7 @@ func createMTLSClient() *http.Client {
 
 ## 6. DNS
 
-### Q: Mô tả quá trình DNS resolution? 🟢
+### Q: Mô tả quá trình DNS resolution? 🟢 🟢 [Junior]
 
 **A:**
 
@@ -979,7 +981,7 @@ User types: www.example.com
 
 ---
 
-### Q: Các DNS record types quan trọng? 🟢
+### Q: Các DNS record types quan trọng? 🟢 🟢 [Junior]
 
 **A:**
 
@@ -1006,7 +1008,7 @@ User types: www.example.com
 
 ---
 
-### Q: Viết DNS lookup bằng Go? 🟡
+### Q: Viết DNS lookup bằng Go? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -1089,7 +1091,7 @@ func main() {
 
 ## 7. WebSocket
 
-### Q: WebSocket hoạt động như thế nào? 🟡
+### Q: WebSocket hoạt động như thế nào? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -1120,7 +1122,7 @@ Server → Client (HTTP 101 Response):
 
 ---
 
-### Q: So sánh WebSocket vs SSE vs Long Polling? 🟡
+### Q: So sánh WebSocket vs SSE vs Long Polling? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -1142,7 +1144,7 @@ Server → Client (HTTP 101 Response):
 
 ---
 
-### Q: Viết WebSocket server bằng Go? 🟡
+### Q: Viết WebSocket server bằng Go? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -1246,7 +1248,7 @@ func main() {
 
 ## 8. gRPC
 
-### Q: gRPC là gì? Tại sao dùng HTTP/2? 🟡
+### Q: gRPC là gì? Tại sao dùng HTTP/2? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -1264,7 +1266,7 @@ func main() {
 
 ---
 
-### Q: 4 loại gRPC communication patterns? 🟡
+### Q: 4 loại gRPC communication patterns? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -1311,7 +1313,7 @@ service ChatService {
 
 ---
 
-### Q: Viết gRPC server và client bằng Go? 🔴
+### Q: Viết gRPC server và client bằng Go? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -1549,7 +1551,7 @@ func main() {
 
 ---
 
-### Q: So sánh gRPC vs REST? 🟡
+### Q: So sánh gRPC vs REST? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -1578,7 +1580,7 @@ func main() {
 
 ## 9. Load Balancing
 
-### Q: L4 vs L7 Load Balancing khác nhau thế nào? 🟡
+### Q: L4 vs L7 Load Balancing khác nhau thế nào? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -1618,7 +1620,7 @@ Client ──→ [LB sees: GET /images/logo.png]                  ──→ Stat
 
 ---
 
-### Q: Các thuật toán Load Balancing? 🟡
+### Q: Các thuật toán Load Balancing? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -1667,7 +1669,7 @@ If A removed → only A's requests remap to B (not all)
 
 ---
 
-### Q: Viết simple reverse proxy / load balancer bằng Go? 🔴
+### Q: Viết simple reverse proxy / load balancer bằng Go? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -1816,7 +1818,7 @@ func main() {
 
 ## 10. REST API
 
-### Q: REST principles là gì? 🟢
+### Q: REST principles là gì? 🟢 🟢 [Junior]
 
 **A:**
 
@@ -1835,7 +1837,7 @@ REST (Representational State Transfer) - 6 nguyên tắc của Roy Fielding:
 
 ---
 
-### Q: HTTP Methods và Status Codes quan trọng? 🟢
+### Q: HTTP Methods và Status Codes quan trọng? 🟢 🟢 [Junior]
 
 **A:**
 
@@ -1884,7 +1886,7 @@ REST (Representational State Transfer) - 6 nguyên tắc của Roy Fielding:
 
 ---
 
-### Q: Pagination strategies? 🟡
+### Q: Pagination strategies? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -1914,7 +1916,7 @@ GET /api/users?after_id=123&after_created_at=2024-01-01&limit=20
 
 ---
 
-### Q: CORS là gì? Preflight request? 🟡
+### Q: CORS là gì? Preflight request? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -1952,7 +1954,7 @@ Browser                              API Server (api.example.com)
 
 ---
 
-### Q: Viết RESTful API với middleware chain bằng Go? 🟡
+### Q: Viết RESTful API với middleware chain bằng Go? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -2223,7 +2225,7 @@ func main() {
 
 ## 11. Network Security
 
-### Q: Các loại DDoS attack phổ biến và cách phòng chống? 🟡
+### Q: Các loại DDoS attack phổ biến và cách phòng chống? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -2252,7 +2254,7 @@ Attacker gửi hàng triệu SYN packets với spoofed source IP
 
 ---
 
-### Q: Rate Limiting algorithms? Implement trong Go? 🔴
+### Q: Rate Limiting algorithms? Implement trong Go? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -2433,7 +2435,7 @@ func (tb *TokenBucket) Allow() bool {
 
 ## 12. CDN
 
-### Q: CDN hoạt động như thế nào? 🟡
+### Q: CDN hoạt động như thế nào? 🟡 🟡 [Mid]
 
 **A:**
 

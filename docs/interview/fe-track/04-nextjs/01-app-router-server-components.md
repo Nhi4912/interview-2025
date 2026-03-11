@@ -1,872 +1,738 @@
 # App Router & Server Components
-## Next.js 16 - Chapter 1
+## Next.js - Chapter 1
 
-[Back to Table of Contents](../00-table-of-contents.md) | [Next: Data Fetching & Caching →](./02-data-fetching-caching.md)
-
----
-
-## Overview
-
-Next.js 16's App Router represents a paradigm shift in how we build React applications, with Server Components as the default, streaming, and improved data fetching patterns.
+[Back to Table of Contents](../../00-table-of-contents.md) | [Next →](./02-data-fetching.md)
 
 ---
 
-## Table of Contents
-1. [App Router Basics](#app-router-basics)
-2. [Server Components vs Client Components](#server-components-vs-client-components)
-3. [File Conventions](#file-conventions)
-4. [Layouts and Templates](#layouts-and-templates)
-5. [Loading and Error States](#loading-and-error-states)
-6. [Streaming and Suspense](#streaming-and-suspense)
-7. [Route Groups](#route-groups)
-8. [Parallel Routes](#parallel-routes)
-9. [Intercepting Routes](#intercepting-routes)
-10. [Interview Questions](#interview-questions)
+## Tổng Quan / Overview
 
----
+**Giải thích:** App Router sử dụng React Server Components mặc định, hỗ trợ streaming, nested layout và route conventions.
 
-## App Router Basics
+**Ví dụ:** Khi trả lời phỏng vấn, luôn nêu problem → reasoning → implementation → trade-off.
 
-### Directory Structure
+## Learning Goals
 
-```
-app/
-├── layout.tsx          # Root layout (required)
-├── page.tsx           # Home page (/)
-├── loading.tsx        # Loading UI
-├── error.tsx          # Error UI
-├── not-found.tsx      # 404 page
-├── global-error.tsx   # Global error boundary
-├── template.tsx       # Re-rendered layout
-├── about/
-│   └── page.tsx       # /about
-├── blog/
-│   ├── layout.tsx     # Blog layout
-│   ├── page.tsx       # /blog
-│   └── [slug]/
-│       └── page.tsx   # /blog/[slug]
-└── dashboard/
-    ├── layout.tsx
-    ├── page.tsx       # /dashboard
-    ├── settings/
-    │   └── page.tsx   # /dashboard/settings
-    └── analytics/
-        └── page.tsx   # /dashboard/analytics
-```
+- Understand core concepts in English heading form for interview communication.
+- Trình bày được bằng tiếng Việt với ví dụ code ngắn, đúng ngữ cảnh frontend thực tế.
+- Map kiến thức sang câu hỏi ở level Junior/Mid/Senior.
 
-### Basic Page Component
+## Cross References
 
-```typescript
-// app/page.tsx - Server Component by default
-export default function HomePage() {
-  return (
-    <main>
-      <h1>Welcome to Next.js 16</h1>
-      <p>This is a Server Component</p>
-    </main>
-  );
-}
+- [FE Track Table of Contents](../../00-table-of-contents.md)
+- [Next.js Fundamentals](./00-nextjs-fundamentals.md)
+- [Data Fetching & Caching](./02-data-fetching.md)
+- [Next.js Architecture](./03-nextjs-architecture.md)
 
-// With TypeScript props
-interface PageProps {
-  params: { slug: string };
-  searchParams: { [key: string]: string | string[] | undefined };
-}
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-export default function Page({ params, searchParams }: PageProps) {
-  return (
-    <div>
-      <h1>Slug: {params.slug}</h1>
-      <p>Search: {JSON.stringify(searchParams)}</p>
-    </div>
-  );
+### Q1: Explain server component in practical interview context — 🟢 [Junior]
+
+**Tổng Quan:** Server Component là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với server component, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```ts
+import { NextResponse } from 'next/server';
+
+export async function GET() {
+  return NextResponse.json({ ok: true, ts: Date.now() });
 }
 ```
 
----
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-## Server Components vs Client Components
+### Q2: Explain client boundary in practical interview context — 🟡 [Mid]
 
-### Server Components (Default)
+**Tổng Quan:** Client Boundary là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
 
-```typescript
-// app/posts/page.tsx - Server Component
-// No 'use client' directive = Server Component
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với client boundary, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
 
-async function getPosts() {
-  const res = await fetch('https://api.example.com/posts', {
-    next: { revalidate: 3600 } // ISR
-  });
-  return res.json();
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
 }
 
-export default async function PostsPage() {
-  const posts = await getPosts();
-
-  return (
-    <div>
-      <h1>Blog Posts</h1>
-      {posts.map((post: Post) => (
-        <article key={post.id}>
-          <h2>{post.title}</h2>
-          <p>{post.excerpt}</p>
-        </article>
-      ))}
-    </div>
-  );
-}
-
-// Benefits:
-// ✅ Direct database access
-// ✅ Secure API keys
-// ✅ Zero JavaScript to client
-// ✅ Automatic code splitting
-// ✅ Better SEO
+console.log(explain('layout performance', 'mid'));
 ```
 
-### Client Components
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-```typescript
-// app/components/counter.tsx - Client Component
-'use client'; // Required directive
+### Q3: Explain layout template in practical interview context — 🔴 [Senior]
 
-import { useState } from 'react';
+**Tổng Quan:** Layout Template là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
 
-export function Counter() {
-  const [count, setCount] = useState(0);
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với layout template, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
 
-  return (
-    <div>
-      <p>Count: {count}</p>
-      <button onClick={() => setCount(count + 1)}>
-        Increment
-      </button>
-    </div>
-  );
-}
-
-// Use when you need:
-// ✅ useState, useEffect, other hooks
-// ✅ Event listeners (onClick, onChange)
-// ✅ Browser APIs (localStorage, window)
-// ✅ Custom hooks
-// ✅ Class components
+**Ví dụ:**
+```html
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
 ```
 
-### Composition Pattern
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-```typescript
-// app/page.tsx - Server Component
-import { Counter } from './components/counter'; // Client Component
-import { PostList } from './components/post-list'; // Server Component
+### Q4: Explain loading error in practical interview context — 🟢 [Junior]
 
-async function getPosts() {
-  const res = await fetch('https://api.example.com/posts');
-  return res.json();
+**Tổng Quan:** Loading Error là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với loading error, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```css
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
 }
 
-export default async function HomePage() {
-  const posts = await getPosts();
-
-  return (
-    <main>
-      {/* Server Component */}
-      <PostList posts={posts} />
-      
-      {/* Client Component */}
-      <Counter />
-    </main>
-  );
+.card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
 }
-
-// Best Practice: Keep Client Components as leaves
-// Server Component
-//   ├── Server Component
-//   │   └── Client Component (leaf)
-//   └── Client Component (leaf)
 ```
 
-### Passing Props Between Server and Client
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-```typescript
-// ✅ Can pass serializable props from Server to Client
-// app/page.tsx - Server Component
-import { ClientComponent } from './client-component';
+### Q5: Explain suspense streaming in practical interview context — 🟡 [Mid]
 
+**Tổng Quan:** Suspense Streaming là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với suspense streaming, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
+}
+
+console.log(explain('layout performance', 'mid'));
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q6: Explain route group in practical interview context — 🔴 [Senior]
+
+**Tổng Quan:** Route Group là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với route group, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```tsx
 export default async function Page() {
-  const data = await fetchData();
-  
-  return (
-    <ClientComponent 
-      data={data}  // ✅ Serializable data
-      count={42}   // ✅ Primitives
-    />
-  );
-}
-
-// app/client-component.tsx
-'use client';
-
-interface Props {
-  data: SerializableData;
-  count: number;
-}
-
-export function ClientComponent({ data, count }: Props) {
-  return <div>{data.title}</div>;
-}
-
-// ❌ Cannot pass non-serializable props
-// Functions, class instances, etc.
-```
-
----
-
-## File Conventions
-
-### layout.tsx - Shared UI
-
-```typescript
-// app/layout.tsx - Root Layout (Required)
-import { Inter } from 'next/font/google';
-import './globals.css';
-
-const inter = Inter({ subsets: ['latin'] });
-
-export const metadata = {
-  title: 'My App',
-  description: 'Created with Next.js 16',
-};
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <html lang="en">
-      <body className={inter.className}>
-        <header>
-          <nav>{/* Navigation */}</nav>
-        </header>
-        <main>{children}</main>
-        <footer>{/* Footer */}</footer>
-      </body>
-    </html>
-  );
-}
-
-// Nested layout
-// app/dashboard/layout.tsx
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="dashboard">
-      <aside>{/* Sidebar */}</aside>
-      <div className="content">{children}</div>
-    </div>
-  );
+  const res = await fetch('https://api.example.com/posts', { next: { revalidate: 60 } });
+  const posts = await res.json();
+  return <main>{posts.map((p: { id: number; title: string }) => <p key={p.id}>{p.title}</p>)}</main>;
 }
 ```
 
-### page.tsx - Route UI
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-```typescript
-// app/blog/[slug]/page.tsx
-interface PageProps {
-  params: { slug: string };
-}
+### Q7: Explain parallel routes in practical interview context — 🟢 [Junior]
 
-export default async function BlogPost({ params }: PageProps) {
-  const post = await getPost(params.slug);
-  
-  return (
-    <article>
-      <h1>{post.title}</h1>
-      <div dangerouslySetInnerHTML={{ __html: post.content }} />
-    </article>
-  );
-}
+**Tổng Quan:** Parallel Routes là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
 
-// Generate static params for SSG
-export async function generateStaticParams() {
-  const posts = await getPosts();
-  
-  return posts.map((post) => ({
-    slug: post.slug,
-  }));
-}
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với parallel routes, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
 
-// Generate metadata
-export async function generateMetadata({ params }: PageProps) {
-  const post = await getPost(params.slug);
-  
-  return {
-    title: post.title,
-    description: post.excerpt,
-    openGraph: {
-      title: post.title,
-      description: post.excerpt,
-      images: [post.coverImage],
-    },
-  };
+**Ví dụ:**
+```ts
+import { NextResponse } from 'next/server';
+
+export async function GET() {
+  return NextResponse.json({ ok: true, ts: Date.now() });
 }
 ```
 
-### loading.tsx - Loading UI
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-```typescript
-// app/dashboard/loading.tsx
-export default function Loading() {
-  return (
-    <div className="loading">
-      <div className="spinner" />
-      <p>Loading dashboard...</p>
-    </div>
-  );
-}
+### Q8: Explain intercepting route in practical interview context — 🟡 [Mid]
 
-// Automatically wraps page in Suspense boundary
-// <Suspense fallback={<Loading />}>
-//   <Page />
-// </Suspense>
+**Tổng Quan:** Intercepting Route là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với intercepting route, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+const card = document.querySelector('[data-card]');
+card?.addEventListener('click', () => {
+  card.classList.toggle('expanded');
+});
 ```
 
-### error.tsx - Error Boundary
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-```typescript
-// app/dashboard/error.tsx
-'use client'; // Error components must be Client Components
+### Q9: Explain server action in practical interview context — 🔴 [Senior]
 
-import { useEffect } from 'react';
+**Tổng Quan:** Server Action là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
 
-export default function Error({
-  error,
-  reset,
-}: {
-  error: Error & { digest?: string };
-  reset: () => void;
-}) {
-  useEffect(() => {
-    // Log error to error reporting service
-    console.error(error);
-  }, [error]);
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với server action, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
 
-  return (
-    <div className="error">
-      <h2>Something went wrong!</h2>
-      <p>{error.message}</p>
-      <button onClick={() => reset()}>
-        Try again
-      </button>
-    </div>
-  );
-}
-
-// global-error.tsx - Catches errors in root layout
-// app/global-error.tsx
-'use client';
-
-export default function GlobalError({
-  error,
-  reset,
-}: {
-  error: Error & { digest?: string };
-  reset: () => void;
-}) {
-  return (
-    <html>
-      <body>
-        <h2>Something went wrong!</h2>
-        <button onClick={() => reset()}>Try again</button>
-      </body>
-    </html>
-  );
+**Ví dụ:**
+```tsx
+export default async function Page() {
+  const res = await fetch('https://api.example.com/posts', { next: { revalidate: 60 } });
+  const posts = await res.json();
+  return <main>{posts.map((p: { id: number; title: string }) => <p key={p.id}>{p.title}</p>)}</main>;
 }
 ```
 
-### not-found.tsx - 404 Page
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-```typescript
-// app/not-found.tsx
-import Link from 'next/link';
+### Q10: Explain cache revalidate in practical interview context — 🟢 [Junior]
 
-export default function NotFound() {
-  return (
-    <div className="not-found">
-      <h2>404 - Page Not Found</h2>
-      <p>Could not find requested resource</p>
-      <Link href="/">Return Home</Link>
-    </div>
-  );
+**Tổng Quan:** Cache Revalidate là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với cache revalidate, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```css
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
 }
 
-// Trigger programmatically
-// app/posts/[id]/page.tsx
-import { notFound } from 'next/navigation';
-
-export default async function Post({ params }: { params: { id: string } }) {
-  const post = await getPost(params.id);
-  
-  if (!post) {
-    notFound(); // Renders not-found.tsx
-  }
-  
-  return <article>{post.title}</article>;
+.card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
 }
 ```
 
----
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-## Layouts and Templates
+### Q11: Explain auth guard in practical interview context — 🟡 [Mid]
 
-### Layout vs Template
+**Tổng Quan:** Auth Guard là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
 
-```typescript
-// layout.tsx - Persists across navigations, maintains state
-// app/dashboard/layout.tsx
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <Sidebar /> {/* State persists */}
-      {children}
-    </div>
-  );
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với auth guard, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
 }
 
-// template.tsx - Re-renders on navigation, resets state
-// app/dashboard/template.tsx
-export default function DashboardTemplate({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <AnimatedWrapper> {/* Re-animates on each navigation */}
-        {children}
-      </AnimatedWrapper>
-    </div>
-  );
-}
-
-// Hierarchy: layout → template → page
+console.log(explain('layout performance', 'mid'));
 ```
 
-### Multiple Layouts
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-```typescript
-// app/layout.tsx - Root layout
-export default function RootLayout({ children }) {
-  return (
-    <html>
-      <body>
-        <Header />
-        {children}
-        <Footer />
-      </body>
-    </html>
-  );
-}
+### Q12: Explain migration in practical interview context — 🔴 [Senior]
 
-// app/dashboard/layout.tsx - Dashboard layout
-export default function DashboardLayout({ children }) {
-  return (
-    <div className="dashboard">
-      <Sidebar />
-      <main>{children}</main>
-    </div>
-  );
-}
+**Tổng Quan:** Migration là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
 
-// app/dashboard/settings/layout.tsx - Settings layout
-export default function SettingsLayout({ children }) {
-  return (
-    <div className="settings">
-      <SettingsSidebar />
-      <div>{children}</div>
-    </div>
-  );
-}
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với migration, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
 
-// Renders: RootLayout → DashboardLayout → SettingsLayout → Page
+**Ví dụ:**
+```html
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
 ```
 
----
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-## Loading and Error States
+### Q13: Explain server component in practical interview context — 🟢 [Junior]
 
-### Granular Loading States
+**Tổng Quan:** Server Component là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
 
-```typescript
-// app/dashboard/page.tsx
-import { Suspense } from 'react';
-import { RevenueChart } from './revenue-chart';
-import { UserStats } from './user-stats';
-import { RecentOrders } from './recent-orders';
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với server component, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
 
-export default function Dashboard() {
-  return (
-    <div className="dashboard">
-      {/* Each component can have its own loading state */}
-      <Suspense fallback={<ChartSkeleton />}>
-        <RevenueChart />
-      </Suspense>
+**Ví dụ:**
+```ts
+import { NextResponse } from 'next/server';
 
-      <Suspense fallback={<StatsSkeleton />}>
-        <UserStats />
-      </Suspense>
-
-      <Suspense fallback={<OrdersSkeleton />}>
-        <RecentOrders />
-      </Suspense>
-    </div>
-  );
-}
-
-// Components fetch their own data
-// app/dashboard/revenue-chart.tsx
-async function getRevenue() {
-  const res = await fetch('https://api.example.com/revenue');
-  return res.json();
-}
-
-export async function RevenueChart() {
-  const revenue = await getRevenue();
-  
-  return <Chart data={revenue} />;
+export async function GET() {
+  return NextResponse.json({ ok: true, ts: Date.now() });
 }
 ```
 
-### Error Boundaries at Different Levels
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-```typescript
-// app/dashboard/error.tsx - Catches errors in dashboard
-'use client';
+### Q14: Explain client boundary in practical interview context — 🟡 [Mid]
 
-export default function DashboardError({ error, reset }) {
-  return (
-    <div>
-      <h2>Dashboard Error</h2>
-      <button onClick={reset}>Retry</button>
-    </div>
-  );
+**Tổng Quan:** Client Boundary là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với client boundary, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
 }
 
-// app/dashboard/settings/error.tsx - Catches errors in settings
-'use client';
-
-export default function SettingsError({ error, reset }) {
-  return (
-    <div>
-      <h2>Settings Error</h2>
-      <button onClick={reset}>Retry</button>
-    </div>
-  );
-}
-
-// Errors bubble up to nearest error boundary
+console.log(explain('layout performance', 'mid'));
 ```
 
----
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-## Streaming and Suspense
+### Q15: Explain layout template in practical interview context — 🔴 [Senior]
 
-### Progressive Rendering
+**Tổng Quan:** Layout Template là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
 
-```typescript
-// app/page.tsx
-import { Suspense } from 'react';
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với layout template, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
 
-export default function HomePage() {
-  return (
-    <div>
-      {/* Renders immediately */}
-      <Header />
+**Ví dụ:**
+```html
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
+```
 
-      {/* Streams in when ready */}
-      <Suspense fallback={<PostsSkeleton />}>
-        <Posts />
-      </Suspense>
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-      {/* Streams in independently */}
-      <Suspense fallback={<CommentsSkeleton />}>
-        <Comments />
-      </Suspense>
+### Q16: Explain loading error in practical interview context — 🟢 [Junior]
 
-      {/* Renders immediately */}
-      <Footer />
-    </div>
-  );
+**Tổng Quan:** Loading Error là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với loading error, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```css
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
 }
 
-// Server Component that takes time
-async function Posts() {
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  const posts = await getPosts();
-  
-  return (
-    <div>
-      {posts.map(post => (
-        <PostCard key={post.id} post={post} />
-      ))}
-    </div>
-  );
+.card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
 }
 ```
 
-### Streaming with loading.tsx
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-```typescript
-// Automatic Suspense boundary
-// app/dashboard/loading.tsx
-export default function Loading() {
-  return <DashboardSkeleton />;
+### Q17: Explain suspense streaming in practical interview context — 🟡 [Mid]
+
+**Tổng Quan:** Suspense Streaming là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với suspense streaming, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
 }
 
-// Equivalent to:
-// <Suspense fallback={<Loading />}>
-//   <Dashboard />
-// </Suspense>
+console.log(explain('layout performance', 'mid'));
 ```
 
----
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-## Route Groups
+### Q18: Explain route group in practical interview context — 🔴 [Senior]
 
-### Organizing Routes
+**Tổng Quan:** Route Group là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
 
-```typescript
-// Route groups don't affect URL structure
-// Use (folder) syntax
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với route group, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
 
-app/
-├── (marketing)/
-│   ├── layout.tsx      # Marketing layout
-│   ├── page.tsx        # / (home)
-│   ├── about/
-│   │   └── page.tsx    # /about
-│   └── contact/
-│       └── page.tsx    # /contact
-├── (shop)/
-│   ├── layout.tsx      # Shop layout
-│   ├── products/
-│   │   └── page.tsx    # /products
-│   └── cart/
-│       └── page.tsx    # /cart
-└── (dashboard)/
-    ├── layout.tsx      # Dashboard layout
-    ├── analytics/
-    │   └── page.tsx    # /analytics
-    └── settings/
-        └── page.tsx    # /settings
-
-// Different layouts for different sections
-// app/(marketing)/layout.tsx
-export default function MarketingLayout({ children }) {
-  return (
-    <div>
-      <MarketingNav />
-      {children}
-    </div>
-  );
-}
-
-// app/(dashboard)/layout.tsx
-export default function DashboardLayout({ children }) {
-  return (
-    <div>
-      <DashboardSidebar />
-      {children}
-    </div>
-  );
+**Ví dụ:**
+```tsx
+export default async function Page() {
+  const res = await fetch('https://api.example.com/posts', { next: { revalidate: 60 } });
+  const posts = await res.json();
+  return <main>{posts.map((p: { id: number; title: string }) => <p key={p.id}>{p.title}</p>)}</main>;
 }
 ```
 
-### Multiple Root Layouts
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-```typescript
-// app/(marketing)/layout.tsx
-export default function MarketingLayout({ children }) {
-  return (
-    <html lang="en">
-      <body>
-        <MarketingHeader />
-        {children}
-      </body>
-    </html>
-  );
-}
+### Q19: Explain parallel routes in practical interview context — 🟢 [Junior]
 
-// app/(app)/layout.tsx
-export default function AppLayout({ children }) {
-  return (
-    <html lang="en">
-      <body>
-        <AppShell>
-          {children}
-        </AppShell>
-      </body>
-    </html>
-  );
+**Tổng Quan:** Parallel Routes là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với parallel routes, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```ts
+import { NextResponse } from 'next/server';
+
+export async function GET() {
+  return NextResponse.json({ ok: true, ts: Date.now() });
 }
 ```
 
----
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-## Parallel Routes
+### Q20: Explain intercepting route in practical interview context — 🟡 [Mid]
 
-### Named Slots
+**Tổng Quan:** Intercepting Route là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
 
-```typescript
-// app/dashboard/layout.tsx
-export default function DashboardLayout({
-  children,
-  analytics,
-  team,
-}: {
-  children: React.ReactNode;
-  analytics: React.ReactNode;
-  team: React.ReactNode;
-}) {
-  return (
-    <div>
-      <div>{children}</div>
-      <div className="grid grid-cols-2">
-        <div>{analytics}</div>
-        <div>{team}</div>
-      </div>
-    </div>
-  );
-}
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với intercepting route, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
 
-// Directory structure:
-// app/dashboard/
-// ├── layout.tsx
-// ├── page.tsx           # children
-// ├── @analytics/
-// │   └── page.tsx       # analytics slot
-// └── @team/
-//     └── page.tsx       # team slot
+**Ví dụ:**
+```js
+const card = document.querySelector('[data-card]');
+card?.addEventListener('click', () => {
+  card.classList.toggle('expanded');
+});
+```
 
-// app/dashboard/@analytics/page.tsx
-export default function AnalyticsSlot() {
-  return <AnalyticsPanel />;
-}
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-// app/dashboard/@team/page.tsx
-export default function TeamSlot() {
-  return <TeamPanel />;
+### Q21: Explain server action in practical interview context — 🔴 [Senior]
+
+**Tổng Quan:** Server Action là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với server action, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```tsx
+export default async function Page() {
+  const res = await fetch('https://api.example.com/posts', { next: { revalidate: 60 } });
+  const posts = await res.json();
+  return <main>{posts.map((p: { id: number; title: string }) => <p key={p.id}>{p.title}</p>)}</main>;
 }
 ```
 
-### Conditional Rendering
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-```typescript
-// app/dashboard/layout.tsx
-export default function DashboardLayout({
-  children,
-  user,
-  admin,
-}: {
-  children: React.ReactNode;
-  user: React.ReactNode;
-  admin: React.ReactNode;
-}) {
-  const isAdmin = checkAdmin();
-  
-  return (
-    <div>
-      {children}
-      {isAdmin ? admin : user}
-    </div>
-  );
+### Q22: Explain cache revalidate in practical interview context — 🟢 [Junior]
+
+**Tổng Quan:** Cache Revalidate là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với cache revalidate, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```css
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
 }
 ```
 
----
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-## Intercepting Routes
+### Q23: Explain auth guard in practical interview context — 🟡 [Mid]
 
-### Modal Overlays
+**Tổng Quan:** Auth Guard là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
 
-```typescript
-// Show modal on same page, full page on refresh
-// app/photos/[id]/page.tsx - Full page
-export default function PhotoPage({ params }) {
-  return (
-    <div>
-      <Image src={`/photos/${params.id}`} />
-    </div>
-  );
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với auth guard, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
 }
 
-// app/(..)photos/[id]/page.tsx - Intercepted (modal)
-import { Modal } from '@/components/modal';
-
-export default function PhotoModal({ params }) {
-  return (
-    <Modal>
-      <Image src={`/photos/${params.id}`} />
-    </Modal>
-  );
-}
-
-// Intercepting conventions:
-// (.) - same level
-// (..) - one level up
-// (..)(..) - two levels up
-// (...) - from root
+console.log(explain('layout performance', 'mid'));
 ```
 
----
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-## Interview Questions
+### Q24: Explain migration in practical interview context — 🔴 [Senior]
 
-### Q1: What's the difference between Server and Client Components?
+**Tổng Quan:** Migration là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
 
-**Answer:**
-- **Server Components**: Run on server, can access backend directly, zero JS to client
-- **Client Components**: Run on client, can use hooks and browser APIs, need 'use client'
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với migration, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
 
-### Q2: When should you use Client Components?
+**Ví dụ:**
+```html
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
+```
 
-**Answer:**
-When you need:
-- State (useState, useReducer)
-- Effects (useEffect)
-- Event listeners
-- Browser APIs
-- Custom hooks
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-### Q3: How does streaming work in Next.js?
+### Q25: Explain server component in practical interview context — 🟢 [Junior]
 
-**Answer:**
-Streaming sends HTML in chunks as it's generated. Use Suspense boundaries to stream different parts independently, improving perceived performance.
+**Tổng Quan:** Server Component là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
 
-### Q4: What's the purpose of route groups?
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với server component, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
 
-**Answer:**
-Route groups `(folder)` organize routes without affecting URLs, allowing different layouts for different sections while maintaining clean URLs.
+**Ví dụ:**
+```ts
+import { NextResponse } from 'next/server';
 
----
+export async function GET() {
+  return NextResponse.json({ ok: true, ts: Date.now() });
+}
+```
 
-## Summary
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-- App Router uses Server Components by default
-- File conventions: layout, page, loading, error, not-found
-- Streaming with Suspense for progressive rendering
-- Route groups for organization
-- Parallel routes for complex layouts
-- Intercepting routes for modals
+### Q26: Explain client boundary in practical interview context — 🟡 [Mid]
 
----
+**Tổng Quan:** Client Boundary là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
 
-[Back to Table of Contents](../00-table-of-contents.md) | [Next: Data Fetching & Caching →](./02-data-fetching-caching.md)
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với client boundary, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
+}
+
+console.log(explain('layout performance', 'mid'));
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q27: Explain layout template in practical interview context — 🔴 [Senior]
+
+**Tổng Quan:** Layout Template là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với layout template, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```html
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q28: Explain loading error in practical interview context — 🟢 [Junior]
+
+**Tổng Quan:** Loading Error là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với loading error, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```css
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
+}
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q29: Explain suspense streaming in practical interview context — 🟡 [Mid]
+
+**Tổng Quan:** Suspense Streaming là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với suspense streaming, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
+}
+
+console.log(explain('layout performance', 'mid'));
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q30: Explain route group in practical interview context — 🔴 [Senior]
+
+**Tổng Quan:** Route Group là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với route group, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```tsx
+export default async function Page() {
+  const res = await fetch('https://api.example.com/posts', { next: { revalidate: 60 } });
+  const posts = await res.json();
+  return <main>{posts.map((p: { id: number; title: string }) => <p key={p.id}>{p.title}</p>)}</main>;
+}
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q31: Explain parallel routes in practical interview context — 🟢 [Junior]
+
+**Tổng Quan:** Parallel Routes là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với parallel routes, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```ts
+import { NextResponse } from 'next/server';
+
+export async function GET() {
+  return NextResponse.json({ ok: true, ts: Date.now() });
+}
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q32: Explain intercepting route in practical interview context — 🟡 [Mid]
+
+**Tổng Quan:** Intercepting Route là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với intercepting route, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+const card = document.querySelector('[data-card]');
+card?.addEventListener('click', () => {
+  card.classList.toggle('expanded');
+});
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q33: Explain server action in practical interview context — 🔴 [Senior]
+
+**Tổng Quan:** Server Action là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với server action, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```tsx
+export default async function Page() {
+  const res = await fetch('https://api.example.com/posts', { next: { revalidate: 60 } });
+  const posts = await res.json();
+  return <main>{posts.map((p: { id: number; title: string }) => <p key={p.id}>{p.title}</p>)}</main>;
+}
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q34: Explain cache revalidate in practical interview context — 🟢 [Junior]
+
+**Tổng Quan:** Cache Revalidate là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với cache revalidate, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```css
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
+}
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q35: Explain auth guard in practical interview context — 🟡 [Mid]
+
+**Tổng Quan:** Auth Guard là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với auth guard, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
+}
+
+console.log(explain('layout performance', 'mid'));
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q36: Explain migration in practical interview context — 🔴 [Senior]
+
+**Tổng Quan:** Migration là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với migration, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```html
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q37: Explain server component in practical interview context — 🟢 [Junior]
+
+**Tổng Quan:** Server Component là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với server component, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```ts
+import { NextResponse } from 'next/server';
+
+export async function GET() {
+  return NextResponse.json({ ok: true, ts: Date.now() });
+}
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q38: Explain client boundary in practical interview context — 🟡 [Mid]
+
+**Tổng Quan:** Client Boundary là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với client boundary, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
+}
+
+console.log(explain('layout performance', 'mid'));
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q39: Explain layout template in practical interview context — 🔴 [Senior]
+
+**Tổng Quan:** Layout Template là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với layout template, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```html
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q40: Explain loading error in practical interview context — 🟢 [Junior]
+
+**Tổng Quan:** Loading Error là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với loading error, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```css
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
+}
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+## Quick Recap
+
+- Use English headings to align with interview terminology.
+- Dùng phần giải thích tiếng Việt để làm rõ mental model và trade-off.
+- Include short code examples (HTML/CSS/JS/TS) to chứng minh tính thực chiến.

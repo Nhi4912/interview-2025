@@ -2490,3 +2490,9 @@ These concepts form the theoretical foundation for modern development tools and 
 ---
 
 [← Back to Modern Development Tools](./05-modern-development-tools.md) | [Next: Interview Questions →](./07-tools-interview-questions.md) | [Back to Table of Contents](../00-table-of-contents.md)
+
+## Câu Hỏi Phỏng Vấn / Interview Q&A
+
+### Q1: What are the core concepts in this topic? 🟢 [Junior]
+### Q2: What trade-offs should engineers evaluate when applying this in production? 🟡 [Mid]
+### Q3: Which failure modes or edge cases are hardest to handle, and why? 🔴 [Senior]

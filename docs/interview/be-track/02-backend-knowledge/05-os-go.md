@@ -24,7 +24,9 @@
 
 ## 1. Process vs Thread
 
-### 🟢 Q: Process là gì? Mô tả các thành phần và trạng thái của process.
+
+## Câu Hỏi Phỏng Vấn / Interview Q&A
+### 🟢 Q: Process là gì? Mô tả các thành phần và trạng thái của process. 🟢 [Junior]
 
 **Process** (tiến trình) là một chương trình đang được thực thi. Mỗi process có không gian địa chỉ riêng biệt, được OS quản lý thông qua **PCB (Process Control Block)**.
 
@@ -71,7 +73,7 @@
 
 ---
 
-### 🟢 Q: Thread là gì? Phân biệt kernel thread và user thread.
+### 🟢 Q: Thread là gì? Phân biệt kernel thread và user thread. 🟢 [Junior]
 
 **Thread** (luồng) là đơn vị thực thi nhỏ nhất trong một process. Các threads trong cùng process chia sẻ:
 - Code segment, data segment
@@ -98,7 +100,7 @@ Mỗi thread có riêng: **stack, registers, program counter, thread ID**.
 
 ---
 
-### 🟡 Q: Go goroutine hoạt động như thế nào? So sánh với process và thread.
+### 🟡 Q: Go goroutine hoạt động như thế nào? So sánh với process và thread. 🟡 [Mid]
 
 **Goroutine** là lightweight thread do Go runtime quản lý, chạy trên M:N threading model.
 
@@ -174,7 +176,7 @@ func main() {
 
 ## 2. CPU Scheduling
 
-### 🟢 Q: Giải thích các thuật toán CPU Scheduling cơ bản.
+### 🟢 Q: Giải thích các thuật toán CPU Scheduling cơ bản. 🟢 [Junior]
 
 **1. FCFS (First-Come, First-Served):**
 - Non-preemptive. Process đến trước được chạy trước.
@@ -213,7 +215,7 @@ func main() {
 
 ---
 
-### 🔴 Q: Giải thích GMP model trong Go scheduler.
+### 🔴 Q: Giải thích GMP model trong Go scheduler. 🔴 [Senior]
 
 **GMP Model** là trái tim của Go runtime scheduler:
 
@@ -339,7 +341,7 @@ func main() {
 
 ## 3. Memory Management
 
-### 🟢 Q: Giải thích Virtual Memory, Paging, và TLB.
+### 🟢 Q: Giải thích Virtual Memory, Paging, và TLB. 🟢 [Junior]
 
 **Virtual Memory** cho phép mỗi process có không gian địa chỉ ảo riêng, ánh xạ sang physical memory qua **page table**.
 
@@ -371,7 +373,7 @@ Physical Address: [Frame Number | Offset]
 
 ---
 
-### 🟡 Q: Giải thích các thuật toán Page Replacement.
+### 🟡 Q: Giải thích các thuật toán Page Replacement. 🟡 [Mid]
 
 Khi physical memory đầy và cần load page mới → phải chọn page nào để evict.
 
@@ -400,7 +402,7 @@ Khi physical memory đầy và cần load page mới → phải chọn page nào
 
 ---
 
-### 🟡 Q: Stack vs Heap allocation khác nhau thế nào? Go xử lý ra sao?
+### 🟡 Q: Stack vs Heap allocation khác nhau thế nào? Go xử lý ra sao? 🟡 [Mid]
 
 | Stack | Heap |
 |---|---|
@@ -434,7 +436,7 @@ func heapAlloc() *int {
 
 ---
 
-### 🔴 Q: Go Memory Allocator hoạt động như thế nào? (TCMalloc-inspired)
+### 🔴 Q: Go Memory Allocator hoạt động như thế nào? (TCMalloc-inspired) 🔴 [Senior]
 
 Go memory allocator lấy cảm hứng từ **TCMalloc** (Thread-Caching Malloc) với 3 cấp:
 
@@ -555,7 +557,7 @@ GODEBUG=gctrace=1 go run main.go
 
 ## 4. Inter-Process Communication (IPC)
 
-### 🟢 Q: Liệt kê và giải thích các phương thức IPC.
+### 🟢 Q: Liệt kê và giải thích các phương thức IPC. 🟢 [Junior]
 
 **1. Pipes (Unnamed):**
 - Unidirectional, giữa parent-child process.
@@ -600,7 +602,7 @@ GODEBUG=gctrace=1 go run main.go
 
 ---
 
-### 🟡 Q: Viết Go code cho các phương thức IPC.
+### 🟡 Q: Viết Go code cho các phương thức IPC. 🟡 [Mid]
 
 **Pipes:**
 
@@ -732,7 +734,7 @@ func main() {
 
 ## 5. Deadlocks
 
-### 🟢 Q: 4 điều kiện cần để xảy ra Deadlock là gì?
+### 🟢 Q: 4 điều kiện cần để xảy ra Deadlock là gì? 🟢 [Junior]
 
 **4 điều kiện Coffman (phải xảy ra đồng thời):**
 
@@ -753,7 +755,7 @@ func main() {
 
 ---
 
-### 🟡 Q: Deadlock trong Go xảy ra như thế nào? Cho ví dụ và cách fix.
+### 🟡 Q: Deadlock trong Go xảy ra như thế nào? Cho ví dụ và cách fix. 🟡 [Mid]
 
 **1. Channel Deadlock — Unbuffered channel, gửi mà không có ai nhận:**
 
@@ -987,7 +989,7 @@ func main() {
 
 ## 6. I/O Models
 
-### 🟡 Q: Giải thích 5 I/O Models.
+### 🟡 Q: Giải thích 5 I/O Models. 🟡 [Mid]
 
 **1. Blocking I/O:**
 - Thread gọi `read()` → block cho đến khi data sẵn sàng.
@@ -1036,7 +1038,7 @@ func main() {
 
 ---
 
-### 🔴 Q: Go netpoller hoạt động như thế nào? Tại sao blocking I/O trong Go lại hiệu quả?
+### 🔴 Q: Go netpoller hoạt động như thế nào? Tại sao blocking I/O trong Go lại hiệu quả? 🔴 [Senior]
 
 **Go netpoller** là lớp trừu tượng trên epoll/kqueue, cho phép goroutines viết code "blocking" nhưng runtime xử lý bằng I/O multiplexing.
 
@@ -1162,7 +1164,7 @@ func main() {
 
 ## 7. File Systems
 
-### 🟢 Q: Giải thích inode, directory, và file descriptor.
+### 🟢 Q: Giải thích inode, directory, và file descriptor. 🟢 [Junior]
 
 **Inode:**
 - Mỗi file/directory trên disk có 1 inode chứa metadata.
@@ -1191,7 +1193,7 @@ Process FD Table    System Open File Table    Inode Table
 
 ---
 
-### 🟡 Q: Journaling file system hoạt động thế nào?
+### 🟡 Q: Journaling file system hoạt động thế nào? 🟡 [Mid]
 
 **Journaling** ghi thay đổi vào journal (log) trước khi ghi vào filesystem thật → crash recovery.
 
@@ -1211,7 +1213,7 @@ Process FD Table    System Open File Table    Inode Table
 
 ---
 
-### 🟡 Q: Go code làm việc với files.
+### 🟡 Q: Go code làm việc với files. 🟡 [Mid]
 
 ```go
 package main
@@ -1332,7 +1334,7 @@ func main() {
 
 ## 8. Linux Internals (for Containerization)
 
-### 🟡 Q: Namespaces trong Linux là gì? Docker dùng chúng như thế nào?
+### 🟡 Q: Namespaces trong Linux là gì? Docker dùng chúng như thế nào? 🟡 [Mid]
 
 **Namespaces** tạo isolation cho processes, mỗi namespace giới hạn "view" của process về 1 tài nguyên hệ thống.
 
@@ -1361,7 +1363,7 @@ Host OS
 
 ---
 
-### 🟡 Q: Cgroups là gì? Cách giới hạn resources.
+### 🟡 Q: Cgroups là gì? Cách giới hạn resources. 🟡 [Mid]
 
 **Cgroups (Control Groups)** giới hạn, theo dõi, và isolate resource usage của process groups.
 
@@ -1395,7 +1397,7 @@ docker run --cpus=2 --memory=512m --pids-limit=100 myapp
 
 ---
 
-### 🟡 Q: /proc filesystem — Các entries quan trọng.
+### 🟡 Q: /proc filesystem — Các entries quan trọng. 🟡 [Mid]
 
 `/proc` là virtual filesystem cung cấp thông tin kernel/process.
 
@@ -1414,7 +1416,7 @@ docker run --cpus=2 --memory=512m --pids-limit=100 myapp
 
 ---
 
-### 🔴 Q: Go code tương tác với Linux syscalls.
+### 🔴 Q: Go code tương tác với Linux syscalls. 🔴 [Senior]
 
 ```go
 //go:build linux
@@ -1509,7 +1511,7 @@ func main() {
 
 ## 9. Signals
 
-### 🟢 Q: Các signals quan trọng trong Linux.
+### 🟢 Q: Các signals quan trọng trong Linux. 🟢 [Junior]
 
 | Signal | Number | Default Action | Mô tả | Catchable? |
 |---|---|---|---|---|
@@ -1531,7 +1533,7 @@ func main() {
 
 ---
 
-### 🟡 Q: Viết graceful shutdown pattern trong Go.
+### 🟡 Q: Viết graceful shutdown pattern trong Go. 🟡 [Mid]
 
 ```go
 package main
@@ -1710,7 +1712,7 @@ func main() {
 
 ## 10. Context Switching
 
-### 🟡 Q: Chuyện gì xảy ra khi context switch?
+### 🟡 Q: Chuyện gì xảy ra khi context switch? 🟡 [Mid]
 
 **Process Context Switch (đắt nhất):**
 1. Save toàn bộ CPU registers, program counter vào PCB.
@@ -1736,7 +1738,7 @@ func main() {
 
 ---
 
-### 🔴 Q: So sánh chi phí context switch.
+### 🔴 Q: So sánh chi phí context switch. 🔴 [Senior]
 
 | Metric | Process Switch | Thread Switch | Goroutine Switch |
 |---|---|---|---|

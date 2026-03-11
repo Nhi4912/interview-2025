@@ -7,7 +7,9 @@
 
 ## 1. REST API Design Principles
 
-### Q1: 6 ràng buộc (constraints) của REST theo luận văn Roy Fielding là gì? 🟡
+
+## Câu Hỏi Phỏng Vấn / Interview Q&A
+### Q1: 6 ràng buộc (constraints) của REST theo luận văn Roy Fielding là gì? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -32,7 +34,7 @@ REST (Representational State Transfer) được Roy Fielding định nghĩa tron
 
 ---
 
-### Q2: Resource naming conventions và URI design best practices? 🟢
+### Q2: Resource naming conventions và URI design best practices? 🟢 🟢 [Junior]
 
 **A:**
 
@@ -63,7 +65,7 @@ REST (Representational State Transfer) được Roy Fielding định nghĩa tron
 
 ---
 
-### Q3: HTTP methods — ngữ nghĩa, idempotency, safety? 🟢
+### Q3: HTTP methods — ngữ nghĩa, idempotency, safety? 🟢 🟢 [Junior]
 
 **A:**
 
@@ -89,7 +91,7 @@ REST (Representational State Transfer) được Roy Fielding định nghĩa tron
 
 ---
 
-### Q4: HTTP Status Codes — bảng đầy đủ? 🟢
+### Q4: HTTP Status Codes — bảng đầy đủ? 🟢 🟢 [Junior]
 
 **A:**
 
@@ -136,7 +138,7 @@ REST (Representational State Transfer) được Roy Fielding định nghĩa tron
 
 ---
 
-### Q5: HATEOAS là gì? Tại sao ít API dùng? 🟡
+### Q5: HATEOAS là gì? Tại sao ít API dùng? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -167,7 +169,7 @@ REST (Representational State Transfer) được Roy Fielding định nghĩa tron
 
 ---
 
-### Q6: Richardson Maturity Model là gì? 🟡
+### Q6: Richardson Maturity Model là gì? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -198,7 +200,7 @@ Level 0: The Swamp of POX (Plain Old XML)
 
 ## 2. API Versioning Strategies
 
-### Q7: Có những chiến lược versioning nào? Trade-off? 🟡
+### Q7: Có những chiến lược versioning nào? Trade-off? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -233,7 +235,7 @@ Level 0: The Swamp of POX (Plain Old XML)
 
 ## 3. Pagination Patterns
 
-### Q8: So sánh các chiến lược pagination? 🟡
+### Q8: So sánh các chiến lược pagination? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -309,7 +311,7 @@ GET /users?created_after=2024-01-15T10:30:00Z&limit=10
 
 ## 4. Idempotency
 
-### Q9: Idempotency là gì và tại sao quan trọng? 🟡
+### Q9: Idempotency là gì và tại sao quan trọng? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -332,7 +334,7 @@ GET /users?created_after=2024-01-15T10:30:00Z&limit=10
 
 ---
 
-### Q10: Idempotency Key pattern hoạt động thế nào? 🔴
+### Q10: Idempotency Key pattern hoạt động thế nào? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -378,7 +380,7 @@ Client                          Server                         Store
 
 ---
 
-### Q11: At-most-once, at-least-once, exactly-once khác nhau thế nào? 🔴
+### Q11: At-most-once, at-least-once, exactly-once khác nhau thế nào? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -402,7 +404,7 @@ Không có hệ thống nào đảm bảo gửi message đúng 1 lần qua netwo
 
 ## 5. gRPC Deep Theory
 
-### Q12: Tại sao gRPC tồn tại? HTTP/2 mang lại gì? 🟡
+### Q12: Tại sao gRPC tồn tại? HTTP/2 mang lại gì? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -433,7 +435,7 @@ HTTP/2: Multiplexing
 
 ---
 
-### Q13: Protocol Buffers — schema evolution rules? 🔴
+### Q13: Protocol Buffers — schema evolution rules? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -471,7 +473,7 @@ message User {
 
 ---
 
-### Q14: 4 communication patterns của gRPC? 🟡
+### Q14: 4 communication patterns của gRPC? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -509,7 +511,7 @@ message User {
 
 ---
 
-### Q15: gRPC vs REST — so sánh chi tiết? 🟡
+### Q15: gRPC vs REST — so sánh chi tiết? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -543,7 +545,7 @@ message User {
 
 ---
 
-### Q16: gRPC Interceptors, Deadline propagation, Error model? 🔴
+### Q16: gRPC Interceptors, Deadline propagation, Error model? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -595,7 +597,7 @@ gRPC error model phong phú hơn HTTP: có thể đính kèm **error details** (
 
 ## 6. GraphQL Theory
 
-### Q17: GraphQL giải quyết vấn đề gì? 🟡
+### Q17: GraphQL giải quyết vấn đề gì? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -634,7 +636,7 @@ query {
 
 ---
 
-### Q18: Query, Mutation, Subscription trong GraphQL? 🟡
+### Q18: Query, Mutation, Subscription trong GraphQL? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -671,7 +673,7 @@ type Subscription {
 
 ---
 
-### Q19: N+1 Problem trong GraphQL và DataLoader? 🔴
+### Q19: N+1 Problem trong GraphQL và DataLoader? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -712,7 +714,7 @@ Có DataLoader (batching):
 
 ---
 
-### Q20: GraphQL vs REST vs gRPC — khi nào dùng gì? 🔴
+### Q20: GraphQL vs REST vs gRPC — khi nào dùng gì? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -740,7 +742,7 @@ Có DataLoader (batching):
 
 ## 7. API Gateway Pattern
 
-### Q21: API Gateway là gì? Tại sao cần? 🟡
+### Q21: API Gateway là gì? Tại sao cần? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -774,7 +776,7 @@ Client phải biết mọi service                       Client chỉ biết gat
 
 ---
 
-### Q22: API Gateway vs Service Mesh? 🔴
+### Q22: API Gateway vs Service Mesh? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -807,7 +809,7 @@ Client phải biết mọi service                       Client chỉ biết gat
 
 ---
 
-### Q23: BFF Pattern (Backend for Frontend) là gì? 🟡
+### Q23: BFF Pattern (Backend for Frontend) là gì? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -843,7 +845,7 @@ Client phải biết mọi service                       Client chỉ biết gat
 
 ## 8. Rate Limiting Theory
 
-### Q24: 5 thuật toán Rate Limiting — giải thích sâu? 🔴
+### Q24: 5 thuật toán Rate Limiting — giải thích sâu? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -977,7 +979,7 @@ Refill rate: 2 tokens/second
 
 ---
 
-### Q25: Distributed rate limiting challenges? 🔴
+### Q25: Distributed rate limiting challenges? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -1012,7 +1014,7 @@ Retry-After: 30                 ← Seconds đợi trước khi retry
 
 ## 9. API Security
 
-### Q26: Authentication vs Authorization — phân biệt? 🟢
+### Q26: Authentication vs Authorization — phân biệt? 🟢 🟢 [Junior]
 
 **A:**
 
@@ -1032,7 +1034,7 @@ Request ──► Authentication ──► Authorization ──► Handler
 
 ---
 
-### Q27: API Key vs OAuth 2.0 vs JWT vs mTLS? 🟡
+### Q27: API Key vs OAuth 2.0 vs JWT vs mTLS? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -1069,7 +1071,7 @@ Header.Payload.Signature
 
 ---
 
-### Q28: CORS giải thích sâu? 🟡
+### Q28: CORS giải thích sâu? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -1113,7 +1115,7 @@ Browser                              Server (api.com)
 
 ---
 
-### Q29: API abuse prevention strategies? 🔴
+### Q29: API abuse prevention strategies? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -1135,7 +1137,7 @@ Browser                              Server (api.com)
 
 ## 10. API Documentation & Contract
 
-### Q30: API-first design là gì? Tại sao quan trọng? 🟡
+### Q30: API-first design là gì? Tại sao quan trọng? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -1166,7 +1168,7 @@ Code first ──► Generate docs    Design spec ──► Review ──► Cod
 
 ---
 
-### Q31: Contract testing là gì? 🔴
+### Q31: Contract testing là gì? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -1195,7 +1197,7 @@ Consumer                          Provider
 
 ---
 
-### Q32: Backward compatibility rules? 🟡
+### Q32: Backward compatibility rules? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -1230,7 +1232,7 @@ Server nên **chấp nhận** input thiếu optional fields.
 
 ## Interview Tips & Common Questions by Company
 
-### Câu hỏi phổ biến theo level
+### Câu hỏi phổ biến theo level 🟡 [Mid]
 
 #### 🟢 Junior
 

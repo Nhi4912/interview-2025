@@ -1,1166 +1,893 @@
-# Functional Reactive Programming (FRP)
+# Functional Reactive Programming (FRP) / Lập Trình Phản Ứng Hàm (FRP)
 
-## Table of Contents
-- [Core Concepts](#core-concepts)
-- [Observables](#observables)
-- [Operators](#operators)
-- [Subjects](#subjects)
-- [Schedulers](#schedulers)
-- [Error Handling](#error-handling)
-- [Backpressure](#backpressure)
-- [Hot vs Cold Observables](#hot-vs-cold-observables)
-- [Marble Diagrams](#marble-diagrams)
-- [Real-World Patterns](#real-world-patterns)
+## Tổng Quan / Overview
 
-## Core Concepts
+- FRP giúp mô hình hóa dữ liệu theo stream, đặc biệt phù hợp với UI bất đồng bộ và realtime.
+- Tài liệu đi qua observable lifecycle, operators, subjects, schedulers, errors và backpressure.
+- Phần interview nhấn mạnh tư duy khai báo, cancellation, và memory-safe stream composition.
 
-### What is FRP?
+### Cross-references / Tài liệu liên quan
+- [Event-Driven Architecture](./17-frontend-theory-13-event-driven-architecture.md)
+- [Async Programming Theory](./17-frontend-theory-10-async-programming-theory.md)
+- [Web Workers Concurrency](./17-frontend-theory-16-web-workers-concurrency.md)
+- [Memory Management Deep Dive](./17-frontend-theory-15-memory-management-deep-dive.md)
 
-**Definition**: A programming paradigm for working with asynchronous data streams using functional programming principles.
+## Key Concepts / Khái Niệm Trọng Tâm
 
-**Key Principles**:
-```
-1. Everything is a stream
-2. Streams are composable
-3. Operations are pure functions
-4. Time is a first-class concept
-5. Declarative over imperative
-```
+### 1. FRP mental model
 
-**Stream Anatomy**:
-```
-Stream: ---a---b---c---d--->
-        |   |   |   |   |
-        |   |   |   |   Complete
-        |   |   |   Value
-        |   |   Value
-        |   Value
-        Value
+**Tổng Quan:** `FRP mental model` là năng lực bắt buộc khi thảo luận lập trình phản ứng hàm (frp).
+
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(1).pipe(map(v => v * 2));
 ```
 
-### Reactive Programming Fundamentals
+### 2. Observable lifecycle
 
-**Push vs Pull**:
-```javascript
-// Pull (Iterator pattern)
-const iterator = [1, 2, 3][Symbol.iterator]();
-console.log(iterator.next().value); // 1
-console.log(iterator.next().value); // 2
+**Tổng Quan:** `Observable lifecycle` là năng lực bắt buộc khi thảo luận lập trình phản ứng hàm (frp).
 
-// Push (Observer pattern)
-const observable = new Observable(observer => {
-  observer.next(1);
-  observer.next(2);
-  observer.next(3);
-});
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(2).pipe(map(v => v * 2));
 ```
 
-**Observable Contract**:
-```
-next*(error|complete)?
+### 3. Creation operators
 
-- Zero or more next notifications
-- Followed by either error OR complete (not both)
-- Nothing after error or complete
-```
+**Tổng Quan:** `Creation operators` là năng lực bắt buộc khi thảo luận lập trình phản ứng hàm (frp).
 
-## Observables
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-### Basic Implementation
-
-```javascript
-class Observable {
-  constructor(subscribe) {
-    this._subscribe = subscribe;
-  }
-
-  subscribe(observer) {
-    // Normalize observer
-    const safeObserver = {
-      next: observer.next?.bind(observer) || (() => {}),
-      error: observer.error?.bind(observer) || (err => { throw err; }),
-      complete: observer.complete?.bind(observer) || (() => {})
-    };
-
-    // Execute subscription
-    const subscription = this._subscribe(safeObserver);
-
-    // Return subscription object
-    return {
-      unsubscribe: () => {
-        if (subscription && subscription.unsubscribe) {
-          subscription.unsubscribe();
-        }
-      }
-    };
-  }
-
-  // Static creation methods
-  static of(...values) {
-    return new Observable(observer => {
-      values.forEach(value => observer.next(value));
-      observer.complete();
-    });
-  }
-
-  static from(iterable) {
-    return new Observable(observer => {
-      try {
-        for (const value of iterable) {
-          observer.next(value);
-        }
-        observer.complete();
-      } catch (error) {
-        observer.error(error);
-      }
-    });
-  }
-
-  static fromEvent(element, eventName) {
-    return new Observable(observer => {
-      const handler = event => observer.next(event);
-      element.addEventListener(eventName, handler);
-
-      return {
-        unsubscribe: () => {
-          element.removeEventListener(eventName, handler);
-        }
-      };
-    });
-  }
-
-  static interval(period) {
-    return new Observable(observer => {
-      let count = 0;
-      const id = setInterval(() => {
-        observer.next(count++);
-      }, period);
-
-      return {
-        unsubscribe: () => clearInterval(id)
-      };
-    });
-  }
-
-  static timer(delay, period) {
-    return new Observable(observer => {
-      const timeoutId = setTimeout(() => {
-        observer.next(0);
-        
-        if (period !== undefined) {
-          let count = 1;
-          const intervalId = setInterval(() => {
-            observer.next(count++);
-          }, period);
-          
-          observer.subscription = {
-            unsubscribe: () => clearInterval(intervalId)
-          };
-        } else {
-          observer.complete();
-        }
-      }, delay);
-
-      return {
-        unsubscribe: () => {
-          clearTimeout(timeoutId);
-          if (observer.subscription) {
-            observer.subscription.unsubscribe();
-          }
-        }
-      };
-    });
-  }
-}
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(3).pipe(map(v => v * 2));
 ```
 
-### Creation Operators
+### 4. Transformation operators
 
-```javascript
-// defer - Lazy creation
-Observable.defer = (factory) => {
-  return new Observable(observer => {
-    const observable = factory();
-    return observable.subscribe(observer);
-  });
-};
+**Tổng Quan:** `Transformation operators` là năng lực bắt buộc khi thảo luận lập trình phản ứng hàm (frp).
 
-// range
-Observable.range = (start, count) => {
-  return new Observable(observer => {
-    for (let i = 0; i < count; i++) {
-      observer.next(start + i);
-    }
-    observer.complete();
-  });
-};
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-// generate
-Observable.generate = (initialState, condition, iterate, resultSelector) => {
-  return new Observable(observer => {
-    let state = initialState;
-    
-    while (condition(state)) {
-      observer.next(resultSelector(state));
-      state = iterate(state);
-    }
-    
-    observer.complete();
-  });
-};
-
-// Usage
-const fibonacci = Observable.generate(
-  [0, 1],                           // initial state
-  ([a, b]) => b < 100,              // condition
-  ([a, b]) => [b, a + b],           // iterate
-  ([a, b]) => a                     // result selector
-);
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(4).pipe(map(v => v * 2));
 ```
 
-## Operators
+### 5. Filtering operators
 
-### Transformation Operators
+**Tổng Quan:** `Filtering operators` là năng lực bắt buộc khi thảo luận lập trình phản ứng hàm (frp).
 
-```javascript
-// map
-Observable.prototype.map = function(project) {
-  return new Observable(observer => {
-    return this.subscribe({
-      next: value => observer.next(project(value)),
-      error: err => observer.error(err),
-      complete: () => observer.complete()
-    });
-  });
-};
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-// flatMap (mergeMap)
-Observable.prototype.flatMap = function(project) {
-  return new Observable(observer => {
-    let activeSubscriptions = 0;
-    let completed = false;
-
-    const checkComplete = () => {
-      if (completed && activeSubscriptions === 0) {
-        observer.complete();
-      }
-    };
-
-    const subscription = this.subscribe({
-      next: value => {
-        activeSubscriptions++;
-        
-        const innerObservable = project(value);
-        innerObservable.subscribe({
-          next: innerValue => observer.next(innerValue),
-          error: err => observer.error(err),
-          complete: () => {
-            activeSubscriptions--;
-            checkComplete();
-          }
-        });
-      },
-      error: err => observer.error(err),
-      complete: () => {
-        completed = true;
-        checkComplete();
-      }
-    });
-
-    return subscription;
-  });
-};
-
-// switchMap
-Observable.prototype.switchMap = function(project) {
-  return new Observable(observer => {
-    let innerSubscription = null;
-    let completed = false;
-
-    const subscription = this.subscribe({
-      next: value => {
-        // Unsubscribe from previous inner observable
-        if (innerSubscription) {
-          innerSubscription.unsubscribe();
-        }
-
-        const innerObservable = project(value);
-        innerSubscription = innerObservable.subscribe({
-          next: innerValue => observer.next(innerValue),
-          error: err => observer.error(err),
-          complete: () => {
-            innerSubscription = null;
-            if (completed) {
-              observer.complete();
-            }
-          }
-        });
-      },
-      error: err => observer.error(err),
-      complete: () => {
-        completed = true;
-        if (!innerSubscription) {
-          observer.complete();
-        }
-      }
-    });
-
-    return {
-      unsubscribe: () => {
-        subscription.unsubscribe();
-        if (innerSubscription) {
-          innerSubscription.unsubscribe();
-        }
-      }
-    };
-  });
-};
-
-// scan (like reduce but emits intermediate values)
-Observable.prototype.scan = function(accumulator, seed) {
-  return new Observable(observer => {
-    let acc = seed;
-    let hasSeed = arguments.length >= 2;
-    let index = 0;
-
-    return this.subscribe({
-      next: value => {
-        if (!hasSeed) {
-          acc = value;
-          hasSeed = true;
-        } else {
-          acc = accumulator(acc, value, index++);
-        }
-        observer.next(acc);
-      },
-      error: err => observer.error(err),
-      complete: () => observer.complete()
-    });
-  });
-};
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(5).pipe(map(v => v * 2));
 ```
 
-### Filtering Operators
+### 6. Combination operators
 
-```javascript
-// filter
-Observable.prototype.filter = function(predicate) {
-  return new Observable(observer => {
-    let index = 0;
-    return this.subscribe({
-      next: value => {
-        if (predicate(value, index++)) {
-          observer.next(value);
-        }
-      },
-      error: err => observer.error(err),
-      complete: () => observer.complete()
-    });
-  });
-};
+**Tổng Quan:** `Combination operators` là năng lực bắt buộc khi thảo luận lập trình phản ứng hàm (frp).
 
-// take
-Observable.prototype.take = function(count) {
-  return new Observable(observer => {
-    let taken = 0;
-    const subscription = this.subscribe({
-      next: value => {
-        if (taken < count) {
-          observer.next(value);
-          taken++;
-          if (taken === count) {
-            observer.complete();
-            subscription.unsubscribe();
-          }
-        }
-      },
-      error: err => observer.error(err),
-      complete: () => observer.complete()
-    });
-    return subscription;
-  });
-};
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-// takeUntil
-Observable.prototype.takeUntil = function(notifier) {
-  return new Observable(observer => {
-    const subscription = this.subscribe(observer);
-    
-    const notifierSubscription = notifier.subscribe({
-      next: () => {
-        observer.complete();
-        subscription.unsubscribe();
-        notifierSubscription.unsubscribe();
-      },
-      error: err => observer.error(err)
-    });
-
-    return {
-      unsubscribe: () => {
-        subscription.unsubscribe();
-        notifierSubscription.unsubscribe();
-      }
-    };
-  });
-};
-
-// skip
-Observable.prototype.skip = function(count) {
-  return new Observable(observer => {
-    let skipped = 0;
-    return this.subscribe({
-      next: value => {
-        if (skipped >= count) {
-          observer.next(value);
-        } else {
-          skipped++;
-        }
-      },
-      error: err => observer.error(err),
-      complete: () => observer.complete()
-    });
-  });
-};
-
-// distinct
-Observable.prototype.distinct = function(keySelector) {
-  return new Observable(observer => {
-    const seen = new Set();
-    
-    return this.subscribe({
-      next: value => {
-        const key = keySelector ? keySelector(value) : value;
-        if (!seen.has(key)) {
-          seen.add(key);
-          observer.next(value);
-        }
-      },
-      error: err => observer.error(err),
-      complete: () => observer.complete()
-    });
-  });
-};
-
-// distinctUntilChanged
-Observable.prototype.distinctUntilChanged = function(compare) {
-  return new Observable(observer => {
-    let hasValue = false;
-    let lastValue;
-    
-    const defaultCompare = (a, b) => a === b;
-    const compareFn = compare || defaultCompare;
-
-    return this.subscribe({
-      next: value => {
-        if (!hasValue || !compareFn(value, lastValue)) {
-          hasValue = true;
-          lastValue = value;
-          observer.next(value);
-        }
-      },
-      error: err => observer.error(err),
-      complete: () => observer.complete()
-    });
-  });
-};
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(6).pipe(map(v => v * 2));
 ```
 
-### Combination Operators
+### 7. Subject vs Observable
 
-```javascript
-// merge
-Observable.merge = (...observables) => {
-  return new Observable(observer => {
-    let completed = 0;
-    const subscriptions = observables.map(obs =>
-      obs.subscribe({
-        next: value => observer.next(value),
-        error: err => observer.error(err),
-        complete: () => {
-          completed++;
-          if (completed === observables.length) {
-            observer.complete();
-          }
-        }
-      })
-    );
+**Tổng Quan:** `Subject vs Observable` là năng lực bắt buộc khi thảo luận lập trình phản ứng hàm (frp).
 
-    return {
-      unsubscribe: () => {
-        subscriptions.forEach(sub => sub.unsubscribe());
-      }
-    };
-  });
-};
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-// concat
-Observable.concat = (...observables) => {
-  return new Observable(observer => {
-    let currentIndex = 0;
-    let currentSubscription;
-
-    const subscribeNext = () => {
-      if (currentIndex >= observables.length) {
-        observer.complete();
-        return;
-      }
-
-      currentSubscription = observables[currentIndex].subscribe({
-        next: value => observer.next(value),
-        error: err => observer.error(err),
-        complete: () => {
-          currentIndex++;
-          subscribeNext();
-        }
-      });
-    };
-
-    subscribeNext();
-
-    return {
-      unsubscribe: () => {
-        if (currentSubscription) {
-          currentSubscription.unsubscribe();
-        }
-      }
-    };
-  });
-};
-
-// combineLatest
-Observable.combineLatest = (...observables) => {
-  return new Observable(observer => {
-    const values = new Array(observables.length);
-    const hasValue = new Array(observables.length).fill(false);
-    let completed = 0;
-
-    const subscriptions = observables.map((obs, index) =>
-      obs.subscribe({
-        next: value => {
-          values[index] = value;
-          hasValue[index] = true;
-          
-          if (hasValue.every(Boolean)) {
-            observer.next([...values]);
-          }
-        },
-        error: err => observer.error(err),
-        complete: () => {
-          completed++;
-          if (completed === observables.length) {
-            observer.complete();
-          }
-        }
-      })
-    );
-
-    return {
-      unsubscribe: () => {
-        subscriptions.forEach(sub => sub.unsubscribe());
-      }
-    };
-  });
-};
-
-// zip
-Observable.zip = (...observables) => {
-  return new Observable(observer => {
-    const buffers = observables.map(() => []);
-    let completed = 0;
-
-    const tryEmit = () => {
-      if (buffers.every(buffer => buffer.length > 0)) {
-        const values = buffers.map(buffer => buffer.shift());
-        observer.next(values);
-        tryEmit(); // Try to emit more
-      } else if (completed === observables.length) {
-        observer.complete();
-      }
-    };
-
-    const subscriptions = observables.map((obs, index) =>
-      obs.subscribe({
-        next: value => {
-          buffers[index].push(value);
-          tryEmit();
-        },
-        error: err => observer.error(err),
-        complete: () => {
-          completed++;
-          tryEmit();
-        }
-      })
-    );
-
-    return {
-      unsubscribe: () => {
-        subscriptions.forEach(sub => sub.unsubscribe());
-      }
-    };
-  });
-};
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(7).pipe(map(v => v * 2));
 ```
 
-### Utility Operators
+### 8. BehaviorSubject usage
 
-```javascript
-// delay
-Observable.prototype.delay = function(duration) {
-  return new Observable(observer => {
-    const subscription = this.subscribe({
-      next: value => {
-        setTimeout(() => observer.next(value), duration);
-      },
-      error: err => {
-        setTimeout(() => observer.error(err), duration);
-      },
-      complete: () => {
-        setTimeout(() => observer.complete(), duration);
-      }
-    });
+**Tổng Quan:** `BehaviorSubject usage` là năng lực bắt buộc khi thảo luận lập trình phản ứng hàm (frp).
 
-    return subscription;
-  });
-};
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-// debounceTime
-Observable.prototype.debounceTime = function(duration) {
-  return new Observable(observer => {
-    let timeoutId;
-    
-    const subscription = this.subscribe({
-      next: value => {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => {
-          observer.next(value);
-        }, duration);
-      },
-      error: err => observer.error(err),
-      complete: () => {
-        clearTimeout(timeoutId);
-        observer.complete();
-      }
-    });
-
-    return {
-      unsubscribe: () => {
-        clearTimeout(timeoutId);
-        subscription.unsubscribe();
-      }
-    };
-  });
-};
-
-// throttleTime
-Observable.prototype.throttleTime = function(duration) {
-  return new Observable(observer => {
-    let lastEmit = 0;
-    
-    return this.subscribe({
-      next: value => {
-        const now = Date.now();
-        if (now - lastEmit >= duration) {
-          lastEmit = now;
-          observer.next(value);
-        }
-      },
-      error: err => observer.error(err),
-      complete: () => observer.complete()
-    });
-  });
-};
-
-// tap (do)
-Observable.prototype.tap = function(sideEffect) {
-  return new Observable(observer => {
-    return this.subscribe({
-      next: value => {
-        sideEffect(value);
-        observer.next(value);
-      },
-      error: err => observer.error(err),
-      complete: () => observer.complete()
-    });
-  });
-};
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(8).pipe(map(v => v * 2));
 ```
 
-## Subjects
+### 9. ReplaySubject tradeoffs
 
-### Subject Implementation
+**Tổng Quan:** `ReplaySubject tradeoffs` là năng lực bắt buộc khi thảo luận lập trình phản ứng hàm (frp).
 
-```javascript
-class Subject extends Observable {
-  constructor() {
-    super(observer => {
-      this.observers.add(observer);
-      return {
-        unsubscribe: () => {
-          this.observers.delete(observer);
-        }
-      };
-    });
-    
-    this.observers = new Set();
-    this.isStopped = false;
-  }
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-  next(value) {
-    if (this.isStopped) return;
-    
-    this.observers.forEach(observer => {
-      observer.next(value);
-    });
-  }
-
-  error(err) {
-    if (this.isStopped) return;
-    
-    this.isStopped = true;
-    this.observers.forEach(observer => {
-      observer.error(err);
-    });
-    this.observers.clear();
-  }
-
-  complete() {
-    if (this.isStopped) return;
-    
-    this.isStopped = true;
-    this.observers.forEach(observer => {
-      observer.complete();
-    });
-    this.observers.clear();
-  }
-}
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(9).pipe(map(v => v * 2));
 ```
 
-### BehaviorSubject
+### 10. AsyncSubject scenarios
 
-```javascript
-class BehaviorSubject extends Subject {
-  constructor(initialValue) {
-    super();
-    this.value = initialValue;
-  }
+**Tổng Quan:** `AsyncSubject scenarios` là năng lực bắt buộc khi thảo luận lập trình phản ứng hàm (frp).
 
-  subscribe(observer) {
-    const subscription = super.subscribe(observer);
-    
-    // Emit current value immediately
-    if (!this.isStopped) {
-      observer.next(this.value);
-    }
-    
-    return subscription;
-  }
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-  next(value) {
-    this.value = value;
-    super.next(value);
-  }
-
-  getValue() {
-    if (this.isStopped) {
-      throw new Error('BehaviorSubject has completed');
-    }
-    return this.value;
-  }
-}
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(10).pipe(map(v => v * 2));
 ```
 
-### ReplaySubject
+### 11. Scheduler selection
 
-```javascript
-class ReplaySubject extends Subject {
-  constructor(bufferSize = Infinity, windowTime = Infinity) {
-    super();
-    this.bufferSize = bufferSize;
-    this.windowTime = windowTime;
-    this.buffer = [];
-  }
+**Tổng Quan:** `Scheduler selection` là năng lực bắt buộc khi thảo luận lập trình phản ứng hàm (frp).
 
-  next(value) {
-    const now = Date.now();
-    this.buffer.push({ value, timestamp: now });
-    
-    // Trim buffer
-    this.trimBuffer(now);
-    
-    super.next(value);
-  }
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-  subscribe(observer) {
-    const subscription = super.subscribe(observer);
-    
-    // Replay buffered values
-    if (!this.isStopped) {
-      const now = Date.now();
-      this.trimBuffer(now);
-      
-      this.buffer.forEach(({ value }) => {
-        observer.next(value);
-      });
-    }
-    
-    return subscription;
-  }
-
-  trimBuffer(now) {
-    // Remove old values based on time window
-    while (
-      this.buffer.length > 0 &&
-      now - this.buffer[0].timestamp > this.windowTime
-    ) {
-      this.buffer.shift();
-    }
-    
-    // Remove old values based on buffer size
-    while (this.buffer.length > this.bufferSize) {
-      this.buffer.shift();
-    }
-  }
-}
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(11).pipe(map(v => v * 2));
 ```
 
-### AsyncSubject
+### 12. Error recovery operators
 
-```javascript
-class AsyncSubject extends Subject {
-  constructor() {
-    super();
-    this.hasValue = false;
-    this.value = undefined;
-  }
+**Tổng Quan:** `Error recovery operators` là năng lực bắt buộc khi thảo luận lập trình phản ứng hàm (frp).
 
-  next(value) {
-    if (!this.isStopped) {
-      this.value = value;
-      this.hasValue = true;
-    }
-  }
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-  complete() {
-    if (this.isStopped) return;
-    
-    this.isStopped = true;
-    
-    if (this.hasValue) {
-      this.observers.forEach(observer => {
-        observer.next(this.value);
-        observer.complete();
-      });
-    } else {
-      this.observers.forEach(observer => {
-        observer.complete();
-      });
-    }
-    
-    this.observers.clear();
-  }
-}
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(12).pipe(map(v => v * 2));
 ```
 
-## Schedulers
+### 13. Backpressure strategies
 
-### Scheduler Implementation
+**Tổng Quan:** `Backpressure strategies` là năng lực bắt buộc khi thảo luận lập trình phản ứng hàm (frp).
 
-```javascript
-class Scheduler {
-  schedule(work, delay = 0) {
-    throw new Error('Must be implemented by subclass');
-  }
-}
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-class ImmediateScheduler extends Scheduler {
-  schedule(work, delay = 0) {
-    if (delay > 0) {
-      const timeoutId = setTimeout(() => work(), delay);
-      return {
-        unsubscribe: () => clearTimeout(timeoutId)
-      };
-    } else {
-      work();
-      return { unsubscribe: () => {} };
-    }
-  }
-}
-
-class AsyncScheduler extends Scheduler {
-  schedule(work, delay = 0) {
-    const timeoutId = setTimeout(() => work(), delay);
-    return {
-      unsubscribe: () => clearTimeout(timeoutId)
-    };
-  }
-}
-
-class AnimationFrameScheduler extends Scheduler {
-  schedule(work, delay = 0) {
-    if (delay > 0) {
-      const timeoutId = setTimeout(() => {
-        const rafId = requestAnimationFrame(() => work());
-        this.rafId = rafId;
-      }, delay);
-      
-      return {
-        unsubscribe: () => {
-          clearTimeout(timeoutId);
-          if (this.rafId) {
-            cancelAnimationFrame(this.rafId);
-          }
-        }
-      };
-    } else {
-      const rafId = requestAnimationFrame(() => work());
-      return {
-        unsubscribe: () => cancelAnimationFrame(rafId)
-      };
-    }
-  }
-}
-
-// Usage with observables
-Observable.prototype.observeOn = function(scheduler) {
-  return new Observable(observer => {
-    return this.subscribe({
-      next: value => {
-        scheduler.schedule(() => observer.next(value));
-      },
-      error: err => {
-        scheduler.schedule(() => observer.error(err));
-      },
-      complete: () => {
-        scheduler.schedule(() => observer.complete());
-      }
-    });
-  });
-};
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(13).pipe(map(v => v * 2));
 ```
 
-## Error Handling
+### 14. Autocomplete stream design
 
-### Error Operators
+**Tổng Quan:** `Autocomplete stream design` là năng lực bắt buộc khi thảo luận lập trình phản ứng hàm (frp).
 
-```javascript
-// catchError
-Observable.prototype.catchError = function(selector) {
-  return new Observable(observer => {
-    return this.subscribe({
-      next: value => observer.next(value),
-      error: err => {
-        try {
-          const result = selector(err);
-          result.subscribe(observer);
-        } catch (e) {
-          observer.error(e);
-        }
-      },
-      complete: () => observer.complete()
-    });
-  });
-};
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-// retry
-Observable.prototype.retry = function(count = -1) {
-  return new Observable(observer => {
-    let attempts = 0;
-    let subscription;
-
-    const subscribe = () => {
-      subscription = this.subscribe({
-        next: value => observer.next(value),
-        error: err => {
-          attempts++;
-          if (count < 0 || attempts < count) {
-            subscribe();
-          } else {
-            observer.error(err);
-          }
-        },
-        complete: () => observer.complete()
-      });
-    };
-
-    subscribe();
-
-    return {
-      unsubscribe: () => {
-        if (subscription) {
-          subscription.unsubscribe();
-        }
-      }
-    };
-  });
-};
-
-// retryWhen
-Observable.prototype.retryWhen = function(notifier) {
-  return new Observable(observer => {
-    const errors = new Subject();
-    let subscription;
-    let notifierSubscription;
-
-    notifierSubscription = notifier(errors).subscribe({
-      next: () => {
-        subscription = this.subscribe({
-          next: value => observer.next(value),
-          error: err => errors.next(err),
-          complete: () => observer.complete()
-        });
-      },
-      error: err => observer.error(err),
-      complete: () => observer.complete()
-    });
-
-    return {
-      unsubscribe: () => {
-        if (subscription) subscription.unsubscribe();
-        if (notifierSubscription) notifierSubscription.unsubscribe();
-      }
-    };
-  });
-};
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(14).pipe(map(v => v * 2));
 ```
 
-## Backpressure
+### 15. Drag-and-drop stream
 
-### Backpressure Strategies
+**Tổng Quan:** `Drag-and-drop stream` là năng lực bắt buộc khi thảo luận lập trình phản ứng hàm (frp).
 
-```javascript
-// Buffer
-Observable.prototype.buffer = function(closingNotifier) {
-  return new Observable(observer => {
-    let buffer = [];
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-    const subscription = this.subscribe({
-      next: value => buffer.push(value),
-      error: err => observer.error(err),
-      complete: () => {
-        if (buffer.length > 0) {
-          observer.next(buffer);
-        }
-        observer.complete();
-      }
-    });
-
-    const notifierSubscription = closingNotifier.subscribe({
-      next: () => {
-        observer.next(buffer);
-        buffer = [];
-      },
-      error: err => observer.error(err)
-    });
-
-    return {
-      unsubscribe: () => {
-        subscription.unsubscribe();
-        notifierSubscription.unsubscribe();
-      }
-    };
-  });
-};
-
-// Sample
-Observable.prototype.sample = function(notifier) {
-  return new Observable(observer => {
-    let lastValue;
-    let hasValue = false;
-
-    const subscription = this.subscribe({
-      next: value => {
-        lastValue = value;
-        hasValue = true;
-      },
-      error: err => observer.error(err),
-      complete: () => observer.complete()
-    });
-
-    const notifierSubscription = notifier.subscribe({
-      next: () => {
-        if (hasValue) {
-          observer.next(lastValue);
-          hasValue = false;
-        }
-      },
-      error: err => observer.error(err)
-    });
-
-    return {
-      unsubscribe: () => {
-        subscription.unsubscribe();
-        notifierSubscription.unsubscribe();
-      }
-    };
-  });
-};
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(15).pipe(map(v => v * 2));
 ```
 
-## Real-World Patterns
+### 16. Polling with backoff
 
-### Autocomplete
+**Tổng Quan:** `Polling with backoff` là năng lực bắt buộc khi thảo luận lập trình phản ứng hàm (frp).
 
-```javascript
-function createAutocomplete(input, searchFn) {
-  return Observable.fromEvent(input, 'input')
-    .map(event => event.target.value)
-    .debounceTime(300)
-    .distinctUntilChanged()
-    .switchMap(query => {
-      if (query.length < 2) {
-        return Observable.of([]);
-      }
-      return Observable.from(searchFn(query))
-        .catchError(err => {
-          console.error('Search error:', err);
-          return Observable.of([]);
-        });
-    });
-}
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(16).pipe(map(v => v * 2));
 ```
 
-### Drag and Drop
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-```javascript
-function createDraggable(element) {
-  const mouseDown = Observable.fromEvent(element, 'mousedown');
-  const mouseMove = Observable.fromEvent(document, 'mousemove');
-  const mouseUp = Observable.fromEvent(document, 'mouseup');
+### 🟢 [Junior] Q01: How would you explain frp mental model in a frontend interview?
 
-  return mouseDown.flatMap(startEvent => {
-    const startX = startEvent.clientX - element.offsetLeft;
-    const startY = startEvent.clientY - element.offsetTop;
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
 
-    return mouseMove
-      .map(moveEvent => ({
-        x: moveEvent.clientX - startX,
-        y: moveEvent.clientY - startY
-      }))
-      .takeUntil(mouseUp);
-  });
-}
+**Giải thích (VI):** Với `FRP mental model`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(1).pipe(map(v => v * 2));
 ```
 
-### Polling with Exponential Backoff
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
 
-```javascript
-function pollWithBackoff(request, maxRetries = 5) {
-  return Observable.defer(() => request())
-    .retryWhen(errors =>
-      errors.scan((acc, error) => {
-        if (acc.count >= maxRetries) {
-          throw error;
-        }
-        return { count: acc.count + 1, error };
-      }, { count: 0 })
-      .flatMap(({ count }) => {
-        const delay = Math.pow(2, count) * 1000;
-        return Observable.timer(delay);
-      })
-    );
-}
+### 🟡 [Mid] Q01: How would you explain frp mental model in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `FRP mental model`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(21).pipe(map(v => v * 2));
 ```
 
-## Summary
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
 
-Functional Reactive Programming provides a powerful paradigm for handling asynchronous data streams with composable, declarative operations. Key concepts include observables, operators, subjects, and proper error handling strategies.
+### 🔴 [Senior] Q01: How would you explain frp mental model in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `FRP mental model`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(41).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q02: How would you explain observable lifecycle in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Observable lifecycle`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(2).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q02: How would you explain observable lifecycle in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Observable lifecycle`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(22).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q02: How would you explain observable lifecycle in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Observable lifecycle`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(42).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q03: How would you explain creation operators in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Creation operators`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(3).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q03: How would you explain creation operators in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Creation operators`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(23).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q03: How would you explain creation operators in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Creation operators`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(43).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q04: How would you explain transformation operators in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Transformation operators`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(4).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q04: How would you explain transformation operators in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Transformation operators`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(24).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q04: How would you explain transformation operators in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Transformation operators`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(44).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q05: How would you explain filtering operators in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Filtering operators`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(5).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q05: How would you explain filtering operators in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Filtering operators`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(25).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q05: How would you explain filtering operators in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Filtering operators`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(45).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q06: How would you explain combination operators in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Combination operators`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(6).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q06: How would you explain combination operators in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Combination operators`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(26).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q06: How would you explain combination operators in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Combination operators`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(46).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q07: How would you explain subject vs observable in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Subject vs Observable`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(7).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q07: How would you explain subject vs observable in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Subject vs Observable`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(27).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q07: How would you explain subject vs observable in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Subject vs Observable`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(47).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q08: How would you explain behaviorsubject usage in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `BehaviorSubject usage`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(8).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q08: How would you explain behaviorsubject usage in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `BehaviorSubject usage`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(28).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q08: How would you explain behaviorsubject usage in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `BehaviorSubject usage`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(48).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q09: How would you explain replaysubject tradeoffs in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `ReplaySubject tradeoffs`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(9).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q09: How would you explain replaysubject tradeoffs in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `ReplaySubject tradeoffs`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(29).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q09: How would you explain replaysubject tradeoffs in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `ReplaySubject tradeoffs`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(49).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q10: How would you explain asyncsubject scenarios in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `AsyncSubject scenarios`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(10).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q10: How would you explain asyncsubject scenarios in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `AsyncSubject scenarios`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(30).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q10: How would you explain asyncsubject scenarios in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `AsyncSubject scenarios`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(50).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q11: How would you explain scheduler selection in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Scheduler selection`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(11).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q11: How would you explain scheduler selection in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Scheduler selection`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(31).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q11: How would you explain scheduler selection in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Scheduler selection`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(51).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q12: How would you explain error recovery operators in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Error recovery operators`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(12).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q12: How would you explain error recovery operators in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Error recovery operators`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(32).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q12: How would you explain error recovery operators in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Error recovery operators`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(52).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q13: How would you explain backpressure strategies in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Backpressure strategies`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(13).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q13: How would you explain backpressure strategies in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Backpressure strategies`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(33).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q13: How would you explain backpressure strategies in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Backpressure strategies`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(53).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q14: How would you explain autocomplete stream design in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Autocomplete stream design`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(14).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q14: How would you explain autocomplete stream design in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Autocomplete stream design`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(34).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q14: How would you explain autocomplete stream design in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Autocomplete stream design`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(54).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q15: How would you explain drag-and-drop stream in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Drag-and-drop stream`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(15).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q15: How would you explain drag-and-drop stream in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Drag-and-drop stream`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(35).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q15: How would you explain drag-and-drop stream in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Drag-and-drop stream`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(55).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q16: How would you explain polling with backoff in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Polling with backoff`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(16).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q16: How would you explain polling with backoff in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Polling with backoff`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(36).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q16: How would you explain polling with backoff in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Polling with backoff`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+import { of, map } from 'rxjs';
+of(56).pipe(map(v => v * 2));
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+## Rapid Review Checklist / Checklist Ôn Tập Nhanh
+
+- Bạn có thể giải thích 16 concept ở cả 3 mức Junior/Mid/Senior?
+- Bạn có ví dụ thực tế về bug/perf/security issue và bài học rút ra?
+- Bạn có thể liên kết chủ đề hiện tại với testing, observability, và delivery?
+- Bạn đã chuẩn bị câu trả lời song ngữ EN heading + VI explanation chưa?
+- Bạn có thể vẽ luồng dữ liệu hoặc kiến trúc trong 2-3 phút trên whiteboard?
+
+## Tóm Tắt / Summary
+
+Tài liệu `Functional Reactive Programming (FRP)` đã được chuyển sang bilingual Q&A format với difficulty tags (`🟢 [Junior]`, `🟡 [Mid]`, `🔴 [Senior]`), chứa marker `Tổng Quan`, `Giải thích`, `Ví dụ`, có cross-reference bằng relative path và code mẫu JS/TS để luyện phỏng vấn.

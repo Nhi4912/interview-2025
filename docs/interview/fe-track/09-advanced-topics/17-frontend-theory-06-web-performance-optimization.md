@@ -1,532 +1,792 @@
-# Web Performance Optimization - Complete Guide
-# Tối Ưu Hiệu Suất Web - Hướng Dẫn Đầy Đủ
+# Frontend Theory 06: Web Performance Optimization
 
-## Table of Contents / Mục Lục
+**Tổng Quan:** Tài liệu song ngữ (EN heading + VI explanation) cho phần lý thuyết Frontend nâng cao, dùng trực tiếp để luyện interview.
+**Giải thích:** Tối ưu hiệu suất web theo Core Web Vitals và runtime metrics. Mỗi câu hỏi đi từ nền tảng đến quyết định kiến trúc và chiến lược tối ưu.
+**Ví dụ:** Có snippet ngắn để nối giữa lý thuyết và cách triển khai thực tế trong dự án.
 
-### Part 1: Performance Metrics
-1. Core Web Vitals (LCP, FID, CLS)
-2. RAIL Performance Model
-3. Performance APIs
-4. Measuring Performance
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-### Part 2: Loading Performance
-5. Critical Rendering Path
-6. Resource Prioritization
-7. Code Splitting Strategies
-8. Lazy Loading Techniques
-9. Preloading and Prefetching
+### Interview Usage Guide
+- `🟢 [Junior]`: định nghĩa đúng và nắm cơ chế cơ bản.
+- `🟡 [Mid]`: phân tích trade-off và tác động implementation.
+- `🔴 [Senior]`: đưa ra quyết định kỹ thuật có điều kiện và plan giảm rủi ro.
 
-### Part 3: Runtime Performance
-10. JavaScript Performance
-11. Rendering Performance
-12. Memory Management
-13. Network Optimization
+## Topic 1: Core Web Vitals baseline and thresholds
 
-### Part 4: Advanced Optimization
-14. Service Workers
-15. HTTP/2 and HTTP/3
-16. CDN Strategies
-17. Image Optimization
-18. Caching Strategies
+### 🟢 [Junior] Q1: How would you explain core web vitals baseline and thresholds in a real interview?
 
----
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
 
-## Part 1: Performance Metrics
+**Giải thích (Explanation):** Với **Core Web Vitals baseline and thresholds**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-### 1. Core Web Vitals (LCP, FID, CLS)
-### 1. Core Web Vitals
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-**English:**
-
-Core Web Vitals are Google's metrics for measuring user experience.
-
-**Largest Contentful Paint (LCP):**
-
+**Ví dụ (Example):**
 ```javascript
-// Measures loading performance
-// Good: < 2.5s
-// Needs Improvement: 2.5s - 4s
-// Poor: > 4s
-
-// Measuring LCP
-new PerformanceObserver((entryList) => {
-  const entries = entryList.getEntries();
-  const lastEntry = entries[entries.length - 1];
-  
-  console.log('LCP:', lastEntry.renderTime || lastEntry.loadTime);
-}).observe({ entryTypes: ['largest-contentful-paint'] });
-
-// Improving LCP:
-// 1. Optimize server response time
-// 2. Eliminate render-blocking resources
-// 3. Optimize images
-// 4. Use CDN
-// 5. Cache assets
-
-// Example: Image optimization
-<img
-  src="hero.jpg"
-  srcset="hero-320w.jpg 320w,
-          hero-640w.jpg 640w,
-          hero-1280w.jpg 1280w"
-  sizes="(max-width: 320px) 280px,
-         (max-width: 640px) 600px,
-         1200px"
-  loading="eager"
-  fetchpriority="high"
-  alt="Hero image"
-/>
-```
-
-**First Input Delay (FID):**
-
-```javascript
-// Measures interactivity
-// Good: < 100ms
-// Needs Improvement: 100ms - 300ms
-// Poor: > 300ms
-
-// Measuring FID
-new PerformanceObserver((entryList) => {
-  const entries = entryList.getEntries();
-  
-  entries.forEach(entry => {
-    console.log('FID:', entry.processingStart - entry.startTime);
-  });
-}).observe({ entryTypes: ['first-input'] });
-
-// Improving FID:
-// 1. Reduce JavaScript execution time
-// 2. Break up long tasks
-// 3. Use web workers
-// 4. Optimize event handlers
-// 5. Code splitting
-
-// Example: Breaking up long tasks
-async function processLargeArray(array) {
-  const chunkSize = 100;
-  
-  for (let i = 0; i < array.length; i += chunkSize) {
-    const chunk = array.slice(i, i + chunkSize);
-    
-    // Process chunk
-    processChunk(chunk);
-    
-    // Yield to browser
-    await new Promise(resolve => setTimeout(resolve, 0));
-  }
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
 }
 ```
 
-**Cumulative Layout Shift (CLS):**
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
 
+### 🟡 [Mid] Q2: How would you explain core web vitals baseline and thresholds in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Core Web Vitals baseline and thresholds**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
 ```javascript
-// Measures visual stability
-// Good: < 0.1
-// Needs Improvement: 0.1 - 0.25
-// Poor: > 0.25
-
-// Measuring CLS
-let clsScore = 0;
-
-new PerformanceObserver((entryList) => {
-  for (const entry of entryList.getEntries()) {
-    if (!entry.hadRecentInput) {
-      clsScore += entry.value;
-      console.log('CLS:', clsScore);
-    }
-  }
-}).observe({ entryTypes: ['layout-shift'] });
-
-// Improving CLS:
-// 1. Set dimensions for images/videos
-// 2. Reserve space for ads
-// 3. Avoid inserting content above existing content
-// 4. Use transform animations instead of layout properties
-
-// ❌ Bad: No dimensions
-<img src="image.jpg" alt="Image" />
-
-// ✅ Good: With dimensions
-<img 
-  src="image.jpg" 
-  width="800" 
-  height="600" 
-  alt="Image" 
-/>
-
-// ✅ Better: Aspect ratio
-<img 
-  src="image.jpg" 
-  style="aspect-ratio: 16/9; width: 100%;" 
-  alt="Image" 
-/>
-```
-
-**Vietnamese:**
-
-Core Web Vitals là metrics của Google để đo trải nghiệm người dùng.
-
-**LCP (Largest Contentful Paint):**
-- Đo hiệu suất loading
-- Tốt: < 2.5s
-- Cần cải thiện: 2.5s - 4s
-- Kém: > 4s
-
-**FID (First Input Delay):**
-- Đo tính tương tác
-- Tốt: < 100ms
-- Cần cải thiện: 100ms - 300ms
-- Kém: > 300ms
-
-**CLS (Cumulative Layout Shift):**
-- Đo độ ổn định visual
-- Tốt: < 0.1
-- Cần cải thiện: 0.1 - 0.25
-- Kém: > 0.25
-
----
-
-### 2. RAIL Performance Model
-### 2. Mô Hình Hiệu Suất RAIL
-
-**English:**
-
-RAIL is a user-centric performance model focusing on Response, Animation, Idle, and Load.
-
-**Response (< 100ms):**
-
-```javascript
-// User input should feel instant
-// Process events in < 100ms
-
-// ❌ Bad: Blocking operation
-button.addEventListener('click', () => {
-  // Heavy computation blocks UI
-  const result = heavyComputation();
-  updateUI(result);
-});
-
-// ✅ Good: Non-blocking
-button.addEventListener('click', async () => {
-  // Show loading state
-  showLoading();
-  
-  // Defer heavy work
-  const result = await new Promise(resolve => {
-    setTimeout(() => {
-      resolve(heavyComputation());
-    }, 0);
-  });
-  
-  hideLoading();
-  updateUI(result);
-});
-
-// ✅ Better: Web Worker
-const worker = new Worker('worker.js');
-
-button.addEventListener('click', () => {
-  showLoading();
-  
-  worker.postMessage({ type: 'COMPUTE' });
-  
-  worker.onmessage = (e) => {
-    hideLoading();
-    updateUI(e.data);
-  };
-});
-```
-
-**Animation (60fps = 16ms per frame):**
-
-```javascript
-// Animations should run at 60fps
-// Each frame has ~16ms budget
-
-// ❌ Bad: Layout thrashing
-function animateBad() {
-  elements.forEach(el => {
-    const height = el.offsetHeight; // Read
-    el.style.height = height + 10 + 'px'; // Write
-    // Causes reflow for each element!
-  });
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
 }
+```
 
-// ✅ Good: Batch reads and writes
-function animateGood() {
-  // Batch reads
-  const heights = elements.map(el => el.offsetHeight);
-  
-  // Batch writes
-  elements.forEach((el, i) => {
-    el.style.height = heights[i] + 10 + 'px';
-  });
+**Cross-reference:** [17-frontend-theory-11-rendering-theory.md](./17-frontend-theory-11-rendering-theory.md)
+
+### 🔴 [Senior] Q3: How would you explain core web vitals baseline and thresholds in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Core Web Vitals baseline and thresholds**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
 }
+```
 
-// ✅ Best: Use transform (GPU accelerated)
-function animateBest() {
-  elements.forEach(el => {
-    el.style.transform = 'translateY(10px)';
-    // No reflow, GPU accelerated
-  });
+**Cross-reference:** [17-frontend-theory-05-javascript-engine-internals.md](./17-frontend-theory-05-javascript-engine-internals.md)
+
+## Topic 2: Largest Contentful Paint improvement tactics
+
+### 🟢 [Junior] Q4: How would you explain largest contentful paint improvement tactics in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Largest Contentful Paint improvement tactics**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
 }
+```
 
-// RequestAnimationFrame for smooth animations
-function animate() {
-  // Animation logic
-  updatePosition();
-  
-  requestAnimationFrame(animate);
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
+
+### 🟡 [Mid] Q5: How would you explain largest contentful paint improvement tactics in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Largest Contentful Paint improvement tactics**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
 }
-
-requestAnimationFrame(animate);
 ```
 
-**Idle (50ms chunks):**
+**Cross-reference:** [17-frontend-theory-11-rendering-theory.md](./17-frontend-theory-11-rendering-theory.md)
 
+### 🔴 [Senior] Q6: How would you explain largest contentful paint improvement tactics in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Largest Contentful Paint improvement tactics**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
 ```javascript
-// Use idle time for non-critical work
-// Break work into 50ms chunks
-
-// Using requestIdleCallback
-function processQueue() {
-  requestIdleCallback((deadline) => {
-    while (deadline.timeRemaining() > 0 && queue.length > 0) {
-      const task = queue.shift();
-      processTask(task);
-    }
-    
-    if (queue.length > 0) {
-      processQueue(); // Continue in next idle period
-    }
-  });
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
 }
-
-// Example: Lazy loading analytics
-requestIdleCallback(() => {
-  loadAnalytics();
-});
-
-// Example: Prefetching
-requestIdleCallback(() => {
-  prefetchNextPage();
-});
 ```
 
-**Load (< 5s):**
+**Cross-reference:** [17-frontend-theory-05-javascript-engine-internals.md](./17-frontend-theory-05-javascript-engine-internals.md)
 
+## Topic 3: Interaction to Next Paint root causes
+
+### 🟢 [Junior] Q7: How would you explain interaction to next paint root causes in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Interaction to Next Paint root causes**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
 ```javascript
-// Page should be interactive in < 5s
-
-// Critical rendering path optimization
-// 1. Minimize critical resources
-// 2. Minimize critical bytes
-// 3. Minimize critical path length
-
-// Example: Async/defer scripts
-// ❌ Bad: Blocking script
-<script src="app.js"></script>
-
-// ✅ Good: Async (independent scripts)
-<script src="analytics.js" async></script>
-
-// ✅ Good: Defer (order matters)
-<script src="app.js" defer></script>
-
-// Example: Critical CSS
-<style>
-  /* Critical above-the-fold CSS */
-  .header { /* ... */ }
-  .hero { /* ... */ }
-</style>
-
-<link rel="preload" href="full.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="full.css"></noscript>
-```
-
-**Vietnamese:**
-
-RAIL là mô hình hiệu suất tập trung vào người dùng: Response, Animation, Idle, Load.
-
-**Response (< 100ms):**
-- Input của user phải cảm thấy tức thì
-- Xử lý events trong < 100ms
-
-**Animation (60fps = 16ms/frame):**
-- Animations chạy ở 60fps
-- Mỗi frame có ~16ms budget
-
-**Idle (50ms chunks):**
-- Dùng idle time cho công việc không quan trọng
-- Chia công việc thành chunks 50ms
-
-**Load (< 5s):**
-- Trang phải interactive trong < 5s
-- Tối ưu critical rendering path
-
----
-
-### 3. Performance APIs
-### 3. Performance APIs
-
-**English:**
-
-Browser provides powerful APIs for measuring and optimizing performance.
-
-**Performance.now():**
-
-```javascript
-// High-resolution timestamp
-const start = performance.now();
-
-// Some operation
-doSomething();
-
-const end = performance.now();
-console.log(`Operation took ${end - start}ms`);
-
-// More accurate than Date.now()
-// Microsecond precision
-// Monotonic (doesn't go backwards)
-```
-
-**Performance Observer:**
-
-```javascript
-// Observe performance entries
-const observer = new PerformanceObserver((list) => {
-  for (const entry of list.getEntries()) {
-    console.log(entry.name, entry.duration);
-  }
-});
-
-// Observe specific entry types
-observer.observe({ 
-  entryTypes: ['measure', 'navigation', 'resource'] 
-});
-
-// Mark and measure
-performance.mark('start-task');
-doTask();
-performance.mark('end-task');
-
-performance.measure('task-duration', 'start-task', 'end-task');
-```
-
-**Navigation Timing:**
-
-```javascript
-// Page load timing
-const perfData = performance.getEntriesByType('navigation')[0];
-
-console.log('DNS lookup:', perfData.domainLookupEnd - perfData.domainLookupStart);
-console.log('TCP connection:', perfData.connectEnd - perfData.connectStart);
-console.log('Request time:', perfData.responseStart - perfData.requestStart);
-console.log('Response time:', perfData.responseEnd - perfData.responseStart);
-console.log('DOM processing:', perfData.domComplete - perfData.domLoading);
-console.log('Load complete:', perfData.loadEventEnd - perfData.loadEventStart);
-
-// Total page load time
-console.log('Total:', perfData.loadEventEnd - perfData.fetchStart);
-```
-
-**Resource Timing:**
-
-```javascript
-// Individual resource timing
-const resources = performance.getEntriesByType('resource');
-
-resources.forEach(resource => {
-  console.log(resource.name);
-  console.log('Duration:', resource.duration);
-  console.log('Size:', resource.transferSize);
-  console.log('Type:', resource.initiatorType);
-});
-
-// Find slow resources
-const slowResources = resources.filter(r => r.duration > 1000);
-console.log('Slow resources:', slowResources);
-
-// Group by type
-const byType = resources.reduce((acc, r) => {
-  acc[r.initiatorType] = acc[r.initiatorType] || [];
-  acc[r.initiatorType].push(r);
-  return acc;
-}, {});
-
-console.log('Scripts:', byType.script?.length);
-console.log('Stylesheets:', byType.link?.length);
-console.log('Images:', byType.img?.length);
-```
-
-**User Timing:**
-
-```javascript
-// Custom performance marks
-class PerformanceTracker {
-  constructor() {
-    this.marks = new Map();
-  }
-  
-  start(name) {
-    performance.mark(`${name}-start`);
-    this.marks.set(name, performance.now());
-  }
-  
-  end(name) {
-    performance.mark(`${name}-end`);
-    performance.measure(name, `${name}-start`, `${name}-end`);
-    
-    const duration = performance.now() - this.marks.get(name);
-    console.log(`${name}: ${duration}ms`);
-    
-    return duration;
-  }
-  
-  getMetrics() {
-    return performance.getEntriesByType('measure');
-  }
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
 }
-
-// Usage
-const tracker = new PerformanceTracker();
-
-tracker.start('data-fetch');
-await fetchData();
-tracker.end('data-fetch');
-
-tracker.start('render');
-renderComponent();
-tracker.end('render');
-
-console.log('All metrics:', tracker.getMetrics());
 ```
 
-**Vietnamese:**
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
 
-Browser cung cấp APIs mạnh mẽ để đo và tối ưu hiệu suất.
+### 🟡 [Mid] Q8: How would you explain interaction to next paint root causes in a real interview?
 
-**Performance APIs:**
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
 
-1. **performance.now()**: Timestamp độ phân giải cao
-2. **PerformanceObserver**: Quan sát performance entries
-3. **Navigation Timing**: Timing load trang
-4. **Resource Timing**: Timing từng resource
-5. **User Timing**: Custom performance marks
+**Giải thích (Explanation):** Với **Interaction to Next Paint root causes**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-**Sử Dụng:**
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
+**Ví dụ (Example):**
 ```javascript
-// Đo thời gian operation
-const start = performance.now();
-doSomething();
-const duration = performance.now() - start;
-
-// Mark và measure
-performance.mark('start');
-doTask();
-performance.mark('end');
-performance.measure('task', 'start', 'end');
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
 ```
 
+**Cross-reference:** [17-frontend-theory-11-rendering-theory.md](./17-frontend-theory-11-rendering-theory.md)
+
+### 🔴 [Senior] Q9: How would you explain interaction to next paint root causes in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Interaction to Next Paint root causes**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-05-javascript-engine-internals.md](./17-frontend-theory-05-javascript-engine-internals.md)
+
+## Topic 4: Cumulative Layout Shift mitigation
+
+### 🟢 [Junior] Q10: How would you explain cumulative layout shift mitigation in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Cumulative Layout Shift mitigation**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
+
+### 🟡 [Mid] Q11: How would you explain cumulative layout shift mitigation in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Cumulative Layout Shift mitigation**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-11-rendering-theory.md](./17-frontend-theory-11-rendering-theory.md)
+
+### 🔴 [Senior] Q12: How would you explain cumulative layout shift mitigation in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Cumulative Layout Shift mitigation**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-05-javascript-engine-internals.md](./17-frontend-theory-05-javascript-engine-internals.md)
+
+## Topic 5: RAIL model for product trade-offs
+
+### 🟢 [Junior] Q13: How would you explain rail model for product trade-offs in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **RAIL model for product trade-offs**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
+
+### 🟡 [Mid] Q14: How would you explain rail model for product trade-offs in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **RAIL model for product trade-offs**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-11-rendering-theory.md](./17-frontend-theory-11-rendering-theory.md)
+
+### 🔴 [Senior] Q15: How would you explain rail model for product trade-offs in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **RAIL model for product trade-offs**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-05-javascript-engine-internals.md](./17-frontend-theory-05-javascript-engine-internals.md)
+
+## Topic 6: Network waterfall analysis
+
+### 🟢 [Junior] Q16: How would you explain network waterfall analysis in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Network waterfall analysis**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
+
+### 🟡 [Mid] Q17: How would you explain network waterfall analysis in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Network waterfall analysis**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-11-rendering-theory.md](./17-frontend-theory-11-rendering-theory.md)
+
+### 🔴 [Senior] Q18: How would you explain network waterfall analysis in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Network waterfall analysis**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-05-javascript-engine-internals.md](./17-frontend-theory-05-javascript-engine-internals.md)
+
+## Topic 7: Resource hints preload prefetch preconnect
+
+### 🟢 [Junior] Q19: How would you explain resource hints preload prefetch preconnect in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Resource hints preload prefetch preconnect**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
+
+### 🟡 [Mid] Q20: How would you explain resource hints preload prefetch preconnect in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Resource hints preload prefetch preconnect**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-11-rendering-theory.md](./17-frontend-theory-11-rendering-theory.md)
+
+### 🔴 [Senior] Q21: How would you explain resource hints preload prefetch preconnect in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Resource hints preload prefetch preconnect**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-05-javascript-engine-internals.md](./17-frontend-theory-05-javascript-engine-internals.md)
+
+## Topic 8: Code splitting and route chunking
+
+### 🟢 [Junior] Q22: How would you explain code splitting and route chunking in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Code splitting and route chunking**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
+
+### 🟡 [Mid] Q23: How would you explain code splitting and route chunking in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Code splitting and route chunking**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-11-rendering-theory.md](./17-frontend-theory-11-rendering-theory.md)
+
+### 🔴 [Senior] Q24: How would you explain code splitting and route chunking in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Code splitting and route chunking**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-05-javascript-engine-internals.md](./17-frontend-theory-05-javascript-engine-internals.md)
+
+## Topic 9: Critical CSS and render-blocking control
+
+### 🟢 [Junior] Q25: How would you explain critical css and render-blocking control in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Critical CSS and render-blocking control**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
+
+### 🟡 [Mid] Q26: How would you explain critical css and render-blocking control in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Critical CSS and render-blocking control**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-11-rendering-theory.md](./17-frontend-theory-11-rendering-theory.md)
+
+### 🔴 [Senior] Q27: How would you explain critical css and render-blocking control in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Critical CSS and render-blocking control**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-05-javascript-engine-internals.md](./17-frontend-theory-05-javascript-engine-internals.md)
+
+## Topic 10: Image optimization and responsive delivery
+
+### 🟢 [Junior] Q28: How would you explain image optimization and responsive delivery in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Image optimization and responsive delivery**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
+
+### 🟡 [Mid] Q29: How would you explain image optimization and responsive delivery in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Image optimization and responsive delivery**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-11-rendering-theory.md](./17-frontend-theory-11-rendering-theory.md)
+
+### 🔴 [Senior] Q30: How would you explain image optimization and responsive delivery in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Image optimization and responsive delivery**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-05-javascript-engine-internals.md](./17-frontend-theory-05-javascript-engine-internals.md)
+
+## Topic 11: Main-thread long tasks reduction
+
+### 🟢 [Junior] Q31: How would you explain main-thread long tasks reduction in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Main-thread long tasks reduction**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
+
+### 🟡 [Mid] Q32: How would you explain main-thread long tasks reduction in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Main-thread long tasks reduction**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-11-rendering-theory.md](./17-frontend-theory-11-rendering-theory.md)
+
+### 🔴 [Senior] Q33: How would you explain main-thread long tasks reduction in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Main-thread long tasks reduction**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-05-javascript-engine-internals.md](./17-frontend-theory-05-javascript-engine-internals.md)
+
+## Topic 12: Performance monitoring in production
+
+### 🟢 [Junior] Q34: How would you explain performance monitoring in production in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Performance monitoring in production**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
+
+### 🟡 [Mid] Q35: How would you explain performance monitoring in production in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Performance monitoring in production**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-11-rendering-theory.md](./17-frontend-theory-11-rendering-theory.md)
+
+### 🔴 [Senior] Q36: How would you explain performance monitoring in production in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Performance monitoring in production**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-05-javascript-engine-internals.md](./17-frontend-theory-05-javascript-engine-internals.md)

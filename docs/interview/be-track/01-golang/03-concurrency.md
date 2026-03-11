@@ -8,7 +8,9 @@
 
 ## 1. Concurrency vs Parallelism
 
-### Q1: Phân biệt concurrency và parallelism theo Rob Pike? 🟢
+
+## Câu Hỏi Phỏng Vấn / Interview Q&A
+### Q1: Phân biệt concurrency và parallelism theo Rob Pike? 🟢 🟢 [Junior]
 
 **A:**
 
@@ -26,7 +28,7 @@ Rob Pike (đồng tác giả Go): *"Concurrency is about dealing with lots of th
 
 ---
 
-### Q2: Go theo mô hình CSP — CSP là gì? 🟡
+### Q2: Go theo mô hình CSP — CSP là gì? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -53,7 +55,7 @@ Go triển khai CSP qua:
 
 ## 2. Goroutines — Deep Theory
 
-### Q3: Goroutine là gì? So sánh chi tiết với OS thread? 🔴
+### Q3: Goroutine là gì? So sánh chi tiết với OS thread? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -86,7 +88,7 @@ Goroutine là **lightweight, user-space thread** được quản lý bởi Go ru
 
 ---
 
-### Q4: Goroutine lifecycle và các trạng thái? 🟡
+### Q4: Goroutine lifecycle và các trạng thái? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -125,7 +127,7 @@ Các trạng thái chính trong runtime:
 
 ---
 
-### Q5: Goroutine leak là gì? Nguyên nhân và cách detect? 🔴
+### Q5: Goroutine leak là gì? Nguyên nhân và cách detect? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -194,7 +196,7 @@ func TestMain(m *testing.M) {
 
 ## 3. Go Scheduler — GMP Model (DEEP DIVE)
 
-### Q6: GMP Model là gì? Giải thích chi tiết từng thành phần? 🔴
+### Q6: GMP Model là gì? Giải thích chi tiết từng thành phần? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -244,7 +246,7 @@ Go scheduler dùng mô hình **M:N threading**: multiplexes M goroutines lên N 
 
 ---
 
-### Q7: Scheduling cycle hoạt động như thế nào? 🔴
+### Q7: Scheduling cycle hoạt động như thế nào? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -282,7 +284,7 @@ schedule() {
 
 ---
 
-### Q8: Work Stealing hoạt động như thế nào? 🔴
+### Q8: Work Stealing hoạt động như thế nào? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -316,7 +318,7 @@ P2                 P0                  P1
 
 ---
 
-### Q9: Syscall handling trong GMP? 🔴
+### Q9: Syscall handling trong GMP? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -356,7 +358,7 @@ M0 wakes up with G1 → tries to acquire idle P
 
 ---
 
-### Q10: Network Poller integration trong scheduler? 🔴
+### Q10: Network Poller integration trong scheduler? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -383,7 +385,7 @@ G2: ────────────[running on same M/P]─────[pre
 
 ---
 
-### Q11: Preemption trong Go — cooperative vs signal-based? 🔴
+### Q11: Preemption trong Go — cooperative vs signal-based? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -421,7 +423,7 @@ go func() {
 
 ---
 
-### Q12: GOMAXPROCS là gì và ảnh hưởng thế nào? 🟡
+### Q12: GOMAXPROCS là gì và ảnh hưởng thế nào? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -446,7 +448,7 @@ import _ "go.uber.org/automaxprocs" // auto-set GOMAXPROCS theo container CPU li
 
 ## 4. Channels — Deep Theory
 
-### Q13: Channel hoạt động bên trong như thế nào? (hchan struct) 🔴
+### Q13: Channel hoạt động bên trong như thế nào? (hchan struct) 🔴 🔴 [Senior]
 
 **A:**
 
@@ -511,7 +513,7 @@ Unbuffered channel:
 
 ---
 
-### Q14: Bảng tổng hợp channel behaviors (Channel Axioms)? 🔴
+### Q14: Bảng tổng hợp channel behaviors (Channel Axioms)? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -546,7 +548,7 @@ if !ok {
 
 ---
 
-### Q15: Unbuffered vs Buffered channel — khi nào dùng gì? 🟡
+### Q15: Unbuffered vs Buffered channel — khi nào dùng gì? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -571,7 +573,7 @@ if !ok {
 
 ---
 
-### Q16: Directional channels là gì? 🟢
+### Q16: Directional channels là gì? 🟢 🟢 [Junior]
 
 **A:**
 
@@ -605,7 +607,7 @@ func main() {
 
 ## 5. Select Statement
 
-### Q17: Select hoạt động như thế nào? 🟡
+### Q17: Select hoạt động như thế nào? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -655,7 +657,7 @@ case <-done:
 
 ## 6. sync Package
 
-### Q18: Mutex vs RWMutex — khi nào dùng gì? 🟡
+### Q18: Mutex vs RWMutex — khi nào dùng gì? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -698,7 +700,7 @@ func (m *SafeMap) Set(key, val string) {
 
 ---
 
-### Q19: sync.WaitGroup, sync.Once, sync.Pool — giải thích? 🟡
+### Q19: sync.WaitGroup, sync.Once, sync.Pool — giải thích? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -768,7 +770,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 ---
 
-### Q20: sync.Cond và sync.Map — khi nào cần? 🟡
+### Q20: sync.Cond và sync.Map — khi nào cần? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -823,7 +825,7 @@ Bên trong: sync.Map dùng 2 maps — `read` (atomic, lock-free) và `dirty` (mu
 
 ## 7. Context Package
 
-### Q21: Context tồn tại để giải quyết vấn đề gì? 🟡
+### Q21: Context tồn tại để giải quyết vấn đề gì? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -855,7 +857,7 @@ Nếu client cancel → TẤT CẢ nodes trong tree nhận cancel signal
 
 ---
 
-### Q22: Các loại Context và cách sử dụng? 🟡
+### Q22: Các loại Context và cách sử dụng? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -905,7 +907,7 @@ childCtx, childCancel := context.WithTimeout(parentCtx, 5*time.Second)
 
 ---
 
-### Q23: Context best practices? 🟡
+### Q23: Context best practices? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -937,7 +939,7 @@ func GetRequestID(ctx context.Context) string {
 
 ## 8. Concurrency Patterns (DEEP)
 
-### Q24: Fan-out / Fan-in pattern? 🔴
+### Q24: Fan-out / Fan-in pattern? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -986,7 +988,7 @@ func fanIn(channels ...<-chan int) <-chan int {
 
 ---
 
-### Q25: Worker Pool pattern? 🔴
+### Q25: Worker Pool pattern? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -1028,7 +1030,7 @@ for r := range results {
 
 ---
 
-### Q26: Pipeline pattern? 🟡
+### Q26: Pipeline pattern? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -1084,7 +1086,7 @@ for v := range result {
 
 ---
 
-### Q27: Semaphore, Rate Limiter, Generator patterns? 🟡
+### Q27: Semaphore, Rate Limiter, Generator patterns? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -1153,7 +1155,7 @@ for n := range fibonacci() {
 
 ---
 
-### Q28: Or-channel, errgroup, singleflight? 🔴
+### Q28: Or-channel, errgroup, singleflight? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -1238,7 +1240,7 @@ func getUser(id string) (*User, error) {
 
 ---
 
-### Q29: Pub/Sub pattern trong Go? 🟡
+### Q29: Pub/Sub pattern trong Go? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -1283,7 +1285,7 @@ func (b *Broker) Unsubscribe(topic string, sub <-chan interface{}) {
 
 ## 9. Race Conditions
 
-### Q30: Data race là gì? Cách detect? 🔴
+### Q30: Data race là gì? Cách detect? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -1347,7 +1349,7 @@ counterCh <- 1 // increment
 
 ## 10. Deadlock
 
-### Q31: Các pattern deadlock phổ biến trong Go? 🔴
+### Q31: Các pattern deadlock phổ biến trong Go? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -1409,7 +1411,7 @@ func B() {
 
 ## 11. atomic Package
 
-### Q32: Khi nào dùng atomic thay vì mutex? 🟡
+### Q32: Khi nào dùng atomic thay vì mutex? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -1455,7 +1457,7 @@ cfg := config.Load().(*Config) // atomic load, no lock needed
 
 ## 12. Real-World Concurrency
 
-### Q33: HTTP server — goroutine per request model? 🟡
+### Q33: HTTP server — goroutine per request model? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -1484,7 +1486,7 @@ func (srv *Server) Serve(l net.Listener) error {
 
 ---
 
-### Q34: Graceful shutdown pattern? 🔴
+### Q34: Graceful shutdown pattern? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -1530,7 +1532,7 @@ func main() {
 
 ---
 
-### Q35: Connection Pool và Background Workers pattern? 🟡
+### Q35: Connection Pool và Background Workers pattern? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -1622,7 +1624,7 @@ func (wm *WorkerManager) Shutdown() {
 
 ## 14. Interview Questions — Google / Zalo / Grab Focus
 
-### Câu hỏi lý thuyết (Theory)
+### Câu hỏi lý thuyết (Theory) 🟡 [Mid]
 
 | # | Question | Difficulty | Key Points |
 |---|----------|-----------|------------|
@@ -1637,7 +1639,7 @@ func (wm *WorkerManager) Shutdown() {
 | 9 | Explain context cancellation cascade | 🟡 | Parent cancel → all children cancel; child cancel → parent unaffected |
 | 10 | When to use atomic vs mutex? | 🟡 | Single variable → atomic; multiple variables → mutex |
 
-### Câu hỏi thiết kế (Design / Coding)
+### Câu hỏi thiết kế (Design / Coding) 🟡 [Mid]
 
 | # | Question | Difficulty | Expected Answer |
 |---|----------|-----------|----------------|
@@ -1652,7 +1654,7 @@ func (wm *WorkerManager) Shutdown() {
 | 9 | Implement pipeline with cancellation | 🟡 | Chain of stages with `<-done` select in each stage |
 | 10 | What's wrong with this concurrent map access? | 🟡 | No synchronization → data race; fix with sync.Map or map+RWMutex |
 
-### Câu hỏi tình huống (Scenario)
+### Câu hỏi tình huống (Scenario) 🟡 [Mid]
 
 > **Q: Bạn có 1 triệu URLs cần crawl. Thiết kế concurrent crawler.**
 

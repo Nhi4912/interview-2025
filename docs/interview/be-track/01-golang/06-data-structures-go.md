@@ -8,7 +8,9 @@
 
 ## 1. Array & Slice
 
-### Q1: Array vs Slice - what is the fundamental difference? 🟢
+
+## Câu Hỏi Phỏng Vấn / Interview Q&A
+### Q1: Array vs Slice - what is the fundamental difference? 🟢 🟢 [Junior]
 
 **A:** Array có kích thước cố định, là value type (copy toàn bộ khi gán/truyền vào function). Slice là reference type — bản chất là một struct header trỏ tới underlying array.
 
@@ -31,7 +33,7 @@ fmt.Println(s1) // [99 2 3] — bị ảnh hưởng!
 
 ---
 
-### Q2: Explain the slice header struct in detail. 🟡
+### Q2: Explain the slice header struct in detail. 🟡 🟡 [Mid]
 
 **A:** Bên trong runtime, slice được biểu diễn bằng struct `reflect.SliceHeader`:
 
@@ -77,7 +79,7 @@ func main() {
 
 ---
 
-### Q3: How does slice append and growth work? (Go 1.18+) 🟡
+### Q3: How does slice append and growth work? (Go 1.18+) 🟡 🟡 [Mid]
 
 **A:** Khi `append` vượt capacity, Go allocate underlying array mới với size lớn hơn, copy data sang, rồi trả về slice header mới.
 
@@ -142,7 +144,7 @@ func buildSliceGood(n int) []int {
 
 ---
 
-### Q4: Common slice tricks — remove, insert, reverse, filter? 🟡
+### Q4: Common slice tricks — remove, insert, reverse, filter? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -219,7 +221,7 @@ func main() {
 
 ---
 
-### Q5: What are the gotchas with shared underlying arrays and memory leaks? 🔴
+### Q5: What are the gotchas with shared underlying arrays and memory leaks? 🔴 🔴 [Senior]
 
 **A:** Đây là câu phân biệt Senior vs Junior. Có 2 gotcha chính:
 
@@ -267,7 +269,7 @@ func processLargeFile(filename string) []byte {
 
 ---
 
-### Q6: Full slice expression `a[low:high:max]` — what and why? 🔴
+### Q6: Full slice expression `a[low:high:max]` — what and why? 🔴 🔴 [Senior]
 
 **A:** Full slice expression giới hạn capacity của slice mới, ngăn chặn việc append vô tình ghi đè underlying array.
 
@@ -303,7 +305,7 @@ func SafeSubSlice(data []int, from, to int) []int {
 
 ## 2. String & Rune
 
-### Q7: Explain string vs []byte vs []rune in Go. 🟢
+### Q7: Explain string vs []byte vs []rune in Go. 🟢 🟢 [Junior]
 
 **A:** Trong Go, `string` là immutable sequence of bytes (UTF-8 encoded). `[]byte` là mutable byte slice. `[]rune` là mutable slice of Unicode code points.
 
@@ -358,7 +360,7 @@ func main() {
 
 ---
 
-### Q8: strings.Builder — why and how? 🟡
+### Q8: strings.Builder — why and how? 🟡 🟡 [Mid]
 
 **A:** String concatenation bằng `+` tạo string mới mỗi lần (vì string immutable), dẫn đến O(n^2) cho n concatenations. `strings.Builder` sử dụng internal `[]byte` buffer, chỉ convert sang string 1 lần cuối.
 
@@ -431,7 +433,7 @@ func main() {
 
 ---
 
-### Q9: Range over string — bytes vs runes? 🟢
+### Q9: Range over string — bytes vs runes? 🟢 🟢 [Junior]
 
 **A:**
 
@@ -477,7 +479,7 @@ func main() {
 
 ## 3. Hash Map (Go `map`)
 
-### Q10: How does Go map work internally? 🔴
+### Q10: How does Go map work internally? 🔴 🔴 [Senior]
 
 **A:** Go map là hash table implementation với bucket-based design. Kiến thức này rất hay được hỏi ở Senior level.
 
@@ -554,7 +556,7 @@ func main() {
 
 ---
 
-### Q11: Why is Go map NOT thread-safe? What happens with concurrent access? 🔴
+### Q11: Why is Go map NOT thread-safe? What happens with concurrent access? 🔴 🔴 [Senior]
 
 **A:** Go map không thread-safe by design (vì mutex cost cho mọi operation sẽ giảm performance cho single-goroutine use case — chiếm đa số). Concurrent read+write sẽ **crash chương trình** (fatal error, không recover được).
 
@@ -587,7 +589,7 @@ func main() {
 
 ---
 
-### Q12: sync.Map vs map+sync.RWMutex — when to use which? 🔴
+### Q12: sync.Map vs map+sync.RWMutex — when to use which? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -678,7 +680,7 @@ func main() {
 
 ## 4. Linked List
 
-### Q13: Implement a singly linked list in Go. 🟢
+### Q13: Implement a singly linked list in Go. 🟢 🟢 [Junior]
 
 **A:**
 
@@ -753,7 +755,7 @@ func main() {
 
 ---
 
-### Q14: Reverse a linked list (iterative & recursive). 🟡
+### Q14: Reverse a linked list (iterative & recursive). 🟡 🟡 [Mid]
 
 **A:** Bài kinh điển — Google và Grab rất hay hỏi.
 
@@ -796,7 +798,7 @@ func main() {
 
 ---
 
-### Q15: Detect cycle in linked list (Floyd's Tortoise and Hare). 🟡
+### Q15: Detect cycle in linked list (Floyd's Tortoise and Hare). 🟡 🟡 [Mid]
 
 **A:**
 
@@ -838,7 +840,7 @@ func detectCycleStart(head *ListNode) *ListNode {
 
 ---
 
-### Q16: Find middle node and merge two sorted linked lists. 🟡
+### Q16: Find middle node and merge two sorted linked lists. 🟡 🟡 [Mid]
 
 **A:**
 
@@ -896,7 +898,7 @@ func main() {
 
 ## 5. Stack & Queue
 
-### Q17: Implement Stack and Queue using slices. 🟢
+### Q17: Implement Stack and Queue using slices. 🟢 🟢 [Junior]
 
 **A:**
 
@@ -979,7 +981,7 @@ func main() {
 
 ---
 
-### Q18: Implement MinStack — getMin in O(1). 🟡
+### Q18: Implement MinStack — getMin in O(1). 🟡 🟡 [Mid]
 
 **A:** Bài LeetCode classic, hay được hỏi ở Grab và Google.
 
@@ -1042,7 +1044,7 @@ func main() {
 
 ---
 
-### Q19: Thread-safe bounded queue using channels. 🟡
+### Q19: Thread-safe bounded queue using channels. 🟡 🟡 [Mid]
 
 **A:** Channel trong Go bản chất là bounded, thread-safe queue.
 
@@ -1123,7 +1125,7 @@ func main() {
 
 ## 6. Tree
 
-### Q20: Implement all binary tree traversals in Go. 🟢
+### Q20: Implement all binary tree traversals in Go. 🟢 🟢 [Junior]
 
 **A:**
 
@@ -1252,7 +1254,7 @@ func main() {
 
 ---
 
-### Q21: BST operations — search, insert, validate, LCA. 🟡
+### Q21: BST operations — search, insert, validate, LCA. 🟡 🟡 [Mid]
 
 **A:**
 
@@ -1354,7 +1356,7 @@ func main() {
 
 ---
 
-### Q22: B-Tree vs B+ Tree — why do databases use B+ Tree? 🔴
+### Q22: B-Tree vs B+ Tree — why do databases use B+ Tree? 🔴 🔴 [Senior]
 
 **A:** Đây là câu rất hay hỏi cho Backend Senior (đặc biệt system design và database internals).
 
@@ -1410,7 +1412,7 @@ B+ Tree (order 3):
 
 ## 7. Heap / Priority Queue
 
-### Q23: Implement priority queue using container/heap. 🟡
+### Q23: Implement priority queue using container/heap. 🟡 🟡 [Mid]
 
 **A:** Go standard library có `container/heap` interface. Bạn implement 5 methods rồi `heap` lo phần logic.
 
@@ -1469,7 +1471,7 @@ func main() {
 
 ---
 
-### Q24: Top K elements pattern with heap. 🟡
+### Q24: Top K elements pattern with heap. 🟡 🟡 [Mid]
 
 **A:** Pattern quan trọng — dùng min-heap size K để tìm top K lớn nhất trong O(n log K).
 
@@ -1523,7 +1525,7 @@ func main() {
 
 ---
 
-### Q25: K closest points to origin (Grab geospatial interview). 🟡
+### Q25: K closest points to origin (Grab geospatial interview). 🟡 🟡 [Mid]
 
 **A:** Bài thường gặp ở Grab vì liên quan tới geospatial — tìm K tài xế gần nhất.
 
@@ -1601,7 +1603,7 @@ func main() {
 
 ## 8. Graph
 
-### Q26: Represent a graph with adjacency list in Go. 🟢
+### Q26: Represent a graph with adjacency list in Go. 🟢 🟢 [Junior]
 
 **A:**
 
@@ -1663,7 +1665,7 @@ func main() {
 
 ---
 
-### Q27: BFS and DFS — both iterative and recursive. 🟡
+### Q27: BFS and DFS — both iterative and recursive. 🟡 🟡 [Mid]
 
 **A:**
 
@@ -1771,7 +1773,7 @@ func main() {
 
 ---
 
-### Q28: Dijkstra's shortest path with priority queue. 🔴
+### Q28: Dijkstra's shortest path with priority queue. 🔴 🔴 [Senior]
 
 **A:** Dijkstra tìm shortest path từ nguồn đến tất cả nodes trong weighted graph (non-negative weights). Complexity: O((V + E) log V) với priority queue.
 
@@ -1900,7 +1902,7 @@ func main() {
 
 ---
 
-### Q29: Topological Sort — Kahn's algorithm (BFS). 🔴
+### Q29: Topological Sort — Kahn's algorithm (BFS). 🔴 🔴 [Senior]
 
 **A:** Topological sort xác định thứ tự thực hiện tasks có dependencies. Dùng nhiều trong build systems, course scheduling, microservice deployment order.
 
@@ -1980,7 +1982,7 @@ func main() {
 
 ## 9. Trie (Prefix Tree)
 
-### Q30: Implement Trie with Insert, Search, StartsWith, and Autocomplete. 🟡
+### Q30: Implement Trie with Insert, Search, StartsWith, and Autocomplete. 🟡 🟡 [Mid]
 
 **A:** Trie (prefix tree) cực kỳ hiệu quả cho prefix-based operations. Dùng trong autocomplete, spell check, IP routing (longest prefix match).
 
@@ -2101,7 +2103,7 @@ func main() {
 
 ## 10. Advanced Structures
 
-### Q31: Bloom Filter — concept and Go implementation. 🔴
+### Q31: Bloom Filter — concept and Go implementation. 🔴 🔴 [Senior]
 
 **A:** Bloom Filter là probabilistic data structure: trả lời "definitely NOT in set" hoặc "PROBABLY in set". Không bao giờ false negative, nhưng có thể false positive.
 
@@ -2199,7 +2201,7 @@ func main() {
 
 ---
 
-### Q32: Ring Buffer (Circular Buffer) implementation. 🔴
+### Q32: Ring Buffer (Circular Buffer) implementation. 🔴 🔴 [Senior]
 
 **A:** Ring Buffer là fixed-size buffer hoạt động như circular queue. Rất hiệu quả cho producer-consumer patterns, logging, network I/O buffering.
 
@@ -2306,7 +2308,7 @@ func main() {
 
 ---
 
-### Q33: Skip List concept — why Redis uses it for sorted sets. 🔴
+### Q33: Skip List concept — why Redis uses it for sorted sets. 🔴 🔴 [Senior]
 
 **A:** Skip List là probabilistic data structure — multi-level linked list cho phép O(log n) search, insert, delete. Redis dùng thay vì balanced BST cho ZSET.
 

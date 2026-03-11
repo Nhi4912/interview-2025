@@ -1,784 +1,804 @@
-# JavaScript Language Theory
-## Theoretical Foundations of JavaScript
+# Frontend Theory 01: JavaScript Language Theory
 
-**English:** JavaScript language theory explores the formal semantics, type systems, and computational models underlying JavaScript, providing deep understanding of language behavior, optimization opportunities, and design patterns.
+**Tổng Quan:** Tài liệu song ngữ (EN heading + VI explanation) cho phần lý thuyết Frontend nâng cao, dùng trực tiếp để luyện interview.
+**Giải thích:** Lý thuyết ngôn ngữ JavaScript cho phỏng vấn Frontend. Mỗi câu hỏi đi từ nền tảng đến quyết định kiến trúc và chiến lược tối ưu.
+**Ví dụ:** Có snippet ngắn để nối giữa lý thuyết và cách triển khai thực tế trong dự án.
 
-**Tiếng Việt:** Lý thuyết ngôn ngữ JavaScript khám phá ngữ nghĩa hình thức, hệ thống kiểu và các mô hình tính toán làm nền tảng cho JavaScript, cung cấp hiểu biết sâu sắc về hành vi ngôn ngữ, cơ hội tối ưu hóa và các mẫu thiết kế.
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-## Table of Contents
-1. [Formal Semantics of JavaScript](#formal-semantics-of-javascript)
-2. [Type Theory in JavaScript](#type-theory-in-javascript)
-3. [Execution Model](#execution-model)
-4. [Scope and Closure Theory](#scope-and-closure-theory)
-5. [Prototype Chain Theory](#prototype-chain-theory)
-6. [Asynchronous Computation Model](#asynchronous-computation-model)
-7. [Memory Model](#memory-model)
-8. [Optimization Theory](#optimization-theory)
-9. [Language Design Principles](#language-design-principles)
-10. [Formal Verification of JavaScript](#formal-verification-of-javascript)
+### Interview Usage Guide
+- `🟢 [Junior]`: định nghĩa đúng và nắm cơ chế cơ bản.
+- `🟡 [Mid]`: phân tích trade-off và tác động implementation.
+- `🔴 [Senior]`: đưa ra quyết định kỹ thuật có điều kiện và plan giảm rủi ro.
 
-## Formal Semantics of JavaScript
+## Topic 1: Operational semantics and evaluation order
 
-### Operational Semantics
+### 🟢 [Junior] Q1: How would you explain operational semantics and evaluation order in a real interview?
 
-**Small-Step Semantics:**
-Defines how program state transitions one step at a time.
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
 
-**State:**
-σ = (heap, stack, environment)
+**Giải thích (Explanation):** Với **Operational semantics and evaluation order**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-**Transition Relation:**
-⟨e, σ⟩ → ⟨e', σ'⟩
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-Expression e in state σ transitions to e' in state σ'.
-
-**Example - Variable Assignment:**
-```
-⟨x = v, σ⟩ → ⟨v, σ[x ↦ v]⟩
-```
-
-**Evaluation Contexts:**
-E ::= [] | E + e | v + E | E.f | ...
-
-**Context Rule:**
-```
-⟨e, σ⟩ → ⟨e', σ'⟩
-─────────────────────
-⟨E[e], σ⟩ → ⟨E[e'], σ'⟩
-```
-
-### Denotational Semantics
-
-**Meaning Function:**
-⟦·⟧: Expression → Environment → Value
-
-**Compositional:**
-Meaning of compound expression defined in terms of subexpressions.
-
-**Example - Addition:**
-⟦e₁ + e₂⟧ρ = ⟦e₁⟧ρ + ⟦e₂⟧ρ
-
-**Function Application:**
-⟦f(e)⟧ρ = apply(⟦f⟧ρ, ⟦e⟧ρ)
-
-**Challenges:**
-- Side effects
-- Exceptions
-- Asynchronous operations
-
-**Monadic Semantics:**
-Use monads to handle effects.
-
-### Axiomatic Semantics
-
-**Hoare Logic for JavaScript:**
-{P} C {Q}
-
-**Assignment:**
-{Q[x ← E]} x = E {Q}
-
-**Sequence:**
-```
-{P} C₁ {R}    {R} C₂ {Q}
-──────────────────────────
-{P} C₁; C₂ {Q}
-```
-
-**Function Call:**
-Requires specification of function behavior.
-
-**Challenges:**
-- Dynamic typing
-- Prototype mutation
-- Global state
-
-## Type Theory in JavaScript
-
-### Dynamic Type System
-
-**Runtime Type Checking:**
-Types checked during execution, not compilation.
-
-**Type Coercion:**
-Implicit conversion between types.
-
-**Coercion Rules:**
-- String + Number → String concatenation
-- Number + Boolean → Numeric addition
-- Comparison operators trigger coercion
-
-**Abstract Operations:**
-- ToPrimitive(input, hint)
-- ToNumber(argument)
-- ToString(argument)
-- ToBoolean(argument)
-
-**Type Lattice:**
-```
-        Any
-       /   \
-   Object  Primitive
-    / \      / | \
-  ...  ... Num Str Bool ...
-```
-
-### Gradual Typing
-
-**TypeScript Type System:**
-Optional static types with gradual guarantees.
-
-**Type Inference:**
-Infer types from usage patterns.
-
-**Structural Typing:**
-Compatibility based on structure, not names.
-
-**Subtyping:**
-```
-interface A { x: number }
-interface B { x: number, y: string }
-```
-B <: A (B is subtype of A)
-
-**Soundness:**
-TypeScript is not sound - runtime types may differ from static types.
-
-**Any Type:**
-Escape hatch from type system.
-
-### Flow Analysis
-
-**Control Flow Analysis:**
-Track types through program flow.
-
-**Refinement Types:**
-```
-function f(x: string | number) {
-  if (typeof x === "string") {
-    // x: string here
-  } else {
-    // x: number here
-  }
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
 }
 ```
 
-**Narrowing:**
-- typeof guards
-- instanceof checks
-- Truthiness checks
-- Equality checks
+**Cross-reference:** [17-frontend-theory-05-javascript-engine-internals.md](./17-frontend-theory-05-javascript-engine-internals.md)
 
-**Union and Intersection Types:**
-- Union: A | B (either A or B)
-- Intersection: A & B (both A and B)
+### 🟡 [Mid] Q2: How would you explain operational semantics and evaluation order in a real interview?
 
-## Execution Model
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
 
-### Event Loop Theory
+**Giải thích (Explanation):** Với **Operational semantics and evaluation order**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-**Call Stack:**
-LIFO structure for function calls.
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-**Task Queue:**
-FIFO queue for callbacks.
-
-**Microtask Queue:**
-Higher priority queue for promises.
-
-**Event Loop Algorithm:**
-```
-while (true) {
-  if (call_stack.empty()) {
-    if (!microtask_queue.empty()) {
-      task = microtask_queue.dequeue()
-      execute(task)
-    } else if (!task_queue.empty()) {
-      task = task_queue.dequeue()
-      execute(task)
-    }
-  }
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
 }
 ```
 
-**Execution Phases:**
-1. Execute synchronous code
-2. Process all microtasks
-3. Render (in browser)
-4. Process one macrotask
-5. Repeat
+**Cross-reference:** [17-frontend-theory-10-async-programming-theory.md](./17-frontend-theory-10-async-programming-theory.md)
 
-**Starvation:**
-Microtasks can starve macrotasks.
+### 🔴 [Senior] Q3: How would you explain operational semantics and evaluation order in a real interview?
 
-### Concurrency Model
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
 
-**Run-to-Completion:**
-Each task runs to completion before next task.
+**Giải thích (Explanation):** Với **Operational semantics and evaluation order**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-**No Shared Memory:**
-No threads sharing memory (in single-threaded JS).
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-**Message Passing:**
-Communication via events and callbacks.
-
-**Happens-Before Relation:**
-- Synchronous code: program order
-- Async: callback order
-- Promises: then chain order
-
-**Memory Consistency:**
-Sequential consistency within single thread.
-
-### Web Workers
-
-**Parallel Execution:**
-True parallelism via separate threads.
-
-**Shared Nothing:**
-No shared memory between workers.
-
-**Message Passing:**
-postMessage/onmessage for communication.
-
-**Structured Clone:**
-Deep copy of data for messages.
-
-**Transferable Objects:**
-Transfer ownership without copying.
-
-## Scope and Closure Theory
-
-### Lexical Scoping
-
-**Static Scope:**
-Scope determined by source code structure.
-
-**Scope Chain:**
-Nested environments forming chain.
-
-**Environment:**
-Mapping from identifiers to values.
-
-**Lookup Algorithm:**
-```
-lookup(x, env):
-  if x ∈ env:
-    return env[x]
-  else if env.parent:
-    return lookup(x, env.parent)
-  else:
-    throw ReferenceError
-```
-
-**Block Scoping:**
-let/const create block-level bindings.
-
-**Temporal Dead Zone:**
-Variables not accessible before declaration.
-
-### Closure Theory
-
-**Mathematical Definition:**
-Closure is pair (λx.e, ρ) where:
-- λx.e: Lambda abstraction
-- ρ: Environment capturing free variables
-
-**Free Variables:**
-Variables not bound in function body.
-
-**Closure Conversion:**
-Transform to make environment explicit.
-
-**Example:**
-```
-function outer(x) {
-  return function inner(y) {
-    return x + y;
-  }
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
 }
 ```
 
-Closure captures x from outer's environment.
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
 
-**Closure Properties:**
-- First-class values
-- Persistent environment
-- Lexical scope
+## Topic 2: Dynamic typing and coercion rules
 
-**Applications:**
-- Data hiding
-- Partial application
-- Module pattern
-- Callbacks
+### 🟢 [Junior] Q4: How would you explain dynamic typing and coercion rules in a real interview?
 
-### Hoisting Theory
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
 
-**Variable Hoisting:**
-Declarations moved to top of scope.
+**Giải thích (Explanation):** Với **Dynamic typing and coercion rules**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-**Two-Phase Processing:**
-1. Creation phase: Allocate bindings
-2. Execution phase: Assign values
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-**var Hoisting:**
-```
-// Source
-console.log(x); // undefined
-var x = 5;
-
-// Equivalent
-var x;
-console.log(x);
-x = 5;
-```
-
-**Function Hoisting:**
-Function declarations hoisted with body.
-
-**let/const:**
-Hoisted but in TDZ until declaration.
-
-## Prototype Chain Theory
-
-### Prototype Delegation
-
-**Prototype Chain:**
-Linked list of objects for property lookup.
-
-**[[Prototype]] Internal Slot:**
-Hidden link to prototype object.
-
-**Lookup Algorithm:**
-```
-getProperty(obj, prop):
-  if prop ∈ obj:
-    return obj[prop]
-  else if obj.[[Prototype]]:
-    return getProperty(obj.[[Prototype]], prop)
-  else:
-    return undefined
-```
-
-**Delegation vs. Inheritance:**
-JavaScript uses delegation, not classical inheritance.
-
-**Dynamic Dispatch:**
-Method resolution at runtime via prototype chain.
-
-### Constructor Functions
-
-**new Operator Semantics:**
-```
-new F(args):
-  obj = Object.create(F.prototype)
-  result = F.apply(obj, args)
-  return (typeof result === 'object') ? result : obj
-```
-
-**Constructor Property:**
-F.prototype.constructor === F
-
-**instanceof Operator:**
-```
-obj instanceof F:
-  proto = obj.[[Prototype]]
-  while (proto !== null):
-    if proto === F.prototype:
-      return true
-    proto = proto.[[Prototype]]
-  return false
-```
-
-### Class Syntax
-
-**Syntactic Sugar:**
-Classes are functions with prototype.
-
-**Desugaring:**
-```
-class C extends P {
-  constructor(x) { super(x); }
-  method() { }
-}
-
-// Roughly equivalent to:
-function C(x) { P.call(this, x); }
-C.prototype = Object.create(P.prototype);
-C.prototype.constructor = C;
-C.prototype.method = function() { };
-```
-
-**Super Keyword:**
-Accesses parent prototype methods.
-
-**Static Methods:**
-Properties on constructor function itself.
-
-## Asynchronous Computation Model
-
-### Callback Theory
-
-**Continuation-Passing Style:**
-Pass continuation (callback) as argument.
-
-**CPS Transform:**
-```
-// Direct style
-function f(x) { return x + 1; }
-
-// CPS
-function f_cps(x, k) { k(x + 1); }
-```
-
-**Callback Hell:**
-Nested callbacks reduce readability.
-
-**Inversion of Control:**
-Caller loses control to callee.
-
-### Promise Theory
-
-**Promise States:**
-- Pending: Initial state
-- Fulfilled: Operation completed successfully
-- Rejected: Operation failed
-
-**State Transitions:**
-```
-Pending → Fulfilled
-Pending → Rejected
-```
-
-Once settled, state is immutable.
-
-**Promise Laws:**
-1. **Left identity:** Promise.resolve(x).then(f) ≡ f(x)
-2. **Right identity:** p.then(Promise.resolve) ≡ p
-3. **Associativity:** p.then(f).then(g) ≡ p.then(x => f(x).then(g))
-
-**Monad Structure:**
-Promises form a monad:
-- return: Promise.resolve
-- bind: then
-
-**Thenable:**
-Object with then method (duck typing).
-
-**Promise Resolution:**
-Recursive unwrapping of thenables.
-
-### Async/Await Theory
-
-**Syntactic Sugar:**
-async/await is syntactic sugar for promises.
-
-**Desugaring:**
-```
-async function f() {
-  const x = await p;
-  return x + 1;
-}
-
-// Roughly equivalent to:
-function f() {
-  return p.then(x => x + 1);
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
 }
 ```
 
-**State Machine:**
-Async functions compiled to state machines.
+**Cross-reference:** [17-frontend-theory-05-javascript-engine-internals.md](./17-frontend-theory-05-javascript-engine-internals.md)
 
-**Suspension Points:**
-await expressions are suspension points.
+### 🟡 [Mid] Q5: How would you explain dynamic typing and coercion rules in a real interview?
 
-**Resumption:**
-Promise resolution resumes execution.
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
 
-**Error Handling:**
-try/catch works with async/await.
+**Giải thích (Explanation):** Với **Dynamic typing and coercion rules**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-## Memory Model
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-### Heap Structure
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
 
-**Object Representation:**
-Objects stored as property maps.
+**Cross-reference:** [17-frontend-theory-10-async-programming-theory.md](./17-frontend-theory-10-async-programming-theory.md)
 
-**Hidden Classes:**
-V8 uses hidden classes for optimization.
+### 🔴 [Senior] Q6: How would you explain dynamic typing and coercion rules in a real interview?
 
-**Inline Caching:**
-Cache property access based on hidden class.
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
 
-**Property Storage:**
-- In-object properties: Fast access
-- Out-of-object properties: Slower, in separate array
+**Giải thích (Explanation):** Với **Dynamic typing and coercion rules**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-**Arrays:**
-- Dense arrays: Contiguous storage
-- Sparse arrays: Hash table storage
-- Holey arrays: Arrays with holes
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-### Garbage Collection
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
 
-**Generational Hypothesis:**
-Most objects die young.
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
 
-**Generational GC:**
-- Young generation: Frequent, fast collection
-- Old generation: Infrequent, thorough collection
+## Topic 3: Scope chain and lexical environment
 
-**Mark-and-Sweep:**
-1. Mark reachable objects
-2. Sweep unreachable objects
+### 🟢 [Junior] Q7: How would you explain scope chain and lexical environment in a real interview?
 
-**Tri-Color Marking:**
-- White: Not visited
-- Gray: Visited, children not processed
-- Black: Visited, children processed
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
 
-**Incremental GC:**
-Interleave marking with execution.
+**Giải thích (Explanation):** Với **Scope chain and lexical environment**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-**Concurrent GC:**
-Mark in parallel with execution.
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-**Write Barriers:**
-Track old-to-young pointers.
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
 
-### Memory Leaks
+**Cross-reference:** [17-frontend-theory-05-javascript-engine-internals.md](./17-frontend-theory-05-javascript-engine-internals.md)
 
-**Common Causes:**
-- Forgotten timers
-- Closures capturing large objects
-- Detached DOM nodes
-- Global variables
+### 🟡 [Mid] Q8: How would you explain scope chain and lexical environment in a real interview?
 
-**Reference Counting:**
-Not used in modern JS (circular references).
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
 
-**Weak References:**
-WeakMap/WeakSet allow garbage collection.
+**Giải thích (Explanation):** Với **Scope chain and lexical environment**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-## Optimization Theory
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-### Just-In-Time Compilation
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
 
-**Interpretation:**
-Execute bytecode directly.
+**Cross-reference:** [17-frontend-theory-10-async-programming-theory.md](./17-frontend-theory-10-async-programming-theory.md)
 
-**Baseline Compiler:**
-Quick compilation to machine code.
+### 🔴 [Senior] Q9: How would you explain scope chain and lexical environment in a real interview?
 
-**Optimizing Compiler:**
-Aggressive optimization for hot code.
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
 
-**Tiered Compilation:**
-1. Interpret
-2. Baseline compile
-3. Optimize hot functions
+**Giải thích (Explanation):** Với **Scope chain and lexical environment**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-**Deoptimization:**
-Fall back when assumptions violated.
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-### Type Specialization
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
 
-**Monomorphic:**
-Single type at call site.
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
 
-**Polymorphic:**
-Few types at call site.
+## Topic 4: Closures and encapsulation boundaries
 
-**Megamorphic:**
-Many types at call site.
+### 🟢 [Junior] Q10: How would you explain closures and encapsulation boundaries in a real interview?
 
-**Inline Caching:**
-Cache based on types seen.
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
 
-**Speculative Optimization:**
-Assume types, deoptimize if wrong.
+**Giải thích (Explanation):** Với **Closures and encapsulation boundaries**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-### Inlining
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-**Function Inlining:**
-Replace call with function body.
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
 
-**Benefits:**
-- Eliminate call overhead
-- Enable further optimizations
-- Improve locality
+**Cross-reference:** [17-frontend-theory-05-javascript-engine-internals.md](./17-frontend-theory-05-javascript-engine-internals.md)
 
-**Heuristics:**
-- Function size
-- Call frequency
-- Polymorphism
+### 🟡 [Mid] Q11: How would you explain closures and encapsulation boundaries in a real interview?
 
-**Deoptimization:**
-If inlined function changes, deoptimize.
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
 
-### Escape Analysis
+**Giải thích (Explanation):** Với **Closures and encapsulation boundaries**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-**Definition:**
-Determine if object escapes function.
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-**Stack Allocation:**
-Allocate non-escaping objects on stack.
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
 
-**Scalar Replacement:**
-Replace object with individual variables.
+**Cross-reference:** [17-frontend-theory-10-async-programming-theory.md](./17-frontend-theory-10-async-programming-theory.md)
 
-**Benefits:**
-- Reduce GC pressure
-- Improve cache locality
-- Enable further optimizations
+### 🔴 [Senior] Q12: How would you explain closures and encapsulation boundaries in a real interview?
 
-## Language Design Principles
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
 
-### First-Class Functions
+**Giải thích (Explanation):** Với **Closures and encapsulation boundaries**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-**Functions as Values:**
-Can be passed, returned, stored.
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-**Higher-Order Functions:**
-Functions taking/returning functions.
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
 
-**Theoretical Foundation:**
-Lambda calculus.
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
 
-**Benefits:**
-- Abstraction
-- Composition
-- Modularity
+## Topic 5: Hoisting and temporal dead zone
 
-### Dynamic Typing
+### 🟢 [Junior] Q13: How would you explain hoisting and temporal dead zone in a real interview?
 
-**Flexibility:**
-No type annotations required.
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
 
-**Duck Typing:**
-"If it walks like a duck..."
+**Giải thích (Explanation):** Với **Hoisting and temporal dead zone**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-**Trade-offs:**
-- Flexibility vs. safety
-- Expressiveness vs. performance
-- Development speed vs. maintenance
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-**Gradual Typing:**
-Optional static types (TypeScript).
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
 
-### Prototype-Based OOP
+**Cross-reference:** [17-frontend-theory-05-javascript-engine-internals.md](./17-frontend-theory-05-javascript-engine-internals.md)
 
-**Delegation:**
-Objects delegate to prototypes.
+### 🟡 [Mid] Q14: How would you explain hoisting and temporal dead zone in a real interview?
 
-**Flexibility:**
-Modify prototypes at runtime.
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
 
-**Comparison to Classes:**
-- More flexible
-- Less structured
-- Different mental model
+**Giải thích (Explanation):** Với **Hoisting and temporal dead zone**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-**Theoretical Foundation:**
-Self language.
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-### Asynchronous by Default
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
 
-**Non-Blocking I/O:**
-Don't wait for I/O operations.
+**Cross-reference:** [17-frontend-theory-10-async-programming-theory.md](./17-frontend-theory-10-async-programming-theory.md)
 
-**Event-Driven:**
-React to events.
+### 🔴 [Senior] Q15: How would you explain hoisting and temporal dead zone in a real interview?
 
-**Single-Threaded:**
-Avoid concurrency issues.
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
 
-**Trade-offs:**
-- Complexity of async code
-- Callback hell
-- Promises/async-await help
+**Giải thích (Explanation):** Với **Hoisting and temporal dead zone**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-## Formal Verification of JavaScript
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-### Static Analysis
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
 
-**Abstract Interpretation:**
-Over-approximate program behavior.
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
 
-**Type Inference:**
-Infer types from usage.
+## Topic 6: Prototype chain and delegation
 
-**Flow Analysis:**
-Track data flow through program.
+### 🟢 [Junior] Q16: How would you explain prototype chain and delegation in a real interview?
 
-**Tools:**
-- Flow
-- TypeScript
-- ESLint
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
 
-### Model Checking
+**Giải thích (Explanation):** Với **Prototype chain and delegation**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-**State Space Exploration:**
-Explore all possible executions.
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-**Challenges:**
-- Infinite state space
-- Dynamic features
-- Asynchronous execution
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
 
-**Abstraction:**
-Reduce state space via abstraction.
+**Cross-reference:** [17-frontend-theory-05-javascript-engine-internals.md](./17-frontend-theory-05-javascript-engine-internals.md)
 
-### Theorem Proving
+### 🟡 [Mid] Q17: How would you explain prototype chain and delegation in a real interview?
 
-**Mechanized Semantics:**
-Formal semantics in proof assistant.
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
 
-**Verified Compiler:**
-Prove compiler correctness.
+**Giải thích (Explanation):** Với **Prototype chain and delegation**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-**Examples:**
-- JSCert: Coq formalization
-- KJS: K framework semantics
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-### Testing and Verification
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
 
-**Property-Based Testing:**
-Generate test cases from properties.
+**Cross-reference:** [17-frontend-theory-10-async-programming-theory.md](./17-frontend-theory-10-async-programming-theory.md)
 
-**Symbolic Execution:**
-Execute with symbolic values.
+### 🔴 [Senior] Q18: How would you explain prototype chain and delegation in a real interview?
 
-**Concolic Testing:**
-Combine concrete and symbolic execution.
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
 
-**Tools:**
-- QuickCheck
-- JSVerify
-- Jalangi
+**Giải thích (Explanation):** Với **Prototype chain and delegation**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-## Interview Questions
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-**Q: Explain JavaScript's execution model and event loop.**
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
 
-A: JavaScript uses a single-threaded event loop with call stack, task queue, and microtask queue. Synchronous code executes on call stack. When stack is empty, event loop processes microtasks (promises) first, then one macrotask (setTimeout, I/O). This provides run-to-completion semantics - each task runs completely before next. Microtasks can starve macrotasks. This model avoids race conditions but requires non-blocking I/O.
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
 
-**Q: How do closures work in JavaScript from a theoretical perspective?**
+## Topic 7: Object model and property descriptors
 
-A: Closures are pairs (λx.e, ρ) of function and captured environment. When function is created, it captures free variables from enclosing scope. Lookup follows scope chain through nested environments. This implements lexical scoping - scope determined by source structure, not call stack. Closures enable data hiding, partial application, and callbacks. They're first-class values with persistent environments.
+### 🟢 [Junior] Q19: How would you explain object model and property descriptors in a real interview?
 
-**Q: Explain prototype delegation vs. classical inheritance.**
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
 
-A: JavaScript uses prototype delegation, not classical inheritance. Objects have [[Prototype]] link forming chain. Property lookup traverses chain until found or null. This is delegation - object delegates to prototype. Classical inheritance copies behavior to subclass. Delegation is more flexible (runtime modification) but less structured. instanceof checks prototype chain. Classes are syntactic sugar over prototypes.
+**Giải thích (Explanation):** Với **Object model and property descriptors**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-**Q: How do promises form a monad?**
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-A: Promises satisfy monad laws with return = Promise.resolve and bind = then. Laws: (1) Left identity: Promise.resolve(x).then(f) ≡ f(x), (2) Right identity: p.then(Promise.resolve) ≡ p, (3) Associativity: p.then(f).then(g) ≡ p.then(x => f(x).then(g)). This provides composable asynchronous computation. Async/await is syntactic sugar for monadic operations. Promise resolution recursively unwraps thenables.
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
 
-**Q: Explain JavaScript's memory model and garbage collection.**
+**Cross-reference:** [17-frontend-theory-05-javascript-engine-internals.md](./17-frontend-theory-05-javascript-engine-internals.md)
 
-A: JavaScript uses generational garbage collection based on generational hypothesis (most objects die young). Young generation has frequent, fast collection (Scavenging). Old generation has infrequent, thorough collection (Mark-and-Sweep). Modern engines use tri-color marking, incremental GC (interleave with execution), and concurrent GC (parallel marking). Write barriers track old-to-young pointers. No reference counting (circular references). WeakMap/WeakSet allow garbage collection of keys.
+### 🟡 [Mid] Q20: How would you explain object model and property descriptors in a real interview?
 
----
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
 
-[← Back to Complexity Theory](../16-theoretical-foundations/09-complexity-theory-advanced.md) | [Next: Browser Architecture Theory →](./02-browser-architecture-theory.md)
+**Giải thích (Explanation):** Với **Object model and property descriptors**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-10-async-programming-theory.md](./17-frontend-theory-10-async-programming-theory.md)
+
+### 🔴 [Senior] Q21: How would you explain object model and property descriptors in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Object model and property descriptors**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
+
+## Topic 8: This binding model in JavaScript
+
+### 🟢 [Junior] Q22: How would you explain this binding model in javascript in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **This binding model in JavaScript**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-05-javascript-engine-internals.md](./17-frontend-theory-05-javascript-engine-internals.md)
+
+### 🟡 [Mid] Q23: How would you explain this binding model in javascript in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **This binding model in JavaScript**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-10-async-programming-theory.md](./17-frontend-theory-10-async-programming-theory.md)
+
+### 🔴 [Senior] Q24: How would you explain this binding model in javascript in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **This binding model in JavaScript**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
+
+## Topic 9: Event loop and run-to-completion
+
+### 🟢 [Junior] Q25: How would you explain event loop and run-to-completion in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Event loop and run-to-completion**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+const controller = new AbortController();
+const task = fetch('/api/data', { signal: controller.signal })
+  .then((r) => r.json())
+  .finally(() => console.log('done'));
+
+queueMicrotask(() => console.log('microtask after current turn'));
+```
+
+**Cross-reference:** [17-frontend-theory-05-javascript-engine-internals.md](./17-frontend-theory-05-javascript-engine-internals.md)
+
+### 🟡 [Mid] Q26: How would you explain event loop and run-to-completion in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Event loop and run-to-completion**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+const controller = new AbortController();
+const task = fetch('/api/data', { signal: controller.signal })
+  .then((r) => r.json())
+  .finally(() => console.log('done'));
+
+queueMicrotask(() => console.log('microtask after current turn'));
+```
+
+**Cross-reference:** [17-frontend-theory-10-async-programming-theory.md](./17-frontend-theory-10-async-programming-theory.md)
+
+### 🔴 [Senior] Q27: How would you explain event loop and run-to-completion in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Event loop and run-to-completion**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+const controller = new AbortController();
+const task = fetch('/api/data', { signal: controller.signal })
+  .then((r) => r.json())
+  .finally(() => console.log('done'));
+
+queueMicrotask(() => console.log('microtask after current turn'));
+```
+
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
+
+## Topic 10: Promises and microtask semantics
+
+### 🟢 [Junior] Q28: How would you explain promises and microtask semantics in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Promises and microtask semantics**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+const controller = new AbortController();
+const task = fetch('/api/data', { signal: controller.signal })
+  .then((r) => r.json())
+  .finally(() => console.log('done'));
+
+queueMicrotask(() => console.log('microtask after current turn'));
+```
+
+**Cross-reference:** [17-frontend-theory-05-javascript-engine-internals.md](./17-frontend-theory-05-javascript-engine-internals.md)
+
+### 🟡 [Mid] Q29: How would you explain promises and microtask semantics in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Promises and microtask semantics**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+const controller = new AbortController();
+const task = fetch('/api/data', { signal: controller.signal })
+  .then((r) => r.json())
+  .finally(() => console.log('done'));
+
+queueMicrotask(() => console.log('microtask after current turn'));
+```
+
+**Cross-reference:** [17-frontend-theory-10-async-programming-theory.md](./17-frontend-theory-10-async-programming-theory.md)
+
+### 🔴 [Senior] Q30: How would you explain promises and microtask semantics in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Promises and microtask semantics**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+const controller = new AbortController();
+const task = fetch('/api/data', { signal: controller.signal })
+  .then((r) => r.json())
+  .finally(() => console.log('done'));
+
+queueMicrotask(() => console.log('microtask after current turn'));
+```
+
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
+
+## Topic 11: Memory model and references
+
+### 🟢 [Junior] Q31: How would you explain memory model and references in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Memory model and references**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-05-javascript-engine-internals.md](./17-frontend-theory-05-javascript-engine-internals.md)
+
+### 🟡 [Mid] Q32: How would you explain memory model and references in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Memory model and references**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-10-async-programming-theory.md](./17-frontend-theory-10-async-programming-theory.md)
+
+### 🔴 [Senior] Q33: How would you explain memory model and references in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Memory model and references**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
+
+## Topic 12: JIT assumptions and deoptimization
+
+### 🟢 [Junior] Q34: How would you explain jit assumptions and deoptimization in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **JIT assumptions and deoptimization**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-05-javascript-engine-internals.md](./17-frontend-theory-05-javascript-engine-internals.md)
+
+### 🟡 [Mid] Q35: How would you explain jit assumptions and deoptimization in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **JIT assumptions and deoptimization**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-10-async-programming-theory.md](./17-frontend-theory-10-async-programming-theory.md)
+
+### 🔴 [Senior] Q36: How would you explain jit assumptions and deoptimization in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **JIT assumptions and deoptimization**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```javascript
+function explain(topic, value) {
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  return { topic, normalized, timestamp: Date.now() };
+}
+```
+
+**Cross-reference:** [17-frontend-theory-09-state-management-theory.md](./17-frontend-theory-09-state-management-theory.md)
