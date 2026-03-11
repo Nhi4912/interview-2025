@@ -336,23 +336,23 @@ Requires 3f + 1 generals to tolerate f traitors.
 
 ## Interview Questions
 
-**Q: What is the consensus problem?**
+**Q: What is the consensus problem? 🟡 [Mid]**
 
 A: Consensus requires distributed processes to agree on single value. Must satisfy agreement (all decide same), validity (decided value was proposed), termination (all eventually decide), and integrity (decide once). FLP theorem proves impossible in asynchronous systems with failures.
 
-**Q: Explain Paxos algorithm.**
+**Q: Explain Paxos algorithm. 🔴 [Senior]**
 
 A: Paxos achieves consensus through two phases: Prepare (proposer gets promises from acceptors) and Accept (proposer sends value, acceptors accept if no higher promise). Requires majority for decisions. Complex but foundational algorithm.
 
-**Q: How does Raft differ from Paxos?**
+**Q: How does Raft differ from Paxos? 🟡 [Mid]**
 
 A: Raft designed for understandability with strong leader, explicit leader election, and log replication. Provides same guarantees as Paxos but easier to understand and implement. Uses terms for logical time and randomized timeouts for elections.
 
-**Q: What is Byzantine fault tolerance?**
+**Q: What is Byzantine fault tolerance? 🔴 [Senior]**
 
 A: Handling malicious or arbitrary failures where nodes may send conflicting messages. Requires 3f+1 nodes for f failures. PBFT is practical algorithm using three-phase protocol with cryptographic signatures.
 
-**Q: Why is consensus important?**
+**Q: Why is consensus important? 🟢 [Junior]**
 
 A: Consensus is foundation for distributed systems enabling leader election, atomic broadcast, state machine replication, and distributed transactions. Critical for databases, coordination services, and blockchain systems.
 

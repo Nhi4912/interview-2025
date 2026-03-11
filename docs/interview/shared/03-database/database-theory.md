@@ -1187,7 +1187,7 @@ RETURN friend.name
 
 ## Interview Questions
 
-**Q: Explain ACID properties with examples.**
+**Q: Explain ACID properties with examples. 🟢 [Junior]**
 
 A: ACID ensures reliable transactions:
 - **Atomicity:** All operations succeed or all fail (bank transfer: debit and credit both happen or neither)
@@ -1195,21 +1195,21 @@ A: ACID ensures reliable transactions:
 - **Isolation:** Concurrent transactions don't interfere (two transfers don't see each other's intermediate states)
 - **Durability:** Committed changes persist (transaction survives system crash)
 
-**Q: What's the difference between 2NF and 3NF?**
+**Q: What's the difference between 2NF and 3NF? 🟡 [Mid]**
 
 A: 2NF eliminates partial dependencies (non-key attributes must depend on entire primary key), while 3NF eliminates transitive dependencies (non-key attributes must depend only on primary key, not on other non-key attributes).
 
-**Q: How do you choose between SQL and NoSQL?**
+**Q: How do you choose between SQL and NoSQL? 🟡 [Mid]**
 
 A: Consider:
 - **SQL:** Complex queries, ACID requirements, structured data, relationships
 - **NoSQL:** Horizontal scaling, flexible schema, high throughput, eventual consistency acceptable
 
-**Q: Explain the CAP theorem.**
+**Q: Explain the CAP theorem. 🟡 [Mid]**
 
 A: CAP states you can only guarantee 2 of 3: Consistency (all nodes see same data), Availability (every request gets response), Partition Tolerance (system works despite network failures). In practice, partition tolerance is required, so you choose between CP (consistent but may be unavailable) or AP (available but may be inconsistent).
 
-**Q: What's the difference between clustered and non-clustered indexes?**
+**Q: What's the difference between clustered and non-clustered indexes? 🟡 [Mid]**
 
 A: Clustered index determines physical order of data (one per table, usually primary key). Non-clustered index is separate structure with pointers to data (multiple per table). Clustered is faster for range queries, non-clustered is better for specific lookups.
 

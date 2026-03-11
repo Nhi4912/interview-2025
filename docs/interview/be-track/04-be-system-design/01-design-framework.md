@@ -4,7 +4,7 @@
 
 ## 1. System Design Interview Framework
 
-### Q: Trình bày framework 5 bước để approach một bài System Design Interview? 🟢
+### Q: Trình bày framework 5 bước để approach một bài System Design Interview? 🟢 [Junior]
 
 **A:**
 
@@ -36,7 +36,7 @@ System Design Interview thường kéo dài 45-60 phút. Framework chuẩn chia 
 
 ---
 
-### Q: Step 1 - Requirements Clarification: Functional vs Non-functional? 🟡
+### Q: Step 1 - Requirements Clarification: Functional vs Non-functional? 🟡 [Mid]
 
 **A:**
 
@@ -67,7 +67,7 @@ NFR Questions:
 
 ---
 
-### Q: Step 3 - High-Level Design gồm những gì? Step 4 - Deep Dive nên focus đâu? 🟡
+### Q: Step 3 - High-Level Design gồm những gì? Step 4 - Deep Dive nên focus đâu? 🟡 [Mid]
 
 **A:**
 
@@ -96,7 +96,7 @@ Không chỉ nói "dùng Redis cache" mà phải giải thích: Cache policy nà
 
 ## 2. Back-of-Envelope Numbers
 
-### Q: Latency numbers mà mọi programmer nên biết? 🟢
+### Q: Latency numbers mà mọi programmer nên biết? 🟢 [Junior]
 
 **A:**
 
@@ -124,7 +124,7 @@ Không chỉ nói "dùng Redis cache" mà phải giải thích: Cache policy nà
 
 ---
 
-### Q: Power of 2 table và common data sizes? 🟢
+### Q: Power of 2 table và common data sizes? 🟢 [Junior]
 
 **A:**
 
@@ -139,7 +139,7 @@ Không chỉ nói "dùng Redis cache" mà phải giải thích: Cache policy nà
 
 ---
 
-### Q: Các công thức estimation thường dùng? 🟡
+### Q: Các công thức estimation thường dùng? 🟡 [Mid]
 
 **A:**
 
@@ -162,7 +162,7 @@ Không chỉ nói "dùng Redis cache" mà phải giải thích: Cache policy nà
 
 ---
 
-### Q: Ví dụ estimation cho Chat System (200M DAU) và URL Shortener (100M DAU)? 🟡
+### Q: Ví dụ estimation cho Chat System (200M DAU) và URL Shortener (100M DAU)? 🟡 [Mid]
 
 **A:**
 
@@ -191,7 +191,7 @@ Cache     = 864M daily reads × 0.2 × 500B ≈ 86 GB → 2 Redis nodes
 
 ## 3. Scalability Concepts
 
-### Q: Horizontal vs Vertical Scaling? Stateless vs Stateful? 🟢
+### Q: Horizontal vs Vertical Scaling? Stateless vs Stateful? 🟢 [Junior]
 
 **A:**
 
@@ -216,7 +216,7 @@ Vertical (Scale Up)                 Horizontal (Scale Out)
 
 ---
 
-### Q: Load Balancing strategies và Database Scaling? 🟡
+### Q: Load Balancing strategies và Database Scaling? 🟡 [Mid]
 
 **A:**
 
@@ -249,7 +249,7 @@ Vertical (Scale Up)                 Horizontal (Scale Out)
 
 ---
 
-### Q: Caching layers và CDN? Message Queue cho async? 🟡
+### Q: Caching layers và CDN? Message Queue cho async? 🟡 [Mid]
 
 **A:**
 
@@ -280,7 +280,7 @@ Dùng khi: tác vụ tốn thời gian, spike traffic (absorb burst), decouple s
 
 ## 4. Availability & Reliability
 
-### Q: SLA/SLO/SLI và Availability Nines Table? 🟢
+### Q: SLA/SLO/SLI và Availability Nines Table? 🟢 [Junior]
 
 **A:**
 
@@ -311,7 +311,7 @@ Parallel: A_total = 1 - (1-A₁)(1-A₂)   → 1 - 0.001² = 99.9999% (tốt hơ
 
 ---
 
-### Q: Active-Active vs Active-Passive? RPO vs RTO? 🟡
+### Q: Active-Active vs Active-Passive? RPO vs RTO? 🟡 [Mid]
 
 **A:**
 
@@ -345,7 +345,7 @@ RPO thấp → cần sync replication (đắt). RTO thấp → cần hot standby
 
 ## 5. Common Building Blocks
 
-### Q: 10 building blocks thường dùng trong System Design - What, When, How to discuss? 🟡
+### Q: 10 building blocks thường dùng trong System Design - What, When, How to discuss? 🟡 [Mid]
 
 **A:**
 
@@ -368,7 +368,7 @@ RPO thấp → cần sync replication (đắt). RTO thấp → cần hot standby
 
 ## 6. Database Selection Framework
 
-### Q: Decision tree chọn SQL vs NoSQL? 🟡
+### Q: Decision tree chọn SQL vs NoSQL? 🟡 [Mid]
 
 **A:**
 
@@ -397,7 +397,7 @@ RPO thấp → cần sync replication (đắt). RTO thấp → cần hot standby
 
 ## 7. Communication Protocol Selection
 
-### Q: REST vs gRPC vs GraphQL vs WebSocket - Decision matrix? 🟡
+### Q: REST vs gRPC vs GraphQL vs WebSocket - Decision matrix? 🟡 [Mid]
 
 **A:**
 
@@ -422,7 +422,7 @@ RPO thấp → cần sync replication (đắt). RTO thấp → cần hot standby
 
 ## 8. Common Tradeoffs
 
-### Q: Trình bày các tradeoff kinh điển trong System Design? 🔴
+### Q: Trình bày các tradeoff kinh điển trong System Design? 🔴 [Senior]
 
 **A:**
 
@@ -495,7 +495,7 @@ Rule: Nếu read > 10x write → Cache.
 
 ## 9. How to Draw Architecture Diagrams
 
-### Q: Conventions vẽ diagram và cách present trong interview? 🟢
+### Q: Conventions vẽ diagram và cách present trong interview? 🟢 [Junior]
 
 **A:**
 
@@ -541,7 +541,7 @@ Bad:  Client ──────────────▶ API Gateway ───
 
 ## 10. Anti-Patterns in System Design Interviews
 
-### Q: Top 10 sai lầm phổ biến nhất? 🟢
+### Q: Top 10 sai lầm phổ biến nhất? 🟢 [Junior]
 
 **A:**
 
@@ -595,7 +595,7 @@ Bad:  Client ──────────────▶ API Gateway ───
 
 ---
 
-### Q: SPOF là gì và cách fix? 🟡
+### Q: SPOF là gì và cách fix? 🟡 [Mid]
 
 **A:**
 
@@ -616,7 +616,7 @@ Bad:  Client ──────────────▶ API Gateway ───
 
 ## Interview Tips by Company
 
-### Q: Các công ty lớn focus gì trong System Design? 🟡
+### Q: Các công ty lớn focus gì trong System Design? 🟡 [Mid]
 
 **A:**
 
@@ -646,7 +646,7 @@ Bad:  Client ──────────────▶ API Gateway ───
 
 ---
 
-### Q: Pre-interview checklist cuối cùng? 🟢
+### Q: Pre-interview checklist cuối cùng? 🟢 [Junior]
 
 **A:**
 

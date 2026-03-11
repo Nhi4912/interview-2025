@@ -1,4 +1,5 @@
 # Complexity Analysis / Phân Tích Độ Phức Tạp
+
 ## Computer Science Fundamentals - Chapter 3 / Khoa Học Máy Tính Cơ Bản - Chương 3
 
 [← Previous: Algorithms](./02-algorithms.md) | [Back to Table of Contents](../00-table-of-contents.md) | [Next: Design Patterns →](./04-design-patterns.md)
@@ -106,9 +107,11 @@ function swap(arr: number[], i: number, j: number): void {
 ```typescript
 // Binary search - O(log n)
 function binarySearch(arr: number[], target: number): number {
-  let left = 0, right = arr.length - 1;
-  
-  while (left <= right) { // log₂(n) iterations / lần lặp
+  let left = 0,
+    right = arr.length - 1;
+
+  while (left <= right) {
+    // log₂(n) iterations / lần lặp
     const mid = Math.floor((left + right) / 2);
     if (arr[mid] === target) return mid;
     if (arr[mid] < target) left = mid + 1;
@@ -135,7 +138,8 @@ function treeHeight(node: TreeNode | null): number {
 // Array traversal - O(n)
 function findMax(arr: number[]): number {
   let max = arr[0];
-  for (let i = 1; i < arr.length; i++) { // n iterations / lần lặp
+  for (let i = 1; i < arr.length; i++) {
+    // n iterations / lần lặp
     if (arr[i] > max) max = arr[i];
   }
   return max;
@@ -165,23 +169,23 @@ function sum(arr: number[]): number {
 // Merge sort - O(n log n)
 function mergeSort(arr: number[]): number[] {
   if (arr.length <= 1) return arr;
-  
+
   const mid = Math.floor(arr.length / 2);
-  const left = mergeSort(arr.slice(0, mid));  // log n levels / cấp
+  const left = mergeSort(arr.slice(0, mid)); // log n levels / cấp
   const right = mergeSort(arr.slice(mid));
-  
+
   return merge(left, right); // O(n) merge / trộn
 }
 
 // Quick sort average case - O(n log n)
 function quickSort(arr: number[]): number[] {
   if (arr.length <= 1) return arr;
-  
+
   const pivot = arr[Math.floor(arr.length / 2)];
-  const left = arr.filter(x => x < pivot);
-  const middle = arr.filter(x => x === pivot);
-  const right = arr.filter(x => x > pivot);
-  
+  const left = arr.filter((x) => x < pivot);
+  const middle = arr.filter((x) => x === pivot);
+  const right = arr.filter((x) => x > pivot);
+
   return [...quickSort(left), ...middle, ...quickSort(right)];
 }
 ```
@@ -195,8 +199,10 @@ function quickSort(arr: number[]): number[] {
 ```typescript
 // Bubble sort - O(n²)
 function bubbleSort(arr: number[]): number[] {
-  for (let i = 0; i < arr.length; i++) {        // n iterations
-    for (let j = 0; j < arr.length - i - 1; j++) { // n iterations
+  for (let i = 0; i < arr.length; i++) {
+    // n iterations
+    for (let j = 0; j < arr.length - i - 1; j++) {
+      // n iterations
       if (arr[j] > arr[j + 1]) {
         [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
       }
@@ -219,8 +225,10 @@ function findPairs(arr: number[]): number[][] {
 // Matrix multiplication - O(n³)
 function matrixMultiply(a: number[][], b: number[][]): number[][] {
   const n = a.length;
-  const result = Array(n).fill(0).map(() => Array(n).fill(0));
-  
+  const result = Array(n)
+    .fill(0)
+    .map(() => Array(n).fill(0));
+
   for (let i = 0; i < n; i++) {
     for (let j = 0; j < n; j++) {
       for (let k = 0; k < n; k++) {
@@ -249,11 +257,11 @@ function fibonacci(n: number): number {
 // Power set - O(2ⁿ)
 function powerSet<T>(arr: T[]): T[][] {
   if (arr.length === 0) return [[]];
-  
+
   const [first, ...rest] = arr;
   const subsetsWithoutFirst = powerSet(rest);
-  const subsetsWithFirst = subsetsWithoutFirst.map(subset => [first, ...subset]);
-  
+  const subsetsWithFirst = subsetsWithoutFirst.map((subset) => [first, ...subset]);
+
   return [...subsetsWithoutFirst, ...subsetsWithFirst];
 }
 ```
@@ -297,7 +305,9 @@ function factorial(n: number): number {
 
 // O(n²) space - 2D array / Mảng 2D
 function createMatrix(n: number): number[][] {
-  return Array(n).fill(0).map(() => Array(n).fill(0));
+  return Array(n)
+    .fill(0)
+    .map(() => Array(n).fill(0));
 }
 
 // O(log n) space - Binary search recursive / Tìm kiếm nhị phân đệ quy
@@ -305,7 +315,7 @@ function binarySearchRecursive(
   arr: number[],
   target: number,
   left = 0,
-  right = arr.length - 1
+  right = arr.length - 1,
 ): number {
   if (left > right) return -1;
   const mid = Math.floor((left + right) / 2);
@@ -482,8 +492,10 @@ Case 3: If f(n) = Ω(n^(log_b(a) + ε)) for some ε > 0
 ```typescript
 // Example 1: Nested loops with different ranges
 function example1(n: number): void {
-  for (let i = 0; i < n; i++) {        // n iterations
-    for (let j = 0; j < i; j++) {      // 0, 1, 2, ..., n-1 iterations
+  for (let i = 0; i < n; i++) {
+    // n iterations
+    for (let j = 0; j < i; j++) {
+      // 0, 1, 2, ..., n-1 iterations
       console.log(i, j);
     }
   }
@@ -493,8 +505,10 @@ function example1(n: number): void {
 
 // Example 2: Logarithmic inner loop
 function example2(n: number): void {
-  for (let i = 0; i < n; i++) {        // n iterations
-    for (let j = 1; j < n; j *= 2) {   // log n iterations
+  for (let i = 0; i < n; i++) {
+    // n iterations
+    for (let j = 1; j < n; j *= 2) {
+      // log n iterations
       console.log(i, j);
     }
   }
@@ -503,12 +517,15 @@ function example2(n: number): void {
 
 // Example 3: Multiple independent loops
 function example3(n: number): void {
-  for (let i = 0; i < n; i++) {        // O(n)
+  for (let i = 0; i < n; i++) {
+    // O(n)
     console.log(i);
   }
-  
-  for (let i = 0; i < n; i++) {        // O(n)
-    for (let j = 0; j < n; j++) {      // O(n)
+
+  for (let i = 0; i < n; i++) {
+    // O(n)
+    for (let j = 0; j < n; j++) {
+      // O(n)
       console.log(i, j);
     }
   }
@@ -519,7 +536,7 @@ function example3(n: number): void {
 function fibonacci(n: number, memo: Map<number, number> = new Map()): number {
   if (n <= 1) return n;
   if (memo.has(n)) return memo.get(n)!;
-  
+
   const result = fibonacci(n - 1, memo) + fibonacci(n - 2, memo);
   memo.set(n, result);
   return result;
@@ -532,7 +549,7 @@ function fibonacci(n: number, memo: Map<number, number> = new Map()): number {
 
 ## Interview Questions / Câu Hỏi Phỏng Vấn
 
-### Question 1: Analyze this code complexity
+### 🟡 [Mid] Question 1: Analyze this code complexity
 
 ```typescript
 function mystery(n: number): number {
@@ -547,25 +564,29 @@ function mystery(n: number): number {
 ```
 
 **English Answer:**
+
 - Outer loop: i = n, n/2, n/4, ..., 1 → log n iterations
 - Inner loop: n + n/2 + n/4 + ... + 1 ≈ 2n iterations total
 - Time complexity: O(n)
 
 **Tiếng Việt:**
+
 - Vòng ngoài: i = n, n/2, n/4, ..., 1 → log n lần lặp
 - Vòng trong: n + n/2 + n/4 + ... + 1 ≈ 2n lần lặp tổng
 - Độ phức tạp thời gian: O(n)
 
-### Question 2: Space vs Time trade-off
+### 🟡 [Mid] Question 2: Space vs Time trade-off
 
 **English Answer:**
 Often can trade space for time:
+
 - **Memoization**: Store results, O(n) space for O(n) time
 - **Hash tables**: O(n) space for O(1) lookup
 - **Precomputation**: Store results, instant lookup
 
 **Tiếng Việt:**
 Thường có thể đánh đổi không gian cho thời gian:
+
 - **Ghi nhớ**: Lưu kết quả, O(n) không gian cho O(n) thời gian
 - **Bảng băm**: O(n) không gian cho O(1) tra cứu
 - **Tính toán trước**: Lưu kết quả, tra cứu tức thì
@@ -575,6 +596,7 @@ Thường có thể đánh đổi không gian cho thời gian:
 ## Key Takeaways / Điểm Chính
 
 **English:**
+
 1. Big O describes worst-case upper bound
 2. Focus on dominant term, drop constants
 3. Analyze both time and space complexity
@@ -583,6 +605,7 @@ Thường có thể đánh đổi không gian cho thời gian:
 6. Trade-offs between time and space
 
 **Tiếng Việt:**
+
 1. Big O mô tả giới hạn trên trường hợp xấu nhất
 2. Tập trung vào số hạng chi phối, bỏ hằng số
 3. Phân tích cả độ phức tạp thời gian và không gian

@@ -1,4 +1,5 @@
 # Information Theory - Mathematical Foundations
+
 ## Understanding Data, Entropy, and Communication
 
 **English:** Information theory is the mathematical study of quantifying, storing, and communicating information, providing the theoretical foundation for data compression, error correction, and communication systems.
@@ -6,6 +7,7 @@
 **Tiếng Việt:** Lý thuyết thông tin là nghiên cứu toán học về định lượng, lưu trữ và truyền thông tin, cung cấp nền tảng lý thuyết cho nén dữ liệu, sửa lỗi và hệ thống truyền thông.
 
 ## Table of Contents
+
 1. [Information Theory Fundamentals](#information-theory-fundamentals)
 2. [Entropy](#entropy)
 3. [Data Compression](#data-compression)
@@ -22,6 +24,7 @@
 **Definition:** Reduction of uncertainty about a state or event
 
 **Quantifying Information:**
+
 ```
 Information content of event with probability p:
 I(x) = -log₂(p)
@@ -40,6 +43,7 @@ I = -log₂(1) = 0 bits (no information)
 ```
 
 **Properties:**
+
 ```
 1. Rare events have more information
 2. Certain events have zero information
@@ -50,6 +54,7 @@ I = -log₂(1) = 0 bits (no information)
 ### Shannon's Theory
 
 **Claude Shannon (1948):**
+
 ```
 "A Mathematical Theory of Communication"
 Founded information theory
@@ -63,6 +68,7 @@ Key Contributions:
 ```
 
 **Fundamental Theorem:**
+
 ```
 Information can be transmitted reliably over noisy channel
 if transmission rate < channel capacity
@@ -78,6 +84,7 @@ Implications:
 ### Definition
 
 **Shannon Entropy:**
+
 ```
 Average information content
 Measure of uncertainty
@@ -95,6 +102,7 @@ Where:
 ### Entropy Examples
 
 **Fair Coin:**
+
 ```
 Outcomes: {Heads, Tails}
 Probabilities: p(H) = 0.5, p(T) = 0.5
@@ -108,6 +116,7 @@ Maximum entropy for 2 outcomes
 ```
 
 **Biased Coin:**
+
 ```
 Outcomes: {Heads, Tails}
 Probabilities: p(H) = 0.9, p(T) = 0.1
@@ -122,6 +131,7 @@ More predictable
 ```
 
 **Die Roll:**
+
 ```
 Outcomes: {1, 2, 3, 4, 5, 6}
 Probabilities: p(i) = 1/6 for all i
@@ -136,6 +146,7 @@ Need ~2.585 bits to represent die roll
 ### Properties of Entropy
 
 **Maximum Entropy:**
+
 ```
 Occurs when all outcomes equally likely
 Uniform distribution
@@ -151,6 +162,7 @@ Examples:
 ```
 
 **Minimum Entropy:**
+
 ```
 Occurs when one outcome certain
 H_min = 0 bits
@@ -158,6 +170,7 @@ No uncertainty
 ```
 
 **Joint Entropy:**
+
 ```
 Entropy of two variables together
 H(X,Y) = -ΣΣ p(x,y) log₂ p(x,y)
@@ -168,6 +181,7 @@ Equality when X and Y independent
 ```
 
 **Conditional Entropy:**
+
 ```
 Entropy of X given Y known
 H(X|Y) = H(X,Y) - H(Y)
@@ -181,6 +195,7 @@ Knowing Y reduces uncertainty
 ```
 
 **Mutual Information:**
+
 ```
 Information shared between variables
 I(X;Y) = H(X) - H(X|Y)
@@ -203,6 +218,7 @@ I(X;Y) = I(Y;X) (symmetric)
 **Definition:** Original data perfectly reconstructed
 
 **Huffman Coding:**
+
 ```
 Variable-length encoding
 Frequent symbols get shorter codes
@@ -238,6 +254,7 @@ Compression ratio: 88/20 = 4.4:1
 ```
 
 **Run-Length Encoding:**
+
 ```
 Replace repeated sequences
 Simple but effective for repetitive data
@@ -253,6 +270,7 @@ Works well for:
 ```
 
 **LZ77/LZ78 (Lempel-Ziv):**
+
 ```
 Dictionary-based compression
 Replace repeated sequences with references
@@ -274,6 +292,7 @@ LZ78:
 **Definition:** Some information lost, cannot perfectly reconstruct
 
 **JPEG (Images):**
+
 ```
 Discrete Cosine Transform (DCT)
 Quantization (loses information)
@@ -292,6 +311,7 @@ Quality vs Size:
 ```
 
 **MP3 (Audio):**
+
 ```
 Psychoacoustic model
 Remove inaudible frequencies
@@ -316,6 +336,7 @@ Bitrates:
 ### Error Detection
 
 **Parity Bit:**
+
 ```
 Single bit added for error detection
 Even or odd parity
@@ -333,6 +354,7 @@ Detection:
 ```
 
 **Checksum:**
+
 ```
 Sum of data values
 Detect errors in transmission
@@ -348,6 +370,7 @@ Match: No error detected
 ```
 
 **Cyclic Redundancy Check (CRC):**
+
 ```
 Polynomial division
 Powerful error detection
@@ -369,6 +392,7 @@ Properties:
 ### Error Correction
 
 **Hamming Code:**
+
 ```
 Add redundant bits for error correction
 Can correct single-bit errors
@@ -393,6 +417,7 @@ P4 checks positions: 4, 5, 6, 7
 ```
 
 **Reed-Solomon Codes:**
+
 ```
 Block-based error correction
 Used in CDs, DVDs, QR codes
@@ -415,6 +440,7 @@ Applications:
 ### Shannon-Hartley Theorem
 
 **Channel Capacity:**
+
 ```
 C = B log₂(1 + S/N)
 
@@ -436,6 +462,7 @@ Maximum theoretical data rate
 ```
 
 **Implications:**
+
 ```
 1. Capacity increases with bandwidth
 2. Capacity increases with SNR
@@ -446,6 +473,7 @@ Maximum theoretical data rate
 ### Nyquist Theorem
 
 **Noiseless Channel:**
+
 ```
 C = 2B log₂(M)
 
@@ -472,6 +500,7 @@ Theoretical maximum for noiseless channel
 **Purpose:** Compress data efficiently
 
 **Kraft Inequality:**
+
 ```
 For prefix-free code with lengths l₁, l₂, ..., lₙ:
 Σ 2^(-lᵢ) ≤ 1
@@ -485,6 +514,7 @@ Valid prefix-free code
 ```
 
 **Optimal Code Length:**
+
 ```
 For symbol with probability p:
 Optimal length ≈ -log₂(p)
@@ -500,6 +530,7 @@ p = 0.125: length ≈ 3 bits
 **Purpose:** Add redundancy for error correction
 
 **Code Rate:**
+
 ```
 R = k/n
 
@@ -517,6 +548,7 @@ Lower rate = more redundancy = better error correction
 ```
 
 **Hamming Distance:**
+
 ```
 Number of positions where symbols differ
 
@@ -543,6 +575,7 @@ Minimum distance d can correct ⌊(d-1)/2⌋ errors
 ### Data Compression
 
 **Text Compression:**
+
 ```
 Huffman coding
 LZ77/LZ78
@@ -555,6 +588,7 @@ Applications:
 ```
 
 **Image Compression:**
+
 ```
 Lossless:
 - PNG (LZ77 + filters)
@@ -566,6 +600,7 @@ Lossy:
 ```
 
 **Video Compression:**
+
 ```
 Temporal compression (between frames)
 Spatial compression (within frames)
@@ -580,6 +615,7 @@ Codecs:
 ### Communication Systems
 
 **Digital Communication:**
+
 ```
 Source → Encoder → Channel → Decoder → Destination
            ↑                      ↑
@@ -592,6 +628,7 @@ Information theory provides:
 ```
 
 **Network Protocols:**
+
 ```
 TCP:
 - Error detection (checksum)
@@ -607,6 +644,7 @@ UDP:
 ### Cryptography
 
 **Perfect Secrecy:**
+
 ```
 Shannon's theorem:
 Perfect secrecy requires key length ≥ message length
@@ -624,6 +662,7 @@ Practical Limitation:
 ```
 
 **Information-Theoretic Security:**
+
 ```
 Security based on information theory
 Not computational complexity
@@ -637,23 +676,23 @@ Examples:
 
 ## Interview Questions
 
-**Q: What is entropy in information theory?**
+**🟢 [Junior] Q: What is entropy in information theory?**
 
 A: Entropy measures average information content or uncertainty. Formula: H(X) = -Σ p(x) log₂ p(x). Higher entropy means more uncertainty, more information per symbol. Fair coin has 1 bit entropy (maximum for 2 outcomes). Biased coin has less. Used to determine optimal compression and channel capacity.
 
-**Q: Explain Shannon's channel capacity theorem.**
+**🔴 [Senior] Q: Explain Shannon's channel capacity theorem.**
 
 A: Channel capacity C = B log₂(1 + S/N), where B is bandwidth and S/N is signal-to-noise ratio. Represents maximum reliable data rate. Cannot exceed capacity without errors. Increasing bandwidth or SNR increases capacity. Fundamental limit for communication systems.
 
-**Q: What's the difference between lossless and lossy compression?**
+**🟢 [Junior] Q: What's the difference between lossless and lossy compression?**
 
 A: Lossless preserves all information, perfect reconstruction (ZIP, PNG, FLAC). Lossy discards some information, cannot perfectly reconstruct (JPEG, MP3, H.264). Lossless for text and data, lossy for media where some loss acceptable. Lossy achieves higher compression ratios.
 
-**Q: How does Huffman coding work?**
+**🟡 [Mid] Q: How does Huffman coding work?**
 
 A: Variable-length encoding where frequent symbols get shorter codes. Build binary tree from frequencies (combine least frequent), assign codes (left=0, right=1). Optimal prefix-free code. Achieves compression by using fewer bits for common symbols. Used in JPEG, MP3, ZIP.
 
-**Q: What is Hamming distance and why is it important?**
+**🟡 [Mid] Q: What is Hamming distance and why is it important?**
 
 A: Number of positions where two sequences differ. Important for error detection/correction. Minimum distance d in code can detect d-1 errors and correct ⌊(d-1)/2⌋ errors. Used to design error-correcting codes. Higher distance means better error correction but more redundancy.
 
