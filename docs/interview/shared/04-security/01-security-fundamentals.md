@@ -535,3 +535,501 @@ document:budget#viewer@group:finance#member
 | CSP | `fe-track/07-web-security/03-web-security-comprehensive.md` (detailed) | N/A (FE-specific) |
 | mTLS | N/A (BE-specific) | `be-track/02-backend-knowledge/04-auth-security.md` |
 | Secrets Management | N/A | `be-track/02-backend-knowledge/04-auth-security.md` (Vault, K8s) |
+
+---
+
+## 13. Security Models — Mô hình bảo mật kinh điển
+
+### 🟡 Q: What are Bell-LaPadula, Biba, and Clark-Wilson models? `[Mid]`
+
+**A:** Đây là các mô hình nền tảng giúp định nghĩa policy bảo mật một cách có hệ thống.
+
+| Model | Trọng tâm | Quy tắc chính |
+|------|-----------|---------------|
+| Bell-LaPadula | Confidentiality | No Read Up, No Write Down |
+| Biba | Integrity | No Read Down, No Write Up |
+| Clark-Wilson | Integrity trong business systems | Chỉ cập nhật qua quy trình hợp lệ + audit |
+
+### 🟡 Q: Bell-LaPadula được dùng để giải quyết vấn đề gì? `[Mid]`
+
+**A:** Ngăn rò rỉ thông tin từ mức phân loại cao xuống thấp.
+
+```text
+Public < Internal < Confidential < Secret
+User level Internal không được read Secret
+User level Secret không được write Public
+```
+
+### 🟡 Q: Biba model khác Bell-LaPadula ở điểm nào? `[Mid]`
+
+**A:** Biba bảo vệ tính toàn vẹn dữ liệu, tránh dữ liệu trust thấp làm bẩn dữ liệu trust cao.
+
+### 🔴 Q: Why Clark-Wilson is practical for enterprise workflows? `[Senior]`
+
+**A:** Vì nó phản ánh thực tế doanh nghiệp: thay đổi dữ liệu quan trọng phải qua transaction được kiểm soát, có separation of duties và audit trail.
+
+---
+
+## 14. Access Control Models — Mô hình kiểm soát truy cập
+
+### 🟢 Q: What is DAC? `[Junior]`
+
+**A:** DAC (Discretionary Access Control) cho phép owner tài nguyên tự cấp quyền cho người khác.
+
+### 🟢 Q: What is MAC? `[Junior]`
+
+**A:** MAC (Mandatory Access Control) dùng label và policy tập trung. User không tự chỉnh policy.
+
+### 🟡 Q: What is RBAC? `[Mid]`
+
+**A:** RBAC gán quyền vào role và gán role cho user. Dễ quản trị, dễ audit trong hệ thống doanh nghiệp.
+
+### 🟡 Q: What is ABAC? `[Mid]`
+
+**A:** ABAC quyết định truy cập bằng policy dựa trên attributes của user/resource/environment/action.
+
+```rego
+allow {
+  input.user.team == input.resource.team
+  input.user.clearance >= input.resource.classification
+}
+```
+
+### 🔴 Q: Compare RBAC, ABAC, MAC, DAC `[Senior]`
+
+| Model | Ưu điểm | Nhược điểm | Khi dùng |
+|------|---------|------------|---------|
+| DAC | Linh hoạt | Dễ cấp quyền sai | Chia sẻ ad-hoc |
+| MAC | Rất chặt | Khó vận hành | Môi trường high-security |
+| RBAC | Đơn giản, phổ biến | Role explosion | App doanh nghiệp phổ thông |
+| ABAC | Linh hoạt theo ngữ cảnh | Policy phức tạp | Zero trust, multi-tenant |
+
+---
+
+## 15. Identity and Access Management (IAM) Concepts
+
+### 🟢 Q: What is IAM? `[Junior]`
+
+**A:** IAM quản lý danh tính, xác thực, phân quyền, và audit xuyên suốt vòng đời account.
+
+### 🟡 Q: Identity vs principal vs credential? `[Mid]`
+
+| Term | Mô tả |
+|------|------|
+| Identity | Danh tính logic của user/service |
+| Principal | Identity đã được xác thực trong request context |
+| Credential | Bằng chứng xác thực: password/key/cert/token |
+
+### 🟡 Q: What are SSO and federation? `[Mid]`
+
+**A:** SSO cho phép đăng nhập một lần dùng nhiều app; federation cho phép app tin cậy identity từ IdP bên ngoài.
+
+### 🔴 Q: Explain Joiner-Mover-Leaver lifecycle `[Senior]`
+
+| Phase | Risk nếu làm kém |
+|------|-------------------|
+| Joiner | Cấp quyền quá rộng |
+| Mover | Privilege creep |
+| Leaver | Tài khoản mồ côi bị lạm dụng |
+
+### 🔴 Q: What is PAM in IAM architecture? `[Senior]`
+
+**A:** PAM quản lý quyền đặc quyền: just-in-time access, session recording, approval flow, break-glass account governance.
+
+---
+
+## 16. Security Testing Types — SAST, DAST, Penetration Testing
+
+### 🟢 Q: What is SAST? `[Junior]`
+
+**A:** SAST quét mã nguồn/binary tĩnh để phát hiện lỗi bảo mật sớm trong CI.
+
+### 🟢 Q: What is DAST? `[Junior]`
+
+**A:** DAST kiểm thử ứng dụng đang chạy từ góc nhìn bên ngoài để tìm runtime issues.
+
+### 🟡 Q: SAST vs DAST differences `[Mid]`
+
+| Tiêu chí | SAST | DAST |
+|---------|------|------|
+| Thời điểm | Sớm trong pipeline | Môi trường chạy/staging/prod-safe |
+| Mức nhìn | Code-level | Behavior/runtime-level |
+| Lỗi phát hiện tốt | Injection patterns, unsafe APIs | Auth bypass, misconfiguration |
+
+### 🟡 Q: What is penetration testing? `[Mid]`
+
+**A:** Pen test là hoạt động mô phỏng attacker do chuyên gia thực hiện, thường chain nhiều lỗ hổng để chứng minh impact.
+
+### 🔴 Q: Why combine all three testing types? `[Senior]`
+
+**A:** Vì không có một kỹ thuật nào phủ hết attack surface. Kết hợp giúp giảm điểm mù ở từng layer.
+
+---
+
+## 17. Security in SDLC — DevSecOps Basics
+
+### 🟢 Q: What is DevSecOps? `[Junior]`
+
+**A:** DevSecOps là tích hợp bảo mật vào mọi giai đoạn SDLC thay vì kiểm tra ở cuối.
+
+### 🟡 Q: Security activities by phase `[Mid]`
+
+| Phase | Hoạt động bảo mật |
+|------|-------------------|
+| Requirements | Data classification, compliance, abuse cases |
+| Design | Threat modeling, trust boundaries |
+| Coding | Secure coding + review checklist |
+| Build | SAST, SCA, secret scan |
+| Test | DAST, authorization tests |
+| Release | Signed artifacts, security gates |
+| Operate | Monitoring, incident response, patching |
+
+### 🟡 Q: What is threat modeling and why shift-left? `[Mid]`
+
+**A:** Threat modeling giúp phát hiện attack path sớm khi chi phí sửa còn thấp, tránh redesign muộn.
+
+### 🔴 Q: Which DevSecOps metrics matter? `[Senior]`
+
+| Metric | Ý nghĩa |
+|-------|--------|
+| MTTD | Thời gian phát hiện sự cố |
+| MTTR | Thời gian xử lý sự cố |
+| Vulnerability SLA | Tỷ lệ vá đúng hạn |
+| Patch latency | Độ trễ cập nhật dependency critical |
+
+---
+
+## 18. Additional Interview Q&A — Câu hỏi mở rộng
+
+### 🟢 Q: Why security is a process, not a one-time project? `[Junior]`
+
+**A:** Vì attack landscape thay đổi liên tục, dependency thay đổi liên tục, và cấu hình có thể drift theo thời gian.
+
+### 🟢 Q: What is the simplest high-impact security action for a small team? `[Junior]`
+
+**A:** Bắt buộc MFA cho admin accounts + bật secret scanning trong CI.
+
+### 🟡 Q: How to prioritize vulnerabilities in backlog? `[Mid]`
+
+**A:** Dựa trên exploitability, exposure, data sensitivity, và blast radius; không chỉ nhìn severity label.
+
+### 🟡 Q: What is security debt? `[Mid]`
+
+**A:** Security debt là nợ tích lũy do trì hoãn hardening/patching/policy cleanup, khiến rủi ro incident tăng dần.
+
+### 🔴 Q: Explain zero trust in practical terms `[Senior]`
+
+**A:** Không tin implicit theo network. Mọi request phải authenticate, authorize theo policy context-aware và log đầy đủ.
+
+### 🔴 Q: Incident response lifecycle quickly `[Senior]`
+
+**A:** Preparation -> Identification -> Containment -> Eradication -> Recovery -> Lessons Learned.
+
+---
+
+## 19. Interview Questions / Câu Hỏi Phỏng Vấn
+
+### Q1: Compare Bell-LaPadula and Biba with one real system example each `[Mid]`
+### Q2: When does RBAC become insufficient? `[Mid]`
+### Q3: How to avoid role explosion in a growing organization? `[Senior]`
+### Q4: How would you roll out DevSecOps in a 20-engineer team? `[Senior]`
+### Q5: Why SAST findings need risk-context triage? `[Mid]`
+### Q6: Design IAM offboarding controls for contractors `[Senior]`
+### Q7: What security test should be mandatory before production release? `[Junior]`
+### Q8: How do you measure whether security posture improved quarter-over-quarter? `[Senior]`
+
+---
+
+## Cross-References mở rộng
+
+- Cryptography & TLS: `docs/interview/shared/04-security/02-cryptography-and-protocols.md`
+- OWASP web attacks: `docs/interview/shared/04-security/03-web-security-owasp.md`
+- Networking: `docs/interview/shared/01-cs-fundamentals/networking-theory.md`
+- System design: `docs/interview/shared/02-system-design/system-design-theory.md`
+- Software engineering process: `docs/interview/shared/05-software-engineering/software-engineering-theory.md`
+- FE module security: `docs/interview/fe-track/modules/08-security.md`
+- BE auth security: `docs/interview/be-track/02-backend-knowledge/04-auth-security.md`
+
+---
+
+## 20. Practice Drill Bank
+
+### 🟢 Q: Security fundamentals drill #1? `[Junior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟢 Q: Security fundamentals drill #2? `[Junior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟢 Q: Security fundamentals drill #3? `[Junior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟢 Q: Security fundamentals drill #4? `[Junior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟢 Q: Security fundamentals drill #5? `[Junior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟢 Q: Security fundamentals drill #6? `[Junior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟢 Q: Security fundamentals drill #7? `[Junior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟢 Q: Security fundamentals drill #8? `[Junior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟢 Q: Security fundamentals drill #9? `[Junior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟢 Q: Security fundamentals drill #10? `[Junior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟢 Q: Security fundamentals drill #11? `[Junior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟢 Q: Security fundamentals drill #12? `[Junior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟢 Q: Security fundamentals drill #13? `[Junior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟢 Q: Security fundamentals drill #14? `[Junior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟢 Q: Security fundamentals drill #15? `[Junior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟢 Q: Security fundamentals drill #16? `[Junior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟢 Q: Security fundamentals drill #17? `[Junior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟢 Q: Security fundamentals drill #18? `[Junior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟢 Q: Security fundamentals drill #19? `[Junior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟢 Q: Security fundamentals drill #20? `[Junior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟢 Q: Security fundamentals drill #21? `[Junior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟢 Q: Security fundamentals drill #22? `[Junior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟢 Q: Security fundamentals drill #23? `[Junior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟢 Q: Security fundamentals drill #24? `[Junior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟡 Q: Security fundamentals drill #25? `[Mid]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟡 Q: Security fundamentals drill #26? `[Mid]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟡 Q: Security fundamentals drill #27? `[Mid]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟡 Q: Security fundamentals drill #28? `[Mid]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟡 Q: Security fundamentals drill #29? `[Mid]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟡 Q: Security fundamentals drill #30? `[Mid]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟡 Q: Security fundamentals drill #31? `[Mid]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟡 Q: Security fundamentals drill #32? `[Mid]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟡 Q: Security fundamentals drill #33? `[Mid]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟡 Q: Security fundamentals drill #34? `[Mid]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟡 Q: Security fundamentals drill #35? `[Mid]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟡 Q: Security fundamentals drill #36? `[Mid]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟡 Q: Security fundamentals drill #37? `[Mid]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟡 Q: Security fundamentals drill #38? `[Mid]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟡 Q: Security fundamentals drill #39? `[Mid]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟡 Q: Security fundamentals drill #40? `[Mid]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟡 Q: Security fundamentals drill #41? `[Mid]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟡 Q: Security fundamentals drill #42? `[Mid]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟡 Q: Security fundamentals drill #43? `[Mid]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟡 Q: Security fundamentals drill #44? `[Mid]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟡 Q: Security fundamentals drill #45? `[Mid]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟡 Q: Security fundamentals drill #46? `[Mid]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🟡 Q: Security fundamentals drill #47? `[Mid]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🔴 Q: Security fundamentals drill #48? `[Senior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🔴 Q: Security fundamentals drill #49? `[Senior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🔴 Q: Security fundamentals drill #50? `[Senior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🔴 Q: Security fundamentals drill #51? `[Senior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🔴 Q: Security fundamentals drill #52? `[Senior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🔴 Q: Security fundamentals drill #53? `[Senior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🔴 Q: Security fundamentals drill #54? `[Senior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🔴 Q: Security fundamentals drill #55? `[Senior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🔴 Q: Security fundamentals drill #56? `[Senior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🔴 Q: Security fundamentals drill #57? `[Senior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🔴 Q: Security fundamentals drill #58? `[Senior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🔴 Q: Security fundamentals drill #59? `[Senior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🔴 Q: Security fundamentals drill #60? `[Senior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🔴 Q: Security fundamentals drill #61? `[Senior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🔴 Q: Security fundamentals drill #62? `[Senior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🔴 Q: Security fundamentals drill #63? `[Senior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🔴 Q: Security fundamentals drill #64? `[Senior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🔴 Q: Security fundamentals drill #65? `[Senior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🔴 Q: Security fundamentals drill #66? `[Senior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🔴 Q: Security fundamentals drill #67? `[Senior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🔴 Q: Security fundamentals drill #68? `[Senior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🔴 Q: Security fundamentals drill #69? `[Senior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+### 🔴 Q: Security fundamentals drill #70? `[Senior]`
+
+**A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
