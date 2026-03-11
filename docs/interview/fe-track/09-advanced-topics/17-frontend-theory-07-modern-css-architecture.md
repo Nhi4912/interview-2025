@@ -1,505 +1,936 @@
-# Modern CSS Architecture - Complete Guide
-# Kiến Trúc CSS Hiện Đại - Hướng Dẫn Đầy Đủ
+# Frontend Theory 07: Modern CSS Architecture
 
-## Table of Contents / Mục Lục
+**Tổng Quan:** Tài liệu song ngữ (EN heading + VI explanation) cho phần lý thuyết Frontend nâng cao, dùng trực tiếp để luyện interview.
+**Giải thích:** Kiến trúc CSS hiện đại: cascade, layout và maintainability. Mỗi câu hỏi đi từ nền tảng đến quyết định kiến trúc và chiến lược tối ưu.
+**Ví dụ:** Có snippet ngắn để nối giữa lý thuyết và cách triển khai thực tế trong dự án.
 
-### Part 1: CSS Fundamentals
-1. CSS Box Model Deep Dive
-2. Specificity and Cascade
-3. CSS Custom Properties (Variables)
-4. CSS Functions
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-### Part 2: Layout Systems
-5. Flexbox Mastery
-6. CSS Grid Advanced
-7. Multi-Column Layout
-8. Responsive Design Patterns
+### Interview Usage Guide
+- `🟢 [Junior]`: định nghĩa đúng và nắm cơ chế cơ bản.
+- `🟡 [Mid]`: phân tích trade-off và tác động implementation.
+- `🔴 [Senior]`: đưa ra quyết định kỹ thuật có điều kiện và plan giảm rủi ro.
 
-### Part 3: Modern CSS Features
-9. CSS Container Queries
-10. CSS Layers (@layer)
-11. CSS Nesting
-12. CSS Subgrid
+## Topic 1: Cascade, specificity, and inheritance model
 
-### Part 4: Architecture Patterns
-13. BEM Methodology
-14. CSS Modules
-15. CSS-in-JS
-16. Utility-First CSS (Tailwind)
+### 🟢 [Junior] Q1: How would you explain cascade, specificity, and inheritance model in a real interview?
 
-### Part 5: Performance
-17. CSS Performance Optimization
-18. Critical CSS
-19. CSS Loading Strategies
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
 
----
+**Giải thích (Explanation):** Với **Cascade, specificity, and inheritance model**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-## Part 1: CSS Fundamentals
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-### 1. CSS Box Model Deep Dive
-### 1. CSS Box Model Tìm Hiểu Sâu
-
-**English:**
-
-The box model is fundamental to understanding CSS layout.
-
-**Box Model Components:**
-
+**Ví dụ (Example):**
 ```css
-/*
-┌─────────────────────────────────┐
-│         Margin (transparent)     │
-│  ┌───────────────────────────┐  │
-│  │    Border                 │  │
-│  │  ┌─────────────────────┐  │  │
-│  │  │   Padding           │  │  │
-│  │  │  ┌───────────────┐  │  │  │
-│  │  │  │   Content     │  │  │  │
-│  │  │  │               │  │  │  │
-│  │  │  └───────────────┘  │  │  │
-│  │  └─────────────────────┘  │  │
-│  └───────────────────────────┘  │
-└─────────────────────────────────┘
-*/
-
-.box {
-  /* Content */
-  width: 200px;
-  height: 100px;
-  
-  /* Padding */
-  padding: 20px;
-  
-  /* Border */
-  border: 5px solid black;
-  
-  /* Margin */
-  margin: 10px;
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
 }
-
-/* Total width calculation:
-   content-box (default):
-   Total width = width + padding-left + padding-right + border-left + border-right
-   = 200 + 20 + 20 + 5 + 5 = 250px
-   
-   border-box:
-   Total width = width
-   = 200px (padding and border included)
-*/
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
+}
 ```
 
-**Box Sizing:**
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
 
+### 🟡 [Mid] Q2: How would you explain cascade, specificity, and inheritance model in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Cascade, specificity, and inheritance model**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
 ```css
-/* Default: content-box */
-.content-box {
-  box-sizing: content-box;
-  width: 200px;
-  padding: 20px;
-  border: 5px solid black;
-  /* Actual width: 250px */
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
 }
-
-/* Better: border-box */
-.border-box {
-  box-sizing: border-box;
-  width: 200px;
-  padding: 20px;
-  border: 5px solid black;
-  /* Actual width: 200px */
-}
-
-/* Global border-box (recommended) */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
 }
 ```
 
-**Margin Collapsing:**
+**Cross-reference:** [17-frontend-theory-11-rendering-theory.md](./17-frontend-theory-11-rendering-theory.md)
 
+### 🔴 [Senior] Q3: How would you explain cascade, specificity, and inheritance model in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Cascade, specificity, and inheritance model**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
 ```css
-/* Vertical margins collapse */
-.box1 {
-  margin-bottom: 20px;
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
 }
-
-.box2 {
-  margin-top: 30px;
-}
-
-/* Gap between boxes: 30px (not 50px!)
-   Larger margin wins
-*/
-
-/* Prevent margin collapsing: */
-
-/* 1. Add border/padding */
-.parent {
-  padding: 1px;
-}
-
-/* 2. Use flexbox/grid */
-.parent {
-  display: flex;
-  flex-direction: column;
-  gap: 20px; /* Use gap instead of margins */
-}
-
-/* 3. Create BFC */
-.parent {
-  overflow: hidden;
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
 }
 ```
 
-**Vietnamese:**
+**Cross-reference:** [17-frontend-theory-06-web-performance-optimization.md](./17-frontend-theory-06-web-performance-optimization.md)
 
-Box model là nền tảng để hiểu CSS layout.
+## Topic 2: Box model and sizing strategies
 
-**Thành Phần Box Model:**
+### 🟢 [Junior] Q4: How would you explain box model and sizing strategies in a real interview?
 
-1. **Content**: Nội dung (text, images)
-2. **Padding**: Khoảng cách bên trong
-3. **Border**: Viền
-4. **Margin**: Khoảng cách bên ngoài
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
 
-**Box Sizing:**
+**Giải thích (Explanation):** Với **Box model and sizing strategies**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-- **content-box**: width/height chỉ tính content
-- **border-box**: width/height bao gồm padding và border (khuyến nghị)
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-**Margin Collapsing:**
-
-Margins dọc của adjacent elements collapse thành một margin duy nhất (margin lớn hơn thắng).
-
----
-
-### 2. Specificity and Cascade
-### 2. Specificity và Cascade
-
-**English:**
-
-Understanding specificity is crucial for managing CSS conflicts.
-
-**Specificity Calculation:**
-
+**Ví dụ (Example):**
 ```css
-/* Specificity: (inline, IDs, classes/attributes/pseudo-classes, elements/pseudo-elements) */
-
-/* (0, 0, 0, 1) */
-p { color: black; }
-
-/* (0, 0, 1, 0) */
-.text { color: blue; }
-
-/* (0, 0, 1, 1) */
-p.text { color: green; }
-
-/* (0, 1, 0, 0) */
-#unique { color: red; }
-
-/* (0, 1, 1, 1) */
-#unique p.text { color: purple; }
-
-/* (1, 0, 0, 0) */
-<p style="color: orange;">Inline</p>
-
-/* Infinity */
-p { color: yellow !important; }
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
+}
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
+}
 ```
 
-**Specificity Examples:**
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
 
+### 🟡 [Mid] Q5: How would you explain box model and sizing strategies in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Box model and sizing strategies**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
 ```css
-/* Specificity: (0, 0, 0, 1) */
-div { color: black; }
-
-/* Specificity: (0, 0, 1, 0) - WINS */
-.container { color: blue; }
-
-/* Specificity: (0, 0, 1, 1) - WINS */
-div.container { color: green; }
-
-/* Specificity: (0, 1, 0, 0) - WINS */
-#main { color: red; }
-
-/* Specificity: (0, 1, 1, 1) - WINS */
-#main div.container { color: purple; }
-
-/* Avoid !important */
-/* Only use for utility classes or overriding third-party CSS */
-.hidden {
-  display: none !important;
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
+}
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
 }
 ```
 
-**Cascade Order:**
+**Cross-reference:** [17-frontend-theory-11-rendering-theory.md](./17-frontend-theory-11-rendering-theory.md)
 
+### 🔴 [Senior] Q6: How would you explain box model and sizing strategies in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Box model and sizing strategies**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
 ```css
-/* 1. Origin and Importance */
-/* User agent (browser) < User < Author < Author !important < User !important */
-
-/* 2. Specificity */
-/* More specific selector wins */
-
-/* 3. Source Order */
-/* Later rules override earlier rules (same specificity) */
-
-.button {
-  background: blue; /* This is overridden */
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
 }
-
-.button {
-  background: red; /* This wins */
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
 }
 ```
 
-**Best Practices:**
+**Cross-reference:** [17-frontend-theory-06-web-performance-optimization.md](./17-frontend-theory-06-web-performance-optimization.md)
 
+## Topic 3: Flexbox mental model and constraints
+
+### 🟢 [Junior] Q7: How would you explain flexbox mental model and constraints in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Flexbox mental model and constraints**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
 ```css
-/* ❌ Bad: High specificity */
-#header nav ul li a.active {
-  color: red;
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
 }
-
-/* ✅ Good: Low specificity */
-.nav-link--active {
-  color: red;
-}
-
-/* ❌ Bad: !important everywhere */
-.text {
-  color: blue !important;
-}
-
-/* ✅ Good: Increase specificity instead */
-.container .text {
-  color: blue;
-}
-
-/* ❌ Bad: Overly specific */
-div.container > ul.list > li.item > a.link {
-  color: blue;
-}
-
-/* ✅ Good: Use classes */
-.list-link {
-  color: blue;
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
 }
 ```
 
-**Vietnamese:**
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
 
-Hiểu specificity rất quan trọng để quản lý conflicts trong CSS.
+### 🟡 [Mid] Q8: How would you explain flexbox mental model and constraints in a real interview?
 
-**Tính Specificity:**
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
 
-```
-(inline, IDs, classes, elements)
+**Giải thích (Explanation):** Với **Flexbox mental model and constraints**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-Ví dụ:
-p                    → (0, 0, 0, 1)
-.class               → (0, 0, 1, 0)
-#id                  → (0, 1, 0, 0)
-style=""             → (1, 0, 0, 0)
-!important           → Infinity
-```
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-**Cascade Order:**
-
-1. **Origin**: User agent < User < Author
-2. **Specificity**: Selector cụ thể hơn thắng
-3. **Source Order**: Rule sau ghi đè rule trước
-
-**Best Practices:**
-
-- Giữ specificity thấp
-- Tránh !important
-- Dùng classes thay vì IDs
-- Tránh nested selectors sâu
-
----
-
-### 3. CSS Custom Properties (Variables)
-### 3. CSS Custom Properties (Biến)
-
-**English:**
-
-CSS variables enable dynamic, maintainable stylesheets.
-
-**Basic Usage:**
-
+**Ví dụ (Example):**
 ```css
-:root {
-  /* Define variables */
-  --primary-color: #007bff;
-  --secondary-color: #6c757d;
-  --font-size-base: 16px;
-  --spacing-unit: 8px;
-  --border-radius: 4px;
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
 }
-
-.button {
-  /* Use variables */
-  background-color: var(--primary-color);
-  font-size: var(--font-size-base);
-  padding: calc(var(--spacing-unit) * 2);
-  border-radius: var(--border-radius);
-}
-
-/* Fallback values */
-.text {
-  color: var(--text-color, black); /* Falls back to black */
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
 }
 ```
 
-**Theming:**
+**Cross-reference:** [17-frontend-theory-11-rendering-theory.md](./17-frontend-theory-11-rendering-theory.md)
 
+### 🔴 [Senior] Q9: How would you explain flexbox mental model and constraints in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Flexbox mental model and constraints**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
 ```css
-/* Light theme (default) */
-:root {
-  --bg-primary: white;
-  --bg-secondary: #f8f9fa;
-  --text-primary: #212529;
-  --text-secondary: #6c757d;
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
 }
-
-/* Dark theme */
-[data-theme="dark"] {
-  --bg-primary: #212529;
-  --bg-secondary: #343a40;
-  --text-primary: #f8f9fa;
-  --text-secondary: #adb5bd;
-}
-
-/* Components use variables */
-.card {
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-}
-
-.card-subtitle {
-  color: var(--text-secondary);
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
 }
 ```
 
-**JavaScript Integration:**
+**Cross-reference:** [17-frontend-theory-06-web-performance-optimization.md](./17-frontend-theory-06-web-performance-optimization.md)
 
-```javascript
-// Get variable value
-const root = document.documentElement;
-const primaryColor = getComputedStyle(root)
-  .getPropertyValue('--primary-color');
+## Topic 4: Grid tracks and placement algorithm
 
-console.log(primaryColor); // "#007bff"
+### 🟢 [Junior] Q10: How would you explain grid tracks and placement algorithm in a real interview?
 
-// Set variable value
-root.style.setProperty('--primary-color', '#ff0000');
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
 
-// Toggle theme
-function toggleTheme() {
-  const currentTheme = root.getAttribute('data-theme');
-  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-  root.setAttribute('data-theme', newTheme);
-}
+**Giải thích (Explanation):** Với **Grid tracks and placement algorithm**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
-// Dynamic color generation
-function setThemeColor(hue) {
-  root.style.setProperty('--primary-hue', hue);
-  root.style.setProperty('--primary-color', `hsl(${hue}, 70%, 50%)`);
-  root.style.setProperty('--primary-light', `hsl(${hue}, 70%, 70%)`);
-  root.style.setProperty('--primary-dark', `hsl(${hue}, 70%, 30%)`);
-}
-```
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
 
-**Advanced Patterns:**
-
+**Ví dụ (Example):**
 ```css
-/* Responsive variables */
-:root {
-  --container-width: 1200px;
-  --gutter: 16px;
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
 }
-
-@media (max-width: 768px) {
-  :root {
-    --container-width: 100%;
-    --gutter: 8px;
-  }
-}
-
-/* Component-scoped variables */
-.card {
-  --card-padding: 20px;
-  --card-bg: white;
-  
-  padding: var(--card-padding);
-  background: var(--card-bg);
-}
-
-.card--large {
-  --card-padding: 40px;
-}
-
-/* Calculated variables */
-:root {
-  --base-size: 16px;
-  --scale-ratio: 1.25;
-  
-  --size-xs: calc(var(--base-size) / var(--scale-ratio) / var(--scale-ratio));
-  --size-sm: calc(var(--base-size) / var(--scale-ratio));
-  --size-md: var(--base-size);
-  --size-lg: calc(var(--base-size) * var(--scale-ratio));
-  --size-xl: calc(var(--base-size) * var(--scale-ratio) * var(--scale-ratio));
-}
-
-/* Color system */
-:root {
-  --primary-h: 210;
-  --primary-s: 100%;
-  --primary-l: 50%;
-  
-  --primary: hsl(var(--primary-h), var(--primary-s), var(--primary-l));
-  --primary-light: hsl(var(--primary-h), var(--primary-s), calc(var(--primary-l) + 20%));
-  --primary-dark: hsl(var(--primary-h), var(--primary-s), calc(var(--primary-l) - 20%));
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
 }
 ```
 
-**Vietnamese:**
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
 
-CSS variables cho phép tạo stylesheets động và dễ maintain.
+### 🟡 [Mid] Q11: How would you explain grid tracks and placement algorithm in a real interview?
 
-**Sử Dụng Cơ Bản:**
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
 
+**Giải thích (Explanation):** Với **Grid tracks and placement algorithm**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
 ```css
-/* Định nghĩa */
-:root {
-  --primary-color: #007bff;
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
 }
-
-/* Sử dụng */
-.button {
-  background: var(--primary-color);
-}
-
-/* Fallback */
-.text {
-  color: var(--text-color, black);
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
 }
 ```
 
-**Lợi Ích:**
+**Cross-reference:** [17-frontend-theory-11-rendering-theory.md](./17-frontend-theory-11-rendering-theory.md)
 
-1. **Theming**: Dễ dàng đổi theme
-2. **Maintainability**: Thay đổi một chỗ, áp dụng toàn bộ
-3. **Dynamic**: Có thể thay đổi bằng JavaScript
-4. **Scoped**: Có thể scope theo component
+### 🔴 [Senior] Q12: How would you explain grid tracks and placement algorithm in a real interview?
 
-**Patterns:**
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
 
-- Responsive variables
-- Component-scoped variables
-- Calculated variables
-- Color systems
+**Giải thích (Explanation):** Với **Grid tracks and placement algorithm**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
 
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```css
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
+}
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
+}
+```
+
+**Cross-reference:** [17-frontend-theory-06-web-performance-optimization.md](./17-frontend-theory-06-web-performance-optimization.md)
+
+## Topic 5: Container queries for component-scale design
+
+### 🟢 [Junior] Q13: How would you explain container queries for component-scale design in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Container queries for component-scale design**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```css
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
+}
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
+}
+```
+
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
+
+### 🟡 [Mid] Q14: How would you explain container queries for component-scale design in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Container queries for component-scale design**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```css
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
+}
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
+}
+```
+
+**Cross-reference:** [17-frontend-theory-11-rendering-theory.md](./17-frontend-theory-11-rendering-theory.md)
+
+### 🔴 [Senior] Q15: How would you explain container queries for component-scale design in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Container queries for component-scale design**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```css
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
+}
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
+}
+```
+
+**Cross-reference:** [17-frontend-theory-06-web-performance-optimization.md](./17-frontend-theory-06-web-performance-optimization.md)
+
+## Topic 6: Cascade layers and style governance
+
+### 🟢 [Junior] Q16: How would you explain cascade layers and style governance in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Cascade layers and style governance**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```css
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
+}
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
+}
+```
+
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
+
+### 🟡 [Mid] Q17: How would you explain cascade layers and style governance in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Cascade layers and style governance**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```css
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
+}
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
+}
+```
+
+**Cross-reference:** [17-frontend-theory-11-rendering-theory.md](./17-frontend-theory-11-rendering-theory.md)
+
+### 🔴 [Senior] Q18: How would you explain cascade layers and style governance in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Cascade layers and style governance**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```css
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
+}
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
+}
+```
+
+**Cross-reference:** [17-frontend-theory-06-web-performance-optimization.md](./17-frontend-theory-06-web-performance-optimization.md)
+
+## Topic 7: CSS custom properties and design tokens
+
+### 🟢 [Junior] Q19: How would you explain css custom properties and design tokens in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **CSS custom properties and design tokens**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```css
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
+}
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
+}
+```
+
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
+
+### 🟡 [Mid] Q20: How would you explain css custom properties and design tokens in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **CSS custom properties and design tokens**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```css
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
+}
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
+}
+```
+
+**Cross-reference:** [17-frontend-theory-11-rendering-theory.md](./17-frontend-theory-11-rendering-theory.md)
+
+### 🔴 [Senior] Q21: How would you explain css custom properties and design tokens in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **CSS custom properties and design tokens**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```css
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
+}
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
+}
+```
+
+**Cross-reference:** [17-frontend-theory-06-web-performance-optimization.md](./17-frontend-theory-06-web-performance-optimization.md)
+
+## Topic 8: Nesting, :is, :where, and selector ergonomics
+
+### 🟢 [Junior] Q22: How would you explain nesting, :is, :where, and selector ergonomics in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Nesting, :is, :where, and selector ergonomics**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```css
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
+}
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
+}
+```
+
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
+
+### 🟡 [Mid] Q23: How would you explain nesting, :is, :where, and selector ergonomics in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Nesting, :is, :where, and selector ergonomics**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```css
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
+}
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
+}
+```
+
+**Cross-reference:** [17-frontend-theory-11-rendering-theory.md](./17-frontend-theory-11-rendering-theory.md)
+
+### 🔴 [Senior] Q24: How would you explain nesting, :is, :where, and selector ergonomics in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Nesting, :is, :where, and selector ergonomics**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```css
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
+}
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
+}
+```
+
+**Cross-reference:** [17-frontend-theory-06-web-performance-optimization.md](./17-frontend-theory-06-web-performance-optimization.md)
+
+## Topic 9: Architecture patterns (BEM, ITCSS, CUBE)
+
+### 🟢 [Junior] Q25: How would you explain architecture patterns (bem, itcss, cube) in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Architecture patterns (BEM, ITCSS, CUBE)**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```css
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
+}
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
+}
+```
+
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
+
+### 🟡 [Mid] Q26: How would you explain architecture patterns (bem, itcss, cube) in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Architecture patterns (BEM, ITCSS, CUBE)**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```css
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
+}
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
+}
+```
+
+**Cross-reference:** [17-frontend-theory-11-rendering-theory.md](./17-frontend-theory-11-rendering-theory.md)
+
+### 🔴 [Senior] Q27: How would you explain architecture patterns (bem, itcss, cube) in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Architecture patterns (BEM, ITCSS, CUBE)**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```css
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
+}
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
+}
+```
+
+**Cross-reference:** [17-frontend-theory-06-web-performance-optimization.md](./17-frontend-theory-06-web-performance-optimization.md)
+
+## Topic 10: CSS Modules and local scoping
+
+### 🟢 [Junior] Q28: How would you explain css modules and local scoping in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **CSS Modules and local scoping**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```css
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
+}
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
+}
+```
+
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
+
+### 🟡 [Mid] Q29: How would you explain css modules and local scoping in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **CSS Modules and local scoping**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```css
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
+}
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
+}
+```
+
+**Cross-reference:** [17-frontend-theory-11-rendering-theory.md](./17-frontend-theory-11-rendering-theory.md)
+
+### 🔴 [Senior] Q30: How would you explain css modules and local scoping in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **CSS Modules and local scoping**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```css
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
+}
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
+}
+```
+
+**Cross-reference:** [17-frontend-theory-06-web-performance-optimization.md](./17-frontend-theory-06-web-performance-optimization.md)
+
+## Topic 11: Theming and dark mode strategy
+
+### 🟢 [Junior] Q31: How would you explain theming and dark mode strategy in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Theming and dark mode strategy**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```css
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
+}
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
+}
+```
+
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
+
+### 🟡 [Mid] Q32: How would you explain theming and dark mode strategy in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Theming and dark mode strategy**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```css
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
+}
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
+}
+```
+
+**Cross-reference:** [17-frontend-theory-11-rendering-theory.md](./17-frontend-theory-11-rendering-theory.md)
+
+### 🔴 [Senior] Q33: How would you explain theming and dark mode strategy in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Theming and dark mode strategy**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```css
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
+}
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
+}
+```
+
+**Cross-reference:** [17-frontend-theory-06-web-performance-optimization.md](./17-frontend-theory-06-web-performance-optimization.md)
+
+## Topic 12: Critical CSS extraction and loading
+
+### 🟢 [Junior] Q34: How would you explain critical css extraction and loading in a real interview?
+
+**Tổng Quan (Overview):** Explain core concept and baseline interview expectation.
+
+**Giải thích (Explanation):** Với **Critical CSS extraction and loading**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```css
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
+}
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
+}
+```
+
+**Cross-reference:** [17-frontend-theory-02-browser-rendering-theory.md](./17-frontend-theory-02-browser-rendering-theory.md)
+
+### 🟡 [Mid] Q35: How would you explain critical css extraction and loading in a real interview?
+
+**Tổng Quan (Overview):** Connect concept to trade-off and implementation detail.
+
+**Giải thích (Explanation):** Với **Critical CSS extraction and loading**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```css
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
+}
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
+}
+```
+
+**Cross-reference:** [17-frontend-theory-11-rendering-theory.md](./17-frontend-theory-11-rendering-theory.md)
+
+### 🔴 [Senior] Q36: How would you explain critical css extraction and loading in a real interview?
+
+**Tổng Quan (Overview):** Reason about architecture, failure mode, and optimization impact.
+
+**Giải thích (Explanation):** Với **Critical CSS extraction and loading**, câu trả lời nên gồm: (1) định nghĩa ngắn gọn bằng English keyword, (2) giải thích cơ chế bằng tiếng Việt theo runtime/browser/framework, (3) kết luận bằng tiêu chí đo lường để quyết định có áp dụng hay không. Điều này giúp interviewer thấy bạn không chỉ thuộc lý thuyết mà còn biết vận dụng trong bối cảnh dự án thật.
+
+**Key points to say:**
+- Explain concept boundary, not just buzzwords.
+- Nêu một failure mode phổ biến và cách phát hiện sớm.
+- Chốt bằng một trade-off có điều kiện if/then.
+
+**Ví dụ (Example):**
+```css
+.component {
+  container-type: inline-size;
+  --space-2: 0.5rem;
+  padding: var(--space-2);
+}
+@container (min-width: 32rem) {
+  .component { display: grid; grid-template-columns: 1fr 2fr; }
+}
+```
+
+**Cross-reference:** [17-frontend-theory-06-web-performance-optimization.md](./17-frontend-theory-06-web-performance-optimization.md)

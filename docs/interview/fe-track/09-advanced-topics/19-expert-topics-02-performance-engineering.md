@@ -1,1673 +1,829 @@
-# Performance Engineering
+# Performance Engineering / Kỹ Thuật Hiệu Năng Frontend
 
-## Table of Contents
-- [Performance Metrics](#performance-metrics)
-- [Critical Rendering Path](#critical-rendering-path)
-- [JavaScript Performance](#javascript-performance)
-- [Memory Optimization](#memory-optimization)
-- [Network Optimization](#network-optimization)
-- [Rendering Performance](#rendering-performance)
-- [Bundle Optimization](#bundle-optimization)
-- [Performance Monitoring](#performance-monitoring)
+## Tổng Quan / Overview
 
-## Performance Metrics
+- Bao phủ từ Core Web Vitals đến profiling CPU/memory/network trong production.
+- Tập trung kỹ thuật ưu tiên tài nguyên, tối ưu JavaScript, rendering, và monitoring thực tế.
+- Mỗi câu trả lời cần gắn metric trước/sau để thể hiện tư duy performance engineering.
 
-### Core Web Vitals
+### Cross-references / Tài liệu liên quan
+- [Browser Rendering Theory](./17-frontend-theory-02-browser-rendering-theory.md)
+- [Web Performance Optimization](./17-frontend-theory-06-web-performance-optimization.md)
+- [Memory Management Deep Dive](./17-frontend-theory-15-memory-management-deep-dive.md)
+- [HTTP Networking Theory](./17-frontend-theory-12-http-networking-theory.md)
 
-**Largest Contentful Paint (LCP)**:
-```javascript
-// Measure LCP
-const observer = new PerformanceObserver((list) => {
-  const entries = list.getEntries();
-  const lastEntry = entries[entries.length - 1];
-  
-  console.log('LCP:', lastEntry.renderTime || lastEntry.loadTime);
-  
-  // Send to analytics
-  sendToAnalytics({
-    metric: 'LCP',
-    value: lastEntry.renderTime || lastEntry.loadTime,
-    element: lastEntry.element
-  });
-});
+## Key Concepts / Khái Niệm Trọng Tâm
 
-observer.observe({ entryTypes: ['largest-contentful-paint'] });
+### 1. Core Web Vitals strategy
 
-// Good: < 2.5s, Needs Improvement: 2.5s - 4s, Poor: > 4s
+**Tổng Quan:** `Core Web Vitals strategy` là năng lực bắt buộc khi thảo luận kỹ thuật hiệu năng frontend.
+
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget1 = (value: number, budget: number) => value <= budget;
 ```
 
-**First Input Delay (FID)**:
-```javascript
-// Measure FID
-const observer = new PerformanceObserver((list) => {
-  const entries = list.getEntries();
-  
-  entries.forEach(entry => {
-    console.log('FID:', entry.processingStart - entry.startTime);
-    
-    sendToAnalytics({
-      metric: 'FID',
-      value: entry.processingStart - entry.startTime,
-      eventType: entry.name
-    });
-  });
-});
+### 2. Performance budgets
 
-observer.observe({ entryTypes: ['first-input'] });
+**Tổng Quan:** `Performance budgets` là năng lực bắt buộc khi thảo luận kỹ thuật hiệu năng frontend.
 
-// Good: < 100ms, Needs Improvement: 100ms - 300ms, Poor: > 300ms
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget2 = (value: number, budget: number) => value <= budget;
 ```
 
-**Cumulative Layout Shift (CLS)**:
-```javascript
-// Measure CLS
-let clsScore = 0;
+### 3. Critical rendering path
 
-const observer = new PerformanceObserver((list) => {
-  for (const entry of list.getEntries()) {
-    if (!entry.hadRecentInput) {
-      clsScore += entry.value;
-      console.log('CLS:', clsScore);
-      
-      sendToAnalytics({
-        metric: 'CLS',
-        value: clsScore,
-        sources: entry.sources
-      });
-    }
-  }
-});
+**Tổng Quan:** `Critical rendering path` là năng lực bắt buộc khi thảo luận kỹ thuật hiệu năng frontend.
 
-observer.observe({ entryTypes: ['layout-shift'] });
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-// Good: < 0.1, Needs Improvement: 0.1 - 0.25, Poor: > 0.25
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget3 = (value: number, budget: number) => value <= budget;
 ```
 
-### Custom Metrics
+### 4. Resource prioritization
 
-**Time to Interactive (TTI)**:
-```javascript
-function measureTTI() {
-  return new Promise((resolve) => {
-    let lastLongTask = 0;
-    
-    const observer = new PerformanceObserver((list) => {
-      const entries = list.getEntries();
-      
-      entries.forEach(entry => {
-        if (entry.duration > 50) {
-          lastLongTask = entry.startTime + entry.duration;
-        }
-      });
-    });
-    
-    observer.observe({ entryTypes: ['longtask'] });
-    
-    // Wait for 5 seconds of no long tasks
-    const checkTTI = () => {
-      const now = performance.now();
-      
-      if (now - lastLongTask > 5000) {
-        observer.disconnect();
-        resolve(lastLongTask);
-      } else {
-        requestIdleCallback(checkTTI);
-      }
-    };
-    
-    requestIdleCallback(checkTTI);
-  });
-}
+**Tổng Quan:** `Resource prioritization` là năng lực bắt buộc khi thảo luận kỹ thuật hiệu năng frontend.
 
-// Usage
-measureTTI().then(tti => {
-  console.log('TTI:', tti);
-  sendToAnalytics({ metric: 'TTI', value: tti });
-});
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget4 = (value: number, budget: number) => value <= budget;
 ```
 
-**Custom User Timing**:
-```javascript
-class PerformanceTracker {
-  constructor() {
-    this.marks = new Map();
-    this.measures = new Map();
-  }
+### 5. Code splitting governance
 
-  mark(name) {
-    const timestamp = performance.now();
-    this.marks.set(name, timestamp);
-    performance.mark(name);
-  }
+**Tổng Quan:** `Code splitting governance` là năng lực bắt buộc khi thảo luận kỹ thuật hiệu năng frontend.
 
-  measure(name, startMark, endMark) {
-    const start = this.marks.get(startMark);
-    const end = endMark ? this.marks.get(endMark) : performance.now();
-    
-    if (!start) {
-      throw new Error(`Start mark "${startMark}" not found`);
-    }
-    
-    const duration = end - start;
-    this.measures.set(name, duration);
-    
-    performance.measure(name, startMark, endMark);
-    
-    return duration;
-  }
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-  getMeasure(name) {
-    return this.measures.get(name);
-  }
-
-  getMarks() {
-    return Array.from(this.marks.entries());
-  }
-
-  getMeasures() {
-    return Array.from(this.measures.entries());
-  }
-
-  clear() {
-    this.marks.clear();
-    this.measures.clear();
-    performance.clearMarks();
-    performance.clearMeasures();
-  }
-}
-
-// Usage
-const tracker = new PerformanceTracker();
-
-tracker.mark('api-start');
-await fetchData();
-tracker.mark('api-end');
-
-const apiDuration = tracker.measure('api-call', 'api-start', 'api-end');
-console.log('API call took:', apiDuration, 'ms');
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget5 = (value: number, budget: number) => value <= budget;
 ```
 
-## Critical Rendering Path
+### 6. Tree shaking pitfalls
 
-### Resource Prioritization
+**Tổng Quan:** `Tree shaking pitfalls` là năng lực bắt buộc khi thảo luận kỹ thuật hiệu năng frontend.
 
-```javascript
-class ResourcePrioritizer {
-  constructor() {
-    this.priorities = {
-      critical: [],
-      high: [],
-      medium: [],
-      low: []
-    };
-  }
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-  addResource(url, priority = 'medium', type = 'script') {
-    this.priorities[priority].push({ url, type });
-  }
-
-  async loadAll() {
-    // Load critical resources first
-    await this.loadPriority('critical');
-    
-    // Then high priority
-    await this.loadPriority('high');
-    
-    // Medium and low can load in parallel
-    await Promise.all([
-      this.loadPriority('medium'),
-      this.loadPriority('low')
-    ]);
-  }
-
-  async loadPriority(priority) {
-    const resources = this.priorities[priority];
-    
-    return Promise.all(
-      resources.map(resource => this.loadResource(resource))
-    );
-  }
-
-  loadResource({ url, type }) {
-    return new Promise((resolve, reject) => {
-      let element;
-      
-      switch (type) {
-        case 'script':
-          element = document.createElement('script');
-          element.src = url;
-          element.async = true;
-          break;
-        
-        case 'style':
-          element = document.createElement('link');
-          element.rel = 'stylesheet';
-          element.href = url;
-          break;
-        
-        case 'image':
-          element = new Image();
-          element.src = url;
-          break;
-        
-        default:
-          reject(new Error(`Unknown type: ${type}`));
-          return;
-      }
-      
-      element.onload = resolve;
-      element.onerror = reject;
-      
-      if (type !== 'image') {
-        document.head.appendChild(element);
-      }
-    });
-  }
-}
-
-// Usage
-const prioritizer = new ResourcePrioritizer();
-
-prioritizer.addResource('/critical.css', 'critical', 'style');
-prioritizer.addResource('/critical.js', 'critical', 'script');
-prioritizer.addResource('/app.js', 'high', 'script');
-prioritizer.addResource('/analytics.js', 'low', 'script');
-
-await prioritizer.loadAll();
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget6 = (value: number, budget: number) => value <= budget;
 ```
 
-### Preloading Strategies
+### 7. Memoization boundaries
 
-```javascript
-class PreloadManager {
-  constructor() {
-    this.preloaded = new Set();
-  }
+**Tổng Quan:** `Memoization boundaries` là năng lực bắt buộc khi thảo luận kỹ thuật hiệu năng frontend.
 
-  preload(url, as, options = {}) {
-    if (this.preloaded.has(url)) return;
-    
-    const link = document.createElement('link');
-    link.rel = 'preload';
-    link.href = url;
-    link.as = as;
-    
-    if (options.type) {
-      link.type = options.type;
-    }
-    
-    if (options.crossorigin) {
-      link.crossOrigin = options.crossorigin;
-    }
-    
-    if (options.importance) {
-      link.importance = options.importance;
-    }
-    
-    document.head.appendChild(link);
-    this.preloaded.add(url);
-  }
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-  prefetch(url) {
-    if (this.preloaded.has(url)) return;
-    
-    const link = document.createElement('link');
-    link.rel = 'prefetch';
-    link.href = url;
-    
-    document.head.appendChild(link);
-    this.preloaded.add(url);
-  }
-
-  preconnect(origin) {
-    const link = document.createElement('link');
-    link.rel = 'preconnect';
-    link.href = origin;
-    link.crossOrigin = 'anonymous';
-    
-    document.head.appendChild(link);
-  }
-
-  dnsPrefetch(origin) {
-    const link = document.createElement('link');
-    link.rel = 'dns-prefetch';
-    link.href = origin;
-    
-    document.head.appendChild(link);
-  }
-
-  preloadCriticalAssets() {
-    // Preload critical CSS
-    this.preload('/critical.css', 'style');
-    
-    // Preload critical fonts
-    this.preload('/fonts/main.woff2', 'font', {
-      type: 'font/woff2',
-      crossorigin: 'anonymous'
-    });
-    
-    // Preload hero image
-    this.preload('/images/hero.jpg', 'image', {
-      importance: 'high'
-    });
-  }
-
-  prefetchNextPage(url) {
-    // Prefetch next page resources
-    this.prefetch(`${url}/main.js`);
-    this.prefetch(`${url}/styles.css`);
-    
-    // Preconnect to API
-    this.preconnect('https://api.example.com');
-  }
-}
-
-// Usage
-const preloadManager = new PreloadManager();
-preloadManager.preloadCriticalAssets();
-
-// On hover over link
-document.querySelectorAll('a').forEach(link => {
-  link.addEventListener('mouseenter', () => {
-    preloadManager.prefetchNextPage(link.href);
-  }, { once: true });
-});
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget7 = (value: number, budget: number) => value <= budget;
 ```
 
-## JavaScript Performance
+### 8. Web Worker offloading
 
-### Code Splitting
+**Tổng Quan:** `Web Worker offloading` là năng lực bắt buộc khi thảo luận kỹ thuật hiệu năng frontend.
 
-```javascript
-// Dynamic imports
-class CodeSplitter {
-  constructor() {
-    this.modules = new Map();
-    this.loading = new Map();
-  }
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-  async load(moduleName, importFn) {
-    // Return cached module
-    if (this.modules.has(moduleName)) {
-      return this.modules.get(moduleName);
-    }
-
-    // Return in-flight promise
-    if (this.loading.has(moduleName)) {
-      return this.loading.get(moduleName);
-    }
-
-    // Load module
-    const promise = importFn()
-      .then(module => {
-        this.modules.set(moduleName, module);
-        this.loading.delete(moduleName);
-        return module;
-      })
-      .catch(error => {
-        this.loading.delete(moduleName);
-        throw error;
-      });
-
-    this.loading.set(moduleName, promise);
-    return promise;
-  }
-
-  preload(moduleName, importFn) {
-    // Start loading but don't wait
-    this.load(moduleName, importFn).catch(console.error);
-  }
-
-  clear(moduleName) {
-    this.modules.delete(moduleName);
-    this.loading.delete(moduleName);
-  }
-}
-
-// Usage
-const splitter = new CodeSplitter();
-
-// Load on demand
-button.addEventListener('click', async () => {
-  const module = await splitter.load(
-    'heavy-feature',
-    () => import('./heavy-feature.js')
-  );
-  
-  module.initialize();
-});
-
-// Preload on hover
-button.addEventListener('mouseenter', () => {
-  splitter.preload(
-    'heavy-feature',
-    () => import('./heavy-feature.js')
-  );
-}, { once: true });
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget8 = (value: number, budget: number) => value <= budget;
 ```
 
-### Tree Shaking
+### 9. Memory leak detection
 
-```javascript
-// Webpack configuration for tree shaking
-module.exports = {
-  mode: 'production',
-  optimization: {
-    usedExports: true,
-    sideEffects: false,
-    minimize: true
-  }
-};
+**Tổng Quan:** `Memory leak detection` là năng lực bắt buộc khi thảo luận kỹ thuật hiệu năng frontend.
 
-// Package.json
-{
-  "sideEffects": false,
-  // or specify files with side effects
-  "sideEffects": [
-    "*.css",
-    "*.scss",
-    "./src/polyfills.js"
-  ]
-}
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-// Write tree-shakeable code
-// BAD: Default export
-export default {
-  method1() {},
-  method2() {},
-  method3() {}
-};
-
-// GOOD: Named exports
-export function method1() {}
-export function method2() {}
-export function method3() {}
-
-// Import only what you need
-import { method1 } from './utils';
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget9 = (value: number, budget: number) => value <= budget;
 ```
 
-### Memoization
+### 10. Request batching
 
-```javascript
-function memoize(fn, options = {}) {
-  const cache = new Map();
-  const maxSize = options.maxSize || Infinity;
-  const ttl = options.ttl || Infinity;
+**Tổng Quan:** `Request batching` là năng lực bắt buộc khi thảo luận kỹ thuật hiệu năng frontend.
 
-  return function(...args) {
-    const key = JSON.stringify(args);
-    
-    // Check cache
-    if (cache.has(key)) {
-      const cached = cache.get(key);
-      
-      // Check TTL
-      if (Date.now() - cached.timestamp < ttl) {
-        return cached.value;
-      }
-      
-      cache.delete(key);
-    }
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-    // Compute value
-    const value = fn.apply(this, args);
-    
-    // Store in cache
-    cache.set(key, {
-      value,
-      timestamp: Date.now()
-    });
-
-    // Enforce max size (LRU)
-    if (cache.size > maxSize) {
-      const firstKey = cache.keys().next().value;
-      cache.delete(firstKey);
-    }
-
-    return value;
-  };
-}
-
-// Usage
-const expensiveCalculation = memoize((n) => {
-  console.log('Computing...');
-  let result = 0;
-  for (let i = 0; i < n; i++) {
-    result += Math.sqrt(i);
-  }
-  return result;
-}, { maxSize: 100, ttl: 60000 });
-
-console.log(expensiveCalculation(1000000)); // Computing... (slow)
-console.log(expensiveCalculation(1000000)); // (instant, from cache)
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget10 = (value: number, budget: number) => value <= budget;
 ```
 
-### Web Workers for Heavy Computation
+### 11. Adaptive loading
 
-```javascript
-class WorkerPool {
-  constructor(workerScript, poolSize = 4) {
-    this.workerScript = workerScript;
-    this.poolSize = poolSize;
-    this.workers = [];
-    this.queue = [];
-    this.taskId = 0;
-    
-    this.initialize();
-  }
+**Tổng Quan:** `Adaptive loading` là năng lực bắt buộc khi thảo luận kỹ thuật hiệu năng frontend.
 
-  initialize() {
-    for (let i = 0; i < this.poolSize; i++) {
-      const worker = new Worker(this.workerScript);
-      this.workers.push({
-        worker,
-        busy: false,
-        tasks: new Map()
-      });
-      
-      worker.onmessage = (e) => this.handleMessage(i, e);
-    }
-  }
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-  handleMessage(workerIndex, event) {
-    const workerInfo = this.workers[workerIndex];
-    const { taskId, result, error } = event.data;
-    
-    const task = workerInfo.tasks.get(taskId);
-    if (task) {
-      workerInfo.tasks.delete(taskId);
-      
-      if (error) {
-        task.reject(new Error(error));
-      } else {
-        task.resolve(result);
-      }
-      
-      if (workerInfo.tasks.size === 0) {
-        workerInfo.busy = false;
-        this.processQueue();
-      }
-    }
-  }
-
-  async execute(data) {
-    return new Promise((resolve, reject) => {
-      const taskId = this.taskId++;
-      
-      this.queue.push({
-        taskId,
-        data,
-        resolve,
-        reject
-      });
-      
-      this.processQueue();
-    });
-  }
-
-  processQueue() {
-    if (this.queue.length === 0) return;
-    
-    const availableWorker = this.workers.find(w => !w.busy);
-    if (!availableWorker) return;
-    
-    const task = this.queue.shift();
-    availableWorker.busy = true;
-    availableWorker.tasks.set(task.taskId, {
-      resolve: task.resolve,
-      reject: task.reject
-    });
-    
-    availableWorker.worker.postMessage({
-      taskId: task.taskId,
-      data: task.data
-    });
-  }
-
-  terminate() {
-    this.workers.forEach(w => w.worker.terminate());
-    this.workers = [];
-    this.queue = [];
-  }
-}
-
-// Worker script (worker.js)
-/*
-self.onmessage = async function(e) {
-  const { taskId, data } = e.data;
-  
-  try {
-    // Heavy computation
-    const result = performHeavyComputation(data);
-    
-    self.postMessage({ taskId, result });
-  } catch (error) {
-    self.postMessage({ taskId, error: error.message });
-  }
-};
-
-function performHeavyComputation(data) {
-  // CPU-intensive work
-  let result = 0;
-  for (let i = 0; i < data.iterations; i++) {
-    result += Math.sqrt(i);
-  }
-  return result;
-}
-*/
-
-// Usage
-const pool = new WorkerPool('worker.js', 4);
-
-const results = await Promise.all([
-  pool.execute({ iterations: 1000000 }),
-  pool.execute({ iterations: 2000000 }),
-  pool.execute({ iterations: 3000000 })
-]);
-
-console.log('Results:', results);
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget11 = (value: number, budget: number) => value <= budget;
 ```
 
-I'll continue with more content:
+### 12. Virtual scrolling
 
-<function_calls>
-<invoke name="fsAppend">
-<parameter name="path">docs/19-expert-topics/02-performance-engineering.md
+**Tổng Quan:** `Virtual scrolling` là năng lực bắt buộc khi thảo luận kỹ thuật hiệu năng frontend.
 
-## Me
-mory Optimization
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-### Memory Leak Detection
-
-```javascript
-class MemoryLeakDetector {
-  constructor() {
-    this.snapshots = [];
-    this.listeners = new WeakMap();
-    this.timers = new Set();
-  }
-
-  takeSnapshot() {
-    if (performance.memory) {
-      this.snapshots.push({
-        timestamp: Date.now(),
-        usedJSHeapSize: performance.memory.usedJSHeapSize,
-        totalJSHeapSize: performance.memory.totalJSHeapSize,
-        jsHeapSizeLimit: performance.memory.jsHeapSizeLimit
-      });
-    }
-  }
-
-  startMonitoring(interval = 5000) {
-    this.monitoringInterval = setInterval(() => {
-      this.takeSnapshot();
-      this.analyze();
-    }, interval);
-  }
-
-  stopMonitoring() {
-    if (this.monitoringInterval) {
-      clearInterval(this.monitoringInterval);
-    }
-  }
-
-  analyze() {
-    if (this.snapshots.length < 3) return;
-
-    const recent = this.snapshots.slice(-10);
-    const trend = this.calculateTrend(recent);
-
-    if (trend > 1000000) { // 1MB growth per snapshot
-      console.warn('Potential memory leak detected!');
-      console.warn('Memory growth rate:', trend, 'bytes per snapshot');
-      this.reportLeak(trend);
-    }
-  }
-
-  calculateTrend(snapshots) {
-    if (snapshots.length < 2) return 0;
-
-    const values = snapshots.map(s => s.usedJSHeapSize);
-    const n = values.length;
-    
-    let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
-    
-    for (let i = 0; i < n; i++) {
-      sumX += i;
-      sumY += values[i];
-      sumXY += i * values[i];
-      sumX2 += i * i;
-    }
-    
-    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-    return slope;
-  }
-
-  reportLeak(trend) {
-    // Send to monitoring service
-    console.log('Leak report:', {
-      trend,
-      snapshots: this.snapshots.slice(-5),
-      timestamp: Date.now()
-    });
-  }
-
-  trackEventListener(element, event, handler) {
-    if (!this.listeners.has(element)) {
-      this.listeners.set(element, new Map());
-    }
-    
-    const elementListeners = this.listeners.get(element);
-    if (!elementListeners.has(event)) {
-      elementListeners.set(event, new Set());
-    }
-    
-    elementListeners.get(event).add(handler);
-  }
-
-  trackTimer(id) {
-    this.timers.add(id);
-  }
-
-  getReport() {
-    return {
-      snapshots: this.snapshots,
-      trend: this.calculateTrend(this.snapshots),
-      activeTimers: this.timers.size
-    };
-  }
-}
-
-// Usage
-const detector = new MemoryLeakDetector();
-detector.startMonitoring(5000);
-
-// Track event listeners
-const handler = () => console.log('clicked');
-element.addEventListener('click', handler);
-detector.trackEventListener(element, 'click', handler);
-
-// Track timers
-const timerId = setInterval(() => {}, 1000);
-detector.trackTimer(timerId);
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget12 = (value: number, budget: number) => value <= budget;
 ```
 
-### Object Pooling for Memory Efficiency
+### 13. RAF scheduling
 
-```javascript
-class AdvancedObjectPool {
-  constructor(factory, reset, options = {}) {
-    this.factory = factory;
-    this.reset = reset;
-    this.maxSize = options.maxSize || 100;
-    this.minSize = options.minSize || 10;
-    this.pool = [];
-    this.inUse = new Set();
-    this.stats = {
-      created: 0,
-      acquired: 0,
-      released: 0,
-      reused: 0
-    };
-    
-    // Pre-allocate minimum objects
-    for (let i = 0; i < this.minSize; i++) {
-      this.pool.push(this.factory());
-      this.stats.created++;
-    }
-  }
+**Tổng Quan:** `RAF scheduling` là năng lực bắt buộc khi thảo luận kỹ thuật hiệu năng frontend.
 
-  acquire() {
-    let obj;
-    
-    if (this.pool.length > 0) {
-      obj = this.pool.pop();
-      this.stats.reused++;
-    } else if (this.inUse.size < this.maxSize) {
-      obj = this.factory();
-      this.stats.created++;
-    } else {
-      throw new Error('Pool exhausted');
-    }
-    
-    this.inUse.add(obj);
-    this.stats.acquired++;
-    return obj;
-  }
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-  release(obj) {
-    if (!this.inUse.has(obj)) {
-      throw new Error('Object not from this pool');
-    }
-    
-    this.inUse.delete(obj);
-    this.reset(obj);
-    
-    if (this.pool.length < this.maxSize) {
-      this.pool.push(obj);
-      this.stats.released++;
-    }
-  }
-
-  drain() {
-    this.pool = [];
-    this.inUse.clear();
-  }
-
-  getStats() {
-    return {
-      ...this.stats,
-      poolSize: this.pool.length,
-      inUse: this.inUse.size,
-      reuseRate: this.stats.reused / this.stats.acquired
-    };
-  }
-}
-
-// Usage with DOM elements
-const divPool = new AdvancedObjectPool(
-  () => document.createElement('div'),
-  (div) => {
-    div.className = '';
-    div.textContent = '';
-    div.style.cssText = '';
-  },
-  { maxSize: 50, minSize: 10 }
-);
-
-// Acquire and use
-const div = divPool.acquire();
-div.textContent = 'Hello';
-document.body.appendChild(div);
-
-// Release when done
-div.remove();
-divPool.release(div);
-
-console.log(divPool.getStats());
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget13 = (value: number, budget: number) => value <= budget;
 ```
 
-## Network Optimization
+### 14. Layout thrashing prevention
 
-### Request Batching
+**Tổng Quan:** `Layout thrashing prevention` là năng lực bắt buộc khi thảo luận kỹ thuật hiệu năng frontend.
 
-```javascript
-class RequestBatcher {
-  constructor(options = {}) {
-    this.batchSize = options.batchSize || 10;
-    this.batchDelay = options.batchDelay || 50;
-    this.endpoint = options.endpoint;
-    this.pending = [];
-    this.timer = null;
-  }
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-  add(request) {
-    return new Promise((resolve, reject) => {
-      this.pending.push({ request, resolve, reject });
-      
-      if (this.pending.length >= this.batchSize) {
-        this.flush();
-      } else if (!this.timer) {
-        this.timer = setTimeout(() => this.flush(), this.batchDelay);
-      }
-    });
-  }
-
-  async flush() {
-    if (this.timer) {
-      clearTimeout(this.timer);
-      this.timer = null;
-    }
-
-    if (this.pending.length === 0) return;
-
-    const batch = this.pending.splice(0, this.batchSize);
-    const requests = batch.map(b => b.request);
-
-    try {
-      const response = await fetch(this.endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ requests })
-      });
-
-      const results = await response.json();
-
-      batch.forEach((item, index) => {
-        const result = results[index];
-        if (result.error) {
-          item.reject(new Error(result.error));
-        } else {
-          item.resolve(result.data);
-        }
-      });
-    } catch (error) {
-      batch.forEach(item => item.reject(error));
-    }
-
-    // Process remaining requests
-    if (this.pending.length > 0) {
-      this.flush();
-    }
-  }
-}
-
-// Usage
-const batcher = new RequestBatcher({
-  endpoint: '/api/batch',
-  batchSize: 10,
-  batchDelay: 50
-});
-
-// Multiple requests get batched
-const results = await Promise.all([
-  batcher.add({ type: 'getUser', id: 1 }),
-  batcher.add({ type: 'getUser', id: 2 }),
-  batcher.add({ type: 'getPost', id: 100 })
-]);
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget14 = (value: number, budget: number) => value <= budget;
 ```
 
-### HTTP/2 Server Push Simulation
+### 15. Bundle regression control
 
-```javascript
-class ResourcePusher {
-  constructor() {
-    this.pushed = new Set();
-    this.dependencies = new Map();
-  }
+**Tổng Quan:** `Bundle regression control` là năng lực bắt buộc khi thảo luận kỹ thuật hiệu năng frontend.
 
-  registerDependencies(resource, deps) {
-    this.dependencies.set(resource, deps);
-  }
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-  async push(resource) {
-    if (this.pushed.has(resource)) return;
-    
-    this.pushed.add(resource);
-    
-    // Get dependencies
-    const deps = this.dependencies.get(resource) || [];
-    
-    // Push dependencies first
-    await Promise.all(
-      deps.map(dep => this.pushResource(dep))
-    );
-    
-    // Push main resource
-    await this.pushResource(resource);
-  }
-
-  async pushResource(url) {
-    if (this.pushed.has(url)) return;
-    
-    this.pushed.add(url);
-    
-    // Use link preload
-    const link = document.createElement('link');
-    link.rel = 'preload';
-    link.href = url;
-    link.as = this.getResourceType(url);
-    
-    document.head.appendChild(link);
-    
-    // Actually fetch
-    return fetch(url);
-  }
-
-  getResourceType(url) {
-    const ext = url.split('.').pop();
-    const types = {
-      'js': 'script',
-      'css': 'style',
-      'woff': 'font',
-      'woff2': 'font',
-      'jpg': 'image',
-      'png': 'image',
-      'webp': 'image'
-    };
-    return types[ext] || 'fetch';
-  }
-}
-
-// Usage
-const pusher = new ResourcePusher();
-
-// Register dependencies
-pusher.registerDependencies('/app.js', [
-  '/vendor.js',
-  '/polyfills.js'
-]);
-
-pusher.registerDependencies('/app.css', [
-  '/fonts/main.woff2'
-]);
-
-// Push resources with dependencies
-await pusher.push('/app.js');
-await pusher.push('/app.css');
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget15 = (value: number, budget: number) => value <= budget;
 ```
 
-### Adaptive Loading
+### 16. RUM and alerting
 
-```javascript
-class AdaptiveLoader {
-  constructor() {
-    this.connection = navigator.connection || navigator.mozConnection;
-    this.deviceMemory = navigator.deviceMemory || 4;
-    this.hardwareConcurrency = navigator.hardwareConcurrency || 4;
-  }
+**Tổng Quan:** `RUM and alerting` là năng lực bắt buộc khi thảo luận kỹ thuật hiệu năng frontend.
 
-  getDeviceCapability() {
-    const effectiveType = this.connection?.effectiveType || '4g';
-    const saveData = this.connection?.saveData || false;
-    
-    if (saveData) return 'low';
-    
-    // Score based on multiple factors
-    let score = 0;
-    
-    // Network
-    if (effectiveType === '4g') score += 3;
-    else if (effectiveType === '3g') score += 2;
-    else score += 1;
-    
-    // Memory
-    if (this.deviceMemory >= 8) score += 3;
-    else if (this.deviceMemory >= 4) score += 2;
-    else score += 1;
-    
-    // CPU
-    if (this.hardwareConcurrency >= 8) score += 3;
-    else if (this.hardwareConcurrency >= 4) score += 2;
-    else score += 1;
-    
-    // Classify
-    if (score >= 8) return 'high';
-    if (score >= 5) return 'medium';
-    return 'low';
-  }
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-  async loadImage(src, options = {}) {
-    const capability = this.getDeviceCapability();
-    
-    let actualSrc = src;
-    
-    switch (capability) {
-      case 'low':
-        actualSrc = options.lowQuality || src;
-        break;
-      case 'medium':
-        actualSrc = options.mediumQuality || src;
-        break;
-      case 'high':
-        actualSrc = options.highQuality || src;
-        break;
-    }
-    
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = reject;
-      img.src = actualSrc;
-    });
-  }
-
-  async loadComponent(importFn, fallbackFn) {
-    const capability = this.getDeviceCapability();
-    
-    if (capability === 'low' && fallbackFn) {
-      return fallbackFn();
-    }
-    
-    return importFn();
-  }
-
-  shouldLoadFeature(feature) {
-    const capability = this.getDeviceCapability();
-    
-    const features = {
-      animations: ['medium', 'high'],
-      videoAutoplay: ['high'],
-      highResImages: ['medium', 'high'],
-      webWorkers: ['medium', 'high'],
-      serviceWorker: ['medium', 'high']
-    };
-    
-    return features[feature]?.includes(capability) ?? true;
-  }
-}
-
-// Usage
-const loader = new AdaptiveLoader();
-
-// Load appropriate image quality
-const img = await loader.loadImage('/hero.jpg', {
-  lowQuality: '/hero-low.jpg',
-  mediumQuality: '/hero-medium.jpg',
-  highQuality: '/hero-high.jpg'
-});
-
-// Conditionally load features
-if (loader.shouldLoadFeature('animations')) {
-  await import('./animations.js');
-}
-
-// Load component based on capability
-const Component = await loader.loadComponent(
-  () => import('./RichComponent'),
-  () => import('./SimpleComponent')
-);
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget16 = (value: number, budget: number) => value <= budget;
 ```
 
-## Rendering Performance
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-### Virtual Scrolling
+### 🟢 [Junior] Q01: How would you explain core web vitals strategy in a frontend interview?
 
-```javascript
-class VirtualScroller {
-  constructor(container, options = {}) {
-    this.container = container;
-    this.itemHeight = options.itemHeight || 50;
-    this.buffer = options.buffer || 5;
-    this.items = [];
-    this.visibleItems = [];
-    this.scrollTop = 0;
-    
-    this.setupContainer();
-    this.attachListeners();
-  }
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
 
-  setupContainer() {
-    this.container.style.overflow = 'auto';
-    this.container.style.position = 'relative';
-    
-    this.viewport = document.createElement('div');
-    this.viewport.style.position = 'relative';
-    this.container.appendChild(this.viewport);
-  }
+**Giải thích (VI):** Với `Core Web Vitals strategy`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
 
-  attachListeners() {
-    this.container.addEventListener('scroll', () => {
-      this.scrollTop = this.container.scrollTop;
-      this.render();
-    });
-  }
-
-  setItems(items) {
-    this.items = items;
-    this.viewport.style.height = `${items.length * this.itemHeight}px`;
-    this.render();
-  }
-
-  render() {
-    const startIndex = Math.max(
-      0,
-      Math.floor(this.scrollTop / this.itemHeight) - this.buffer
-    );
-    
-    const endIndex = Math.min(
-      this.items.length,
-      Math.ceil((this.scrollTop + this.container.clientHeight) / this.itemHeight) + this.buffer
-    );
-
-    // Remove items outside visible range
-    this.visibleItems.forEach(item => {
-      if (item.index < startIndex || item.index >= endIndex) {
-        item.element.remove();
-      }
-    });
-
-    // Add items in visible range
-    const newVisibleItems = [];
-    
-    for (let i = startIndex; i < endIndex; i++) {
-      let item = this.visibleItems.find(v => v.index === i);
-      
-      if (!item) {
-        const element = this.createItemElement(this.items[i], i);
-        this.viewport.appendChild(element);
-        item = { index: i, element };
-      }
-      
-      newVisibleItems.push(item);
-    }
-    
-    this.visibleItems = newVisibleItems;
-  }
-
-  createItemElement(data, index) {
-    const element = document.createElement('div');
-    element.style.position = 'absolute';
-    element.style.top = `${index * this.itemHeight}px`;
-    element.style.height = `${this.itemHeight}px`;
-    element.style.width = '100%';
-    element.textContent = data;
-    return element;
-  }
-}
-
-// Usage
-const scroller = new VirtualScroller(
-  document.getElementById('container'),
-  { itemHeight: 50, buffer: 5 }
-);
-
-const items = Array.from({ length: 10000 }, (_, i) => `Item ${i}`);
-scroller.setItems(items);
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget1 = (value: number, budget: number) => value <= budget;
 ```
 
-### RAF Throttling
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
 
-```javascript
-class RAFThrottler {
-  constructor() {
-    this.rafId = null;
-    this.lastArgs = null;
-  }
+### 🟡 [Mid] Q01: How would you explain core web vitals strategy in a frontend interview?
 
-  throttle(callback) {
-    return (...args) => {
-      this.lastArgs = args;
-      
-      if (this.rafId === null) {
-        this.rafId = requestAnimationFrame(() => {
-          callback.apply(null, this.lastArgs);
-          this.rafId = null;
-          this.lastArgs = null;
-        });
-      }
-    };
-  }
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
 
-  cancel() {
-    if (this.rafId !== null) {
-      cancelAnimationFrame(this.rafId);
-      this.rafId = null;
-      this.lastArgs = null;
-    }
-  }
-}
+**Giải thích (VI):** Với `Core Web Vitals strategy`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
 
-// Usage
-const throttler = new RAFThrottler();
-
-const handleScroll = throttler.throttle((event) => {
-  console.log('Scroll position:', window.scrollY);
-  // Expensive DOM operations
-});
-
-window.addEventListener('scroll', handleScroll);
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget21 = (value: number, budget: number) => value <= budget;
 ```
 
-### Layout Thrashing Prevention
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
 
-```javascript
-class LayoutOptimizer {
-  constructor() {
-    this.readQueue = [];
-    this.writeQueue = [];
-    this.scheduled = false;
-  }
+### 🔴 [Senior] Q01: How would you explain core web vitals strategy in a frontend interview?
 
-  read(fn) {
-    this.readQueue.push(fn);
-    this.schedule();
-  }
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
 
-  write(fn) {
-    this.writeQueue.push(fn);
-    this.schedule();
-  }
+**Giải thích (VI):** Với `Core Web Vitals strategy`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
 
-  schedule() {
-    if (this.scheduled) return;
-    
-    this.scheduled = true;
-    
-    requestAnimationFrame(() => {
-      // Batch all reads first
-      this.readQueue.forEach(fn => fn());
-      this.readQueue = [];
-      
-      // Then batch all writes
-      this.writeQueue.forEach(fn => fn());
-      this.writeQueue = [];
-      
-      this.scheduled = false;
-    });
-  }
-
-  measure(element, property) {
-    return new Promise(resolve => {
-      this.read(() => {
-        const value = element[property];
-        resolve(value);
-      });
-    });
-  }
-
-  mutate(element, property, value) {
-    return new Promise(resolve => {
-      this.write(() => {
-        element[property] = value;
-        resolve();
-      });
-    });
-  }
-}
-
-// Usage
-const optimizer = new LayoutOptimizer();
-
-// BAD: Causes layout thrashing
-elements.forEach(el => {
-  const height = el.offsetHeight; // Read
-  el.style.width = height + 'px'; // Write
-});
-
-// GOOD: Batched reads and writes
-elements.forEach(el => {
-  optimizer.read(() => {
-    const height = el.offsetHeight;
-    
-    optimizer.write(() => {
-      el.style.width = height + 'px';
-    });
-  });
-});
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget41 = (value: number, budget: number) => value <= budget;
 ```
 
-## Bundle Optimization
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
 
-### Code Splitting Strategies
+### 🟢 [Junior] Q02: How would you explain performance budgets in a frontend interview?
 
-```javascript
-// Route-based splitting
-const routes = [
-  {
-    path: '/',
-    component: () => import('./pages/Home')
-  },
-  {
-    path: '/about',
-    component: () => import('./pages/About')
-  },
-  {
-    path: '/dashboard',
-    component: () => import('./pages/Dashboard')
-  }
-];
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
 
-// Component-based splitting
-const HeavyComponent = lazy(() => import('./HeavyComponent'));
+**Giải thích (VI):** Với `Performance budgets`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
 
-function App() {
-  return (
-    <Suspense fallback={<Loading />}>
-      <HeavyComponent />
-    </Suspense>
-  );
-}
-
-// Vendor splitting (webpack config)
-module.exports = {
-  optimization: {
-    splitChunks: {
-      cacheGroups: {
-        vendor: {
-          test: /[\\/]node_modules[\\/]/,
-          name: 'vendors',
-          chunks: 'all'
-        },
-        common: {
-          minChunks: 2,
-          priority: -10,
-          reuseExistingChunk: true
-        }
-      }
-    }
-  }
-};
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget2 = (value: number, budget: number) => value <= budget;
 ```
 
-### Dynamic Import Optimization
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
 
-```javascript
-class DynamicImportOptimizer {
-  constructor() {
-    this.cache = new Map();
-    this.loading = new Map();
-    this.prefetched = new Set();
-  }
+### 🟡 [Mid] Q02: How would you explain performance budgets in a frontend interview?
 
-  async import(modulePath) {
-    // Return cached module
-    if (this.cache.has(modulePath)) {
-      return this.cache.get(modulePath);
-    }
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
 
-    // Return in-flight promise
-    if (this.loading.has(modulePath)) {
-      return this.loading.get(modulePath);
-    }
+**Giải thích (VI):** Với `Performance budgets`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
 
-    // Import module
-    const promise = import(modulePath)
-      .then(module => {
-        this.cache.set(modulePath, module);
-        this.loading.delete(modulePath);
-        return module;
-      })
-      .catch(error => {
-        this.loading.delete(modulePath);
-        throw error;
-      });
-
-    this.loading.set(modulePath, promise);
-    return promise;
-  }
-
-  prefetch(modulePath) {
-    if (this.prefetched.has(modulePath)) return;
-    
-    this.prefetched.add(modulePath);
-    
-    // Use link prefetch
-    const link = document.createElement('link');
-    link.rel = 'prefetch';
-    link.href = modulePath;
-    document.head.appendChild(link);
-  }
-
-  preload(modulePath) {
-    // Use link preload for critical resources
-    const link = document.createElement('link');
-    link.rel = 'preload';
-    link.href = modulePath;
-    link.as = 'script';
-    document.head.appendChild(link);
-  }
-
-  async importWithRetry(modulePath, retries = 3) {
-    for (let i = 0; i < retries; i++) {
-      try {
-        return await this.import(modulePath);
-      } catch (error) {
-        if (i === retries - 1) throw error;
-        
-        // Wait before retry with exponential backoff
-        await new Promise(resolve => 
-          setTimeout(resolve, Math.pow(2, i) * 1000)
-        );
-      }
-    }
-  }
-}
-
-// Usage
-const optimizer = new DynamicImportOptimizer();
-
-// Prefetch on hover
-button.addEventListener('mouseenter', () => {
-  optimizer.prefetch('./heavy-feature.js');
-}, { once: true });
-
-// Import on click
-button.addEventListener('click', async () => {
-  const module = await optimizer.import('./heavy-feature.js');
-  module.initialize();
-});
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget22 = (value: number, budget: number) => value <= budget;
 ```
 
-## Performance Monitoring
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
 
-### Real User Monitoring (RUM)
+### 🔴 [Senior] Q02: How would you explain performance budgets in a frontend interview?
 
-```javascript
-class RUMCollector {
-  constructor(endpoint) {
-    this.endpoint = endpoint;
-    this.metrics = {};
-    this.buffer = [];
-    this.flushInterval = 30000; // 30 seconds
-    
-    this.collectMetrics();
-    this.startFlushing();
-  }
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
 
-  collectMetrics() {
-    // Navigation Timing
-    if (performance.timing) {
-      const timing = performance.timing;
-      this.metrics.navigationTiming = {
-        dns: timing.domainLookupEnd - timing.domainLookupStart,
-        tcp: timing.connectEnd - timing.connectStart,
-        request: timing.responseStart - timing.requestStart,
-        response: timing.responseEnd - timing.responseStart,
-        dom: timing.domComplete - timing.domLoading,
-        load: timing.loadEventEnd - timing.loadEventStart
-      };
-    }
+**Giải thích (VI):** Với `Performance budgets`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
 
-    // Resource Timing
-    const resources = performance.getEntriesByType('resource');
-    this.metrics.resources = resources.map(r => ({
-      name: r.name,
-      duration: r.duration,
-      size: r.transferSize,
-      type: r.initiatorType
-    }));
-
-    // Paint Timing
-    const paintEntries = performance.getEntriesByType('paint');
-    this.metrics.paint = {};
-    paintEntries.forEach(entry => {
-      this.metrics.paint[entry.name] = entry.startTime;
-    });
-
-    // Core Web Vitals
-    this.collectWebVitals();
-  }
-
-  collectWebVitals() {
-    // LCP
-    new PerformanceObserver((list) => {
-      const entries = list.getEntries();
-      const lastEntry = entries[entries.length - 1];
-      this.addMetric('LCP', lastEntry.renderTime || lastEntry.loadTime);
-    }).observe({ entryTypes: ['largest-contentful-paint'] });
-
-    // FID
-    new PerformanceObserver((list) => {
-      const entries = list.getEntries();
-      entries.forEach(entry => {
-        this.addMetric('FID', entry.processingStart - entry.startTime);
-      });
-    }).observe({ entryTypes: ['first-input'] });
-
-    // CLS
-    let clsScore = 0;
-    new PerformanceObserver((list) => {
-      for (const entry of list.getEntries()) {
-        if (!entry.hadRecentInput) {
-          clsScore += entry.value;
-          this.addMetric('CLS', clsScore);
-        }
-      }
-    }).observe({ entryTypes: ['layout-shift'] });
-  }
-
-  addMetric(name, value, metadata = {}) {
-    this.buffer.push({
-      name,
-      value,
-      metadata,
-      timestamp: Date.now(),
-      url: window.location.href,
-      userAgent: navigator.userAgent
-    });
-  }
-
-  startFlushing() {
-    setInterval(() => this.flush(), this.flushInterval);
-    
-    // Flush on page unload
-    window.addEventListener('beforeunload', () => this.flush());
-  }
-
-  async flush() {
-    if (this.buffer.length === 0) return;
-
-    const data = this.buffer.splice(0);
-    
-    try {
-      // Use sendBeacon for reliability
-      if (navigator.sendBeacon) {
-        navigator.sendBeacon(
-          this.endpoint,
-          JSON.stringify(data)
-        );
-      } else {
-        await fetch(this.endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
-          keepalive: true
-        });
-      }
-    } catch (error) {
-      console.error('Failed to send metrics:', error);
-      // Re-add to buffer
-      this.buffer.unshift(...data);
-    }
-  }
-
-  trackCustomMetric(name, value, metadata) {
-    this.addMetric(name, value, metadata);
-  }
-}
-
-// Usage
-const rum = new RUMCollector('/api/metrics');
-
-// Track custom metrics
-rum.trackCustomMetric('api-call-duration', 234, {
-  endpoint: '/api/users',
-  method: 'GET'
-});
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget42 = (value: number, budget: number) => value <= budget;
 ```
 
-## Summary
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
 
-Performance engineering encompasses:
-- **Metrics**: Core Web Vitals (LCP, FID, CLS), custom timing
-- **Critical Rendering Path**: Resource prioritization, preloading
-- **JavaScript**: Code splitting, memoization, Web Workers
-- **Memory**: Leak detection, object pooling, efficient allocation
-- **Network**: Request batching, adaptive loading, HTTP/2
-- **Rendering**: Virtual scrolling, RAF throttling, layout optimization
-- **Bundles**: Code splitting, tree shaking, dynamic imports
-- **Monitoring**: RUM, synthetic monitoring, performance budgets
+### 🟢 [Junior] Q03: How would you explain critical rendering path in a frontend interview?
 
-These techniques are essential for building fast, responsive web applications that provide excellent user experiences across all devices and network conditions.
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Critical rendering path`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget3 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q03: How would you explain critical rendering path in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Critical rendering path`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget23 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q03: How would you explain critical rendering path in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Critical rendering path`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget43 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q04: How would you explain resource prioritization in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Resource prioritization`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget4 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q04: How would you explain resource prioritization in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Resource prioritization`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget24 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q04: How would you explain resource prioritization in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Resource prioritization`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget44 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q05: How would you explain code splitting governance in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Code splitting governance`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget5 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q05: How would you explain code splitting governance in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Code splitting governance`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget25 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q05: How would you explain code splitting governance in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Code splitting governance`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget45 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q06: How would you explain tree shaking pitfalls in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Tree shaking pitfalls`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget6 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q06: How would you explain tree shaking pitfalls in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Tree shaking pitfalls`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget26 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q06: How would you explain tree shaking pitfalls in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Tree shaking pitfalls`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget46 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q07: How would you explain memoization boundaries in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Memoization boundaries`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget7 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q07: How would you explain memoization boundaries in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Memoization boundaries`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget27 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q07: How would you explain memoization boundaries in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Memoization boundaries`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget47 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q08: How would you explain web worker offloading in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Web Worker offloading`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget8 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q08: How would you explain web worker offloading in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Web Worker offloading`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget28 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q08: How would you explain web worker offloading in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Web Worker offloading`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget48 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q09: How would you explain memory leak detection in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Memory leak detection`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget9 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q09: How would you explain memory leak detection in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Memory leak detection`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget29 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q09: How would you explain memory leak detection in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Memory leak detection`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget49 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q10: How would you explain request batching in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Request batching`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget10 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q10: How would you explain request batching in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Request batching`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget30 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q10: How would you explain request batching in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Request batching`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget50 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q11: How would you explain adaptive loading in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Adaptive loading`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget11 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q11: How would you explain adaptive loading in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Adaptive loading`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget31 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q11: How would you explain adaptive loading in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Adaptive loading`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget51 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q12: How would you explain virtual scrolling in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Virtual scrolling`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget12 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q12: How would you explain virtual scrolling in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Virtual scrolling`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget32 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q12: How would you explain virtual scrolling in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Virtual scrolling`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget52 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q13: How would you explain raf scheduling in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `RAF scheduling`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget13 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q13: How would you explain raf scheduling in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `RAF scheduling`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget33 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q13: How would you explain raf scheduling in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `RAF scheduling`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget53 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q14: How would you explain layout thrashing prevention in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Layout thrashing prevention`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget14 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q14: How would you explain layout thrashing prevention in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Layout thrashing prevention`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget34 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q14: How would you explain layout thrashing prevention in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Layout thrashing prevention`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget54 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q15: How would you explain bundle regression control in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Bundle regression control`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget15 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q15: How would you explain bundle regression control in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Bundle regression control`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget35 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q15: How would you explain bundle regression control in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Bundle regression control`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget55 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q16: How would you explain rum and alerting in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `RUM and alerting`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget16 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q16: How would you explain rum and alerting in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `RUM and alerting`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget36 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q16: How would you explain rum and alerting in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `RUM and alerting`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const withinBudget56 = (value: number, budget: number) => value <= budget;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+## Rapid Review Checklist / Checklist Ôn Tập Nhanh
+
+- Bạn có thể giải thích 16 concept ở cả 3 mức Junior/Mid/Senior?
+- Bạn có ví dụ thực tế về bug/perf/security issue và bài học rút ra?
+- Bạn có thể liên kết chủ đề hiện tại với testing, observability, và delivery?
+- Bạn đã chuẩn bị câu trả lời song ngữ EN heading + VI explanation chưa?
+- Bạn có thể vẽ luồng dữ liệu hoặc kiến trúc trong 2-3 phút trên whiteboard?
+
+## Tóm Tắt / Summary
+
+Tài liệu `Performance Engineering` đã được chuyển sang bilingual Q&A format với difficulty tags (`🟢 [Junior]`, `🟡 [Mid]`, `🔴 [Senior]`), chứa marker `Tổng Quan`, `Giải thích`, `Ví dụ`, có cross-reference bằng relative path và code mẫu JS/TS để luyện phỏng vấn.

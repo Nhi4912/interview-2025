@@ -26,7 +26,9 @@
 
 ## 1. Complexity Analysis (Big-O)
 
-### Q: Big-O là gì và tại sao quan trọng trong interview? 🟢
+
+## Câu Hỏi Phỏng Vấn / Interview Q&A
+### Q: Big-O là gì và tại sao quan trọng trong interview? 🟢 🟢 [Junior]
 
 **A:** Big-O notation mô tả **upper bound** của thời gian/bộ nhớ mà algorithm cần khi input tăng lên. Trong interview, interviewer đánh giá bạn qua khả năng phân tích complexity — đây là skill bắt buộc.
 
@@ -124,7 +126,7 @@ func main() {
 
 ---
 
-### Q: Phân tích Space Complexity như thế nào? 🟡
+### Q: Phân tích Space Complexity như thế nào? 🟡 🟡 [Mid]
 
 **A:** Space complexity đo **bộ nhớ phụ** (auxiliary space) mà algorithm cần, **không tính input**.
 
@@ -180,7 +182,7 @@ func binarySearchRecursive(arr []int, target, lo, hi int) int {
 
 ---
 
-### Q: Amortized Analysis là gì? Cho ví dụ với Go slice? 🔴
+### Q: Amortized Analysis là gì? Cho ví dụ với Go slice? 🔴 🔴 [Senior]
 
 **A:** Amortized analysis tính **chi phí trung bình** trên một chuỗi operations. Dù một operation riêng lẻ có thể đắt (ví dụ: resize slice), trung bình mỗi operation vẫn rẻ.
 
@@ -215,7 +217,7 @@ func main() {
 
 ---
 
-### Q: Phân tích complexity của nested loops và recursion? 🟡
+### Q: Phân tích complexity của nested loops và recursion? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -285,7 +287,7 @@ func fibNaive(n int) int {
 
 ## 2. Sorting Algorithms
 
-### Q: Implement Quick Sort trong Go? Phân tích kỹ. 🟡
+### Q: Implement Quick Sort trong Go? Phân tích kỹ. 🟡 🟡 [Mid]
 
 **A:** Quick Sort là **divide-and-conquer** algorithm. Chọn pivot, partition array thành 2 phần (nhỏ hơn pivot / lớn hơn pivot), rồi sort đệ quy.
 
@@ -386,7 +388,7 @@ func main() {
 
 ---
 
-### Q: Implement Merge Sort? Khi nào dùng Merge Sort thay Quick Sort? 🟡
+### Q: Implement Merge Sort? Khi nào dùng Merge Sort thay Quick Sort? 🟡 🟡 [Mid]
 
 **A:** Merge Sort ổn định O(n log n) trong **mọi trường hợp**. Là **stable sort** — giữ thứ tự tương đối của equal elements. Phù hợp cho sorting linked lists (không cần random access).
 
@@ -493,7 +495,7 @@ func main() {
 
 ---
 
-### Q: Implement Heap Sort dùng container/heap? 🟡
+### Q: Implement Heap Sort dùng container/heap? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -590,7 +592,7 @@ func main() {
 
 ---
 
-### Q: Go's sort package dùng algorithm gì? pdqsort là gì? 🔴
+### Q: Go's sort package dùng algorithm gì? pdqsort là gì? 🔴 🔴 [Senior]
 
 **A:** Từ Go 1.19, `sort.Slice` dùng **pdqsort (Pattern-Defeating Quicksort)** — hybrid algorithm kết hợp:
 1. **Quicksort** cho average case
@@ -664,7 +666,7 @@ func main() {
 
 ---
 
-### Q: So sánh tất cả sorting algorithms? 🟡
+### Q: So sánh tất cả sorting algorithms? 🟡 🟡 [Mid]
 
 | Algorithm | Best | Average | Worst | Space | Stable | Use Case |
 |-----------|------|---------|-------|-------|--------|----------|
@@ -680,7 +682,7 @@ func main() {
 
 ## 3. Searching
 
-### Q: Implement Binary Search — tìm chính xác, tìm first/last occurrence? 🟡
+### Q: Implement Binary Search — tìm chính xác, tìm first/last occurrence? 🟡 🟡 [Mid]
 
 **A:** Binary Search là thuật toán tìm kiếm trên **sorted array** với O(log n).
 
@@ -791,7 +793,7 @@ func main() {
 
 ---
 
-### Q: Binary Search on Answer (Parametric Search) là gì? 🔴
+### Q: Binary Search on Answer (Parametric Search) là gì? 🔴 🔴 [Senior]
 
 **A:** Kỹ thuật dùng binary search **trên kết quả** thay vì trên array. Khi bài toán có dạng: "tìm giá trị nhỏ nhất/lớn nhất thỏa mãn điều kiện" và hàm điều kiện **monotonic**.
 
@@ -875,7 +877,7 @@ func main() {
 
 ## 4. Two Pointers Pattern
 
-### Q: Giải thích Two Pointers pattern với các bài toán kinh điển? 🟡
+### Q: Giải thích Two Pointers pattern với các bài toán kinh điển? 🟡 🟡 [Mid]
 
 **A:** Two Pointers dùng 2 con trỏ di chuyển trên array (thường sorted) để giảm complexity từ O(n²) xuống O(n).
 
@@ -1000,7 +1002,7 @@ func main() {
 
 ## 5. Sliding Window Pattern
 
-### Q: Fixed vs Variable Sliding Window? Implement cả hai. 🟡
+### Q: Fixed vs Variable Sliding Window? Implement cả hai. 🟡 🟡 [Mid]
 
 **A:** Sliding Window là kỹ thuật maintain một "cửa sổ" trên array/string, di chuyển từ trái sang phải. Giảm O(n*k) xuống O(n).
 
@@ -1161,7 +1163,7 @@ func main() {
 
 ## 6. Dynamic Programming
 
-### Q: Giải thích DP concepts: overlapping subproblems, optimal substructure? 🟡
+### Q: Giải thích DP concepts: overlapping subproblems, optimal substructure? 🟡 🟡 [Mid]
 
 **A:** Dynamic Programming giải bài toán bằng cách chia thành **subproblems** và lưu kết quả để tránh tính lại.
 
@@ -1501,7 +1503,7 @@ func main() {
 
 ## 7. Greedy Algorithms
 
-### Q: Khi nào dùng Greedy? Cho ví dụ kinh điển? 🟡
+### Q: Khi nào dùng Greedy? Cho ví dụ kinh điển? 🟡 🟡 [Mid]
 
 **A:** Greedy chọn **locally optimal** ở mỗi bước, hy vọng đạt **globally optimal**. Chỉ đúng khi bài toán có **greedy choice property** (chọn local optimal không ảnh hưởng khả năng đạt global optimal).
 
@@ -1660,7 +1662,7 @@ func main() {
 
 ## 8. Graph Algorithms
 
-### Q: BFS và DFS — implement full trong Go? 🟡
+### Q: BFS và DFS — implement full trong Go? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -1891,7 +1893,7 @@ func main() {
 
 ---
 
-### Q: Dijkstra's Algorithm — Weighted Shortest Path? 🔴
+### Q: Dijkstra's Algorithm — Weighted Shortest Path? 🔴 🔴 [Senior]
 
 **A:** Dijkstra tìm shortest path từ **một nguồn** đến tất cả nodes trong graph có **non-negative weights**. Dùng min-heap (priority queue).
 
@@ -1975,7 +1977,7 @@ func main() {
 
 ---
 
-### Q: Topological Sort — Kahn's BFS và DFS-based? 🟡
+### Q: Topological Sort — Kahn's BFS và DFS-based? 🟡 🟡 [Mid]
 
 **A:** Topological sort sắp xếp DAG (Directed Acyclic Graph) sao cho nếu có edge u->v thì u đứng trước v. Dùng cho: build systems, course scheduling, dependency resolution.
 
@@ -2101,7 +2103,7 @@ func main() {
 
 ---
 
-### Q: Union-Find (Disjoint Set) với path compression + union by rank? 🔴
+### Q: Union-Find (Disjoint Set) với path compression + union by rank? 🔴 🔴 [Senior]
 
 **A:** Union-Find quản lý tập hợp rời nhau. Hỗ trợ 2 operations: `Find` (tìm root) và `Union` (gộp 2 tập). Với path compression + union by rank, mỗi operation gần O(1) amortized (chính xác: O(alpha(n)) — inverse Ackermann).
 
@@ -2261,7 +2263,7 @@ func main() {
 
 ## 9. Backtracking
 
-### Q: Backtracking template và các bài kinh điển? 🟡
+### Q: Backtracking template và các bài kinh điển? 🟡 🟡 [Mid]
 
 **A:** Backtracking = DFS + pruning. Explore tất cả possibilities, "backtrack" (quay lại) khi path hiện tại không thỏa mãn.
 
@@ -2477,7 +2479,7 @@ func main() {
 
 ## 10. String Algorithms
 
-### Q: KMP và Rabin-Karp string matching? 🔴
+### Q: KMP và Rabin-Karp string matching? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -2737,7 +2739,7 @@ func main() {
 
 ## 11. Bit Manipulation
 
-### Q: Các bit operation phổ biến trong Go? 🟡
+### Q: Các bit operation phổ biến trong Go? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -2908,7 +2910,7 @@ func main() {
 
 ## 12. Interview Coding Patterns Summary
 
-### Q: Làm sao nhận diện pattern khi gặp bài mới? 🔴
+### Q: Làm sao nhận diện pattern khi gặp bài mới? 🔴 🔴 [Senior]
 
 **A:** Đây là bảng pattern recognition — skill quan trọng nhất trong coding interview:
 

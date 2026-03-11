@@ -29,7 +29,9 @@
 
 ## 1. Authentication vs Authorization
 
-### Q: Phân biệt Authentication và Authorization? 🟢
+
+## Câu Hỏi Phỏng Vấn / Interview Q&A
+### Q: Phân biệt Authentication và Authorization? 🟢 🟢 [Junior]
 
 **A:** Đây là hai khái niệm hoàn toàn khác nhau nhưng thường bị nhầm lẫn:
 
@@ -86,7 +88,7 @@ Client Request
 
 ## 2. Session-Based Authentication
 
-### Q: Session-based authentication hoạt động như thế nào? 🟢
+### Q: Session-based authentication hoạt động như thế nào? 🟢 🟢 [Junior]
 
 **A:** Session-based auth là phương pháp truyền thống, server lưu trạng thái đăng nhập của user.
 
@@ -110,7 +112,7 @@ Client Request
        │<──────────────────────────────────────│
 ```
 
-### Q: Có những cách nào lưu trữ session? So sánh ưu nhược điểm? 🟡
+### Q: Có những cách nào lưu trữ session? So sánh ưu nhược điểm? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -135,7 +137,7 @@ Client Request
 
 **Production recommendation**: Redis là lựa chọn phổ biến nhất - cân bằng tốt giữa tốc độ, scalability, và persistence. Hầu hết framework Go (gorilla/sessions) đều có Redis adapter.
 
-### Q: Session fixation attack là gì và cách phòng chống? 🟡
+### Q: Session fixation attack là gì và cách phòng chống? 🟡 🟡 [Mid]
 
 **A:** Attacker tạo sẵn một session ID, trick victim sử dụng session ID đó để đăng nhập. Sau khi victim đăng nhập thành công, attacker dùng session ID đã biết để truy cập.
 
@@ -169,7 +171,7 @@ Attacker                    Victim                     Server
 3. **Set session timeout** ngắn hợp lý
 4. **Dùng HttpOnly + Secure + SameSite** cookie flags
 
-### Q: Ưu nhược điểm của session-based auth? 🟢
+### Q: Ưu nhược điểm của session-based auth? 🟢 🟢 [Junior]
 
 **Ưu điểm:**
 - **Dễ revoke**: Xóa session khỏi store → user bị logout ngay lập tức
@@ -186,7 +188,7 @@ Attacker                    Victim                     Server
 
 ## 3. Token-Based Authentication (JWT)
 
-### Q: JWT là gì? Cấu trúc như thế nào? 🟢
+### Q: JWT là gì? Cấu trúc như thế nào? 🟢 🟢 [Junior]
 
 **A:** JWT (JSON Web Token) là một chuẩn mở (RFC 7519) dùng để truyền thông tin an toàn giữa các bên dưới dạng JSON object được ký số (digitally signed).
 
@@ -214,7 +216,7 @@ JWT Structure:
 
 **QUAN TRỌNG**: JWT payload KHÔNG được mã hóa (encrypted), chỉ được encode (Base64URL). Bất kỳ ai cũng có thể đọc payload. KHÔNG bao giờ đặt sensitive data (password, credit card) trong JWT payload.
 
-### Q: So sánh các thuật toán ký JWT: HS256, RS256, ES256? 🟡
+### Q: So sánh các thuật toán ký JWT: HS256, RS256, ES256? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -239,7 +241,7 @@ Khi nào dùng:
 • ES256: Như RS256 nhưng key nhỏ hơn, nhanh hơn. Phổ biến trong mobile/IoT.
 ```
 
-### Q: JWT claims gồm những loại nào? 🟢
+### Q: JWT claims gồm những loại nào? 🟢 🟢 [Junior]
 
 **A:**
 
@@ -247,7 +249,7 @@ Khi nào dùng:
 - **Public claims**: Đăng ký tại IANA hoặc dùng URI tránh conflict. VD: `email`, `name`
 - **Private claims**: Custom claims giữa các party đồng ý. VD: `role`, `tenant_id`
 
-### Q: Access Token vs Refresh Token hoạt động như thế nào? Tại sao cần cả hai? 🟡
+### Q: Access Token vs Refresh Token hoạt động như thế nào? Tại sao cần cả hai? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -305,7 +307,7 @@ Client                   Auth Server              Resource Server
 
 **Token Rotation** (bước 8): Mỗi lần dùng refresh token, server phát ra refresh token mới và invalidate cái cũ. Nếu attacker steal refresh token cũ và dùng lại → server phát hiện token đã bị dùng → revoke toàn bộ token family → user phải login lại.
 
-### Q: JWT có những nhược điểm gì? Làm sao revoke JWT? 🔴
+### Q: JWT có những nhược điểm gì? Làm sao revoke JWT? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -339,7 +341,7 @@ Client                   Auth Server              Resource Server
 
 **Production recommendation**: Kết hợp Short TTL (15 phút) + Refresh Token Rotation + Token Blacklist cho critical actions (password change, logout).
 
-### Q: So sánh Session-based vs JWT-based authentication? 🟡
+### Q: So sánh Session-based vs JWT-based authentication? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -365,7 +367,7 @@ Client                   Auth Server              Resource Server
 
 ## 4. OAuth 2.0
 
-### Q: OAuth 2.0 là gì? Giải quyết vấn đề gì? 🟢
+### Q: OAuth 2.0 là gì? Giải quyết vấn đề gì? 🟢 🟢 [Junior]
 
 **A:** OAuth 2.0 là **authorization framework** (KHÔNG phải authentication protocol) cho phép ứng dụng bên thứ 3 (third-party) truy cập tài nguyên của user mà KHÔNG cần biết password của user.
 
@@ -385,7 +387,7 @@ Client                   Auth Server              Resource Server
 └──────────────────┴──────────────────────────────────────────────┘
 ```
 
-### Q: Trình bày Authorization Code Flow? 🟡
+### Q: Trình bày Authorization Code Flow? 🟡 🟡 [Mid]
 
 **A:** Đây là flow phổ biến và an toàn nhất, dùng cho server-side web apps:
 
@@ -446,7 +448,7 @@ Client                   Auth Server              Resource Server
 - **state parameter**: Chống CSRF - server tạo random value, verify khi callback
 - **Authorization code** chỉ dùng 1 lần, thời hạn rất ngắn (~10 phút)
 
-### Q: PKCE là gì? Tại sao SPA/mobile cần PKCE? 🟡
+### Q: PKCE là gì? Tại sao SPA/mobile cần PKCE? 🟡 🟡 [Mid]
 
 **A:** PKCE (Proof Key for Code Exchange, đọc là "pixy") giải quyết vấn đề: SPA/mobile app KHÔNG CÓ client_secret (vì code chạy trên device của user, secret sẽ bị lộ).
 
@@ -471,7 +473,7 @@ Với PKCE:
 
 **Hiện nay**: PKCE được khuyến nghị cho TẤT CẢ OAuth clients (kể cả server-side), không chỉ public clients. Đây là best practice theo OAuth 2.1 draft.
 
-### Q: So sánh các OAuth 2.0 grant types? 🔴
+### Q: So sánh các OAuth 2.0 grant types? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -532,7 +534,7 @@ Device (TV)             Auth Server            User's Phone/PC
 
 ## 5. OpenID Connect (OIDC)
 
-### Q: OIDC khác OAuth 2.0 như thế nào? 🟡
+### Q: OIDC khác OAuth 2.0 như thế nào? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -585,7 +587,7 @@ Nói đơn giản:
 
 ## 6. API Key Authentication
 
-### Q: API Key authentication hoạt động thế nào? Khi nào nên dùng? 🟢
+### Q: API Key authentication hoạt động thế nào? Khi nào nên dùng? 🟢 🟢 [Junior]
 
 **A:**
 
@@ -634,7 +636,7 @@ Khi nào KHÔNG dùng:
 
 ## 7. Mutual TLS (mTLS)
 
-### Q: mTLS là gì? Khác gì so với TLS thông thường? 🔴
+### Q: mTLS là gì? Khác gì so với TLS thông thường? 🔴 🔴 [Senior]
 
 **A:**
 
@@ -691,7 +693,7 @@ Service Mesh giải quyết:
 
 ## 8. Access Control Models
 
-### Q: RBAC là gì? Thiết kế RBAC như thế nào? 🟢
+### Q: RBAC là gì? Thiết kế RBAC như thế nào? 🟢 🟢 [Junior]
 
 **A:** RBAC (Role-Based Access Control) gán quyền dựa trên vai trò (role) của user.
 
@@ -724,7 +726,7 @@ Role hierarchy (optional):
 **Ưu điểm**: Đơn giản, dễ hiểu, dễ audit, phù hợp hầu hết ứng dụng.
 **Nhược điểm**: Role explosion khi hệ thống phức tạp, không linh hoạt cho context-based decisions.
 
-### Q: ABAC là gì? Khác RBAC như thế nào? 🟡
+### Q: ABAC là gì? Khác RBAC như thế nào? 🟡 🟡 [Mid]
 
 **A:** ABAC (Attribute-Based Access Control) quyết định quyền truy cập dựa trên attributes (thuộc tính) thay vì roles.
 
@@ -757,7 +759,7 @@ Ví dụ: "Bác sĩ khoa tim (cardio) được xem hồ sơ bệnh nhân khoa ti
 RBAC không thể diễn tả rule phức tạp này một cách tự nhiên.
 ```
 
-### Q: ReBAC là gì? Google Zanzibar hoạt động thế nào? 🔴
+### Q: ReBAC là gì? Google Zanzibar hoạt động thế nào? 🔴 🔴 [Senior]
 
 **A:** ReBAC (Relationship-Based Access Control) xác định quyền dựa trên mối quan hệ (relationship) giữa các objects. Google Zanzibar là hệ thống authorization của Google, scale cho YouTube, Drive, Maps...
 
@@ -785,7 +787,7 @@ Ví dụ Google Drive:
 
 **Open-source implementations**: SpiceDB (by AuthZed), OpenFGA (by Okta/Auth0)
 
-### Q: So sánh các access control models? 🟡
+### Q: So sánh các access control models? 🟡 🟡 [Mid]
 
 ```
 ┌────────┬──────────────────┬──────────────────┬──────────────────┐
@@ -811,7 +813,7 @@ Ví dụ Google Drive:
 
 ## 9. Password Security
 
-### Q: Tại sao KHÔNG dùng MD5/SHA để hash password? Bcrypt và Argon2id khác gì? 🟢
+### Q: Tại sao KHÔNG dùng MD5/SHA để hash password? Bcrypt và Argon2id khác gì? 🟢 🟢 [Junior]
 
 **A:**
 
@@ -883,7 +885,7 @@ Argon2id ưu việt hơn vì memory-hard: attacker cần NHIỀU RAM
 để brute force, GPU thường thiếu RAM → không thể parallelize.
 ```
 
-### Q: MFA (Multi-Factor Authentication) hoạt động thế nào? 🟡
+### Q: MFA (Multi-Factor Authentication) hoạt động thế nào? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -931,7 +933,7 @@ Verify:
 
 ## 10. Common Security Vulnerabilities (OWASP)
 
-### Q: SQL Injection là gì? Tại sao parameterized queries ngăn chặn được? 🟢
+### Q: SQL Injection là gì? Tại sao parameterized queries ngăn chặn được? 🟢 🟢 [Junior]
 
 **A:**
 
@@ -954,7 +956,7 @@ Parameterized query (safe):
 
 **Bản chất**: Parameterized queries TÁCH BIỆT code (SQL) và data (user input). Database parse SQL trước, rồi mới bind data vào → data không bao giờ được interpret là code.
 
-### Q: Giải thích XSS, CSRF, SSRF? 🟡
+### Q: Giải thích XSS, CSRF, SSRF? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -1017,7 +1019,7 @@ Phòng chống:
   4. Dùng network policies để restrict server outbound
 ```
 
-### Q: IDOR và Mass Assignment là gì? 🟡
+### Q: IDOR và Mass Assignment là gì? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -1048,7 +1050,7 @@ Phòng chống:
      KHÔNG bind trực tiếp vào User model
 ```
 
-### Q: Rate Limiting và Brute Force prevention? 🟡
+### Q: Rate Limiting và Brute Force prevention? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -1082,7 +1084,7 @@ Brute force prevention cho login:
 
 ## 11. CORS (Cross-Origin Resource Sharing)
 
-### Q: Same-origin policy là gì? CORS giải quyết vấn đề gì? 🟢
+### Q: Same-origin policy là gì? CORS giải quyết vấn đề gì? 🟢 🟢 [Junior]
 
 **A:**
 
@@ -1106,7 +1108,7 @@ CORS = cơ chế cho phép server "opt-in" cho cross-origin requests
   Server nói: "Tôi cho phép requests từ https://app.com"
 ```
 
-### Q: CORS preflight request hoạt động thế nào? 🟡
+### Q: CORS preflight request hoạt động thế nào? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -1173,7 +1175,7 @@ Preflight flow:
 
 ## 12. Secrets Management
 
-### Q: Tại sao không nên đặt secrets trong code/config? Có những giải pháp nào? 🟡
+### Q: Tại sao không nên đặt secrets trong code/config? Có những giải pháp nào? 🟡 🟡 [Mid]
 
 **A:**
 
@@ -1258,7 +1260,7 @@ Kubernetes Secrets (cẩn thận):
 
 ## 13. Network Security for Backend
 
-### Q: Những lớp bảo mật network nào cần cho backend? 🟡
+### Q: Những lớp bảo mật network nào cần cho backend? 🟡 🟡 [Mid]
 
 **A:**
 

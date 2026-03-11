@@ -1,902 +1,770 @@
 # Modern CSS Features
 ## CSS - Chapter 6
 
-[← Previous: CSS Architecture](./05-css-architecture.md) | [Back to Table of Contents](../00-table-of-contents.md)
+[Back to Table of Contents](../../00-table-of-contents.md) | [Next →](./07-css-architecture-theory.md)
 
 ---
 
-## Overview
+## Tổng Quan / Overview
 
-Modern CSS has evolved significantly with powerful new features that enable better layouts, animations, and responsive designs. This chapter covers cutting-edge CSS features for 2025-2026.
+**Giải thích:** Modern CSS gồm container queries, layer, nesting, :has(), subgrid, logical properties và animation hiện đại.
 
----
+**Ví dụ:** Khi trả lời phỏng vấn, luôn nêu problem → reasoning → implementation → trade-off.
 
-## Table of Contents
+## Learning Goals
 
-1. [Container Queries](#container-queries)
-2. [CSS Nesting](#css-nesting)
-3. [CSS Layers](#css-layers)
-4. [Subgrid](#subgrid)
-5. [CSS Functions](#css-functions)
-6. [:has() Selector](#has-selector)
-7. [Scroll-Driven Animations](#scroll-driven-animations)
-8. [View Transitions](#view-transitions)
-9. [Color Functions](#color-functions)
-10. [Interview Questions](#interview-questions)
+- Understand core concepts in English heading form for interview communication.
+- Trình bày được bằng tiếng Việt với ví dụ code ngắn, đúng ngữ cảnh frontend thực tế.
+- Map kiến thức sang câu hỏi ở level Junior/Mid/Senior.
 
----
+## Cross References
 
-## Container Queries
+- [FE Track Table of Contents](../../00-table-of-contents.md)
+- [Grid & Flexbox](./01-grid-flexbox.md)
+- [CSS Architecture Theory](./07-css-architecture-theory.md)
+- [Bundle Optimization](../06-browser-performance/03-bundle-optimization.md)
 
-### Basic Container Queries
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
+### Q1: Explain container query in practical interview context — 🟢 [Junior]
+
+**Tổng Quan:** Container Query là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với container query, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
 ```css
-/* Define container */
-.card-container {
-  container-type: inline-size;
-  container-name: card;
-}
-
-/* Query the container */
-@container card (min-width: 400px) {
-  .card {
-    display: grid;
-    grid-template-columns: 1fr 2fr;
-  }
-}
-
-@container card (min-width: 600px) {
-  .card {
-    grid-template-columns: 1fr 1fr 1fr;
-  }
-}
-```
-
-### Container Query Units
-
-```css
-.container {
-  container-type: inline-size;
-}
-
-.child {
-  /* Container query units */
-  width: 50cqw; /* 50% of container width */
-  height: 50cqh; /* 50% of container height */
-  font-size: 5cqi; /* 5% of container inline size */
-  padding: 2cqb; /* 2% of container block size */
-  margin: 1cqmin; /* 1% of smaller container dimension */
-  gap: 2cqmax; /* 2% of larger container dimension */
-}
-```
-
-### Practical Example
-
-```css
-/* Responsive card without media queries */
-.card-grid {
+.wrapper {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
 }
 
 .card {
-  container-type: inline-size;
-  container-name: card;
-}
-
-/* Small card */
-.card-content {
-  display: flex;
-  flex-direction: column;
-}
-
-/* Medium card */
-@container card (min-width: 400px) {
-  .card-content {
-    flex-direction: row;
-    gap: 1rem;
-  }
-  
-  .card-image {
-    width: 40%;
-  }
-}
-
-/* Large card */
-@container card (min-width: 600px) {
-  .card-title {
-    font-size: 2rem;
-  }
-  
-  .card-description {
-    font-size: 1.125rem;
-  }
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
 }
 ```
 
----
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-## CSS Nesting
+### Q2: Explain css nesting in practical interview context — 🟡 [Mid]
 
-### Native Nesting
+**Tổng Quan:** Css Nesting là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
 
-```css
-/* Old way */
-.card { }
-.card .title { }
-.card .title:hover { }
-.card .description { }
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với css nesting, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
 
-/* New way - Native nesting */
-.card {
-  background: white;
-  padding: 1rem;
-  
-  .title {
-    font-size: 1.5rem;
-    color: #333;
-    
-    &:hover {
-      color: #007bff;
-    }
-  }
-  
-  .description {
-    color: #666;
-    margin-top: 0.5rem;
-  }
-  
-  &:hover {
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-  }
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
 }
+
+console.log(explain('layout performance', 'mid'));
 ```
 
-### Nesting with Combinators
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-```css
-.parent {
-  color: black;
-  
-  /* Direct child */
-  & > .child {
-    color: blue;
-  }
-  
-  /* Adjacent sibling */
-  & + .sibling {
-    margin-top: 1rem;
-  }
-  
-  /* General sibling */
-  & ~ .sibling {
-    opacity: 0.8;
-  }
-}
+### Q3: Explain cascade layer in practical interview context — 🔴 [Senior]
+
+**Tổng Quan:** Cascade Layer là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với cascade layer, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```html
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
 ```
 
-### Nesting Media Queries
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
+### Q4: Explain :has selector in practical interview context — 🟢 [Junior]
+
+**Tổng Quan:** :Has Selector là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với :has selector, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
 ```css
-.component {
-  padding: 1rem;
-  
-  @media (min-width: 768px) {
-    padding: 2rem;
-  }
-  
-  @media (min-width: 1024px) {
-    padding: 3rem;
-  }
-  
-  .title {
-    font-size: 1.5rem;
-    
-    @media (min-width: 768px) {
-      font-size: 2rem;
-    }
-  }
-}
-```
-
----
-
-## CSS Layers
-
-### Defining Layers
-
-```css
-/* Define layer order */
-@layer reset, base, components, utilities;
-
-/* Reset layer */
-@layer reset {
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-}
-
-/* Base layer */
-@layer base {
-  body {
-    font-family: system-ui;
-    line-height: 1.5;
-  }
-  
-  h1 {
-    font-size: 2rem;
-  }
-}
-
-/* Components layer */
-@layer components {
-  .button {
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 4px;
-  }
-}
-
-/* Utilities layer */
-@layer utilities {
-  .text-center {
-    text-align: center;
-  }
-  
-  .mt-4 {
-    margin-top: 1rem;
-  }
-}
-```
-
-### Layer Benefits
-
-```css
-/* Layers provide predictable specificity */
-
-/* Even though this comes later, it has lower priority */
-@layer base {
-  .button {
-    background: blue; /* Won't override components layer */
-  }
-}
-
-@layer components {
-  .button {
-    background: red; /* This wins */
-  }
-}
-
-/* Unlayered styles have highest priority */
-.button {
-  background: green; /* This wins over all layers */
-}
-```
-
-### Importing with Layers
-
-```css
-/* Import into specific layer */
-@import url('reset.css') layer(reset);
-@import url('components.css') layer(components);
-
-/* Anonymous layer */
-@layer {
-  .special {
-    color: purple;
-  }
-}
-```
-
----
-
-## Subgrid
-
-### Basic Subgrid
-
-```css
-.grid {
+.wrapper {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-}
-
-.grid-item {
-  display: grid;
-  /* Inherit parent's column tracks */
-  grid-template-columns: subgrid;
-  gap: 0.5rem;
-}
-```
-
-### Practical Example
-
-```css
-/* Card grid with aligned content */
-.card-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  grid-template-rows: auto 1fr auto;
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
 }
 
 .card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
+}
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q5: Explain subgrid in practical interview context — 🟡 [Mid]
+
+**Tổng Quan:** Subgrid là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với subgrid, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
+}
+
+console.log(explain('layout performance', 'mid'));
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q6: Explain logical properties in practical interview context — 🔴 [Senior]
+
+**Tổng Quan:** Logical Properties là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với logical properties, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```html
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q7: Explain color functions in practical interview context — 🟢 [Junior]
+
+**Tổng Quan:** Color Functions là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với color functions, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```css
+.wrapper {
   display: grid;
-  /* Align with parent grid rows */
-  grid-template-rows: subgrid;
-  grid-row: span 3;
-}
-
-.card-header {
-  /* Aligns with first row */
-}
-
-.card-body {
-  /* Aligns with second row */
-}
-
-.card-footer {
-  /* Aligns with third row */
-}
-```
-
----
-
-## CSS Functions
-
-### clamp()
-
-```css
-/* Responsive font size */
-.title {
-  /* min, preferred, max */
-  font-size: clamp(1.5rem, 5vw, 3rem);
-}
-
-/* Responsive spacing */
-.container {
-  padding: clamp(1rem, 5%, 3rem);
-  width: clamp(300px, 90%, 1200px);
-}
-```
-
-### min() and max()
-
-```css
-/* Width: smaller of 500px or 100% */
-.element {
-  width: min(500px, 100%);
-}
-
-/* Width: larger of 300px or 50% */
-.element {
-  width: max(300px, 50%);
-}
-
-/* Combine with calc */
-.element {
-  width: min(500px, calc(100% - 2rem));
-}
-```
-
-### calc()
-
-```css
-/* Complex calculations */
-.element {
-  width: calc(100% - 2rem);
-  height: calc(100vh - 60px);
-  padding: calc(1rem + 2px);
-  
-  /* With CSS variables */
-  margin: calc(var(--spacing) * 2);
-  
-  /* Nested calc */
-  font-size: calc(1rem + calc(2vw - 1px));
-}
-```
-
-### Custom Properties with calc()
-
-```css
-:root {
-  --base-size: 16px;
-  --scale: 1.5;
-}
-
-.heading {
-  font-size: calc(var(--base-size) * var(--scale));
-}
-
-.subheading {
-  font-size: calc(var(--base-size) * var(--scale) * 0.8);
-}
-```
-
----
-
-## :has() Selector
-
-### Parent Selector
-
-```css
-/* Style parent based on child */
-.card:has(.featured) {
-  border: 2px solid gold;
-  background: #fffef0;
-}
-
-/* Style form based on invalid input */
-form:has(input:invalid) {
-  border-color: red;
-}
-
-/* Style container based on empty state */
-.list:has(:empty) {
-  display: none;
-}
-```
-
-### Sibling Selector
-
-```css
-/* Style element if it has specific sibling */
-.item:has(+ .item-active) {
-  border-bottom: none;
-}
-
-/* Style based on following sibling */
-h2:has(+ p) {
-  margin-bottom: 0.5rem;
-}
-```
-
-### Complex Queries
-
-```css
-/* Card with image */
-.card:has(img) {
-  display: grid;
-  grid-template-columns: 200px 1fr;
-}
-
-/* Card without image */
-.card:not(:has(img)) {
-  padding: 2rem;
-}
-
-/* Form with checked checkbox */
-form:has(input[type="checkbox"]:checked) {
-  background: #e8f5e9;
-}
-
-/* List with more than 5 items */
-ul:has(li:nth-child(6)) {
-  columns: 2;
-}
-```
-
-### Practical Examples
-
-```css
-/* Accordion */
-.accordion-item:has(.accordion-content:target) {
-  background: #f5f5f5;
-}
-
-/* Navigation with active link */
-nav:has(a.active) {
-  border-bottom: 2px solid blue;
-}
-
-/* Table row with selected checkbox */
-tr:has(input:checked) {
-  background: #e3f2fd;
-}
-```
-
----
-
-## Scroll-Driven Animations
-
-### Scroll Timeline
-
-```css
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.element {
-  animation: fade-in linear;
-  animation-timeline: scroll();
-  animation-range: entry 0% cover 50%;
-}
-```
-
-### View Timeline
-
-```css
-@keyframes scale-up {
-  from {
-    transform: scale(0.8);
-  }
-  to {
-    transform: scale(1);
-  }
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
 }
 
 .card {
-  animation: scale-up linear;
-  animation-timeline: view();
-  animation-range: entry 0% cover 30%;
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
 }
 ```
 
-### Scroll-Linked Animations
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
+### Q8: Explain clamp min max in practical interview context — 🟡 [Mid]
+
+**Tổng Quan:** Clamp Min Max là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với clamp min max, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
+}
+
+console.log(explain('layout performance', 'mid'));
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q9: Explain scroll timeline in practical interview context — 🔴 [Senior]
+
+**Tổng Quan:** Scroll Timeline là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với scroll timeline, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```html
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q10: Explain view transition in practical interview context — 🟢 [Junior]
+
+**Tổng Quan:** View Transition là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với view transition, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
 ```css
-/* Progress bar */
-.progress {
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 4px;
-  background: blue;
-  
-  animation: grow-progress linear;
-  animation-timeline: scroll(root);
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
 }
 
-@keyframes grow-progress {
-  from {
-    width: 0%;
-  }
-  to {
-    width: 100%;
-  }
+.card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
 }
 ```
 
----
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-## View Transitions
+### Q11: Explain anchor positioning in practical interview context — 🟡 [Mid]
 
-### Basic View Transition
+**Tổng Quan:** Anchor Positioning là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
 
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với anchor positioning, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
+}
+
+console.log(explain('layout performance', 'mid'));
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q12: Explain progressive enhancement in practical interview context — 🔴 [Senior]
+
+**Tổng Quan:** Progressive Enhancement là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với progressive enhancement, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```html
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q13: Explain container query in practical interview context — 🟢 [Junior]
+
+**Tổng Quan:** Container Query là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với container query, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
 ```css
-/* Enable view transitions */
-@view-transition {
-  navigation: auto;
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
 }
 
-/* Customize transition */
-::view-transition-old(root) {
-  animation: fade-out 0.3s ease-out;
-}
-
-::view-transition-new(root) {
-  animation: fade-in 0.3s ease-in;
-}
-
-@keyframes fade-out {
-  to {
-    opacity: 0;
-  }
-}
-
-@keyframes fade-in {
-  from {
-    opacity: 0;
-  }
+.card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
 }
 ```
 
-### Named Transitions
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
+### Q14: Explain css nesting in practical interview context — 🟡 [Mid]
+
+**Tổng Quan:** Css Nesting là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với css nesting, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
+}
+
+console.log(explain('layout performance', 'mid'));
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q15: Explain cascade layer in practical interview context — 🔴 [Senior]
+
+**Tổng Quan:** Cascade Layer là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với cascade layer, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```html
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q16: Explain :has selector in practical interview context — 🟢 [Junior]
+
+**Tổng Quan:** :Has Selector là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với :has selector, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
 ```css
-/* Name specific elements */
-.hero {
-  view-transition-name: hero;
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
 }
 
-.title {
-  view-transition-name: title;
-}
-
-/* Customize named transitions */
-::view-transition-old(hero) {
-  animation: slide-out-left 0.3s ease-out;
-}
-
-::view-transition-new(hero) {
-  animation: slide-in-right 0.3s ease-in;
+.card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
 }
 ```
 
-### JavaScript API
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-```javascript
-// Trigger view transition
-document.startViewTransition(() => {
-  // Update DOM
-  document.body.classList.toggle('dark-mode');
-});
+### Q17: Explain subgrid in practical interview context — 🟡 [Mid]
 
-// With async updates
-document.startViewTransition(async () => {
-  await updateContent();
-});
+**Tổng Quan:** Subgrid là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với subgrid, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
+}
+
+console.log(explain('layout performance', 'mid'));
 ```
 
----
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-## Color Functions
+### Q18: Explain logical properties in practical interview context — 🔴 [Senior]
 
-### color-mix()
+**Tổng Quan:** Logical Properties là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
 
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với logical properties, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```html
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q19: Explain color functions in practical interview context — 🟢 [Junior]
+
+**Tổng Quan:** Color Functions là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với color functions, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
 ```css
-.element {
-  /* Mix two colors */
-  background: color-mix(in srgb, blue 50%, red);
-  
-  /* Create tints */
-  background: color-mix(in srgb, blue 80%, white);
-  
-  /* Create shades */
-  background: color-mix(in srgb, blue 80%, black);
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
 }
 ```
 
-### oklch() and oklab()
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
+### Q20: Explain clamp min max in practical interview context — 🟡 [Mid]
+
+**Tổng Quan:** Clamp Min Max là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với clamp min max, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
+}
+
+console.log(explain('layout performance', 'mid'));
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q21: Explain scroll timeline in practical interview context — 🔴 [Senior]
+
+**Tổng Quan:** Scroll Timeline là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với scroll timeline, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```html
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q22: Explain view transition in practical interview context — 🟢 [Junior]
+
+**Tổng Quan:** View Transition là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với view transition, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
 ```css
-.element {
-  /* Better perceptual color space */
-  color: oklch(60% 0.15 180);
-  /* lightness, chroma, hue */
-  
-  background: oklab(60% -0.1 0.1);
-  /* lightness, a, b */
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
 }
 ```
 
-### Relative Colors
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
+### Q23: Explain anchor positioning in practical interview context — 🟡 [Mid]
+
+**Tổng Quan:** Anchor Positioning là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với anchor positioning, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
+}
+
+console.log(explain('layout performance', 'mid'));
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q24: Explain progressive enhancement in practical interview context — 🔴 [Senior]
+
+**Tổng Quan:** Progressive Enhancement là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với progressive enhancement, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```html
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q25: Explain container query in practical interview context — 🟢 [Junior]
+
+**Tổng Quan:** Container Query là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với container query, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
 ```css
-:root {
-  --primary: #007bff;
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
 }
 
-.element {
-  /* Lighten color */
-  background: oklch(from var(--primary) calc(l + 0.2) c h);
-  
-  /* Adjust opacity */
-  color: rgb(from var(--primary) r g b / 0.5);
-  
-  /* Rotate hue */
-  border-color: hsl(from var(--primary) calc(h + 180) s l);
+.card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
 }
 ```
 
----
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-## Additional Modern Features
+### Q26: Explain css nesting in practical interview context — 🟡 [Mid]
 
-### Logical Properties
+**Tổng Quan:** Css Nesting là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
 
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với css nesting, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
+}
+
+console.log(explain('layout performance', 'mid'));
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q27: Explain cascade layer in practical interview context — 🔴 [Senior]
+
+**Tổng Quan:** Cascade Layer là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với cascade layer, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```html
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q28: Explain :has selector in practical interview context — 🟢 [Junior]
+
+**Tổng Quan:** :Has Selector là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với :has selector, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
 ```css
-/* Instead of left/right, use start/end */
-.element {
-  /* Old way */
-  margin-left: 1rem;
-  padding-right: 2rem;
-  border-left: 1px solid black;
-  
-  /* New way (RTL-friendly) */
-  margin-inline-start: 1rem;
-  padding-inline-end: 2rem;
-  border-inline-start: 1px solid black;
-  
-  /* Block direction */
-  margin-block-start: 1rem; /* margin-top */
-  margin-block-end: 1rem; /* margin-bottom */
-  
-  /* Shorthand */
-  margin-inline: 1rem 2rem; /* start end */
-  margin-block: 1rem 2rem; /* start end */
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
 }
 ```
 
-### aspect-ratio
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
+### Q29: Explain subgrid in practical interview context — 🟡 [Mid]
+
+**Tổng Quan:** Subgrid là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với subgrid, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
+}
+
+console.log(explain('layout performance', 'mid'));
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q30: Explain logical properties in practical interview context — 🔴 [Senior]
+
+**Tổng Quan:** Logical Properties là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với logical properties, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```html
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q31: Explain color functions in practical interview context — 🟢 [Junior]
+
+**Tổng Quan:** Color Functions là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với color functions, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
 ```css
-.video-container {
-  aspect-ratio: 16 / 9;
-  width: 100%;
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
 }
 
-.square {
-  aspect-ratio: 1;
-  width: 200px;
-}
-
-.portrait {
-  aspect-ratio: 3 / 4;
+.card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
 }
 ```
 
-### gap for Flexbox
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
+### Q32: Explain clamp min max in practical interview context — 🟡 [Mid]
+
+**Tổng Quan:** Clamp Min Max là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với clamp min max, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
+}
+
+console.log(explain('layout performance', 'mid'));
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q33: Explain scroll timeline in practical interview context — 🔴 [Senior]
+
+**Tổng Quan:** Scroll Timeline là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với scroll timeline, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```html
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q34: Explain view transition in practical interview context — 🟢 [Junior]
+
+**Tổng Quan:** View Transition là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với view transition, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
 ```css
-.flex-container {
-  display: flex;
-  gap: 1rem; /* Works in flexbox now! */
-  row-gap: 1rem;
-  column-gap: 2rem;
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
 }
 ```
 
-### accent-color
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
+### Q35: Explain anchor positioning in practical interview context — 🟡 [Mid]
+
+**Tổng Quan:** Anchor Positioning là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với anchor positioning, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
+}
+
+console.log(explain('layout performance', 'mid'));
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q36: Explain progressive enhancement in practical interview context — 🔴 [Senior]
+
+**Tổng Quan:** Progressive Enhancement là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với progressive enhancement, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```html
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q37: Explain container query in practical interview context — 🟢 [Junior]
+
+**Tổng Quan:** Container Query là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với container query, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
 ```css
-/* Style form controls */
-input[type="checkbox"],
-input[type="radio"],
-input[type="range"] {
-  accent-color: #007bff;
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
 }
 ```
 
----
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-## Interview Questions
+### Q38: Explain css nesting in practical interview context — 🟡 [Mid]
 
-### Q1: What are container queries and why are they useful?
+**Tổng Quan:** Css Nesting là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
 
-**Answer:**
-Container queries allow styling based on a container's size rather than viewport size. Benefits:
-- True component-based responsive design
-- Components adapt to their container, not viewport
-- Better for reusable components
-- Works with any container size
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với css nesting, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
 
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
+}
+
+console.log(explain('layout performance', 'mid'));
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q39: Explain cascade layer in practical interview context — 🔴 [Senior]
+
+**Tổng Quan:** Cascade Layer là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với cascade layer, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```html
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q40: Explain :has selector in practical interview context — 🟢 [Junior]
+
+**Tổng Quan:** :Has Selector là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với :has selector, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
 ```css
-.card-container {
-  container-type: inline-size;
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
 }
 
-@container (min-width: 400px) {
-  .card {
-    display: grid;
-  }
-}
-```
-
-### Q2: How does the :has() selector work?
-
-**Answer:**
-`:has()` is a "parent selector" that styles an element based on its descendants or siblings:
-
-```css
-/* Style parent if it has specific child */
-.card:has(.featured) {
-  border: 2px solid gold;
-}
-
-/* Style based on form state */
-form:has(input:invalid) {
-  border-color: red;
+.card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
 }
 ```
 
-### Q3: What's the difference between clamp(), min(), and max()?
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-**Answer:**
-- **clamp(min, preferred, max)**: Value between min and max
-- **min(val1, val2)**: Smaller of two values
-- **max(val1, val2)**: Larger of two values
+## Quick Recap
 
-```css
-/* Responsive font size */
-font-size: clamp(1rem, 5vw, 3rem);
-
-/* Responsive width */
-width: min(500px, 100%);
-```
-
-### Q4: What are CSS layers and why use them?
-
-**Answer:**
-CSS layers provide explicit control over cascade order:
-- Predictable specificity
-- Better organization
-- Easier to override
-- Framework integration
-
-```css
-@layer reset, base, components, utilities;
-
-@layer components {
-  .button { background: blue; }
-}
-```
-
-### Q5: How do view transitions work?
-
-**Answer:**
-View transitions provide smooth animations between page states:
-
-```javascript
-document.startViewTransition(() => {
-  // Update DOM
-  updateContent();
-});
-```
-
-CSS can customize the transition:
-```css
-::view-transition-old(root) {
-  animation: fade-out 0.3s;
-}
-```
-
----
-
-## Browser Support Considerations
-
-```css
-/* Feature detection */
-@supports (container-type: inline-size) {
-  .card-container {
-    container-type: inline-size;
-  }
-}
-
-/* Fallback */
-@supports not (container-type: inline-size) {
-  @media (min-width: 400px) {
-    .card {
-      display: grid;
-    }
-  }
-}
-
-/* Progressive enhancement */
-.element {
-  /* Fallback */
-  font-size: 1.5rem;
-  
-  /* Modern browsers */
-  font-size: clamp(1rem, 5vw, 3rem);
-}
-```
-
----
-
-## Key Takeaways
-
-1. **Container Queries**: Component-based responsive design
-2. **CSS Nesting**: Cleaner, more maintainable code
-3. **CSS Layers**: Explicit cascade control
-4. **Subgrid**: Better grid alignment
-5. **:has()**: Parent and sibling selection
-6. **Scroll Animations**: Scroll-linked effects
-7. **View Transitions**: Smooth page transitions
-8. **Modern Functions**: clamp(), color-mix(), etc.
-9. **Logical Properties**: RTL-friendly layouts
-10. **Progressive Enhancement**: Use with fallbacks
-
----
-
-[← Previous: CSS Architecture](./05-css-architecture.md) | [Back to Table of Contents](../00-table-of-contents.md)
+- Use English headings to align with interview terminology.
+- Dùng phần giải thích tiếng Việt để làm rõ mental model và trade-off.
+- Include short code examples (HTML/CSS/JS/TS) to chứng minh tính thực chiến.

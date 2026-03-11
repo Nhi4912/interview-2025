@@ -27,7 +27,9 @@
 
 ## Workflow - AI-Powered Development / Phát Triển Hỗ Trợ AI
 
-### What is Workflow? / Workflow là gì?
+
+## Câu Hỏi Phỏng Vấn / Interview Q&A
+### What is Workflow? / Workflow là gì? 🟢 [Junior]
 
 **Website**: https://useworkflow.dev/
 
@@ -361,7 +363,7 @@ const { value: isOpen, toggle } = useToggle(false);
 
 ## Rivet - Visual Programming / Lập Trình Trực Quan
 
-### What is Rivet? / Rivet là gì?
+### What is Rivet? / Rivet là gì? 🟢 [Junior]
 
 **Website**: https://www.rivet.dev/
 
@@ -1150,7 +1152,7 @@ class IntegratedDevelopment {
 
 ## Best Practices
 
-### 1. When to Use Visual Tools
+### 1. When to Use Visual Tools 🟡 [Mid]
 
 **Use Rivet for:**
 - Complex workflows with multiple steps
@@ -1164,7 +1166,7 @@ class IntegratedDevelopment {
 - Fine-grained control
 - Version control and testing
 
-### 2. When to Use AI Assistance
+### 2. When to Use AI Assistance 🟡 [Mid]
 
 **Use Workflow for:**
 - Boilerplate code generation
@@ -1178,7 +1180,7 @@ class IntegratedDevelopment {
 - Performance-optimized code
 - Complex algorithms
 
-### 3. Hybrid Approach
+### 3. Hybrid Approach 🟡 [Mid]
 
 ```typescript
 // Best practice: Combine visual and code

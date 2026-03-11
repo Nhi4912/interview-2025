@@ -1,858 +1,829 @@
-# Memory Management Deep Dive
+# Memory Management Deep Dive / Quản Lý Bộ Nhớ Chuyên Sâu
 
-## Table of Contents
-- [Memory Fundamentals](#memory-fundamentals)
-- [Garbage Collection](#garbage-collection)
-- [Memory Leaks](#memory-leaks)
-- [Memory Profiling](#memory-profiling)
-- [Optimization Techniques](#optimization-techniques)
-- [WeakMap and WeakSet](#weakmap-and-weakset)
-- [Memory Allocation Patterns](#memory-allocation-patterns)
-- [Browser Memory Model](#browser-memory-model)
+## Tổng Quan / Overview
 
-## Memory Fundamentals
+- Bao phủ memory model, GC, leak pattern, profiling, WeakMap/WeakRef và tối ưu allocation.
+- Mục tiêu interview: giải thích được nguyên nhân OOM/jank và phương pháp điều tra có hệ thống.
+- Code ví dụ tập trung vào kỹ thuật tránh retained object trong ứng dụng frontend thực tế.
 
-### JavaScript Memory Model
+### Cross-references / Tài liệu liên quan
+- [Web Performance Optimization](./17-frontend-theory-06-web-performance-optimization.md)
+- [React Hooks Advanced Theory](./17-frontend-theory-04-react-hooks-advanced.md)
+- [Event-Driven Architecture](./17-frontend-theory-13-event-driven-architecture.md)
+- [Performance Engineering](./19-expert-topics-02-performance-engineering.md)
 
-**Memory Regions**:
-```
-┌─────────────────────────────────┐
-│         Call Stack              │  Function execution contexts
-├─────────────────────────────────┤
-│         Heap                    │  Objects, closures, functions
-├─────────────────────────────────┤
-│         Code Segment            │  Compiled code
-└─────────────────────────────────┘
-```
+## Key Concepts / Khái Niệm Trọng Tâm
 
-**Value Types**:
-```javascript
-// Primitive values (stored on stack)
-let num = 42;              // Number
-let str = "hello";         // String
-let bool = true;           // Boolean
-let nothing = null;        // Null
-let undef = undefined;     // Undefined
-let sym = Symbol('id');    // Symbol
-let big = 123n;            // BigInt
+### 1. JavaScript memory model
 
-// Reference values (stored on heap)
-let obj = { x: 1 };        // Object
-let arr = [1, 2, 3];       // Array
-let fn = () => {};         // Function
+**Tổng Quan:** `JavaScript memory model` là năng lực bắt buộc khi thảo luận quản lý bộ nhớ chuyên sâu.
+
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold1 = (used: number, total: number) => used / total > 0.85;
 ```
 
-**Memory Allocation**:
-```javascript
-// Stack allocation (automatic)
-function calculate() {
-  let x = 10;  // Allocated on stack
-  let y = 20;  // Allocated on stack
-  return x + y;
-} // x and y automatically deallocated
+### 2. Memory lifecycle
 
-// Heap allocation (manual/GC)
-function createObject() {
-  return { data: new Array(1000) }; // Allocated on heap
-} // Object remains until GC collects it
+**Tổng Quan:** `Memory lifecycle` là năng lực bắt buộc khi thảo luận quản lý bộ nhớ chuyên sâu.
+
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold2 = (used: number, total: number) => used / total > 0.85;
 ```
 
-### Memory Lifecycle
+### 3. Mark-and-sweep GC
 
-**Phases**:
-```
-1. Allocation: Memory is allocated for values
-2. Usage: Program reads/writes to memory
-3. Deallocation: Memory is freed (GC)
-```
+**Tổng Quan:** `Mark-and-sweep GC` là năng lực bắt buộc khi thảo luận quản lý bộ nhớ chuyên sâu.
 
-**Allocation Examples**:
-```javascript
-// Implicit allocation
-let str = "hello";                    // String allocation
-let obj = { x: 1 };                   // Object allocation
-let arr = [1, 2, 3];                  // Array allocation
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-// Explicit allocation
-let buffer = new ArrayBuffer(1024);   // Buffer allocation
-let arr = new Array(1000);            // Array with size
-let map = new Map();                  // Map allocation
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold3 = (used: number, total: number) => used / total > 0.85;
 ```
 
-## Garbage Collection
+### 4. Generational GC behavior
 
-### Mark-and-Sweep Algorithm
+**Tổng Quan:** `Generational GC behavior` là năng lực bắt buộc khi thảo luận quản lý bộ nhớ chuyên sâu.
 
-**Concept**:
-```
-1. Mark Phase:
-   - Start from roots (global, stack)
-   - Mark all reachable objects
-   
-2. Sweep Phase:
-   - Iterate through heap
-   - Collect unmarked objects
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold4 = (used: number, total: number) => used / total > 0.85;
 ```
 
-**Implementation Concept**:
-```javascript
-class GarbageCollector {
-  constructor() {
-    this.heap = new Set();
-    this.roots = new Set();
-  }
+### 5. Leak pattern taxonomy
 
-  allocate(object) {
-    this.heap.add(object);
-    return object;
-  }
+**Tổng Quan:** `Leak pattern taxonomy` là năng lực bắt buộc khi thảo luận quản lý bộ nhớ chuyên sâu.
 
-  addRoot(object) {
-    this.roots.add(object);
-  }
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-  mark(object, marked = new Set()) {
-    if (marked.has(object)) return;
-    marked.add(object);
-
-    // Mark referenced objects
-    for (const key in object) {
-      if (typeof object[key] === 'object' && object[key] !== null) {
-        this.mark(object[key], marked);
-      }
-    }
-
-    return marked;
-  }
-
-  sweep(marked) {
-    const toDelete = [];
-    
-    for (const object of this.heap) {
-      if (!marked.has(object)) {
-        toDelete.push(object);
-      }
-    }
-
-    toDelete.forEach(obj => this.heap.delete(obj));
-    return toDelete.length;
-  }
-
-  collect() {
-    // Mark phase
-    const marked = new Set();
-    for (const root of this.roots) {
-      this.mark(root, marked);
-    }
-
-    // Sweep phase
-    return this.sweep(marked);
-  }
-}
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold5 = (used: number, total: number) => used / total > 0.85;
 ```
 
-### Generational GC
+### 6. Closure leak prevention
 
-**Concept**:
-```
-Young Generation (Minor GC):
-- New objects allocated here
-- Frequent, fast collections
-- Most objects die young
+**Tổng Quan:** `Closure leak prevention` là năng lực bắt buộc khi thảo luận quản lý bộ nhớ chuyên sâu.
 
-Old Generation (Major GC):
-- Long-lived objects promoted here
-- Infrequent, slower collections
-- Survivors from young generation
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold6 = (used: number, total: number) => used / total > 0.85;
 ```
 
-**V8 Generations**:
-```
-┌──────────────────────────────────┐
-│   New Space (Young Generation)   │
-│   ┌────────────┬────────────┐   │
-│   │  From      │    To      │   │
-│   │  Space     │   Space    │   │
-│   └────────────┴────────────┘   │
-├──────────────────────────────────┤
-│   Old Space (Old Generation)     │
-│   - Old Pointer Space            │
-│   - Old Data Space               │
-├──────────────────────────────────┤
-│   Large Object Space             │
-│   - Objects > 1MB                │
-├──────────────────────────────────┤
-│   Code Space                     │
-│   - Compiled code                │
-└──────────────────────────────────┘
+### 7. Detached DOM cleanup
+
+**Tổng Quan:** `Detached DOM cleanup` là năng lực bắt buộc khi thảo luận quản lý bộ nhớ chuyên sâu.
+
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold7 = (used: number, total: number) => used / total > 0.85;
 ```
 
-### Reference Counting
+### 8. Heap snapshot analysis
 
-**Concept**:
-```javascript
-// Simplified reference counting
-class RefCounted {
-  constructor(value) {
-    this.value = value;
-    this.refCount = 0;
-  }
+**Tổng Quan:** `Heap snapshot analysis` là năng lực bắt buộc khi thảo luận quản lý bộ nhớ chuyên sâu.
 
-  addRef() {
-    this.refCount++;
-  }
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-  release() {
-    this.refCount--;
-    if (this.refCount === 0) {
-      this.dispose();
-    }
-  }
-
-  dispose() {
-    console.log('Object disposed');
-    // Clean up resources
-  }
-}
-
-// Usage
-let obj = new RefCounted({ data: 'test' });
-obj.addRef();  // refCount = 1
-obj.addRef();  // refCount = 2
-obj.release(); // refCount = 1
-obj.release(); // refCount = 0, disposed
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold8 = (used: number, total: number) => used / total > 0.85;
 ```
 
-**Circular Reference Problem**:
-```javascript
-// Reference counting fails with cycles
-function createCycle() {
-  const obj1 = { name: 'obj1' };
-  const obj2 = { name: 'obj2' };
-  
-  obj1.ref = obj2;  // obj1 -> obj2
-  obj2.ref = obj1;  // obj2 -> obj1
-  
-  // Both have refCount = 1
-  // Neither can be collected with pure reference counting
-}
+### 9. Allocation timeline reading
 
-// Mark-and-sweep handles this correctly
+**Tổng Quan:** `Allocation timeline reading` là năng lực bắt buộc khi thảo luận quản lý bộ nhớ chuyên sâu.
+
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold9 = (used: number, total: number) => used / total > 0.85;
 ```
 
-## Memory Leaks
+### 10. Runtime memory monitoring
 
-### Common Leak Patterns
+**Tổng Quan:** `Runtime memory monitoring` là năng lực bắt buộc khi thảo luận quản lý bộ nhớ chuyên sâu.
 
-**1. Forgotten Timers**:
-```javascript
-// BAD: Timer keeps reference
-class Component {
-  constructor() {
-    this.data = new Array(1000000);
-    setInterval(() => {
-      console.log(this.data.length);
-    }, 1000);
-  }
-}
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-// GOOD: Clear timer
-class Component {
-  constructor() {
-    this.data = new Array(1000000);
-    this.timerId = setInterval(() => {
-      console.log(this.data.length);
-    }, 1000);
-  }
-
-  destroy() {
-    clearInterval(this.timerId);
-  }
-}
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold10 = (used: number, total: number) => used / total > 0.85;
 ```
 
-**2. Event Listeners**:
-```javascript
-// BAD: Listener not removed
-class Component {
-  constructor(element) {
-    this.element = element;
-    this.data = new Array(1000000);
-    this.element.addEventListener('click', () => {
-      console.log(this.data.length);
-    });
-  }
-}
+### 11. Object pooling tradeoffs
 
-// GOOD: Remove listener
-class Component {
-  constructor(element) {
-    this.element = element;
-    this.data = new Array(1000000);
-    this.handler = () => console.log(this.data.length);
-    this.element.addEventListener('click', this.handler);
-  }
+**Tổng Quan:** `Object pooling tradeoffs` là năng lực bắt buộc khi thảo luận quản lý bộ nhớ chuyên sâu.
 
-  destroy() {
-    this.element.removeEventListener('click', this.handler);
-  }
-}
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold11 = (used: number, total: number) => used / total > 0.85;
 ```
 
-**3. Closures**:
-```javascript
-// BAD: Closure captures large object
-function createHandler() {
-  const largeData = new Array(1000000);
-  
-  return function handler() {
-    console.log('Handler called');
-    // largeData is captured even if not used
-  };
-}
+### 12. Lazy initialization
 
-// GOOD: Don't capture unnecessary data
-function createHandler() {
-  const largeData = new Array(1000000);
-  const needed = largeData.length;
-  
-  return function handler() {
-    console.log('Handler called', needed);
-    // Only needed value is captured
-  };
-}
+**Tổng Quan:** `Lazy initialization` là năng lực bắt buộc khi thảo luận quản lý bộ nhớ chuyên sâu.
+
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold12 = (used: number, total: number) => used / total > 0.85;
 ```
 
-**4. Global Variables**:
-```javascript
-// BAD: Accidental global
-function process() {
-  data = new Array(1000000); // Forgot 'let/const'
-  // data is now global and never collected
-}
+### 13. WeakMap and WeakSet
 
-// GOOD: Use strict mode
-'use strict';
-function process() {
-  const data = new Array(1000000);
-  // data is local and will be collected
-}
+**Tổng Quan:** `WeakMap and WeakSet` là năng lực bắt buộc khi thảo luận quản lý bộ nhớ chuyên sâu.
+
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold13 = (used: number, total: number) => used / total > 0.85;
 ```
 
-**5. Detached DOM Nodes**:
-```javascript
-// BAD: Keep reference to removed node
-let detachedNodes = [];
+### 14. WeakRef and FinalizationRegistry
 
-function removeElement(element) {
-  detachedNodes.push(element);
-  element.remove();
-  // Node is removed from DOM but still referenced
-}
+**Tổng Quan:** `WeakRef and FinalizationRegistry` là năng lực bắt buộc khi thảo luận quản lý bộ nhớ chuyên sâu.
 
-// GOOD: Don't keep references
-function removeElement(element) {
-  element.remove();
-  // Node can be garbage collected
-}
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold14 = (used: number, total: number) => used / total > 0.85;
 ```
 
-**6. Cache Without Limits**:
-```javascript
-// BAD: Unbounded cache
-const cache = new Map();
+### 15. Memory budget governance
 
-function getData(key) {
-  if (cache.has(key)) {
-    return cache.get(key);
-  }
-  
-  const data = fetchData(key);
-  cache.set(key, data); // Cache grows forever
-  return data;
-}
+**Tổng Quan:** `Memory budget governance` là năng lực bắt buộc khi thảo luận quản lý bộ nhớ chuyên sâu.
 
-// GOOD: LRU cache with size limit
-class LRUCache {
-  constructor(maxSize) {
-    this.maxSize = maxSize;
-    this.cache = new Map();
-  }
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-  get(key) {
-    if (!this.cache.has(key)) return undefined;
-    
-    // Move to end (most recently used)
-    const value = this.cache.get(key);
-    this.cache.delete(key);
-    this.cache.set(key, value);
-    return value;
-  }
-
-  set(key, value) {
-    if (this.cache.has(key)) {
-      this.cache.delete(key);
-    }
-    
-    this.cache.set(key, value);
-    
-    // Remove oldest if over limit
-    if (this.cache.size > this.maxSize) {
-      const firstKey = this.cache.keys().next().value;
-      this.cache.delete(firstKey);
-    }
-  }
-}
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold15 = (used: number, total: number) => used / total > 0.85;
 ```
 
-### Leak Detection
+### 16. Incident response for OOM
 
-**Manual Detection**:
-```javascript
-class LeakDetector {
-  constructor() {
-    this.allocations = new Map();
-    this.nextId = 0;
-  }
+**Tổng Quan:** `Incident response for OOM` là năng lực bắt buộc khi thảo luận quản lý bộ nhớ chuyên sâu.
 
-  track(object, name) {
-    const id = this.nextId++;
-    this.allocations.set(id, {
-      name,
-      object: new WeakRef(object),
-      timestamp: Date.now(),
-      stack: new Error().stack
-    });
-    return id;
-  }
+**Giải thích (VI):** Trình bày bối cảnh, trade-off và failure mode. Với interview, hãy nêu rõ bạn đo lường thành công bằng metric nào.
 
-  check() {
-    const leaks = [];
-    
-    for (const [id, allocation] of this.allocations) {
-      const object = allocation.object.deref();
-      
-      if (object !== undefined) {
-        const age = Date.now() - allocation.timestamp;
-        if (age > 60000) { // Alive for > 1 minute
-          leaks.push({
-            id,
-            name: allocation.name,
-            age,
-            stack: allocation.stack
-          });
-        }
-      } else {
-        // Object was collected
-        this.allocations.delete(id);
-      }
-    }
-    
-    return leaks;
-  }
-}
-
-// Usage
-const detector = new LeakDetector();
-
-function createComponent() {
-  const component = { data: new Array(1000) };
-  detector.track(component, 'Component');
-  return component;
-}
-
-// Check for leaks periodically
-setInterval(() => {
-  const leaks = detector.check();
-  if (leaks.length > 0) {
-    console.warn('Potential leaks:', leaks);
-  }
-}, 10000);
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold16 = (used: number, total: number) => used / total > 0.85;
 ```
 
-## Memory Profiling
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-### Heap Snapshots
+### 🟢 [Junior] Q01: How would you explain javascript memory model in a frontend interview?
 
-**Taking Snapshots**:
-```javascript
-// In Chrome DevTools
-// 1. Open DevTools > Memory tab
-// 2. Select "Heap snapshot"
-// 3. Click "Take snapshot"
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
 
-// Programmatically (Node.js)
-const v8 = require('v8');
-const fs = require('fs');
+**Giải thích (VI):** Với `JavaScript memory model`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
 
-function takeHeapSnapshot(filename) {
-  const snapshot = v8.writeHeapSnapshot(filename);
-  console.log('Snapshot written to', snapshot);
-}
-
-// Compare snapshots to find leaks
-takeHeapSnapshot('before.heapsnapshot');
-// ... perform operations
-takeHeapSnapshot('after.heapsnapshot');
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold1 = (used: number, total: number) => used / total > 0.85;
 ```
 
-### Allocation Timeline
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
 
-**Recording Allocations**:
-```javascript
-// Chrome DevTools: Memory > Allocation instrumentation on timeline
+### 🟡 [Mid] Q01: How would you explain javascript memory model in a frontend interview?
 
-// Analyze allocation patterns
-class AllocationTracker {
-  constructor() {
-    this.allocations = [];
-    this.enabled = false;
-  }
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
 
-  enable() {
-    this.enabled = true;
-    this.startTime = performance.now();
-  }
+**Giải thích (VI):** Với `JavaScript memory model`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
 
-  disable() {
-    this.enabled = false;
-  }
-
-  track(size, type) {
-    if (!this.enabled) return;
-    
-    this.allocations.push({
-      size,
-      type,
-      timestamp: performance.now() - this.startTime,
-      stack: new Error().stack
-    });
-  }
-
-  analyze() {
-    const byType = new Map();
-    
-    for (const allocation of this.allocations) {
-      const current = byType.get(allocation.type) || { count: 0, totalSize: 0 };
-      current.count++;
-      current.totalSize += allocation.size;
-      byType.set(allocation.type, current);
-    }
-    
-    return Array.from(byType.entries())
-      .map(([type, stats]) => ({ type, ...stats }))
-      .sort((a, b) => b.totalSize - a.totalSize);
-  }
-}
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold21 = (used: number, total: number) => used / total > 0.85;
 ```
 
-### Memory Usage Monitoring
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
 
-```javascript
-class MemoryMonitor {
-  constructor(interval = 1000) {
-    this.interval = interval;
-    this.samples = [];
-    this.monitoring = false;
-  }
+### 🔴 [Senior] Q01: How would you explain javascript memory model in a frontend interview?
 
-  start() {
-    if (this.monitoring) return;
-    
-    this.monitoring = true;
-    this.timerId = setInterval(() => {
-      if (performance.memory) {
-        this.samples.push({
-          timestamp: Date.now(),
-          usedJSHeapSize: performance.memory.usedJSHeapSize,
-          totalJSHeapSize: performance.memory.totalJSHeapSize,
-          jsHeapSizeLimit: performance.memory.jsHeapSizeLimit
-        });
-        
-        // Keep last 1000 samples
-        if (this.samples.length > 1000) {
-          this.samples.shift();
-        }
-      }
-    }, this.interval);
-  }
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
 
-  stop() {
-    if (!this.monitoring) return;
-    
-    this.monitoring = false;
-    clearInterval(this.timerId);
-  }
+**Giải thích (VI):** Với `JavaScript memory model`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
 
-  getStats() {
-    if (this.samples.length === 0) return null;
-    
-    const used = this.samples.map(s => s.usedJSHeapSize);
-    const total = this.samples.map(s => s.totalJSHeapSize);
-    
-    return {
-      current: this.samples[this.samples.length - 1],
-      average: {
-        used: used.reduce((a, b) => a + b) / used.length,
-        total: total.reduce((a, b) => a + b) / total.length
-      },
-      peak: {
-        used: Math.max(...used),
-        total: Math.max(...total)
-      },
-      trend: this.calculateTrend(used)
-    };
-  }
-
-  calculateTrend(values) {
-    if (values.length < 2) return 0;
-    
-    const recent = values.slice(-10);
-    const older = values.slice(-20, -10);
-    
-    const recentAvg = recent.reduce((a, b) => a + b) / recent.length;
-    const olderAvg = older.reduce((a, b) => a + b) / older.length;
-    
-    return recentAvg - olderAvg;
-  }
-
-  detectLeak() {
-    const stats = this.getStats();
-    if (!stats) return false;
-    
-    // Simple heuristic: memory growing consistently
-    return stats.trend > 1000000; // 1MB growth
-  }
-}
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold41 = (used: number, total: number) => used / total > 0.85;
 ```
 
-## Optimization Techniques
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
 
-### Object Pooling
+### 🟢 [Junior] Q02: How would you explain memory lifecycle in a frontend interview?
 
-```javascript
-class ObjectPool {
-  constructor(factory, reset, initialSize = 10) {
-    this.factory = factory;
-    this.reset = reset;
-    this.pool = [];
-    
-    // Pre-allocate objects
-    for (let i = 0; i < initialSize; i++) {
-      this.pool.push(this.factory());
-    }
-  }
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
 
-  acquire() {
-    if (this.pool.length > 0) {
-      return this.pool.pop();
-    }
-    return this.factory();
-  }
+**Giải thích (VI):** Với `Memory lifecycle`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
 
-  release(object) {
-    this.reset(object);
-    this.pool.push(object);
-  }
-
-  clear() {
-    this.pool = [];
-  }
-}
-
-// Usage
-const vectorPool = new ObjectPool(
-  () => ({ x: 0, y: 0, z: 0 }),
-  (v) => { v.x = 0; v.y = 0; v.z = 0; }
-);
-
-function calculate() {
-  const v1 = vectorPool.acquire();
-  const v2 = vectorPool.acquire();
-  
-  v1.x = 10;
-  v1.y = 20;
-  v2.x = 5;
-  v2.y = 15;
-  
-  const result = { x: v1.x + v2.x, y: v1.y + v2.y };
-  
-  vectorPool.release(v1);
-  vectorPool.release(v2);
-  
-  return result;
-}
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold2 = (used: number, total: number) => used / total > 0.85;
 ```
 
-### Lazy Initialization
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
 
-```javascript
-class LazyValue {
-  constructor(initializer) {
-    this.initializer = initializer;
-    this.initialized = false;
-    this.value = undefined;
-  }
+### 🟡 [Mid] Q02: How would you explain memory lifecycle in a frontend interview?
 
-  get() {
-    if (!this.initialized) {
-      this.value = this.initializer();
-      this.initialized = true;
-      this.initializer = null; // Allow GC
-    }
-    return this.value;
-  }
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
 
-  reset() {
-    this.initialized = false;
-    this.value = undefined;
-  }
-}
+**Giải thích (VI):** Với `Memory lifecycle`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
 
-// Usage
-const expensiveData = new LazyValue(() => {
-  console.log('Computing expensive data...');
-  return new Array(1000000).fill(0).map((_, i) => i * i);
-});
-
-// Data not computed yet
-console.log('Before access');
-
-// Data computed on first access
-const data = expensiveData.get();
-
-// Subsequent accesses use cached value
-const data2 = expensiveData.get();
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold22 = (used: number, total: number) => used / total > 0.85;
 ```
 
-### String Interning
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
 
-```javascript
-class StringInterner {
-  constructor() {
-    this.pool = new Map();
-  }
+### 🔴 [Senior] Q02: How would you explain memory lifecycle in a frontend interview?
 
-  intern(string) {
-    if (this.pool.has(string)) {
-      return this.pool.get(string);
-    }
-    
-    this.pool.set(string, string);
-    return string;
-  }
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
 
-  clear() {
-    this.pool.clear();
-  }
+**Giải thích (VI):** Với `Memory lifecycle`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
 
-  size() {
-    return this.pool.size;
-  }
-}
-
-// Usage
-const interner = new StringInterner();
-
-// These will reference the same string object
-const s1 = interner.intern('hello');
-const s2 = interner.intern('hello');
-const s3 = interner.intern('hello');
-
-console.log(s1 === s2 === s3); // true
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold42 = (used: number, total: number) => used / total > 0.85;
 ```
 
-## WeakMap and WeakSet
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
 
-### WeakMap Usage
+### 🟢 [Junior] Q03: How would you explain mark-and-sweep gc in a frontend interview?
 
-```javascript
-// Private data using WeakMap
-const privateData = new WeakMap();
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
 
-class User {
-  constructor(name, password) {
-    this.name = name;
-    privateData.set(this, { password });
-  }
+**Giải thích (VI):** Với `Mark-and-sweep GC`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
 
-  checkPassword(password) {
-    return privateData.get(this).password === password;
-  }
-}
-
-// When user instance is GC'd, private data is too
-let user = new User('Alice', 'secret123');
-console.log(user.checkPassword('secret123')); // true
-user = null; // privateData entry can be GC'd
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold3 = (used: number, total: number) => used / total > 0.85;
 ```
 
-### WeakSet Usage
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
 
-```javascript
-// Track object membership without preventing GC
-const processedObjects = new WeakSet();
+### 🟡 [Mid] Q03: How would you explain mark-and-sweep gc in a frontend interview?
 
-function processObject(obj) {
-  if (processedObjects.has(obj)) {
-    console.log('Already processed');
-    return;
-  }
-  
-  // Process object
-  console.log('Processing', obj);
-  processedObjects.add(obj);
-}
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
 
-// Usage
-let obj = { data: 'test' };
-processObject(obj); // Processing
-processObject(obj); // Already processed
-obj = null; // Entry in WeakSet can be GC'd
+**Giải thích (VI):** Với `Mark-and-sweep GC`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold23 = (used: number, total: number) => used / total > 0.85;
 ```
 
-### WeakRef and FinalizationRegistry
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
 
-```javascript
-// WeakRef: Hold weak reference to object
-class Cache {
-  constructor() {
-    this.cache = new Map();
-  }
+### 🔴 [Senior] Q03: How would you explain mark-and-sweep gc in a frontend interview?
 
-  set(key, value) {
-    this.cache.set(key, new WeakRef(value));
-  }
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
 
-  get(key) {
-    const ref = this.cache.get(key);
-    if (!ref) return undefined;
-    
-    const value = ref.deref();
-    if (value === undefined) {
-      // Object was GC'd
-      this.cache.delete(key);
-    }
-    return value;
-  }
-}
+**Giải thích (VI):** Với `Mark-and-sweep GC`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
 
-// FinalizationRegistry: Run cleanup when object is GC'd
-const registry = new FinalizationRegistry((heldValue) => {
-  console.log('Object was garbage collected:', heldValue);
-});
-
-class Resource {
-  constructor(name) {
-    this.name = name;
-    registry.register(this, name);
-  }
-}
-
-let resource = new Resource('MyResource');
-resource = null; // Eventually logs: "Object was garbage collected: MyResource"
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold43 = (used: number, total: number) => used / total > 0.85;
 ```
 
-## Summary
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
 
-Effective memory management in JavaScript requires understanding garbage collection, identifying and preventing memory leaks, and applying optimization techniques like object pooling and lazy initialization. Use profiling tools to monitor memory usage and WeakMap/WeakSet for memory-efficient data structures.
+### 🟢 [Junior] Q04: How would you explain generational gc behavior in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Generational GC behavior`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold4 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q04: How would you explain generational gc behavior in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Generational GC behavior`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold24 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q04: How would you explain generational gc behavior in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Generational GC behavior`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold44 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q05: How would you explain leak pattern taxonomy in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Leak pattern taxonomy`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold5 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q05: How would you explain leak pattern taxonomy in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Leak pattern taxonomy`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold25 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q05: How would you explain leak pattern taxonomy in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Leak pattern taxonomy`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold45 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q06: How would you explain closure leak prevention in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Closure leak prevention`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold6 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q06: How would you explain closure leak prevention in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Closure leak prevention`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold26 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q06: How would you explain closure leak prevention in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Closure leak prevention`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold46 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q07: How would you explain detached dom cleanup in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Detached DOM cleanup`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold7 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q07: How would you explain detached dom cleanup in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Detached DOM cleanup`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold27 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q07: How would you explain detached dom cleanup in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Detached DOM cleanup`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold47 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q08: How would you explain heap snapshot analysis in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Heap snapshot analysis`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold8 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q08: How would you explain heap snapshot analysis in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Heap snapshot analysis`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold28 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q08: How would you explain heap snapshot analysis in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Heap snapshot analysis`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold48 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q09: How would you explain allocation timeline reading in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Allocation timeline reading`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold9 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q09: How would you explain allocation timeline reading in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Allocation timeline reading`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold29 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q09: How would you explain allocation timeline reading in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Allocation timeline reading`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold49 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q10: How would you explain runtime memory monitoring in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Runtime memory monitoring`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold10 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q10: How would you explain runtime memory monitoring in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Runtime memory monitoring`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold30 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q10: How would you explain runtime memory monitoring in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Runtime memory monitoring`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold50 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q11: How would you explain object pooling tradeoffs in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Object pooling tradeoffs`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold11 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q11: How would you explain object pooling tradeoffs in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Object pooling tradeoffs`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold31 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q11: How would you explain object pooling tradeoffs in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Object pooling tradeoffs`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold51 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q12: How would you explain lazy initialization in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Lazy initialization`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold12 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q12: How would you explain lazy initialization in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Lazy initialization`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold32 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q12: How would you explain lazy initialization in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Lazy initialization`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold52 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q13: How would you explain weakmap and weakset in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `WeakMap and WeakSet`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold13 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q13: How would you explain weakmap and weakset in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `WeakMap and WeakSet`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold33 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q13: How would you explain weakmap and weakset in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `WeakMap and WeakSet`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold53 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q14: How would you explain weakref and finalizationregistry in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `WeakRef and FinalizationRegistry`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold14 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q14: How would you explain weakref and finalizationregistry in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `WeakRef and FinalizationRegistry`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold34 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q14: How would you explain weakref and finalizationregistry in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `WeakRef and FinalizationRegistry`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold54 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q15: How would you explain memory budget governance in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Memory budget governance`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold15 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q15: How would you explain memory budget governance in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Memory budget governance`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold35 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q15: How would you explain memory budget governance in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Memory budget governance`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold55 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟢 [Junior] Q16: How would you explain incident response for oom in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Incident response for OOM`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Junior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold16 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🟡 [Mid] Q16: How would you explain incident response for oom in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Incident response for OOM`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Mid, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold36 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+### 🔴 [Senior] Q16: How would you explain incident response for oom in a frontend interview?
+
+**Tổng Quan:** Trả lời ngắn, đúng vấn đề, rồi mở rộng bằng một tình huống thật từng gặp.
+
+**Giải thích (VI):** Với `Incident response for OOM`, bạn nên mô tả định nghĩa trước, sau đó nói cách triển khai trong dự án, cuối cùng nêu rủi ro và cách giảm rủi ro. Ở level Senior, ưu tiên trade-off thay vì học thuộc lòng.
+
+**Ví dụ (JS/TS):**
+```ts
+export const overThreshold56 = (used: number, total: number) => used / total > 0.85;
+```
+
+**Follow-up (VI):** Bạn sẽ test, monitor, và rollback như thế nào nếu thay đổi này gây lỗi production?
+
+## Rapid Review Checklist / Checklist Ôn Tập Nhanh
+
+- Bạn có thể giải thích 16 concept ở cả 3 mức Junior/Mid/Senior?
+- Bạn có ví dụ thực tế về bug/perf/security issue và bài học rút ra?
+- Bạn có thể liên kết chủ đề hiện tại với testing, observability, và delivery?
+- Bạn đã chuẩn bị câu trả lời song ngữ EN heading + VI explanation chưa?
+- Bạn có thể vẽ luồng dữ liệu hoặc kiến trúc trong 2-3 phút trên whiteboard?
+
+## Tóm Tắt / Summary
+
+Tài liệu `Memory Management Deep Dive` đã được chuyển sang bilingual Q&A format với difficulty tags (`🟢 [Junior]`, `🟡 [Mid]`, `🔴 [Senior]`), chứa marker `Tổng Quan`, `Giải thích`, `Ví dụ`, có cross-reference bằng relative path và code mẫu JS/TS để luyện phỏng vấn.

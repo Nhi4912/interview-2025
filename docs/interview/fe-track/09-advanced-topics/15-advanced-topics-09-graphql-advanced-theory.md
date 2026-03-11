@@ -1284,7 +1284,7 @@ const resolvers = {
 };
 ```
 
-## Interview Questions
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
 **Q: What are the main advantages of GraphQL over REST?**
 

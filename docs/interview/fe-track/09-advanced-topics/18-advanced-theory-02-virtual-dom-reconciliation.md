@@ -1,940 +1,1317 @@
-# Virtual DOM and Reconciliation
+# Virtual DOM and Reconciliation Internals
 
-## Table of Contents
-- [Introduction](#introduction)
-- [Virtual DOM Concepts](#virtual-dom-concepts)
-- [Diffing Algorithms](#diffing-algorithms)
-- [Reconciliation Process](#reconciliation-process)
-- [Fiber Architecture](#fiber-architecture)
-- [Keys and Lists](#keys-and-lists)
-- [Performance Optimization](#performance-optimization)
-- [Implementation](#implementation)
+**Tổng Quan / Overview:** How modern UI runtimes model UI trees, diff changes, and schedule rendering work.
+**Giải thích:** Cách runtime UI hiện đại mô hình hóa cây giao diện, diff thay đổi và lập lịch render.
 
-## Introduction
+## Mục Tiêu Học Tập / Learning Goals
+- Understand interview-grade theory in frontend systems.
+- Nắm được cách giải thích bằng tiếng Anh ngắn gọn và tiếng Việt rõ ràng.
+- Practice with JavaScript/TypeScript examples for implementation discussion.
 
-### What is Virtual DOM?
+## Liên Kết Liên Quan / Related Files
+- [./18-advanced-theory-01-compiler-design-frontend.md](./18-advanced-theory-01-compiler-design-frontend.md)
+- [./18-advanced-theory-03-advanced-algorithms-frontend.md](./18-advanced-theory-03-advanced-algorithms-frontend.md)
+- [./18-advanced-theory-04-data-structures-advanced.md](./18-advanced-theory-04-data-structures-advanced.md)
+- [./18-advanced-theory-05-concurrency-patterns.md](./18-advanced-theory-05-concurrency-patterns.md)
+- [./18-advanced-theory-06-design-patterns-advanced.md](./18-advanced-theory-06-design-patterns-advanced.md)
 
-**Definition**: A lightweight JavaScript representation of the actual DOM that enables efficient updates through diffing and batching.
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-**Benefits**:
-```
-1. Performance: Batch DOM updates
-2. Abstraction: Platform-independent rendering
-3. Declarative: Describe UI state, not mutations
-4. Predictable: Pure functions for rendering
-```
+### Q1. Virtual DOM mental model — Concept and core mental model
+**Difficulty:** 🟡 [Mid]
 
-**Virtual DOM vs Real DOM**:
-```javascript
-// Real DOM (expensive)
-const div = document.createElement('div');
-div.className = 'container';
-div.textContent = 'Hello';
-document.body.appendChild(div);
+**Tổng Quan (Overview):**
+- EN: Explain **Virtual DOM mental model** in a concise system-level way before diving into details.
+- VI: Trình bày **Virtual DOM mental model** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
 
-// Virtual DOM (cheap)
-const vnode = {
-  type: 'div',
-  props: { className: 'container' },
-  children: ['Hello']
-};
-```
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for virtual dom mental model.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho virtual dom mental model.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
 
-## Virtual DOM Concepts
+**Ví dụ (Example):**
+```ts
+type VNode1 = { type: string; key?: string; children?: VNode1[] };
 
-### VNode Structure
-
-**Basic VNode**:
-```javascript
-class VNode {
-  constructor(type, props, children) {
-    this.type = type;        // 'div', 'span', Component, etc.
-    this.props = props || {}; // { className: 'foo', onClick: fn }
-    this.children = children || []; // Array of VNodes or strings
-    this.key = props?.key;   // Unique identifier
-    this.ref = props?.ref;   // Reference to DOM node
-  }
-}
-
-// Element VNode
-const elementVNode = new VNode('div', { className: 'container' }, [
-  new VNode('h1', {}, ['Title']),
-  new VNode('p', {}, ['Content'])
-]);
-
-// Component VNode
-const componentVNode = new VNode(MyComponent, { name: 'John' }, []);
-
-// Text VNode
-const textVNode = 'Hello World';
-```
-
-### JSX to VNode
-
-**Transformation**:
-```javascript
-// JSX
-const element = (
-  <div className="container">
-    <h1>Title</h1>
-    <p>Content</p>
-  </div>
-);
-
-// Compiled to
-const element = createElement('div', { className: 'container' },
-  createElement('h1', null, 'Title'),
-  createElement('p', null, 'Content')
-);
-
-// createElement function
-function createElement(type, props, ...children) {
-  return new VNode(
-    type,
-    props,
-    children.flat().map(child =>
-      typeof child === 'object' ? child : createTextVNode(child)
-    )
-  );
-}
-
-function createTextVNode(text) {
-  return new VNode('TEXT', { nodeValue: text }, []);
+export function reconcileVirtualDomMentalModel(prev: VNode1[], next: VNode1[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
 }
 ```
 
-### VNode Types
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-**Classification**:
-```javascript
-const VNodeType = {
-  ELEMENT: 'element',      // HTML elements
-  TEXT: 'text',            // Text nodes
-  COMPONENT: 'component',  // React components
-  FRAGMENT: 'fragment',    // React.Fragment
-  PORTAL: 'portal'         // ReactDOM.createPortal
-};
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-02-virtual-dom-reconciliation.md](./18-advanced-theory-02-virtual-dom-reconciliation.md)
 
-function getVNodeType(vnode) {
-  if (typeof vnode === 'string' || typeof vnode === 'number') {
-    return VNodeType.TEXT;
-  }
-  
-  if (typeof vnode.type === 'string') {
-    return VNodeType.ELEMENT;
-  }
-  
-  if (typeof vnode.type === 'function') {
-    return VNodeType.COMPONENT;
-  }
-  
-  if (vnode.type === Fragment) {
-    return VNodeType.FRAGMENT;
-  }
-  
-  if (vnode.type === Portal) {
-    return VNodeType.PORTAL;
-  }
+### Q2. Virtual DOM mental model — Practical trade-offs and debugging in production
+**Difficulty:** 🔴 [Senior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Virtual DOM mental model** in a concise system-level way before diving into details.
+- VI: Trình bày **Virtual DOM mental model** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for virtual dom mental model.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho virtual dom mental model.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode2 = { type: string; key?: string; children?: VNode2[] };
+
+export function reconcileVirtualDomMentalModel(prev: VNode2[], next: VNode2[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
 }
 ```
 
-## Diffing Algorithms
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-### Naive Diff (O(n³))
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-03-advanced-algorithms-frontend.md](./18-advanced-theory-03-advanced-algorithms-frontend.md)
 
-**Concept**:
-```
-Compare every node in old tree with every node in new tree
-- Time Complexity: O(n³)
-- Space Complexity: O(n²)
-- Too slow for practical use
-```
+### Q3. VNode structure and identity — Concept and core mental model
+**Difficulty:** 🟢 [Junior]
 
-### React's Heuristic Diff (O(n))
+**Tổng Quan (Overview):**
+- EN: Explain **VNode structure and identity** in a concise system-level way before diving into details.
+- VI: Trình bày **VNode structure and identity** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
 
-**Assumptions**:
-```
-1. Different types produce different trees
-2. Keys identify stable elements across renders
-3. Siblings are compared in order
-```
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for vnode structure and identity.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho vnode structure and identity.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
 
-**Algorithm**:
-```javascript
-function diff(oldVNode, newVNode) {
-  // Rule 1: Different types -> replace
-  if (oldVNode.type !== newVNode.type) {
-    return { type: 'REPLACE', newVNode };
-  }
-  
-  // Rule 2: Text nodes -> update if different
-  if (typeof newVNode === 'string') {
-    if (oldVNode !== newVNode) {
-      return { type: 'TEXT', content: newVNode };
-    }
-    return null;
-  }
-  
-  // Rule 3: Same type -> update props and diff children
-  const propPatches = diffProps(oldVNode.props, newVNode.props);
-  const childPatches = diffChildren(oldVNode.children, newVNode.children);
-  
-  if (propPatches || childPatches) {
-    return {
-      type: 'UPDATE',
-      propPatches,
-      childPatches
-    };
-  }
-  
-  return null;
+**Ví dụ (Example):**
+```ts
+type VNode3 = { type: string; key?: string; children?: VNode3[] };
+
+export function reconcileVnodeStructureAndIdentity(prev: VNode3[], next: VNode3[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
 }
 ```
 
-### Props Diffing
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-**Implementation**:
-```javascript
-function diffProps(oldProps, newProps) {
-  const patches = [];
-  
-  // Find changed and removed props
-  for (const key in oldProps) {
-    if (key === 'key' || key === 'ref') continue;
-    
-    if (!(key in newProps)) {
-      patches.push({ type: 'REMOVE_PROP', key });
-    } else if (oldProps[key] !== newProps[key]) {
-      patches.push({
-        type: 'UPDATE_PROP',
-        key,
-        value: newProps[key]
-      });
-    }
-  }
-  
-  // Find added props
-  for (const key in newProps) {
-    if (key === 'key' || key === 'ref') continue;
-    
-    if (!(key in oldProps)) {
-      patches.push({
-        type: 'ADD_PROP',
-        key,
-        value: newProps[key]
-      });
-    }
-  }
-  
-  return patches.length > 0 ? patches : null;
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-04-data-structures-advanced.md](./18-advanced-theory-04-data-structures-advanced.md)
+
+### Q4. VNode structure and identity — Practical trade-offs and debugging in production
+**Difficulty:** 🟡 [Mid]
+
+**Tổng Quan (Overview):**
+- EN: Explain **VNode structure and identity** in a concise system-level way before diving into details.
+- VI: Trình bày **VNode structure and identity** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for vnode structure and identity.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho vnode structure and identity.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode4 = { type: string; key?: string; children?: VNode4[] };
+
+export function reconcileVnodeStructureAndIdentity(prev: VNode4[], next: VNode4[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
 }
 ```
 
-### Children Diffing
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-**Without Keys (Simple)**:
-```javascript
-function diffChildren(oldChildren, newChildren) {
-  const patches = [];
-  const maxLength = Math.max(oldChildren.length, newChildren.length);
-  
-  for (let i = 0; i < maxLength; i++) {
-    const oldChild = oldChildren[i];
-    const newChild = newChildren[i];
-    
-    if (!oldChild) {
-      // New child added
-      patches.push({
-        type: 'INSERT',
-        index: i,
-        vnode: newChild
-      });
-    } else if (!newChild) {
-      // Old child removed
-      patches.push({
-        type: 'REMOVE',
-        index: i
-      });
-    } else {
-      // Diff existing children
-      const patch = diff(oldChild, newChild);
-      if (patch) {
-        patches.push({
-          type: 'PATCH',
-          index: i,
-          patch
-        });
-      }
-    }
-  }
-  
-  return patches.length > 0 ? patches : null;
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-05-concurrency-patterns.md](./18-advanced-theory-05-concurrency-patterns.md)
+
+### Q5. Diff algorithm heuristics — Concept and core mental model
+**Difficulty:** 🔴 [Senior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Diff algorithm heuristics** in a concise system-level way before diving into details.
+- VI: Trình bày **Diff algorithm heuristics** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for diff algorithm heuristics.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho diff algorithm heuristics.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode5 = { type: string; key?: string; children?: VNode5[] };
+
+export function reconcileDiffAlgorithmHeuristics(prev: VNode5[], next: VNode5[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
 }
 ```
 
-**With Keys (Optimized)**:
-```javascript
-function diffChildrenWithKeys(oldChildren, newChildren) {
-  const patches = [];
-  const oldKeyMap = new Map();
-  const newKeyMap = new Map();
-  
-  // Build key maps
-  oldChildren.forEach((child, index) => {
-    if (child.key != null) {
-      oldKeyMap.set(child.key, { child, index });
-    }
-  });
-  
-  newChildren.forEach((child, index) => {
-    if (child.key != null) {
-      newKeyMap.set(child.key, { child, index });
-    }
-  });
-  
-  // Track moved, added, removed nodes
-  const moves = [];
-  let lastIndex = 0;
-  
-  newChildren.forEach((newChild, newIndex) => {
-    const key = newChild.key;
-    
-    if (key != null && oldKeyMap.has(key)) {
-      const { child: oldChild, index: oldIndex } = oldKeyMap.get(key);
-      
-      // Diff the nodes
-      const patch = diff(oldChild, newChild);
-      if (patch) {
-        patches.push({
-          type: 'PATCH',
-          key,
-          patch
-        });
-      }
-      
-      // Check if node moved
-      if (oldIndex < lastIndex) {
-        moves.push({
-          type: 'MOVE',
-          key,
-          from: oldIndex,
-          to: newIndex
-        });
-      } else {
-        lastIndex = oldIndex;
-      }
-    } else {
-      // New node
-      patches.push({
-        type: 'INSERT',
-        index: newIndex,
-        vnode: newChild
-      });
-    }
-  });
-  
-  // Find removed nodes
-  oldChildren.forEach((oldChild) => {
-    const key = oldChild.key;
-    if (key != null && !newKeyMap.has(key)) {
-      patches.push({
-        type: 'REMOVE',
-        key
-      });
-    }
-  });
-  
-  return { patches, moves };
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-06-design-patterns-advanced.md](./18-advanced-theory-06-design-patterns-advanced.md)
+
+### Q6. Diff algorithm heuristics — Practical trade-offs and debugging in production
+**Difficulty:** 🟢 [Junior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Diff algorithm heuristics** in a concise system-level way before diving into details.
+- VI: Trình bày **Diff algorithm heuristics** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for diff algorithm heuristics.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho diff algorithm heuristics.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode6 = { type: string; key?: string; children?: VNode6[] };
+
+export function reconcileDiffAlgorithmHeuristics(prev: VNode6[], next: VNode6[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
 }
 ```
 
-## Reconciliation Process
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-### Mounting Phase
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-01-compiler-design-frontend.md](./18-advanced-theory-01-compiler-design-frontend.md)
 
-**Initial Render**:
-```javascript
-function mount(vnode, container) {
-  const node = createDOMNode(vnode);
-  container.appendChild(node);
-  return node;
-}
+### Q7. Child reconciliation and key matching — Concept and core mental model
+**Difficulty:** 🟡 [Mid]
 
-function createDOMNode(vnode) {
-  // Text node
-  if (typeof vnode === 'string' || typeof vnode === 'number') {
-    return document.createTextNode(vnode);
-  }
-  
-  // Element node
-  const { type, props, children } = vnode;
-  const element = document.createElement(type);
-  
-  // Set props
-  updateProps(element, {}, props);
-  
-  // Mount children
-  children.forEach(child => {
-    const childNode = createDOMNode(child);
-    element.appendChild(childNode);
-  });
-  
-  // Store reference
-  vnode._dom = element;
-  
-  return element;
-}
+**Tổng Quan (Overview):**
+- EN: Explain **Child reconciliation and key matching** in a concise system-level way before diving into details.
+- VI: Trình bày **Child reconciliation and key matching** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
 
-function updateProps(dom, oldProps, newProps) {
-  // Remove old props
-  for (const key in oldProps) {
-    if (!(key in newProps)) {
-      removeProp(dom, key, oldProps[key]);
-    }
-  }
-  
-  // Add/update new props
-  for (const key in newProps) {
-    if (oldProps[key] !== newProps[key]) {
-      setProp(dom, key, newProps[key]);
-    }
-  }
-}
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for child reconciliation and key matching.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho child reconciliation and key matching.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
 
-function setProp(dom, key, value) {
-  if (key === 'className') {
-    dom.className = value;
-  } else if (key === 'style') {
-    if (typeof value === 'string') {
-      dom.style.cssText = value;
-    } else {
-      Object.assign(dom.style, value);
-    }
-  } else if (key.startsWith('on')) {
-    const eventType = key.slice(2).toLowerCase();
-    dom.addEventListener(eventType, value);
-  } else if (key in dom) {
-    dom[key] = value;
-  } else {
-    dom.setAttribute(key, value);
-  }
-}
+**Ví dụ (Example):**
+```ts
+type VNode7 = { type: string; key?: string; children?: VNode7[] };
 
-function removeProp(dom, key, value) {
-  if (key === 'className') {
-    dom.className = '';
-  } else if (key === 'style') {
-    dom.style.cssText = '';
-  } else if (key.startsWith('on')) {
-    const eventType = key.slice(2).toLowerCase();
-    dom.removeEventListener(eventType, value);
-  } else if (key in dom) {
-    dom[key] = '';
-  } else {
-    dom.removeAttribute(key);
-  }
+export function reconcileChildReconciliationAndKeyMatchin(prev: VNode7[], next: VNode7[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
 }
 ```
 
-### Update Phase
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-**Patching**:
-```javascript
-function patch(dom, oldVNode, newVNode) {
-  // Get patch
-  const patches = diff(oldVNode, newVNode);
-  
-  if (!patches) return dom;
-  
-  // Apply patch
-  return applyPatch(dom, patches);
-}
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-02-virtual-dom-reconciliation.md](./18-advanced-theory-02-virtual-dom-reconciliation.md)
 
-function applyPatch(dom, patch) {
-  switch (patch.type) {
-    case 'REPLACE':
-      const newDom = createDOMNode(patch.newVNode);
-      dom.parentNode.replaceChild(newDom, dom);
-      return newDom;
-    
-    case 'TEXT':
-      dom.textContent = patch.content;
-      return dom;
-    
-    case 'UPDATE':
-      if (patch.propPatches) {
-        applyPropPatches(dom, patch.propPatches);
-      }
-      
-      if (patch.childPatches) {
-        applyChildPatches(dom, patch.childPatches);
-      }
-      
-      return dom;
-    
-    default:
-      return dom;
-  }
-}
+### Q8. Child reconciliation and key matching — Practical trade-offs and debugging in production
+**Difficulty:** 🔴 [Senior]
 
-function applyPropPatches(dom, propPatches) {
-  propPatches.forEach(patch => {
-    switch (patch.type) {
-      case 'ADD_PROP':
-      case 'UPDATE_PROP':
-        setProp(dom, patch.key, patch.value);
-        break;
-      
-      case 'REMOVE_PROP':
-        removeProp(dom, patch.key);
-        break;
-    }
-  });
-}
+**Tổng Quan (Overview):**
+- EN: Explain **Child reconciliation and key matching** in a concise system-level way before diving into details.
+- VI: Trình bày **Child reconciliation and key matching** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
 
-function applyChildPatches(dom, childPatches) {
-  childPatches.forEach(patch => {
-    switch (patch.type) {
-      case 'INSERT':
-        const newChild = createDOMNode(patch.vnode);
-        if (patch.index >= dom.childNodes.length) {
-          dom.appendChild(newChild);
-        } else {
-          dom.insertBefore(newChild, dom.childNodes[patch.index]);
-        }
-        break;
-      
-      case 'REMOVE':
-        dom.removeChild(dom.childNodes[patch.index]);
-        break;
-      
-      case 'PATCH':
-        const child = dom.childNodes[patch.index];
-        applyPatch(child, patch.patch);
-        break;
-      
-      case 'MOVE':
-        const nodeToMove = dom.childNodes[patch.from];
-        dom.insertBefore(nodeToMove, dom.childNodes[patch.to]);
-        break;
-    }
-  });
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for child reconciliation and key matching.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho child reconciliation and key matching.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode8 = { type: string; key?: string; children?: VNode8[] };
+
+export function reconcileChildReconciliationAndKeyMatchin(prev: VNode8[], next: VNode8[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
 }
 ```
 
-### Unmounting Phase
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-**Cleanup**:
-```javascript
-function unmount(vnode) {
-  const dom = vnode._dom;
-  
-  if (!dom) return;
-  
-  // Call cleanup for components
-  if (typeof vnode.type === 'function') {
-    if (vnode._instance && vnode._instance.componentWillUnmount) {
-      vnode._instance.componentWillUnmount();
-    }
-  }
-  
-  // Recursively unmount children
-  if (vnode.children) {
-    vnode.children.forEach(child => {
-      if (typeof child === 'object') {
-        unmount(child);
-      }
-    });
-  }
-  
-  // Remove event listeners
-  if (vnode.props) {
-    for (const key in vnode.props) {
-      if (key.startsWith('on')) {
-        const eventType = key.slice(2).toLowerCase();
-        dom.removeEventListener(eventType, vnode.props[key]);
-      }
-    }
-  }
-  
-  // Remove from DOM
-  if (dom.parentNode) {
-    dom.parentNode.removeChild(dom);
-  }
-  
-  // Clear reference
-  vnode._dom = null;
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-03-advanced-algorithms-frontend.md](./18-advanced-theory-03-advanced-algorithms-frontend.md)
+
+### Q9. Mount, update, and unmount phases — Concept and core mental model
+**Difficulty:** 🟢 [Junior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Mount, update, and unmount phases** in a concise system-level way before diving into details.
+- VI: Trình bày **Mount, update, and unmount phases** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for mount, update, and unmount phases.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho mount, update, and unmount phases.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode9 = { type: string; key?: string; children?: VNode9[] };
+
+export function reconcileMountUpdateAndUnmountPhases(prev: VNode9[], next: VNode9[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
 }
 ```
 
-## Fiber Architecture
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-### Fiber Node Structure
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-04-data-structures-advanced.md](./18-advanced-theory-04-data-structures-advanced.md)
 
-**Fiber**:
-```javascript
-class Fiber {
-  constructor(vnode) {
-    // Instance
-    this.type = vnode.type;
-    this.props = vnode.props;
-    this.key = vnode.key;
-    
-    // Relationships
-    this.parent = null;
-    this.child = null;
-    this.sibling = null;
-    
-    // State
-    this.alternate = null;  // Previous fiber
-    this.effectTag = null;  // What to do with this fiber
-    this.effects = [];      // Side effects to commit
-    
-    // DOM
-    this.dom = null;
-    
-    // Hooks
-    this.hooks = [];
-    this.hookIndex = 0;
-  }
-}
+### Q10. Mount, update, and unmount phases — Practical trade-offs and debugging in production
+**Difficulty:** 🟡 [Mid]
 
-const EffectTag = {
-  PLACEMENT: 'PLACEMENT',  // Insert new node
-  UPDATE: 'UPDATE',        // Update existing node
-  DELETION: 'DELETION'     // Remove node
-};
-```
+**Tổng Quan (Overview):**
+- EN: Explain **Mount, update, and unmount phases** in a concise system-level way before diving into details.
+- VI: Trình bày **Mount, update, and unmount phases** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
 
-### Work Loop
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for mount, update, and unmount phases.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho mount, update, and unmount phases.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
 
-**Concurrent Rendering**:
-```javascript
-class FiberScheduler {
-  constructor() {
-    this.nextUnitOfWork = null;
-    this.wipRoot = null;          // Work in progress root
-    this.currentRoot = null;      // Last committed root
-    this.deletions = [];
-  }
+**Ví dụ (Example):**
+```ts
+type VNode10 = { type: string; key?: string; children?: VNode10[] };
 
-  scheduleWork(fiber) {
-    this.wipRoot = {
-      dom: this.currentRoot?.dom,
-      props: this.currentRoot?.props,
-      alternate: this.currentRoot
-    };
-    
-    this.nextUnitOfWork = this.wipRoot;
-    this.deletions = [];
-    
-    requestIdleCallback(this.workLoop.bind(this));
-  }
-
-  workLoop(deadline) {
-    let shouldYield = false;
-    
-    while (this.nextUnitOfWork && !shouldYield) {
-      this.nextUnitOfWork = this.performUnitOfWork(this.nextUnitOfWork);
-      shouldYield = deadline.timeRemaining() < 1;
-    }
-    
-    // Commit phase
-    if (!this.nextUnitOfWork && this.wipRoot) {
-      this.commitRoot();
-    }
-    
-    requestIdleCallback(this.workLoop.bind(this));
-  }
-
-  performUnitOfWork(fiber) {
-    // 1. Create DOM node if needed
-    if (!fiber.dom) {
-      fiber.dom = createDOMNode(fiber);
-    }
-    
-    // 2. Create fibers for children
-    this.reconcileChildren(fiber, fiber.props.children);
-    
-    // 3. Return next unit of work
-    if (fiber.child) {
-      return fiber.child;
-    }
-    
-    let nextFiber = fiber;
-    while (nextFiber) {
-      if (nextFiber.sibling) {
-        return nextFiber.sibling;
-      }
-      nextFiber = nextFiber.parent;
-    }
-    
-    return null;
-  }
-
-  reconcileChildren(wipFiber, elements) {
-    let index = 0;
-    let oldFiber = wipFiber.alternate?.child;
-    let prevSibling = null;
-    
-    while (index < elements.length || oldFiber) {
-      const element = elements[index];
-      let newFiber = null;
-      
-      const sameType = oldFiber && element && element.type === oldFiber.type;
-      
-      if (sameType) {
-        // Update
-        newFiber = {
-          type: oldFiber.type,
-          props: element.props,
-          dom: oldFiber.dom,
-          parent: wipFiber,
-          alternate: oldFiber,
-          effectTag: EffectTag.UPDATE
-        };
-      }
-      
-      if (element && !sameType) {
-        // Add
-        newFiber = {
-          type: element.type,
-          props: element.props,
-          dom: null,
-          parent: wipFiber,
-          alternate: null,
-          effectTag: EffectTag.PLACEMENT
-        };
-      }
-      
-      if (oldFiber && !sameType) {
-        // Delete
-        oldFiber.effectTag = EffectTag.DELETION;
-        this.deletions.push(oldFiber);
-      }
-      
-      if (oldFiber) {
-        oldFiber = oldFiber.sibling;
-      }
-      
-      if (index === 0) {
-        wipFiber.child = newFiber;
-      } else if (element) {
-        prevSibling.sibling = newFiber;
-      }
-      
-      prevSibling = newFiber;
-      index++;
-    }
-  }
-
-  commitRoot() {
-    this.deletions.forEach(this.commitWork.bind(this));
-    this.commitWork(this.wipRoot.child);
-    this.currentRoot = this.wipRoot;
-    this.wipRoot = null;
-  }
-
-  commitWork(fiber) {
-    if (!fiber) return;
-    
-    const domParent = fiber.parent.dom;
-    
-    if (fiber.effectTag === EffectTag.PLACEMENT && fiber.dom) {
-      domParent.appendChild(fiber.dom);
-    } else if (fiber.effectTag === EffectTag.UPDATE && fiber.dom) {
-      updateProps(fiber.dom, fiber.alternate.props, fiber.props);
-    } else if (fiber.effectTag === EffectTag.DELETION) {
-      domParent.removeChild(fiber.dom);
-    }
-    
-    this.commitWork(fiber.child);
-    this.commitWork(fiber.sibling);
-  }
+export function reconcileMountUpdateAndUnmountPhases(prev: VNode10[], next: VNode10[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
 }
 ```
 
-### Time Slicing
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-**Concept**:
-```javascript
-// Break work into chunks
-function timeSlicedRender(work, deadline) {
-  while (work.length > 0 && deadline.timeRemaining() > 0) {
-    const unit = work.shift();
-    processUnit(unit);
-  }
-  
-  if (work.length > 0) {
-    // More work to do
-    requestIdleCallback((deadline) => {
-      timeSlicedRender(work, deadline);
-    });
-  } else {
-    // Work complete, commit
-    commitChanges();
-  }
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-05-concurrency-patterns.md](./18-advanced-theory-05-concurrency-patterns.md)
+
+### Q11. Fiber architecture fundamentals — Concept and core mental model
+**Difficulty:** 🔴 [Senior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Fiber architecture fundamentals** in a concise system-level way before diving into details.
+- VI: Trình bày **Fiber architecture fundamentals** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for fiber architecture fundamentals.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho fiber architecture fundamentals.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode11 = { type: string; key?: string; children?: VNode11[] };
+
+export function reconcileFiberArchitectureFundamentals(prev: VNode11[], next: VNode11[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
 }
 ```
 
-## Keys and Lists
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-### Why Keys Matter
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-06-design-patterns-advanced.md](./18-advanced-theory-06-design-patterns-advanced.md)
 
-**Without Keys**:
-```javascript
-// Initial render
-<ul>
-  <li>A</li>
-  <li>B</li>
-  <li>C</li>
-</ul>
+### Q12. Fiber architecture fundamentals — Practical trade-offs and debugging in production
+**Difficulty:** 🟢 [Junior]
 
-// After inserting at beginning
-<ul>
-  <li>X</li>  // React thinks: A -> X (update)
-  <li>A</li>  // React thinks: B -> A (update)
-  <li>B</li>  // React thinks: C -> B (update)
-  <li>C</li>  // React thinks: new (insert)
-</ul>
-// Result: 3 updates + 1 insert
-```
+**Tổng Quan (Overview):**
+- EN: Explain **Fiber architecture fundamentals** in a concise system-level way before diving into details.
+- VI: Trình bày **Fiber architecture fundamentals** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
 
-**With Keys**:
-```javascript
-// Initial render
-<ul>
-  <li key="a">A</li>
-  <li key="b">B</li>
-  <li key="c">C</li>
-</ul>
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for fiber architecture fundamentals.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho fiber architecture fundamentals.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
 
-// After inserting at beginning
-<ul>
-  <li key="x">X</li>  // React thinks: new (insert)
-  <li key="a">A</li>  // React thinks: same (no change)
-  <li key="b">B</li>  // React thinks: same (no change)
-  <li key="c">C</li>  // React thinks: same (no change)
-</ul>
-// Result: 1 insert
-```
+**Ví dụ (Example):**
+```ts
+type VNode12 = { type: string; key?: string; children?: VNode12[] };
 
-### Key Selection
-
-**Good Keys**:
-```javascript
-// Stable IDs from data
-items.map(item => (
-  <Item key={item.id} {...item} />
-))
-
-// Composite keys
-items.map(item => (
-  <Item key={`${item.category}-${item.id}`} {...item} />
-))
-```
-
-**Bad Keys**:
-```javascript
-// Index as key (unstable on reorder)
-items.map((item, index) => (
-  <Item key={index} {...item} />
-))
-
-// Random keys (breaks reconciliation)
-items.map(item => (
-  <Item key={Math.random()} {...item} />
-))
-```
-
-## Performance Optimization
-
-### Memoization
-
-**React.memo**:
-```javascript
-function memo(Component, arePropsEqual) {
-  return class MemoizedComponent extends React.Component {
-    shouldComponentUpdate(nextProps) {
-      if (arePropsEqual) {
-        return !arePropsEqual(this.props, nextProps);
-      }
-      
-      // Shallow comparison
-      return !shallowEqual(this.props, nextProps);
-    }
-    
-    render() {
-      return <Component {...this.props} />;
-    }
-  };
-}
-
-function shallowEqual(obj1, obj2) {
-  const keys1 = Object.keys(obj1);
-  const keys2 = Object.keys(obj2);
-  
-  if (keys1.length !== keys2.length) return false;
-  
-  return keys1.every(key => obj1[key] === obj2[key]);
+export function reconcileFiberArchitectureFundamentals(prev: VNode12[], next: VNode12[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
 }
 ```
 
-### Batching Updates
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-**Implementation**:
-```javascript
-class UpdateQueue {
-  constructor() {
-    this.queue = [];
-    this.isBatching = false;
-  }
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-01-compiler-design-frontend.md](./18-advanced-theory-01-compiler-design-frontend.md)
 
-  enqueueUpdate(component, partialState) {
-    this.queue.push({ component, partialState });
-    
-    if (!this.isBatching) {
-      this.flush();
-    }
-  }
+### Q13. Render phase vs commit phase — Concept and core mental model
+**Difficulty:** 🟡 [Mid]
 
-  batchUpdates(fn) {
-    this.isBatching = true;
-    try {
-      fn();
-    } finally {
-      this.isBatching = false;
-      this.flush();
-    }
-  }
+**Tổng Quan (Overview):**
+- EN: Explain **Render phase vs commit phase** in a concise system-level way before diving into details.
+- VI: Trình bày **Render phase vs commit phase** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
 
-  flush() {
-    const updates = this.queue.slice();
-    this.queue = [];
-    
-    // Group updates by component
-    const componentUpdates = new Map();
-    
-    updates.forEach(({ component, partialState }) => {
-      if (!componentUpdates.has(component)) {
-        componentUpdates.set(component, []);
-      }
-      componentUpdates.get(component).push(partialState);
-    });
-    
-    // Apply batched updates
-    componentUpdates.forEach((states, component) => {
-      const newState = states.reduce(
-        (acc, state) => ({ ...acc, ...state }),
-        component.state
-      );
-      component.state = newState;
-      component.forceUpdate();
-    });
-  }
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for render phase vs commit phase.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho render phase vs commit phase.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode13 = { type: string; key?: string; children?: VNode13[] };
+
+export function reconcileRenderPhaseVsCommitPhase(prev: VNode13[], next: VNode13[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
 }
 ```
 
-## Summary
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-Virtual DOM and reconciliation enable efficient UI updates through intelligent diffing algorithms, fiber architecture for concurrent rendering, and optimization techniques like memoization and batching. Understanding these concepts is crucial for building performant React applications.
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-02-virtual-dom-reconciliation.md](./18-advanced-theory-02-virtual-dom-reconciliation.md)
+
+### Q14. Render phase vs commit phase — Practical trade-offs and debugging in production
+**Difficulty:** 🔴 [Senior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Render phase vs commit phase** in a concise system-level way before diving into details.
+- VI: Trình bày **Render phase vs commit phase** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for render phase vs commit phase.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho render phase vs commit phase.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode14 = { type: string; key?: string; children?: VNode14[] };
+
+export function reconcileRenderPhaseVsCommitPhase(prev: VNode14[], next: VNode14[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
+}
+```
+
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-03-advanced-algorithms-frontend.md](./18-advanced-theory-03-advanced-algorithms-frontend.md)
+
+### Q15. Priority lanes and scheduling — Concept and core mental model
+**Difficulty:** 🟢 [Junior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Priority lanes and scheduling** in a concise system-level way before diving into details.
+- VI: Trình bày **Priority lanes and scheduling** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for priority lanes and scheduling.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho priority lanes and scheduling.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode15 = { type: string; key?: string; children?: VNode15[] };
+
+export function reconcilePriorityLanesAndScheduling(prev: VNode15[], next: VNode15[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
+}
+```
+
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-04-data-structures-advanced.md](./18-advanced-theory-04-data-structures-advanced.md)
+
+### Q16. Priority lanes and scheduling — Practical trade-offs and debugging in production
+**Difficulty:** 🟡 [Mid]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Priority lanes and scheduling** in a concise system-level way before diving into details.
+- VI: Trình bày **Priority lanes and scheduling** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for priority lanes and scheduling.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho priority lanes and scheduling.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode16 = { type: string; key?: string; children?: VNode16[] };
+
+export function reconcilePriorityLanesAndScheduling(prev: VNode16[], next: VNode16[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
+}
+```
+
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-05-concurrency-patterns.md](./18-advanced-theory-05-concurrency-patterns.md)
+
+### Q17. Batching and update coalescing — Concept and core mental model
+**Difficulty:** 🔴 [Senior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Batching and update coalescing** in a concise system-level way before diving into details.
+- VI: Trình bày **Batching and update coalescing** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for batching and update coalescing.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho batching and update coalescing.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode17 = { type: string; key?: string; children?: VNode17[] };
+
+export function reconcileBatchingAndUpdateCoalescing(prev: VNode17[], next: VNode17[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
+}
+```
+
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-06-design-patterns-advanced.md](./18-advanced-theory-06-design-patterns-advanced.md)
+
+### Q18. Batching and update coalescing — Practical trade-offs and debugging in production
+**Difficulty:** 🟢 [Junior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Batching and update coalescing** in a concise system-level way before diving into details.
+- VI: Trình bày **Batching and update coalescing** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for batching and update coalescing.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho batching and update coalescing.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode18 = { type: string; key?: string; children?: VNode18[] };
+
+export function reconcileBatchingAndUpdateCoalescing(prev: VNode18[], next: VNode18[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
+}
+```
+
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-01-compiler-design-frontend.md](./18-advanced-theory-01-compiler-design-frontend.md)
+
+### Q19. Concurrent rendering interruption — Concept and core mental model
+**Difficulty:** 🟡 [Mid]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Concurrent rendering interruption** in a concise system-level way before diving into details.
+- VI: Trình bày **Concurrent rendering interruption** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for concurrent rendering interruption.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho concurrent rendering interruption.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode19 = { type: string; key?: string; children?: VNode19[] };
+
+export function reconcileConcurrentRenderingInterruption(prev: VNode19[], next: VNode19[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
+}
+```
+
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-02-virtual-dom-reconciliation.md](./18-advanced-theory-02-virtual-dom-reconciliation.md)
+
+### Q20. Concurrent rendering interruption — Practical trade-offs and debugging in production
+**Difficulty:** 🔴 [Senior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Concurrent rendering interruption** in a concise system-level way before diving into details.
+- VI: Trình bày **Concurrent rendering interruption** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for concurrent rendering interruption.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho concurrent rendering interruption.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode20 = { type: string; key?: string; children?: VNode20[] };
+
+export function reconcileConcurrentRenderingInterruption(prev: VNode20[], next: VNode20[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
+}
+```
+
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-03-advanced-algorithms-frontend.md](./18-advanced-theory-03-advanced-algorithms-frontend.md)
+
+### Q21. Suspense and async boundaries — Concept and core mental model
+**Difficulty:** 🟢 [Junior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Suspense and async boundaries** in a concise system-level way before diving into details.
+- VI: Trình bày **Suspense and async boundaries** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for suspense and async boundaries.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho suspense and async boundaries.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode21 = { type: string; key?: string; children?: VNode21[] };
+
+export function reconcileSuspenseAndAsyncBoundaries(prev: VNode21[], next: VNode21[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
+}
+```
+
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-04-data-structures-advanced.md](./18-advanced-theory-04-data-structures-advanced.md)
+
+### Q22. Suspense and async boundaries — Practical trade-offs and debugging in production
+**Difficulty:** 🟡 [Mid]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Suspense and async boundaries** in a concise system-level way before diving into details.
+- VI: Trình bày **Suspense and async boundaries** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for suspense and async boundaries.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho suspense and async boundaries.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode22 = { type: string; key?: string; children?: VNode22[] };
+
+export function reconcileSuspenseAndAsyncBoundaries(prev: VNode22[], next: VNode22[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
+}
+```
+
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-05-concurrency-patterns.md](./18-advanced-theory-05-concurrency-patterns.md)
+
+### Q23. State retention via keys — Concept and core mental model
+**Difficulty:** 🔴 [Senior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **State retention via keys** in a concise system-level way before diving into details.
+- VI: Trình bày **State retention via keys** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for state retention via keys.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho state retention via keys.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode23 = { type: string; key?: string; children?: VNode23[] };
+
+export function reconcileStateRetentionViaKeys(prev: VNode23[], next: VNode23[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
+}
+```
+
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-06-design-patterns-advanced.md](./18-advanced-theory-06-design-patterns-advanced.md)
+
+### Q24. State retention via keys — Practical trade-offs and debugging in production
+**Difficulty:** 🟢 [Junior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **State retention via keys** in a concise system-level way before diving into details.
+- VI: Trình bày **State retention via keys** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for state retention via keys.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho state retention via keys.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode24 = { type: string; key?: string; children?: VNode24[] };
+
+export function reconcileStateRetentionViaKeys(prev: VNode24[], next: VNode24[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
+}
+```
+
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-01-compiler-design-frontend.md](./18-advanced-theory-01-compiler-design-frontend.md)
+
+### Q25. List reordering pitfalls — Concept and core mental model
+**Difficulty:** 🟡 [Mid]
+
+**Tổng Quan (Overview):**
+- EN: Explain **List reordering pitfalls** in a concise system-level way before diving into details.
+- VI: Trình bày **List reordering pitfalls** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for list reordering pitfalls.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho list reordering pitfalls.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode25 = { type: string; key?: string; children?: VNode25[] };
+
+export function reconcileListReorderingPitfalls(prev: VNode25[], next: VNode25[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
+}
+```
+
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-02-virtual-dom-reconciliation.md](./18-advanced-theory-02-virtual-dom-reconciliation.md)
+
+### Q26. List reordering pitfalls — Practical trade-offs and debugging in production
+**Difficulty:** 🔴 [Senior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **List reordering pitfalls** in a concise system-level way before diving into details.
+- VI: Trình bày **List reordering pitfalls** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for list reordering pitfalls.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho list reordering pitfalls.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode26 = { type: string; key?: string; children?: VNode26[] };
+
+export function reconcileListReorderingPitfalls(prev: VNode26[], next: VNode26[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
+}
+```
+
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-03-advanced-algorithms-frontend.md](./18-advanced-theory-03-advanced-algorithms-frontend.md)
+
+### Q27. Memoization and referential stability — Concept and core mental model
+**Difficulty:** 🟢 [Junior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Memoization and referential stability** in a concise system-level way before diving into details.
+- VI: Trình bày **Memoization and referential stability** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for memoization and referential stability.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho memoization and referential stability.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode27 = { type: string; key?: string; children?: VNode27[] };
+
+export function reconcileMemoizationAndReferentialStabilit(prev: VNode27[], next: VNode27[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
+}
+```
+
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-04-data-structures-advanced.md](./18-advanced-theory-04-data-structures-advanced.md)
+
+### Q28. Memoization and referential stability — Practical trade-offs and debugging in production
+**Difficulty:** 🟡 [Mid]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Memoization and referential stability** in a concise system-level way before diving into details.
+- VI: Trình bày **Memoization and referential stability** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for memoization and referential stability.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho memoization and referential stability.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode28 = { type: string; key?: string; children?: VNode28[] };
+
+export function reconcileMemoizationAndReferentialStabilit(prev: VNode28[], next: VNode28[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
+}
+```
+
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-05-concurrency-patterns.md](./18-advanced-theory-05-concurrency-patterns.md)
+
+### Q29. Hydration and SSR reconciliation — Concept and core mental model
+**Difficulty:** 🔴 [Senior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Hydration and SSR reconciliation** in a concise system-level way before diving into details.
+- VI: Trình bày **Hydration and SSR reconciliation** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for hydration and ssr reconciliation.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho hydration and ssr reconciliation.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode29 = { type: string; key?: string; children?: VNode29[] };
+
+export function reconcileHydrationAndSsrReconciliation(prev: VNode29[], next: VNode29[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
+}
+```
+
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-06-design-patterns-advanced.md](./18-advanced-theory-06-design-patterns-advanced.md)
+
+### Q30. Hydration and SSR reconciliation — Practical trade-offs and debugging in production
+**Difficulty:** 🟢 [Junior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Hydration and SSR reconciliation** in a concise system-level way before diving into details.
+- VI: Trình bày **Hydration and SSR reconciliation** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for hydration and ssr reconciliation.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho hydration and ssr reconciliation.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode30 = { type: string; key?: string; children?: VNode30[] };
+
+export function reconcileHydrationAndSsrReconciliation(prev: VNode30[], next: VNode30[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
+}
+```
+
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-01-compiler-design-frontend.md](./18-advanced-theory-01-compiler-design-frontend.md)
+
+### Q31. Error boundaries in reconciliation — Concept and core mental model
+**Difficulty:** 🟡 [Mid]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Error boundaries in reconciliation** in a concise system-level way before diving into details.
+- VI: Trình bày **Error boundaries in reconciliation** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for error boundaries in reconciliation.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho error boundaries in reconciliation.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode31 = { type: string; key?: string; children?: VNode31[] };
+
+export function reconcileErrorBoundariesInReconciliation(prev: VNode31[], next: VNode31[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
+}
+```
+
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-02-virtual-dom-reconciliation.md](./18-advanced-theory-02-virtual-dom-reconciliation.md)
+
+### Q32. Error boundaries in reconciliation — Practical trade-offs and debugging in production
+**Difficulty:** 🔴 [Senior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Error boundaries in reconciliation** in a concise system-level way before diving into details.
+- VI: Trình bày **Error boundaries in reconciliation** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for error boundaries in reconciliation.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho error boundaries in reconciliation.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode32 = { type: string; key?: string; children?: VNode32[] };
+
+export function reconcileErrorBoundariesInReconciliation(prev: VNode32[], next: VNode32[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
+}
+```
+
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-03-advanced-algorithms-frontend.md](./18-advanced-theory-03-advanced-algorithms-frontend.md)
+
+### Q33. Comparison with Svelte compiler approach — Concept and core mental model
+**Difficulty:** 🟢 [Junior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Comparison with Svelte compiler approach** in a concise system-level way before diving into details.
+- VI: Trình bày **Comparison with Svelte compiler approach** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for comparison with svelte compiler approach.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho comparison with svelte compiler approach.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode33 = { type: string; key?: string; children?: VNode33[] };
+
+export function reconcileComparisonWithSvelteCompilerAppr(prev: VNode33[], next: VNode33[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
+}
+```
+
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-04-data-structures-advanced.md](./18-advanced-theory-04-data-structures-advanced.md)
+
+### Q34. Comparison with Svelte compiler approach — Practical trade-offs and debugging in production
+**Difficulty:** 🟡 [Mid]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Comparison with Svelte compiler approach** in a concise system-level way before diving into details.
+- VI: Trình bày **Comparison with Svelte compiler approach** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for comparison with svelte compiler approach.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho comparison with svelte compiler approach.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode34 = { type: string; key?: string; children?: VNode34[] };
+
+export function reconcileComparisonWithSvelteCompilerAppr(prev: VNode34[], next: VNode34[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
+}
+```
+
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-05-concurrency-patterns.md](./18-advanced-theory-05-concurrency-patterns.md)
+
+### Q35. Comparison with Solid fine-grained reactivity — Concept and core mental model
+**Difficulty:** 🔴 [Senior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Comparison with Solid fine-grained reactivity** in a concise system-level way before diving into details.
+- VI: Trình bày **Comparison with Solid fine-grained reactivity** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for comparison with solid fine-grained reactivity.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho comparison with solid fine-grained reactivity.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode35 = { type: string; key?: string; children?: VNode35[] };
+
+export function reconcileComparisonWithSolidFineGrainedR(prev: VNode35[], next: VNode35[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
+}
+```
+
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-06-design-patterns-advanced.md](./18-advanced-theory-06-design-patterns-advanced.md)
+
+### Q36. Comparison with Solid fine-grained reactivity — Practical trade-offs and debugging in production
+**Difficulty:** 🟢 [Junior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Comparison with Solid fine-grained reactivity** in a concise system-level way before diving into details.
+- VI: Trình bày **Comparison with Solid fine-grained reactivity** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for comparison with solid fine-grained reactivity.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho comparison with solid fine-grained reactivity.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode36 = { type: string; key?: string; children?: VNode36[] };
+
+export function reconcileComparisonWithSolidFineGrainedR(prev: VNode36[], next: VNode36[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
+}
+```
+
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-01-compiler-design-frontend.md](./18-advanced-theory-01-compiler-design-frontend.md)
+
+### Q37. Measuring reconciliation performance — Concept and core mental model
+**Difficulty:** 🟡 [Mid]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Measuring reconciliation performance** in a concise system-level way before diving into details.
+- VI: Trình bày **Measuring reconciliation performance** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for measuring reconciliation performance.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho measuring reconciliation performance.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode37 = { type: string; key?: string; children?: VNode37[] };
+
+export function reconcileMeasuringReconciliationPerformance(prev: VNode37[], next: VNode37[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
+}
+```
+
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-02-virtual-dom-reconciliation.md](./18-advanced-theory-02-virtual-dom-reconciliation.md)
+
+### Q38. Measuring reconciliation performance — Practical trade-offs and debugging in production
+**Difficulty:** 🔴 [Senior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Measuring reconciliation performance** in a concise system-level way before diving into details.
+- VI: Trình bày **Measuring reconciliation performance** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for measuring reconciliation performance.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho measuring reconciliation performance.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+type VNode38 = { type: string; key?: string; children?: VNode38[] };
+
+export function reconcileMeasuringReconciliationPerformance(prev: VNode38[], next: VNode38[]) {
+  const prevKeys = new Set(prev.map((n) => n.key));
+  return next.map((n) => ({ ...n, reused: Boolean(n.key && prevKeys.has(n.key)) }));
+}
+```
+
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-03-advanced-algorithms-frontend.md](./18-advanced-theory-03-advanced-algorithms-frontend.md)
+
+## Tổng Kết / Summary
+- EN: Use this file as a speaking map for advanced interviews: concept → trade-off → metrics → code path.
+- VI: Dùng tài liệu này như bản đồ trả lời phỏng vấn nâng cao: khái niệm → đánh đổi → chỉ số → luồng code.
+- EN: Pair with neighboring advanced theory files for cross-topic system design discussion.
+- VI: Kết hợp với các file advanced khác để luyện phần liên kết nhiều chủ đề trong system design frontend.
+

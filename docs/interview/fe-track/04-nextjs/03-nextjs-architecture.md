@@ -570,25 +570,25 @@ npm start
 npm run build && npm run export
 ```
 
-## Interview Questions
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-**Q: What's the difference between SSG and SSR?**
+**Q: What's the difference between SSG and SSR? — 🟢 [Junior]**
 
 A: SSG generates pages at build time (fast, cacheable), while SSR generates pages on each request (fresh data, personalized). SSG is better for static content, SSR for dynamic content.
 
-**Q: When to use ISR?**
+**Q: When to use ISR? — 🟡 [Mid]**
 
 A: Use ISR when you want static performance but need to update content periodically without rebuilding. It's perfect for e-commerce, blogs, and content sites.
 
-**Q: How does Next.js handle code splitting?**
+**Q: How does Next.js handle code splitting? — 🔴 [Senior]**
 
 A: Next.js automatically splits code by routes. Each page only loads necessary JavaScript. You can also use dynamic imports for component-level splitting.
 
-**Q: What are API routes used for?**
+**Q: What are API routes used for? — 🟢 [Junior]**
 
 A: API routes create backend endpoints within Next.js for handling server-side logic, database operations, authentication, and external API calls.
 
-**Q: How to optimize images in Next.js?**
+**Q: How to optimize images in Next.js? — 🟡 [Mid]**
 
 A: Use next/image component which provides automatic optimization, lazy loading, responsive images, WebP format, and blur placeholders.
 

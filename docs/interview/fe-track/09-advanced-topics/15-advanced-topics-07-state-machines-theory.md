@@ -19,7 +19,7 @@
 
 ## State Machine Fundamentals
 
-### What is a State Machine?
+### What is a State Machine? 🟢 [Junior]
 
 **Definition:** Mathematical model with finite states and transitions between them
 
@@ -43,7 +43,7 @@ Transitions:
   Yellow → Red (after 5s)
 ```
 
-### Why State Machines?
+### Why State Machines? 🟡 [Mid]
 
 **Problems Without State Machines:**
 ```javascript
@@ -1257,7 +1257,7 @@ const cartMachine = createMachine({
 });
 ```
 
-## Interview Questions
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
 **Q: What are the benefits of using state machines?**
 

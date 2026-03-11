@@ -1,533 +1,770 @@
 # HTML5 Fundamentals
 ## HTML - Chapter 0
 
-[Back to Table of Contents](../00-table-of-contents.md)
+[Back to Table of Contents](../../00-table-of-contents.md) | [Next →](./00-css-fundamentals.md)
 
 ---
 
-## Overview
+## Tổng Quan / Overview
 
-HTML5 is the latest evolution of HTML, providing semantic elements, multimedia support, and powerful APIs. This chapter covers essential HTML5 concepts for Big Tech interviews.
+**Giải thích:** HTML5 tập trung semantic structure, accessibility, forms, media, metadata và best practices cho SEO.
 
----
+**Ví dụ:** Khi trả lời phỏng vấn, luôn nêu problem → reasoning → implementation → trade-off.
 
-## Table of Contents
+## Learning Goals
 
-1. [Semantic HTML](#semantic-html)
-2. [Document Structure](#document-structure)
-3. [Forms and Input Types](#forms-and-input-types)
-4. [Multimedia Elements](#multimedia-elements)
-5. [Accessibility](#accessibility)
-6. [SEO Best Practices](#seo-best-practices)
-7. [Meta Tags](#meta-tags)
-8. [Interview Questions](#interview-questions)
+- Understand core concepts in English heading form for interview communication.
+- Trình bày được bằng tiếng Việt với ví dụ code ngắn, đúng ngữ cảnh frontend thực tế.
+- Map kiến thức sang câu hỏi ở level Junior/Mid/Senior.
 
----
+## Cross References
 
-## Semantic HTML
+- [FE Track Table of Contents](../../00-table-of-contents.md)
+- [CSS Fundamentals](./00-css-fundamentals.md)
+- [Responsive Design](./03-responsive-design.md)
+- [Web Security (tham khảo)](../07-web-security/01-common-vulnerabilities.md)
 
-### Why Semantic HTML?
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-**Benefits:**
-- Better accessibility
-- Improved SEO
-- Easier maintenance
-- Better browser support
-- Clearer code structure
+### Q1: Explain semantic html in practical interview context — 🟢 [Junior]
 
-### Semantic Elements
+**Tổng Quan:** Semantic Html là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
 
-```html
-<!-- Document Structure -->
-<header>
-  <nav>
-    <ul>
-      <li><a href="/">Home</a></li>
-      <li><a href="/about">About</a></li>
-    </ul>
-  </nav>
-</header>
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với semantic html, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
 
-<main>
-  <article>
-    <header>
-      <h1>Article Title</h1>
-      <p>Published on <time datetime="2025-01-31">January 31, 2025</time></p>
-    </header>
-    
-    <section>
-      <h2>Section Title</h2>
-      <p>Content goes here...</p>
-    </section>
-    
-    <aside>
-      <h3>Related Content</h3>
-      <p>Sidebar information</p>
-    </aside>
-    
-    <footer>
-      <p>Author: John Doe</p>
-    </footer>
-  </article>
-</main>
+**Ví dụ:**
+```css
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
 
-<footer>
-  <p>&copy; 2025 Company Name</p>
-</footer>
+.card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
+}
 ```
 
-### Semantic vs Non-Semantic
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-```html
-<!-- ❌ Non-semantic (bad) -->
-<div class="header">
-  <div class="nav">
-    <div class="nav-item">Home</div>
-  </div>
-</div>
-<div class="content">
-  <div class="article">
-    <div class="title">Title</div>
-  </div>
-</div>
+### Q2: Explain document outline in practical interview context — 🟡 [Mid]
 
-<!-- ✅ Semantic (good) -->
-<header>
-  <nav>
-    <a href="/">Home</a>
-  </nav>
-</header>
-<main>
-  <article>
-    <h1>Title</h1>
-  </article>
-</main>
+**Tổng Quan:** Document Outline là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với document outline, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
+}
+
+console.log(explain('layout performance', 'mid'));
 ```
 
----
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-## Document Structure
+### Q3: Explain forms in practical interview context — 🔴 [Senior]
 
-### Complete HTML5 Template
+**Tổng Quan:** Forms là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
 
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với forms, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
 ```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Page description">
-  <meta name="keywords" content="keyword1, keyword2">
-  <meta name="author" content="Author Name">
-  
-  <title>Page Title</title>
-  
-  <!-- Open Graph -->
-  <meta property="og:title" content="Page Title">
-  <meta property="og:description" content="Description">
-  <meta property="og:image" content="image.jpg">
-  <meta property="og:url" content="https://example.com">
-  
-  <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Page Title">
-  
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="/favicon.png">
-  
-  <!-- Stylesheets -->
-  <link rel="stylesheet" href="styles.css">
-  
-  <!-- Preload critical resources -->
-  <link rel="preload" href="font.woff2" as="font" crossorigin>
-</head>
-<body>
-  <header>
-    <nav><!-- Navigation --></nav>
-  </header>
-  
-  <main>
-    <!-- Main content -->
-  </main>
-  
-  <footer>
-    <!-- Footer content -->
-  </footer>
-  
-  <!-- Scripts at end of body -->
-  <script src="script.js" defer></script>
-</body>
-</html>
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
 ```
 
----
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-## Forms and Input Types
+### Q4: Explain validation in practical interview context — 🟢 [Junior]
 
-### Modern Form Elements
+**Tổng Quan:** Validation là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
 
-```html
-<form action="/submit" method="POST">
-  <!-- Text inputs -->
-  <label for="name">Name:</label>
-  <input type="text" id="name" name="name" required>
-  
-  <!-- Email with validation -->
-  <label for="email">Email:</label>
-  <input type="email" id="email" name="email" required>
-  
-  <!-- Password -->
-  <label for="password">Password:</label>
-  <input type="password" id="password" name="password" 
-         minlength="8" required>
-  
-  <!-- Number with range -->
-  <label for="age">Age:</label>
-  <input type="number" id="age" name="age" 
-         min="18" max="100" required>
-  
-  <!-- Date -->
-  <label for="birthdate">Birthdate:</label>
-  <input type="date" id="birthdate" name="birthdate">
-  
-  <!-- Time -->
-  <label for="time">Time:</label>
-  <input type="time" id="time" name="time">
-  
-  <!-- Color picker -->
-  <label for="color">Favorite Color:</label>
-  <input type="color" id="color" name="color">
-  
-  <!-- Range slider -->
-  <label for="volume">Volume:</label>
-  <input type="range" id="volume" name="volume" 
-         min="0" max="100" value="50">
-  
-  <!-- File upload -->
-  <label for="file">Upload File:</label>
-  <input type="file" id="file" name="file" 
-         accept="image/*" multiple>
-  
-  <!-- Textarea -->
-  <label for="message">Message:</label>
-  <textarea id="message" name="message" 
-            rows="4" required></textarea>
-  
-  <!-- Select dropdown -->
-  <label for="country">Country:</label>
-  <select id="country" name="country" required>
-    <option value="">Select...</option>
-    <option value="us">United States</option>
-    <option value="uk">United Kingdom</option>
-  </select>
-  
-  <!-- Radio buttons -->
-  <fieldset>
-    <legend>Gender:</legend>
-    <label>
-      <input type="radio" name="gender" value="male">
-      Male
-    </label>
-    <label>
-      <input type="radio" name="gender" value="female">
-      Female
-    </label>
-  </fieldset>
-  
-  <!-- Checkboxes -->
-  <label>
-    <input type="checkbox" name="terms" required>
-    I agree to terms
-  </label>
-  
-  <!-- Submit button -->
-  <button type="submit">Submit</button>
-</form>
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với validation, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```css
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
+}
 ```
 
-### Form Validation
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-```html
-<!-- HTML5 validation attributes -->
-<input type="text" required>
-<input type="email" required>
-<input type="url" required>
-<input type="number" min="0" max="100">
-<input type="text" minlength="3" maxlength="20">
-<input type="text" pattern="[A-Za-z]{3,}">
+### Q5: Explain a11y in practical interview context — 🟡 [Mid]
 
-<!-- Custom validation message -->
-<input type="text" id="username" required
-       oninvalid="this.setCustomValidity('Please enter username')"
-       oninput="this.setCustomValidity('')">
+**Tổng Quan:** A11Y là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với a11y, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
+}
+
+console.log(explain('layout performance', 'mid'));
 ```
 
----
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-## Multimedia Elements
+### Q6: Explain seo in practical interview context — 🔴 [Senior]
 
-### Images
+**Tổng Quan:** Seo là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
 
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với seo, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
 ```html
-<!-- Basic image -->
-<img src="image.jpg" alt="Description" width="800" height="600">
-
-<!-- Responsive images -->
-<img src="small.jpg"
-     srcset="small.jpg 400w,
-             medium.jpg 800w,
-             large.jpg 1200w"
-     sizes="(max-width: 600px) 400px,
-            (max-width: 1000px) 800px,
-            1200px"
-     alt="Responsive image">
-
-<!-- Picture element for art direction -->
-<picture>
-  <source media="(min-width: 1000px)" srcset="large.jpg">
-  <source media="(min-width: 600px)" srcset="medium.jpg">
-  <img src="small.jpg" alt="Responsive image">
-</picture>
-
-<!-- Lazy loading -->
-<img src="image.jpg" alt="Description" loading="lazy">
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
 ```
 
-### Video
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-```html
-<!-- Basic video -->
-<video controls width="640" height="360">
-  <source src="video.mp4" type="video/mp4">
-  <source src="video.webm" type="video/webm">
-  Your browser doesn't support video.
-</video>
+### Q7: Explain meta tags in practical interview context — 🟢 [Junior]
 
-<!-- Video with attributes -->
-<video controls autoplay muted loop poster="poster.jpg">
-  <source src="video.mp4" type="video/mp4">
-  <track kind="subtitles" src="subtitles.vtt" srclang="en" label="English">
-</video>
+**Tổng Quan:** Meta Tags là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với meta tags, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```css
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
+}
 ```
 
-### Audio
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-```html
-<audio controls>
-  <source src="audio.mp3" type="audio/mpeg">
-  <source src="audio.ogg" type="audio/ogg">
-  Your browser doesn't support audio.
-</audio>
+### Q8: Explain landmarks in practical interview context — 🟡 [Mid]
+
+**Tổng Quan:** Landmarks là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với landmarks, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
+}
+
+console.log(explain('layout performance', 'mid'));
 ```
 
----
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-## Accessibility
+### Q9: Explain media in practical interview context — 🔴 [Senior]
 
-### ARIA Attributes
+**Tổng Quan:** Media là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
 
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với media, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
 ```html
-<!-- Landmarks -->
-<nav aria-label="Main navigation">
-  <ul>
-    <li><a href="/">Home</a></li>
-  </ul>
-</nav>
-
-<!-- Buttons -->
-<button aria-label="Close dialog" aria-pressed="false">
-  <span aria-hidden="true">×</span>
-</button>
-
-<!-- Form labels -->
-<label for="search">Search:</label>
-<input type="search" id="search" 
-       aria-describedby="search-help">
-<p id="search-help">Enter keywords to search</p>
-
-<!-- Live regions -->
-<div aria-live="polite" aria-atomic="true">
-  <p>Status message</p>
-</div>
-
-<!-- Hidden content -->
-<span class="visually-hidden">
-  Additional context for screen readers
-</span>
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
 ```
 
-### Keyboard Navigation
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-```html
-<!-- Tab index -->
-<div tabindex="0">Focusable div</div>
-<div tabindex="-1">Programmatically focusable</div>
+### Q10: Explain tables in practical interview context — 🟢 [Junior]
 
-<!-- Skip links -->
-<a href="#main-content" class="skip-link">
-  Skip to main content
-</a>
+**Tổng Quan:** Tables là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
 
-<main id="main-content">
-  <!-- Content -->
-</main>
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với tables, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```css
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
+}
 ```
 
----
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-## SEO Best Practices
+### Q11: Explain custom data attributes in practical interview context — 🟡 [Mid]
 
-### Heading Hierarchy
+**Tổng Quan:** Custom Data Attributes là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
 
-```html
-<!-- ✅ Correct hierarchy -->
-<h1>Main Title</h1>
-  <h2>Section 1</h2>
-    <h3>Subsection 1.1</h3>
-    <h3>Subsection 1.2</h3>
-  <h2>Section 2</h2>
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với custom data attributes, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
 
-<!-- ❌ Wrong: Skipping levels -->
-<h1>Main Title</h1>
-  <h3>Subsection</h3> <!-- Skipped h2 -->
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
+}
+
+console.log(explain('layout performance', 'mid'));
 ```
 
-### Links
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
+### Q12: Explain script loading in practical interview context — 🔴 [Senior]
+
+**Tổng Quan:** Script Loading là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với script loading, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
 ```html
-<!-- Descriptive link text -->
-<a href="/article">Read the full article</a>
-
-<!-- ❌ Avoid generic text -->
-<a href="/article">Click here</a>
-
-<!-- External links -->
-<a href="https://example.com" 
-   target="_blank" 
-   rel="noopener noreferrer">
-  External Link
-</a>
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
 ```
 
----
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-## Meta Tags
+### Q13: Explain semantic html in practical interview context — 🟢 [Junior]
 
-### Essential Meta Tags
+**Tổng Quan:** Semantic Html là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
 
-```html
-<head>
-  <!-- Character encoding -->
-  <meta charset="UTF-8">
-  
-  <!-- Viewport for responsive -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <!-- Description (150-160 characters) -->
-  <meta name="description" content="Page description for search engines">
-  
-  <!-- Keywords (optional, less important now) -->
-  <meta name="keywords" content="keyword1, keyword2, keyword3">
-  
-  <!-- Author -->
-  <meta name="author" content="Author Name">
-  
-  <!-- Robots -->
-  <meta name="robots" content="index, follow">
-  
-  <!-- Canonical URL -->
-  <link rel="canonical" href="https://example.com/page">
-  
-  <!-- Language -->
-  <meta http-equiv="content-language" content="en">
-</head>
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với semantic html, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```css
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
+}
 ```
 
-### Open Graph (Social Media)
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-```html
-<!-- Facebook/LinkedIn -->
-<meta property="og:type" content="website">
-<meta property="og:title" content="Page Title">
-<meta property="og:description" content="Description">
-<meta property="og:image" content="https://example.com/image.jpg">
-<meta property="og:url" content="https://example.com/page">
-<meta property="og:site_name" content="Site Name">
+### Q14: Explain document outline in practical interview context — 🟡 [Mid]
 
-<!-- Twitter -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:site" content="@username">
-<meta name="twitter:title" content="Page Title">
-<meta name="twitter:description" content="Description">
-<meta name="twitter:image" content="https://example.com/image.jpg">
+**Tổng Quan:** Document Outline là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với document outline, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
+}
+
+console.log(explain('layout performance', 'mid'));
 ```
 
----
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-## Interview Questions
+### Q15: Explain forms in practical interview context — 🔴 [Senior]
 
-### Q1: What's the difference between `<div>` and `<section>`?
+**Tổng Quan:** Forms là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
 
-**Answer:**
-- `<div>`: Generic container, no semantic meaning
-- `<section>`: Thematic grouping of content, semantic meaning
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với forms, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
 
-Use `<section>` when content has a heading and represents a distinct section.
-
-### Q2: What are semantic HTML elements and why use them?
-
-**Answer:**
-Semantic elements clearly describe their meaning:
-- Better accessibility (screen readers)
-- Improved SEO
-- Easier maintenance
-- Better browser support
-
-Examples: `<header>`, `<nav>`, `<main>`, `<article>`, `<section>`, `<aside>`, `<footer>`
-
-### Q3: How do you make a website accessible?
-
-**Answer:**
-1. Use semantic HTML
-2. Add ARIA attributes
-3. Ensure keyboard navigation
-4. Provide alt text for images
-5. Use proper heading hierarchy
-6. Ensure sufficient color contrast
-7. Add captions for videos
-8. Test with screen readers
-
-### Q4: What's the purpose of the viewport meta tag?
-
-**Answer:**
+**Ví dụ:**
 ```html
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
 ```
-Controls how the page is displayed on mobile devices:
-- `width=device-width`: Match screen width
-- `initial-scale=1.0`: Initial zoom level
 
-### Q5: What's the difference between `<article>` and `<section>`?
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-**Answer:**
-- `<article>`: Self-contained, independently distributable content (blog post, news article)
-- `<section>`: Thematic grouping within a document
+### Q16: Explain validation in practical interview context — 🟢 [Junior]
 
-An `<article>` can contain `<section>`s, and vice versa.
+**Tổng Quan:** Validation là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
 
----
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với validation, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
 
-## Key Takeaways
+**Ví dụ:**
+```css
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
 
-1. Use semantic HTML for better accessibility and SEO
-2. Proper document structure improves maintainability
-3. HTML5 form validation reduces JavaScript needs
-4. Multimedia elements support modern content
-5. ARIA attributes enhance accessibility
-6. Meta tags improve SEO and social sharing
-7. Heading hierarchy matters for SEO
-8. Always include alt text for images
+.card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
+}
+```
 
----
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
 
-[Back to Table of Contents](../00-table-of-contents.md)
+### Q17: Explain a11y in practical interview context — 🟡 [Mid]
+
+**Tổng Quan:** A11Y là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với a11y, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
+}
+
+console.log(explain('layout performance', 'mid'));
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q18: Explain seo in practical interview context — 🔴 [Senior]
+
+**Tổng Quan:** Seo là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với seo, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```html
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q19: Explain meta tags in practical interview context — 🟢 [Junior]
+
+**Tổng Quan:** Meta Tags là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với meta tags, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```css
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
+}
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q20: Explain landmarks in practical interview context — 🟡 [Mid]
+
+**Tổng Quan:** Landmarks là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với landmarks, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
+}
+
+console.log(explain('layout performance', 'mid'));
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q21: Explain media in practical interview context — 🔴 [Senior]
+
+**Tổng Quan:** Media là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với media, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```html
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q22: Explain tables in practical interview context — 🟢 [Junior]
+
+**Tổng Quan:** Tables là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với tables, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```css
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
+}
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q23: Explain custom data attributes in practical interview context — 🟡 [Mid]
+
+**Tổng Quan:** Custom Data Attributes là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với custom data attributes, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
+}
+
+console.log(explain('layout performance', 'mid'));
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q24: Explain script loading in practical interview context — 🔴 [Senior]
+
+**Tổng Quan:** Script Loading là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với script loading, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```html
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q25: Explain semantic html in practical interview context — 🟢 [Junior]
+
+**Tổng Quan:** Semantic Html là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với semantic html, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```css
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
+}
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q26: Explain document outline in practical interview context — 🟡 [Mid]
+
+**Tổng Quan:** Document Outline là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với document outline, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
+}
+
+console.log(explain('layout performance', 'mid'));
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q27: Explain forms in practical interview context — 🔴 [Senior]
+
+**Tổng Quan:** Forms là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với forms, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```html
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q28: Explain validation in practical interview context — 🟢 [Junior]
+
+**Tổng Quan:** Validation là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với validation, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```css
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
+}
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q29: Explain a11y in practical interview context — 🟡 [Mid]
+
+**Tổng Quan:** A11Y là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với a11y, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
+}
+
+console.log(explain('layout performance', 'mid'));
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q30: Explain seo in practical interview context — 🔴 [Senior]
+
+**Tổng Quan:** Seo là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với seo, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```html
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q31: Explain meta tags in practical interview context — 🟢 [Junior]
+
+**Tổng Quan:** Meta Tags là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với meta tags, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```css
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
+}
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q32: Explain landmarks in practical interview context — 🟡 [Mid]
+
+**Tổng Quan:** Landmarks là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với landmarks, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
+}
+
+console.log(explain('layout performance', 'mid'));
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q33: Explain media in practical interview context — 🔴 [Senior]
+
+**Tổng Quan:** Media là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với media, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```html
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q34: Explain tables in practical interview context — 🟢 [Junior]
+
+**Tổng Quan:** Tables là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với tables, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```css
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
+}
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q35: Explain custom data attributes in practical interview context — 🟡 [Mid]
+
+**Tổng Quan:** Custom Data Attributes là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với custom data attributes, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
+}
+
+console.log(explain('layout performance', 'mid'));
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q36: Explain script loading in practical interview context — 🔴 [Senior]
+
+**Tổng Quan:** Script Loading là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với script loading, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```html
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q37: Explain semantic html in practical interview context — 🟢 [Junior]
+
+**Tổng Quan:** Semantic Html là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với semantic html, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```css
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
+}
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q38: Explain document outline in practical interview context — 🟡 [Mid]
+
+**Tổng Quan:** Document Outline là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với document outline, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```js
+function explain(topic, level) {
+  return `[${level}] ${topic}: answer with trade-offs and practical examples`;
+}
+
+console.log(explain('layout performance', 'mid'));
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q39: Explain forms in practical interview context — 🔴 [Senior]
+
+**Tổng Quan:** Forms là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với forms, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```html
+<section class="card" data-level="junior">
+  <h2>Interview Note</h2>
+  <p>Semantic structure improves accessibility.</p>
+</section>
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+### Q40: Explain validation in practical interview context — 🟢 [Junior]
+
+**Tổng Quan:** Validation là chủ đề quan trọng, thường dùng để đánh giá khả năng tư duy hệ thống và kinh nghiệm production.
+
+**Giải thích:** Ứng viên nên mô tả định nghĩa ngắn gọn bằng tiếng Anh, sau đó giải thích bằng tiếng Việt về cách hoạt động, ưu/nhược điểm, và khi nào nên dùng trong dự án thật. Với validation, cần nhấn mạnh tính maintainability, performance, và khả năng scale giữa nhiều thành viên.
+
+**Ví dụ:**
+```css
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0d7de);
+}
+```
+
+**Follow-up (VN):** Nếu interviewer hỏi sâu hơn, hãy so sánh 2 phương án thay thế và đưa tiêu chí lựa chọn rõ ràng.
+
+## Quick Recap
+
+- Use English headings to align with interview terminology.
+- Dùng phần giải thích tiếng Việt để làm rõ mental model và trade-off.
+- Include short code examples (HTML/CSS/JS/TS) to chứng minh tính thực chiến.

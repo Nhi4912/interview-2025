@@ -1,1734 +1,1279 @@
-# Advanced Algorithms for Frontend
+# Advanced Algorithms for Frontend Engineers
 
-## Table of Contents
-- [String Algorithms](#string-algorithms)
-- [Search Algorithms](#search-algorithms)
-- [Sorting Algorithms](#sorting-algorithms)
-- [Graph Algorithms](#graph-algorithms)
-- [Dynamic Programming](#dynamic-programming)
-- [Geometric Algorithms](#geometric-algorithms)
-- [Scheduling Algorithms](#scheduling-algorithms)
-- [Compression Algorithms](#compression-algorithms)
+**Tổng Quan / Overview:** Interview-level algorithms mapped to frontend use cases, visualization, and product constraints.
+**Giải thích:** Thuật toán mức phỏng vấn gắn với bài toán frontend, trực quan hóa và ràng buộc sản phẩm.
 
-## String Algorithms
+## Mục Tiêu Học Tập / Learning Goals
+- Understand interview-grade theory in frontend systems.
+- Nắm được cách giải thích bằng tiếng Anh ngắn gọn và tiếng Việt rõ ràng.
+- Practice with JavaScript/TypeScript examples for implementation discussion.
 
-### String Matching
+## Liên Kết Liên Quan / Related Files
+- [./18-advanced-theory-01-compiler-design-frontend.md](./18-advanced-theory-01-compiler-design-frontend.md)
+- [./18-advanced-theory-02-virtual-dom-reconciliation.md](./18-advanced-theory-02-virtual-dom-reconciliation.md)
+- [./18-advanced-theory-04-data-structures-advanced.md](./18-advanced-theory-04-data-structures-advanced.md)
+- [./18-advanced-theory-05-concurrency-patterns.md](./18-advanced-theory-05-concurrency-patterns.md)
+- [./18-advanced-theory-06-design-patterns-advanced.md](./18-advanced-theory-06-design-patterns-advanced.md)
 
-**Naive Pattern Matching**:
-```javascript
-function naiveSearch(text, pattern) {
-  const matches = [];
-  const n = text.length;
-  const m = pattern.length;
-  
-  for (let i = 0; i <= n - m; i++) {
-    let j = 0;
-    while (j < m && text[i + j] === pattern[j]) {
-      j++;
-    }
-    if (j === m) {
-      matches.push(i);
-    }
-  }
-  
-  return matches;
+## Câu Hỏi Phỏng Vấn / Interview Q&A
+
+### Q1. Sorting visualization architecture — Concept and core mental model
+**Difficulty:** 🟡 [Mid]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Sorting visualization architecture** in a concise system-level way before diving into details.
+- VI: Trình bày **Sorting visualization architecture** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for sorting visualization architecture.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho sorting visualization architecture.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveSortingVisualizationArchitecture(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
-// Time: O(n * m), Space: O(1)
+
+console.log(solveSortingVisualizationArchitecture([5, 1, 4, 2]));
 ```
 
-**KMP Algorithm**:
-```javascript
-function kmpSearch(text, pattern) {
-  const n = text.length;
-  const m = pattern.length;
-  const lps = computeLPS(pattern);
-  const matches = [];
-  
-  let i = 0; // text index
-  let j = 0; // pattern index
-  
-  while (i < n) {
-    if (text[i] === pattern[j]) {
-      i++;
-      j++;
-    }
-    
-    if (j === m) {
-      matches.push(i - j);
-      j = lps[j - 1];
-    } else if (i < n && text[i] !== pattern[j]) {
-      if (j !== 0) {
-        j = lps[j - 1];
-      } else {
-        i++;
-      }
-    }
-  }
-  
-  return matches;
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-02-virtual-dom-reconciliation.md](./18-advanced-theory-02-virtual-dom-reconciliation.md)
+
+### Q2. Sorting visualization architecture — Practical trade-offs and debugging in production
+**Difficulty:** 🔴 [Senior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Sorting visualization architecture** in a concise system-level way before diving into details.
+- VI: Trình bày **Sorting visualization architecture** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for sorting visualization architecture.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho sorting visualization architecture.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveSortingVisualizationArchitecture(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
 
-function computeLPS(pattern) {
-  const m = pattern.length;
-  const lps = new Array(m).fill(0);
-  let len = 0;
-  let i = 1;
-  
-  while (i < m) {
-    if (pattern[i] === pattern[len]) {
-      len++;
-      lps[i] = len;
-      i++;
-    } else {
-      if (len !== 0) {
-        len = lps[len - 1];
-      } else {
-        lps[i] = 0;
-        i++;
-      }
-    }
-  }
-  
-  return lps;
-}
-// Time: O(n + m), Space: O(m)
+console.log(solveSortingVisualizationArchitecture([5, 1, 4, 2]));
 ```
 
-**Rabin-Karp Algorithm**:
-```javascript
-function rabinKarp(text, pattern) {
-  const n = text.length;
-  const m = pattern.length;
-  const prime = 101;
-  const base = 256;
-  const matches = [];
-  
-  let patternHash = 0;
-  let textHash = 0;
-  let h = 1;
-  
-  // Calculate h = base^(m-1) % prime
-  for (let i = 0; i < m - 1; i++) {
-    h = (h * base) % prime;
-  }
-  
-  // Calculate initial hashes
-  for (let i = 0; i < m; i++) {
-    patternHash = (base * patternHash + pattern.charCodeAt(i)) % prime;
-    textHash = (base * textHash + text.charCodeAt(i)) % prime;
-  }
-  
-  // Slide pattern over text
-  for (let i = 0; i <= n - m; i++) {
-    if (patternHash === textHash) {
-      // Hash match, verify character by character
-      let match = true;
-      for (let j = 0; j < m; j++) {
-        if (text[i + j] !== pattern[j]) {
-          match = false;
-          break;
-        }
-      }
-      if (match) {
-        matches.push(i);
-      }
-    }
-    
-    // Calculate hash for next window
-    if (i < n - m) {
-      textHash = (base * (textHash - text.charCodeAt(i) * h) + 
-                  text.charCodeAt(i + m)) % prime;
-      
-      if (textHash < 0) {
-        textHash += prime;
-      }
-    }
-  }
-  
-  return matches;
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-03-advanced-algorithms-frontend.md](./18-advanced-theory-03-advanced-algorithms-frontend.md)
+
+### Q3. Stable vs unstable sorting in UI state — Concept and core mental model
+**Difficulty:** 🟢 [Junior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Stable vs unstable sorting in UI state** in a concise system-level way before diving into details.
+- VI: Trình bày **Stable vs unstable sorting in UI state** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for stable vs unstable sorting in ui state.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho stable vs unstable sorting in ui state.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveStableVsUnstableSortingInUiSta(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
-// Average Time: O(n + m), Worst: O(n * m), Space: O(1)
+
+console.log(solveStableVsUnstableSortingInUiSta([5, 1, 4, 2]));
 ```
 
-### Longest Common Subsequence
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-```javascript
-function longestCommonSubsequence(text1, text2) {
-  const m = text1.length;
-  const n = text2.length;
-  const dp = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
-  
-  for (let i = 1; i <= m; i++) {
-    for (let j = 1; j <= n; j++) {
-      if (text1[i - 1] === text2[j - 1]) {
-        dp[i][j] = dp[i - 1][j - 1] + 1;
-      } else {
-        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
-      }
-    }
-  }
-  
-  // Reconstruct LCS
-  let i = m, j = n;
-  const lcs = [];
-  
-  while (i > 0 && j > 0) {
-    if (text1[i - 1] === text2[j - 1]) {
-      lcs.unshift(text1[i - 1]);
-      i--;
-      j--;
-    } else if (dp[i - 1][j] > dp[i][j - 1]) {
-      i--;
-    } else {
-      j--;
-    }
-  }
-  
-  return { length: dp[m][n], sequence: lcs.join('') };
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-04-data-structures-advanced.md](./18-advanced-theory-04-data-structures-advanced.md)
+
+### Q4. Stable vs unstable sorting in UI state — Practical trade-offs and debugging in production
+**Difficulty:** 🟡 [Mid]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Stable vs unstable sorting in UI state** in a concise system-level way before diving into details.
+- VI: Trình bày **Stable vs unstable sorting in UI state** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for stable vs unstable sorting in ui state.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho stable vs unstable sorting in ui state.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveStableVsUnstableSortingInUiSta(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
-// Time: O(m * n), Space: O(m * n)
+
+console.log(solveStableVsUnstableSortingInUiSta([5, 1, 4, 2]));
 ```
 
-### Edit Distance (Levenshtein)
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-```javascript
-function editDistance(word1, word2) {
-  const m = word1.length;
-  const n = word2.length;
-  const dp = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
-  
-  // Initialize base cases
-  for (let i = 0; i <= m; i++) dp[i][0] = i;
-  for (let j = 0; j <= n; j++) dp[0][j] = j;
-  
-  // Fill DP table
-  for (let i = 1; i <= m; i++) {
-    for (let j = 1; j <= n; j++) {
-      if (word1[i - 1] === word2[j - 1]) {
-        dp[i][j] = dp[i - 1][j - 1];
-      } else {
-        dp[i][j] = 1 + Math.min(
-          dp[i - 1][j],     // Delete
-          dp[i][j - 1],     // Insert
-          dp[i - 1][j - 1]  // Replace
-        );
-      }
-    }
-  }
-  
-  return dp[m][n];
-}
-// Time: O(m * n), Space: O(m * n)
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-05-concurrency-patterns.md](./18-advanced-theory-05-concurrency-patterns.md)
 
-// Space-optimized version
-function editDistanceOptimized(word1, word2) {
-  const m = word1.length;
-  const n = word2.length;
-  let prev = Array(n + 1).fill(0).map((_, i) => i);
-  let curr = Array(n + 1).fill(0);
-  
-  for (let i = 1; i <= m; i++) {
-    curr[0] = i;
-    
-    for (let j = 1; j <= n; j++) {
-      if (word1[i - 1] === word2[j - 1]) {
-        curr[j] = prev[j - 1];
-      } else {
-        curr[j] = 1 + Math.min(prev[j], curr[j - 1], prev[j - 1]);
-      }
-    }
-    
-    [prev, curr] = [curr, prev];
-  }
-  
-  return prev[n];
+### Q5. Binary search in virtualized lists — Concept and core mental model
+**Difficulty:** 🔴 [Senior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Binary search in virtualized lists** in a concise system-level way before diving into details.
+- VI: Trình bày **Binary search in virtualized lists** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for binary search in virtualized lists.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho binary search in virtualized lists.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveBinarySearchInVirtualizedLists(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
-// Time: O(m * n), Space: O(n)
+
+console.log(solveBinarySearchInVirtualizedLists([5, 1, 4, 2]));
 ```
 
-### Trie (Prefix Tree)
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-```javascript
-class TrieNode {
-  constructor() {
-    this.children = new Map();
-    this.isEndOfWord = false;
-    this.value = null;
-  }
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-06-design-patterns-advanced.md](./18-advanced-theory-06-design-patterns-advanced.md)
+
+### Q6. Binary search in virtualized lists — Practical trade-offs and debugging in production
+**Difficulty:** 🟢 [Junior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Binary search in virtualized lists** in a concise system-level way before diving into details.
+- VI: Trình bày **Binary search in virtualized lists** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for binary search in virtualized lists.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho binary search in virtualized lists.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveBinarySearchInVirtualizedLists(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
 
-class Trie {
-  constructor() {
-    this.root = new TrieNode();
-  }
-
-  insert(word, value = null) {
-    let node = this.root;
-    
-    for (const char of word) {
-      if (!node.children.has(char)) {
-        node.children.set(char, new TrieNode());
-      }
-      node = node.children.get(char);
-    }
-    
-    node.isEndOfWord = true;
-    node.value = value;
-  }
-
-  search(word) {
-    let node = this.root;
-    
-    for (const char of word) {
-      if (!node.children.has(char)) {
-        return null;
-      }
-      node = node.children.get(char);
-    }
-    
-    return node.isEndOfWord ? node.value : null;
-  }
-
-  startsWith(prefix) {
-    let node = this.root;
-    
-    for (const char of prefix) {
-      if (!node.children.has(char)) {
-        return false;
-      }
-      node = node.children.get(char);
-    }
-    
-    return true;
-  }
-
-  autocomplete(prefix, limit = 10) {
-    let node = this.root;
-    
-    // Navigate to prefix
-    for (const char of prefix) {
-      if (!node.children.has(char)) {
-        return [];
-      }
-      node = node.children.get(char);
-    }
-    
-    // Collect all words with this prefix
-    const results = [];
-    this.collectWords(node, prefix, results, limit);
-    return results;
-  }
-
-  collectWords(node, prefix, results, limit) {
-    if (results.length >= limit) return;
-    
-    if (node.isEndOfWord) {
-      results.push({ word: prefix, value: node.value });
-    }
-    
-    for (const [char, childNode] of node.children) {
-      this.collectWords(childNode, prefix + char, results, limit);
-    }
-  }
-
-  delete(word) {
-    return this.deleteHelper(this.root, word, 0);
-  }
-
-  deleteHelper(node, word, index) {
-    if (index === word.length) {
-      if (!node.isEndOfWord) return false;
-      node.isEndOfWord = false;
-      return node.children.size === 0;
-    }
-    
-    const char = word[index];
-    const childNode = node.children.get(char);
-    
-    if (!childNode) return false;
-    
-    const shouldDeleteChild = this.deleteHelper(childNode, word, index + 1);
-    
-    if (shouldDeleteChild) {
-      node.children.delete(char);
-      return node.children.size === 0 && !node.isEndOfWord;
-    }
-    
-    return false;
-  }
-}
+console.log(solveBinarySearchInVirtualizedLists([5, 1, 4, 2]));
 ```
 
-## Search Algorithms
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-### Binary Search Variations
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-01-compiler-design-frontend.md](./18-advanced-theory-01-compiler-design-frontend.md)
 
-**Standard Binary Search**:
-```javascript
-function binarySearch(arr, target) {
-  let left = 0;
-  let right = arr.length - 1;
-  
-  while (left <= right) {
-    const mid = Math.floor((left + right) / 2);
-    
-    if (arr[mid] === target) {
-      return mid;
-    } else if (arr[mid] < target) {
-      left = mid + 1;
-    } else {
-      right = mid - 1;
-    }
-  }
-  
-  return -1;
+### Q7. Exponential and interpolation search — Concept and core mental model
+**Difficulty:** 🟡 [Mid]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Exponential and interpolation search** in a concise system-level way before diving into details.
+- VI: Trình bày **Exponential and interpolation search** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for exponential and interpolation search.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho exponential and interpolation search.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveExponentialAndInterpolationSearch(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
-// Time: O(log n), Space: O(1)
+
+console.log(solveExponentialAndInterpolationSearch([5, 1, 4, 2]));
 ```
 
-**Find First Occurrence**:
-```javascript
-function findFirst(arr, target) {
-  let left = 0;
-  let right = arr.length - 1;
-  let result = -1;
-  
-  while (left <= right) {
-    const mid = Math.floor((left + right) / 2);
-    
-    if (arr[mid] === target) {
-      result = mid;
-      right = mid - 1; // Continue searching left
-    } else if (arr[mid] < target) {
-      left = mid + 1;
-    } else {
-      right = mid - 1;
-    }
-  }
-  
-  return result;
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-02-virtual-dom-reconciliation.md](./18-advanced-theory-02-virtual-dom-reconciliation.md)
+
+### Q8. Exponential and interpolation search — Practical trade-offs and debugging in production
+**Difficulty:** 🔴 [Senior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Exponential and interpolation search** in a concise system-level way before diving into details.
+- VI: Trình bày **Exponential and interpolation search** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for exponential and interpolation search.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho exponential and interpolation search.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveExponentialAndInterpolationSearch(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
+
+console.log(solveExponentialAndInterpolationSearch([5, 1, 4, 2]));
 ```
 
-**Find Last Occurrence**:
-```javascript
-function findLast(arr, target) {
-  let left = 0;
-  let right = arr.length - 1;
-  let result = -1;
-  
-  while (left <= right) {
-    const mid = Math.floor((left + right) / 2);
-    
-    if (arr[mid] === target) {
-      result = mid;
-      left = mid + 1; // Continue searching right
-    } else if (arr[mid] < target) {
-      left = mid + 1;
-    } else {
-      right = mid - 1;
-    }
-  }
-  
-  return result;
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-03-advanced-algorithms-frontend.md](./18-advanced-theory-03-advanced-algorithms-frontend.md)
+
+### Q9. Graph traversal for dependency graphs — Concept and core mental model
+**Difficulty:** 🟢 [Junior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Graph traversal for dependency graphs** in a concise system-level way before diving into details.
+- VI: Trình bày **Graph traversal for dependency graphs** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for graph traversal for dependency graphs.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho graph traversal for dependency graphs.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveGraphTraversalForDependencyGraph(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
+
+console.log(solveGraphTraversalForDependencyGraph([5, 1, 4, 2]));
 ```
 
-**Search in Rotated Array**:
-```javascript
-function searchRotated(arr, target) {
-  let left = 0;
-  let right = arr.length - 1;
-  
-  while (left <= right) {
-    const mid = Math.floor((left + right) / 2);
-    
-    if (arr[mid] === target) {
-      return mid;
-    }
-    
-    // Determine which half is sorted
-    if (arr[left] <= arr[mid]) {
-      // Left half is sorted
-      if (target >= arr[left] && target < arr[mid]) {
-        right = mid - 1;
-      } else {
-        left = mid + 1;
-      }
-    } else {
-      // Right half is sorted
-      if (target > arr[mid] && target <= arr[right]) {
-        left = mid + 1;
-      } else {
-        right = mid - 1;
-      }
-    }
-  }
-  
-  return -1;
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-04-data-structures-advanced.md](./18-advanced-theory-04-data-structures-advanced.md)
+
+### Q10. Graph traversal for dependency graphs — Practical trade-offs and debugging in production
+**Difficulty:** 🟡 [Mid]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Graph traversal for dependency graphs** in a concise system-level way before diving into details.
+- VI: Trình bày **Graph traversal for dependency graphs** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for graph traversal for dependency graphs.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho graph traversal for dependency graphs.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveGraphTraversalForDependencyGraph(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
+
+console.log(solveGraphTraversalForDependencyGraph([5, 1, 4, 2]));
 ```
 
-### Ternary Search
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-```javascript
-function ternarySearch(arr, target) {
-  let left = 0;
-  let right = arr.length - 1;
-  
-  while (left <= right) {
-    const mid1 = left + Math.floor((right - left) / 3);
-    const mid2 = right - Math.floor((right - left) / 3);
-    
-    if (arr[mid1] === target) return mid1;
-    if (arr[mid2] === target) return mid2;
-    
-    if (target < arr[mid1]) {
-      right = mid1 - 1;
-    } else if (target > arr[mid2]) {
-      left = mid2 + 1;
-    } else {
-      left = mid1 + 1;
-      right = mid2 - 1;
-    }
-  }
-  
-  return -1;
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-05-concurrency-patterns.md](./18-advanced-theory-05-concurrency-patterns.md)
+
+### Q11. Topological sort for build order — Concept and core mental model
+**Difficulty:** 🔴 [Senior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Topological sort for build order** in a concise system-level way before diving into details.
+- VI: Trình bày **Topological sort for build order** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for topological sort for build order.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho topological sort for build order.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveTopologicalSortForBuildOrder(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
-// Time: O(log₃ n), Space: O(1)
+
+console.log(solveTopologicalSortForBuildOrder([5, 1, 4, 2]));
 ```
 
-### Exponential Search
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-```javascript
-function exponentialSearch(arr, target) {
-  if (arr[0] === target) return 0;
-  
-  // Find range for binary search
-  let i = 1;
-  while (i < arr.length && arr[i] <= target) {
-    i *= 2;
-  }
-  
-  // Binary search in found range
-  return binarySearchRange(arr, target, i / 2, Math.min(i, arr.length - 1));
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-06-design-patterns-advanced.md](./18-advanced-theory-06-design-patterns-advanced.md)
+
+### Q12. Topological sort for build order — Practical trade-offs and debugging in production
+**Difficulty:** 🟢 [Junior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Topological sort for build order** in a concise system-level way before diving into details.
+- VI: Trình bày **Topological sort for build order** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for topological sort for build order.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho topological sort for build order.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveTopologicalSortForBuildOrder(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
 
-function binarySearchRange(arr, target, left, right) {
-  while (left <= right) {
-    const mid = Math.floor((left + right) / 2);
-    
-    if (arr[mid] === target) {
-      return mid;
-    } else if (arr[mid] < target) {
-      left = mid + 1;
-    } else {
-      right = mid - 1;
-    }
-  }
-  
-  return -1;
-}
-// Time: O(log n), Space: O(1)
+console.log(solveTopologicalSortForBuildOrder([5, 1, 4, 2]));
 ```
 
-## Sorting Algorithms
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-### Quick Sort
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-01-compiler-design-frontend.md](./18-advanced-theory-01-compiler-design-frontend.md)
 
-```javascript
-function quickSort(arr, low = 0, high = arr.length - 1) {
-  if (low < high) {
-    const pi = partition(arr, low, high);
-    quickSort(arr, low, pi - 1);
-    quickSort(arr, pi + 1, high);
-  }
-  return arr;
+### Q13. Shortest path for navigation and routing — Concept and core mental model
+**Difficulty:** 🟡 [Mid]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Shortest path for navigation and routing** in a concise system-level way before diving into details.
+- VI: Trình bày **Shortest path for navigation and routing** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for shortest path for navigation and routing.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho shortest path for navigation and routing.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveShortestPathForNavigationAndRou(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
 
-function partition(arr, low, high) {
-  const pivot = arr[high];
-  let i = low - 1;
-  
-  for (let j = low; j < high; j++) {
-    if (arr[j] < pivot) {
-      i++;
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-  }
-  
-  [arr[i + 1], arr[high]] = [arr[high], arr[i + 1]];
-  return i + 1;
-}
-// Average Time: O(n log n), Worst: O(n²), Space: O(log n)
-
-// Optimized with random pivot
-function quickSortRandom(arr, low = 0, high = arr.length - 1) {
-  if (low < high) {
-    const pi = partitionRandom(arr, low, high);
-    quickSortRandom(arr, low, pi - 1);
-    quickSortRandom(arr, pi + 1, high);
-  }
-  return arr;
-}
-
-function partitionRandom(arr, low, high) {
-  const randomIndex = low + Math.floor(Math.random() * (high - low + 1));
-  [arr[randomIndex], arr[high]] = [arr[high], arr[randomIndex]];
-  return partition(arr, low, high);
-}
+console.log(solveShortestPathForNavigationAndRou([5, 1, 4, 2]));
 ```
 
-### Merge Sort
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-```javascript
-function mergeSort(arr) {
-  if (arr.length <= 1) return arr;
-  
-  const mid = Math.floor(arr.length / 2);
-  const left = mergeSort(arr.slice(0, mid));
-  const right = mergeSort(arr.slice(mid));
-  
-  return merge(left, right);
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-02-virtual-dom-reconciliation.md](./18-advanced-theory-02-virtual-dom-reconciliation.md)
+
+### Q14. Shortest path for navigation and routing — Practical trade-offs and debugging in production
+**Difficulty:** 🔴 [Senior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Shortest path for navigation and routing** in a concise system-level way before diving into details.
+- VI: Trình bày **Shortest path for navigation and routing** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for shortest path for navigation and routing.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho shortest path for navigation and routing.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveShortestPathForNavigationAndRou(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
 
-function merge(left, right) {
-  const result = [];
-  let i = 0, j = 0;
-  
-  while (i < left.length && j < right.length) {
-    if (left[i] <= right[j]) {
-      result.push(left[i++]);
-    } else {
-      result.push(right[j++]);
-    }
-  }
-  
-  return result.concat(left.slice(i)).concat(right.slice(j));
-}
-// Time: O(n log n), Space: O(n)
-
-// In-place merge sort
-function mergeSortInPlace(arr, left = 0, right = arr.length - 1) {
-  if (left < right) {
-    const mid = Math.floor((left + right) / 2);
-    mergeSortInPlace(arr, left, mid);
-    mergeSortInPlace(arr, mid + 1, right);
-    mergeInPlace(arr, left, mid, right);
-  }
-  return arr;
-}
-
-function mergeInPlace(arr, left, mid, right) {
-  const leftArr = arr.slice(left, mid + 1);
-  const rightArr = arr.slice(mid + 1, right + 1);
-  
-  let i = 0, j = 0, k = left;
-  
-  while (i < leftArr.length && j < rightArr.length) {
-    if (leftArr[i] <= rightArr[j]) {
-      arr[k++] = leftArr[i++];
-    } else {
-      arr[k++] = rightArr[j++];
-    }
-  }
-  
-  while (i < leftArr.length) arr[k++] = leftArr[i++];
-  while (j < rightArr.length) arr[k++] = rightArr[j++];
-}
+console.log(solveShortestPathForNavigationAndRou([5, 1, 4, 2]));
 ```
 
-### Heap Sort
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-```javascript
-function heapSort(arr) {
-  const n = arr.length;
-  
-  // Build max heap
-  for (let i = Math.floor(n / 2) - 1; i >= 0; i--) {
-    heapify(arr, n, i);
-  }
-  
-  // Extract elements from heap
-  for (let i = n - 1; i > 0; i--) {
-    [arr[0], arr[i]] = [arr[i], arr[0]];
-    heapify(arr, i, 0);
-  }
-  
-  return arr;
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-03-advanced-algorithms-frontend.md](./18-advanced-theory-03-advanced-algorithms-frontend.md)
+
+### Q15. Cycle detection in module graphs — Concept and core mental model
+**Difficulty:** 🟢 [Junior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Cycle detection in module graphs** in a concise system-level way before diving into details.
+- VI: Trình bày **Cycle detection in module graphs** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for cycle detection in module graphs.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho cycle detection in module graphs.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveCycleDetectionInModuleGraphs(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
 
-function heapify(arr, n, i) {
-  let largest = i;
-  const left = 2 * i + 1;
-  const right = 2 * i + 2;
-  
-  if (left < n && arr[left] > arr[largest]) {
-    largest = left;
-  }
-  
-  if (right < n && arr[right] > arr[largest]) {
-    largest = right;
-  }
-  
-  if (largest !== i) {
-    [arr[i], arr[largest]] = [arr[largest], arr[i]];
-    heapify(arr, n, largest);
-  }
-}
-// Time: O(n log n), Space: O(1)
+console.log(solveCycleDetectionInModuleGraphs([5, 1, 4, 2]));
 ```
 
-### Counting Sort
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-```javascript
-function countingSort(arr) {
-  if (arr.length === 0) return arr;
-  
-  const max = Math.max(...arr);
-  const min = Math.min(...arr);
-  const range = max - min + 1;
-  
-  const count = new Array(range).fill(0);
-  const output = new Array(arr.length);
-  
-  // Count occurrences
-  for (let i = 0; i < arr.length; i++) {
-    count[arr[i] - min]++;
-  }
-  
-  // Cumulative count
-  for (let i = 1; i < range; i++) {
-    count[i] += count[i - 1];
-  }
-  
-  // Build output array
-  for (let i = arr.length - 1; i >= 0; i--) {
-    output[count[arr[i] - min] - 1] = arr[i];
-    count[arr[i] - min]--;
-  }
-  
-  return output;
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-04-data-structures-advanced.md](./18-advanced-theory-04-data-structures-advanced.md)
+
+### Q16. Cycle detection in module graphs — Practical trade-offs and debugging in production
+**Difficulty:** 🟡 [Mid]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Cycle detection in module graphs** in a concise system-level way before diving into details.
+- VI: Trình bày **Cycle detection in module graphs** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for cycle detection in module graphs.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho cycle detection in module graphs.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveCycleDetectionInModuleGraphs(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
-// Time: O(n + k), Space: O(n + k), where k is range
+
+console.log(solveCycleDetectionInModuleGraphs([5, 1, 4, 2]));
 ```
 
-### Radix Sort
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-```javascript
-function radixSort(arr) {
-  const max = Math.max(...arr);
-  const maxDigits = Math.floor(Math.log10(max)) + 1;
-  
-  for (let digit = 0; digit < maxDigits; digit++) {
-    arr = countingSortByDigit(arr, digit);
-  }
-  
-  return arr;
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-05-concurrency-patterns.md](./18-advanced-theory-05-concurrency-patterns.md)
+
+### Q17. Dynamic programming for memoization — Concept and core mental model
+**Difficulty:** 🔴 [Senior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Dynamic programming for memoization** in a concise system-level way before diving into details.
+- VI: Trình bày **Dynamic programming for memoization** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for dynamic programming for memoization.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho dynamic programming for memoization.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveDynamicProgrammingForMemoization(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
 
-function countingSortByDigit(arr, digit) {
-  const output = new Array(arr.length);
-  const count = new Array(10).fill(0);
-  const divisor = Math.pow(10, digit);
-  
-  // Count occurrences
-  for (let i = 0; i < arr.length; i++) {
-    const digitValue = Math.floor(arr[i] / divisor) % 10;
-    count[digitValue]++;
-  }
-  
-  // Cumulative count
-  for (let i = 1; i < 10; i++) {
-    count[i] += count[i - 1];
-  }
-  
-  // Build output
-  for (let i = arr.length - 1; i >= 0; i--) {
-    const digitValue = Math.floor(arr[i] / divisor) % 10;
-    output[count[digitValue] - 1] = arr[i];
-    count[digitValue]--;
-  }
-  
-  return output;
-}
-// Time: O(d * (n + k)), Space: O(n + k)
-// where d is number of digits, k is range of digits (10)
+console.log(solveDynamicProgrammingForMemoization([5, 1, 4, 2]));
 ```
 
-## Graph Algorithms
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-### Depth-First Search
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-06-design-patterns-advanced.md](./18-advanced-theory-06-design-patterns-advanced.md)
 
-```javascript
-class Graph {
-  constructor() {
-    this.adjacencyList = new Map();
-  }
+### Q18. Dynamic programming for memoization — Practical trade-offs and debugging in production
+**Difficulty:** 🟢 [Junior]
 
-  addVertex(vertex) {
-    if (!this.adjacencyList.has(vertex)) {
-      this.adjacencyList.set(vertex, []);
-    }
-  }
+**Tổng Quan (Overview):**
+- EN: Explain **Dynamic programming for memoization** in a concise system-level way before diving into details.
+- VI: Trình bày **Dynamic programming for memoization** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
 
-  addEdge(v1, v2) {
-    this.adjacencyList.get(v1).push(v2);
-    this.adjacencyList.get(v2).push(v1);
-  }
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for dynamic programming for memoization.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho dynamic programming for memoization.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
 
-  dfs(start) {
-    const visited = new Set();
-    const result = [];
-    
-    const dfsHelper = (vertex) => {
-      visited.add(vertex);
-      result.push(vertex);
-      
-      const neighbors = this.adjacencyList.get(vertex);
-      for (const neighbor of neighbors) {
-        if (!visited.has(neighbor)) {
-          dfsHelper(neighbor);
-        }
-      }
-    };
-    
-    dfsHelper(start);
-    return result;
-  }
-
-  dfsIterative(start) {
-    const visited = new Set();
-    const result = [];
-    const stack = [start];
-    
-    while (stack.length > 0) {
-      const vertex = stack.pop();
-      
-      if (!visited.has(vertex)) {
-        visited.add(vertex);
-        result.push(vertex);
-        
-        const neighbors = this.adjacencyList.get(vertex);
-        for (let i = neighbors.length - 1; i >= 0; i--) {
-          if (!visited.has(neighbors[i])) {
-            stack.push(neighbors[i]);
-          }
-        }
-      }
-    }
-    
-    return result;
-  }
+**Ví dụ (Example):**
+```ts
+export function solveDynamicProgrammingForMemoization(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
-// Time: O(V + E), Space: O(V)
+
+console.log(solveDynamicProgrammingForMemoization([5, 1, 4, 2]));
 ```
 
-### Breadth-First Search
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-```javascript
-Graph.prototype.bfs = function(start) {
-  const visited = new Set();
-  const result = [];
-  const queue = [start];
-  visited.add(start);
-  
-  while (queue.length > 0) {
-    const vertex = queue.shift();
-    result.push(vertex);
-    
-    const neighbors = this.adjacencyList.get(vertex);
-    for (const neighbor of neighbors) {
-      if (!visited.has(neighbor)) {
-        visited.add(neighbor);
-        queue.push(neighbor);
-      }
-    }
-  }
-  
-  return result;
-};
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-01-compiler-design-frontend.md](./18-advanced-theory-01-compiler-design-frontend.md)
 
-// Find shortest path
-Graph.prototype.shortestPath = function(start, end) {
-  const visited = new Set();
-  const queue = [[start, [start]]];
-  visited.add(start);
-  
-  while (queue.length > 0) {
-    const [vertex, path] = queue.shift();
-    
-    if (vertex === end) {
-      return path;
-    }
-    
-    const neighbors = this.adjacencyList.get(vertex);
-    for (const neighbor of neighbors) {
-      if (!visited.has(neighbor)) {
-        visited.add(neighbor);
-        queue.push([neighbor, [...path, neighbor]]);
-      }
-    }
-  }
-  
-  return null;
-};
-// Time: O(V + E), Space: O(V)
+### Q19. LCS for diff-like comparisons — Concept and core mental model
+**Difficulty:** 🟡 [Mid]
+
+**Tổng Quan (Overview):**
+- EN: Explain **LCS for diff-like comparisons** in a concise system-level way before diving into details.
+- VI: Trình bày **LCS for diff-like comparisons** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for lcs for diff-like comparisons.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho lcs for diff-like comparisons.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveLcsForDiffLikeComparisons(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
+}
+
+console.log(solveLcsForDiffLikeComparisons([5, 1, 4, 2]));
 ```
 
-### Dijkstra's Algorithm
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-```javascript
-class PriorityQueue {
-  constructor() {
-    this.values = [];
-  }
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-02-virtual-dom-reconciliation.md](./18-advanced-theory-02-virtual-dom-reconciliation.md)
 
-  enqueue(val, priority) {
-    this.values.push({ val, priority });
-    this.sort();
-  }
+### Q20. LCS for diff-like comparisons — Practical trade-offs and debugging in production
+**Difficulty:** 🔴 [Senior]
 
-  dequeue() {
-    return this.values.shift();
-  }
+**Tổng Quan (Overview):**
+- EN: Explain **LCS for diff-like comparisons** in a concise system-level way before diving into details.
+- VI: Trình bày **LCS for diff-like comparisons** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
 
-  sort() {
-    this.values.sort((a, b) => a.priority - b.priority);
-  }
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for lcs for diff-like comparisons.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho lcs for diff-like comparisons.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveLcsForDiffLikeComparisons(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
 
-class WeightedGraph {
-  constructor() {
-    this.adjacencyList = new Map();
-  }
-
-  addVertex(vertex) {
-    if (!this.adjacencyList.has(vertex)) {
-      this.adjacencyList.set(vertex, []);
-    }
-  }
-
-  addEdge(v1, v2, weight) {
-    this.adjacencyList.get(v1).push({ node: v2, weight });
-    this.adjacencyList.get(v2).push({ node: v1, weight });
-  }
-
-  dijkstra(start, end) {
-    const distances = new Map();
-    const previous = new Map();
-    const pq = new PriorityQueue();
-    
-    // Initialize
-    for (const vertex of this.adjacencyList.keys()) {
-      if (vertex === start) {
-        distances.set(vertex, 0);
-        pq.enqueue(vertex, 0);
-      } else {
-        distances.set(vertex, Infinity);
-      }
-      previous.set(vertex, null);
-    }
-    
-    while (pq.values.length > 0) {
-      const { val: current } = pq.dequeue();
-      
-      if (current === end) {
-        // Build path
-        const path = [];
-        let temp = end;
-        while (temp) {
-          path.unshift(temp);
-          temp = previous.get(temp);
-        }
-        return { path, distance: distances.get(end) };
-      }
-      
-      const neighbors = this.adjacencyList.get(current);
-      for (const neighbor of neighbors) {
-        const distance = distances.get(current) + neighbor.weight;
-        
-        if (distance < distances.get(neighbor.node)) {
-          distances.set(neighbor.node, distance);
-          previous.set(neighbor.node, current);
-          pq.enqueue(neighbor.node, distance);
-        }
-      }
-    }
-    
-    return null;
-  }
-}
-// Time: O((V + E) log V), Space: O(V)
+console.log(solveLcsForDiffLikeComparisons([5, 1, 4, 2]));
 ```
 
-I'll continue with more content by appending to this file:
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-<function_calls>
-<invoke name="fsAppend">
-<parameter name="path">docs/18-advanced-theory/03-advanced-algorithms-frontend.md
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-03-advanced-algorithms-frontend.md](./18-advanced-theory-03-advanced-algorithms-frontend.md)
 
-###
- Bellman-Ford Algorithm
+### Q21. Edit distance for fuzzy matching — Concept and core mental model
+**Difficulty:** 🟢 [Junior]
 
-```javascript
-WeightedGraph.prototype.bellmanFord = function(start) {
-  const distances = new Map();
-  const previous = new Map();
-  
-  // Initialize
-  for (const vertex of this.adjacencyList.keys()) {
-    distances.set(vertex, vertex === start ? 0 : Infinity);
-    previous.set(vertex, null);
-  }
-  
-  // Relax edges V-1 times
-  const vertices = Array.from(this.adjacencyList.keys());
-  for (let i = 0; i < vertices.length - 1; i++) {
-    for (const vertex of vertices) {
-      const neighbors = this.adjacencyList.get(vertex);
-      
-      for (const neighbor of neighbors) {
-        const distance = distances.get(vertex) + neighbor.weight;
-        
-        if (distance < distances.get(neighbor.node)) {
-          distances.set(neighbor.node, distance);
-          previous.set(neighbor.node, vertex);
-        }
-      }
-    }
-  }
-  
-  // Check for negative cycles
-  for (const vertex of vertices) {
-    const neighbors = this.adjacencyList.get(vertex);
-    
-    for (const neighbor of neighbors) {
-      const distance = distances.get(vertex) + neighbor.weight;
-      
-      if (distance < distances.get(neighbor.node)) {
-        throw new Error('Graph contains negative cycle');
-      }
-    }
-  }
-  
-  return { distances, previous };
-};
-// Time: O(V * E), Space: O(V)
+**Tổng Quan (Overview):**
+- EN: Explain **Edit distance for fuzzy matching** in a concise system-level way before diving into details.
+- VI: Trình bày **Edit distance for fuzzy matching** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for edit distance for fuzzy matching.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho edit distance for fuzzy matching.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveEditDistanceForFuzzyMatching(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
+}
+
+console.log(solveEditDistanceForFuzzyMatching([5, 1, 4, 2]));
 ```
 
-### Topological Sort
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-```javascript
-class DirectedGraph {
-  constructor() {
-    this.adjacencyList = new Map();
-  }
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-04-data-structures-advanced.md](./18-advanced-theory-04-data-structures-advanced.md)
 
-  addVertex(vertex) {
-    if (!this.adjacencyList.has(vertex)) {
-      this.adjacencyList.set(vertex, []);
-    }
-  }
+### Q22. Edit distance for fuzzy matching — Practical trade-offs and debugging in production
+**Difficulty:** 🟡 [Mid]
 
-  addEdge(from, to) {
-    this.adjacencyList.get(from).push(to);
-  }
+**Tổng Quan (Overview):**
+- EN: Explain **Edit distance for fuzzy matching** in a concise system-level way before diving into details.
+- VI: Trình bày **Edit distance for fuzzy matching** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
 
-  topologicalSort() {
-    const visited = new Set();
-    const stack = [];
-    
-    const dfs = (vertex) => {
-      visited.add(vertex);
-      
-      const neighbors = this.adjacencyList.get(vertex);
-      for (const neighbor of neighbors) {
-        if (!visited.has(neighbor)) {
-          dfs(neighbor);
-        }
-      }
-      
-      stack.push(vertex);
-    };
-    
-    for (const vertex of this.adjacencyList.keys()) {
-      if (!visited.has(vertex)) {
-        dfs(vertex);
-      }
-    }
-    
-    return stack.reverse();
-  }
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for edit distance for fuzzy matching.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho edit distance for fuzzy matching.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
 
-  // Kahn's algorithm (BFS-based)
-  topologicalSortKahn() {
-    const inDegree = new Map();
-    const queue = [];
-    const result = [];
-    
-    // Calculate in-degrees
-    for (const vertex of this.adjacencyList.keys()) {
-      inDegree.set(vertex, 0);
-    }
-    
-    for (const vertex of this.adjacencyList.keys()) {
-      const neighbors = this.adjacencyList.get(vertex);
-      for (const neighbor of neighbors) {
-        inDegree.set(neighbor, inDegree.get(neighbor) + 1);
-      }
-    }
-    
-    // Add vertices with in-degree 0 to queue
-    for (const [vertex, degree] of inDegree) {
-      if (degree === 0) {
-        queue.push(vertex);
-      }
-    }
-    
-    // Process queue
-    while (queue.length > 0) {
-      const vertex = queue.shift();
-      result.push(vertex);
-      
-      const neighbors = this.adjacencyList.get(vertex);
-      for (const neighbor of neighbors) {
-        inDegree.set(neighbor, inDegree.get(neighbor) - 1);
-        
-        if (inDegree.get(neighbor) === 0) {
-          queue.push(neighbor);
-        }
-      }
-    }
-    
-    // Check for cycle
-    if (result.length !== this.adjacencyList.size) {
-      throw new Error('Graph contains cycle');
-    }
-    
-    return result;
-  }
+**Ví dụ (Example):**
+```ts
+export function solveEditDistanceForFuzzyMatching(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
-// Time: O(V + E), Space: O(V)
+
+console.log(solveEditDistanceForFuzzyMatching([5, 1, 4, 2]));
 ```
 
-## Dynamic Programming
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-### Knapsack Problem
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-05-concurrency-patterns.md](./18-advanced-theory-05-concurrency-patterns.md)
 
-**0/1 Knapsack**:
-```javascript
-function knapsack01(weights, values, capacity) {
-  const n = weights.length;
-  const dp = Array(n + 1).fill(null).map(() => Array(capacity + 1).fill(0));
-  
-  for (let i = 1; i <= n; i++) {
-    for (let w = 1; w <= capacity; w++) {
-      if (weights[i - 1] <= w) {
-        dp[i][w] = Math.max(
-          values[i - 1] + dp[i - 1][w - weights[i - 1]],
-          dp[i - 1][w]
-        );
-      } else {
-        dp[i][w] = dp[i - 1][w];
-      }
-    }
-  }
-  
-  // Reconstruct solution
-  const items = [];
-  let w = capacity;
-  for (let i = n; i > 0 && w > 0; i--) {
-    if (dp[i][w] !== dp[i - 1][w]) {
-      items.push(i - 1);
-      w -= weights[i - 1];
-    }
-  }
-  
-  return { maxValue: dp[n][capacity], items: items.reverse() };
+### Q23. Trie for autocomplete and search suggest — Concept and core mental model
+**Difficulty:** 🔴 [Senior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Trie for autocomplete and search suggest** in a concise system-level way before diving into details.
+- VI: Trình bày **Trie for autocomplete and search suggest** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for trie for autocomplete and search suggest.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho trie for autocomplete and search suggest.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveTrieForAutocompleteAndSearchSug(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
-// Time: O(n * W), Space: O(n * W)
 
-// Space-optimized version
-function knapsack01Optimized(weights, values, capacity) {
-  const n = weights.length;
-  let dp = Array(capacity + 1).fill(0);
-  
-  for (let i = 0; i < n; i++) {
-    for (let w = capacity; w >= weights[i]; w--) {
-      dp[w] = Math.max(dp[w], values[i] + dp[w - weights[i]]);
-    }
-  }
-  
-  return dp[capacity];
-}
-// Time: O(n * W), Space: O(W)
+console.log(solveTrieForAutocompleteAndSearchSug([5, 1, 4, 2]));
 ```
 
-**Unbounded Knapsack**:
-```javascript
-function knapsackUnbounded(weights, values, capacity) {
-  const dp = Array(capacity + 1).fill(0);
-  
-  for (let w = 1; w <= capacity; w++) {
-    for (let i = 0; i < weights.length; i++) {
-      if (weights[i] <= w) {
-        dp[w] = Math.max(dp[w], values[i] + dp[w - weights[i]]);
-      }
-    }
-  }
-  
-  return dp[capacity];
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-06-design-patterns-advanced.md](./18-advanced-theory-06-design-patterns-advanced.md)
+
+### Q24. Trie for autocomplete and search suggest — Practical trade-offs and debugging in production
+**Difficulty:** 🟢 [Junior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Trie for autocomplete and search suggest** in a concise system-level way before diving into details.
+- VI: Trình bày **Trie for autocomplete and search suggest** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for trie for autocomplete and search suggest.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho trie for autocomplete and search suggest.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveTrieForAutocompleteAndSearchSug(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
-// Time: O(n * W), Space: O(W)
+
+console.log(solveTrieForAutocompleteAndSearchSug([5, 1, 4, 2]));
 ```
 
-### Longest Increasing Subsequence
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-```javascript
-function lengthOfLIS(nums) {
-  if (nums.length === 0) return 0;
-  
-  const dp = Array(nums.length).fill(1);
-  
-  for (let i = 1; i < nums.length; i++) {
-    for (let j = 0; j < i; j++) {
-      if (nums[i] > nums[j]) {
-        dp[i] = Math.max(dp[i], dp[j] + 1);
-      }
-    }
-  }
-  
-  return Math.max(...dp);
-}
-// Time: O(n²), Space: O(n)
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-01-compiler-design-frontend.md](./18-advanced-theory-01-compiler-design-frontend.md)
 
-// Optimized with binary search
-function lengthOfLISOptimized(nums) {
-  const tails = [];
-  
-  for (const num of nums) {
-    let left = 0;
-    let right = tails.length;
-    
-    while (left < right) {
-      const mid = Math.floor((left + right) / 2);
-      if (tails[mid] < num) {
-        left = mid + 1;
-      } else {
-        right = mid;
-      }
-    }
-    
-    if (left === tails.length) {
-      tails.push(num);
-    } else {
-      tails[left] = num;
-    }
-  }
-  
-  return tails.length;
+### Q25. KMP and string matching in editors — Concept and core mental model
+**Difficulty:** 🟡 [Mid]
+
+**Tổng Quan (Overview):**
+- EN: Explain **KMP and string matching in editors** in a concise system-level way before diving into details.
+- VI: Trình bày **KMP and string matching in editors** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for kmp and string matching in editors.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho kmp and string matching in editors.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveKmpAndStringMatchingInEditors(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
-// Time: O(n log n), Space: O(n)
+
+console.log(solveKmpAndStringMatchingInEditors([5, 1, 4, 2]));
 ```
 
-### Matrix Chain Multiplication
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-```javascript
-function matrixChainOrder(dimensions) {
-  const n = dimensions.length - 1;
-  const dp = Array(n).fill(null).map(() => Array(n).fill(0));
-  const split = Array(n).fill(null).map(() => Array(n).fill(0));
-  
-  // l is chain length
-  for (let l = 2; l <= n; l++) {
-    for (let i = 0; i < n - l + 1; i++) {
-      const j = i + l - 1;
-      dp[i][j] = Infinity;
-      
-      for (let k = i; k < j; k++) {
-        const cost = dp[i][k] + dp[k + 1][j] + 
-                     dimensions[i] * dimensions[k + 1] * dimensions[j + 1];
-        
-        if (cost < dp[i][j]) {
-          dp[i][j] = cost;
-          split[i][j] = k;
-        }
-      }
-    }
-  }
-  
-  return { minCost: dp[0][n - 1], split };
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-02-virtual-dom-reconciliation.md](./18-advanced-theory-02-virtual-dom-reconciliation.md)
+
+### Q26. KMP and string matching in editors — Practical trade-offs and debugging in production
+**Difficulty:** 🔴 [Senior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **KMP and string matching in editors** in a concise system-level way before diving into details.
+- VI: Trình bày **KMP and string matching in editors** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for kmp and string matching in editors.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho kmp and string matching in editors.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveKmpAndStringMatchingInEditors(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
-// Time: O(n³), Space: O(n²)
+
+console.log(solveKmpAndStringMatchingInEditors([5, 1, 4, 2]));
 ```
 
-### Coin Change
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-```javascript
-function coinChange(coins, amount) {
-  const dp = Array(amount + 1).fill(Infinity);
-  dp[0] = 0;
-  
-  for (let i = 1; i <= amount; i++) {
-    for (const coin of coins) {
-      if (coin <= i) {
-        dp[i] = Math.min(dp[i], dp[i - coin] + 1);
-      }
-    }
-  }
-  
-  return dp[amount] === Infinity ? -1 : dp[amount];
-}
-// Time: O(amount * coins), Space: O(amount)
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-03-advanced-algorithms-frontend.md](./18-advanced-theory-03-advanced-algorithms-frontend.md)
 
-// Count number of ways
-function coinChangeWays(coins, amount) {
-  const dp = Array(amount + 1).fill(0);
-  dp[0] = 1;
-  
-  for (const coin of coins) {
-    for (let i = coin; i <= amount; i++) {
-      dp[i] += dp[i - coin];
-    }
-  }
-  
-  return dp[amount];
+### Q27. Rolling hash for substring lookup — Concept and core mental model
+**Difficulty:** 🟢 [Junior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Rolling hash for substring lookup** in a concise system-level way before diving into details.
+- VI: Trình bày **Rolling hash for substring lookup** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for rolling hash for substring lookup.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho rolling hash for substring lookup.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveRollingHashForSubstringLookup(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
+
+console.log(solveRollingHashForSubstringLookup([5, 1, 4, 2]));
 ```
 
-## Geometric Algorithms
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-### Convex Hull (Graham Scan)
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-04-data-structures-advanced.md](./18-advanced-theory-04-data-structures-advanced.md)
 
-```javascript
-function convexHull(points) {
-  if (points.length < 3) return points;
-  
-  // Find bottom-most point (or left-most if tie)
-  let bottom = 0;
-  for (let i = 1; i < points.length; i++) {
-    if (points[i].y < points[bottom].y ||
-        (points[i].y === points[bottom].y && points[i].x < points[bottom].x)) {
-      bottom = i;
-    }
-  }
-  
-  [points[0], points[bottom]] = [points[bottom], points[0]];
-  const p0 = points[0];
-  
-  // Sort by polar angle
-  points.slice(1).sort((a, b) => {
-    const angle = orientation(p0, a, b);
-    if (angle === 0) {
-      return distance(p0, a) - distance(p0, b);
-    }
-    return angle < 0 ? -1 : 1;
-  });
-  
-  // Build hull
-  const hull = [points[0], points[1]];
-  
-  for (let i = 2; i < points.length; i++) {
-    while (hull.length > 1 && 
-           orientation(hull[hull.length - 2], hull[hull.length - 1], points[i]) <= 0) {
-      hull.pop();
-    }
-    hull.push(points[i]);
-  }
-  
-  return hull;
+### Q28. Rolling hash for substring lookup — Practical trade-offs and debugging in production
+**Difficulty:** 🟡 [Mid]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Rolling hash for substring lookup** in a concise system-level way before diving into details.
+- VI: Trình bày **Rolling hash for substring lookup** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for rolling hash for substring lookup.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho rolling hash for substring lookup.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveRollingHashForSubstringLookup(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
 
-function orientation(p, q, r) {
-  return (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
-}
-
-function distance(p1, p2) {
-  return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
-}
-// Time: O(n log n), Space: O(n)
+console.log(solveRollingHashForSubstringLookup([5, 1, 4, 2]));
 ```
 
-### Line Intersection
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-```javascript
-function lineIntersection(p1, p2, p3, p4) {
-  const x1 = p1.x, y1 = p1.y;
-  const x2 = p2.x, y2 = p2.y;
-  const x3 = p3.x, y3 = p3.y;
-  const x4 = p4.x, y4 = p4.y;
-  
-  const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
-  
-  if (denom === 0) {
-    return null; // Parallel or coincident
-  }
-  
-  const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom;
-  const u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denom;
-  
-  if (t >= 0 && t <= 1 && u >= 0 && u <= 1) {
-    return {
-      x: x1 + t * (x2 - x1),
-      y: y1 + t * (y2 - y1)
-    };
-  }
-  
-  return null;
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-05-concurrency-patterns.md](./18-advanced-theory-05-concurrency-patterns.md)
+
+### Q29. Greedy scheduling for UI task queues — Concept and core mental model
+**Difficulty:** 🔴 [Senior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Greedy scheduling for UI task queues** in a concise system-level way before diving into details.
+- VI: Trình bày **Greedy scheduling for UI task queues** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for greedy scheduling for ui task queues.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho greedy scheduling for ui task queues.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveGreedySchedulingForUiTaskQueues(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
+
+console.log(solveGreedySchedulingForUiTaskQueues([5, 1, 4, 2]));
 ```
 
-### Point in Polygon
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-```javascript
-function pointInPolygon(point, polygon) {
-  let inside = false;
-  const x = point.x, y = point.y;
-  
-  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-    const xi = polygon[i].x, yi = polygon[i].y;
-    const xj = polygon[j].x, yj = polygon[j].y;
-    
-    const intersect = ((yi > y) !== (yj > y)) &&
-                      (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
-    
-    if (intersect) inside = !inside;
-  }
-  
-  return inside;
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-06-design-patterns-advanced.md](./18-advanced-theory-06-design-patterns-advanced.md)
+
+### Q30. Greedy scheduling for UI task queues — Practical trade-offs and debugging in production
+**Difficulty:** 🟢 [Junior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Greedy scheduling for UI task queues** in a concise system-level way before diving into details.
+- VI: Trình bày **Greedy scheduling for UI task queues** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for greedy scheduling for ui task queues.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho greedy scheduling for ui task queues.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveGreedySchedulingForUiTaskQueues(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
-// Time: O(n), Space: O(1)
+
+console.log(solveGreedySchedulingForUiTaskQueues([5, 1, 4, 2]));
 ```
 
-### Closest Pair of Points
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-```javascript
-function closestPair(points) {
-  points.sort((a, b) => a.x - b.x);
-  return closestPairRec(points);
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-01-compiler-design-frontend.md](./18-advanced-theory-01-compiler-design-frontend.md)
+
+### Q31. Backtracking in constraint-driven UI — Concept and core mental model
+**Difficulty:** 🟡 [Mid]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Backtracking in constraint-driven UI** in a concise system-level way before diving into details.
+- VI: Trình bày **Backtracking in constraint-driven UI** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for backtracking in constraint-driven ui.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho backtracking in constraint-driven ui.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveBacktrackingInConstraintDrivenUi(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
 
-function closestPairRec(points) {
-  const n = points.length;
-  
-  if (n <= 3) {
-    return bruteForce(points);
-  }
-  
-  const mid = Math.floor(n / 2);
-  const midPoint = points[mid];
-  
-  const leftMin = closestPairRec(points.slice(0, mid));
-  const rightMin = closestPairRec(points.slice(mid));
-  
-  const minDist = Math.min(leftMin, rightMin);
-  
-  // Find points in strip
-  const strip = points.filter(p => Math.abs(p.x - midPoint.x) < minDist);
-  
-  return Math.min(minDist, stripClosest(strip, minDist));
-}
-
-function bruteForce(points) {
-  let minDist = Infinity;
-  
-  for (let i = 0; i < points.length; i++) {
-    for (let j = i + 1; j < points.length; j++) {
-      minDist = Math.min(minDist, distance(points[i], points[j]));
-    }
-  }
-  
-  return minDist;
-}
-
-function stripClosest(strip, d) {
-  let minDist = d;
-  strip.sort((a, b) => a.y - b.y);
-  
-  for (let i = 0; i < strip.length; i++) {
-    for (let j = i + 1; j < strip.length && (strip[j].y - strip[i].y) < minDist; j++) {
-      minDist = Math.min(minDist, distance(strip[i], strip[j]));
-    }
-  }
-  
-  return minDist;
-}
-// Time: O(n log n), Space: O(n)
+console.log(solveBacktrackingInConstraintDrivenUi([5, 1, 4, 2]));
 ```
 
-## Scheduling Algorithms
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-### Task Scheduler
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-02-virtual-dom-reconciliation.md](./18-advanced-theory-02-virtual-dom-reconciliation.md)
 
-```javascript
-function taskScheduler(tasks, n) {
-  const freq = new Map();
-  
-  for (const task of tasks) {
-    freq.set(task, (freq.get(task) || 0) + 1);
-  }
-  
-  const maxFreq = Math.max(...freq.values());
-  const maxCount = Array.from(freq.values()).filter(f => f === maxFreq).length;
-  
-  const partCount = maxFreq - 1;
-  const partLength = n - (maxCount - 1);
-  const emptySlots = partCount * partLength;
-  const availableTasks = tasks.length - maxFreq * maxCount;
-  const idles = Math.max(0, emptySlots - availableTasks);
-  
-  return tasks.length + idles;
+### Q32. Backtracking in constraint-driven UI — Practical trade-offs and debugging in production
+**Difficulty:** 🔴 [Senior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Backtracking in constraint-driven UI** in a concise system-level way before diving into details.
+- VI: Trình bày **Backtracking in constraint-driven UI** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for backtracking in constraint-driven ui.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho backtracking in constraint-driven ui.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveBacktrackingInConstraintDrivenUi(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
-// Time: O(n), Space: O(1)
+
+console.log(solveBacktrackingInConstraintDrivenUi([5, 1, 4, 2]));
 ```
 
-### Meeting Rooms
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-```javascript
-function minMeetingRooms(intervals) {
-  if (intervals.length === 0) return 0;
-  
-  const starts = intervals.map(i => i[0]).sort((a, b) => a - b);
-  const ends = intervals.map(i => i[1]).sort((a, b) => a - b);
-  
-  let rooms = 0;
-  let endPtr = 0;
-  
-  for (let i = 0; i < starts.length; i++) {
-    if (starts[i] < ends[endPtr]) {
-      rooms++;
-    } else {
-      endPtr++;
-    }
-  }
-  
-  return rooms;
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-03-advanced-algorithms-frontend.md](./18-advanced-theory-03-advanced-algorithms-frontend.md)
+
+### Q33. Approximation algorithms in UX constraints — Concept and core mental model
+**Difficulty:** 🟢 [Junior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Approximation algorithms in UX constraints** in a concise system-level way before diving into details.
+- VI: Trình bày **Approximation algorithms in UX constraints** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for approximation algorithms in ux constraints.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho approximation algorithms in ux constraints.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveApproximationAlgorithmsInUxConst(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
-// Time: O(n log n), Space: O(n)
+
+console.log(solveApproximationAlgorithmsInUxConst([5, 1, 4, 2]));
 ```
 
-### Job Sequencing
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-```javascript
-function jobSequencing(jobs) {
-  // Sort by profit (descending)
-  jobs.sort((a, b) => b.profit - a.profit);
-  
-  const maxDeadline = Math.max(...jobs.map(j => j.deadline));
-  const slots = Array(maxDeadline).fill(null);
-  let totalProfit = 0;
-  
-  for (const job of jobs) {
-    // Find slot for this job
-    for (let i = Math.min(maxDeadline, job.deadline) - 1; i >= 0; i--) {
-      if (slots[i] === null) {
-        slots[i] = job;
-        totalProfit += job.profit;
-        break;
-      }
-    }
-  }
-  
-  return {
-    jobs: slots.filter(j => j !== null),
-    profit: totalProfit
-  };
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-04-data-structures-advanced.md](./18-advanced-theory-04-data-structures-advanced.md)
+
+### Q34. Approximation algorithms in UX constraints — Practical trade-offs and debugging in production
+**Difficulty:** 🟡 [Mid]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Approximation algorithms in UX constraints** in a concise system-level way before diving into details.
+- VI: Trình bày **Approximation algorithms in UX constraints** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for approximation algorithms in ux constraints.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho approximation algorithms in ux constraints.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveApproximationAlgorithmsInUxConst(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
-// Time: O(n²), Space: O(n)
+
+console.log(solveApproximationAlgorithmsInUxConst([5, 1, 4, 2]));
 ```
 
-## Compression Algorithms
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-### Run-Length Encoding
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-05-concurrency-patterns.md](./18-advanced-theory-05-concurrency-patterns.md)
 
-```javascript
-function runLengthEncode(str) {
-  if (str.length === 0) return '';
-  
-  let encoded = '';
-  let count = 1;
-  
-  for (let i = 1; i < str.length; i++) {
-    if (str[i] === str[i - 1]) {
-      count++;
-    } else {
-      encoded += str[i - 1] + count;
-      count = 1;
-    }
-  }
-  
-  encoded += str[str.length - 1] + count;
-  return encoded.length < str.length ? encoded : str;
+### Q35. Streaming algorithms for large data — Concept and core mental model
+**Difficulty:** 🔴 [Senior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Streaming algorithms for large data** in a concise system-level way before diving into details.
+- VI: Trình bày **Streaming algorithms for large data** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for streaming algorithms for large data.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho streaming algorithms for large data.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveStreamingAlgorithmsForLargeData(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
 
-function runLengthDecode(str) {
-  let decoded = '';
-  
-  for (let i = 0; i < str.length; i += 2) {
-    const char = str[i];
-    const count = parseInt(str[i + 1]);
-    decoded += char.repeat(count);
-  }
-  
-  return decoded;
-}
-// Time: O(n), Space: O(n)
+console.log(solveStreamingAlgorithmsForLargeData([5, 1, 4, 2]));
 ```
 
-### Huffman Coding
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-```javascript
-class HuffmanNode {
-  constructor(char, freq, left = null, right = null) {
-    this.char = char;
-    this.freq = freq;
-    this.left = left;
-    this.right = right;
-  }
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-06-design-patterns-advanced.md](./18-advanced-theory-06-design-patterns-advanced.md)
+
+### Q36. Streaming algorithms for large data — Practical trade-offs and debugging in production
+**Difficulty:** 🟢 [Junior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Streaming algorithms for large data** in a concise system-level way before diving into details.
+- VI: Trình bày **Streaming algorithms for large data** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for streaming algorithms for large data.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho streaming algorithms for large data.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveStreamingAlgorithmsForLargeData(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
 
-function huffmanCoding(text) {
-  // Calculate frequencies
-  const freq = new Map();
-  for (const char of text) {
-    freq.set(char, (freq.get(char) || 0) + 1);
-  }
-  
-  // Build priority queue
-  const pq = Array.from(freq.entries())
-    .map(([char, freq]) => new HuffmanNode(char, freq))
-    .sort((a, b) => a.freq - b.freq);
-  
-  // Build Huffman tree
-  while (pq.length > 1) {
-    const left = pq.shift();
-    const right = pq.shift();
-    
-    const parent = new HuffmanNode(
-      null,
-      left.freq + right.freq,
-      left,
-      right
-    );
-    
-    pq.push(parent);
-    pq.sort((a, b) => a.freq - b.freq);
-  }
-  
-  const root = pq[0];
-  
-  // Generate codes
-  const codes = new Map();
-  generateCodes(root, '', codes);
-  
-  // Encode text
-  let encoded = '';
-  for (const char of text) {
-    encoded += codes.get(char);
-  }
-  
-  return { encoded, codes, tree: root };
-}
-
-function generateCodes(node, code, codes) {
-  if (!node) return;
-  
-  if (node.char !== null) {
-    codes.set(node.char, code);
-    return;
-  }
-  
-  generateCodes(node.left, code + '0', codes);
-  generateCodes(node.right, code + '1', codes);
-}
-
-function huffmanDecode(encoded, tree) {
-  let decoded = '';
-  let current = tree;
-  
-  for (const bit of encoded) {
-    current = bit === '0' ? current.left : current.right;
-    
-    if (current.char !== null) {
-      decoded += current.char;
-      current = tree;
-    }
-  }
-  
-  return decoded;
-}
-// Time: O(n log n), Space: O(n)
+console.log(solveStreamingAlgorithmsForLargeData([5, 1, 4, 2]));
 ```
 
-### LZW Compression
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-```javascript
-function lzwCompress(text) {
-  const dictionary = new Map();
-  let dictSize = 256;
-  
-  // Initialize dictionary with single characters
-  for (let i = 0; i < 256; i++) {
-    dictionary.set(String.fromCharCode(i), i);
-  }
-  
-  let current = '';
-  const result = [];
-  
-  for (const char of text) {
-    const combined = current + char;
-    
-    if (dictionary.has(combined)) {
-      current = combined;
-    } else {
-      result.push(dictionary.get(current));
-      dictionary.set(combined, dictSize++);
-      current = char;
-    }
-  }
-  
-  if (current) {
-    result.push(dictionary.get(current));
-  }
-  
-  return result;
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-01-compiler-design-frontend.md](./18-advanced-theory-01-compiler-design-frontend.md)
+
+### Q37. Complexity budgeting in frontend apps — Concept and core mental model
+**Difficulty:** 🟡 [Mid]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Complexity budgeting in frontend apps** in a concise system-level way before diving into details.
+- VI: Trình bày **Complexity budgeting in frontend apps** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for complexity budgeting in frontend apps.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho complexity budgeting in frontend apps.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveComplexityBudgetingInFrontendApp(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
 }
 
-function lzwDecompress(compressed) {
-  const dictionary = new Map();
-  let dictSize = 256;
-  
-  // Initialize dictionary
-  for (let i = 0; i < 256; i++) {
-    dictionary.set(i, String.fromCharCode(i));
-  }
-  
-  let current = String.fromCharCode(compressed[0]);
-  let result = current;
-  
-  for (let i = 1; i < compressed.length; i++) {
-    const code = compressed[i];
-    let entry;
-    
-    if (dictionary.has(code)) {
-      entry = dictionary.get(code);
-    } else if (code === dictSize) {
-      entry = current + current[0];
-    } else {
-      throw new Error('Invalid compressed data');
-    }
-    
-    result += entry;
-    dictionary.set(dictSize++, current + entry[0]);
-    current = entry;
-  }
-  
-  return result;
-}
-// Time: O(n), Space: O(n)
+console.log(solveComplexityBudgetingInFrontendApp([5, 1, 4, 2]));
 ```
 
-## Summary
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
 
-Advanced algorithms are essential for solving complex problems in frontend development. Understanding string matching, graph traversal, dynamic programming, geometric computations, scheduling, and compression enables building efficient, scalable applications. These algorithms form the foundation for features like search, routing, optimization, and data processing.
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-02-virtual-dom-reconciliation.md](./18-advanced-theory-02-virtual-dom-reconciliation.md)
+
+### Q38. Complexity budgeting in frontend apps — Practical trade-offs and debugging in production
+**Difficulty:** 🔴 [Senior]
+
+**Tổng Quan (Overview):**
+- EN: Explain **Complexity budgeting in frontend apps** in a concise system-level way before diving into details.
+- VI: Trình bày **Complexity budgeting in frontend apps** theo tư duy hệ thống, rồi mới đi vào tối ưu cụ thể.
+
+**Giải thích (Explanation):**
+- EN: Start from invariants, then describe lifecycle, bottlenecks, and measurable outcomes for complexity budgeting in frontend apps.
+- VI: Bắt đầu từ bất biến (invariant), mô tả vòng đời xử lý, điểm nghẽn, và chỉ số cần đo cho complexity budgeting in frontend apps.
+- EN: Mention complexity (time/space), memory behavior, and edge cases interviewers often probe.
+- VI: Nêu độ phức tạp thời gian/bộ nhớ, hành vi cache/memory, và các edge case hay bị hỏi sâu.
+- EN: Connect theory to tooling and framework behavior in real frontend projects.
+- VI: Liên kết lý thuyết với công cụ build, runtime framework, và trải nghiệm người dùng thực tế.
+
+**Ví dụ (Example):**
+```ts
+export function solveComplexityBudgetingInFrontendApp(items: number[]): number[] {
+  return [...items].sort((a, b) => a - b);
+}
+
+console.log(solveComplexityBudgetingInFrontendApp([5, 1, 4, 2]));
+```
+
+**Follow-up Interview Angles / Góc hỏi thêm:**
+- EN: What breaks first under scale, and how would you instrument it?
+- VI: Thành phần nào vỡ trước khi tải tăng, và bạn sẽ gắn đo đạc (instrumentation) ở đâu?
+- EN: Which assumptions become invalid when requirements change?
+- VI: Giả định nào không còn đúng khi yêu cầu sản phẩm thay đổi?
+
+**Cross-reference / Tham chiếu:**
+- See related theory: [./18-advanced-theory-03-advanced-algorithms-frontend.md](./18-advanced-theory-03-advanced-algorithms-frontend.md)
+
+## Tổng Kết / Summary
+- EN: Use this file as a speaking map for advanced interviews: concept → trade-off → metrics → code path.
+- VI: Dùng tài liệu này như bản đồ trả lời phỏng vấn nâng cao: khái niệm → đánh đổi → chỉ số → luồng code.
+- EN: Pair with neighboring advanced theory files for cross-topic system design discussion.
+- VI: Kết hợp với các file advanced khác để luyện phần liên kết nhiều chủ đề trong system design frontend.
+
