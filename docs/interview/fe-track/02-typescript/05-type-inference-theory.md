@@ -1,514 +1,728 @@
-# TypeScript Type Inference - Theoretical Deep Dive
-## Understanding How TypeScript Infers Types
+# Type Inference Theory / Lý Thuyết Suy Luận Kiểu
 
-**English:** Type inference is TypeScript's ability to automatically deduce types from code context without explicit type annotations, making code less verbose while maintaining type safety.
-
-**Tiếng Việt:** Type inference là khả năng của TypeScript tự động suy ra các kiểu từ ngữ cảnh code mà không cần chú thích kiểu rõ ràng, làm cho code ít dài dòng hơn trong khi vẫn duy trì tính an toàn kiểu.
-
-## Type Inference Fundamentals
-
-### What is Type Inference?
-
-**Theoretical Foundation:**
-
-Type inference is a feature of statically-typed languages where the compiler automatically deduces the type of an expression based on its context. TypeScript's inference engine analyzes code structure, variable assignments, function returns, and contextual information to determine the most appropriate type.
-
-**Key Principles:**
-
-1. **Best Common Type:** When inferring from multiple expressions, TypeScript finds the type that is compatible with all candidates.
-
-2. **Contextual Typing:** Type is inferred from the location where expression appears.
-
-3. **Widening:** Literal types are widened to their base types in certain contexts.
-
-4. **Narrowing:** Types become more specific through control flow analysis.
-
-### Inference Algorithm
-
-**Theoretical Model:**
-
-TypeScript's type inference follows a constraint-based algorithm:
-
-1. **Constraint Generation:** Analyze code to generate type constraints
-2. **Constraint Solving:** Solve constraints to find valid type assignments
-3. **Type Substitution:** Replace type variables with concrete types
-4. **Verification:** Ensure all constraints are satisfied
-
-**Inference Phases:**
-
-**Phase 1: Local Inference**
-- Infer types from immediate context
-- Variable initialization
-- Function return statements
-- Object literal properties
-
-**Phase 2: Contextual Inference**
-- Infer from usage context
-- Function parameters from call sites
-- Generic type arguments
-- Callback parameters
-
-**Phase 3: Global Inference**
-- Propagate types through program
-- Resolve circular dependencies
-- Handle recursive types
-- Finalize type assignments
-
-## Variable Type Inference
-
-### Basic Variable Inference
-
-**Theory:** TypeScript infers variable types from their initialization values.
-
-**Inference Rules:**
-
-1. **Literal Inference:** Literals infer to their literal type or base type depending on mutability
-2. **Expression Inference:** Complex expressions infer from result type
-3. **Null/Undefined:** Special handling for nullable types
-4. **Any Fallback:** When inference impossible, falls back to `any`
-
-**Widening Behavior:**
-
-**Definition:** Widening is the process of converting specific literal types to more general types.
-
-**When Widening Occurs:**
-- `let` declarations widen literals to base types
-- `const` declarations preserve literal types
-- Object properties widen by default
-- Function returns widen in certain contexts
-
-**Widening Rules:**
-- `let x = "hello"` → type is `string` (widened)
-- `const x = "hello"` → type is `"hello"` (literal)
-- `let x = null` → type is `any` (widened to any)
-- `const x = null` → type is `null` (literal)
-
-**Preventing Widening:**
-
-Techniques to prevent unwanted widening:
-- Use `const` instead of `let`
-- Add explicit type annotations
-- Use `as const` assertion
-- Enable `strictNullChecks`
-
-### Best Common Type
-
-**Theory:** When inferring from multiple expressions, TypeScript computes the best common type.
-
-**Algorithm:**
-
-1. Collect all candidate types
-2. Find common supertype
-3. If no common type exists, use union
-4. Consider structural compatibility
-
-**Supertype Selection:**
-
-TypeScript selects the most specific type that is compatible with all candidates. If no single type works, it creates a union type.
-
-**Limitations:**
-
-- Cannot infer beyond provided types
-- May require explicit type annotation
-- Union types can become complex
-- Performance considerations with many candidates
-
-## Function Type Inference
-
-### Return Type Inference
-
-**Theory:** TypeScript infers function return types from all return statements.
-
-**Inference Process:**
-
-1. **Collect Returns:** Gather all return statement types
-2. **Compute Union:** Create union of all return types
-3. **Simplify:** Reduce union if possible
-4. **Verify:** Ensure consistency across branches
-
-**Control Flow Impact:**
-
-Return type inference considers:
-- All code paths
-- Conditional returns
-- Early returns
-- Thrown exceptions
-- Never-returning functions
-
-**Recursive Functions:**
-
-Special handling for recursive functions:
-- Initial type assumption
-- Iterative refinement
-- Fixed-point computation
-- Cycle detection
-
-### Parameter Type Inference
-
-**Theory:** Parameters can be inferred from contextual typing.
-
-**Contextual Sources:**
-
-1. **Function Type:** Parameter types from function signature
-2. **Call Site:** Argument types at invocation
-3. **Generic Constraints:** Bounds on type parameters
-4. **Default Values:** Type from default parameter value
-
-**Inference Direction:**
-
-**Forward Inference:** From parameters to return type
-**Backward Inference:** From return type to parameters
-**Bidirectional:** Both directions simultaneously
-
-### Generic Type Inference
-
-**Theory:** TypeScript infers generic type arguments from usage.
-
-**Inference Algorithm:**
-
-1. **Candidate Collection:** Gather type information from arguments
-2. **Constraint Generation:** Create constraints for type parameters
-3. **Unification:** Find type that satisfies all constraints
-4. **Substitution:** Replace type parameters with inferred types
-
-**Inference Priority:**
-
-1. Explicit type arguments (highest)
-2. Argument types
-3. Return type context
-4. Constraint bounds
-5. Default type parameters (lowest)
-
-**Multiple Type Parameters:**
-
-When function has multiple type parameters:
-- Each inferred independently
-- Constraints between parameters considered
-- Order of inference matters
-- Some may remain unresolved
-
-**Inference Limitations:**
-
-Situations where inference fails:
-- Insufficient information
-- Conflicting constraints
-- Circular dependencies
-- Ambiguous types
-
-## Contextual Typing
-
-### What is Contextual Typing?
-
-**Definition:** Contextual typing infers type from the location where expression is used.
-
-**Theoretical Basis:**
-
-Contextual typing implements bidirectional type checking:
-- **Checking Mode:** Type flows from context to expression
-- **Synthesis Mode:** Type flows from expression to context
-
-**Context Sources:**
-
-1. **Variable Declarations:** Type annotation provides context
-2. **Function Calls:** Parameter types provide context
-3. **Return Statements:** Return type provides context
-4. **Object Literals:** Expected type provides context
-5. **Array Literals:** Element type provides context
-
-### Contextual Inference Rules
-
-**Rule 1: Function Parameters**
-
-When function is used where specific type expected, parameters inferred from context.
-
-**Rule 2: Object Literals**
-
-Object literal properties inferred from expected object type.
-
-**Rule 3: Array Literals**
-
-Array element types inferred from expected array type.
-
-**Rule 4: Callback Functions**
-
-Callback parameters inferred from function signature.
-
-### Contextual Type Propagation
-
-**Theory:** Contextual types propagate through expression trees.
-
-**Propagation Rules:**
-
-1. **Downward:** From parent to child expressions
-2. **Upward:** From child to parent (synthesis)
-3. **Lateral:** Between sibling expressions
-4. **Constraint-based:** Through type relationships
-
-**Propagation Boundaries:**
-
-Contexts don't propagate across:
-- Type assertions
-- Explicit type annotations
-- Module boundaries
-- Certain operators
-
-## Type Narrowing
-
-### Control Flow Analysis
-
-**Theory:** TypeScript tracks type changes through control flow.
-
-**Analysis Technique:**
-
-TypeScript builds a control flow graph (CFG) and performs dataflow analysis:
-
-1. **Graph Construction:** Create CFG from code
-2. **Type State:** Track type at each program point
-3. **Join Points:** Merge types from multiple paths
-4. **Fixed Point:** Iterate until types stabilize
-
-**Narrowing Mechanisms:**
-
-1. **Type Guards:** Runtime checks that refine types
-2. **Truthiness:** Boolean context narrows types
-3. **Equality:** Comparison narrows to specific values
-4. **instanceof:** Narrows to class types
-5. **typeof:** Narrows to primitive types
-6. **in:** Narrows based on property existence
-
-### Type Predicate Functions
-
-**Theory:** User-defined functions that perform type narrowing.
-
-**Predicate Semantics:**
-
-Type predicates are boolean functions with special return type:
-- Return `true` implies type refinement
-- Return `false` implies type exclusion
-- Must be sound (no false positives)
-
-**Soundness Requirements:**
-
-For type predicate to be sound:
-- Implementation must match declaration
-- Runtime behavior must align with type
-- No side effects that invalidate predicate
-
-### Discriminated Unions
-
-**Theory:** Use common property to distinguish union members.
-
-**Theoretical Foundation:**
-
-Discriminated unions implement tagged union types from type theory:
-- Each variant has unique tag
-- Tag enables exhaustive pattern matching
-- Compiler ensures completeness
-
-**Exhaustiveness Checking:**
-
-TypeScript verifies all union members handled:
-- Switch statements checked for completeness
-- Missing cases cause compile errors
-- `never` type catches unhandled cases
-
-## Advanced Inference Topics
-
-### Conditional Type Inference
-
-**Theory:** Infer types within conditional type branches.
-
-**Inference Mechanism:**
-
-The `infer` keyword introduces type variable in conditional type:
-- Scoped to conditional branch
-- Unified across multiple occurrences
-- Subject to variance rules
-
-**Variance in Inference:**
-
-**Covariant Position:** Infers union of candidates
-**Contravariant Position:** Infers intersection of candidates
-**Invariant Position:** Must match exactly
-
-### Template Literal Type Inference
-
-**Theory:** Infer string literal types from template patterns.
-
-**Pattern Matching:**
-
-TypeScript performs pattern matching on string types:
-- Literal parts must match exactly
-- Type parameters match any string
-- Captures matched portions
-
-**Inference Algorithm:**
-
-1. Parse template pattern
-2. Match against input type
-3. Extract captured groups
-4. Construct result type
-
-### Recursive Type Inference
-
-**Theory:** Handle types that reference themselves.
-
-**Challenges:**
-
-- Infinite type expansion
-- Termination detection
-- Depth limits
-- Performance concerns
-
-**Solutions:**
-
-TypeScript uses:
-- Lazy evaluation
-- Depth tracking
-- Cycle detection
-- Caching
-
-## Inference Performance
-
-### Computational Complexity
-
-**Theory:** Type inference has computational cost.
-
-**Complexity Factors:**
-
-1. **Program Size:** Linear in code size
-2. **Type Complexity:** Exponential in type nesting
-3. **Generic Instantiation:** Multiplicative per instantiation
-4. **Union Types:** Exponential in union size
-
-**Performance Optimization:**
-
-TypeScript optimizes through:
-- Incremental compilation
-- Type caching
-- Lazy evaluation
-- Heuristic cutoffs
-
-### Inference Depth Limits
-
-**Theory:** TypeScript limits inference depth to prevent infinite recursion.
-
-**Depth Tracking:**
-
-- Instantiation depth
-- Recursion depth
-- Type complexity
-- Union expansion
-
-**When Limits Hit:**
-
-- Inference fails
-- Falls back to `any`
-- Compiler error
-- Performance degradation
-
-## Practical Implications
-
-### When to Add Type Annotations
-
-**Guidelines:**
-
-1. **Public APIs:** Always annotate
-2. **Complex Types:** Help inference
-3. **Performance:** Reduce inference cost
-4. **Documentation:** Clarify intent
-5. **Precision:** Prevent widening
-
-### Inference Best Practices
-
-**Principles:**
-
-1. **Trust Inference:** Let TypeScript infer when possible
-2. **Annotate Boundaries:** Type module interfaces
-3. **Const Assertions:** Preserve literal types
-4. **Generic Constraints:** Guide inference
-5. **Explicit Returns:** Document function contracts
-
-### Common Inference Pitfalls
-
-**Issue 1: Widening**
-Problem: Literal types widened unexpectedly
-Solution: Use `const` or `as const`
-
-**Issue 2: Any Propagation**
-Problem: `any` type spreads through code
-Solution: Enable `noImplicitAny`
-
-**Issue 3: Generic Inference Failure**
-Problem: Cannot infer generic type
-Solution: Provide explicit type argument
-
-**Issue 4: Circular Inference**
-Problem: Types reference each other
-Solution: Add explicit type annotation
-
-**Issue 5: Union Complexity**
-Problem: Inferred union too complex
-Solution: Simplify or annotate explicitly
-
-## Type Inference vs Type Checking
-
-### Distinction
-
-**Type Inference:** Deduce types from code
-**Type Checking:** Verify type correctness
-
-**Relationship:**
-
-Inference and checking are interleaved:
-1. Infer types from expressions
-2. Check inferred types against constraints
-3. Propagate type information
-4. Verify soundness
-
-### Soundness Considerations
-
-**Type System Soundness:**
-
-A type system is sound if well-typed programs don't have runtime type errors.
-
-**TypeScript's Approach:**
-
-TypeScript is intentionally unsound in some areas:
-- Bivariant function parameters
-- Type assertions
-- `any` type
-- Structural typing edge cases
-
-**Trade-offs:**
-
-Soundness vs Usability:
-- Strict soundness may reject valid code
-- Pragmatic unsoundness enables gradual typing
-- Escape hatches for JavaScript interop
-
-## Interview Questions
-
-**Q: How does TypeScript infer types?**
-
-A: TypeScript uses constraint-based type inference analyzing code structure, variable assignments, function returns, and contextual information. It follows phases: local inference from immediate context, contextual inference from usage, and global inference propagating types through program.
-
-**Q: What is type widening?**
-
-A: Widening converts specific literal types to more general types. Occurs with `let` declarations, object properties, and certain contexts. Prevented using `const`, explicit annotations, or `as const` assertions.
-
-**Q: Explain contextual typing.**
-
-A: Contextual typing infers types from location where expression is used. Implements bidirectional type checking where type flows from context to expression (checking mode) or expression to context (synthesis mode).
-
-**Q: What is control flow analysis?**
-
-A: TypeScript tracks type changes through control flow by building control flow graph and performing dataflow analysis. Enables type narrowing through type guards, truthiness checks, equality comparisons, and discriminated unions.
-
-**Q: When should you add explicit type annotations?**
-
-A: Add annotations for public APIs, complex types, performance optimization, documentation, and preventing unwanted widening. Trust inference for local variables and simple expressions.
+[← Related: TypeScript Basics](./01-typescript-basics.md) | [Related: Comprehensive Guide](./04-typescript-comprehensive.md)
 
 ---
 
-[← Back to TypeScript Comprehensive](./04-typescript-comprehensive.md) | [Next: React →](../03-react/01-fundamentals.md)
+## Tổng Quan / Overview
+
+Type inference is the compiler process that deduces types from values, context, and control flow. Interviewers often ask *why* inference chooses a type, not only what type is produced.
+
+Phần này tập trung vào algorithm, contextual typing, best common type, control-flow analysis, widening/narrowing, const assertions, `satisfies`, và variance.
+
+## Inference Algorithm
+
+**English:** Constraint collection → candidate synthesis → contextual adjustment → finalization.
+
+**Giải thích (VI):** Trả lời theo cơ chế compiler và ví dụ phản-biện để thể hiện hiểu sâu.
+
+**Ví dụ (TypeScript):**
+```ts
+const n = 1;
+const arr = [1, 2, 3];
+```
+
+## Contextual Typing
+
+**English:** Expression type derives from where it appears (callbacks, JSX props, assignment targets).
+
+**Giải thích (VI):** Trả lời theo cơ chế compiler và ví dụ phản-biện để thể hiện hiểu sâu.
+
+**Ví dụ (TypeScript):**
+```ts
+const xs = [1,2,3];
+xs.map(x => x.toFixed(2));
+```
+
+## Best Common Type
+
+**English:** For arrays/unions, TS finds supertype compatible with all elements.
+
+**Giải thích (VI):** Trả lời theo cơ chế compiler và ví dụ phản-biện để thể hiện hiểu sâu.
+
+**Ví dụ (TypeScript):**
+```ts
+const mixed = [1, 'a']; // (string | number)[]
+```
+
+## Control Flow Analysis
+
+**English:** Branches narrow unions based on runtime guards and reachability.
+
+**Giải thích (VI):** Trả lời theo cơ chế compiler và ví dụ phản-biện để thể hiện hiểu sâu.
+
+**Ví dụ (TypeScript):**
+```ts
+function fn(v: string | number){ if(typeof v==='string') return v.length; return v.toFixed(2); }
+```
+
+## Widening vs Narrowing
+
+**English:** `let` widens literal; `const` preserves literal. Guards narrow unions.
+
+**Giải thích (VI):** Trả lời theo cơ chế compiler và ví dụ phản-biện để thể hiện hiểu sâu.
+
+**Ví dụ (TypeScript):**
+```ts
+let mode = 'dark'; // string
+const lock = 'dark'; // 'dark'
+```
+
+## Const Assertions
+
+**English:** `as const` freezes literals and readonly tuple/object semantics.
+
+**Giải thích (VI):** Trả lời theo cơ chế compiler và ví dụ phản-biện để thể hiện hiểu sâu.
+
+**Ví dụ (TypeScript):**
+```ts
+const cfg = { env: 'prod', retries: 3 } as const;
+```
+
+## satisfies Operator
+
+**English:** Validate against target type without changing inferred literal precision.
+
+**Giải thích (VI):** Trả lời theo cơ chế compiler và ví dụ phản-biện để thể hiện hiểu sâu.
+
+**Ví dụ (TypeScript):**
+```ts
+const routes = { home: '/', about: '/about' } satisfies Record<string, `/${string}`>;
+```
+
+## Variance Basics
+
+**English:** Function parameters are contravariant in strict function types; return types covariant.
+
+**Giải thích (VI):** Trả lời theo cơ chế compiler và ví dụ phản-biện để thể hiện hiểu sâu.
+
+**Ví dụ (TypeScript):**
+```ts
+type F1 = (x: string | number) => string;
+type F2 = (x: string) => string;
+```
+
+## Cross References / Tham Chiếu Liên Quan
+
+- [Generics Deep Dive](./03-generics-deep-dive.md)
+- [TypeScript Comprehensive](./04-typescript-comprehensive.md)
+- [React with TypeScript](./05-react-typescript.md)
+
+## Câu Hỏi Phỏng Vấn / Interview Q&A
+
+### 🟢 [Junior] Q1. What is contextual typing?
+
+**Answer (EN):** Type comes from usage location, e.g., callback parameter in array methods.
+
+**Giải thích (VI):** Kiểu được suy ra từ ngữ cảnh sử dụng như callback.
+
+**Ví dụ (TypeScript):**
+```ts
+[1,2,3].map(n => n.toFixed(1));
+```
+
+### 🟡 [Mid] Q2. Explain widening and narrowing with examples.
+
+**Answer (EN):** Widening generalizes literals; narrowing specializes union through guards.
+
+**Giải thích (VI):** Widening mở rộng literal, narrowing thu hẹp union bằng điều kiện.
+
+**Ví dụ (TypeScript):**
+```ts
+let a='x'; const b='x';
+```
+
+### 🟡 [Mid] Q3. What does `satisfies` solve?
+
+**Answer (EN):** It checks compatibility while preserving precise inferred literals for downstream use.
+
+**Giải thích (VI):** Nó kiểm tra tương thích mà vẫn giữ literal inference chi tiết.
+
+**Ví dụ (TypeScript):**
+```ts
+const t={mode:'dark'} satisfies {mode:string};
+```
+
+### 🔴 [Senior] Q4. Why variance matters for callbacks?
+
+**Answer (EN):** Incorrect variance assumptions can make callback APIs unsound and unsafe.
+
+**Giải thích (VI):** Hiểu variance giúp thiết kế API callback an toàn.
+
+**Ví dụ (TypeScript):**
+```ts
+type Handler<T> = (value: T) => void;
+```
+
+### 🔴 [Senior] Q5. Inference scenario 5
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟢 [Junior] Q6. Inference scenario 6
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟡 [Mid] Q7. Inference scenario 7
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🔴 [Senior] Q8. Inference scenario 8
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟢 [Junior] Q9. Inference scenario 9
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟡 [Mid] Q10. Inference scenario 10
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🔴 [Senior] Q11. Inference scenario 11
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟢 [Junior] Q12. Inference scenario 12
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟡 [Mid] Q13. Inference scenario 13
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🔴 [Senior] Q14. Inference scenario 14
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟢 [Junior] Q15. Inference scenario 15
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟡 [Mid] Q16. Inference scenario 16
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🔴 [Senior] Q17. Inference scenario 17
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟢 [Junior] Q18. Inference scenario 18
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟡 [Mid] Q19. Inference scenario 19
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🔴 [Senior] Q20. Inference scenario 20
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟢 [Junior] Q21. Inference scenario 21
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟡 [Mid] Q22. Inference scenario 22
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🔴 [Senior] Q23. Inference scenario 23
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟢 [Junior] Q24. Inference scenario 24
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟡 [Mid] Q25. Inference scenario 25
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🔴 [Senior] Q26. Inference scenario 26
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟢 [Junior] Q27. Inference scenario 27
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟡 [Mid] Q28. Inference scenario 28
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🔴 [Senior] Q29. Inference scenario 29
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟢 [Junior] Q30. Inference scenario 30
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟡 [Mid] Q31. Inference scenario 31
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🔴 [Senior] Q32. Inference scenario 32
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟢 [Junior] Q33. Inference scenario 33
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟡 [Mid] Q34. Inference scenario 34
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🔴 [Senior] Q35. Inference scenario 35
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟢 [Junior] Q36. Inference scenario 36
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟡 [Mid] Q37. Inference scenario 37
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🔴 [Senior] Q38. Inference scenario 38
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟢 [Junior] Q39. Inference scenario 39
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟡 [Mid] Q40. Inference scenario 40
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🔴 [Senior] Q41. Inference scenario 41
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟢 [Junior] Q42. Inference scenario 42
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟡 [Mid] Q43. Inference scenario 43
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🔴 [Senior] Q44. Inference scenario 44
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟢 [Junior] Q45. Inference scenario 45
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟡 [Mid] Q46. Inference scenario 46
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🔴 [Senior] Q47. Inference scenario 47
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟢 [Junior] Q48. Inference scenario 48
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟡 [Mid] Q49. Inference scenario 49
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🔴 [Senior] Q50. Inference scenario 50
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟢 [Junior] Q51. Inference scenario 51
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟡 [Mid] Q52. Inference scenario 52
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🔴 [Senior] Q53. Inference scenario 53
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟢 [Junior] Q54. Inference scenario 54
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🟡 [Mid] Q55. Inference scenario 55
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+
+### 🔴 [Senior] Q56. Inference scenario 56
+
+**Answer (EN):** Describe inference boundary and when explicit annotation is better.
+
+**Giải thích (VI):** Nêu ranh giới suy luận và lúc cần chú thích tường minh.
+
+**Ví dụ (TypeScript):**
+```ts
+type Infer<T> = T extends Promise<infer U> ? U : T;
+```
+

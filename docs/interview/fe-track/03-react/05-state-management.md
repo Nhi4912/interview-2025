@@ -763,7 +763,7 @@ function Component() {
 
 ## Interview Questions / Câu Hỏi Phỏng Vấn
 
-### Q1: What is prop drilling and how do you solve it?
+### Q1: What is prop drilling and how do you solve it? — 🟢 [Junior]
 
 **English Answer:**
 Prop drilling is passing props through multiple component layers to reach a deeply nested component. Solutions:
@@ -779,7 +779,7 @@ Prop drilling là việc truyền props qua nhiều lớp component để đến
 3. Kết hợp component
 4. Render props hoặc custom hooks
 
-### Q2: Redux vs Context API - when to use each?
+### Q2: Redux vs Context API - when to use each? — 🟡 [Mid]
 
 **English Answer:**
 - **Context API**: Simple global state, theme, auth, small apps
@@ -795,7 +795,7 @@ Prop drilling là việc truyền props qua nhiều lớp component để đến
 - **Context API**: Trạng thái toàn cục đơn giản, theme, auth, ứng dụng nhỏ
 - **Redux**: Logic trạng thái phức tạp, gỡ lỗi time-travel, ứng dụng lớn, cần middleware
 
-### Q3: How does Redux middleware work?
+### Q3: How does Redux middleware work? — 🟡 [Mid]
 
 **English Answer:**
 Middleware provides a third-party extension point between dispatching an action and the moment it reaches the reducer. It's a chain of functions with signature:
@@ -814,7 +814,7 @@ Common use cases:
 - Analytics
 - Error reporting
 
-### Q4: What are selectors and why use them?
+### Q4: What are selectors and why use them? — 🟢 [Junior]
 
 **English Answer:**
 Selectors are functions that extract and compute derived data from the store. Benefits:
@@ -830,7 +830,7 @@ const selectCompletedTodos = createSelector(
 );
 ```
 
-### Q5: How do you handle async actions in Redux?
+### Q5: How do you handle async actions in Redux? — 🔴 [Senior]
 
 **English Answer:**
 Three main approaches:

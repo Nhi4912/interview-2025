@@ -1,731 +1,899 @@
 # JavaScript Basics
-## JavaScript - Chapter 0
+## JavaScript Fundamentals - Chapter 0
 
-[Back to Table of Contents](../00-table-of-contents.md) | [Next: Variables & Data Types →](./01-variables-data-types.md)
-
----
-
-## Overview
-
-JavaScript is the programming language of the web. This chapter covers fundamental JavaScript concepts essential for every frontend developer.
+[← Previous](../00-table-of-contents.md) | [Back to Table of Contents](../00-table-of-contents.md) | [Next →](./01-variables-data-types.md)
 
 ---
 
-## Table of Contents
+## Tổng Quan / Overview
 
-1. [What is JavaScript?](#what-is-javascript)
-2. [Variables and Data Types](#variables-and-data-types)
-3. [Operators](#operators)
-4. [Control Flow](#control-flow)
-5. [Functions](#functions)
-6. [Arrays](#arrays)
-7. [Objects](#objects)
-8. [String Methods](#string-methods)
-9. [Number Methods](#number-methods)
-10. [Interview Questions](#interview-questions)
+JavaScript interview prep should be bilingual and practical: explain the concept in English, then reinforce it in Vietnamese with trade-offs and common pitfalls.
 
----
+Giải thích (VI): Tài liệu này tập trung vào phần cốt lõi thường gặp trong phỏng vấn Frontend. Mỗi mục có định nghĩa, lưu ý và ví dụ JavaScript ngắn gọn để bạn ôn tập nhanh.
 
-## What is JavaScript?
-
-### JavaScript Characteristics
-
-**Definition:** JavaScript is a high-level, interpreted programming language that conforms to the ECMAScript specification.
-
-**Key Features:**
-- **Dynamic typing**: Variables can hold any type
-- **Prototype-based**: Object-oriented via prototypes
-- **First-class functions**: Functions are objects
-- **Event-driven**: Responds to user actions
-- **Single-threaded**: One execution thread
-- **Non-blocking**: Asynchronous operations
-
-### JavaScript Execution
-
-```javascript
-// JavaScript runs in:
-// 1. Browser (client-side)
-console.log('Running in browser');
-
-// 2. Node.js (server-side)
-console.log('Running in Node.js');
-
-// 3. Other environments (React Native, Electron, etc.)
-```
+### Related Links / Liên Kết Liên Quan
+- [Variables & Data Types](./01-variables-data-types.md)
+- [Closures](./03-closures.md)
+- [Event Loop & Async](./06-event-loop-async.md)
+- [Functional Programming](./12-functional-programming.md)
 
 ---
 
-## Variables and Data Types
+## Core Concepts
 
-### Variable Declaration
+### 1. JavaScript History and ECMAScript Evolution
 
+#### Tổng Quan
+JavaScript started in 1995 and is standardized as ECMAScript. Interviewers expect you to know key milestones such as ES5 strict mode, ES6 modules/classes, and modern async features.
+
+#### Giải thích
+JavaScript ban đầu được tạo rất nhanh cho trình duyệt, sau đó chuẩn hóa thành ECMAScript để các engine triển khai nhất quán. Khi đi phỏng vấn, bạn nên nêu mốc ES5 (strict mode), ES6 (let/const, class, module), ES2017 (async/await), ES2020+ (BigInt, optional chaining).
+
+#### Ví dụ
 ```javascript
-// var (old way, function-scoped)
-var name = 'John';
+const milestones = {
+  ES5: ['strict mode', 'JSON'],
+  ES6: ['let/const', 'arrow function', 'Promise'],
+  ES2017: ['async/await'],
+  ES2020: ['BigInt', 'optional chaining']
+};
 
-// let (block-scoped, can reassign)
-let age = 30;
-age = 31; // OK
-
-// const (block-scoped, cannot reassign)
-const PI = 3.14159;
-// PI = 3.14; // Error!
-
-// const with objects (can modify properties)
-const person = { name: 'John' };
-person.name = 'Jane'; // OK
-person.age = 30; // OK
-// person = {}; // Error!
+console.log(Object.keys(milestones));
 ```
 
-### Primitive Data Types
+### 2. Strict Mode Basics
 
+#### Tổng Quan
+Strict mode prevents silent errors and disallows dangerous patterns. It can be enabled per-file or per-function.
+
+#### Giải thích
+"use strict" giúp phát hiện lỗi sớm: ví dụ gán biến chưa khai báo sẽ ném lỗi thay vì tạo biến global ngầm. Trong module ES, strict mode mặc định luôn bật.
+
+#### Ví dụ
 ```javascript
-// 1. String
-const name = 'John';
-const greeting = "Hello";
-const template = `Hello ${name}`; // Template literal
+'use strict';
 
-// 2. Number
-const integer = 42;
-const float = 3.14;
-const negative = -10;
-const infinity = Infinity;
-const notANumber = NaN;
-
-// 3. Boolean
-const isTrue = true;
-const isFalse = false;
-
-// 4. Undefined
-let x; // undefined
-const y = undefined;
-
-// 5. Null
-const empty = null;
-
-// 6. Symbol (ES6)
-const sym = Symbol('description');
-
-// 7. BigInt (ES2020)
-const bigNumber = 1234567890123456789012345678901234567890n;
-```
-
-### Type Checking
-
-```javascript
-// typeof operator
-typeof 'hello'; // 'string'
-typeof 42; // 'number'
-typeof true; // 'boolean'
-typeof undefined; // 'undefined'
-typeof null; // 'object' (historical bug)
-typeof Symbol(); // 'symbol'
-typeof 123n; // 'bigint'
-typeof {}; // 'object'
-typeof []; // 'object'
-typeof function(){}; // 'function'
-
-// Check for null
-const value = null;
-value === null; // true
-
-// Check for array
-Array.isArray([]); // true
-Array.isArray({}); // false
-```
-
----
-
-## Operators
-
-### Arithmetic Operators
-
-```javascript
-// Basic arithmetic
-10 + 5; // 15 (addition)
-10 - 5; // 5 (subtraction)
-10 * 5; // 50 (multiplication)
-10 / 5; // 2 (division)
-10 % 3; // 1 (modulus/remainder)
-10 ** 2; // 100 (exponentiation)
-
-// Increment/Decrement
-let x = 5;
-x++; // 6 (post-increment)
-++x; // 7 (pre-increment)
-x--; // 6 (post-decrement)
---x; // 5 (pre-decrement)
-```
-
-### Comparison Operators
-
-```javascript
-// Equality
-5 == '5'; // true (loose equality, type coercion)
-5 === '5'; // false (strict equality, no coercion)
-5 != '5'; // false
-5 !== '5'; // true
-
-// Relational
-5 > 3; // true
-5 < 3; // false
-5 >= 5; // true
-5 <= 3; // false
-```
-
-### Logical Operators
-
-```javascript
-// AND (&&)
-true && true; // true
-true && false; // false
-
-// OR (||)
-true || false; // true
-false || false; // false
-
-// NOT (!)
-!true; // false
-!false; // true
-
-// Nullish coalescing (??)
-null ?? 'default'; // 'default'
-undefined ?? 'default'; // 'default'
-0 ?? 'default'; // 0
-'' ?? 'default'; // ''
-
-// Optional chaining (?.)
-const user = { name: 'John' };
-user?.address?.street; // undefined (no error)
-```
-
-### Assignment Operators
-
-```javascript
-let x = 10;
-
-x += 5; // x = x + 5 (15)
-x -= 3; // x = x - 3 (12)
-x *= 2; // x = x * 2 (24)
-x /= 4; // x = x / 4 (6)
-x %= 4; // x = x % 4 (2)
-x **= 3; // x = x ** 3 (8)
-```
-
----
-
-## Control Flow
-
-### If-Else Statements
-
-```javascript
-const age = 18;
-
-if (age >= 18) {
-  console.log('Adult');
-} else if (age >= 13) {
-  console.log('Teenager');
-} else {
-  console.log('Child');
+function demo() {
+  // x = 10; // ReferenceError in strict mode
+  let x = 10;
+  return x;
 }
 
-// Ternary operator
-const status = age >= 18 ? 'Adult' : 'Minor';
+console.log(demo());
 ```
 
-### Switch Statement
+### 3. Primitive vs Reference Types
 
+#### Tổng Quan
+Primitives are copied by value, while objects are copied by reference identity.
+
+#### Giải thích
+Khi gán primitive, bạn tạo bản sao giá trị. Khi gán object/array/function, bạn sao chép tham chiếu đến cùng vùng nhớ, nên sửa một nơi ảnh hưởng nơi khác.
+
+#### Ví dụ
 ```javascript
-const day = 'Monday';
+let a = 5;
+let b = a;
+b = 7;
 
-switch (day) {
-  case 'Monday':
-    console.log('Start of week');
+const user1 = { name: 'A' };
+const user2 = user1;
+user2.name = 'B';
+
+console.log(a, b); // 5 7
+console.log(user1.name); // B
+```
+
+### 4. Type Coercion Fundamentals
+
+#### Tổng Quan
+JavaScript may convert types implicitly when operators are used with mixed operands.
+
+#### Giải thích
+Ép kiểu ngầm (implicit coercion) là nguồn bug phổ biến. Phỏng vấn thường hỏi bạn vì sao "5" + 1 thành "51" nhưng "5" - 1 thành 4.
+
+#### Ví dụ
+```javascript
+console.log('5' + 1); // '51'
+console.log('5' - 1); // 4
+console.log(Number('5') + 1); // 6
+console.log(String(5) + 1); // '51'
+```
+
+### 5. Truthy and Falsy Values
+
+#### Tổng Quan
+In conditionals, non-boolean values are converted to boolean. There are only a few falsy values.
+
+#### Giải thích
+Các giá trị falsy gồm: false, 0, -0, 0n, "", null, undefined, NaN. Còn lại là truthy. Cần cẩn thận khi kiểm tra dữ liệu đầu vào.
+
+#### Ví dụ
+```javascript
+const values = [false, 0, '', null, undefined, NaN, '0', [], {}];
+
+for (const v of values) {
+  if (v) {
+    console.log(v, '=> truthy');
+  } else {
+    console.log(v, '=> falsy');
+  }
+}
+```
+
+### 6. Equality Operators (== vs ===)
+
+#### Tổng Quan
+Loose equality performs coercion, strict equality compares type and value directly.
+
+#### Giải thích
+Quy tắc an toàn là ưu tiên === và !== để tránh ép kiểu bất ngờ. Chỉ dùng == khi bạn thực sự kiểm soát được bảng coercion.
+
+#### Ví dụ
+```javascript
+console.log(0 == false); // true
+console.log(0 === false); // false
+console.log(null == undefined); // true
+console.log(null === undefined); // false
+```
+
+### 7. Arithmetic and Logical Operators
+
+#### Tổng Quan
+Operators include arithmetic, comparison, logical, nullish coalescing, and optional chaining.
+
+#### Giải thích
+Trong code production, toán tử ?? thường tốt hơn || khi bạn chỉ muốn fallback cho null/undefined (không phải cho 0 hoặc chuỗi rỗng).
+
+#### Ví dụ
+```javascript
+const qty = 0;
+console.log(qty || 10); // 10 (unexpected sometimes)
+console.log(qty ?? 10); // 0
+
+const profile = null;
+console.log(profile?.name ?? 'Anonymous');
+```
+
+### 8. Control Flow: if/switch/loops
+
+#### Tổng Quan
+Control flow determines execution paths and repeated logic.
+
+#### Giải thích
+Phỏng vấn cơ bản thường yêu cầu bạn chọn cấu trúc phù hợp: if cho điều kiện phức tạp, switch cho nhánh rời rạc, loop khi xử lý danh sách.
+
+#### Ví dụ
+```javascript
+const role = 'admin';
+
+switch (role) {
+  case 'admin':
+    console.log('Full access');
     break;
-  case 'Friday':
-    console.log('End of week');
-    break;
-  case 'Saturday':
-  case 'Sunday':
-    console.log('Weekend');
+  case 'editor':
+    console.log('Edit access');
     break;
   default:
-    console.log('Midweek');
+    console.log('Read only');
 }
 ```
 
-### Loops
+### 9. Error Handling Basics
 
+#### Tổng Quan
+Use try/catch/finally to capture runtime exceptions and keep the app resilient.
+
+#### Giải thích
+Không nên nuốt lỗi im lặng. Hãy log có ngữ cảnh hoặc chuyển đổi sang lỗi domain-specific để dễ debug và quan sát production.
+
+#### Ví dụ
 ```javascript
-// For loop
-for (let i = 0; i < 5; i++) {
-  console.log(i); // 0, 1, 2, 3, 4
-}
-
-// While loop
-let i = 0;
-while (i < 5) {
-  console.log(i);
-  i++;
-}
-
-// Do-while loop
-let j = 0;
-do {
-  console.log(j);
-  j++;
-} while (j < 5);
-
-// For...of (arrays)
-const arr = [1, 2, 3];
-for (const num of arr) {
-  console.log(num);
-}
-
-// For...in (objects)
-const obj = { a: 1, b: 2 };
-for (const key in obj) {
-  console.log(key, obj[key]);
-}
-
-// Break and continue
-for (let i = 0; i < 10; i++) {
-  if (i === 3) continue; // Skip 3
-  if (i === 7) break; // Stop at 7
-  console.log(i);
-}
-```
-
----
-
-## Functions
-
-### Function Declaration
-
-```javascript
-// Function declaration
-function greet(name) {
-  return `Hello, ${name}!`;
-}
-
-// Function expression
-const greet = function(name) {
-  return `Hello, ${name}!`;
-};
-
-// Arrow function
-const greet = (name) => {
-  return `Hello, ${name}!`;
-};
-
-// Arrow function (concise)
-const greet = name => `Hello, ${name}!`;
-
-// Multiple parameters
-const add = (a, b) => a + b;
-
-// No parameters
-const sayHello = () => 'Hello!';
-```
-
-### Default Parameters
-
-```javascript
-function greet(name = 'Guest') {
-  return `Hello, ${name}!`;
-}
-
-greet(); // 'Hello, Guest!'
-greet('John'); // 'Hello, John!'
-```
-
-### Rest Parameters
-
-```javascript
-function sum(...numbers) {
-  return numbers.reduce((total, num) => total + num, 0);
-}
-
-sum(1, 2, 3); // 6
-sum(1, 2, 3, 4, 5); // 15
-```
-
-### Return Values
-
-```javascript
-// Explicit return
-function add(a, b) {
-  return a + b;
-}
-
-// Implicit return (arrow function)
-const add = (a, b) => a + b;
-
-// No return (returns undefined)
-function logMessage(msg) {
-  console.log(msg);
-}
-```
-
----
-
-## Arrays
-
-### Creating Arrays
-
-```javascript
-// Array literal
-const arr = [1, 2, 3, 4, 5];
-
-// Array constructor
-const arr2 = new Array(1, 2, 3);
-
-// Array.of
-const arr3 = Array.of(1, 2, 3);
-
-// Array.from
-const arr4 = Array.from('hello'); // ['h', 'e', 'l', 'l', 'o']
-```
-
-### Array Methods
-
-```javascript
-const numbers = [1, 2, 3, 4, 5];
-
-// Add/Remove
-numbers.push(6); // Add to end: [1, 2, 3, 4, 5, 6]
-numbers.pop(); // Remove from end: [1, 2, 3, 4, 5]
-numbers.unshift(0); // Add to start: [0, 1, 2, 3, 4, 5]
-numbers.shift(); // Remove from start: [1, 2, 3, 4, 5]
-
-// Slice (doesn't modify original)
-numbers.slice(1, 3); // [2, 3]
-
-// Splice (modifies original)
-numbers.splice(2, 1); // Remove 1 item at index 2
-numbers.splice(2, 0, 10); // Insert 10 at index 2
-
-// Concat
-const arr1 = [1, 2];
-const arr2 = [3, 4];
-const combined = arr1.concat(arr2); // [1, 2, 3, 4]
-
-// Join
-const arr = ['Hello', 'World'];
-arr.join(' '); // 'Hello World'
-
-// Reverse
-[1, 2, 3].reverse(); // [3, 2, 1]
-
-// Sort
-[3, 1, 2].sort(); // [1, 2, 3]
-[3, 1, 2].sort((a, b) => b - a); // [3, 2, 1] (descending)
-```
-
-### Array Iteration
-
-```javascript
-const numbers = [1, 2, 3, 4, 5];
-
-// forEach
-numbers.forEach(num => console.log(num));
-
-// map (transform)
-const doubled = numbers.map(num => num * 2); // [2, 4, 6, 8, 10]
-
-// filter
-const evens = numbers.filter(num => num % 2 === 0); // [2, 4]
-
-// find
-const found = numbers.find(num => num > 3); // 4
-
-// findIndex
-const index = numbers.findIndex(num => num > 3); // 3
-
-// some (at least one)
-const hasEven = numbers.some(num => num % 2 === 0); // true
-
-// every (all)
-const allPositive = numbers.every(num => num > 0); // true
-
-// reduce
-const sum = numbers.reduce((total, num) => total + num, 0); // 15
-```
-
----
-
-## Objects
-
-### Creating Objects
-
-```javascript
-// Object literal
-const person = {
-  name: 'John',
-  age: 30,
-  greet() {
-    return `Hello, I'm ${this.name}`;
+function parseUser(jsonText) {
+  try {
+    return JSON.parse(jsonText);
+  } catch (error) {
+    throw new Error(`Invalid user payload: ${error.message}`);
   }
-};
+}
 
-// Object constructor
-const person2 = new Object();
-person2.name = 'Jane';
-
-// Object.create
-const person3 = Object.create(person);
+console.log(parseUser('{"name":"Lan"}'));
 ```
 
-### Accessing Properties
+### 10. Functions as Building Blocks
 
+#### Tổng Quan
+Functions support reuse, abstraction, and testability.
+
+#### Giải thích
+Nên viết hàm nhỏ, rõ input/output để dễ test. Đây cũng là cách trả lời tốt khi được hỏi về clean code trong JavaScript.
+
+#### Ví dụ
 ```javascript
-const person = { name: 'John', age: 30 };
+function formatFullName(firstName, lastName) {
+  return `${firstName} ${lastName}`.trim();
+}
 
-// Dot notation
-person.name; // 'John'
-
-// Bracket notation
-person['age']; // 30
-
-// Dynamic property
-const prop = 'name';
-person[prop]; // 'John'
+console.log(formatFullName('Gia', 'Buu'));
 ```
 
-### Object Methods
+### 11. Objects and Arrays Essentials
 
+#### Tổng Quan
+Objects store keyed data; arrays store ordered lists. Both are reference types.
+
+#### Giải thích
+Bạn cần nắm thao tác không mutate để tránh side effects, đặc biệt trong React state updates.
+
+#### Ví dụ
 ```javascript
-const person = { name: 'John', age: 30, city: 'NYC' };
+const user = { id: 1, name: 'Mai' };
+const updatedUser = { ...user, name: 'Minh' };
 
-// Keys
-Object.keys(person); // ['name', 'age', 'city']
+const nums = [1, 2, 3];
+const nextNums = [...nums, 4];
 
-// Values
-Object.values(person); // ['John', 30, 'NYC']
-
-// Entries
-Object.entries(person); // [['name', 'John'], ['age', 30], ['city', 'NYC']]
-
-// Assign (merge objects)
-const obj1 = { a: 1 };
-const obj2 = { b: 2 };
-Object.assign(obj1, obj2); // { a: 1, b: 2 }
-
-// Spread operator (ES6)
-const merged = { ...obj1, ...obj2 };
-
-// Freeze (immutable)
-Object.freeze(person);
-person.age = 31; // No effect
-
-// Seal (can modify, can't add/delete)
-Object.seal(person);
+console.log(updatedUser, nextNums);
 ```
 
-### Destructuring
+### 12. Short-Circuit Evaluation
 
+#### Tổng Quan
+Logical operators can return operands, not just booleans, enabling concise defaults and guards.
+
+#### Giải thích
+Cần hiểu behavior trả về giá trị gốc để tránh bug. Ví dụ `a && b` trả về a nếu a falsy, ngược lại trả về b.
+
+#### Ví dụ
 ```javascript
-// Object destructuring
-const person = { name: 'John', age: 30 };
-const { name, age } = person;
+const token = '';
+const header = token && `Bearer ${token}`;
+const safeHeader = token ? `Bearer ${token}` : null;
 
-// With default values
-const { name, age, city = 'Unknown' } = person;
+console.log(header, safeHeader);
+```
 
-// Rename variables
-const { name: personName } = person;
+### 13. Basic Debugging Mindset
 
-// Array destructuring
-const arr = [1, 2, 3];
-const [first, second] = arr;
+#### Tổng Quan
+Interviewers value systematic debugging: reproduce, isolate, observe, and verify fix.
 
-// Skip elements
-const [first, , third] = arr;
+#### Giải thích
+Đừng chỉ đoán. Hãy trình bày quy trình: tái hiện lỗi, thu hẹp phạm vi, thêm log/ breakpoint, kiểm tra giả thuyết, rồi mới sửa.
 
-// Rest operator
-const [first, ...rest] = arr; // first = 1, rest = [2, 3]
+#### Ví dụ
+```javascript
+function safeDivide(a, b) {
+  if (b === 0) {
+    throw new Error('Division by zero');
+  }
+  return a / b;
+}
+
+console.log(safeDivide(10, 2));
+```
+
+### 14. Interview Strategy for Basics
+
+#### Tổng Quan
+Strong basics answers combine definition, practical example, and caveat.
+
+#### Giải thích
+Công thức trả lời hiệu quả: Định nghĩa ngắn → Ví dụ code nhỏ → Cảnh báo bug thường gặp → Best practice.
+
+#### Ví dụ
+```javascript
+function answerTemplate(topic) {
+  return {
+    definition: `What is ${topic}?`,
+    example: 'Show 3-5 lines of code',
+    caveat: 'Mention a common pitfall'
+  };
+}
+
+console.log(answerTemplate('strict mode'));
 ```
 
 ---
 
-## String Methods
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
+### 🟢 [Junior] Q1. What is JavaScript and why is it single-threaded?
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
 ```javascript
-const str = 'Hello World';
-
-// Length
-str.length; // 11
-
-// Case
-str.toLowerCase(); // 'hello world'
-str.toUpperCase(); // 'HELLO WORLD'
-
-// Trim
-'  hello  '.trim(); // 'hello'
-
-// Includes
-str.includes('World'); // true
-
-// StartsWith/EndsWith
-str.startsWith('Hello'); // true
-str.endsWith('World'); // true
-
-// IndexOf
-str.indexOf('World'); // 6
-str.lastIndexOf('o'); // 7
-
-// Slice
-str.slice(0, 5); // 'Hello'
-str.slice(-5); // 'World'
-
-// Substring
-str.substring(0, 5); // 'Hello'
-
-// Replace
-str.replace('World', 'JavaScript'); // 'Hello JavaScript'
-str.replaceAll('l', 'L'); // 'HeLLo WorLd'
-
-// Split
-str.split(' '); // ['Hello', 'World']
-
-// Repeat
-'ha'.repeat(3); // 'hahaha'
-
-// PadStart/PadEnd
-'5'.padStart(3, '0'); // '005'
-'5'.padEnd(3, '0'); // '500'
-
-// Template literals
-const name = 'John';
-const age = 30;
-`My name is ${name} and I'm ${age} years old`;
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
 ```
 
----
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
 
-## Number Methods
+### 🟡 [Mid] Q2. Differentiate ECMAScript and JavaScript.
 
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
 ```javascript
-// parseInt
-parseInt('42'); // 42
-parseInt('42.5'); // 42
-parseInt('42px'); // 42
-
-// parseFloat
-parseFloat('42.5'); // 42.5
-
-// Number
-Number('42'); // 42
-Number('42.5'); // 42.5
-Number('42px'); // NaN
-
-// toFixed (decimal places)
-(3.14159).toFixed(2); // '3.14'
-
-// toPrecision (significant digits)
-(123.456).toPrecision(4); // '123.5'
-
-// isNaN
-isNaN(NaN); // true
-isNaN('hello'); // true
-Number.isNaN(NaN); // true (better)
-Number.isNaN('hello'); // false
-
-// isFinite
-isFinite(42); // true
-isFinite(Infinity); // false
-
-// Math methods
-Math.round(4.5); // 5
-Math.ceil(4.1); // 5
-Math.floor(4.9); // 4
-Math.abs(-5); // 5
-Math.max(1, 2, 3); // 3
-Math.min(1, 2, 3); // 1
-Math.random(); // Random between 0 and 1
-Math.pow(2, 3); // 8
-Math.sqrt(16); // 4
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
 ```
 
----
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
 
-## Interview Questions
+### 🔴 [Senior] Q3. Name major ES milestones interviewers ask about.
 
-### Q1: What's the difference between `let`, `const`, and `var`?
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
 
-**Answer:**
-- **var**: Function-scoped, hoisted, can redeclare
-- **let**: Block-scoped, not hoisted (TDZ), can't redeclare
-- **const**: Block-scoped, not hoisted (TDZ), can't reassign
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
 
+**Ví dụ:**
 ```javascript
-var x = 1; // Function-scoped
-let y = 2; // Block-scoped
-const z = 3; // Block-scoped, immutable binding
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
 ```
 
-### Q2: What's the difference between `==` and `===`?
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
 
-**Answer:**
-- **==**: Loose equality, performs type coercion
-- **===**: Strict equality, no type coercion
+### 🟢 [Junior] Q4. When should you enable strict mode?
 
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
 ```javascript
-5 == '5'; // true (coercion)
-5 === '5'; // false (different types)
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
 ```
 
-### Q3: What are falsy values in JavaScript?
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
 
-**Answer:**
-Six falsy values:
-1. `false`
-2. `0`
-3. `''` (empty string)
-4. `null`
-5. `undefined`
-6. `NaN`
+### 🟡 [Mid] Q5. What changes in strict mode for accidental globals?
 
-All other values are truthy.
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
 
-### Q4: What's the difference between `null` and `undefined`?
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
 
-**Answer:**
-- **undefined**: Variable declared but not assigned
-- **null**: Intentional absence of value
-
+**Ví dụ:**
 ```javascript
-let x; // undefined
-let y = null; // null
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
 ```
 
-### Q5: How do you check if a variable is an array?
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
 
-**Answer:**
+### 🔴 [Senior] Q6. Explain primitive vs reference assignment.
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
 ```javascript
-Array.isArray([]); // true
-Array.isArray({}); // false
-
-// Don't use typeof (returns 'object')
-typeof []; // 'object'
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
 ```
 
----
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
 
-## Key Takeaways
+### 🟢 [Junior] Q7. Why does object mutation surprise beginners?
 
-1. JavaScript is dynamically typed
-2. Use `const` by default, `let` when needed, avoid `var`
-3. Use `===` for equality checks
-4. Arrays and objects are reference types
-5. Functions are first-class citizens
-6. Template literals for string interpolation
-7. Destructuring simplifies code
-8. Array methods are powerful tools
-9. Understand falsy values
-10. Master type checking
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
 
----
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
 
-[Back to Table of Contents](../00-table-of-contents.md) | [Next: Variables & Data Types →](./01-variables-data-types.md)
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🟡 [Mid] Q8. What is implicit type coercion?
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🔴 [Senior] Q9. Why does '5' + 1 differ from '5' - 1?
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🟢 [Junior] Q10. List all falsy values in JavaScript.
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🟡 [Mid] Q11. How do truthy/falsy checks affect form validation?
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🔴 [Senior] Q12. Compare == and ===.
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🟢 [Junior] Q13. When is using == acceptable?
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🟡 [Mid] Q14. What is the difference between || and ??.
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🔴 [Senior] Q15. How does optional chaining prevent runtime crashes?
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🟢 [Junior] Q16. Explain short-circuiting with &&.
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🟡 [Mid] Q17. What are pre/post increment pitfalls?
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🔴 [Senior] Q18. How do bitwise operators differ from logical operators?
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🟢 [Junior] Q19. When would you choose switch over if/else?
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🟡 [Mid] Q20. How does break affect loops?
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🔴 [Senior] Q21. Difference between for...of and for...in?
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🟢 [Junior] Q22. How do you safely parse JSON from APIs?
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🟡 [Mid] Q23. Why should you avoid swallowing errors silently?
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🔴 [Senior] Q24. What does finally guarantee?
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🟢 [Junior] Q25. How do you rethrow errors with context?
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🟡 [Mid] Q26. What is idempotent control flow in UI handlers?
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🔴 [Senior] Q27. Why are guard clauses useful?
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🟢 [Junior] Q28. How do you validate unknown input types?
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🟡 [Mid] Q29. What is NaN and how to check it correctly?
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🔴 [Senior] Q30. Difference between Number.isNaN and isNaN?
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🟢 [Junior] Q31. What is Object.is and when to use it?
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🟡 [Mid] Q32. Why is floating-point arithmetic imprecise?
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🔴 [Senior] Q33. How do you compare decimals safely?
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🟢 [Junior] Q34. What is temporal coupling in imperative code?
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🟡 [Mid] Q35. How can defaults hide real bugs?
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🔴 [Senior] Q36. Why is explicit conversion better in APIs?
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🟢 [Junior] Q37. How do you explain event-driven behavior in basics round?
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🟡 [Mid] Q38. What baseline debugging process do you follow?
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🔴 [Senior] Q39. How do you answer basics questions under pressure?
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.
+
+### 🟢 [Junior] Q40. What common JavaScript beginner mistakes appear in interviews?
+
+**Answer (EN):** State the rule clearly, then show a tiny code sample and one pitfall. Interviewers prioritize correctness over memorized jargon.
+
+**Giải thích (VI):** Hãy nêu quy tắc cốt lõi, đưa ví dụ ngắn và nhắc lỗi thường gặp. Nhà tuyển dụng đánh giá khả năng áp dụng hơn là học thuộc lòng.
+
+**Ví dụ:**
+```javascript
+const input = '42';
+const value = Number(input);
+console.log({ input, value, type: typeof value });
+```
+
+**Interview Tip:** Keep your answer in 30-45 seconds, then invite a follow-up scenario.

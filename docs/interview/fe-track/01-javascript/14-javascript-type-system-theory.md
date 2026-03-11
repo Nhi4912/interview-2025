@@ -675,9 +675,9 @@ class EqualityComparison {
 
 ---
 
-## Interview Questions / Câu Hỏi Phỏng Vấn
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-### Q1: Explain the difference between == and ===
+### 🟡 [Mid] Q1: Explain the difference between == and ===
 
 **English Answer:**
 
@@ -707,7 +707,7 @@ Object.is(+0, -0) // false
 
 `==` thực hiện chuyển đổi kiểu trước khi so sánh, trong khi `===` không chuyển đổi kiểu.
 
-### Q2: How does type coercion work in JavaScript?
+### 🔴 [Senior] Q2: How does type coercion work in JavaScript?
 
 **English Answer:**
 

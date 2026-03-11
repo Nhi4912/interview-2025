@@ -851,9 +851,9 @@ console.log(html.build());
 
 ---
 
-## Interview Questions / Câu Hỏi Phỏng Vấn
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-### Q1: What is metaprogramming and why use it?
+### 🔴 [Senior] Q1: What is metaprogramming and why use it?
 
 **English Answer:**
 
@@ -889,7 +889,7 @@ console.log(html.build());
 
 Metaprogramming là code thao tác code. Dùng cho frameworks, ORMs, validation, serialization, DI, AOP.
 
-### Q2: Explain Reflect API and its advantages
+### 🔴 [Senior] Q2: Explain Reflect API and its advantages
 
 **English Answer:**
 
@@ -925,7 +925,7 @@ const success = Reflect.deleteProperty(obj, 'prop');
 
 Reflect API cung cấp methods cho các thao tác có thể chặn. Ưu điểm: return values, consistency, functional, proxy integration.
 
-### Q3: How to create a DSL in JavaScript?
+### 🔴 [Senior] Q3: How to create a DSL in JavaScript?
 
 **English Answer:**
 

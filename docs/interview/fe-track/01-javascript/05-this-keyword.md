@@ -583,9 +583,9 @@ const person2 = {
 
 ---
 
-## Interview Questions / Câu Hỏi Phỏng Vấn
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-### Question 1: What determines the value of `this`?
+### 🟡 [Mid] Question 1: What determines the value of `this`?
 
 **English Answer:**
 The value of `this` is determined by how a function is called, not where it's defined. There are four binding rules:
@@ -601,7 +601,7 @@ Giá trị của `this` được xác định bởi cách hàm được gọi, k
 3. Ràng buộc tường minh (call, apply, bind)
 4. Ràng buộc new (hàm constructor với từ khóa new)
 
-### Question 2: How do arrow functions handle `this`?
+### 🟡 [Mid] Question 2: How do arrow functions handle `this`?
 
 **English Answer:**
 Arrow functions don't have their own `this` binding. They lexically capture the `this` value from the enclosing scope where they're defined. This makes them useful for callbacks and nested functions where you want to preserve the outer `this` context.
@@ -625,7 +625,7 @@ const obj = {
 };
 ```
 
-### Question 3: Difference between call, apply, and bind?
+### 🟢 [Junior] Question 3: Difference between call, apply, and bind?
 
 **English Answer:**
 - `call()`: Invokes function immediately with specified `this` and individual arguments
@@ -655,7 +655,7 @@ const boundGreet = greet.bind(person, 'Hey');
 console.log(boundGreet('?')); // "Hey, I'm Ivy?"
 ```
 
-### Question 4: Predict the output
+### 🟡 [Mid] Question 4: Predict the output
 
 ```javascript
 const obj = {

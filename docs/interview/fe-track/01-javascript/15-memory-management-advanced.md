@@ -803,9 +803,9 @@ class WeakReferenceExamples {
 
 ---
 
-## Interview Questions / Câu Hỏi Phỏng Vấn
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-### Q1: Explain how garbage collection works in JavaScript
+### 🔴 [Senior] Q1: Explain how garbage collection works in JavaScript
 
 **English Answer:**
 
@@ -830,7 +830,7 @@ JavaScript uses automatic garbage collection with mark-and-sweep algorithm:
 
 JavaScript sử dụng thu gom rác tự động với thuật toán đánh dấu và quét, có tối ưu hóa theo thế hệ và concurrent.
 
-### Q2: What causes memory leaks in JavaScript?
+### 🔴 [Senior] Q2: What causes memory leaks in JavaScript?
 
 **English Answer:**
 

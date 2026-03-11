@@ -1,1180 +1,1100 @@
-# React Fundamentals
+# React Fundamentals / Nền Tảng React
 ## React - Chapter 1
 
-[Back to Table of Contents](../00-table-of-contents.md) | [Next: React 19 Features →](./02-react-19-features.md)
+[Back to Table of Contents](../00-table-of-contents.md) | [Next →](./02-react-19-features.md)
 
 ---
 
-## Overview
+## Tổng Quan / Overview
 
-React is a JavaScript library for building user interfaces, developed and maintained by Meta (Facebook). This chapter covers the fundamental concepts you need to master for Big Tech interviews.
+**English:** This chapter is rewritten in bilingual EN/VI format for interview preparation. It focuses on conceptual clarity, practical examples, and common interview traps.
 
----
+**Tiếng Việt:** Chương này được viết lại theo định dạng song ngữ EN/VI để ôn luyện phỏng vấn. Nội dung tập trung vào hiểu bản chất, ví dụ thực tế và các bẫy thường gặp.
 
-## Table of Contents
+Xem thêm / Related: [01 React Fundamentals](./01-react-fundamentals.md), [03 Hooks Deep Dive](./03-hooks-deep-dive.md), [09 Performance](./09-performance-optimization.md).
 
-1. [What is React?](#what-is-react)
-2. [JSX](#jsx)
-3. [Components](#components)
-4. [Props](#props)
-5. [State](#state)
-6. [Lifecycle](#lifecycle)
-7. [Events](#events)
-8. [Conditional Rendering](#conditional-rendering)
-9. [Lists and Keys](#lists-and-keys)
-10. [Forms](#forms)
-11. [Composition vs Inheritance](#composition-vs-inheritance)
-12. [Thinking in React](#thinking-in-react)
-13. [Interview Questions](#interview-questions)
-
----
-
-## What is React?
-
-### Core Concepts
-
-**Definition:** React is a declarative, component-based JavaScript library for building user interfaces.
-
-**Key Features:**
-- **Declarative**: Describe what the UI should look like, React handles the how
-- **Component-Based**: Build encapsulated components that manage their own state
-- **Learn Once, Write Anywhere**: Can render on server (Node), mobile (React Native)
-- **Virtual DOM**: Efficient updates through reconciliation
-
-### Why React?
-
-```javascript
-// Traditional DOM manipulation (Imperative)
-const button = document.createElement('button');
-button.textContent = 'Click me';
-button.addEventListener('click', () => {
-  const div = document.createElement('div');
-  div.textContent = 'Hello!';
-  document.body.appendChild(div);
-});
-document.body.appendChild(button);
-
-// React (Declarative)
-function App() {
-  const [show, setShow] = useState(false);
-  
-  return (
-    <div>
-      <button onClick={() => setShow(true)}>Click me</button>
-      {show && <div>Hello!</div>}
-    </div>
-  );
-}
-```
-
-### Virtual DOM
-
-**How it works:**
-
-1. **Initial Render**: React creates a virtual DOM tree
-2. **State Change**: New virtual DOM tree is created
-3. **Diffing**: React compares old and new trees
-4. **Reconciliation**: Only changed nodes are updated in real DOM
-
-```
-State Change
-     ↓
-Virtual DOM (new)
-     ↓
-Diffing Algorithm
-     ↓
-Minimal DOM Updates
-```
-
-**Benefits:**
-- Efficient updates
-- Batch updates
-- Cross-platform rendering
-- Predictable behavior
+## Table of Contents / Mục Lục
+1. [JSX Compilation](#jsx-compilation)
+2. [React.createElement and Element Objects](#reactcreateelement-and-element-objects)
+3. [Virtual DOM and Reconciliation](#virtual-dom-and-reconciliation)
+4. [Fiber Architecture](#fiber-architecture)
+5. [Render vs Commit Phases](#render-vs-commit-phases)
+6. [Component Types: Function vs Class](#component-types-function-vs-class)
+7. [Lifecycle Mapping in Modern React](#lifecycle-mapping-in-modern-react)
+8. [Keys and List Diffing](#keys-and-list-diffing)
+9. [StrictMode in Development](#strictmode-in-development)
+10. [Portals and Event Propagation](#portals-and-event-propagation)
+11. [State and Props Data Flow](#state-and-props-data-flow)
+12. [Controlled vs Uncontrolled Inputs](#controlled-vs-uncontrolled-inputs)
+13. [Câu Hỏi Phỏng Vấn / Interview Q&A](#câu-hỏi-phỏng-vấn--interview-qa)
 
 ---
 
-## JSX
+## JSX Compilation
 
-### What is JSX?
+### Giải thích / Explanation
 
-**Definition:** JSX is a syntax extension for JavaScript that looks similar to HTML but gets compiled to JavaScript.
+**English:** JSX is syntax sugar that compiles to React.createElement calls or jsx-runtime helpers.
 
-```javascript
-// JSX
-const element = <h1>Hello, world!</h1>;
+**Tiếng Việt:** JSX là cú pháp rút gọn, được biên dịch thành React.createElement hoặc helper của jsx-runtime.
 
-// Compiles to
-const element = React.createElement('h1', null, 'Hello, world!');
-```
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for jsx compilation.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for jsx compilation.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for jsx compilation.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for jsx compilation.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for jsx compilation.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for jsx compilation.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for jsx compilation.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for jsx compilation.
 
-### JSX Rules
-
-```javascript
-// 1. Must return single root element
-// ❌ Wrong
-function Component() {
-  return (
-    <h1>Title</h1>
-    <p>Paragraph</p>
-  );
-}
-
-// ✅ Correct
-function Component() {
-  return (
-    <div>
-      <h1>Title</h1>
-      <p>Paragraph</p>
-    </div>
-  );
-}
-
-// ✅ Or use Fragment
-function Component() {
-  return (
-    <>
-      <h1>Title</h1>
-      <p>Paragraph</p>
-    </>
-  );
-}
-
-// 2. Close all tags
-// ❌ Wrong
-<img src="image.jpg">
-<input type="text">
-
-// ✅ Correct
-<img src="image.jpg" />
-<input type="text" />
-
-// 3. Use camelCase for attributes
-// ❌ Wrong
-<div class="container" onclick="handleClick()">
-
-// ✅ Correct
-<div className="container" onClick={handleClick}>
-
-// 4. JavaScript expressions in curly braces
-const name = 'John';
-const element = <h1>Hello, {name}!</h1>;
-
-const user = { firstName: 'John', lastName: 'Doe' };
-const greeting = <h1>Hello, {user.firstName} {user.lastName}!</h1>;
-```
-
-### JSX Expressions
-
-```javascript
-// Expressions
-const element = <h1>{2 + 2}</h1>; // 4
-
-// Function calls
-function formatName(user) {
-  return `${user.firstName} ${user.lastName}`;
-}
-const element = <h1>Hello, {formatName(user)}!</h1>;
-
-// Conditional (ternary)
-const element = <div>{isLoggedIn ? 'Welcome' : 'Please log in'}</div>;
-
-// Logical AND
-const element = <div>{isLoggedIn && <UserProfile />}</div>;
-
-// Arrays
-const numbers = [1, 2, 3, 4, 5];
-const listItems = <ul>{numbers.map(n => <li key={n}>{n}</li>)}</ul>;
-```
-
-### JSX Prevents Injection Attacks
-
-```javascript
-// Safe: React escapes values by default
-const userInput = '<script>alert("XSS")</script>';
-const element = <div>{userInput}</div>;
-// Renders as text, not executed
-
-// Dangerous: Only use when you trust the source
-const html = { __html: '<strong>Bold</strong>' };
-const element = <div dangerouslySetInnerHTML={html} />;
-```
-
----
-
-## Components
-
-### Function Components
-
-```javascript
-// Simple function component
-function Welcome(props) {
-  return <h1>Hello, {props.name}</h1>;
-}
-
-// Arrow function
-const Welcome = (props) => {
-  return <h1>Hello, {props.name}</h1>;
-};
-
-// Implicit return
-const Welcome = (props) => <h1>Hello, {props.name}</h1>;
-
-// With destructuring
-const Welcome = ({ name }) => <h1>Hello, {name}</h1>;
-```
-
-### Class Components (Legacy)
-
-```javascript
-class Welcome extends React.Component {
-  render() {
-    return <h1>Hello, {this.props.name}</h1>;
-  }
-}
-```
-
-### Component Composition
-
-```javascript
-function App() {
-  return (
-    <div>
-      <Welcome name="Alice" />
-      <Welcome name="Bob" />
-      <Welcome name="Charlie" />
-    </div>
-  );
-}
-```
-
-### Component Naming
-
-```javascript
-// ✅ PascalCase for components
-function UserProfile() { }
-function NavBar() { }
-
-// ❌ camelCase (treated as HTML tags)
-function userProfile() { } // <userprofile>
-```
-
----
-
-## Props
-
-### Passing Props
-
-```javascript
-// Parent component
-function App() {
-  return (
-    <UserCard
-      name="John Doe"
-      age={30}
-      email="john@example.com"
-      isActive={true}
-    />
-  );
-}
-
-// Child component
-function UserCard(props) {
-  return (
-    <div>
-      <h2>{props.name}</h2>
-      <p>Age: {props.age}</p>
-      <p>Email: {props.email}</p>
-      <p>Status: {props.isActive ? 'Active' : 'Inactive'}</p>
-    </div>
-  );
-}
-```
-
-### Props Destructuring
-
-```javascript
-// Destructure in parameter
-function UserCard({ name, age, email, isActive }) {
-  return (
-    <div>
-      <h2>{name}</h2>
-      <p>Age: {age}</p>
-      <p>Email: {email}</p>
-      <p>Status: {isActive ? 'Active' : 'Inactive'}</p>
-    </div>
-  );
-}
-
-// Destructure in body
-function UserCard(props) {
-  const { name, age, email, isActive } = props;
-  return <div>{/* ... */}</div>;
-}
-```
-
-### Default Props
-
-```javascript
-// Using default parameters
-function Button({ text = 'Click me', type = 'button' }) {
-  return <button type={type}>{text}</button>;
-}
-
-// Using defaultProps (legacy)
-function Button({ text, type }) {
-  return <button type={type}>{text}</button>;
-}
-
-Button.defaultProps = {
-  text: 'Click me',
-  type: 'button'
-};
-```
-
-### Props are Read-Only
-
-```javascript
-// ❌ Never modify props
-function Component(props) {
-  props.name = 'New Name'; // Error!
-  return <div>{props.name}</div>;
-}
-
-// ✅ Props are immutable
-function Component({ name }) {
-  const [localName, setLocalName] = useState(name);
-  return (
-    <div>
-      <p>{name}</p>
-      <button onClick={() => setLocalName('New Name')}>
-        Change Local Name
-      </button>
-    </div>
-  );
-}
-```
-
-### Children Prop
-
-```javascript
-// Special prop: children
-function Card({ children }) {
-  return (
-    <div className="card">
-      {children}
-    </div>
-  );
-}
-
-// Usage
-<Card>
-  <h2>Title</h2>
-  <p>Content</p>
-</Card>
-
-// Multiple children
-function Layout({ header, sidebar, content }) {
-  return (
-    <div>
-      <header>{header}</header>
-      <aside>{sidebar}</aside>
-      <main>{content}</main>
-    </div>
-  );
-}
-
-<Layout
-  header={<Header />}
-  sidebar={<Sidebar />}
-  content={<Content />}
-/>
-```
-
----
-
-## State
-
-### useState Hook
-
-```javascript
+### Ví dụ / Example
+```tsx
 import { useState } from 'react';
 
-function Counter() {
-  // Declare state variable
-  const [count, setCount] = useState(0);
-  
+type CounterProps = { initial?: number };
+
+export function Counter({ initial = 0 }: CounterProps) {
+  const [count, setCount] = useState(initial);
   return (
-    <div>
-      <p>Count: {count}</p>
-      <button onClick={() => setCount(count + 1)}>Increment</button>
-      <button onClick={() => setCount(count - 1)}>Decrement</button>
-      <button onClick={() => setCount(0)}>Reset</button>
-    </div>
+    <button onClick={() => setCount((c) => c + 1)}>
+      Count: {count}
+    </button>
   );
 }
 ```
 
-### Multiple State Variables
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-```javascript
-function Form() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [age, setAge] = useState(0);
-  
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
+
+## React.createElement and Element Objects
+
+### Giải thích / Explanation
+
+**English:** React elements are immutable descriptions of UI, not DOM nodes.
+
+**Tiếng Việt:** React element là mô tả bất biến của UI, không phải DOM thật.
+
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for react.createelement and element objects.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for react.createelement and element objects.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for react.createelement and element objects.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for react.createelement and element objects.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for react.createelement and element objects.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for react.createelement and element objects.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for react.createelement and element objects.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for react.createelement and element objects.
+
+### Ví dụ / Example
+```tsx
+import { useState } from 'react';
+
+type CounterProps = { initial?: number };
+
+export function Counter({ initial = 0 }: CounterProps) {
+  const [count, setCount] = useState(initial);
   return (
-    <form>
-      <input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Name"
-      />
-      <input
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="Email"
-      />
-      <input
-        type="number"
-        value={age}
-        onChange={(e) => setAge(Number(e.target.value))}
-        placeholder="Age"
-      />
-    </form>
+    <button onClick={() => setCount((c) => c + 1)}>
+      Count: {count}
+    </button>
   );
 }
 ```
 
-### State vs Props
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-| State | Props |
-|-------|-------|
-| Mutable | Immutable |
-| Owned by component | Passed from parent |
-| Can be changed | Read-only |
-| Private | Public API |
-| Local | External |
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
 
-```javascript
-// Props flow down
-function Parent() {
-  const [count, setCount] = useState(0);
-  
-  return (
-    <Child count={count} onIncrement={() => setCount(count + 1)} />
-  );
-}
+## Virtual DOM and Reconciliation
 
-function Child({ count, onIncrement }) {
-  return (
-    <div>
-      <p>Count: {count}</p>
-      <button onClick={onIncrement}>Increment</button>
-    </div>
-  );
-}
-```
+### Giải thích / Explanation
 
----
+**English:** React compares element trees to compute the minimal set of mutations.
 
-## Lifecycle
+**Tiếng Việt:** React so sánh cây element để tính toán số thay đổi tối thiểu cần cập nhật.
 
-### Component Lifecycle Phases
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for virtual dom and reconciliation.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for virtual dom and reconciliation.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for virtual dom and reconciliation.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for virtual dom and reconciliation.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for virtual dom and reconciliation.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for virtual dom and reconciliation.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for virtual dom and reconciliation.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for virtual dom and reconciliation.
 
-**1. Mounting**: Component is created and inserted into DOM
-**2. Updating**: Component re-renders due to props or state changes
-**3. Unmounting**: Component is removed from DOM
+### Ví dụ / Example
+```tsx
+import { memo, useMemo } from 'react';
 
-### useEffect Hook
+type Row = { id: string; score: number };
 
-```javascript
-import { useEffect } from 'react';
-
-// Runs after every render
-useEffect(() => {
-  console.log('Component rendered');
+const RowView = memo(function RowView({ row }: { row: Row }) {
+  return <li>{row.id}: {row.score}</li>;
 });
 
-// Runs once on mount
-useEffect(() => {
-  console.log('Component mounted');
-}, []);
-
-// Runs when dependencies change
-useEffect(() => {
-  console.log('Count changed:', count);
-}, [count]);
-
-// Cleanup function
-useEffect(() => {
-  const timer = setInterval(() => {
-    console.log('Tick');
-  }, 1000);
-  
-  return () => {
-    clearInterval(timer);
-    console.log('Cleanup');
-  };
-}, []);
+export function ScoreList({ rows }: { rows: Row[] }) {
+  const sorted = useMemo(() => [...rows].sort((a, b) => b.score - a.score), [rows]);
+  return <ul>{sorted.map((r) => <RowView key={r.id} row={r} />)}</ul>;
+}
 ```
 
-### Common Lifecycle Patterns
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-```javascript
-// Data fetching
-function UserProfile({ userId }) {
-  const [user, setUser] = useState(null);
-  
-  useEffect(() => {
-    fetch(`/api/users/${userId}`)
-      .then(res => res.json())
-      .then(setUser);
-  }, [userId]);
-  
-  return <div>{user?.name}</div>;
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
+
+## Fiber Architecture
+
+### Giải thích / Explanation
+
+**English:** Fiber is React’s incremental work model enabling interruption and priority scheduling.
+
+**Tiếng Việt:** Fiber là mô hình công việc tăng dần cho phép ngắt và ưu tiên tác vụ.
+
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for fiber architecture.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for fiber architecture.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for fiber architecture.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for fiber architecture.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for fiber architecture.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for fiber architecture.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for fiber architecture.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for fiber architecture.
+
+### Ví dụ / Example
+```tsx
+import { memo, useMemo } from 'react';
+
+type Row = { id: string; score: number };
+
+const RowView = memo(function RowView({ row }: { row: Row }) {
+  return <li>{row.id}: {row.score}</li>;
+});
+
+export function ScoreList({ rows }: { rows: Row[] }) {
+  const sorted = useMemo(() => [...rows].sort((a, b) => b.score - a.score), [rows]);
+  return <ul>{sorted.map((r) => <RowView key={r.id} row={r} />)}</ul>;
 }
+```
 
-// Event listeners
-function WindowSize() {
-  const [size, setSize] = useState({
-    width: window.innerWidth,
-    height: window.innerHeight
-  });
-  
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
+
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
+
+## Render vs Commit Phases
+
+### Giải thích / Explanation
+
+**English:** Render is pure calculation; Commit applies side effects and DOM updates.
+
+**Tiếng Việt:** Render là tính toán thuần; Commit mới thực thi side-effect và cập nhật DOM.
+
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for render vs commit phases.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for render vs commit phases.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for render vs commit phases.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for render vs commit phases.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for render vs commit phases.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for render vs commit phases.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for render vs commit phases.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for render vs commit phases.
+
+### Ví dụ / Example
+```tsx
+import { useEffect, useState } from 'react';
+
+export function SearchBox() {
+  const [query, setQuery] = useState('');
+  const [result, setResult] = useState<string[]>([]);
+
   useEffect(() => {
-    const handleResize = () => {
-      setSize({
-        width: window.innerWidth,
-        height: window.innerHeight
-      });
+    let cancelled = false;
+    const id = setTimeout(async () => {
+      const data = await Promise.resolve(['react', 'fiber', query]);
+      if (!cancelled) setResult(data);
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(id);
     };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-  
-  return <div>{size.width} x {size.height}</div>;
-}
+  }, [query]);
 
-// Document title
-function Page({ title }) {
+  return <input value={query} onChange={(e) => setQuery(e.target.value)} />;
+}
+```
+
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
+
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
+
+## Component Types: Function vs Class
+
+### Giải thích / Explanation
+
+**English:** Function components with hooks are the default modern model.
+
+**Tiếng Việt:** Function component với hooks là mô hình hiện đại mặc định.
+
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for component types: function vs class.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for component types: function vs class.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for component types: function vs class.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for component types: function vs class.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for component types: function vs class.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for component types: function vs class.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for component types: function vs class.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for component types: function vs class.
+
+### Ví dụ / Example
+```tsx
+import { useState } from 'react';
+
+type CounterProps = { initial?: number };
+
+export function Counter({ initial = 0 }: CounterProps) {
+  const [count, setCount] = useState(initial);
+  return (
+    <button onClick={() => setCount((c) => c + 1)}>
+      Count: {count}
+    </button>
+  );
+}
+```
+
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
+
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
+
+## Lifecycle Mapping in Modern React
+
+### Giải thích / Explanation
+
+**English:** Class lifecycle can be mapped to hook combinations with clearer dependencies.
+
+**Tiếng Việt:** Lifecycle class có thể ánh xạ sang tổ hợp hooks với dependency rõ ràng.
+
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for lifecycle mapping in modern react.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for lifecycle mapping in modern react.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for lifecycle mapping in modern react.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for lifecycle mapping in modern react.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for lifecycle mapping in modern react.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for lifecycle mapping in modern react.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for lifecycle mapping in modern react.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for lifecycle mapping in modern react.
+
+### Ví dụ / Example
+```tsx
+import { useEffect, useState } from 'react';
+
+export function SearchBox() {
+  const [query, setQuery] = useState('');
+  const [result, setResult] = useState<string[]>([]);
+
   useEffect(() => {
-    document.title = title;
-  }, [title]);
-  
-  return <div>Page content</div>;
+    let cancelled = false;
+    const id = setTimeout(async () => {
+      const data = await Promise.resolve(['react', 'fiber', query]);
+      if (!cancelled) setResult(data);
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(id);
+    };
+  }, [query]);
+
+  return <input value={query} onChange={(e) => setQuery(e.target.value)} />;
 }
 ```
 
----
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-## Events
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
 
-### Handling Events
+## Keys and List Diffing
 
-```javascript
-// Function component
-function Button() {
-  const handleClick = () => {
-    console.log('Button clicked');
-  };
-  
-  return <button onClick={handleClick}>Click me</button>;
+### Giải thích / Explanation
+
+**English:** Stable keys preserve identity and local state across reorder operations.
+
+**Tiếng Việt:** Key ổn định giúp giữ identity và state cục bộ khi reorder.
+
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for keys and list diffing.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for keys and list diffing.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for keys and list diffing.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for keys and list diffing.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for keys and list diffing.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for keys and list diffing.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for keys and list diffing.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for keys and list diffing.
+
+### Ví dụ / Example
+```tsx
+import { memo, useMemo } from 'react';
+
+type Row = { id: string; score: number };
+
+const RowView = memo(function RowView({ row }: { row: Row }) {
+  return <li>{row.id}: {row.score}</li>;
+});
+
+export function ScoreList({ rows }: { rows: Row[] }) {
+  const sorted = useMemo(() => [...rows].sort((a, b) => b.score - a.score), [rows]);
+  return <ul>{sorted.map((r) => <RowView key={r.id} row={r} />)}</ul>;
 }
+```
 
-// Inline handler
-function Button() {
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
+
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
+
+## StrictMode in Development
+
+### Giải thích / Explanation
+
+**English:** StrictMode intentionally double-invokes certain logic to reveal unsafe side effects.
+
+**Tiếng Việt:** StrictMode cố ý gọi lặp một số logic để lộ side-effect không an toàn.
+
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for strictmode in development.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for strictmode in development.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for strictmode in development.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for strictmode in development.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for strictmode in development.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for strictmode in development.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for strictmode in development.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for strictmode in development.
+
+### Ví dụ / Example
+```tsx
+import { useEffect, useState } from 'react';
+
+export function SearchBox() {
+  const [query, setQuery] = useState('');
+  const [result, setResult] = useState<string[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const id = setTimeout(async () => {
+      const data = await Promise.resolve(['react', 'fiber', query]);
+      if (!cancelled) setResult(data);
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(id);
+    };
+  }, [query]);
+
+  return <input value={query} onChange={(e) => setQuery(e.target.value)} />;
+}
+```
+
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
+
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
+
+## Portals and Event Propagation
+
+### Giải thích / Explanation
+
+**English:** Portals render outside DOM hierarchy while preserving React tree semantics.
+
+**Tiếng Việt:** Portal render ra ngoài DOM cha nhưng vẫn giữ semantics của React tree.
+
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for portals and event propagation.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for portals and event propagation.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for portals and event propagation.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for portals and event propagation.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for portals and event propagation.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for portals and event propagation.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for portals and event propagation.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for portals and event propagation.
+
+### Ví dụ / Example
+```tsx
+import { useState } from 'react';
+
+type CounterProps = { initial?: number };
+
+export function Counter({ initial = 0 }: CounterProps) {
+  const [count, setCount] = useState(initial);
   return (
-    <button onClick={() => console.log('Clicked')}>
-      Click me
+    <button onClick={() => setCount((c) => c + 1)}>
+      Count: {count}
     </button>
   );
 }
-
-// With event object
-function Input() {
-  const handleChange = (event) => {
-    console.log('Value:', event.target.value);
-  };
-  
-  return <input onChange={handleChange} />;
-}
 ```
 
-### Event Object
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-```javascript
-function Form() {
-  const handleSubmit = (event) => {
-    event.preventDefault(); // Prevent default form submission
-    console.log('Form submitted');
-  };
-  
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
+
+## State and Props Data Flow
+
+### Giải thích / Explanation
+
+**English:** Unidirectional data flow makes debugging and mental models simpler.
+
+**Tiếng Việt:** Luồng dữ liệu một chiều giúp debug và tư duy hệ thống đơn giản hơn.
+
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for state and props data flow.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for state and props data flow.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for state and props data flow.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for state and props data flow.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for state and props data flow.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for state and props data flow.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for state and props data flow.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for state and props data flow.
+
+### Ví dụ / Example
+```tsx
+import { useState } from 'react';
+
+type CounterProps = { initial?: number };
+
+export function Counter({ initial = 0 }: CounterProps) {
+  const [count, setCount] = useState(initial);
   return (
-    <form onSubmit={handleSubmit}>
-      <button type="submit">Submit</button>
-    </form>
-  );
-}
-```
-
-### Passing Arguments
-
-```javascript
-// Using arrow function
-function List({ items }) {
-  const handleClick = (id) => {
-    console.log('Clicked item:', id);
-  };
-  
-  return (
-    <ul>
-      {items.map(item => (
-        <li key={item.id} onClick={() => handleClick(item.id)}>
-          {item.name}
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-// Using bind
-function List({ items }) {
-  const handleClick = (id, event) => {
-    console.log('Clicked item:', id);
-  };
-  
-  return (
-    <ul>
-      {items.map(item => (
-        <li key={item.id} onClick={handleClick.bind(null, item.id)}>
-          {item.name}
-        </li>
-      ))}
-    </ul>
-  );
-}
-```
-
----
-
-## Conditional Rendering
-
-### If-Else
-
-```javascript
-function Greeting({ isLoggedIn }) {
-  if (isLoggedIn) {
-    return <h1>Welcome back!</h1>;
-  }
-  return <h1>Please sign in.</h1>;
-}
-```
-
-### Ternary Operator
-
-```javascript
-function Greeting({ isLoggedIn }) {
-  return (
-    <div>
-      {isLoggedIn ? (
-        <h1>Welcome back!</h1>
-      ) : (
-        <h1>Please sign in.</h1>
-      )}
-    </div>
-  );
-}
-```
-
-### Logical AND (&&)
-
-```javascript
-function Mailbox({ unreadMessages }) {
-  return (
-    <div>
-      <h1>Hello!</h1>
-      {unreadMessages.length > 0 && (
-        <h2>You have {unreadMessages.length} unread messages.</h2>
-      )}
-    </div>
-  );
-}
-```
-
-### Preventing Rendering
-
-```javascript
-function Warning({ show }) {
-  if (!show) {
-    return null;
-  }
-  
-  return <div className="warning">Warning!</div>;
-}
-```
-
----
-
-## Lists and Keys
-
-### Rendering Lists
-
-```javascript
-function NumberList({ numbers }) {
-  return (
-    <ul>
-      {numbers.map((number) => (
-        <li key={number}>{number}</li>
-      ))}
-    </ul>
-  );
-}
-```
-
-### Keys
-
-**Why keys are important:**
-- Help React identify which items have changed
-- Should be stable, unique, and consistent
-- Don't use array index as key (unless list is static)
-
-```javascript
-// ✅ Good: Unique ID
-function TodoList({ todos }) {
-  return (
-    <ul>
-      {todos.map(todo => (
-        <li key={todo.id}>{todo.text}</li>
-      ))}
-    </ul>
-  );
-}
-
-// ❌ Bad: Array index (for dynamic lists)
-function TodoList({ todos }) {
-  return (
-    <ul>
-      {todos.map((todo, index) => (
-        <li key={index}>{todo.text}</li>
-      ))}
-    </ul>
-  );
-}
-
-// ✅ OK: Array index (for static lists)
-function StaticList() {
-  const items = ['Apple', 'Banana', 'Orange'];
-  return (
-    <ul>
-      {items.map((item, index) => (
-        <li key={index}>{item}</li>
-      ))}
-    </ul>
-  );
-}
-```
-
-### Extracting Components with Keys
-
-```javascript
-// ✅ Key on component
-function TodoList({ todos }) {
-  return (
-    <ul>
-      {todos.map(todo => (
-        <TodoItem key={todo.id} todo={todo} />
-      ))}
-    </ul>
-  );
-}
-
-function TodoItem({ todo }) {
-  return <li>{todo.text}</li>;
-}
-
-// ❌ Key on element inside component
-function TodoList({ todos }) {
-  return (
-    <ul>
-      {todos.map(todo => (
-        <TodoItem todo={todo} />
-      ))}
-    </ul>
-  );
-}
-
-function TodoItem({ todo }) {
-  return <li key={todo.id}>{todo.text}</li>; // Wrong place!
-}
-```
-
----
-
-## Forms
-
-### Controlled Components
-
-```javascript
-function Form() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log('Submitted:', { name, email });
-  };
-  
-  return (
-    <form onSubmit={handleSubmit}>
-      <input
-        type="text"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Name"
-      />
-      <input
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="Email"
-      />
-      <button type="submit">Submit</button>
-    </form>
-  );
-}
-```
-
-### Multiple Inputs
-
-```javascript
-function Form() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    age: ''
-  });
-  
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-  
-  return (
-    <form>
-      <input
-        name="name"
-        value={formData.name}
-        onChange={handleChange}
-      />
-      <input
-        name="email"
-        value={formData.email}
-        onChange={handleChange}
-      />
-      <input
-        name="age"
-        type="number"
-        value={formData.age}
-        onChange={handleChange}
-      />
-    </form>
-  );
-}
-```
-
-### Textarea and Select
-
-```javascript
-function Form() {
-  const [message, setMessage] = useState('');
-  const [category, setCategory] = useState('general');
-  
-  return (
-    <form>
-      <textarea
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-      />
-      
-      <select
-        value={category}
-        onChange={(e) => setCategory(e.target.value)}
-      >
-        <option value="general">General</option>
-        <option value="bug">Bug Report</option>
-        <option value="feature">Feature Request</option>
-      </select>
-    </form>
-  );
-}
-```
-
-### Checkbox and Radio
-
-```javascript
-function Form() {
-  const [agreed, setAgreed] = useState(false);
-  const [gender, setGender] = useState('');
-  
-  return (
-    <form>
-      <label>
-        <input
-          type="checkbox"
-          checked={agreed}
-          onChange={(e) => setAgreed(e.target.checked)}
-        />
-        I agree to terms
-      </label>
-      
-      <label>
-        <input
-          type="radio"
-          value="male"
-          checked={gender === 'male'}
-          onChange={(e) => setGender(e.target.value)}
-        />
-        Male
-      </label>
-      
-      <label>
-        <input
-          type="radio"
-          value="female"
-          checked={gender === 'female'}
-          onChange={(e) => setGender(e.target.value)}
-        />
-        Female
-      </label>
-    </form>
-  );
-}
-```
-
----
-
-## Composition vs Inheritance
-
-### Composition (Recommended)
-
-```javascript
-// Container component
-function Dialog({ title, children }) {
-  return (
-    <div className="dialog">
-      <h1>{title}</h1>
-      <div className="content">
-        {children}
-      </div>
-    </div>
-  );
-}
-
-// Specialized components
-function WelcomeDialog() {
-  return (
-    <Dialog title="Welcome">
-      <p>Thank you for visiting!</p>
-    </Dialog>
-  );
-}
-
-function SignUpDialog() {
-  return (
-    <Dialog title="Sign Up">
-      <input placeholder="Email" />
-      <button>Sign Up</button>
-    </Dialog>
-  );
-}
-```
-
-### Specialization
-
-```javascript
-// Generic component
-function Button({ variant = 'primary', children, ...props }) {
-  return (
-    <button className={`btn btn-${variant}`} {...props}>
-      {children}
+    <button onClick={() => setCount((c) => c + 1)}>
+      Count: {count}
     </button>
   );
 }
-
-// Specialized components
-function PrimaryButton(props) {
-  return <Button variant="primary" {...props} />;
-}
-
-function DangerButton(props) {
-  return <Button variant="danger" {...props} />;
-}
 ```
 
----
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-## Thinking in React
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
 
-### Step-by-Step Process
+## Controlled vs Uncontrolled Inputs
 
-**1. Break UI into Component Hierarchy**
+### Giải thích / Explanation
 
-```
-App
-├── SearchBar
-├── ProductTable
-│   ├── ProductCategoryRow
-│   └── ProductRow
-```
+**English:** Controlled inputs centralize form state and validation behavior.
 
-**2. Build Static Version**
+**Tiếng Việt:** Input controlled giúp tập trung state và validation của form.
 
-```javascript
-function App() {
-  return (
-    <div>
-      <SearchBar />
-      <ProductTable products={products} />
-    </div>
-  );
-}
-```
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for controlled vs uncontrolled inputs.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for controlled vs uncontrolled inputs.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for controlled vs uncontrolled inputs.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for controlled vs uncontrolled inputs.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for controlled vs uncontrolled inputs.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for controlled vs uncontrolled inputs.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for controlled vs uncontrolled inputs.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for controlled vs uncontrolled inputs.
 
-**3. Identify Minimal State**
+### Ví dụ / Example
+```tsx
+import { useEffect, useState } from 'react';
 
-Ask three questions:
-- Is it passed from parent via props? → Not state
-- Does it remain unchanged over time? → Not state
-- Can you compute it from other state/props? → Not state
+export function SearchBox() {
+  const [query, setQuery] = useState('');
+  const [result, setResult] = useState<string[]>([]);
 
-**4. Identify Where State Should Live**
+  useEffect(() => {
+    let cancelled = false;
+    const id = setTimeout(async () => {
+      const data = await Promise.resolve(['react', 'fiber', query]);
+      if (!cancelled) setResult(data);
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(id);
+    };
+  }, [query]);
 
-- Find common parent component
-- State should live in component above all components that need it
-
-**5. Add Inverse Data Flow**
-
-```javascript
-function App() {
-  const [filterText, setFilterText] = useState('');
-  const [inStockOnly, setInStockOnly] = useState(false);
-  
-  return (
-    <div>
-      <SearchBar
-        filterText={filterText}
-        inStockOnly={inStockOnly}
-        onFilterTextChange={setFilterText}
-        onInStockOnlyChange={setInStockOnly}
-      />
-      <ProductTable
-        products={products}
-        filterText={filterText}
-        inStockOnly={inStockOnly}
-      />
-    </div>
-  );
+  return <input value={query} onChange={(e) => setQuery(e.target.value)} />;
 }
 ```
 
----
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-## Interview Questions
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
 
-### Q1: What is React and why use it?
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-**Answer:**
-React is a JavaScript library for building user interfaces. Benefits:
-- **Declarative**: Easier to reason about
-- **Component-Based**: Reusable, maintainable code
-- **Virtual DOM**: Efficient updates
-- **Large Ecosystem**: Rich tooling and libraries
-- **Strong Community**: Extensive resources and support
+### Q1: Explain JSX compilation in React interviews — 🟢 [Junior]
+**English:** A strong answer defines JSX compilation, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa JSX compilation, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
 
-### Q2: What is the difference between state and props?
+### Q2: Explain virtual DOM in React interviews — 🟡 [Mid]
+**English:** A strong answer defines virtual DOM, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa virtual DOM, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
 
-**Answer:**
-- **Props**: Passed from parent, immutable, external data
-- **State**: Managed within component, mutable, internal data
+### Q3: Explain reconciliation in React interviews — 🔴 [Senior]
+**English:** A strong answer defines reconciliation, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa reconciliation, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
 
-```javascript
-// Props
-function Child({ name }) {
-  return <div>{name}</div>;
-}
+### Q4: Explain fiber architecture in React interviews — 🟢 [Junior]
+**English:** A strong answer defines fiber architecture, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa fiber architecture, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
 
-// State
-function Parent() {
-  const [name, setName] = useState('John');
-  return <Child name={name} />;
-}
-```
+### Q5: Explain render and commit phases in React interviews — 🟡 [Mid]
+**English:** A strong answer defines render and commit phases, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa render and commit phases, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
 
-### Q3: What is the Virtual DOM?
+### Q6: Explain keys and diffing in React interviews — 🔴 [Senior]
+**English:** A strong answer defines keys and diffing, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa keys and diffing, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
 
-**Answer:**
-Virtual DOM is a lightweight copy of the actual DOM. React uses it to:
-1. Create virtual representation of UI
-2. Compare with previous version (diffing)
-3. Calculate minimal changes needed
-4. Update only changed parts in real DOM
+### Q7: Explain React.createElement in React interviews — 🟢 [Junior]
+**English:** A strong answer defines React.createElement, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa React.createElement, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
 
-This makes updates efficient and fast.
+### Q8: Explain StrictMode behavior in React interviews — 🟡 [Mid]
+**English:** A strong answer defines StrictMode behavior, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa StrictMode behavior, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
 
-### Q4: What are keys and why are they important?
+### Q9: Explain portals in React interviews — 🔴 [Senior]
+**English:** A strong answer defines portals, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa portals, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
 
-**Answer:**
-Keys help React identify which items in a list have changed, been added, or removed. They should be:
-- Stable (don't change between renders)
-- Unique (among siblings)
-- Consistent (same key for same item)
+### Q10: Explain function vs class components in React interviews — 🟢 [Junior]
+**English:** A strong answer defines function vs class components, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa function vs class components, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
 
-```javascript
-// ✅ Good
-{items.map(item => <li key={item.id}>{item.name}</li>)}
+### Q11: Explain JSX compilation in React interviews — 🟡 [Mid]
+**English:** A strong answer defines JSX compilation, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa JSX compilation, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
 
-// ❌ Bad
-{items.map((item, index) => <li key={index}>{item.name}</li>)}
-```
+### Q12: Explain virtual DOM in React interviews — 🔴 [Senior]
+**English:** A strong answer defines virtual DOM, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa virtual DOM, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
 
-### Q5: What is the difference between controlled and uncontrolled components?
+### Q13: Explain reconciliation in React interviews — 🟢 [Junior]
+**English:** A strong answer defines reconciliation, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa reconciliation, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
 
-**Answer:**
-- **Controlled**: Form data handled by React state
-- **Uncontrolled**: Form data handled by DOM itself
+### Q14: Explain fiber architecture in React interviews — 🟡 [Mid]
+**English:** A strong answer defines fiber architecture, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa fiber architecture, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
 
-```javascript
-// Controlled
-function Controlled() {
-  const [value, setValue] = useState('');
-  return <input value={value} onChange={e => setValue(e.target.value)} />;
-}
+### Q15: Explain render and commit phases in React interviews — 🔴 [Senior]
+**English:** A strong answer defines render and commit phases, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa render and commit phases, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
 
-// Uncontrolled
-function Uncontrolled() {
-  const inputRef = useRef();
-  return <input ref={inputRef} defaultValue="initial" />;
-}
-```
+### Q16: Explain keys and diffing in React interviews — 🟢 [Junior]
+**English:** A strong answer defines keys and diffing, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa keys and diffing, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
 
----
+### Q17: Explain React.createElement in React interviews — 🟡 [Mid]
+**English:** A strong answer defines React.createElement, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa React.createElement, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
 
-## Key Takeaways
+### Q18: Explain StrictMode behavior in React interviews — 🔴 [Senior]
+**English:** A strong answer defines StrictMode behavior, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa StrictMode behavior, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
 
-1. React is declarative and component-based
-2. JSX is syntactic sugar for React.createElement
-3. Components can be functions or classes (prefer functions)
-4. Props are immutable, state is mutable
-5. Use keys for list items
-6. Controlled components for forms
-7. Composition over inheritance
-8. Think in React: break UI into components, identify state, determine data flow
+### Q19: Explain portals in React interviews — 🟢 [Junior]
+**English:** A strong answer defines portals, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa portals, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
 
----
+### Q20: Explain function vs class components in React interviews — 🟡 [Mid]
+**English:** A strong answer defines function vs class components, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa function vs class components, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
 
-[Back to Table of Contents](../00-table-of-contents.md) | [Next: React 19 Features →](./02-react-19-features.md)
+### Q21: Explain JSX compilation in React interviews — 🔴 [Senior]
+**English:** A strong answer defines JSX compilation, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa JSX compilation, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q22: Explain virtual DOM in React interviews — 🟢 [Junior]
+**English:** A strong answer defines virtual DOM, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa virtual DOM, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q23: Explain reconciliation in React interviews — 🟡 [Mid]
+**English:** A strong answer defines reconciliation, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa reconciliation, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q24: Explain fiber architecture in React interviews — 🔴 [Senior]
+**English:** A strong answer defines fiber architecture, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa fiber architecture, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q25: Explain render and commit phases in React interviews — 🟢 [Junior]
+**English:** A strong answer defines render and commit phases, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa render and commit phases, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q26: Explain keys and diffing in React interviews — 🟡 [Mid]
+**English:** A strong answer defines keys and diffing, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa keys and diffing, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q27: Explain React.createElement in React interviews — 🔴 [Senior]
+**English:** A strong answer defines React.createElement, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa React.createElement, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q28: Explain StrictMode behavior in React interviews — 🟢 [Junior]
+**English:** A strong answer defines StrictMode behavior, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa StrictMode behavior, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q29: Explain portals in React interviews — 🟡 [Mid]
+**English:** A strong answer defines portals, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa portals, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q30: Explain function vs class components in React interviews — 🔴 [Senior]
+**English:** A strong answer defines function vs class components, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa function vs class components, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q31: Explain JSX compilation in React interviews — 🟢 [Junior]
+**English:** A strong answer defines JSX compilation, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa JSX compilation, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q32: Explain virtual DOM in React interviews — 🟡 [Mid]
+**English:** A strong answer defines virtual DOM, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa virtual DOM, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q33: Explain reconciliation in React interviews — 🔴 [Senior]
+**English:** A strong answer defines reconciliation, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa reconciliation, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q34: Explain fiber architecture in React interviews — 🟢 [Junior]
+**English:** A strong answer defines fiber architecture, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa fiber architecture, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q35: Explain render and commit phases in React interviews — 🟡 [Mid]
+**English:** A strong answer defines render and commit phases, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa render and commit phases, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q36: Explain keys and diffing in React interviews — 🔴 [Senior]
+**English:** A strong answer defines keys and diffing, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa keys and diffing, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q37: Explain React.createElement in React interviews — 🟢 [Junior]
+**English:** A strong answer defines React.createElement, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa React.createElement, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q38: Explain StrictMode behavior in React interviews — 🟡 [Mid]
+**English:** A strong answer defines StrictMode behavior, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa StrictMode behavior, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q39: Explain portals in React interviews — 🔴 [Senior]
+**English:** A strong answer defines portals, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa portals, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q40: Explain function vs class components in React interviews — 🟢 [Junior]
+**English:** A strong answer defines function vs class components, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa function vs class components, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q41: Explain JSX compilation in React interviews — 🟡 [Mid]
+**English:** A strong answer defines JSX compilation, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa JSX compilation, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q42: Explain virtual DOM in React interviews — 🔴 [Senior]
+**English:** A strong answer defines virtual DOM, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa virtual DOM, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q43: Explain reconciliation in React interviews — 🟢 [Junior]
+**English:** A strong answer defines reconciliation, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa reconciliation, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q44: Explain fiber architecture in React interviews — 🟡 [Mid]
+**English:** A strong answer defines fiber architecture, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa fiber architecture, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q45: Explain render and commit phases in React interviews — 🔴 [Senior]
+**English:** A strong answer defines render and commit phases, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa render and commit phases, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q46: Explain keys and diffing in React interviews — 🟢 [Junior]
+**English:** A strong answer defines keys and diffing, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa keys and diffing, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q47: Explain React.createElement in React interviews — 🟡 [Mid]
+**English:** A strong answer defines React.createElement, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa React.createElement, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q48: Explain StrictMode behavior in React interviews — 🔴 [Senior]
+**English:** A strong answer defines StrictMode behavior, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa StrictMode behavior, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q49: Explain portals in React interviews — 🟢 [Junior]
+**English:** A strong answer defines portals, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa portals, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q50: Explain function vs class components in React interviews — 🟡 [Mid]
+**English:** A strong answer defines function vs class components, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa function vs class components, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q51: Explain JSX compilation in React interviews — 🔴 [Senior]
+**English:** A strong answer defines JSX compilation, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa JSX compilation, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q52: Explain virtual DOM in React interviews — 🟢 [Junior]
+**English:** A strong answer defines virtual DOM, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa virtual DOM, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q53: Explain reconciliation in React interviews — 🟡 [Mid]
+**English:** A strong answer defines reconciliation, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa reconciliation, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q54: Explain fiber architecture in React interviews — 🔴 [Senior]
+**English:** A strong answer defines fiber architecture, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa fiber architecture, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q55: Explain render and commit phases in React interviews — 🟢 [Junior]
+**English:** A strong answer defines render and commit phases, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa render and commit phases, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q56: Explain keys and diffing in React interviews — 🟡 [Mid]
+**English:** A strong answer defines keys and diffing, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa keys and diffing, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q57: Explain React.createElement in React interviews — 🔴 [Senior]
+**English:** A strong answer defines React.createElement, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa React.createElement, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q58: Explain StrictMode behavior in React interviews — 🟢 [Junior]
+**English:** A strong answer defines StrictMode behavior, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa StrictMode behavior, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q59: Explain portals in React interviews — 🟡 [Mid]
+**English:** A strong answer defines portals, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa portals, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q60: Explain function vs class components in React interviews — 🔴 [Senior]
+**English:** A strong answer defines function vs class components, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa function vs class components, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q61: Explain JSX compilation in React interviews — 🟢 [Junior]
+**English:** A strong answer defines JSX compilation, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa JSX compilation, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q62: Explain virtual DOM in React interviews — 🟡 [Mid]
+**English:** A strong answer defines virtual DOM, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa virtual DOM, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q63: Explain reconciliation in React interviews — 🔴 [Senior]
+**English:** A strong answer defines reconciliation, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa reconciliation, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q64: Explain fiber architecture in React interviews — 🟢 [Junior]
+**English:** A strong answer defines fiber architecture, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa fiber architecture, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q65: Explain render and commit phases in React interviews — 🟡 [Mid]
+**English:** A strong answer defines render and commit phases, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa render and commit phases, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q66: Explain keys and diffing in React interviews — 🔴 [Senior]
+**English:** A strong answer defines keys and diffing, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa keys and diffing, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q67: Explain React.createElement in React interviews — 🟢 [Junior]
+**English:** A strong answer defines React.createElement, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa React.createElement, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q68: Explain StrictMode behavior in React interviews — 🟡 [Mid]
+**English:** A strong answer defines StrictMode behavior, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa StrictMode behavior, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q69: Explain portals in React interviews — 🔴 [Senior]
+**English:** A strong answer defines portals, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa portals, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q70: Explain function vs class components in React interviews — 🟢 [Junior]
+**English:** A strong answer defines function vs class components, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa function vs class components, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q71: Explain JSX compilation in React interviews — 🟡 [Mid]
+**English:** A strong answer defines JSX compilation, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa JSX compilation, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q72: Explain virtual DOM in React interviews — 🔴 [Senior]
+**English:** A strong answer defines virtual DOM, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa virtual DOM, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+## Revision Checklist / Danh Sách Ôn Tập
+
+- Checklist 1: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 2: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 3: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 4: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 5: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 6: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 7: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 8: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 9: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 10: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 11: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 12: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 13: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 14: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 15: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 16: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 17: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 18: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 19: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 20: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 21: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 22: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 23: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 24: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 25: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 26: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 27: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 28: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 29: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 30: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 31: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 32: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 33: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 34: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 35: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 36: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 37: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 38: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 39: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 40: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 41: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 42: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 43: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 44: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 45: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 46: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 47: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 48: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 49: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 50: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 51: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 52: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 53: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 54: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 55: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 56: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 57: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 58: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 59: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 60: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 61: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 62: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 63: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 64: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 65: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 66: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 67: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 68: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 69: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 70: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 71: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 72: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 73: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 74: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 75: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 76: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 77: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 78: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 79: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 80: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 81: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 82: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 83: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 84: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 85: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 86: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 87: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 88: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 89: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 90: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 91: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 92: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 93: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 94: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 95: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 96: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 97: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 98: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 99: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 100: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 101: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 102: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 103: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 104: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 105: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 106: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 107: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 108: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 109: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 110: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 111: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 112: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 113: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 114: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 115: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 116: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 117: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 118: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 119: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 120: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 121: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 122: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 123: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 124: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 125: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 126: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 127: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 128: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 129: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 130: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 131: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 132: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 133: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 134: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 135: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 136: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 137: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 138: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 139: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 140: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 141: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 142: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 143: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 144: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 145: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 146: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 147: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 148: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 149: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 150: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 151: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 152: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 153: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 154: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 155: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 156: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 157: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 158: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 159: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 160: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 161: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 162: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 163: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 164: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 165: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 166: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 167: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 168: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 169: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 170: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 171: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 172: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 173: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 174: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 175: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 176: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 177: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 178: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 179: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 180: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?

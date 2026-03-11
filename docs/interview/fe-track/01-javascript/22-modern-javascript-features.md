@@ -882,9 +882,9 @@ match (value) {
 
 ---
 
-## Interview Questions / Câu Hỏi Phỏng Vấn
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-### Q1: Explain BigInt and its use cases
+### 🟡 [Mid] Q1: Explain BigInt and its use cases
 
 **English Answer:**
 
@@ -917,7 +917,7 @@ const big = 123456789012345678901234567890n;
 
 BigInt cung cấp số nguyên độ chính xác tùy ý. Giải quyết giới hạn Number.MAX_SAFE_INTEGER. Use cases: cryptography, large IDs, timestamps, financial calculations.
 
-### Q2: Difference between ?? and ||
+### 🟢 [Junior] Q2: Difference between ?? and ||
 
 **English Answer:**
 
@@ -950,7 +950,7 @@ undefined ?? 'default' // 'default'
 
 || trả về right nếu left là falsy. ?? trả về right nếu left là null/undefined. Dùng ?? cho default values khi 0, '', false là valid.
 
-### Q3: Explain top-level await
+### 🟡 [Mid] Q3: Explain top-level await
 
 **English Answer:**
 

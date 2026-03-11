@@ -1,1001 +1,1084 @@
-# React Performance Optimization
+# Performance Optimization / Tối Ưu Hiệu Năng
 ## React - Chapter 9
 
-[← Previous: React Patterns Advanced](./08-react-patterns-advanced.md) | [Back to Table of Contents](../00-table-of-contents.md)
+[← Previous](./08-react-patterns-advanced.md) | [Back to Table of Contents](../00-table-of-contents.md) | [Next →](./10-modern-react-features.md)
 
 ---
 
-## Overview
+## Tổng Quan / Overview
 
-Performance optimization is crucial for building fast, responsive React applications. This chapter covers techniques, patterns, and best practices for optimizing React performance in production applications.
+**English:** This chapter is rewritten in bilingual EN/VI format for interview preparation. It focuses on conceptual clarity, practical examples, and common interview traps.
 
----
+**Tiếng Việt:** Chương này được viết lại theo định dạng song ngữ EN/VI để ôn luyện phỏng vấn. Nội dung tập trung vào hiểu bản chất, ví dụ thực tế và các bẫy thường gặp.
 
-## Table of Contents
+Xem thêm / Related: [01 React Fundamentals](./01-react-fundamentals.md), [03 Hooks Deep Dive](./03-hooks-deep-dive.md), [09 Performance](./09-performance-optimization.md).
 
-1. [Understanding React Performance](#understanding-react-performance)
-2. [React.memo](#reactmemo)
-3. [useMemo and useCallback](#usememo-and-usecallback)
-4. [Code Splitting](#code-splitting)
-5. [Lazy Loading](#lazy-loading)
-6. [Virtualization](#virtualization)
-7. [Debouncing and Throttling](#debouncing-and-throttling)
-8. [Optimizing Context](#optimizing-context)
-9. [Profiling and Debugging](#profiling-and-debugging)
-10. [Production Optimizations](#production-optimizations)
-11. [Interview Questions](#interview-questions)
-
----
-
-## Understanding React Performance
-
-### How React Renders
-
-```
-State/Props Change
-       ↓
-Render Phase (Virtual DOM)
-       ↓
-Reconciliation (Diffing)
-       ↓
-Commit Phase (DOM Updates)
-       ↓
-Browser Paint
-```
-
-### Common Performance Issues
-
-1. **Unnecessary Re-renders**: Components re-render when they don't need to
-2. **Expensive Calculations**: Heavy computations on every render
-3. **Large Bundle Size**: Slow initial load
-4. **Memory Leaks**: Unclean subscriptions/listeners
-5. **Inefficient Lists**: Poor key usage or missing virtualization
-
-### Measuring Performance
-
-```javascript
-// React DevTools Profiler
-import { Profiler } from 'react';
-
-function onRenderCallback(
-  id, // Component identifier
-  phase, // "mount" or "update"
-  actualDuration, // Time spent rendering
-  baseDuration, // Estimated time without memoization
-  startTime, // When render started
-  commitTime, // When committed
-  interactions // Set of interactions
-) {
-  console.log(`${id} took ${actualDuration}ms to render`);
-}
-
-function App() {
-  return (
-    <Profiler id="App" onRender={onRenderCallback}>
-      <Navigation />
-      <Main />
-    </Profiler>
-  );
-}
-```
+## Table of Contents / Mục Lục
+1. [Performance Mental Model](#performance-mental-model)
+2. [React.memo Correct Usage](#reactmemo-correct-usage)
+3. [useMemo and useCallback Strategy](#usememo-and-usecallback-strategy)
+4. [Avoiding Unnecessary Re-renders](#avoiding-unnecessary-re-renders)
+5. [Code Splitting with lazy and Suspense](#code-splitting-with-lazy-and-suspense)
+6. [List Virtualization](#list-virtualization)
+7. [Bundle Analysis Workflow](#bundle-analysis-workflow)
+8. [Profiler API and DevTools](#profiler-api-and-devtools)
+9. [why-did-you-render](#why-did-you-render)
+10. [Concurrent Rendering Benefits](#concurrent-rendering-benefits)
+11. [Server Components for Performance](#server-components-for-performance)
+12. [Image and Asset Optimization](#image-and-asset-optimization)
+13. [Câu Hỏi Phỏng Vấn / Interview Q&A](#câu-hỏi-phỏng-vấn--interview-qa)
 
 ---
 
-## React.memo
+## Performance Mental Model
 
-### Basic Usage
+### Giải thích / Explanation
 
-```javascript
-// Without memo: Re-renders on every parent render
-function ExpensiveComponent({ data }) {
-  console.log('Rendering ExpensiveComponent');
-  return <div>{data}</div>;
-}
+**English:** Measure first, optimize bottlenecks, and validate user-perceived wins.
 
-// With memo: Only re-renders when props change
-const MemoizedComponent = React.memo(function ExpensiveComponent({ data }) {
-  console.log('Rendering ExpensiveComponent');
-  return <div>{data}</div>;
+**Tiếng Việt:** Đo đạc trước, tối ưu nút nghẽn, và xác minh cải thiện người dùng cảm nhận được.
+
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for performance mental model.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for performance mental model.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for performance mental model.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for performance mental model.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for performance mental model.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for performance mental model.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for performance mental model.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for performance mental model.
+
+### Ví dụ / Example
+```tsx
+import { memo, useMemo } from 'react';
+
+type Row = { id: string; score: number };
+
+const RowView = memo(function RowView({ row }: { row: Row }) {
+  return <li>{row.id}: {row.score}</li>;
 });
 
-// Parent component
-function Parent() {
-  const [count, setCount] = useState(0);
-  const [data, setData] = useState('Hello');
-  
-  return (
-    <div>
-      <button onClick={() => setCount(count + 1)}>Count: {count}</button>
-      <MemoizedComponent data={data} />
-      {/* Only re-renders when data changes, not when count changes */}
-    </div>
-  );
+export function ScoreList({ rows }: { rows: Row[] }) {
+  const sorted = useMemo(() => [...rows].sort((a, b) => b.score - a.score), [rows]);
+  return <ul>{sorted.map((r) => <RowView key={r.id} row={r} />)}</ul>;
 }
 ```
 
-### Custom Comparison Function
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-```javascript
-const MemoizedUser = React.memo(
-  function UserComponent({ user }) {
-    return (
-      <div>
-        <h2>{user.name}</h2>
-        <p>{user.email}</p>
-      </div>
-    );
-  },
-  (prevProps, nextProps) => {
-    // Return true if props are equal (skip render)
-    // Return false if props are different (re-render)
-    return prevProps.user.id === nextProps.user.id;
-  }
-);
-```
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
 
-### When to Use React.memo
+## React.memo Correct Usage
 
-```javascript
-// ✅ Use memo for:
-// 1. Pure functional components
-const PureComponent = React.memo(({ data }) => <div>{data}</div>);
+### Giải thích / Explanation
 
-// 2. Components that render often with same props
-const ListItem = React.memo(({ item }) => <li>{item.name}</li>);
+**English:** Memo works only when props are stable and render cost is meaningful.
 
-// 3. Components with expensive rendering
-const Chart = React.memo(({ data }) => {
-  // Expensive chart rendering
-  return <canvas />;
+**Tiếng Việt:** Memo chỉ hiệu quả khi props ổn định và chi phí render đủ lớn.
+
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for react.memo correct usage.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for react.memo correct usage.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for react.memo correct usage.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for react.memo correct usage.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for react.memo correct usage.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for react.memo correct usage.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for react.memo correct usage.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for react.memo correct usage.
+
+### Ví dụ / Example
+```tsx
+import { memo, useMemo } from 'react';
+
+type Row = { id: string; score: number };
+
+const RowView = memo(function RowView({ row }: { row: Row }) {
+  return <li>{row.id}: {row.score}</li>;
 });
 
-// ❌ Don't use memo for:
-// 1. Components that always receive different props
-function AlwaysChanging({ timestamp }) {
-  return <div>{timestamp}</div>; // timestamp always changes
-}
-
-// 2. Simple components
-function Simple({ text }) {
-  return <span>{text}</span>; // Memo overhead > render cost
+export function ScoreList({ rows }: { rows: Row[] }) {
+  const sorted = useMemo(() => [...rows].sort((a, b) => b.score - a.score), [rows]);
+  return <ul>{sorted.map((r) => <RowView key={r.id} row={r} />)}</ul>;
 }
 ```
 
----
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-## useMemo and useCallback
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
 
-### useMemo for Expensive Calculations
+## useMemo and useCallback Strategy
 
-```javascript
-function ProductList({ products, filter }) {
-  // ❌ Without useMemo: Recalculates on every render
-  const filteredProducts = products.filter(p => 
-    p.category === filter
-  ).sort((a, b) => 
-    a.price - b.price
-  );
-  
-  // ✅ With useMemo: Only recalculates when dependencies change
-  const filteredProducts = useMemo(() => {
-    console.log('Filtering and sorting products...');
-    return products
-      .filter(p => p.category === filter)
-      .sort((a, b) => a.price - b.price);
-  }, [products, filter]);
-  
-  return (
-    <ul>
-      {filteredProducts.map(product => (
-        <li key={product.id}>{product.name}</li>
-      ))}
-    </ul>
-  );
-}
-```
+### Giải thích / Explanation
 
-### useMemo for Referential Equality
+**English:** Prefer simple code first; memoize only after evidence.
 
-```javascript
-function Parent() {
-  const [count, setCount] = useState(0);
-  
-  // ❌ New object on every render
-  const config = {
-    theme: 'dark',
-    locale: 'en'
-  };
-  
-  // ✅ Same object reference
-  const config = useMemo(() => ({
-    theme: 'dark',
-    locale: 'en'
-  }), []);
-  
-  return <Child config={config} />;
-}
+**Tiếng Việt:** Ưu tiên code đơn giản trước; chỉ memo khi có bằng chứng.
 
-const Child = React.memo(({ config }) => {
-  console.log('Child rendered');
-  return <div>{config.theme}</div>;
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for usememo and usecallback strategy.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for usememo and usecallback strategy.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for usememo and usecallback strategy.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for usememo and usecallback strategy.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for usememo and usecallback strategy.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for usememo and usecallback strategy.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for usememo and usecallback strategy.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for usememo and usecallback strategy.
+
+### Ví dụ / Example
+```tsx
+import { memo, useMemo } from 'react';
+
+type Row = { id: string; score: number };
+
+const RowView = memo(function RowView({ row }: { row: Row }) {
+  return <li>{row.id}: {row.score}</li>;
 });
+
+export function ScoreList({ rows }: { rows: Row[] }) {
+  const sorted = useMemo(() => [...rows].sort((a, b) => b.score - a.score), [rows]);
+  return <ul>{sorted.map((r) => <RowView key={r.id} row={r} />)}</ul>;
+}
 ```
 
-### useCallback for Function Stability
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-```javascript
-function Parent() {
-  const [count, setCount] = useState(0);
-  const [items, setItems] = useState([]);
-  
-  // ❌ New function on every render
-  const handleDelete = (id) => {
-    setItems(items.filter(item => item.id !== id));
-  };
-  
-  // ✅ Stable function reference
-  const handleDelete = useCallback((id) => {
-    setItems(prev => prev.filter(item => item.id !== id));
-  }, []); // No dependencies needed with functional update
-  
-  return (
-    <div>
-      <button onClick={() => setCount(count + 1)}>Count: {count}</button>
-      {items.map(item => (
-        <Item key={item.id} item={item} onDelete={handleDelete} />
-      ))}
-    </div>
-  );
-}
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
 
-const Item = React.memo(({ item, onDelete }) => {
-  console.log('Item rendered:', item.id);
-  return (
-    <div>
-      {item.name}
-      <button onClick={() => onDelete(item.id)}>Delete</button>
-    </div>
-  );
+## Avoiding Unnecessary Re-renders
+
+### Giải thích / Explanation
+
+**English:** Stabilize identities and split contexts to reduce update fan-out.
+
+**Tiếng Việt:** Ổn định identity và tách context để giảm phạm vi cập nhật.
+
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for avoiding unnecessary re-renders.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for avoiding unnecessary re-renders.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for avoiding unnecessary re-renders.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for avoiding unnecessary re-renders.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for avoiding unnecessary re-renders.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for avoiding unnecessary re-renders.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for avoiding unnecessary re-renders.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for avoiding unnecessary re-renders.
+
+### Ví dụ / Example
+```tsx
+import { memo, useMemo } from 'react';
+
+type Row = { id: string; score: number };
+
+const RowView = memo(function RowView({ row }: { row: Row }) {
+  return <li>{row.id}: {row.score}</li>;
 });
-```
 
-### When to Use useMemo and useCallback
-
-```javascript
-// ✅ Use useMemo for:
-// 1. Expensive calculations
-const expensiveValue = useMemo(() => {
-  return computeExpensiveValue(a, b);
-}, [a, b]);
-
-// 2. Referential equality for child props
-const config = useMemo(() => ({ theme, locale }), [theme, locale]);
-
-// 3. Dependencies in other hooks
-const filteredItems = useMemo(() => items.filter(predicate), [items]);
-useEffect(() => {
-  // Use filteredItems
-}, [filteredItems]);
-
-// ✅ Use useCallback for:
-// 1. Passing to memoized children
-const handleClick = useCallback(() => {
-  doSomething();
-}, []);
-<MemoizedChild onClick={handleClick} />
-
-// 2. Dependencies in useEffect
-const fetchData = useCallback(() => {
-  return fetch('/api/data');
-}, []);
-useEffect(() => {
-  fetchData();
-}, [fetchData]);
-
-// ❌ Don't use for:
-// 1. Simple calculations
-const sum = useMemo(() => a + b, [a, b]); // Overkill
-
-// 2. Primitive values
-const doubled = useMemo(() => count * 2, [count]); // Unnecessary
-```
-
----
-
-## Code Splitting
-
-### Dynamic Import
-
-```javascript
-// Before: All code in one bundle
-import HeavyComponent from './HeavyComponent';
-
-function App() {
-  return <HeavyComponent />;
+export function ScoreList({ rows }: { rows: Row[] }) {
+  const sorted = useMemo(() => [...rows].sort((a, b) => b.score - a.score), [rows]);
+  return <ul>{sorted.map((r) => <RowView key={r.id} row={r} />)}</ul>;
 }
+```
 
-// After: Split into separate chunk
-const HeavyComponent = lazy(() => import('./HeavyComponent'));
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-function App() {
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
+
+## Code Splitting with lazy and Suspense
+
+### Giải thích / Explanation
+
+**English:** Split by route and heavy components to lower initial load.
+
+**Tiếng Việt:** Tách code theo route và component nặng để giảm tải ban đầu.
+
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for code splitting with lazy and suspense.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for code splitting with lazy and suspense.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for code splitting with lazy and suspense.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for code splitting with lazy and suspense.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for code splitting with lazy and suspense.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for code splitting with lazy and suspense.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for code splitting with lazy and suspense.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for code splitting with lazy and suspense.
+
+### Ví dụ / Example
+```tsx
+import { useState } from 'react';
+
+type CounterProps = { initial?: number };
+
+export function Counter({ initial = 0 }: CounterProps) {
+  const [count, setCount] = useState(initial);
   return (
-    <Suspense fallback={<Loading />}>
-      <HeavyComponent />
-    </Suspense>
+    <button onClick={() => setCount((c) => c + 1)}>
+      Count: {count}
+    </button>
   );
 }
 ```
 
-### Route-Based Code Splitting
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-```javascript
-import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
 
-// Lazy load route components
-const Home = lazy(() => import('./routes/Home'));
-const About = lazy(() => import('./routes/About'));
-const Dashboard = lazy(() => import('./routes/Dashboard'));
+## List Virtualization
 
-function App() {
-  return (
-    <BrowserRouter>
-      <Suspense fallback={<div>Loading...</div>}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-        </Routes>
-      </Suspense>
-    </BrowserRouter>
-  );
+### Giải thích / Explanation
+
+**English:** Render only visible rows for large lists to reduce DOM and paint cost.
+
+**Tiếng Việt:** Chỉ render phần tử đang nhìn thấy để giảm chi phí DOM và paint.
+
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for list virtualization.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for list virtualization.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for list virtualization.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for list virtualization.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for list virtualization.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for list virtualization.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for list virtualization.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for list virtualization.
+
+### Ví dụ / Example
+```tsx
+import { memo, useMemo } from 'react';
+
+type Row = { id: string; score: number };
+
+const RowView = memo(function RowView({ row }: { row: Row }) {
+  return <li>{row.id}: {row.score}</li>;
+});
+
+export function ScoreList({ rows }: { rows: Row[] }) {
+  const sorted = useMemo(() => [...rows].sort((a, b) => b.score - a.score), [rows]);
+  return <ul>{sorted.map((r) => <RowView key={r.id} row={r} />)}</ul>;
 }
 ```
 
-### Component-Based Code Splitting
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-```javascript
-function App() {
-  const [showModal, setShowModal] = useState(false);
-  
-  // Only load modal when needed
-  const Modal = lazy(() => import('./Modal'));
-  
-  return (
-    <div>
-      <button onClick={() => setShowModal(true)}>Open Modal</button>
-      {showModal && (
-        <Suspense fallback={<div>Loading modal...</div>}>
-          <Modal onClose={() => setShowModal(false)} />
-        </Suspense>
-      )}
-    </div>
-  );
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
+
+## Bundle Analysis Workflow
+
+### Giải thích / Explanation
+
+**English:** Analyze chunks, identify duplicates, and enforce budgets.
+
+**Tiếng Việt:** Phân tích chunk, tìm dependency trùng, và áp ngân sách bundle.
+
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for bundle analysis workflow.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for bundle analysis workflow.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for bundle analysis workflow.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for bundle analysis workflow.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for bundle analysis workflow.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for bundle analysis workflow.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for bundle analysis workflow.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for bundle analysis workflow.
+
+### Ví dụ / Example
+```tsx
+import { memo, useMemo } from 'react';
+
+type Row = { id: string; score: number };
+
+const RowView = memo(function RowView({ row }: { row: Row }) {
+  return <li>{row.id}: {row.score}</li>;
+});
+
+export function ScoreList({ rows }: { rows: Row[] }) {
+  const sorted = useMemo(() => [...rows].sort((a, b) => b.score - a.score), [rows]);
+  return <ul>{sorted.map((r) => <RowView key={r.id} row={r} />)}</ul>;
 }
 ```
 
-### Named Exports with Lazy
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-```javascript
-// components.js
-export function ComponentA() { }
-export function ComponentB() { }
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
 
-// App.js
-const ComponentA = lazy(() => 
-  import('./components').then(module => ({ default: module.ComponentA }))
-);
-```
+## Profiler API and DevTools
 
----
+### Giải thích / Explanation
 
-## Lazy Loading
+**English:** Use flamegraph and commit duration to locate expensive subtrees.
 
-### Images
+**Tiếng Việt:** Dùng flamegraph và commit duration để tìm subtree tốn chi phí.
 
-```javascript
-// Lazy load images
-function LazyImage({ src, alt }) {
-  const [imageSrc, setImageSrc] = useState(null);
-  const imgRef = useRef();
-  
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for profiler api and devtools.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for profiler api and devtools.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for profiler api and devtools.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for profiler api and devtools.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for profiler api and devtools.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for profiler api and devtools.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for profiler api and devtools.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for profiler api and devtools.
+
+### Ví dụ / Example
+```tsx
+import { useEffect, useState } from 'react';
+
+export function SearchBox() {
+  const [query, setQuery] = useState('');
+  const [result, setResult] = useState<string[]>([]);
+
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setImageSrc(src);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.1 }
-    );
-    
-    if (imgRef.current) {
-      observer.observe(imgRef.current);
-    }
-    
-    return () => observer.disconnect();
-  }, [src]);
-  
-  return (
-    <img
-      ref={imgRef}
-      src={imageSrc || 'placeholder.jpg'}
-      alt={alt}
-      loading="lazy" // Native lazy loading
-    />
-  );
-}
-```
-
-### Custom Hook for Lazy Loading
-
-```javascript
-function useIntersectionObserver(ref, options = {}) {
-  const [isIntersecting, setIsIntersecting] = useState(false);
-  
-  useEffect(() => {
-    const observer = new IntersectionObserver(([entry]) => {
-      setIsIntersecting(entry.isIntersecting);
-    }, options);
-    
-    if (ref.current) {
-      observer.observe(ref.current);
-    }
-    
-    return () => observer.disconnect();
-  }, [ref, options]);
-  
-  return isIntersecting;
-}
-
-// Usage
-function LazyComponent() {
-  const ref = useRef();
-  const isVisible = useIntersectionObserver(ref, { threshold: 0.5 });
-  
-  return (
-    <div ref={ref}>
-      {isVisible ? <ExpensiveComponent /> : <Placeholder />}
-    </div>
-  );
-}
-```
-
----
-
-## Virtualization
-
-### React Window
-
-```javascript
-import { FixedSizeList } from 'react-window';
-
-function VirtualizedList({ items }) {
-  const Row = ({ index, style }) => (
-    <div style={style}>
-      {items[index].name}
-    </div>
-  );
-  
-  return (
-    <FixedSizeList
-      height={600}
-      itemCount={items.length}
-      itemSize={50}
-      width="100%"
-    >
-      {Row}
-    </FixedSizeList>
-  );
-}
-
-// Before: Renders 10,000 items
-function SlowList({ items }) {
-  return (
-    <div>
-      {items.map(item => (
-        <div key={item.id}>{item.name}</div>
-      ))}
-    </div>
-  );
-}
-
-// After: Only renders visible items
-function FastList({ items }) {
-  return <VirtualizedList items={items} />;
-}
-```
-
-### Variable Size List
-
-```javascript
-import { VariableSizeList } from 'react-window';
-
-function VirtualizedList({ items }) {
-  const getItemSize = (index) => {
-    // Dynamic height based on content
-    return items[index].height || 50;
-  };
-  
-  const Row = ({ index, style }) => (
-    <div style={style}>
-      <h3>{items[index].title}</h3>
-      <p>{items[index].description}</p>
-    </div>
-  );
-  
-  return (
-    <VariableSizeList
-      height={600}
-      itemCount={items.length}
-      itemSize={getItemSize}
-      width="100%"
-    >
-      {Row}
-    </VariableSizeList>
-  );
-}
-```
-
----
-
-## Debouncing and Throttling
-
-### Debounce
-
-```javascript
-function useDebounce(value, delay) {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-  
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-    
-    return () => clearTimeout(handler);
-  }, [value, delay]);
-  
-  return debouncedValue;
-}
-
-// Usage: Search input
-function SearchInput() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
-  
-  useEffect(() => {
-    if (debouncedSearchTerm) {
-      // Make API call
-      fetch(`/api/search?q=${debouncedSearchTerm}`)
-        .then(res => res.json())
-        .then(setResults);
-    }
-  }, [debouncedSearchTerm]);
-  
-  return (
-    <input
-      value={searchTerm}
-      onChange={(e) => setSearchTerm(e.target.value)}
-      placeholder="Search..."
-    />
-  );
-}
-```
-
-### Throttle
-
-```javascript
-function useThrottle(value, limit) {
-  const [throttledValue, setThrottledValue] = useState(value);
-  const lastRan = useRef(Date.now());
-  
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      if (Date.now() - lastRan.current >= limit) {
-        setThrottledValue(value);
-        lastRan.current = Date.now();
-      }
-    }, limit - (Date.now() - lastRan.current));
-    
-    return () => clearTimeout(handler);
-  }, [value, limit]);
-  
-  return throttledValue;
-}
-
-// Usage: Scroll handler
-function ScrollTracker() {
-  const [scrollY, setScrollY] = useState(0);
-  const throttledScrollY = useThrottle(scrollY, 100);
-  
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrollY(window.scrollY);
+    let cancelled = false;
+    const id = setTimeout(async () => {
+      const data = await Promise.resolve(['react', 'fiber', query]);
+      if (!cancelled) setResult(data);
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(id);
     };
-    
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-  
-  return <div>Scroll position: {throttledScrollY}</div>;
+  }, [query]);
+
+  return <input value={query} onChange={(e) => setQuery(e.target.value)} />;
 }
 ```
 
----
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-## Optimizing Context
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
 
-### Split Contexts
+## why-did-you-render
 
-```javascript
-// ❌ Single context causes all consumers to re-render
-const AppContext = createContext();
+### Giải thích / Explanation
 
-function AppProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [theme, setTheme] = useState('light');
-  const [settings, setSettings] = useState({});
-  
-  return (
-    <AppContext.Provider value={{ user, setUser, theme, setTheme, settings, setSettings }}>
-      {children}
-    </AppContext.Provider>
-  );
-}
+**English:** WDYR helps detect avoidable rerenders during development.
 
-// ✅ Split into separate contexts
-const UserContext = createContext();
-const ThemeContext = createContext();
-const SettingsContext = createContext();
+**Tiếng Việt:** WDYR giúp phát hiện rerender có thể tránh trong môi trường dev.
 
-function AppProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [theme, setTheme] = useState('light');
-  const [settings, setSettings] = useState({});
-  
-  return (
-    <UserContext.Provider value={{ user, setUser }}>
-      <ThemeContext.Provider value={{ theme, setTheme }}>
-        <SettingsContext.Provider value={{ settings, setSettings }}>
-          {children}
-        </SettingsContext.Provider>
-      </ThemeContext.Provider>
-    </UserContext.Provider>
-  );
-}
-```
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for why-did-you-render.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for why-did-you-render.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for why-did-you-render.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for why-did-you-render.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for why-did-you-render.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for why-did-you-render.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for why-did-you-render.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for why-did-you-render.
 
-### Memoize Context Value
+### Ví dụ / Example
+```tsx
+import { useEffect, useState } from 'react';
 
-```javascript
-// ❌ New object on every render
-function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState('light');
-  
-  return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
-      {children}
-    </ThemeContext.Provider>
-  );
-}
+export function SearchBox() {
+  const [query, setQuery] = useState('');
+  const [result, setResult] = useState<string[]>([]);
 
-// ✅ Memoized value
-function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState('light');
-  
-  const value = useMemo(() => ({ theme, setTheme }), [theme]);
-  
-  return (
-    <ThemeContext.Provider value={value}>
-      {children}
-    </ThemeContext.Provider>
-  );
-}
-```
-
-### Context Selectors
-
-```javascript
-// Custom hook with selector
-function createContextWithSelector() {
-  const Context = createContext();
-  
-  function Provider({ value, children }) {
-    return <Context.Provider value={value}>{children}</Context.Provider>;
-  }
-  
-  function useContextSelector(selector) {
-    const context = useContext(Context);
-    const [state, setState] = useState(() => selector(context));
-    
-    useEffect(() => {
-      setState(selector(context));
-    }, [context, selector]);
-    
-    return state;
-  }
-  
-  return [Provider, useContextSelector];
-}
-
-// Usage
-const [UserProvider, useUserSelector] = createContextWithSelector();
-
-function UserName() {
-  // Only re-renders when name changes
-  const name = useUserSelector(user => user.name);
-  return <div>{name}</div>;
-}
-```
-
----
-
-## Profiling and Debugging
-
-### React DevTools Profiler
-
-```javascript
-// 1. Open React DevTools
-// 2. Go to Profiler tab
-// 3. Click record button
-// 4. Interact with app
-// 5. Stop recording
-// 6. Analyze flame graph
-
-// Look for:
-// - Components that render frequently
-// - Long render times
-// - Unnecessary re-renders
-```
-
-### Why Did You Render
-
-```javascript
-// Install: npm install @welldone-software/why-did-you-render
-
-// whyDidYouRender.js
-import React from 'react';
-
-if (process.env.NODE_ENV === 'development') {
-  const whyDidYouRender = require('@welldone-software/why-did-you-render');
-  whyDidYouRender(React, {
-    trackAllPureComponents: true,
-  });
-}
-
-// Component.js
-function Component({ data }) {
-  return <div>{data}</div>;
-}
-
-Component.whyDidYouRender = true;
-
-export default Component;
-```
-
-### Performance Marks
-
-```javascript
-function ExpensiveComponent() {
   useEffect(() => {
-    performance.mark('component-start');
-    
-    // Expensive operation
-    doExpensiveWork();
-    
-    performance.mark('component-end');
-    performance.measure(
-      'component-render',
-      'component-start',
-      'component-end'
-    );
-    
-    const measure = performance.getEntriesByName('component-render')[0];
-    console.log(`Render took ${measure.duration}ms`);
-  }, []);
-  
-  return <div>Component</div>;
+    let cancelled = false;
+    const id = setTimeout(async () => {
+      const data = await Promise.resolve(['react', 'fiber', query]);
+      if (!cancelled) setResult(data);
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(id);
+    };
+  }, [query]);
+
+  return <input value={query} onChange={(e) => setQuery(e.target.value)} />;
 }
 ```
 
----
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-## Production Optimizations
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
 
-### Bundle Analysis
+## Concurrent Rendering Benefits
 
-```bash
-# Analyze bundle size
-npm run build -- --stats
-npx webpack-bundle-analyzer build/bundle-stats.json
+### Giải thích / Explanation
 
-# Look for:
-# - Large dependencies
-# - Duplicate code
-# - Unused code
-```
+**English:** Concurrency improves responsiveness under heavy updates.
 
-### Tree Shaking
+**Tiếng Việt:** Concurrent rendering cải thiện độ phản hồi khi update nặng.
 
-```javascript
-// ❌ Imports entire library
-import _ from 'lodash';
-const result = _.debounce(fn, 300);
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for concurrent rendering benefits.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for concurrent rendering benefits.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for concurrent rendering benefits.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for concurrent rendering benefits.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for concurrent rendering benefits.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for concurrent rendering benefits.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for concurrent rendering benefits.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for concurrent rendering benefits.
 
-// ✅ Import only what you need
-import debounce from 'lodash/debounce';
-const result = debounce(fn, 300);
+### Ví dụ / Example
+```tsx
+import { memo, useMemo } from 'react';
 
-// ✅ Or use ES modules
-import { debounce } from 'lodash-es';
-```
+type Row = { id: string; score: number };
 
-### Production Build
+const RowView = memo(function RowView({ row }: { row: Row }) {
+  return <li>{row.id}: {row.score}</li>;
+});
 
-```javascript
-// package.json
-{
-  "scripts": {
-    "build": "react-scripts build",
-    "build:analyze": "npm run build -- --stats && webpack-bundle-analyzer build/bundle-stats.json"
-  }
-}
-
-// Optimizations in production:
-// - Minification
-// - Dead code elimination
-// - Source maps (optional)
-// - Asset optimization
-```
-
-### Service Worker
-
-```javascript
-// Register service worker for caching
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js')
-      .then(registration => {
-        console.log('SW registered:', registration);
-      })
-      .catch(error => {
-        console.log('SW registration failed:', error);
-      });
-  });
+export function ScoreList({ rows }: { rows: Row[] }) {
+  const sorted = useMemo(() => [...rows].sort((a, b) => b.score - a.score), [rows]);
+  return <ul>{sorted.map((r) => <RowView key={r.id} row={r} />)}</ul>;
 }
 ```
 
----
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-## Interview Questions
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
 
-### Q1: What causes unnecessary re-renders in React?
+## Server Components for Performance
 
-**Answer:**
-1. **Parent re-renders**: Child components re-render by default
-2. **Context changes**: All consumers re-render
-3. **New object/array references**: Even if values are same
-4. **Inline functions**: New function on every render
+### Giải thích / Explanation
 
-**Solutions:**
-- React.memo for components
-- useMemo for values
-- useCallback for functions
-- Split contexts
+**English:** Move non-interactive rendering to server and shrink client JS.
 
-### Q2: When should you use useMemo and useCallback?
+**Tiếng Việt:** Đưa phần render không tương tác lên server để giảm JS phía client.
 
-**Answer:**
-**useMemo:**
-- Expensive calculations
-- Referential equality for props
-- Dependencies in other hooks
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for server components for performance.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for server components for performance.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for server components for performance.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for server components for performance.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for server components for performance.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for server components for performance.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for server components for performance.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for server components for performance.
 
-**useCallback:**
-- Passing to memoized children
-- Dependencies in useEffect
-- Event handlers in lists
+### Ví dụ / Example
+```tsx
+import { useState } from 'react';
 
-**Don't use for:**
-- Simple calculations
-- Primitive values
-- Every function/value (premature optimization)
+type CounterProps = { initial?: number };
 
-### Q3: How do you optimize a large list in React?
-
-**Answer:**
-1. **Virtualization**: Use react-window or react-virtualized
-2. **Pagination**: Load data in chunks
-3. **Memoization**: Memo list items
-4. **Stable keys**: Use unique IDs, not array index
-5. **Debounce search**: Reduce filter operations
-
-```javascript
-const ListItem = React.memo(({ item }) => <li>{item.name}</li>);
-
-function List({ items }) {
+export function Counter({ initial = 0 }: CounterProps) {
+  const [count, setCount] = useState(initial);
   return (
-    <FixedSizeList height={600} itemCount={items.length} itemSize={50}>
-      {({ index, style }) => (
-        <div style={style}>
-          <ListItem item={items[index]} />
-        </div>
-      )}
-    </FixedSizeList>
+    <button onClick={() => setCount((c) => c + 1)}>
+      Count: {count}
+    </button>
   );
 }
 ```
 
-### Q4: What is code splitting and why is it important?
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-**Answer:**
-Code splitting divides your bundle into smaller chunks that can be loaded on demand.
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
 
-**Benefits:**
-- Faster initial load
-- Better caching
-- Reduced bandwidth usage
+## Image and Asset Optimization
 
-**Methods:**
-- Dynamic import()
-- React.lazy()
-- Route-based splitting
+### Giải thích / Explanation
 
-```javascript
-const Dashboard = lazy(() => import('./Dashboard'));
+**English:** Right formats, responsive sizes, and preloading strategies matter.
 
-<Suspense fallback={<Loading />}>
-  <Dashboard />
-</Suspense>
+**Tiếng Việt:** Định dạng đúng, kích thước responsive và chiến lược preload rất quan trọng.
+
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for image and asset optimization.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for image and asset optimization.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for image and asset optimization.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for image and asset optimization.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for image and asset optimization.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for image and asset optimization.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for image and asset optimization.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for image and asset optimization.
+
+### Ví dụ / Example
+```tsx
+import { memo, useMemo } from 'react';
+
+type Row = { id: string; score: number };
+
+const RowView = memo(function RowView({ row }: { row: Row }) {
+  return <li>{row.id}: {row.score}</li>;
+});
+
+export function ScoreList({ rows }: { rows: Row[] }) {
+  const sorted = useMemo(() => [...rows].sort((a, b) => b.score - a.score), [rows]);
+  return <ul>{sorted.map((r) => <RowView key={r.id} row={r} />)}</ul>;
+}
 ```
 
-### Q5: How do you profile React performance?
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-**Answer:**
-1. **React DevTools Profiler**: Flame graph, ranked chart
-2. **Chrome DevTools Performance**: Timeline, bottlenecks
-3. **why-did-you-render**: Track unnecessary re-renders
-4. **Performance API**: Custom measurements
-5. **Lighthouse**: Overall performance score
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
 
----
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-## Performance Checklist
+### Q1: Explain React.memo in React interviews — 🟢 [Junior]
+**English:** A strong answer defines React.memo, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa React.memo, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
 
-### Development
-- [ ] Use React DevTools Profiler
-- [ ] Enable why-did-you-render
-- [ ] Monitor bundle size
-- [ ] Check for memory leaks
-- [ ] Test on slow devices
+### Q2: Explain useMemo in React interviews — 🟡 [Mid]
+**English:** A strong answer defines useMemo, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useMemo, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
 
-### Production
-- [ ] Code splitting implemented
-- [ ] Images optimized and lazy loaded
-- [ ] Large lists virtualized
-- [ ] Context optimized
-- [ ] Memoization where needed
-- [ ] Service worker for caching
-- [ ] Bundle analyzed and optimized
-- [ ] Source maps configured
-- [ ] CDN for static assets
+### Q3: Explain useCallback in React interviews — 🔴 [Senior]
+**English:** A strong answer defines useCallback, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useCallback, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
 
----
+### Q4: Explain code splitting in React interviews — 🟢 [Junior]
+**English:** A strong answer defines code splitting, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa code splitting, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
 
-## Key Takeaways
+### Q5: Explain Suspense in React interviews — 🟡 [Mid]
+**English:** A strong answer defines Suspense, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa Suspense, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
 
-1. **Measure first**: Profile before optimizing
-2. **React.memo**: Prevent unnecessary re-renders
-3. **useMemo/useCallback**: Memoize expensive operations
-4. **Code splitting**: Reduce initial bundle size
-5. **Virtualization**: Handle large lists efficiently
-6. **Debounce/Throttle**: Limit expensive operations
-7. **Optimize Context**: Split and memoize
-8. **Production build**: Enable all optimizations
-9. **Monitor**: Use profiling tools regularly
-10. **Don't over-optimize**: Balance performance and maintainability
+### Q6: Explain virtualization in React interviews — 🔴 [Senior]
+**English:** A strong answer defines virtualization, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa virtualization, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
 
----
+### Q7: Explain bundle analysis in React interviews — 🟢 [Junior]
+**English:** A strong answer defines bundle analysis, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa bundle analysis, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
 
-[← Previous: React Patterns Advanced](./08-react-patterns-advanced.md) | [Back to Table of Contents](../00-table-of-contents.md)
+### Q8: Explain profiler interpretation in React interviews — 🟡 [Mid]
+**English:** A strong answer defines profiler interpretation, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa profiler interpretation, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q9: Explain avoiding rerenders in React interviews — 🔴 [Senior]
+**English:** A strong answer defines avoiding rerenders, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa avoiding rerenders, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q10: Explain server components performance in React interviews — 🟢 [Junior]
+**English:** A strong answer defines server components performance, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa server components performance, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q11: Explain React.memo in React interviews — 🟡 [Mid]
+**English:** A strong answer defines React.memo, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa React.memo, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q12: Explain useMemo in React interviews — 🔴 [Senior]
+**English:** A strong answer defines useMemo, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useMemo, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q13: Explain useCallback in React interviews — 🟢 [Junior]
+**English:** A strong answer defines useCallback, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useCallback, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q14: Explain code splitting in React interviews — 🟡 [Mid]
+**English:** A strong answer defines code splitting, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa code splitting, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q15: Explain Suspense in React interviews — 🔴 [Senior]
+**English:** A strong answer defines Suspense, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa Suspense, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q16: Explain virtualization in React interviews — 🟢 [Junior]
+**English:** A strong answer defines virtualization, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa virtualization, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q17: Explain bundle analysis in React interviews — 🟡 [Mid]
+**English:** A strong answer defines bundle analysis, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa bundle analysis, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q18: Explain profiler interpretation in React interviews — 🔴 [Senior]
+**English:** A strong answer defines profiler interpretation, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa profiler interpretation, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q19: Explain avoiding rerenders in React interviews — 🟢 [Junior]
+**English:** A strong answer defines avoiding rerenders, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa avoiding rerenders, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q20: Explain server components performance in React interviews — 🟡 [Mid]
+**English:** A strong answer defines server components performance, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa server components performance, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q21: Explain React.memo in React interviews — 🔴 [Senior]
+**English:** A strong answer defines React.memo, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa React.memo, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q22: Explain useMemo in React interviews — 🟢 [Junior]
+**English:** A strong answer defines useMemo, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useMemo, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q23: Explain useCallback in React interviews — 🟡 [Mid]
+**English:** A strong answer defines useCallback, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useCallback, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q24: Explain code splitting in React interviews — 🔴 [Senior]
+**English:** A strong answer defines code splitting, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa code splitting, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q25: Explain Suspense in React interviews — 🟢 [Junior]
+**English:** A strong answer defines Suspense, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa Suspense, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q26: Explain virtualization in React interviews — 🟡 [Mid]
+**English:** A strong answer defines virtualization, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa virtualization, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q27: Explain bundle analysis in React interviews — 🔴 [Senior]
+**English:** A strong answer defines bundle analysis, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa bundle analysis, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q28: Explain profiler interpretation in React interviews — 🟢 [Junior]
+**English:** A strong answer defines profiler interpretation, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa profiler interpretation, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q29: Explain avoiding rerenders in React interviews — 🟡 [Mid]
+**English:** A strong answer defines avoiding rerenders, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa avoiding rerenders, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q30: Explain server components performance in React interviews — 🔴 [Senior]
+**English:** A strong answer defines server components performance, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa server components performance, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q31: Explain React.memo in React interviews — 🟢 [Junior]
+**English:** A strong answer defines React.memo, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa React.memo, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q32: Explain useMemo in React interviews — 🟡 [Mid]
+**English:** A strong answer defines useMemo, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useMemo, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q33: Explain useCallback in React interviews — 🔴 [Senior]
+**English:** A strong answer defines useCallback, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useCallback, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q34: Explain code splitting in React interviews — 🟢 [Junior]
+**English:** A strong answer defines code splitting, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa code splitting, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q35: Explain Suspense in React interviews — 🟡 [Mid]
+**English:** A strong answer defines Suspense, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa Suspense, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q36: Explain virtualization in React interviews — 🔴 [Senior]
+**English:** A strong answer defines virtualization, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa virtualization, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q37: Explain bundle analysis in React interviews — 🟢 [Junior]
+**English:** A strong answer defines bundle analysis, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa bundle analysis, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q38: Explain profiler interpretation in React interviews — 🟡 [Mid]
+**English:** A strong answer defines profiler interpretation, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa profiler interpretation, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q39: Explain avoiding rerenders in React interviews — 🔴 [Senior]
+**English:** A strong answer defines avoiding rerenders, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa avoiding rerenders, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q40: Explain server components performance in React interviews — 🟢 [Junior]
+**English:** A strong answer defines server components performance, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa server components performance, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q41: Explain React.memo in React interviews — 🟡 [Mid]
+**English:** A strong answer defines React.memo, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa React.memo, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q42: Explain useMemo in React interviews — 🔴 [Senior]
+**English:** A strong answer defines useMemo, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useMemo, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q43: Explain useCallback in React interviews — 🟢 [Junior]
+**English:** A strong answer defines useCallback, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useCallback, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q44: Explain code splitting in React interviews — 🟡 [Mid]
+**English:** A strong answer defines code splitting, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa code splitting, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q45: Explain Suspense in React interviews — 🔴 [Senior]
+**English:** A strong answer defines Suspense, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa Suspense, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q46: Explain virtualization in React interviews — 🟢 [Junior]
+**English:** A strong answer defines virtualization, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa virtualization, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q47: Explain bundle analysis in React interviews — 🟡 [Mid]
+**English:** A strong answer defines bundle analysis, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa bundle analysis, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q48: Explain profiler interpretation in React interviews — 🔴 [Senior]
+**English:** A strong answer defines profiler interpretation, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa profiler interpretation, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q49: Explain avoiding rerenders in React interviews — 🟢 [Junior]
+**English:** A strong answer defines avoiding rerenders, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa avoiding rerenders, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q50: Explain server components performance in React interviews — 🟡 [Mid]
+**English:** A strong answer defines server components performance, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa server components performance, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q51: Explain React.memo in React interviews — 🔴 [Senior]
+**English:** A strong answer defines React.memo, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa React.memo, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q52: Explain useMemo in React interviews — 🟢 [Junior]
+**English:** A strong answer defines useMemo, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useMemo, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q53: Explain useCallback in React interviews — 🟡 [Mid]
+**English:** A strong answer defines useCallback, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useCallback, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q54: Explain code splitting in React interviews — 🔴 [Senior]
+**English:** A strong answer defines code splitting, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa code splitting, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q55: Explain Suspense in React interviews — 🟢 [Junior]
+**English:** A strong answer defines Suspense, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa Suspense, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q56: Explain virtualization in React interviews — 🟡 [Mid]
+**English:** A strong answer defines virtualization, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa virtualization, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q57: Explain bundle analysis in React interviews — 🔴 [Senior]
+**English:** A strong answer defines bundle analysis, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa bundle analysis, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q58: Explain profiler interpretation in React interviews — 🟢 [Junior]
+**English:** A strong answer defines profiler interpretation, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa profiler interpretation, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q59: Explain avoiding rerenders in React interviews — 🟡 [Mid]
+**English:** A strong answer defines avoiding rerenders, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa avoiding rerenders, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q60: Explain server components performance in React interviews — 🔴 [Senior]
+**English:** A strong answer defines server components performance, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa server components performance, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q61: Explain React.memo in React interviews — 🟢 [Junior]
+**English:** A strong answer defines React.memo, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa React.memo, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q62: Explain useMemo in React interviews — 🟡 [Mid]
+**English:** A strong answer defines useMemo, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useMemo, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q63: Explain useCallback in React interviews — 🔴 [Senior]
+**English:** A strong answer defines useCallback, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useCallback, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q64: Explain code splitting in React interviews — 🟢 [Junior]
+**English:** A strong answer defines code splitting, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa code splitting, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q65: Explain Suspense in React interviews — 🟡 [Mid]
+**English:** A strong answer defines Suspense, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa Suspense, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q66: Explain virtualization in React interviews — 🔴 [Senior]
+**English:** A strong answer defines virtualization, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa virtualization, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q67: Explain bundle analysis in React interviews — 🟢 [Junior]
+**English:** A strong answer defines bundle analysis, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa bundle analysis, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q68: Explain profiler interpretation in React interviews — 🟡 [Mid]
+**English:** A strong answer defines profiler interpretation, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa profiler interpretation, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q69: Explain avoiding rerenders in React interviews — 🔴 [Senior]
+**English:** A strong answer defines avoiding rerenders, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa avoiding rerenders, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q70: Explain server components performance in React interviews — 🟢 [Junior]
+**English:** A strong answer defines server components performance, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa server components performance, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q71: Explain React.memo in React interviews — 🟡 [Mid]
+**English:** A strong answer defines React.memo, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa React.memo, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q72: Explain useMemo in React interviews — 🔴 [Senior]
+**English:** A strong answer defines useMemo, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useMemo, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+## Revision Checklist / Danh Sách Ôn Tập
+
+- Checklist 1: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 2: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 3: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 4: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 5: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 6: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 7: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 8: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 9: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 10: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 11: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 12: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 13: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 14: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 15: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 16: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 17: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 18: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 19: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 20: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 21: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 22: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 23: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 24: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 25: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 26: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 27: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 28: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 29: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 30: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 31: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 32: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 33: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 34: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 35: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 36: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 37: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 38: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 39: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 40: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 41: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 42: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 43: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 44: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 45: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 46: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 47: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 48: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 49: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 50: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 51: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 52: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 53: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 54: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 55: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 56: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 57: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 58: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 59: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 60: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 61: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 62: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 63: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 64: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 65: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 66: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 67: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 68: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 69: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 70: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 71: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 72: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 73: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 74: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 75: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 76: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 77: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 78: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 79: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 80: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 81: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 82: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 83: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 84: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 85: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 86: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 87: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 88: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 89: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 90: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 91: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 92: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 93: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 94: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 95: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 96: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 97: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 98: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 99: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 100: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 101: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 102: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 103: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 104: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 105: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 106: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 107: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 108: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 109: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 110: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 111: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 112: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 113: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 114: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 115: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 116: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 117: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 118: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 119: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 120: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 121: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 122: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 123: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 124: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 125: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 126: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 127: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 128: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 129: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 130: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 131: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 132: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 133: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 134: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 135: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 136: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 137: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 138: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 139: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 140: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 141: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 142: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 143: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 144: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 145: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 146: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 147: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 148: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 149: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 150: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 151: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 152: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 153: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 154: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 155: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 156: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 157: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 158: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 159: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 160: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 161: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 162: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 163: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 164: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 165: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 166: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 167: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 168: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 169: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 170: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 171: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 172: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 173: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 174: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 175: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 176: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 177: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 178: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 179: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 180: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?

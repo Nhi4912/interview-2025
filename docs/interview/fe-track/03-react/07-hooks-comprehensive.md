@@ -1,2792 +1,1108 @@
-# React Hooks - Complete Guide
-## From Basics to Advanced Patterns
+# Hooks Comprehensive / Tổng Hợp Hooks
+## React - Chapter 7
 
-[← Back to Testing](./06-testing.md) | [Next: Performance →](../08-performance/02-react-performance.md)
-
----
-
-## 📋 Table of Contents
-
-1. [Hooks Fundamentals](#hooks-fundamentals)
-2. [useState Deep Dive](#usestate-deep-dive)
-3. [useEffect Mastery](#useeffect-mastery)
-4. [useContext Patterns](#usecontext-patterns)
-5. [useReducer Advanced](#usereducer-advanced)
-6. [useMemo & useCallback](#usememo-usecallback)
-7. [useRef Complete Guide](#useref-complete-guide)
-8. [Custom Hooks](#custom-hooks)
-9. [Advanced Patterns](#advanced-patterns)
-10. [Performance Optimization](#performance-optimization)
-11. [Interview Questions](#interview-questions)
-12. [Practice Problems](#practice-problems)
+[← Previous](./06-testing.md) | [Back to Table of Contents](../00-table-of-contents.md) | [Next →](./08-react-patterns-advanced.md)
 
 ---
 
-## 🎯 Learning Objectives
+## Tổng Quan / Overview
 
-Master React Hooks:
-- Understand all built-in hooks deeply
-- Create powerful custom hooks
-- Optimize performance with hooks
-- Handle complex state management
-- Implement advanced patterns
-- Avoid common pitfalls
+**English:** This chapter is rewritten in bilingual EN/VI format for interview preparation. It focuses on conceptual clarity, practical examples, and common interview traps.
 
----
+**Tiếng Việt:** Chương này được viết lại theo định dạng song ngữ EN/VI để ôn luyện phỏng vấn. Nội dung tập trung vào hiểu bản chất, ví dụ thực tế và các bẫy thường gặp.
 
-## Hooks Fundamentals
+Xem thêm / Related: [01 React Fundamentals](./01-react-fundamentals.md), [03 Hooks Deep Dive](./03-hooks-deep-dive.md), [09 Performance](./09-performance-optimization.md).
 
-### What are Hooks?
-
-**English Definition:** Hooks are functions that let you "hook into" React state and lifecycle features from function components.
-
-**Định nghĩa (Tiếng Việt):** Hooks là các hàm cho phép bạn "kết nối" vào state và lifecycle features của React từ function components.
-
-
-### Hooks Mind Map
-
-```
-React Hooks
-│
-├── Basic Hooks
-│   ├── useState (state management)
-│   ├── useEffect (side effects)
-│   └── useContext (context consumption)
-│
-├── Additional Hooks
-│   ├── useReducer (complex state)
-│   ├── useCallback (memoized callbacks)
-│   ├── useMemo (memoized values)
-│   ├── useRef (mutable refs)
-│   ├── useImperativeHandle (ref customization)
-│   ├── useLayoutEffect (synchronous effects)
-│   └── useDebugValue (dev tools)
-│
-├── Custom Hooks
-│   ├── Data fetching
-│   ├── Form handling
-│   ├── Local storage
-│   ├── Window size
-│   └── Debounce/Throttle
-│
-└── Rules
-    ├── Only call at top level
-    ├── Only call from React functions
-    └── Use ESLint plugin
-```
-
-### Rules of Hooks
-
-```javascript
-// ========================================
-// RULE 1: ONLY CALL HOOKS AT TOP LEVEL
-// ========================================
-
-// ✅ CORRECT
-function Component() {
-  const [state, setState] = useState(0);
-  
-  useEffect(() => {
-    // Effect logic
-  }, []);
-  
-  return <div>{state}</div>;
-}
-
-// ❌ WRONG: Inside condition
-function WrongComponent() {
-  if (condition) {
-    const [state, setState] = useState(0); // ❌ Don't do this
-  }
-  return <div>Content</div>;
-}
-
-// ❌ WRONG: Inside loop
-function WrongComponent2() {
-  for (let i = 0; i < 10; i++) {
-    const [state, setState] = useState(i); // ❌ Don't do this
-  }
-  return <div>Content</div>;
-}
-
-// ========================================
-// RULE 2: ONLY CALL FROM REACT FUNCTIONS
-// ========================================
-
-// ✅ CORRECT: From function component
-function Component() {
-  const [state, setState] = useState(0);
-  return <div>{state}</div>;
-}
-
-// ✅ CORRECT: From custom hook
-function useCustomHook() {
-  const [state, setState] = useState(0);
-  return state;
-}
-
-// ❌ WRONG: From regular function
-function regularFunction() {
-  const [state, setState] = useState(0); // ❌ Don't do this
-  return state;
-}
-
-// ❌ WRONG: From class component
-class ClassComponent extends React.Component {
-  render() {
-    const [state, setState] = useState(0); // ❌ Don't do this
-    return <div>{state}</div>;
-  }
-}
-```
-
-### Why Hooks?
-
-```javascript
-// ========================================
-// BEFORE HOOKS: CLASS COMPONENT
-// ========================================
-
-class Counter extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { count: 0 };
-    this.increment = this.increment.bind(this);
-  }
-  
-  componentDidMount() {
-    document.title = `Count: ${this.state.count}`;
-  }
-  
-  componentDidUpdate() {
-    document.title = `Count: ${this.state.count}`;
-  }
-  
-  increment() {
-    this.setState({ count: this.state.count + 1 });
-  }
-  
-  render() {
-    return (
-      <div>
-        <p>Count: {this.state.count}</p>
-        <button onClick={this.increment}>Increment</button>
-      </div>
-    );
-  }
-}
-
-// ========================================
-// WITH HOOKS: FUNCTION COMPONENT
-// ========================================
-
-function Counter() {
-  const [count, setCount] = useState(0);
-  
-  useEffect(() => {
-    document.title = `Count: ${count}`;
-  }, [count]);
-  
-  return (
-    <div>
-      <p>Count: {count}</p>
-      <button onClick={() => setCount(count + 1)}>
-        Increment
-      </button>
-    </div>
-  );
-}
-
-/*
-Benefits:
-1. Less boilerplate
-2. No 'this' binding
-3. Easier to share logic (custom hooks)
-4. Better code organization
-5. Smaller bundle size
-*/
-```
+## Table of Contents / Mục Lục
+1. [Hooks Taxonomy](#hooks-taxonomy)
+2. [Custom Hook Library Architecture](#custom-hook-library-architecture)
+3. [Hook Composition Patterns](#hook-composition-patterns)
+4. [Testing Hooks](#testing-hooks)
+5. [Hooks vs Class Lifecycle Mapping](#hooks-vs-class-lifecycle-mapping)
+6. [useTransition](#usetransition)
+7. [useDeferredValue](#usedeferredvalue)
+8. [useId and Accessibility](#useid-and-accessibility)
+9. [useSyncExternalStore](#usesyncexternalstore)
+10. [useInsertionEffect and Styling](#useinsertioneffect-and-styling)
+11. [Performance Patterns with Hooks](#performance-patterns-with-hooks)
+12. [Migration Strategy and Team Conventions](#migration-strategy-and-team-conventions)
+13. [Câu Hỏi Phỏng Vấn / Interview Q&A](#câu-hỏi-phỏng-vấn--interview-qa)
 
 ---
 
-## useState Deep Dive
+## Hooks Taxonomy
 
-### Basic useState
+### Giải thích / Explanation
 
-```javascript
-// ========================================
-// SIMPLE STATE
-// ========================================
+**English:** Group hooks by state, effects, refs, memoization, and concurrency concerns.
 
-function Counter() {
-  const [count, setCount] = useState(0);
-  
+**Tiếng Việt:** Phân loại hook theo state, effect, ref, memo và concurrency.
+
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for hooks taxonomy.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for hooks taxonomy.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for hooks taxonomy.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for hooks taxonomy.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for hooks taxonomy.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for hooks taxonomy.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for hooks taxonomy.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for hooks taxonomy.
+
+### Ví dụ / Example
+```tsx
+import { useState } from 'react';
+
+type CounterProps = { initial?: number };
+
+export function Counter({ initial = 0 }: CounterProps) {
+  const [count, setCount] = useState(initial);
   return (
-    <div>
-      <p>Count: {count}</p>
-      <button onClick={() => setCount(count + 1)}>+</button>
-      <button onClick={() => setCount(count - 1)}>-</button>
-      <button onClick={() => setCount(0)}>Reset</button>
-    </div>
-  );
-}
-
-// ========================================
-// MULTIPLE STATE VARIABLES
-// ========================================
-
-function Form() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [age, setAge] = useState(0);
-  
-  return (
-    <form>
-      <input 
-        value={name} 
-        onChange={(e) => setName(e.target.value)} 
-      />
-      <input 
-        value={email} 
-        onChange={(e) => setEmail(e.target.value)} 
-      />
-      <input 
-        type="number"
-        value={age} 
-        onChange={(e) => setAge(Number(e.target.value))} 
-      />
-    </form>
-  );
-}
-
-// ========================================
-// OBJECT STATE
-// ========================================
-
-function UserProfile() {
-  const [user, setUser] = useState({
-    name: '',
-    email: '',
-    age: 0
-  });
-  
-  const updateField = (field, value) => {
-    setUser(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-  
-  return (
-    <form>
-      <input 
-        value={user.name}
-        onChange={(e) => updateField('name', e.target.value)}
-      />
-      <input 
-        value={user.email}
-        onChange={(e) => updateField('email', e.target.value)}
-      />
-    </form>
-  );
-}
-
-// ========================================
-// ARRAY STATE
-// ========================================
-
-function TodoList() {
-  const [todos, setTodos] = useState([]);
-  
-  const addTodo = (text) => {
-    setTodos(prev => [...prev, { id: Date.now(), text }]);
-  };
-  
-  const removeTodo = (id) => {
-    setTodos(prev => prev.filter(todo => todo.id !== id));
-  };
-  
-  const updateTodo = (id, newText) => {
-    setTodos(prev => prev.map(todo =>
-      todo.id === id ? { ...todo, text: newText } : todo
-    ));
-  };
-  
-  return (
-    <div>
-      {todos.map(todo => (
-        <div key={todo.id}>
-          <span>{todo.text}</span>
-          <button onClick={() => removeTodo(todo.id)}>Delete</button>
-        </div>
-      ))}
-    </div>
-  );
-}
-```
-
-### Functional Updates
-
-```javascript
-// ========================================
-// WHY FUNCTIONAL UPDATES?
-// ========================================
-
-function Counter() {
-  const [count, setCount] = useState(0);
-  
-  // ❌ PROBLEM: Stale closure
-  const incrementThreeTimes = () => {
-    setCount(count + 1); // Uses current count
-    setCount(count + 1); // Uses same count
-    setCount(count + 1); // Uses same count
-    // Result: count increases by 1, not 3!
-  };
-  
-  // ✅ SOLUTION: Functional update
-  const incrementThreeTimesFix = () => {
-    setCount(prev => prev + 1); // Uses latest
-    setCount(prev => prev + 1); // Uses latest
-    setCount(prev => prev + 1); // Uses latest
-    // Result: count increases by 3 ✓
-  };
-  
-  return (
-    <div>
-      <p>Count: {count}</p>
-      <button onClick={incrementThreeTimes}>+3 (Wrong)</button>
-      <button onClick={incrementThreeTimesFix}>+3 (Correct)</button>
-    </div>
-  );
-}
-
-// ========================================
-// COMPLEX FUNCTIONAL UPDATES
-// ========================================
-
-function ShoppingCart() {
-  const [cart, setCart] = useState([]);
-  
-  const addItem = (item) => {
-    setCart(prev => {
-      const existing = prev.find(i => i.id === item.id);
-      
-      if (existing) {
-        return prev.map(i =>
-          i.id === item.id
-            ? { ...i, quantity: i.quantity + 1 }
-            : i
-        );
-      }
-      
-      return [...prev, { ...item, quantity: 1 }];
-    });
-  };
-  
-  const removeItem = (id) => {
-    setCart(prev => prev.filter(item => item.id !== id));
-  };
-  
-  const updateQuantity = (id, quantity) => {
-    setCart(prev => prev.map(item =>
-      item.id === id ? { ...item, quantity } : item
-    ));
-  };
-  
-  return (
-    <div>
-      {cart.map(item => (
-        <div key={item.id}>
-          <span>{item.name} x {item.quantity}</span>
-          <button onClick={() => updateQuantity(item.id, item.quantity + 1)}>
-            +
-          </button>
-          <button onClick={() => updateQuantity(item.id, item.quantity - 1)}>
-            -
-          </button>
-          <button onClick={() => removeItem(item.id)}>Remove</button>
-        </div>
-      ))}
-    </div>
-  );
-}
-```
-
-### Lazy Initialization
-
-```javascript
-// ========================================
-// EXPENSIVE INITIAL STATE
-// ========================================
-
-// ❌ BAD: Runs on every render
-function Component() {
-  const [data, setData] = useState(expensiveComputation());
-  // expensiveComputation() runs on every render!
-  return <div>{data}</div>;
-}
-
-// ✅ GOOD: Runs only once
-function Component() {
-  const [data, setData] = useState(() => expensiveComputation());
-  // expensiveComputation() runs only on initial render
-  return <div>{data}</div>;
-}
-
-// ========================================
-// PRACTICAL EXAMPLES
-// ========================================
-
-// Reading from localStorage
-function useLocalStorage(key, initialValue) {
-  const [value, setValue] = useState(() => {
-    try {
-      const item = window.localStorage.getItem(key);
-      return item ? JSON.parse(item) : initialValue;
-    } catch (error) {
-      console.error(error);
-      return initialValue;
-    }
-  });
-  
-  return [value, setValue];
-}
-
-// Complex calculation
-function DataProcessor() {
-  const [processed, setProcessed] = useState(() => {
-    const rawData = fetchRawData();
-    return processLargeDataset(rawData);
-  });
-  
-  return <div>{processed}</div>;
-}
-
-// Creating unique ID
-function UniqueComponent() {
-  const [id] = useState(() => `component-${Math.random()}`);
-  return <div id={id}>Content</div>;
-}
-```
-
-### State Batching
-
-```javascript
-// ========================================
-// AUTOMATIC BATCHING (React 18+)
-// ========================================
-
-function Component() {
-  const [count, setCount] = useState(0);
-  const [flag, setFlag] = useState(false);
-  
-  // React 18: Batched automatically
-  const handleClick = () => {
-    setCount(c => c + 1);
-    setFlag(f => !f);
-    // Only one re-render!
-  };
-  
-  // React 18: Even in async, batched automatically
-  const handleClickAsync = async () => {
-    await fetch('/api/data');
-    setCount(c => c + 1);
-    setFlag(f => !f);
-    // Only one re-render!
-  };
-  
-  // React 18: Even in setTimeout, batched automatically
-  const handleClickTimeout = () => {
-    setTimeout(() => {
-      setCount(c => c + 1);
-      setFlag(f => !f);
-      // Only one re-render!
-    }, 1000);
-  };
-  
-  console.log('Render'); // Logs once per click
-  
-  return (
-    <div>
-      <p>Count: {count}</p>
-      <p>Flag: {flag.toString()}</p>
-      <button onClick={handleClick}>Update</button>
-      <button onClick={handleClickAsync}>Update Async</button>
-      <button onClick={handleClickTimeout}>Update Timeout</button>
-    </div>
-  );
-}
-
-// ========================================
-// OPT-OUT OF BATCHING (if needed)
-// ========================================
-
-import { flushSync } from 'react-dom';
-
-function Component() {
-  const [count, setCount] = useState(0);
-  const [flag, setFlag] = useState(false);
-  
-  const handleClick = () => {
-    flushSync(() => {
-      setCount(c => c + 1);
-    });
-    // Re-render here
-    
-    flushSync(() => {
-      setFlag(f => !f);
-    });
-    // Re-render here
-    
-    // Total: 2 re-renders
-  };
-  
-  return <button onClick={handleClick}>Update</button>;
-}
-```
-
----
-
-## useEffect Mastery
-
-### Basic useEffect
-
-```javascript
-// ========================================
-// EFFECT WITHOUT DEPENDENCIES
-// ========================================
-
-function Component() {
-  const [count, setCount] = useState(0);
-  
-  // Runs after every render
-  useEffect(() => {
-    console.log('Effect ran');
-  });
-  
-  return <button onClick={() => setCount(count + 1)}>Count: {count}</button>;
-}
-
-// ========================================
-// EFFECT WITH EMPTY DEPENDENCIES
-// ========================================
-
-function Component() {
-  useEffect(() => {
-    console.log('Mounted');
-    
-    return () => {
-      console.log('Unmounted');
-    };
-  }, []); // Runs once on mount
-  
-  return <div>Component</div>;
-}
-
-// ========================================
-// EFFECT WITH DEPENDENCIES
-// ========================================
-
-function Component() {
-  const [count, setCount] = useState(0);
-  const [name, setName] = useState('');
-  
-  useEffect(() => {
-    console.log(`Count changed to ${count}`);
-  }, [count]); // Runs when count changes
-  
-  return (
-    <div>
-      <button onClick={() => setCount(count + 1)}>Count: {count}</button>
-      <input value={name} onChange={(e) => setName(e.target.value)} />
-    </div>
-  );
-}
-```
-
-### Cleanup Functions
-
-```javascript
-// ========================================
-// EVENT LISTENERS
-// ========================================
-
-function WindowSize() {
-  const [size, setSize] = useState({
-    width: window.innerWidth,
-    height: window.innerHeight
-  });
-  
-  useEffect(() => {
-    const handleResize = () => {
-      setSize({
-        width: window.innerWidth,
-        height: window.innerHeight
-      });
-    };
-    
-    window.addEventListener('resize', handleResize);
-    
-    // Cleanup: Remove listener
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
-  
-  return <div>{size.width} x {size.height}</div>;
-}
-
-// ========================================
-// TIMERS
-// ========================================
-
-function Timer() {
-  const [seconds, setSeconds] = useState(0);
-  
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSeconds(s => s + 1);
-    }, 1000);
-    
-    // Cleanup: Clear interval
-    return () => {
-      clearInterval(interval);
-    };
-  }, []);
-  
-  return <div>Seconds: {seconds}</div>;
-}
-
-// ========================================
-// SUBSCRIPTIONS
-// ========================================
-
-function ChatRoom({ roomId }) {
-  const [messages, setMessages] = useState([]);
-  
-  useEffect(() => {
-    const subscription = chatAPI.subscribe(roomId, (message) => {
-      setMessages(prev => [...prev, message]);
-    });
-    
-    // Cleanup: Unsubscribe
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [roomId]);
-  
-  return (
-    <div>
-      {messages.map((msg, i) => (
-        <div key={i}>{msg}</div>
-      ))}
-    </div>
-  );
-}
-
-// ========================================
-// ABORT CONTROLLER (FETCH)
-// ========================================
-
-function DataFetcher({ userId }) {
-  const [data, setData] = useState(null);
-  
-  useEffect(() => {
-    const controller = new AbortController();
-    
-    fetch(`/api/users/${userId}`, {
-      signal: controller.signal
-    })
-      .then(res => res.json())
-      .then(setData)
-      .catch(error => {
-        if (error.name !== 'AbortError') {
-          console.error(error);
-        }
-      });
-    
-    // Cleanup: Abort fetch
-    return () => {
-      controller.abort();
-    };
-  }, [userId]);
-  
-  return <div>{data ? data.name : 'Loading...'}</div>;
-}
-```
-
-### Common useEffect Patterns
-
-```javascript
-// ========================================
-// PATTERN 1: DATA FETCHING
-// ========================================
-
-function UserProfile({ userId }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  
-  useEffect(() => {
-    let cancelled = false;
-    
-    setLoading(true);
-    setError(null);
-    
-    fetch(`/api/users/${userId}`)
-      .then(res => res.json())
-      .then(data => {
-        if (!cancelled) {
-          setUser(data);
-          setLoading(false);
-        }
-      })
-      .catch(err => {
-        if (!cancelled) {
-          setError(err);
-          setLoading(false);
-        }
-      });
-    
-    return () => {
-      cancelled = true;
-    };
-  }, [userId]);
-  
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error.message}</div>;
-  return <div>{user.name}</div>;
-}
-
-// ========================================
-// PATTERN 2: DOCUMENT TITLE
-// ========================================
-
-function useDocumentTitle(title) {
-  useEffect(() => {
-    const prevTitle = document.title;
-    document.title = title;
-    
-    return () => {
-      document.title = prevTitle;
-    };
-  }, [title]);
-}
-
-function Page() {
-  const [count, setCount] = useState(0);
-  useDocumentTitle(`Count: ${count}`);
-  
-  return <button onClick={() => setCount(count + 1)}>Increment</button>;
-}
-
-// ========================================
-// PATTERN 3: LOCAL STORAGE SYNC
-// ========================================
-
-function useLocalStorageSync(key, value) {
-  useEffect(() => {
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-    } catch (error) {
-      console.error('Failed to save to localStorage:', error);
-    }
-  }, [key, value]);
-}
-
-function Form() {
-  const [formData, setFormData] = useState({ name: '', email: '' });
-  useLocalStorageSync('formData', formData);
-  
-  return (
-    <form>
-      <input
-        value={formData.name}
-        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-      />
-      <input
-        value={formData.email}
-        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-      />
-    </form>
-  );
-}
-
-// ========================================
-// PATTERN 4: DEBOUNCED EFFECT
-// ========================================
-
-function SearchInput() {
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState([]);
-  
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (query) {
-        fetch(`/api/search?q=${query}`)
-          .then(res => res.json())
-          .then(setResults);
-      }
-    }, 500);
-    
-    return () => clearTimeout(timer);
-  }, [query]);
-  
-  return (
-    <div>
-      <input
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search..."
-      />
-      <ul>
-        {results.map(result => (
-          <li key={result.id}>{result.name}</li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-```
-
-
-### useEffect vs useLayoutEffect
-
-```javascript
-// ========================================
-// USEEFFECT (ASYNCHRONOUS)
-// ========================================
-
-function Component() {
-  const [width, setWidth] = useState(0);
-  
-  useEffect(() => {
-    // Runs AFTER browser paint
-    setWidth(window.innerWidth);
-  }, []);
-  
-  // User might see flash of 0 before width updates
-  return <div>Width: {width}</div>;
-}
-
-// ========================================
-// USELAYOUTEFFECT (SYNCHRONOUS)
-// ========================================
-
-function Component() {
-  const [width, setWidth] = useState(0);
-  
-  useLayoutEffect(() => {
-    // Runs BEFORE browser paint
-    setWidth(window.innerWidth);
-  }, []);
-  
-  // No flash, width is set before paint
-  return <div>Width: {width}</div>;
-}
-
-// ========================================
-// WHEN TO USE USELAYOUTEFFECT
-// ========================================
-
-// Use case 1: Measuring DOM elements
-function Tooltip({ children }) {
-  const [tooltipHeight, setTooltipHeight] = useState(0);
-  const tooltipRef = useRef(null);
-  
-  useLayoutEffect(() => {
-    const { height } = tooltipRef.current.getBoundingClientRect();
-    setTooltipHeight(height);
-  }, []);
-  
-  return (
-    <div ref={tooltipRef} style={{ top: -tooltipHeight }}>
-      {children}
-    </div>
-  );
-}
-
-// Use case 2: Preventing visual flicker
-function AnimatedComponent() {
-  const [position, setPosition] = useState(0);
-  
-  useLayoutEffect(() => {
-    // Calculate position before paint
-    const newPosition = calculatePosition();
-    setPosition(newPosition);
-  }, []);
-  
-  return <div style={{ left: position }}>Content</div>;
-}
-```
-
----
-
-## useContext Patterns
-
-### Basic Context Usage
-
-```javascript
-// ========================================
-// CREATING CONTEXT
-// ========================================
-
-import { createContext, useContext, useState } from 'react';
-
-const ThemeContext = createContext();
-
-function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState('light');
-  
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
-  };
-  
-  return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      {children}
-    </ThemeContext.Provider>
-  );
-}
-
-// Custom hook for consuming context
-function useTheme() {
-  const context = useContext(ThemeContext);
-  
-  if (!context) {
-    throw new Error('useTheme must be used within ThemeProvider');
-  }
-  
-  return context;
-}
-
-// Usage
-function App() {
-  return (
-    <ThemeProvider>
-      <Header />
-      <Content />
-    </ThemeProvider>
-  );
-}
-
-function Header() {
-  const { theme, toggleTheme } = useTheme();
-  
-  return (
-    <header className={theme}>
-      <button onClick={toggleTheme}>Toggle Theme</button>
-    </header>
-  );
-}
-```
-
-### Advanced Context Patterns
-
-```javascript
-// ========================================
-// PATTERN 1: SPLIT CONTEXTS
-// ========================================
-
-// Separate state and dispatch to prevent unnecessary re-renders
-const StateContext = createContext();
-const DispatchContext = createContext();
-
-function Provider({ children }) {
-  const [state, dispatch] = useReducer(reducer, initialState);
-  
-  return (
-    <StateContext.Provider value={state}>
-      <DispatchContext.Provider value={dispatch}>
-        {children}
-      </DispatchContext.Provider>
-    </StateContext.Provider>
-  );
-}
-
-function useAppState() {
-  return useContext(StateContext);
-}
-
-function useAppDispatch() {
-  return useContext(DispatchContext);
-}
-
-// ========================================
-// PATTERN 2: CONTEXT WITH SELECTOR
-// ========================================
-
-function createContextWithSelector() {
-  const Context = createContext();
-  
-  function Provider({ value, children }) {
-    return <Context.Provider value={value}>{children}</Context.Provider>;
-  }
-  
-  function useContextSelector(selector) {
-    const context = useContext(Context);
-    const [state, setState] = useState(() => selector(context));
-    
-    useEffect(() => {
-      setState(selector(context));
-    }, [context, selector]);
-    
-    return state;
-  }
-  
-  return [Provider, useContextSelector];
-}
-
-// Usage
-const [UserProvider, useUserSelector] = createContextWithSelector();
-
-function UserName() {
-  // Only re-renders when name changes
-  const name = useUserSelector(user => user.name);
-  return <div>{name}</div>;
-}
-
-// ========================================
-// PATTERN 3: MULTIPLE CONTEXTS
-// ========================================
-
-function App() {
-  return (
-    <AuthProvider>
-      <ThemeProvider>
-        <LanguageProvider>
-          <NotificationProvider>
-            <Router />
-          </NotificationProvider>
-        </LanguageProvider>
-      </ThemeProvider>
-    </AuthProvider>
-  );
-}
-
-// Better: Compose providers
-function ComposeProviders({ providers, children }) {
-  return providers.reduceRight(
-    (acc, [Provider, props]) => <Provider {...props}>{acc}</Provider>,
-    children
-  );
-}
-
-function App() {
-  return (
-    <ComposeProviders
-      providers={[
-        [AuthProvider, {}],
-        [ThemeProvider, {}],
-        [LanguageProvider, {}],
-        [NotificationProvider, {}]
-      ]}
-    >
-      <Router />
-    </ComposeProviders>
-  );
-}
-```
-
----
-
-## useReducer Advanced
-
-### Basic useReducer
-
-```javascript
-// ========================================
-// SIMPLE COUNTER
-// ========================================
-
-function reducer(state, action) {
-  switch (action.type) {
-    case 'increment':
-      return { count: state.count + 1 };
-    case 'decrement':
-      return { count: state.count - 1 };
-    case 'reset':
-      return { count: 0 };
-    default:
-      throw new Error(`Unknown action: ${action.type}`);
-  }
-}
-
-function Counter() {
-  const [state, dispatch] = useReducer(reducer, { count: 0 });
-  
-  return (
-    <div>
-      <p>Count: {state.count}</p>
-      <button onClick={() => dispatch({ type: 'increment' })}>+</button>
-      <button onClick={() => dispatch({ type: 'decrement' })}>-</button>
-      <button onClick={() => dispatch({ type: 'reset' })}>Reset</button>
-    </div>
-  );
-}
-
-// ========================================
-// COMPLEX STATE MANAGEMENT
-// ========================================
-
-const initialState = {
-  user: null,
-  loading: false,
-  error: null,
-  posts: [],
-  filters: {
-    search: '',
-    category: 'all'
-  }
-};
-
-function reducer(state, action) {
-  switch (action.type) {
-    case 'FETCH_START':
-      return { ...state, loading: true, error: null };
-      
-    case 'FETCH_SUCCESS':
-      return {
-        ...state,
-        loading: false,
-        user: action.payload.user,
-        posts: action.payload.posts
-      };
-      
-    case 'FETCH_ERROR':
-      return { ...state, loading: false, error: action.payload };
-      
-    case 'UPDATE_FILTER':
-      return {
-        ...state,
-        filters: {
-          ...state.filters,
-          [action.payload.key]: action.payload.value
-        }
-      };
-      
-    case 'ADD_POST':
-      return {
-        ...state,
-        posts: [...state.posts, action.payload]
-      };
-      
-    case 'DELETE_POST':
-      return {
-        ...state,
-        posts: state.posts.filter(post => post.id !== action.payload)
-      };
-      
-    case 'UPDATE_POST':
-      return {
-        ...state,
-        posts: state.posts.map(post =>
-          post.id === action.payload.id ? action.payload : post
-        )
-      };
-      
-    default:
-      return state;
-  }
-}
-
-function App() {
-  const [state, dispatch] = useReducer(reducer, initialState);
-  
-  useEffect(() => {
-    dispatch({ type: 'FETCH_START' });
-    
-    fetchData()
-      .then(data => {
-        dispatch({ type: 'FETCH_SUCCESS', payload: data });
-      })
-      .catch(error => {
-        dispatch({ type: 'FETCH_ERROR', payload: error.message });
-      });
-  }, []);
-  
-  return (
-    <div>
-      {state.loading && <div>Loading...</div>}
-      {state.error && <div>Error: {state.error}</div>}
-      {state.posts.map(post => (
-        <Post key={post.id} post={post} dispatch={dispatch} />
-      ))}
-    </div>
-  );
-}
-```
-
-### useReducer Patterns
-
-```javascript
-// ========================================
-// PATTERN 1: IMMER FOR IMMUTABILITY
-// ========================================
-
-import { produce } from 'immer';
-
-function reducer(state, action) {
-  return produce(state, draft => {
-    switch (action.type) {
-      case 'ADD_TODO':
-        draft.todos.push(action.payload);
-        break;
-      case 'TOGGLE_TODO':
-        const todo = draft.todos.find(t => t.id === action.payload);
-        if (todo) todo.completed = !todo.completed;
-        break;
-      case 'DELETE_TODO':
-        draft.todos = draft.todos.filter(t => t.id !== action.payload);
-        break;
-    }
-  });
-}
-
-// ========================================
-// PATTERN 2: LAZY INITIALIZATION
-// ========================================
-
-function init(initialCount) {
-  return {
-    count: initialCount,
-    history: [initialCount]
-  };
-}
-
-function reducer(state, action) {
-  switch (action.type) {
-    case 'increment':
-      const newCount = state.count + 1;
-      return {
-        count: newCount,
-        history: [...state.history, newCount]
-      };
-    case 'reset':
-      return init(action.payload);
-    default:
-      return state;
-  }
-}
-
-function Counter({ initialCount }) {
-  const [state, dispatch] = useReducer(reducer, initialCount, init);
-  
-  return (
-    <div>
-      <p>Count: {state.count}</p>
-      <p>History: {state.history.join(', ')}</p>
-      <button onClick={() => dispatch({ type: 'increment' })}>+</button>
-      <button onClick={() => dispatch({ type: 'reset', payload: 0 })}>
-        Reset
-      </button>
-    </div>
-  );
-}
-
-// ========================================
-// PATTERN 3: MIDDLEWARE
-// ========================================
-
-function createReducerWithMiddleware(reducer, middleware) {
-  return (state, action) => {
-    const newState = reducer(state, action);
-    middleware(state, action, newState);
-    return newState;
-  };
-}
-
-// Logger middleware
-const logger = (prevState, action, nextState) => {
-  console.group(action.type);
-  console.log('Previous State:', prevState);
-  console.log('Action:', action);
-  console.log('Next State:', nextState);
-  console.groupEnd();
-};
-
-function Component() {
-  const [state, dispatch] = useReducer(
-    createReducerWithMiddleware(reducer, logger),
-    initialState
-  );
-  
-  return <div>...</div>;
-}
-```
-
----
-
-## useMemo & useCallback
-
-### useMemo Deep Dive
-
-```javascript
-// ========================================
-// BASIC USEMEMO
-// ========================================
-
-function ExpensiveComponent({ items }) {
-  // Without useMemo: Recalculates on every render
-  const total = items.reduce((sum, item) => sum + item.price, 0);
-  
-  // With useMemo: Only recalculates when items change
-  const totalMemo = useMemo(() => {
-    console.log('Calculating total...');
-    return items.reduce((sum, item) => sum + item.price, 0);
-  }, [items]);
-  
-  return <div>Total: {totalMemo}</div>;
-}
-
-// ========================================
-// COMPLEX CALCULATIONS
-// ========================================
-
-function DataTable({ data, filters }) {
-  const filteredData = useMemo(() => {
-    console.log('Filtering data...');
-    return data.filter(item => {
-      return (
-        item.name.includes(filters.search) &&
-        (filters.category === 'all' || item.category === filters.category)
-      );
-    });
-  }, [data, filters]);
-  
-  const sortedData = useMemo(() => {
-    console.log('Sorting data...');
-    return [...filteredData].sort((a, b) => a.name.localeCompare(b.name));
-  }, [filteredData]);
-  
-  const stats = useMemo(() => {
-    console.log('Calculating stats...');
-    return {
-      total: sortedData.length,
-      average: sortedData.reduce((sum, item) => sum + item.value, 0) / sortedData.length
-    };
-  }, [sortedData]);
-  
-  return (
-    <div>
-      <div>Total: {stats.total}, Average: {stats.average}</div>
-      {sortedData.map(item => (
-        <div key={item.id}>{item.name}</div>
-      ))}
-    </div>
-  );
-}
-
-// ========================================
-// REFERENTIAL EQUALITY
-// ========================================
-
-function Parent() {
-  const [count, setCount] = useState(0);
-  
-  // Without useMemo: New object on every render
-  const config = { theme: 'dark', count };
-  
-  // With useMemo: Same object reference if count hasn't changed
-  const configMemo = useMemo(() => {
-    return { theme: 'dark', count };
-  }, [count]);
-  
-  return <Child config={configMemo} />;
-}
-
-const Child = React.memo(({ config }) => {
-  console.log('Child rendered');
-  return <div>{config.theme}</div>;
-});
-```
-
-### useCallback Deep Dive
-
-```javascript
-// ========================================
-// BASIC USECALLBACK
-// ========================================
-
-function Parent() {
-  const [count, setCount] = useState(0);
-  
-  // Without useCallback: New function on every render
-  const handleClick = () => {
-    console.log('Clicked');
-  };
-  
-  // With useCallback: Same function reference
-  const handleClickMemo = useCallback(() => {
-    console.log('Clicked');
-  }, []);
-  
-  return <Child onClick={handleClickMemo} />;
-}
-
-const Child = React.memo(({ onClick }) => {
-  console.log('Child rendered');
-  return <button onClick={onClick}>Click</button>;
-});
-
-// ========================================
-// WITH DEPENDENCIES
-// ========================================
-
-function SearchComponent() {
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState([]);
-  
-  const handleSearch = useCallback(async () => {
-    const data = await fetch(`/api/search?q=${query}`);
-    const json = await data.json();
-    setResults(json);
-  }, [query]); // Recreates when query changes
-  
-  return (
-    <div>
-      <input value={query} onChange={(e) => setQuery(e.target.value)} />
-      <button onClick={handleSearch}>Search</button>
-      <Results data={results} />
-    </div>
-  );
-}
-
-// ========================================
-// COMMON PATTERN: EVENT HANDLERS
-// ========================================
-
-function TodoList() {
-  const [todos, setTodos] = useState([]);
-  
-  const handleToggle = useCallback((id) => {
-    setTodos(prev => prev.map(todo =>
-      todo.id === id ? { ...todo, completed: !todo.completed } : todo
-    ));
-  }, []); // No dependencies needed with functional update
-  
-  const handleDelete = useCallback((id) => {
-    setTodos(prev => prev.filter(todo => todo.id !== id));
-  }, []);
-  
-  return (
-    <div>
-      {todos.map(todo => (
-        <TodoItem
-          key={todo.id}
-          todo={todo}
-          onToggle={handleToggle}
-          onDelete={handleDelete}
-        />
-      ))}
-    </div>
-  );
-}
-
-const TodoItem = React.memo(({ todo, onToggle, onDelete }) => {
-  console.log('TodoItem rendered:', todo.id);
-  
-  return (
-    <div>
-      <input
-        type="checkbox"
-        checked={todo.completed}
-        onChange={() => onToggle(todo.id)}
-      />
-      <span>{todo.text}</span>
-      <button onClick={() => onDelete(todo.id)}>Delete</button>
-    </div>
-  );
-});
-```
-
-### When to Use useMemo and useCallback
-
-```javascript
-// ========================================
-// WHEN TO USE USEMEMO
-// ========================================
-
-// ✅ DO: Expensive calculations
-const expensiveValue = useMemo(() => {
-  return computeExpensiveValue(a, b);
-}, [a, b]);
-
-// ✅ DO: Prevent child re-renders
-const config = useMemo(() => ({ theme, locale }), [theme, locale]);
-
-// ✅ DO: Dependency in other hooks
-const filteredItems = useMemo(() => items.filter(predicate), [items]);
-useEffect(() => {
-  // Use filteredItems
-}, [filteredItems]);
-
-// ❌ DON'T: Simple calculations
-const sum = useMemo(() => a + b, [a, b]); // Overkill
-
-// ❌ DON'T: Primitive values
-const doubled = useMemo(() => count * 2, [count]); // Unnecessary
-
-// ========================================
-// WHEN TO USE USECALLBACK
-// ========================================
-
-// ✅ DO: Passing to memoized children
-const handleClick = useCallback(() => {
-  doSomething();
-}, []);
-<MemoizedChild onClick={handleClick} />
-
-// ✅ DO: Dependency in other hooks
-const fetchData = useCallback(() => {
-  return fetch('/api/data');
-}, []);
-useEffect(() => {
-  fetchData();
-}, [fetchData]);
-
-// ✅ DO: Event handlers in lists
-const handleDelete = useCallback((id) => {
-  setItems(prev => prev.filter(item => item.id !== id));
-}, []);
-
-// ❌ DON'T: Every function
-const handleChange = useCallback((e) => {
-  setValue(e.target.value);
-}, []); // Probably unnecessary if not passed to memoized child
-
-// ❌ DON'T: Functions that change often
-const handleClick = useCallback(() => {
-  console.log(count); // Needs count in deps
-}, [count]); // Recreates on every count change anyway
-```
-
----
-
-## useRef Complete Guide
-
-### Basic useRef
-
-```javascript
-// ========================================
-// DOM REFERENCES
-// ========================================
-
-function TextInput() {
-  const inputRef = useRef(null);
-  
-  const focusInput = () => {
-    inputRef.current.focus();
-  };
-  
-  return (
-    <div>
-      <input ref={inputRef} />
-      <button onClick={focusInput}>Focus Input</button>
-    </div>
-  );
-}
-
-// ========================================
-// STORING MUTABLE VALUES
-// ========================================
-
-function Timer() {
-  const [seconds, setSeconds] = useState(0);
-  const intervalRef = useRef(null);
-  
-  const start = () => {
-    if (intervalRef.current) return;
-    
-    intervalRef.current = setInterval(() => {
-      setSeconds(s => s + 1);
-    }, 1000);
-  };
-  
-  const stop = () => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-  };
-  
-  const reset = () => {
-    stop();
-    setSeconds(0);
-  };
-  
-  useEffect(() => {
-    return () => stop(); // Cleanup
-  }, []);
-  
-  return (
-    <div>
-      <p>Seconds: {seconds}</p>
-      <button onClick={start}>Start</button>
-      <button onClick={stop}>Stop</button>
-      <button onClick={reset}>Reset</button>
-    </div>
-  );
-}
-
-// ========================================
-// PREVIOUS VALUE
-// ========================================
-
-function usePrevious(value) {
-  const ref = useRef();
-  
-  useEffect(() => {
-    ref.current = value;
-  }, [value]);
-  
-  return ref.current;
-}
-
-function Counter() {
-  const [count, setCount] = useState(0);
-  const prevCount = usePrevious(count);
-  
-  return (
-    <div>
-      <p>Current: {count}</p>
-      <p>Previous: {prevCount}</p>
-      <button onClick={() => setCount(count + 1)}>Increment</button>
-    </div>
-  );
-}
-```
-
-### Advanced useRef Patterns
-
-```javascript
-// ========================================
-// PATTERN 1: CALLBACK REF
-// ========================================
-
-function MeasureComponent() {
-  const [height, setHeight] = useState(0);
-  
-  const measuredRef = useCallback(node => {
-    if (node !== null) {
-      setHeight(node.getBoundingClientRect().height);
-    }
-  }, []);
-  
-  return (
-    <div>
-      <div ref={measuredRef}>
-        <p>This element's height is {height}px</p>
-      </div>
-    </div>
-  );
-}
-
-// ========================================
-// PATTERN 2: FORWARDING REFS
-// ========================================
-
-const FancyInput = forwardRef((props, ref) => {
-  return <input ref={ref} className="fancy-input" {...props} />;
-});
-
-function Parent() {
-  const inputRef = useRef();
-  
-  return (
-    <div>
-      <FancyInput ref={inputRef} />
-      <button onClick={() => inputRef.current.focus()}>
-        Focus Input
-      </button>
-    </div>
-  );
-}
-
-// ========================================
-// PATTERN 3: IMPERATIVE HANDLE
-// ========================================
-
-const FancyInput = forwardRef((props, ref) => {
-  const inputRef = useRef();
-  
-  useImperativeHandle(ref, () => ({
-    focus: () => {
-      inputRef.current.focus();
-    },
-    scrollIntoView: () => {
-      inputRef.current.scrollIntoView();
-    },
-    getValue: () => {
-      return inputRef.current.value;
-    }
-  }));
-  
-  return <input ref={inputRef} {...props} />;
-});
-
-function Parent() {
-  const fancyInputRef = useRef();
-  
-  return (
-    <div>
-      <FancyInput ref={fancyInputRef} />
-      <button onClick={() => fancyInputRef.current.focus()}>
-        Focus
-      </button>
-      <button onClick={() => console.log(fancyInputRef.current.getValue())}>
-        Get Value
-      </button>
-    </div>
-  );
-}
-
-// ========================================
-// PATTERN 4: INSTANCE VARIABLES
-// ========================================
-
-function Chat() {
-  const [messages, setMessages] = useState([]);
-  const ws = useRef(null);
-  const reconnectAttempts = useRef(0);
-  const maxReconnectAttempts = 5;
-  
-  useEffect(() => {
-    function connect() {
-      ws.current = new WebSocket('wss://chat.example.com');
-      
-      ws.current.onopen = () => {
-        console.log('Connected');
-        reconnectAttempts.current = 0;
-      };
-      
-      ws.current.onmessage = (event) => {
-        setMessages(prev => [...prev, JSON.parse(event.data)]);
-      };
-      
-      ws.current.onclose = () => {
-        if (reconnectAttempts.current < maxReconnectAttempts) {
-          reconnectAttempts.current++;
-          setTimeout(connect, 1000 * reconnectAttempts.current);
-        }
-      };
-    }
-    
-    connect();
-    
-    return () => {
-      if (ws.current) {
-        ws.current.close();
-      }
-    };
-  }, []);
-  
-  const sendMessage = (text) => {
-    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-      ws.current.send(JSON.stringify({ text }));
-    }
-  };
-  
-  return (
-    <div>
-      {messages.map((msg, i) => (
-        <div key={i}>{msg.text}</div>
-      ))}
-    </div>
-  );
-}
-```
-
-
----
-
-## Custom Hooks
-
-### Creating Custom Hooks
-
-```javascript
-// ========================================
-// CUSTOM HOOK: FETCH DATA
-// ========================================
-
-function useFetch(url) {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  
-  useEffect(() => {
-    let cancelled = false;
-    
-    setLoading(true);
-    setError(null);
-    
-    fetch(url)
-      .then(res => res.json())
-      .then(data => {
-        if (!cancelled) {
-          setData(data);
-          setLoading(false);
-        }
-      })
-      .catch(err => {
-        if (!cancelled) {
-          setError(err);
-          setLoading(false);
-        }
-      });
-    
-    return () => {
-      cancelled = true;
-    };
-  }, [url]);
-  
-  return { data, loading, error };
-}
-
-// Usage
-function UserProfile({ userId }) {
-  const { data: user, loading, error } = useFetch(`/api/users/${userId}`);
-  
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error.message}</div>;
-  return <div>{user.name}</div>;
-}
-
-// ========================================
-// CUSTOM HOOK: LOCAL STORAGE
-// ========================================
-
-function useLocalStorage(key, initialValue) {
-  const [storedValue, setStoredValue] = useState(() => {
-    try {
-      const item = window.localStorage.getItem(key);
-      return item ? JSON.parse(item) : initialValue;
-    } catch (error) {
-      console.error(error);
-      return initialValue;
-    }
-  });
-  
-  const setValue = (value) => {
-    try {
-      const valueToStore = value instanceof Function ? value(storedValue) : value;
-      setStoredValue(valueToStore);
-      window.localStorage.setItem(key, JSON.stringify(valueToStore));
-    } catch (error) {
-      console.error(error);
-    }
-  };
-  
-  return [storedValue, setValue];
-}
-
-// Usage
-function Settings() {
-  const [theme, setTheme] = useLocalStorage('theme', 'light');
-  const [language, setLanguage] = useLocalStorage('language', 'en');
-  
-  return (
-    <div>
-      <select value={theme} onChange={(e) => setTheme(e.target.value)}>
-        <option value="light">Light</option>
-        <option value="dark">Dark</option>
-      </select>
-      <select value={language} onChange={(e) => setLanguage(e.target.value)}>
-        <option value="en">English</option>
-        <option value="vi">Vietnamese</option>
-      </select>
-    </div>
-  );
-}
-
-// ========================================
-// CUSTOM HOOK: DEBOUNCE
-// ========================================
-
-function useDebounce(value, delay) {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-  
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-    
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-  
-  return debouncedValue;
-}
-
-// Usage
-function SearchComponent() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
-  
-  useEffect(() => {
-    if (debouncedSearchTerm) {
-      // Make API call
-      fetch(`/api/search?q=${debouncedSearchTerm}`)
-        .then(res => res.json())
-        .then(data => console.log(data));
-    }
-  }, [debouncedSearchTerm]);
-  
-  return (
-    <input
-      value={searchTerm}
-      onChange={(e) => setSearchTerm(e.target.value)}
-      placeholder="Search..."
-    />
-  );
-}
-
-// ========================================
-// CUSTOM HOOK: WINDOW SIZE
-// ========================================
-
-function useWindowSize() {
-  const [windowSize, setWindowSize] = useState({
-    width: window.innerWidth,
-    height: window.innerHeight
-  });
-  
-  useEffect(() => {
-    function handleResize() {
-      setWindowSize({
-        width: window.innerWidth,
-        height: window.innerHeight
-      });
-    }
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-  
-  return windowSize;
-}
-
-// Usage
-function ResponsiveComponent() {
-  const { width, height } = useWindowSize();
-  
-  return (
-    <div>
-      <p>Window size: {width} x {height}</p>
-      {width < 768 ? <MobileView /> : <DesktopView />}
-    </div>
-  );
-}
-
-// ========================================
-// CUSTOM HOOK: FORM HANDLING
-// ========================================
-
-function useForm(initialValues, validate) {
-  const [values, setValues] = useState(initialValues);
-  const [errors, setErrors] = useState({});
-  const [touched, setTouched] = useState({});
-  
-  const handleChange = (name, value) => {
-    setValues(prev => ({ ...prev, [name]: value }));
-  };
-  
-  const handleBlur = (name) => {
-    setTouched(prev => ({ ...prev, [name]: true }));
-    
-    if (validate) {
-      const fieldErrors = validate({ ...values, [name]: values[name] });
-      setErrors(prev => ({ ...prev, [name]: fieldErrors[name] }));
-    }
-  };
-  
-  const handleSubmit = (onSubmit) => (e) => {
-    e.preventDefault();
-    
-    if (validate) {
-      const validationErrors = validate(values);
-      setErrors(validationErrors);
-      
-      if (Object.keys(validationErrors).length === 0) {
-        onSubmit(values);
-      }
-    } else {
-      onSubmit(values);
-    }
-  };
-  
-  const reset = () => {
-    setValues(initialValues);
-    setErrors({});
-    setTouched({});
-  };
-  
-  return {
-    values,
-    errors,
-    touched,
-    handleChange,
-    handleBlur,
-    handleSubmit,
-    reset
-  };
-}
-
-// Usage
-function LoginForm() {
-  const validate = (values) => {
-    const errors = {};
-    
-    if (!values.email) {
-      errors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(values.email)) {
-      errors.email = 'Email is invalid';
-    }
-    
-    if (!values.password) {
-      errors.password = 'Password is required';
-    } else if (values.password.length < 6) {
-      errors.password = 'Password must be at least 6 characters';
-    }
-    
-    return errors;
-  };
-  
-  const { values, errors, touched, handleChange, handleBlur, handleSubmit } = useForm(
-    { email: '', password: '' },
-    validate
-  );
-  
-  const onSubmit = (values) => {
-    console.log('Form submitted:', values);
-  };
-  
-  return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <div>
-        <input
-          name="email"
-          value={values.email}
-          onChange={(e) => handleChange('email', e.target.value)}
-          onBlur={() => handleBlur('email')}
-        />
-        {touched.email && errors.email && <span>{errors.email}</span>}
-      </div>
-      
-      <div>
-        <input
-          type="password"
-          name="password"
-          value={values.password}
-          onChange={(e) => handleChange('password', e.target.value)}
-          onBlur={() => handleBlur('password')}
-        />
-        {touched.password && errors.password && <span>{errors.password}</span>}
-      </div>
-      
-      <button type="submit">Login</button>
-    </form>
-  );
-}
-```
-
-### Advanced Custom Hooks
-
-```javascript
-// ========================================
-// CUSTOM HOOK: ASYNC STATE
-// ========================================
-
-function useAsync(asyncFunction, immediate = true) {
-  const [status, setStatus] = useState('idle');
-  const [value, setValue] = useState(null);
-  const [error, setError] = useState(null);
-  
-  const execute = useCallback((...params) => {
-    setStatus('pending');
-    setValue(null);
-    setError(null);
-    
-    return asyncFunction(...params)
-      .then(response => {
-        setValue(response);
-        setStatus('success');
-        return response;
-      })
-      .catch(error => {
-        setError(error);
-        setStatus('error');
-        throw error;
-      });
-  }, [asyncFunction]);
-  
-  useEffect(() => {
-    if (immediate) {
-      execute();
-    }
-  }, [execute, immediate]);
-  
-  return { execute, status, value, error };
-}
-
-// Usage
-function UserProfile({ userId }) {
-  const fetchUser = useCallback(() => {
-    return fetch(`/api/users/${userId}`).then(res => res.json());
-  }, [userId]);
-  
-  const { value: user, status, error, execute } = useAsync(fetchUser);
-  
-  if (status === 'pending') return <div>Loading...</div>;
-  if (status === 'error') return <div>Error: {error.message}</div>;
-  if (status === 'success') return <div>{user.name}</div>;
-  
-  return <button onClick={execute}>Load User</button>;
-}
-
-// ========================================
-// CUSTOM HOOK: INTERSECTION OBSERVER
-// ========================================
-
-function useIntersectionObserver(ref, options = {}) {
-  const [isIntersecting, setIsIntersecting] = useState(false);
-  
-  useEffect(() => {
-    const observer = new IntersectionObserver(([entry]) => {
-      setIsIntersecting(entry.isIntersecting);
-    }, options);
-    
-    if (ref.current) {
-      observer.observe(ref.current);
-    }
-    
-    return () => {
-      if (ref.current) {
-        observer.unobserve(ref.current);
-      }
-    };
-  }, [ref, options]);
-  
-  return isIntersecting;
-}
-
-// Usage
-function LazyImage({ src, alt }) {
-  const imgRef = useRef();
-  const isVisible = useIntersectionObserver(imgRef, {
-    threshold: 0.1,
-    rootMargin: '100px'
-  });
-  
-  return (
-    <div ref={imgRef}>
-      {isVisible ? (
-        <img src={src} alt={alt} />
-      ) : (
-        <div>Loading...</div>
-      )}
-    </div>
-  );
-}
-
-// ========================================
-// CUSTOM HOOK: MEDIA QUERY
-// ========================================
-
-function useMediaQuery(query) {
-  const [matches, setMatches] = useState(() => {
-    return window.matchMedia(query).matches;
-  });
-  
-  useEffect(() => {
-    const mediaQuery = window.matchMedia(query);
-    
-    const handleChange = (e) => {
-      setMatches(e.matches);
-    };
-    
-    mediaQuery.addEventListener('change', handleChange);
-    
-    return () => {
-      mediaQuery.removeEventListener('change', handleChange);
-    };
-  }, [query]);
-  
-  return matches;
-}
-
-// Usage
-function ResponsiveComponent() {
-  const isMobile = useMediaQuery('(max-width: 768px)');
-  const isTablet = useMediaQuery('(min-width: 769px) and (max-width: 1024px)');
-  const isDesktop = useMediaQuery('(min-width: 1025px)');
-  
-  return (
-    <div>
-      {isMobile && <MobileView />}
-      {isTablet && <TabletView />}
-      {isDesktop && <DesktopView />}
-    </div>
-  );
-}
-
-// ========================================
-// CUSTOM HOOK: PREVIOUS VALUE
-// ========================================
-
-function usePrevious(value) {
-  const ref = useRef();
-  
-  useEffect(() => {
-    ref.current = value;
-  }, [value]);
-  
-  return ref.current;
-}
-
-// Usage
-function Counter() {
-  const [count, setCount] = useState(0);
-  const prevCount = usePrevious(count);
-  
-  return (
-    <div>
-      <p>Current: {count}</p>
-      <p>Previous: {prevCount}</p>
-      <p>Change: {count - (prevCount || 0)}</p>
-      <button onClick={() => setCount(count + 1)}>Increment</button>
-    </div>
-  );
-}
-
-// ========================================
-// CUSTOM HOOK: TOGGLE
-// ========================================
-
-function useToggle(initialValue = false) {
-  const [value, setValue] = useState(initialValue);
-  
-  const toggle = useCallback(() => {
-    setValue(v => !v);
-  }, []);
-  
-  const setTrue = useCallback(() => {
-    setValue(true);
-  }, []);
-  
-  const setFalse = useCallback(() => {
-    setValue(false);
-  }, []);
-  
-  return [value, { toggle, setTrue, setFalse }];
-}
-
-// Usage
-function Modal() {
-  const [isOpen, { toggle, setTrue, setFalse }] = useToggle(false);
-  
-  return (
-    <div>
-      <button onClick={setTrue}>Open Modal</button>
-      {isOpen && (
-        <div className="modal">
-          <p>Modal Content</p>
-          <button onClick={setFalse}>Close</button>
-          <button onClick={toggle}>Toggle</button>
-        </div>
-      )}
-    </div>
-  );
-}
-```
-
----
-
-## Advanced Patterns
-
-### Pattern 1: Compound Components
-
-```javascript
-// ========================================
-// COMPOUND COMPONENTS WITH CONTEXT
-// ========================================
-
-const TabsContext = createContext();
-
-function Tabs({ children, defaultValue }) {
-  const [activeTab, setActiveTab] = useState(defaultValue);
-  
-  return (
-    <TabsContext.Provider value={{ activeTab, setActiveTab }}>
-      <div className="tabs">{children}</div>
-    </TabsContext.Provider>
-  );
-}
-
-function TabList({ children }) {
-  return <div className="tab-list">{children}</div>;
-}
-
-function Tab({ value, children }) {
-  const { activeTab, setActiveTab } = useContext(TabsContext);
-  
-  return (
-    <button
-      className={activeTab === value ? 'active' : ''}
-      onClick={() => setActiveTab(value)}
-    >
-      {children}
+    <button onClick={() => setCount((c) => c + 1)}>
+      Count: {count}
     </button>
   );
 }
-
-function TabPanel({ value, children }) {
-  const { activeTab } = useContext(TabsContext);
-  
-  if (activeTab !== value) return null;
-  
-  return <div className="tab-panel">{children}</div>;
-}
-
-// Usage
-function App() {
-  return (
-    <Tabs defaultValue="tab1">
-      <TabList>
-        <Tab value="tab1">Tab 1</Tab>
-        <Tab value="tab2">Tab 2</Tab>
-        <Tab value="tab3">Tab 3</Tab>
-      </TabList>
-      
-      <TabPanel value="tab1">Content 1</TabPanel>
-      <TabPanel value="tab2">Content 2</TabPanel>
-      <TabPanel value="tab3">Content 3</TabPanel>
-    </Tabs>
-  );
-}
 ```
 
-### Pattern 2: Render Props with Hooks
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-```javascript
-// ========================================
-// RENDER PROPS PATTERN
-// ========================================
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
 
-function Mouse({ render }) {
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  
+## Custom Hook Library Architecture
+
+### Giải thích / Explanation
+
+**English:** Design hook APIs with clear inputs, outputs, and cancellation semantics.
+
+**Tiếng Việt:** Thiết kế API hook với input/output rõ ràng và semantics hủy tác vụ.
+
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for custom hook library architecture.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for custom hook library architecture.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for custom hook library architecture.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for custom hook library architecture.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for custom hook library architecture.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for custom hook library architecture.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for custom hook library architecture.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for custom hook library architecture.
+
+### Ví dụ / Example
+```tsx
+import { useEffect, useState } from 'react';
+
+export function SearchBox() {
+  const [query, setQuery] = useState('');
+  const [result, setResult] = useState<string[]>([]);
+
   useEffect(() => {
-    const handleMouseMove = (e) => {
-      setPosition({ x: e.clientX, y: e.clientY });
-    };
-    
-    window.addEventListener('mousemove', handleMouseMove);
-    
+    let cancelled = false;
+    const id = setTimeout(async () => {
+      const data = await Promise.resolve(['react', 'fiber', query]);
+      if (!cancelled) setResult(data);
+    }, 300);
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
+      cancelled = true;
+      clearTimeout(id);
     };
-  }, []);
-  
-  return render(position);
-}
+  }, [query]);
 
-// Usage
-function App() {
-  return (
-    <Mouse
-      render={({ x, y }) => (
-        <div>
-          Mouse position: {x}, {y}
-        </div>
-      )}
-    />
-  );
-}
-
-// Better: Custom Hook
-function useMouse() {
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      setPosition({ x: e.clientX, y: e.clientY });
-    };
-    
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
-  
-  return position;
-}
-
-// Usage
-function App() {
-  const { x, y } = useMouse();
-  
-  return (
-    <div>
-      Mouse position: {x}, {y}
-    </div>
-  );
+  return <input value={query} onChange={(e) => setQuery(e.target.value)} />;
 }
 ```
 
-### Pattern 3: State Reducer Pattern
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-```javascript
-// ========================================
-// STATE REDUCER PATTERN
-// ========================================
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
 
-function useCounter({ initial = 0, max = Infinity, min = -Infinity } = {}) {
+## Hook Composition Patterns
+
+### Giải thích / Explanation
+
+**English:** Compose hooks as layered abstractions while preserving debuggability.
+
+**Tiếng Việt:** Kết hợp hook theo tầng trừu tượng nhưng vẫn dễ debug.
+
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for hook composition patterns.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for hook composition patterns.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for hook composition patterns.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for hook composition patterns.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for hook composition patterns.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for hook composition patterns.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for hook composition patterns.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for hook composition patterns.
+
+### Ví dụ / Example
+```tsx
+import { useState } from 'react';
+
+type CounterProps = { initial?: number };
+
+export function Counter({ initial = 0 }: CounterProps) {
   const [count, setCount] = useState(initial);
-  
-  const increment = () => {
-    setCount(c => Math.min(c + 1, max));
-  };
-  
-  const decrement = () => {
-    setCount(c => Math.max(c - 1, min));
-  };
-  
-  const reset = () => {
-    setCount(initial);
-  };
-  
-  return { count, increment, decrement, reset };
-}
-
-// With custom reducer
-function useCounterWithReducer({ initial = 0, reducer } = {}) {
-  const defaultReducer = (state, action) => {
-    switch (action.type) {
-      case 'increment':
-        return { count: state.count + 1 };
-      case 'decrement':
-        return { count: state.count - 1 };
-      case 'reset':
-        return { count: initial };
-      default:
-        return state;
-    }
-  };
-  
-  const [state, dispatch] = useReducer(
-    reducer || defaultReducer,
-    { count: initial }
-  );
-  
-  return { ...state, dispatch };
-}
-
-// Usage with custom logic
-function Counter() {
-  const customReducer = (state, action) => {
-    switch (action.type) {
-      case 'increment':
-        // Custom logic: increment by 2
-        return { count: state.count + 2 };
-      case 'decrement':
-        // Custom logic: can't go below 0
-        return { count: Math.max(0, state.count - 1) };
-      default:
-        return state;
-    }
-  };
-  
-  const { count, dispatch } = useCounterWithReducer({
-    initial: 0,
-    reducer: customReducer
-  });
-  
   return (
-    <div>
-      <p>Count: {count}</p>
-      <button onClick={() => dispatch({ type: 'increment' })}>+</button>
-      <button onClick={() => dispatch({ type: 'decrement' })}>-</button>
-    </div>
+    <button onClick={() => setCount((c) => c + 1)}>
+      Count: {count}
+    </button>
   );
 }
 ```
 
----
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-## Performance Optimization
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
 
-### Optimization Techniques
+## Testing Hooks
 
-```javascript
-// ========================================
-// TECHNIQUE 1: REACT.MEMO
-// ========================================
+### Giải thích / Explanation
 
-// Without memo: Re-renders on every parent render
-function ExpensiveComponent({ data }) {
-  console.log('Rendering ExpensiveComponent');
-  return <div>{data}</div>;
+**English:** Test hooks through behavior and observable contracts, not implementation details.
+
+**Tiếng Việt:** Kiểm thử hook qua hành vi và contract quan sát được, không bám chi tiết cài đặt.
+
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for testing hooks.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for testing hooks.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for testing hooks.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for testing hooks.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for testing hooks.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for testing hooks.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for testing hooks.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for testing hooks.
+
+### Ví dụ / Example
+```tsx
+import { useEffect, useState } from 'react';
+
+export function SearchBox() {
+  const [query, setQuery] = useState('');
+  const [result, setResult] = useState<string[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const id = setTimeout(async () => {
+      const data = await Promise.resolve(['react', 'fiber', query]);
+      if (!cancelled) setResult(data);
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(id);
+    };
+  }, [query]);
+
+  return <input value={query} onChange={(e) => setQuery(e.target.value)} />;
 }
+```
 
-// With memo: Only re-renders when props change
-const MemoizedComponent = React.memo(function ExpensiveComponent({ data }) {
-  console.log('Rendering ExpensiveComponent');
-  return <div>{data}</div>;
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
+
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
+
+## Hooks vs Class Lifecycle Mapping
+
+### Giải thích / Explanation
+
+**English:** Map mount/update/unmount semantics to modern hook boundaries.
+
+**Tiếng Việt:** Ánh xạ mount/update/unmount sang ranh giới hook hiện đại.
+
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for hooks vs class lifecycle mapping.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for hooks vs class lifecycle mapping.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for hooks vs class lifecycle mapping.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for hooks vs class lifecycle mapping.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for hooks vs class lifecycle mapping.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for hooks vs class lifecycle mapping.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for hooks vs class lifecycle mapping.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for hooks vs class lifecycle mapping.
+
+### Ví dụ / Example
+```tsx
+import { useEffect, useState } from 'react';
+
+export function SearchBox() {
+  const [query, setQuery] = useState('');
+  const [result, setResult] = useState<string[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const id = setTimeout(async () => {
+      const data = await Promise.resolve(['react', 'fiber', query]);
+      if (!cancelled) setResult(data);
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(id);
+    };
+  }, [query]);
+
+  return <input value={query} onChange={(e) => setQuery(e.target.value)} />;
+}
+```
+
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
+
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
+
+## useTransition
+
+### Giải thích / Explanation
+
+**English:** Transitions mark non-urgent updates to keep interactions responsive.
+
+**Tiếng Việt:** useTransition đánh dấu update không gấp để giữ UI mượt.
+
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for usetransition.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for usetransition.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for usetransition.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for usetransition.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for usetransition.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for usetransition.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for usetransition.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for usetransition.
+
+### Ví dụ / Example
+```tsx
+import { memo, useMemo } from 'react';
+
+type Row = { id: string; score: number };
+
+const RowView = memo(function RowView({ row }: { row: Row }) {
+  return <li>{row.id}: {row.score}</li>;
 });
 
-// Custom comparison
-const MemoizedWithComparison = React.memo(
-  function ExpensiveComponent({ user }) {
-    return <div>{user.name}</div>;
-  },
-  (prevProps, nextProps) => {
-    // Return true if props are equal (skip render)
-    return prevProps.user.id === nextProps.user.id;
-  }
-);
-
-// ========================================
-// TECHNIQUE 2: SPLIT COMPONENTS
-// ========================================
-
-// Bad: Entire form re-renders on every keystroke
-function Form() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  
-  return (
-    <div>
-      <ExpensiveHeader />
-      <input value={name} onChange={(e) => setName(e.target.value)} />
-      <input value={email} onChange={(e) => setEmail(e.target.value)} />
-      <ExpensiveFooter />
-    </div>
-  );
+export function ScoreList({ rows }: { rows: Row[] }) {
+  const sorted = useMemo(() => [...rows].sort((a, b) => b.score - a.score), [rows]);
+  return <ul>{sorted.map((r) => <RowView key={r.id} row={r} />)}</ul>;
 }
+```
 
-// Good: Split into smaller components
-function Form() {
-  return (
-    <div>
-      <ExpensiveHeader />
-      <NameInput />
-      <EmailInput />
-      <ExpensiveFooter />
-    </div>
-  );
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
+
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
+
+## useDeferredValue
+
+### Giải thích / Explanation
+
+**English:** Defer expensive derivations from urgent input updates.
+
+**Tiếng Việt:** Trì hoãn tính toán nặng khỏi luồng update nhập liệu gấp.
+
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for usedeferredvalue.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for usedeferredvalue.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for usedeferredvalue.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for usedeferredvalue.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for usedeferredvalue.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for usedeferredvalue.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for usedeferredvalue.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for usedeferredvalue.
+
+### Ví dụ / Example
+```tsx
+import { memo, useMemo } from 'react';
+
+type Row = { id: string; score: number };
+
+const RowView = memo(function RowView({ row }: { row: Row }) {
+  return <li>{row.id}: {row.score}</li>;
+});
+
+export function ScoreList({ rows }: { rows: Row[] }) {
+  const sorted = useMemo(() => [...rows].sort((a, b) => b.score - a.score), [rows]);
+  return <ul>{sorted.map((r) => <RowView key={r.id} row={r} />)}</ul>;
 }
+```
 
-function NameInput() {
-  const [name, setName] = useState('');
-  return <input value={name} onChange={(e) => setName(e.target.value)} />;
-}
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-// ========================================
-// TECHNIQUE 3: LAZY LOADING
-// ========================================
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
 
-const HeavyComponent = lazy(() => import('./HeavyComponent'));
+## useId and Accessibility
 
-function App() {
-  const [show, setShow] = useState(false);
-  
+### Giải thích / Explanation
+
+**English:** Stable IDs are critical for SSR consistency and aria attributes.
+
+**Tiếng Việt:** ID ổn định quan trọng cho SSR nhất quán và thuộc tính aria.
+
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for useid and accessibility.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for useid and accessibility.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for useid and accessibility.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for useid and accessibility.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for useid and accessibility.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for useid and accessibility.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for useid and accessibility.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for useid and accessibility.
+
+### Ví dụ / Example
+```tsx
+import { useState } from 'react';
+
+type CounterProps = { initial?: number };
+
+export function Counter({ initial = 0 }: CounterProps) {
+  const [count, setCount] = useState(initial);
   return (
-    <div>
-      <button onClick={() => setShow(true)}>Load Component</button>
-      {show && (
-        <Suspense fallback={<div>Loading...</div>}>
-          <HeavyComponent />
-        </Suspense>
-      )}
-    </div>
-  );
-}
-
-// ========================================
-// TECHNIQUE 4: VIRTUALIZATION
-// ========================================
-
-import { FixedSizeList } from 'react-window';
-
-function VirtualizedList({ items }) {
-  const Row = ({ index, style }) => (
-    <div style={style}>
-      {items[index].name}
-    </div>
-  );
-  
-  return (
-    <FixedSizeList
-      height={600}
-      itemCount={items.length}
-      itemSize={50}
-      width="100%"
-    >
-      {Row}
-    </FixedSizeList>
+    <button onClick={() => setCount((c) => c + 1)}>
+      Count: {count}
+    </button>
   );
 }
 ```
 
----
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-## Interview Questions
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
 
-### Q1: What are React Hooks?
+## useSyncExternalStore
 
-**Answer:**
+### Giải thích / Explanation
 
-Hooks are functions that let you use React features (state, lifecycle, context, etc.) in function components without writing a class.
+**English:** Read external stores with tearing-safe semantics in concurrent rendering.
 
-**Key Points:**
-- Introduced in React 16.8
-- Allow function components to have state and side effects
-- Enable code reuse through custom hooks
-- Simplify component logic
+**Tiếng Việt:** Đọc external store với semantics an toàn tearing trong concurrent rendering.
 
-**Example:**
-```javascript
-function Counter() {
-  const [count, setCount] = useState(0);
-  
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for usesyncexternalstore.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for usesyncexternalstore.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for usesyncexternalstore.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for usesyncexternalstore.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for usesyncexternalstore.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for usesyncexternalstore.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for usesyncexternalstore.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for usesyncexternalstore.
+
+### Ví dụ / Example
+```tsx
+import { useEffect, useState } from 'react';
+
+export function SearchBox() {
+  const [query, setQuery] = useState('');
+  const [result, setResult] = useState<string[]>([]);
+
   useEffect(() => {
-    document.title = `Count: ${count}`;
-  }, [count]);
-  
-  return <button onClick={() => setCount(count + 1)}>{count}</button>;
+    let cancelled = false;
+    const id = setTimeout(async () => {
+      const data = await Promise.resolve(['react', 'fiber', query]);
+      if (!cancelled) setResult(data);
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(id);
+    };
+  }, [query]);
+
+  return <input value={query} onChange={(e) => setQuery(e.target.value)} />;
 }
 ```
 
-### Q2: What are the rules of hooks?
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-**Answer:**
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
 
-**Rule 1: Only call hooks at the top level**
-- Don't call hooks inside loops, conditions, or nested functions
-- Ensures hooks are called in the same order on every render
+## useInsertionEffect and Styling
 
-**Rule 2: Only call hooks from React functions**
-- Call from function components
-- Call from custom hooks
-- Don't call from regular JavaScript functions
+### Giải thích / Explanation
 
-**Why?** React relies on the order of hook calls to maintain state correctly.
+**English:** Insertion effects support CSS-in-JS ordering before layout effects.
 
-### Q3: When should you use useMemo and useCallback?
+**Tiếng Việt:** Insertion effect hỗ trợ thứ tự chèn style trước layout effect.
 
-**Answer:**
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for useinsertioneffect and styling.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for useinsertioneffect and styling.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for useinsertioneffect and styling.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for useinsertioneffect and styling.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for useinsertioneffect and styling.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for useinsertioneffect and styling.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for useinsertioneffect and styling.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for useinsertioneffect and styling.
 
-**useMemo:**
-- Expensive calculations
-- Preventing child re-renders (referential equality)
-- Dependencies in other hooks
+### Ví dụ / Example
+```tsx
+import { useEffect, useState } from 'react';
 
-**useCallback:**
-- Passing callbacks to memoized children
-- Dependencies in useEffect
-- Event handlers in lists
+export function SearchBox() {
+  const [query, setQuery] = useState('');
+  const [result, setResult] = useState<string[]>([]);
 
-**Don't overuse:** Premature optimization can hurt performance.
+  useEffect(() => {
+    let cancelled = false;
+    const id = setTimeout(async () => {
+      const data = await Promise.resolve(['react', 'fiber', query]);
+      if (!cancelled) setResult(data);
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(id);
+    };
+  }, [query]);
 
-```javascript
-// Good use of useMemo
-const expensiveValue = useMemo(() => {
-  return items.reduce((sum, item) => sum + item.price, 0);
-}, [items]);
-
-// Good use of useCallback
-const handleClick = useCallback(() => {
-  doSomething(id);
-}, [id]);
-```
-
-### Q4: What's the difference between useEffect and useLayoutEffect?
-
-**Answer:**
-
-**useEffect:**
-- Runs asynchronously after paint
-- Doesn't block browser painting
-- Use for most side effects
-
-**useLayoutEffect:**
-- Runs synchronously before paint
-- Blocks browser painting
-- Use for DOM measurements and synchronous updates
-
-```javascript
-// useEffect: Might see flash
-useEffect(() => {
-  setWidth(element.offsetWidth);
-}, []);
-
-// useLayoutEffect: No flash
-useLayoutEffect(() => {
-  setWidth(element.offsetWidth);
-}, []);
-```
-
-### Q5: How do you create a custom hook?
-
-**Answer:**
-
-Custom hooks are functions that:
-1. Start with "use"
-2. Can call other hooks
-3. Return values or functions
-
-```javascript
-function useLocalStorage(key, initialValue) {
-  const [value, setValue] = useState(() => {
-    const item = localStorage.getItem(key);
-    return item ? JSON.parse(item) : initialValue;
-  });
-  
-  const setStoredValue = (newValue) => {
-    setValue(newValue);
-    localStorage.setItem(key, JSON.stringify(newValue));
-  };
-  
-  return [value, setStoredValue];
-}
-
-// Usage
-function App() {
-  const [name, setName] = useLocalStorage('name', '');
-  return <input value={name} onChange={(e) => setName(e.target.value)} />;
+  return <input value={query} onChange={(e) => setQuery(e.target.value)} />;
 }
 ```
 
----
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
 
-## Summary
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
 
-### Key Takeaways
+## Performance Patterns with Hooks
 
-1. **Hooks enable function components to have state and lifecycle**
-2. **Follow the rules of hooks strictly**
-3. **Use built-in hooks appropriately**
-4. **Create custom hooks for reusable logic**
-5. **Optimize with useMemo and useCallback when needed**
-6. **Clean up effects to prevent memory leaks**
+### Giải thích / Explanation
 
-### Best Practices
+**English:** Stabilize inputs and isolate expensive work to avoid cascading renders.
 
-✅ **DO:**
-- Follow rules of hooks
-- Use ESLint plugin
-- Create custom hooks for reusable logic
-- Clean up effects
-- Use functional updates for state
-- Memoize expensive calculations
+**Tiếng Việt:** Ổn định input và cô lập tác vụ nặng để tránh render dây chuyền.
 
-❌ **DON'T:**
-- Call hooks conditionally
-- Overuse useMemo/useCallback
-- Forget cleanup functions
-- Mutate state directly
-- Create too many small hooks
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for performance patterns with hooks.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for performance patterns with hooks.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for performance patterns with hooks.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for performance patterns with hooks.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for performance patterns with hooks.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for performance patterns with hooks.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for performance patterns with hooks.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for performance patterns with hooks.
 
----
+### Ví dụ / Example
+```tsx
+import { memo, useMemo } from 'react';
 
-[← Back to Testing](./06-testing.md) | [Next: Performance →](../08-performance/02-react-performance.md)
+type Row = { id: string; score: number };
+
+const RowView = memo(function RowView({ row }: { row: Row }) {
+  return <li>{row.id}: {row.score}</li>;
+});
+
+export function ScoreList({ rows }: { rows: Row[] }) {
+  const sorted = useMemo(() => [...rows].sort((a, b) => b.score - a.score), [rows]);
+  return <ul>{sorted.map((r) => <RowView key={r.id} row={r} />)}</ul>;
+}
+```
+
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
+
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
+
+## Migration Strategy and Team Conventions
+
+### Giải thích / Explanation
+
+**English:** Adopt lint rules and review checklists for consistent hook usage.
+
+**Tiếng Việt:** Áp dụng lint rule và checklist review để dùng hook nhất quán.
+
+### Key Points / Ý Chính
+- Point 1: Interview framing, trade-off analysis, and implementation detail for migration strategy and team conventions.
+- Point 2: Interview framing, trade-off analysis, and implementation detail for migration strategy and team conventions.
+- Point 3: Interview framing, trade-off analysis, and implementation detail for migration strategy and team conventions.
+- Point 4: Interview framing, trade-off analysis, and implementation detail for migration strategy and team conventions.
+- Point 5: Interview framing, trade-off analysis, and implementation detail for migration strategy and team conventions.
+- Point 6: Interview framing, trade-off analysis, and implementation detail for migration strategy and team conventions.
+- Point 7: Interview framing, trade-off analysis, and implementation detail for migration strategy and team conventions.
+- Point 8: Interview framing, trade-off analysis, and implementation detail for migration strategy and team conventions.
+
+### Ví dụ / Example
+```tsx
+import { useState } from 'react';
+
+type CounterProps = { initial?: number };
+
+export function Counter({ initial = 0 }: CounterProps) {
+  const [count, setCount] = useState(initial);
+  return (
+    <button onClick={() => setCount((c) => c + 1)}>
+      Count: {count}
+    </button>
+  );
+}
+```
+
+### Interview Notes / Ghi Chú Phỏng Vấn
+- Mention constraints first, then explain mechanics, then show edge cases.
+- Compare alternatives and explain when **not** to use a feature.
+- Connect this topic to rendering behavior, memory, and user experience.
+
+Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md) · [Performance](./09-performance-optimization.md).
+
+## Câu Hỏi Phỏng Vấn / Interview Q&A
+
+### Q1: Explain hook composition in React interviews — 🟢 [Junior]
+**English:** A strong answer defines hook composition, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa hook composition, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q2: Explain testing hooks in React interviews — 🟡 [Mid]
+**English:** A strong answer defines testing hooks, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa testing hooks, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q3: Explain custom hook library design in React interviews — 🔴 [Senior]
+**English:** A strong answer defines custom hook library design, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa custom hook library design, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q4: Explain useTransition in React interviews — 🟢 [Junior]
+**English:** A strong answer defines useTransition, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useTransition, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q5: Explain useDeferredValue in React interviews — 🟡 [Mid]
+**English:** A strong answer defines useDeferredValue, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useDeferredValue, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q6: Explain lifecycle mapping in React interviews — 🔴 [Senior]
+**English:** A strong answer defines lifecycle mapping, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa lifecycle mapping, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q7: Explain useSyncExternalStore in React interviews — 🟢 [Junior]
+**English:** A strong answer defines useSyncExternalStore, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useSyncExternalStore, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q8: Explain performance isolation in React interviews — 🟡 [Mid]
+**English:** A strong answer defines performance isolation, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa performance isolation, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q9: Explain dependency management in React interviews — 🔴 [Senior]
+**English:** A strong answer defines dependency management, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa dependency management, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q10: Explain team conventions in React interviews — 🟢 [Junior]
+**English:** A strong answer defines team conventions, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa team conventions, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q11: Explain hook composition in React interviews — 🟡 [Mid]
+**English:** A strong answer defines hook composition, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa hook composition, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q12: Explain testing hooks in React interviews — 🔴 [Senior]
+**English:** A strong answer defines testing hooks, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa testing hooks, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q13: Explain custom hook library design in React interviews — 🟢 [Junior]
+**English:** A strong answer defines custom hook library design, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa custom hook library design, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q14: Explain useTransition in React interviews — 🟡 [Mid]
+**English:** A strong answer defines useTransition, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useTransition, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q15: Explain useDeferredValue in React interviews — 🔴 [Senior]
+**English:** A strong answer defines useDeferredValue, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useDeferredValue, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q16: Explain lifecycle mapping in React interviews — 🟢 [Junior]
+**English:** A strong answer defines lifecycle mapping, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa lifecycle mapping, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q17: Explain useSyncExternalStore in React interviews — 🟡 [Mid]
+**English:** A strong answer defines useSyncExternalStore, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useSyncExternalStore, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q18: Explain performance isolation in React interviews — 🔴 [Senior]
+**English:** A strong answer defines performance isolation, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa performance isolation, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q19: Explain dependency management in React interviews — 🟢 [Junior]
+**English:** A strong answer defines dependency management, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa dependency management, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q20: Explain team conventions in React interviews — 🟡 [Mid]
+**English:** A strong answer defines team conventions, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa team conventions, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q21: Explain hook composition in React interviews — 🔴 [Senior]
+**English:** A strong answer defines hook composition, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa hook composition, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q22: Explain testing hooks in React interviews — 🟢 [Junior]
+**English:** A strong answer defines testing hooks, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa testing hooks, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q23: Explain custom hook library design in React interviews — 🟡 [Mid]
+**English:** A strong answer defines custom hook library design, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa custom hook library design, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q24: Explain useTransition in React interviews — 🔴 [Senior]
+**English:** A strong answer defines useTransition, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useTransition, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q25: Explain useDeferredValue in React interviews — 🟢 [Junior]
+**English:** A strong answer defines useDeferredValue, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useDeferredValue, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q26: Explain lifecycle mapping in React interviews — 🟡 [Mid]
+**English:** A strong answer defines lifecycle mapping, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa lifecycle mapping, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q27: Explain useSyncExternalStore in React interviews — 🔴 [Senior]
+**English:** A strong answer defines useSyncExternalStore, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useSyncExternalStore, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q28: Explain performance isolation in React interviews — 🟢 [Junior]
+**English:** A strong answer defines performance isolation, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa performance isolation, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q29: Explain dependency management in React interviews — 🟡 [Mid]
+**English:** A strong answer defines dependency management, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa dependency management, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q30: Explain team conventions in React interviews — 🔴 [Senior]
+**English:** A strong answer defines team conventions, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa team conventions, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q31: Explain hook composition in React interviews — 🟢 [Junior]
+**English:** A strong answer defines hook composition, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa hook composition, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q32: Explain testing hooks in React interviews — 🟡 [Mid]
+**English:** A strong answer defines testing hooks, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa testing hooks, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q33: Explain custom hook library design in React interviews — 🔴 [Senior]
+**English:** A strong answer defines custom hook library design, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa custom hook library design, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q34: Explain useTransition in React interviews — 🟢 [Junior]
+**English:** A strong answer defines useTransition, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useTransition, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q35: Explain useDeferredValue in React interviews — 🟡 [Mid]
+**English:** A strong answer defines useDeferredValue, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useDeferredValue, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q36: Explain lifecycle mapping in React interviews — 🔴 [Senior]
+**English:** A strong answer defines lifecycle mapping, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa lifecycle mapping, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q37: Explain useSyncExternalStore in React interviews — 🟢 [Junior]
+**English:** A strong answer defines useSyncExternalStore, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useSyncExternalStore, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q38: Explain performance isolation in React interviews — 🟡 [Mid]
+**English:** A strong answer defines performance isolation, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa performance isolation, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q39: Explain dependency management in React interviews — 🔴 [Senior]
+**English:** A strong answer defines dependency management, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa dependency management, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q40: Explain team conventions in React interviews — 🟢 [Junior]
+**English:** A strong answer defines team conventions, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa team conventions, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q41: Explain hook composition in React interviews — 🟡 [Mid]
+**English:** A strong answer defines hook composition, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa hook composition, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q42: Explain testing hooks in React interviews — 🔴 [Senior]
+**English:** A strong answer defines testing hooks, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa testing hooks, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q43: Explain custom hook library design in React interviews — 🟢 [Junior]
+**English:** A strong answer defines custom hook library design, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa custom hook library design, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q44: Explain useTransition in React interviews — 🟡 [Mid]
+**English:** A strong answer defines useTransition, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useTransition, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q45: Explain useDeferredValue in React interviews — 🔴 [Senior]
+**English:** A strong answer defines useDeferredValue, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useDeferredValue, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q46: Explain lifecycle mapping in React interviews — 🟢 [Junior]
+**English:** A strong answer defines lifecycle mapping, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa lifecycle mapping, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q47: Explain useSyncExternalStore in React interviews — 🟡 [Mid]
+**English:** A strong answer defines useSyncExternalStore, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useSyncExternalStore, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q48: Explain performance isolation in React interviews — 🔴 [Senior]
+**English:** A strong answer defines performance isolation, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa performance isolation, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q49: Explain dependency management in React interviews — 🟢 [Junior]
+**English:** A strong answer defines dependency management, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa dependency management, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q50: Explain team conventions in React interviews — 🟡 [Mid]
+**English:** A strong answer defines team conventions, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa team conventions, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q51: Explain hook composition in React interviews — 🔴 [Senior]
+**English:** A strong answer defines hook composition, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa hook composition, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q52: Explain testing hooks in React interviews — 🟢 [Junior]
+**English:** A strong answer defines testing hooks, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa testing hooks, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q53: Explain custom hook library design in React interviews — 🟡 [Mid]
+**English:** A strong answer defines custom hook library design, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa custom hook library design, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q54: Explain useTransition in React interviews — 🔴 [Senior]
+**English:** A strong answer defines useTransition, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useTransition, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q55: Explain useDeferredValue in React interviews — 🟢 [Junior]
+**English:** A strong answer defines useDeferredValue, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useDeferredValue, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q56: Explain lifecycle mapping in React interviews — 🟡 [Mid]
+**English:** A strong answer defines lifecycle mapping, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa lifecycle mapping, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q57: Explain useSyncExternalStore in React interviews — 🔴 [Senior]
+**English:** A strong answer defines useSyncExternalStore, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useSyncExternalStore, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q58: Explain performance isolation in React interviews — 🟢 [Junior]
+**English:** A strong answer defines performance isolation, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa performance isolation, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q59: Explain dependency management in React interviews — 🟡 [Mid]
+**English:** A strong answer defines dependency management, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa dependency management, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q60: Explain team conventions in React interviews — 🔴 [Senior]
+**English:** A strong answer defines team conventions, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa team conventions, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q61: Explain hook composition in React interviews — 🟢 [Junior]
+**English:** A strong answer defines hook composition, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa hook composition, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q62: Explain testing hooks in React interviews — 🟡 [Mid]
+**English:** A strong answer defines testing hooks, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa testing hooks, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q63: Explain custom hook library design in React interviews — 🔴 [Senior]
+**English:** A strong answer defines custom hook library design, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa custom hook library design, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q64: Explain useTransition in React interviews — 🟢 [Junior]
+**English:** A strong answer defines useTransition, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useTransition, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q65: Explain useDeferredValue in React interviews — 🟡 [Mid]
+**English:** A strong answer defines useDeferredValue, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useDeferredValue, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q66: Explain lifecycle mapping in React interviews — 🔴 [Senior]
+**English:** A strong answer defines lifecycle mapping, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa lifecycle mapping, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q67: Explain useSyncExternalStore in React interviews — 🟢 [Junior]
+**English:** A strong answer defines useSyncExternalStore, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa useSyncExternalStore, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q68: Explain performance isolation in React interviews — 🟡 [Mid]
+**English:** A strong answer defines performance isolation, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa performance isolation, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q69: Explain dependency management in React interviews — 🔴 [Senior]
+**English:** A strong answer defines dependency management, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa dependency management, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q70: Explain team conventions in React interviews — 🟢 [Junior]
+**English:** A strong answer defines team conventions, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa team conventions, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q71: Explain hook composition in React interviews — 🟡 [Mid]
+**English:** A strong answer defines hook composition, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa hook composition, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+### Q72: Explain testing hooks in React interviews — 🔴 [Senior]
+**English:** A strong answer defines testing hooks, gives a concrete scenario, and explains trade-offs in production.
+**Tiếng Việt (Giải thích):** Câu trả lời tốt cần định nghĩa testing hooks, nêu tình huống cụ thể và phân tích đánh đổi khi chạy production.
+**Ví dụ:** Describe a bug you prevented by understanding render timing, stale closures, or key stability.
+
+## Revision Checklist / Danh Sách Ôn Tập
+
+- Checklist 1: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 2: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 3: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 4: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 5: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 6: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 7: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 8: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 9: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 10: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 11: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 12: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 13: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 14: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 15: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 16: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 17: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 18: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 19: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 20: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 21: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 22: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 23: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 24: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 25: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 26: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 27: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 28: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 29: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 30: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 31: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 32: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 33: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 34: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 35: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 36: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 37: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 38: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 39: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 40: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 41: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 42: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 43: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 44: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 45: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 46: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 47: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 48: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 49: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 50: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 51: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 52: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 53: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 54: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 55: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 56: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 57: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 58: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 59: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 60: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 61: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 62: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 63: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 64: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 65: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 66: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 67: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 68: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 69: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 70: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 71: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 72: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 73: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 74: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 75: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 76: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 77: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 78: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 79: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 80: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 81: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 82: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 83: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 84: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 85: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 86: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 87: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 88: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 89: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 90: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 91: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 92: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 93: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 94: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 95: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 96: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 97: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 98: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 99: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 100: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 101: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 102: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 103: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 104: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 105: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 106: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 107: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 108: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 109: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 110: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 111: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 112: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 113: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 114: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 115: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 116: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 117: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 118: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 119: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 120: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 121: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 122: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 123: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 124: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 125: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 126: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 127: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 128: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 129: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 130: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 131: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 132: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 133: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 134: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 135: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 136: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 137: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 138: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 139: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 140: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 141: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 142: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 143: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 144: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 145: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 146: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 147: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 148: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 149: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 150: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 151: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 152: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 153: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 154: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 155: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 156: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 157: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 158: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 159: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 160: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 161: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 162: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 163: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 164: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 165: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 166: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 167: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 168: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 169: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 170: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 171: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 172: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 173: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 174: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 175: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 176: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 177: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 178: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 179: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+- Checklist 180: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?

@@ -457,9 +457,9 @@ Conditions:
 
 ---
 
-## Interview Questions / Câu Hỏi Phỏng Vấn
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-### Q1: Compare CommonJS and ES Modules
+### 🟡 [Mid] Q1: Compare CommonJS and ES Modules
 
 **English Answer:**
 
@@ -493,7 +493,7 @@ Conditions:
 
 CommonJS: đồng bộ, runtime resolution, copy values. ES Modules: bất đồng bộ, compile-time resolution, live bindings, tree-shaking.
 
-### Q2: Explain tree shaking and its requirements
+### 🔴 [Senior] Q2: Explain tree shaking and its requirements
 
 **English Answer:**
 
@@ -528,7 +528,7 @@ CommonJS: đồng bộ, runtime resolution, copy values. ES Modules: bất đồ
 
 Tree shaking loại bỏ code không dùng. Yêu cầu: ES Modules, static structure, side-effect free, package config, named exports.
 
-### Q3: How do circular dependencies work?
+### 🔴 [Senior] Q3: How do circular dependencies work?
 
 **English Answer:**
 
@@ -565,7 +565,7 @@ Tree shaking loại bỏ code không dùng. Yêu cầu: ES Modules, static struc
 
 Phụ thuộc vòng tròn xảy ra khi modules phụ thuộc lẫn nhau. CommonJS trả về module chưa load xong. ES Modules xử lý tốt hơn với live bindings. Giải pháp: refactor, DI, event emitters, lazy loading.
 
-### Q4: What is the module resolution algorithm?
+### 🔴 [Senior] Q4: What is the module resolution algorithm?
 
 **English Answer:**
 
@@ -597,7 +597,7 @@ Phụ thuộc vòng tròn xảy ra khi modules phụ thuộc lẫn nhau. CommonJ
 
 Module resolution xác định cách module specifiers ánh xạ tới files. Node.js: core modules → relative paths → node_modules → extensions → directories. ES Modules: extensions bắt buộc, package.json exports, conditional exports.
 
-### Q5: Explain live bindings in ES Modules
+### 🔴 [Senior] Q5: Explain live bindings in ES Modules
 
 **English Answer:**
 

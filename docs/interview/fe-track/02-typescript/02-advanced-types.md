@@ -717,7 +717,7 @@ const definedValues = values.filter(isDefined);
 
 ## Interview Questions / Câu Hỏi Phỏng Vấn
 
-### Question 1: Implement DeepReadonly<T>
+### 🔴 [Senior] Question 1: Implement DeepReadonly<T>
 
 **English Answer:**
 ```typescript
@@ -740,7 +740,7 @@ type ReadonlyUser = DeepReadonly<User>;
 // All nested properties are readonly / Tất cả thuộc tính lồng nhau chỉ đọc
 ```
 
-### Question 2: Difference between `type` and `interface`?
+### 🟢 [Junior] Question 2: Difference between `type` and `interface`?
 
 **English Answer:**
 - **Interface**: Can be extended, supports declaration merging
@@ -752,7 +752,7 @@ type ReadonlyUser = DeepReadonly<User>;
 - **Type**: Có thể dùng union/intersection, linh hoạt hơn
 - **Dùng interface** cho hình dạng object, **type** cho union/kiểu phức tạp
 
-### Question 3: What are discriminated unions?
+### 🟡 [Mid] Question 3: What are discriminated unions?
 
 **English Answer:**
 Discriminated unions use a common property (discriminant) to narrow types in switch/if statements. Essential for type-safe state management and API responses.

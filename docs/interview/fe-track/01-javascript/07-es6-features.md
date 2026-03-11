@@ -480,9 +480,9 @@ console.log(createObject('color', 'blue')); // { color: 'blue' }
 
 ---
 
-## Interview Questions / Câu Hỏi Phỏng Vấn
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-### Question 1: Difference between spread and rest?
+### 🟢 [Junior] Question 1: Difference between spread and rest?
 
 **English Answer:**
 - **Spread**: Expands an array/object into individual elements
@@ -505,7 +505,7 @@ function sum(...numbers) {
 }
 ```
 
-### Question 2: When to use arrow functions?
+### 🟡 [Mid] Question 2: When to use arrow functions?
 
 **English Answer:**
 Use arrow functions when:
@@ -529,7 +529,7 @@ Không dùng khi:
 - Cần object `arguments`
 - Cần dùng như constructor
 
-### Question 3: Shallow vs Deep Copy?
+### 🟡 [Mid] Question 3: Shallow vs Deep Copy?
 
 **English Answer:**
 - **Shallow copy**: Copies first level only (spread, Object.assign)

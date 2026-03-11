@@ -1,914 +1,785 @@
-# TypeScript - Complete Mastery Guide
-## From Basics to Advanced Type System
+# TypeScript Comprehensive Guide / Hướng Dẫn TypeScript Toàn Diện
 
-[← Back to Generics](./03-generics-deep-dive.md) | [Next: React with TypeScript →](../03-react/01-fundamentals.md)
-
----
-
-## 📋 Table of Contents
-
-1. [TypeScript Fundamentals](#typescript-fundamentals)
-2. [Type System Deep Dive](#type-system-deep-dive)
-3. [Advanced Types](#advanced-types)
-4. [Generics Mastery](#generics-mastery)
-5. [Utility Types](#utility-types)
-6. [Type Guards & Narrowing](#type-guards-narrowing)
-7. [Conditional Types](#conditional-types)
-8. [Mapped Types](#mapped-types)
-9. [Template Literal Types](#template-literal-types)
-10. [Real-World Patterns](#real-world-patterns)
-11. [Interview Questions](#interview-questions)
-12. [Practice Problems](#practice-problems)
+[← Previous: Generics Deep Dive](./03-generics-deep-dive.md) | [Next: React + TS](./05-react-typescript.md) | [Related: Inference Theory](./05-type-inference-theory.md)
 
 ---
 
-## 🎯 Learning Objectives
+## Tổng Quan / Overview
 
-Master TypeScript:
-- Understand the type system deeply
-- Use advanced type features effectively
-- Create type-safe applications
-- Implement complex type patterns
-- Optimize type performance
-- Avoid common pitfalls
+This chapter is a complete reference for interview prep: structural typing, excess property checking, index signatures, mapped/conditional/template literal types, declaration merging, module augmentation, namespace vs modules, and project references.
 
----
+Mục tiêu là hiểu sâu cơ chế hệ kiểu của TypeScript và trả lời được câu hỏi thiết kế trong phỏng vấn middle/senior.
 
-## TypeScript Fundamentals
+## Structural Typing
 
-### What is TypeScript?
+**English:** TypeScript compares shapes (properties/methods), not nominal type names.
 
-**English Definition:** TypeScript is a strongly typed superset of JavaScript that compiles to plain JavaScript, adding static type checking and modern features.
+**Giải thích (VI):** TS kiểm tra tương thích theo cấu trúc object.
 
-**Định nghĩa (Tiếng Việt):** TypeScript là một superset có kiểu mạnh của JavaScript, biên dịch thành JavaScript thuần túy, thêm kiểm tra kiểu tĩnh và các tính năng hiện đại.
-
-
-### TypeScript Mind Map
-
-```
-TypeScript Type System
-│
-├── Basic Types
-│   ├── Primitive Types (string, number, boolean, etc.)
-│   ├── Object Types
-│   ├── Array Types
-│   ├── Tuple Types
-│   └── Enum Types
-│
-├── Advanced Types
-│   ├── Union Types
-│   ├── Intersection Types
-│   ├── Literal Types
-│   ├── Type Aliases
-│   └── Interface Types
-│
-├── Type Operations
-│   ├── Type Guards
-│   ├── Type Assertions
-│   ├── Type Narrowing
-│   └── Type Predicates
-│
-├── Generic Types
-│   ├── Generic Functions
-│   ├── Generic Classes
-│   ├── Generic Constraints
-│   └── Generic Inference
-│
-├── Utility Types
-│   ├── Partial, Required, Readonly
-│   ├── Pick, Omit, Exclude
-│   ├── Record, Extract
-│   └── ReturnType, Parameters
-│
-└── Advanced Features
-    ├── Conditional Types
-    ├── Mapped Types
-    ├── Template Literal Types
-    └── Recursive Types
+**Ví dụ (TypeScript):**
+```ts
+interface Point2D { x: number; y: number }
+const p = { x: 1, y: 2, z: 3 };
+const ok: Point2D = p; // compatible by shape
 ```
 
----
+## Excess Property Checking
 
-## Type System Deep Dive
+**English:** Object literals receive stricter checks to catch misspelled fields.
 
-### Understanding Type Systems
+**Giải thích (VI):** Khi truyền object literal, TS kiểm tra thuộc tính dư để bắt lỗi chính tả.
 
-**Theory:** A type system is a logical system comprising a set of rules that assigns a property called "type" to various constructs in a program. TypeScript uses a structural type system (also called duck typing), where type compatibility is determined by the structure of types rather than their explicit declarations.
-
-**Structural vs Nominal Typing:**
-
-**Structural Typing (TypeScript):**
-- Types are compatible if their structure matches
-- Focus on "shape" of data
-- More flexible but can lead to unexpected compatibility
-
-**Nominal Typing (Java, C++):**
-- Types are compatible only if explicitly declared
-- Focus on type names and declarations
-- More strict but requires explicit relationships
-
-**Type Soundness:**
-
-TypeScript's type system is intentionally unsound in certain areas for pragmatic reasons:
-- Allows gradual adoption in JavaScript projects
-- Balances type safety with developer productivity
-- Provides escape hatches (any, type assertions) when needed
-
-**Type Inference:**
-
-TypeScript's type inference engine analyzes code to automatically determine types without explicit annotations. The inference algorithm:
-1. Examines variable initialization
-2. Analyzes function return statements
-3. Considers control flow
-4. Propagates types through expressions
-5. Widens or narrows types based on context
-
-### Variance in TypeScript
-
-**Theory:** Variance describes how subtyping relationships between complex types relate to subtyping relationships between their components.
-
-**Covariance:**
-- Type relationship preserved in the same direction
-- Arrays in TypeScript are covariant
-- Return types are covariant
-
-**Contravariance:**
-- Type relationship reversed
-- Function parameters are contravariant (in strict mode)
-
-**Invariance:**
-- No subtyping relationship
-- Mutable structures should be invariant for safety
-
-**Bivariance:**
-- Accepts both covariant and contravariant relationships
-- TypeScript's default for function parameters (non-strict)
-- Can lead to unsoundness
-
-**Example Theory:**
-
-If `Dog` is a subtype of `Animal`:
-- `Array<Dog>` is a subtype of `Array<Animal>` (covariance)
-- `(animal: Animal) => void` is a subtype of `(dog: Dog) => void` (contravariance)
-
-### Type Widening and Narrowing
-
-**Type Widening:**
-
-Theory: TypeScript automatically widens types from specific to more general when it determines the initial type is too narrow for practical use.
-
-**Widening Scenarios:**
-1. **Literal to Primitive:** `let x = "hello"` → type is `string`, not `"hello"`
-2. **Null/Undefined:** `let x = null` → type is `any` (without strictNullChecks)
-3. **Empty Arrays:** `let arr = []` → type is `any[]`
-4. **Object Literals:** Properties widen to their general types
-
-**Preventing Widening:**
-- Use `const` instead of `let`
-- Add explicit type annotations
-- Use `as const` assertion
-- Enable strict mode
-
-**Type Narrowing:**
-
-Theory: TypeScript narrows types from general to more specific based on control flow analysis and type guards.
-
-**Narrowing Mechanisms:**
-1. **Type Guards:** Runtime checks that refine types
-2. **Control Flow Analysis:** Tracks type changes through code paths
-3. **Discriminated Unions:** Uses common properties to distinguish types
-4. **Truthiness Checks:** Narrows based on boolean context
-5. **Equality Checks:** Narrows based on comparisons
-6. **instanceof/typeof:** Built-in type guards
-
-**Control Flow Analysis Theory:**
-
-TypeScript's control flow analysis:
-- Tracks all possible code paths
-- Maintains type information for each path
-- Merges types at join points
-- Handles unreachable code
-- Respects type guards and assertions
-
-### Assignability and Compatibility
-
-**Theory:** TypeScript determines if one type can be assigned to another based on structural compatibility rules.
-
-**Assignability Rules:**
-
-1. **Primitive Compatibility:**
-   - Exact match required
-   - Literal types assignable to their base type
-   - `never` assignable to everything
-   - Everything assignable to `any` and `unknown`
-
-2. **Object Compatibility:**
-   - Target must have all required properties of source
-   - Extra properties allowed (structural typing)
-   - Property types must be compatible
-   - Methods follow function compatibility rules
-
-3. **Function Compatibility:**
-   - Parameter count: Target can have fewer parameters
-   - Parameter types: Contravariant (in strict mode)
-   - Return type: Covariant
-   - `this` parameter: Must be compatible
-
-4. **Union/Intersection Compatibility:**
-   - Union: Assignable if assignable to any member
-   - Intersection: Must be assignable to all members
-
-**Excess Property Checking:**
-
-Theory: TypeScript performs stricter checks on object literals to catch common errors.
-
-**When Applied:**
-- Object literals assigned to variables
-- Object literals passed as arguments
-- Object literals in return statements
-
-**Why It Exists:**
-- Catches typos in property names
-- Prevents accidental extra properties
-- Enforces stricter object shape matching
-
-**Bypassing:**
-- Assign to intermediate variable
-- Use type assertion
-- Add index signature to target type
-
----
-
-## Advanced Types
-
-### Union Types Theory
-
-**Definition:** A union type represents a value that can be one of several types. It's the type-level equivalent of the logical OR operation.
-
-**Theoretical Foundation:**
-
-Union types form a **lattice structure** in type theory:
-- **Join Operation:** Union creates the least upper bound
-- **Subtyping:** Each member is a subtype of the union
-- **Distributivity:** Operations distribute over unions
-
-**Type Algebra:**
-```
-A | B | A = A | B (idempotent)
-A | B = B | A (commutative)
-(A | B) | C = A | (B | C) (associative)
-A | never = A (identity)
-A | unknown = unknown (absorption)
+**Ví dụ (TypeScript):**
+```ts
+interface User { id: string; name: string }
+const u: User = { id: 'u1', name: 'Ann', role: 'admin' }; // error on literal
 ```
 
-**Discriminated Unions:**
+## Index Signatures
 
-Theory: A discriminated union (also called tagged union or algebraic data type) uses a common property (discriminant) to distinguish between union members.
+**English:** Model dynamic keys with explicit value constraints and optional readonly.
 
-**Properties:**
-- **Exhaustiveness:** Compiler ensures all cases handled
-- **Type Safety:** Automatic narrowing based on discriminant
-- **Pattern Matching:** Similar to functional programming languages
+**Giải thích (VI):** Dùng index signature cho map động nhưng vẫn ràng buộc value type.
 
-**Use Cases:**
-- State machines
-- Action types in Redux
-- API response types
-- Error handling
-
-### Intersection Types Theory
-
-**Definition:** An intersection type combines multiple types into one, requiring a value to satisfy all constituent types simultaneously.
-
-**Theoretical Foundation:**
-
-Intersection types represent the **meet operation** in type lattice:
-- **Meet Operation:** Intersection creates the greatest lower bound
-- **Subtyping:** Intersection is a subtype of each member
-- **Contravariance:** Useful for combining constraints
-
-**Type Algebra:**
-```
-A & B & A = A & B (idempotent)
-A & B = B & A (commutative)
-(A & B) & C = A & (B & C) (associative)
-A & unknown = A (identity)
-A & never = never (absorption)
+**Ví dụ (TypeScript):**
+```ts
+type Scores = { [subject: string]: number };
+const scores: Scores = { math: 9, cs: 10 };
 ```
 
-**Intersection vs Union:**
-- Union: "Either/Or" - value can be any member type
-- Intersection: "Both/And" - value must satisfy all types
+## Mapped Types
 
-**Practical Implications:**
-- Combining object types merges properties
-- Conflicting primitive types result in `never`
-- Useful for mixins and trait composition
+**English:** Transform property modifiers and value types systematically.
 
-### Literal Types Theory
+**Giải thích (VI):** Mapped type cho phép biến đổi toàn bộ thuộc tính theo quy tắc.
 
-**Definition:** Literal types represent exact values rather than general types. They're the most specific types possible.
-
-**Type Hierarchy:**
-
-```
-unknown (top type)
-  ↓
-any
-  ↓
-string, number, boolean (general types)
-  ↓
-"hello", 42, true (literal types)
-  ↓
-never (bottom type)
+**Ví dụ (TypeScript):**
+```ts
+type Flags<T> = { [K in keyof T]: boolean };
+type UserFlags = Flags<{ id: string; active: boolean }>;
 ```
 
-**Theoretical Properties:**
+## Conditional Types
 
-1. **Singleton Types:** Each literal type has exactly one value
-2. **Subtyping:** Literal types are subtypes of their base type
-3. **Widening:** Literals widen to base types in mutable contexts
-4. **Narrowing:** Base types narrow to literals through guards
+**English:** Encode type-level branching with `extends ? :`.
 
-**Template Literal Types:**
+**Giải thích (VI):** Conditional type mô hình hóa if/else ở tầng kiểu.
 
-Theory: Template literal types apply string manipulation at the type level, enabling powerful string type transformations.
-
-**Capabilities:**
-- String concatenation at type level
-- Pattern matching with unions
-- Case transformations (Uppercase, Lowercase, etc.)
-- String splitting and joining
-
-**Use Cases:**
-- API route typing
-- CSS property names
-- Event name generation
-- Database column names
-
----
-
-## Generics Mastery
-
-### Generic Theory
-
-**Definition:** Generics provide a way to create reusable components that work with multiple types while maintaining type safety. They're parametric polymorphism in type theory.
-
-**Theoretical Foundation:**
-
-**Parametric Polymorphism:**
-- Functions/types parameterized by other types
-- Same implementation works for all type arguments
-- Type parameters act as variables in type expressions
-
-**Type Parameters:**
-- Abstract over types
-- Bound at call site or instantiation
-- Can have constraints (bounded quantification)
-- Support variance annotations
-
-**Generic Constraints Theory:**
-
-Constraints limit type parameters to types satisfying certain conditions:
-
-**Constraint Types:**
-1. **Extends Constraint:** Type must be subtype of bound
-2. **Keyof Constraint:** Type must be key of another type
-3. **Conditional Constraint:** Type depends on condition
-4. **Multiple Constraints:** Intersection of constraints
-
-**Constraint Satisfaction:**
-- Checked at instantiation time
-- Enables safe operations on type parameters
-- Provides IntelliSense and autocomplete
-- Prevents invalid type arguments
-
-### Generic Inference Theory
-
-**Definition:** Type inference for generics automatically determines type arguments based on usage context.
-
-**Inference Algorithm:**
-
-1. **Candidate Collection:**
-   - Gather type information from arguments
-   - Consider return type context
-   - Analyze constraint satisfaction
-
-2. **Unification:**
-   - Find common type satisfying all uses
-   - Resolve conflicts through subtyping
-   - Apply variance rules
-
-3. **Widening/Narrowing:**
-   - Widen literals if needed
-   - Narrow unions when possible
-   - Respect explicit annotations
-
-**Inference Priority:**
-1. Explicit type arguments (highest)
-2. Argument types
-3. Return type context
-4. Default type parameters
-5. Constraint bounds (lowest)
-
-**Inference Limitations:**
-
-Theory: Generic inference has fundamental limitations:
-- **Undecidability:** Some type relationships undecidable
-- **Ambiguity:** Multiple valid inferences possible
-- **Complexity:** Inference can be computationally expensive
-- **Heuristics:** TypeScript uses heuristics for practical cases
-
-### Higher-Kinded Types Theory
-
-**Definition:** Higher-kinded types are types that abstract over type constructors, not just types.
-
-**Kind System:**
-
-```
-* = concrete type (string, number)
-* → * = type constructor (Array, Promise)
-* → * → * = binary type constructor (Map, Record)
-(* → *) → * = higher-kinded type
+**Ví dụ (TypeScript):**
+```ts
+type ElementType<T> = T extends (infer U)[] ? U : T;
+type A = ElementType<string[]>; // string
 ```
 
-**TypeScript Limitations:**
+## Template Literal Types
 
-TypeScript doesn't directly support higher-kinded types, but workarounds exist:
-- Type-level functions using conditional types
-- Encoding with interfaces and type parameters
-- Simulating with mapped types
+**English:** Generate string unions and infer segments from text patterns.
 
-**Use Cases:**
-- Functor, Monad abstractions
-- Generic container operations
-- Type-level programming
-- Advanced library design
+**Giải thích (VI):** Template literal type tạo union chuỗi và tách thông tin từ pattern.
 
----
-
-## Utility Types Theory
-
-### Built-in Utility Types
-
-**Theoretical Classification:**
-
-**1. Property Modifiers:**
-- `Partial<T>`: Makes all properties optional
-- `Required<T>`: Makes all properties required
-- `Readonly<T>`: Makes all properties readonly
-
-**Theory:** These use mapped types to transform property modifiers systematically.
-
-**2. Property Selection:**
-- `Pick<T, K>`: Selects subset of properties
-- `Omit<T, K>`: Excludes subset of properties
-
-**Theory:** These use key remapping and conditional types for property filtering.
-
-**3. Type Transformations:**
-- `Record<K, T>`: Creates object type with specific keys
-- `Exclude<T, U>`: Removes types from union
-- `Extract<T, U>`: Extracts types from union
-
-**Theory:** These leverage conditional types and distributive properties.
-
-**4. Function Utilities:**
-- `Parameters<T>`: Extracts parameter types
-- `ReturnType<T>`: Extracts return type
-- `ConstructorParameters<T>`: Extracts constructor parameters
-- `InstanceType<T>`: Extracts instance type
-
-**Theory:** These use conditional types with `infer` keyword for type extraction.
-
-### Utility Type Composition
-
-**Theory:** Utility types can be composed to create complex transformations.
-
-**Composition Patterns:**
-
-1. **Sequential Composition:**
-   - Apply utilities in sequence
-   - Each transformation builds on previous
-   - Order matters for non-commutative operations
-
-2. **Parallel Composition:**
-   - Apply multiple utilities to same type
-   - Combine results with intersection
-   - Useful for independent transformations
-
-3. **Conditional Composition:**
-   - Choose utility based on type properties
-   - Use conditional types for selection
-   - Enables context-dependent transformations
-
-**Algebraic Properties:**
-
-Some utilities have algebraic properties:
-- `Partial<Required<T>>` ≈ `T` (if T has no optional properties)
-- `Pick<T, K> & Omit<T, K>` = `never` (disjoint)
-- `Readonly<Readonly<T>>` = `Readonly<T>` (idempotent)
-
----
-
-## Type Guards & Narrowing
-
-### Type Guard Theory
-
-**Definition:** Type guards are expressions that perform runtime checks to narrow types within a conditional block.
-
-**Theoretical Foundation:**
-
-**Refinement Types:**
-- Type guards implement refinement type system
-- Narrow types based on runtime predicates
-- Maintain soundness through control flow
-
-**Type Predicate Logic:**
-
-Type predicates use logical implications:
-- If predicate true → type is narrowed type
-- If predicate false → type is complement
-- Predicates compose with logical operators
-
-**Type Guard Categories:**
-
-**1. Built-in Type Guards:**
-- `typeof`: Checks primitive types
-- `instanceof`: Checks class instances
-- `in`: Checks property existence
-- Equality checks: Narrows to literal types
-
-**2. User-Defined Type Guards:**
-- Functions returning type predicates
-- Custom logic for complex types
-- Reusable across codebase
-
-**3. Assertion Functions:**
-- Throw if condition false
-- Narrow type in subsequent code
-- Useful for validation
-
-### Control Flow Analysis Theory
-
-**Definition:** Control flow analysis tracks how types change through different code paths.
-
-**Analysis Phases:**
-
-**1. Graph Construction:**
-- Build control flow graph (CFG)
-- Nodes represent statements
-- Edges represent possible execution paths
-
-**2. Type Propagation:**
-- Assign initial types to variables
-- Propagate types along edges
-- Apply narrowing at conditional branches
-
-**3. Join Points:**
-- Merge types from multiple paths
-- Use union for divergent types
-- Maintain precision where possible
-
-**4. Unreachable Code Detection:**
-- Identify impossible paths
-- Mark code after `never` type
-- Warn about dead code
-
-**Theoretical Challenges:**
-
-**Aliasing:**
-- Multiple references to same value
-- Type changes through one reference
-- May not reflect in others
-
-**Mutation:**
-- Type narrowing invalidated by mutation
-- Requires conservative analysis
-- Trade-off between precision and soundness
-
-**Closures:**
-- Captured variables in closures
-- Type at capture time vs call time
-- Requires careful tracking
-
----
-
-## Conditional Types Theory
-
-### Conditional Type Fundamentals
-
-**Definition:** Conditional types select one of two possible types based on a condition expressed as a type relationship test.
-
-**Syntax:** `T extends U ? X : Y`
-
-**Theoretical Model:**
-
-Conditional types implement **type-level if-then-else**:
-- Condition: Type relationship test
-- Branches: Two possible result types
-- Evaluation: At type checking time
-
-**Distributive Property:**
-
-Theory: Conditional types distribute over union types when the checked type is a naked type parameter.
-
-**Distribution Rule:**
-```
-(A | B) extends U ? X : Y
-=
-(A extends U ? X : Y) | (B extends U ? X : Y)
+**Ví dụ (TypeScript):**
+```ts
+type Event = 'click' | 'focus';
+type HandlerName = `on${Capitalize<Event>}`; // onClick | onFocus
 ```
 
-**Why Distribution Matters:**
-- Enables filtering union types
-- Allows per-member transformations
-- Foundation for many utility types
+## Declaration Merging
 
-**Preventing Distribution:**
-- Wrap type parameter in tuple: `[T]`
-- Use intersection: `T & {}`
-- Useful when treating union as single type
+**English:** Interfaces and namespaces can merge declarations in same scope.
 
-### Infer Keyword Theory
+**Giải thích (VI):** Declaration merging giúp mở rộng định nghĩa theo nhiều file.
 
-**Definition:** The `infer` keyword introduces a type variable within a conditional type's extends clause, allowing pattern matching and type extraction.
+**Ví dụ (TypeScript):**
+```ts
+interface Box { width: number }
+interface Box { height: number }
+const b: Box = { width: 10, height: 20 };
+```
 
-**Theoretical Foundation:**
+## Module Augmentation
 
-**Pattern Matching:**
-- Match type structure
-- Extract components
-- Bind to type variables
+**English:** Augment third-party module types safely without forking package.
 
-**Unification:**
-- Find type satisfying pattern
-- Resolve type variables
-- Handle multiple infer sites
+**Giải thích (VI):** Module augmentation thêm type cho thư viện ngoài một cách an toàn.
 
-**Inference Context:**
-- Covariant positions: Infer union
-- Contravariant positions: Infer intersection
-- Invariant positions: Infer exact type
+**Ví dụ (TypeScript):**
+```ts
+declare module 'axios' {
+  interface AxiosRequestConfig { requestId?: string }
+}
+```
 
-**Advanced Infer Patterns:**
+## Namespace vs Modules
 
-**1. Multiple Infer:**
-- Multiple type variables in pattern
-- Each infers independently
-- Useful for complex extractions
+**English:** Prefer ES modules; namespaces mostly for legacy/global typing.
 
-**2. Nested Infer:**
-- Infer within inferred types
-- Recursive pattern matching
-- Enables deep type inspection
+**Giải thích (VI):** Ưu tiên module ES; namespace chủ yếu cho legacy.
 
-**3. Conditional Infer:**
-- Infer in both branches
-- Different patterns per branch
-- Maximum flexibility
+**Ví dụ (TypeScript):**
+```ts
+// module preferred
+export function add(a: number, b: number){ return a+b }
+```
 
----
+## Project References
 
-## Mapped Types Theory
+**English:** Split monorepo into incremental TS projects for faster builds.
 
-### Mapped Type Fundamentals
+**Giải thích (VI):** Project references tăng tốc build cho codebase lớn.
 
-**Definition:** Mapped types transform properties of an existing type systematically, creating new types based on a pattern.
+**Ví dụ (TypeScript):**
+```ts
+// tsconfig.json
+{
+  "files": [],
+  "references": [{ "path": "../shared" }]
+}
+```
 
-**Syntax:** `{ [P in K]: T }`
+## Cross References / Tham Chiếu Liên Quan
 
-**Theoretical Model:**
+- [TypeScript Basics](./01-typescript-basics.md)
+- [Advanced Types](./02-advanced-types.md)
+- [React + TypeScript](./05-react-typescript.md)
+- [Modern Features](./06-typescript-modern-features.md)
 
-Mapped types implement **type-level iteration**:
-- Iterate over keys
-- Transform each property
-- Produce new object type
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-**Key Remapping:**
+### 🟢 [Junior] Q1. What is structural typing?
 
-Theory: Key remapping allows transforming property keys during mapping.
+**Answer (EN):** Types are compatible when required members match.
 
-**Syntax:** `{ [P in K as NewKey]: T }`
+**Giải thích (VI):** TypeScript dùng cấu trúc thay vì định danh tên kiểu.
 
-**Capabilities:**
-- Rename properties
-- Filter properties (map to `never`)
-- Add prefixes/suffixes
-- Transform key types
+**Ví dụ (TypeScript):**
+```ts
+type A={x:number}; type B={x:number;y:number}; const a:A={x:1,y:2} as any;
+```
 
-**Mapping Modifiers:**
+### 🟡 [Mid] Q2. Why does excess property checking exist?
 
-**Modifier Types:**
-- `+?`: Add optional modifier
-- `-?`: Remove optional modifier
-- `+readonly`: Add readonly modifier
-- `-readonly`: Remove readonly modifier
+**Answer (EN):** To catch accidental extra fields in object literals early.
 
-**Theory:** Modifiers enable systematic property transformation while preserving or changing mutability and optionality.
+**Giải thích (VI):** Nó giúp phát hiện typo hoặc field sai ngay lúc compile.
 
-### Recursive Mapped Types
+**Ví dụ (TypeScript):**
+```ts
+interface C{a:number}; const c:C={a:1,b:2}; // error
+```
 
-**Theory:** Recursive mapped types apply transformations deeply through nested structures.
+### 🟡 [Mid] Q3. How do mapped types differ from utility types?
 
-**Recursion Depth:**
-- TypeScript limits recursion depth
-- Prevents infinite loops
-- Typically 50 levels deep
+**Answer (EN):** Utility types are predefined mapped/conditional patterns shipped by TS.
 
-**Tail Recursion:**
-- Optimize recursive types
-- Accumulator pattern
-- Reduce stack depth
+**Giải thích (VI):** Utility type là các mẫu dựng sẵn dựa trên mapped/conditional.
 
-**Mutual Recursion:**
-- Types reference each other
-- Enables complex structures
-- Requires careful design
+**Ví dụ (TypeScript):**
+```ts
+type Read<T>={readonly [K in keyof T]:T[K]};
+```
 
----
+### 🔴 [Senior] Q4. When to use project references?
 
-## Template Literal Types Theory
+**Answer (EN):** Use for large multi-package repos needing fast incremental builds and strict boundaries.
 
-### String Manipulation Types
+**Giải thích (VI):** Áp dụng cho monorepo lớn để tăng tốc build và tách boundary.
 
-**Definition:** Template literal types enable string manipulation at the type level, creating new string literal types from existing ones.
+**Ví dụ (TypeScript):**
+```ts
+// composite + references in tsconfig
+```
 
-**Theoretical Foundation:**
+### 🔴 [Senior] Q5. How to augment third-party modules safely?
 
-**String Type Algebra:**
-- Concatenation: Combine string types
-- Union distribution: Apply to each member
-- Pattern matching: Extract substrings
+**Answer (EN):** Use declaration merging in local `.d.ts` and keep runtime behavior unchanged.
 
-**Intrinsic String Types:**
+**Giải thích (VI):** Tăng cường type qua .d.ts, không sửa runtime package.
 
-TypeScript provides built-in string transformations:
-- `Uppercase<S>`: Convert to uppercase
-- `Lowercase<S>`: Convert to lowercase
-- `Capitalize<S>`: Capitalize first character
-- `Uncapitalize<S>`: Lowercase first character
+**Ví dụ (TypeScript):**
+```ts
+declare module 'x' { interface Options { trace?: boolean } }
+```
 
-**Theory:** These are compiler intrinsics, not implementable in user code.
+### 🟢 [Junior] Q6. Comprehensive scenario 6
 
-### Pattern Matching with Template Literals
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
 
-**Theory:** Template literal types support pattern matching through conditional types and infer.
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
 
-**Pattern Syntax:**
-- Literal parts: Match exactly
-- Type parameters: Match any string
-- Infer: Extract matched portions
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
 
-**Use Cases:**
-- Parse structured strings
-- Extract route parameters
-- Validate string formats
-- Generate type-safe APIs
+### 🟡 [Mid] Q7. Comprehensive scenario 7
 
----
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
 
-## Interview Questions
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
 
-### Q1: Explain TypeScript's structural type system
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
 
-**Answer:**
+### 🔴 [Senior] Q8. Comprehensive scenario 8
 
-TypeScript uses structural typing (duck typing) where type compatibility is determined by structure, not explicit declarations.
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
 
-**Key Concepts:**
-- Types compatible if shapes match
-- Extra properties allowed in objects
-- Focuses on "what" not "who"
-- Enables gradual typing
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
 
-**Contrast with Nominal:**
-- Nominal: Types must be explicitly related
-- Structural: Types related by shape
-- TypeScript: Structural for flexibility
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
 
-### Q2: What is type narrowing and how does it work?
+### 🟢 [Junior] Q9. Comprehensive scenario 9
 
-**Answer:**
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
 
-Type narrowing refines types from general to specific based on runtime checks and control flow analysis.
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
 
-**Mechanisms:**
-- Type guards (typeof, instanceof, in)
-- Truthiness checks
-- Equality comparisons
-- Discriminated unions
-- Control flow analysis
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
 
-**Theory:**
-- Compiler tracks type through code paths
-- Narrows at conditional branches
-- Merges at join points
-- Maintains soundness
+### 🟡 [Mid] Q10. Comprehensive scenario 10
 
-### Q3: Explain variance in TypeScript
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
 
-**Answer:**
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
 
-Variance describes how subtyping relationships between complex types relate to their components.
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
 
-**Types:**
-- **Covariance:** Preserves direction (arrays, return types)
-- **Contravariance:** Reverses direction (function parameters in strict mode)
-- **Invariance:** No relationship (mutable structures)
-- **Bivariance:** Both directions (function parameters in non-strict)
+### 🔴 [Senior] Q11. Comprehensive scenario 11
 
-**Implications:**
-- Affects type safety
-- Determines assignability
-- Impacts generic constraints
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
 
-### Q4: What are conditional types and when to use them?
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
 
-**Answer:**
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
 
-Conditional types select between two types based on a type relationship test.
+### 🟢 [Junior] Q12. Comprehensive scenario 12
 
-**Syntax:** `T extends U ? X : Y`
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
 
-**Key Features:**
-- Distributive over unions
-- Support infer keyword
-- Enable type-level logic
-- Foundation for utility types
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
 
-**Use Cases:**
-- Type filtering
-- Type extraction
-- Conditional transformations
-- Generic constraints
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
 
-### Q5: Explain mapped types
+### 🟡 [Mid] Q13. Comprehensive scenario 13
 
-**Answer:**
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
 
-Mapped types transform properties of existing types systematically.
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
 
-**Capabilities:**
-- Iterate over keys
-- Transform property types
-- Modify property modifiers
-- Remap keys
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
 
-**Theory:**
-- Type-level iteration
-- Systematic transformations
-- Preserve structure
-- Enable metaprogramming
+### 🔴 [Senior] Q14. Comprehensive scenario 14
 
----
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
 
-## Summary
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
 
-### Key Theoretical Concepts
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
 
-1. **Structural Type System**
-   - Shape-based compatibility
-   - Flexible and pragmatic
-   - Enables gradual typing
+### 🟢 [Junior] Q15. Comprehensive scenario 15
 
-2. **Type Inference**
-   - Automatic type determination
-   - Context-sensitive
-   - Reduces annotations
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
 
-3. **Variance**
-   - Covariance, contravariance
-   - Affects type safety
-   - Important for generics
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
 
-4. **Control Flow Analysis**
-   - Tracks types through code
-   - Enables narrowing
-   - Maintains soundness
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
 
-5. **Advanced Type Features**
-   - Conditional types
-   - Mapped types
-   - Template literals
-   - Enable powerful abstractions
+### 🟡 [Mid] Q16. Comprehensive scenario 16
 
-### Best Practices
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
 
-✅ **DO:**
-- Understand type system deeply
-- Use strict mode
-- Leverage type inference
-- Create reusable generic types
-- Use utility types appropriately
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
 
-❌ **DON'T:**
-- Overuse `any`
-- Ignore type errors
-- Create overly complex types
-- Abuse type assertions
-- Neglect variance considerations
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
 
----
+### 🔴 [Senior] Q17. Comprehensive scenario 17
 
-[← Back to Generics](./03-generics-deep-dive.md) | [Next: React with TypeScript →](../03-react/01-fundamentals.md)
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🟢 [Junior] Q18. Comprehensive scenario 18
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🟡 [Mid] Q19. Comprehensive scenario 19
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🔴 [Senior] Q20. Comprehensive scenario 20
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🟢 [Junior] Q21. Comprehensive scenario 21
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🟡 [Mid] Q22. Comprehensive scenario 22
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🔴 [Senior] Q23. Comprehensive scenario 23
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🟢 [Junior] Q24. Comprehensive scenario 24
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🟡 [Mid] Q25. Comprehensive scenario 25
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🔴 [Senior] Q26. Comprehensive scenario 26
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🟢 [Junior] Q27. Comprehensive scenario 27
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🟡 [Mid] Q28. Comprehensive scenario 28
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🔴 [Senior] Q29. Comprehensive scenario 29
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🟢 [Junior] Q30. Comprehensive scenario 30
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🟡 [Mid] Q31. Comprehensive scenario 31
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🔴 [Senior] Q32. Comprehensive scenario 32
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🟢 [Junior] Q33. Comprehensive scenario 33
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🟡 [Mid] Q34. Comprehensive scenario 34
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🔴 [Senior] Q35. Comprehensive scenario 35
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🟢 [Junior] Q36. Comprehensive scenario 36
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🟡 [Mid] Q37. Comprehensive scenario 37
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🔴 [Senior] Q38. Comprehensive scenario 38
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🟢 [Junior] Q39. Comprehensive scenario 39
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🟡 [Mid] Q40. Comprehensive scenario 40
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🔴 [Senior] Q41. Comprehensive scenario 41
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🟢 [Junior] Q42. Comprehensive scenario 42
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🟡 [Mid] Q43. Comprehensive scenario 43
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🔴 [Senior] Q44. Comprehensive scenario 44
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🟢 [Junior] Q45. Comprehensive scenario 45
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🟡 [Mid] Q46. Comprehensive scenario 46
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🔴 [Senior] Q47. Comprehensive scenario 47
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🟢 [Junior] Q48. Comprehensive scenario 48
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🟡 [Mid] Q49. Comprehensive scenario 49
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🔴 [Senior] Q50. Comprehensive scenario 50
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🟢 [Junior] Q51. Comprehensive scenario 51
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🟡 [Mid] Q52. Comprehensive scenario 52
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🔴 [Senior] Q53. Comprehensive scenario 53
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🟢 [Junior] Q54. Comprehensive scenario 54
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🟡 [Mid] Q55. Comprehensive scenario 55
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🔴 [Senior] Q56. Comprehensive scenario 56
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🟢 [Junior] Q57. Comprehensive scenario 57
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+
+### 🟡 [Mid] Q58. Comprehensive scenario 58
+
+**Answer (EN):** Explain mechanics, edge cases, and trade-offs.
+
+**Giải thích (VI):** Trả lời theo cơ chế, ngoại lệ và đánh đổi.
+
+**Ví dụ (TypeScript):**
+```ts
+type Scenario<T> = T extends string ? 'text' : 'other';
+```
+

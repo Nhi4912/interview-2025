@@ -421,9 +421,9 @@ console.log(person.age); // 30
 
 ---
 
-## Interview Questions / Câu Hỏi Phỏng Vấn
+## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-### Question 1: Explain Prototypal Inheritance / Giải Thích Kế Thừa Nguyên Mẫu
+### 🟡 [Mid] Question 1: Explain Prototypal Inheritance / Giải Thích Kế Thừa Nguyên Mẫu
 
 **English Answer:**
 Prototypal inheritance is JavaScript's mechanism for objects to inherit properties and methods from other objects. Every object has an internal `[[Prototype]]` property that references another object. When you access a property, JavaScript looks for it on the object itself first, then walks up the prototype chain until it finds the property or reaches `null`.
@@ -440,7 +440,7 @@ console.log(child.x); // 10 (from parent / từ parent)
 console.log(child.y); // 20 (own property / thuộc tính riêng)
 ```
 
-### Question 2: Difference Between `__proto__` and `prototype`
+### 🟢 [Junior] Question 2: Difference Between `__proto__` and `prototype`
 
 **English Answer:**
 - `prototype` is a property of constructor functions that becomes the `__proto__` of instances created with that constructor
@@ -462,7 +462,7 @@ console.log(john.__proto__ === Person.prototype); // true
 console.log(john.prototype); // undefined (instances don't have .prototype)
 ```
 
-### Question 3: How Does `new` Keyword Work?
+### 🟡 [Mid] Question 3: How Does `new` Keyword Work?
 
 **English Answer:**
 The `new` keyword performs four steps:
@@ -478,7 +478,7 @@ Từ khóa `new` thực hiện bốn bước:
 3. Thực thi constructor với `this` gắn với đối tượng mới
 4. Trả về đối tượng (hoặc giá trị trả về của constructor nếu nó là một đối tượng)
 
-### Question 4: Class vs Constructor Function
+### 🟡 [Mid] Question 4: Class vs Constructor Function
 
 **English Answer:**
 ES6 classes are syntactic sugar over constructor functions. Key differences:
