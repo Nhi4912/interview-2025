@@ -1,0 +1,23 @@
+# Progress Log
+
+Bead: epic-interview-kb
+Started: 2026-03-11
+Branch: epic/interview-kb
+
+## Codebase Patterns
+
+- **Bilingual Q&A format**: EN headings + VI explanations, difficulty tags [Junior]/[Mid]/[Senior] — exemplar: `be-track/01-golang/01-language-fundamentals.md`
+- **Deep theory format**: ~1000+ lines, bilingual, interview Q&A section — exemplar: `shared/01-cs-fundamentals/networking-theory.md`
+- **System design format**: Step-by-step problem solving with estimation, architecture, deep dives — exemplar: `be-track/04-be-system-design/02-classic-problems.md`
+- **File size target**: 600-1500 lines per file (max 2000)
+- **Code ratio**: shared/ ~10-20%, be-track/ ~25%, fe-track/ can be higher
+
+## Execution Waves
+
+Wave 1 (Parallel): Tasks 1-5, 7-9 (8 tasks, no dependencies)
+Wave 2 (After Wave 1): Task 6 (depends on 1-4), Task 10 (depends on 9)
+Wave 3 (After all): Task 11 (depends on 1-10)
+
+---
+
+<!-- Task logs below - APPEND ONLY -->
