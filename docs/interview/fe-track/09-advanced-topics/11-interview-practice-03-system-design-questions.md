@@ -1,149 +1,869 @@
-# System Design Interview Questions / Câu Hỏi Phỏng Vấn Thiết Kế Hệ Thống
-## Interview Practice - Chapter 3 / Thực Hành Phỏng Vấn - Chương 3
+# Interview Practice 03: Frontend System Design Questions
 
-[Back to Table of Contents](../00-table-of-contents.md)
+## Tổng Quan
 
----
+Frontend system design interview đánh giá khả năng thiết kế UI ở quy mô lớn: architecture, state, API contract,
+performance, accessibility, reliability, và trade-off kinh doanh/kỹ thuật.
 
-## Design URL Shortener
+Cross-reference:
+- `../../08-fe-system-design/01-architecture-patterns.md`
+- `../../shared/02-system-design/system-design-theory.md`
 
-### Requirements / Yêu Cầu
-- Shorten long URLs / Rút ngắn URL dài
-- Redirect to original URL / Chuyển hướng đến URL gốc
-- Track analytics / Theo dõi phân tích
-- Handle 100M URLs / Xử lý 100M URL
+## Frontend System Design Interview Format
 
-### Solution / Giải Pháp
+1. Clarify requirements (functional + non-functional)
+2. Define scope and constraints
+3. Propose high-level architecture
+4. Dive into state/data/API design
+5. Discuss performance and accessibility
+6. Evaluate trade-offs and future evolution
 
-```typescript
-class URLShortener {
-  private urlMap = new Map<string, string>();
-  private reverseMap = new Map<string, string>();
-  private counter = 0;
-  private baseUrl = 'https://short.url/';
+Giải thích: interviewer muốn xem cách bạn suy nghĩ có cấu trúc, không chỉ vẽ component tree.
+Ví dụ: luôn nói rõ assumption trước khi đưa kiến trúc.
 
-  private base62Encode(num: number): string {
-    const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    let result = '';
-    
-    while (num > 0) {
-      result = chars[num % 62] + result;
-      num = Math.floor(num / 62);
-    }
-    
-    return result || '0';
-  }
+## Problem 1: Design a Chat UI
 
-  shorten(longUrl: string): string {
-    // Check if already shortened / Kiểm tra đã rút ngắn chưa
-    if (this.reverseMap.has(longUrl)) {
-      return this.baseUrl + this.reverseMap.get(longUrl);
-    }
+### Requirements Clarification
+Giải thích:
+- Liệt kê core use cases và edge cases trước khi thiết kế.
+- Chốt SLO/SLA hiển thị, latency, offline requirement nếu có.
+Ví dụ: chat cần delivery state (sent/delivered/read), search message, và retry khi mạng chập chờn.
 
-    // Generate short code / Tạo mã ngắn
-    const shortCode = this.base62Encode(++this.counter);
-    
-    // Store mappings / Lưu ánh xạ
-    this.urlMap.set(shortCode, longUrl);
-    this.reverseMap.set(longUrl, shortCode);
-    
-    return this.baseUrl + shortCode;
-  }
+### Component Architecture
+Giải thích:
+- Chia theo feature boundary: container, presentational, data hooks, shared primitives.
+- Ưu tiên khả năng test và thay thế module.
+Ví dụ: `MessageList`, `Composer`, `PresenceIndicator`, `ConnectionBanner`.
 
-  expand(shortUrl: string): string | null {
-    const shortCode = shortUrl.replace(this.baseUrl, '');
-    return this.urlMap.get(shortCode) || null;
-  }
-}
+### State Management
+Giải thích:
+- Tách UI state, domain state, server state.
+- Dùng normalized store cho entity lớn và quan hệ nhiều-nhiều.
+Ví dụ: `entities.byId`, `idsByChannel`, `pendingOps` cho optimistic update.
 
-// Usage / Sử dụng
-const shortener = new URLShortener();
-const short = shortener.shorten('https://example.com/very/long/url');
-console.log(short); // https://short.url/1
-const original = shortener.expand(short);
-console.log(original); // https://example.com/very/long/url
-```
+### API Design
+Giải thích:
+- Định nghĩa contract rõ request/response/error shape + pagination strategy.
+- Nêu rõ cơ chế realtime (SSE/WebSocket) nếu cần.
+Ví dụ: `GET /items?cursor=...`, `POST /items`, `WS event:item.updated`.
 
----
+### Performance Considerations
+Giải thích:
+- Virtualization, memoized selectors, request batching, incremental rendering.
+- Budget theo p95 interaction latency.
+Ví dụ: windowed list cho 50k records và debounce input 150ms.
 
-## Design Rate Limiter
+### Accessibility
+Giải thích:
+- Keyboard-first navigation, ARIA semantics, focus management, screen reader announcement.
+Ví dụ: role listbox/option cho autocomplete, live region cho thông báo trạng thái.
 
-```typescript
-class RateLimiter {
-  private requests = new Map<string, number[]>();
-  private limit: number;
-  private windowMs: number;
+### Trade-offs
+Giải thích:
+- Chọn giải pháp theo complexity hiện tại và khả năng mở rộng tương lai.
+- Nêu rõ rủi ro + mitigation.
+Ví dụ: chọn polling thay WS ở phase 1 để giảm vận hành, sau đó nâng cấp theo growth.
 
-  constructor(limit: number, windowMs: number) {
-    this.limit = limit;
-    this.windowMs = windowMs;
-  }
+### High-level Solution Summary
+Giải thích: đưa ra phương án baseline có thể ship nhanh, rồi nêu roadmap scale.
+Ví dụ: MVP dùng REST + polling; scale dùng WS + event dedupe + partitioned caches.
 
-  isAllowed(userId: string): boolean {
-    const now = Date.now();
-    const userRequests = this.requests.get(userId) || [];
-    
-    // Remove old requests / Xóa yêu cầu cũ
-    const validRequests = userRequests.filter(
-      time => now - time < this.windowMs
-    );
-    
-    if (validRequests.length < this.limit) {
-      validRequests.push(now);
-      this.requests.set(userId, validRequests);
-      return true;
-    }
-    
-    return false;
-  }
-}
+## Problem 2: Design an Autocomplete Component
 
-// Usage: 5 requests per minute / Sử dụng: 5 yêu cầu mỗi phút
-const limiter = new RateLimiter(5, 60000);
-console.log(limiter.isAllowed('user1')); // true
-```
+### Requirements Clarification
+Giải thích:
+- Liệt kê core use cases và edge cases trước khi thiết kế.
+- Chốt SLO/SLA hiển thị, latency, offline requirement nếu có.
+Ví dụ: chat cần delivery state (sent/delivered/read), search message, và retry khi mạng chập chờn.
 
----
+### Component Architecture
+Giải thích:
+- Chia theo feature boundary: container, presentational, data hooks, shared primitives.
+- Ưu tiên khả năng test và thay thế module.
+Ví dụ: `MessageList`, `Composer`, `PresenceIndicator`, `ConnectionBanner`.
 
-## Design Cache System
+### State Management
+Giải thích:
+- Tách UI state, domain state, server state.
+- Dùng normalized store cho entity lớn và quan hệ nhiều-nhiều.
+Ví dụ: `entities.byId`, `idsByChannel`, `pendingOps` cho optimistic update.
 
-```typescript
-class CacheSystem<K, V> {
-  private cache = new Map<K, { value: V; expiry: number }>();
-  private maxSize: number;
+### API Design
+Giải thích:
+- Định nghĩa contract rõ request/response/error shape + pagination strategy.
+- Nêu rõ cơ chế realtime (SSE/WebSocket) nếu cần.
+Ví dụ: `GET /items?cursor=...`, `POST /items`, `WS event:item.updated`.
 
-  constructor(maxSize: number) {
-    this.maxSize = maxSize;
-  }
+### Performance Considerations
+Giải thích:
+- Virtualization, memoized selectors, request batching, incremental rendering.
+- Budget theo p95 interaction latency.
+Ví dụ: windowed list cho 50k records và debounce input 150ms.
 
-  set(key: K, value: V, ttlMs: number): void {
-    if (this.cache.size >= this.maxSize && !this.cache.has(key)) {
-      // Evict oldest / Loại bỏ cũ nhất
-      const firstKey = this.cache.keys().next().value;
-      this.cache.delete(firstKey);
-    }
+### Accessibility
+Giải thích:
+- Keyboard-first navigation, ARIA semantics, focus management, screen reader announcement.
+Ví dụ: role listbox/option cho autocomplete, live region cho thông báo trạng thái.
 
-    this.cache.set(key, {
-      value,
-      expiry: Date.now() + ttlMs
-    });
-  }
+### Trade-offs
+Giải thích:
+- Chọn giải pháp theo complexity hiện tại và khả năng mở rộng tương lai.
+- Nêu rõ rủi ro + mitigation.
+Ví dụ: chọn polling thay WS ở phase 1 để giảm vận hành, sau đó nâng cấp theo growth.
 
-  get(key: K): V | null {
-    const entry = this.cache.get(key);
-    
-    if (!entry) return null;
-    
-    if (Date.now() > entry.expiry) {
-      this.cache.delete(key);
-      return null;
-    }
-    
-    return entry.value;
-  }
-}
-```
+### High-level Solution Summary
+Giải thích: đưa ra phương án baseline có thể ship nhanh, rồi nêu roadmap scale.
+Ví dụ: MVP dùng REST + polling; scale dùng WS + event dedupe + partitioned caches.
 
----
+## Problem 3: Design a Spreadsheet App
 
-[Back to Table of Contents](../00-table-of-contents.md)
+### Requirements Clarification
+Giải thích:
+- Liệt kê core use cases và edge cases trước khi thiết kế.
+- Chốt SLO/SLA hiển thị, latency, offline requirement nếu có.
+Ví dụ: chat cần delivery state (sent/delivered/read), search message, và retry khi mạng chập chờn.
+
+### Component Architecture
+Giải thích:
+- Chia theo feature boundary: container, presentational, data hooks, shared primitives.
+- Ưu tiên khả năng test và thay thế module.
+Ví dụ: `MessageList`, `Composer`, `PresenceIndicator`, `ConnectionBanner`.
+
+### State Management
+Giải thích:
+- Tách UI state, domain state, server state.
+- Dùng normalized store cho entity lớn và quan hệ nhiều-nhiều.
+Ví dụ: `entities.byId`, `idsByChannel`, `pendingOps` cho optimistic update.
+
+### API Design
+Giải thích:
+- Định nghĩa contract rõ request/response/error shape + pagination strategy.
+- Nêu rõ cơ chế realtime (SSE/WebSocket) nếu cần.
+Ví dụ: `GET /items?cursor=...`, `POST /items`, `WS event:item.updated`.
+
+### Performance Considerations
+Giải thích:
+- Virtualization, memoized selectors, request batching, incremental rendering.
+- Budget theo p95 interaction latency.
+Ví dụ: windowed list cho 50k records và debounce input 150ms.
+
+### Accessibility
+Giải thích:
+- Keyboard-first navigation, ARIA semantics, focus management, screen reader announcement.
+Ví dụ: role listbox/option cho autocomplete, live region cho thông báo trạng thái.
+
+### Trade-offs
+Giải thích:
+- Chọn giải pháp theo complexity hiện tại và khả năng mở rộng tương lai.
+- Nêu rõ rủi ro + mitigation.
+Ví dụ: chọn polling thay WS ở phase 1 để giảm vận hành, sau đó nâng cấp theo growth.
+
+### High-level Solution Summary
+Giải thích: đưa ra phương án baseline có thể ship nhanh, rồi nêu roadmap scale.
+Ví dụ: MVP dùng REST + polling; scale dùng WS + event dedupe + partitioned caches.
+
+## Problem 4: Design a Feed/Timeline
+
+### Requirements Clarification
+Giải thích:
+- Liệt kê core use cases và edge cases trước khi thiết kế.
+- Chốt SLO/SLA hiển thị, latency, offline requirement nếu có.
+Ví dụ: chat cần delivery state (sent/delivered/read), search message, và retry khi mạng chập chờn.
+
+### Component Architecture
+Giải thích:
+- Chia theo feature boundary: container, presentational, data hooks, shared primitives.
+- Ưu tiên khả năng test và thay thế module.
+Ví dụ: `MessageList`, `Composer`, `PresenceIndicator`, `ConnectionBanner`.
+
+### State Management
+Giải thích:
+- Tách UI state, domain state, server state.
+- Dùng normalized store cho entity lớn và quan hệ nhiều-nhiều.
+Ví dụ: `entities.byId`, `idsByChannel`, `pendingOps` cho optimistic update.
+
+### API Design
+Giải thích:
+- Định nghĩa contract rõ request/response/error shape + pagination strategy.
+- Nêu rõ cơ chế realtime (SSE/WebSocket) nếu cần.
+Ví dụ: `GET /items?cursor=...`, `POST /items`, `WS event:item.updated`.
+
+### Performance Considerations
+Giải thích:
+- Virtualization, memoized selectors, request batching, incremental rendering.
+- Budget theo p95 interaction latency.
+Ví dụ: windowed list cho 50k records và debounce input 150ms.
+
+### Accessibility
+Giải thích:
+- Keyboard-first navigation, ARIA semantics, focus management, screen reader announcement.
+Ví dụ: role listbox/option cho autocomplete, live region cho thông báo trạng thái.
+
+### Trade-offs
+Giải thích:
+- Chọn giải pháp theo complexity hiện tại và khả năng mở rộng tương lai.
+- Nêu rõ rủi ro + mitigation.
+Ví dụ: chọn polling thay WS ở phase 1 để giảm vận hành, sau đó nâng cấp theo growth.
+
+### High-level Solution Summary
+Giải thích: đưa ra phương án baseline có thể ship nhanh, rồi nêu roadmap scale.
+Ví dụ: MVP dùng REST + polling; scale dùng WS + event dedupe + partitioned caches.
+
+## Problem 5: Design a Drag-and-Drop Page Builder
+
+### Requirements Clarification
+Giải thích:
+- Liệt kê core use cases và edge cases trước khi thiết kế.
+- Chốt SLO/SLA hiển thị, latency, offline requirement nếu có.
+Ví dụ: chat cần delivery state (sent/delivered/read), search message, và retry khi mạng chập chờn.
+
+### Component Architecture
+Giải thích:
+- Chia theo feature boundary: container, presentational, data hooks, shared primitives.
+- Ưu tiên khả năng test và thay thế module.
+Ví dụ: `MessageList`, `Composer`, `PresenceIndicator`, `ConnectionBanner`.
+
+### State Management
+Giải thích:
+- Tách UI state, domain state, server state.
+- Dùng normalized store cho entity lớn và quan hệ nhiều-nhiều.
+Ví dụ: `entities.byId`, `idsByChannel`, `pendingOps` cho optimistic update.
+
+### API Design
+Giải thích:
+- Định nghĩa contract rõ request/response/error shape + pagination strategy.
+- Nêu rõ cơ chế realtime (SSE/WebSocket) nếu cần.
+Ví dụ: `GET /items?cursor=...`, `POST /items`, `WS event:item.updated`.
+
+### Performance Considerations
+Giải thích:
+- Virtualization, memoized selectors, request batching, incremental rendering.
+- Budget theo p95 interaction latency.
+Ví dụ: windowed list cho 50k records và debounce input 150ms.
+
+### Accessibility
+Giải thích:
+- Keyboard-first navigation, ARIA semantics, focus management, screen reader announcement.
+Ví dụ: role listbox/option cho autocomplete, live region cho thông báo trạng thái.
+
+### Trade-offs
+Giải thích:
+- Chọn giải pháp theo complexity hiện tại và khả năng mở rộng tương lai.
+- Nêu rõ rủi ro + mitigation.
+Ví dụ: chọn polling thay WS ở phase 1 để giảm vận hành, sau đó nâng cấp theo growth.
+
+### High-level Solution Summary
+Giải thích: đưa ra phương án baseline có thể ship nhanh, rồi nêu roadmap scale.
+Ví dụ: MVP dùng REST + polling; scale dùng WS + event dedupe + partitioned caches.
+
+## Problem 6: Design a Real-time Dashboard
+
+### Requirements Clarification
+Giải thích:
+- Liệt kê core use cases và edge cases trước khi thiết kế.
+- Chốt SLO/SLA hiển thị, latency, offline requirement nếu có.
+Ví dụ: chat cần delivery state (sent/delivered/read), search message, và retry khi mạng chập chờn.
+
+### Component Architecture
+Giải thích:
+- Chia theo feature boundary: container, presentational, data hooks, shared primitives.
+- Ưu tiên khả năng test và thay thế module.
+Ví dụ: `MessageList`, `Composer`, `PresenceIndicator`, `ConnectionBanner`.
+
+### State Management
+Giải thích:
+- Tách UI state, domain state, server state.
+- Dùng normalized store cho entity lớn và quan hệ nhiều-nhiều.
+Ví dụ: `entities.byId`, `idsByChannel`, `pendingOps` cho optimistic update.
+
+### API Design
+Giải thích:
+- Định nghĩa contract rõ request/response/error shape + pagination strategy.
+- Nêu rõ cơ chế realtime (SSE/WebSocket) nếu cần.
+Ví dụ: `GET /items?cursor=...`, `POST /items`, `WS event:item.updated`.
+
+### Performance Considerations
+Giải thích:
+- Virtualization, memoized selectors, request batching, incremental rendering.
+- Budget theo p95 interaction latency.
+Ví dụ: windowed list cho 50k records và debounce input 150ms.
+
+### Accessibility
+Giải thích:
+- Keyboard-first navigation, ARIA semantics, focus management, screen reader announcement.
+Ví dụ: role listbox/option cho autocomplete, live region cho thông báo trạng thái.
+
+### Trade-offs
+Giải thích:
+- Chọn giải pháp theo complexity hiện tại và khả năng mở rộng tương lai.
+- Nêu rõ rủi ro + mitigation.
+Ví dụ: chọn polling thay WS ở phase 1 để giảm vận hành, sau đó nâng cấp theo growth.
+
+### High-level Solution Summary
+Giải thích: đưa ra phương án baseline có thể ship nhanh, rồi nêu roadmap scale.
+Ví dụ: MVP dùng REST + polling; scale dùng WS + event dedupe + partitioned caches.
+
+## Problem 7: Design a Notification System UI
+
+### Requirements Clarification
+Giải thích:
+- Liệt kê core use cases và edge cases trước khi thiết kế.
+- Chốt SLO/SLA hiển thị, latency, offline requirement nếu có.
+Ví dụ: chat cần delivery state (sent/delivered/read), search message, và retry khi mạng chập chờn.
+
+### Component Architecture
+Giải thích:
+- Chia theo feature boundary: container, presentational, data hooks, shared primitives.
+- Ưu tiên khả năng test và thay thế module.
+Ví dụ: `MessageList`, `Composer`, `PresenceIndicator`, `ConnectionBanner`.
+
+### State Management
+Giải thích:
+- Tách UI state, domain state, server state.
+- Dùng normalized store cho entity lớn và quan hệ nhiều-nhiều.
+Ví dụ: `entities.byId`, `idsByChannel`, `pendingOps` cho optimistic update.
+
+### API Design
+Giải thích:
+- Định nghĩa contract rõ request/response/error shape + pagination strategy.
+- Nêu rõ cơ chế realtime (SSE/WebSocket) nếu cần.
+Ví dụ: `GET /items?cursor=...`, `POST /items`, `WS event:item.updated`.
+
+### Performance Considerations
+Giải thích:
+- Virtualization, memoized selectors, request batching, incremental rendering.
+- Budget theo p95 interaction latency.
+Ví dụ: windowed list cho 50k records và debounce input 150ms.
+
+### Accessibility
+Giải thích:
+- Keyboard-first navigation, ARIA semantics, focus management, screen reader announcement.
+Ví dụ: role listbox/option cho autocomplete, live region cho thông báo trạng thái.
+
+### Trade-offs
+Giải thích:
+- Chọn giải pháp theo complexity hiện tại và khả năng mở rộng tương lai.
+- Nêu rõ rủi ro + mitigation.
+Ví dụ: chọn polling thay WS ở phase 1 để giảm vận hành, sau đó nâng cấp theo growth.
+
+### High-level Solution Summary
+Giải thích: đưa ra phương án baseline có thể ship nhanh, rồi nêu roadmap scale.
+Ví dụ: MVP dùng REST + polling; scale dùng WS + event dedupe + partitioned caches.
+
+## Problem 8: Design a File Upload System
+
+### Requirements Clarification
+Giải thích:
+- Liệt kê core use cases và edge cases trước khi thiết kế.
+- Chốt SLO/SLA hiển thị, latency, offline requirement nếu có.
+Ví dụ: chat cần delivery state (sent/delivered/read), search message, và retry khi mạng chập chờn.
+
+### Component Architecture
+Giải thích:
+- Chia theo feature boundary: container, presentational, data hooks, shared primitives.
+- Ưu tiên khả năng test và thay thế module.
+Ví dụ: `MessageList`, `Composer`, `PresenceIndicator`, `ConnectionBanner`.
+
+### State Management
+Giải thích:
+- Tách UI state, domain state, server state.
+- Dùng normalized store cho entity lớn và quan hệ nhiều-nhiều.
+Ví dụ: `entities.byId`, `idsByChannel`, `pendingOps` cho optimistic update.
+
+### API Design
+Giải thích:
+- Định nghĩa contract rõ request/response/error shape + pagination strategy.
+- Nêu rõ cơ chế realtime (SSE/WebSocket) nếu cần.
+Ví dụ: `GET /items?cursor=...`, `POST /items`, `WS event:item.updated`.
+
+### Performance Considerations
+Giải thích:
+- Virtualization, memoized selectors, request batching, incremental rendering.
+- Budget theo p95 interaction latency.
+Ví dụ: windowed list cho 50k records và debounce input 150ms.
+
+### Accessibility
+Giải thích:
+- Keyboard-first navigation, ARIA semantics, focus management, screen reader announcement.
+Ví dụ: role listbox/option cho autocomplete, live region cho thông báo trạng thái.
+
+### Trade-offs
+Giải thích:
+- Chọn giải pháp theo complexity hiện tại và khả năng mở rộng tương lai.
+- Nêu rõ rủi ro + mitigation.
+Ví dụ: chọn polling thay WS ở phase 1 để giảm vận hành, sau đó nâng cấp theo growth.
+
+### High-level Solution Summary
+Giải thích: đưa ra phương án baseline có thể ship nhanh, rồi nêu roadmap scale.
+Ví dụ: MVP dùng REST + polling; scale dùng WS + event dedupe + partitioned caches.
+
+## Problem 9: Design a Collaborative Kanban Board
+
+### Requirements Clarification
+Giải thích:
+- Liệt kê core use cases và edge cases trước khi thiết kế.
+- Chốt SLO/SLA hiển thị, latency, offline requirement nếu có.
+Ví dụ: chat cần delivery state (sent/delivered/read), search message, và retry khi mạng chập chờn.
+
+### Component Architecture
+Giải thích:
+- Chia theo feature boundary: container, presentational, data hooks, shared primitives.
+- Ưu tiên khả năng test và thay thế module.
+Ví dụ: `MessageList`, `Composer`, `PresenceIndicator`, `ConnectionBanner`.
+
+### State Management
+Giải thích:
+- Tách UI state, domain state, server state.
+- Dùng normalized store cho entity lớn và quan hệ nhiều-nhiều.
+Ví dụ: `entities.byId`, `idsByChannel`, `pendingOps` cho optimistic update.
+
+### API Design
+Giải thích:
+- Định nghĩa contract rõ request/response/error shape + pagination strategy.
+- Nêu rõ cơ chế realtime (SSE/WebSocket) nếu cần.
+Ví dụ: `GET /items?cursor=...`, `POST /items`, `WS event:item.updated`.
+
+### Performance Considerations
+Giải thích:
+- Virtualization, memoized selectors, request batching, incremental rendering.
+- Budget theo p95 interaction latency.
+Ví dụ: windowed list cho 50k records và debounce input 150ms.
+
+### Accessibility
+Giải thích:
+- Keyboard-first navigation, ARIA semantics, focus management, screen reader announcement.
+Ví dụ: role listbox/option cho autocomplete, live region cho thông báo trạng thái.
+
+### Trade-offs
+Giải thích:
+- Chọn giải pháp theo complexity hiện tại và khả năng mở rộng tương lai.
+- Nêu rõ rủi ro + mitigation.
+Ví dụ: chọn polling thay WS ở phase 1 để giảm vận hành, sau đó nâng cấp theo growth.
+
+### High-level Solution Summary
+Giải thích: đưa ra phương án baseline có thể ship nhanh, rồi nêu roadmap scale.
+Ví dụ: MVP dùng REST + polling; scale dùng WS + event dedupe + partitioned caches.
+
+### Deep Dive 1: Design a Chat UI Architecture Notes
+Giải thích:
+- Data flow: input events -> domain actions -> async effects -> state updates -> UI render.
+- Error handling: retry policy, user feedback, fallback UI.
+- Observability: logs/metrics/traces trên interaction critical path.
+Ví dụ: emit metric `ui.action.latency` theo action type để theo dõi regression sau release.
+
+#### Edge Cases 1
+Giải thích: luôn chuẩn bị edge case để thể hiện tư duy production-grade.
+Ví dụ: duplicate events, clock skew, partial failure, stale cache, slow network.
+
+### Deep Dive 2: Design an Autocomplete Component Architecture Notes
+Giải thích:
+- Data flow: input events -> domain actions -> async effects -> state updates -> UI render.
+- Error handling: retry policy, user feedback, fallback UI.
+- Observability: logs/metrics/traces trên interaction critical path.
+Ví dụ: emit metric `ui.action.latency` theo action type để theo dõi regression sau release.
+
+#### Edge Cases 2
+Giải thích: luôn chuẩn bị edge case để thể hiện tư duy production-grade.
+Ví dụ: duplicate events, clock skew, partial failure, stale cache, slow network.
+
+### Deep Dive 3: Design a Spreadsheet App Architecture Notes
+Giải thích:
+- Data flow: input events -> domain actions -> async effects -> state updates -> UI render.
+- Error handling: retry policy, user feedback, fallback UI.
+- Observability: logs/metrics/traces trên interaction critical path.
+Ví dụ: emit metric `ui.action.latency` theo action type để theo dõi regression sau release.
+
+#### Edge Cases 3
+Giải thích: luôn chuẩn bị edge case để thể hiện tư duy production-grade.
+Ví dụ: duplicate events, clock skew, partial failure, stale cache, slow network.
+
+### Deep Dive 4: Design a Feed/Timeline Architecture Notes
+Giải thích:
+- Data flow: input events -> domain actions -> async effects -> state updates -> UI render.
+- Error handling: retry policy, user feedback, fallback UI.
+- Observability: logs/metrics/traces trên interaction critical path.
+Ví dụ: emit metric `ui.action.latency` theo action type để theo dõi regression sau release.
+
+#### Edge Cases 4
+Giải thích: luôn chuẩn bị edge case để thể hiện tư duy production-grade.
+Ví dụ: duplicate events, clock skew, partial failure, stale cache, slow network.
+
+### Deep Dive 5: Design a Drag-and-Drop Page Builder Architecture Notes
+Giải thích:
+- Data flow: input events -> domain actions -> async effects -> state updates -> UI render.
+- Error handling: retry policy, user feedback, fallback UI.
+- Observability: logs/metrics/traces trên interaction critical path.
+Ví dụ: emit metric `ui.action.latency` theo action type để theo dõi regression sau release.
+
+#### Edge Cases 5
+Giải thích: luôn chuẩn bị edge case để thể hiện tư duy production-grade.
+Ví dụ: duplicate events, clock skew, partial failure, stale cache, slow network.
+
+### Deep Dive 6: Design a Real-time Dashboard Architecture Notes
+Giải thích:
+- Data flow: input events -> domain actions -> async effects -> state updates -> UI render.
+- Error handling: retry policy, user feedback, fallback UI.
+- Observability: logs/metrics/traces trên interaction critical path.
+Ví dụ: emit metric `ui.action.latency` theo action type để theo dõi regression sau release.
+
+#### Edge Cases 6
+Giải thích: luôn chuẩn bị edge case để thể hiện tư duy production-grade.
+Ví dụ: duplicate events, clock skew, partial failure, stale cache, slow network.
+
+### Deep Dive 7: Design a Notification System UI Architecture Notes
+Giải thích:
+- Data flow: input events -> domain actions -> async effects -> state updates -> UI render.
+- Error handling: retry policy, user feedback, fallback UI.
+- Observability: logs/metrics/traces trên interaction critical path.
+Ví dụ: emit metric `ui.action.latency` theo action type để theo dõi regression sau release.
+
+#### Edge Cases 7
+Giải thích: luôn chuẩn bị edge case để thể hiện tư duy production-grade.
+Ví dụ: duplicate events, clock skew, partial failure, stale cache, slow network.
+
+### Deep Dive 8: Design a File Upload System Architecture Notes
+Giải thích:
+- Data flow: input events -> domain actions -> async effects -> state updates -> UI render.
+- Error handling: retry policy, user feedback, fallback UI.
+- Observability: logs/metrics/traces trên interaction critical path.
+Ví dụ: emit metric `ui.action.latency` theo action type để theo dõi regression sau release.
+
+#### Edge Cases 8
+Giải thích: luôn chuẩn bị edge case để thể hiện tư duy production-grade.
+Ví dụ: duplicate events, clock skew, partial failure, stale cache, slow network.
+
+### Deep Dive 9: Design a Collaborative Kanban Board Architecture Notes
+Giải thích:
+- Data flow: input events -> domain actions -> async effects -> state updates -> UI render.
+- Error handling: retry policy, user feedback, fallback UI.
+- Observability: logs/metrics/traces trên interaction critical path.
+Ví dụ: emit metric `ui.action.latency` theo action type để theo dõi regression sau release.
+
+#### Edge Cases 9
+Giải thích: luôn chuẩn bị edge case để thể hiện tư duy production-grade.
+Ví dụ: duplicate events, clock skew, partial failure, stale cache, slow network.
+
+## Reusable Answer Template
+
+1. Clarify use cases
+2. Define constraints and assumptions
+3. Draw module boundaries
+4. Explain state model and data flow
+5. Specify API and caching strategy
+6. Cover perf + a11y + observability
+7. Discuss trade-offs and next iteration
+
+Giải thích: template này giúp bạn trả lời nhất quán trong 35-45 phút interview.
+Ví dụ: dùng đúng template cho mọi bài, chỉ thay domain-specific details.
+
+## Failure Modes to Mention
+
+- Network timeout and retries
+- Partial data loading
+- Out-of-order events
+- Race conditions in optimistic UI
+- Stale tabs and sync conflicts
+- Accessibility regressions after refactor
+
+Giải thích: chủ động nói failure modes giúp tăng điểm senior signal.
+Ví dụ: realtime dashboard cần dedupe theo event id để tránh double-apply.
+
+## Câu Hỏi Phỏng Vấn / Interview Q&A
+
+### 🟢 [Junior] Frontend system design khác coding interview thế nào?
+Giải thích: Nó tập trung kiến trúc và trade-off ở scale thay vì chỉ đúng/sai thuật toán.
+Ví dụ: Bạn cần nói về state, API, perf, a11y, không chỉ code component.
+
+### 🟢 [Junior] Khi nào cần virtualization cho list?
+Giải thích: Khi số item lớn làm render vượt budget frame.
+Ví dụ: Feed 20k items nên dùng windowing.
+
+### 🟡 [Mid] Thiết kế autocomplete để vừa nhanh vừa chính xác?
+Giải thích: Debounce input, cache query gần nhất, cancel request cũ, prefetch kết quả phổ biến.
+Ví dụ: Dùng AbortController để hủy request stale.
+
+### 🟡 [Mid] Làm sao xử lý optimistic update an toàn?
+Giải thích: Gắn client operation id, rollback khi fail, reconcile khi server confirm.
+Ví dụ: Upload file hiển thị pending và chuyển sang success khi server ack.
+
+### 🔴 [Senior] Bạn scale chat UI cho hàng triệu MAU thế nào?
+Giải thích: Phân tách channel shards, incremental sync, pagination theo cursor, compact local cache.
+Ví dụ: Warm cache cho active channels + background prefetch.
+
+### 🔴 [Senior] Cân bằng performance và accessibility ra sao?
+Giải thích: Không đánh đổi a11y; tối ưu bằng semantic đúng + kỹ thuật render hiệu quả.
+Ví dụ: Virtualized list vẫn giữ keyboard nav và SR announcements.
+
+### 🟡 [Mid] FE system design question 7
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🔴 [Senior] FE system design question 8
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟢 [Junior] FE system design question 9
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟡 [Mid] FE system design question 10
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🔴 [Senior] FE system design question 11
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟢 [Junior] FE system design question 12
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟡 [Mid] FE system design question 13
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🔴 [Senior] FE system design question 14
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟢 [Junior] FE system design question 15
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟡 [Mid] FE system design question 16
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🔴 [Senior] FE system design question 17
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟢 [Junior] FE system design question 18
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟡 [Mid] FE system design question 19
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🔴 [Senior] FE system design question 20
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟢 [Junior] FE system design question 21
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟡 [Mid] FE system design question 22
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🔴 [Senior] FE system design question 23
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟢 [Junior] FE system design question 24
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟡 [Mid] FE system design question 25
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🔴 [Senior] FE system design question 26
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟢 [Junior] FE system design question 27
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟡 [Mid] FE system design question 28
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🔴 [Senior] FE system design question 29
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟢 [Junior] FE system design question 30
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟡 [Mid] FE system design question 31
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🔴 [Senior] FE system design question 32
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟢 [Junior] FE system design question 33
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟡 [Mid] FE system design question 34
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🔴 [Senior] FE system design question 35
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟢 [Junior] FE system design question 36
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟡 [Mid] FE system design question 37
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🔴 [Senior] FE system design question 38
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟢 [Junior] FE system design question 39
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟡 [Mid] FE system design question 40
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🔴 [Senior] FE system design question 41
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟢 [Junior] FE system design question 42
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟡 [Mid] FE system design question 43
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🔴 [Senior] FE system design question 44
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟢 [Junior] FE system design question 45
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟡 [Mid] FE system design question 46
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🔴 [Senior] FE system design question 47
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟢 [Junior] FE system design question 48
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟡 [Mid] FE system design question 49
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🔴 [Senior] FE system design question 50
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟢 [Junior] FE system design question 51
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟡 [Mid] FE system design question 52
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🔴 [Senior] FE system design question 53
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟢 [Junior] FE system design question 54
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟡 [Mid] FE system design question 55
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🔴 [Senior] FE system design question 56
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟢 [Junior] FE system design question 57
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟡 [Mid] FE system design question 58
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🔴 [Senior] FE system design question 59
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟢 [Junior] FE system design question 60
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟡 [Mid] FE system design question 61
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🔴 [Senior] FE system design question 62
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟢 [Junior] FE system design question 63
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟡 [Mid] FE system design question 64
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🔴 [Senior] FE system design question 65
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟢 [Junior] FE system design question 66
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟡 [Mid] FE system design question 67
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🔴 [Senior] FE system design question 68
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟢 [Junior] FE system design question 69
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+### 🟡 [Mid] FE system design question 70
+Giải thích: trả lời theo cấu trúc requirement -> architecture -> state -> API -> performance -> a11y -> trade-off.
+Ví dụ: với file upload system, nêu chunk upload, resume, progress UI, error retry và keyboard access cho controls.
+
+## Practice Plan (2 Weeks)
+
+- Day 1-2: Chat UI + Autocomplete
+- Day 3-4: Feed/Timeline + Notifications
+- Day 5-6: File Upload + Dashboard
+- Day 7: Mock interview + feedback
+- Week 2: lặp lại với thời gian giới hạn 40 phút/bài
+
+Giải thích: luyện theo lịch cố định giúp tăng phản xạ trình bày và độ chắc trade-off.
+Ví dụ: record màn hình + tự chấm rubric để cải tiến vòng sau.
+
+## Related Files
+
+- `../../08-fe-system-design/01-architecture-patterns.md`
+- `../../08-fe-system-design/02-scalability.md`
+- `../../08-fe-system-design/03-caching.md`
+- `../../shared/02-system-design/system-design-theory.md`
