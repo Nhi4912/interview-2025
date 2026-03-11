@@ -25,7 +25,7 @@ Mỗi bài system design nên follow framework sau:
 
 ## 1. URL Shortener (TinyURL)
 
-### Q: Design một URL Shortener service. Walk through từng bước. 🟢
+### Q: Design một URL Shortener service. Walk through từng bước. 🟢 [Junior]
 
 **A:**
 
@@ -175,7 +175,7 @@ Event payload:
 
 ## 2. Chat System (WhatsApp/Zalo-like) ⭐ VERY RELEVANT FOR ZALO
 
-### Q: Design một real-time chat system giống WhatsApp/Zalo. 🟡
+### Q: Design một real-time chat system giống WhatsApp/Zalo. 🟡 [Mid]
 
 **A:**
 
@@ -411,7 +411,7 @@ Tại sao pre-signed URL?
 
 ## 3. Ride-Sharing Service (Grab-like) ⭐ VERY RELEVANT FOR GRAB
 
-### Q: Design một ride-sharing service như Grab. 🟡
+### Q: Design một ride-sharing service như Grab. 🟡 [Mid]
 
 **A:**
 
@@ -639,7 +639,7 @@ Driver App ──[every 3s]──▶ Location Service
 
 ## 4. News Feed / Timeline (Facebook/Zalo Feed)
 
-### Q: Design News Feed system cho social network. 🟡
+### Q: Design News Feed system cho social network. 🟡 [Mid]
 
 **A:**
 
@@ -809,7 +809,7 @@ Cursor-based pagination (not offset):
 
 ## 5. Notification System
 
-### Q: Design một notification system hỗ trợ push, SMS, email, in-app. 🟢
+### Q: Design một notification system hỗ trợ push, SMS, email, in-app. 🟢 [Junior]
 
 **A:**
 
@@ -962,7 +962,7 @@ Implementation:
 
 ## 6. Rate Limiter (API Rate Limiting)
 
-### Q: Design một distributed rate limiter. 🟢
+### Q: Design một distributed rate limiter. 🟢 [Junior]
 
 **A:**
 
@@ -1130,7 +1130,7 @@ Check order: IP → Global → User Global → User per-API
 
 ## 7. Key-Value Store (like Redis/DynamoDB)
 
-### Q: Design một distributed key-value store. 🔴
+### Q: Design một distributed key-value store. 🔴 [Senior]
 
 **A:**
 
@@ -1327,7 +1327,7 @@ Scenario: 2 clients write cùng key tới 2 different replicas
 
 ## 8. Distributed Task Scheduler / Job Queue
 
-### Q: Design một distributed task scheduler / job queue. 🟡
+### Q: Design một distributed task scheduler / job queue. 🟡 [Mid]
 
 **A:**
 
@@ -1496,7 +1496,7 @@ Worker polling strategy:
 
 ## 9. Payment System ⭐ RELEVANT FOR GRAB, E-COMMERCE
 
-### Q: Design một payment processing system. 🔴
+### Q: Design một payment processing system. 🔴 [Senior]
 
 **A:**
 
@@ -1708,7 +1708,7 @@ Reconciliation = so khớp records giữa hệ thống internal và PSP
 
 ## 10. Search Autocomplete / Typeahead
 
-### Q: Design search autocomplete (typeahead suggestions). 🟢
+### Q: Design search autocomplete (typeahead suggestions). 🟢 [Junior]
 
 **A:**
 

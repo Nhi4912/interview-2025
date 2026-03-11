@@ -1,4 +1,5 @@
 # Operating Systems Theory
+
 ## Understanding System Software Fundamentals
 
 **English:** An operating system is system software that manages computer hardware, software resources, and provides common services for computer programs, acting as an intermediary between users and computer hardware.
@@ -6,6 +7,7 @@
 **Tiếng Việt:** Hệ điều hành là phần mềm hệ thống quản lý phần cứng máy tính, tài nguyên phần mềm và cung cấp các dịch vụ chung cho các chương trình máy tính, hoạt động như trung gian giữa người dùng và phần cứng máy tính.
 
 ## Table of Contents
+
 1. [OS Fundamentals](#os-fundamentals)
 2. [Process Management](#process-management)
 3. [Thread Management](#thread-management)
@@ -24,22 +26,23 @@
 **Definition:** Software that manages hardware and provides services to applications
 
 **Main Functions:**
+
 ```
 1. Resource Management
    - CPU, memory, storage, I/O devices
-   
+
 2. Process Management
    - Creation, scheduling, termination
-   
+
 3. Memory Management
    - Allocation, deallocation, virtual memory
-   
+
 4. File System Management
    - File operations, directories, permissions
-   
+
 5. I/O Management
    - Device drivers, buffering, caching
-   
+
 6. Security and Protection
    - Authentication, authorization, access control
 ```
@@ -47,6 +50,7 @@
 ### OS Structure
 
 **Layered Architecture:**
+
 ```
 ┌─────────────────────────┐
 │   User Applications     │
@@ -64,6 +68,7 @@
 **Kernel Types:**
 
 **Monolithic Kernel:**
+
 ```
 All OS services in kernel space
 - Fast (no context switching)
@@ -72,6 +77,7 @@ All OS services in kernel space
 ```
 
 **Microkernel:**
+
 ```
 Minimal kernel, services in user space
 - More secure (isolation)
@@ -80,6 +86,7 @@ Minimal kernel, services in user space
 ```
 
 **Hybrid Kernel:**
+
 ```
 Combination of both
 - Balance performance and security
@@ -91,24 +98,26 @@ Combination of both
 **Definition:** Interface between user programs and OS
 
 **Categories:**
+
 ```
 1. Process Control
    - fork(), exec(), exit(), wait()
-   
+
 2. File Management
    - open(), read(), write(), close()
-   
+
 3. Device Management
    - ioctl(), read(), write()
-   
+
 4. Information Maintenance
    - getpid(), alarm(), sleep()
-   
+
 5. Communication
    - pipe(), shmget(), mmap()
 ```
 
 **Example (Unix):**
+
 ```c
 // Process creation
 pid_t pid = fork();
@@ -135,6 +144,7 @@ close(fd);
 **Definition:** Program in execution
 
 **Process Components:**
+
 ```
 ┌─────────────────────┐
 │   Stack             │ ← Function calls, local variables
@@ -148,6 +158,7 @@ close(fd);
 ```
 
 **Process Control Block (PCB):**
+
 ```
 - Process ID (PID)
 - Process State
@@ -161,6 +172,7 @@ close(fd);
 ### Process States
 
 **State Diagram:**
+
 ```
         ┌─────────┐
         │   New   │
@@ -184,6 +196,7 @@ close(fd);
 ```
 
 **State Transitions:**
+
 ```
 New → Ready: Process created, loaded into memory
 Ready → Running: Scheduler selects process
@@ -196,13 +209,14 @@ Running → Terminated: Process completes
 ### Process Creation
 
 **Unix fork():**
+
 ```c
 #include <stdio.h>
 #include <unistd.h>
 
 int main() {
     pid_t pid = fork();
-    
+
     if (pid < 0) {
         // Fork failed
         fprintf(stderr, "Fork failed\n");
@@ -213,12 +227,12 @@ int main() {
         execlp("/bin/ls", "ls", NULL);
     } else {
         // Parent process
-        printf("Parent process: PID = %d, Child PID = %d\n", 
+        printf("Parent process: PID = %d, Child PID = %d\n",
                getpid(), pid);
         wait(NULL);
         printf("Child completed\n");
     }
-    
+
     return 0;
 }
 ```
@@ -226,6 +240,7 @@ int main() {
 ### Inter-Process Communication (IPC)
 
 **Shared Memory:**
+
 ```c
 // Create shared memory
 int shmid = shmget(IPC_PRIVATE, 1024, IPC_CREAT | 0666);
@@ -244,6 +259,7 @@ shmctl(shmid, IPC_RMID, NULL);
 ```
 
 **Message Passing:**
+
 ```c
 // Create message queue
 int msgid = msgget(IPC_PRIVATE, IPC_CREAT | 0666);
@@ -264,6 +280,7 @@ msgrcv(msgid, &msg, sizeof(msg.text), 1, 0);
 ```
 
 **Pipes:**
+
 ```c
 int pipefd[2];
 pipe(pipefd);
@@ -289,6 +306,7 @@ if (fork() == 0) {
 **Definition:** Lightweight process, unit of execution within process
 
 **Process vs Thread:**
+
 ```
 Process:
 - Own address space
@@ -304,6 +322,7 @@ Thread:
 ```
 
 **Thread Components:**
+
 ```
 Shared:
 - Code section
@@ -321,6 +340,7 @@ Private:
 ### Thread Models
 
 **User-Level Threads:**
+
 ```
 Managed by user-level library
 - Fast (no kernel involvement)
@@ -330,6 +350,7 @@ Managed by user-level library
 ```
 
 **Kernel-Level Threads:**
+
 ```
 Managed by OS kernel
 - Can utilize multiple CPUs
@@ -339,6 +360,7 @@ Managed by OS kernel
 ```
 
 **Hybrid Model:**
+
 ```
 Many-to-many mapping
 - Combines benefits of both
@@ -360,18 +382,18 @@ void *thread_function(void *arg) {
 int main() {
     pthread_t threads[5];
     int thread_args[5];
-    
+
     // Create threads
     for (int i = 0; i < 5; i++) {
         thread_args[i] = i;
         pthread_create(&threads[i], NULL, thread_function, &thread_args[i]);
     }
-    
+
     // Wait for threads
     for (int i = 0; i < 5; i++) {
         pthread_join(threads[i], NULL);
     }
-    
+
     return 0;
 }
 ```
@@ -379,6 +401,7 @@ int main() {
 ### Thread Synchronization
 
 **Mutex:**
+
 ```c
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 int counter = 0;
@@ -394,6 +417,7 @@ void *increment(void *arg) {
 ```
 
 **Semaphore:**
+
 ```c
 #include <semaphore.h>
 
@@ -413,6 +437,7 @@ void *thread_function(void *arg) {
 ### Scheduling Algorithms
 
 **First-Come, First-Served (FCFS):**
+
 ```
 Non-preemptive
 Simple but can cause convoy effect
@@ -431,6 +456,7 @@ Average Waiting Time: (0 + 24 + 27) / 3 = 17
 ```
 
 **Shortest Job First (SJF):**
+
 ```
 Non-preemptive
 Optimal average waiting time
@@ -451,6 +477,7 @@ Average Waiting Time: (0 + 3 + 9 + 16) / 4 = 7
 ```
 
 **Round Robin (RR):**
+
 ```
 Preemptive
 Time quantum = 4
@@ -469,6 +496,7 @@ Average Waiting Time: 5.66
 ```
 
 **Priority Scheduling:**
+
 ```
 Each process has priority
 Lower number = higher priority
@@ -486,6 +514,7 @@ Order: P2, P5, P1, P3, P4
 ```
 
 **Multilevel Queue:**
+
 ```
 Multiple queues with different priorities
 
@@ -517,6 +546,7 @@ Multiple queues with different priorities
 ### Memory Allocation
 
 **Contiguous Allocation:**
+
 ```
 Fixed Partitioning:
 ┌────────┐
@@ -542,6 +572,7 @@ Dynamic Partitioning:
 ```
 
 **Allocation Strategies:**
+
 ```
 First Fit: Allocate first hole large enough
 Best Fit: Allocate smallest hole large enough
@@ -566,6 +597,7 @@ Page | Frame
 ```
 
 **Address Translation:**
+
 ```
 Logical Address: 0x1234
 Page Size: 4KB (0x1000)
@@ -581,6 +613,7 @@ Physical Address: (5 × 0x1000) + 0x234 = 0x5234
 ### Virtual Memory
 
 **Demand Paging:**
+
 ```
 Load pages only when needed
 - Reduces memory usage
@@ -591,6 +624,7 @@ Load pages only when needed
 **Page Replacement Algorithms:**
 
 **FIFO:**
+
 ```
 Reference String: 1, 2, 3, 4, 1, 2, 5, 1, 2, 3, 4, 5
 Frames: 3
@@ -605,6 +639,7 @@ Page Faults: 9
 ```
 
 **LRU (Least Recently Used):**
+
 ```
 Replace page not used for longest time
 Better performance than FIFO
@@ -616,6 +651,7 @@ More complex implementation
 ### File Concept
 
 **File Attributes:**
+
 ```
 - Name
 - Type
@@ -627,6 +663,7 @@ More complex implementation
 ```
 
 **File Operations:**
+
 ```
 - Create
 - Open
@@ -640,6 +677,7 @@ More complex implementation
 ### Directory Structure
 
 **Single-Level:**
+
 ```
 /
 ├── file1
@@ -650,6 +688,7 @@ Simple but no organization
 ```
 
 **Two-Level:**
+
 ```
 /
 ├── user1/
@@ -663,6 +702,7 @@ Separate directories per user
 ```
 
 **Tree-Structured:**
+
 ```
 /
 ├── home/
@@ -678,6 +718,7 @@ Most common structure
 ### File Allocation Methods
 
 **Contiguous:**
+
 ```
 File stored in contiguous blocks
 - Fast sequential access
@@ -686,6 +727,7 @@ File stored in contiguous blocks
 ```
 
 **Linked:**
+
 ```
 Each block points to next
 - No external fragmentation
@@ -694,6 +736,7 @@ Each block points to next
 ```
 
 **Indexed:**
+
 ```
 Index block contains pointers
 - Fast random access
@@ -704,6 +747,7 @@ Index block contains pointers
 ### Unix File System
 
 **inode Structure:**
+
 ```
 - File type and permissions
 - Owner and group
@@ -720,6 +764,7 @@ Index block contains pointers
 ### I/O Hardware
 
 **Device Types:**
+
 ```
 Block Devices:
 - Fixed-size blocks
@@ -735,6 +780,7 @@ Character Devices:
 ### I/O Methods
 
 **Programmed I/O:**
+
 ```
 CPU polls device status
 - Simple
@@ -742,6 +788,7 @@ CPU polls device status
 ```
 
 **Interrupt-Driven I/O:**
+
 ```
 Device interrupts CPU when ready
 - More efficient
@@ -749,6 +796,7 @@ Device interrupts CPU when ready
 ```
 
 **DMA (Direct Memory Access):**
+
 ```
 Device transfers data directly to memory
 - Most efficient
@@ -758,6 +806,7 @@ Device transfers data directly to memory
 ### Buffering
 
 **Single Buffer:**
+
 ```
 ┌──────┐    ┌────────┐    ┌──────┐
 │Device│ →  │ Buffer │ →  │ User │
@@ -765,6 +814,7 @@ Device transfers data directly to memory
 ```
 
 **Double Buffer:**
+
 ```
 ┌──────┐    ┌────────┐
 │Device│ →  │Buffer 1│ ⇄ User
@@ -778,16 +828,17 @@ Device transfers data directly to memory
 ### Deadlock Conditions
 
 **Four Necessary Conditions:**
+
 ```
 1. Mutual Exclusion
    - Resource cannot be shared
-   
+
 2. Hold and Wait
    - Process holds resource while waiting
-   
+
 3. No Preemption
    - Resource cannot be forcibly taken
-   
+
 4. Circular Wait
    - Circular chain of waiting processes
 ```
@@ -795,17 +846,18 @@ Device transfers data directly to memory
 ### Deadlock Prevention
 
 **Break One Condition:**
+
 ```
 1. Mutual Exclusion
    - Make resources sharable (not always possible)
-   
+
 2. Hold and Wait
    - Request all resources at once
    - Release all before requesting new
-   
+
 3. No Preemption
    - Allow resource preemption
-   
+
 4. Circular Wait
    - Order resources, request in order
 ```
@@ -813,6 +865,7 @@ Device transfers data directly to memory
 ### Deadlock Avoidance
 
 **Banker's Algorithm:**
+
 ```
 Check if granting request leaves system in safe state
 
@@ -834,6 +887,7 @@ Safe sequence: P1, P3, P4, P2, P0
 ### Protection Mechanisms
 
 **Access Control:**
+
 ```
 Access Control Matrix:
 
@@ -844,6 +898,7 @@ User3   -      R      RWX
 ```
 
 **Access Control Lists (ACL):**
+
 ```
 File1: User1(RW), User2(R)
 File2: User1(R), User2(RW), User3(R)
@@ -851,6 +906,7 @@ File3: User3(RWX)
 ```
 
 **Capabilities:**
+
 ```
 User1: File1(RW), File2(R)
 User2: File1(R), File2(RW)
@@ -860,6 +916,7 @@ User3: File2(R), File3(RWX)
 ### Authentication
 
 **Methods:**
+
 ```
 1. Something you know (password)
 2. Something you have (token)
@@ -871,6 +928,7 @@ User3: File2(R), File3(RWX)
 ### Virtualization
 
 **Virtual Machines:**
+
 ```
 ┌─────────────────────────┐
 │   Guest OS 1 | Guest OS 2│
@@ -886,6 +944,7 @@ User3: File2(R), File3(RWX)
 ### Containers
 
 **Docker Architecture:**
+
 ```
 ┌─────────────────────────┐
 │ Container 1 | Container 2│
@@ -904,23 +963,23 @@ Isolated user space
 
 ## Interview Questions
 
-**Q: Explain the difference between process and thread.**
+**🟢 [Junior] Q: Explain the difference between process and thread.**
 
 A: Process is independent program with own memory space, heavy context switch. Thread is lightweight unit within process, shares memory, light context switch. Use threads for concurrent tasks within application, processes for isolation and security.
 
-**Q: What is a deadlock and how can it be prevented?**
+**🟡 [Mid] Q: What is a deadlock and how can it be prevented?**
 
 A: Deadlock occurs when processes wait for each other in cycle. Four conditions: mutual exclusion, hold and wait, no preemption, circular wait. Prevention: break one condition (resource ordering, preemption, request all at once). Avoidance: Banker's algorithm checks safe states.
 
-**Q: Explain virtual memory and paging.**
+**🟡 [Mid] Q: Explain virtual memory and paging.**
 
 A: Virtual memory gives each process illusion of large address space. Paging divides memory into fixed-size pages, maps virtual to physical addresses via page table. Enables: more processes than physical memory, memory protection, shared memory. Uses demand paging to load pages only when needed.
 
-**Q: What are the main CPU scheduling algorithms?**
+**🟡 [Mid] Q: What are the main CPU scheduling algorithms?**
 
 A: FCFS (simple, convoy effect), SJF (optimal waiting time, needs prediction), Round Robin (fair, time quantum), Priority (can starve low priority), Multilevel Queue (different queues for different types). Choose based on: fairness, response time, throughput requirements.
 
-**Q: Explain the difference between mutex and semaphore.**
+**🟡 [Mid] Q: Explain the difference between mutex and semaphore.**
 
 A: Mutex is binary lock for mutual exclusion, owned by thread that locks it. Semaphore is counter for resource access control, can be binary or counting, no ownership. Use mutex for critical sections, semaphore for resource pools or signaling between threads.
 

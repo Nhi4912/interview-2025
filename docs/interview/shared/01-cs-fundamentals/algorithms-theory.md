@@ -1,4 +1,5 @@
 # Algorithms - Comprehensive Guide
+
 ## Essential Algorithms for Technical Interviews
 
 **English:** Algorithms are step-by-step procedures for solving computational problems. Understanding common algorithms and their applications is crucial for technical interviews and efficient problem-solving.
@@ -12,6 +13,7 @@
 **Theory:** Repeatedly swap adjacent elements if they're in wrong order.
 
 **Time Complexity:**
+
 - Best: O(n) - already sorted
 - Average: O(n²)
 - Worst: O(n²)
@@ -19,11 +21,13 @@
 **Space Complexity:** O(1)
 
 **When to Use:**
+
 - Small datasets
 - Nearly sorted data
 - Educational purposes
 
 **Characteristics:**
+
 - Stable sort
 - In-place
 - Simple implementation
@@ -33,6 +37,7 @@
 **Theory:** Divide-and-conquer algorithm that picks a pivot and partitions array around it.
 
 **Time Complexity:**
+
 - Best: O(n log n)
 - Average: O(n log n)
 - Worst: O(n²) - poor pivot choice
@@ -40,16 +45,19 @@
 **Space Complexity:** O(log n) - recursion stack
 
 **When to Use:**
+
 - General purpose sorting
 - Large datasets
 - In-place sorting needed
 
 **Characteristics:**
+
 - Not stable (can be made stable)
 - In-place
 - Cache-friendly
 
 **Pivot Selection Strategies:**
+
 - First element
 - Last element
 - Random element
@@ -60,6 +68,7 @@
 **Theory:** Divide array into halves, recursively sort, then merge.
 
 **Time Complexity:**
+
 - Best: O(n log n)
 - Average: O(n log n)
 - Worst: O(n log n)
@@ -67,12 +76,14 @@
 **Space Complexity:** O(n) - temporary arrays
 
 **When to Use:**
+
 - Stable sort required
 - Linked lists
 - External sorting
 - Guaranteed O(n log n)
 
 **Characteristics:**
+
 - Stable sort
 - Not in-place
 - Predictable performance
@@ -82,6 +93,7 @@
 **Theory:** Build max heap, repeatedly extract maximum.
 
 **Time Complexity:**
+
 - Best: O(n log n)
 - Average: O(n log n)
 - Worst: O(n log n)
@@ -89,11 +101,13 @@
 **Space Complexity:** O(1)
 
 **When to Use:**
+
 - Memory constrained
 - Guaranteed O(n log n)
 - Priority queue operations
 
 **Characteristics:**
+
 - Not stable
 - In-place
 - No worst-case degradation
@@ -108,16 +122,19 @@
 **Space Complexity:** O(1) iterative, O(log n) recursive
 
 **Requirements:**
+
 - Array must be sorted
 - Random access needed
 
 **Variations:**
+
 - Find first occurrence
 - Find last occurrence
 - Find insertion position
 - Search in rotated array
 
 **Template:**
+
 ```
 while left <= right:
     mid = left + (right - left) // 2
@@ -137,12 +154,14 @@ while left <= right:
 **Space Complexity:** O(V) - recursion stack
 
 **When to Use:**
+
 - Path finding
 - Cycle detection
 - Topological sorting
 - Connected components
 
 **Implementation Approaches:**
+
 - Recursive
 - Iterative with stack
 - Backtracking
@@ -155,12 +174,14 @@ while left <= right:
 **Space Complexity:** O(V) - queue
 
 **When to Use:**
+
 - Shortest path (unweighted)
 - Level-order traversal
 - Minimum steps problems
 - Connected components
 
 **Characteristics:**
+
 - Uses queue
 - Finds shortest path
 - Level by level
@@ -172,6 +193,7 @@ while left <= right:
 **Definition:** Solve complex problems by breaking down into simpler subproblems and storing results.
 
 **Key Concepts:**
+
 - Optimal substructure
 - Overlapping subproblems
 - Memoization (top-down)
@@ -184,6 +206,7 @@ while left <= right:
 **Recurrence:** `F(n) = F(n-1) + F(n-2)`
 
 **Approaches:**
+
 - Recursive: O(2^n)
 - Memoization: O(n)
 - Tabulation: O(n)
@@ -194,6 +217,7 @@ while left <= right:
 **Problem:** Find longest subsequence common to two sequences.
 
 **Recurrence:**
+
 ```
 if s1[i] == s2[j]:
     dp[i][j] = 1 + dp[i-1][j-1]
@@ -209,6 +233,7 @@ else:
 **Problem:** Maximize value within weight constraint.
 
 **0/1 Knapsack Recurrence:**
+
 ```
 dp[i][w] = max(
     dp[i-1][w],  // don't take item
@@ -224,6 +249,7 @@ dp[i][w] = max(
 **Problem:** Minimum coins to make amount.
 
 **Recurrence:**
+
 ```
 dp[amount] = min(
     dp[amount - coin] + 1
@@ -237,11 +263,13 @@ dp[amount] = min(
 ### DP Optimization Techniques
 
 **Space Optimization:**
+
 - Rolling array
 - Two rows instead of full matrix
 - Single array with careful iteration
 
 **State Compression:**
+
 - Bitmask DP
 - Coordinate compression
 - Hash map for sparse states
@@ -253,6 +281,7 @@ dp[amount] = min(
 **Definition:** Make locally optimal choice at each step, hoping to find global optimum.
 
 **When Greedy Works:**
+
 - Greedy choice property
 - Optimal substructure
 - No need to reconsider choices
@@ -293,18 +322,21 @@ dp[amount] = min(
 **Theory:** Find shortest path from source to all vertices (non-negative weights).
 
 **Time Complexity:**
+
 - With min-heap: O((V + E) log V)
 - With array: O(V²)
 
 **Space Complexity:** O(V)
 
 **When to Use:**
+
 - Non-negative edge weights
 - Single source shortest path
 - GPS navigation
 - Network routing
 
 **Limitations:**
+
 - Doesn't work with negative weights
 - Not for all-pairs shortest path
 
@@ -316,11 +348,13 @@ dp[amount] = min(
 **Space Complexity:** O(V)
 
 **When to Use:**
+
 - Negative edge weights
 - Detect negative cycles
 - Distributed systems
 
 **Advantages over Dijkstra:**
+
 - Handles negative weights
 - Detects negative cycles
 
@@ -332,11 +366,13 @@ dp[amount] = min(
 **Space Complexity:** O(V²)
 
 **When to Use:**
+
 - All-pairs shortest path
 - Dense graphs
 - Transitive closure
 
 **Recurrence:**
+
 ```
 dist[i][j] = min(
     dist[i][j],
@@ -349,16 +385,19 @@ dist[i][j] = min(
 **Theory:** Linear ordering of vertices in DAG.
 
 **Algorithms:**
+
 - DFS-based: O(V + E)
 - Kahn's (BFS): O(V + E)
 
 **When to Use:**
+
 - Task scheduling
 - Build systems
 - Course prerequisites
 - Dependency resolution
 
 **Requirements:**
+
 - Must be DAG (no cycles)
 - Multiple valid orderings possible
 
@@ -369,6 +408,7 @@ dist[i][j] = min(
 **Theory:** Pattern matching with preprocessing to avoid redundant comparisons.
 
 **Time Complexity:**
+
 - Preprocessing: O(m)
 - Searching: O(n)
 - Total: O(n + m)
@@ -378,6 +418,7 @@ dist[i][j] = min(
 **Key Concept:** Longest Proper Prefix which is also Suffix (LPS)
 
 **When to Use:**
+
 - Pattern matching
 - Multiple searches of same pattern
 - Avoid backtracking
@@ -387,17 +428,20 @@ dist[i][j] = min(
 **Theory:** Use rolling hash for pattern matching.
 
 **Time Complexity:**
+
 - Average: O(n + m)
 - Worst: O(nm) - many hash collisions
 
 **Space Complexity:** O(1)
 
 **When to Use:**
+
 - Multiple pattern search
 - Plagiarism detection
 - String matching with wildcards
 
 **Advantages:**
+
 - Simple implementation
 - Easy to extend to multiple patterns
 
@@ -406,6 +450,7 @@ dist[i][j] = min(
 **Theory:** Tree structure for storing strings with common prefixes.
 
 **Time Complexity:**
+
 - Insert: O(m) - length of word
 - Search: O(m)
 - Prefix search: O(p + k) - prefix + results
@@ -413,12 +458,14 @@ dist[i][j] = min(
 **Space Complexity:** O(ALPHABET_SIZE × N × M)
 
 **When to Use:**
+
 - Autocomplete
 - Spell checker
 - IP routing
 - Dictionary implementation
 
 **Advantages:**
+
 - Fast prefix search
 - Space efficient for common prefixes
 
@@ -429,12 +476,13 @@ dist[i][j] = min(
 **Definition:** Incrementally build solution, abandoning candidates that fail constraints.
 
 **Template:**
+
 ```
 function backtrack(state):
     if is_solution(state):
         add_to_results(state)
         return
-    
+
     for choice in get_choices(state):
         if is_valid(choice):
             make_choice(choice)
@@ -452,6 +500,7 @@ function backtrack(state):
 **Space:** O(N)
 
 **Optimizations:**
+
 - Bit manipulation
 - Symmetry reduction
 
@@ -463,6 +512,7 @@ function backtrack(state):
 **Space:** O(n×n)
 
 **Optimizations:**
+
 - Constraint propagation
 - Most constrained variable first
 
@@ -474,6 +524,7 @@ function backtrack(state):
 **Space:** O(n) - recursion depth
 
 **Variations:**
+
 - Count subsets
 - Find all subsets
 - Partition problem
@@ -513,23 +564,23 @@ function backtrack(state):
 
 ## Interview Questions
 
-**Q: When to use Quick Sort vs Merge Sort?**
+**🟡 [Mid] Q: When to use Quick Sort vs Merge Sort?**
 
 A: Use Quick Sort for in-place sorting with average O(n log n). Use Merge Sort when stability is required or for linked lists. Merge Sort guarantees O(n log n) but needs O(n) extra space.
 
-**Q: Difference between DFS and BFS?**
+**🟢 [Junior] Q: Difference between DFS and BFS?**
 
 A: DFS explores depth-first using stack/recursion, good for path finding and backtracking. BFS explores level-by-level using queue, finds shortest path in unweighted graphs.
 
-**Q: When to use DP vs Greedy?**
+**🟡 [Mid] Q: When to use DP vs Greedy?**
 
 A: Use DP when problem has optimal substructure and overlapping subproblems. Use Greedy when greedy choice property holds and local optimum leads to global optimum. DP is more general but slower.
 
-**Q: How to identify DP problem?**
+**🟡 [Mid] Q: How to identify DP problem?**
 
 A: Look for: optimal substructure, overlapping subproblems, counting/optimization, "maximum/minimum" keywords, decision at each step.
 
-**Q: Dijkstra vs Bellman-Ford?**
+**🟡 [Mid] Q: Dijkstra vs Bellman-Ford?**
 
 A: Dijkstra is faster O((V+E) log V) but requires non-negative weights. Bellman-Ford handles negative weights and detects negative cycles but slower O(VE).
 

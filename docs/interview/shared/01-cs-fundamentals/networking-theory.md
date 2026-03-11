@@ -1,4 +1,5 @@
 # Network Theory - Comprehensive Guide
+
 ## Understanding Computer Networks and Communication
 
 **English:** Computer networking is the practice of connecting computers and devices to share resources and communicate, forming the foundation of the internet and modern distributed systems.
@@ -6,6 +7,7 @@
 **Tiếng Việt:** Mạng máy tính là thực hành kết nối máy tính và thiết bị để chia sẻ tài nguyên và giao tiếp, tạo nền tảng cho internet và các hệ thống phân tán hiện đại.
 
 ## Table of Contents
+
 1. [Network Fundamentals](#network-fundamentals)
 2. [OSI Model](#osi-model)
 3. [TCP/IP Model](#tcpip-model)
@@ -26,21 +28,25 @@
 **Network Types by Size:**
 
 **PAN (Personal Area Network):**
+
 - Range: Few meters
 - Example: Bluetooth devices, USB connections
 - Use: Personal device connectivity
 
 **LAN (Local Area Network):**
+
 - Range: Building or campus
 - Example: Office network, home WiFi
 - Use: Local resource sharing
 
 **MAN (Metropolitan Area Network):**
+
 - Range: City or metropolitan area
 - Example: City-wide WiFi, cable TV networks
 - Use: Regional connectivity
 
 **WAN (Wide Area Network):**
+
 - Range: Country or global
 - Example: Internet, corporate networks
 - Use: Long-distance communication
@@ -48,6 +54,7 @@
 ### Network Topologies
 
 **Bus Topology:**
+
 ```
 Device1 ─┬─ Device2 ─┬─ Device3 ─┬─ Device4
          │           │           │
@@ -64,6 +71,7 @@ Disadvantages:
 ```
 
 **Star Topology:**
+
 ```
         Device1
            |
@@ -83,6 +91,7 @@ Disadvantages:
 ```
 
 **Ring Topology:**
+
 ```
 Device1 ─ Device2
    |         |
@@ -99,6 +108,7 @@ Disadvantages:
 ```
 
 **Mesh Topology:**
+
 ```
 Device1 ─── Device2
   |  \    /  |
@@ -121,34 +131,40 @@ Disadvantages:
 ### Network Components
 
 **Network Interface Card (NIC):**
+
 - Hardware for network connection
 - Has unique MAC address
 - Converts data to network signals
 
 **Hub:**
+
 - Broadcasts to all ports
 - Layer 1 device (Physical)
 - No intelligence
 - Creates collision domain
 
 **Switch:**
+
 - Forwards to specific port
 - Layer 2 device (Data Link)
 - Uses MAC address table
 - Reduces collisions
 
 **Router:**
+
 - Connects different networks
 - Layer 3 device (Network)
 - Uses IP addresses
 - Makes routing decisions
 
 **Gateway:**
+
 - Connects different protocols
 - Protocol translation
 - Can operate at any layer
 
 **Modem:**
+
 - Modulates/demodulates signals
 - Converts digital to analog
 - Connects to ISP
@@ -158,6 +174,7 @@ Disadvantages:
 ### Seven Layers
 
 **Layer 7 - Application:**
+
 ```
 Purpose: User interface, application services
 Protocols: HTTP, FTP, SMTP, DNS, SSH
@@ -177,6 +194,7 @@ Examples:
 ```
 
 **Layer 6 - Presentation:**
+
 ```
 Purpose: Data translation, encryption, compression
 Protocols: SSL/TLS, JPEG, MPEG, ASCII
@@ -196,6 +214,7 @@ Examples:
 ```
 
 **Layer 5 - Session:**
+
 ```
 Purpose: Session management, synchronization
 Protocols: NetBIOS, RPC, PPTP
@@ -215,6 +234,7 @@ Examples:
 ```
 
 **Layer 4 - Transport:**
+
 ```
 Purpose: End-to-end communication, reliability
 Protocols: TCP, UDP, SCTP
@@ -241,6 +261,7 @@ UDP:
 ```
 
 **Layer 3 - Network:**
+
 ```
 Purpose: Logical addressing, routing
 Protocols: IP, ICMP, ARP, OSPF, BGP
@@ -260,6 +281,7 @@ Examples:
 ```
 
 **Layer 2 - Data Link:**
+
 ```
 Purpose: Physical addressing, error detection
 Protocols: Ethernet, PPP, HDLC, Frame Relay
@@ -283,6 +305,7 @@ Examples:
 ```
 
 **Layer 1 - Physical:**
+
 ```
 Purpose: Physical transmission
 Protocols: Ethernet physical, USB, Bluetooth
@@ -305,6 +328,7 @@ Examples:
 ### Data Encapsulation
 
 **Process:**
+
 ```
 Application Layer:     Data
 Presentation Layer:    Data
@@ -326,6 +350,7 @@ Bits → Frame → Packet → Segment → Data
 ### Four Layers
 
 **Application Layer:**
+
 ```
 Combines OSI Layers 5, 6, 7
 Protocols: HTTP, FTP, SMTP, DNS, SSH, Telnet
@@ -337,6 +362,7 @@ Provides:
 ```
 
 **Transport Layer:**
+
 ```
 Same as OSI Layer 4
 Protocols: TCP, UDP
@@ -357,6 +383,7 @@ UDP (User Datagram Protocol):
 ```
 
 **Internet Layer:**
+
 ```
 Same as OSI Layer 3
 Protocols: IP, ICMP, ARP, RARP
@@ -376,6 +403,7 @@ ARP (Address Resolution Protocol):
 ```
 
 **Network Access Layer:**
+
 ```
 Combines OSI Layers 1, 2
 Protocols: Ethernet, WiFi, PPP
@@ -389,6 +417,7 @@ Provides:
 ### TCP Three-Way Handshake
 
 **Connection Establishment:**
+
 ```
 Client                    Server
   |                          |
@@ -405,6 +434,7 @@ ACK: Acknowledge receipt
 ```
 
 **Connection Termination:**
+
 ```
 Client                    Server
   |                          |
@@ -426,6 +456,7 @@ FIN: Finish, no more data
 ### HTTP/HTTPS
 
 **HTTP (HyperText Transfer Protocol):**
+
 ```
 Application layer protocol
 Port: 80
@@ -449,6 +480,7 @@ Status Codes:
 ```
 
 **HTTPS (HTTP Secure):**
+
 ```
 HTTP over TLS/SSL
 Port: 443
@@ -464,6 +496,7 @@ Security Features:
 ### FTP
 
 **File Transfer Protocol:**
+
 ```
 Application layer protocol
 Ports: 20 (data), 21 (control)
@@ -485,6 +518,7 @@ Commands:
 ### SMTP/POP3/IMAP
 
 **SMTP (Simple Mail Transfer Protocol):**
+
 ```
 Sending email
 Port: 25 (unencrypted), 587 (TLS)
@@ -500,6 +534,7 @@ Process:
 ```
 
 **POP3 (Post Office Protocol v3):**
+
 ```
 Receiving email
 Port: 110 (unencrypted), 995 (SSL)
@@ -513,6 +548,7 @@ Characteristics:
 ```
 
 **IMAP (Internet Message Access Protocol):**
+
 ```
 Receiving email
 Port: 143 (unencrypted), 993 (SSL)
@@ -528,6 +564,7 @@ Characteristics:
 ### DNS
 
 **Domain Name System:**
+
 ```
 Translates domain names to IP addresses
 Port: 53 (UDP for queries, TCP for zone transfers)
@@ -550,6 +587,7 @@ Record Types:
 ```
 
 **DNS Resolution Process:**
+
 ```
 1. User enters www.example.com
 2. Check local cache
@@ -575,6 +613,7 @@ Resolver → Client
 ### DHCP
 
 **Dynamic Host Configuration Protocol:**
+
 ```
 Automatic IP address assignment
 Port: 67 (server), 68 (client)
@@ -599,6 +638,7 @@ Provides:
 ### IPv4
 
 **Format:**
+
 ```
 32-bit address
 Dotted decimal notation
@@ -637,6 +677,7 @@ Class E: 240.0.0.0 to 255.255.255.255
 ```
 
 **Private IP Ranges:**
+
 ```
 Class A: 10.0.0.0 to 10.255.255.255
 Class B: 172.16.0.0 to 172.31.255.255
@@ -648,6 +689,7 @@ NAT for internet access
 ```
 
 **Special Addresses:**
+
 ```
 0.0.0.0: Default route
 127.0.0.1: Loopback (localhost)
@@ -658,6 +700,7 @@ NAT for internet access
 ### Subnetting
 
 **Subnet Mask:**
+
 ```
 Divides IP address into network and host portions
 
@@ -680,6 +723,7 @@ CIDR Notation:
 ```
 
 **Subnetting Example:**
+
 ```
 Network: 192.168.1.0/24
 Requirement: 4 subnets
@@ -698,6 +742,7 @@ Subnets:
 ### IPv6
 
 **Format:**
+
 ```
 128-bit address
 Hexadecimal notation
@@ -725,6 +770,7 @@ ff00::/8 - Multicast
 ```
 
 **IPv6 Advantages:**
+
 ```
 - Larger address space (340 undecillion)
 - No NAT required
@@ -740,6 +786,7 @@ ff00::/8 - Multicast
 ### Routing Concepts
 
 **Static Routing:**
+
 ```
 Manually configured routes
 Administrator defines paths
@@ -757,6 +804,7 @@ Disadvantages:
 ```
 
 **Dynamic Routing:**
+
 ```
 Automatic route discovery
 Protocols exchange routing information
@@ -771,6 +819,7 @@ Routing Protocols:
 ### Routing Protocols
 
 **RIP (Routing Information Protocol):**
+
 ```
 Distance vector protocol
 Metric: Hop count
@@ -785,6 +834,7 @@ Characteristics:
 ```
 
 **OSPF (Open Shortest Path First):**
+
 ```
 Link state protocol
 Metric: Cost (bandwidth-based)
@@ -799,6 +849,7 @@ Characteristics:
 ```
 
 **BGP (Border Gateway Protocol):**
+
 ```
 Path vector protocol
 Used between autonomous systems
@@ -814,6 +865,7 @@ Characteristics:
 ### Switching
 
 **MAC Address Table:**
+
 ```
 Switch learns MAC addresses
 Associates MAC with port
@@ -828,6 +880,7 @@ Learning Process:
 ```
 
 **VLAN (Virtual LAN):**
+
 ```
 Logical network segmentation
 Broadcast domain separation
@@ -849,6 +902,7 @@ VLAN Types:
 ### DNS Architecture
 
 **Hierarchical Structure:**
+
 ```
 Root Level (.)
   ├── .com (TLD)
@@ -867,6 +921,7 @@ Anycast routing
 ### DNS Query Types
 
 **Recursive Query:**
+
 ```
 Client expects complete answer
 Resolver does all the work
@@ -879,6 +934,7 @@ Resolver returns final answer
 ```
 
 **Iterative Query:**
+
 ```
 Server returns best answer it has
 Client may need multiple queries
@@ -894,6 +950,7 @@ Repeat until answer found
 ### DNS Caching
 
 **Cache Levels:**
+
 ```
 1. Browser cache
 2. Operating system cache
@@ -909,6 +966,7 @@ TTL (Time To Live):
 ### DNS Security
 
 **DNSSEC (DNS Security Extensions):**
+
 ```
 Cryptographic signatures
 Prevents DNS spoofing
@@ -926,6 +984,7 @@ Components:
 ### Firewalls
 
 **Types:**
+
 ```
 Packet Filtering:
 - Examines packet headers
@@ -946,6 +1005,7 @@ Application Layer:
 ```
 
 **Firewall Rules:**
+
 ```
 Rule Components:
 - Source IP/network
@@ -964,6 +1024,7 @@ Rule Order:
 ### VPN (Virtual Private Network)
 
 **Types:**
+
 ```
 Site-to-Site VPN:
 - Connects networks
@@ -977,6 +1038,7 @@ Remote Access VPN:
 ```
 
 **VPN Protocols:**
+
 ```
 IPSec:
 - Network layer
@@ -997,6 +1059,7 @@ OpenVPN:
 ### Network Attacks
 
 **DoS/DDoS:**
+
 ```
 Denial of Service
 Overwhelm target with traffic
@@ -1015,6 +1078,7 @@ Mitigation:
 ```
 
 **Man-in-the-Middle:**
+
 ```
 Attacker intercepts communication
 Can read/modify data
@@ -1028,6 +1092,7 @@ Prevention:
 ```
 
 **DNS Spoofing:**
+
 ```
 Fake DNS responses
 Redirect to malicious sites
@@ -1045,6 +1110,7 @@ Prevention:
 ### Latency
 
 **Components:**
+
 ```
 Propagation Delay:
 - Time for signal to travel
@@ -1069,6 +1135,7 @@ Queuing Delay:
 ### Bandwidth
 
 **Definition:**
+
 ```
 Maximum data transfer rate
 Measured in bits per second (bps)
@@ -1084,6 +1151,7 @@ Factors:
 ### Quality of Service (QoS)
 
 **Traffic Prioritization:**
+
 ```
 Classification:
 - Identify traffic types
@@ -1109,6 +1177,7 @@ Policing:
 ### Software-Defined Networking (SDN)
 
 **Architecture:**
+
 ```
 Application Layer:
 - Network applications
@@ -1134,6 +1203,7 @@ Benefits:
 ### Network Function Virtualization (NFV)
 
 **Concept:**
+
 ```
 Virtualize network functions
 Run on standard hardware
@@ -1155,6 +1225,7 @@ Benefits:
 ### 5G Networks
 
 **Characteristics:**
+
 ```
 Enhanced Mobile Broadband:
 - Higher data rates
@@ -1174,23 +1245,23 @@ Massive IoT:
 
 ## Interview Questions
 
-**Q: Explain the difference between TCP and UDP.**
+**🟢 [Junior] Q: Explain the difference between TCP and UDP.**
 
 A: TCP is connection-oriented, reliable, with flow control and error checking (three-way handshake, acknowledgments, retransmission). UDP is connectionless, unreliable, no flow control, faster with lower overhead. Use TCP for accuracy (web, email, file transfer), UDP for speed (streaming, gaming, DNS).
 
-**Q: What happens when you type a URL in a browser?**
+**🟡 [Mid] Q: What happens when you type a URL in a browser?**
 
 A: 1) DNS lookup (domain to IP), 2) TCP connection (three-way handshake), 3) TLS handshake (HTTPS), 4) HTTP request sent, 5) Server processes and responds, 6) Browser receives HTML, 7) Parse and render, 8) Load additional resources (CSS, JS, images), 9) Execute JavaScript, 10) Page interactive.
 
-**Q: Explain the OSI model layers.**
+**🟢 [Junior] Q: Explain the OSI model layers.**
 
 A: Seven layers from bottom: Physical (bits, cables), Data Link (frames, MAC), Network (packets, IP routing), Transport (segments, TCP/UDP), Session (connections), Presentation (encryption, formatting), Application (user interface, HTTP/FTP). Remember: Please Do Not Throw Sausage Pizza Away.
 
-**Q: What is subnetting and why is it used?**
+**🟡 [Mid] Q: What is subnetting and why is it used?**
 
 A: Subnetting divides network into smaller subnetworks using subnet mask. Benefits: efficient IP usage, reduced broadcast traffic, improved security, better organization. Example: 192.168.1.0/24 can be split into 192.168.1.0/26, 192.168.1.64/26, etc. Each subnet has own network/broadcast addresses.
 
-**Q: How does DNS work?**
+**🟡 [Mid] Q: How does DNS work?**
 
 A: DNS translates domain names to IP addresses. Process: 1) Check local cache, 2) Query recursive resolver, 3) Resolver queries root server, 4) Root returns TLD server, 5) Query TLD server, 6) TLD returns authoritative server, 7) Query authoritative server, 8) Return IP address, 9) Cache result. Hierarchical distributed database.
 
