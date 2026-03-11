@@ -1,1195 +1,1041 @@
-# Web Security & OWASP Top 10 (2021) — Bảo mật web và OWASP Top 10
-> Shared theory for both Frontend and Backend tracks.
-> Cross-referenced by: `fe-track/modules/08-security.md`, `be-track/02-backend-knowledge/04-auth-security.md`
-
----
-
-## 1. OWASP Top 10 (2021) Overview
-
-### 🟢 Q: What is OWASP Top 10? `[Junior]`
-
-**A:** Danh sách 10 nhóm rủi ro bảo mật web phổ biến nhất, dùng để ưu tiên hardening và training.
-
-| Mục tiêu | Ý nghĩa |
-|---------|--------|
-| Awareness | Đồng bộ ngôn ngữ security trong team |
-| Prioritization | Ưu tiên fix risk có impact cao |
-| Interview baseline | Nền cho câu hỏi bảo mật web phổ biến |
-
----
-
-## 2. A01:2021 – Broken Access Control — Lỗi kiểm soát truy cập
-
-### 🟢 Q: What is A01:2021 – Broken Access Control? `[Junior]`
-
-**A:** Lỗi kiểm soát truy cập là nhóm rủi ro khi ứng dụng thiếu kiểm soát quan trọng, tạo đường cho attacker vượt trust boundary.
-
-### 🟡 Q: How does the attack usually work? `[Mid]`
-
-**A:** Reconnaissance → tìm entry point → exploit → mở rộng quyền hoặc đọc dữ liệu → che giấu dấu vết.
-
-### 🟡 Q: Give one realistic example `[Mid]`
-
-**A:** Endpoint nội bộ bị expose hoặc validation không chặt, attacker chain nhiều lỗ hổng nhỏ để đạt impact lớn.
-
-### 🟡 Q: Prevention techniques? `[Mid]`
-
-1. Least privilege + deny by default
-2. Input validation + output encoding
-3. Hardened config và security headers
-4. Logging + alerting + runbook
-5. Dependency patching thường xuyên
-
-### 🔴 Q: Vulnerable vs secure snippet `[Senior]`
-
-```js
-// ❌ vulnerable
-app.get('/item/:id', async (req, res) => {
-  const item = await db.items.findById(req.params.id)
-  res.json(item)
-})
-
-// ✅ secure
-app.get('/item/:id', async (req, res) => {
-  validateId(req.params.id)
-  const item = await db.items.findById(req.params.id)
-  authorize(req.user, 'item:read', item)
-  res.json(item)
-})
-```
-
-```go
-// ✅ safe parameterized query
-row := db.QueryRowContext(ctx, "SELECT * FROM users WHERE email=$1", email)
-```
-
----
-
-## 3. A02:2021 – Cryptographic Failures — Thất bại mật mã
-
-### 🟢 Q: What is A02:2021 – Cryptographic Failures? `[Junior]`
-
-**A:** Thất bại mật mã là nhóm rủi ro khi ứng dụng thiếu kiểm soát quan trọng, tạo đường cho attacker vượt trust boundary.
-
-### 🟡 Q: How does the attack usually work? `[Mid]`
-
-**A:** Reconnaissance → tìm entry point → exploit → mở rộng quyền hoặc đọc dữ liệu → che giấu dấu vết.
-
-### 🟡 Q: Give one realistic example `[Mid]`
-
-**A:** Endpoint nội bộ bị expose hoặc validation không chặt, attacker chain nhiều lỗ hổng nhỏ để đạt impact lớn.
-
-### 🟡 Q: Prevention techniques? `[Mid]`
-
-1. Least privilege + deny by default
-2. Input validation + output encoding
-3. Hardened config và security headers
-4. Logging + alerting + runbook
-5. Dependency patching thường xuyên
-
-### 🔴 Q: Vulnerable vs secure snippet `[Senior]`
-
-```js
-// ❌ vulnerable
-app.get('/item/:id', async (req, res) => {
-  const item = await db.items.findById(req.params.id)
-  res.json(item)
-})
-
-// ✅ secure
-app.get('/item/:id', async (req, res) => {
-  validateId(req.params.id)
-  const item = await db.items.findById(req.params.id)
-  authorize(req.user, 'item:read', item)
-  res.json(item)
-})
-```
-
-```go
-// ✅ safe parameterized query
-row := db.QueryRowContext(ctx, "SELECT * FROM users WHERE email=$1", email)
-```
-
----
-
-## 4. A03:2021 – Injection — Lỗi chèn mã
-
-### 🟢 Q: What is A03:2021 – Injection? `[Junior]`
-
-**A:** Lỗi chèn mã là nhóm rủi ro khi ứng dụng thiếu kiểm soát quan trọng, tạo đường cho attacker vượt trust boundary.
-
-### 🟡 Q: How does the attack usually work? `[Mid]`
-
-**A:** Reconnaissance → tìm entry point → exploit → mở rộng quyền hoặc đọc dữ liệu → che giấu dấu vết.
-
-### 🟡 Q: Give one realistic example `[Mid]`
-
-**A:** Endpoint nội bộ bị expose hoặc validation không chặt, attacker chain nhiều lỗ hổng nhỏ để đạt impact lớn.
-
-### 🟡 Q: Prevention techniques? `[Mid]`
-
-1. Least privilege + deny by default
-2. Input validation + output encoding
-3. Hardened config và security headers
-4. Logging + alerting + runbook
-5. Dependency patching thường xuyên
-
-### 🔴 Q: Vulnerable vs secure snippet `[Senior]`
-
-```js
-// ❌ vulnerable
-app.get('/item/:id', async (req, res) => {
-  const item = await db.items.findById(req.params.id)
-  res.json(item)
-})
-
-// ✅ secure
-app.get('/item/:id', async (req, res) => {
-  validateId(req.params.id)
-  const item = await db.items.findById(req.params.id)
-  authorize(req.user, 'item:read', item)
-  res.json(item)
-})
-```
-
-```go
-// ✅ safe parameterized query
-row := db.QueryRowContext(ctx, "SELECT * FROM users WHERE email=$1", email)
-```
-
----
-
-## 5. A04:2021 – Insecure Design — Thiết kế không an toàn
-
-### 🟢 Q: What is A04:2021 – Insecure Design? `[Junior]`
-
-**A:** Thiết kế không an toàn là nhóm rủi ro khi ứng dụng thiếu kiểm soát quan trọng, tạo đường cho attacker vượt trust boundary.
-
-### 🟡 Q: How does the attack usually work? `[Mid]`
-
-**A:** Reconnaissance → tìm entry point → exploit → mở rộng quyền hoặc đọc dữ liệu → che giấu dấu vết.
-
-### 🟡 Q: Give one realistic example `[Mid]`
-
-**A:** Endpoint nội bộ bị expose hoặc validation không chặt, attacker chain nhiều lỗ hổng nhỏ để đạt impact lớn.
-
-### 🟡 Q: Prevention techniques? `[Mid]`
-
-1. Least privilege + deny by default
-2. Input validation + output encoding
-3. Hardened config và security headers
-4. Logging + alerting + runbook
-5. Dependency patching thường xuyên
-
-### 🔴 Q: Vulnerable vs secure snippet `[Senior]`
-
-```js
-// ❌ vulnerable
-app.get('/item/:id', async (req, res) => {
-  const item = await db.items.findById(req.params.id)
-  res.json(item)
-})
-
-// ✅ secure
-app.get('/item/:id', async (req, res) => {
-  validateId(req.params.id)
-  const item = await db.items.findById(req.params.id)
-  authorize(req.user, 'item:read', item)
-  res.json(item)
-})
-```
-
-```go
-// ✅ safe parameterized query
-row := db.QueryRowContext(ctx, "SELECT * FROM users WHERE email=$1", email)
-```
-
----
-
-## 6. A05:2021 – Security Misconfiguration — Cấu hình bảo mật sai
-
-### 🟢 Q: What is A05:2021 – Security Misconfiguration? `[Junior]`
-
-**A:** Cấu hình bảo mật sai là nhóm rủi ro khi ứng dụng thiếu kiểm soát quan trọng, tạo đường cho attacker vượt trust boundary.
-
-### 🟡 Q: How does the attack usually work? `[Mid]`
-
-**A:** Reconnaissance → tìm entry point → exploit → mở rộng quyền hoặc đọc dữ liệu → che giấu dấu vết.
-
-### 🟡 Q: Give one realistic example `[Mid]`
-
-**A:** Endpoint nội bộ bị expose hoặc validation không chặt, attacker chain nhiều lỗ hổng nhỏ để đạt impact lớn.
-
-### 🟡 Q: Prevention techniques? `[Mid]`
-
-1. Least privilege + deny by default
-2. Input validation + output encoding
-3. Hardened config và security headers
-4. Logging + alerting + runbook
-5. Dependency patching thường xuyên
-
-### 🔴 Q: Vulnerable vs secure snippet `[Senior]`
-
-```js
-// ❌ vulnerable
-app.get('/item/:id', async (req, res) => {
-  const item = await db.items.findById(req.params.id)
-  res.json(item)
-})
-
-// ✅ secure
-app.get('/item/:id', async (req, res) => {
-  validateId(req.params.id)
-  const item = await db.items.findById(req.params.id)
-  authorize(req.user, 'item:read', item)
-  res.json(item)
-})
-```
-
-```go
-// ✅ safe parameterized query
-row := db.QueryRowContext(ctx, "SELECT * FROM users WHERE email=$1", email)
-```
-
----
-
-## 7. A06:2021 – Vulnerable and Outdated Components — Thành phần lỗi thời/có lỗ hổng
-
-### 🟢 Q: What is A06:2021 – Vulnerable and Outdated Components? `[Junior]`
-
-**A:** Thành phần lỗi thời/có lỗ hổng là nhóm rủi ro khi ứng dụng thiếu kiểm soát quan trọng, tạo đường cho attacker vượt trust boundary.
-
-### 🟡 Q: How does the attack usually work? `[Mid]`
-
-**A:** Reconnaissance → tìm entry point → exploit → mở rộng quyền hoặc đọc dữ liệu → che giấu dấu vết.
-
-### 🟡 Q: Give one realistic example `[Mid]`
-
-**A:** Endpoint nội bộ bị expose hoặc validation không chặt, attacker chain nhiều lỗ hổng nhỏ để đạt impact lớn.
-
-### 🟡 Q: Prevention techniques? `[Mid]`
-
-1. Least privilege + deny by default
-2. Input validation + output encoding
-3. Hardened config và security headers
-4. Logging + alerting + runbook
-5. Dependency patching thường xuyên
-
-### 🔴 Q: Vulnerable vs secure snippet `[Senior]`
-
-```js
-// ❌ vulnerable
-app.get('/item/:id', async (req, res) => {
-  const item = await db.items.findById(req.params.id)
-  res.json(item)
-})
-
-// ✅ secure
-app.get('/item/:id', async (req, res) => {
-  validateId(req.params.id)
-  const item = await db.items.findById(req.params.id)
-  authorize(req.user, 'item:read', item)
-  res.json(item)
-})
-```
-
-```go
-// ✅ safe parameterized query
-row := db.QueryRowContext(ctx, "SELECT * FROM users WHERE email=$1", email)
-```
-
----
-
-## 8. A07:2021 – Identification and Authentication Failures — Lỗi định danh và xác thực
-
-### 🟢 Q: What is A07:2021 – Identification and Authentication Failures? `[Junior]`
-
-**A:** Lỗi định danh và xác thực là nhóm rủi ro khi ứng dụng thiếu kiểm soát quan trọng, tạo đường cho attacker vượt trust boundary.
-
-### 🟡 Q: How does the attack usually work? `[Mid]`
-
-**A:** Reconnaissance → tìm entry point → exploit → mở rộng quyền hoặc đọc dữ liệu → che giấu dấu vết.
-
-### 🟡 Q: Give one realistic example `[Mid]`
-
-**A:** Endpoint nội bộ bị expose hoặc validation không chặt, attacker chain nhiều lỗ hổng nhỏ để đạt impact lớn.
-
-### 🟡 Q: Prevention techniques? `[Mid]`
-
-1. Least privilege + deny by default
-2. Input validation + output encoding
-3. Hardened config và security headers
-4. Logging + alerting + runbook
-5. Dependency patching thường xuyên
-
-### 🔴 Q: Vulnerable vs secure snippet `[Senior]`
-
-```js
-// ❌ vulnerable
-app.get('/item/:id', async (req, res) => {
-  const item = await db.items.findById(req.params.id)
-  res.json(item)
-})
-
-// ✅ secure
-app.get('/item/:id', async (req, res) => {
-  validateId(req.params.id)
-  const item = await db.items.findById(req.params.id)
-  authorize(req.user, 'item:read', item)
-  res.json(item)
-})
-```
-
-```go
-// ✅ safe parameterized query
-row := db.QueryRowContext(ctx, "SELECT * FROM users WHERE email=$1", email)
-```
-
----
-
-## 9. A08:2021 – Software and Data Integrity Failures — Lỗi toàn vẹn phần mềm và dữ liệu
-
-### 🟢 Q: What is A08:2021 – Software and Data Integrity Failures? `[Junior]`
-
-**A:** Lỗi toàn vẹn phần mềm và dữ liệu là nhóm rủi ro khi ứng dụng thiếu kiểm soát quan trọng, tạo đường cho attacker vượt trust boundary.
-
-### 🟡 Q: How does the attack usually work? `[Mid]`
-
-**A:** Reconnaissance → tìm entry point → exploit → mở rộng quyền hoặc đọc dữ liệu → che giấu dấu vết.
-
-### 🟡 Q: Give one realistic example `[Mid]`
-
-**A:** Endpoint nội bộ bị expose hoặc validation không chặt, attacker chain nhiều lỗ hổng nhỏ để đạt impact lớn.
-
-### 🟡 Q: Prevention techniques? `[Mid]`
-
-1. Least privilege + deny by default
-2. Input validation + output encoding
-3. Hardened config và security headers
-4. Logging + alerting + runbook
-5. Dependency patching thường xuyên
-
-### 🔴 Q: Vulnerable vs secure snippet `[Senior]`
-
-```js
-// ❌ vulnerable
-app.get('/item/:id', async (req, res) => {
-  const item = await db.items.findById(req.params.id)
-  res.json(item)
-})
-
-// ✅ secure
-app.get('/item/:id', async (req, res) => {
-  validateId(req.params.id)
-  const item = await db.items.findById(req.params.id)
-  authorize(req.user, 'item:read', item)
-  res.json(item)
-})
-```
-
-```go
-// ✅ safe parameterized query
-row := db.QueryRowContext(ctx, "SELECT * FROM users WHERE email=$1", email)
-```
-
----
-
-## 10. A09:2021 – Security Logging and Monitoring Failures — Thiếu logging/monitoring bảo mật
-
-### 🟢 Q: What is A09:2021 – Security Logging and Monitoring Failures? `[Junior]`
-
-**A:** Thiếu logging/monitoring bảo mật là nhóm rủi ro khi ứng dụng thiếu kiểm soát quan trọng, tạo đường cho attacker vượt trust boundary.
-
-### 🟡 Q: How does the attack usually work? `[Mid]`
-
-**A:** Reconnaissance → tìm entry point → exploit → mở rộng quyền hoặc đọc dữ liệu → che giấu dấu vết.
-
-### 🟡 Q: Give one realistic example `[Mid]`
-
-**A:** Endpoint nội bộ bị expose hoặc validation không chặt, attacker chain nhiều lỗ hổng nhỏ để đạt impact lớn.
-
-### 🟡 Q: Prevention techniques? `[Mid]`
-
-1. Least privilege + deny by default
-2. Input validation + output encoding
-3. Hardened config và security headers
-4. Logging + alerting + runbook
-5. Dependency patching thường xuyên
-
-### 🔴 Q: Vulnerable vs secure snippet `[Senior]`
-
-```js
-// ❌ vulnerable
-app.get('/item/:id', async (req, res) => {
-  const item = await db.items.findById(req.params.id)
-  res.json(item)
-})
-
-// ✅ secure
-app.get('/item/:id', async (req, res) => {
-  validateId(req.params.id)
-  const item = await db.items.findById(req.params.id)
-  authorize(req.user, 'item:read', item)
-  res.json(item)
-})
-```
-
-```go
-// ✅ safe parameterized query
-row := db.QueryRowContext(ctx, "SELECT * FROM users WHERE email=$1", email)
-```
-
----
-
-## 11. A10:2021 – Server-Side Request Forgery (SSRF) — SSRF
-
-### 🟢 Q: What is A10:2021 – Server-Side Request Forgery (SSRF)? `[Junior]`
-
-**A:** SSRF là nhóm rủi ro khi ứng dụng thiếu kiểm soát quan trọng, tạo đường cho attacker vượt trust boundary.
-
-### 🟡 Q: How does the attack usually work? `[Mid]`
-
-**A:** Reconnaissance → tìm entry point → exploit → mở rộng quyền hoặc đọc dữ liệu → che giấu dấu vết.
-
-### 🟡 Q: Give one realistic example `[Mid]`
-
-**A:** Endpoint nội bộ bị expose hoặc validation không chặt, attacker chain nhiều lỗ hổng nhỏ để đạt impact lớn.
-
-### 🟡 Q: Prevention techniques? `[Mid]`
-
-1. Least privilege + deny by default
-2. Input validation + output encoding
-3. Hardened config và security headers
-4. Logging + alerting + runbook
-5. Dependency patching thường xuyên
-
-### 🔴 Q: Vulnerable vs secure snippet `[Senior]`
-
-```js
-// ❌ vulnerable
-app.get('/item/:id', async (req, res) => {
-  const item = await db.items.findById(req.params.id)
-  res.json(item)
-})
-
-// ✅ secure
-app.get('/item/:id', async (req, res) => {
-  validateId(req.params.id)
-  const item = await db.items.findById(req.params.id)
-  authorize(req.user, 'item:read', item)
-  res.json(item)
-})
-```
-
-```go
-// ✅ safe parameterized query
-row := db.QueryRowContext(ctx, "SELECT * FROM users WHERE email=$1", email)
-```
-
----
-
-## 12. XSS Deep Dive — Stored, Reflected, DOM-based
-
-### 🟢 Q: What are XSS variants? `[Junior]`
-
-| Type | Mô tả |
-|------|------|
-| Stored | Payload lưu trong DB và phát tán |
-| Reflected | Payload phản chiếu ngay trong response |
-| DOM-based | Payload xử lý/chạy ở client-side DOM |
-
-### 🟡 Q: How to prevent XSS effectively? `[Mid]`
-
-1. Output encoding đúng context
-2. Tránh `innerHTML` với untrusted input
-3. Sanitizer cho rich text
-4. CSP với nonce/hash
-5. HttpOnly cookies để giảm token theft impact
-
-### 🔴 Q: Vulnerable vs secure DOM code `[Senior]`
-
-```js
-// ❌ vulnerable
-const q = new URLSearchParams(location.search).get('q')
-result.innerHTML = 'Search: ' + q
-
-// ✅ secure
-const q = new URLSearchParams(location.search).get('q') || ''
-result.textContent = `Search: ${q}`
-```
-
----
-
-## 13. CSRF — Cơ chế và phòng chống
-
-### 🟢 Q: Why CSRF happens? `[Junior]`
-
-**A:** Browser tự gửi cookie theo domain. Nếu server thiếu anti-CSRF controls, request giả mạo vẫn thành công.
-
-### 🟡 Q: Token vs SameSite vs Origin check `[Mid]`
-
-| Technique | Điểm mạnh |
-|----------|-----------|
-| Synchronizer token | Mạnh cho state-changing requests |
-| Double-submit cookie | Tốt cho kiến trúc stateless |
-| SameSite | Giảm bề mặt tấn công cross-site |
-| Origin/Referer check | Layer bổ sung hiệu quả |
-
-### 🔴 Q: Example CSRF middleware `[Senior]`
-
-```go
-func RequireCSRF(next http.Handler) http.Handler {
-  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-    if r.Method == http.MethodGet || r.Method == http.MethodHead {
-      next.ServeHTTP(w, r); return
-    }
-    token := r.Header.Get("X-CSRF-Token")
-    c, _ := r.Cookie("csrf")
-    if c == nil || token == "" || token != c.Value {
-      http.Error(w, "forbidden", http.StatusForbidden); return
-    }
-    next.ServeHTTP(w, r)
-  })
-}
-```
-
----
-
-## 14. SQL Injection — Parameterized queries, ORM safety
-
-### 🟢 Q: What is SQL Injection? `[Junior]`
-
-**A:** Chèn SQL độc hại qua input để làm thay đổi ý nghĩa truy vấn.
-
-### 🟡 Q: Vulnerable vs secure query `[Mid]`
-
-```js
-// ❌ vulnerable
-const sql = `SELECT * FROM users WHERE email='${email}'`
-
-// ✅ secure
-const sql = 'SELECT * FROM users WHERE email = ?'
-await db.execute(sql, [email])
-```
-
-### 🔴 Q: Is ORM always safe? `[Senior]`
-
-**A:** Không. ORM chỉ an toàn khi dùng parameter binding/query builder; raw interpolation vẫn có thể bị SQLi.
-
----
-
-## 15. SSRF — Cloud-critical risk
-
-### 🟢 Q: What is SSRF? `[Junior]`
-
-**A:** SSRF là ép server gửi request đến địa chỉ mà attacker muốn, bao gồm internal endpoints.
-
-### 🟡 Q: Why critical in cloud? `[Mid]`
-
-**A:** Metadata service có thể lộ temporary credentials, tạo đường leo thang quyền.
-
-### 🔴 Q: SSRF prevention checklist `[Senior]`
-
-- Domain allowlist
-- DNS/IP validation và block private/link-local/loopback
-- Disable untrusted redirects
-- Egress firewall
-- Least-privilege runtime identity
-
----
-
-## 16. Authentication Attacks
-
-### 🟢 Q: Brute force vs credential stuffing? `[Junior]`
-
-| Attack | Source |
-|-------|--------|
-| Brute force | Đoán password hàng loạt |
-| Credential stuffing | Dùng credentials rò rỉ từ dịch vụ khác |
-
-### 🟡 Q: Session hijacking vectors `[Mid]`
-
-**A:** XSS token theft, MITM khi không HTTPS, session fixation, token leak qua logs/referrer.
-
-### 🔴 Q: Defenses `[Senior]`
-
-1. MFA/WebAuthn
-2. Rate limiting + risk scoring
-3. Session rotation
-4. Short token TTL
-5. Secure cookie flags
-
----
-
-## 17. API Security
-
-### 🟢 Q: Baseline controls for APIs `[Junior]`
-
-**A:** AuthN, AuthZ, schema validation, rate limiting, secure errors, audit logs.
-
-### 🟡 Q: Why per-principal rate limiting? `[Mid]`
-
-**A:** Chỉ limit theo IP không đủ vì attacker có thể rotate IP; cần kết hợp user/token/device.
-
-### 🔴 Q: Multi-tenant API pitfalls `[Senior]`
-
-- Missing tenant isolation in queries
-- Trusting client-supplied tenantId
-- Overbroad scopes
-- Missing access matrix tests
-
----
-
-## 18. Security Headers
-
-| Header | Mục đích |
-|-------|---------|
-| CSP | Giảm XSS |
-| HSTS | Bắt buộc HTTPS |
-| X-Frame-Options / frame-ancestors | Chống clickjacking |
-| X-Content-Type-Options | Chống MIME sniffing |
-| Referrer-Policy | Giảm lộ thông tin referrer |
-| Permissions-Policy | Giới hạn browser APIs |
-
-### 🟡 Q: CSP nonce strategy `[Mid]`
-
-```http
-Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-abc123'
-```
-
-### 🔴 Q: Why headers are not enough? `[Senior]`
-
-**A:** Header là lớp bổ sung, không thay thế authz đúng, validation đúng, và secure business logic.
-
----
-
-## 19. Interview Q&A
-
-### 🟢 Q: What is IDOR? `[Junior]`
-
-**A:** Truy cập object ngoài quyền bằng cách đổi ID; cần object-level authorization.
-
-### 🟢 Q: Why server-side validation is mandatory? `[Junior]`
-
-**A:** Client validation có thể bị bypass.
-
-### 🟡 Q: How to test broken access control quickly? `[Mid]`
-
-**A:** Dùng matrix owner/non-owner/admin/anonymous trên cùng tài nguyên.
-
-### 🟡 Q: Why verbose errors are risky? `[Mid]`
-
-**A:** Lộ nội dung stack/schema giúp attacker reconnaissance.
-
-### 🟡 Q: How to detect credential stuffing patterns? `[Mid]`
-
-**A:** Theo dõi fail-login burst đa IP/device/user-agent.
-
-### 🔴 Q: Design defense for public payment API `[Senior]`
-
-**A:** Kết hợp auth mạnh, rate limits, fraud checks, immutable audit logs.
-
-### 🔴 Q: First-hour incident response priorities? `[Senior]`
-
-**A:** Contain blast radius, preserve evidence, rotate secrets, coordinate comms.
-
-### 🔴 Q: How to validate control effectiveness long-term? `[Senior]`
-
-**A:** Security tests định kỳ + drills + MTTD/MTTR metrics + postmortem loop.
-
-### 🟢 Q: AuthN vs AuthZ in one line? `[Junior]`
-
-**A:** AuthN: bạn là ai; AuthZ: bạn được làm gì.
-
-### 🔴 Q: Why fail-closed default? `[Senior]`
-
-**A:** Khi lỗi phải deny để tránh bypass control.
-
----
-
-## 20. Practice Bank
-
-### 🟢 Q: OWASP scenario drill #1? `[Junior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟢 Q: OWASP scenario drill #2? `[Junior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟢 Q: OWASP scenario drill #3? `[Junior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟢 Q: OWASP scenario drill #4? `[Junior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟢 Q: OWASP scenario drill #5? `[Junior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟢 Q: OWASP scenario drill #6? `[Junior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟢 Q: OWASP scenario drill #7? `[Junior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟢 Q: OWASP scenario drill #8? `[Junior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟢 Q: OWASP scenario drill #9? `[Junior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟢 Q: OWASP scenario drill #10? `[Junior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟢 Q: OWASP scenario drill #11? `[Junior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟢 Q: OWASP scenario drill #12? `[Junior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟢 Q: OWASP scenario drill #13? `[Junior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟢 Q: OWASP scenario drill #14? `[Junior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟢 Q: OWASP scenario drill #15? `[Junior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟢 Q: OWASP scenario drill #16? `[Junior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟢 Q: OWASP scenario drill #17? `[Junior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟢 Q: OWASP scenario drill #18? `[Junior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟢 Q: OWASP scenario drill #19? `[Junior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟢 Q: OWASP scenario drill #20? `[Junior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟢 Q: OWASP scenario drill #21? `[Junior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟢 Q: OWASP scenario drill #22? `[Junior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟢 Q: OWASP scenario drill #23? `[Junior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟢 Q: OWASP scenario drill #24? `[Junior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟢 Q: OWASP scenario drill #25? `[Junior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟢 Q: OWASP scenario drill #26? `[Junior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟢 Q: OWASP scenario drill #27? `[Junior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟢 Q: OWASP scenario drill #28? `[Junior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟢 Q: OWASP scenario drill #29? `[Junior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟢 Q: OWASP scenario drill #30? `[Junior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟢 Q: OWASP scenario drill #31? `[Junior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟢 Q: OWASP scenario drill #32? `[Junior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟡 Q: OWASP scenario drill #33? `[Mid]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟡 Q: OWASP scenario drill #34? `[Mid]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟡 Q: OWASP scenario drill #35? `[Mid]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟡 Q: OWASP scenario drill #36? `[Mid]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟡 Q: OWASP scenario drill #37? `[Mid]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟡 Q: OWASP scenario drill #38? `[Mid]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟡 Q: OWASP scenario drill #39? `[Mid]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟡 Q: OWASP scenario drill #40? `[Mid]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟡 Q: OWASP scenario drill #41? `[Mid]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟡 Q: OWASP scenario drill #42? `[Mid]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟡 Q: OWASP scenario drill #43? `[Mid]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟡 Q: OWASP scenario drill #44? `[Mid]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟡 Q: OWASP scenario drill #45? `[Mid]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟡 Q: OWASP scenario drill #46? `[Mid]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟡 Q: OWASP scenario drill #47? `[Mid]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟡 Q: OWASP scenario drill #48? `[Mid]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟡 Q: OWASP scenario drill #49? `[Mid]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟡 Q: OWASP scenario drill #50? `[Mid]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟡 Q: OWASP scenario drill #51? `[Mid]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟡 Q: OWASP scenario drill #52? `[Mid]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟡 Q: OWASP scenario drill #53? `[Mid]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟡 Q: OWASP scenario drill #54? `[Mid]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟡 Q: OWASP scenario drill #55? `[Mid]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟡 Q: OWASP scenario drill #56? `[Mid]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟡 Q: OWASP scenario drill #57? `[Mid]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟡 Q: OWASP scenario drill #58? `[Mid]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟡 Q: OWASP scenario drill #59? `[Mid]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟡 Q: OWASP scenario drill #60? `[Mid]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟡 Q: OWASP scenario drill #61? `[Mid]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟡 Q: OWASP scenario drill #62? `[Mid]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟡 Q: OWASP scenario drill #63? `[Mid]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🟡 Q: OWASP scenario drill #64? `[Mid]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🔴 Q: OWASP scenario drill #65? `[Senior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🔴 Q: OWASP scenario drill #66? `[Senior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🔴 Q: OWASP scenario drill #67? `[Senior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🔴 Q: OWASP scenario drill #68? `[Senior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🔴 Q: OWASP scenario drill #69? `[Senior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🔴 Q: OWASP scenario drill #70? `[Senior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🔴 Q: OWASP scenario drill #71? `[Senior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🔴 Q: OWASP scenario drill #72? `[Senior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🔴 Q: OWASP scenario drill #73? `[Senior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🔴 Q: OWASP scenario drill #74? `[Senior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🔴 Q: OWASP scenario drill #75? `[Senior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🔴 Q: OWASP scenario drill #76? `[Senior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🔴 Q: OWASP scenario drill #77? `[Senior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🔴 Q: OWASP scenario drill #78? `[Senior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🔴 Q: OWASP scenario drill #79? `[Senior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🔴 Q: OWASP scenario drill #80? `[Senior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🔴 Q: OWASP scenario drill #81? `[Senior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🔴 Q: OWASP scenario drill #82? `[Senior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🔴 Q: OWASP scenario drill #83? `[Senior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🔴 Q: OWASP scenario drill #84? `[Senior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🔴 Q: OWASP scenario drill #85? `[Senior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🔴 Q: OWASP scenario drill #86? `[Senior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🔴 Q: OWASP scenario drill #87? `[Senior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🔴 Q: OWASP scenario drill #88? `[Senior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🔴 Q: OWASP scenario drill #89? `[Senior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🔴 Q: OWASP scenario drill #90? `[Senior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🔴 Q: OWASP scenario drill #91? `[Senior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🔴 Q: OWASP scenario drill #92? `[Senior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🔴 Q: OWASP scenario drill #93? `[Senior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🔴 Q: OWASP scenario drill #94? `[Senior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
-
-### 🔴 Q: OWASP scenario drill #95? `[Senior]`
-
-**A:** Trả lời theo flow: attack vector → điều kiện khai thác → impact → layered controls → verification bằng tests/logs/alerts.
-
----
+# Web Security and OWASP Top 10 (2021)
+
+## Tổng Quan
+- Tài liệu tổng hợp rủi ro web phổ biến theo OWASP Top 10 (2021) và kỹ thuật phòng thủ nhiều lớp.
+- Cross-references: `./01-security-fundamentals.md`, `./02-cryptography-and-protocols.md`
+
+## OWASP Top 10 Snapshot
+### Giải thích
+- OWASP là danh mục ưu tiên risk chứ không phải checklist hoàn chỉnh cho mọi hệ thống.
+- Khi phỏng vấn, hãy nêu: attack path, impact, detection, prevention, verification.
+### Ví dụ
+- Broken Access Control thường gây IDOR hoặc privilege escalation.
+- Injection thường xuất hiện ở SQL/NoSQL/OS command khi thiếu validation và parameterization.
+
+## A01:2021 Broken Access Control
+### Tổng Quan
+- Đây là nhóm rủi ro có impact cao và xuất hiện thường xuyên trong sản phẩm thực tế.
+### Giải thích
+- Cần defense-in-depth: secure design + secure coding + secure config + monitoring + incident response.
+- Không có một control đơn lẻ nào đủ mạnh cho mọi trường hợp; cần phối hợp nhiều tầng.
+### Ví dụ
+- Ví dụ khai thác: attacker tìm input vector, bypass validation, sau đó mở rộng phạm vi tấn công.
+- Ví dụ phòng thủ: deny-by-default, object-level authorization, strict validation, structured logging.
+### Interview Angle
+- Nêu rõ cách test: unit security tests, integration tests, DAST/SAST, pentest, chaos security drills.
+- Nêu rõ metrics: attack blocked rate, false positive rate, MTTD/MTTR, patch lead time.
+
+## A02:2021 Cryptographic Failures
+### Tổng Quan
+- Đây là nhóm rủi ro có impact cao và xuất hiện thường xuyên trong sản phẩm thực tế.
+### Giải thích
+- Cần defense-in-depth: secure design + secure coding + secure config + monitoring + incident response.
+- Không có một control đơn lẻ nào đủ mạnh cho mọi trường hợp; cần phối hợp nhiều tầng.
+### Ví dụ
+- Ví dụ khai thác: attacker tìm input vector, bypass validation, sau đó mở rộng phạm vi tấn công.
+- Ví dụ phòng thủ: deny-by-default, object-level authorization, strict validation, structured logging.
+### Interview Angle
+- Nêu rõ cách test: unit security tests, integration tests, DAST/SAST, pentest, chaos security drills.
+- Nêu rõ metrics: attack blocked rate, false positive rate, MTTD/MTTR, patch lead time.
+
+## A03:2021 Injection
+### Tổng Quan
+- Đây là nhóm rủi ro có impact cao và xuất hiện thường xuyên trong sản phẩm thực tế.
+### Giải thích
+- Cần defense-in-depth: secure design + secure coding + secure config + monitoring + incident response.
+- Không có một control đơn lẻ nào đủ mạnh cho mọi trường hợp; cần phối hợp nhiều tầng.
+### Ví dụ
+- Ví dụ khai thác: attacker tìm input vector, bypass validation, sau đó mở rộng phạm vi tấn công.
+- Ví dụ phòng thủ: deny-by-default, object-level authorization, strict validation, structured logging.
+### Interview Angle
+- Nêu rõ cách test: unit security tests, integration tests, DAST/SAST, pentest, chaos security drills.
+- Nêu rõ metrics: attack blocked rate, false positive rate, MTTD/MTTR, patch lead time.
+
+## A04:2021 Insecure Design
+### Tổng Quan
+- Đây là nhóm rủi ro có impact cao và xuất hiện thường xuyên trong sản phẩm thực tế.
+### Giải thích
+- Cần defense-in-depth: secure design + secure coding + secure config + monitoring + incident response.
+- Không có một control đơn lẻ nào đủ mạnh cho mọi trường hợp; cần phối hợp nhiều tầng.
+### Ví dụ
+- Ví dụ khai thác: attacker tìm input vector, bypass validation, sau đó mở rộng phạm vi tấn công.
+- Ví dụ phòng thủ: deny-by-default, object-level authorization, strict validation, structured logging.
+### Interview Angle
+- Nêu rõ cách test: unit security tests, integration tests, DAST/SAST, pentest, chaos security drills.
+- Nêu rõ metrics: attack blocked rate, false positive rate, MTTD/MTTR, patch lead time.
+
+## A05:2021 Security Misconfiguration
+### Tổng Quan
+- Đây là nhóm rủi ro có impact cao và xuất hiện thường xuyên trong sản phẩm thực tế.
+### Giải thích
+- Cần defense-in-depth: secure design + secure coding + secure config + monitoring + incident response.
+- Không có một control đơn lẻ nào đủ mạnh cho mọi trường hợp; cần phối hợp nhiều tầng.
+### Ví dụ
+- Ví dụ khai thác: attacker tìm input vector, bypass validation, sau đó mở rộng phạm vi tấn công.
+- Ví dụ phòng thủ: deny-by-default, object-level authorization, strict validation, structured logging.
+### Interview Angle
+- Nêu rõ cách test: unit security tests, integration tests, DAST/SAST, pentest, chaos security drills.
+- Nêu rõ metrics: attack blocked rate, false positive rate, MTTD/MTTR, patch lead time.
+
+## A06:2021 Vulnerable and Outdated Components
+### Tổng Quan
+- Đây là nhóm rủi ro có impact cao và xuất hiện thường xuyên trong sản phẩm thực tế.
+### Giải thích
+- Cần defense-in-depth: secure design + secure coding + secure config + monitoring + incident response.
+- Không có một control đơn lẻ nào đủ mạnh cho mọi trường hợp; cần phối hợp nhiều tầng.
+### Ví dụ
+- Ví dụ khai thác: attacker tìm input vector, bypass validation, sau đó mở rộng phạm vi tấn công.
+- Ví dụ phòng thủ: deny-by-default, object-level authorization, strict validation, structured logging.
+### Interview Angle
+- Nêu rõ cách test: unit security tests, integration tests, DAST/SAST, pentest, chaos security drills.
+- Nêu rõ metrics: attack blocked rate, false positive rate, MTTD/MTTR, patch lead time.
+
+## A07:2021 Identification and Authentication Failures
+### Tổng Quan
+- Đây là nhóm rủi ro có impact cao và xuất hiện thường xuyên trong sản phẩm thực tế.
+### Giải thích
+- Cần defense-in-depth: secure design + secure coding + secure config + monitoring + incident response.
+- Không có một control đơn lẻ nào đủ mạnh cho mọi trường hợp; cần phối hợp nhiều tầng.
+### Ví dụ
+- Ví dụ khai thác: attacker tìm input vector, bypass validation, sau đó mở rộng phạm vi tấn công.
+- Ví dụ phòng thủ: deny-by-default, object-level authorization, strict validation, structured logging.
+### Interview Angle
+- Nêu rõ cách test: unit security tests, integration tests, DAST/SAST, pentest, chaos security drills.
+- Nêu rõ metrics: attack blocked rate, false positive rate, MTTD/MTTR, patch lead time.
+
+## A08:2021 Software and Data Integrity Failures
+### Tổng Quan
+- Đây là nhóm rủi ro có impact cao và xuất hiện thường xuyên trong sản phẩm thực tế.
+### Giải thích
+- Cần defense-in-depth: secure design + secure coding + secure config + monitoring + incident response.
+- Không có một control đơn lẻ nào đủ mạnh cho mọi trường hợp; cần phối hợp nhiều tầng.
+### Ví dụ
+- Ví dụ khai thác: attacker tìm input vector, bypass validation, sau đó mở rộng phạm vi tấn công.
+- Ví dụ phòng thủ: deny-by-default, object-level authorization, strict validation, structured logging.
+### Interview Angle
+- Nêu rõ cách test: unit security tests, integration tests, DAST/SAST, pentest, chaos security drills.
+- Nêu rõ metrics: attack blocked rate, false positive rate, MTTD/MTTR, patch lead time.
+
+## A09:2021 Security Logging and Monitoring Failures
+### Tổng Quan
+- Đây là nhóm rủi ro có impact cao và xuất hiện thường xuyên trong sản phẩm thực tế.
+### Giải thích
+- Cần defense-in-depth: secure design + secure coding + secure config + monitoring + incident response.
+- Không có một control đơn lẻ nào đủ mạnh cho mọi trường hợp; cần phối hợp nhiều tầng.
+### Ví dụ
+- Ví dụ khai thác: attacker tìm input vector, bypass validation, sau đó mở rộng phạm vi tấn công.
+- Ví dụ phòng thủ: deny-by-default, object-level authorization, strict validation, structured logging.
+### Interview Angle
+- Nêu rõ cách test: unit security tests, integration tests, DAST/SAST, pentest, chaos security drills.
+- Nêu rõ metrics: attack blocked rate, false positive rate, MTTD/MTTR, patch lead time.
+
+## A10:2021 Server-Side Request Forgery (SSRF)
+### Tổng Quan
+- Đây là nhóm rủi ro có impact cao và xuất hiện thường xuyên trong sản phẩm thực tế.
+### Giải thích
+- Cần defense-in-depth: secure design + secure coding + secure config + monitoring + incident response.
+- Không có một control đơn lẻ nào đủ mạnh cho mọi trường hợp; cần phối hợp nhiều tầng.
+### Ví dụ
+- Ví dụ khai thác: attacker tìm input vector, bypass validation, sau đó mở rộng phạm vi tấn công.
+- Ví dụ phòng thủ: deny-by-default, object-level authorization, strict validation, structured logging.
+### Interview Angle
+- Nêu rõ cách test: unit security tests, integration tests, DAST/SAST, pentest, chaos security drills.
+- Nêu rõ metrics: attack blocked rate, false positive rate, MTTD/MTTR, patch lead time.
+
+## XSS Deep Dive
+### Tổng Quan
+- Phần này đi sâu vào XSS Deep Dive để chuẩn bị câu hỏi phỏng vấn senior-level.
+### Giải thích
+- Mô tả đầy đủ: entry points, prerequisites, exploit chain, business impact, and layered mitigations.
+- Liên hệ thực tế với web app hiện đại: SPA + API backend + CDN + reverse proxy + cloud services.
+### Ví dụ
+- Tình huống 1: triển khai thiếu policy dẫn tới bypass.
+- Tình huống 2: khắc phục bằng secure-by-default và automation checks trong CI/CD.
+- Tình huống 3: thêm observability để phát hiện bất thường theo thời gian thực.
+### Practical Checklist
+- Input validation theo schema, output encoding theo context, strict authz checks.
+- Secret management chuẩn, headers chuẩn, and least-privilege service identity.
+- Thêm regression tests để không tái phát lỗ hổng sau refactor.
+
+## CSRF
+### Tổng Quan
+- Phần này đi sâu vào CSRF để chuẩn bị câu hỏi phỏng vấn senior-level.
+### Giải thích
+- Mô tả đầy đủ: entry points, prerequisites, exploit chain, business impact, and layered mitigations.
+- Liên hệ thực tế với web app hiện đại: SPA + API backend + CDN + reverse proxy + cloud services.
+### Ví dụ
+- Tình huống 1: triển khai thiếu policy dẫn tới bypass.
+- Tình huống 2: khắc phục bằng secure-by-default và automation checks trong CI/CD.
+- Tình huống 3: thêm observability để phát hiện bất thường theo thời gian thực.
+### Practical Checklist
+- Input validation theo schema, output encoding theo context, strict authz checks.
+- Secret management chuẩn, headers chuẩn, and least-privilege service identity.
+- Thêm regression tests để không tái phát lỗ hổng sau refactor.
+
+## SQL Injection
+### Tổng Quan
+- Phần này đi sâu vào SQL Injection để chuẩn bị câu hỏi phỏng vấn senior-level.
+### Giải thích
+- Mô tả đầy đủ: entry points, prerequisites, exploit chain, business impact, and layered mitigations.
+- Liên hệ thực tế với web app hiện đại: SPA + API backend + CDN + reverse proxy + cloud services.
+### Ví dụ
+- Tình huống 1: triển khai thiếu policy dẫn tới bypass.
+- Tình huống 2: khắc phục bằng secure-by-default và automation checks trong CI/CD.
+- Tình huống 3: thêm observability để phát hiện bất thường theo thời gian thực.
+### Practical Checklist
+- Input validation theo schema, output encoding theo context, strict authz checks.
+- Secret management chuẩn, headers chuẩn, and least-privilege service identity.
+- Thêm regression tests để không tái phát lỗ hổng sau refactor.
+
+## SSRF
+### Tổng Quan
+- Phần này đi sâu vào SSRF để chuẩn bị câu hỏi phỏng vấn senior-level.
+### Giải thích
+- Mô tả đầy đủ: entry points, prerequisites, exploit chain, business impact, and layered mitigations.
+- Liên hệ thực tế với web app hiện đại: SPA + API backend + CDN + reverse proxy + cloud services.
+### Ví dụ
+- Tình huống 1: triển khai thiếu policy dẫn tới bypass.
+- Tình huống 2: khắc phục bằng secure-by-default và automation checks trong CI/CD.
+- Tình huống 3: thêm observability để phát hiện bất thường theo thời gian thực.
+### Practical Checklist
+- Input validation theo schema, output encoding theo context, strict authz checks.
+- Secret management chuẩn, headers chuẩn, and least-privilege service identity.
+- Thêm regression tests để không tái phát lỗ hổng sau refactor.
+
+## Authentication Attacks
+### Tổng Quan
+- Phần này đi sâu vào Authentication Attacks để chuẩn bị câu hỏi phỏng vấn senior-level.
+### Giải thích
+- Mô tả đầy đủ: entry points, prerequisites, exploit chain, business impact, and layered mitigations.
+- Liên hệ thực tế với web app hiện đại: SPA + API backend + CDN + reverse proxy + cloud services.
+### Ví dụ
+- Tình huống 1: triển khai thiếu policy dẫn tới bypass.
+- Tình huống 2: khắc phục bằng secure-by-default và automation checks trong CI/CD.
+- Tình huống 3: thêm observability để phát hiện bất thường theo thời gian thực.
+### Practical Checklist
+- Input validation theo schema, output encoding theo context, strict authz checks.
+- Secret management chuẩn, headers chuẩn, and least-privilege service identity.
+- Thêm regression tests để không tái phát lỗ hổng sau refactor.
+
+## API Security
+### Tổng Quan
+- Phần này đi sâu vào API Security để chuẩn bị câu hỏi phỏng vấn senior-level.
+### Giải thích
+- Mô tả đầy đủ: entry points, prerequisites, exploit chain, business impact, and layered mitigations.
+- Liên hệ thực tế với web app hiện đại: SPA + API backend + CDN + reverse proxy + cloud services.
+### Ví dụ
+- Tình huống 1: triển khai thiếu policy dẫn tới bypass.
+- Tình huống 2: khắc phục bằng secure-by-default và automation checks trong CI/CD.
+- Tình huống 3: thêm observability để phát hiện bất thường theo thời gian thực.
+### Practical Checklist
+- Input validation theo schema, output encoding theo context, strict authz checks.
+- Secret management chuẩn, headers chuẩn, and least-privilege service identity.
+- Thêm regression tests để không tái phát lỗ hổng sau refactor.
+
+## Security Headers
+### Tổng Quan
+- Phần này đi sâu vào Security Headers để chuẩn bị câu hỏi phỏng vấn senior-level.
+### Giải thích
+- Mô tả đầy đủ: entry points, prerequisites, exploit chain, business impact, and layered mitigations.
+- Liên hệ thực tế với web app hiện đại: SPA + API backend + CDN + reverse proxy + cloud services.
+### Ví dụ
+- Tình huống 1: triển khai thiếu policy dẫn tới bypass.
+- Tình huống 2: khắc phục bằng secure-by-default và automation checks trong CI/CD.
+- Tình huống 3: thêm observability để phát hiện bất thường theo thời gian thực.
+### Practical Checklist
+- Input validation theo schema, output encoding theo context, strict authz checks.
+- Secret management chuẩn, headers chuẩn, and least-privilege service identity.
+- Thêm regression tests để không tái phát lỗ hổng sau refactor.
+
+## Defense in Depth Blueprint
+### Tổng Quan
+- Thiết kế web security nên theo nhiều lớp từ client, edge, app, data, đến ops.
+### Giải thích
+- Nếu một lớp bị bypass, lớp tiếp theo vẫn phải giảm thiểu blast radius.
+### Ví dụ
+- Client: CSP + input constraints.
+- Edge: WAF + bot protection + rate limiting.
+- App: authz + validation + secure session management.
+- Data: encryption + least privilege + audit log.
+- Ops: patch cadence + incident runbook + tabletop exercise.
+
+## Câu Hỏi Phỏng Vấn / Interview Q&A
+
+### 🟢 [Junior] IDOR là gì?
+- **Trả lời:** IDOR là lỗi truy cập object theo ID mà không kiểm tra quyền sở hữu/ủy quyền tương ứng.
+- **Giải thích:** Luôn nhấn mạnh cả prevention lẫn detection để thể hiện tư duy vận hành.
+
+### 🟢 [Junior] Vì sao server-side validation bắt buộc?
+- **Trả lời:** Vì attacker có thể bypass mọi kiểm tra phía client bằng request thủ công.
+- **Giải thích:** Luôn nhấn mạnh cả prevention lẫn detection để thể hiện tư duy vận hành.
+
+### 🟡 [Mid] Làm sao giảm rủi ro XSS trong SPA?
+- **Trả lời:** Dùng output encoding đúng context, tránh dangerouslySetInnerHTML, bật CSP nonce/hash, và sanitize dữ liệu giàu định dạng.
+- **Giải thích:** Luôn nhấn mạnh cả prevention lẫn detection để thể hiện tư duy vận hành.
+
+### 🟡 [Mid] Rate limiting nên đặt theo gì?
+- **Trả lời:** Kết hợp IP, user ID, token fingerprint, và hành vi để tránh bypass khi attacker rotate IP.
+- **Giải thích:** Luôn nhấn mạnh cả prevention lẫn detection để thể hiện tư duy vận hành.
+
+### 🔴 [Senior] Thiết kế chống SSRF cho dịch vụ fetch URL như thế nào?
+- **Trả lời:** Bắt buộc allowlist domain, chặn private CIDR/link-local, disable redirect không tin cậy, và egress firewall.
+- **Giải thích:** Luôn nhấn mạnh cả prevention lẫn detection để thể hiện tư duy vận hành.
+
+### 🔴 [Senior] Ưu tiên gì trong giờ đầu incident security?
+- **Trả lời:** Containment trước, bảo toàn evidence, rotate secrets, thông báo stakeholders, và bắt đầu timeline điều tra.
+- **Giải thích:** Luôn nhấn mạnh cả prevention lẫn detection để thể hiện tư duy vận hành.
+
+### 🟢 [Junior] Practice question 1: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 2: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 3: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 4: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 5: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 6: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 7: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 8: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 9: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 10: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 11: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 12: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 13: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 14: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 15: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 16: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 17: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 18: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 19: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 20: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 21: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 22: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 23: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 24: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 25: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 26: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 27: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 28: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 29: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 30: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 31: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 32: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 33: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 34: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 35: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 36: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 37: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 38: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 39: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 40: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 41: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 42: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 43: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 44: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 45: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 46: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 47: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 48: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 49: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟢 [Junior] Practice question 50: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 51: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 52: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 53: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 54: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 55: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 56: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 57: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 58: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 59: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 60: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 61: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 62: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 63: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 64: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 65: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 66: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 67: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 68: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 69: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 70: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 71: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 72: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 73: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 74: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 75: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 76: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 77: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 78: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 79: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 80: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 81: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 82: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 83: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 84: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 85: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 86: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 87: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 88: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 89: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 90: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 91: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 92: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 93: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 94: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 95: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 96: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 97: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 98: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 99: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 100: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 101: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 102: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 103: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 104: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🟡 [Mid] Practice question 105: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 106: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 107: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 108: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 109: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 110: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 111: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 112: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 113: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 114: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 115: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 116: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 117: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 118: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 119: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 120: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 121: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 122: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 123: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 124: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 125: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 126: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 127: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 128: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 129: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 130: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 131: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 132: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 133: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 134: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 135: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 136: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 137: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 138: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 139: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 140: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 141: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 142: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 143: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 144: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 145: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 146: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 147: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 148: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 149: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
+
+### 🔴 [Senior] Practice question 150: How would you analyze and mitigate a web security risk under OWASP?
+- **Trả lời:** Xác định vector tấn công, điều kiện khai thác, mức impact, sau đó áp dụng layered controls và xác minh bằng test + telemetry.
+- **Giải thích:** Nếu chỉ nêu mitigation mà không nêu detection/verification thì câu trả lời chưa đủ production-grade.
+- **Ví dụ:** Với API public, áp dụng schema validation, authz theo resource owner, rate limit đa chiều, và cảnh báo bất thường theo baseline.
 
 ## Cross-References
+- Security fundamentals: `./01-security-fundamentals.md`
+- Cryptography and protocols: `./02-cryptography-and-protocols.md`
 
-- Security fundamentals: `docs/interview/shared/04-security/01-security-fundamentals.md`
-- Cryptography and protocols: `docs/interview/shared/04-security/02-cryptography-and-protocols.md`
-- Networking theory: `docs/interview/shared/01-cs-fundamentals/networking-theory.md`
-- System design theory: `docs/interview/shared/02-system-design/system-design-theory.md`
-- FE security module: `docs/interview/fe-track/modules/08-security.md`
-- BE auth-security: `docs/interview/be-track/02-backend-knowledge/04-auth-security.md`

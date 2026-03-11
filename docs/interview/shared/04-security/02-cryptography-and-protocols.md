@@ -1,862 +1,802 @@
-# Cryptography and Protocols — Mật mã học và giao thức bảo mật
-> Shared theory for both Frontend and Backend tracks.
-> Cross-referenced by: `fe-track/modules/08-security.md`, `be-track/02-backend-knowledge/04-auth-security.md`
-
----
-
-## 1. Symmetric Encryption — Mã hóa đối xứng
-
-### 🟢 Q: What is symmetric encryption? `[Junior]`
-
-**A:** Mã hóa đối xứng dùng cùng một key cho encrypt/decrypt. Rất nhanh, phù hợp mã hóa dữ liệu lớn.
-
-```text
-plaintext --Encrypt(K)--> ciphertext --Decrypt(K)--> plaintext
-```
-
-### 🟢 Q: Compare AES, DES, and 3DES `[Junior]`
-
-| Algorithm | Key size | Status | Ghi chú |
-|----------|----------|--------|--------|
-| DES | 56-bit | Obsolete | Không còn an toàn |
-| 3DES | 112/168-bit | Legacy | Chậm, đang bị loại khỏi chuẩn mới |
-| AES | 128/192/256-bit | Recommended | Chuẩn hiện đại, có acceleration phần cứng |
-
-### 🟡 Q: How do AES modes (ECB/CBC/GCM) differ? `[Mid]`
-
-| Mode | Mức an toàn | Gợi ý |
-|------|------------|------|
-| ECB | ❌ Kém | Không dùng trong production |
-| CBC | ⚠️ Trung bình | Cần IV random và MAC riêng |
-| GCM | ✅ Tốt | AEAD: vừa mã hóa vừa xác thực |
-
-```js
-// JS pseudocode
-const iv = randomBytes(12)
-const { ciphertext, tag } = aesGcmEncrypt(key, iv, plaintext, aad)
-const plain = aesGcmDecrypt(key, iv, ciphertext, tag, aad)
-```
-
-### 🔴 Q: Why nonce reuse is dangerous in AES-GCM? `[Senior]`
-
-**A:** Reuse nonce với cùng key có thể phá confidentiality và integrity. Quy tắc vận hành: cặp `(key, nonce)` phải unique.
-
----
-
-## 2. Asymmetric Cryptography — Mã hóa bất đối xứng
-
-### 🟢 Q: What are public and private keys? `[Junior]`
-
-**A:** Public key chia sẻ để verify/encrypt; private key giữ bí mật để sign/decrypt.
-
-### 🟡 Q: Compare RSA, ECDSA, and Diffie-Hellman `[Mid]`
-
-| Algorithm | Mục đích | Output |
-|----------|----------|--------|
-| RSA | Encryption/Signature | Ciphertext hoặc signature |
-| ECDSA | Signature | Signature nhỏ gọn |
-| Diffie-Hellman/ECDHE | Key exchange | Shared secret |
-
-### 🟡 Q: Explain Diffie-Hellman in simple steps `[Mid]`
-
-```text
-Alice: private a, sends public A
-Bob:   private b, sends public B
-Alice computes s = f(B, a)
-Bob computes   s = f(A, b)
-=> both derive same shared secret s
-```
-
-### 🔴 Q: Why does modern TLS prefer ECDHE? `[Senior]`
-
-**A:** ECDHE cho Perfect Forward Secrecy: lộ private key dài hạn hôm nay không giải mã được traffic cũ đã capture.
-
----
-
-## 3. Hashing & Password Hashing
-
-### 🟢 Q: What is SHA-256 used for? `[Junior]`
-
-**A:** Dùng cho integrity/fingerprint/signature internals. Không dùng trực tiếp để lưu password.
-
-### 🟢 Q: bcrypt vs argon2 `[Junior]`
-
-| Algorithm | Dùng cho password | Ghi chú |
-|----------|-------------------|--------|
-| bcrypt | Có | Adaptive cost, phổ biến |
-| argon2id | Có (khuyến nghị) | Memory-hard, chống GPU tốt |
-| SHA-256 | Không nên dùng trực tiếp | Quá nhanh |
-
-### 🟡 Q: Password hashing best practices `[Mid]`
-
-1. Dùng argon2id hoặc bcrypt
-2. Salt unique cho mỗi user
-3. Optional pepper trong secret manager
-4. Rehash khi policy cost thay đổi
-
-```go
-// Go-like pseudocode
-salt := randomBytes(16)
-hash := argon2id(password, salt, mem=64*1024, iterations=3, parallelism=4)
-store(userID, salt, hash, paramsVersion)
-```
-
-### 🔴 Q: Why not encrypt passwords instead of hashing? `[Senior]`
-
-**A:** Encrypt cần key decrypt; key lộ thì lộ toàn bộ plaintext passwords. Hashing one-way giảm rủi ro này.
-
----
-
-## 4. Digital Signatures — Chữ ký số
-
-### 🟢 Q: How digital signatures work? `[Junior]`
-
-**A:** Signer ký hash của message bằng private key; verifier kiểm tra bằng public key.
-
-```text
-message -> hash -> sign(privateKey) => signature
-verify(publicKey, hash(message), signature)
-```
-
-### 🟡 Q: What properties do signatures provide? `[Mid]`
-
-| Property | Có? |
-|----------|-----|
-| Integrity | ✅ |
-| Authenticity | ✅ |
-| Non-repudiation | ✅ (tùy legal context) |
-| Confidentiality | ❌ |
-
-### 🔴 Q: Signature use cases in production `[Senior]`
-
-**A:** JWT signing, artifact signing, firmware update verification, document e-signing, blockchain transactions.
-
----
-
-## 5. PKI — Certificates, CAs, Chain of Trust
-
-### 🟢 Q: What is PKI? `[Junior]`
-
-**A:** PKI là hạ tầng quản lý certificate/public key để xác minh danh tính qua CA.
-
-### 🟡 Q: Explain chain of trust `[Mid]`
-
-```text
-Leaf cert (example.com)
-  signed by Intermediate CA
-  signed by Root CA (trusted by OS/browser)
-```
-
-### 🟡 Q: What should clients verify in certificates? `[Mid]`
-
-- SAN/hostname match
-- Valid time range
-- Valid signature chain
-- Revocation signal (OCSP/CRL when applicable)
-
-### 🔴 Q: Common PKI operational failures `[Senior]`
-
-- Cert expiry outage
-- Missing intermediate chain
-- Private key leakage
-- Manual, non-automated rotation
-
----
-
-## 6. TLS/SSL Handshake — Step by Step
-
-### 🟢 Q: What is TLS handshake? `[Junior]`
-
-**A:** Quá trình client/server thỏa thuận phiên mã hóa và xác thực danh tính trước khi gửi dữ liệu ứng dụng.
-
-### 🟡 Q: TLS 1.3 handshake steps `[Mid]`
-
-1. ClientHello (versions, ciphers, key share)
-2. ServerHello (chosen params, key share)
-3. Certificate + CertificateVerify + Finished từ server
-4. Client verify certificate chain + hostname
-5. Client gửi Finished
-6. Bắt đầu encrypted HTTP data
-
-```text
-Client                                 Server
-  | --- ClientHello ------------------> |
-  | <--- ServerHello ------------------ |
-  | <--- Certificate + Finished ------- |
-  | --- Finished ---------------------> |
-  | ===== Encrypted application data == |
-```
-
-### 🔴 Q: TLS 1.2 vs TLS 1.3 differences `[Senior]`
-
-| Topic | TLS 1.2 | TLS 1.3 |
-|------|---------|---------|
-| RTT | Cao hơn | Thấp hơn |
-| Legacy ciphers | Nhiều hơn | Loại bỏ nhiều thuật toán yếu |
-| Forward secrecy | Optional | Mặc định tốt hơn với (EC)DHE |
-
----
-
-## 7. HTTPS — Hybrid Model
-
-### 🟢 Q: How HTTPS combines asymmetric + symmetric crypto? `[Junior]`
-
-**A:** Asymmetric dùng trong handshake để xác thực/trao đổi key, symmetric dùng để mã hóa traffic vì hiệu năng cao.
-
-### 🟡 Q: Why not use asymmetric crypto for all data? `[Mid]`
-
-**A:** Vì asymmetric chậm hơn nhiều. Hybrid model là cân bằng giữa bảo mật và hiệu năng.
-
-### 🔴 Q: What is HSTS and why important? `[Senior]`
-
-**A:** HSTS buộc browser dùng HTTPS, giảm downgrade và SSL stripping attacks.
-
-```http
-Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
-```
-
----
-
-## 8. Key Management Best Practices
-
-### 🟢 Q: What is key lifecycle? `[Junior]`
-
-**A:** Generate → Store → Distribute → Rotate → Revoke → Destroy.
-
-### 🟡 Q: KMS and HSM difference? `[Mid]`
-
-| Tool | Vai trò |
-|------|---------|
-| KMS | Quản lý key qua service/API |
-| HSM | Bảo vệ key bằng phần cứng chuyên dụng |
-
-### 🟡 Q: What is envelope encryption? `[Mid]`
-
-**A:** Dùng DEK mã hóa data, dùng KEK (KMS/HSM) mã hóa DEK.
-
-```text
-Data --encrypted with--> DEK
-DEK  --encrypted with--> KEK
-```
-
-### 🔴 Q: Key management anti-patterns `[Senior]`
-
-- Hardcode keys in source
-- Share one key across environments
-- Never rotate keys
-- Log plaintext secrets
-
----
-
-## 9. Interview Q&A
-
-### 🟢 Q: Why is DES deprecated? `[Junior]`
-
-**A:** DES key size nhỏ, brute-force thực tế khả thi.
-
-### 🟢 Q: What does SHA-256 provide? `[Junior]`
-
-**A:** Integrity/fingerprint, không phải password hashing trực tiếp.
-
-### 🟡 Q: RSA vs ECC certificates: when to choose? `[Mid]`
-
-**A:** ECC nhỏ/nhanh hơn, RSA tương thích rộng hơn.
-
-### 🟡 Q: Why short-lived tokens are safer? `[Mid]`
-
-**A:** Giảm cửa sổ lạm dụng khi token bị lộ.
-
-### 🟡 Q: What is perfect forward secrecy? `[Mid]`
-
-**A:** Lộ private key dài hạn không giải mã được session cũ.
-
-### 🔴 Q: How to rotate JWT signing keys safely? `[Senior]`
-
-**A:** Dùng JWKS + kid, rollout key mới song song, retire key cũ theo plan.
-
-### 🔴 Q: How to enforce crypto agility? `[Senior]`
-
-**A:** Versioned config + test migration + central policy registry.
-
-### 🔴 Q: How to avoid downtime during certificate rotation? `[Senior]`
-
-**A:** Tự động renew trước hạn, health checks chain/SAN, deploy staged.
-
----
-
-## 10. Practice Bank
-
-### 🟢 Q: Cryptography scenario drill #1? `[Junior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟢 Q: Cryptography scenario drill #2? `[Junior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟢 Q: Cryptography scenario drill #3? `[Junior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟢 Q: Cryptography scenario drill #4? `[Junior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟢 Q: Cryptography scenario drill #5? `[Junior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟢 Q: Cryptography scenario drill #6? `[Junior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟢 Q: Cryptography scenario drill #7? `[Junior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟢 Q: Cryptography scenario drill #8? `[Junior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟢 Q: Cryptography scenario drill #9? `[Junior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟢 Q: Cryptography scenario drill #10? `[Junior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟢 Q: Cryptography scenario drill #11? `[Junior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟢 Q: Cryptography scenario drill #12? `[Junior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟢 Q: Cryptography scenario drill #13? `[Junior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟢 Q: Cryptography scenario drill #14? `[Junior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟢 Q: Cryptography scenario drill #15? `[Junior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟢 Q: Cryptography scenario drill #16? `[Junior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟢 Q: Cryptography scenario drill #17? `[Junior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟢 Q: Cryptography scenario drill #18? `[Junior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟢 Q: Cryptography scenario drill #19? `[Junior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟢 Q: Cryptography scenario drill #20? `[Junior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟢 Q: Cryptography scenario drill #21? `[Junior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟢 Q: Cryptography scenario drill #22? `[Junior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟢 Q: Cryptography scenario drill #23? `[Junior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟢 Q: Cryptography scenario drill #24? `[Junior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟢 Q: Cryptography scenario drill #25? `[Junior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟢 Q: Cryptography scenario drill #26? `[Junior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟢 Q: Cryptography scenario drill #27? `[Junior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟢 Q: Cryptography scenario drill #28? `[Junior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟡 Q: Cryptography scenario drill #29? `[Mid]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟡 Q: Cryptography scenario drill #30? `[Mid]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟡 Q: Cryptography scenario drill #31? `[Mid]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟡 Q: Cryptography scenario drill #32? `[Mid]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟡 Q: Cryptography scenario drill #33? `[Mid]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟡 Q: Cryptography scenario drill #34? `[Mid]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟡 Q: Cryptography scenario drill #35? `[Mid]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟡 Q: Cryptography scenario drill #36? `[Mid]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟡 Q: Cryptography scenario drill #37? `[Mid]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟡 Q: Cryptography scenario drill #38? `[Mid]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟡 Q: Cryptography scenario drill #39? `[Mid]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟡 Q: Cryptography scenario drill #40? `[Mid]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟡 Q: Cryptography scenario drill #41? `[Mid]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟡 Q: Cryptography scenario drill #42? `[Mid]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟡 Q: Cryptography scenario drill #43? `[Mid]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟡 Q: Cryptography scenario drill #44? `[Mid]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟡 Q: Cryptography scenario drill #45? `[Mid]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟡 Q: Cryptography scenario drill #46? `[Mid]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟡 Q: Cryptography scenario drill #47? `[Mid]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟡 Q: Cryptography scenario drill #48? `[Mid]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟡 Q: Cryptography scenario drill #49? `[Mid]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟡 Q: Cryptography scenario drill #50? `[Mid]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟡 Q: Cryptography scenario drill #51? `[Mid]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟡 Q: Cryptography scenario drill #52? `[Mid]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟡 Q: Cryptography scenario drill #53? `[Mid]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟡 Q: Cryptography scenario drill #54? `[Mid]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟡 Q: Cryptography scenario drill #55? `[Mid]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟡 Q: Cryptography scenario drill #56? `[Mid]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🟡 Q: Cryptography scenario drill #57? `[Mid]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🔴 Q: Cryptography scenario drill #58? `[Senior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🔴 Q: Cryptography scenario drill #59? `[Senior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🔴 Q: Cryptography scenario drill #60? `[Senior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🔴 Q: Cryptography scenario drill #61? `[Senior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🔴 Q: Cryptography scenario drill #62? `[Senior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🔴 Q: Cryptography scenario drill #63? `[Senior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🔴 Q: Cryptography scenario drill #64? `[Senior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🔴 Q: Cryptography scenario drill #65? `[Senior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🔴 Q: Cryptography scenario drill #66? `[Senior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🔴 Q: Cryptography scenario drill #67? `[Senior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🔴 Q: Cryptography scenario drill #68? `[Senior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🔴 Q: Cryptography scenario drill #69? `[Senior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🔴 Q: Cryptography scenario drill #70? `[Senior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🔴 Q: Cryptography scenario drill #71? `[Senior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🔴 Q: Cryptography scenario drill #72? `[Senior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🔴 Q: Cryptography scenario drill #73? `[Senior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🔴 Q: Cryptography scenario drill #74? `[Senior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🔴 Q: Cryptography scenario drill #75? `[Senior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🔴 Q: Cryptography scenario drill #76? `[Senior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🔴 Q: Cryptography scenario drill #77? `[Senior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🔴 Q: Cryptography scenario drill #78? `[Senior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🔴 Q: Cryptography scenario drill #79? `[Senior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🔴 Q: Cryptography scenario drill #80? `[Senior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🔴 Q: Cryptography scenario drill #81? `[Senior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🔴 Q: Cryptography scenario drill #82? `[Senior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🔴 Q: Cryptography scenario drill #83? `[Senior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🔴 Q: Cryptography scenario drill #84? `[Senior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
-
-### 🔴 Q: Cryptography scenario drill #85? `[Senior]`
-
-**A:** Trả lời theo khung: threat model → primitive phù hợp → key lifecycle → trade-off → verification bằng test/monitoring.
-
----
+# Cryptography and Protocols
+
+## Tổng Quan
+- Tài liệu trình bày nền tảng mật mã học và giao thức bảo mật cho phỏng vấn backend/frontend.
+- Cross-references: `./01-security-fundamentals.md`, `./03-web-security-owasp.md`
+
+## Symmetric Encryption (AES, DES)
+### Tổng Quan
+- Mã hóa đối xứng dùng cùng key để encrypt/decrypt, hiệu năng cao cho dữ liệu lớn.
+### Giải thích
+- Khi trả lời phỏng vấn, hãy phân biệt rõ security goals: confidentiality, integrity, authenticity, availability.
+- Nên mô tả attack surface và failure mode nếu vận hành sai (nonce reuse, weak key, misconfigured ciphers, expired cert).
+### Ví dụ
+- Ví dụ 1: API service mã hóa dữ liệu nhạy cảm bằng AES-GCM với nonce unique per message.
+- Ví dụ 2: Authentication server ký JWT bằng private key và publish public key qua JWKS.
+- Ví dụ 3: Hệ thống dùng KMS để envelope encryption và tự động key rotation.
+### Technical Checklist
+- Thuật toán mạnh + chế độ an toàn + key size hợp chuẩn + lifecycle quản lý rõ ràng.
+- Có monitoring cho certificate expiry, handshake failure spike, và unusual signature verification errors.
+
+## Asymmetric Cryptography (RSA, ECDSA)
+### Tổng Quan
+- Mật mã khóa công khai dùng cặp public/private key để xác thực và trao đổi bí mật.
+### Giải thích
+- Khi trả lời phỏng vấn, hãy phân biệt rõ security goals: confidentiality, integrity, authenticity, availability.
+- Nên mô tả attack surface và failure mode nếu vận hành sai (nonce reuse, weak key, misconfigured ciphers, expired cert).
+### Ví dụ
+- Ví dụ 1: API service mã hóa dữ liệu nhạy cảm bằng AES-GCM với nonce unique per message.
+- Ví dụ 2: Authentication server ký JWT bằng private key và publish public key qua JWKS.
+- Ví dụ 3: Hệ thống dùng KMS để envelope encryption và tự động key rotation.
+### Technical Checklist
+- Thuật toán mạnh + chế độ an toàn + key size hợp chuẩn + lifecycle quản lý rõ ràng.
+- Có monitoring cho certificate expiry, handshake failure spike, và unusual signature verification errors.
+
+## Hashing and Password Hashing (SHA, bcrypt, argon2)
+### Tổng Quan
+- Hash phục vụ integrity; password hashing cần thuật toán chậm và memory-hard.
+### Giải thích
+- Khi trả lời phỏng vấn, hãy phân biệt rõ security goals: confidentiality, integrity, authenticity, availability.
+- Nên mô tả attack surface và failure mode nếu vận hành sai (nonce reuse, weak key, misconfigured ciphers, expired cert).
+### Ví dụ
+- Ví dụ 1: API service mã hóa dữ liệu nhạy cảm bằng AES-GCM với nonce unique per message.
+- Ví dụ 2: Authentication server ký JWT bằng private key và publish public key qua JWKS.
+- Ví dụ 3: Hệ thống dùng KMS để envelope encryption và tự động key rotation.
+### Technical Checklist
+- Thuật toán mạnh + chế độ an toàn + key size hợp chuẩn + lifecycle quản lý rõ ràng.
+- Có monitoring cho certificate expiry, handshake failure spike, và unusual signature verification errors.
+
+## Digital Signatures
+### Tổng Quan
+- Chữ ký số đảm bảo integrity, authenticity, và non-repudiation ở mức kỹ thuật.
+### Giải thích
+- Khi trả lời phỏng vấn, hãy phân biệt rõ security goals: confidentiality, integrity, authenticity, availability.
+- Nên mô tả attack surface và failure mode nếu vận hành sai (nonce reuse, weak key, misconfigured ciphers, expired cert).
+### Ví dụ
+- Ví dụ 1: API service mã hóa dữ liệu nhạy cảm bằng AES-GCM với nonce unique per message.
+- Ví dụ 2: Authentication server ký JWT bằng private key và publish public key qua JWKS.
+- Ví dụ 3: Hệ thống dùng KMS để envelope encryption và tự động key rotation.
+### Technical Checklist
+- Thuật toán mạnh + chế độ an toàn + key size hợp chuẩn + lifecycle quản lý rõ ràng.
+- Có monitoring cho certificate expiry, handshake failure spike, và unusual signature verification errors.
+
+## Public Key Infrastructure (PKI)
+### Tổng Quan
+- PKI quản lý certificate, chain of trust, issuance và revocation.
+### Giải thích
+- Khi trả lời phỏng vấn, hãy phân biệt rõ security goals: confidentiality, integrity, authenticity, availability.
+- Nên mô tả attack surface và failure mode nếu vận hành sai (nonce reuse, weak key, misconfigured ciphers, expired cert).
+### Ví dụ
+- Ví dụ 1: API service mã hóa dữ liệu nhạy cảm bằng AES-GCM với nonce unique per message.
+- Ví dụ 2: Authentication server ký JWT bằng private key và publish public key qua JWKS.
+- Ví dụ 3: Hệ thống dùng KMS để envelope encryption và tự động key rotation.
+### Technical Checklist
+- Thuật toán mạnh + chế độ an toàn + key size hợp chuẩn + lifecycle quản lý rõ ràng.
+- Có monitoring cho certificate expiry, handshake failure spike, và unusual signature verification errors.
+
+## TLS Handshake and HTTPS
+### Tổng Quan
+- TLS thiết lập secure channel; HTTPS là HTTP chạy trên TLS.
+### Giải thích
+- Khi trả lời phỏng vấn, hãy phân biệt rõ security goals: confidentiality, integrity, authenticity, availability.
+- Nên mô tả attack surface và failure mode nếu vận hành sai (nonce reuse, weak key, misconfigured ciphers, expired cert).
+### Ví dụ
+- Ví dụ 1: API service mã hóa dữ liệu nhạy cảm bằng AES-GCM với nonce unique per message.
+- Ví dụ 2: Authentication server ký JWT bằng private key và publish public key qua JWKS.
+- Ví dụ 3: Hệ thống dùng KMS để envelope encryption và tự động key rotation.
+### Technical Checklist
+- Thuật toán mạnh + chế độ an toàn + key size hợp chuẩn + lifecycle quản lý rõ ràng.
+- Có monitoring cho certificate expiry, handshake failure spike, và unusual signature verification errors.
+
+## Key Management and Rotation
+### Tổng Quan
+- Quản lý vòng đời khóa là yếu tố sống còn của hệ thống bảo mật.
+### Giải thích
+- Khi trả lời phỏng vấn, hãy phân biệt rõ security goals: confidentiality, integrity, authenticity, availability.
+- Nên mô tả attack surface và failure mode nếu vận hành sai (nonce reuse, weak key, misconfigured ciphers, expired cert).
+### Ví dụ
+- Ví dụ 1: API service mã hóa dữ liệu nhạy cảm bằng AES-GCM với nonce unique per message.
+- Ví dụ 2: Authentication server ký JWT bằng private key và publish public key qua JWKS.
+- Ví dụ 3: Hệ thống dùng KMS để envelope encryption và tự động key rotation.
+### Technical Checklist
+- Thuật toán mạnh + chế độ an toàn + key size hợp chuẩn + lifecycle quản lý rõ ràng.
+- Có monitoring cho certificate expiry, handshake failure spike, và unusual signature verification errors.
+
+## Algorithm Comparison Tables
+### Giải thích
+- Bảng dưới hỗ trợ trả lời nhanh khi interviewer hỏi so sánh thuật toán.
+
+| Primitive | Best Use | Not Recommended For | Notes |
+| --- | --- | --- | --- |
+| AES-GCM | Data at rest/in transit with AEAD | Reusing nonce with same key | Fast, modern, authenticated |
+| RSA | Compatibility and signatures | Bulk data encryption | Key size lớn, chậm hơn ECC |
+| ECDSA | Efficient signatures | Legacy-only stacks lacking support | Key nhỏ, chữ ký gọn |
+| Argon2id | Password hashing | General file hashing | Memory-hard chống GPU |
+| SHA-256 | Integrity checks | Password storage trực tiếp | One-way hash, rất nhanh |
+
+## TLS 1.2 vs TLS 1.3
+### Tổng Quan
+- TLS 1.3 đơn giản hóa handshake, loại bỏ cipher yếu, và cải thiện bảo mật mặc định.
+### Giải thích
+- Interview thường hỏi khác biệt về RTT, forward secrecy và backward compatibility.
+### Ví dụ
+- ClientHello/ServerHello trao đổi key share, sau đó hai bên xác thực và chuyển sang encrypted application data.
+
+## Câu Hỏi Phỏng Vấn / Interview Q&A
+
+### 🟢 [Junior] Vì sao DES không còn an toàn?
+- **Trả lời:** Vì key size quá nhỏ và brute-force đã khả thi bằng tài nguyên hiện đại.
+- **Giải thích:** Nên gắn câu trả lời với một tình huống hệ thống thực tế để tăng sức thuyết phục.
+
+### 🟢 [Junior] Khác nhau giữa hashing và encryption?
+- **Trả lời:** Encryption có thể đảo ngược bằng key; hashing là một chiều cho integrity/indexing/password workflow.
+- **Giải thích:** Nên gắn câu trả lời với một tình huống hệ thống thực tế để tăng sức thuyết phục.
+
+### 🟡 [Mid] Tại sao password nên dùng argon2/bcrypt thay vì SHA-256 thuần?
+- **Trả lời:** Vì argon2/bcrypt chậm có chủ đích và memory-hard, khiến brute-force tốn tài nguyên hơn đáng kể.
+- **Giải thích:** Nên gắn câu trả lời với một tình huống hệ thống thực tế để tăng sức thuyết phục.
+
+### 🟡 [Mid] Forward secrecy là gì?
+- **Trả lời:** Nếu long-term private key bị lộ trong tương lai, session cũ vẫn không bị giải mã dễ dàng.
+- **Giải thích:** Nên gắn câu trả lời với một tình huống hệ thống thực tế để tăng sức thuyết phục.
+
+### 🔴 [Senior] Thiết kế key rotation zero-downtime cho JWT signing như thế nào?
+- **Trả lời:** Dùng key version (kid), publish JWKS đa key trong giai đoạn chuyển tiếp, monitor verify errors rồi retire key cũ.
+- **Giải thích:** Nên gắn câu trả lời với một tình huống hệ thống thực tế để tăng sức thuyết phục.
+
+### 🔴 [Senior] Rủi ro lớn nhất khi dùng AES-GCM sai là gì?
+- **Trả lời:** Reuse nonce với cùng key làm mất cả confidentiality và integrity.
+- **Giải thích:** Nên gắn câu trả lời với một tình huống hệ thống thực tế để tăng sức thuyết phục.
+
+### 🟢 [Junior] Practice question 1: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 2: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 3: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 4: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 5: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 6: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 7: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 8: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 9: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 10: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 11: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 12: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 13: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 14: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 15: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 16: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 17: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 18: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 19: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 20: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 21: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 22: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 23: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 24: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 25: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 26: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 27: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 28: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 29: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 30: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 31: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 32: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 33: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 34: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 35: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 36: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 37: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 38: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 39: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟢 [Junior] Practice question 40: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 41: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 42: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 43: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 44: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 45: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 46: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 47: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 48: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 49: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 50: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 51: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 52: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 53: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 54: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 55: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 56: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 57: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 58: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 59: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 60: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 61: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 62: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 63: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 64: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 65: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 66: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 67: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 68: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 69: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 70: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 71: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 72: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 73: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 74: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 75: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 76: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 77: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 78: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 79: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 80: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 81: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 82: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 83: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 84: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🟡 [Mid] Practice question 85: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 86: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 87: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 88: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 89: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 90: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 91: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 92: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 93: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 94: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 95: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 96: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 97: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 98: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 99: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 100: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 101: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 102: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 103: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 104: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 105: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 106: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 107: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 108: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 109: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 110: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 111: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 112: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 113: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 114: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 115: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 116: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 117: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 118: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 119: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 120: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 121: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 122: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 123: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+### 🔴 [Senior] Practice question 124: How would you secure cryptographic operations end-to-end?
+- **Trả lời:** Xác định tài sản cần bảo vệ, chọn primitive đúng mục tiêu, quản lý key lifecycle, và triển khai monitoring + rotation.
+- **Giải thích:** Sai sót vận hành thường nguy hiểm hơn bản thân thuật toán; do đó cần checklist vận hành và incident runbook.
+- **Ví dụ:** Encrypt bằng AES-GCM, key giữ trong KMS, cert auto-renew, alert khi handshake failure tăng bất thường.
+
+## Operational Security Playbooks
+### Tổng Quan
+- Vận hành mật mã an toàn đòi hỏi playbook rõ ràng cho rotate key, revoke certificate, và incident response.
+### Giải thích
+- Thiếu playbook thường dẫn đến downtime hoặc rollback không an toàn khi xảy ra sự cố bảo mật.
+- Trong phỏng vấn senior, bạn nên mô tả cả technical steps và coordination steps giữa SRE, backend, security, compliance.
+### Ví dụ
+- Playbook 1: Rotate signing key theo lịch, publish key mới, monitor verification failures, retire key cũ an toàn.
+- Playbook 2: Certificate compromise: revoke, reissue, deploy theo canary, audit toàn bộ dependent services.
+- Playbook 3: Incident simulation định kỳ để kiểm tra readiness thực tế của đội.
+
+## Threat Modeling for Cryptographic Design
+### Tổng Quan
+- Threat modeling giúp chọn đúng primitive thay vì “dùng thuật toán mạnh một cách mù quáng”.
+### Giải thích
+- Cần phân loại attacker capability: passive eavesdropper, active MITM, insider threat, supply chain attacker.
+- Mỗi attacker profile dẫn tới control set khác nhau: PFS, signature verification, attestation, key isolation.
+### Ví dụ
+- Với attacker MITM: bắt buộc TLS chuẩn, certificate validation nghiêm ngặt, và pinning khi phù hợp.
+- Với insider threat: tách quyền KMS, audit immutable, và alert theo policy violation.
 
 ## Cross-References
-
-- Security foundations: `docs/interview/shared/04-security/01-security-fundamentals.md`
-- OWASP web security: `docs/interview/shared/04-security/03-web-security-owasp.md`
-- Networking: `docs/interview/shared/01-cs-fundamentals/networking-theory.md`
-- System design: `docs/interview/shared/02-system-design/system-design-theory.md`
-- FE security module: `docs/interview/fe-track/modules/08-security.md`
-- BE auth-security: `docs/interview/be-track/02-backend-knowledge/04-auth-security.md`
-
----
-
-## 11. Supplemental Interview Drills
-
-### 🟢 Q: Cryptography scenario drill #86? `[Junior]`
-
-**A:** Nêu rõ asset cần bảo vệ, adversary model, thuật toán phù hợp, cách quản lý key/cert, và cách kiểm chứng bằng test + quan sát runtime.
-
-
-### 🟢 Q: Cryptography scenario drill #87? `[Junior]`
-
-**A:** Nêu rõ asset cần bảo vệ, adversary model, thuật toán phù hợp, cách quản lý key/cert, và cách kiểm chứng bằng test + quan sát runtime.
-
-
-### 🟢 Q: Cryptography scenario drill #88? `[Junior]`
-
-**A:** Nêu rõ asset cần bảo vệ, adversary model, thuật toán phù hợp, cách quản lý key/cert, và cách kiểm chứng bằng test + quan sát runtime.
-
-
-### 🟢 Q: Cryptography scenario drill #89? `[Junior]`
-
-**A:** Nêu rõ asset cần bảo vệ, adversary model, thuật toán phù hợp, cách quản lý key/cert, và cách kiểm chứng bằng test + quan sát runtime.
-
-
-### 🟢 Q: Cryptography scenario drill #90? `[Junior]`
-
-**A:** Nêu rõ asset cần bảo vệ, adversary model, thuật toán phù hợp, cách quản lý key/cert, và cách kiểm chứng bằng test + quan sát runtime.
-
-
-### 🟢 Q: Cryptography scenario drill #91? `[Junior]`
-
-**A:** Nêu rõ asset cần bảo vệ, adversary model, thuật toán phù hợp, cách quản lý key/cert, và cách kiểm chứng bằng test + quan sát runtime.
-
-
-### 🟢 Q: Cryptography scenario drill #92? `[Junior]`
-
-**A:** Nêu rõ asset cần bảo vệ, adversary model, thuật toán phù hợp, cách quản lý key/cert, và cách kiểm chứng bằng test + quan sát runtime.
-
-
-### 🟢 Q: Cryptography scenario drill #93? `[Junior]`
-
-**A:** Nêu rõ asset cần bảo vệ, adversary model, thuật toán phù hợp, cách quản lý key/cert, và cách kiểm chứng bằng test + quan sát runtime.
-
-
-### 🟢 Q: Cryptography scenario drill #94? `[Junior]`
-
-**A:** Nêu rõ asset cần bảo vệ, adversary model, thuật toán phù hợp, cách quản lý key/cert, và cách kiểm chứng bằng test + quan sát runtime.
-
-
-### 🟡 Q: Cryptography scenario drill #95? `[Mid]`
-
-**A:** Nêu rõ asset cần bảo vệ, adversary model, thuật toán phù hợp, cách quản lý key/cert, và cách kiểm chứng bằng test + quan sát runtime.
-
-
-### 🟡 Q: Cryptography scenario drill #96? `[Mid]`
-
-**A:** Nêu rõ asset cần bảo vệ, adversary model, thuật toán phù hợp, cách quản lý key/cert, và cách kiểm chứng bằng test + quan sát runtime.
-
-
-### 🟡 Q: Cryptography scenario drill #97? `[Mid]`
-
-**A:** Nêu rõ asset cần bảo vệ, adversary model, thuật toán phù hợp, cách quản lý key/cert, và cách kiểm chứng bằng test + quan sát runtime.
-
-
-### 🟡 Q: Cryptography scenario drill #98? `[Mid]`
-
-**A:** Nêu rõ asset cần bảo vệ, adversary model, thuật toán phù hợp, cách quản lý key/cert, và cách kiểm chứng bằng test + quan sát runtime.
-
-
-### 🟡 Q: Cryptography scenario drill #99? `[Mid]`
-
-**A:** Nêu rõ asset cần bảo vệ, adversary model, thuật toán phù hợp, cách quản lý key/cert, và cách kiểm chứng bằng test + quan sát runtime.
-
-
-### 🟡 Q: Cryptography scenario drill #100? `[Mid]`
-
-**A:** Nêu rõ asset cần bảo vệ, adversary model, thuật toán phù hợp, cách quản lý key/cert, và cách kiểm chứng bằng test + quan sát runtime.
-
-
-### 🟡 Q: Cryptography scenario drill #101? `[Mid]`
-
-**A:** Nêu rõ asset cần bảo vệ, adversary model, thuật toán phù hợp, cách quản lý key/cert, và cách kiểm chứng bằng test + quan sát runtime.
-
-
-### 🟡 Q: Cryptography scenario drill #102? `[Mid]`
-
-**A:** Nêu rõ asset cần bảo vệ, adversary model, thuật toán phù hợp, cách quản lý key/cert, và cách kiểm chứng bằng test + quan sát runtime.
-
-
-### 🔴 Q: Cryptography scenario drill #103? `[Senior]`
-
-**A:** Nêu rõ asset cần bảo vệ, adversary model, thuật toán phù hợp, cách quản lý key/cert, và cách kiểm chứng bằng test + quan sát runtime.
-
-
-### 🔴 Q: Cryptography scenario drill #104? `[Senior]`
-
-**A:** Nêu rõ asset cần bảo vệ, adversary model, thuật toán phù hợp, cách quản lý key/cert, và cách kiểm chứng bằng test + quan sát runtime.
-
-
-### 🔴 Q: Cryptography scenario drill #105? `[Senior]`
-
-**A:** Nêu rõ asset cần bảo vệ, adversary model, thuật toán phù hợp, cách quản lý key/cert, và cách kiểm chứng bằng test + quan sát runtime.
-
-
-### 🔴 Q: Cryptography scenario drill #106? `[Senior]`
-
-**A:** Nêu rõ asset cần bảo vệ, adversary model, thuật toán phù hợp, cách quản lý key/cert, và cách kiểm chứng bằng test + quan sát runtime.
-
-
-### 🔴 Q: Cryptography scenario drill #107? `[Senior]`
-
-**A:** Nêu rõ asset cần bảo vệ, adversary model, thuật toán phù hợp, cách quản lý key/cert, và cách kiểm chứng bằng test + quan sát runtime.
-
-
-### 🔴 Q: Cryptography scenario drill #108? `[Senior]`
-
-**A:** Nêu rõ asset cần bảo vệ, adversary model, thuật toán phù hợp, cách quản lý key/cert, và cách kiểm chứng bằng test + quan sát runtime.
-
-
-### 🔴 Q: Cryptography scenario drill #109? `[Senior]`
-
-**A:** Nêu rõ asset cần bảo vệ, adversary model, thuật toán phù hợp, cách quản lý key/cert, và cách kiểm chứng bằng test + quan sát runtime.
-
-
-### 🔴 Q: Cryptography scenario drill #110? `[Senior]`
-
-**A:** Nêu rõ asset cần bảo vệ, adversary model, thuật toán phù hợp, cách quản lý key/cert, và cách kiểm chứng bằng test + quan sát runtime.
-
----
-
-## 12. Quick Terms Review
-- **Nonce:** Giá trị chỉ dùng một lần trong encryption/session setup.
-- **Salt:** Random value cho password hash để chống rainbow tables.
-- **Pepper:** Secret chung hệ thống lưu ngoài DB để tăng độ khó cracking.
-- **AEAD:** Authenticated Encryption with Associated Data.
-- **PFS:** Perfect Forward Secrecy cho session keys.
-- **OCSP:** Kiểm tra trạng thái thu hồi certificate.
-- **JWKS:** Endpoint chứa public keys để verify JWT.
-- **KDF:** Hàm dẫn xuất khóa như HKDF/PBKDF2/Argon2.
+- Security fundamentals: `./01-security-fundamentals.md`
+- OWASP and web attacks: `./03-web-security-owasp.md`
+
+## Final Review Checklist
+### Tổng Quan
+- Trước release, xác nhận thuật toán, key lifecycle, certificate health, và monitoring đều đạt chuẩn.
+### Giải thích
+- Checklist ngắn nhưng giúp giảm lỗi cấu hình có thể gây sự cố nghiêm trọng ở production.
+### Ví dụ
+- Chạy kiểm tra tự động cho TLS config, cert expiry, và secret leakage trong pipeline CI/CD.

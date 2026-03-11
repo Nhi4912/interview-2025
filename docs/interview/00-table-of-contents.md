@@ -1,4 +1,4 @@
-# Interview Preparation Knowledge Base — Mục Lục Tổng Hợp
+# Interview Preparation Knowledge Base / Mục Lục — Mục Lục Tổng Hợp
 
 > **Comprehensive guide for mid-senior developers targeting Frontend (React/TypeScript) and Backend (Go) roles.**
 > Target companies: Google, Microsoft, Grab, Axon, Employment Hero, Zalo/VNG
@@ -6,7 +6,7 @@
 
 ---
 
-## 📋 Quick Start
+## 📋 Quick Start / Bắt Đầu Nhanh
 
 - [Interview Market Overview 2025-2026](./00-interview-market-overview.md) — Xu hướng phỏng vấn và so sánh các công ty
 - [Quick Start Guide](./00-quick-start-guide.md)
@@ -222,7 +222,7 @@ See [be-track/05-company-guide.md](./be-track/05-company-guide.md) for BE-specif
 
 ---
 
-## 📊 Content Statistics
+## 📊 Content Statistics / Thống Kê Nội Dung
 
 | Section             | Files          | Est. Words   | Coverage                                             |
 | ------------------- | -------------- | ------------ | ---------------------------------------------------- |
@@ -234,7 +234,7 @@ See [be-track/05-company-guide.md](./be-track/05-company-guide.md) for BE-specif
 
 ---
 
-## 🔗 Cross-Reference Guide
+## 🔗 Cross-Reference Guide / Hướng Dẫn Tham Chiếu Chéo
 
 | If studying...  | Also see...                                                                                                                                                    |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
