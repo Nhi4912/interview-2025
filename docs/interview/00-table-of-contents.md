@@ -1,256 +1,251 @@
-# Frontend Interview Preparation Guide 2025-2026
-## Complete Learning Path for Big Tech Companies
+# Interview Preparation Knowledge Base — Mục Lục Tổng Hợp
 
-> Comprehensive guide for mid-level to senior frontend developers targeting positions at Meta, Microsoft, Google, Amazon, Grab, Axon, and other top tech companies.
-
----
-
-## 📚 Learning Path Structure
-
-### Part 1: JavaScript Fundamentals
-- [01. Variables & Data Types](./01-javascript-fundamentals/01-variables-data-types.md)
-- [02. Scope & Hoisting](./01-javascript-fundamentals/02-scope-hoisting.md)
-- [03. Closures](./01-javascript-fundamentals/03-closures.md)
-- [04. Prototypes & Inheritance](./01-javascript-fundamentals/04-prototypes-inheritance.md)
-- [05. The `this` Keyword](./01-javascript-fundamentals/05-this-keyword.md)
-- [06. Event Loop & Async Programming](./01-javascript-fundamentals/06-event-loop-async.md)
-- [07. ES6+ Modern Features](./01-javascript-fundamentals/07-es6-features.md)
-- [08. Advanced Patterns](./01-javascript-fundamentals/08-advanced-patterns.md)
-
-### Part 2: TypeScript Mastery
-- [01. TypeScript Basics](./02-typescript/01-typescript-basics.md)
-- [02. Advanced Types](./02-typescript/02-advanced-types.md)
-- [03. Generics & Utility Types](./02-typescript/03-generics-utility-types.md)
-- [04. TypeScript with React](./02-typescript/04-typescript-react.md)
-- [05. Configuration & Best Practices](./02-typescript/05-config-best-practices.md)
-
-### Part 3: React 19 & Modern Patterns
-- [01. React Fundamentals](./03-react/01-react-fundamentals.md) ✅
-- [02. React 19 New Features](./03-react/02-react-19-features.md) ✅
-- [03. Hooks Deep Dive](./03-react/03-hooks-deep-dive.md) ✅
-- [04. Advanced Patterns](./03-react/04-advanced-patterns.md) ✅
-- [05. State Management](./03-react/05-state-management.md) ✅
-- [06. Testing React Applications](./03-react/06-testing.md) ✅
-- [07. Hooks Comprehensive](./03-react/07-hooks-comprehensive.md) ✅
-- [08. React Patterns Advanced](./03-react/08-react-patterns-advanced.md) ✅
-- [09. Performance Optimization](./03-react/09-performance-optimization.md) ✅
-
-### Part 4: Next.js 16 Advanced
-- [00. Next.js Fundamentals](./04-nextjs/00-nextjs-fundamentals.md) ✅
-- [01. App Router & Server Components](./04-nextjs/01-app-router-server-components.md) ✅
-- [02. Data Fetching & Caching](./04-nextjs/02-data-fetching.md) ✅
-- [03. Next.js Architecture](./04-nextjs/03-nextjs-architecture.md) ✅
-
-### Part 5: Web Security
-- [01. Common Vulnerabilities](./05-security/01-common-vulnerabilities.md)
-- [02. Authentication & Authorization](./05-security/02-auth-authorization.md)
-- [03. HTTPS & Security Headers](./05-security/03-https-security-headers.md)
-- [04. Secure Coding Practices](./05-security/04-secure-coding-practices.md)
-- [05. OWASP Top 10](./05-security/05-owasp-top-10.md)
-
-### Part 6: HTML5 & Semantic Web
-- [01. Semantic HTML](./06-html/01-semantic-html.md)
-- [02. Accessibility (a11y)](./06-html/02-accessibility.md)
-- [03. Web Standards](./06-html/03-web-standards.md)
-- [04. Forms & Validation](./06-html/04-forms-validation.md)
-- [05. SEO Best Practices](./06-html/05-seo-best-practices.md)
-
-### Part 7: Modern CSS & Styling
-- [01. CSS Grid & Flexbox](./07-css/01-grid-flexbox.md)
-- [02. Modern CSS Features](./07-css/02-modern-css-features.md)
-- [03. CSS-in-JS Solutions](./07-css/03-css-in-js.md)
-- [04. Responsive Design](./07-css/04-responsive-design.md)
-- [05. CSS Architecture](./07-css/05-css-architecture.md)
-- [06. Animations & Transitions](./07-css/06-animations-transitions.md)
-
-### Part 8: Performance Optimization
-- [01. Core Web Vitals](./08-performance/01-core-web-vitals.md)
-- [02. Loading Performance](./08-performance/02-loading-performance.md)
-- [03. Runtime Performance](./08-performance/03-runtime-performance.md)
-- [04. Bundle Optimization](./08-performance/04-bundle-optimization.md)
-- [05. Caching Strategies](./08-performance/05-caching-strategies.md)
-- [06. Performance Monitoring](./08-performance/06-performance-monitoring.md)
-
-### Part 9: System Design for Frontend
-- [01. Architecture Patterns](./09-system-design/01-architecture-patterns.md)
-- [02. Micro-Frontends](./09-system-design/02-micro-frontends.md)
-- [03. State Management Architecture](./09-system-design/03-state-management-architecture.md)
-- [04. API Design & Integration](./09-system-design/04-api-design-integration.md)
-- [05. Scalability & Maintainability](./09-system-design/05-scalability-maintainability.md)
-- [06. Design System Architecture](./09-system-design/06-design-system-architecture.md)
-
-### Part 10: Development Tools & Workflow
-- [01. Version Control (Git)](./10-tools/01-version-control.md)
-- [02. Build Tools & Bundlers](./10-tools/02-build-tools-bundlers.md)
-- [03. Testing Frameworks](./10-tools/03-testing-frameworks.md)
-- [04. CI/CD Pipelines](./10-tools/04-cicd-pipelines.md)
-- [05. Debugging Tools](./10-tools/05-debugging-tools.md)
-- [06. Development Environment](./10-tools/06-development-environment.md)
-
-### Part 11: Interview Practice
-- [01. JavaScript Coding Challenges](./11-interview-practice/01-javascript-challenges.md)
-- [02. React Coding Challenges](./11-interview-practice/02-react-challenges.md)
-- [03. Algorithm Problems](./11-interview-practice/03-algorithm-problems.md)
-- [04. System Design Questions](./11-interview-practice/04-system-design-questions.md)
-- [05. Behavioral Questions](./11-interview-practice/05-behavioral-questions.md)
-- [06. Company-Specific Prep](./11-interview-practice/06-company-specific-prep.md)
-
-### Part 12: Visual Learning & Mind Maps
-- [01. JavaScript Concepts Map](./12-visual-learning/01-javascript-concepts-map.md)
-- [02. React Ecosystem Map](./12-visual-learning/02-react-ecosystem-map.md)
-- [03. Performance Optimization Flow](./12-visual-learning/03-performance-optimization-flow.md)
-- [04. Security Checklist](./12-visual-learning/04-security-checklist.md)
-- [05. Learning Roadmap](./12-visual-learning/05-learning-roadmap.md)
+> **Comprehensive guide for mid-senior developers targeting Frontend (React/TypeScript) and Backend (Go) roles.**
+> Target companies: Google, Microsoft, Grab, Axon, Employment Hero, Zalo/VNG
+> Last updated: March 2026
 
 ---
 
-## 🎯 How to Use This Guide
+## 📋 Quick Start
 
-### For Beginners (0-2 years experience)
-1. Start with **Part 1: JavaScript Fundamentals**
-2. Move to **Part 3: React Fundamentals**
-3. Learn **Part 6: HTML5** and **Part 7: CSS**
-4. Practice with **Part 11: Interview Practice** (JavaScript & React)
-
-### For Mid-Level (2-4 years experience)
-1. Review **Part 1: JavaScript Advanced Patterns**
-2. Master **Part 2: TypeScript**
-3. Deep dive into **Part 3: React Advanced Patterns**
-4. Study **Part 4: Next.js**
-5. Learn **Part 5: Web Security**
-6. Practice **Part 8: Performance Optimization**
-7. Complete **Part 11: All Interview Challenges**
-
-### For Senior Level (4+ years experience)
-1. Focus on **Part 9: System Design**
-2. Master **Part 8: Performance Optimization**
-3. Deep dive into **Part 5: Web Security**
-4. Study **Part 4: Next.js Advanced**
-5. Practice **Part 11: System Design Questions**
-6. Review **Part 10: Development Workflow**
+- [Interview Market Overview 2025-2026](./00-interview-market-overview.md) — Xu hướng phỏng vấn và so sánh các công ty
+- [Quick Start Guide](./00-quick-start-guide.md)
+- [Quick Reference Cheat Sheet](./quick-reference-cheat-sheet.md)
 
 ---
 
-## 📊 Study Plan
+## 🎯 Company-Specific Guides / Hướng Dẫn Theo Công Ty
 
-### 4-Week Intensive Plan
-- **Week 1**: JavaScript Fundamentals + TypeScript
-- **Week 2**: React + Next.js
-- **Week 3**: Performance + Security + System Design
-- **Week 4**: Interview Practice + Mock Interviews
-
-### 8-Week Comprehensive Plan
-- **Weeks 1-2**: JavaScript Deep Dive
-- **Weeks 3-4**: TypeScript + React Advanced
-- **Weeks 5-6**: Next.js + Performance + Security
-- **Weeks 7-8**: System Design + Interview Practice
-
-### 12-Week Mastery Plan
-- **Weeks 1-3**: JavaScript + TypeScript Mastery
-- **Weeks 4-6**: React + Next.js Complete
-- **Weeks 7-9**: HTML/CSS + Performance + Security
-- **Weeks 10-11**: System Design + Tools
-- **Week 12**: Full Interview Preparation
+| Company         | Guide                                                                     | Key Focus                                  |
+| --------------- | ------------------------------------------------------------------------- | ------------------------------------------ |
+| Google          | [01-google.md](./shared/07-company-guides/01-google.md)                   | Hard DSA, System Design (L5+), No AI tools |
+| Microsoft       | [02-microsoft.md](./shared/07-company-guides/02-microsoft.md)             | Domain-specific, Compliance, Medium DSA    |
+| Grab            | [03-grab.md](./shared/07-company-guides/03-grab.md)                       | Go backend, SEA-scale System Design        |
+| Axon            | [04-axon.md](./shared/07-company-guides/04-axon.md)                       | Practical engineering, Mission-driven      |
+| Employment Hero | [05-employment-hero.md](./shared/07-company-guides/05-employment-hero.md) | Async-first, Values fit, Product domain    |
+| Zalo/VNG        | [06-zalo-vng.md](./shared/07-company-guides/06-zalo-vng.md)               | Go + React, Messaging at scale, Bilingual  |
 
 ---
 
-## 🏢 Company-Specific Focus
+## 📚 Shared Fundamentals / Kiến Thức Nền Tảng Chung
 
-### Meta/Facebook
-- Focus: React internals, performance, large-scale apps
-- Key topics: React 19, Concurrent features, State management
-- Practice: Build social media features, real-time updates
+> Language-agnostic theory — single source of truth for both FE and BE tracks.
 
-### Google
-- Focus: Algorithms, performance, accessibility
-- Key topics: Core Web Vitals, TypeScript, Testing
-- Practice: Search interfaces, data visualization
+### 01 — CS Fundamentals / Nền Tảng Khoa Học Máy Tính
 
-### Microsoft
-- Focus: TypeScript, enterprise patterns, accessibility
-- Key topics: TypeScript advanced, Design patterns, Testing
-- Practice: Productivity tools, collaborative features
+| #   | Topic                  | File                                                                               | Difficulty      |
+| --- | ---------------------- | ---------------------------------------------------------------------------------- | --------------- |
+| 1   | Algorithms Theory      | [algorithms-theory.md](./shared/01-cs-fundamentals/algorithms-theory.md)           | Junior → Senior |
+| 2   | Complexity Analysis    | [complexity-analysis.md](./shared/01-cs-fundamentals/complexity-analysis.md)       | Junior → Senior |
+| 3   | Data Structures Theory | [data-structures-theory.md](./shared/01-cs-fundamentals/data-structures-theory.md) | Junior → Senior |
+| 4   | Operating Systems      | [os-theory.md](./shared/01-cs-fundamentals/os-theory.md)                           | Mid → Senior    |
+| 5   | Networking             | [networking-theory.md](./shared/01-cs-fundamentals/networking-theory.md)           | Mid → Senior    |
+| 6   | Information Theory     | [information-theory.md](./shared/01-cs-fundamentals/information-theory.md)         | Senior          |
 
-### Amazon
-- Focus: Scalability, performance, customer experience
-- Key topics: Performance optimization, System design
-- Practice: E-commerce features, shopping cart
+### 02 — System Design / Thiết Kế Hệ Thống
 
-### Grab/Uber
-- Focus: Real-time features, maps, mobile-first
-- Key topics: Performance, PWA, Real-time updates
-- Practice: Location-based features, booking systems
+| #   | Topic                      | File                                                                                 | Difficulty   |
+| --- | -------------------------- | ------------------------------------------------------------------------------------ | ------------ |
+| 1   | System Design Theory       | [system-design-theory.md](./shared/02-system-design/system-design-theory.md)         | Mid → Senior |
+| 2   | Consensus Algorithms       | [consensus-algorithms.md](./shared/02-system-design/consensus-algorithms.md)         | Senior       |
+| 3   | Caching Patterns           | [caching-patterns.md](./shared/02-system-design/caching-patterns.md)                 | Mid → Senior |
+| 4   | Replication & Partitioning | [replication-partitioning.md](./shared/02-system-design/replication-partitioning.md) | Mid → Senior |
 
----
+### 03 — Database / Cơ Sở Dữ Liệu
 
-## 📝 Progress Tracking
+| #   | Topic                   | File                                                                                    | Difficulty      |
+| --- | ----------------------- | --------------------------------------------------------------------------------------- | --------------- |
+| 1   | Database Theory         | [database-theory.md](./shared/03-database/database-theory.md)                           | Junior → Senior |
+| 2   | Indexing & Optimization | [02-indexing-and-optimization.md](./shared/03-database/02-indexing-and-optimization.md) | Mid → Senior    |
+| 3   | NoSQL & NewSQL          | [03-nosql-and-newsql.md](./shared/03-database/03-nosql-and-newsql.md)                   | Mid → Senior    |
 
-Create a checklist for yourself:
+### 04 — Security / Bảo Mật
 
-```markdown
-## My Progress
+| #   | Topic                    | File                                                                                      | Difficulty      |
+| --- | ------------------------ | ----------------------------------------------------------------------------------------- | --------------- |
+| 1   | Security Fundamentals    | [01-security-fundamentals.md](./shared/04-security/01-security-fundamentals.md)           | Junior → Senior |
+| 2   | Cryptography & Protocols | [02-cryptography-and-protocols.md](./shared/04-security/02-cryptography-and-protocols.md) | Mid → Senior    |
+| 3   | Web Security & OWASP     | [03-web-security-owasp.md](./shared/04-security/03-web-security-owasp.md)                 | Mid → Senior    |
 
-### JavaScript Fundamentals
-- [ ] Variables & Data Types
-- [ ] Scope & Hoisting
-- [ ] Closures
-- [ ] Prototypes & Inheritance
-- [ ] The `this` Keyword
-- [ ] Event Loop & Async
-- [ ] ES6+ Features
-- [ ] Advanced Patterns
+### 05 — Software Engineering / Kỹ Thuật Phần Mềm
 
-### TypeScript
-- [ ] Basics
-- [ ] Advanced Types
-- [ ] Generics
-- [ ] TypeScript with React
-- [ ] Best Practices
+| #   | Topic                   | File                                                                                                | Difficulty      |
+| --- | ----------------------- | --------------------------------------------------------------------------------------------------- | --------------- |
+| 1   | SOLID & Design Patterns | [01-solid-and-design-patterns.md](./shared/05-software-engineering/01-solid-and-design-patterns.md) | Junior → Senior |
+| 2   | Architecture Styles     | [02-architecture-styles.md](./shared/05-software-engineering/02-architecture-styles.md)             | Mid → Senior    |
+| 3   | SDLC & Practices        | [03-sdlc-and-practices.md](./shared/05-software-engineering/03-sdlc-and-practices.md)               | Junior → Senior |
 
-... (continue for all sections)
-```
+### 06 — AI & Agentic Systems / AI và Hệ Thống Agent
 
----
-
-## 🎓 Additional Resources
-
-### Online Platforms
-- LeetCode (JavaScript/TypeScript problems)
-- Frontend Mentor (Real-world projects)
-- Exercism (Practice with mentorship)
-- CodeSignal (Interview prep)
-
-### Books
-- "You Don't Know JS" series
-- "JavaScript: The Good Parts"
-- "Designing Data-Intensive Applications"
-- "Web Performance in Action"
-
-### Communities
-- React Discord
-- TypeScript Discord
-- Dev.to
-- Stack Overflow
-- Reddit r/reactjs, r/javascript
+| #   | Topic                   | File                                                                                     | Difficulty   |
+| --- | ----------------------- | ---------------------------------------------------------------------------------------- | ------------ |
+| 1   | ML Fundamentals         | [01-ml-fundamentals.md](./shared/06-ai-and-agents/01-ml-fundamentals.md)                 | Junior → Mid |
+| 2   | LLMs & Transformers     | [02-llm-and-transformers.md](./shared/06-ai-and-agents/02-llm-and-transformers.md)       | Mid → Senior |
+| 3   | Agent Patterns          | [03-agent-patterns.md](./shared/06-ai-and-agents/03-agent-patterns.md)                   | Mid → Senior |
+| 4   | RAG & Embeddings        | [04-rag-and-embeddings.md](./shared/06-ai-and-agents/04-rag-and-embeddings.md)           | Mid → Senior |
+| 5   | AI Engineering Practice | [05-ai-engineering-practice.md](./shared/06-ai-and-agents/05-ai-engineering-practice.md) | Mid → Senior |
+| 6   | AI System Design        | [06-ai-system-design.md](./shared/06-ai-and-agents/06-ai-system-design.md)               | Senior       |
 
 ---
 
-## 💡 Tips for Success
+## ⚛️ Frontend Track / Lộ Trình Frontend
 
-1. **Practice Daily**: Code at least 1-2 hours every day
-2. **Build Projects**: Apply concepts in real projects
-3. **Mock Interviews**: Practice with peers or platforms
-4. **Stay Updated**: Follow React, Next.js, and web standards updates
-5. **Contribute**: Open source contributions show real-world experience
-6. **Document**: Write about what you learn (blog, notes)
-7. **Network**: Connect with other developers, attend meetups
+> [Study Roadmap](./fe-track/00-study-roadmap.md) — Recommended study order
+
+### 01 — JavaScript (25 files)
+
+| #   | Topic                    | File                                                                                  | Priority |
+| --- | ------------------------ | ------------------------------------------------------------------------------------- | -------- |
+| 1   | Basics                   | [00-javascript-basics.md](./fe-track/01-javascript/00-javascript-basics.md)           | Critical |
+| 2   | Variables & Data Types   | [01-variables-data-types.md](./fe-track/01-javascript/01-variables-data-types.md)     | Critical |
+| 3   | Scope & Hoisting         | [02-scope-hoisting.md](./fe-track/01-javascript/02-scope-hoisting.md)                 | Critical |
+| 4   | Closures                 | [03-closures.md](./fe-track/01-javascript/03-closures.md)                             | Critical |
+| 5   | Prototypes & Inheritance | [04-prototypes-inheritance.md](./fe-track/01-javascript/04-prototypes-inheritance.md) | Critical |
+| 6   | `this` Keyword           | [05-this-keyword.md](./fe-track/01-javascript/05-this-keyword.md)                     | Critical |
+| 7   | Event Loop & Async       | [06-event-loop-async.md](./fe-track/01-javascript/06-event-loop-async.md)             | Critical |
+| 8   | ES6+ Features            | [07-es6-features.md](./fe-track/01-javascript/07-es6-features.md)                     | Critical |
+| 9   | Advanced Concepts        | [08-advanced-concepts.md](./fe-track/01-javascript/08-advanced-concepts.md)           | High     |
+
+### 02 — TypeScript (7 files)
+
+| #   | Topic              | File                                                                          | Priority |
+| --- | ------------------ | ----------------------------------------------------------------------------- | -------- |
+| 1   | TypeScript Basics  | [01-typescript-basics.md](./fe-track/02-typescript/01-typescript-basics.md)   | Critical |
+| 2   | Advanced Types     | [02-advanced-types.md](./fe-track/02-typescript/02-advanced-types.md)         | High     |
+| 3   | Generics Deep Dive | [03-generics-deep-dive.md](./fe-track/02-typescript/03-generics-deep-dive.md) | High     |
+| 4   | React + TypeScript | [05-react-typescript.md](./fe-track/02-typescript/05-react-typescript.md)     | High     |
+
+### 03 — React (10 files)
+
+| #   | Topic                    | File                                                                                 | Priority |
+| --- | ------------------------ | ------------------------------------------------------------------------------------ | -------- |
+| 1   | React Fundamentals       | [01-react-fundamentals.md](./fe-track/03-react/01-react-fundamentals.md)             | Critical |
+| 2   | React 19 Features        | [02-react-19-features.md](./fe-track/03-react/02-react-19-features.md)               | Critical |
+| 3   | Hooks Deep Dive          | [03-hooks-deep-dive.md](./fe-track/03-react/03-hooks-deep-dive.md)                   | Critical |
+| 4   | Advanced Patterns        | [04-advanced-patterns.md](./fe-track/03-react/04-advanced-patterns.md)               | High     |
+| 5   | State Management         | [05-state-management.md](./fe-track/03-react/05-state-management.md)                 | High     |
+| 6   | Testing                  | [06-testing.md](./fe-track/03-react/06-testing.md)                                   | High     |
+| 7   | Performance Optimization | [09-performance-optimization.md](./fe-track/03-react/09-performance-optimization.md) | High     |
+
+### 04 — Next.js (4 files)
+
+| #   | Topic            | File                                                                                          | Priority |
+| --- | ---------------- | --------------------------------------------------------------------------------------------- | -------- |
+| 1   | Fundamentals     | [00-nextjs-fundamentals.md](./fe-track/04-nextjs/00-nextjs-fundamentals.md)                   | High     |
+| 2   | App Router & RSC | [01-app-router-server-components.md](./fe-track/04-nextjs/01-app-router-server-components.md) | High     |
+| 3   | Data Fetching    | [02-data-fetching.md](./fe-track/04-nextjs/02-data-fetching.md)                               | High     |
+| 4   | Architecture     | [03-nextjs-architecture.md](./fe-track/04-nextjs/03-nextjs-architecture.md)                   | Medium   |
+
+### 05 — HTML & CSS (9 files)
+
+See `fe-track/05-html-css/` for CSS fundamentals, Grid/Flexbox, architecture, responsive design.
+
+### 06 — Browser & Performance (5 files)
+
+See `fe-track/06-browser-performance/` for Core Web Vitals, React perf, bundle optimization.
+
+### 07 — Web Security (3 files)
+
+See `fe-track/07-web-security/` for vulnerabilities, authentication, security practices.
+
+### 08 — Frontend System Design (6 files)
+
+See `fe-track/08-fe-system-design/` for architecture patterns, scalability, caching, micro-frontends.
+
+### 09 — Advanced Topics (85 files)
+
+See `fe-track/09-advanced-topics/` for data structures in JS, browser APIs, design patterns, interview practice, visual learning, tools, accessibility, and more.
+
+> ⚠️ Note: Theoretical foundations (16-\*) now redirect to `shared/` — see shared fundamentals above.
+
+### Company Guide
+
+See [fe-track/10-company-guide.md](./fe-track/10-company-guide.md) for FE-specific company targeting.
 
 ---
 
-**Last Updated**: January 2025
-**Version**: 1.0.0
-**Maintained by**: Frontend Interview Prep Community
+## 🔧 Backend Track (Go) / Lộ Trình Backend
+
+> [Study Roadmap](./be-track/00-study-roadmap.md) — Recommended study order
+
+### 01 — Go Language (8 files)
+
+| #   | Topic                 | File                                                                            | Priority |
+| --- | --------------------- | ------------------------------------------------------------------------------- | -------- |
+| 1   | Language Fundamentals | [01-language-fundamentals.md](./be-track/01-golang/01-language-fundamentals.md) | Critical |
+| 2   | Interfaces & Generics | [02-interfaces-generics.md](./be-track/01-golang/02-interfaces-generics.md)     | Critical |
+| 3   | Concurrency           | [03-concurrency.md](./be-track/01-golang/03-concurrency.md)                     | Critical |
+| 4   | Memory & GC           | [04-memory-gc.md](./be-track/01-golang/04-memory-gc.md)                         | High     |
+| 5   | Testing & Profiling   | [05-testing-profiling.md](./be-track/01-golang/05-testing-profiling.md)         | High     |
+| 6   | Data Structures (Go)  | [06-data-structures-go.md](./be-track/01-golang/06-data-structures-go.md)       | High     |
+| 7   | Algorithms (Go)       | [07-algorithms-go.md](./be-track/01-golang/07-algorithms-go.md)                 | High     |
+| 8   | Advanced Patterns     | [08-advanced-patterns.md](./be-track/01-golang/08-advanced-patterns.md)         | High     |
+
+### 02 — Backend Knowledge (6 files)
+
+| #   | Topic               | File                                                                                   | Priority |
+| --- | ------------------- | -------------------------------------------------------------------------------------- | -------- |
+| 1   | API Design          | [01-api-design.md](./be-track/02-backend-knowledge/01-api-design.md)                   | Critical |
+| 2   | Microservices       | [02-microservices.md](./be-track/02-backend-knowledge/02-microservices.md)             | High     |
+| 3   | Distributed Systems | [03-distributed-systems.md](./be-track/02-backend-knowledge/03-distributed-systems.md) | High     |
+| 4   | Auth & Security     | [04-auth-security.md](./be-track/02-backend-knowledge/04-auth-security.md)             | Medium   |
+| 5   | OS for Go           | [05-os-go.md](./be-track/02-backend-knowledge/05-os-go.md)                             | Medium   |
+| 6   | Networking for Go   | [06-networking-go.md](./be-track/02-backend-knowledge/06-networking-go.md)             | Medium   |
+
+### 03 — Database Advanced (4 files)
+
+| #   | Topic                   | File                                                                                       | Priority |
+| --- | ----------------------- | ------------------------------------------------------------------------------------------ | -------- |
+| 1   | SQL Fundamentals        | [01-sql-fundamentals.md](./be-track/03-database-advanced/01-sql-fundamentals.md)           | Critical |
+| 2   | Indexing & Optimization | [02-indexing-optimization.md](./be-track/03-database-advanced/02-indexing-optimization.md) | Critical |
+| 3   | NoSQL (Redis, MongoDB)  | [03-nosql-redis-mongo.md](./be-track/03-database-advanced/03-nosql-redis-mongo.md)         | High     |
+| 4   | Caching Patterns        | [04-caching-patterns.md](./be-track/03-database-advanced/04-caching-patterns.md)           | High     |
+
+### 04 — Backend System Design (4 files)
+
+| #   | Topic                | File                                                                                    | Priority |
+| --- | -------------------- | --------------------------------------------------------------------------------------- | -------- |
+| 1   | Design Framework     | [01-design-framework.md](./be-track/04-be-system-design/01-design-framework.md)         | Critical |
+| 2   | Classic Problems     | [02-classic-problems.md](./be-track/04-be-system-design/02-classic-problems.md)         | Critical |
+| 3   | Advanced Problems    | [03-advanced-problems.md](./be-track/04-be-system-design/03-advanced-problems.md)       | High     |
+| 4   | Distributed Patterns | [04-distributed-patterns.md](./be-track/04-be-system-design/04-distributed-patterns.md) | High     |
+
+### 05 — Company Guide
+
+See [be-track/05-company-guide.md](./be-track/05-company-guide.md) for BE-specific company targeting.
+
+### 06 — DevOps & Infrastructure
+
+| #   | Topic                   | File                                                                  | Priority |
+| --- | ----------------------- | --------------------------------------------------------------------- | -------- |
+| 1   | DevOps & Infrastructure | [06-devops-infrastructure.md](./be-track/06-devops-infrastructure.md) | Medium   |
 
 ---
 
-Ready to start? Begin with [JavaScript Fundamentals - Variables & Data Types](./01-javascript-fundamentals/01-variables-data-types.md)
+## 📊 Content Statistics
+
+| Section             | Files          | Est. Words   | Coverage                                             |
+| ------------------- | -------------- | ------------ | ---------------------------------------------------- |
+| Shared Fundamentals | ~25 files      | ~80,000      | CS, System Design, DB, Security, SE, AI              |
+| Frontend Track      | ~120 files     | ~150,000     | JS, TS, React, Next.js, HTML/CSS, Perf, Security, SD |
+| Backend Track       | ~25 files      | ~100,000     | Go, Backend, DB, System Design, DevOps               |
+| Company Guides      | 6 files        | ~3,000       | Google, MS, Grab, Axon, EH, Zalo/VNG                 |
+| **Total**           | **~176 files** | **~333,000** | **Comprehensive bilingual interview prep**           |
+
+---
+
+## 🔗 Cross-Reference Guide
+
+| If studying...  | Also see...                                                                                                                                                    |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| System Design   | `shared/02-system-design/` + `be-track/04-be-system-design/` + `fe-track/08-fe-system-design/`                                                                 |
+| Security        | `shared/04-security/` + `fe-track/07-web-security/` + `be-track/02-backend-knowledge/04-auth-security.md`                                                      |
+| Data Structures | `shared/01-cs-fundamentals/data-structures-theory.md` + `fe-track/09-advanced-topics/01-data-structures-js.md` + `be-track/01-golang/06-data-structures-go.md` |
+| AI/Agents       | `shared/06-ai-and-agents/` (theory applies to both FE and BE roles)                                                                                            |
+| Design Patterns | `shared/05-software-engineering/01-solid-and-design-patterns.md` + track-specific implementations                                                              |
+
+---
+
+**Last Updated**: March 2026
+**Format**: Bilingual (English + Vietnamese)
+**Difficulty Range**: Junior → Mid → Senior
