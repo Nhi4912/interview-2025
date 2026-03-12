@@ -53,6 +53,7 @@
 | 2   | Consensus Algorithms       | [consensus-algorithms.md](./shared/02-system-design/consensus-algorithms.md)         | Senior       |
 | 3   | Caching Patterns           | [caching-patterns.md](./shared/02-system-design/caching-patterns.md)                 | Mid → Senior |
 | 4   | Replication & Partitioning | [replication-partitioning.md](./shared/02-system-design/replication-partitioning.md) | Mid → Senior |
+| 5   | Message Queues & Event Streaming | [05-message-queues.md](./shared/02-system-design/05-message-queues.md) | Mid → Senior |
 
 ### 03 — Database / Cơ Sở Dữ Liệu
 
@@ -61,6 +62,7 @@
 | 1   | Database Theory         | [database-theory.md](./shared/03-database/database-theory.md)                           | Junior → Senior |
 | 2   | Indexing & Optimization | [02-indexing-and-optimization.md](./shared/03-database/02-indexing-and-optimization.md) | Mid → Senior    |
 | 3   | NoSQL & NewSQL          | [03-nosql-and-newsql.md](./shared/03-database/03-nosql-and-newsql.md)                   | Mid → Senior    |
+| 4   | Sharding & Transaction Isolation | [04-sharding-and-transactions.md](./shared/03-database/04-sharding-and-transactions.md) | Mid → Senior    |
 
 ### 04 — Security / Bảo Mật
 
@@ -209,7 +211,7 @@ See `fe-track/mindmaps/` for visual review aids per category.
 | 7   | Algorithms (Go)       | [07-algorithms-go.md](./be-track/01-golang/07-algorithms-go.md)                 | High     |
 | 8   | Advanced Patterns     | [08-advanced-patterns.md](./be-track/01-golang/08-advanced-patterns.md)         | High     |
 
-### 02 — Backend Knowledge (7 files)
+### 02 — Backend Knowledge (9 files)
 
 | #   | Topic               | File                                                                                   | Priority |
 | --- | ------------------- | -------------------------------------------------------------------------------------- | -------- |
@@ -220,6 +222,8 @@ See `fe-track/mindmaps/` for visual review aids per category.
 | 5   | OS for Go           | [05-os-go.md](./be-track/02-backend-knowledge/05-os-go.md)                             | Medium   |
 | 6   | Networking for Go   | [06-networking-go.md](./be-track/02-backend-knowledge/06-networking-go.md)             | Medium   |
 | 7   | Resilience Patterns | [07-resilience-patterns.md](./be-track/02-backend-knowledge/07-resilience-patterns.md) | High     |
+| 8   | Message Queues (Go) | [08-message-queues.md](./be-track/02-backend-knowledge/08-message-queues.md) | High     |
+| 9   | gRPC & Protobuf    | [09-grpc-protobuf.md](./be-track/02-backend-knowledge/09-grpc-protobuf.md) | High     |
 
 ### 03 — Database Advanced (4 files)
 
