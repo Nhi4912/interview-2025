@@ -1,11 +1,94 @@
-# Modern Authentication & Authorization Patterns
+# Modern Authentication & Authorization Patterns / Mẫu Xác Thực và Phân Quyền Hiện Đại
 
-> Shared theory document (language-agnostic), bilingual format: English question headings + Vietnamese explanations.
+> **Track**: Shared | **Difficulty**: 🟡 Mid → 🔴 Senior
+> **See also**: [Security Fundamentals](./01-security-fundamentals.md) | [Cryptography](./02-cryptography-and-protocols.md) | [Web Security](./03-web-security-owasp.md)
 
-## Liên Kết Nền Tảng / Foundation Cross-References
+---
 
-- Xem nền tảng bảo mật tổng quát tại: `01-security-fundamentals.md`
-- Xem mật mã và giao thức tại: `02-cryptography-and-protocols.md`
+## Visual Overview / Sơ Đồ Tổng Quan
+
+### OAuth 2.0 Authorization Code Flow
+```
+USER          APP (Client)      AUTH SERVER     RESOURCE SERVER
+  │                │                 │                 │
+  │  Click Login   │                 │                 │
+  │──────────────►│                 │                 │
+  │                │  redirect to    │                 │
+  │                │  auth server    │                 │
+  │◄───────────────│  /authorize     │                 │
+  │                │                 │                 │
+  │  Login + consent                 │                 │
+  │─────────────────────────────────►│                 │
+  │                │                 │                 │
+  │                │◄── auth_code ───│                 │
+  │                │    (redirect)   │                 │
+  │                │                 │                 │
+  │                │ POST /token     │                 │
+  │                │ {code, secret}  │                 │
+  │                │────────────────►│                 │
+  │                │◄── access_token─│                 │
+  │                │    refresh_token│                 │
+  │                │                 │                 │
+  │                │  GET /resource  │                 │
+  │                │  Authorization: │                 │
+  │                │  Bearer <token> │                 │
+  │                │─────────────────────────────────►│
+  │                │◄─────────────── data ────────────│
+```
+
+### JWT Structure / Cấu Trúc JWT
+```
+JWT = base64url(header) . base64url(payload) . signature
+
+HEADER:
+{
+  "alg": "RS256",    ← algorithm
+  "typ": "JWT"
+}
+
+PAYLOAD:
+{
+  "sub": "user123",  ← subject (user ID)
+  "iss": "auth.app", ← issuer
+  "aud": "api.app",  ← audience
+  "exp": 1699999999, ← expiry (unix timestamp)
+  "iat": 1699996399, ← issued at
+  "roles": ["user"]  ← custom claims
+}
+
+SIGNATURE (RS256):
+  RSASSA-PKCS1-v1_5(
+    SHA256(base64url(header) + "." + base64url(payload)),
+    private_key
+  )
+
+Verification: recipient uses PUBLIC key to verify signature
+              → only auth server (with private key) could have signed it
+```
+
+### Session vs JWT Comparison
+```
+SESSION-BASED:                    JWT (Stateless):
+┌─────────────────────┐          ┌─────────────────────────────┐
+│ Login               │          │ Login                       │
+│ Server creates      │          │ Server creates signed JWT    │
+│ session in Redis    │          │ Sends to client (cookie/LS) │
+│ session_id → cookie │          │                             │
+│                     │          │ Subsequent requests:        │
+│ Subsequent requests:│          │ Client sends JWT in header  │
+│ Server looks up     │          │ Server VERIFIES SIGNATURE   │
+│ session in Redis    │          │ NO DB lookup needed         │
+│                     │          │                             │
+│ Logout: delete      │          │ Logout: can't invalidate!   │
+│ session from Redis  │          │ Token valid until exp       │
+│                     │          │ → Use short TTL (15min)     │
+│ Scale: Redis must   │          │ + refresh token in Redis    │
+│ be shared           │          │ (for revocation)            │
+└─────────────────────┘          └─────────────────────────────┘
+
+Session: easy revocation, server state
+JWT: stateless, fast, hard to revoke
+```
 
 ---
 

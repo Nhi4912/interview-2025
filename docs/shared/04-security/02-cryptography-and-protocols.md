@@ -7,6 +7,88 @@
 - Tài liệu trình bày nền tảng mật mã học và giao thức bảo mật cho phỏng vấn backend/frontend.
 - Covers: symmetric/asymmetric encryption, TLS, hashing, digital signatures, PKI.
 
+
+## Visual Overview / Sơ Đồ Tổng Quan
+
+### Symmetric vs Asymmetric Encryption
+```
+SYMMETRIC (AES, ChaCha20):           ASYMMETRIC (RSA, ECC):
+  Same key for encrypt + decrypt       Key pair: public + private
+  
+  Sender     Key     Receiver           Sender        Receiver
+     │       🔑        │                   │           🔑🔑
+     │  encrypt(msg)   │                msg encrypted  pub  priv
+     │────────────────►│                with receiver's PUBLIC key
+     │    encrypted    │                Only receiver's PRIVATE key
+     │◄────────────────│                can decrypt
+     │  decrypt(enc)   │
+                                       Pros: no shared secret needed
+  Pros: FAST (hardware AES)            Cons: 1000x SLOWER than symmetric
+  Cons: How to share the key safely?
+  
+  AES-256-GCM: gold standard for data at rest + in transit
+  ChaCha20-Poly1305: AES alternative (better on mobile without hardware AES)
+```
+
+### TLS Handshake (TLS 1.3 simplified)
+```
+CLIENT                                     SERVER
+  │                                           │
+  │── ClientHello ──────────────────────────►│
+  │   {TLS version, cipher suites,           │
+  │    random, key_share (DH public key)}    │
+  │                                           │
+  │◄── ServerHello ─────────────────────────│
+  │    {cipher chosen, server key_share}     │
+  │                                           │
+  │◄── Certificate ─────────────────────────│
+  │    {server's X.509 cert}                 │
+  │                                           │
+  │◄── CertificateVerify ───────────────────│
+  │    {signature proving server has         │
+  │     private key matching cert}           │
+  │                                           │
+  │◄── Finished ────────────────────────────│
+  │                                           │
+  │ Both sides now compute:                  │
+  │ session_key = HKDF(client_share ×        │
+  │                    server_share)          │
+  │ (ECDH key exchange — same shared secret) │
+  │                                           │
+  │──── Finished ──────────────────────────►│
+  │                                           │
+  │══ Encrypted Application Data ═══════════│
+  
+TLS 1.3 vs 1.2:
+  1.2: 2 round trips before data
+  1.3: 1 round trip (0-RTT for resumption!)
+  1.3: Removed weak ciphers (RC4, 3DES, RSA key exchange)
+```
+
+### Hashing vs Encryption
+```
+HASHING:                         ENCRYPTION:
+  One-way — cannot reverse         Two-way — can decrypt with key
+  Same input → always same hash    Same input → different output (IV/nonce)
+  
+  Use for:                         Use for:
+  - Password storage               - Data at rest/transit
+  - Data integrity check           - Reversible secrets
+  - Digital signatures             
+  
+  MD5:    128-bit, BROKEN (collision found)
+  SHA-1:  160-bit, DEPRECATED
+  SHA-256: 256-bit, SECURE ✓
+  SHA-3:  256-bit+, SECURE ✓ (different algorithm family)
+  
+  Password hashing (special — slow by design!):
+  bcrypt, argon2id, scrypt — add salt + iterations
+  WHY slow: makes brute-force expensive
+  NEVER use raw SHA-256 for passwords!
+```
+
+---
+
 ## Symmetric Encryption (AES, DES)
 ### Overview / Tổng Quan
 - Mã hóa đối xứng dùng cùng key để encrypt/decrypt, hiệu năng cao cho dữ liệu lớn.

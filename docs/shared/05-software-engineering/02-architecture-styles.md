@@ -1,11 +1,75 @@
-# Architecture Styles — Các phong cách kiến trúc
+# Architecture Styles / Các Phong Cách Kiến Trúc
 
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../00-table-of-contents.md)
-> - `docs/shared/02-system-design/system-design-theory.md`
-> - `docs/fe-track/08-fe-system-design/04-microservices.md`
-> - `docs/be-track/04-be-system-design/01-design-framework.md`
-> - `docs/be-track/02-backend-knowledge/03-distributed-systems.md`
+> **See also**: [SOLID & Design Patterns](./01-solid-and-design-patterns.md) | [System Design Theory](../02-system-design/system-design-theory.md)
+
+---
+
+## Visual: Architecture Evolution / Tiến Hóa Kiến Trúc
+
+```
+MONOLITH → SOA → MICROSERVICES → SERVERLESS
+
+MONOLITH:
+  ┌────────────────────────────────────┐
+  │          Single Deployable Unit    │
+  │  [UI] [Business Logic] [Data Layer]│
+  │              │                     │
+  │              ▼                     │
+  │         [Single DB]                │
+  └────────────────────────────────────┘
+  + Simple to develop and deploy
+  + Easy transactions across modules
+  - Scale everything together or nothing
+  - One bug can crash entire app
+
+MICROSERVICES:
+  [User Service]──┐
+  [Order Service]─┤
+  [Payment Svc]───┤──[API Gateway]──[Client]
+  [Product Svc]───┤
+  [Search Svc]────┘
+  Each service:    + Independent deployment
+    own DB         + Scale independently
+    own team       - Network latency
+    own repo       - Distributed transactions hard
+                   - Operational complexity
+
+EVENT-DRIVEN:
+  Service A ──publishes──► [Event Bus] ──subscribes──► Service B
+                                       └──subscribes──► Service C
+  + Loose coupling (A doesn't know about B,C)
+  + Async = higher throughput
+  - Eventual consistency (not immediate)
+  - Hard to trace request flow
+  - Order of events matters
+
+SERVERLESS (FaaS):
+  HTTP trigger → [Function] → return response
+  + No server management
+  + Auto-scaling to zero
+  - Cold start latency (100ms-3s)
+  - Max execution time limits
+  - Hard to test locally
+```
+
+### When to Choose What / Khi Nào Chọn Gì
+
+```
+START HERE → Monolith
+              │
+              Is the team > 10 engineers?     NO → Stay monolith
+              │ YES
+              Is there a clear service boundary?  NO → Stay monolith
+              │ YES
+              Are different parts scaling differently? NO → Consider modular monolith
+              │ YES
+              ▼
+         Microservices
+              │
+              Do you need async processing?    YES → Add Event-Driven
+              Do you have variable traffic?    YES → Consider Serverless for parts
+```
 
 ---
 

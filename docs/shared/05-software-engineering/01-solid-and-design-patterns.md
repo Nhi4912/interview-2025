@@ -3,9 +3,79 @@
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Architecture Styles](./02-architecture-styles.md) | [Code Quality](./05-code-quality-and-review.md)
 
-## Overview / Tổng Quan
-- Tài liệu giúp bạn trả lời phỏng vấn thiết kế phần mềm theo ngôn ngữ chuẩn công nghiệp.
-- Covers: SOLID principles, Gang of Four patterns, behavioral/structural/creational patterns.
+---
+
+## Visual: SOLID Principles at a Glance / Tổng Quan SOLID
+
+```
+S — Single Responsibility         O — Open/Closed
+  BAD:                              BAD:
+  class User {                      if (type == "circle") area = π×r²
+    validate()                      if (type == "square") area = s×s
+    saveToDb()                      ← must modify code to add "triangle"
+    sendEmail()
+  }                                 GOOD:
+  ↑ 3 reasons to change             interface Shape { area(): number }
+                                    class Circle implements Shape {...}
+  GOOD:                             class Square implements Shape {...}
+  class User {}          ← data     class Triangle implements Shape {...}
+  class UserValidator {} ← validate ← add new shape without changing old code
+  class UserRepo {}      ← persist
+  class UserMailer {}    ← notify
+
+L — Liskov Substitution             I — Interface Segregation
+  BAD:                              BAD:
+  class Bird {                      interface Worker {
+    fly(): void                       work(): void
+  }                                   eat(): void   ← robot can't eat!
+  class Penguin extends Bird {        sleep(): void ← robot doesn't sleep!
+    fly() { throw Error("can't!") }
+  }                                   GOOD:
+  ↑ breaks substitutability          interface Workable { work(): void }
+                                      interface Eatable { eat(): void }
+  GOOD:                               interface Sleepable { sleep(): void }
+  interface Bird { move(): void }     Human implements Workable, Eatable, Sleepable
+  class FlyingBird extends Bird       Robot implements Workable
+  class Penguin extends Bird          ← each class only implements what it needs
+
+D — Dependency Inversion
+  BAD:                              GOOD:
+  class OrderService {              interface PaymentGateway {
+    stripe = new Stripe()             charge(amount): void
+    pay(amount) {                   }
+      this.stripe.charge(amount)    class OrderService {
+    }                                 constructor(payment: PaymentGateway)
+  }                                 }
+  ↑ hard-coded dependency           ↑ depend on abstraction, not concrete
+  ↑ can't test without Stripe       ↑ inject Stripe, PayPal, or mock
+```
+
+### Design Patterns Map / Bản Đồ Mẫu Thiết Kế
+
+```
+CREATIONAL (how objects are created):
+  Singleton    ← one instance globally (DB connection, config)
+  Factory      ← create objects without specifying exact class
+  Builder      ← construct complex objects step by step
+  Prototype    ← clone existing objects
+
+STRUCTURAL (how objects are composed):
+  Adapter      ← wrap incompatible interface to make compatible
+  Decorator    ← add behavior without modifying the original
+  Facade       ← simplified interface to complex subsystem
+  Proxy        ← control access to an object (lazy init, caching, auth)
+  Composite    ← tree structures of objects (file system, DOM)
+
+BEHAVIORAL (how objects communicate):
+  Observer     ← subscribe/publish to events (EventEmitter, Redux)
+  Strategy     ← swap algorithm at runtime (sort strategies)
+  Command      ← encapsulate actions as objects (undo/redo)
+  Iterator     ← traverse collection without exposing internals
+  Template     ← define skeleton algorithm, subclasses fill in steps
+  Chain of Resp ← pass request down a chain (middleware, express)
+```
+
+---
 
 ## Core Engineering Mindset
 ### Explanation / Giải thích

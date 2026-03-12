@@ -1,1800 +1,514 @@
-# Classic System Design Problems for Backend Interviews
+# Classic System Design Problems / Các Bài Toán Thiết Kế Hệ Thống Kinh Điển
 
-## Overview / Tổng Quan
-Tài liệu này tổng hợp các bài toán system design kinh điển trong phỏng vấn Backend.
-Mục tiêu là giúp bạn đi từ yêu cầu bài toán đến kiến trúc, data model, API, và trade-off.
-Nội dung dùng heading tiếng Anh và phần giải thích tiếng Việt để phù hợp bối cảnh bilingual.
-
-### Cross-References
-- Framework: [System Design Framework](./01-design-framework.md)
-- Nâng cao: [Advanced Problems](./03-advanced-problems.md)
-- Pattern phân tán: [Distributed Patterns](./04-distributed-patterns.md)
-
-## How To Use This Document
-### Explanation / Giải thích
-Bạn nên luyện theo nhịp: Requirements -> Estimation -> High-Level -> Data Model -> API -> Deep Dive -> Trade-offs.
-Trong phỏng vấn 45-60 phút, không cần đi quá sâu mọi phần; chọn 2-3 điểm quan trọng nhất để đào sâu.
-
-### Example / Ví dụ
-Ví dụ nếu interviewer hỏi URL shortener, bạn có thể ưu tiên redirect latency, key generation, cache, analytics.
+> **Track**: BE | **Difficulty**: 🟡 Mid → 🔴 Senior
+> **Prerequisites**: [Design Framework](./01-design-framework.md) | [Distributed Systems](../02-backend-knowledge/03-distributed-systems.md)
+> **See also**: [Advanced Problems](./03-advanced-problems.md) | [Distributed Patterns](./04-distributed-patterns.md)
 
 ---
 
-## 1. URL Shortener
+## How to Use This Guide / Cách Sử Dụng
 
-### Overview / Tổng Quan
-Thiết kế hệ thống rút gọn URL có khả năng xử lý hàng trăm nghìn redirect mỗi giây.
-Bài toán `url-shortener` thường được dùng để kiểm tra tư duy scale, reliability và trade-off.
+Mỗi bài toán trình bày theo framework 5 bước:
+```
+1. Requirements  → FR + NFR rõ ràng
+2. Estimation    → Back-of-envelope (QPS, storage, bandwidth)
+3. Architecture  → High-level diagram + key components
+4. Deep Dive     → Critical subsystems (thường là bottleneck)
+5. Trade-offs    → Alternatives and why this design wins
+```
+Trong phỏng vấn 45-60 phút: dành 5 phút cho requirements, 5 cho estimation, 15 cho architecture, 20 cho deep dive.
+
+---
+
+## 1. URL Shortener / Rút Gọn URL (e.g., bit.ly)
 
 ### Requirements
-#### Explanation / Giải thích
-Functional Requirements (FR):
-- Hệ thống phải cung cấp API rõ ràng, ổn định, versioned.
-- Hỗ trợ idempotency cho các thao tác write quan trọng.
-- Có khả năng audit và quan sát hành vi người dùng qua metrics/logs.
-- Cho phép cấu hình policy theo tenant hoặc theo user tier.
 
-Non-Functional Requirements (NFR):
-- Availability cao (thường 99.9% -> 99.99% tùy domain).
-- P95/P99 latency có mục tiêu cụ thể theo luồng critical.
-- Dữ liệu cần đảm bảo durability và backup/restore rõ ràng.
-- Thiết kế theo nguyên tắc horizontal scalability.
-- Có cơ chế graceful degradation khi phụ thuộc downstream lỗi.
+**Functional:**
+- `POST /shorten` → given long URL, return short code (e.g., `bit.ly/abc123`)
+- `GET /:code` → redirect to original URL
+- Custom alias support (optional)
+- Link expiration (optional)
+- Analytics: click count per link
 
-### Estimation
-#### Explanation / Giải thích
-Bạn nên trình bày ước lượng theo 4 trục: traffic, storage, bandwidth, compute.
-Nói rõ giả định trước khi tính để interviewer có thể điều chỉnh input.
+**Non-Functional:**
+- 100M URLs created/day → ~1200 writes/sec
+- Read:Write = 100:1 → 120,000 redirects/sec
+- Latency: redirect < 10ms p99
+- Availability: 99.9%
+- URLs never change (immutable after creation)
 
-- Assumption 1: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 2: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 3: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 4: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 5: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 6: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 7: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 8: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 9: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 10: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 11: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 12: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 13: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 14: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 15: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 16: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 17: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 18: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 19: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 20: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 21: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 22: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 23: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 24: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 25: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 26: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 27: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 28: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 29: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 30: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 31: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 32: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 33: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 34: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 35: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
+### Estimation / Ước Tính
 
-### High-Level Architecture
-#### Explanation / Giải thích
-Mô hình chuẩn: Client -> API Gateway -> Stateless Services -> Cache/Queue/DB -> Analytics.
-Trong buổi phỏng vấn, ưu tiên vẽ data flow chính trước rồi mới đi sâu edge case.
+```
+WRITE:
+  100M URLs/day ÷ 86,400s = ~1,200 write/sec
 
-```text
+READ (redirects):
+  100:1 read-write ratio → 120,000 read/sec
+
+STORAGE:
+  Each URL record: short_code(7) + long_url(100) + metadata(50) ≈ 157 bytes
+  5 years retention: 100M × 365 × 5 × 157B ≈ 28.7 TB
+
+BANDWIDTH:
+  Read: 120,000 req/s × 100 bytes = ~12 MB/s
+  → CDN handles most redirect responses → actual origin traffic much lower
+```
+
+### Architecture / Kiến Trúc
+
+```
 Client
-  -> API Gateway (Auth, Rate Limit, Routing)
-    -> Service Layer (stateless)
-      -> Cache (Redis/Memcached)
-      -> Queue/Stream (Kafka/PubSub)
-      -> Primary Storage (SQL/NoSQL)
-      -> Object Store (S3/GCS) nếu có blob/media
+  │
+  ▼
+[CDN / Edge Cache]   ← cache redirect responses (301 → browser caches)
+  │ cache miss
+  ▼
+[Load Balancer]
+  │
+  ├──[URL Service]   ← reads short_code → long_url from cache/DB
+  │       │
+  │       ▼
+  │  [Redis Cache]   ← hot URLs (LRU, TTL=24h), ~90% hit rate
+  │       │ miss
+  │       ▼
+  │  [DB: MySQL]     ← source of truth, sharded by short_code
+  │
+  └──[Shorten Service]  ← generates unique short codes
+          │
+          ▼
+     [ID Generator]  ← Snowflake ID or Base62 counter
 ```
 
-### Data Model
-#### Explanation / Giải thích
-Khi mô tả data model, luôn nêu rõ primary key, index chiến lược, và access pattern.
-Tách write model và read model khi query pattern phức tạp hoặc read-heavy.
+### Deep Dive: Short Code Generation / Sinh Mã Ngắn
 
-### API Design
-#### Example / Ví dụ
-Các endpoint gợi ý:
-- `POST /v1/urls`: mô tả request/response, lỗi thường gặp, và idempotency behavior.
-- `GET /r/{shortCode}`: mô tả request/response, lỗi thường gặp, và idempotency behavior.
-- `GET /v1/urls/{shortCode}/stats`: mô tả request/response, lỗi thường gặp, và idempotency behavior.
-- `DELETE /v1/urls/{shortCode}`: mô tả request/response, lỗi thường gặp, và idempotency behavior.
+**Option 1: MD5/Hash**
+```
+hash = MD5(long_url + salt)
+short_code = base62(hash[:7])   # take first 7 chars = 62^7 = 3.5 trillion combos
 
-### Go Implementation Sketch
-#### Example / Ví dụ
-```go
-package main
-
-import (
-	"context"
-	"errors"
-	"net/http"
-	"time"
-)
-
-type Service interface {
-	Handle(ctx context.Context, input map[string]string) (map[string]string, error)
-}
-
-func Handler(svc Service) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), 1500*time.Millisecond)
-		defer cancel()
-		out, err := svc.Handle(ctx, map[string]string{"path": r.URL.Path})
-		if err != nil {
-			status := http.StatusInternalServerError
-			if errors.Is(err, context.DeadlineExceeded) {
-				status = http.StatusGatewayTimeout
-			}
-			w.WriteHeader(status)
-			_, _ = w.Write([]byte(err.Error()))
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(out["message"]))
-	}
-}
+Problem: MD5 is deterministic → same URL = same code (good for dedup)
+Problem: Hash collision → two different URLs, same first 7 chars
 ```
 
-### Deep Dives
-#### Explanation / Giải thích
-Phần deep dive quyết định mức Senior: cần nêu bottleneck, consistency, failure handling, observability.
+**Option 2: Auto-increment ID + Base62 (recommended)**
+```
+DB auto_increment: 1000000
+Base62(1000000) = "4c92"   → 4-6 char codes initially, grows slowly
 
-- Deep Dive 1: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 2: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 3: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 4: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 5: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 6: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 7: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 8: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 9: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 10: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 11: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 12: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 13: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 14: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 15: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 16: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 17: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 18: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 19: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 20: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 21: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 22: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 23: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 24: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 25: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 26: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 27: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 28: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 29: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 30: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 31: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 32: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 33: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 34: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 35: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 36: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 37: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 38: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 39: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 40: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 41: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 42: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 43: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 44: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 45: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 46: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 47: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 48: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 49: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 50: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 51: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 52: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 53: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 54: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 55: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 56: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 57: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 58: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 59: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 60: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 61: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 62: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 63: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 64: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 65: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 66: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 67: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 68: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 69: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 70: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 71: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 72: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 73: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 74: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 75: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 76: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 77: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 78: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 79: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
-- Deep Dive 80: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh URL Shortener.
+Scale: shard by counter ranges (Shard1: 0-1B, Shard2: 1B-2B)
+OR: single Redis INCR for counter → fast, single-threaded → no collisions
+```
 
-### Trade-offs
-#### Explanation / Giải thích
-- Trade-off 1: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 2: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 3: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 4: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 5: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 6: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 7: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 8: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 9: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 10: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 11: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 12: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 13: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 14: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 15: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 16: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 17: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 18: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 19: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 20: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 21: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 22: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 23: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 24: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 25: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 26: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 27: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 28: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 29: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 30: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 31: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 32: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 33: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 34: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 35: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 36: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 37: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 38: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 39: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 40: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
+**Option 3: Snowflake ID**
+```
+64-bit: [41-bit timestamp][10-bit machine][12-bit sequence]
+= globally unique, time-ordered, no coordination needed
+```
 
-### Failure Scenarios
-#### Example / Ví dụ
-- Scenario 1: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 2: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 3: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 4: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 5: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 6: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 7: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 8: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 9: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 10: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 11: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 12: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 13: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 14: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 15: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 16: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 17: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 18: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 19: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 20: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 21: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 22: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 23: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 24: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 25: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
+**Redirect strategy:**
+```
+301 Permanent: browser caches → no repeated requests → low load
+              Bad for analytics (can't count clicks)
+302 Temporary: every redirect hits our servers → analytics ✓
+              Higher load but can update destination
 
-### Interview Delivery Tips
-#### Explanation / Giải thích
-Trả lời theo thứ tự: scope -> assumptions -> architecture -> deep dive -> trade-offs -> future improvements.
-Nếu bị cắt thời gian, ưu tiên phần bottleneck và mitigation thay vì thêm nhiều microservice chi tiết.
+Most URL shorteners: 302 for analytics-enabled links
+```
+
+### Trade-offs / Đánh Đổi
+
+| Concern | Chosen | Alternative | Why |
+|---------|--------|------------|-----|
+| Storage | MySQL sharded | NoSQL (DynamoDB) | Simple key-value access pattern, SQL works fine |
+| Caching | Redis LRU | In-memory app cache | Shared across instances, survives restart |
+| ID gen | Redis INCR | UUID | Shorter codes, no collision |
+| Redirect | 302 | 301 | Analytics requirement |
 
 ---
 
-## 2. Chat System
-
-### Overview / Tổng Quan
-Thiết kế hệ thống chat thời gian thực với 1-1, group, presence và offline delivery.
-Bài toán `chat-system` thường được dùng để kiểm tra tư duy scale, reliability và trade-off.
+## 2. Chat System / Hệ Thống Nhắn Tin (e.g., Slack, WhatsApp)
 
 ### Requirements
-#### Explanation / Giải thích
-Functional Requirements (FR):
-- Hệ thống phải cung cấp API rõ ràng, ổn định, versioned.
-- Hỗ trợ idempotency cho các thao tác write quan trọng.
-- Có khả năng audit và quan sát hành vi người dùng qua metrics/logs.
-- Cho phép cấu hình policy theo tenant hoặc theo user tier.
 
-Non-Functional Requirements (NFR):
-- Availability cao (thường 99.9% -> 99.99% tùy domain).
-- P95/P99 latency có mục tiêu cụ thể theo luồng critical.
-- Dữ liệu cần đảm bảo durability và backup/restore rõ ràng.
-- Thiết kế theo nguyên tắc horizontal scalability.
-- Có cơ chế graceful degradation khi phụ thuộc downstream lỗi.
+**Functional:**
+- 1:1 and group messaging (up to 500 members)
+- Real-time message delivery
+- Online/offline status
+- Message history (persistent)
+- Read receipts (optional)
+- File/media sharing (out of scope for basic)
+
+**Non-Functional:**
+- DAU: 50M, each sends 40 messages/day → 23,000 msg/sec
+- Latency: message delivery < 100ms
+- Consistency: messages ordered per sender, eventual consistency for delivery
+- Storage: retain messages 5 years
 
 ### Estimation
-#### Explanation / Giải thích
-Bạn nên trình bày ước lượng theo 4 trục: traffic, storage, bandwidth, compute.
-Nói rõ giả định trước khi tính để interviewer có thể điều chỉnh input.
 
-- Assumption 1: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 2: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 3: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 4: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 5: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 6: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 7: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 8: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 9: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 10: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 11: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 12: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 13: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 14: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 15: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 16: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 17: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 18: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 19: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 20: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 21: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 22: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 23: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 24: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 25: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 26: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 27: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 28: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 29: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 30: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 31: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 32: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 33: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 34: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 35: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
+```
+Message rate: 50M users × 40 msg/day ÷ 86,400s = ~23,000 msg/sec
+Peak (2x avg): 46,000 msg/sec
 
-### High-Level Architecture
-#### Explanation / Giải thích
-Mô hình chuẩn: Client -> API Gateway -> Stateless Services -> Cache/Queue/DB -> Analytics.
-Trong buổi phỏng vấn, ưu tiên vẽ data flow chính trước rồi mới đi sâu edge case.
+Storage per message: sender_id(8) + receiver_id(8) + content(100) + ts(8) ≈ 124 bytes
+5 years: 23,000 × 86,400 × 365 × 5 × 124B ≈ 52 TB
+→ Use Cassandra/HBase for time-series chat history (designed for this)
 
-```text
-Client
-  -> API Gateway (Auth, Rate Limit, Routing)
-    -> Service Layer (stateless)
-      -> Cache (Redis/Memcached)
-      -> Queue/Stream (Kafka/PubSub)
-      -> Primary Storage (SQL/NoSQL)
-      -> Object Store (S3/GCS) nếu có blob/media
+WebSocket connections: 50M DAU × 30% online simultaneously = 15M concurrent connections
+→ Need ~300 WebSocket servers (50k connections each)
 ```
 
-### Data Model
-#### Explanation / Giải thích
-Khi mô tả data model, luôn nêu rõ primary key, index chiến lược, và access pattern.
-Tách write model và read model khi query pattern phức tạp hoặc read-heavy.
+### Architecture
 
-### API Design
-#### Example / Ví dụ
-Các endpoint gợi ý:
-- `POST /v1/messages`: mô tả request/response, lỗi thường gặp, và idempotency behavior.
-- `GET /v1/conversations/{id}/messages`: mô tả request/response, lỗi thường gặp, và idempotency behavior.
-- `POST /v1/conversations`: mô tả request/response, lỗi thường gặp, và idempotency behavior.
-- `GET /v1/users/{id}/presence`: mô tả request/response, lỗi thường gặp, và idempotency behavior.
-
-### Go Implementation Sketch
-#### Example / Ví dụ
-```go
-package main
-
-import (
-	"context"
-	"errors"
-	"net/http"
-	"time"
-)
-
-type Service interface {
-	Handle(ctx context.Context, input map[string]string) (map[string]string, error)
-}
-
-func Handler(svc Service) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), 1500*time.Millisecond)
-		defer cancel()
-		out, err := svc.Handle(ctx, map[string]string{"path": r.URL.Path})
-		if err != nil {
-			status := http.StatusInternalServerError
-			if errors.Is(err, context.DeadlineExceeded) {
-				status = http.StatusGatewayTimeout
-			}
-			w.WriteHeader(status)
-			_, _ = w.Write([]byte(err.Error()))
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(out["message"]))
-	}
-}
+```
+[Mobile/Web Client]
+        │ WebSocket (persistent)
+        ▼
+[WebSocket Gateway]  ← stateful servers, handle 50k connections each
+  (ws1.chat.com)         maintain user→server mapping in Redis
+  (ws2.chat.com)
+        │
+        ▼
+[Message Service]    ← receive, persist, fan-out
+        │
+   ┌────┴────┐
+   ▼         ▼
+[Kafka]    [Chat DB]
+(fan-out)  (Cassandra)
+   │
+   ▼
+[Delivery Service]   ← reads from Kafka, routes to correct WebSocket server
+        │
+        ▼
+  [Redis: user→server map]
+  user:123 → ws2.chat.com
+        │
+        ▼
+[Target WebSocket Server]  → push to client
 ```
 
-### Deep Dives
-#### Explanation / Giải thích
-Phần deep dive quyết định mức Senior: cần nêu bottleneck, consistency, failure handling, observability.
+### Deep Dive: Message Ordering / Thứ Tự Tin Nhắn
 
-- Deep Dive 1: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 2: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 3: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 4: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 5: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 6: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 7: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 8: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 9: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 10: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 11: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 12: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 13: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 14: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 15: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 16: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 17: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 18: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 19: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 20: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 21: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 22: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 23: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 24: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 25: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 26: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 27: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 28: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 29: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 30: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 31: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 32: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 33: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 34: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 35: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 36: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 37: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 38: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 39: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 40: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 41: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 42: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 43: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 44: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 45: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 46: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 47: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 48: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 49: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 50: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 51: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 52: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 53: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 54: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 55: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 56: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 57: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 58: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 59: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 60: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 61: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 62: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 63: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 64: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 65: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 66: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 67: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 68: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 69: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 70: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 71: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 72: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 73: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 74: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 75: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 76: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 77: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 78: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 79: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
-- Deep Dive 80: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Chat System.
+```
+Problem: Multi-region, multiple servers → messages can arrive out of order
 
-### Trade-offs
-#### Explanation / Giải thích
-- Trade-off 1: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 2: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 3: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 4: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 5: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 6: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 7: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 8: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 9: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 10: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 11: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 12: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 13: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 14: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 15: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 16: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 17: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 18: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 19: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 20: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 21: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 22: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 23: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 24: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 25: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 26: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 27: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 28: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 29: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 30: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 31: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 32: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 33: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 34: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 35: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 36: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 37: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 38: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 39: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 40: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
+VECTOR CLOCK approach (WhatsApp):
+  Each device maintains a logical clock
+  msg.vector_clock = {device1: 5, device2: 3}
+  Receiver orders by vector clock
 
-### Failure Scenarios
-#### Example / Ví dụ
-- Scenario 1: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 2: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 3: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 4: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 5: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 6: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 7: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 8: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 9: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 10: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 11: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 12: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 13: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 14: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 15: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 16: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 17: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 18: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 19: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 20: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 21: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 22: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 23: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 24: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 25: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
+SIMPLER: Sequence number per conversation
+  Each conversation has a monotonic sequence number
+  seq_num generated by conversation service (single writer)
+  seq_num stored with message
+  
+Trade-off: Sequence number service = bottleneck
+  Scale: one sequence service per conversation shard
+  OR: use HLC (Hybrid Logical Clock) = physical time + logical counter
+```
 
-### Interview Delivery Tips
-#### Explanation / Giải thích
-Trả lời theo thứ tự: scope -> assumptions -> architecture -> deep dive -> trade-offs -> future improvements.
-Nếu bị cắt thời gian, ưu tiên phần bottleneck và mitigation thay vì thêm nhiều microservice chi tiết.
+### Deep Dive: Fan-out Strategy
+
+```
+Group message to 500 members:
+
+FAN-OUT ON WRITE (WhatsApp):
+  Write one message to Kafka
+  Delivery service reads and delivers to each member's WebSocket
+  
+  Pros: Fast delivery
+  Cons: Message stored once, but delivered 500x from Kafka
+
+FAN-OUT ON READ (Slack):
+  Store message once in DB
+  Each user reads from DB when they open the conversation
+  
+  Pros: Storage efficient
+  Cons: Slow initial load (all 500 members read on open)
+
+Facebook Messenger hybrid:
+  Active users → fan-out on write (WebSocket push)
+  Inactive users → fan-out on read (pull on next login)
+```
 
 ---
 
-## 3. Distributed Cache
-
-### Overview / Tổng Quan
-Thiết kế distributed cache cho read-heavy workload với eviction, replication, consistent hashing.
-Bài toán `distributed-cache` thường được dùng để kiểm tra tư duy scale, reliability và trade-off.
+## 3. Rate Limiter / Giới Hạn Tốc Độ
 
 ### Requirements
-#### Explanation / Giải thích
-Functional Requirements (FR):
-- Hệ thống phải cung cấp API rõ ràng, ổn định, versioned.
-- Hỗ trợ idempotency cho các thao tác write quan trọng.
-- Có khả năng audit và quan sát hành vi người dùng qua metrics/logs.
-- Cho phép cấu hình policy theo tenant hoặc theo user tier.
 
-Non-Functional Requirements (NFR):
-- Availability cao (thường 99.9% -> 99.99% tùy domain).
-- P95/P99 latency có mục tiêu cụ thể theo luồng critical.
-- Dữ liệu cần đảm bảo durability và backup/restore rõ ràng.
-- Thiết kế theo nguyên tắc horizontal scalability.
-- Có cơ chế graceful degradation khi phụ thuộc downstream lỗi.
+**Functional:**
+- Limit requests per user/IP/API key
+- Multiple rules: 100 req/min per user, 1000 req/hour per IP
+- Return 429 Too Many Requests with retry-after header
+- Rules configurable without deployment
 
-### Estimation
-#### Explanation / Giải thích
-Bạn nên trình bày ước lượng theo 4 trục: traffic, storage, bandwidth, compute.
-Nói rõ giả định trước khi tính để interviewer có thể điều chỉnh input.
+**Non-Functional:**
+- Added latency < 2ms for allow path
+- Handle 100k req/sec
+- Distributed: multiple app servers share the same rate limit state
+- Fail-open: if rate limiter unavailable, allow requests (availability > strictness)
 
-- Assumption 1: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 2: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 3: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 4: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 5: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 6: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 7: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 8: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 9: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 10: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 11: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 12: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 13: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 14: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 15: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 16: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 17: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 18: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 19: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 20: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 21: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 22: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 23: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 24: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 25: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 26: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 27: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 28: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 29: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 30: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 31: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 32: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 33: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 34: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 35: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
+### Algorithms / Thuật Toán
 
-### High-Level Architecture
-#### Explanation / Giải thích
-Mô hình chuẩn: Client -> API Gateway -> Stateless Services -> Cache/Queue/DB -> Analytics.
-Trong buổi phỏng vấn, ưu tiên vẽ data flow chính trước rồi mới đi sâu edge case.
+```
+FIXED WINDOW:
+  window: [00:00 - 01:00], count per window
+  Simple but: burst at window boundary (99 req at :59, 100 req at :01)
 
-```text
-Client
-  -> API Gateway (Auth, Rate Limit, Routing)
-    -> Service Layer (stateless)
-      -> Cache (Redis/Memcached)
-      -> Queue/Stream (Kafka/PubSub)
-      -> Primary Storage (SQL/NoSQL)
-      -> Object Store (S3/GCS) nếu có blob/media
+  [────────────────][────────────────]
+  0s               60s              120s
+  Count: 100 ok    Count: 0 reset → 100 more immediately = 200 in 2s ✗
+
+SLIDING WINDOW LOG:
+  Store timestamp of each request in sorted set
+  Count requests in [now - 60s, now]
+  
+  Pros: Exact, no boundary burst
+  Cons: Memory heavy (store each request timestamp)
+
+SLIDING WINDOW COUNTER (recommended):
+  Blend of fixed windows:
+  current_count = curr_window_count + prev_window_count × (1 - elapsed%)
+  
+  Example: 100 req/min limit
+  Prev window (40s ago): 80 requests
+  Current window (20s elapsed): 30 requests
+  elapsed% in current = 20/60 = 33%
+  
+  estimated_count = 30 + 80 × (1 - 0.33) = 30 + 54 = 84 → allow
+  
+  Memory efficient, approximation < 0.003% error
+
+TOKEN BUCKET:
+  Bucket capacity = burst limit
+  Tokens refilled at rate R per second
+  Request costs 1 token, rejected if empty
+  
+  Pros: Allows bursts up to capacity
+  AWS API Gateway uses token bucket
 ```
 
-### Data Model
-#### Explanation / Giải thích
-Khi mô tả data model, luôn nêu rõ primary key, index chiến lược, và access pattern.
-Tách write model và read model khi query pattern phức tạp hoặc read-heavy.
+### Distributed Rate Limiter Architecture
 
-### API Design
-#### Example / Ví dụ
-Các endpoint gợi ý:
-- `GET /v1/cache/{key}`: mô tả request/response, lỗi thường gặp, và idempotency behavior.
-- `PUT /v1/cache/{key}`: mô tả request/response, lỗi thường gặp, và idempotency behavior.
-- `DELETE /v1/cache/{key}`: mô tả request/response, lỗi thường gặp, và idempotency behavior.
-- `GET /v1/cache/health`: mô tả request/response, lỗi thường gặp, và idempotency behavior.
-
-### Go Implementation Sketch
-#### Example / Ví dụ
-```go
-package main
-
-import (
-	"context"
-	"errors"
-	"net/http"
-	"time"
-)
-
-type Service interface {
-	Handle(ctx context.Context, input map[string]string) (map[string]string, error)
-}
-
-func Handler(svc Service) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), 1500*time.Millisecond)
-		defer cancel()
-		out, err := svc.Handle(ctx, map[string]string{"path": r.URL.Path})
-		if err != nil {
-			status := http.StatusInternalServerError
-			if errors.Is(err, context.DeadlineExceeded) {
-				status = http.StatusGatewayTimeout
-			}
-			w.WriteHeader(status)
-			_, _ = w.Write([]byte(err.Error()))
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(out["message"]))
-	}
-}
 ```
+                    App Server 1
+                    App Server 2   → [Redis Cluster] ← central rate limit state
+                    App Server 3
+                    
+Per-server counter (bad):
+  S1 allows 100, S2 allows 100 → 200 requests pass (2x the limit)
 
-### Deep Dives
-#### Explanation / Giải thích
-Phần deep dive quyết định mức Senior: cần nêu bottleneck, consistency, failure handling, observability.
+Redis ATOMIC operations:
+  INCR user:123:count:minute:1234
+  EXPIRE user:123:count:minute:1234 60
+  Both in Lua script = atomic
+  
+Redis sliding window with sorted set:
+  ZADD user:123:requests <timestamp> <request_id>
+  ZREMRANGEBYSCORE user:123:requests 0 <now-60s>  ← remove old
+  ZCARD user:123:requests                          ← count
+  All in pipeline = fast
 
-- Deep Dive 1: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 2: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 3: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 4: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 5: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 6: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 7: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 8: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 9: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 10: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 11: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 12: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 13: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 14: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 15: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 16: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 17: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 18: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 19: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 20: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 21: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 22: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 23: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 24: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 25: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 26: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 27: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 28: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 29: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 30: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 31: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 32: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 33: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 34: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 35: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 36: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 37: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 38: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 39: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 40: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 41: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 42: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 43: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 44: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 45: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 46: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 47: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 48: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 49: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 50: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 51: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 52: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 53: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 54: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 55: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 56: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 57: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 58: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 59: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 60: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 61: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 62: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 63: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 64: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 65: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 66: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 67: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 68: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 69: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 70: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 71: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 72: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 73: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 74: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 75: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 76: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 77: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 78: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 79: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-- Deep Dive 80: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Distributed Cache.
-
-### Trade-offs
-#### Explanation / Giải thích
-- Trade-off 1: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 2: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 3: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 4: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 5: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 6: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 7: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 8: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 9: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 10: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 11: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 12: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 13: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 14: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 15: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 16: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 17: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 18: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 19: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 20: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 21: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 22: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 23: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 24: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 25: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 26: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 27: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 28: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 29: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 30: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 31: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 32: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 33: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 34: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 35: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 36: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 37: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 38: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 39: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 40: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-
-### Failure Scenarios
-#### Example / Ví dụ
-- Scenario 1: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 2: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 3: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 4: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 5: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 6: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 7: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 8: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 9: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 10: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 11: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 12: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 13: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 14: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 15: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 16: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 17: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 18: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 19: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 20: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 21: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 22: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 23: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 24: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 25: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-
-### Interview Delivery Tips
-#### Explanation / Giải thích
-Trả lời theo thứ tự: scope -> assumptions -> architecture -> deep dive -> trade-offs -> future improvements.
-Nếu bị cắt thời gian, ưu tiên phần bottleneck và mitigation thay vì thêm nhiều microservice chi tiết.
+Performance:
+  Redis: 100k+ ops/sec
+  Rate limit check: ~0.5ms → meets our 2ms target
+```
 
 ---
 
-## 4. Search Engine
-
-### Overview / Tổng Quan
-Thiết kế search engine gồm crawl/index/query/ranking cho tài liệu quy mô lớn.
-Bài toán `search-engine` thường được dùng để kiểm tra tư duy scale, reliability và trade-off.
+## 4. Distributed Cache / Cache Phân Tán (Redis Clone)
 
 ### Requirements
-#### Explanation / Giải thích
-Functional Requirements (FR):
-- Hệ thống phải cung cấp API rõ ràng, ổn định, versioned.
-- Hỗ trợ idempotency cho các thao tác write quan trọng.
-- Có khả năng audit và quan sát hành vi người dùng qua metrics/logs.
-- Cho phép cấu hình policy theo tenant hoặc theo user tier.
 
-Non-Functional Requirements (NFR):
-- Availability cao (thường 99.9% -> 99.99% tùy domain).
-- P95/P99 latency có mục tiêu cụ thể theo luồng critical.
-- Dữ liệu cần đảm bảo durability và backup/restore rõ ràng.
-- Thiết kế theo nguyên tắc horizontal scalability.
-- Có cơ chế graceful degradation khi phụ thuộc downstream lỗi.
+**Functional:**
+- GET/SET/DELETE operations
+- TTL/expiration
+- LRU eviction when memory full
 
-### Estimation
-#### Explanation / Giải thích
-Bạn nên trình bày ước lượng theo 4 trục: traffic, storage, bandwidth, compute.
-Nói rõ giả định trước khi tính để interviewer có thể điều chỉnh input.
+**Non-Functional:**
+- < 1ms p99 for GET/SET
+- 99.99% availability
+- Horizontal scalability
+- Persistence optional (configurable)
 
-- Assumption 1: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 2: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 3: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 4: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 5: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 6: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 7: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 8: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 9: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 10: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 11: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 12: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 13: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 14: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 15: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 16: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 17: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 18: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 19: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 20: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 21: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 22: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 23: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 24: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 25: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 26: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 27: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 28: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 29: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 30: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 31: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 32: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 33: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 34: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 35: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
+### Architecture
 
-### High-Level Architecture
-#### Explanation / Giải thích
-Mô hình chuẩn: Client -> API Gateway -> Stateless Services -> Cache/Queue/DB -> Analytics.
-Trong buổi phỏng vấn, ưu tiên vẽ data flow chính trước rồi mới đi sâu edge case.
+```
+CLIENT
+  │
+  ▼
+[Proxy / Router]   ← consistent hashing to route key to correct shard
+  │
+  ├── Shard 1 (keys 0-33%)
+  │     ├── Primary
+  │     └── Replica(s)
+  ├── Shard 2 (keys 33-66%)
+  │     ├── Primary
+  │     └── Replica(s)
+  └── Shard 3 (keys 66-100%)
+        ├── Primary
+        └── Replica(s)
 
-```text
-Client
-  -> API Gateway (Auth, Rate Limit, Routing)
-    -> Service Layer (stateless)
-      -> Cache (Redis/Memcached)
-      -> Queue/Stream (Kafka/PubSub)
-      -> Primary Storage (SQL/NoSQL)
-      -> Object Store (S3/GCS) nếu có blob/media
+Consistent hashing ring:
+hash(key) → position on ring → nearest shard primary
+Adding shard: only ≈ 1/N keys remapped (vs all keys with hash%N)
 ```
 
-### Data Model
-#### Explanation / Giải thích
-Khi mô tả data model, luôn nêu rõ primary key, index chiến lược, và access pattern.
-Tách write model và read model khi query pattern phức tạp hoặc read-heavy.
+### LRU Eviction Implementation
 
-### API Design
-#### Example / Ví dụ
-Các endpoint gợi ý:
-- `POST /v1/index/documents`: mô tả request/response, lỗi thường gặp, và idempotency behavior.
-- `GET /v1/search?q=...`: mô tả request/response, lỗi thường gặp, và idempotency behavior.
-- `POST /v1/search/suggest`: mô tả request/response, lỗi thường gặp, và idempotency behavior.
-- `GET /v1/search/health`: mô tả request/response, lỗi thường gặp, và idempotency behavior.
-
-### Go Implementation Sketch
-#### Example / Ví dụ
-```go
-package main
-
-import (
-	"context"
-	"errors"
-	"net/http"
-	"time"
-)
-
-type Service interface {
-	Handle(ctx context.Context, input map[string]string) (map[string]string, error)
-}
-
-func Handler(svc Service) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), 1500*time.Millisecond)
-		defer cancel()
-		out, err := svc.Handle(ctx, map[string]string{"path": r.URL.Path})
-		if err != nil {
-			status := http.StatusInternalServerError
-			if errors.Is(err, context.DeadlineExceeded) {
-				status = http.StatusGatewayTimeout
-			}
-			w.WriteHeader(status)
-			_, _ = w.Write([]byte(err.Error()))
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(out["message"]))
-	}
-}
 ```
+HashMap + Doubly Linked List = O(1) get/put/evict
 
-### Deep Dives
-#### Explanation / Giải thích
-Phần deep dive quyết định mức Senior: cần nêu bottleneck, consistency, failure handling, observability.
+HashMap: {key → node}
+LinkedList: [MRU] ←→ node ←→ node ←→ node ←→ [LRU]
 
-- Deep Dive 1: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 2: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 3: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 4: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 5: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 6: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 7: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 8: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 9: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 10: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 11: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 12: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 13: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 14: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 15: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 16: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 17: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 18: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 19: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 20: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 21: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 22: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 23: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 24: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 25: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 26: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 27: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 28: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 29: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 30: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 31: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 32: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 33: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 34: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 35: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 36: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 37: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 38: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 39: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 40: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 41: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 42: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 43: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 44: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 45: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 46: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 47: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 48: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 49: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 50: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 51: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 52: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 53: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 54: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 55: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 56: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 57: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 58: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 59: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 60: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 61: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 62: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 63: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 64: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 65: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 66: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 67: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 68: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 69: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 70: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 71: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 72: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 73: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 74: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 75: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 76: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 77: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 78: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 79: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
-- Deep Dive 80: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Search Engine.
+GET key:
+  1. HashMap lookup → find node
+  2. Move node to MRU end of list
+  3. Return value
 
-### Trade-offs
-#### Explanation / Giải thích
-- Trade-off 1: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 2: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 3: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 4: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 5: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 6: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 7: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 8: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 9: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 10: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 11: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 12: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 13: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 14: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 15: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 16: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 17: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 18: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 19: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 20: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 21: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 22: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 23: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 24: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 25: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 26: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 27: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 28: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 29: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 30: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 31: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 32: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 33: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 34: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 35: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 36: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 37: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 38: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 39: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 40: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
+SET key=value:
+  1. If exists: update value + move to MRU
+  2. If new + capacity full: remove LRU (tail node + HashMap entry)
+  3. Insert new node at MRU head + HashMap
 
-### Failure Scenarios
-#### Example / Ví dụ
-- Scenario 1: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 2: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 3: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 4: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 5: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 6: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 7: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 8: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 9: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 10: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 11: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 12: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 13: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 14: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 15: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 16: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 17: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 18: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 19: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 20: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 21: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 22: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 23: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 24: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 25: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-
-### Interview Delivery Tips
-#### Explanation / Giải thích
-Trả lời theo thứ tự: scope -> assumptions -> architecture -> deep dive -> trade-offs -> future improvements.
-Nếu bị cắt thời gian, ưu tiên phần bottleneck và mitigation thay vì thêm nhiều microservice chi tiết.
+All operations O(1) ← this is the entire LRU Cache interview answer
+```
 
 ---
 
-## 5. Notification System
-
-### Overview / Tổng Quan
-Thiết kế notification đa kênh (push/email/sms/in-app) có retry, dedup, ưu tiên.
-Bài toán `notification-system` thường được dùng để kiểm tra tư duy scale, reliability và trade-off.
+## 5. Notification System / Hệ Thống Thông Báo
 
 ### Requirements
-#### Explanation / Giải thích
-Functional Requirements (FR):
-- Hệ thống phải cung cấp API rõ ràng, ổn định, versioned.
-- Hỗ trợ idempotency cho các thao tác write quan trọng.
-- Có khả năng audit và quan sát hành vi người dùng qua metrics/logs.
-- Cho phép cấu hình policy theo tenant hoặc theo user tier.
 
-Non-Functional Requirements (NFR):
-- Availability cao (thường 99.9% -> 99.99% tùy domain).
-- P95/P99 latency có mục tiêu cụ thể theo luồng critical.
-- Dữ liệu cần đảm bảo durability và backup/restore rõ ràng.
-- Thiết kế theo nguyên tắc horizontal scalability.
-- Có cơ chế graceful degradation khi phụ thuộc downstream lỗi.
+**Functional:**
+- Push notifications (iOS/Android), email, SMS
+- Template-based messages with user data
+- Schedule and bulk send
+- Delivery tracking
 
-### Estimation
-#### Explanation / Giải thích
-Bạn nên trình bày ước lượng theo 4 trục: traffic, storage, bandwidth, compute.
-Nói rõ giả định trước khi tính để interviewer có thể điều chỉnh input.
+**Non-Functional:**
+- 10M notifications/day → ~115 notifications/sec
+- Peak 10x: 1,150/sec
+- Each notification delivered exactly once (at-least-once + idempotency)
+- Email: 5min delivery SLA; Push: 1min; SMS: 2min
 
-- Assumption 1: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 2: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 3: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 4: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 5: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 6: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 7: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 8: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 9: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 10: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 11: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 12: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 13: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 14: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 15: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 16: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 17: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 18: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 19: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 20: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 21: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 22: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 23: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 24: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 25: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 26: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 27: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 28: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 29: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 30: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 31: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 32: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 33: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 34: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 35: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
+### Architecture
 
-### High-Level Architecture
-#### Explanation / Giải thích
-Mô hình chuẩn: Client -> API Gateway -> Stateless Services -> Cache/Queue/DB -> Analytics.
-Trong buổi phỏng vấn, ưu tiên vẽ data flow chính trước rồi mới đi sâu edge case.
-
-```text
-Client
-  -> API Gateway (Auth, Rate Limit, Routing)
-    -> Service Layer (stateless)
-      -> Cache (Redis/Memcached)
-      -> Queue/Stream (Kafka/PubSub)
-      -> Primary Storage (SQL/NoSQL)
-      -> Object Store (S3/GCS) nếu có blob/media
+```
+Producer Services             ┌──────────────────────────────────┐
+(Order Service,               │         Notification Service      │
+ Marketing,                   │                                  │
+ System Alerts)               │  [Priority Queue]                │
+        │                     │  HIGH: system alerts              │
+        │ REST / Event         │  MEDIUM: user-triggered          │
+        ▼                     │  LOW: marketing                  │
+[Notification API]            └──────────────────────────────────┘
+        │                              │
+        ▼                     ┌────────┼────────┐
+[Kafka: notifications]        ▼        ▼        ▼
+        │               [Email    ] [Push    ] [SMS
+        │               [Worker   ] [Worker  ] [Worker]
+        │                   │          │          │
+        ▼               [SendGrid] [APNs/FCM] [Twilio]
+[Notification DB]           │          │          │
+(status tracking)           └──────────┴──────────┘
+                                    Delivery
 ```
 
-### Data Model
-#### Explanation / Giải thích
-Khi mô tả data model, luôn nêu rõ primary key, index chiến lược, và access pattern.
-Tách write model và read model khi query pattern phức tạp hoặc read-heavy.
+### Deduplication / Chống Gửi Trùng
 
-### API Design
-#### Example / Ví dụ
-Các endpoint gợi ý:
-- `POST /v1/notifications`: mô tả request/response, lỗi thường gặp, và idempotency behavior.
-- `GET /v1/notifications/{id}`: mô tả request/response, lỗi thường gặp, và idempotency behavior.
-- `POST /v1/users/{id}/preferences`: mô tả request/response, lỗi thường gặp, và idempotency behavior.
-- `GET /v1/notifications/metrics`: mô tả request/response, lỗi thường gặp, và idempotency behavior.
-
-### Go Implementation Sketch
-#### Example / Ví dụ
-```go
-package main
-
-import (
-	"context"
-	"errors"
-	"net/http"
-	"time"
-)
-
-type Service interface {
-	Handle(ctx context.Context, input map[string]string) (map[string]string, error)
-}
-
-func Handler(svc Service) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), 1500*time.Millisecond)
-		defer cancel()
-		out, err := svc.Handle(ctx, map[string]string{"path": r.URL.Path})
-		if err != nil {
-			status := http.StatusInternalServerError
-			if errors.Is(err, context.DeadlineExceeded) {
-				status = http.StatusGatewayTimeout
-			}
-			w.WriteHeader(status)
-			_, _ = w.Write([]byte(err.Error()))
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(out["message"]))
-	}
-}
 ```
+Problem: Kafka at-least-once → notification sent twice if worker crashes mid-send
 
-### Deep Dives
-#### Explanation / Giải thích
-Phần deep dive quyết định mức Senior: cần nêu bottleneck, consistency, failure handling, observability.
-
-- Deep Dive 1: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 2: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 3: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 4: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 5: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 6: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 7: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 8: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 9: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 10: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 11: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 12: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 13: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 14: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 15: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 16: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 17: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 18: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 19: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 20: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 21: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 22: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 23: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 24: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 25: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 26: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 27: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 28: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 29: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 30: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 31: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 32: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 33: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 34: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 35: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 36: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 37: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 38: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 39: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 40: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 41: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 42: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 43: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 44: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 45: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 46: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 47: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 48: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 49: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 50: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 51: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 52: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 53: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 54: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 55: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 56: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 57: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 58: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 59: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 60: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 61: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 62: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 63: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 64: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 65: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 66: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 67: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 68: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 69: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 70: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 71: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 72: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 73: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 74: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 75: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 76: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 77: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 78: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 79: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-- Deep Dive 80: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Notification System.
-
-### Trade-offs
-#### Explanation / Giải thích
-- Trade-off 1: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 2: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 3: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 4: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 5: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 6: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 7: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 8: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 9: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 10: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 11: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 12: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 13: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 14: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 15: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 16: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 17: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 18: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 19: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 20: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 21: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 22: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 23: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 24: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 25: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 26: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 27: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 28: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 29: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 30: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 31: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 32: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 33: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 34: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 35: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 36: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 37: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 38: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 39: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 40: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-
-### Failure Scenarios
-#### Example / Ví dụ
-- Scenario 1: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 2: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 3: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 4: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 5: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 6: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 7: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 8: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 9: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 10: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 11: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 12: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 13: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 14: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 15: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 16: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 17: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 18: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 19: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 20: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 21: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 22: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 23: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 24: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 25: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-
-### Interview Delivery Tips
-#### Explanation / Giải thích
-Trả lời theo thứ tự: scope -> assumptions -> architecture -> deep dive -> trade-offs -> future improvements.
-Nếu bị cắt thời gian, ưu tiên phần bottleneck và mitigation thay vì thêm nhiều microservice chi tiết.
+Solution: Idempotency key
+  notification_id → generated once, stored in DB
+  Worker checks: has this notification_id been sent?
+  
+Redis dedup check:
+  SET notification:abc123:sent "1" NX EX 86400
+  → SET if Not Exists, expire in 24h
+  → Returns 1 if newly set (send it), 0 if already set (skip)
+  → Atomic → safe in distributed env
+```
 
 ---
 
-## 6. Rate Limiter
-
-### Overview / Tổng Quan
-Thiết kế distributed rate limiter cho API gateway với token bucket và sliding window.
-Bài toán `rate-limiter` thường được dùng để kiểm tra tư duy scale, reliability và trade-off.
+## 6. Search Autocomplete / Tìm Kiếm Gợi Ý
 
 ### Requirements
-#### Explanation / Giải thích
-Functional Requirements (FR):
-- Hệ thống phải cung cấp API rõ ràng, ổn định, versioned.
-- Hỗ trợ idempotency cho các thao tác write quan trọng.
-- Có khả năng audit và quan sát hành vi người dùng qua metrics/logs.
-- Cho phép cấu hình policy theo tenant hoặc theo user tier.
 
-Non-Functional Requirements (NFR):
-- Availability cao (thường 99.9% -> 99.99% tùy domain).
-- P95/P99 latency có mục tiêu cụ thể theo luồng critical.
-- Dữ liệu cần đảm bảo durability và backup/restore rõ ràng.
-- Thiết kế theo nguyên tắc horizontal scalability.
-- Có cơ chế graceful degradation khi phụ thuộc downstream lỗi.
+**Functional:**
+- Return top 5 suggestions for a prefix as user types
+- Rank by search frequency
+- Low latency (< 100ms end-to-end)
+- Updated daily with new trending queries
 
-### Estimation
-#### Explanation / Giải thích
-Bạn nên trình bày ước lượng theo 4 trục: traffic, storage, bandwidth, compute.
-Nói rõ giả định trước khi tính để interviewer có thể điều chỉnh input.
+**Non-Functional:**
+- 100M DAU, each types 10 searches/day
+- ~11,600 queries/sec peak
+- Read-heavy (queries >> updates)
 
-- Assumption 1: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 2: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 3: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 4: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 5: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 6: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 7: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 8: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 9: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 10: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 11: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 12: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 13: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 14: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 15: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 16: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 17: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 18: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 19: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 20: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 21: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 22: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 23: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 24: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 25: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 26: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 27: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 28: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 29: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 30: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 31: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 32: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 33: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 34: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
-- Assumption 35: Trình bày một giả định định lượng và tác động của nó lên QPS/throughput.
+### Data Structure: Trie / Cây Tìm Kiếm
 
-### High-Level Architecture
-#### Explanation / Giải thích
-Mô hình chuẩn: Client -> API Gateway -> Stateless Services -> Cache/Queue/DB -> Analytics.
-Trong buổi phỏng vấn, ưu tiên vẽ data flow chính trước rồi mới đi sâu edge case.
+```
+Trie storing ["apple":100, "app":80, "application":60, "apply":40]:
 
-```text
-Client
-  -> API Gateway (Auth, Rate Limit, Routing)
-    -> Service Layer (stateless)
-      -> Cache (Redis/Memcached)
-      -> Queue/Stream (Kafka/PubSub)
-      -> Primary Storage (SQL/NoSQL)
-      -> Object Store (S3/GCS) nếu có blob/media
+    root
+    └── a
+        └── p
+            ├── p (freq:80) ← "app"
+            │   ├── l
+            │   │   ├── e (freq:100) ← "apple"
+            │   │   └── i
+            │   │       └── c
+            │   │           └── a
+            │   │               └── t
+            │   │                   └── i
+            │   │                       └── o
+            │   │                           └── n (freq:60) ← "application"
+            │   └── y (freq:40) ← "apply"
+
+Query "app": traverse a→p→p → return top-5 children by freq
+= ["apple":100, "app":80, "application":60, "apply":40]
 ```
 
-### Data Model
-#### Explanation / Giải thích
-Khi mô tả data model, luôn nêu rõ primary key, index chiến lược, và access pattern.
-Tách write model và read model khi query pattern phức tạp hoặc read-heavy.
+### Architecture
 
-### API Design
-#### Example / Ví dụ
-Các endpoint gợi ý:
-- `POST /v1/ratelimit/check`: mô tả request/response, lỗi thường gặp, và idempotency behavior.
-- `POST /v1/ratelimit/configs`: mô tả request/response, lỗi thường gặp, và idempotency behavior.
-- `GET /v1/ratelimit/configs/{key}`: mô tả request/response, lỗi thường gặp, và idempotency behavior.
-- `GET /v1/ratelimit/usage/{key}`: mô tả request/response, lỗi thường gặp, và idempotency behavior.
-
-### Go Implementation Sketch
-#### Example / Ví dụ
-```go
-package main
-
-import (
-	"context"
-	"errors"
-	"net/http"
-	"time"
-)
-
-type Service interface {
-	Handle(ctx context.Context, input map[string]string) (map[string]string, error)
-}
-
-func Handler(svc Service) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), 1500*time.Millisecond)
-		defer cancel()
-		out, err := svc.Handle(ctx, map[string]string{"path": r.URL.Path})
-		if err != nil {
-			status := http.StatusInternalServerError
-			if errors.Is(err, context.DeadlineExceeded) {
-				status = http.StatusGatewayTimeout
-			}
-			w.WriteHeader(status)
-			_, _ = w.Write([]byte(err.Error()))
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(out["message"]))
-	}
-}
 ```
+Client types "app":
+  1. Client sends GET /suggestions?q=app
+  2. Load Balancer → nearest edge (CDN)
+  3. Cache: check Redis "suggestions:app" → HIT → return in < 1ms
+  4. MISS → Trie Service → traverse trie → top 5 → cache result
+  
+Data pipeline (daily updates):
+  Search logs → Spark job → count top queries per prefix
+  → rebuild trie → push to Trie Service
+  → warm up Redis cache for popular prefixes
 
-### Deep Dives
-#### Explanation / Giải thích
-Phần deep dive quyết định mức Senior: cần nêu bottleneck, consistency, failure handling, observability.
-
-- Deep Dive 1: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 2: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 3: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 4: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 5: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 6: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 7: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 8: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 9: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 10: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 11: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 12: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 13: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 14: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 15: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 16: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 17: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 18: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 19: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 20: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 21: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 22: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 23: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 24: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 25: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 26: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 27: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 28: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 29: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 30: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 31: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 32: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 33: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 34: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 35: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 36: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 37: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 38: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 39: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 40: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 41: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 42: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 43: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 44: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 45: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 46: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 47: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 48: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 49: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 50: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 51: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 52: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 53: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 54: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 55: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 56: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 57: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 58: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 59: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 60: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 61: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 62: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 63: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 64: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 65: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 66: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 67: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 68: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 69: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 70: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 71: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 72: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 73: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 74: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 75: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 76: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 77: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 78: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 79: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-- Deep Dive 80: Phân tích trade-off giữa latency, consistency, cost, complexity trong ngữ cảnh Rate Limiter.
-
-### Trade-offs
-#### Explanation / Giải thích
-- Trade-off 1: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 2: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 3: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 4: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 5: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 6: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 7: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 8: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 9: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 10: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 11: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 12: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 13: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 14: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 15: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 16: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 17: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 18: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 19: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 20: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 21: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 22: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 23: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 24: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 25: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 26: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 27: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 28: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 29: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 30: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 31: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 32: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 33: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 34: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 35: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 36: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 37: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 38: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 39: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-- Trade-off 40: Khi ưu tiên availability thì phải chấp nhận eventual consistency trong một số luồng.
-
-### Failure Scenarios
-#### Example / Ví dụ
-- Scenario 1: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 2: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 3: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 4: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 5: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 6: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 7: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 8: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 9: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 10: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 11: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 12: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 13: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 14: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 15: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 16: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 17: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 18: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 19: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 20: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 21: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 22: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 23: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 24: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-- Scenario 25: Mô tả lỗi node/network/dependency và chiến lược retry, circuit breaker, fallback.
-
-### Interview Delivery Tips
-#### Explanation / Giải thích
-Trả lời theo thứ tự: scope -> assumptions -> architecture -> deep dive -> trade-offs -> future improvements.
-Nếu bị cắt thời gian, ưu tiên phần bottleneck và mitigation thay vì thêm nhiều microservice chi tiết.
+Scale:
+  Trie in memory (top 3-char prefixes cached in Redis)
+  Trie Service: read replicas, no writes during serving
+  Cache TTL: 1 hour (trends don't change that fast)
+```
 
 ---
 
-## Câu Hỏi Phỏng Vấn / Interview Q&A
+## Interview Q&A Summary / Tổng Kết
 
-### 🟢 [Junior] Câu 1: Vì sao cần tách Functional Requirements và Non-Functional Requirements?
-**Giải thích:** Tách FR/NFR giúp bạn tránh thiết kế sai mục tiêu. FR nói hệ thống làm gì; NFR nói hệ thống phải tốt như thế nào.
-**Ví dụ:** URL shortener có FR là redirect URL; NFR là p95 redirect < 50ms.
+| System | Key Insight | Common Follow-up |
+|--------|------------|-----------------|
+| URL Shortener | 302 for analytics, Base62+counter for codes | How to handle custom aliases? |
+| Chat | WebSocket + Redis pubsub for routing, Cassandra for history | Message ordering in groups? |
+| Rate Limiter | Sliding window counter in Redis, Lua script for atomicity | Distributed race condition? |
+| Distributed Cache | Consistent hashing + LRU = HashMap+DLL | Cache invalidation strategy? |
+| Notifications | Priority queues + Kafka + idempotency key | Dead letter queue for failures? |
+| Autocomplete | Trie + Redis prefix cache, daily rebuild from logs | Real-time updates vs batch? |
 
-### 🟢 [Junior] Câu 2: Khi nào nên dùng cache trước database?
-**Giải thích:** Dùng cache khi read-heavy hoặc cần giảm latency/p99.
-**Ví dụ:** Redirect URL ngắn có hot key cao, Redis có thể giảm tải database đáng kể.
+---
 
-### 🟡 [Mid] Câu 3: Thiết kế id generation cho URL shortener như thế nào để tránh collision?
-**Giải thích:** Có thể dùng Snowflake/segment allocator và encode base62.
-**Ví dụ:** Mỗi node lấy block ID từ coordinator, sinh cục bộ để giảm lock toàn cục.
-
-### 🟡 [Mid] Câu 4: Chat system đảm bảo ordering ra sao khi multi-region?
-**Giải thích:** Dùng sequence theo conversation và conflict rule khi merge cross-region.
-**Ví dụ:** Per-conversation logical sequence + sticky routing.
-
-### 🟡 [Mid] Câu 5: Cache invalidation chiến lược nào thực dụng?
-**Giải thích:** Kết hợp TTL + write-through/write-around tùy pattern.
-**Ví dụ:** Notification preference update thì invalidate key theo user.
-
-### 🔴 [Senior] Câu 6: Bạn cân bằng consistency và availability trong notification pipeline thế nào?
-**Giải thích:** Với notification, at-least-once + dedup key thường thực dụng hơn exactly-once tuyệt đối.
-**Ví dụ:** Dùng Kafka, consumer idempotent, Redis SETNX dedup key, DLQ cho poison message.
-
-### 🔴 [Senior] Câu 7: Rate limiter phân tán xử lý race condition thế nào?
-**Giải thích:** Cần atomic operation (Lua script/transaction) trên store trung tâm.
-**Ví dụ:** Redis Lua kiểm tra và consume token trong một round-trip.
-
-### 🔴 [Senior] Câu 8: Khi nào bạn chọn SQL vs NoSQL trong system design?
-**Giải thích:** Chọn theo pattern truy cập, consistency, và scale profile; không chọn theo trend.
-**Ví dụ:** Transaction thanh toán dùng SQL; event log hoặc message timeline có thể dùng wide-column/NoSQL.
-
-## Final Notes
-### Overview / Tổng Quan
-Bạn nên luyện mỗi bài theo timer 45 phút và tự chấm theo rubric: clarity, correctness, trade-off depth.
-
-### Explanation / Giải thích
-Đây là file nền tảng; sau khi vững phần này, chuyển sang bài nâng cao tại [Advanced Problems](./03-advanced-problems.md).
-
-### Example / Ví dụ
-Kết hợp cùng [Distributed Patterns](./04-distributed-patterns.md) để tăng chiều sâu replication, partitioning, consensus.
-
+**See also**: [Design Framework](./01-design-framework.md) | [Advanced Problems](./03-advanced-problems.md) | [Distributed Patterns](./04-distributed-patterns.md)
