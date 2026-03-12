@@ -1,4 +1,4 @@
-# Interview Preparation Knowledge Base / Mục Lục — Mục Lục Tổng Hợp
+# Interview Preparation Knowledge Base — Mục Lục Tổng Hợp
 
 > **Comprehensive guide for mid-senior developers targeting Frontend (React/TypeScript) and Backend (Go) roles.**
 > Target companies: Google, Microsoft, Grab, Axon, Employment Hero, Zalo/VNG
@@ -10,6 +10,8 @@
 
 - [Interview Market Overview 2025-2026](./00-interview-market-overview.md) — Xu hướng phỏng vấn và so sánh các công ty
 - [Quick Start Guide](./00-quick-start-guide.md)
+- [6-Month Study Plan](./00-6-month-study-plan.md) — Lộ trình học 6 tháng chi tiết
+- [Learning Methodology](./00-learning-methodology.md) — Phương pháp học hiệu quả
 - [Quick Reference Cheat Sheet](./quick-reference-cheat-sheet.md)
 
 ---
@@ -33,14 +35,16 @@
 
 ### 01 — CS Fundamentals / Nền Tảng Khoa Học Máy Tính
 
-| #   | Topic                  | File                                                                               | Difficulty      |
-| --- | ---------------------- | ---------------------------------------------------------------------------------- | --------------- |
-| 1   | Algorithms Theory      | [algorithms-theory.md](./shared/01-cs-fundamentals/algorithms-theory.md)           | Junior → Senior |
-| 2   | Complexity Analysis    | [complexity-analysis.md](./shared/01-cs-fundamentals/complexity-analysis.md)       | Junior → Senior |
-| 3   | Data Structures Theory | [data-structures-theory.md](./shared/01-cs-fundamentals/data-structures-theory.md) | Junior → Senior |
-| 4   | Operating Systems      | [os-theory.md](./shared/01-cs-fundamentals/os-theory.md)                           | Mid → Senior    |
-| 5   | Networking             | [networking-theory.md](./shared/01-cs-fundamentals/networking-theory.md)           | Mid → Senior    |
-| 6   | Information Theory     | [information-theory.md](./shared/01-cs-fundamentals/information-theory.md)         | Senior          |
+| #   | Topic                        | File                                                                                               | Difficulty      |
+| --- | ---------------------------- | -------------------------------------------------------------------------------------------------- | --------------- |
+| 1   | Algorithms Theory            | [algorithms-theory.md](./shared/01-cs-fundamentals/algorithms-theory.md)                           | Junior → Senior |
+| 2   | Complexity Analysis          | [complexity-analysis.md](./shared/01-cs-fundamentals/complexity-analysis.md)                       | Junior → Senior |
+| 3   | Data Structures Theory       | [data-structures-theory.md](./shared/01-cs-fundamentals/data-structures-theory.md)                 | Junior → Senior |
+| 4   | Operating Systems            | [os-theory.md](./shared/01-cs-fundamentals/os-theory.md)                                           | Mid → Senior    |
+| 5   | Networking                   | [networking-theory.md](./shared/01-cs-fundamentals/networking-theory.md)                           | Mid → Senior    |
+| 6   | Information Theory           | [information-theory.md](./shared/01-cs-fundamentals/information-theory.md)                         | Senior          |
+| 7   | Concurrency & Parallelism    | [07-concurrency-and-parallelism.md](./shared/01-cs-fundamentals/07-concurrency-and-parallelism.md) | Mid → Senior    |
+| 8   | Computation Theory           | [08-computation-theory.md](./shared/01-cs-fundamentals/08-computation-theory.md)                   | Senior          |
 
 ### 02 — System Design / Thiết Kế Hệ Thống
 
@@ -66,6 +70,7 @@
 | 1   | Security Fundamentals    | [01-security-fundamentals.md](./shared/04-security/01-security-fundamentals.md)           | Junior → Senior |
 | 2   | Cryptography & Protocols | [02-cryptography-and-protocols.md](./shared/04-security/02-cryptography-and-protocols.md) | Mid → Senior    |
 | 3   | Web Security & OWASP     | [03-web-security-owasp.md](./shared/04-security/03-web-security-owasp.md)                 | Mid → Senior    |
+| 4   | Modern Auth Patterns     | [04-modern-auth-patterns.md](./shared/04-security/04-modern-auth-patterns.md)             | Mid → Senior    |
 
 ### 05 — Software Engineering / Kỹ Thuật Phần Mềm
 
@@ -74,17 +79,21 @@
 | 1   | SOLID & Design Patterns | [01-solid-and-design-patterns.md](./shared/05-software-engineering/01-solid-and-design-patterns.md) | Junior → Senior |
 | 2   | Architecture Styles     | [02-architecture-styles.md](./shared/05-software-engineering/02-architecture-styles.md)             | Mid → Senior    |
 | 3   | SDLC & Practices        | [03-sdlc-and-practices.md](./shared/05-software-engineering/03-sdlc-and-practices.md)               | Junior → Senior |
+| 4   | Testing Theory          | [04-testing-theory.md](./shared/05-software-engineering/04-testing-theory.md)                       | Junior → Senior |
+| 5   | Code Quality & Review   | [05-code-quality-and-review.md](./shared/05-software-engineering/05-code-quality-and-review.md)     | Mid → Senior    |
+| 6   | Project Management      | [06-project-management.md](./shared/05-software-engineering/06-project-management.md)               | Mid → Senior    |
 
 ### 06 — AI & Agentic Systems / AI và Hệ Thống Agent
 
-| #   | Topic                   | File                                                                                     | Difficulty   |
-| --- | ----------------------- | ---------------------------------------------------------------------------------------- | ------------ |
-| 1   | ML Fundamentals         | [01-ml-fundamentals.md](./shared/06-ai-and-agents/01-ml-fundamentals.md)                 | Junior → Mid |
-| 2   | LLMs & Transformers     | [02-llm-and-transformers.md](./shared/06-ai-and-agents/02-llm-and-transformers.md)       | Mid → Senior |
-| 3   | Agent Patterns          | [03-agent-patterns.md](./shared/06-ai-and-agents/03-agent-patterns.md)                   | Mid → Senior |
-| 4   | RAG & Embeddings        | [04-rag-and-embeddings.md](./shared/06-ai-and-agents/04-rag-and-embeddings.md)           | Mid → Senior |
-| 5   | AI Engineering Practice | [05-ai-engineering-practice.md](./shared/06-ai-and-agents/05-ai-engineering-practice.md) | Mid → Senior |
-| 6   | AI System Design        | [06-ai-system-design.md](./shared/06-ai-and-agents/06-ai-system-design.md)               | Senior       |
+| #   | Topic                      | File                                                                                           | Difficulty   |
+| --- | -------------------------- | ---------------------------------------------------------------------------------------------- | ------------ |
+| 1   | ML Fundamentals            | [01-ml-fundamentals.md](./shared/06-ai-and-agents/01-ml-fundamentals.md)                       | Junior → Mid |
+| 2   | LLMs & Transformers        | [02-llm-and-transformers.md](./shared/06-ai-and-agents/02-llm-and-transformers.md)             | Mid → Senior |
+| 3   | Agent Patterns             | [03-agent-patterns.md](./shared/06-ai-and-agents/03-agent-patterns.md)                         | Mid → Senior |
+| 4   | RAG & Embeddings           | [04-rag-and-embeddings.md](./shared/06-ai-and-agents/04-rag-and-embeddings.md)                 | Mid → Senior |
+| 5   | AI Engineering Practice    | [05-ai-engineering-practice.md](./shared/06-ai-and-agents/05-ai-engineering-practice.md)       | Mid → Senior |
+| 6   | AI System Design           | [06-ai-system-design.md](./shared/06-ai-and-agents/06-ai-system-design.md)                     | Senior       |
+| 7   | AI Production Challenges   | [07-ai-production-challenges.md](./shared/06-ai-and-agents/07-ai-production-challenges.md)     | Senior       |
 
 ---
 
@@ -106,16 +115,16 @@
 | 8   | ES6+ Features            | [07-es6-features.md](./fe-track/01-javascript/07-es6-features.md)                     | Critical |
 | 9   | Advanced Concepts        | [08-advanced-concepts.md](./fe-track/01-javascript/08-advanced-concepts.md)           | High     |
 
-### 02 — TypeScript (7 files)
+### 02 — TypeScript (7+ files)
 
-| #   | Topic              | File                                                                          | Priority |
-| --- | ------------------ | ----------------------------------------------------------------------------- | -------- |
-| 1   | TypeScript Basics  | [01-typescript-basics.md](./fe-track/02-typescript/01-typescript-basics.md)   | Critical |
-| 2   | Advanced Types     | [02-advanced-types.md](./fe-track/02-typescript/02-advanced-types.md)         | High     |
-| 3   | Generics Deep Dive | [03-generics-deep-dive.md](./fe-track/02-typescript/03-generics-deep-dive.md) | High     |
-| 4   | React + TypeScript | [05-react-typescript.md](./fe-track/02-typescript/05-react-typescript.md)     | High     |
+| #   | Topic              | File                                                                            | Priority |
+| --- | ------------------ | ------------------------------------------------------------------------------- | -------- |
+| 1   | TypeScript Basics  | [01-typescript-basics.md](./fe-track/02-typescript/01-typescript-basics.md)     | Critical |
+| 2   | Advanced Types     | [02-advanced-types.md](./fe-track/02-typescript/02-advanced-types.md)           | High     |
+| 3   | Generics Deep Dive | [03-generics-deep-dive.md](./fe-track/02-typescript/03-generics-deep-dive.md)   | High     |
+| 4   | React + TypeScript | [05-react-typescript.md](./fe-track/02-typescript/05-react-typescript.md)       | High     |
 
-### 03 — React (10 files)
+### 03 — React (10+ files)
 
 | #   | Topic                    | File                                                                                 | Priority |
 | --- | ------------------------ | ------------------------------------------------------------------------------------ | -------- |
@@ -127,7 +136,7 @@
 | 6   | Testing                  | [06-testing.md](./fe-track/03-react/06-testing.md)                                   | High     |
 | 7   | Performance Optimization | [09-performance-optimization.md](./fe-track/03-react/09-performance-optimization.md) | High     |
 
-### 04 — Next.js (4 files)
+### 04 — Next.js (4+ files)
 
 | #   | Topic            | File                                                                                          | Priority |
 | --- | ---------------- | --------------------------------------------------------------------------------------------- | -------- |
@@ -136,31 +145,51 @@
 | 3   | Data Fetching    | [02-data-fetching.md](./fe-track/04-nextjs/02-data-fetching.md)                               | High     |
 | 4   | Architecture     | [03-nextjs-architecture.md](./fe-track/04-nextjs/03-nextjs-architecture.md)                   | Medium   |
 
-### 05 — HTML & CSS (9 files)
+### 05 — HTML & CSS (9+ files)
 
 See `fe-track/05-html-css/` for CSS fundamentals, Grid/Flexbox, architecture, responsive design.
 
-### 06 — Browser & Performance (5 files)
+### 06 — Browser & Performance (5+ files)
 
-See `fe-track/06-browser-performance/` for Core Web Vitals, React perf, bundle optimization.
+See `fe-track/06-browser-performance/` for Core Web Vitals, React perf, bundle optimization, browser internals.
 
-### 07 — Web Security (3 files)
+### 07 — Web Security (3+ files)
 
 See `fe-track/07-web-security/` for vulnerabilities, authentication, security practices.
 
-### 08 — Frontend System Design (6 files)
+### 08 — Frontend System Design (6+ files)
 
 See `fe-track/08-fe-system-design/` for architecture patterns, scalability, caching, micro-frontends.
 
-### 09 — Advanced Topics (85 files)
+### 09 — Advanced Topics (86 files)
 
 See `fe-track/09-advanced-topics/` for data structures in JS, browser APIs, design patterns, interview practice, visual learning, tools, accessibility, and more.
 
-> ⚠️ Note: Theoretical foundations (16-\*) now redirect to `shared/` — see shared fundamentals above.
+> ⚠️ Note: Theoretical foundations (16-*) now redirect to `shared/` — see shared fundamentals above.
 
-### Company Guide
+### 10 — Networking / Mạng (NEW)
 
-See [fe-track/10-company-guide.md](./fe-track/10-company-guide.md) for FE-specific company targeting.
+See `fe-track/10-networking/` for HTTP fundamentals, REST API design, GraphQL, WebSockets, caching/CDN, CORS.
+
+### 11 — Accessibility / Khả Năng Truy Cập (NEW)
+
+See `fe-track/11-accessibility/` for WCAG fundamentals, ARIA, keyboard navigation, screen readers, a11y testing.
+
+### 12 — Behavioral Interviews / Phỏng Vấn Hành Vi (NEW)
+
+See `fe-track/12-behavioral/` for STAR method, leadership principles, common questions, storytelling.
+
+### 13 — Coding Practice / Luyện Code (NEW)
+
+See `fe-track/13-coding-practice/` for DOM manipulation, React components, algorithm challenges, performance exercises.
+
+### 14 — Company Guide / Hướng Dẫn Theo Công Ty
+
+See `fe-track/14-company-guide/` for FE-specific company targeting.
+
+### Mindmaps / Bản Đồ Tư Duy
+
+See `fe-track/mindmaps/` for visual review aids per category.
 
 ---
 
@@ -181,7 +210,7 @@ See [fe-track/10-company-guide.md](./fe-track/10-company-guide.md) for FE-specif
 | 7   | Algorithms (Go)       | [07-algorithms-go.md](./be-track/01-golang/07-algorithms-go.md)                 | High     |
 | 8   | Advanced Patterns     | [08-advanced-patterns.md](./be-track/01-golang/08-advanced-patterns.md)         | High     |
 
-### 02 — Backend Knowledge (6 files)
+### 02 — Backend Knowledge (7 files)
 
 | #   | Topic               | File                                                                                   | Priority |
 | --- | ------------------- | -------------------------------------------------------------------------------------- | -------- |
@@ -191,6 +220,7 @@ See [fe-track/10-company-guide.md](./fe-track/10-company-guide.md) for FE-specif
 | 4   | Auth & Security     | [04-auth-security.md](./be-track/02-backend-knowledge/04-auth-security.md)             | Medium   |
 | 5   | OS for Go           | [05-os-go.md](./be-track/02-backend-knowledge/05-os-go.md)                             | Medium   |
 | 6   | Networking for Go   | [06-networking-go.md](./be-track/02-backend-knowledge/06-networking-go.md)             | Medium   |
+| 7   | Resilience Patterns | [07-resilience-patterns.md](./be-track/02-backend-knowledge/07-resilience-patterns.md) | High     |
 
 ### 03 — Database Advanced (4 files)
 
@@ -201,14 +231,15 @@ See [fe-track/10-company-guide.md](./fe-track/10-company-guide.md) for FE-specif
 | 3   | NoSQL (Redis, MongoDB)  | [03-nosql-redis-mongo.md](./be-track/03-database-advanced/03-nosql-redis-mongo.md)         | High     |
 | 4   | Caching Patterns        | [04-caching-patterns.md](./be-track/03-database-advanced/04-caching-patterns.md)           | High     |
 
-### 04 — Backend System Design (4 files)
+### 04 — Backend System Design (5 files)
 
-| #   | Topic                | File                                                                                    | Priority |
-| --- | -------------------- | --------------------------------------------------------------------------------------- | -------- |
-| 1   | Design Framework     | [01-design-framework.md](./be-track/04-be-system-design/01-design-framework.md)         | Critical |
-| 2   | Classic Problems     | [02-classic-problems.md](./be-track/04-be-system-design/02-classic-problems.md)         | Critical |
-| 3   | Advanced Problems    | [03-advanced-problems.md](./be-track/04-be-system-design/03-advanced-problems.md)       | High     |
-| 4   | Distributed Patterns | [04-distributed-patterns.md](./be-track/04-be-system-design/04-distributed-patterns.md) | High     |
+| #   | Topic                  | File                                                                                          | Priority |
+| --- | ---------------------- | --------------------------------------------------------------------------------------------- | -------- |
+| 1   | Design Framework       | [01-design-framework.md](./be-track/04-be-system-design/01-design-framework.md)               | Critical |
+| 2   | Classic Problems       | [02-classic-problems.md](./be-track/04-be-system-design/02-classic-problems.md)               | Critical |
+| 3   | Advanced Problems      | [03-advanced-problems.md](./be-track/04-be-system-design/03-advanced-problems.md)             | High     |
+| 4   | Distributed Patterns   | [04-distributed-patterns.md](./be-track/04-be-system-design/04-distributed-patterns.md)       | High     |
+| 5   | Observability & Scale  | [05-observability-and-scale.md](./be-track/04-be-system-design/05-observability-and-scale.md) | High     |
 
 ### 05 — Company Guide
 
@@ -222,15 +253,34 @@ See [be-track/05-company-guide.md](./be-track/05-company-guide.md) for BE-specif
 
 ---
 
+## 🏋️ LeetCode / Luyện Thuật Toán (NEW)
+
+> See `leetcode/` for algorithm problem solutions organized by category.
+
+| Category          | Files | Difficulty Range |
+| ----------------- | ----- | ---------------- |
+| Array             | ~29   | Easy → Hard      |
+| String            | ~21   | Easy → Hard      |
+| Tree & Graph      | ~20   | Medium → Hard    |
+| Dynamic Programming | ~13 | Medium → Hard    |
+| Backtracking      | ~13   | Medium → Hard    |
+| Linked List       | ~13   | Easy → Medium    |
+| Design            | ~11   | Medium → Hard    |
+| Sorting & Searching | ~8  | Easy → Hard      |
+| Math              | ~7    | Easy → Medium    |
+| Others            | ~12   | Mixed            |
+
+---
+
 ## 📊 Content Statistics / Thống Kê Nội Dung
 
-| Section             | Files          | Est. Words   | Coverage                                             |
-| ------------------- | -------------- | ------------ | ---------------------------------------------------- |
-| Shared Fundamentals | ~25 files      | ~80,000      | CS, System Design, DB, Security, SE, AI              |
-| Frontend Track      | ~120 files     | ~150,000     | JS, TS, React, Next.js, HTML/CSS, Perf, Security, SD |
-| Backend Track       | ~25 files      | ~100,000     | Go, Backend, DB, System Design, DevOps               |
-| Company Guides      | 6 files        | ~3,000       | Google, MS, Grab, Axon, EH, Zalo/VNG                 |
-| **Total**           | **~176 files** | **~333,000** | **Comprehensive bilingual interview prep**           |
+| Section             | Files          | Coverage                                                    |
+| ------------------- | -------------- | ----------------------------------------------------------- |
+| Shared Fundamentals | ~39 files      | CS, System Design, DB, Security, SE, AI, Company Guides     |
+| Frontend Track      | ~200+ files    | JS, TS, React, Next.js, HTML/CSS, Perf, Security, SD, a11y |
+| Backend Track       | ~27 files      | Go, Backend, DB, System Design, DevOps                      |
+| LeetCode            | ~149 files     | Arrays, Strings, Trees, DP, Backtracking, Design            |
+| **Total**           | **~440 files** | **Comprehensive bilingual interview prep**                  |
 
 ---
 
@@ -243,9 +293,11 @@ See [be-track/05-company-guide.md](./be-track/05-company-guide.md) for BE-specif
 | Data Structures | `shared/01-cs-fundamentals/data-structures-theory.md` + `fe-track/09-advanced-topics/01-data-structures-js.md` + `be-track/01-golang/06-data-structures-go.md` |
 | AI/Agents       | `shared/06-ai-and-agents/` (theory applies to both FE and BE roles)                                                                                            |
 | Design Patterns | `shared/05-software-engineering/01-solid-and-design-patterns.md` + track-specific implementations                                                              |
+| Networking      | `shared/01-cs-fundamentals/networking-theory.md` + `fe-track/10-networking/` + `be-track/02-backend-knowledge/06-networking-go.md`                             |
+| Algorithms      | `shared/01-cs-fundamentals/algorithms-theory.md` + `leetcode/` + `fe-track/13-coding-practice/`                                                                |
 
 ---
 
 **Last Updated**: March 2026
-**Format**: Bilingual (English + Vietnamese)
-**Difficulty Range**: Junior → Mid → Senior
+**Format**: Bilingual (English + Vietnamese) | Gold Standard (🎯📖🤔🔧🕐)
+**Difficulty Range**: 🟢 Junior → 🟡 Mid → 🔴 Senior
