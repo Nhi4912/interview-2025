@@ -1,7 +1,0 @@
-{
-  "database": "dolt",
-  "backend": "dolt",
-  "dolt_mode": "server",
-  "dolt_database": "interview",
-  "project_id": "7fbed9f1-e86d-417a-aecb-c3a449d02273"
-}
