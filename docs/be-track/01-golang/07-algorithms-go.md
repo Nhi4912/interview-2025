@@ -1,8 +1,97 @@
-# Algorithms & Coding Patterns — Go Backend Interview Prep
+# Algorithms & Coding Patterns in Go / Thuật Toán và Mẫu Coding Go
 
-> **Target**: Middle/Senior Go Backend Developer
-> **Companies**: Zalo, Grab, Axon, Employment Hero, Microsoft, Google
-> **Format**: Q&A · English headings + Vietnamese explanations · Full Go code · Difficulty tagged
+> **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Data Structures Go](./06-data-structures-go.md) | [Algorithms Theory](../../shared/01-cs-fundamentals/algorithms-theory.md) | [LeetCode](../../leetcode/)
+
+---
+
+## Visual: Algorithm Pattern Map / Bản Đồ Các Mẫu Thuật Toán
+
+```
+PROBLEM TYPE                    PATTERN              TIME      GO STRUCTURE
+────────────────────────────────────────────────────────────────────────────
+"Find subarray/window"       →  Sliding Window       O(n)      two indices i,j
+"Find pair with condition"   →  Two Pointers         O(n)      lo, hi from ends
+"Search in sorted array"     →  Binary Search        O(log n)  lo,hi,mid loop
+"Shortest path (unweighted)" →  BFS                  O(V+E)    [][]int + queue
+"All paths / combinations"   →  Backtracking         O(n!)     recursion + undo
+"Optimal subproblem"         →  Dynamic Programming  varies    dp[] array
+"Top K elements"             →  Heap                 O(n log k) container/heap
+"Sort"                       →  sort.Slice           O(n log n) standard library
+"Connectivity"               →  Union-Find           O(α(n))   parent[] array
+```
+
+### Sorting Algorithm Comparison / So Sánh Thuật Toán Sắp Xếp
+```
+Input: [5, 3, 8, 1, 9, 2, 4, 7, 6]
+
+QUICK SORT (divide by pivot):
+  pivot=5: [3,1,2,4] 5 [8,9,7,6]
+  Recurse: [1,2,3,4] 5 [6,7,8,9]
+  Best/Avg: O(n log n) | Worst: O(n²) bad pivot | Space: O(log n)
+
+MERGE SORT (divide, sort, merge):
+  [5,3,8,1] [9,2,4,7,6]
+  [5,3][8,1] [9,2][4,7,6]
+  [3,5][1,8] [2,9][4,6,7]
+  [1,3,5,8] [2,4,6,7,9]
+  [1,2,3,4,5,6,7,8,9]
+  Always: O(n log n) | Space: O(n) | Stable ✓
+
+HEAP SORT:
+  Build max-heap: O(n)
+  Extract max n times: O(n log n)
+  Always: O(n log n) | Space: O(1) | Not stable
+
+Go standard library:
+  sort.Slice → IntroSort (Quick+Heap+Insertion hybrid)
+  Adaptive: uses insertion sort for n<12, merge sort for stability
+```
+
+### Two Pointers Pattern / Mẫu Hai Con Trỏ
+```
+OPPOSITE ENDS (sorted array, find pair sum):
+arr = [1, 2, 3, 4, 5, 6]  target = 7
+lo=0(1), hi=5(6): sum=7 ✓
+
+lo=0   →→→→→→
+              ←←←← hi=5
+Move lo right if sum < target
+Move hi left  if sum > target
+
+SAME DIRECTION (remove duplicates, fast/slow):
+arr = [1,1,2,2,3]
+slow=0
+fast scans: 1(dup,skip) 2(new,write) 2(dup,skip) 3(new,write)
+Result: arr[:3] = [1,2,3]
+```
+
+### Binary Search Template / Mẫu Tìm Kiếm Nhị Phân
+```
+FIND EXACT VALUE:
+  lo, hi = 0, len-1
+  while lo <= hi:
+    mid = lo + (hi-lo)/2
+    if arr[mid] == target: return mid
+    if arr[mid] < target: lo = mid+1
+    else: hi = mid-1
+
+FIND FIRST TRUE (leftmost):
+  lo, hi = 0, len-1; result = -1
+  while lo <= hi:
+    mid = lo + (hi-lo)/2
+    if condition(arr[mid]):
+      result = mid; hi = mid-1  ← search left for first
+    else: lo = mid+1
+
+BINARY SEARCH ON ANSWER:
+  lo, hi = minPossible, maxPossible
+  while lo < hi:
+    mid = lo + (hi-lo)/2
+    if canAchieve(mid): hi = mid  ← try smaller
+    else: lo = mid+1
+  return lo
+```
 
 ---
 

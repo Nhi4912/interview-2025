@@ -1,8 +1,102 @@
-# Data Structures in Go - Interview Prep
+# Data Structures in Go / Cấu Trúc Dữ Liệu trong Go
 
-> **Target:** Go Backend Developer (Middle/Senior) — Zalo, Grab, Axon, Employment Hero, Microsoft, Google
->
-> **Format:** Q&A | English headings + Vietnamese explanations | Full Go code | Difficulty tags
+> **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Algorithms Go](./07-algorithms-go.md) | [Language Fundamentals](./01-language-fundamentals.md) | [LeetCode](../../leetcode/)
+
+---
+
+## Visual: Data Structures Decision Map / Sơ Đồ Chọn Cấu Trúc Dữ Liệu
+
+```
+NEED...                          USE IN GO
+─────────────────────────────────────────────────────────────
+O(1) access by index?          → []T (slice)
+O(1) key lookup?               → map[K]V
+Insert/delete at both ends?    → container/list (doubly linked)
+LIFO (undo, DFS)?              → []T as stack (append/pop)
+FIFO (BFS, job queue)?         → []T as queue or chan T
+Min/Max in O(log n)?           → container/heap
+Ordered iteration?             → sorted []T or manual BST
+Prefix search?                 → Trie (custom struct)
+Graph traversal?               → adjacency list: map[int][]int
+Thread-safe counter?           → sync/atomic or sync.Mutex + map
+```
+
+### Slice as Stack / Dùng Slice như Stack
+```
+stack := []int{}
+
+// Push
+stack = append(stack, 5)   // [5]
+stack = append(stack, 3)   // [5, 3]
+
+// Pop (LIFO)
+top := stack[len(stack)-1] // top = 3
+stack = stack[:len(stack)-1] // [5]
+
+// Peek
+top = stack[len(stack)-1]  // top = 5 (don't modify)
+```
+
+### Slice as Queue / Dùng Slice như Queue
+```
+queue := []int{}
+
+// Enqueue
+queue = append(queue, 1)   // [1]
+queue = append(queue, 2)   // [1, 2]
+
+// Dequeue (FIFO) — O(n) due to shift
+front := queue[0]          // front = 1
+queue = queue[1:]          // [2]
+
+// For O(1) dequeue: use two-pointer trick or circular buffer
+```
+
+### Binary Tree Structure / Cấu Trúc Cây Nhị Phân
+```
+BST with [5, 3, 7, 1, 4, 6, 8]:
+
+           5           ← root
+          / \
+         3   7
+        / \ / \
+       1  4 6  8
+
+Traversals:
+  In-order  (L→R→R): 1, 3, 4, 5, 6, 7, 8  ← SORTED
+  Pre-order (R→L→R): 5, 3, 1, 4, 7, 6, 8  ← root first
+  Post-order(L→R→R): 1, 4, 3, 6, 8, 7, 5  ← root last
+  BFS/Level:         5, 3, 7, 1, 4, 6, 8  ← level by level
+
+type TreeNode struct {
+    Val   int
+    Left  *TreeNode
+    Right *TreeNode
+}
+```
+
+### Heap Structure / Cấu Trúc Heap
+```
+Go container/heap (min-heap):
+
+          1           ← root = minimum
+         / \
+        3   2
+       / \ / \
+      7  4 5  6
+
+Index:  0  1  2  3  4  5  6
+Array: [1, 3, 2, 7, 4, 5, 6]
+
+Parent of i:      (i-1)/2
+Left child of i:   2*i+1
+Right child of i:  2*i+2
+
+heap.Push: add to end, sift UP   O(log n)
+heap.Pop:  remove root, sift DOWN O(log n)
+heap[0]:   peek minimum           O(1)
+```
 
 ---
 
