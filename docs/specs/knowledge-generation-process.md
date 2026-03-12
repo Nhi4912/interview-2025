@@ -228,20 +228,20 @@ Tracked here so discovery always knows what to prioritize:
 
 ### High Priority
 - [ ] FE: Frontend Testing (Jest, RTL, Cypress) — no dedicated section
-- [ ] Shared: Load Balancing theory (only mentioned, not covered)
-- [ ] Shared: Message Queues / Event Streaming (Kafka, RabbitMQ)
-- [ ] BE: gRPC and Protocol Buffers
+- [x] Shared: Load Balancing theory → `shared/02-system-design/06-load-balancing.md`
+- [x] Shared: Message Queues / Event Streaming → `shared/02-system-design/05-message-queues.md`
+- [x] BE: gRPC and Protocol Buffers → `be-track/02-backend-knowledge/09-grpc-protobuf.md`
 - [ ] FE: Web Performance — Bundle analysis deep dive
 
 ### Medium Priority
-- [ ] Shared: Database — Sharding patterns
-- [ ] Shared: Database — Transaction isolation levels deep dive
+- [x] Shared: Database — Sharding patterns → `shared/03-database/04-sharding-and-transactions.md`
+- [x] Shared: Database — Transaction isolation levels → included in `04-sharding-and-transactions.md`
 - [ ] BE: Kubernetes and container orchestration (06-devops is thin)
 - [ ] FE: CSS — CSS-in-JS vs CSS Modules vs Tailwind comparison
 
 ### Low Priority
 - [ ] LeetCode: Add bilingual explanations to problem solutions
-- [ ] FE: Advanced TypeScript — Mapped types, Template literal types
+- [x] FE: Advanced TypeScript — Mapped Types, Template Literal Types → `fe-track/02-typescript/02-advanced-types.md` (785 lines, comprehensive)
 - [ ] Shared: AI — Evaluation and testing AI systems
 
 ---

@@ -163,6 +163,35 @@ Pitfall phổ biến: app container kết nối DB bằng `localhost:5432` → f
 
 ## 2) Kubernetes Basics
 
+> **Visual Overview** / Sơ Đồ Kubernetes:
+> ```
+> KUBERNETES CLUSTER:
+>
+>                         kubectl
+>                            │
+>                            ▼
+>                   ┌─────────────────┐
+>                   │  CONTROL PLANE  │
+>                   │  ─────────────  │
+>                   │  API Server     │ ← all communication goes here
+>                   │  etcd           │ ← cluster state (key-value store)
+>                   │  Scheduler      │ ← assigns pods to nodes
+>                   │  Controller Mgr │ ← maintains desired state
+>                   └────────┬────────┘
+>                            │ watch/reconcile
+>                  ┌─────────┼─────────┐
+>                  ▼         ▼         ▼
+>             ┌────────┐ ┌────────┐ ┌────────┐
+>             │ Node 1 │ │ Node 2 │ │ Node 3 │
+>             │kubelet │ │kubelet │ │kubelet │
+>             │Pod A   │ │Pod B   │ │Pod C   │
+>             └────────┘ └────────┘ └────────┘
+>
+> Pod = 1+ containers sharing network; Deployment = manages replicas + updates
+> Service = stable IP for pods; Ingress = HTTP routing; HPA = autoscaling
+> ```
+
+
 ### 🟡 Q: What core problem does Kubernetes solve? `[Mid]`
 **A:** Kubernetes giải quyết orchestration ở scale:
 

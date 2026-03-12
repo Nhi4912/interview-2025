@@ -493,3 +493,59 @@
 - Không học dàn trải: ưu tiên theo study priority của công ty trong tài liệu này.
 - Mỗi buổi luyện phải có output đo được: số bài, tỷ lệ đúng, thời gian, lỗi lặp lại.
 - Mục tiêu phỏng vấn không phải trả lời “hoàn hảo” mà là ra quyết định tốt dưới constraint.
+
+
+---
+
+## 2025 Interview Trends / Xu Hướng Phỏng Vấn 2025
+
+### AI Tools Policy / Chính Sách Công Cụ AI
+
+**Across all companies (2024-2025 trend):**
+
+| Company | AI Tools in Interview | Notes |
+|---------|----------------------|-------|
+| Google | **NOT allowed** | Must solve without Cursor/Copilot. Interviewers explicitly note this. |
+| Microsoft | **NOT allowed** | Same as Google — demonstrate raw problem-solving |
+| Grab | **NOT allowed** in live coding | OA may differ — check recruiter |
+| Axon | **NOT allowed** | Values authentic engineering thought process |
+| Employment Hero | **Sometimes allowed** for take-home | Live rounds: no AI tools |
+| Zalo/VNG | **NOT allowed** | Traditional format |
+
+**Key insight**: Being asked to write code without AI tools means interviewers are testing:
+- How you think through problems (not Google-then-paste)
+- Your mental model of data structures and algorithms
+- How you handle ambiguity and ask clarifying questions
+
+### What Has Changed in 2025 / Điều Gì Thay Đổi
+
+1. **AI knowledge is now required**: Interviewers expect you to discuss AI/ML in system design.
+   - "How would you add AI-powered search to your design?"
+   - "Where would you use an LLM in this architecture?"
+   - "How do you prevent prompt injection in user-facing AI features?"
+
+2. **System design now includes AI components**:
+   - RAG (Retrieval Augmented Generation) for search/Q&A features
+   - Vector databases (Pinecone, pgvector) in system design
+   - LLM API rate limiting and cost management
+   - AI feature flags and gradual rollout
+
+3. **Behavioral questions shifted toward AI impact**:
+   - "Tell me about a time you used AI to improve developer productivity"
+   - "How do you decide when to use AI vs build manually?"
+   - "How do you evaluate AI-generated code quality?"
+
+4. **New coding patterns tested**:
+   - Async patterns for LLM streaming responses
+   - Rate limiting and retry for external AI APIs
+   - Prompt versioning and A/B testing
+
+### How to Prepare / Cách Chuẩn Bị
+
+**For all companies in 2025:**
+1. **Practice without AI tools** — use LeetCode/HackerRank in a clean editor
+2. **Know AI/ML basics** — see `shared/06-ai-and-agents/` for interview-relevant AI knowledge
+3. **Prepare AI system design answers** — "add AI to X" is now a common follow-up
+4. **Be honest about AI tool usage** in your daily work — interviewers appreciate candor
+
+

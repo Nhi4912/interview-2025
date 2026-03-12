@@ -97,6 +97,7 @@
 | 5   | AI Engineering Practice    | [05-ai-engineering-practice.md](./shared/06-ai-and-agents/05-ai-engineering-practice.md)       | Mid → Senior |
 | 6   | AI System Design           | [06-ai-system-design.md](./shared/06-ai-and-agents/06-ai-system-design.md)                     | Senior       |
 | 7   | AI Production Challenges   | [07-ai-production-challenges.md](./shared/06-ai-and-agents/07-ai-production-challenges.md)     | Senior       |
+| 8   | AI Evaluation & Testing   | [08-ai-evaluation-testing.md](./shared/06-ai-and-agents/08-ai-evaluation-testing.md)         | Mid → Senior |
 
 ---
 
@@ -152,6 +153,10 @@
 
 See `fe-track/05-html-css/` for CSS fundamentals, Grid/Flexbox, architecture, responsive design.
 
+### 05a — CSS Framework Comparison (NEW)
+
+See [fe-track/05-html-css/08-css-framework-comparison.md](./fe-track/05-html-css/08-css-framework-comparison.md) for CSS Modules vs Tailwind vs CSS-in-JS comparison.
+
 ### 06 — Browser & Performance (5+ files)
 
 See `fe-track/06-browser-performance/` for Core Web Vitals, React perf, bundle optimization, browser internals.
@@ -189,6 +194,10 @@ See `fe-track/13-coding-practice/` for DOM manipulation, React components, algor
 ### 14 — Company Guide / Hướng Dẫn Theo Công Ty
 
 See [fe-track/10-company-guide.md](./fe-track/10-company-guide.md) for FE-specific company targeting.
+
+### 14 — Frontend Testing / Kiểm Thử Frontend (NEW)
+
+See [fe-track/14-frontend-testing.md](./fe-track/14-frontend-testing.md) for Vitest, RTL, MSW, Playwright vs Cypress, testing patterns.
 
 ### Mindmaps / Bản Đồ Tư Duy
 

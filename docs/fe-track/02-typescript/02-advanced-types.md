@@ -5,6 +5,53 @@
 
 ---
 
+
+## Visual: TypeScript Type System Map / Sơ Đồ Hệ Thống Kiểu
+
+```
+TypeScript Types Relationships:
+
+  ┌──────────────────────────────────────────────────────────┐
+  │                    unknown                               │
+  │  (top type — must narrow before use)                    │
+  │  ┌────────────────────────────────────────────────────┐  │
+  │  │                   any                             │  │
+  │  │  (opt out of type checking — avoid!)             │  │
+  │  └────────────────────────────────────────────────────┘  │
+  │                                                          │
+  │  string | number | boolean | null | undefined | ...      │
+  │                                                          │
+  │  ┌──────────────────────────────────────────────────┐   │
+  │  │                  never                           │   │
+  │  │  (bottom type — unreachable code, empty union)  │   │
+  │  └──────────────────────────────────────────────────┘   │
+  └──────────────────────────────────────────────────────────┘
+
+TYPE MANIPULATION CHEATSHEET:
+
+Utility Type      | Input                    | Output
+──────────────────|──────────────────────────|─────────────────────────
+Partial<T>        | {a: string, b: number}   | {a?: string, b?: number}
+Required<T>       | {a?: string, b?: number} | {a: string, b: number}
+Readonly<T>       | {a: string}              | {readonly a: string}
+Pick<T, K>        | {a, b, c}, 'a'|'b'       | {a, b}
+Omit<T, K>        | {a, b, c}, 'c'           | {a, b}
+Record<K, V>      | 'x'|'y', number          | {x: number, y: number}
+Exclude<T, U>     | 'a'|'b'|'c', 'a'         | 'b'|'c'
+Extract<T, U>     | 'a'|'b'|'c', 'a'|'b'     | 'a'|'b'
+NonNullable<T>    | string|null|undefined    | string
+ReturnType<F>     | () => number             | number
+Parameters<F>     | (x: string) => void      | [string]
+
+MAPPED TYPE PATTERN:
+  {[K in keyof T]: Transform<T[K]>}
+   └── iterate   └── transform each property type
+
+CONDITIONAL TYPE PATTERN:
+  T extends U ? X : Y
+  "if T is assignable to U, use X, else use Y"
+```
+
 ## Overview / Tổng Quan
 
 **English:** Advanced TypeScript types enable powerful type manipulation and inference. Mastering these concepts is crucial for senior frontend interviews at Big Tech companies.
