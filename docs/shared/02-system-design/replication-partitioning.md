@@ -1,7 +1,92 @@
-# Replication and Partitioning — Sao chép và phân vùng dữ liệu
+# Replication & Partitioning / Sao Chép và Phân Vùng Dữ Liệu
 
-> Shared theory for both Frontend and Backend tracks.
-> Cross-referenced by: `be-track/02-backend-knowledge/03-distributed-systems.md`, `be-track/03-database-advanced/03-nosql-redis-mongo.md`, `shared/02-system-design/system-design-theory.md`
+> **Track**: Shared | **Difficulty**: 🟡 Mid → 🔴 Senior
+> **See also**: [System Design Theory](./system-design-theory.md) | [Consensus Algorithms](./consensus-algorithms.md) | [Sharding & Transactions](../../shared/03-database/04-sharding-and-transactions.md)
+
+---
+
+## Visual Overview / Sơ Đồ Tổng Quan
+
+### Replication Models
+```
+SINGLE LEADER (Master-Slave):
+        ┌──────────┐
+        │  Leader  │  ← all WRITES go here
+        └─────┬────┘
+              │ replication log
+       ┌──────┴──────┐
+       ▼             ▼
+  ┌─────────┐  ┌─────────┐
+  │Follower1│  │Follower2│  ← READS can go here
+  └─────────┘  └─────────┘
+
+  Pros: simple, strong consistency for writes
+  Cons: leader = bottleneck + SPOF for writes
+
+MULTI-LEADER:
+  ┌──────────┐   ┌──────────┐
+  │ Leader A │◄──►│ Leader B │  ← both accept writes
+  └─────┬────┘   └────┬─────┘   ← sync between leaders
+        ▼              ▼
+  [Followers]    [Followers]
+
+  Pros: geo-distributed writes, no single write bottleneck
+  Cons: CONFLICT RESOLUTION needed (concurrent writes to same data)
+
+LEADERLESS (Dynamo-style):
+  Client writes to W of N nodes
+  Client reads from R of N nodes
+  Consistency if W + R > N
+
+  W=2, R=2, N=3:  ← quorum read+write
+  ┌────┐ ┌────┐ ┌────┐
+  │ N1 │ │ N2 │ │ N3 │  Write to 2/3, Read from 2/3
+  └────┘ └────┘ └────┘  At least 1 overlap → fresh data
+```
+
+### Replication Lag Visualization
+```
+Async replication timeline:
+t=0: Client writes user.name="Alice" to Leader
+t=0: Leader commits locally
+t=2ms: Follower1 receives and applies
+t=5ms: Follower2 receives and applies
+
+Read-your-own-writes problem:
+t=1ms: Client reads from Follower1 → still "Bob" (stale!)
+                                      ↑
+                        Replication lag window
+
+Fix: read-after-write consistency:
+  Option 1: Read own writes from Leader
+  Option 2: Track replication position, wait until follower caught up
+  Option 3: Sticky session — always read from same replica
+```
+
+### Partitioning Strategies
+```
+RANGE PARTITIONING:
+Key range:  [A-F]  [G-M]  [N-Z]
+Shard:       P1     P2     P3
+Problem: "A" names are popular → P1 = hotspot!
+
+HASH PARTITIONING:
+hash("alice") % 3 = 1 → Shard P1
+hash("bob")   % 3 = 2 → Shard P2
+Pros: even distribution
+Cons: no range queries, resharding = move everything
+
+CONSISTENT HASHING:
+Ring: ──────A(0°)──────B(120°)──────C(240°)──────
+       ^ key           ^ key           ^ key
+       stored at A     stored at B     stored at C
+
+Add node D between A and B:
+Only keys previously at B that are now "closer" to D move
+≈ 1/N of total keys move (vs ALL with hash mod N!)
+```
+
+---
 
 ---
 

@@ -54,6 +54,8 @@
 | 3   | Caching Patterns           | [caching-patterns.md](./shared/02-system-design/caching-patterns.md)                 | Mid → Senior |
 | 4   | Replication & Partitioning | [replication-partitioning.md](./shared/02-system-design/replication-partitioning.md) | Mid → Senior |
 | 5   | Message Queues & Event Streaming | [05-message-queues.md](./shared/02-system-design/05-message-queues.md) | Mid → Senior |
+| 6   | Load Balancing | [06-load-balancing.md](./shared/02-system-design/06-load-balancing.md) | Junior → Senior |
+| 7   | Event Sourcing & CQRS | [07-event-sourcing-cqrs.md](./shared/02-system-design/07-event-sourcing-cqrs.md) | Senior |
 
 ### 03 — Database / Cơ Sở Dữ Liệu
 
@@ -243,6 +245,7 @@ See `fe-track/mindmaps/` for visual review aids per category.
 | 3   | Advanced Problems      | [03-advanced-problems.md](./be-track/04-be-system-design/03-advanced-problems.md)             | High     |
 | 4   | Distributed Patterns   | [04-distributed-patterns.md](./be-track/04-be-system-design/04-distributed-patterns.md)       | High     |
 | 5   | Observability & Scale  | [05-observability-and-scale.md](./be-track/04-be-system-design/05-observability-and-scale.md) | High     |
+| 6   | Ride-Hailing System (Grab) | [06-ride-hailing-system.md](./be-track/04-be-system-design/06-ride-hailing-system.md) | Senior  |
 
 ### 05 — Company Guide
 

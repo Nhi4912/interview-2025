@@ -1,7 +1,71 @@
-# Caching Patterns — Mẫu thiết kế cache
+# Caching Patterns / Mẫu Thiết Kế Cache
 
-> Shared theory for both Frontend and Backend tracks.
-> Cross-referenced by: `be-track/03-database-advanced/04-caching-patterns.md`, `be-track/04-be-system-design/01-design-framework.md`, `shared/02-system-design/system-design-theory.md`, `fe-track/modules/07-performance.md`
+> **Track**: Shared | **Difficulty**: 🟡 Mid → 🔴 Senior
+> **See also**: [System Design Theory](./system-design-theory.md) | [BE Caching](../../be-track/03-database-advanced/04-caching-patterns.md) | [Replication & Partitioning](./replication-partitioning.md)
+
+---
+
+## Visual Overview / Sơ Đồ Tổng Quan
+
+### Cache Position in System Architecture
+```
+CLIENT
+  │
+  ▼
+[CDN / Edge Cache]          ← static assets, geo-distributed
+  │
+  ▼
+[Load Balancer]
+  │
+  ▼
+[Application Server]
+  │  ├──[In-Memory Cache (local)]  ← process-level, fastest, non-shared
+  │  │
+  │  └──[Distributed Cache]        ← Redis, Memcached, shared across instances
+  │             │
+  ▼             │
+[Database]◄─────┘             ← source of truth, slowest
+```
+
+### Cache-Aside vs Write-Through vs Write-Behind
+```
+CACHE-ASIDE (Lazy Loading):       WRITE-THROUGH:
+Read:                             Write:
+ App → Cache HIT → return         App → Cache → DB (sync)
+ App → Cache MISS → DB → Cache    Read always hits cache ✓
+ → return                         Write latency = Cache + DB latency ✗
+
+WRITE-BEHIND (Write-Back):        READ-THROUGH:
+Write:                            Read:
+ App → Cache only (fast!)         App → Cache (miss) → Cache fetches DB
+ Background: Cache → DB (async)   App never touches DB directly
+ Risk: data loss if cache crashes  Simpler app code ✓
+```
+
+### Cache Eviction Policies Visualization
+```
+LRU (Least Recently Used):
+Access order: A, B, C, D (capacity=3)
+Cache: [A, B, C]
+Access D → evict A (least recently used)
+Cache: [B, C, D]
+
+LFU (Least Frequently Used):
+Freq:  A=3, B=1, C=5  (capacity=3, evict 1)
+Access D → evict B (lowest frequency=1)
+Cache: [A, C, D] (D starts at freq=1)
+
+FIFO (First In, First Out):
+Insert: A, B, C (capacity=3)
+Insert D → evict A (first inserted)
+
+TTL-based:
+key:user:123 → set with TTL=300s
+After 300s → automatically evicted regardless of access
+```
+
+---
+
 
 ---
 

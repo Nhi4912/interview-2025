@@ -3,590 +3,461 @@
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Data Structures](./data-structures-theory.md) | [Complexity Analysis](./complexity-analysis.md) | [LeetCode Practice](../../leetcode/)
 
-## Essential Algorithms for Technical Interviews / Các Thuật Toán Cần Nắm
+---
 
-**English:** Algorithms are step-by-step procedures for solving computational problems. Understanding common algorithms and their applications is crucial for technical interviews and efficient problem-solving.
-
-**Tiếng Việt:** Thuật toán là các thủ tục từng bước để giải quyết các vấn đề tính toán. Hiểu các thuật toán phổ biến và ứng dụng của chúng là rất quan trọng cho phỏng vấn kỹ thuật và giải quyết vấn đề hiệu quả.
-
-## Sorting Algorithms
-
-### Bubble Sort
-
-**Theory:** Repeatedly swap adjacent elements if they're in wrong order.
-
-**Time Complexity:**
-
-- Best: O(n) - already sorted
-- Average: O(n²)
-- Worst: O(n²)
-
-**Space Complexity:** O(1)
-
-**When to Use:**
-
-- Small datasets
-- Nearly sorted data
-- Educational purposes
-
-**Characteristics:**
-
-- Stable sort
-- In-place
-- Simple implementation
-
-### Quick Sort
-
-**Theory:** Divide-and-conquer algorithm that picks a pivot and partitions array around it.
-
-**Time Complexity:**
-
-- Best: O(n log n)
-- Average: O(n log n)
-- Worst: O(n²) - poor pivot choice
-
-**Space Complexity:** O(log n) - recursion stack
-
-**When to Use:**
-
-- General purpose sorting
-- Large datasets
-- In-place sorting needed
-
-**Characteristics:**
-
-- Not stable (can be made stable)
-- In-place
-- Cache-friendly
-
-**Pivot Selection Strategies:**
-
-- First element
-- Last element
-- Random element
-- Median-of-three
-
-### Merge Sort
-
-**Theory:** Divide array into halves, recursively sort, then merge.
-
-**Time Complexity:**
-
-- Best: O(n log n)
-- Average: O(n log n)
-- Worst: O(n log n)
-
-**Space Complexity:** O(n) - temporary arrays
-
-**When to Use:**
-
-- Stable sort required
-- Linked lists
-- External sorting
-- Guaranteed O(n log n)
-
-**Characteristics:**
-
-- Stable sort
-- Not in-place
-- Predictable performance
-
-### Heap Sort
-
-**Theory:** Build max heap, repeatedly extract maximum.
-
-**Time Complexity:**
-
-- Best: O(n log n)
-- Average: O(n log n)
-- Worst: O(n log n)
-
-**Space Complexity:** O(1)
-
-**When to Use:**
-
-- Memory constrained
-- Guaranteed O(n log n)
-- Priority queue operations
-
-**Characteristics:**
-
-- Not stable
-- In-place
-- No worst-case degradation
-
-## Searching Algorithms
-
-### Binary Search
-
-**Theory:** Divide and conquer on sorted array.
-
-**Time Complexity:** O(log n)
-**Space Complexity:** O(1) iterative, O(log n) recursive
-
-**Requirements:**
-
-- Array must be sorted
-- Random access needed
-
-**Variations:**
-
-- Find first occurrence
-- Find last occurrence
-- Find insertion position
-- Search in rotated array
-
-**Template:**
+## Algorithm Patterns Map / Bản Đồ Các Pattern
 
 ```
-while left <= right:
-    mid = left + (right - left) // 2
-    if target == arr[mid]:
-        return mid
-    elif target < arr[mid]:
-        right = mid - 1
-    else:
-        left = mid + 1
+PROBLEM TYPE               →  ALGORITHM PATTERN
+─────────────────────────────────────────────────────
+"Find max/min subarray"    →  Sliding Window
+"Find pair with sum X"     →  Two Pointers
+"Binary search on answer"  →  Binary Search (modified)
+"Shortest path"            →  BFS (unweighted) / Dijkstra (weighted)
+"All combinations"         →  Backtracking
+"Optimal subproblem"       →  Dynamic Programming
+"Repeated subproblems"     →  Memoization / DP
+"Connectivity"             →  Union-Find / DFS
+"Top K elements"           →  Heap
+"Sorted merge"             →  Merge Sort
 ```
-
-### Depth-First Search (DFS)
-
-**Theory:** Explore as far as possible along each branch before backtracking.
-
-**Time Complexity:** O(V + E) - vertices + edges
-**Space Complexity:** O(V) - recursion stack
-
-**When to Use:**
-
-- Path finding
-- Cycle detection
-- Topological sorting
-- Connected components
-
-**Implementation Approaches:**
-
-- Recursive
-- Iterative with stack
-- Backtracking
-
-### Breadth-First Search (BFS)
-
-**Theory:** Explore all neighbors before moving to next level.
-
-**Time Complexity:** O(V + E)
-**Space Complexity:** O(V) - queue
-
-**When to Use:**
-
-- Shortest path (unweighted)
-- Level-order traversal
-- Minimum steps problems
-- Connected components
-
-**Characteristics:**
-
-- Uses queue
-- Finds shortest path
-- Level by level
-
-## Dynamic Programming
-
-### Theory
-
-**Definition:** Solve complex problems by breaking down into simpler subproblems and storing results.
-
-**Key Concepts:**
-
-- Optimal substructure
-- Overlapping subproblems
-- Memoization (top-down)
-- Tabulation (bottom-up)
-
-### Common Patterns
-
-**1. Fibonacci Sequence**
-
-**Recurrence:** `F(n) = F(n-1) + F(n-2)`
-
-**Approaches:**
-
-- Recursive: O(2^n)
-- Memoization: O(n)
-- Tabulation: O(n)
-- Space optimized: O(1)
-
-**2. Longest Common Subsequence**
-
-**Problem:** Find longest subsequence common to two sequences.
-
-**Recurrence:**
-
-```
-if s1[i] == s2[j]:
-    dp[i][j] = 1 + dp[i-1][j-1]
-else:
-    dp[i][j] = max(dp[i-1][j], dp[i][j-1])
-```
-
-**Time:** O(m × n)
-**Space:** O(m × n), can optimize to O(min(m,n))
-
-**3. Knapsack Problem**
-
-**Problem:** Maximize value within weight constraint.
-
-**0/1 Knapsack Recurrence:**
-
-```
-dp[i][w] = max(
-    dp[i-1][w],  // don't take item
-    value[i] + dp[i-1][w-weight[i]]  // take item
-)
-```
-
-**Time:** O(n × W)
-**Space:** O(n × W), can optimize to O(W)
-
-**4. Coin Change**
-
-**Problem:** Minimum coins to make amount.
-
-**Recurrence:**
-
-```
-dp[amount] = min(
-    dp[amount - coin] + 1
-    for all coins
-)
-```
-
-**Time:** O(amount × coins)
-**Space:** O(amount)
-
-### DP Optimization Techniques
-
-**Space Optimization:**
-
-- Rolling array
-- Two rows instead of full matrix
-- Single array with careful iteration
-
-**State Compression:**
-
-- Bitmask DP
-- Coordinate compression
-- Hash map for sparse states
-
-## Greedy Algorithms
-
-### Theory
-
-**Definition:** Make locally optimal choice at each step, hoping to find global optimum.
-
-**When Greedy Works:**
-
-- Greedy choice property
-- Optimal substructure
-- No need to reconsider choices
-
-### Common Problems
-
-**1. Activity Selection**
-
-**Problem:** Select maximum non-overlapping activities.
-
-**Strategy:** Sort by end time, greedily select earliest ending.
-
-**Time:** O(n log n) - sorting
-**Proof:** Greedy choice is safe
-
-**2. Huffman Coding**
-
-**Problem:** Optimal prefix-free encoding.
-
-**Strategy:** Build tree from least frequent characters.
-
-**Time:** O(n log n)
-**Result:** Optimal compression
-
-**3. Fractional Knapsack**
-
-**Problem:** Maximize value, can take fractions.
-
-**Strategy:** Sort by value/weight ratio, take greedily.
-
-**Time:** O(n log n)
-**Difference from 0/1:** Can take fractions
-
-## Graph Algorithms
-
-### Dijkstra's Algorithm
-
-**Theory:** Find shortest path from source to all vertices (non-negative weights).
-
-**Time Complexity:**
-
-- With min-heap: O((V + E) log V)
-- With array: O(V²)
-
-**Space Complexity:** O(V)
-
-**When to Use:**
-
-- Non-negative edge weights
-- Single source shortest path
-- GPS navigation
-- Network routing
-
-**Limitations:**
-
-- Doesn't work with negative weights
-- Not for all-pairs shortest path
-
-### Bellman-Ford Algorithm
-
-**Theory:** Find shortest path, handles negative weights.
-
-**Time Complexity:** O(V × E)
-**Space Complexity:** O(V)
-
-**When to Use:**
-
-- Negative edge weights
-- Detect negative cycles
-- Distributed systems
-
-**Advantages over Dijkstra:**
-
-- Handles negative weights
-- Detects negative cycles
-
-### Floyd-Warshall Algorithm
-
-**Theory:** All-pairs shortest path using dynamic programming.
-
-**Time Complexity:** O(V³)
-**Space Complexity:** O(V²)
-
-**When to Use:**
-
-- All-pairs shortest path
-- Dense graphs
-- Transitive closure
-
-**Recurrence:**
-
-```
-dist[i][j] = min(
-    dist[i][j],
-    dist[i][k] + dist[k][j]
-)
-```
-
-### Topological Sort
-
-**Theory:** Linear ordering of vertices in DAG.
-
-**Algorithms:**
-
-- DFS-based: O(V + E)
-- Kahn's (BFS): O(V + E)
-
-**When to Use:**
-
-- Task scheduling
-- Build systems
-- Course prerequisites
-- Dependency resolution
-
-**Requirements:**
-
-- Must be DAG (no cycles)
-- Multiple valid orderings possible
-
-## String Algorithms
-
-### KMP (Knuth-Morris-Pratt)
-
-**Theory:** Pattern matching with preprocessing to avoid redundant comparisons.
-
-**Time Complexity:**
-
-- Preprocessing: O(m)
-- Searching: O(n)
-- Total: O(n + m)
-
-**Space Complexity:** O(m) - LPS array
-
-**Key Concept:** Longest Proper Prefix which is also Suffix (LPS)
-
-**When to Use:**
-
-- Pattern matching
-- Multiple searches of same pattern
-- Avoid backtracking
-
-### Rabin-Karp Algorithm
-
-**Theory:** Use rolling hash for pattern matching.
-
-**Time Complexity:**
-
-- Average: O(n + m)
-- Worst: O(nm) - many hash collisions
-
-**Space Complexity:** O(1)
-
-**When to Use:**
-
-- Multiple pattern search
-- Plagiarism detection
-- String matching with wildcards
-
-**Advantages:**
-
-- Simple implementation
-- Easy to extend to multiple patterns
-
-### Trie (Prefix Tree)
-
-**Theory:** Tree structure for storing strings with common prefixes.
-
-**Time Complexity:**
-
-- Insert: O(m) - length of word
-- Search: O(m)
-- Prefix search: O(p + k) - prefix + results
-
-**Space Complexity:** O(ALPHABET_SIZE × N × M)
-
-**When to Use:**
-
-- Autocomplete
-- Spell checker
-- IP routing
-- Dictionary implementation
-
-**Advantages:**
-
-- Fast prefix search
-- Space efficient for common prefixes
-
-## Backtracking
-
-### Theory
-
-**Definition:** Incrementally build solution, abandoning candidates that fail constraints.
-
-**Template:**
-
-```
-function backtrack(state):
-    if is_solution(state):
-        add_to_results(state)
-        return
-
-    for choice in get_choices(state):
-        if is_valid(choice):
-            make_choice(choice)
-            backtrack(new_state)
-            undo_choice(choice)
-```
-
-### Common Problems
-
-**1. N-Queens**
-
-**Problem:** Place N queens on N×N board, no attacks.
-
-**Time:** O(N!)
-**Space:** O(N)
-
-**Optimizations:**
-
-- Bit manipulation
-- Symmetry reduction
-
-**2. Sudoku Solver**
-
-**Problem:** Fill 9×9 grid following Sudoku rules.
-
-**Time:** O(9^(n×n)) worst case
-**Space:** O(n×n)
-
-**Optimizations:**
-
-- Constraint propagation
-- Most constrained variable first
-
-**3. Subset Sum**
-
-**Problem:** Find subset with given sum.
-
-**Time:** O(2^n)
-**Space:** O(n) - recursion depth
-
-**Variations:**
-
-- Count subsets
-- Find all subsets
-- Partition problem
-
-## Bit Manipulation
-
-### Common Operations
-
-**Set bit:** `n | (1 << i)`
-**Clear bit:** `n & ~(1 << i)`
-**Toggle bit:** `n ^ (1 << i)`
-**Check bit:** `(n & (1 << i)) != 0`
-
-### Useful Tricks
-
-**Check power of 2:** `n & (n-1) == 0`
-**Count set bits:** Brian Kernighan's algorithm
-**Get rightmost set bit:** `n & -n`
-**Clear rightmost set bit:** `n & (n-1)`
-
-### Applications
-
-**1. Subset Generation**
-
-**Theory:** Use bits to represent subset membership.
-
-**Time:** O(2^n × n)
-**Space:** O(1)
-
-**2. Bitmask DP**
-
-**Theory:** Use integer to represent state.
-
-**Example:** Traveling Salesman Problem
-**Time:** O(n² × 2^n)
-**Space:** O(n × 2^n)
-
-## Interview Questions
-
-**🟡 [Mid] Q: When to use Quick Sort vs Merge Sort?**
-
-A: Use Quick Sort for in-place sorting with average O(n log n). Use Merge Sort when stability is required or for linked lists. Merge Sort guarantees O(n log n) but needs O(n) extra space.
-
-**🟢 [Junior] Q: Difference between DFS and BFS?**
-
-A: DFS explores depth-first using stack/recursion, good for path finding and backtracking. BFS explores level-by-level using queue, finds shortest path in unweighted graphs.
-
-**🟡 [Mid] Q: When to use DP vs Greedy?**
-
-A: Use DP when problem has optimal substructure and overlapping subproblems. Use Greedy when greedy choice property holds and local optimum leads to global optimum. DP is more general but slower.
-
-**🟡 [Mid] Q: How to identify DP problem?**
-
-A: Look for: optimal substructure, overlapping subproblems, counting/optimization, "maximum/minimum" keywords, decision at each step.
-
-**🟡 [Mid] Q: Dijkstra vs Bellman-Ford?**
-
-A: Dijkstra is faster O((V+E) log V) but requires non-negative weights. Bellman-Ford handles negative weights and detects negative cycles but slower O(VE).
 
 ---
 
-[← Back to Data Structures](./01-data-structures-comprehensive.md) | [Next: Complexity Analysis →](./03-complexity-analysis.md)
+## Part 1: Sorting / Sắp Xếp
+
+### Visual: Sorting Comparison
+
+```
+Array: [5, 3, 8, 1, 9, 2]
+
+BUBBLE SORT (swap adjacent if out of order):
+Pass 1: [3,5,1,8,2,9]  ← 9 bubbles to end
+Pass 2: [3,1,5,2,8,9]  ← 8 bubbles to position
+Pass n: O(n²) comparisons
+
+SELECTION SORT (find min, place at front):
+Step 1: min=1  [1, 3,8,5,9,2]
+Step 2: min=2  [1,2, 8,5,9,3]
+Step 3: min=3  [1,2,3, 5,9,8]
+          O(n²) regardless of input
+
+INSERTION SORT (like sorting playing cards):
+Hand: [5]
+Add 3: [3,5]         ← insert 3 before 5
+Add 8: [3,5,8]       ← 8 fits at end
+Add 1: [1,3,5,8]     ← slide 1 to front
+Add 9: [1,3,5,8,9]   ← 9 fits at end
+O(n) for nearly-sorted, O(n²) worst case
+
+MERGE SORT (divide → sort halves → merge):
+[5,3,8,1,9,2]
+    /       \
+[5,3,8]   [1,9,2]
+  / \       / \
+[5,3] [8] [1,9] [2]
+ / \        / \
+[5] [3]   [1] [9]
+
+Merge [3,5] + [8] = [3,5,8]
+Merge [1,9] + [2] = [1,2,9]
+Merge [3,5,8] + [1,2,9] = [1,2,3,5,8,9] ✓
+
+QUICK SORT (pivot partition):
+[5, 3, 8, 1, 9, 2]  pivot=5
+[3,1,2] 5 [8,9]     ← elements < 5 | pivot | elements > 5
+Recurse on both sides
+```
+
+### Sorting Algorithm Summary
+
+| Algorithm | Best | Average | Worst | Space | Stable? | When to use |
+|-----------|------|---------|-------|-------|---------|-------------|
+| Bubble | O(n) | O(n²) | O(n²) | O(1) | Yes | Never in production |
+| Selection | O(n²) | O(n²) | O(n²) | O(1) | No | Never |
+| Insertion | O(n) | O(n²) | O(n²) | O(1) | Yes | Nearly sorted / small n |
+| Merge | O(n log n) | O(n log n) | O(n log n) | O(n) | Yes | Need stable sort, linked lists |
+| Quick | O(n log n) | O(n log n) | O(n²) | O(log n) | No | Default choice (fast in practice) |
+| Heap | O(n log n) | O(n log n) | O(n log n) | O(1) | No | Sort in-place, memory-constrained |
+| Counting | O(n+k) | O(n+k) | O(n+k) | O(k) | Yes | Small integer range |
+| Radix | O(nk) | O(nk) | O(nk) | O(n+k) | Yes | Large integers, fixed length strings |
+
+**Stable sort** = equal elements maintain their original relative order.
+
+**Interview tip**: "Which sort would you use?" → Quick sort for general purpose. Merge sort if stability required or sorting linked lists. Counting/Radix for integer sorting with known range.
+
+---
+
+## Part 2: Searching / Tìm Kiếm
+
+### Binary Search / Tìm Kiếm Nhị Phân
+
+```
+Array (MUST be sorted): [1, 3, 5, 7, 9, 11, 13]
+Search for: 7
+
+Step 1: lo=0, hi=6, mid=3 → arr[3]=7 → FOUND ✓
+
+Search for: 5:
+Step 1: lo=0, hi=6, mid=3 → arr[3]=7 > 5 → search left
+Step 2: lo=0, hi=2, mid=1 → arr[1]=3 < 5 → search right
+Step 3: lo=2, hi=2, mid=2 → arr[2]=5 → FOUND ✓
+
+Each step eliminates HALF the remaining elements → O(log n)
+```
+
+```python
+def binary_search(arr, target):
+    lo, hi = 0, len(arr) - 1
+    while lo <= hi:
+        mid = lo + (hi - lo) // 2  # avoid integer overflow
+        if arr[mid] == target:
+            return mid
+        elif arr[mid] < target:
+            lo = mid + 1
+        else:
+            hi = mid - 1
+    return -1  # not found
+
+# Template for "find first position where condition is true":
+def binary_search_boundary(arr, condition):
+    lo, hi = 0, len(arr) - 1
+    result = -1
+    while lo <= hi:
+        mid = (lo + hi) // 2
+        if condition(arr[mid]):
+            result = mid
+            hi = mid - 1  # search left for first occurrence
+        else:
+            lo = mid + 1
+    return result
+```
+
+**Binary search variants** (all O(log n)):
+- Find exact value
+- Find first occurrence (leftmost)
+- Find last occurrence (rightmost)
+- Find first position where `arr[i] >= target` (lower_bound)
+- **Binary search on answer**: "Minimum max" problems — binary search on the answer space, not the array
+
+```
+"Binary search on answer" example:
+  Problem: "Minimum days to eat N oranges" (LeetCode 1553)
+  Instead of searching array, binary search on answer:
+  lo = 1, hi = N
+  "Can we do it in `mid` days?" → yes/no
+  Find minimum `mid` where answer is yes
+```
+
+---
+
+## Part 3: Graph Algorithms / Thuật Toán Đồ Thị
+
+### BFS vs DFS Visualization
+
+```
+Graph:
+    1
+   / \
+  2   3
+ / \   \
+4   5   6
+
+BFS (Queue — Level by Level):
+Queue: [1]
+Visit 1 → Queue: [2, 3]
+Visit 2 → Queue: [3, 4, 5]
+Visit 3 → Queue: [4, 5, 6]
+Visit 4 → Queue: [5, 6]
+Visit 5 → Queue: [6]
+Visit 6 → Queue: []
+BFS order: 1, 2, 3, 4, 5, 6
+
+DFS (Stack — Go Deep First):
+Stack: [1]
+Visit 1 → Stack: [2, 3]
+Visit 3 → Stack: [2, 6]   ← LIFO, process 3 before 2
+Visit 6 → Stack: [2]
+Visit 2 → Stack: [4, 5]
+Visit 5 → Stack: [4]
+Visit 4 → Stack: []
+DFS order: 1, 3, 6, 2, 5, 4
+```
+
+**When to use which:**
+| Algorithm | Use When |
+|-----------|----------|
+| BFS | Shortest path (unweighted), find if path exists, level-order traversal |
+| DFS | Detect cycle, topological sort, connected components, backtracking |
+
+```python
+# BFS template
+from collections import deque
+def bfs(graph, start):
+    visited = set([start])
+    queue = deque([start])
+    while queue:
+        node = queue.popleft()
+        for neighbor in graph[node]:
+            if neighbor not in visited:
+                visited.add(neighbor)
+                queue.append(neighbor)
+
+# DFS template (iterative)
+def dfs(graph, start):
+    visited = set()
+    stack = [start]
+    while stack:
+        node = stack.pop()
+        if node not in visited:
+            visited.add(node)
+            for neighbor in graph[node]:
+                stack.append(neighbor)
+```
+
+### Dijkstra's Shortest Path
+
+```
+Graph with weights:
+    A
+  2/ \5
+  B   C
+ 1\  /3
+    D
+    |1
+    E
+
+Find shortest path A → E:
+
+Priority Queue (min-heap by distance):
+Start: {A:0}
+Process A(0): update B=2, C=5 → PQ: [(2,B),(5,C)]
+Process B(2): update D=3 → PQ: [(3,D),(5,C)]
+Process D(3): update C=6, E=4 → PQ: [(4,E),(5,C),(6,C)]
+Process E(4): DONE ✓
+
+Shortest path A→E = 4 (via A→B→D→E: 0+2+1+1=4)
+```
+
+```python
+import heapq
+
+def dijkstra(graph, start, end):
+    # graph = {node: [(cost, neighbor), ...]}
+    dist = {start: 0}
+    heap = [(0, start)]
+    
+    while heap:
+        cost, node = heapq.heappop(heap)
+        if cost > dist.get(node, float('inf')):
+            continue  # stale entry
+        if node == end:
+            return cost
+        for edge_cost, neighbor in graph[node]:
+            new_cost = cost + edge_cost
+            if new_cost < dist.get(neighbor, float('inf')):
+                dist[neighbor] = new_cost
+                heapq.heappush(heap, (new_cost, neighbor))
+    return -1
+```
+
+---
+
+## Part 4: Dynamic Programming / Quy Hoạch Động
+
+### The Key Insight / Ý Tưởng Cốt Lõi
+
+```
+RECURSION (plain):          MEMOIZATION (top-down DP):
+fib(5)                      fib(5)
+├─ fib(4)                   ├─ fib(4) [computed once]
+│  ├─ fib(3)                │  ├─ fib(3) [computed once]
+│  │  ├─ fib(2)             │  │  └─ ...
+│  │  └─ fib(1)             │  └─ fib(2) [from cache]
+│  └─ fib(2)                └─ fib(3) [from cache]
+│     ├─ fib(1)
+│     └─ fib(0)
+└─ fib(3) ← repeated!
+   ├─ fib(2) ← repeated!
+   └─ fib(1) ← repeated!
+
+Without memo: O(2^n)   →   With memo: O(n)
+```
+
+### DP Decision Framework
+
+```
+Can I split problem into SMALLER SUBPROBLEMS?
+    ↓ YES
+Are subproblems OVERLAPPING (same subproblem solved multiple times)?
+    ↓ YES
+Does optimal solution use OPTIMAL subproblem solutions?
+    ↓ YES
+→ USE DYNAMIC PROGRAMMING
+
+Ask yourself:
+1. What is dp[i] (or dp[i][j]) representing?
+2. Base case: dp[0] = ?
+3. Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
+4. Answer: dp[n] or max(dp)
+```
+
+### Classic DP Patterns with Visualization
+
+**1. Fibonacci (O(n) time, O(1) space)**
+```
+dp[i] = dp[i-1] + dp[i-2]
+i:    0  1  2  3  4  5  6  7
+dp:   0  1  1  2  3  5  8  13
+```
+
+**2. Climbing Stairs (LeetCode 70)**
+```
+n stairs, can climb 1 or 2 steps
+dp[i] = ways to reach stair i = dp[i-1] + dp[i-2]
+n:  1  2  3  4  5
+dp: 1  2  3  5  8  ← same as Fibonacci!
+```
+
+**3. 0/1 Knapsack**
+```
+Items: weight=[2,3,4], value=[3,4,5], capacity=5
+
+dp[i][w] = max value using first i items, capacity w
+
+    w=0 w=1 w=2 w=3 w=4 w=5
+i=0   0   0   0   0   0   0
+i=1   0   0   3   3   3   3   ← item 1 (w=2, v=3)
+i=2   0   0   3   4   4   7   ← item 2 (w=3, v=4)
+i=3   0   0   3   4   5   7   ← item 3 (w=4, v=5)
+
+Answer: dp[3][5] = 7 (items 1+2: value 3+4=7)
+```
+
+**4. Longest Common Subsequence (LCS)**
+```
+s1 = "ABCDE", s2 = "ACE"
+
+    ""  A  C  E
+""   0  0  0  0
+A    0  1  1  1
+B    0  1  1  1
+C    0  1  2  2
+D    0  1  2  2
+E    0  1  2  3  ← LCS length = 3 ("ACE")
+
+dp[i][j] = s1[i]==s2[j] ? dp[i-1][j-1]+1 : max(dp[i-1][j], dp[i][j-1])
+```
+
+---
+
+## Part 5: Two Pointers & Sliding Window
+
+These are the most common FE + BE interview patterns:
+
+### Two Pointers Visualization
+
+```
+Problem: Find pair in sorted array that sums to target=9
+Array: [1, 2, 3, 4, 5, 6, 7, 8]
+
+lo=0(1), hi=7(8): sum=9 ✓ FOUND
+
+If sum < target: move lo right (need bigger sum)
+If sum > target: move hi left (need smaller sum)
+
+Problem: Remove duplicates from sorted array [1,1,2,3,3,4]
+slow=0, fast=0:
+fast scans, slow writes unique values:
+
+fast: 1,1,2,3,3,4
+      ↑
+slow writes 1, advances
+       ↑ fast: 1 (dup skip)
+          ↑ fast: 2 → write 2, slow++
+             ↑ fast: 3 → write 3
+                ↑ fast: 3 (dup skip)
+                   ↑ fast: 4 → write 4
+Result: [1,2,3,4] in first 4 positions
+```
+
+### Sliding Window Visualization
+
+```
+Problem: Maximum sum of subarray size k=3
+Array: [2, 1, 5, 1, 3, 2]
+
+Window [2,1,5]: sum=8
+Slide:  [1,5,1]: sum=7  (remove 2, add 1)
+Slide:  [5,1,3]: sum=9  ← MAX
+Slide:  [1,3,2]: sum=6
+Answer: 9
+
+Variable-size window (longest substring without repeat):
+s = "abcabcbb"
+lo=0 hi=0: "a" (no repeat)
+lo=0 hi=1: "ab"
+lo=0 hi=2: "abc"
+lo=0 hi=3: "abca" → 'a' repeats! → move lo to after first 'a'
+lo=1 hi=3: "bca"
+...
+Max window length = 3 ("abc")
+```
+
+---
+
+## Part 6: Backtracking / Quay Lui
+
+```
+Problem: Generate all permutations of [1,2,3]
+
+Decision tree:
+         []
+      /   |   \
+    [1]  [2]  [3]
+    / \   / \   / \
+ [1,2][1,3][2,1][2,3][3,1][3,2]
+   |    |    |    |    |    |
+[1,2,3][1,3,2][2,1,3][2,3,1][3,1,2][3,2,1]
+
+Backtracking = DFS + undo choice:
+choose 1 → recurse → unchoose 1 → choose 2 → ...
+```
+
+```python
+def permutations(nums):
+    result = []
+    def backtrack(current, remaining):
+        if not remaining:
+            result.append(current[:])
+            return
+        for i, num in enumerate(remaining):
+            current.append(num)                    # CHOOSE
+            backtrack(current, remaining[:i] + remaining[i+1:])  # EXPLORE
+            current.pop()                          # UNCHOOSE
+    backtrack([], nums)
+    return result
+```
+
+**When to use backtracking**: "Generate all...", "Find all combinations", "N-Queens", "Word Search"
+
+---
+
+## Algorithm Interview Cheatsheet / Bảng Tóm Tắt
+
+| Problem signal | Algorithm | Time |
+|----------------|-----------|------|
+| "Find X in sorted array" | Binary Search | O(log n) |
+| "Shortest path (unweighted)" | BFS | O(V+E) |
+| "Shortest path (weighted)" | Dijkstra | O((V+E) log V) |
+| "All paths / permutations" | Backtracking | O(n!) |
+| "Optimal substructure" | DP | Varies |
+| "Subarray sum/max" | Sliding Window | O(n) |
+| "Pair/triplet with sum" | Two Pointers | O(n) |
+| "Top K elements" | Heap | O(n log k) |
+| "Sort" | Quick/Merge | O(n log n) |
+| "Connected components" | Union-Find | O(α(n)) |
+
+---
+
+**See also**: [Data Structures](./data-structures-theory.md) | [Complexity Analysis](./complexity-analysis.md) | [LeetCode](../../leetcode/)

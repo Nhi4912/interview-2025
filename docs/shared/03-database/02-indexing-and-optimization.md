@@ -1,7 +1,95 @@
-# Indexing and Query Optimization — Đánh chỉ mục và tối ưu truy vấn
+# Indexing & Query Optimization / Đánh Chỉ Mục và Tối Ưu Truy Vấn
 
-> Shared theory for both Frontend and Backend tracks.
-> Cross-referenced by: `be-track/03-database-advanced/02-indexing-optimization.md`, `shared/03-database/database-theory.md`, `be-track/01-golang/05-testing-profiling.md`
+> **Track**: Shared | **Difficulty**: 🟡 Mid → 🔴 Senior
+> **See also**: [Database Theory](./database-theory.md) | [Sharding & Transactions](./04-sharding-and-transactions.md) | [NoSQL & NewSQL](./03-nosql-and-newsql.md)
+
+---
+
+## Visual Overview / Sơ Đồ Tổng Quan
+
+### How B+Tree Index Works
+```
+Table: users (id, name, age, email)
+Index on: age
+
+B+Tree Index:
+                [30 | 50]           ← internal node (routing only)
+               /    |    \
+         [20,25] [35,40] [55,60]    ← internal nodes
+          /  \    / \     / \
+        leaf leaf ...  leaf leaf    ← leaf nodes (actual data + pointers)
+
+Leaf nodes form a LINKED LIST:
+[20→row] ↔ [25→row] ↔ [30→row] ↔ [35→row] ↔ ...
+
+Query: WHERE age = 35
+→ Traverse tree: root → [30,50] → left of 50 → leaf [35] → row pointer
+→ O(log n) to find, then pointer to actual row
+
+Query: WHERE age BETWEEN 25 AND 40
+→ Find leaf [25] via tree traversal
+→ Follow linked list: [25] → [30] → [35] → [40] → STOP
+→ O(log n) + O(k) where k = matching rows = VERY FAST for ranges!
+```
+
+### Full Table Scan vs Index Scan
+```
+Table: 1,000,000 rows
+Query: SELECT * FROM orders WHERE customer_id = 123
+
+WITHOUT INDEX:                  WITH INDEX:
+Read ALL 1M rows                B+Tree lookup
+Check each customer_id          → ~20 comparisons (log₂(1M) ≈ 20)
+Return matches                  → jump to rows
+Cost: O(n) = scan 1M rows       Cost: O(log n) = 20 comparisons
+
+Time: ~500ms                    Time: ~1ms
+```
+
+### Index Types Comparison
+```
+B+Tree Index:                   Hash Index:
+┌─────────────────┐             ┌──────────────────┐
+│ Perfect for:    │             │ Perfect for:     │
+│ = , <, >, BETWEEN│           │ = only (exact)   │
+│ ORDER BY        │             │ Fastest lookup   │
+│ GROUP BY        │             │                  │
+│ LIKE 'prefix%'  │             │ NOT for:         │
+│                 │             │ ranges, sorting  │
+└─────────────────┘             └──────────────────┘
+
+Composite Index: INDEX(last_name, first_name)
+Left-prefix rule:
+  WHERE last_name = 'Smith'              ← uses index ✓
+  WHERE last_name = 'Smith' AND first_name = 'John'  ← uses index ✓
+  WHERE first_name = 'John'             ← does NOT use index ✗
+  (only uses leftmost columns in sequence)
+```
+
+### Query Execution Plan (EXPLAIN)
+```
+EXPLAIN SELECT * FROM orders
+  JOIN customers ON orders.customer_id = customers.id
+  WHERE customers.city = 'Hanoi'
+  ORDER BY orders.created_at DESC
+  LIMIT 10;
+
+Output (simplified):
+┌─────────────────────────────────────────────────────┐
+│ id │ type  │ table     │ key          │ rows │ Extra │
+├────┼───────┼───────────┼──────────────┼──────┼───────┤
+│ 1  │ ALL   │ customers │ NULL         │ 50k  │Using filesort│ ← BAD: full scan!
+│ 1  │ ref   │ orders    │ customer_id  │ 3    │       │ ← OK: uses index
+└─────────────────────────────────────────────────────┘
+
+Red flags in EXPLAIN:
+  type=ALL     → full table scan (add index!)
+  Extra=Using filesort → no index for ORDER BY (add index!)
+  Extra=Using temporary → temp table (complex query)
+  rows=50000   → estimating too many rows (bad statistics)
+```
+
+---
 
 ---
 

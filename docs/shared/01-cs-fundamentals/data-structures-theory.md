@@ -1,1121 +1,603 @@
 # Data Structures Theory / Lý Thuyết Cấu Trúc Dữ Liệu
 
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Algorithms Theory](./algorithms-theory.md) | [Complexity Analysis](./complexity-analysis.md)
-
-## Overview / Tổng Quan
-- Tài liệu dùng heading tiếng Anh và giải thích tiếng Việt để phù hợp luyện phỏng vấn song ngữ.
-- Mục tiêu là hiểu bản chất, trade-off và cách chọn cấu trúc dữ liệu theo workload thực tế.
-- Aim: understand the nature, trade-offs, and how to choose data structures based on real workload.
-
-## Foundation Notes
-### Explanation / Giải thích
-- Khi trả lời interview, luôn nêu pattern truy cập: read-heavy, write-heavy, range query, memory limit, latency target.
-- Không chỉ đọc thuộc complexity; cần giải thích vì sao complexity đó xuất hiện từ cấu trúc bộ nhớ và invariants.
-### Example / Ví dụ
-- Nếu bài toán cần tra cứu key rất nhanh và không cần thứ tự: chọn hash table.
-- Nếu cần range query và ordered traversal: chọn cây cân bằng hoặc B+Tree.
-
-## Arrays
-### Overview / Tổng Quan
-- Mảng lưu phần tử liên tiếp trong bộ nhớ, truy cập theo index cực nhanh.
-- Đây là phần lý thuyết nền dùng cho cả frontend và backend.
-### Explanation / Giải thích
-- Khi phân tích, nên xem đồng thời độ phức tạp trung bình và worst-case để tránh câu trả lời phiến diện.
-- Cần chú ý chi phí hidden cost như cache-miss, pointer overhead, resize cost, và synchronization cost.
-
-| Operation | Complexity |
-| --- | --- |
-| Access by index | O(1) |
-| Search unsorted | O(n) |
-| Append dynamic | Amortized O(1) |
-| Insert/Delete middle | O(n) |
-
-### Example / Ví dụ
-- Use case 1: Áp dụng Arrays trong hệ thống production để tối ưu latency.
-- Use case 2: Áp dụng Arrays trong bài toán coding interview để giảm time complexity.
-- Cần mô tả vì sao lựa chọn này tốt hơn lựa chọn thay thế trong cùng bối cảnh.
-### Interview Notes
-- Trả lời theo template: requirement -> candidates -> trade-off -> final pick -> scaling plan.
-- Nếu interviewer đổi ràng buộc (memory thấp hơn, traffic cao hơn), cần pivot cấu trúc tương ứng.
-
-## Linked Lists
-### Overview / Tổng Quan
-- Danh sách liên kết lưu node rời rạc, tối ưu chèn/xóa khi đã có con trỏ.
-- Đây là phần lý thuyết nền dùng cho cả frontend và backend.
-### Explanation / Giải thích
-- Khi phân tích, nên xem đồng thời độ phức tạp trung bình và worst-case để tránh câu trả lời phiến diện.
-- Cần chú ý chi phí hidden cost như cache-miss, pointer overhead, resize cost, và synchronization cost.
-
-| Operation | Complexity |
-| --- | --- |
-| Access by index | O(n) |
-| Insert at head | O(1) |
-| Delete known node | O(1) |
-| Search | O(n) |
-
-### Example / Ví dụ
-- Use case 1: Áp dụng Linked Lists trong hệ thống production để tối ưu latency.
-- Use case 2: Áp dụng Linked Lists trong bài toán coding interview để giảm time complexity.
-- Cần mô tả vì sao lựa chọn này tốt hơn lựa chọn thay thế trong cùng bối cảnh.
-### Interview Notes
-- Trả lời theo template: requirement -> candidates -> trade-off -> final pick -> scaling plan.
-- Nếu interviewer đổi ràng buộc (memory thấp hơn, traffic cao hơn), cần pivot cấu trúc tương ứng.
-
-## Stacks
-### Overview / Tổng Quan
-- Ngăn xếp LIFO, phần tử vào sau ra trước.
-- Đây là phần lý thuyết nền dùng cho cả frontend và backend.
-### Explanation / Giải thích
-- Khi phân tích, nên xem đồng thời độ phức tạp trung bình và worst-case để tránh câu trả lời phiến diện.
-- Cần chú ý chi phí hidden cost như cache-miss, pointer overhead, resize cost, và synchronization cost.
-
-| Operation | Complexity |
-| --- | --- |
-| Push | O(1) |
-| Pop | O(1) |
-| Peek | O(1) |
-| Search | O(n) |
-
-### Example / Ví dụ
-- Use case 1: Áp dụng Stacks trong hệ thống production để tối ưu latency.
-- Use case 2: Áp dụng Stacks trong bài toán coding interview để giảm time complexity.
-- Cần mô tả vì sao lựa chọn này tốt hơn lựa chọn thay thế trong cùng bối cảnh.
-### Interview Notes
-- Trả lời theo template: requirement -> candidates -> trade-off -> final pick -> scaling plan.
-- Nếu interviewer đổi ràng buộc (memory thấp hơn, traffic cao hơn), cần pivot cấu trúc tương ứng.
-
-## Queues
-### Overview / Tổng Quan
-- Hàng đợi FIFO, phần tử vào trước ra trước.
-- Đây là phần lý thuyết nền dùng cho cả frontend và backend.
-### Explanation / Giải thích
-- Khi phân tích, nên xem đồng thời độ phức tạp trung bình và worst-case để tránh câu trả lời phiến diện.
-- Cần chú ý chi phí hidden cost như cache-miss, pointer overhead, resize cost, và synchronization cost.
-
-| Operation | Complexity |
-| --- | --- |
-| Enqueue | O(1) |
-| Dequeue | O(1) |
-| Front | O(1) |
-| Search | O(n) |
-
-### Example / Ví dụ
-- Use case 1: Áp dụng Queues trong hệ thống production để tối ưu latency.
-- Use case 2: Áp dụng Queues trong bài toán coding interview để giảm time complexity.
-- Cần mô tả vì sao lựa chọn này tốt hơn lựa chọn thay thế trong cùng bối cảnh.
-### Interview Notes
-- Trả lời theo template: requirement -> candidates -> trade-off -> final pick -> scaling plan.
-- Nếu interviewer đổi ràng buộc (memory thấp hơn, traffic cao hơn), cần pivot cấu trúc tương ứng.
-
-## Hash Tables
-### Overview / Tổng Quan
-- Bảng băm ánh xạ key -> bucket để tra cứu trung bình O(1).
-- Đây là phần lý thuyết nền dùng cho cả frontend và backend.
-### Explanation / Giải thích
-- Khi phân tích, nên xem đồng thời độ phức tạp trung bình và worst-case để tránh câu trả lời phiến diện.
-- Cần chú ý chi phí hidden cost như cache-miss, pointer overhead, resize cost, và synchronization cost.
-
-| Operation | Complexity |
-| --- | --- |
-| Get/Put/Delete avg | O(1) |
-| Get/Put/Delete worst | O(n) |
-| Rehash | O(n) |
-| Space | O(n) |
-
-### Example / Ví dụ
-- Use case 1: Áp dụng Hash Tables trong hệ thống production để tối ưu latency.
-- Use case 2: Áp dụng Hash Tables trong bài toán coding interview để giảm time complexity.
-- Cần mô tả vì sao lựa chọn này tốt hơn lựa chọn thay thế trong cùng bối cảnh.
-### Interview Notes
-- Trả lời theo template: requirement -> candidates -> trade-off -> final pick -> scaling plan.
-- Nếu interviewer đổi ràng buộc (memory thấp hơn, traffic cao hơn), cần pivot cấu trúc tương ứng.
-
-## Binary Search Trees (BST)
-### Overview / Tổng Quan
-- Cây tìm kiếm nhị phân giữ thứ tự key trái < node < phải.
-- Đây là phần lý thuyết nền dùng cho cả frontend và backend.
-### Explanation / Giải thích
-- Khi phân tích, nên xem đồng thời độ phức tạp trung bình và worst-case để tránh câu trả lời phiến diện.
-- Cần chú ý chi phí hidden cost như cache-miss, pointer overhead, resize cost, và synchronization cost.
-
-| Operation | Complexity |
-| --- | --- |
-| Search avg | O(log n) |
-| Search worst | O(n) |
-| Insert | O(h) |
-| Delete | O(h) |
-
-### Example / Ví dụ
-- Use case 1: Áp dụng Binary Search Trees (BST) trong hệ thống production để tối ưu latency.
-- Use case 2: Áp dụng Binary Search Trees (BST) trong bài toán coding interview để giảm time complexity.
-- Cần mô tả vì sao lựa chọn này tốt hơn lựa chọn thay thế trong cùng bối cảnh.
-### Interview Notes
-- Trả lời theo template: requirement -> candidates -> trade-off -> final pick -> scaling plan.
-- Nếu interviewer đổi ràng buộc (memory thấp hơn, traffic cao hơn), cần pivot cấu trúc tương ứng.
-
-## AVL Trees
-### Overview / Tổng Quan
-- BST tự cân bằng chặt bằng rotation để giữ chiều cao logarit.
-- Đây là phần lý thuyết nền dùng cho cả frontend và backend.
-### Explanation / Giải thích
-- Khi phân tích, nên xem đồng thời độ phức tạp trung bình và worst-case để tránh câu trả lời phiến diện.
-- Cần chú ý chi phí hidden cost như cache-miss, pointer overhead, resize cost, và synchronization cost.
-
-| Operation | Complexity |
-| --- | --- |
-| Search | O(log n) |
-| Insert | O(log n) |
-| Delete | O(log n) |
-| Rotation | O(1) |
-
-### Example / Ví dụ
-- Use case 1: Áp dụng AVL Trees trong hệ thống production để tối ưu latency.
-- Use case 2: Áp dụng AVL Trees trong bài toán coding interview để giảm time complexity.
-- Cần mô tả vì sao lựa chọn này tốt hơn lựa chọn thay thế trong cùng bối cảnh.
-### Interview Notes
-- Trả lời theo template: requirement -> candidates -> trade-off -> final pick -> scaling plan.
-- Nếu interviewer đổi ràng buộc (memory thấp hơn, traffic cao hơn), cần pivot cấu trúc tương ứng.
-
-## Red-Black Trees
-### Overview / Tổng Quan
-- BST tự cân bằng với luật màu đỏ/đen, cập nhật thực dụng.
-- Đây là phần lý thuyết nền dùng cho cả frontend và backend.
-### Explanation / Giải thích
-- Khi phân tích, nên xem đồng thời độ phức tạp trung bình và worst-case để tránh câu trả lời phiến diện.
-- Cần chú ý chi phí hidden cost như cache-miss, pointer overhead, resize cost, và synchronization cost.
-
-| Operation | Complexity |
-| --- | --- |
-| Search | O(log n) |
-| Insert | O(log n) |
-| Delete | O(log n) |
-| Fix-up | O(log n) |
-
-### Example / Ví dụ
-- Use case 1: Áp dụng Red-Black Trees trong hệ thống production để tối ưu latency.
-- Use case 2: Áp dụng Red-Black Trees trong bài toán coding interview để giảm time complexity.
-- Cần mô tả vì sao lựa chọn này tốt hơn lựa chọn thay thế trong cùng bối cảnh.
-### Interview Notes
-- Trả lời theo template: requirement -> candidates -> trade-off -> final pick -> scaling plan.
-- Nếu interviewer đổi ràng buộc (memory thấp hơn, traffic cao hơn), cần pivot cấu trúc tương ứng.
-
-## B-Trees and B+ Trees
-### Overview / Tổng Quan
-- Cây nhiều nhánh tối ưu I/O đĩa, dùng rộng rãi trong database index.
-- Đây là phần lý thuyết nền dùng cho cả frontend và backend.
-### Explanation / Giải thích
-- Khi phân tích, nên xem đồng thời độ phức tạp trung bình và worst-case để tránh câu trả lời phiến diện.
-- Cần chú ý chi phí hidden cost như cache-miss, pointer overhead, resize cost, và synchronization cost.
-
-| Operation | Complexity |
-| --- | --- |
-| Search | O(log_f n) |
-| Insert | O(log_f n) |
-| Delete | O(log_f n) |
-| Range scan B+Tree | O(log_f n + k) |
-
-### Example / Ví dụ
-- Use case 1: Áp dụng B-Trees and B+ Trees trong hệ thống production để tối ưu latency.
-- Use case 2: Áp dụng B-Trees and B+ Trees trong bài toán coding interview để giảm time complexity.
-- Cần mô tả vì sao lựa chọn này tốt hơn lựa chọn thay thế trong cùng bối cảnh.
-### Interview Notes
-- Trả lời theo template: requirement -> candidates -> trade-off -> final pick -> scaling plan.
-- Nếu interviewer đổi ràng buộc (memory thấp hơn, traffic cao hơn), cần pivot cấu trúc tương ứng.
-
-## Tries
-### Overview / Tổng Quan
-- Cây tiền tố tối ưu prefix search và autocomplete.
-- Đây là phần lý thuyết nền dùng cho cả frontend và backend.
-### Explanation / Giải thích
-- Khi phân tích, nên xem đồng thời độ phức tạp trung bình và worst-case để tránh câu trả lời phiến diện.
-- Cần chú ý chi phí hidden cost như cache-miss, pointer overhead, resize cost, và synchronization cost.
-
-| Operation | Complexity |
-| --- | --- |
-| Insert word | O(L) |
-| Search word | O(L) |
-| Prefix query | O(P) |
-| Delete | O(L) |
-
-### Example / Ví dụ
-- Use case 1: Áp dụng Tries trong hệ thống production để tối ưu latency.
-- Use case 2: Áp dụng Tries trong bài toán coding interview để giảm time complexity.
-- Cần mô tả vì sao lựa chọn này tốt hơn lựa chọn thay thế trong cùng bối cảnh.
-### Interview Notes
-- Trả lời theo template: requirement -> candidates -> trade-off -> final pick -> scaling plan.
-- Nếu interviewer đổi ràng buộc (memory thấp hơn, traffic cao hơn), cần pivot cấu trúc tương ứng.
-
-## Heaps
-### Overview / Tổng Quan
-- Cấu trúc ưu tiên với phần tử min/max ở root.
-- Đây là phần lý thuyết nền dùng cho cả frontend và backend.
-### Explanation / Giải thích
-- Khi phân tích, nên xem đồng thời độ phức tạp trung bình và worst-case để tránh câu trả lời phiến diện.
-- Cần chú ý chi phí hidden cost như cache-miss, pointer overhead, resize cost, và synchronization cost.
-
-| Operation | Complexity |
-| --- | --- |
-| Peek top | O(1) |
-| Insert | O(log n) |
-| Extract top | O(log n) |
-| Build heap | O(n) |
-
-### Example / Ví dụ
-- Use case 1: Áp dụng Heaps trong hệ thống production để tối ưu latency.
-- Use case 2: Áp dụng Heaps trong bài toán coding interview để giảm time complexity.
-- Cần mô tả vì sao lựa chọn này tốt hơn lựa chọn thay thế trong cùng bối cảnh.
-### Interview Notes
-- Trả lời theo template: requirement -> candidates -> trade-off -> final pick -> scaling plan.
-- Nếu interviewer đổi ràng buộc (memory thấp hơn, traffic cao hơn), cần pivot cấu trúc tương ứng.
-
-## Graphs
-### Overview / Tổng Quan
-- Mô hình đỉnh-cạnh biểu diễn quan hệ phức tạp.
-- Đây là phần lý thuyết nền dùng cho cả frontend và backend.
-### Explanation / Giải thích
-- Khi phân tích, nên xem đồng thời độ phức tạp trung bình và worst-case để tránh câu trả lời phiến diện.
-- Cần chú ý chi phí hidden cost như cache-miss, pointer overhead, resize cost, và synchronization cost.
-
-| Operation | Complexity |
-| --- | --- |
-| BFS/DFS | O(V+E) |
-| Adj matrix space | O(V^2) |
-| Adj list space | O(V+E) |
-| Topological sort | O(V+E) |
-
-### Example / Ví dụ
-- Use case 1: Áp dụng Graphs trong hệ thống production để tối ưu latency.
-- Use case 2: Áp dụng Graphs trong bài toán coding interview để giảm time complexity.
-- Cần mô tả vì sao lựa chọn này tốt hơn lựa chọn thay thế trong cùng bối cảnh.
-### Interview Notes
-- Trả lời theo template: requirement -> candidates -> trade-off -> final pick -> scaling plan.
-- Nếu interviewer đổi ràng buộc (memory thấp hơn, traffic cao hơn), cần pivot cấu trúc tương ứng.
-
-## Skip Lists
-### Overview / Tổng Quan
-- Danh sách nhiều tầng ngẫu nhiên, expected O(log n).
-- Đây là phần lý thuyết nền dùng cho cả frontend và backend.
-### Explanation / Giải thích
-- Khi phân tích, nên xem đồng thời độ phức tạp trung bình và worst-case để tránh câu trả lời phiến diện.
-- Cần chú ý chi phí hidden cost như cache-miss, pointer overhead, resize cost, và synchronization cost.
-
-| Operation | Complexity |
-| --- | --- |
-| Search expected | O(log n) |
-| Insert expected | O(log n) |
-| Delete expected | O(log n) |
-| Worst case | O(n) |
-
-### Example / Ví dụ
-- Use case 1: Áp dụng Skip Lists trong hệ thống production để tối ưu latency.
-- Use case 2: Áp dụng Skip Lists trong bài toán coding interview để giảm time complexity.
-- Cần mô tả vì sao lựa chọn này tốt hơn lựa chọn thay thế trong cùng bối cảnh.
-### Interview Notes
-- Trả lời theo template: requirement -> candidates -> trade-off -> final pick -> scaling plan.
-- Nếu interviewer đổi ràng buộc (memory thấp hơn, traffic cao hơn), cần pivot cấu trúc tương ứng.
-
-## Bloom Filters
-### Overview / Tổng Quan
-- Bộ lọc xác suất cho membership, chấp nhận false positive.
-- Đây là phần lý thuyết nền dùng cho cả frontend và backend.
-### Explanation / Giải thích
-- Khi phân tích, nên xem đồng thời độ phức tạp trung bình và worst-case để tránh câu trả lời phiến diện.
-- Cần chú ý chi phí hidden cost như cache-miss, pointer overhead, resize cost, và synchronization cost.
-
-| Operation | Complexity |
-| --- | --- |
-| Add | O(k) |
-| Query | O(k) |
-| False positive | Possible |
-| False negative | No (without delete) |
-
-### Example / Ví dụ
-- Use case 1: Áp dụng Bloom Filters trong hệ thống production để tối ưu latency.
-- Use case 2: Áp dụng Bloom Filters trong bài toán coding interview để giảm time complexity.
-- Cần mô tả vì sao lựa chọn này tốt hơn lựa chọn thay thế trong cùng bối cảnh.
-### Interview Notes
-- Trả lời theo template: requirement -> candidates -> trade-off -> final pick -> scaling plan.
-- Nếu interviewer đổi ràng buộc (memory thấp hơn, traffic cao hơn), cần pivot cấu trúc tương ứng.
-
-## Union-Find (Disjoint Set)
-### Overview / Tổng Quan
-- Cấu trúc quản lý tập rời, rất mạnh cho connectivity query.
-- Đây là phần lý thuyết nền dùng cho cả frontend và backend.
-### Explanation / Giải thích
-- Khi phân tích, nên xem đồng thời độ phức tạp trung bình và worst-case để tránh câu trả lời phiến diện.
-- Cần chú ý chi phí hidden cost như cache-miss, pointer overhead, resize cost, và synchronization cost.
-
-| Operation | Complexity |
-| --- | --- |
-| Find | Amortized O(α(n)) |
-| Union | Amortized O(α(n)) |
-| Connectivity query | Amortized O(α(n)) |
-| Init | O(n) |
-
-### Example / Ví dụ
-- Use case 1: Áp dụng Union-Find (Disjoint Set) trong hệ thống production để tối ưu latency.
-- Use case 2: Áp dụng Union-Find (Disjoint Set) trong bài toán coding interview để giảm time complexity.
-- Cần mô tả vì sao lựa chọn này tốt hơn lựa chọn thay thế trong cùng bối cảnh.
-### Interview Notes
-- Trả lời theo template: requirement -> candidates -> trade-off -> final pick -> scaling plan.
-- Nếu interviewer đổi ràng buộc (memory thấp hơn, traffic cao hơn), cần pivot cấu trúc tương ứng.
-
-## Comparative Analysis
-### Overview / Tổng Quan
-- Bảng so sánh nhanh giúp chốt cấu trúc trong 30 giây khi phỏng vấn.
-### Explanation / Giải thích
-- Hãy dùng bảng này như điểm xuất phát, sau đó điều chỉnh theo ràng buộc cụ thể của bài toán.
-
-| Structure | Strength | Weakness | Best Fit |
-| --- | --- | --- | --- |
-| Array | Cache-friendly, O(1) index | Insert middle O(n) | Dense sequential data |
-| Linked List | O(1) insert/delete at known node | Poor locality, O(n) index | Frequent local structural edits |
-| Hash Table | Avg O(1) lookup | Collision worst-case | Key-value lookup heavy |
-| Balanced Trees | Ordered queries | More complex implementation | Range queries |
-| Heap | Fast top priority operations | No fast arbitrary search | Priority scheduling |
-| Trie | Strong prefix operations | Memory heavy | Autocomplete/routing |
-| Union-Find | Very fast connectivity checks | Not for path retrieval | Dynamic grouping |
-
-## Câu Hỏi Phỏng Vấn / Interview Q&A
-
-### 🟢 [Junior] Array random access là gì và vì sao O(1)?
-- **Trả lời:** Vì địa chỉ phần tử được tính trực tiếp từ base address và offset, không cần duyệt tuần tự.
-- **Giải thích thêm:** Trong interview nên nêu thêm một ví dụ thực tế bạn đã gặp hoặc có thể thiết kế.
-
-### 🟢 [Junior] Khác nhau giữa stack và queue?
-- **Trả lời:** Stack là LIFO còn queue là FIFO; chọn cấu trúc theo thứ tự xử lý của bài toán.
-- **Giải thích thêm:** Trong interview nên nêu thêm một ví dụ thực tế bạn đã gặp hoặc có thể thiết kế.
-
-### 🟢 [Junior] Khi nào nên dùng hash set?
-- **Trả lời:** Khi cần kiểm tra phần tử đã xuất hiện chưa với tốc độ trung bình O(1).
-- **Giải thích thêm:** Trong interview nên nêu thêm một ví dụ thực tế bạn đã gặp hoặc có thể thiết kế.
-
-### 🟡 [Mid] Amortized O(1) append của dynamic array nghĩa là gì?
-- **Trả lời:** Một số lần resize tốn O(n), nhưng trung bình trên chuỗi thao tác append thì chi phí mỗi lần gần O(1).
-- **Giải thích thêm:** Trong interview nên nêu thêm một ví dụ thực tế bạn đã gặp hoặc có thể thiết kế.
-
-### 🟡 [Mid] Vì sao BST có thể rơi về O(n)?
-- **Trả lời:** Nếu cây bị lệch hoàn toàn, chiều cao h gần n nên thao tác theo h trở thành O(n).
-- **Giải thích thêm:** Trong interview nên nêu thêm một ví dụ thực tế bạn đã gặp hoặc có thể thiết kế.
-
-### 🟡 [Mid] B+Tree mạnh hơn BST ở disk workload như thế nào?
-- **Trả lời:** B+Tree có fanout lớn nên chiều cao thấp, giảm số lần I/O page và tối ưu range scan.
-- **Giải thích thêm:** Trong interview nên nêu thêm một ví dụ thực tế bạn đã gặp hoặc có thể thiết kế.
-
-### 🔴 [Senior] Trade-off giữa AVL và Red-Black tree?
-- **Trả lời:** AVL cân bằng chặt nên lookup ổn định hơn; Red-Black update thực dụng hơn và thường ít rotation hơn.
-- **Giải thích thêm:** Trong interview nên nêu thêm một ví dụ thực tế bạn đã gặp hoặc có thể thiết kế.
-
-### 🔴 [Senior] Thiết kế LRU cache O(1) bằng cấu trúc nào?
-- **Trả lời:** Kết hợp hash map (lookup key) và doubly linked list (move/evict) để mọi thao tác chính đều O(1).
-- **Giải thích thêm:** Trong interview nên nêu thêm một ví dụ thực tế bạn đã gặp hoặc có thể thiết kế.
-
-### 🔴 [Senior] Bloom filter phù hợp tình huống nào và rủi ro gì?
-- **Trả lời:** Phù hợp pre-check membership ở scale lớn; rủi ro là false positive nên cần tầng xác minh sau đó.
-- **Giải thích thêm:** Trong interview nên nêu thêm một ví dụ thực tế bạn đã gặp hoặc có thể thiết kế.
-
-### 🟢 [Junior] Practice question 1: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 2: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 3: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 4: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 5: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 6: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 7: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 8: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 9: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 10: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 11: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 12: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 13: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 14: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 15: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 16: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 17: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 18: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 19: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 20: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 21: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 22: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 23: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 24: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 25: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 26: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 27: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 28: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 29: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 30: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 31: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 32: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 33: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 34: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 35: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 36: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 37: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 38: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 39: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 40: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 41: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 42: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 43: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 44: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟢 [Junior] Practice question 45: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 46: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 47: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 48: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 49: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 50: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 51: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 52: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 53: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 54: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 55: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 56: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 57: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 58: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 59: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 60: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 61: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 62: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 63: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 64: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 65: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 66: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 67: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 68: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 69: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 70: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 71: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 72: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 73: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 74: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 75: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 76: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 77: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 78: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 79: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 80: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 81: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 82: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 83: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 84: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 85: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 86: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 87: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 88: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 89: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 90: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 91: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 92: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 93: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 94: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🟡 [Mid] Practice question 95: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 96: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 97: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 98: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 99: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 100: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 101: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 102: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 103: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 104: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 105: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 106: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 107: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 108: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 109: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 110: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 111: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 112: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 113: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 114: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 115: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 116: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 117: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 118: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 119: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 120: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 121: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 122: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 123: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 124: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 125: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 126: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 127: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 128: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 129: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 130: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 131: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 132: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 133: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 134: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 135: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 136: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 137: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 138: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 139: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-### 🔴 [Senior] Practice question 140: How would you choose between two data structures under changing constraints?
-- **Trả lời:** Bắt đầu từ pattern truy cập chính, sau đó so memory footprint, worst-case latency, và độ phức tạp triển khai.
-- **Giải thích:** Nếu requirement thay đổi (ví dụ thêm range query), cần chứng minh lý do chuyển từ hash structure sang tree structure.
-- **Ví dụ:** Ban đầu dùng hash map cho lookup nhanh; khi cần order by time và window scan thì chuyển sang balanced tree hoặc indexed storage.
-
-## Cross-References
-- Algorithms theory: `./algorithms-theory.md`
-- Complexity analysis: `./complexity-analysis.md`
+> **See also**: [Algorithms Theory](./algorithms-theory.md) | [Complexity Analysis](./complexity-analysis.md) | [LeetCode Practice](../../leetcode/)
 
+---
+
+## How to Read This Guide / Cách Đọc Tài Liệu Này
+
+Mỗi cấu trúc dữ liệu được trình bày theo format:
+1. **Analogy** — liên tưởng thực tế dễ nhớ
+2. **Visual diagram** — sơ đồ ASCII trực quan
+3. **Complexity table** — bảng độ phức tạp
+4. **Real use cases** — dùng ở đâu trong production
+5. **Interview tip** — tip phỏng vấn cụ thể
+
+**Nguyên tắc chọn data structure:**
+```
+Cần access by index nhanh?          → Array
+Cần insert/delete ở đầu/giữa nhiều? → Linked List
+Cần LIFO (undo, parse)?             → Stack
+Cần FIFO (task queue, BFS)?         → Queue
+Cần lookup O(1)?                    → Hash Table
+Cần sorted + range query?           → BST / B+Tree
+Cần priority (task scheduling)?     → Heap
+Cần prefix search?                  → Trie
+Cần graph traversal?                → Adjacency List/Matrix
+```
+
+---
+
+## 1. Array / Mảng
+
+### Analogy / Liên Tưởng
+Think of a row of numbered lockers in a school hallway. Each locker has a number (index). To get locker #42 — you walk directly to it. No searching needed.
+
+*Giống như dãy tủ có số thứ tự ở trường học. Muốn tủ số 42 → đi thẳng đến, không cần tìm.*
+
+### Visual / Sơ Đồ
+
+```
+Memory layout (contiguous):
+Index:  [ 0 ][ 1 ][ 2 ][ 3 ][ 4 ]
+Value:  [ 10][ 20][ 30][ 40][ 50]
+Addr:   1000 1004 1008 1012 1016   (each int = 4 bytes)
+
+Access arr[3] → jump to 1000 + (3 × 4) = 1012 → O(1) ✓
+
+Insert at index 2:
+Before: [10, 20, 30, 40, 50]
+Shift:  [10, 20, XX, 30, 40, 50]  ← shift right = O(n)
+After:  [10, 20, 99, 30, 40, 50]
+```
+
+### Complexity
+
+| Operation | Time | Why |
+|-----------|------|-----|
+| Access `arr[i]` | O(1) | Direct address calculation |
+| Search (unsorted) | O(n) | Must check every element |
+| Search (sorted, binary) | O(log n) | Eliminate half each step |
+| Insert/delete at end | Amortized O(1) | Dynamic arrays double capacity |
+| Insert/delete at middle | O(n) | Must shift elements |
+| Space | O(n) | n elements stored |
+
+### Real Use Cases / Dùng Ở Đâu
+- **React Virtual DOM diffing**: Arrays of children nodes, index-based comparison
+- **Database buffer pool**: Fixed-size array of page frames
+- **Sliding window problems**: LeetCode classics — Two Pointers, Subarray Sum
+
+### Interview Tip / Tip Phỏng Vấn
+> "Khi nào nên tránh Array?" — Khi cần insert/delete ở giữa nhiều lần (O(n) mỗi lần). Nếu dataset dynamic và cần thêm/xóa ở đầu → dùng Linked List hoặc Deque.
+
+---
+
+## 2. Linked List / Danh Sách Liên Kết
+
+### Analogy / Liên Tưởng
+Think of a treasure hunt where each clue tells you where the next clue is. You can't skip to clue #5 without following the chain from the start.
+
+*Giống như trò tìm kho báu — mỗi mảnh giấy chỉ chỗ mảnh tiếp theo. Không thể nhảy thẳng đến mảnh số 5.*
+
+### Visual / Sơ Đồ
+
+```
+Singly Linked List:
+[Head]
+  ↓
+[10 | next]──→[20 | next]──→[30 | next]──→[40 | null]
+
+Doubly Linked List:
+[Head]                                      [Tail]
+  ↓                                           ↓
+null←─[10|prev|next]⟷[20|prev|next]⟷[30|prev|next]─→null
+
+Insert at Head (O(1)):
+new_node.next = head
+head = new_node
+
+Insert at Middle after node X (O(1) if you have pointer):
+new_node.next = X.next
+X.next = new_node
+```
+
+### Complexity
+
+| Operation | Singly | Doubly | Why |
+|-----------|--------|--------|-----|
+| Access by index | O(n) | O(n) | Must traverse from head |
+| Insert at head | O(1) | O(1) | Just change head pointer |
+| Insert at tail | O(n) / O(1)* | O(1)* | *if tail pointer maintained |
+| Delete known node | O(n)** | O(1) | **need predecessor; doubly has prev |
+| Search | O(n) | O(n) | Sequential scan |
+| Space | O(n) | O(n) | + pointer overhead vs array |
+
+### Real Use Cases / Dùng Ở Đâu
+- **LRU Cache** (most common interview Q): Doubly linked list + HashMap for O(1) eviction
+- **Browser history**: Next/back navigation (doubly linked)
+- **Undo queue in editors**: LinkedList of states
+
+### Interview Tip / Tip Phỏng Vấn
+> LRU Cache là câu hỏi kinh điển kết hợp HashMap + Doubly Linked List. HashMap để O(1) lookup, LinkedList để O(1) move-to-front khi accessed.
+
+```
+LRU Cache visualization:
+HashMap: {A→node_A, B→node_B, C→node_C}
+List: [Head]←→[C]←→[B]←→[A]←→[Tail]
+                ↑ most recent
+
+Access B: move B to head
+List: [Head]←→[B]←→[C]←→[A]←→[Tail]
+```
+
+---
+
+## 3. Stack / Ngăn Xếp
+
+### Analogy / Liên Tưởng
+A stack of plates. You can only add/remove from the top. **LIFO** — Last In, First Out.
+
+*Chồng đĩa. Chỉ có thể lấy hoặc để từ trên xuống. Cái nào để vào sau, lấy ra trước.*
+
+### Visual / Sơ Đồ
+
+```
+Push(1), Push(2), Push(3):
+        ┌───┐
+   Top→ │ 3 │  ← Push here, Pop here
+        ├───┤
+        │ 2 │
+        ├───┤
+        │ 1 │
+        └───┘
+
+Pop() → returns 3
+        ┌───┐
+   Top→ │ 2 │
+        ├───┤
+        │ 1 │
+        └───┘
+
+Call Stack Example:
+main() calls foo() calls bar():
+┌─────────┐
+│  bar()  │  ← currently executing
+├─────────┤
+│  foo()  │
+├─────────┤
+│ main()  │
+└─────────┘
+bar() returns → stack pops → foo() resumes
+```
+
+### Complexity
+
+| Operation | Time | Space |
+|-----------|------|-------|
+| Push | O(1) | O(1) |
+| Pop | O(1) | O(1) |
+| Peek (top) | O(1) | O(1) |
+| isEmpty | O(1) | O(1) |
+| Space total | O(n) for n elements |
+
+### Real Use Cases / Dùng Ở Đâu
+- **JavaScript Call Stack**: Every function call pushed, return pops
+- **Undo/Redo** in editors: past actions on stack, redo on another stack
+- **Browser back button**: Pages on a stack
+- **Expression evaluation**: `(3 + 4) * 2` — operators and operands on stack
+- **DFS traversal**: Explicit stack instead of recursion
+
+### Interview Tip / Tip Phỏng Vấn
+> Classic interview problems: Valid Parentheses, Min Stack, Decode String, Daily Temperatures.
+> Pattern: whenever you need to "remember the previous state" → think Stack.
+
+---
+
+## 4. Queue / Hàng Đợi
+
+### Analogy / Liên Tưởng
+A line at a coffee shop. First person in line gets served first. **FIFO** — First In, First Out.
+
+*Hàng chờ ở quán cà phê. Người đến trước phục vụ trước.*
+
+### Visual / Sơ Đồ
+
+```
+Enqueue(1), Enqueue(2), Enqueue(3):
+
+Front                         Back
+  ↓                             ↓
+[ 1 ] → [ 2 ] → [ 3 ]  ← Enqueue here
+  ↑
+Dequeue here → returns 1
+
+After Dequeue():
+Front             Back
+  ↓                 ↓
+[ 2 ] → [ 3 ]
+
+Circular Queue (fixed size, no wasted space):
+  0   1   2   3   4
+[ B ] [  ] [  ] [A] [  ]
+         ↑            ↑
+        rear          front
+Wrap around when pointer hits end
+```
+
+### Special Queue Types
+
+| Type | Description | Use case |
+|------|-------------|----------|
+| Regular Queue | FIFO | BFS, task scheduling |
+| Deque | Insert/remove from both ends | Sliding window max (LeetCode 239) |
+| Priority Queue | Dequeue highest priority first | Dijkstra, job scheduling, Top-K |
+| Circular Queue | Fixed size, no realloc | Ring buffer, OS kernel |
+
+### Real Use Cases / Dùng Ở Đâu
+- **BFS** (Breadth-First Search): Queue of nodes to visit
+- **Message queues** (Kafka, RabbitMQ): Producer enqueues, consumer dequeues
+- **Rate limiter** (sliding window): Queue of timestamps
+- **OS task scheduler**: CPU job queue
+
+### Interview Tip / Tip Phỏng Vấn
+> Priority Queue / Heap is used for: Top-K elements, Merge K sorted lists, Dijkstra's shortest path.
+> In Python: `heapq` is a min-heap. To get max-heap: push negatives.
+
+---
+
+## 5. Hash Table / Bảng Băm
+
+### Analogy / Liên Tưởng
+A massive library where instead of searching every shelf, you get a formula: `shelf = f(book_title)`. The formula maps any title to a specific shelf number. Find any book in O(1) regardless of library size.
+
+*Thư viện khổng lồ với công thức: `giá sách = f(tên sách)`. Tìm sách trong O(1) bất kể thư viện bao nhiêu cuốn.*
+
+### Visual / Sơ Đồ
+
+```
+Hash Table with chaining (separate chaining):
+
+keys → hash function → index → linked list
+
+"alice"  → hash() % 5 → 2 → [alice:90] → null
+"bob"    → hash() % 5 → 4 → [bob:85] → null
+"carol"  → hash() % 5 → 2 → [carol:92] → null  ← collision! same bucket as alice
+"dave"   → hash() % 5 → 1 → [dave:78] → null
+
+Bucket:  0: null
+         1: [dave:78]
+         2: [alice:90] → [carol:92]   ← chain
+         3: null
+         4: [bob:85]
+
+Load Factor = n/m = 4/5 = 0.8
+When load factor > 0.75 → rehash (double size)
+
+Open Addressing (linear probing):
+"alice" → slot 2 → empty → store here
+"carol" → slot 2 → taken → try slot 3 → empty → store here
+```
+
+### Complexity
+
+| Operation | Average | Worst Case | Why worst |
+|-----------|---------|------------|-----------|
+| Get(key) | O(1) | O(n) | All keys hash to same bucket |
+| Put(key, val) | O(1) | O(n) | Same — hash collision |
+| Delete(key) | O(1) | O(n) | Same |
+| Space | O(n) | O(n) | |
+
+**Collision resolution:**
+- **Separate chaining**: Each slot is a linked list — Python dict, Java HashMap
+- **Open addressing**: Find next open slot — Python `set`, Go `map`
+
+### Real Use Cases / Dùng Ở Đâu
+- **Database indexes** (hash index): Exact match queries — O(1) lookup
+- **Caching** (Redis, Memcached): Key → value store
+- **Deduplication**: Seen set for unique visitors, unique URLs
+- **Two Sum** (LeetCode): Store complement in hash map — O(n) solution
+
+### Interview Tip / Tip Phỏng Vấn
+> When you see "O(1) lookup" requirement → HashMap. Pattern: store `{value: index}` as you scan.
+> Common trick: use HashMap as frequency counter: `{char: count}` for anagram problems.
+
+---
+
+## 6. Binary Search Tree (BST) / Cây Tìm Kiếm Nhị Phân
+
+### Analogy / Liên Tưởng
+A sorted phone book where each page tells you "if the name you want comes before mine, go left; if after, go right." Each step eliminates half the remaining search space.
+
+*Danh bạ điện thoại được tổ chức: "tên cần tìm nhỏ hơn → rẽ trái, lớn hơn → rẽ phải." Mỗi bước loại bỏ nửa không gian tìm kiếm.*
+
+### Visual / Sơ Đồ
+
+```
+BST with values [5, 3, 7, 1, 4, 6, 8]:
+
+           5           ← root
+          / \
+         3   7
+        / \ / \
+       1  4 6  8
+
+BST Property: left < node < right (at every node)
+
+Search(4):
+  Start at 5 → 4 < 5, go left
+  At 3 → 4 > 3, go right
+  At 4 → found! O(log n) = 2 steps for 7 nodes
+
+In-order traversal (left→root→right):
+1, 3, 4, 5, 6, 7, 8  ← always sorted!
+
+Unbalanced BST (worst case — like a linked list):
+1
+ \
+  2
+   \
+    3      ← O(n) search, not O(log n)
+     \
+      4
+```
+
+### Complexity (Balanced BST)
+
+| Operation | Balanced | Unbalanced |
+|-----------|----------|------------|
+| Search | O(log n) | O(n) |
+| Insert | O(log n) | O(n) |
+| Delete | O(log n) | O(n) |
+| Min/Max | O(log n) | O(n) |
+| In-order traversal | O(n) | O(n) |
+
+**Self-balancing variants:** AVL Tree, Red-Black Tree (Java TreeMap), B+Tree (DB indexes)
+
+### Real Use Cases / Dùng Ở Đâu
+- **Database B+Tree index**: Range queries `WHERE age BETWEEN 20 AND 30`
+- **Linux kernel**: CFS scheduler uses Red-Black Tree for process priority
+- **TreeMap/TreeSet** in Java: Sorted map with O(log n) operations
+
+### Interview Tip / Tip Phỏng Vấn
+> BST interview patterns:
+> - Validate BST: In-order traversal should be sorted
+> - LCA (Lowest Common Ancestor): Compare values to find split point
+> - Kth smallest: In-order traversal with counter
+
+---
+
+## 7. Heap / Đống (Priority Queue)
+
+### Analogy / Liên Tưởng
+A hospital emergency room. Patients are prioritized by severity — most critical always seen first, regardless of when they arrived.
+
+*Phòng cấp cứu: bệnh nhân nặng nhất luôn được gặp bác sĩ trước, không kể ai đến trước.*
+
+### Visual / Sơ Đồ
+
+```
+Max-Heap (parent ≥ children):
+
+Tree view:          Array view:
+      90               [90, 80, 70, 40, 30, 60, 50]
+     /  \               0   1   2   3   4   5   6
+    80   70
+   / \ / \
+  40 30 60 50
+
+Heap Property: parent ≥ both children (max-heap)
+              parent ≤ both children (min-heap)
+
+Index relationships:
+  Parent of i:       (i-1) / 2
+  Left child of i:    2*i + 1
+  Right child of i:   2*i + 2
+
+Extract Max (O(log n)):
+1. Swap root (90) with last element (50)
+2. Remove last (90 is extracted)
+3. Sift down 50:
+      50              80
+     /  \            /  \
+    80   70  →      50   70   → valid heap
+   / \ / \         / \ / \
+  40 30 60        40 30 60
+
+Insert 85 (O(log n)):
+1. Add to end: [..., 85]
+2. Sift up: 85 > 70 → swap, 85 > 90? No → stop
+```
+
+### Complexity
+
+| Operation | Time | Why |
+|-----------|------|-----|
+| Insert | O(log n) | Sift up — at most height steps |
+| Extract min/max | O(log n) | Sift down after removing root |
+| Peek min/max | O(1) | Root is always min/max |
+| Build heap | O(n) | Heapify — not O(n log n)! |
+| Heap sort | O(n log n) | Build + n extractions |
+
+### Real Use Cases / Dùng Ở Đâu
+- **Dijkstra's shortest path**: Min-heap of (distance, node)
+- **Top-K elements**: Max-heap of size K (LeetCode 215, 347)
+- **Merge K sorted lists**: Min-heap with one element from each list
+- **Task scheduler** (OS): Priority queue of processes
+- **Median of data stream**: Two heaps (max-heap for lower half, min-heap for upper)
+
+### Interview Tip / Tip Phỏng Vấn
+> "Top K" → Heap of size K.
+> "K closest points" (LeetCode 973) → max-heap of size K, keep K smallest.
+> "Median stream" (LeetCode 295) → two heaps trick.
+
+---
+
+## 8. Graph / Đồ Thị
+
+### Analogy / Liên Tưởng
+A city map. Nodes = intersections, edges = roads. Directed graph = one-way streets. Weighted graph = roads with distances.
+
+*Bản đồ thành phố. Node = giao lộ, edge = con đường. Đồ thị có hướng = đường một chiều.*
+
+### Visual / Sơ Đồ
+
+```
+Types of Graphs:
+
+Undirected:     Directed:       Weighted:
+A - B           A → B           A --5-- B
+|   |           ↑   ↓           |       |
+C - D           C ← D           3       2
+                                 \     /
+                                  C--1--D
+
+Representation options:
+
+1. Adjacency List (space efficient for sparse graphs):
+A: [B, C]
+B: [A, D]
+C: [A, D]
+D: [B, C]
+Space: O(V + E)
+
+2. Adjacency Matrix (fast edge lookup):
+   A  B  C  D
+A [0, 1, 1, 0]
+B [1, 0, 0, 1]
+C [1, 0, 0, 1]
+D [0, 1, 1, 0]
+Space: O(V²) — bad for sparse graphs!
+
+Graph traversal:
+BFS (level by level):          DFS (go deep first):
+     1                              1
+   ↙   ↘                          ↙ ↘
+  2     3       BFS: 1,2,3,4,5   2   3
+ ↙ ↘                             ↙ ↘   ↘
+4   5           DFS: 1,2,4,5,3  4   5
+```
+
+### Algorithms & Complexity
+
+| Algorithm | Time | Use case |
+|-----------|------|----------|
+| BFS | O(V+E) | Shortest path (unweighted), level traversal |
+| DFS | O(V+E) | Detect cycles, topological sort, connected components |
+| Dijkstra | O((V+E) log V) | Shortest path (non-negative weights) |
+| Bellman-Ford | O(VE) | Shortest path with negative weights |
+| Topological Sort | O(V+E) | Dependency ordering (build systems, courses) |
+| Union-Find | O(α(n)) ≈ O(1) | Connected components, cycle detection |
+
+### Real Use Cases / Dùng Ở Đâu
+- **Google Maps / Waze**: Dijkstra/A* for routing
+- **Social networks**: BFS for friend-of-friend (LinkedIn "2nd connections")
+- **Build systems** (npm, gradle): Topological sort for dependency order
+- **Fraud detection**: Graph clustering to find suspicious patterns
+
+### Interview Tip / Tip Phỏng Vấn
+> Graph problem signals: "network", "dependencies", "connections", "path between"
+> Default to adjacency list. Use BFS for shortest path (unweighted), Dijkstra for weighted.
+> Union-Find for "number of connected components" problems.
+
+---
+
+## 9. Trie / Cây Tiền Tố
+
+### Analogy / Liên Tưởng
+An autocomplete system. Type "ca" → shows "cat", "car", "card", "catalog". All words sharing a prefix share a path in the trie.
+
+*Hệ thống autocomplete. Gõ "ca" → hiện "cat", "car", "card". Các từ cùng prefix dùng chung đường đi.*
+
+### Visual / Sơ Đồ
+
+```
+Trie storing: ["cat", "car", "card", "care", "bat"]
+
+         root
+        /    \
+       c      b
+       |      |
+       a      a
+      / \     |
+     t   r    t*
+    (*) (*) \
+           d*  e*
+
+* = end of word marker
+
+Search "car": root→c→a→r → found (marked) ✓
+Search "ca":  root→c→a → exists but NOT end-of-word → not a word
+Search "cab": root→c→a→b? → no b child → not found
+
+Prefix search "car": root→c→a→r → all words below:
+- "car" (marked)
+- "card" (r→d→*)
+- "care" (r→e→*)
+```
+
+### Complexity
+
+| Operation | Time | Space |
+|-----------|------|-------|
+| Insert word | O(m) | O(m) | m = word length |
+| Search word | O(m) | O(1) |
+| Starts with prefix | O(m) | O(1) |
+| Space total | O(ALPHABET × n × m) | — |
+
+### Real Use Cases / Dùng Ở Đâu
+- **Search autocomplete** (Google Search suggestions)
+- **Spell checker**: Check if word exists + suggest corrections
+- **IP routing tables**: Longest prefix match
+- **Word games**: Valid word check in Boggle, Scrabble
+
+### Interview Tip / Tip Phỏng Vấn
+> Trie problems: Word Search II (LeetCode 212), Design Search Autocomplete, Add and Search Words.
+> Trie node in code: `{children: Map<char, TrieNode>, isEnd: boolean}`
+
+---
+
+## 10. Quick Reference: Choosing the Right Structure
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    DATA STRUCTURE DECISION TREE                  │
+│                                                                   │
+│  Need O(1) access by index?        YES → Array                   │
+│                 ↓ NO                                             │
+│  Need O(1) insert at head/tail?    YES → Linked List / Deque     │
+│                 ↓ NO                                             │
+│  Need O(1) lookup by key?          YES → Hash Table              │
+│                 ↓ NO                                             │
+│  Need sorted order + range query?  YES → BST / B+Tree            │
+│                 ↓ NO                                             │
+│  Need min/max quickly?             YES → Heap                    │
+│                 ↓ NO                                             │
+│  Need LIFO (undo, parsing)?        YES → Stack                   │
+│                 ↓ NO                                             │
+│  Need FIFO (BFS, tasks)?           YES → Queue                   │
+│                 ↓ NO                                             │
+│  Need prefix matching?             YES → Trie                    │
+│                 ↓ NO                                             │
+│  Need connection/path queries?     YES → Graph                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Complexity Cheatsheet / Bảng Tổng Kết
+
+| Structure | Access | Search | Insert | Delete | Space |
+|-----------|--------|--------|--------|--------|-------|
+| Array | O(1) | O(n) | O(n) | O(n) | O(n) |
+| Linked List | O(n) | O(n) | O(1)* | O(1)* | O(n) |
+| Stack | O(n) | O(n) | O(1) | O(1) | O(n) |
+| Queue | O(n) | O(n) | O(1) | O(1) | O(n) |
+| Hash Table | O(1) | O(1) | O(1) | O(1) | O(n) |
+| BST (balanced) | O(log n) | O(log n) | O(log n) | O(log n) | O(n) |
+| Heap | O(1) top | O(n) | O(log n) | O(log n) | O(n) |
+| Trie | O(m) | O(m) | O(m) | O(m) | O(n×m) |
+
+*with pointer to node
+
+---
+
+**See also**: [Algorithms Theory](./algorithms-theory.md) | [Complexity Analysis](./complexity-analysis.md) | [LeetCode by Category](../../leetcode/)
