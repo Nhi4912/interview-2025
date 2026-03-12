@@ -55,3 +55,17 @@ Vietnamese explanation: giải thích bằng tiếng Việt, tập trung vào đ
 - Create stubs or placeholder content ("Tactic 1...", "TODO: fill in")
 - Break bilingual format (every section needs both EN and VI)
 - Add files outside the docs/ directory structure
+
+## Knowledge Generation Workflow
+
+When adding new content, follow the 5-phase specs-driven process:
+
+1. **Discover** → `/discovery-interview` (for vague requests)
+2. **Spec** → `docs/specs/pending/{topic}.spec.md`
+3. **Design** → `/interview-system-designer` (Q&A structure)
+4. **Generate** → Write content following standard template
+5. **Review** → Run Phase 5 checklist
+
+Full process: [docs/specs/knowledge-generation-process.md](docs/specs/knowledge-generation-process.md)
+
+Skill rules: [.claude/skill-rules.md](.claude/skill-rules.md)
