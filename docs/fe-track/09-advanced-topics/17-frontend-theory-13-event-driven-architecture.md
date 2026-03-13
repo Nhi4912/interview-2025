@@ -1,6 +1,5 @@
 # Event-Driven Architecture in Frontend / Kiến Trúc Hướng Sự Kiện Trong Frontend
 
-
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

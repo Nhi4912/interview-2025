@@ -8,7 +8,6 @@ tags: [react, hooks, form-validation, async-validation, custom-hooks]
 
 # Problem 3: React Form Validation with Custom Hooks
 
-
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

@@ -1,6 +1,6 @@
 # ML Fundamentals — Nền tảng Machine Learning cho Developers
 
-> **Track**: Shared | **Difficulty**: 🟡 Mid → 🔴 Senior
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 
 ---

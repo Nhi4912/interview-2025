@@ -1,6 +1,5 @@
 # Development Tools - Interview Questions / Câu Hỏi Phỏng Vấn Công Cụ Phát Triển
 
-
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

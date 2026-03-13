@@ -1,6 +1,6 @@
 # Message Queues in Go / Hàng Đợi Tin Nhắn với Go
 
-> **Track**: BE | **Difficulty**: 🟡 Mid → 🔴 Senior
+> **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **Prerequisites**: [Distributed Systems](./03-distributed-systems.md) | [Resilience Patterns](./07-resilience-patterns.md)
 > **See also**: [Shared Message Queues Theory](../../shared/02-system-design/05-message-queues.md) | [Distributed Patterns](../04-be-system-design/04-distributed-patterns.md)
 
@@ -174,7 +174,7 @@ func (p *OrderProducer) PublishOrderCreated(ctx context.Context, orderID string,
 
 ## 2. Dead Letter Queue (DLQ) Pattern / Hàng Đợi Lỗi
 
-### Q: How do you implement a Dead Letter Queue in Go? 🟡 Mid → 🔴 Senior
+### Q: How do you implement a Dead Letter Queue in Go? 🟢 Junior → 🔴 Senior
 
 **A:** DLQ nhận message sau N lần retry thất bại — cho phép inspect và reprocess sau.
 

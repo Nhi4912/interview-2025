@@ -1,6 +1,6 @@
 # AI Production Challenges — Thách thức triển khai AI/LLM thực tế
 
-> **Track**: Shared | **Difficulty**: 🟡 Mid → 🔴 Senior
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > Tài liệu này tập trung vào các vấn đề production khi đưa AI/LLM vào hệ thống thật.
 
 ---

@@ -1,6 +1,6 @@
 # LLM and Transformers — Mô hình ngôn ngữ lớn và Transformer
 
-> **Track**: Shared | **Difficulty**: 🟡 Mid → 🔴 Senior
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 
 ---

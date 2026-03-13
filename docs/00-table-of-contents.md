@@ -1,6 +1,5 @@
 # Interview Preparation Knowledge Base — Mục Lục Tổng Hợp
 
-
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](00-table-of-contents.md)
 
@@ -319,4 +318,4 @@ See [be-track/05-company-guide.md](./be-track/05-company-guide.md) for BE-specif
 
 **Last Updated**: March 2026
 **Format**: Bilingual (English + Vietnamese) | Gold Standard (🎯📖🤔🔧🕐)
-**Difficulty Range**: 🟢 Junior → 🟡 Mid → 🔴 Senior
+**Difficulty Range**: 🟢 Junior → 🟢 Junior → 🔴 Senior

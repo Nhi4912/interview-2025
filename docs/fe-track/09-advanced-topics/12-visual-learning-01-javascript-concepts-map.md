@@ -1,6 +1,5 @@
 # JavaScript Concepts Map / Bản Đồ Khái Niệm JavaScript
 
-
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

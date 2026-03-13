@@ -1,6 +1,6 @@
 # Core Web Vitals / Chỉ Số Web Cốt Lõi
 
-> **Track**: FE | **Difficulty**: 🟡 Mid → 🔴 Senior
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [React Performance](./02-react-performance.md) | [Bundle Optimization](./03-bundle-optimization.md) | [Web Performance Comprehensive](./04-web-performance-comprehensive.md)
 
 ---
@@ -107,7 +107,7 @@ export function Hero() {
 | Large DOM (>1500 nodes) | Virtualize lists, remove hidden nodes |
 | Synchronous layout/style recalcs | Avoid reading layout properties after writes |
 
-### Q: How to debug and fix INP? 🟡 Mid → 🔴 Senior
+### Q: How to debug and fix INP? 🟢 Junior → 🔴 Senior
 
 **Debug in Chrome DevTools:**
 1. Record a Performance trace
@@ -167,7 +167,7 @@ self.onmessage = (e) => {
 - Dynamic content injected above existing content
 - Web fonts causing FOIT/FOUT (Flash of Invisible/Unstyled Text)
 
-### Q: How to fix CLS? 🟢 Junior → 🟡 Mid
+### Q: How to fix CLS? 🟢 Junior → 🔴 Senior
 
 **1. Always set image dimensions:**
 ```html
@@ -300,7 +300,7 @@ Google switched because FID was too easy to game (fast first click doesn't mean 
 
 ---
 
-### Q: Your CLS score is 0.3 (poor). How do you identify and fix it? 🟡 Mid → 🔴 Senior
+### Q: Your CLS score is 0.3 (poor). How do you identify and fix it? 🟢 Junior → 🔴 Senior
 
 **A:**
 1. **DevTools → Performance tab**: Record a load, look for "Layout Shift" events
@@ -338,3 +338,34 @@ new PerformanceObserver((list) => {
 ---
 
 **See also**: [React Performance](./02-react-performance.md) | [Bundle Optimization](./03-bundle-optimization.md) | [Rendering Optimization Theory](./05-rendering-optimization-theory.md)
+
+---
+
+## 7. INP — Interaction to Next Paint (2024) / Chỉ Số INP Thay Thế FID
+
+### Q: What is INP and why did it replace FID? / INP là gì và tại sao thay FID? 🟡 Mid
+
+**A:** INP (Interaction to Next Paint) measures the worst-case latency of all user interactions during a page visit. FID only measured the first interaction's input delay, missing slow clicks/taps that happened later. INP is a better measure of overall responsiveness.
+
+Vietnamese: FID chỉ đo input delay của interaction đầu tiên (khi JS đang parse). Sau đó FID không đo gì nữa — trang có thể lag nặng khi user click nhiều. INP đo tất cả interactions (click, tap, key) trong suốt session, lấy giá trị xấu nhất (p98). Ngưỡng: INP < 200ms = Good, < 500ms = Needs Improvement, > 500ms = Poor. Thay thế FID trong Core Web Vitals từ tháng 3/2024.
+
+**Optimization cho INP:**
+```
+Root causes & fixes:
+1. Long JS tasks (>50ms) blocking main thread
+   → Break with scheduler.yield() or setTimeout(0)
+   → Move to Web Worker
+   → Code splitting (load less JS)
+
+2. Expensive render after interaction  
+   → useTransition() to defer non-urgent updates
+   → Debounce/throttle event handlers
+   → Virtualize long lists (react-window)
+
+3. Layout thrashing in event handler
+   → Batch DOM reads before writes
+   → Use requestAnimationFrame for visual updates
+```
+
+Vietnamese: INP cao nhất thường do: (1) Heavy JS on main thread — profiler sẽ thấy "Long Tasks" màu đỏ trong Performance tab. (2) Expensive React re-renders sau click — dùng `useTransition` để defer update, tránh block visual feedback. (3) Layout thrashing trong handler — đọc `offsetHeight` rồi set style, browser phải recalculate layout synchronously.
+

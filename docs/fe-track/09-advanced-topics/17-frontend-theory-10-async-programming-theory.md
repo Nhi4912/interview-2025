@@ -1,6 +1,5 @@
 # Frontend Theory 10: Async Programming Theory
 
-
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

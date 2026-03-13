@@ -1,6 +1,6 @@
 # React 19 Features / Tinh Nang React 19
 
-> **Track**: FE | **Difficulty**: 🟡 Mid → 🔴 Senior
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [React Fundamentals](./01-react-fundamentals.md) | [Hooks Deep Dive](./03-hooks-deep-dive.md) | [Performance](./09-performance-optimization.md)
 
 [← Previous](./01-react-fundamentals.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next →](./03-hooks-deep-dive.md)

@@ -1,6 +1,5 @@
 # Frontend Advanced Topics Index / Mục Lục Chủ Đề Nâng Cao Frontend
 
-
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

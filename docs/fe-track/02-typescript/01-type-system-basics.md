@@ -1,6 +1,5 @@
 # TypeScript Type System Basics - Hệ Thống Kiểu TypeScript Cơ Bản
 
-
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 
@@ -14,7 +13,7 @@ TypeScript provides static typing on top of JavaScript. This chapter focuses on 
 
 Trong chương này bạn cần hiểu cách TypeScript mô hình hóa dữ liệu, cách compiler thu hẹp kiểu qua control-flow, và cách cấu hình strict mode để bắt lỗi sớm.
 
-**Difficulty:** 🟢 Junior → 🟡 Mid
+**Difficulty:** 🟢 Junior → 🔴 Senior
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐

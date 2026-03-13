@@ -17,7 +17,7 @@ Hay được hỏi ở Axon, Grab, các công ty làm financial/audit systems.
 
 ## Part 1: Event Sourcing
 
-### Q: What is Event Sourcing and how does it differ from traditional storage? 🟡 Mid → 🔴 Senior
+### Q: What is Event Sourcing and how does it differ from traditional storage? 🟢 Junior → 🔴 Senior
 
 **A:**
 
@@ -251,6 +251,38 @@ All built from the SAME event stream!
 
 ---
 
+## 7. Snapshot & Projection Patterns / Snapshot và Projection
+
+### Q: How do snapshots solve the event replay performance problem? / Snapshot giải quyết vấn đề replay performance thế nào? 🔴 Senior
+
+**A:** After N events, serialize the current aggregate state as a snapshot. On next load, read the snapshot + only events that occurred after it. This reduces replay cost from O(all events) to O(events since last snapshot).
+
+```
+Without snapshot: replay 1,000,000 events = slow
+With snapshot at event #999,000:
+  Load snapshot (1 read) + replay events 999,001–1,000,000 (1,000 events) = fast
+
+Snapshot strategy:
+  - Every N events (e.g., every 100)
+  - Time-based (every hour)
+  - On explicit command (admin trigger)
+
+Storage: same event store with special "Snapshot" event type,
+         or separate snapshot table for quick lookup
+```
+
+Vietnamese: Snapshot là optimization quan trọng cho Event Sourcing trong production. Không dùng snapshot → aggregate với lịch sử dài (tài khoản ngân hàng 10 năm) sẽ replay rất chậm. Snapshot không phải bắt buộc — bắt đầu không có snapshot, thêm vào khi performance cần. Trade-off: snapshot tạo complexity (phải versioned cùng schema), nhưng giải quyết được bottleneck thực sự.
+
+---
+
+### Q: How do you rebuild a CQRS read model after a bug in the projector? / Rebuild read model CQRS sau bug trong projector thế nào? 🔴 Senior
+
+**A:** Since all data is preserved as immutable events in the event store, you can fix the projector bug, delete the corrupted read model, and replay all events from the beginning to rebuild a correct read model. This is one of ES's strongest advantages over CRUD.
+
+Vietnamese: Đây là một trong những điểm mạnh nhất của Event Sourcing: **time travel**. Nếu projection logic có bug → read model bị sai → không panic: (1) Fix bug trong projector code. (2) Drop bảng read model bị sai. (3) Replay tất cả events qua projector mới. Read model mới được tạo từ đầu, đúng hoàn toàn. Trong CRUD system, lỗi logic nghĩa là data đã bị ghi sai vào DB và không thể recover. ES events = source of truth không bao giờ bị modified → projection errors là recoverable.
+
+---
+
 ## Interview Q&A Summary / Tổng Kết
 
 | Question | Level | Key Answer |
@@ -261,6 +293,8 @@ All built from the SAME event stream!
 | Why combine ES+CQRS? | 🔴 | Events → publish to projectors → optimized read models |
 | Event schema evolution? | 🔴 | Never delete old event types; use upcasting to handle old versions |
 | When to avoid? | 🟡 | Simple CRUD, small teams, strong consistency requirement |
+| Snapshot pattern? | 🔴 | Cache aggregate state every N events to avoid full replay |
+| Rebuild read model after bug? | 🔴 | Fix projector → drop read model → replay all events from event store |
 
 ---
 

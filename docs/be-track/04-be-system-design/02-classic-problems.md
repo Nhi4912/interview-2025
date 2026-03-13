@@ -1,6 +1,6 @@
 # Classic System Design Problems / Các Bài Toán Thiết Kế Hệ Thống Kinh Điển
 
-> **Track**: BE | **Difficulty**: 🟡 Mid → 🔴 Senior
+> **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **Prerequisites**: [Design Framework](./01-design-framework.md) | [Distributed Systems](../02-backend-knowledge/03-distributed-systems.md)
 > **See also**: [Advanced Problems](./03-advanced-problems.md) | [Distributed Patterns](./04-distributed-patterns.md)
 

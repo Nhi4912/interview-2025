@@ -6,7 +6,6 @@ description: Real interview-style coding challenges for frontend development
 
 # Frontend Coding Problems
 
-
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

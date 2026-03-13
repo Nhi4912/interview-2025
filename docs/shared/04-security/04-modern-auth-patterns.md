@@ -1,6 +1,6 @@
 # Modern Authentication & Authorization Patterns / Mẫu Xác Thực và Phân Quyền Hiện Đại
 
-> **Track**: Shared | **Difficulty**: 🟡 Mid → 🔴 Senior
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Security Fundamentals](./01-security-fundamentals.md) | [Cryptography](./02-cryptography-and-protocols.md) | [Web Security](./03-web-security-owasp.md)
 
 ---

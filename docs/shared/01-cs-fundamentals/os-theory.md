@@ -1,6 +1,6 @@
 # Operating Systems Theory / Lý Thuyết Hệ Điều Hành
 
-> **Track**: Shared | **Difficulty**: 🟡 Mid → 🔴 Senior
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Concurrency & Parallelism](./07-concurrency-and-parallelism.md) | [Go OS](../../be-track/02-backend-knowledge/05-os-go.md)
 
 ## Understanding System Software Fundamentals / Hiểu về Phần Mềm Hệ Thống
@@ -988,4 +988,4 @@ A: Mutex is binary lock for mutual exclusion, owned by thread that locks it. Sem
 
 ---
 
-[← Back to Concurrency Theory](./os-theory.md) | [Next: Network Theory →](./networking-theory.md)
+[← Back to Concurrency Theory](./07-concurrency-and-parallelism.md) | [Next: Network Theory →](./networking-theory.md)

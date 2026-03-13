@@ -1,6 +1,5 @@
 # THEORY KNOWLEDGE INDEX / Chỉ Mục Lý Thuyết Dùng Chung
 
-
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../00-table-of-contents.md)
 

@@ -1,6 +1,5 @@
 # TypeScript Comprehensive Guide / Hướng Dẫn TypeScript Toàn Diện
 
-
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

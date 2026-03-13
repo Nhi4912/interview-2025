@@ -1,6 +1,5 @@
 # Go Backend Interview Study Roadmap / Lộ Trình Học
 
-
 > **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../00-table-of-contents.md)
 

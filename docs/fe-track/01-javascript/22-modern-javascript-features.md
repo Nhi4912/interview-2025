@@ -1,6 +1,5 @@
 # Modern JavaScript Features (ES2020-2024) - Theory / Tính Năng JavaScript Hiện Đại - Lý Thuyết
 
-
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

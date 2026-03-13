@@ -1,6 +1,6 @@
 # Cryptography and Protocols / Mật Mã Học và Giao Thức Bảo Mật
 
-> **Track**: Shared | **Difficulty**: 🟡 Mid → 🔴 Senior
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Security Fundamentals](./01-security-fundamentals.md) | [Web Security & OWASP](./03-web-security-owasp.md) | [Modern Auth](./04-modern-auth-patterns.md)
 
 ## Overview / Tổng Quan

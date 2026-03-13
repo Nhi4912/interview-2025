@@ -6,7 +6,6 @@ description: Comprehensive algorithm practice with 200+ problems organized by ca
 
 # Algorithm Practice - LeetCode Problems
 
-
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../00-table-of-contents.md)
 

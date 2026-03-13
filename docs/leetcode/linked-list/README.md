@@ -9,7 +9,6 @@ tags: [Linked List, LeetCode, Interview Preparation]
 
 # Linked List Problems
 
-
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

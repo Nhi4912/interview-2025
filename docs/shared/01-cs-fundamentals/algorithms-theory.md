@@ -461,3 +461,81 @@ def permutations(nums):
 ---
 
 **See also**: [Data Structures](./data-structures-theory.md) | [Complexity Analysis](./complexity-analysis.md) | [LeetCode](../../leetcode/)
+
+---
+
+## Interview Q&A / Câu Hỏi Phỏng Vấn
+
+### Q: How do you choose between BFS and DFS for graph problems? / Khi nào dùng BFS vs DFS? 🟢 Junior
+
+**A:** BFS (Breadth-First Search) explores layer by layer using a queue — use for shortest path in unweighted graphs, level-order traversal, finding all nodes at distance K. DFS (Depth-First Search) explores deep first using a stack (or recursion) — use for detecting cycles, topological sort, finding connected components, path existence.
+
+Vietnamese: Rule of thumb: BFS khi cần "shortest path" hoặc "nearest" (vì khám phá theo layer). DFS khi cần "all paths", "cycle detection", hoặc "topological order". Memory: BFS lưu toàn bộ frontier (có thể lớn), DFS chỉ lưu current path (O(depth)). Trong interview khi thấy "find shortest path" → ngay lập tức nghĩ BFS. Khi thấy "list all solutions" → nghĩ DFS/backtracking.
+
+---
+
+### Q: When should you use dynamic programming instead of recursion? / Khi nào dùng DP thay vì recursion? 🟡 Mid
+
+**A:** Use DP when the problem has: (1) **overlapping subproblems** — same subproblem solved multiple times in plain recursion, and (2) **optimal substructure** — optimal solution built from optimal sub-solutions. DP avoids recomputation via memoization (top-down) or tabulation (bottom-up).
+
+Example recognition: Fibonacci with plain recursion = O(2^n), with memoization = O(n). Coin change, longest common subsequence, knapsack are classic DP patterns.
+
+Vietnamese: Dấu hiệu nhận biết DP problem: "minimum/maximum", "count ways", "is possible". Khi thấy recursive tree có nhiều nhánh trùng nhau → memoize. Top-down (memoization): dễ viết, giữ recursive structure. Bottom-up (tabulation): nhanh hơn (no call stack overhead), dễ optimize space. Phỏng vấn: bắt đầu với brute force recursion → nhận ra overlap → thêm memo → tối ưu nếu cần.
+
+---
+
+### Q: What is the difference between Dijkstra and Bellman-Ford? / Dijkstra vs Bellman-Ford khác nhau như thế nào? 🟡 Mid
+
+**A:** Dijkstra finds shortest paths from source, works with non-negative weights, O((V+E) log V) with a min-heap. Bellman-Ford handles negative weights and detects negative cycles, but is O(V×E) — much slower.
+
+```
+Dijkstra (greedy, min-heap):
+- Pick unvisited node with smallest distance
+- Update neighbors
+- Does NOT work with negative edges
+
+Bellman-Ford (relaxation):
+- Relax ALL edges V-1 times
+- Then check for negative cycles (Vth iteration still improves = negative cycle)
+- Works with negative edges
+```
+
+Vietnamese: Dijkstra thường được hỏi trong interview (Google Maps, routing). Key insight: greedy works vì một khi node được visited với min distance, không có path nào ngắn hơn (chỉ đúng với non-negative weights). Bellman-Ford dùng khi có negative weights (currency arbitrage). Thực tế production: A* (Dijkstra + heuristic) cho pathfinding games.
+
+---
+
+### Q: What is a hash collision and how is it resolved? / Hash collision là gì và xử lý thế nào? 🟡 Mid
+
+**A:** A collision occurs when two different keys hash to the same bucket. Two main resolution strategies: **Chaining** — each bucket stores a linked list of entries, O(n) worst case if many collisions. **Open addressing** — probe for next empty slot (linear probing, quadratic probing, double hashing), more cache-friendly.
+
+Vietnamese: Java HashMap dùng chaining, chuyển sang TreeMap (O(log n)) khi chain dài hơn 8. Load factor quan trọng: nếu > 0.75 thì rehash (thường double size). Python dict dùng open addressing với pseudo-random probing. Interview tip: biết tại sao load factor 0.75 là trade-off tốt (space vs collision rate). Good hash function: uniform distribution, fast to compute, avalanche effect.
+
+---
+
+### Q: When would you use a trie instead of a hash map? / Khi nào dùng trie thay vì hash map? 🔴 Senior
+
+**A:** Use a Trie when you need: (1) prefix matching or autocomplete, (2) lexicographic sorting of strings, (3) longest common prefix. Hash map gives O(1) exact lookup but can't do prefix search. Trie gives O(m) per operation (m=key length) and supports all prefix operations naturally.
+
+```
+Trie vs Hash Map for autocomplete:
+Query: "app" → find all words starting with "app"
+Hash map: O(n) scan all keys
+Trie: O(m + results) — traverse to "app" node, then DFS subtree
+
+Memory: Trie shares prefixes, efficient for large string sets
+        Hash map stores full key per entry
+```
+
+Vietnamese: Trie dùng trong autocomplete (search engines, IDE completions), IP routing tables (longest prefix match), spell checkers. Trade-off: Trie dùng nhiều memory hơn hash map nếu string set nhỏ hoặc ít share prefix. Compressed trie (Patricia tree) giải quyết vấn đề memory. Trong interview khi thấy "prefix", "autocomplete", "words starting with" → nghĩ trie ngay.
+
+---
+
+## Interview Q&A Summary / Tổng Kết
+
+| Question | Level | Key Point |
+|----------|-------|-----------|
+| BFS vs DFS | 🟢 | BFS = shortest path/nearest; DFS = all paths/cycles |
+| When to use DP | 🟡 | Overlapping subproblems + optimal substructure |
+| Dijkstra vs Bellman-Ford | 🟡 | Dijkstra = non-negative O((V+E)logV); BF = negative edges O(VE) |
+| Hash collision resolution | 🟡 | Chaining vs open addressing; load factor triggers rehash |
+| Trie vs hash map | 🔴 | Trie = prefix search O(m); hash map = exact lookup O(1) |

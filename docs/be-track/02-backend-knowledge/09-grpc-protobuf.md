@@ -1,6 +1,6 @@
 # gRPC & Protocol Buffers / gRPC và Protocol Buffers
 
-> **Track**: BE | **Difficulty**: 🟡 Mid → 🔴 Senior
+> **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **Prerequisites**: [API Design](./01-api-design.md) | [Networking for Go](./06-networking-go.md)
 > **See also**: [Microservices](./02-microservices.md) | [Distributed Systems](./03-distributed-systems.md)
 
@@ -48,7 +48,7 @@ gRPC là RPC framework của Google, dùng Protocol Buffers (protobuf) cho seria
 
 ## 2. Protocol Buffers / Ngôn Ngữ Định Nghĩa Giao Thức
 
-### Q: Write a protobuf definition for a user service and explain key concepts. 🟢 Junior → 🟡 Mid
+### Q: Write a protobuf definition for a user service and explain key concepts. 🟢 Junior → 🔴 Senior
 
 **A:**
 
@@ -255,7 +255,7 @@ func getUser(client pb.UserServiceClient, userID string) (*pb.User, error) {
 
 ## 4. Interceptors (Middleware) / Middleware trong gRPC
 
-### Q: How do you add authentication, logging, and metrics to gRPC? 🟡 Mid → 🔴 Senior
+### Q: How do you add authentication, logging, and metrics to gRPC? 🟢 Junior → 🔴 Senior
 
 **A:** gRPC interceptors = middleware for unary and streaming calls.
 
@@ -431,3 +431,49 @@ reflection.Register(s) // enable reflection
 ---
 
 **See also**: [API Design](./01-api-design.md) | [Microservices](./02-microservices.md) | [Resilience Patterns](./07-resilience-patterns.md)
+
+---
+
+## 8. gRPC vs REST vs GraphQL / So Sánh
+
+### Q: When do you choose gRPC vs REST vs GraphQL? / Khi nào chọn gRPC, REST, GraphQL? 🟡 Mid
+
+**A:**
+
+| Use Case | Choose | Reason |
+|----------|--------|--------|
+| Internal microservice-to-microservice | **gRPC** | Strong typing, streaming, multiplexing, 5–10x faster than JSON/REST |
+| Public API consumed by web/mobile browsers | **REST** | Browser support, easy to debug, widely understood |
+| Mobile app with complex nested data needs | **GraphQL** | Avoid over-fetching, single endpoint, type system |
+| Realtime bidirectional (chat, telemetry) | **gRPC streaming** | Bidirectional streaming > WebSocket for typed protocols |
+| Simple CRUD with many clients | **REST** | Simplicity wins, wide tooling support |
+
+Vietnamese: Rule of thumb cho phỏng vấn: **gRPC = internal backend-to-backend** (hiệu suất cao, typed contract), **REST = external API** (universal client support), **GraphQL = data-driven frontend** (mobile app muốn fetch exactly what they need). gRPC không work trực tiếp trên browser vì gRPC dùng HTTP/2 trailers (không support trong browser XHR/fetch). Muốn dùng gRPC từ browser phải có gRPC-Web proxy (Envoy).
+
+---
+
+### Q: How do you handle retries in gRPC? / Handle retry trong gRPC thế nào? 🔴 Senior
+
+**A:** gRPC has built-in retry policy configurable in service config. Only retry on `UNAVAILABLE` and `RESOURCE_EXHAUSTED` — never retry `INVALID_ARGUMENT` or `NOT_FOUND` (non-transient).
+
+```go
+// Client-side retry via service config (Go)
+serviceConfig := `{
+  "methodConfig": [{
+    "name": [{"service": "OrderService"}],
+    "retryPolicy": {
+      "maxAttempts": 4,
+      "initialBackoff": "0.1s",
+      "maxBackoff": "1s",
+      "backoffMultiplier": 2,
+      "retryableStatusCodes": ["UNAVAILABLE"]
+    }
+  }]
+}`
+conn, _ := grpc.Dial(addr,
+  grpc.WithDefaultServiceConfig(serviceConfig),
+)
+```
+
+Vietnamese: gRPC retry policy quan trọng cần biết: (1) Chỉ retry **idempotent operations** hoặc operations có retry-safe guarantee. (2) `UNAVAILABLE` = server unavailable → safe to retry. `RESOURCE_EXHAUSTED` = rate limit → retry sau backoff. `DEADLINE_EXCEEDED` = timeout → thường không nên retry (đã hết deadline). (3) Hedged requests: gửi request đến multiple backends đồng thời, lấy response đầu tiên — tradeoff: server load vs latency tail reduction. Dùng cho read-only operations trong low latency systems.
+

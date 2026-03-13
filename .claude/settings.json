@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(perl -i -pe 's|\\\\[← Back to Concurrency Theory\\\\]\\\\\\(./os-theory\\\\.md\\\\\\)|[← Back to Concurrency Theory]\\(./07-concurrency-and-parallelism.md\\)|' /Users/nee/Documents/Documents/interview/docs/shared/01-cs-fundamentals/os-theory.md)",
+      "Bash(find /Users/nee/Documents/Documents/interview/docs -type f -name \"*.md\" -exec wc -l {} +)",
+      "Read(//Users/nee/Documents/Documents/interview/**)",
+      "Bash(wc -l /Users/nee/Documents/Documents/interview/docs/shared/01-cs-fundamentals/*.md /Users/nee/Documents/Documents/interview/docs/shared/02-system-design/*.md /Users/nee/Documents/Documents/interview/docs/shared/04-security/*.md)",
+      "Bash(wc -l /Users/nee/Documents/Documents/interview/docs/shared/07-company-guides/*.md /Users/nee/Documents/Documents/interview/docs/shared/05-software-engineering/*.md /Users/nee/Documents/Documents/interview/docs/shared/06-ai-and-agents/*.md)",
+      "Bash(find /Users/nee/Documents/Documents/interview/docs/fe-track -name \"*.md\" -type f ! -name \"README.md\" ! -name \"index.md\" -exec wc -l {} +)",
+      "Bash(find /Users/nee/Documents/Documents/interview/docs/be-track -name \"*.md\" -type f ! -name \"README.md\" ! -name \"index.md\" -exec wc -l {} +)",
+      "Bash(find /Users/nee/Documents/Documents/interview/docs -type f -name *.md -exec wc -l {} +)",
+      "Read(//Users/nee/Documents/Documents/interview/$1 < 250 && $1 > 50 && $2 !~ /**)",
+      "Bash(find /Users/nee/Documents/Documents/interview/docs/fe-track -type f -name \"*.md\" ! -name \"README.md\" ! -name \"index.md\" ! -name \"*mindmap*\" -exec wc -l {} +)",
+      "Bash(find /Users/nee/Documents/Documents/interview/docs -type f -name \"*.md\" ! -path \"*/leetcode/*\" ! -name \"README.md\" ! -name \"index.md\" ! -name \"*table-of*\" ! -name \"*00-*\" ! -name \"*study-plan*\" ! -name \"*quick-*\" ! -name \"*cheat*\" ! -path \"*/mindmaps/*\" ! -path \"*/specs/*\" -exec wc -l {} +)",
+      "Bash(perl -i -pe 's/> \\\\*\\\\*Track\\\\*\\\\*: FE \\\\| \\\\*\\\\*Difficulty\\\\*\\\\*: 🟡 Medium\\\\n> \\\\*\\\\*Topics\\\\*\\\\*: React Hooks, Abstraction, Reusability//' /Users/nee/Documents/Documents/interview/docs/fe-track/13-coding-practice/14-custom-hook.md)",
+      "Bash(perl -i -0pe 's/\\(# Custom React Hooks \\\\/ Hook React Tùy Chỉnh\\\\n\\\\n\\)\\(> \\\\*\\\\*Track\\\\*\\\\*: FE \\\\| \\\\*\\\\*Difficulty\\\\*\\\\*: 🟡 Medium\\\\n> \\\\*\\\\*Topics\\\\*\\\\*: React Hooks, Abstraction, Reusability\\)/$1> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior\\\\n> **Topics**: React Hooks, Abstraction, Reusability\\\\n> **See also**: [Hooks Deep Dive]\\(..\\\\/03-react\\\\/03-hooks-deep-dive.md\\) | [React Testing]\\(..\\\\/03-react\\\\/06-testing.md\\)/' /Users/nee/Documents/Documents/interview/docs/fe-track/13-coding-practice/14-custom-hook.md)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/fe-track/06-browser-performance/01-core-web-vitals.md:*)",
+      "Bash(wc -l /Users/nee/Documents/Documents/interview/docs/fe-track/11-accessibility/*.md /Users/nee/Documents/Documents/interview/docs/fe-track/04-nextjs/*.md)",
+      "Bash(wc -l /Users/nee/Documents/Documents/interview/docs/shared/02-system-design/*.md /Users/nee/Documents/Documents/interview/docs/shared/01-cs-fundamentals/*.md)",
+      "Bash(wc -l /Users/nee/Documents/Documents/interview/docs/be-track/01-golang/*.md /Users/nee/Documents/Documents/interview/docs/be-track/02-backend-knowledge/*.md /Users/nee/Documents/Documents/interview/docs/be-track/03-database-advanced/*.md /Users/nee/Documents/Documents/interview/docs/be-track/04-be-system-design/*.md)",
+      "Bash(grep -l \"### Q:\" /Users/nee/Documents/Documents/interview/docs/fe-track/04-nextjs/*.md)",
+      "Bash(wc -l /Users/nee/Documents/Documents/interview/docs/fe-track/11-accessibility/*.md)",
+      "Bash(grep -l '### Q:' /Users/nee/Documents/Documents/interview/docs/fe-track/11-accessibility/*.md)",
+      "Bash(wc -l grep -rL '### Q:' /Users/nee/Documents/Documents/interview/docs/fe-track/11-accessibility/*.md)",
+      "Bash(grep -rL \"### Q:\" /Users/nee/Documents/Documents/interview/docs/shared/02-system-design/*.md)",
+      "Bash(xargs -I{} basename {} grep -rL \"### Q:\" /Users/nee/Documents/Documents/interview/docs/shared/01-cs-fundamentals/*.md)",
+      "Bash(xargs -I{} basename {})",
+      "Bash(wc -l /Users/nee/Documents/Documents/interview/docs/shared/02-system-design/system-design-theory.md grep -n \"Interview Questions\\\\|## [0-9]\" /Users/nee/Documents/Documents/interview/docs/shared/02-system-design/system-design-theory.md)"
+    ]
+  }
+}

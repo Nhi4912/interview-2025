@@ -9,7 +9,6 @@ leetcode_url: "https://leetcode.com/problems/longest-substring-with-at-most-k-di
 
 # Longest Substring with At Most K Distinct Character
 
-
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../../00-table-of-contents.md)
 

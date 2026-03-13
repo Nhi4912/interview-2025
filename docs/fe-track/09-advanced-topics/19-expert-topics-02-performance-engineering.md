@@ -1,6 +1,5 @@
 # Performance Engineering / Kỹ Thuật Hiệu Năng Frontend
 
-
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

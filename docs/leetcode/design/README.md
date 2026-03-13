@@ -9,7 +9,6 @@ tags: [Design, LeetCode, Interview Preparation]
 
 # Design Problems
 
-
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

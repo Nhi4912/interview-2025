@@ -8,7 +8,6 @@ tags: [javascript, performance, virtualization, large-datasets, optimization, me
 
 # Problem 4: Virtual Scrolling Implementation
 
-
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

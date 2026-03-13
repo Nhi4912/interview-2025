@@ -9,7 +9,6 @@ leetcode_url: "https://leetcode.com/problems/best-time-to-buy-and-sell-stock-ii/
 
 # Best Time to Buy and Sell Stock II
 
-
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../../00-table-of-contents.md)
 

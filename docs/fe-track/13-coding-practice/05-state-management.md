@@ -8,7 +8,6 @@ tags: [javascript, react, state-management, redux, middleware, architecture]
 
 # Problem 5: Simple State Management System
 
-
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

@@ -8,7 +8,6 @@ tags: [react, accessibility, focus-management, aria, modal]
 
 # Problem 8: Accessible Modal Dialog / Hộp thoại Modal có thể truy cập
 
-
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

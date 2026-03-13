@@ -1,6 +1,5 @@
 # 6-Month Frontend Interview Study Plan — Lộ Trình Học 6 Tháng
 
-
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](00-table-of-contents.md)
 

@@ -1,6 +1,5 @@
 # Concurrency and Parallelism Theory — Lý thuyết Đồng thời và Song song
 
-
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

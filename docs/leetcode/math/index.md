@@ -9,7 +9,6 @@ tags: [Math, LeetCode, Interview Preparation]
 
 # Math Problems
 
-
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

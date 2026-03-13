@@ -1,6 +1,6 @@
 # CSS Grid & Flexbox Theory / Lý thuyết sâu về Grid & Flexbox
 
-> **Track**: FE | **Difficulty**: 🟡 Mid → 🔴 Senior
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Grid & Flexbox Practice](./01-grid-flexbox.md) | [CSS Fundamentals](./00-css-fundamentals.md) | [Modern CSS Features](./06-modern-css-features.md)
 
 ---

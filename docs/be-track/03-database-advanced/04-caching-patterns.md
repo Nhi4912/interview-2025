@@ -1,6 +1,5 @@
 # Caching Patterns & Strategies
 
-
 > **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

@@ -1,6 +1,5 @@
 # Memory Management Deep Dive / Quản Lý Bộ Nhớ Chuyên Sâu
 
-
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

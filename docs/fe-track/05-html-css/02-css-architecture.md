@@ -1,6 +1,5 @@
 # CSS Architecture for Scalable Frontend Systems / Kiến Trúc CSS Cho Hệ Thống Frontend Mở Rộng
 
-
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

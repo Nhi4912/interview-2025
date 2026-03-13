@@ -1,6 +1,6 @@
 # React Coding Challenges / Thử Thách Code React Trong Phỏng Vấn
 
-> **Track**: FE | **Difficulty**: 🟡 Mid → 🔴 Senior
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [React Fundamentals](../03-react/01-react-fundamentals.md) | [Hooks](../03-react/03-hooks-deep-dive.md) | [Patterns](../03-react/08-react-patterns-advanced.md)
 
 [Back to Table of Contents](../../00-table-of-contents.md) | [JavaScript Challenges](./11-interview-practice-01-javascript-challenges.md) | [Tools Practical](./13-tools-ecosystem-08-tools-practical-applications.md)

@@ -1,6 +1,6 @@
 # AI System Evaluation & Testing / Đánh Giá và Kiểm Thử Hệ Thống AI
 
-> **Track**: Shared | **Difficulty**: 🟡 Mid → 🔴 Senior
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **Prerequisites**: [ML Fundamentals](./01-ml-fundamentals.md) | [LLMs & Transformers](./02-llm-and-transformers.md)
 > **See also**: [AI Engineering Practice](./05-ai-engineering-practice.md) | [AI Production Challenges](./07-ai-production-challenges.md)
 
@@ -61,7 +61,7 @@ Level 4 — Business Metrics:
 
 ## 2. LLM Testing Patterns / Mẫu Kiểm Thử LLM
 
-### Q: How do you write tests for LLM-powered code? 🟡 Mid → 🔴 Senior
+### Q: How do you write tests for LLM-powered code? 🟢 Junior → 🔴 Senior
 
 **A:**
 
@@ -264,6 +264,67 @@ def call_llm(prompt: str, user_id: str) -> str:
 
 ---
 
+## 5. Advanced Eval Frameworks / Framework Đánh Giá Nâng Cao
+
+### Q: What is RAGAS and when do you use it for RAG evaluation? / RAGAS là gì và dùng khi nào? 🔴 Senior
+
+**A:** RAGAS (Retrieval Augmented Generation Assessment) is a framework for evaluating RAG pipelines across four metrics: faithfulness (answer grounded in context), answer relevancy (answer addresses question), context precision (retrieved chunks are relevant), and context recall (all relevant info was retrieved).
+
+```
+RAGAS metrics:
+  Faithfulness:       Does answer only say things supported by retrieved context?
+                      Score 0–1 (1 = fully grounded, 0 = hallucinated)
+
+  Answer Relevancy:   Does the answer actually address the question asked?
+                      Score 0–1 (penalizes off-topic/incomplete answers)
+
+  Context Precision:  Of retrieved chunks, how many were actually useful?
+                      High = low noise in retrieval (good embedding/reranker)
+
+  Context Recall:     Did retrieval surface ALL relevant information?
+                      Requires ground truth — hard to compute without labels
+
+Typical RAGAS CI pipeline:
+  1. Curate 50–200 question/ground-truth pairs
+  2. Run RAG pipeline on each question
+  3. Compute RAGAS scores (uses LLM-as-judge internally)
+  4. Fail CI if faithfulness < 0.8 or answer_relevancy < 0.75
+  5. Track score trends over time in dashboard
+```
+
+Vietnamese: RAGAS đặc biệt hữu ích khi debug RAG system: nếu Faithfulness thấp → model đang hallucinate (không bám context) → fix prompt hoặc retrieval. Nếu Context Precision thấp → retrieval đang kéo về nhiều chunks không liên quan → fix embedding hoặc reranker. Nếu Context Recall thấp → missing relevant chunks → fix chunking strategy hoặc hybrid search. RAGAS dùng LLM để tính score → không free, nhưng nhanh hơn human evaluation và reproducible.
+
+---
+
+### Q: How do you build a regression test suite for an AI feature? / Xây dựng regression test suite cho AI feature thế nào? 🔴 Senior
+
+**A:** Create a golden dataset of (input, expected_output) pairs, define pass/fail criteria as thresholds (not exact match), run the suite in CI on every prompt or model change, and track score trends over time to detect gradual degradation.
+
+```
+Regression suite structure:
+  golden_set/
+    qa_pairs.jsonl         # {input, expected, tags: ["accuracy", "safety"]}
+    eval_config.yaml       # thresholds per metric per tag
+
+  CI pipeline:
+    1. On PR with prompt/model change:
+       run_eval(golden_set, new_config) → scores
+    2. Compare to baseline scores (main branch)
+    3. Fail if any metric degrades > 5% from baseline
+    4. Block merge until regression is addressed
+
+  Key principle: test PROPERTIES, not exact outputs
+    ✗ assert response == "The capital is Paris"
+    ✓ assert contains_city_name(response, "Paris")
+    ✓ assert faithfulness_score(response, context) > 0.8
+    ✓ assert response_length_tokens < 500
+    ✓ assert not contains_pii(response)
+```
+
+Vietnamese: Regression test cho AI khác software test thông thường vì: (1) outputs không deterministic — cần threshold, không so sánh exact. (2) "Correct" thường là fuzzy — dùng LLM-as-judge để score thay vì binary pass/fail. (3) Gradual degradation khó phát hiện — track trend theo thời gian, không chỉ point-in-time. (4) Test case phải có diversity — edge cases, adversarial inputs, different languages. Thực tế: Anthropic, OpenAI đều dùng eval suite hàng nghìn test cases chạy mỗi khi model update.
+
+---
+
 ## 5. Interview Q&A Summary / Tổng Kết
 
 | Question | Level | Key Answer |
@@ -274,6 +335,8 @@ def call_llm(prompt: str, user_id: str) -> str:
 | What metrics matter for AI in prod? | 🔴 | Latency, cost, user feedback, fallback rate, hallucination flags |
 | How to handle non-determinism in tests? | 🟡 | Test structure/properties not exact output; use threshold-based pass rates |
 | Evaluation vs monitoring difference? | 🟡 | Eval = offline quality assessment; monitoring = online production health |
+| What is RAGAS? | 🔴 | RAG eval framework: faithfulness, answer relevancy, context precision/recall |
+| How to build AI regression suite? | 🔴 | Golden dataset + threshold scoring + CI gate + trend tracking |
 
 ---
 

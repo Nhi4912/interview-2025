@@ -1,6 +1,5 @@
 # JavaScript Interview Practice 01 / Thử Thách JavaScript 01
 
-
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

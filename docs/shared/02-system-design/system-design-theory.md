@@ -1,6 +1,6 @@
 # System Design Theory / Lý Thuyết Thiết Kế Hệ Thống
 
-> **Track**: Shared | **Difficulty**: 🟡 Mid → 🔴 Senior
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Caching Patterns](./caching-patterns.md) | [Replication & Partitioning](./replication-partitioning.md) | [Consensus Algorithms](./consensus-algorithms.md)
 
 ---
@@ -929,3 +929,102 @@ Weakest
 ---
 
 **See also**: [Caching Patterns](./caching-patterns.md) | [Replication & Partitioning](./replication-partitioning.md) | [Consensus Algorithms](./consensus-algorithms.md)
+
+---
+
+## Interview Q&A / Câu Hỏi Phỏng Vấn
+
+### Q: What are the trade-offs between vertical and horizontal scaling? / Sự khác biệt giữa vertical và horizontal scaling là gì? 🟢 Junior
+
+**A:** Vertical scaling (scale-up) adds more resources to a single machine — more CPU, RAM, storage. Simple but has a hard ceiling and creates a single point of failure. Horizontal scaling (scale-out) adds more machines — no ceiling, fault-tolerant, but requires the application to be stateless and adds distributed system complexity.
+
+Vietnamese: Vertical scaling đơn giản hơn cho ứng dụng vì không cần xử lý distributed state. Nhưng giới hạn phần cứng và SPOF là vấn đề lớn. Horizontal scaling không có giới hạn lý thuyết nhưng đòi hỏi: stateless service, distributed cache/session, load balancer, và xử lý partial failure. Trong interview, nêu rõ: "bắt đầu với vertical scaling cho đơn giản, sau đó horizontal khi gần giới hạn hoặc khi cần HA."
+
+---
+
+### Q: Explain the CAP theorem with a concrete example. / Giải thích CAP theorem với ví dụ cụ thể? 🟡 Mid
+
+**A:** CAP states that a distributed system can guarantee at most 2 of: Consistency (every read returns the latest write), Availability (every request gets a response), and Partition Tolerance (system works despite network splits). Since network partitions are unavoidable in distributed systems, the real choice is between CP and AP.
+
+Example: During a network partition in a distributed database:
+- **CP** (e.g., HBase, Zookeeper): Returns an error if it can't guarantee consistency — some requests fail but the data returned is always correct.
+- **AP** (e.g., Cassandra, DynamoDB): Returns possibly stale data — requests succeed but may not reflect the latest write.
+
+Vietnamese: Trong phỏng vấn, nhiều người nhầm nghĩ có thể chọn CA (không có P). Thực tế: network partition luôn xảy ra trong production, nên P bắt buộc. Trade-off thực tế là CP vs AP. Ví dụ thực tế: banking system chọn CP (không chấp nhận stale balance), social media feed chọn AP (stale post list không sao). PACELC mở rộng CAP: khi không có partition, còn trade-off giữa Latency và Consistency.
+
+---
+
+### Q: What is the difference between strong consistency and eventual consistency? / Sự khác biệt giữa strong consistency và eventual consistency? 🟡 Mid
+
+**A:** Strong (linearizable) consistency: every read reflects the latest write — behaves like a single sequential machine. Any read after a write returns the new value, globally. Eventual consistency: given no new updates, all replicas will converge to the same value — but during propagation, different replicas may return different values.
+
+```
+Strong consistency (linearizable):
+Client A writes X=1 at t=0
+Client B reads X at t=1 → always sees X=1
+
+Eventual consistency:
+Client A writes X=1 at t=0 to Replica 1
+Client B reads from Replica 2 at t=1 → may still see X=0
+Client B reads from Replica 2 at t=100ms → sees X=1 (converged)
+```
+
+Vietnamese: Strong consistency dễ lập luận nhưng costly: yêu cầu coordination giữa replicas trước khi commit. Eventual consistency cho phép write nhanh hơn và scale tốt hơn, nhưng ứng dụng phải xử lý stale reads. Các mức giữa: read-your-own-writes, monotonic reads, causal consistency — từng mức giải quyết một anomaly cụ thể mà không cần full linearizability.
+
+---
+
+### Q: How would you estimate capacity for a new system? / Ước tính capacity cho hệ thống mới như thế nào? 🟡 Mid
+
+**A:** Use back-of-envelope estimation: start with DAU (daily active users), estimate requests/user/day, calculate QPS, then estimate storage and bandwidth.
+
+Example for a social media post service:
+- 100M DAU × 10 posts read/day = 1B reads/day → ~12K reads/sec
+- 100M DAU × 0.1 posts written/day = 10M writes/day → ~120 writes/sec
+- Storage: 10M posts × 1KB = 10GB/day → 3.6TB/year
+- Use 2-3x margin for peak traffic
+
+Vietnamese: Capacity estimation trong interview không cần chính xác tuyệt đối — mục tiêu là: (1) chứng minh bạn biết đặt câu hỏi đúng, (2) xác định bottleneck sớm (DB? Network? Memory?), (3) quyết định kiến trúc dựa trên scale. Một số số hữu ích cần nhớ: disk seek ~10ms, memory access ~100ns, SSD ~1ms, 1Gbps network ~125MB/s. Nêu assumption rõ ràng và hỏi interviewer để align.
+
+---
+
+### Q: When should you choose microservices over monolith? / Khi nào chọn microservices thay vì monolith? 🔴 Senior
+
+**A:** Default to a monolith. Choose microservices only when you have: (1) proven scaling bottlenecks that can't be solved vertically, (2) independent deployment needs across large teams, (3) heterogeneous technology requirements per domain, (4) mature DevOps (CI/CD, observability, service mesh).
+
+Microservices add: distributed system complexity, network latency, partial failures, data consistency challenges (no ACID across services), and massive operational overhead (observability, deployment).
+
+Vietnamese: "Microservices are earned, not designed" — Martin Fowler. Nhiều team chọn microservices từ đầu rồi hối tiếc vì chưa hiểu domain rõ, boundary dễ vẽ sai → distributed monolith. Quy trình đúng: monolith modular trước → identify seams (xác định ranh giới domain rõ ràng) → extract service khi có nhu cầu thực sự. Câu hỏi để quyết định: "Bao nhiêu team? Mỗi team có thể deploy độc lập không? Domain boundary có ổn định không?"
+
+---
+
+### Q: How do you design for high availability (99.99% uptime)? / Thiết kế cho high availability (99.99% uptime) như thế nào? 🔴 Senior
+
+**A:** 99.99% = 52 minutes downtime/year. Achieve with: eliminate single points of failure (redundancy at every layer), health checks + auto-restart, multi-AZ/region deployment, circuit breakers to isolate failures, graceful degradation, chaos engineering to find hidden SPOFs.
+
+```
+HA Architecture Layers:
+Load Balancer (active-passive pair)
+    ↓
+App Servers (N≥2, auto-scaling)
+    ↓
+Database (primary + standby, automatic failover)
+    ↓
+Cache (Redis Sentinel or Cluster)
+    ↓
+Storage (replicated, S3-level durability)
+```
+
+Vietnamese: 99.99% nghe đơn giản nhưng cần thiết kế xuyên suốt. Failure domains: dùng nhiều AZ để tránh datacenter failures. Health checks: readiness (có thể nhận traffic không?) vs liveness (cần restart không?). Circuit breaker: khi dependency chậm/lỗi, ngắt circuit để tránh cascade failure. Chaos engineering (Netflix Chaos Monkey): cố tình inject lỗi để tìm weakness trước khi production. SLA composition: nếu 3 dependency mỗi cái 99.9%, tổng = 99.9%^3 = 99.7% — phải thiết kế fallback cho từng dependency.
+
+---
+
+## Interview Q&A Summary / Tổng Kết
+
+| Question | Level | Key Point |
+|----------|-------|-----------|
+| Vertical vs horizontal scaling | 🟢 | Vertical = simpler, limited; Horizontal = unlimited, distributed complexity |
+| CAP theorem explained | 🟡 | P is mandatory → real choice is CP vs AP |
+| Strong vs eventual consistency | 🟡 | Strong = always fresh; Eventual = converge over time, trade latency for scale |
+| Capacity estimation | 🟡 | DAU → QPS → Storage → identify bottleneck |
+| Monolith vs microservices | 🔴 | Default monolith; microservices earned via proven need + DevOps maturity |
+| High availability design | 🔴 | Eliminate SPOF at every layer + circuit breakers + chaos engineering |

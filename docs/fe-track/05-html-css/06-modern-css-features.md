@@ -1,6 +1,6 @@
 # Modern CSS Features / Tính năng CSS hiện đại
 
-> **Track**: FE | **Difficulty**: 🟡 Mid → 🔴 Senior
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Grid & Flexbox](./01-grid-flexbox.md) | [CSS Architecture Theory](./07-css-architecture-theory.md) | [CSS Fundamentals](./00-css-fundamentals.md)
 
 ---

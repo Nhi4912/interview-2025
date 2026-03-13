@@ -1,6 +1,5 @@
 # Modern React Features (18-19) - Theory / Tính Năng React Hiện Đại - Lý Thuyết
 
-
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

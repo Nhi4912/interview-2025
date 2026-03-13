@@ -1,6 +1,6 @@
 # Networking Theory / Lý Thuyết Mạng Máy Tính
 
-> **Track**: Shared | **Difficulty**: 🟡 Mid → 🔴 Senior
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [OS Theory](./os-theory.md) | [FE Networking](../../fe-track/10-networking/) | [BE Networking](../../be-track/02-backend-knowledge/06-networking-go.md)
 
 ## Understanding Computer Networks and Communication / Hiểu về Mạng Máy Tính
@@ -1270,4 +1270,141 @@ A: DNS translates domain names to IP addresses. Process: 1) Check local cache, 2
 
 ---
 
+## Interview Q&A — Networking / Câu Hỏi Phỏng Vấn Networking
+
+---
+
+### Q: When should you use TCP vs UDP? / Khi nào dùng TCP, khi nào dùng UDP? 🟢 Junior
+
+**A:** TCP (Transmission Control Protocol) is connection-oriented, reliable, and ordered. It guarantees delivery through acknowledgments, retransmission, and sequencing. Use TCP when data integrity matters: HTTP/HTTPS, file transfer (FTP, SFTP), email (SMTP, IMAP), database connections.
+
+UDP (User Datagram Protocol) is connectionless, with no delivery guarantee or ordering. It is faster due to zero handshake overhead and no retransmission. Use UDP when speed matters more than reliability: video/audio streaming, DNS queries, online gaming, VoIP, DHCP.
+
+Vietnamese: TCP đảm bảo dữ liệu đến đúng thứ tự và đầy đủ, nhưng tốn overhead (handshake, ACK, retransmit). UDP nhanh hơn vì không cần thiết lập kết nối và không retry — phù hợp với các ứng dụng real-time chấp nhận mất một vài packet (video call mất 1 frame vẫn OK, nhưng file bị mất byte thì hỏng hoàn toàn). Trade-off cốt lõi: reliability vs latency.
+
+---
+
+### Q: What happens when you type a URL in the browser? / Điều gì xảy ra khi bạn gõ URL vào trình duyệt? 🟢 Junior
+
+**A:** The full lifecycle involves multiple layers of the networking stack:
+
+1. **URL parsing** — Browser parses scheme, host, port, path.
+2. **DNS resolution** — Browser cache → OS cache → Recursive resolver → Root NS → TLD NS → Authoritative NS → returns IP address.
+3. **TCP 3-way handshake** — SYN → SYN-ACK → ACK establishes connection to the server IP on port 80 (HTTP) or 443 (HTTPS).
+4. **TLS handshake** (HTTPS only) — ClientHello → ServerHello + Certificate → Key Exchange → Finished. Negotiates cipher suite, verifies certificate, establishes session keys.
+5. **HTTP request** — Browser sends `GET /path HTTP/1.1` with headers (Host, Accept, Cookies, etc.).
+6. **Server processing** — Server routes request, executes application logic, queries database if needed, builds response.
+7. **HTTP response** — Server returns status code, headers, and body (HTML).
+8. **Rendering** — Browser parses HTML → builds DOM → fetches sub-resources (CSS, JS, images) → renders page.
+
+Vietnamese: Đây là câu hỏi kinh điển để test hiểu biết toàn stack. Điểm quan trọng cần nhớ: DNS xảy ra trước TCP, TCP handshake xảy ra trước TLS, TLS xong mới gửi HTTP request. Mỗi bước đều có latency: DNS lookup (~20-120ms), TCP handshake (1 RTT), TLS handshake (1-2 RTT), HTTP round-trip. HTTP/2 và HTTP/3 ra đời phần lớn để giảm các latency này.
+
+---
+
+### Q: What are the key differences between HTTP/1.1, HTTP/2, and HTTP/3? / Sự khác biệt chính giữa HTTP/1.1, HTTP/2 và HTTP/3? 🟡 Mid
+
+**A:**
+
+**HTTP/1.1** (1997): Text-based protocol. One request per TCP connection at a time (head-of-line blocking). Workaround: browser opens 6–8 parallel TCP connections per domain. No header compression — headers resent in full on every request. Keep-Alive allows connection reuse but still sequential.
+
+**HTTP/2** (2015): Binary framing layer. Key improvements:
+- **Multiplexing**: multiple streams over a single TCP connection, eliminating application-layer HOL blocking.
+- **Header compression (HPACK)**: compresses repetitive headers using a shared table.
+- **Server push**: server can proactively send resources the client will need.
+- **Stream prioritization**: client signals which resources are more important.
+Still suffers from **TCP-level head-of-line blocking** — a single lost TCP packet stalls all streams.
+
+**HTTP/3** (2022): Runs over **QUIC** instead of TCP. QUIC is built on UDP and implements reliability, congestion control, and TLS 1.3 natively. Key improvements:
+- **Eliminates HOL blocking at transport layer**: each QUIC stream is independent — a lost packet only stalls its own stream.
+- **0-RTT connection establishment**: reconnecting clients can send data immediately.
+- **Connection migration**: connections survive IP changes (useful on mobile switching from WiFi to LTE).
+
+Vietnamese: Mỗi version ra đời để giải quyết bottleneck của version trước. HTTP/1.1 bị HOL blocking ở application layer → HTTP/2 fix bằng multiplexing nhưng vẫn bị HOL ở TCP layer → HTTP/3 bỏ TCP hoàn toàn, dùng QUIC trên UDP. Trong phỏng vấn, điểm hay bị hỏi nhầm là "HTTP/2 đã fix HOL blocking chưa?" — câu trả lời là fix được application-level HOL nhưng không fix TCP-level HOL.
+
+---
+
+### Q: What is the TLS handshake and how does it work? / TLS handshake là gì và hoạt động như thế nào? 🟡 Mid
+
+**A:** TLS (Transport Layer Security) establishes an encrypted, authenticated channel before any HTTP data flows. The handshake in TLS 1.2 takes 2 RTTs:
+
+1. **ClientHello** — Client sends supported TLS versions, cipher suites, and a random nonce.
+2. **ServerHello + Certificate** — Server picks cipher suite, sends its X.509 certificate (containing public key), and its own random nonce.
+3. **Certificate verification** — Client verifies the certificate against trusted Certificate Authorities (CA chain), checks expiry and domain match.
+4. **Key Exchange** — Client and server use asymmetric cryptography (RSA or ECDHE) to agree on a shared **pre-master secret**, from which symmetric session keys are derived.
+5. **Finished** — Both sides send a Finished message encrypted with session keys to confirm handshake integrity.
+
+**TLS 1.3** (2018) reduces this to **1-RTT** by eliminating the separate key exchange round-trip — the client sends key share parameters in the ClientHello. It also supports **0-RTT resumption** for repeat connections (with replay attack caveats).
+
+Key principle: **asymmetric encryption** (expensive) is only used to exchange keys; all actual data is encrypted with **symmetric keys** (AES-GCM, ChaCha20), which are much faster.
+
+Vietnamese: TLS dùng hai loại mã hóa kết hợp — asymmetric (RSA/ECDHE) để trao đổi khóa an toàn vì không thể gửi symmetric key qua đường chưa mã hóa, rồi symmetric (AES) để mã hóa data vì nhanh hơn nhiều. PKI (Public Key Infrastructure) là hệ thống niềm tin dựa trên CA — browser tin server vì CA (Lets Encrypt, DigiCert) đã ký xác nhận. TLS 1.3 bỏ các cipher suite yếu (RSA key exchange không có forward secrecy), chỉ giữ ECDHE — đây là lý do mọi modern site nên dùng TLS 1.3.
+
+---
+
+### Q: How does DNS resolution work step by step? / DNS resolution hoạt động từng bước như thế nào? 🟡 Mid
+
+**A:** DNS (Domain Name System) is a distributed hierarchical database that maps domain names to IP addresses. Resolution follows this order:
+
+1. **Browser cache** — Most browsers cache DNS results for the duration specified by TTL. Chrome: `chrome://net-internals/#dns`.
+2. **OS cache** — Operating system checks its resolver cache (`/etc/hosts` on Linux/Mac, Windows hosts file checked first).
+3. **Recursive resolver** (ISP or 8.8.8.8) — If not cached, OS queries the configured recursive resolver. The resolver does the heavy lifting.
+4. **Root nameservers** (13 logical servers, anycast) — Resolver asks "who handles `.com`?" → gets TLD nameserver addresses.
+5. **TLD nameserver** — Resolver asks "who handles `example.com`?" → gets authoritative nameserver addresses.
+6. **Authoritative nameserver** — Resolver asks "what is the IP for `www.example.com`?" → gets the A (IPv4) or AAAA (IPv6) record.
+7. **Response + caching** — Resolver caches the result per TTL, returns IP to OS, OS caches and returns to browser.
+
+Key details: **TTL** (Time To Live) controls cache duration — low TTL (60s) allows fast DNS changes, high TTL (86400s) reduces resolver load. **Negative caching** (NXDOMAIN) caches "domain does not exist" responses to prevent repeated lookups. **DNSSEC** adds cryptographic signatures to prevent cache poisoning.
+
+Vietnamese: Chuỗi phân cấp Root → TLD → Authoritative chỉ xảy ra khi không có cache. Trong thực tế, recursive resolver (của ISP hoặc 8.8.8.8) đã cache hầu hết các domain phổ biến, nên query thường kết thúc ở bước 3. TTL là trade-off quan trọng: TTL thấp = dễ đổi IP nhưng tốn nhiều DNS query hơn; TTL cao = ít query nhưng propagation chậm khi cần đổi. Khi deploy, nên giảm TTL vài giờ trước khi migrate để failover nhanh hơn.
+
+---
+
+### Q: What is TCP's 3-way handshake and why does TIME_WAIT state exist? / 3-way handshake của TCP là gì và tại sao có trạng thái TIME_WAIT? 🔴 Senior
+
+**A:** **3-way handshake** establishes a TCP connection:
+1. **SYN** — Client sends SYN with its Initial Sequence Number (ISN), enters SYN_SENT state.
+2. **SYN-ACK** — Server acknowledges client ISN and sends its own ISN, enters SYN_RECEIVED state.
+3. **ACK** — Client acknowledges server ISN, both enter ESTABLISHED state.
+
+**Connection termination** (4-way): FIN → ACK → FIN → ACK. The side initiating close enters TIME_WAIT after sending the final ACK.
+
+**TIME_WAIT** lasts **2×MSL** (Maximum Segment Lifetime, typically 60s, so TIME_WAIT = 120s). Two reasons:
+1. **Prevent stale packet collision**: ensures any delayed packets from the old connection expire before a new connection with the same 4-tuple (src IP, src port, dst IP, dst port) is established. Without TIME_WAIT, a delayed packet could corrupt a new connection.
+2. **Reliable connection termination**: if the final ACK is lost, the remote side retransmits its FIN — TIME_WAIT allows the client to re-send the ACK.
+
+**Operational implications**: High-traffic servers may exhaust available ports due to TIME_WAIT accumulation. Mitigations: `SO_REUSEADDR`, `net.ipv4.tcp_tw_reuse` (Linux), or increasing the local port range (`net.ipv4.ip_local_port_range`).
+
+**SYN flood attack**: Attacker sends many SYN packets with spoofed IPs, filling the server's SYN backlog (half-open connections). Server waits for ACK that never comes. Mitigation: **SYN cookies** — server encodes connection state in the SYN-ACK's sequence number, requires no memory until ACK arrives.
+
+Vietnamese: TIME_WAIT thường bị hiểu nhầm là bug — thực ra là tính năng bảo vệ tính toàn vẹn của TCP. Vấn đề thực tế: server xử lý hàng nghìn kết nối ngắn (REST API calls) có thể bị cạn kiệt port vì TIME_WAIT. Giải pháp không phải disable TIME_WAIT mà là dùng connection pooling, HTTP keep-alive, hoặc tuning OS params. SYN flood là DDoS cổ điển — SYN cookies là giải pháp stateless cho phép server handle flood mà không tốn RAM cho mỗi half-open connection.
+
+---
+
+### Q: What is head-of-line blocking and how do HTTP/2 and HTTP/3 address it differently? / Head-of-line blocking là gì và HTTP/2, HTTP/3 giải quyết khác nhau như thế nào? 🔴 Senior
+
+**A:** **Head-of-line (HOL) blocking** occurs when a queue of requests is blocked by the first request, preventing subsequent requests from being processed.
+
+**HTTP/1.1 application-level HOL**: A connection can only have one in-flight request at a time. The browser must wait for a response before sending the next request on that connection. Workaround: browsers open 6–8 parallel TCP connections per domain, which wastes resources and adds TCP handshake overhead.
+
+**HTTP/2 solution (partial)**: Multiplexing maps multiple logical **streams** onto a single TCP connection. Each stream is independent at the HTTP layer — stream 3 does not wait for stream 1. This eliminates application-level HOL blocking. However, TCP sees one byte stream. If a single TCP **segment is lost**, the TCP layer holds all subsequent data in the receive buffer until the lost segment is retransmitted — all HTTP/2 streams are stalled regardless. This is **TCP-level HOL blocking**, which HTTP/2 cannot solve.
+
+**HTTP/3 solution (complete)**: HTTP/3 runs over **QUIC**, which operates over UDP and implements its own stream multiplexing. QUIC's streams are truly independent: a lost UDP packet only triggers retransmission for the affected QUIC stream — other streams continue unimpeded. QUIC achieves this by managing per-stream flow control and loss recovery at the application layer, bypassing TCP's rigid byte-stream model.
+
+Trade-off: QUIC adds complexity and some CPU overhead since it implements reliability in user space. On networks with high packet loss, HTTP/3 significantly outperforms HTTP/2. On reliable networks (low loss), the difference narrows.
+
+Vietnamese: HOL blocking là vấn đề cơ bản của queue — một item đầu queue bị chậm thì toàn bộ queue bị ảnh hưởng. HTTP/2 giải quyết ở application layer nhưng không thể làm gì với TCP vì TCP là ordered byte stream — nếu packet bị mất, TCP phải đợi retransmit trước khi deliver data tiếp theo cho application. HTTP/3 đổi luật chơi bằng cách bỏ TCP hoàn toàn: QUIC implement reliability trên UDP nhưng per-stream, nên packet loss của stream A không ảnh hưởng stream B. Trong thực tế, HTTP/3 quan trọng nhất với mobile users vì mạng di động có packet loss cao hơn nhiều so với wired connections.
+
+---
+
+## Interview Q&A Summary / Tổng Kết
+
+| Question | Level | Key Point |
+|----------|-------|-----------|
+| TCP vs UDP | 🟢 | Reliable vs fast — choose by tolerance for data loss |
+| URL to page lifecycle | 🟢 | DNS → TCP → TLS → HTTP → render |
+| HTTP/1.1 vs 2 vs 3 | 🟡 | Multiplexing → QUIC eliminates transport-level HOL |
+| TLS handshake | 🟡 | Asymmetric for key exchange, symmetric for data |
+| DNS resolution | 🟡 | Hierarchical + caching at every layer with TTL |
+| TCP 3-way handshake & TIME_WAIT | 🔴 | TIME_WAIT = 2×MSL prevents stale packet collision |
+| Head-of-line blocking | 🔴 | HTTP/2 fixes app-level HOL; HTTP/3 fixes transport-level HOL |
 [← Back to Operating Systems](./os-theory.md) | [Next: Software Engineering →](./08-computation-theory.md)

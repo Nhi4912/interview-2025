@@ -1,6 +1,6 @@
 # Message Queues & Event Streaming / Hàng Đợi Tin Nhắn và Event Streaming
 
-> **Track**: Shared | **Difficulty**: 🟡 Mid → 🔴 Senior
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **Prerequisites**: [System Design Theory](./system-design-theory.md) | [Replication & Partitioning](./replication-partitioning.md)
 > **See also**: [BE Message Queues](../../be-track/02-backend-knowledge/08-message-queues.md) | [Distributed Systems](../../be-track/02-backend-knowledge/03-distributed-systems.md)
 
@@ -253,6 +253,38 @@ Saga Orchestrator controls all steps:
 
 ## 6. Interview Q&A Summary / Tổng Kết
 
+### Q: What is a Dead Letter Queue (DLQ) and when do messages end up there? / DLQ là gì và khi nào message bị đẩy vào đó? 🟡 Mid
+
+**A:** A Dead Letter Queue receives messages that cannot be processed successfully after N retries, or messages that expired before consumption, or messages rejected by the consumer. It is a safety net to prevent poison pill messages from blocking the main queue indefinitely.
+
+```
+Normal flow:
+  Producer → Queue → Consumer (success) → message deleted
+
+DLQ flow:
+  Producer → Queue → Consumer (fail)
+                   → retry 1 (fail)
+                   → retry 2 (fail)
+                   → retry 3 (fail)
+                   → → Dead Letter Queue
+
+  Common DLQ triggers:
+  - Max delivery attempts exceeded (RabbitMQ x-max-delivery-count, SQS maxReceiveCount)
+  - Message TTL expired before consumption
+  - Consumer explicitly rejects/nacks with requeue=false
+  - Queue max length exceeded (overflow policy)
+
+  DLQ use cases:
+  1. Alert on DLQ → investigate root cause
+  2. Fix consumer bug → redrive DLQ messages back to main queue
+  3. Audit: preserve failed messages for compliance
+  4. Poison pill isolation: one bad message doesn't block entire queue
+```
+
+Vietnamese: DLQ là pattern cực kỳ quan trọng trong production. Không có DLQ → một "poison pill" message (message mà consumer không bao giờ xử lý được, ví dụ malformed JSON) sẽ được retry vô tận → consumer bị occupied → queue tắc nghẽn. DLQ cho phép: isolate bad messages, alert team, fix bug, redrive. AWS SQS và RabbitMQ đều có built-in DLQ support. Kafka không có native DLQ — thường implement thủ công bằng cách produce failed message vào topic khác.
+
+---
+
 | Question | Level | Key Answer |
 |----------|-------|------------|
 | Why use a message queue? | 🟢 | Decouple, buffer speed mismatch, reliability |
@@ -260,6 +292,7 @@ Saga Orchestrator controls all steps:
 | Why can't I add more consumers than partitions? | 🟡 | Partition = unit of parallelism — extras idle |
 | At-least-once vs exactly-once? | 🟡 | At-least-once + idempotent consumer is practical default |
 | Kafka vs RabbitMQ? | 🟡 | Kafka = log/replay/scale; Rabbit = routing/tasks/simplicity |
+| Dead Letter Queue? | 🟡 | Safety net for poison pill messages — N retries exceeded → DLQ |
 | Outbox pattern? | 🔴 | Solve dual-write: DB tx + outbox table, CDC publishes to Kafka |
 | Saga pattern? | 🔴 | Distributed transactions via compensating steps; choreography vs orchestration |
 

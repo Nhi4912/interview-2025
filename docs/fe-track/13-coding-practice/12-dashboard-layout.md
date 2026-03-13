@@ -1,7 +1,16 @@
 # Responsive Dashboard Layout / Bố Cục Dashboard Responsive
 
-> **Track**: FE | **Difficulty**: 🟢 Easy → 🟡 Medium
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **Topics**: CSS Grid, Flexbox, Responsive Design, CSS Variables
+> **See also**: [CSS Architecture](../05-html-css/02-css-architecture.md) | [Core Web Vitals](../06-browser-performance/01-core-web-vitals.md)
+
+---
+
+## Overview / Tổng Quan
+
+Dashboard layout combines CSS Grid named areas, responsive breakpoints, and state management for widget data. It tests both CSS skills and React patterns for real-world admin interfaces.
+
+Bài này kiểm tra: (1) CSS Grid advanced — named areas, auto-fill vs auto-fit, (2) responsive design — mobile-first vs desktop-first, (3) React state management cho widgets — local vs lifted vs global. Senior level: hỏi về data refresh strategies (polling, SSE, WebSocket), layout shift prevention, và performance với nhiều widgets.
 
 ---
 
@@ -150,3 +159,62 @@ export function Dashboard() {
 - **Resizable sidebar**: CSS `resize: horizontal` or drag handle with `mousemove` listener
 - **Dark mode**: CSS custom properties + `prefers-color-scheme` media query
 - **Skeleton loading**: CSS animation `@keyframes pulse` on placeholder cards
+
+---
+
+## Interview Q&A / Câu Hỏi Phỏng Vấn
+
+### Q: What is the difference between `auto-fill` and `auto-fit` in CSS Grid? / `auto-fill` và `auto-fit` khác nhau thế nào? 🟢 Junior
+
+**A:** Both create as many columns as fit the container. `auto-fill` preserves empty tracks (columns remain even with no content). `auto-fit` collapses empty tracks and stretches remaining items to fill the row.
+
+Vietnamese: `auto-fill`: giữ nguyên cột rỗng — items không giãn dài ra. Dùng khi muốn preserve grid alignment với content chưa load. `auto-fit`: xóa cột rỗng — item cuối cùng giãn ra fill hết row. Dùng khi muốn responsive cards luôn fill toàn bộ chiều rộng container. Ví dụ dashboard: `repeat(auto-fill, minmax(280px, 1fr))` — khi màn hình rộng 600px chứa được 2 cards 280px, cột thứ 3 vẫn tồn tại nhưng rỗng (auto-fill) hoặc không tồn tại (auto-fit).
+
+---
+
+### Q: How do you manage state for multiple dashboard widgets? / Quản lý state cho nhiều widget dashboard thế nào? 🟡 Mid
+
+**A:** Use co-located state for widget-local data (e.g., whether a widget is collapsed). Lift state up to the dashboard when widgets need to share data. Use React Query or SWR per widget for server data — each widget manages its own fetch lifecycle independently.
+
+Vietnamese: Ba mức state trong dashboard: (1) **Widget-local**: collapsed state, active tab → dùng `useState` trong widget component. (2) **Layout level**: widget order, grid positions → lift lên Dashboard component hoặc persist to localStorage. (3) **Server data**: mỗi widget fetch riêng với React Query `useQuery(widgetKey)` — independent refetch, caching, error boundary. Tránh một global store lớn cho tất cả widgets — coupling cao, khó test riêng lẻ.
+
+---
+
+### Q: How would you implement data refresh strategies for a live dashboard? / Implement data refresh cho live dashboard thế nào? 🔴 Senior
+
+**A:** Four strategies by use case: polling (simple, high latency), smart polling with `visibilitychange` (pause when tab hidden), SSE for server-pushed updates, WebSocket for bidirectional realtime.
+
+```ts
+// Smart polling: pause when tab hidden
+useEffect(() => {
+  let interval: ReturnType<typeof setInterval>
+  const start = () => { interval = setInterval(refetch, 30_000) }
+  const stop  = () => clearInterval(interval)
+
+  document.addEventListener('visibilitychange', () =>
+    document.hidden ? stop() : start()
+  )
+  start()
+  return stop
+}, [refetch])
+
+// SSE: server pushes updates
+useEffect(() => {
+  const es = new EventSource('/api/dashboard/stream')
+  es.onmessage = e => setMetrics(JSON.parse(e.data))
+  es.onerror   = () => es.close()
+  return () => es.close()
+}, [])
+```
+
+Vietnamese: Trade-off rõ ràng: Polling đơn giản nhưng lãng phí (poll dù không có gì mới). Smart polling + `visibilitychange` tiết kiệm mobile battery. SSE tốt cho server-push một chiều (metrics, notifications). WebSocket cho collaborative features (nhiều user cùng xem dashboard). Production dashboards như Grafana/Datadog dùng WebSocket cho realtime metrics vì latency thấp và server có thể push batch updates theo rate phù hợp.
+
+---
+
+## Interview Q&A Summary / Tổng Kết Phỏng Vấn
+
+| Question | Level | Key Point |
+|----------|-------|-----------|
+| auto-fill vs auto-fit | 🟢 | auto-fit collapses empty tracks; auto-fill preserves them |
+| Widget state management | 🟡 | Local state → lifted state → React Query per widget |
+| Live data refresh strategies | 🔴 | Polling → smart polling → SSE → WebSocket (by latency/complexity need) |

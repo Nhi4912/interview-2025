@@ -1,6 +1,5 @@
 # Distributed Patterns for Backend Interviews — Mẫu Thiết Kế Phân Tán
 
-
 > **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

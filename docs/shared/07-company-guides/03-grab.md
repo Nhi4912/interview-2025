@@ -1,6 +1,5 @@
 # Grab Interview Guide — Hướng Dẫn Phỏng Vấn Grab
 
-
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

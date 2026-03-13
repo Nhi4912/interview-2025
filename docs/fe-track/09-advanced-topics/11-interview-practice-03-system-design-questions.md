@@ -1,6 +1,5 @@
 # Interview Practice 03: Frontend System Design Questions
 
-
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

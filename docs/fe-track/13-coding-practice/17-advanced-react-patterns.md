@@ -8,7 +8,6 @@ tags: [react, hoc, render-props, compound-components, advanced-patterns]
 
 # Advanced React Patterns for Big Tech Interviews
 
-
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

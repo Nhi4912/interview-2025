@@ -9,7 +9,6 @@ leetcode_url: "https://leetcode.com/problems/given-an-array-nums-of-n-integers-r
 
 # Given an array nums of n integers, return an array of all the unique quadruplets 
 
-
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../../00-table-of-contents.md)
 

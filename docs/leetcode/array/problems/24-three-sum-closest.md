@@ -9,7 +9,6 @@ leetcode_url: "https://leetcode.com/problems/given-an-integer-array-nums-of-leng
 
 # Given an integer array nums of length n and an integer target, find three integers 
 
-
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../../00-table-of-contents.md)
 

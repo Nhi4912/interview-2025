@@ -111,7 +111,7 @@ describe('formatPrice', () => {
 
 ## 2. React Testing Library (RTL)
 
-### Q: What's the RTL philosophy and what queries should you use? 🟢 Junior → 🟡 Mid
+### Q: What's the RTL philosophy and what queries should you use? 🟢 Junior → 🔴 Senior
 
 **A:** RTL's guiding principle: **"Test behavior, not implementation."**
 
@@ -338,7 +338,7 @@ export default defineConfig({
 
 ## 5. Testing Patterns & Anti-Patterns
 
-### Q: What are the most common testing mistakes in React projects? 🟡 Mid → 🔴 Senior
+### Q: What are the most common testing mistakes in React projects? 🟢 Junior → 🔴 Senior
 
 **Anti-pattern 1: Testing implementation details**
 ```tsx

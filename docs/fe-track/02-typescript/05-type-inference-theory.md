@@ -1,6 +1,5 @@
 # Type Inference Theory / Lý Thuyết Suy Luận Kiểu
 
-
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

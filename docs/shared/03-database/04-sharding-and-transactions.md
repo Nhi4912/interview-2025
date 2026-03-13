@@ -1,6 +1,6 @@
 # Database Sharding & Transaction Isolation / Phân Mảnh Cơ Sở Dữ Liệu và Cô Lập Giao Dịch
 
-> **Track**: Shared | **Difficulty**: 🟡 Mid → 🔴 Senior
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **Prerequisites**: [Database Theory](./database-theory.md) | [Indexing & Optimization](./02-indexing-and-optimization.md)
 > **See also**: [Replication & Partitioning](../02-system-design/replication-partitioning.md) | [BE Database Advanced](../../be-track/03-database-advanced/)
 
@@ -38,7 +38,7 @@ All data → [DB]           Shard 1: user_id 33M–66M
 
 ---
 
-### Q: What are the main sharding strategies? Compare their trade-offs. 🟡 Mid → 🔴 Senior
+### Q: What are the main sharding strategies? Compare their trade-offs. 🟢 Junior → 🔴 Senior
 
 **A:**
 
@@ -220,7 +220,7 @@ COMMIT;
 
 ---
 
-### Q: What is a deadlock and how do you prevent it? 🟡 Mid → 🔴 Senior
+### Q: What is a deadlock and how do you prevent it? 🟢 Junior → 🔴 Senior
 
 **A:**
 
@@ -318,3 +318,45 @@ Dead row versions accumulate (old versions no longer needed by any transaction).
 ---
 
 **See also**: [Database Theory](./database-theory.md) | [NoSQL & NewSQL](./03-nosql-and-newsql.md) | [Replication & Partitioning](../02-system-design/replication-partitioning.md)
+
+---
+
+## 7. Distributed Transactions / Giao Dịch Phân Tán
+
+### Q: How does the Saga pattern handle distributed transactions? / Saga pattern xử lý distributed transaction thế nào? 🔴 Senior
+
+**A:** Saga replaces a single distributed transaction with a sequence of local transactions, each with a compensating action. If step N fails, steps N-1, N-2, ... are compensated (rolled back) via their compensating transactions.
+
+```
+Order Service Saga:
+  Step 1: Reserve inventory   → Compensation: Release inventory
+  Step 2: Charge payment      → Compensation: Refund payment
+  Step 3: Assign delivery     → Compensation: Cancel delivery
+
+If step 3 fails:
+  Execute compensation for step 2 (refund)
+  Execute compensation for step 1 (release inventory)
+
+Two implementations:
+  Choreography: services react to each other's events (no coordinator)
+    OrderCreated → InventoryService listens → InventoryReserved →
+    PaymentService listens → PaymentCharged → ...
+    Pro: decoupled; Con: hard to track saga state, hard to debug
+
+  Orchestration: central saga orchestrator sends commands
+    Orchestrator → InventoryService.Reserve()
+    Orchestrator → PaymentService.Charge()
+    Orchestrator → DeliveryService.Assign()
+    Pro: explicit flow, easier to track; Con: coupling to orchestrator
+```
+
+Vietnamese: Saga là giải pháp thực tế nhất cho distributed transactions ở scale lớn (Grab, Shopee đều dùng). 2PC (Two-Phase Commit) có coordinator SPOF và blocking protocol — không scale. Saga: eventual consistency nhưng compensatable. Key requirement: mỗi step phải **idempotent** (gọi nhiều lần cùng kết quả) và có **compensating action** rõ ràng. Payment saga đặc biệt hay được hỏi trong interview — explain được choreography vs orchestration là điểm cộng lớn.
+
+---
+
+### Q: What is Two-Phase Commit (2PC) and why is it rarely used in microservices? / 2PC là gì và tại sao ít dùng trong microservices? 🔴 Senior
+
+**A:** 2PC is a protocol where a coordinator asks all participants to "prepare" (Phase 1), then commits or aborts (Phase 2). It provides ACID guarantees across distributed nodes but has critical drawbacks: coordinator is a SPOF, all participants block during Phase 1 waiting for Phase 2, and partial failure leaves participants in uncertain state.
+
+Vietnamese: 2PC đảm bảo strong consistency nhưng: (1) **Coordinator SPOF** — nếu coordinator crash sau Phase 1 và trước Phase 2, participants sẽ bị "stuck" (lock held, can't commit or abort). (2) **Blocking** — tất cả participants giữ locks trong suốt protocol → throughput thấp. (3) **Không scale** — latency của 2PC = sum of all participant latencies. Trong microservices scale lớn → Saga/eventual consistency là lựa chọn thực tế hơn. 2PC vẫn dùng trong single-database contexts (PostgreSQL distributed transactions với FDW, XA transactions).
+

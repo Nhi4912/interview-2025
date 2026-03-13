@@ -1,7 +1,7 @@
 # Performance Optimization / Toi Uu Hieu Nang
 ## React - Chapter 9
 
-> **Track**: FE | **Difficulty**: 🟡 Mid → 🔴 Senior
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [React Fundamentals](./01-react-fundamentals.md) | [Hooks Deep Dive](./03-hooks-deep-dive.md) | [Browser Performance](../../fe-track/06-browser-performance/01-core-web-vitals.md)
 
 [← Previous](./08-react-patterns-advanced.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next →](./10-modern-react-features.md)

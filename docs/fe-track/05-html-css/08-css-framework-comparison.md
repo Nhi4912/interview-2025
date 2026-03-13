@@ -1,6 +1,6 @@
 # CSS Framework & Styling Comparison / So Sánh Các Phương Pháp CSS
 
-> **Track**: FE | **Difficulty**: 🟢 Junior → 🟡 Mid
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [CSS Architecture](./02-css-architecture.md) | [Modern CSS Features](./06-modern-css-features.md)
 
 ---

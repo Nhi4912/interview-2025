@@ -1,6 +1,5 @@
 # Distributed Frontend Systems / Hệ Thống Frontend Phân Tán
 
-
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

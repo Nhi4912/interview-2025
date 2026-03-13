@@ -232,6 +232,45 @@ Used for: streaming video, large file downloads
 
 ---
 
+## 6. Failure Modes & Advanced Patterns / Chế Độ Lỗi và Nâng Cao
+
+### Q: What are common load balancer failure modes? / Các failure mode phổ biến của LB là gì? 🔴 Senior
+
+**A:** Five main failure modes: LB itself as SPOF, false-positive health checks, thundering herd on recovery, head-of-line blocking, and half-open connections.
+
+```
+1. LB SPOF → Fix: Active-active pair with VRRP shared VIP
+   If LB-A dies → LB-B takes VIP in ~1-2 seconds
+
+2. False-positive health check → Fix: Require 3 consecutive failures before marking DOWN
+   Cause: DB spike → health check slow → LB marks server unhealthy
+
+3. Thundering herd on recovery → Fix: nginx slow_start=30s
+   Recovered server gets flooded immediately
+
+4. gRPC with L4 LB → all traffic to one backend!
+   HTTP/2 multiplexing: one TCP connection carries all streams
+   Fix: Use L7 LB (Envoy) that understands HTTP/2 frames
+
+5. Sticky session pitfalls:
+   - Uneven load (heavy user pinned to one server)
+   - Session loss on server crash
+   - Blocks canary deploys
+   Fix: Externalise state to Redis, make services stateless
+```
+
+Vietnamese: Điểm quan trọng nhất cần nhớ: (1) LB single instance = SPOF → luôn dùng active-active pair. (2) gRPC với L4 LB là bug cổ điển — HTTP/2 multiplexing khiến tất cả requests đi vào một server duy nhất. (3) Sticky session là anti-pattern cho cloud-native — externalise state thay thế.
+
+---
+
+### Q: What are liveness vs readiness health checks in Kubernetes? / Liveness và readiness checks khác nhau thế nào? 🟡 Mid
+
+**A:** Liveness asks "should Kubernetes restart this pod?" — checks only if the process is alive. Readiness asks "should the load balancer route traffic here?" — checks all dependencies (DB, cache). Separate them to avoid restarting healthy pods that have a slow DB.
+
+Vietnamese: Đây là câu hỏi hay gặp khi phỏng vấn về K8s hoặc microservices. Liveness probe (`/healthz`): chỉ check process sống — nếu fail, K8s restart pod. Readiness probe (`/readyz`): check tất cả dependencies — nếu fail, LB dừng gửi traffic nhưng không restart. Pattern production: readiness check DB connection + Redis ping + queue lag. Nếu DB tạm slow → pod marked "not ready" → traffic rerouted → DB hết tải → pod recovered. Nếu chỉ dùng liveness thì mọi DB spike đều trigger restart vô ích.
+
+---
+
 ## Interview Q&A Summary / Tổng Kết
 
 | Question | Level | Key Answer |
@@ -239,9 +278,11 @@ Used for: streaming video, large file downloads
 | What is a load balancer? | 🟢 | Distributes traffic to prevent single server overload |
 | L4 vs L7? | 🟢 | L4=TCP/IP routing, L7=HTTP-aware routing |
 | Round robin vs Least Connections? | 🟡 | RR for stateless, LC for long-lived connections |
+| Liveness vs readiness health checks? | 🟡 | Liveness = restart trigger; readiness = traffic routing trigger |
 | What are sticky sessions? | 🟡 | Pin user to same server — bad for scaling, prefer Redis session |
 | DNS load balancing limitations? | 🔴 | TTL cache, can't do health-based quick failover |
 | Active-active vs Active-passive? | 🔴 | Active-active: both handle traffic; Passive: standby only |
+| LB failure modes? | 🔴 | SPOF, false-positive health check, gRPC L4 problem, sticky session pitfalls |
 
 ---
 

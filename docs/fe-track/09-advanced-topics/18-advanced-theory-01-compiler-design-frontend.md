@@ -1,6 +1,5 @@
 # Advanced Frontend Compiler Design (AST, Parsing, Codegen)
 
-
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

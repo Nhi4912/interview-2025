@@ -1,6 +1,5 @@
 # 00. Interview Market Overview 2025-2026 — Bản Đồ Thị Trường Phỏng Vấn Kỹ Thuật
 
-
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](00-table-of-contents.md)
 

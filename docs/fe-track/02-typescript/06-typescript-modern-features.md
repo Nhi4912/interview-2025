@@ -1,6 +1,5 @@
 # Modern TypeScript Features (4.0-5.3) - Theory / Tính Năng TypeScript Hiện Đại - Lý Thuyết
 
-
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

@@ -1,6 +1,6 @@
 # AI System Design — Thiết kế hệ thống AI cho phỏng vấn
 
-> **Track**: Shared | **Difficulty**: 🟡 Mid → 🔴 Senior
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 
 ---

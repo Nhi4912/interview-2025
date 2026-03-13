@@ -9,7 +9,6 @@ leetcode_url: "https://leetcode.com/problems/binary-tree-maximum-path-sum/"
 
 # Binary Tree Maximum Path Sum
 
-
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../../00-table-of-contents.md)
 

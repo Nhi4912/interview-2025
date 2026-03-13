@@ -1,6 +1,6 @@
 # Web Security & OWASP Top 10 / Bảo Mật Web và OWASP
 
-> **Track**: Shared | **Difficulty**: 🟡 Mid → 🔴 Senior
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Security Fundamentals](./01-security-fundamentals.md) | [Cryptography](./02-cryptography-and-protocols.md) | [FE Web Security](../../fe-track/07-web-security/) | [BE Auth](../../be-track/02-backend-knowledge/04-auth-security.md)
 
 ## Overview / Tổng Quan

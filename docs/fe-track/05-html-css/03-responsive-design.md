@@ -1,6 +1,5 @@
 # Responsive Design for Modern Web / Thiết Kế Responsive Cho Web Hiện Đại
 
-
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

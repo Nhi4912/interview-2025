@@ -8,7 +8,6 @@ tags: [webgl, canvas, graphics, performance, 3d-rendering, particle-systems]
 
 # WebGL & Canvas Advanced Challenges
 
-
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

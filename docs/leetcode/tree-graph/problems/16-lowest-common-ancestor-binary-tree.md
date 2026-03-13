@@ -9,7 +9,6 @@ leetcode_url: "https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-
 
 # Lowest Common Ancestor of a Binary Tree
 
-
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../../00-table-of-contents.md)
 

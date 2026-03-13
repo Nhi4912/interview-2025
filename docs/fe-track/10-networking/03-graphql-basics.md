@@ -1,6 +1,5 @@
 # GraphQL Basics - Query Language for APIs
 
-
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 

@@ -1,6 +1,5 @@
 # Operating Systems — Go Backend Interview Prep
 
-
 > **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 
