@@ -11,6 +11,10 @@ leetcode_url: "https://leetcode.com/problems/design-phone-directory/"
 
 
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 ## Problem Description
 
  *  * Design a phone directory that initially contains all numbers from 0 to maxNumbers - 1.  * The directory should support the following operations:  *  * - get: Provide a number that is not assigned to anyone. 

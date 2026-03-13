@@ -1,4 +1,8 @@
 # Version Control with Git / Kiểm Soát Phiên Bản Với Git
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Tools & Ecosystem - Chapter 3 / Công Cụ & Hệ Sinh Thái - Chương 3
 [Back to Table of Contents](../../00-table-of-contents.md)
 

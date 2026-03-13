@@ -1,5 +1,9 @@
 # Distributed Patterns for Backend Interviews — Mẫu Thiết Kế Phân Tán
 
+
+> **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > Backend Track — System Design
 > Cross-referenced by: `shared/02-system-design/system-design-theory.md`, `shared/02-system-design/consensus-algorithms.md`, `shared/01-cs-fundamentals/networking-theory.md`, `be-track/02-backend-knowledge/02-microservices.md`, `be-track/02-backend-knowledge/03-distributed-systems.md`
 
@@ -1351,4 +1355,52 @@ func (e errString) Error() string { return string(e) }
   2) chỉ ra tradeoffs,
   3) gắn với SLO/failure mode,
   4) có plan rollout + observability.
+
+---
+
+## Câu Hỏi Phỏng Vấn / Interview Q&A
+
+### Q: Explain the CAP theorem. Can a distributed system ever be both consistent and available? / Giải thích CAP theorem. Hệ thống phân tán có thể vừa consistent vừa available không? 🟡 Mid
+
+**A:** The CAP theorem states that a distributed system under a network partition (P) can guarantee either Consistency (every read sees the most recent write) or Availability (every request gets a non-error response), but not both simultaneously. In practice, network partitions are unavoidable, so the real choice is CP vs AP. CP systems (HBase, ZooKeeper, etcd) reject or block requests when partitioned to preserve consistency. AP systems (Cassandra, CouchDB, DynamoDB) return potentially stale data to remain available. Note: PACELC extends CAP by also considering latency vs consistency trade-offs even without partitions.
+
+Vietnamese explanation: CAP thường bị hiểu sai là "chọn 2 trong 3." Thực tế, P (Partition tolerance) không phải là lựa chọn — mạng luôn có thể bị phân vùng, bạn phải chấp nhận P. Vậy chỉ còn chọn C hoặc A khi partition xảy ra. Cassandra chọn AP: vẫn accept write ở cả hai side của partition, sau đó reconcile khi mạng phục hồi (eventual consistency). ZooKeeper chọn CP: không serve request nếu không có quorum. PACELC quan trọng hơn trong thực tế vì nó mô tả trade-off ngay cả khi không có partition.
+
+---
+
+### Q: How does the Circuit Breaker pattern work and how does it differ from a retry strategy? / Circuit Breaker hoạt động thế nào và khác gì retry strategy? 🟡 Mid
+
+**A:** A Circuit Breaker wraps calls to a downstream service and tracks failure rate. It has three states: **Closed** (normal, calls pass through), **Open** (failure threshold exceeded, calls fail immediately without attempting), **Half-Open** (after a timeout, allows a probe request — if it succeeds, transition to Closed; if it fails, back to Open). Unlike pure retry which keeps hammering a failing service (causing cascading failures and overload), Circuit Breaker gives the downstream time to recover and prevents resource exhaustion in the caller.
+
+```text
+Closed → [failures > threshold] → Open → [timeout elapsed] → Half-Open
+Half-Open → [probe succeeds] → Closed
+Half-Open → [probe fails]    → Open
+```
+
+Vietnamese explanation: Retry đơn giản là thử lại — hữu ích với transient errors (network blip). Circuit Breaker là lớp bảo vệ cao hơn: khi downstream service đã rõ ràng là down, tiếp tục retry chỉ làm trầm trọng thêm (thread pool cạn kiệt, latency tăng cho user). Circuit Breaker trả lời nhanh với fallback (cached data, default response) thay vì đợi timeout. Trong Go, thư viện `sony/gobreaker` phổ biến. Nên kết hợp cả hai: Circuit Breaker bao bên ngoài retry để không retry khi breaker đang Open.
+
+---
+
+### Q: What is a service mesh and what problems does it solve that cannot be solved at the application layer? / Service mesh là gì và giải quyết vấn đề gì mà application layer không làm được? 🔴 Senior
+
+**A:** A service mesh (e.g., Istio, Linkerd) is an infrastructure layer that intercepts all network traffic between services via sidecar proxies (e.g., Envoy). It provides: mutual TLS (mTLS) for service-to-service auth without code changes, observability (distributed tracing, metrics, access logs) automatically, traffic management (canary deployments, retries, timeouts, circuit breaking) declaratively via control plane config. The key distinction: these concerns are handled uniformly at the infrastructure level regardless of programming language or framework, eliminating the need for each team to implement their own resilience library.
+
+Vietnamese explanation: Application layer có thể implement retry, circuit breaker, TLS — nhưng mỗi team làm mỗi cách khác nhau, mỗi ngôn ngữ một library. Service mesh đồng nhất hóa toàn bộ: bạn configure retry policy một lần trong YAML, áp dụng cho mọi service bất kể Go, Java, hay Python. mTLS được bật tự động — không cần developer nhớ configure certificate. Đây là lý do tại sao large-scale microservices (>50 services) thường adopt service mesh. Nhược điểm: thêm latency ~1-3ms per hop, tăng resource usage (sidecar mỗi pod), và ops complexity của control plane.
+
+---
+
+### Q: Explain the Raft consensus algorithm at a high level. Why is it preferred over Paxos in modern systems? / Giải thích Raft consensus algorithm ở mức cao. Tại sao nó được ưa dùng hơn Paxos? 🔴 Senior
+
+**A:** Raft divides consensus into three sub-problems: **Leader Election** (nodes vote for a leader; leader has the most up-to-date log), **Log Replication** (leader appends entries to its log, replicates to followers; commit when majority acknowledges), **Safety** (only nodes with the most complete log can become leader). Key properties: one leader at a time (strong consistency), entries only flow leader→follower (no complex multi-master scenarios), explicit term numbers prevent stale leaders from causing splits. Raft is preferred over Paxos because it is designed for understandability — it decomposes the problem into clearly defined roles and phases, making correct implementation significantly easier.
+
+Vietnamese explanation: Paxos được Lamport chứng minh là đúng nhưng cực kỳ khó implement đúng — đến mức Google Chubby và nhiều hệ thống phải dùng "Multi-Paxos" (biến thể chưa được formal proof đầy đủ). Raft ra đời với mục tiêu rõ ràng: understandable. etcd (dùng trong Kubernetes), CockroachDB, TiKV đều implement Raft. Trong phỏng vấn, điểm quan trọng: Raft đảm bảo tối đa một leader mỗi term, commit chỉ khi majority nodes acknowledge — đây là nền tảng của CP systems. Raft không giải quyết Byzantine failures (node gửi dữ liệu sai); cho Byzantine, cần PBFT hoặc BFT-based protocols.
+
+---
+
+### Q: What is the Saga pattern's approach to handling partial failures in distributed transactions? / Saga pattern xử lý partial failure trong distributed transaction thế nào? 🟡 Mid
+
+**A:** The Saga pattern replaces a distributed ACID transaction with a sequence of local transactions, each publishing an event or message to trigger the next step. If a step fails, the saga executes **compensating transactions** in reverse order to undo the work done by previous steps. Compensating transactions must be idempotent (safe to execute multiple times) and semantically undo the business effect — they cannot always be a true rollback (e.g., a sent email cannot be unsent; instead, a "cancellation email" is the compensation). Two coordination approaches: Choreography (event-driven, decentralized) and Orchestration (central coordinator, explicit state machine).
+
+Vietnamese explanation: Saga chấp nhận eventual consistency thay vì ACID atomicity. Ví dụ đặt tour du lịch: Book Flight → Book Hotel → Book Car. Nếu Book Car fail, compensation là Cancel Hotel → Cancel Flight. Thách thức chính: compensation không phải lúc nào cũng "sạch" (irreversible effects như charge thẻ, gửi email). Đây là lý do tại sao business logic phải thiết kế "compensatable actions" từ đầu. Trong phỏng vấn, đề cập đến idempotency của compensation (dùng idempotency key), visibility vào saga state (orchestration dễ debug hơn choreography), và cách handle compensation cũng fail (dead letter queue + manual intervention).
 

@@ -1,5 +1,9 @@
 # SQL & Database Fundamentals — Deep Dive
 
+
+> **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > **Phương pháp**: ~85% lý thuyết / 15% SQL ví dụ. Q&A format.
 > **Difficulty**: 🟢 Junior | 🟡 Middle | 🔴 Senior
 
@@ -1410,4 +1414,4 @@ Flowchart:
 
 ---
 
-> **Tiếp theo:** [02-indexing-and-query-optimization.md](./02-indexing-and-query-optimization.md) — B-tree, Hash, GIN, GiST, EXPLAIN ANALYZE, query plan optimization.
+> **Tiếp theo:** [02-indexing-and-query-optimization.md](./02-indexing-optimization.md) — B-tree, Hash, GIN, GiST, EXPLAIN ANALYZE, query plan optimization.

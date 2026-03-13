@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/valid-palindrome/"
 
 # Valid Palindrome
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 125. Valid Palindrome**
 
 ## Problem Description

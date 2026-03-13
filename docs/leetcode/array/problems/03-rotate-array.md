@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/rotate-array/"
 
 # Rotate Array
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 189. Rotate Array**
 
 ## Problem Description

@@ -1,5 +1,9 @@
 # Frontend Theory 09: State Management Patterns
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Overview / Tổng Quan
 
 Tài liệu này tổng hợp tiến hóa của state management: MVC → Flux → Redux → Context → Zustand → Signals,

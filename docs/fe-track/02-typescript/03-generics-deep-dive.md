@@ -1,5 +1,9 @@
 # Generics Deep Dive / Tìm Hiểu Sâu về Generics
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 [← Previous: Advanced Types](./02-advanced-types.md) | [Next: TypeScript Comprehensive](./04-typescript-comprehensive.md)
 
 ---

@@ -1,5 +1,9 @@
 # STAR Method - Framework Trả Lời Behavioral Questions
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > STAR là framework chuẩn để trả lời behavioral questions một cách có cấu trúc và thuyết phục.
 
 ---

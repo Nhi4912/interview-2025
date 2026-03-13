@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/merge-two-sorted-list/"
 
 # Merge Two Sorted List
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 21. Merge Two Sorted Lists**
 
 ## Problem Description

@@ -1,5 +1,9 @@
 # Google Interview Guide — Hướng Dẫn Phỏng Vấn Google
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > Target roles: Frontend (React/TypeScript) and Backend (Go)
 > Last updated: 2026
 > Cross-references: `shared/`, `fe-track/`, `be-track/`

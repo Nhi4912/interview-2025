@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/group-anagram/"
 
 # Group Anagram
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 49. Group Anagrams**
 
 ## Problem Description

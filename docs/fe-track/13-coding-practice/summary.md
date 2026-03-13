@@ -1,5 +1,9 @@
 # Frontend Coding Problems - Complete Collection
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Overview
 
 This collection contains practical frontend coding problems with complete solutions, covering various aspects of modern web development commonly tested in technical interviews.

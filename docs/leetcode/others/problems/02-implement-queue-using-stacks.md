@@ -11,6 +11,10 @@ leetcode_url: "https://leetcode.com/problems/implement-queue-using-stacks/"
 
 
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 ## Problem Description
 
  *  * Implement a first in first out (FIFO) queue using only two stacks.  * The implemented queue should support all the functions of a normal queue  * (push, peek, pop, and empty).  * 

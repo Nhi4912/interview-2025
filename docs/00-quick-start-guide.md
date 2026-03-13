@@ -1,4 +1,8 @@
 # Frontend Interview Preparation - Quick Start Guide
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](00-table-of-contents.md)
+
 ## Your Roadmap to Success
 
 **English:** This guide provides a structured approach to preparing for frontend developer interviews, covering essential topics and study strategies.
@@ -399,4 +403,4 @@ Good luck with your interviews! 🚀
 
 ---
 
-[Next: JavaScript Fundamentals →](./01-javascript-fundamentals/01-variables-data-types.md)
+[Next: JavaScript Fundamentals →](./fe-track/01-javascript/01-variables-data-types.md)

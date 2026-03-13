@@ -1,5 +1,9 @@
 # JavaScript Concepts Map / Bản Đồ Khái Niệm JavaScript
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 [Back to Table of Contents](../../00-table-of-contents.md) | [Web APIs](./00-web-apis-fundamentals.md) | [Coding Patterns](./11-interview-practice-04-coding-patterns.md)
 
 ## Overview

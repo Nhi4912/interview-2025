@@ -1,5 +1,9 @@
 # Infinite Scroll Implementation
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Problem Description
 
 Implement infinite scroll functionality for a list of items.

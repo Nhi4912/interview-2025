@@ -1,5 +1,9 @@
 # Screen Readers - Compatibility & Best Practices
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > Screen readers convert visual content to speech/braille. Understanding how they work helps build truly accessible applications.
 
 ---

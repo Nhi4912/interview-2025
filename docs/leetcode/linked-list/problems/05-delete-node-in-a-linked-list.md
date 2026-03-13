@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/delete-node-in-a-linked-list/"
 
 # Delete Node in a Linked List
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 237. Delete Node in a Linked List**
 
 ## Problem Description

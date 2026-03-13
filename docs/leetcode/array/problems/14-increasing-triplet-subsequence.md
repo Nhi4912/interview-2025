@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/increasing-triplet-subsequence/"
 
 # Increasing Triplet Subsequence
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 334. Increasing Triplet Subsequence**
 
 ## Problem Description

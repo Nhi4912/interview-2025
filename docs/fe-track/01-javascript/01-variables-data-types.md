@@ -1,4 +1,8 @@
 # Variables & Data Types
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## JavaScript Fundamentals - Chapter 1
 
 [← Previous](./00-javascript-basics.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next →](./02-scope-hoisting.md)

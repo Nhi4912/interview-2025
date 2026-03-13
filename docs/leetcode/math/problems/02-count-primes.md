@@ -11,6 +11,10 @@ leetcode_url: "https://leetcode.com/problems/count-primes/"
 
 
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 ## Problem Description
 
  *  * Given an integer n, return the number of prime numbers that are strictly less than n.  *  * Input: n = 10  * Output: 4 

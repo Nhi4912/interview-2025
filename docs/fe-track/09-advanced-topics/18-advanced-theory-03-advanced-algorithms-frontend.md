@@ -1,5 +1,9 @@
 # Advanced Algorithms for Frontend Engineers
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 **Tổng Quan / Overview:** Interview-level algorithms mapped to frontend use cases, visualization, and product constraints.
 **Giải thích:** Thuật toán mức phỏng vấn gắn với bài toán frontend, trực quan hóa và ràng buộc sản phẩm.
 

@@ -1,4 +1,8 @@
 # Security Fundamentals — Nền tảng Bảo mật
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > Shared theory for both Frontend and Backend tracks.
 > Cross-referenced by: `fe-track/07-web-security/`, `be-track/02-backend-knowledge/04-auth-security.md`
 

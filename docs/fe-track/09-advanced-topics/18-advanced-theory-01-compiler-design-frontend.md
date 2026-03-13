@@ -1,5 +1,9 @@
 # Advanced Frontend Compiler Design (AST, Parsing, Codegen)
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 **Tổng Quan / Overview:** Compiler pipeline for frontend: tokenization, parsing, transforms, code generation, and optimization.
 **Giải thích:** Pipeline compiler cho frontend: tách token, parse AST, transform, sinh mã và tối ưu hóa.
 

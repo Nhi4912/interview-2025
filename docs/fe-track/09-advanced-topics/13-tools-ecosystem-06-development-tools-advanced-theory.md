@@ -1,5 +1,9 @@
 # Advanced Development Tools Theory / Lý Thuyết Công Cụ Phát Triển Nâng Cao
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Table of Contents / Mục Lục
 
 1. [Dataflow Programming Theory](#dataflow-programming-theory)
@@ -2489,7 +2493,7 @@ These concepts form the theoretical foundation for modern development tools and 
 
 ---
 
-[← Back to Modern Development Tools](./05-modern-development-tools.md) | [Next: Interview Questions →](./07-tools-interview-questions.md) | [Back to Table of Contents](../../00-table-of-contents.md)
+[← Back to Modern Development Tools](./13-tools-ecosystem-05-modern-development-tools.md) | [Next: Interview Questions →](./13-tools-ecosystem-07-tools-interview-questions.md) | [Back to Table of Contents](../../00-table-of-contents.md)
 
 ## Câu Hỏi Phỏng Vấn / Interview Q&A
 

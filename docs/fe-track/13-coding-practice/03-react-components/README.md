@@ -1,5 +1,9 @@
 # React Component Challenges
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 > Bài tập xây dựng React components và custom hooks phổ biến trong phỏng vấn.
 
 ---
@@ -8,14 +12,14 @@
 
 | # | Problem | Difficulty | Time | Focus |
 |---|---------|------------|------|-------|
-| 1 | [Autocomplete](./autocomplete.md) | 🟡 Medium | 35 min | Debounce, A11y |
-| 2 | [Data Table](./data-table.md) | 🔴 Hard | 45 min | Sort, Filter, Pagination |
-| 3 | [useLocalStorage](./useLocalStorage.md) | 🟢 Easy | 15 min | Custom Hook |
-| 4 | [Infinite Query](./infinite-query.md) | 🟡 Medium | 30 min | Data Fetching |
-| 5 | [Accordion](./accordion.md) | 🟡 Medium | 25 min | Compound Component |
-| 6 | [useDebounce](./useDebounce.md) | 🟢 Easy | 15 min | Custom Hook |
-| 7 | [Tabs](./tabs.md) | 🟡 Medium | 25 min | Compound Component |
-| 8 | [Modal](./modal.md) | 🟡 Medium | 30 min | Portal, Focus Trap |
+| 1 | Autocomplete | 🟡 Medium | 35 min | Debounce, A11y |
+| 2 | Data Table | 🔴 Hard | 45 min | Sort, Filter, Pagination |
+| 3 | useLocalStorage | 🟢 Easy | 15 min | Custom Hook |
+| 4 | Infinite Query | 🟡 Medium | 30 min | Data Fetching |
+| 5 | Accordion | 🟡 Medium | 25 min | Compound Component |
+| 6 | useDebounce | 🟢 Easy | 15 min | Custom Hook |
+| 7 | Tabs | 🟡 Medium | 25 min | Compound Component |
+| 8 | Modal | 🟡 Medium | 30 min | Portal, Focus Trap |
 
 ---
 

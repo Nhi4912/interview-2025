@@ -11,6 +11,10 @@ leetcode_url: "https://leetcode.com/problems/kth-smallest-element-in-a-bst/"
 
 
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 ## Problem Description
 
  * return the kth smallest value (1-indexed) of all the values of the nodes in the tree.  *  *  * Companies: Amazon, Google, Microsoft  * 

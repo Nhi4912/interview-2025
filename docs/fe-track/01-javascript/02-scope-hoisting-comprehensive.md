@@ -1,4 +1,8 @@
 # Scope & Hoisting - Comprehensive Bilingual Deep Dive
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Lexical Scope, Hoisting, TDZ, Module Scope, and Interview Pitfalls
 
 [← Variables](./01-variables-data-types.md) | [Closures →](./03-closures-comprehensive.md) | [Async](./09-async-comprehensive.md)

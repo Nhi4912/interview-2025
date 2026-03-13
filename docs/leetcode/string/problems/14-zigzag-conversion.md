@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/zigzag-conversion/"
 
 # ZigZag Conversion
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 6. ZigZag Conversion**
 
 ## Problem Description

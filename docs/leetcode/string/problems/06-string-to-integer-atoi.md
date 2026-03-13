@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/string-to-integer-atoi-/"
 
 # String to Integer (atoi)
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 8. String to Integer (atoi)**
 
 ## Problem Description

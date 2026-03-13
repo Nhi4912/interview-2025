@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/serialize-and-deserialize-binary-tr
 
 # Serialize and Deserialize Binary Tree
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 297. Serialize and Deserialize Binary Tree**
 
 ## Problem Description

@@ -11,6 +11,10 @@ leetcode_url: "https://leetcode.com/problems/insert-delete-getrandom-o1/"
 
 
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 ## Problem Description
 
  *  * Implement the RandomizedSet class:  * - RandomizedSet() Initializes the RandomizedSet object.  * - bool insert(int val) Inserts an item val into the set if not present. Returns true if the item was not present, false otherwise.  * - bool remove(int val) Removes an item val from the set if present. Returns true if the item was present, false otherwise. 

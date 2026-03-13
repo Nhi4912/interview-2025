@@ -1,5 +1,9 @@
 # Advanced System Design Problems — Bài Toán Nâng Cao
 
+
+> **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > Backend Track — System Design
 > Cross-referenced by: `shared/02-system-design/system-design-theory.md`, `shared/03-database/database-theory.md`, `shared/01-cs-fundamentals/networking-theory.md`, `shared/04-security/01-security-fundamentals.md`, `be-track/02-backend-knowledge/03-distributed-systems.md`, `be-track/02-backend-knowledge/04-auth-security.md`
 
@@ -1997,4 +2001,62 @@ func SHA256Hex(data []byte) string {
 6) Discuss tradeoffs + failure handling
 7) Wrap with monitoring + future scaling
 ```
+
+---
+
+## Câu Hỏi Phỏng Vấn / Interview Q&A
+
+### Q: How would you design a rate limiting system that works across multiple server instances? / Thiết kế hệ thống rate limiting hoạt động trên nhiều server như thế nào? 🔴 Senior
+
+**A:** A distributed rate limiter requires a shared state store (typically Redis) so all instances enforce limits consistently. Common algorithms: Token Bucket (smooth bursting), Sliding Window Log (precise but memory-heavy), Sliding Window Counter (approximate but memory-efficient). The key design choices are: fixed vs sliding window, where to enforce (API Gateway vs per-service), and how to handle Redis unavailability (fail-open vs fail-closed).
+
+```text
+Client → API Gateway → Redis INCR + EXPIRE → Allow/Reject
+                              ↓ (Redis down)
+                         Local fallback counter (fail-open)
+```
+
+Vietnamese explanation: Rate limiting phân tán cần shared state để mọi server node đếm cùng một bucket. Redis với lệnh `INCR` + `EXPIRE` là lựa chọn phổ biến nhất vì atomic và nhanh. Bạn cần quyết định trade-off giữa độ chính xác (Sliding Window Log tốn memory O(requests)) và hiệu quả (Fixed Window có race condition ở boundary). Trong phỏng vấn, hãy đề cập đến vấn đề Redis SPOF và chiến lược fallback.
+
+---
+
+### Q: What is distributed locking and when should you use it? / Distributed locking là gì và khi nào nên dùng? 🟡 Mid
+
+**A:** A distributed lock ensures that only one process/node executes a critical section at a time across a distributed system. Common implementations: Redis `SET key value NX PX ttl` (Redlock for multi-node), ZooKeeper ephemeral znodes, etcd leases. Use distributed locks when: preventing double-processing of a job, coordinating leader election, or protecting a shared resource (e.g., file write). Pitfalls: lock expiry while holder is still working (use fencing tokens), Redis single-node failure (use Redlock with 5 nodes), deadlock if holder crashes before releasing.
+
+Vietnamese explanation: Distributed lock giải quyết race condition khi nhiều service instance cùng tranh nhau làm một việc — ví dụ cron job chạy trên 3 pod, chỉ 1 pod được phép thực thi. Redis `SET NX PX` là cách đơn giản nhất, nhưng nếu Redis node chết sau khi lock được set thì lock mất. Redlock dùng majority quorum trên 5 Redis node để tăng reliability. Fencing token (monotonic counter) là kỹ thuật quan trọng để phát hiện stale lock holder.
+
+---
+
+### Q: Explain consistent hashing and why it matters for distributed caching. / Giải thích consistent hashing và tại sao nó quan trọng với distributed cache? 🟡 Mid
+
+**A:** Consistent hashing maps both cache nodes and keys onto a virtual ring (0 to 2³²). A key is assigned to the first node clockwise from its hash position. When a node is added/removed, only the keys between the new node and its predecessor need to be remapped — on average `k/n` keys (k = total keys, n = nodes), compared to nearly all keys in naive modulo hashing. Virtual nodes (vnodes) per physical node compensate for uneven load distribution.
+
+```text
+Ring: 0 ──── NodeA ──── NodeB ──── NodeC ──── 2³²
+      Key1→A, Key2→B, Key3→C  (add NodeD: only ~25% keys move)
+```
+
+Vietnamese explanation: Với modulo hashing (`key % N`), thêm hoặc xóa 1 node khiến gần như toàn bộ key phải remap — cache miss hàng loạt gây thundering herd lên database. Consistent hashing chỉ di chuyển `1/N` phần key trung bình. Đây là lý do tại sao Memcached, DynamoDB, Cassandra đều dùng kỹ thuật này. Trong phỏng vấn, hãy đề cập đến virtual nodes để xử lý hot spot khi các node có capacity khác nhau.
+
+---
+
+### Q: What is CQRS and when does it make sense to apply it? / CQRS là gì và khi nào nên áp dụng? 🔴 Senior
+
+**A:** CQRS (Command Query Responsibility Segregation) separates the write model (Commands that mutate state) from the read model (Queries that return data). Commands go through domain logic and update a write store; the read side maintains denormalized projections optimized for specific query patterns. This enables independent scaling, different storage technologies per side, and simpler query models. It adds complexity: eventual consistency between write and read stores, multiple data models to maintain, and more infrastructure.
+
+Vietnamese explanation: CQRS phù hợp khi read/write load chênh lệch lớn (ví dụ: e-commerce có 99% đọc, 1% ghi), hoặc khi domain phức tạp cần tách bạch business logic khỏi query optimization. Read side có thể dùng Elasticsearch cho full-text search trong khi write side dùng PostgreSQL. Không nên áp dụng CQRS cho CRUD đơn giản — overhead không xứng đáng. Trong hệ thống lớn, CQRS thường đi cùng Event Sourcing nhưng hai khái niệm này độc lập nhau.
+
+---
+
+### Q: What is Event Sourcing and how does it differ from traditional state storage? / Event Sourcing là gì và khác gì với lưu trạng thái truyền thống? 🔴 Senior
+
+**A:** Traditional storage saves the current state: `UPDATE orders SET status='shipped' WHERE id=1`. Event Sourcing saves every state-changing event as an immutable append-only log: `[OrderPlaced, PaymentReceived, OrderShipped]`. Current state is derived by replaying events from the beginning (or from a snapshot). Benefits: full audit trail, ability to replay to any point in time, natural fit for event-driven architectures, temporal queries. Drawbacks: eventual consistency for reads, event schema evolution complexity, replay performance (mitigated by snapshots).
+
+```text
+Traditional:  orders table → {id:1, status:"shipped", total:99}
+Event Sourcing: event_log → [OrderPlaced(99), Paid(99), Shipped] → replay → same state
+```
+
+Vietnamese explanation: Event Sourcing giải quyết câu hỏi "tại sao trạng thái lại như vậy?" mà traditional storage không trả lời được. Ví dụ điển hình: hệ thống ngân hàng lưu từng transaction thay vì chỉ lưu balance cuối. Điểm khó nhất là event schema evolution — khi business logic thay đổi, các event cũ vẫn phải replay được. Snapshot giúp tránh replay toàn bộ history mỗi lần đọc. Trong phỏng vấn, phân biệt rõ Event Sourcing (persistence strategy) với Event-Driven Architecture (communication pattern).
 

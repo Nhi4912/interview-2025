@@ -1,5 +1,9 @@
 # CSS Architecture for Scalable Frontend Systems / Kiến Trúc CSS Cho Hệ Thống Frontend Mở Rộng
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Overview
 
 Trong các dự án FE thực tế, CSS thường hỏng không phải vì thiếu syntax, mà vì thiếu kiến trúc.

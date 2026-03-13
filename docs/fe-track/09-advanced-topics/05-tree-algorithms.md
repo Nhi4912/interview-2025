@@ -1,4 +1,8 @@
 # Tree Algorithms / Thuật Toán Cây
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Computer Science - Chapter 6 / Khoa Học Máy Tính - Chương 6
 
 [Back to Table of Contents](../../00-table-of-contents.md)

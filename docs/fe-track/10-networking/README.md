@@ -1,5 +1,9 @@
 # Networking - HTTP & API Fundamentals
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > Hiểu networking là essential cho frontend developers. HTTP, REST, GraphQL, WebSockets là core knowledge.
 
 ---

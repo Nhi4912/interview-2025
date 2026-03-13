@@ -6,6 +6,10 @@ description: Real interview-style coding challenges for frontend development
 
 # Frontend Coding Problems
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 Practice with real interview-style coding challenges that test your frontend development skills.
 
 ## Core React Challenges

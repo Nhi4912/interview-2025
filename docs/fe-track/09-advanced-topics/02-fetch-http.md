@@ -1,4 +1,8 @@
 # Fetch API & HTTP / API Fetch & HTTP
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Web APIs - Chapter 2 / API Web - Chương 2
 
 [← Previous: Browser APIs](./01-browser-apis.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next: WebSockets →](./03-websockets.md)

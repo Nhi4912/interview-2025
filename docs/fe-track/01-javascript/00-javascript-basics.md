@@ -1,4 +1,8 @@
 # JavaScript Basics
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## JavaScript Fundamentals - Chapter 0
 
 [← Previous](../../00-table-of-contents.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next →](./01-variables-data-types.md)

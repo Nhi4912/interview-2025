@@ -1,5 +1,9 @@
 # JavaScript Type System - Advanced Theory / Hệ Thống Kiểu JavaScript - Lý Thuyết Nâng Cao
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Table of Contents / Mục Lục
 
 1. [Type System Fundamentals](#type-system-fundamentals)

@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/first-unique-character-in-a-string/
 
 # First Unique Character in a String
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 387. First Unique Character in a String**
 
 ## Problem Description

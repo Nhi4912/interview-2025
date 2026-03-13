@@ -1,7 +1,11 @@
 # Algorithms / Thuật Toán
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Computer Science Fundamentals - Chapter 2 / Khoa Học Máy Tính Cơ Bản - Chương 2
 
-[← Previous: Data Structures](./01-data-structures.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next: Complexity Analysis →](./03-complexity-analysis.md)
+[← Previous: Data Structures](./01-data-structures-js.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next: Complexity Analysis →](./08-web-performance-theory.md)
 
 ---
 
@@ -579,4 +583,4 @@ console.log(coinChangeGreedy([25, 10, 5, 1], 63)); // [25, 25, 10, 1, 1, 1]
 
 ---
 
-[← Previous: Data Structures](./01-data-structures.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next: Complexity Analysis →](./03-complexity-analysis.md)
+[← Previous: Data Structures](./01-data-structures-js.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next: Complexity Analysis →](./08-web-performance-theory.md)

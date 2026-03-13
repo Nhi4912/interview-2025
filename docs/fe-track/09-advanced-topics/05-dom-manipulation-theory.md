@@ -1,4 +1,8 @@
 # DOM Manipulation Theory
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Understanding the Document Object Model
 
 **English:** The Document Object Model (DOM) is a programming interface for web documents that represents the page structure as a tree of objects, enabling dynamic manipulation of content, structure, and styling.
@@ -976,4 +980,4 @@ A: getElementById is faster (hash lookup), returns single element, only works on
 
 ---
 
-[← Back to CSS Grid/Flexbox](../07-css/05-css-grid-flexbox-theory.md) | [Next: State Machines →](../15-advanced-topics/07-state-machines-theory.md)
+[← Back to CSS Grid/Flexbox](../05-html-css/05-css-grid-flexbox-theory.md) | [Next: State Machines →](./15-advanced-topics-07-state-machines-theory.md)

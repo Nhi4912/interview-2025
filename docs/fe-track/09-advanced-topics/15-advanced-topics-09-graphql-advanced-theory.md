@@ -1,4 +1,8 @@
 # GraphQL Advanced Theory
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Mastering Modern API Query Language
 
 **English:** GraphQL is a query language for APIs and a runtime for executing those queries, providing a complete and understandable description of data, giving clients the power to ask for exactly what they need.
@@ -1308,4 +1312,4 @@ A: Add user to context from token in headers, check authentication in resolvers 
 
 ---
 
-[← Back to WebAssembly](./08-webassembly-theory.md) | [Next: Testing Advanced →](../13-tools-ecosystem/05-testing-advanced-theory.md)
+[← Back to WebAssembly](./15-advanced-topics-08-webassembly-theory.md) | [Next: Testing Advanced →](./13-tools-ecosystem-04-testing-tools.md)

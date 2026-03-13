@@ -8,6 +8,10 @@ tags: [react, accessibility, focus-management, aria, modal]
 
 # Problem 8: Accessible Modal Dialog / Hộp thoại Modal có thể truy cập
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Problem Description / Mô tả bài toán
 
 **English:** Create a modal dialog component that is fully accessible and follows WCAG guidelines for user interaction and screen reader support.

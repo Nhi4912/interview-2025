@@ -1,5 +1,9 @@
 # NoSQL, Redis, MongoDB & Beyond — Interview Deep Dive
 
+
+> **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > **Phạm vi**: Lý thuyết chuyên sâu (~85%) + ví dụ minh họa (~15%). Định dạng Q&A song ngữ.
 > **Mục tiêu**: Trang bị kiến thức vững chắc về các hệ thống NoSQL phổ biến cho phỏng vấn Backend/System Design.
 

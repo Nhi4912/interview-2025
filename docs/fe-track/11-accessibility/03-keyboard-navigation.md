@@ -1,5 +1,9 @@
 # Keyboard Navigation - Focus Management & Accessibility
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > Keyboard accessibility ensures all users can navigate and interact with your application without a mouse.
 
 ---

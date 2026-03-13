@@ -1,4 +1,8 @@
 # Advanced JavaScript Concepts / Khái Niệm JavaScript Nâng Cao
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## JavaScript Fundamentals - Chapter 8 / Kiến Thức Cơ Bản JavaScript - Chương 8
 
 [← Previous: ES6+ Features](./07-es6-features.md) | [Back to Table of Contents](../../00-table-of-contents.md)

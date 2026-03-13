@@ -1,5 +1,9 @@
 # Operating Systems — Go Backend Interview Prep
 
+
+> **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > **Target:** Middle/Senior Go Backend Developer
 > **Companies:** Zalo, Grab, Axon, Employment Hero, Microsoft, Google
 > **Difficulty:** 🟢 Junior | 🟡 Middle | 🔴 Senior
@@ -1954,3 +1958,47 @@ func main() {
 ---
 
 > **Final Tip:** Khi phỏng vấn OS, luôn kết nối lý thuyết với Go implementation. Đừng chỉ nói "virtual memory uses paging" — nói thêm "Go memory allocator dùng mmap để lấy memory từ OS, chia thành spans, quản lý qua mcache/mcentral/mheap hierarchy." Điều này thể hiện bạn không chỉ học lý thuyết mà còn hiểu implementation thực tế.
+
+---
+
+## Câu Hỏi Phỏng Vấn / Interview Q&A
+
+### Q: How does a goroutine differ from an OS thread, and what are the scheduling implications? / Goroutine khác OS thread như thế nào và hệ quả về scheduling là gì? 🟡 Mid
+
+**A:** A goroutine is a user-space, cooperatively-and-preemptively scheduled unit of execution managed by the Go runtime (GMP model). It starts at 2KB stack (grows dynamically up to 1GB), vs OS thread which starts at 1–8MB fixed stack. Context switching between goroutines costs ~200ns vs ~1–10µs for OS threads (no kernel involvement).
+
+Vietnamese explanation: Go runtime dùng M:N threading — M goroutines chạy trên N OS threads (thường N = số CPU). Scheduler là work-stealing: nếu một P (processor) hết việc, nó steal goroutines từ P khác. Khi goroutine gọi blocking syscall (file I/O cũ), runtime detach thread khỏi P và tạo thread mới để P tiếp tục chạy goroutine khác. Với network I/O, Go dùng netpoller (epoll/kqueue) nên goroutine không block thread — đây là lý do Go xử lý 100K connections tốt hơn Java thread-per-connection model.
+
+---
+
+### Q: What is a context switch and what does the OS save/restore during one? / Context switch là gì và OS lưu/khôi phục gì trong quá trình đó? 🟢 Junior
+
+**A:** A context switch is the OS saving the state (context) of the currently running process/thread and loading the saved state of the next one to run. Saved state includes: CPU registers (PC, SP, general-purpose), memory mappings (if switching processes), kernel stack pointer, and scheduling metadata.
+
+Vietnamese explanation: Context switch tốn kém vì: (1) CPU pipeline bị flush; (2) CPU cache (L1/L2 TLB) bị invalidate khi switch process (do address space thay đổi); (3) kernel phải thực hiện privileged mode transition (user → kernel → user). Thread switch trong cùng process rẻ hơn process switch vì dùng chung address space, không flush TLB. Goroutine switch rẻ nhất vì hoàn toàn user-space, không cần kernel trap. Trong Go interview, liên kết: `runtime.Gosched()` yields goroutine; `GOMAXPROCS` controls parallelism.
+
+---
+
+### Q: Explain the Go memory model with respect to goroutine communication. What guarantees does it provide? / Giải thích Go memory model liên quan đến goroutine communication. Nó đảm bảo điều gì? 🔴 Senior
+
+**A:** The Go memory model defines *happens-before* relationships: if event A happens-before B, then B is guaranteed to observe A's writes. Key guarantees: a send on a channel happens-before the corresponding receive completes; `sync.Mutex` Unlock happens-before the next Lock; `sync.WaitGroup.Done` happens-before `Wait` returns.
+
+Vietnamese explanation: Không có happens-before relationship thì compiler và CPU có thể reorder instructions (out-of-order execution, store buffering). Ví dụ sai: hai goroutines đọc/ghi một biến không qua channel hay mutex — đây là **data race**, undefined behavior trong Go memory model. `go build -race` dùng ThreadSanitizer để phát hiện. Thực tế: bất kỳ shared mutable state nào đều cần synchronization primitive (channel, mutex, atomic). `sync/atomic` chỉ đảm bảo visibility, không đảm bảo ordering cho non-atomic reads trên cùng variable.
+
+---
+
+### Q: What are file descriptors? How does Go manage them at scale, and what happens when they run out? / File descriptor là gì? Go quản lý chúng thế nào ở scale lớn và điều gì xảy ra khi hết? 🟡 Mid
+
+**A:** A file descriptor (fd) is a non-negative integer index into the per-process open file table maintained by the OS kernel. Every open file, socket, pipe, and timer uses an fd. Linux default limit: 1024 per process (`ulimit -n`), configurable up to millions system-wide.
+
+Vietnamese explanation: Khi hết fd (`EMFILE: too many open files`): `net.Listen` và `os.Open` trả về error, Go server không nhận được connection mới. Nguyên nhân phổ biến trong Go: **goroutine/connection leak** — `http.Client` mà không drain và close response body, TCP connections không được close đúng (`defer resp.Body.Close()`). Cách kiểm tra: `lsof -p <pid> | wc -l`. Production fix: set `MaxIdleConnsPerHost` trong `http.Transport`, dùng connection pool, và set `SO_REUSEPORT`. Monitoring: export `process_open_fds` metric từ Prometheus Go client library.
+
+---
+
+### Q: How does Go handle OS signals, and what is the correct pattern for graceful shutdown on SIGTERM? / Go xử lý OS signals như thế nào và pattern đúng cho graceful shutdown với SIGTERM là gì? 🟡 Mid
+
+**A:** Go exposes signal handling via `signal.Notify(ch, syscall.SIGTERM, syscall.SIGINT)` which routes signals to a buffered channel. Go 1.16+ provides `signal.NotifyContext(ctx, ...)` which cancels a context when the signal arrives.
+
+Vietnamese explanation: Signals là cơ chế IPC của Unix để OS/process gửi thông báo bất đồng bộ. `SIGTERM` (15) là "please terminate gracefully" — Kubernetes gửi cái này trước khi kill. `SIGKILL` (9) không thể catch — đây là hard kill. `SIGINT` là Ctrl+C. Pattern sai: ignore signal và cho OS force-kill — in-flight requests bị drop, DB transactions không complete. Pattern đúng với `signal.NotifyContext`: context cancel trigger `server.Shutdown(ctx)` → drain connections → cancel background workers → flush buffers → exit 0. Buffer size của signal channel phải ít nhất 1 để không miss signal nếu goroutine chưa ready receive.
+
+---

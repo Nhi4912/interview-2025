@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/count-and-say/"
 
 # Count and Say
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 38. Count and Say**
 
 ## Problem Description

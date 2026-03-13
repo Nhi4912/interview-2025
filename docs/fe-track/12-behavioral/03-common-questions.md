@@ -1,5 +1,9 @@
 # Common Behavioral Questions - 50+ Questions with Frameworks
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > Danh sách các câu hỏi behavioral thường gặp và cách tiếp cận từng loại.
 
 ---

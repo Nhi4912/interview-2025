@@ -1,5 +1,9 @@
 # Go Concurrency — Deep Theory & Interview Questions
 
+
+> **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > **Phạm vi**: Goroutines, Scheduler (GMP), Channels, sync, Context, Concurrency Patterns, Race/Deadlock.
 > Đây là chủ đề **quan trọng nhất** trong phỏng vấn Go — Google, Zalo, Grab đều hỏi sâu.
 > ~70% lý thuyết, ~30% code minh họa. Bilingual: English headings + Vietnamese explanations.
@@ -1676,6 +1680,48 @@ Approach:
 4. **Connection pool** (DB, HTTP client) đủ lớn: maxConns ≥ expected concurrency
 5. **Circuit breaker** nếu downstream slow/fail
 6. **GOMAXPROCS** = CPU cores, automaxprocs trong container
+
+---
+
+## Câu Hỏi Phỏng Vấn Bổ Sung / Additional Interview Q&A
+
+### Q: What is the difference between a goroutine and an OS thread? / Goroutine khác OS thread như thế nào? 🟢 Junior
+
+**A:** Goroutines are user-space lightweight threads managed by the Go runtime scheduler, not the OS. A goroutine starts with ~2KB of stack (growable up to 1GB), whereas an OS thread typically uses 1–8MB of fixed stack. The Go runtime multiplexes thousands of goroutines onto a small pool of OS threads using the GMP model (Goroutines, Machine threads, Processors). Context switching between goroutines is handled in user space and is orders of magnitude cheaper than OS thread context switches which require kernel mode transitions.
+
+Vietnamese explanation: Goroutine là luồng nhẹ (lightweight thread) chạy trong user space, được Go runtime quản lý qua mô hình GMP. Stack ban đầu chỉ ~2KB (so với ~1-8MB của OS thread) và tự động mở rộng khi cần. Hàng nghìn goroutine có thể chạy trên chỉ vài OS threads. Context switch của goroutine xảy ra trong user space — nhanh hơn nhiều so với kernel-level context switch của OS thread. Đây là lý do Go xử lý concurrency hiệu quả hơn mô hình thread-per-request truyền thống.
+
+---
+
+### Q: When should you use a buffered channel vs an unbuffered channel? / Khi nào dùng buffered channel, khi nào dùng unbuffered channel? 🟡 Mid
+
+**A:** An **unbuffered channel** (`make(chan T)`) synchronizes sender and receiver — the sender blocks until the receiver is ready, enforcing a rendezvous. Use it when you need guaranteed handoff and synchronization between goroutines. A **buffered channel** (`make(chan T, N)`) allows the sender to continue until the buffer is full, decoupling producer from consumer. Use buffered channels for: worker pool job queues, rate limiting (semaphore pattern with `make(chan struct{}, N)`), or when a producer is faster than a consumer and you want to absorb bursts. Choosing the wrong type causes subtle bugs — buffered channels can hide synchronization issues and cause goroutine leaks if the receiver exits early.
+
+Vietnamese explanation: Unbuffered channel đảm bảo **rendezvous** — sender và receiver phải đồng bộ nhau. Dùng khi cần chắc chắn data đã được xử lý trước khi tiếp tục. Buffered channel cho phép sender tiếp tục mà không cần chờ receiver ngay — hữu ích khi muốn tách producer/consumer về tốc độ. Pattern semaphore (`make(chan struct{}, N)`) giới hạn N goroutine chạy đồng thời. Lưu ý: buffered channel có thể che giấu race condition — nếu receiver thoát sớm mà channel vẫn còn data, goroutine leak xảy ra.
+
+---
+
+### Q: Explain how the `select` statement works with multiple channels and a default case. / `select` statement hoạt động như thế nào? 🟡 Mid
+
+**A:** `select` blocks until one of its channel cases is ready to proceed. If multiple cases are ready simultaneously, Go picks one **uniformly at random** (not top-to-bottom), which prevents starvation. A `default` case makes `select` non-blocking — if no channel is ready, `default` executes immediately. Common patterns: (1) timeout with `time.After`, (2) cancellation with `<-ctx.Done()`, (3) non-blocking send/receive with `default`, (4) fan-in merging multiple channels into one. Without a `default`, a `select{}` with no ready cases blocks forever — useful for keeping a goroutine alive.
+
+Vietnamese explanation: `select` chờ cho đến khi **ít nhất một** case sẵn sàng. Nếu nhiều case sẵn sàng cùng lúc, Go chọn **ngẫu nhiên đều** để tránh starvation. `default` biến select thành non-blocking — nếu không case nào sẵn sàng, default chạy ngay. Pattern thường gặp trong production: kết hợp `<-ctx.Done()` để cancel, `time.After(timeout)` để timeout, và channel data để nhận kết quả — ba case trong một select xử lý graceful shutdown rất gọn.
+
+---
+
+### Q: What are the differences between `sync.Mutex` and `sync.RWMutex`, and when do you use each? / Phân biệt `sync.Mutex` và `sync.RWMutex`? 🟡 Mid
+
+**A:** `sync.Mutex` has two states: locked and unlocked. Only one goroutine can hold the lock at a time, regardless of whether it reads or writes. `sync.RWMutex` distinguishes reads from writes: **multiple goroutines can hold RLock() simultaneously** (concurrent reads), but a `Lock()` (write) requires exclusive access — all readers must release first. Use `RWMutex` when your workload is **read-heavy** (e.g., an in-memory cache with rare writes). If writes are frequent or reads are very short, `Mutex` has less overhead since `RWMutex` is more complex internally. Never promote an `RLock` to a `Lock` without releasing first — that causes deadlock.
+
+Vietnamese explanation: `Mutex` đơn giản: một goroutine giữ lock, tất cả còn lại chờ — dù đọc hay ghi. `RWMutex` tối ưu cho workload đọc nhiều: nhiều goroutine có thể `RLock()` đồng thời, nhưng `Lock()` (ghi) yêu cầu exclusive. Dùng `RWMutex` khi cache có tỉ lệ đọc/ghi cao (ví dụ 99% đọc, 1% ghi). Tuy nhiên, nếu critical section ngắn hoặc ghi thường xuyên, overhead của RWMutex không đáng — dùng Mutex đơn giản hơn. Lỗi hay gặp: giữ `RLock` rồi cố `Lock()` mà không unlock trước → deadlock.
+
+---
+
+### Q: How does `context.WithCancel` and `context.WithTimeout` enable cancellation propagation? / Context cancellation hoạt động như thế nào trong chuỗi goroutine? 🔴 Senior
+
+**A:** `context.Context` forms a tree — a child context is derived from a parent. When you call `cancel()` on a context (from `WithCancel`) or the deadline expires (`WithTimeout`/`WithDeadline`), all derived children are cancelled automatically by closing their `Done()` channel. Goroutines cooperate by selecting on `<-ctx.Done()` and returning when cancelled. This enables **cascading cancellation**: cancelling a request at the HTTP handler level propagates through all downstream goroutines (DB queries, HTTP calls, background workers) that received the same context. Key rule: always call the cancel function (usually `defer cancel()`) to avoid context leaks — an uncancelled context holds resources until the parent is cancelled or the program exits.
+
+Vietnamese explanation: Context tạo thành **cây phân cấp**: cancel parent → tất cả children bị cancel. Goroutine "hợp tác" (cooperative) bằng cách check `<-ctx.Done()` định kỳ trong select. Pattern production: HTTP handler nhận `r.Context()`, truyền xuống tất cả downstream calls (DB, RPC, worker). Khi client disconnect, context bị cancel, tất cả goroutines dọn dẹp — tránh lãng phí resource. Lỗi thường gặp: quên `defer cancel()` → context leak (bộ nhớ không được giải phóng). Lỗi khác: pass `context.Background()` vào hàm thay vì ctx từ request — mất toàn bộ cancellation chain.
 
 ---
 

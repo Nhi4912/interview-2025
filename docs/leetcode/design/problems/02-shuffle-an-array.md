@@ -11,6 +11,10 @@ leetcode_url: "https://leetcode.com/problems/shuffle-an-array/"
 
 
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 ## Problem Description
 
  *  * Given an integer array nums, design an algorithm to randomly shuffle the array.  * All permutations of the array should be equally likely as a result of the shuffling.  *  * Implement the Solution class: 

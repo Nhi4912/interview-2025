@@ -1,4 +1,8 @@
 # WCAG 2.1 Guidelines / Hướng Dẫn WCAG 2.1
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Accessibility - Chapter 1 / Khả Năng Truy Cập - Chương 1
 
 [Back to Table of Contents](../../00-table-of-contents.md)
@@ -13,7 +17,7 @@
 
 ## Tài Liệu Liên Quan / Related References
 - [ARIA Comprehensive](./14-accessibility-02-aria-comprehensive.md)
-- [HTML5 Fundamentals](../../05-html-css/00-html5-fundamentals.md)
+- [HTML5 Fundamentals](../05-html-css/00-html5-fundamentals.md)
 
 ---
 

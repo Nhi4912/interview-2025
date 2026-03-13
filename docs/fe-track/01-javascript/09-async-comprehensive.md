@@ -1,4 +1,8 @@
 # Asynchronous JavaScript - Comprehensive Bilingual Deep Dive
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Callbacks, Promises, Async/Await, Scheduling, and Practical Patterns
 
 [← Scope & Hoisting](./02-scope-hoisting-comprehensive.md) | [Closures →](./03-closures-comprehensive.md) | [ES6 Features](./11-es6-features-deep.md)

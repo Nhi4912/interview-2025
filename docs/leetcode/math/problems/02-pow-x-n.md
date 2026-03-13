@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/pow-x-n-/"
 
 # Pow(x, n)
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 50. Pow(x, n)**
 
 ## Problem Description

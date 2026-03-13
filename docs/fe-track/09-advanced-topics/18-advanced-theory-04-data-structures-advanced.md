@@ -1,5 +1,9 @@
 # Advanced Data Structures for Frontend Systems
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 **Tổng Quan / Overview:** Persistent and specialized data structures used by editors, frameworks, and large-scale UIs.
 **Giải thích:** Cấu trúc dữ liệu persistent/chuyên dụng dùng trong editor, framework và UI quy mô lớn.
 

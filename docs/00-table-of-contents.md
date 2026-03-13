@@ -1,5 +1,9 @@
 # Interview Preparation Knowledge Base — Mục Lục Tổng Hợp
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](00-table-of-contents.md)
+
 > **Comprehensive guide for mid-senior developers targeting Frontend (React/TypeScript) and Backend (Go) roles.**
 > Target companies: Google, Microsoft, Grab, Axon, Employment Hero, Zalo/VNG
 > Last updated: March 2026

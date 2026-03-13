@@ -1,5 +1,9 @@
 # WCAG Fundamentals - Web Content Accessibility Guidelines
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > WCAG là international standard cho web accessibility. Understand principles, levels, và key success criteria.
 
 ---

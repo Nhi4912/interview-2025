@@ -1,5 +1,9 @@
 # Accessibility Mind Map - Quick Reference
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > Sơ đồ tổng hợp kiến thức Accessibility cho ôn tập nhanh.
 
 ---
@@ -359,4 +363,4 @@ DYNAMIC:
 
 ---
 
-> **Module hoàn thành!** Quay lại [README.md](./README.md) để xem tổng quan module.
+> **Module hoàn thành!** Quay lại [README.md](./mindmap-foundations.md) để xem tổng quan module.

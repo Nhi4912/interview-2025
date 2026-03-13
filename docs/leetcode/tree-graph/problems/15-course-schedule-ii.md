@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/course-schedule-ii/"
 
 # Course Schedule II
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 210. Course Schedule II**
 
 ## Problem Description

@@ -11,6 +11,10 @@ leetcode_url: "https://leetcode.com/problems/roman-to-integer/"
 
 
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 ## Problem Description
 
  *  * Roman numerals are represented by seven different symbols: I, V, X, L, C, D and M.  *  * Symbol       Value  * I             1 

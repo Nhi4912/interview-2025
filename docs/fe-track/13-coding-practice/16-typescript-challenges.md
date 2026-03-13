@@ -8,6 +8,10 @@ tags: [typescript, type-system, generics, utility-types, advanced-patterns]
 
 # TypeScript Coding Challenges
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Problem 1: Advanced Type Utilities
 
 Create a comprehensive set of TypeScript utility types that can be used in real-world applications.

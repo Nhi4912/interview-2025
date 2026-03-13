@@ -1,4 +1,8 @@
 # Testing Tools & Strategies
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Comprehensive Testing Guide
 
 **English:** Testing ensures code quality, prevents regressions, and provides confidence in deployments. Modern testing includes unit, integration, and end-to-end tests.
@@ -587,4 +591,4 @@ A: Test behavior not implementation, use descriptive names, keep tests simple, a
 
 ---
 
-[← Back to Version Control](./03-version-control.md) | [Next: Build Tools →](./01-build-tools.md)
+[← Back to Version Control](./13-tools-ecosystem-03-version-control.md) | [Next: Build Tools →](./13-tools-ecosystem-01-build-tools.md)

@@ -1,4 +1,8 @@
 # Prototypes & Inheritance - Comprehensive Bilingual Deep Dive
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Prototype Chain, Class Sugar, Descriptors, Reflect/Proxy, and Advanced Patterns
 
 [← Closures](./03-closures-comprehensive.md) | [ES6 Features →](./11-es6-features-deep.md) | [Async](./09-async-comprehensive.md)

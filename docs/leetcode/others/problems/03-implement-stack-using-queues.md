@@ -11,6 +11,10 @@ leetcode_url: "https://leetcode.com/problems/implement-stack-using-queues/"
 
 
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 ## Problem Description
 
  *  * Implement a last in first out (LIFO) stack using only two queues.  * The implemented stack should support all the functions of a normal stack  * (push, top, pop, and empty).  * 

@@ -1,5 +1,9 @@
 # Frontend Theory 16: Web Workers & Concurrency
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Overview / Tổng Quan
 
 Tài liệu này tập trung cách xử lý concurrency trên web: Dedicated Worker, Shared Worker, Service Worker,

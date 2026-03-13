@@ -1,5 +1,9 @@
 # TypeScript Type System Basics - Hệ Thống Kiểu TypeScript Cơ Bản
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > TypeScript thêm static typing vào JavaScript. Hiểu type system là foundation cho type-safe code.
 
 ---
@@ -696,7 +700,7 @@ const map: Record<string, number> = {}; const v = map['x']; // number | undefine
 
 ## 🔗 Cross-References
 
-- [02-interfaces-vs-types.md](./02-interfaces-vs-types.md) - Interface vs Type deep dive
-- [03-generics.md](./03-generics.md) - Generics patterns
+- [02-interfaces-vs-types.md](./02-advanced-types.md) - Interface vs Type deep dive
+- [03-generics.md](./03-generics-deep-dive.md) - Generics patterns
 - [05-type-inference-theory.md](./05-type-inference-theory.md) - Type inference algorithm
 - [04-typescript-comprehensive.md](./04-typescript-comprehensive.md) - Structural typing, module augmentation

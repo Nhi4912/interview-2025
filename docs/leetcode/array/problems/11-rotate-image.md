@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/rotate-image/"
 
 # Rotate Image
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 48. Rotate Image**
 
 ## Problem Description

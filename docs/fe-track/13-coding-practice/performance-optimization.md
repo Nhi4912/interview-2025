@@ -1,5 +1,9 @@
 # Frontend Performance Optimization Problems
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Problem 1: Virtual Scrolling Implementation
 
 ### Problem Description

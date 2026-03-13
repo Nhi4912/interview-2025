@@ -11,6 +11,10 @@ leetcode_url: "https://leetcode.com/problems/min-stack/"
 
 
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 ## Problem Description
 
  *  * Design a stack that supports push, pop, top, and retrieving the minimum element  * in constant time.  *  * Implement the MinStack class: 

@@ -11,6 +11,10 @@ leetcode_url: "https://leetcode.com/problems/inorder-successor-in-bst/"
 
 
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 ## Problem Description
 
  * return the in-order successor of that node in the BST. If the given node  * has no in-order successor in the tree, return null.  *  *  * Companies: Amazon, Google, Microsoft 

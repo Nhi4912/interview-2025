@@ -1,5 +1,9 @@
 # React Hooks Advanced Theory / Lý Thuyết React Hooks Nâng Cao
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Tổng Quan / Overview
 
 - Bao phủ hooks built-in, custom hooks, tối ưu rendering, và concurrency features trong React 18+.

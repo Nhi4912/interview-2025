@@ -1,7 +1,11 @@
 # Advanced React Patterns / Mẫu React Nâng Cao
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## React - Chapter 4 / React - Chương 4
 
-[← Previous: Hooks Deep Dive](./03-hooks-deep-dive.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next: Performance Optimization →](./05-performance-optimization.md)
+[← Previous: Hooks Deep Dive](./03-hooks-deep-dive.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next: Performance Optimization →](./09-performance-optimization.md)
 
 ---
 
@@ -853,4 +857,4 @@ Sử dụng compound components khi bạn cần:
 
 ---
 
-[← Previous: Hooks Deep Dive](./03-hooks-deep-dive.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next: Performance Optimization →](./05-performance-optimization.md)
+[← Previous: Hooks Deep Dive](./03-hooks-deep-dive.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next: Performance Optimization →](./09-performance-optimization.md)

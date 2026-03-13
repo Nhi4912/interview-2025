@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/convert-sorted-array-to-binary-sear
 
 # Convert Sorted Array to Binary Search Tree
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 108. Convert Sorted Array to Binary Search Tree**
 
 ## Problem Description

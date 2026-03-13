@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/edit-distance/"
 
 # Edit Distance
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 72. Edit Distance**
 
 ## Problem Description

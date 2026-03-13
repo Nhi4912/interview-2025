@@ -1,5 +1,9 @@
 # Advanced Design Patterns for Frontend Architecture
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 **Tổng Quan / Overview:** Behavioral and architectural patterns applied to component systems, micro-frontends, and plugin platforms.
 **Giải thích:** Behavioral pattern và pattern kiến trúc áp dụng cho component system, micro-frontend, và nền tảng plugin.
 

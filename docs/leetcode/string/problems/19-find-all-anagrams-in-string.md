@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/find-all-anagrams-in-a-string/"
 
 # Find All Anagrams in a String
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 438. Find All Anagrams in a String**
 
 ## Problem Description

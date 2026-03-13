@@ -614,4 +614,4 @@ Thường có thể đánh đổi không gian cho thời gian:
 
 ---
 
-[← Previous: Algorithms](./02-algorithms.md) | [Back to Table of Contents](../00-table-of-contents.md) | [Next: Design Patterns →](./04-design-patterns.md)
+[← Previous: Algorithms](./algorithms-theory.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next: Design Patterns →](./data-structures-theory.md)

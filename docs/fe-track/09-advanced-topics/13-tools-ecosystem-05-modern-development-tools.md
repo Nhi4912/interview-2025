@@ -1,7 +1,11 @@
 # Modern Development Tools / Công Cụ Phát Triển Hiện Đại
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Tools & Ecosystem - Chapter 5 / Công Cụ & Hệ Sinh Thái - Chương 5
 
-[← Previous: Testing Tools](./04-testing-tools.md) | [Back to Table of Contents](../../00-table-of-contents.md)
+[← Previous: Testing Tools](./13-tools-ecosystem-04-testing-tools.md) | [Back to Table of Contents](../../00-table-of-contents.md)
 
 ---
 
@@ -1235,4 +1239,4 @@ async function publishContent(content: Content) {
 
 ---
 
-[← Previous: Testing Tools](./04-testing-tools.md) | [Back to Table of Contents](../../00-table-of-contents.md)
+[← Previous: Testing Tools](./13-tools-ecosystem-04-testing-tools.md) | [Back to Table of Contents](../../00-table-of-contents.md)

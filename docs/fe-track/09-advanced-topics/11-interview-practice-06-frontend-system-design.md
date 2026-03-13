@@ -1,4 +1,8 @@
 # Frontend System Design
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Designing Scalable Frontend Applications
 
 **English:** Frontend system design involves architecting client-side applications that are scalable, maintainable, performant, and provide excellent user experience.
@@ -511,4 +515,4 @@ A: Semantic HTML, ARIA labels, keyboard navigation, screen reader support, color
 
 ---
 
-[← Back to Coding Patterns](./04-coding-patterns.md) | [Next: Behavioral Questions →](./05-behavioral-questions.md)
+[← Back to Coding Patterns](./11-interview-practice-04-coding-patterns.md) | [Next: Behavioral Questions →](./11-interview-practice-05-behavioral-questions.md)

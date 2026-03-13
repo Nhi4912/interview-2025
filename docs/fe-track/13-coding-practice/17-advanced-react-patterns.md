@@ -8,6 +8,10 @@ tags: [react, hoc, render-props, compound-components, advanced-patterns]
 
 # Advanced React Patterns for Big Tech Interviews
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## 🎯 Overview
 
 This problem set covers advanced React patterns commonly tested in FAANG+ interviews. These patterns demonstrate deep React knowledge and architectural thinking required for senior positions.

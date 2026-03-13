@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/lru-cache/"
 
 # LRU Cache
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 146. LRU Cache**
 
 ## Problem Description

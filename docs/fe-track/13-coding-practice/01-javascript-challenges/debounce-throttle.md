@@ -1,5 +1,9 @@
 # Debounce & Throttle
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 > Implement debounce và throttle functions - một trong những câu hỏi phổ biến nhất.
 
 **Difficulty**: 🟢 Easy

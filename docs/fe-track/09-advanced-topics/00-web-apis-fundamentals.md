@@ -1,5 +1,9 @@
 # Web APIs Fundamentals / Nền Tảng Web APIs
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 [Back to Table of Contents](../../00-table-of-contents.md) | [JavaScript Challenges](./11-interview-practice-01-javascript-challenges.md) | [Concept Map](./12-visual-learning-01-javascript-concepts-map.md)
 
 ## Overview

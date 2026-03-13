@@ -1,7 +1,11 @@
 # Data Structures / Cấu Trúc Dữ Liệu
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Computer Science Fundamentals - Chapter 1 / Khoa Học Máy Tính Cơ Bản - Chương 1
 
-[Back to Table of Contents](../../00-table-of-contents.md) | [Next: Algorithms →](./02-algorithms.md)
+[Back to Table of Contents](../../00-table-of-contents.md) | [Next: Algorithms →](./02-algorithms-js.md)
 
 ---
 
@@ -757,4 +761,4 @@ function hasCycle<T>(head: ListNode<T> | null): boolean {
 
 ---
 
-[Back to Table of Contents](../../00-table-of-contents.md) | [Next: Algorithms →](./02-algorithms.md)
+[Back to Table of Contents](../../00-table-of-contents.md) | [Next: Algorithms →](./02-algorithms-js.md)

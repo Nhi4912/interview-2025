@@ -1,4 +1,8 @@
 # React Performance Optimization / Tối Ưu Hiệu Suất React
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Performance - Chapter 2 / Hiệu Suất - Chương 2
 
 [← Previous: Core Web Vitals](./01-core-web-vitals.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next: Bundle Optimization →](./03-bundle-optimization.md)

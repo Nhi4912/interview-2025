@@ -1,4 +1,8 @@
 # Graph Algorithms / Thuật Toán Đồ Thị
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Computer Science - Chapter 5 / Khoa Học Máy Tính - Chương 5
 
 [Back to Table of Contents](../../00-table-of-contents.md)

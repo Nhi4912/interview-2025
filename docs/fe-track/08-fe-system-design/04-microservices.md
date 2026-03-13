@@ -1,5 +1,9 @@
 # Micro-frontends & Frontend Microservices Design
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Tổng Quan / Overview
 Tài liệu mô tả kiến trúc micro-frontends cho bối cảnh nhiều team cùng phát triển và phát hành frontend.
 Trọng tâm interview là giải thích động lực áp dụng, mô hình tích hợp, governance, và cách giảm rủi ro vận hành.

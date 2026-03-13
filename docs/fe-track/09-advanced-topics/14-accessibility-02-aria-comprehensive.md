@@ -1,4 +1,8 @@
 # ARIA - Comprehensive Guide
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Accessible Rich Internet Applications
 
 **English:** ARIA (Accessible Rich Internet Applications) provides additional semantics to make web content and applications accessible to people with disabilities.
@@ -718,4 +722,4 @@ A: Hides content from assistive technology while keeping it visible. Use for dec
 
 ---
 
-[← Back to WCAG Guidelines](./01-wcag-guidelines.md) | [Next: Visual Learning →](../12-visual-learning/01-data-structure-visualizations.md)
+[← Back to WCAG Guidelines](./14-accessibility-01-wcag-guidelines.md) | [Next: Visual Learning →](./12-visual-learning-02-algorithm-visualizations.md)

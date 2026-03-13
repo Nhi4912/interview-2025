@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/climbing-stair/"
 
 # Climbing Stair
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 70. Climbing Stairs**
 
 ## Problem Description

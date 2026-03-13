@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/merge-k-sorted-list/"
 
 # Merge k Sorted List
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 23. Merge k Sorted Lists**
 
 ## Problem Description

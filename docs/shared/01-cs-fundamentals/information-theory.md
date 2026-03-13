@@ -701,4 +701,4 @@ A: Number of positions where two sequences differ. Important for error detection
 
 ---
 
-[← Back to Software Engineering](./14-software-engineering-theory.md) | [Next: Discrete Mathematics →](./16-discrete-mathematics-theory.md)
+[← Back to Software Engineering](./08-computation-theory.md) | [Next: Discrete Mathematics →](./08-computation-theory.md)

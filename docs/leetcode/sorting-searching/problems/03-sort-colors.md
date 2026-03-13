@@ -11,6 +11,10 @@ leetcode_url: "https://leetcode.com/problems/sort-colors/"
 
 
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 ## Problem Description
 
  *  * Given an array nums with n objects colored red, white, or blue, sort them in-place  * so that objects of the same color are adjacent, with the colors in the order red,  * white, and blue.  * 

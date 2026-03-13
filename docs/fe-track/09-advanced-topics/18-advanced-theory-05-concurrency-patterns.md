@@ -1,5 +1,9 @@
 # Concurrency Patterns in JavaScript and Frontend Runtime
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 **Tổng Quan / Overview:** Event-loop-aware concurrency, workers, shared memory, and scheduler patterns in frontend apps.
 **Giải thích:** Concurrency theo event loop, workers, shared memory và mẫu scheduler trong ứng dụng frontend.
 

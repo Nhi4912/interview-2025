@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/reverse-linked-list/"
 
 # Reverse Linked List
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 206. Reverse Linked List**
 
 ## Problem Description

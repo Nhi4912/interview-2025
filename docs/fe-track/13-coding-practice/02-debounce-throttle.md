@@ -8,6 +8,10 @@ tags: [javascript, performance, event-handling, optimization, search]
 
 # Problem 2: Debounce and Throttle Implementation
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Problem Description
 
 Implement debounce and throttle functions for performance optimization in search inputs, scroll handlers, and other frequent events.

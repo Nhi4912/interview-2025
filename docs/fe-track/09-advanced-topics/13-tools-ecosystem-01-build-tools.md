@@ -1,4 +1,8 @@
 # Build Tools Ecosystem / Hệ Sinh Thái Công Cụ Build
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Tools & Ecosystem - Chapter 1 / Công Cụ & Hệ Sinh Thái - Chương 1
 [Back to Table of Contents](../../00-table-of-contents.md)
 

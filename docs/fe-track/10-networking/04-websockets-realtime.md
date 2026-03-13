@@ -1,5 +1,9 @@
 # WebSockets & Real-time - Bidirectional Communication
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > Real-time features require bidirectional communication. WebSockets, SSE, and polling each have their use cases.
 
 ---

@@ -1,5 +1,9 @@
 # DOM Manipulation Challenges
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 > Bài tập xây dựng UI components với vanilla JavaScript và DOM APIs.
 
 ---
@@ -8,14 +12,14 @@
 
 | # | Problem | Difficulty | Time | Focus |
 |---|---------|------------|------|-------|
-| 1 | [Infinite Scroll](./infinite-scroll.md) | 🟡 Medium | 30 min | IntersectionObserver |
-| 2 | [Drag and Drop](./drag-and-drop.md) | 🟡 Medium | 30 min | Drag Events |
-| 3 | [Modal Dialog](./modal-dialog.md) | 🟢 Easy | 20 min | Accessibility |
-| 4 | [Form Validation](./form-validation.md) | 🟡 Medium | 25 min | Validation APIs |
-| 5 | [Virtual List](./virtual-list.md) | 🔴 Hard | 45 min | Windowing |
-| 6 | [Autocomplete](./autocomplete.md) | 🟡 Medium | 30 min | Debounce, A11y |
-| 7 | [Carousel/Slider](./carousel.md) | 🟡 Medium | 35 min | Touch Events |
-| 8 | [Tooltip](./tooltip.md) | 🟢 Easy | 20 min | Positioning |
+| 1 | Infinite Scroll | 🟡 Medium | 30 min | IntersectionObserver |
+| 2 | Drag and Drop | 🟡 Medium | 30 min | Drag Events |
+| 3 | Modal Dialog | 🟢 Easy | 20 min | Accessibility |
+| 4 | Form Validation | 🟡 Medium | 25 min | Validation APIs |
+| 5 | Virtual List | 🔴 Hard | 45 min | Windowing |
+| 6 | Autocomplete | 🟡 Medium | 30 min | Debounce, A11y |
+| 7 | Carousel/Slider | 🟡 Medium | 35 min | Touch Events |
+| 8 | Tooltip | 🟢 Easy | 20 min | Positioning |
 
 ---
 

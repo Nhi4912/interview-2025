@@ -1,4 +1,8 @@
 # ES6+ Features - Comprehensive Bilingual Deep Dive
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Destructuring, Symbols, Collections, Proxy/Reflect, and Modern Operators
 
 [← Prototypes](./10-prototypes-inheritance-deep.md) | [Async](./09-async-comprehensive.md) | [Scope](./02-scope-hoisting-comprehensive.md)

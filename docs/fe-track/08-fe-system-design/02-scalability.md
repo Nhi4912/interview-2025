@@ -1,4 +1,8 @@
 # Frontend Scalability / Khả Năng Mở Rộng Frontend
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## FE System Design - Chapter 2 / Thiết Kế Hệ Thống FE - Chương 2
 
 

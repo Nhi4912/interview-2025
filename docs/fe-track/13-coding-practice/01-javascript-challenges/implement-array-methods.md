@@ -1,5 +1,9 @@
 # Implement Array Methods
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 > Implement các array methods như map, filter, reduce từ scratch.
 
 **Difficulty**: 🟢 Easy
@@ -359,4 +363,4 @@ Array.prototype.myMap.call(arrayLike, x => x.toUpperCase());
 
 ---
 
-> **Tiếp theo:** [Deep Clone](./deep-clone.md) | **Quay lại:** [JavaScript Challenges](./README.md)
+> **Tiếp theo:** Deep Clone | **Quay lại:** [JavaScript Challenges](./README.md)

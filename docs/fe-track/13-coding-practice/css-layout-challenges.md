@@ -1,5 +1,9 @@
 # CSS Layout Challenges
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Problem 1: Holy Grail Layout
 
 ### Problem Description

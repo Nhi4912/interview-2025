@@ -1,5 +1,9 @@
 # TypeScript Comprehensive Guide / Hướng Dẫn TypeScript Toàn Diện
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 [← Previous: Generics Deep Dive](./03-generics-deep-dive.md) | [Next: React + TS](./05-react-typescript.md) | [Related: Inference Theory](./05-type-inference-theory.md)
 
 ---

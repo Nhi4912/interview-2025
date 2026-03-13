@@ -1,5 +1,9 @@
 # DevOps & Infrastructure Basics — Nền tảng DevOps và hạ tầng cho Backend Developer
 
+
+> **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../00-table-of-contents.md)
+
 > Backend Track — Go/DevOps
 > Difficulty: `[Junior]` `[Mid]` `[Senior]`
 

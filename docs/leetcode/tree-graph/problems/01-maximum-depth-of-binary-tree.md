@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/maximum-depth-of-binary-tree/"
 
 # Maximum Depth of Binary Tree
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 104. Maximum Depth of Binary Tree**
 
 ## Problem Description

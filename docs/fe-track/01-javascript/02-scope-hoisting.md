@@ -1,4 +1,8 @@
 # Scope & Hoisting / Phạm Vi & Kéo Lên
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## JavaScript Fundamentals - Chapter 2 / Kiến Thức Cơ Bản JavaScript - Chương 2
 
 [← Previous: Variables & Data Types](./01-variables-data-types.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next: Closures →](./03-closures.md)

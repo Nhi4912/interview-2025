@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/intersection-of-two-arrays-ii/"
 
 # Intersection of Two Arrays II
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 350. Intersection of Two Arrays II**
 
 ## Problem Description

@@ -1,5 +1,9 @@
 # HTTP Fundamentals - The Web Protocol
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > HTTP là foundation của web communication. Hiểu methods, status codes, headers là essential.
 
 ---

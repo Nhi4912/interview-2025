@@ -1,5 +1,9 @@
 # TypeScript Mind Map - Quick Reference
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > Sơ đồ tổng hợp tất cả TypeScript concepts quan trọng.
 
 ---
@@ -294,12 +298,12 @@
 
 ## 🔗 Related Topics
 
-- [01-type-system-basics.md](./01-type-system-basics.md) - Primitives, Objects
-- [02-interfaces-vs-types.md](./02-interfaces-vs-types.md) - When to use what
-- [03-generics.md](./03-generics.md) - Generic patterns
-- [04-utility-types.md](./04-utility-types.md) - Built-in utilities
-- [05-advanced-patterns.md](./05-advanced-patterns.md) - Discriminated unions, Type guards
-- [06-typescript-with-react.md](./06-typescript-with-react.md) - React integration
+- [01-type-system-basics.md](../02-typescript/01-type-system-basics.md) - Primitives, Objects
+- [02-interfaces-vs-types.md](../02-typescript/02-advanced-types.md) - When to use what
+- [03-generics.md](../02-typescript/03-generics-deep-dive.md) - Generic patterns
+- [04-utility-types.md](../02-typescript/04-typescript-comprehensive.md) - Built-in utilities
+- [05-advanced-patterns.md](../02-typescript/04-typescript-comprehensive.md) - Discriminated unions, Type guards
+- [06-typescript-with-react.md](../02-typescript/05-react-typescript.md) - React integration
 
 ---
 

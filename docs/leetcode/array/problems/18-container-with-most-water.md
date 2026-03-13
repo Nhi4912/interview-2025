@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/container-with-most-water/"
 
 # Container With Most Water
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 11. Container With Most Water**
 
 ## Problem Description

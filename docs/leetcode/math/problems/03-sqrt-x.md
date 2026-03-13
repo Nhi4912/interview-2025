@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/sqrt-x-/"
 
 # Sqrt(x)
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 69. Sqrt(x)**
 
 ## Problem Description

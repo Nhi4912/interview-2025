@@ -1,4 +1,8 @@
 # Browser APIs / API Trình Duyệt
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Web APIs - Chapter 1 / API Web - Chương 1
 
 [Back to Table of Contents](../../00-table-of-contents.md) | [Next: Fetch & HTTP →](./02-fetch-http.md)

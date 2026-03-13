@@ -1,5 +1,9 @@
 # JavaScript Module Systems - Theory / Hệ Thống Module JavaScript - Lý Thuyết
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Table of Contents / Mục Lục
 
 1. [Module System Evolution](#module-system-evolution)

@@ -1,4 +1,8 @@
 # Frontend Authentication / Xác Thực Frontend
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Web Security - Chapter 2 / Bảo Mật Web - Chương 2
 
 

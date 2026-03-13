@@ -1,4 +1,8 @@
 # Observability and Scale for Go Backend Interviews — Quan sát hệ thống và mở rộng quy mô
+
+> **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > Backend Track — System Design
 > Cross-referenced by: `01-design-framework.md`, `02-classic-problems.md`, `04-distributed-patterns.md`, `../02-backend-knowledge/02-microservices.md`, `../02-backend-knowledge/03-distributed-systems.md`, `../02-backend-knowledge/06-networking-go.md`, `../06-devops-infrastructure.md`, `../01-golang/05-testing-profiling.md`, `../../shared/02-system-design/system-design-theory.md`, `../../shared/02-system-design/replication-partitioning.md`, `../../shared/01-cs-fundamentals/networking-theory.md`
 ---

@@ -1,4 +1,8 @@
 # Frontend Concepts - Visual Guide
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Understanding Through Diagrams
 
 **English:** Visual representations help understand complex frontend concepts by providing clear mental models and relationships between components.
@@ -519,4 +523,4 @@
 
 ---
 
-[← Back to Algorithm Visualizations](./02-algorithm-visualizations.md) | [Next: Testing →](../13-tools-ecosystem/04-testing-tools.md)
+[← Back to Algorithm Visualizations](./12-visual-learning-02-algorithm-visualizations.md) | [Next: Testing →](./13-tools-ecosystem-04-testing-tools.md)

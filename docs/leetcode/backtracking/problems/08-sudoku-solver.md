@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/sudoku-solver/"
 
 # Sudoku Solver
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 37. Sudoku Solver**
 
 ## Problem Description

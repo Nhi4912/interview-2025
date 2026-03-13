@@ -1,5 +1,9 @@
 # JavaScript Interview Practice 01B / Bài JavaScript Nâng Cao
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 [Back to Table of Contents](../../00-table-of-contents.md) | [Practice 01](./11-interview-practice-01-javascript-challenges.md) | [React Challenges](./11-interview-practice-02-react-coding-challenges.md)
 
 ## Overview

@@ -1,5 +1,9 @@
 # Caching & CDN - Speed Through Strategic Storage
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > Caching là key để performance. Hiểu HTTP caching, browser cache, và CDN để optimize loading speed.
 
 ---

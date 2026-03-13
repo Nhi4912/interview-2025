@@ -1,5 +1,9 @@
 # Frontend Data Layer & Client-side Database Design
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Tổng Quan / Overview
 Tài liệu bao phủ thiết kế dữ liệu phía client: lưu trữ, đồng bộ offline, cache chuẩn hóa, phân trang và real-time.
 Mục tiêu interview: giải thích được dữ liệu nào lưu ở đâu, cách sync/conflict resolution, và cách bảo đảm UX đáng tin cậy.

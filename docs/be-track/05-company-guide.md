@@ -1,5 +1,9 @@
 # Company-Specific Interview Guide
 
+
+> **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../00-table-of-contents.md)
+
 ## Hướng dẫn phỏng vấn theo từng công ty cho Go Backend Developer
 
 > Tài liệu này tập trung vào **thực chiến**: format phỏng vấn, câu hỏi thường gặp, và cách chuẩn bị cụ thể cho từng công ty.

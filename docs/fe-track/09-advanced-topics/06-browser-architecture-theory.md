@@ -1,5 +1,9 @@
 # Browser Architecture - Advanced Theory / Kiến Trúc Trình Duyệt - Lý Thuyết Nâng Cao
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Table of Contents / Mục Lục
 
 1. [Browser Architecture Overview](#browser-architecture-overview)
@@ -1114,4 +1118,4 @@ SOP hạn chế tương tác cross-origin. Origin = Scheme + Host + Port. CORS c
 
 ---
 
-[← Previous: DOM Manipulation Theory](./05-dom-manipulation-theory.md) | [Next: Browser APIs →](./07-browser-apis-theory.md) | [Back to Table of Contents](../../00-table-of-contents.md)
+[← Previous: DOM Manipulation Theory](./05-dom-manipulation-theory.md) | [Next: Browser APIs →](./01-browser-apis.md) | [Back to Table of Contents](../../00-table-of-contents.md)

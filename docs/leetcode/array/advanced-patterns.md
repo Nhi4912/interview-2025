@@ -9,6 +9,10 @@ companies: [Google, Meta, Amazon, Microsoft, Apple]
 
 # Advanced Array Patterns for FAANG Interviews
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## 🎯 Core Patterns Every Mid-Level Developer Must Master
 
 ### 1. Sliding Window Technique

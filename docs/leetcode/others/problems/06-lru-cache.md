@@ -11,6 +11,10 @@ leetcode_url: "https://leetcode.com/problems/lru-cache/"
 
 
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 ## Problem Description
 
  *  * Design a data structure that follows the constraints of a Least Recently Used (LRU) cache.  *  * Implement the LRUCache class:  * - LRUCache(int capacity) Initialize the LRU cache with positive size capacity. 

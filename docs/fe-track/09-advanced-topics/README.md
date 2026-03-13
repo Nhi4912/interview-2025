@@ -1,5 +1,9 @@
 # Frontend Advanced Topics Index / Mục Lục Chủ Đề Nâng Cao Frontend
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## 1) Overview / Tổng Quan
 
 This section is the **senior-level knowledge map** for frontend interview preparation.
@@ -128,15 +132,15 @@ Nội dung tập trung vào tư duy thuật toán, nội tại trình duyệt, q
 
 | File                                                                                                                               | Stub Target Theme          | Chủ đề chuyển hướng              |
 | ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------- | -------------------------------- |
-| [16-theoretical-foundations-01-computer-science-fundamentals.md](./16-theoretical-foundations-01-computer-science-fundamentals.md) | CS fundamentals            | Nền tảng khoa học máy tính       |
-| [16-theoretical-foundations-02-computational-theory.md](./16-theoretical-foundations-02-computational-theory.md)                   | Computation theory         | Lý thuyết tính toán              |
-| [16-theoretical-foundations-03-type-theory.md](./16-theoretical-foundations-03-type-theory.md)                                     | Type systems               | Hệ kiểu dữ liệu                  |
-| [16-theoretical-foundations-04-category-theory.md](./16-theoretical-foundations-04-category-theory.md)                             | Category theory            | Lý thuyết phạm trù               |
-| [16-theoretical-foundations-05-logic-proof-theory.md](./16-theoretical-foundations-05-logic-proof-theory.md)                       | Logic and proof            | Logic và chứng minh              |
-| [16-theoretical-foundations-06-formal-verification.md](./16-theoretical-foundations-06-formal-verification.md)                     | Verification methods       | Phương pháp kiểm chứng hình thức |
-| [16-theoretical-foundations-07-distributed-systems-theory.md](./16-theoretical-foundations-07-distributed-systems-theory.md)       | Distributed systems theory | Lý thuyết hệ phân tán            |
-| [16-theoretical-foundations-08-quantum-computing-theory.md](./16-theoretical-foundations-08-quantum-computing-theory.md)           | Quantum computing basics   | Nền tảng điện toán lượng tử      |
-| [16-theoretical-foundations-09-complexity-theory-advanced.md](./16-theoretical-foundations-09-complexity-theory-advanced.md)       | Complexity classes         | Lớp độ phức tạp                  |
+| [16-theoretical-foundations-01-computer-science-fundamentals.md](./19-expert-topics-01-distributed-frontend-systems.md) | CS fundamentals            | Nền tảng khoa học máy tính       |
+| [16-theoretical-foundations-02-computational-theory.md](./17-frontend-theory-01-javascript-language-theory.md)                   | Computation theory         | Lý thuyết tính toán              |
+| [16-theoretical-foundations-03-type-theory.md](./17-frontend-theory-08-typescript-advanced-patterns.md)                                     | Type systems               | Hệ kiểu dữ liệu                  |
+| [16-theoretical-foundations-04-category-theory.md](./17-frontend-theory-14-functional-reactive-programming.md)                             | Category theory            | Lý thuyết phạm trù               |
+| [16-theoretical-foundations-05-logic-proof-theory.md](./18-advanced-theory-01-compiler-design-frontend.md)                       | Logic and proof            | Logic và chứng minh              |
+| [16-theoretical-foundations-06-formal-verification.md](./18-advanced-theory-01-compiler-design-frontend.md)                     | Verification methods       | Phương pháp kiểm chứng hình thức |
+| [16-theoretical-foundations-07-distributed-systems-theory.md](./19-expert-topics-01-distributed-frontend-systems.md)       | Distributed systems theory | Lý thuyết hệ phân tán            |
+| [16-theoretical-foundations-08-quantum-computing-theory.md](./19-expert-topics-02-performance-engineering.md)           | Quantum computing basics   | Nền tảng điện toán lượng tử      |
+| [16-theoretical-foundations-09-complexity-theory-advanced.md](./18-advanced-theory-03-advanced-algorithms-frontend.md)       | Complexity classes         | Lớp độ phức tạp                  |
 
 ### K) Frontend Theory (17-\*)
 

@@ -1,4 +1,8 @@
 # Cryptography Theory - Comprehensive Guide
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Understanding Cryptographic Principles and Security
 
 **English:** Cryptography is the practice and study of techniques for secure communication in the presence of adversaries, encompassing encryption, hashing, digital signatures, and key management.
@@ -1055,4 +1059,4 @@ A: Encryption is reversible (decrypt with key to get original data), used for co
 
 ---
 
-[← Back to HTTP Protocols](./01-http-protocols-theory.md) | [Next: API Design →](./03-api-design-theory.md)
+[← Back to HTTP Protocols](./15-advanced-topics-01-http-protocols-theory.md) | [Next: API Design →](./15-advanced-topics-03-api-design-theory.md)

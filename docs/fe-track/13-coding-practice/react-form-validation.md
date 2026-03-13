@@ -1,5 +1,9 @@
 # React Form Validation with Custom Hooks
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Problem Description
 
 Create a custom React hook for form validation with multiple validation rules.

@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/copy-list-with-random-pointer/"
 
 # Copy List with Random Pointer
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 138. Copy List with Random Pointer**
 
 ## Problem Description

@@ -1,4 +1,8 @@
 # Bundle Optimization / Tối Ưu Bundle
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Browser Performance - Chapter 3 / Hiệu Suất Trình Duyệt - Chương 3
 
 

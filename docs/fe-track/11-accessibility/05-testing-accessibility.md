@@ -1,5 +1,9 @@
 # Testing Accessibility - Tools & Methodologies
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > Accessibility testing combines automated tools with manual testing to ensure inclusive experiences.
 
 ---

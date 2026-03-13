@@ -1,7 +1,11 @@
 # Frontend Architecture Patterns / Các Mẫu Kiến Trúc Frontend
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## System Design - Chapter 1 / Thiết Kế Hệ Thống - Chương 1
 
-[Back to Table of Contents](../../00-table-of-contents.md) | [Next: Micro-Frontends →](./02-micro-frontends.md)
+[Back to Table of Contents](../../00-table-of-contents.md) | [Next: Micro-Frontends →](./01-architecture-patterns.md)
 
 ---
 
@@ -688,4 +692,4 @@ Kiến trúc phân lớp tổ chức code thành các lớp ngang (Trình bày, 
 
 ---
 
-[Back to Table of Contents](../../00-table-of-contents.md) | [Next: Micro-Frontends →](./02-micro-frontends.md)
+[Back to Table of Contents](../../00-table-of-contents.md) | [Next: Micro-Frontends →](./01-architecture-patterns.md)

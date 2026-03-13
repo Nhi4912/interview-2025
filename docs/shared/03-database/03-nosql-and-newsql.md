@@ -1,5 +1,9 @@
 # NoSQL and NewSQL — NoSQL và NewSQL
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > Shared theory for both Frontend and Backend tracks.
 > Cross-referenced by: `be-track/03-database-advanced/03-nosql-redis-mongo.md`, `shared/03-database/database-theory.md`, `shared/02-system-design/system-design-theory.md`
 

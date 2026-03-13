@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/binary-tree-level-order-traversal/"
 
 # Binary Tree Level Order Traversal
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 102. Binary Tree Level Order Traversal**
 
 ## Problem Description

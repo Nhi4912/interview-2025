@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/move-zeroe/"
 
 # Move Zeroe
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 283. Move Zeroes**
 
 ## Problem Description

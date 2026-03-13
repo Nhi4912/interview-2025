@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/validate-binary-search-tree/"
 
 # Validate Binary Search Tree
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 98. Validate Binary Search Tree**
 
 ## Problem Description

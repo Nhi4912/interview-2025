@@ -1,5 +1,9 @@
 # 6-Month Frontend Interview Study Plan — Lộ Trình Học 6 Tháng
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](00-table-of-contents.md)
+
 > Dành cho vị trí Frontend Developer (2-5 năm kinh nghiệm) tại các công ty tech hàng đầu.
 > Target: Google, Microsoft, Grab, Axon, Employment Hero, Zalo/VNG
 
@@ -61,8 +65,8 @@
 
 | Tuần | Chủ đề            | Tài liệu                                                            | Mức độ      |
 | ---- | ----------------- | ------------------------------------------------------------------- | ----------- |
-| 9    | Next.js           | [Next.js Basics](./fe-track/04-nextjs/01-nextjs-basics.md)          | 🔴 Critical |
-|      |                   | [App Router](./fe-track/04-nextjs/02-app-router.md)                 | 🔴 Critical |
+| 9    | Next.js           | [Next.js Basics](./fe-track/04-nextjs/00-nextjs-fundamentals.md)          | 🔴 Critical |
+|      |                   | [App Router](./fe-track/04-nextjs/01-app-router-server-components.md)                 | 🔴 Critical |
 | 10   | State Management  | [State Management](./fe-track/03-react/05-state-management.md)      | 🟡 High     |
 |      |                   | [React Context](./fe-track/03-react/05-state-management.md#context) | 🟡 High     |
 | 11   | Advanced Patterns | [Advanced Patterns](./fe-track/03-react/04-advanced-patterns.md)    | 🟡 High     |
@@ -78,14 +82,14 @@
 
 | Tuần | Chủ đề            | Tài liệu                                                                                     | Mức độ      |
 | ---- | ----------------- | -------------------------------------------------------------------------------------------- | ----------- |
-| 13   | Browser Internals | [Browser Architecture](./fe-track/06-browser-performance/01-browser-architecture.md)         | 🔴 Critical |
-|      |                   | [Rendering Pipeline](./fe-track/06-browser-performance/02-rendering-pipeline.md)             | 🔴 Critical |
-| 14   | Performance       | [Core Web Vitals](./fe-track/06-browser-performance/03-core-web-vitals.md)                   | 🔴 Critical |
-|      |                   | [Performance Optimization](./fe-track/06-browser-performance/04-performance-optimization.md) | 🔴 Critical |
+| 13   | Browser Internals | [Browser Architecture](./fe-track/06-browser-performance/01-core-web-vitals.md)         | 🔴 Critical |
+|      |                   | [Rendering Pipeline](./fe-track/06-browser-performance/02-react-performance.md)             | 🔴 Critical |
+| 14   | Performance       | [Core Web Vitals](./fe-track/06-browser-performance/03-bundle-optimization.md)                   | 🔴 Critical |
+|      |                   | [Performance Optimization](./fe-track/06-browser-performance/04-web-performance-comprehensive.md) | 🔴 Critical |
 | 15   | Security          | [Web Security](./fe-track/07-web-security/01-common-vulnerabilities.md)                      | 🔴 Critical |
 |      |                   | [Authentication](./fe-track/07-web-security/02-authentication.md)                            | 🟡 High     |
 | 16   | Networking        | [HTTP Fundamentals](./fe-track/10-networking/01-http-fundamentals.md)                        | 🔴 Critical |
-|      |                   | [Caching](./fe-track/10-networking/02-caching-strategies.md)                                 | 🟡 High     |
+|      |                   | [Caching](./fe-track/10-networking/02-rest-api-design.md)                                 | 🟡 High     |
 
 **✅ Deliverable cuối tháng:** Optimize được một page từ 60fps lên 60fps, giải thích được Critical Rendering Path
 
@@ -97,11 +101,11 @@
 
 | Tuần | Chủ đề                  | Tài liệu                                                                              | Mức độ      |
 | ---- | ----------------------- | ------------------------------------------------------------------------------------- | ----------- |
-| 17   | FE System Design Basics | [FE System Design](./fe-track/08-fe-system-design/01-introduction.md)                 | 🔴 Critical |
-|      |                         | [Component Architecture](./fe-track/08-fe-system-design/02-component-architecture.md) | 🔴 Critical |
-| 18   | Design Patterns         | [State Management Design](./fe-track/08-fe-system-design/03-state-management.md)      | 🟡 High     |
-|      |                         | [Performance Patterns](./fe-track/08-fe-system-design/04-performance-patterns.md)     | 🟡 High     |
-| 19   | Scalability             | [Scalability Patterns](./fe-track/08-fe-system-design/05-scalability.md)              | 🟡 High     |
+| 17   | FE System Design Basics | [FE System Design](./fe-track/08-fe-system-design/01-architecture-patterns.md)                 | 🔴 Critical |
+|      |                         | [Component Architecture](./fe-track/08-fe-system-design/02-scalability.md) | 🔴 Critical |
+| 18   | Design Patterns         | [State Management Design](./fe-track/08-fe-system-design/03-caching.md)      | 🟡 High     |
+|      |                         | [Performance Patterns](./fe-track/08-fe-system-design/04-microservices.md)     | 🟡 High     |
+| 19   | Scalability             | [Scalability Patterns](./fe-track/08-fe-system-design/05-database-design.md)              | 🟡 High     |
 | 20   | Real-world Examples     | [Design Examples](./fe-track/08-fe-system-design/)                                    | 🟡 High     |
 
 **✅ Deliverable cuối tháng:** Design được một hệ thống như Twitter timeline, YouTube player
@@ -154,5 +158,5 @@
 
 - [Frontend Study Roadmap](./fe-track/00-study-roadmap.md)
 - [Company Guides](./fe-track/10-company-guide.md)
-- [Interview Checklist](./fe-track/12-behavioral/checklist.md)
+- [Interview Checklist](./fe-track/12-behavioral/01-star-method.md)
 - [Quick Reference Cheat Sheet](./quick-reference-cheat-sheet.md)

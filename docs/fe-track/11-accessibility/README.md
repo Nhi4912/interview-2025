@@ -1,5 +1,9 @@
 # Accessibility (A11y) - Inclusive Web Development
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > Accessibility không chỉ là compliance - nó là về building products everyone can use. WCAG guidelines và practical implementation.
 
 ---

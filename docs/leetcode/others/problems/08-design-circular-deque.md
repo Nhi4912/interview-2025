@@ -11,6 +11,10 @@ leetcode_url: "https://leetcode.com/problems/design-circular-deque/"
 
 
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 ## Problem Description
 
  *  * Design your implementation of the circular double-ended queue (deque).  * Your implementation should support the following operations:  *  * - MyCircularDeque(k): Constructor, set the size of the deque to be k. 

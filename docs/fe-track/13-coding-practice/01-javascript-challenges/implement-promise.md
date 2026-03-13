@@ -1,5 +1,9 @@
 # Implement Promise
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 > Implement Promise class from scratch - câu hỏi khó nhất trong JavaScript challenges.
 
 **Difficulty**: 🔴 Hard

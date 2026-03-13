@@ -1250,3 +1250,45 @@ Continuous monitoring + revoke on risk change
      Liên hệ lại kiến thức nền từ `01-security-fundamentals.md` và `02-cryptography-and-protocols.md`.
 - **Ví dụ:**
   Trả lời tốt là trả lời có cấu trúc, có trade-off, có kiểm soát rủi ro và có cách vận hành thực tế.
+
+---
+
+## Câu Hỏi Phỏng Vấn / Interview Q&A
+
+### Q: Walk me through the OAuth 2.0 Authorization Code flow. Why is it preferred over Implicit flow? / Giải thích OAuth 2.0 Authorization Code flow. Tại sao nó được ưu tiên hơn Implicit flow? 🟡 Mid
+
+**A:** The Authorization Code flow exchanges a short-lived authorization code for tokens via a back-channel server-to-server request. Steps: (1) Client redirects user to Authorization Server with `response_type=code`, `client_id`, `redirect_uri`, `scope`, and `state`. (2) User authenticates and consents. (3) Auth Server redirects back with a one-time `code`. (4) Client backend POSTs `code` + `client_secret` to `/token` endpoint and receives `access_token` + `refresh_token`. The Implicit flow returned the `access_token` directly in the URL fragment — visible in browser history, referrer headers, and server logs. Authorization Code never exposes tokens in the URL and authenticates the client with a `client_secret` on the back-channel.
+
+Vietnamese explanation: Implicit flow bị deprecated vì token xuất hiện trong URL fragment — có thể bị lộ qua browser history, referrer header, hay log server. Authorization Code flow giải quyết bằng cách dùng back-channel (server-to-server) để đổi `code` lấy token. Trong phỏng vấn, nhấn mạnh: short-lived code, client authentication qua `client_secret`, và tại sao không đặt token trong URL là điểm cốt lõi.
+
+---
+
+### Q: What is PKCE and when must you use it? / PKCE là gì và khi nào bắt buộc dùng? 🟡 Mid
+
+**A:** PKCE (Proof Key for Code Exchange, RFC 7636) defends against authorization code interception attacks in public clients that cannot securely store a `client_secret` (SPAs, mobile apps). The client generates a random `code_verifier`, hashes it with SHA-256 to produce `code_challenge`, and sends the challenge with the authorization request. At token exchange the server verifies the original `code_verifier` — an intercepted code is useless without it. PKCE is mandatory for public clients (no client secret) and recommended for confidential clients as an extra layer since OAuth 2.1 folds it in as a requirement for all flows.
+
+Vietnamese explanation: Vì SPA và mobile app không thể giữ bí mật `client_secret` (code chạy ở client side), kẻ tấn công có thể intercept authorization code rồi đổi token. PKCE giải quyết bằng cách bind code với một `code_verifier` chỉ client gốc mới biết. Trade-off: không tốn overhead đáng kể, nên luôn dùng. Trong phỏng vấn, cần phân biệt public client vs confidential client và tại sao PKCE không thay thế hoàn toàn `client_secret` cho confidential clients.
+
+---
+
+### Q: What is refresh token rotation and why does it matter for security? / Refresh token rotation là gì và tại sao quan trọng? 🔴 Senior
+
+**A:** Refresh token rotation issues a new `refresh_token` every time the old one is used to obtain a new `access_token`, then immediately invalidates the used token. If a refresh token is stolen and used by an attacker, the legitimate client's next refresh attempt will fail (the token it holds is now invalid), triggering a security alert or forced re-authentication. This converts a static long-lived secret into a rolling single-use token. Implementation details: store refresh tokens server-side as hashed values, set short absolute expiry (e.g., 30 days), detect token reuse by checking if an already-invalidated token is presented (replay detection), and revoke the entire token family on reuse to prevent a stolen-token race.
+
+Vietnamese explanation: Không có rotation thì refresh token bị đánh cắp → attacker dùng mãi mãi mà không bị phát hiện. Với rotation, token chỉ dùng được một lần — khi bị replay, hệ thống biết có compromise và revoke toàn bộ family. Trade-off: nếu client request bị drop/retry, có thể tự invalidate token của mình → cần window nhỏ để xử lý race. Senior candidates cần biết: hashed storage, family revocation, và detection logic.
+
+---
+
+### Q: Compare JWT (stateless) vs opaque session tokens (stateful). When would you choose each? / So sánh JWT stateless và opaque session token stateful. Khi nào chọn cái nào? 🟡 Mid
+
+**A:** JWT embeds claims directly in a signed token — the Resource Server validates it locally without a database call, enabling horizontal scaling with no shared session store. Downsides: tokens cannot be revoked before expiry (short expiry + refresh token rotation mitigates this), payload is Base64-encoded (not encrypted by default), and size grows with claims. Opaque session tokens are random strings; the server looks up session data in a store (Redis, DB) on every request — instant revocation, but requires a centralized store and adds latency. Choose JWT for stateless microservices, cross-domain APIs, and read-heavy systems. Choose opaque sessions for high-security contexts requiring instant revocation (banking, admin panels), or when the backend is monolithic with fast session store access.
+
+Vietnamese explanation: JWT phù hợp khi cần scale ngang vì không cần shared state, nhưng không thể revoke trước expiry — chỉ giảm thiểu bằng short TTL (5-15 phút) kết hợp refresh token. Opaque token phù hợp khi cần revoke ngay lập tức (logout tức thì, ban user). Trade-off thực tế: nhiều hệ thống dùng hybrid — JWT ngắn hạn cho resource servers + opaque refresh token trong DB cho revocation.
+
+---
+
+### Q: How does passwordless authentication work, and what are its security trade-offs compared to passwords? / Passwordless authentication hoạt động thế nào và trade-off bảo mật so với password? 🔴 Senior
+
+**A:** Passwordless replaces shared-secret passwords with cryptographic proof of identity. Main patterns: (1) **Magic link** — server emails a one-time signed URL; user clicks to authenticate. (2) **OTP/TOTP** — time-based one-time password from an authenticator app (TOTP, RFC 6238) or SMS OTP. (3) **Passkeys / WebAuthn** — the device generates an asymmetric key pair; private key never leaves the device; server stores only the public key; authentication is a challenge-response signed by the private key, optionally gated by biometrics. Security gains: eliminates password reuse, phishing (passkeys are origin-bound), credential stuffing, and breach exposure of hashed passwords. Trade-offs: magic links depend on email security; SMS OTP is vulnerable to SIM swapping; passkeys require device enrollment and recovery planning; account recovery flows become the new attack surface.
+
+Vietnamese explanation: Passkeys (WebAuthn) là gold standard vì private key không bao giờ rời thiết bị và credential bị bind vào origin (chống phishing). Trade-off: recovery khi mất thiết bị phức tạp hơn reset password; cần backup authenticator hoặc recovery code. SMS OTP tiện lợi nhưng yếu vì SIM swap. Trong phỏng vấn Senior, cần thảo luận account recovery design và multi-device enrollment strategy.

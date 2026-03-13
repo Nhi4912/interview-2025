@@ -1,5 +1,9 @@
 # Frontend Caching Strategies (Browser, SW, App Cache, CDN)
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Tổng Quan / Overview
 Tài liệu tập trung vào chiến lược caching frontend từ tầng browser đến CDN để tối ưu tốc độ tải và độ ổn định.
 Mục tiêu interview: trình bày đúng nguyên lý cache, invalidation, và trade-off giữa freshness với performance.

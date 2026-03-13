@@ -1,4 +1,8 @@
 # Next.js Architecture & Patterns
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Building Production-Ready Applications
 
 **English:** Next.js is a React framework that provides infrastructure and optimizations for building production-ready web applications with features like server-side rendering, static generation, and API routes.

@@ -1,5 +1,9 @@
 # Interview Practice 05: Behavioral Questions
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Overview / Tổng Quan
 
 Behavioral interview đánh giá cách bạn đã hành động trong quá khứ để dự đoán hiệu quả làm việc tương lai.

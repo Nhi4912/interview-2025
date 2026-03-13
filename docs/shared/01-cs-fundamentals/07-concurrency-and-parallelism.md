@@ -1,5 +1,9 @@
 # Concurrency and Parallelism Theory — Lý thuyết Đồng thời và Song song
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > Shared theory for both Frontend and Backend tracks.
 > Cross-referenced by: `docs/shared/01-cs-fundamentals/os-theory.md`, `docs/be-track/01-golang/03-concurrency.md`, `docs/fe-track/01-javascript/06-event-loop-async.md`
 

@@ -1,5 +1,9 @@
 # Leadership Principles - Company Values & Interview Focus
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > Mỗi Big Tech có leadership principles riêng. Chuẩn bị stories cho từng principle là key để succeed.
 
 ---

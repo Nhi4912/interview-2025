@@ -1,4 +1,8 @@
 # ES6+ Modern Features / Tính Năng Hiện Đại ES6+
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## JavaScript Fundamentals - Chapter 7 / Kiến Thức Cơ Bản JavaScript - Chương 7
 
 [← Previous: Event Loop & Async](./06-event-loop-async.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next: Advanced Concepts →](./08-advanced-concepts.md)

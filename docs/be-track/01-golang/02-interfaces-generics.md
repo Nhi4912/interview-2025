@@ -1,5 +1,9 @@
 # Interfaces & Generics in Go — Deep Theory & Interview Questions
 
+
+> **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > **Phạm vi**: Interface semantics, internal representation (iface/eface), design principles, generics (Go 1.18+), reflection.
 > Tập trung lý thuyết sâu (~75%), code minh hoạ ngắn gọn (~25%) — phù hợp ôn phỏng vấn Golang Backend.
 
@@ -819,3 +823,45 @@ Cần abstraction?
 ---
 
 > **Tóm tắt**: Interface là trái tim của Go — implicit satisfaction cho phép decoupling mạnh mẽ với minimum boilerplate. Generics (Go 1.18+) bổ sung type safety cho containers và utilities mà interface không handle tốt. Reflection là công cụ cuối cùng khi compile-time information không đủ. Hiểu internal representation (iface/eface/itab) giúp bạn viết code hiệu quả hơn và debug interface-related bugs nhanh hơn.
+
+---
+
+## Câu Hỏi Phỏng Vấn / Interview Q&A
+
+### Q: How does Go determine if a type satisfies an interface? / Go xác định một type có thỏa mãn interface như thế nào? 🟢 Junior
+
+**A:** Go uses **structural typing** (implicit interface satisfaction). A type satisfies an interface if it implements all methods in the interface with matching signatures — no explicit declaration is needed. The compiler checks this at compile time. A pointer type `*T` and value type `T` satisfy different sets of interfaces: pointer receivers are only callable on pointer types, but value receivers are callable on both.
+
+Vietnamese explanation: Go không yêu cầu khai báo `implements` như Java. Compiler tự kiểm tra xem type có đủ method không. Điểm quan trọng cần nhớ: method với **pointer receiver** chỉ satisfy interface khi dùng pointer (`*T`), còn **value receiver** thì cả `T` và `*T` đều satisfy. Lỗi phổ biến là truyền value type khi interface cần pointer receiver — compiler sẽ báo lỗi ngay.
+
+---
+
+### Q: What is the difference between `interface{}` and `any`? When should you use the empty interface? / `interface{}` và `any` khác nhau thế nào? Khi nào nên dùng? 🟢 Junior
+
+**A:** `any` is an alias for `interface{}` introduced in Go 1.18 — they are identical at runtime. The empty interface has no methods, so every type satisfies it. Use cases: generic containers before Go 1.18, encoding/decoding unknown JSON, logging, and fmt functions. The downside is loss of type safety — the caller must type-assert back to the concrete type, which can panic if wrong. Prefer generics or typed interfaces when the set of types is known.
+
+Vietnamese explanation: `any` chỉ là alias đẹp hơn của `interface{}`, không có sự khác biệt về runtime. Dùng empty interface khi thực sự không biết trước kiểu dữ liệu (ví dụ: JSON unmarshal vào `map[string]any`). Tuy nhiên, mỗi lần truy cập giá trị phải type-assert, và nếu assert sai sẽ **panic**. Go 1.18+ với generics cho phép viết code type-safe hơn cho nhiều trường hợp trước đây phải dùng `interface{}`.
+
+---
+
+### Q: What is a type assertion vs a type switch? When does a type assertion panic? / Type assertion và type switch khác nhau thế nào? Khi nào type assertion panic? 🟡 Mid
+
+**A:** A **type assertion** `v, ok := i.(T)` extracts the concrete value of type `T` from an interface. The two-value form (`v, ok`) never panics — `ok` is `false` if the type doesn't match. The single-value form `v := i.(T)` panics if the interface does not hold type `T`. A **type switch** `switch v := i.(type)` is syntactic sugar for multiple type assertions and is the idiomatic way to handle multiple concrete types without risk of panic.
+
+Vietnamese explanation: Type assertion một giá trị có thể panic nếu interface đang giữ type khác — luôn dùng dạng two-value `v, ok` trong production code. Type switch là cách idiomatic khi cần xử lý nhiều concrete types, ví dụ trong error handling hoặc JSON parsing. Một pattern thường gặp trong phỏng vấn: implement `Stringer` check — `if s, ok := v.(fmt.Stringer); ok { return s.String() }`.
+
+---
+
+### Q: When should you use generics instead of interfaces in Go 1.18+? / Khi nào nên dùng generics thay vì interface? 🟡 Mid
+
+**A:** Use **generics** when: (1) you need type-safe containers (e.g., `Stack[T]`, `Set[T]`); (2) you want to avoid boxing/unboxing overhead with `interface{}`; (3) the operation is the same for all types (e.g., `Map`, `Filter`, `Reduce` on slices); (4) you need type constraints that express capability (`~int | ~float64`). Use **interfaces** when: you need runtime polymorphism where the concrete type is determined at runtime, or when you're designing APIs that external packages implement.
+
+Vietnamese explanation: Rule of thumb — **interfaces cho runtime polymorphism, generics cho compile-time type safety**. Generics không thể thay thế interface hoàn toàn: bạn không thể có `[]Animal[T]` chứa cả Dog và Cat. Generics tốt nhất cho utility functions và containers. Trade-off: generics làm tăng binary size (monomorphization), nhưng thường nhanh hơn interface do tránh allocation và vtable lookup. Tránh over-generics — nếu chỉ có 2-3 types cụ thể, interface thường rõ ràng hơn.
+
+---
+
+### Q: What are type constraints in Go generics? How do you define a custom constraint? / Type constraints trong Go generics là gì? Cách định nghĩa custom constraint? 🔴 Senior
+
+**A:** A **type constraint** is an interface that restricts which types a generic type parameter can be. The `comparable` built-in constraint allows `==` and `!=`. The `constraints` package (or inline union types) allows arithmetic: `~int | ~float64`. The tilde `~` means "underlying type" — `~int` includes any named type whose underlying type is `int` (e.g., `type UserID int`). Custom constraints are defined as interfaces with a type set: `type Number interface { ~int | ~int64 | ~float64 }`. A type parameter can also be constrained by method sets: `type Stringer interface { String() string }`.
+
+Vietnamese explanation: Constraint trong generics là interface dùng ở vị trí type parameter. `comparable` là built-in, dùng cho map keys và `==` operations. Khi cần arithmetic operators (`+`, `-`, `*`), bạn phải dùng union constraint vì operators không thể express qua methods. Tilde `~` rất quan trọng — không có tilde, `type Celsius float64` sẽ không satisfy `float64` constraint dù underlying type là float64. Đây là câu hỏi phân biệt candidate hiểu sâu về generics.

@@ -11,6 +11,10 @@ leetcode_url: "https://leetcode.com/problems/design-tic-tac-toe/"
 
 
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 ## Problem Description
 
  *  * Assume the following rules are for the tic-tac-toe game on an n x n board between two players:  *  * A move is guaranteed to be valid and is placed on an empty block.  * Once a winning condition is reached, no more moves are allowed. 

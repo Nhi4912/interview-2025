@@ -1,5 +1,9 @@
 # Go Language Fundamentals
 
+
+> **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > **Focus**: ~75% theory (WHY & HOW internally), ~25% code examples
 > **Format**: Q&A, Bilingual (English headings + Vietnamese explanations)
 > **Difficulty**: `[Junior]` `[Mid]` `[Senior]`
@@ -1112,4 +1116,4 @@ var _ io.Reader = (*MyType)(nil)
 
 ---
 
-> **Next**: [02-interfaces-and-generics.md](./02-interfaces-and-generics.md) — Interface internals, type assertion, generics
+> **Next**: [02-interfaces-and-generics.md](./02-interfaces-generics.md) — Interface internals, type assertion, generics

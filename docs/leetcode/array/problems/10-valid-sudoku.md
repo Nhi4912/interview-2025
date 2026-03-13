@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/valid-sudoku/"
 
 # Valid Sudoku
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 36. Valid Sudoku**
 
 ## Problem Description

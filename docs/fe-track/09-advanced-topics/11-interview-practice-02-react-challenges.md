@@ -1,7 +1,11 @@
 # React Coding Challenges / Thử Thách Lập Trình React
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Interview Practice - Chapter 2 / Thực Hành Phỏng Vấn - Chương 2
 
-[← Previous: JavaScript Challenges](./01-javascript-challenges.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next: Algorithm Problems →](./03-algorithm-problems.md)
+[← Previous: JavaScript Challenges](./11-interview-practice-01-javascript-challenges.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next: Algorithm Problems →](./11-interview-practice-04-coding-patterns.md)
 
 ---
 
@@ -734,4 +738,4 @@ function Cart() {
 
 ---
 
-[← Previous: JavaScript Challenges](./01-javascript-challenges.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next: Algorithm Problems →](./03-algorithm-problems.md)
+[← Previous: JavaScript Challenges](./11-interview-practice-01-javascript-challenges.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next: Algorithm Problems →](./11-interview-practice-04-coding-patterns.md)

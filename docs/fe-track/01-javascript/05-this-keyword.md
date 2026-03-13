@@ -1,4 +1,8 @@
 # The `this` Keyword / Từ Khóa `this`
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## JavaScript Fundamentals - Chapter 5 / Kiến Thức Cơ Bản JavaScript - Chương 5
 
 [← Previous: Prototypes & Inheritance](./04-prototypes-inheritance.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next: Event Loop & Async →](./06-event-loop-async.md)

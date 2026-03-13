@@ -1,5 +1,9 @@
 # Authentication & Security
 
+
+> **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Kiến thức Auth & Security cho Go Backend Developer (Middle/Senior)
 
 > **Target**: Zalo (VNG), Grab, Axon, Employment Hero, Microsoft, Google

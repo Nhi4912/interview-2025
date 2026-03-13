@@ -1,5 +1,9 @@
 # Resilience Patterns
 
+
+> **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Go Backend Interview Guide (Mid-Senior)
 
 > Bilingual format: English question headings + Vietnamese explanations  

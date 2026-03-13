@@ -11,6 +11,10 @@ leetcode_url: "https://leetcode.com/problems/construct-binary-tree-from-preorder
 
 
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 ## Problem Description
 
  * of a binary tree and inorder is the inorder traversal of the same tree, construct and return the binary tree.  *  *  * Companies: Amazon, Google, Microsoft, Facebook  * 

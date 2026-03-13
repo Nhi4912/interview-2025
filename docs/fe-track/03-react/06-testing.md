@@ -1,4 +1,8 @@
 # React Testing / Kiểm Thử React
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## React - Chapter 6 / React - Chương 6
 
 [Back to Table of Contents](../../00-table-of-contents.md)

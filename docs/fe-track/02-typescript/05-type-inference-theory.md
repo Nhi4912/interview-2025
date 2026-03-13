@@ -1,5 +1,9 @@
 # Type Inference Theory / Lý Thuyết Suy Luận Kiểu
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 [← Related: TypeScript Basics](./01-typescript-basics.md) | [Related: Comprehensive Guide](./04-typescript-comprehensive.md)
 
 ---

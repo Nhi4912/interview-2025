@@ -2611,4 +2611,4 @@ func main() {
 
 ---
 
-> **Next:** [02-algorithms.md](./02-algorithms.md) — Sorting, Searching, Dynamic Programming, Greedy
+> **Next:** [02-algorithms.md](./07-algorithms-go.md) — Sorting, Searching, Dynamic Programming, Greedy

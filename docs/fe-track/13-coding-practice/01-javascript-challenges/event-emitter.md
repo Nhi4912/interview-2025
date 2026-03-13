@@ -1,5 +1,9 @@
 # Event Emitter
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 > Implement Event Emitter (Pub/Sub pattern) - câu hỏi phổ biến về design patterns.
 
 **Difficulty**: 🟡 Medium
@@ -454,4 +458,4 @@ class Store extends EventEmitter {
 
 ---
 
-> **Tiếp theo:** [Curry & Compose](./curry-compose.md) | **Quay lại:** [JavaScript Challenges](./README.md)
+> **Tiếp theo:** Curry & Compose | **Quay lại:** [JavaScript Challenges](./README.md)

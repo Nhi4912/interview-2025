@@ -1,7 +1,11 @@
 # CSS Architecture Theory
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Scalable CSS Systems for Large Teams
 
-[Back to Table of Contents](../../../00-table-of-contents.md) | [Next →](./06-modern-css-features.md)
+[Back to Table of Contents](../../00-table-of-contents.md) | [Next →](./06-modern-css-features.md)
 
 ---
 
@@ -19,7 +23,7 @@
 
 ## Cross References
 
-- [FE Track Table of Contents](../../../00-table-of-contents.md)
+- [FE Track Table of Contents](../../00-table-of-contents.md)
 - [CSS Architecture Practical](./02-css-architecture.md)
 - [Modern CSS Features](./06-modern-css-features.md)
 - [React Fundamentals](../03-react/01-react-fundamentals.md)

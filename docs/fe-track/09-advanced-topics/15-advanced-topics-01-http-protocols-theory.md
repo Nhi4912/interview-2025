@@ -1,4 +1,8 @@
 # HTTP Protocols - Comprehensive Theory
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## From HTTP/1.1 to HTTP/3
 
 **English:** HTTP (Hypertext Transfer Protocol) is the foundation of data communication on the web. Understanding its evolution and mechanics is crucial for building performant web applications.
@@ -412,4 +416,4 @@ A: Server proactively sends resources before client requests them, eliminating r
 
 ---
 
-[Next: Database Theory →](./02-database-theory.md)
+[Next: Database Theory →](./15-advanced-topics-01-http-protocols-theory.md)

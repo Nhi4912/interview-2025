@@ -988,4 +988,4 @@ A: Mutex is binary lock for mutual exclusion, owned by thread that locks it. Sem
 
 ---
 
-[← Back to Concurrency Theory](./11-concurrency-parallelism-theory.md) | [Next: Network Theory →](./13-network-theory.md)
+[← Back to Concurrency Theory](./os-theory.md) | [Next: Network Theory →](./networking-theory.md)

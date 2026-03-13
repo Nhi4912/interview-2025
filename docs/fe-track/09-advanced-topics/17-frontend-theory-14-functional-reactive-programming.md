@@ -1,5 +1,9 @@
 # Functional Reactive Programming (FRP) / Lập Trình Phản Ứng Hàm (FRP)
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Tổng Quan / Overview
 
 - FRP giúp mô hình hóa dữ liệu theo stream, đặc biệt phù hợp với UI bất đồng bộ và realtime.

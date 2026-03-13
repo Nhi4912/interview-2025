@@ -1,5 +1,9 @@
 # Development Tools - Interview Questions / Câu Hỏi Phỏng Vấn Công Cụ Phát Triển
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Advanced Interview Questions / Câu Hỏi Phỏng Vấn Nâng Cao
 
 ### Q1: Explain how dataflow programming differs from traditional control flow programming
@@ -694,4 +698,4 @@ Good: "Create a TypeScript function that processes user data.
 
 ---
 
-[← Back to Modern Development Tools](./05-modern-development-tools.md) | [Back to Table of Contents](../../00-table-of-contents.md)
+[← Back to Modern Development Tools](./13-tools-ecosystem-05-modern-development-tools.md) | [Back to Table of Contents](../../00-table-of-contents.md)

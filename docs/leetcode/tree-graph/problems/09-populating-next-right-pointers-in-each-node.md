@@ -11,6 +11,10 @@ leetcode_url: "https://leetcode.com/problems/populating-next-right-pointers-in-e
 
 
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 ## Problem Description
 
  * and every parent has two children. Populate each next pointer to point to its next right node.  * If there is no next right node, the next pointer should be set to NULL.  *  *  * Companies: Amazon, Google, Microsoft, Facebook 

@@ -11,6 +11,10 @@ leetcode_url: "https://leetcode.com/problems/design-hit-counter/"
 
 
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 ## Problem Description
 
  *  * Design a hit counter which counts the number of hits received in the past 5 minutes (i.e., the past 300 seconds).  *  * Your system should accept a timestamp parameter (in seconds granularity), and you may assume that calls are being made to the system in chronological order (i.e., timestamp is monotonically increasing). You may also assume that the earliest timestamp starts at 1.  * 

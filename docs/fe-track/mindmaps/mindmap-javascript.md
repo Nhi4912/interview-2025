@@ -1,5 +1,9 @@
 # JavaScript Mind Map - Sơ Đồ Tổng Hợp
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > Sơ đồ tổng hợp tất cả kiến thức JavaScript Core để review nhanh trước phỏng vấn
 
 ---

@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/remove-nth-node-from-end-of-list/"
 
 # Remove Nth Node From End of List
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 19. Remove Nth Node From End of List**
 
 ## Problem Description

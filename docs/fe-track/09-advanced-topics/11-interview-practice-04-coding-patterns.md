@@ -1,5 +1,9 @@
 # Frontend Coding Patterns / Mẫu Tư Duy Lập Trình FE
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 [Back to Table of Contents](../../00-table-of-contents.md) | [JavaScript Challenges](./11-interview-practice-01-javascript-challenges.md) | [Web APIs](./00-web-apis-fundamentals.md)
 
 ## Overview

@@ -8,6 +8,10 @@ tags: [web-apis, service-worker, webrtc, intersection-observer, performance]
 
 # Advanced Web APIs Challenges
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Overview
 Modern Web APIs provide powerful capabilities for building sophisticated frontend applications. These challenges focus on APIs commonly tested in Big Tech interviews.
 

@@ -1,5 +1,9 @@
 # Next.js Mind Map - Quick Reference
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > Sơ đồ tổng hợp kiến thức Next.js App Router cho interview.
 
 ---
@@ -380,4 +384,4 @@
 
 ---
 
-> **Quay lại:** [README.md](./README.md) - Next.js Overview
+> **Quay lại:** [README.md](./mindmap-foundations.md) - Next.js Overview

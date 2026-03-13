@@ -1,5 +1,9 @@
 # React Mind Map - Quick Reference
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > Sơ đồ tổng hợp tất cả concepts React quan trọng.
 
 ---
@@ -289,13 +293,13 @@
 
 ## 🔗 Related Topics
 
-- [01-react-fundamentals.md](./01-react-fundamentals.md) - Components, JSX, Props
-- [02-hooks-deep-dive.md](./02-hooks-deep-dive.md) - All Hooks
-- [03-state-management.md](./03-state-management.md) - Context, Redux, Zustand
-- [04-component-patterns.md](./04-component-patterns.md) - HOC, Render Props
-- [05-react-internals.md](./05-react-internals.md) - Fiber, Reconciliation
-- [06-performance-optimization.md](./06-performance-optimization.md) - Memoization
-- [07-testing-react.md](./07-testing-react.md) - Testing Library, Jest
+- [01-react-fundamentals.md](../03-react/01-react-fundamentals.md) - Components, JSX, Props
+- [02-hooks-deep-dive.md](../03-react/03-hooks-deep-dive.md) - All Hooks
+- [03-state-management.md](../03-react/05-state-management.md) - Context, Redux, Zustand
+- [04-component-patterns.md](../03-react/08-react-patterns-advanced.md) - HOC, Render Props
+- [05-react-internals.md](../03-react/01-react-fundamentals.md) - Fiber, Reconciliation
+- [06-performance-optimization.md](../03-react/09-performance-optimization.md) - Memoization
+- [07-testing-react.md](../03-react/01-react-fundamentals.md) - Testing Library, Jest
 
 ---
 

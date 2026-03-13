@@ -1,4 +1,8 @@
 # TypeScript Basics / Cơ Bản TypeScript
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## TypeScript - Chapter 1 / TypeScript - Chương 1
 [Back to Table of Contents](../../00-table-of-contents.md) | [Next: Advanced Types →](./02-advanced-types.md) | [Related: Generics](./03-generics-deep-dive.md)
 

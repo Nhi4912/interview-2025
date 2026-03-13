@@ -1,5 +1,9 @@
 # Testing & Profiling in Go — Deep Theory & Interview Questions
 
+
+> **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > **Phạm vi**: Unit test, benchmark, fuzz, mocking, integration test, HTTP test, race detector, coverage, profiling, static analysis.
 > Tập trung lý thuyết sâu (~75%), code minh họa pattern (~25%) — phù hợp ôn phỏng vấn Golang Backend.
 

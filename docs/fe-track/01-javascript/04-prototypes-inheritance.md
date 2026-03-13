@@ -1,4 +1,8 @@
 # Prototypes & Inheritance / Nguyên Mẫu & Kế Thừa
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## JavaScript Fundamentals - Chapter 4 / Kiến Thức Cơ Bản JavaScript - Chương 4
 
 [← Previous: Closures](./03-closures.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next: The `this` Keyword →](./05-this-keyword.md)

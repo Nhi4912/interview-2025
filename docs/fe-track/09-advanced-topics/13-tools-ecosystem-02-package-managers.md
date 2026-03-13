@@ -1,4 +1,8 @@
 # Package Managers / Trình Quản Lý Gói
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Tools & Ecosystem - Chapter 2 / Công Cụ & Hệ Sinh Thái - Chương 2
 [Back to Table of Contents](../../00-table-of-contents.md)
 

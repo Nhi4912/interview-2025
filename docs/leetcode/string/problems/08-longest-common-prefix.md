@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/longest-common-prefix/"
 
 # Longest Common Prefix
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 14. Longest Common Prefix**
 
 ## Problem Description

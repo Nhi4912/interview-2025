@@ -1,4 +1,8 @@
 # Quick Reference Cheat Sheet / Bảng Ghi Nhớ Nhanh
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](00-table-of-contents.md)
+
 ## Interview Preparation (FE + BE) / Chuẩn Bị Phỏng Vấn (FE + BE)
 [← Back to Table of Contents](./00-table-of-contents.md)
 ---

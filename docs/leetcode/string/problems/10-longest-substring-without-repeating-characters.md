@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/longest-substring-without-repeating
 
 # Longest Substring Without Repeating Character
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 3. Longest Substring Without Repeating Characters**
 
 ## Problem Description

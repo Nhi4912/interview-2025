@@ -1,5 +1,9 @@
 # Go Memory Management & Garbage Collection — Deep Dive
 
+
+> **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > **Target:** Middle/Senior Go Backend Developer
 > **Companies:** Zalo, Grab, Axon, Employment Hero, Microsoft, Google
 > **Difficulty:** 🟢 Junior | 🟡 Middle | 🔴 Senior
@@ -912,3 +916,45 @@ Traditional GC:                    Arena:
 
 12. **Q: GC phases nào STW?**
     A: Mark Setup (~10-30μs) và Mark Termination (~10-30μs). Concurrent Mark + Sweep không STW. Tổng < 100μs trên Go 1.18+.
+
+---
+
+## Câu Hỏi Phỏng Vấn / Interview Q&A
+
+### Q: How does Go decide whether a variable is allocated on the stack or the heap? / Go quyết định allocate biến lên stack hay heap như thế nào? 🟡 Mid
+
+**A:** Go uses **escape analysis** at compile time to determine allocation. A variable "escapes" to the heap when: (1) its address is returned from a function; (2) it's stored in a heap-allocated struct; (3) it's assigned to an interface (boxing); (4) it's too large for the stack (typically >8KB); (5) its size is not known at compile time (e.g., dynamic slices). Stack allocation is preferred — it's faster (no GC involvement, no lock, just pointer bump) and automatically freed when the function returns. Run `go build -gcflags='-m'` to see escape analysis output.
+
+Vietnamese explanation: Compiler chạy escape analysis để tối ưu allocation. **Stack rẻ hơn heap rất nhiều**: stack chỉ cần tăng/giảm stack pointer, không cần GC scan. Heap cần GC theo dõi và thu dọn. Một lỗi phổ biến là trả về pointer đến local variable — variable bắt buộc escape lên heap. Với interface boxing (`var i interface{} = v`), giá trị cũng thường escape. Dùng `go build -gcflags='-m -m'` để xem chi tiết lý do escape — đây là kỹ năng quan trọng khi optimize performance.
+
+---
+
+### Q: Explain Go's tri-color mark-and-sweep GC algorithm. What problem does the write barrier solve? / Giải thích thuật toán GC tri-color mark-and-sweep. Write barrier giải quyết vấn đề gì? 🔴 Senior
+
+**A:** Go's GC uses **tri-color marking**: all objects start White (unreachable), the GC colors them Grey (reachable, children not scanned) then Black (reachable, children scanned). At the end, White objects are garbage. The challenge is that the mutator (application) runs concurrently with the GC. A **write barrier** intercepts pointer writes during the concurrent mark phase to prevent the "lost object" problem: if a black object gains a pointer to a white object and the grey object loses its reference, the white object would be incorrectly collected. Go uses a **hybrid write barrier** (combining Dijkstra insertion barrier + Yuasa deletion barrier) since Go 1.14.
+
+Vietnamese explanation: Thuật toán 3 màu cho phép GC chạy **concurrent** với application, giảm STW xuống còn vài chục microseconds thay vì milliseconds. Vấn đề: khi mutator ghi pointer đồng thời với GC scanning, có thể xảy ra "lost object" — object reachable bị thu hồi nhầm. Write barrier là "hook" được inject vào mọi pointer write để thông báo cho GC. Trade-off: write barrier thêm latency nhỏ vào mọi pointer assignment trong mark phase, nhưng đánh đổi này xứng đáng để tránh STW dài.
+
+---
+
+### Q: What is GOGC and GOMEMLIMIT? How do you tune them for a latency-sensitive service? / GOGC và GOMEMLIMIT là gì? Tune thế nào cho latency-sensitive service? 🔴 Senior
+
+**A:** `GOGC` (default: 100) controls when GC triggers: GC runs when heap size reaches `(1 + GOGC/100) * live_heap`. Setting `GOGC=200` halves GC frequency but doubles peak memory. Setting `GOGC=off` disables GC entirely — only safe for short-lived batch jobs. `GOMEMLIMIT` (Go 1.19+) is an absolute memory ceiling — when the process approaches this limit, GC becomes more aggressive regardless of GOGC. The recommended pattern for latency-sensitive services: set `GOMEMLIMIT` to ~90% of container memory limit, keep `GOGC` at default (100) or increase slightly (150-200) to reduce GC frequency.
+
+Vietnamese explanation: GOGC là percentage-based trigger — tăng GOGC giảm tần suất GC nhưng tăng memory. GOMEMLIMIT mới hơn và thực dụng hơn cho containerized environments: nó đảm bảo process không bị OOM killed bởi Kubernetes. Pattern thường dùng: `GOMEMLIMIT=1800MiB` khi pod limit là 2GiB. Không nên set GOGC quá cao mà không có GOMEMLIMIT — nếu traffic spike, heap có thể tăng không giới hạn cho đến khi OOM. Với latency-sensitive service (ví dụ: payment API), nên chạy `GOGC=50` để GC thường xuyên hơn, heap nhỏ hơn, latency spike thấp hơn.
+
+---
+
+### Q: How do you use pprof to find a memory leak in a Go service? / Dùng pprof thế nào để tìm memory leak trong Go service? 🟡 Mid
+
+**A:** Steps: (1) Enable pprof endpoint: import `_ "net/http/pprof"` and start an HTTP server. (2) Capture baseline heap profile: `go tool pprof http://host:6060/debug/pprof/heap`. (3) Wait for traffic/time to pass. (4) Capture a second profile. (5) Compare with `pprof -base base.prof current.prof` to see what allocated memory grew. Key pprof views: `alloc_objects` (total allocations), `inuse_objects` (currently live), `alloc_space` (total bytes allocated), `inuse_space` (currently live bytes). Focus on `inuse_space` for leaks. The `top`, `tree`, and `web` commands show call stacks responsible for allocations.
+
+Vietnamese explanation: Memory leak trong Go thường do: (1) goroutine leak — goroutine blocked mãi, giữ reference; (2) global map không được clear; (3) channel không được close; (4) slice giữ reference đến large backing array. Workflow chuẩn: capture 2 heap profiles cách nhau vài phút, so sánh bằng `-base` để thấy net growth. Nếu `inuse_space` tăng đều theo thời gian → leak. `go tool pprof -http=:8080` mở web UI với flamegraph rất trực quan. Đây là kỹ năng thực chiến quan trọng ở Senior level.
+
+---
+
+### Q: What is the difference between `sync.Pool` and regular heap allocation? When should you use it? / `sync.Pool` khác heap allocation thường thế nào? Khi nào nên dùng? 🔴 Senior
+
+**A:** `sync.Pool` is a thread-safe cache of temporary objects that reduces GC pressure by reusing allocated objects instead of discarding them. Objects in the pool are freed during GC — there is **no guarantee** an object will still be there after the next GC. This makes it unsuitable for persistent state. Use cases: byte buffers (e.g., `bytes.Buffer`), JSON encoders/decoders, HTTP request/response objects in high-throughput paths. The standard library uses `sync.Pool` extensively in `fmt`, `encoding/json`, and `net/http`. Avoid using it for objects with complex state that needs resetting — you must reset the object before returning it to the pool.
+
+Vietnamese explanation: `sync.Pool` giải quyết vấn đề GC pressure trong high-throughput service. Thay vì allocate mới và GC sau mỗi request, pool tái sử dụng objects. Điểm quan trọng: **pool bị clear sau mỗi GC cycle**, nên không dùng cho objects cần tồn tại lâu dài. Pattern chuẩn: `Get()` lấy object → dùng → **reset state** → `Put()` trả lại. Nếu quên reset, object cũ có thể lẫn data của request trước — đây là security bug nghiêm trọng. `sync.Pool` thích hợp nhất cho `[]byte` buffers trong parsing/serialization hot paths.

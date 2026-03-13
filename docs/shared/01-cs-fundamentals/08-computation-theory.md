@@ -1,5 +1,9 @@
 # Computation Theory — Lý thuyết Tính toán
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > Shared theory for both Frontend and Backend tracks.
 > Cross-referenced by: `docs/shared/01-cs-fundamentals/complexity-analysis.md`, `docs/shared/01-cs-fundamentals/algorithms-theory.md`, `docs/shared/01-cs-fundamentals/information-theory.md`
 

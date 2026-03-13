@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/minimum-window-substring/"
 
 # Minimum Window Substring
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 76. Minimum Window Substring**
 
 ## Problem Description

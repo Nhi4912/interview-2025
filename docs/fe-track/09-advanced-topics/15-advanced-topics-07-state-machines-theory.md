@@ -1,4 +1,8 @@
 # State Machines & Finite Automata Theory
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Understanding State-Based Systems
 
 **English:** State machines are mathematical models of computation that describe systems in terms of states and transitions, providing a formal way to model behavior and manage complexity in software systems.
@@ -1281,4 +1285,4 @@ A: Test initial state, individual transitions, guard conditions, actions/side ef
 
 ---
 
-[← Back to DOM Manipulation](../../06-web-apis/05-dom-manipulation-theory.md) | [Next: Cloud Architecture →](./08-cloud-architecture-theory.md)
+[← Back to DOM Manipulation](./05-dom-manipulation-theory.md) | [Next: Cloud Architecture →](./15-advanced-topics-08-webassembly-theory.md)

@@ -1,4 +1,8 @@
 # Progressive Web Apps (PWA) Theory
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Building Modern Web Applications
 
 **English:** Progressive Web Apps are web applications that use modern web capabilities to deliver app-like experiences, combining the best of web and native apps with offline support, push notifications, and installability.
@@ -1016,4 +1020,4 @@ A: Minimal HTML/CSS/JS for UI cached during install, content loaded dynamically.
 
 ---
 
-[← Back to Reactive Programming](./04-reactive-programming-theory.md) | [Next: Web Standards →](./06-web-standards-theory.md)
+[← Back to Reactive Programming](./15-advanced-topics-04-reactive-programming-theory.md) | [Next: Web Standards →](./09-modern-web-apis-theory.md)

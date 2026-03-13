@@ -1219,4 +1219,4 @@ A: Clustered index determines physical order of data (one per table, usually pri
 
 ---
 
-[← Back to Algorithms](./07-algorithms-comprehensive.md) | [Next: Memory Management →](./09-memory-management-theory.md)
+[← Back to Algorithms](../01-cs-fundamentals/algorithms-theory.md) | [Next: Memory Management →](../01-cs-fundamentals/os-theory.md)

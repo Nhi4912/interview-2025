@@ -1,5 +1,9 @@
 # Behavioral Interview - Phỏng Vấn Hành Vi
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > Behavioral interview chiếm 30-40% quyết định tuyển dụng tại Big Tech. "Hire for culture fit" là thực tế.
 
 ---

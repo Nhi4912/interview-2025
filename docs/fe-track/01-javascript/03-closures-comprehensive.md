@@ -1,4 +1,8 @@
 # Closures - Comprehensive Bilingual Deep Dive
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Internal Mechanics, Lifecycle, Patterns, React Hooks, and Memory Safety
 
 [← Scope & Hoisting](./02-scope-hoisting-comprehensive.md) | [Prototypes →](./10-prototypes-inheritance-deep.md) | [Async](./09-async-comprehensive.md)

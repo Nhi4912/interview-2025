@@ -1,7 +1,11 @@
 # Web Security - Comprehensive Theoretical Guide
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Understanding Security from First Principles
 
-[← Back to Authentication](./02-authentication.md) | [Next: Web APIs →](../06-web-apis/01-browser-apis.md)
+[← Back to Authentication](./02-authentication.md) | [Next: Web APIs →](../09-advanced-topics/01-browser-apis.md)
 
 ---
 
@@ -792,4 +796,4 @@ Content-Security-Policy: default-src 'self'; report-uri /csp-report
 
 ---
 
-[← Back to Authentication](./02-authentication.md) | [Next: Web APIs →](../06-web-apis/01-browser-apis.md)
+[← Back to Authentication](./02-authentication.md) | [Next: Web APIs →](../09-advanced-topics/01-browser-apis.md)

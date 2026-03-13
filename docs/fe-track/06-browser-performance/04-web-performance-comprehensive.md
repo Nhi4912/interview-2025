@@ -1,7 +1,11 @@
 # Web Performance - Comprehensive Theoretical Guide
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Understanding Performance from First Principles
 
-[← Back to Bundle Optimization](./03-bundle-optimization.md) | [Next: Security →](../05-security/01-security-fundamentals.md)
+[← Back to Bundle Optimization](./03-bundle-optimization.md) | [Next: Security →](../07-web-security/01-common-vulnerabilities.md)
 
 ---
 
@@ -1013,4 +1017,46 @@ Write style (invalidates layout again)
 
 ---
 
-[← Back to Bundle Optimization](./03-bundle-optimization.md) | [Next: Security →](../05-security/01-security-fundamentals.md)
+## Câu Hỏi Phỏng Vấn / Interview Q&A
+
+### Q: What are Core Web Vitals and why does Google use them as ranking signals? / Core Web Vitals là gì và tại sao Google dùng chúng làm tín hiệu xếp hạng? 🟡 Mid
+
+**A:** Core Web Vitals are three user-centric metrics: Largest Contentful Paint (LCP) measures loading performance — good threshold is under 2.5 s. Interaction to Next Paint (INP) measures responsiveness to all interactions — good threshold is under 200 ms. Cumulative Layout Shift (CLS) measures visual stability — good score is under 0.1. Google uses them because they correlate directly with user experience quality and bounce rate: pages that load fast, respond quickly, and don't shift content retain users.
+
+Vietnamese explanation: Core Web Vitals là ba chỉ số đo trải nghiệm người dùng thực sự — không phải lab benchmark. LCP đo tốc độ hiển thị nội dung lớn nhất (hero image, heading lớn). INP thay thế FID từ 2024, đo tổng thể độ phản hồi mọi tương tác trong suốt vòng đời trang. CLS đo sự ổn định bố cục — trang bị layout shift khi quảng cáo load muộn sẽ bị điểm CLS cao. Trade-off quan trọng: tối ưu LCP đôi khi mâu thuẫn với tối ưu INP nếu preload quá nhiều JavaScript.
+
+---
+
+### Q: Describe the critical rendering path and where bottlenecks typically occur. / Mô tả critical rendering path và các điểm thắt cổ chai thường gặp ở đâu? 🔴 Senior
+
+**A:** The critical rendering path is the sequence the browser must complete before painting the first pixel: (1) Parse HTML → build DOM; (2) Encounter CSS → fetch and parse → build CSSOM; (3) Combine DOM + CSSOM → Render Tree; (4) Layout (reflow) — compute geometry; (5) Paint — fill pixels; (6) Composite — layer assembly on GPU. Bottlenecks: render-blocking CSS in `<head>` stalls CSSOM construction; render-blocking synchronous `<script>` without `defer`/`async` pauses HTML parsing; large unoptimised images delay LCP; JavaScript-triggered forced synchronous layout (layout thrashing) causes repeated reflow.
+
+Vietnamese explanation: Điểm mấu chốt là CSSOM phải hoàn tất trước khi Render Tree được xây dựng — đây là lý do CSS luôn render-blocking theo mặc định. Chiến lược tối ưu: inline critical CSS cho above-the-fold, dùng `<link rel="preload">` cho font và LCP image, đặt script ở cuối body hoặc dùng `defer`. Layout thrashing xảy ra khi JavaScript đọc thuộc tính layout (offsetHeight, getBoundingClientRect) ngay sau khi thay đổi DOM — browser phải flush layout queue ngay lập tức, gây jank.
+
+---
+
+### Q: How do resource hints (`preload`, `prefetch`, `preconnect`) differ and when should each be used? / Các resource hint khác nhau thế nào và khi nào dùng từng loại? 🟡 Mid
+
+**A:** `<link rel="preconnect">` — establishes the TCP connection + TLS handshake to an origin early, saving 100–500 ms on first request; use for third-party origins you will definitely fetch from (fonts.googleapis.com, CDN). `<link rel="preload">` — fetches a specific resource at high priority before the parser would normally discover it; use for LCP images, critical fonts, or above-the-fold scripts. `<link rel="prefetch">` — fetches a resource at low priority in idle time for likely future navigation; use for next-page assets. Misusing `preload` for non-critical resources wastes bandwidth and can hurt LCP by competing with critical resources.
+
+Vietnamese explanation: Thứ tự ưu tiên: preconnect → preload → prefetch. Preconnect chỉ thiết lập kết nối, không tải file — phù hợp khi bạn biết origin nhưng chưa biết file cụ thể (ví dụ: font CDN). Preload tải file ngay với priority cao — nên dùng có chọn lọc vì browser có giới hạn băng thông. Prefetch có thể bị browser bỏ qua khi kết nối chậm. Một lỗi phổ biến là preload font nhưng thiếu attribute `crossorigin`, khiến browser tải font hai lần.
+
+---
+
+### Q: Explain lazy loading strategies for images and JavaScript modules, and their trade-offs. / Giải thích các chiến lược lazy loading cho ảnh và JavaScript module, cùng trade-off? 🟡 Mid
+
+**A:** For images: the native `loading="lazy"` attribute defers off-screen images until they approach the viewport. For JavaScript: dynamic `import()` splits code into chunks loaded on demand. Intersection Observer API enables custom lazy loading with fine-grained control over thresholds and rootMargin. Trade-offs: lazy loading reduces initial page weight and improves LCP (fewer competing requests), but can cause layout shift if image dimensions are not reserved with `width`/`height` or `aspect-ratio`. JavaScript lazy loading adds a waterfall request on demand — pre-fetching on hover or route hover (`<Link prefetch>` in Next.js) mitigates perceived delay.
+
+Vietnamese explanation: Với ảnh, `loading="lazy"` là giải pháp đơn giản nhất nhưng browser tự quyết định threshold (thường 1200–1500 px trước viewport) — không phù hợp để kiểm soát chính xác. Intersection Observer cho phép kiểm soát rootMargin để preload sớm hơn. Với JS, code-splitting theo route là mặc định trong Next.js/Vite, nhưng lazy loading component-level (React.lazy + Suspense) phù hợp cho modal, drawer, heavy chart. Trade-off quan trọng: lazy loading quá nhiều tạo nhiều waterfall request nhỏ — cần cân bằng giữa initial load và on-demand load.
+
+---
+
+### Q: What is a performance budget and how do you enforce it in a CI pipeline? / Performance budget là gì và làm thế nào để áp dụng trong CI pipeline? 🔴 Senior
+
+**A:** A performance budget is a set of constraints on performance metrics (file sizes, lighthouse scores, Core Web Vitals) that a page must not exceed. Examples: total JavaScript bundle under 200 KB gzipped, LCP under 2.5 s on 4G, Lighthouse performance score above 85. Enforcement in CI: use tools like Lighthouse CI (`lhci autorun`) which runs Lighthouse against a deployed preview and fails the build if thresholds are violated; `bundlesize` or `size-limit` checks asset sizes at build time; webpack `performance.hints: 'error'` fails the build on oversized bundles. The budget is defined per route because landing pages and dashboards have different requirements.
+
+Vietnamese explanation: Performance budget là cam kết kỹ thuật để tránh "performance regressions" do tích lũy dần. Không có budget, mỗi feature nhỏ thêm vài KB JS — sau 1 năm bundle tăng gấp đôi mà không ai chú ý. Trong CI, Lighthouse CI chạy sau deploy preview (Vercel, Netlify) và comment kết quả lên PR. Size-limit check ở bước build (trước deploy) để fail fast hơn. Trade-off: budget quá chặt làm chậm phát triển; budget quá lỏng mất tác dụng. Best practice: đặt budget theo p75 RUM data thực tế, không chỉ theo lab Lighthouse.
+
+---
+
+[← Back to Bundle Optimization](./03-bundle-optimization.md) | [Next: Security →](../07-web-security/01-common-vulnerabilities.md)

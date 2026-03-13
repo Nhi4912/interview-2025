@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/restore-ip-addresse/"
 
 # Restore IP Addresse
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 93. Restore IP Addresses**
 
 ## Problem Description

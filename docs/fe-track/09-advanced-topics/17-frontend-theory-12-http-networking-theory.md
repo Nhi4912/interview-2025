@@ -1,4 +1,8 @@
 # HTTP and Networking Theory - Complete Guide
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 # Lý Thuyết HTTP và Networking - Hướng Dẫn Đầy Đủ
 
 ## Table of Contents / Mục Lục

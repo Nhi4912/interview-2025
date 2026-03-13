@@ -1,7 +1,11 @@
 # Data Structures - Comprehensive Guide / Cấu Trúc Dữ Liệu - Hướng Dẫn Toàn Diện
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Computer Science Fundamentals - Chapter 1 / Khoa Học Máy Tính Cơ Bản - Chương 1
 
-[Back to Table of Contents](../../00-table-of-contents.md) | [Next: Algorithms →](./02-algorithms.md)
+[Back to Table of Contents](../../00-table-of-contents.md) | [Next: Algorithms →](./02-algorithms-js.md)
 
 ---
 

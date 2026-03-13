@@ -1270,4 +1270,4 @@ A: DNS translates domain names to IP addresses. Process: 1) Check local cache, 2
 
 ---
 
-[← Back to Operating Systems](./12-operating-systems-theory.md) | [Next: Software Engineering →](./14-software-engineering-theory.md)
+[← Back to Operating Systems](./os-theory.md) | [Next: Software Engineering →](./08-computation-theory.md)

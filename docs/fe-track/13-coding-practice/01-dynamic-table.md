@@ -9,6 +9,10 @@ tags:
 
 # Problem 1: Dynamic Table Generator
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Problem Description
 
 Create a function that generates a dynamic table from an array of objects with sorting and filtering capabilities.

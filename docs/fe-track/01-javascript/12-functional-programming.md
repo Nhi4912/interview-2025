@@ -1,7 +1,11 @@
 # Functional Programming in JavaScript
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Principles, Patterns, and Interview Practice
 
-[← Previous](./11-design-patterns.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next →](./13-memory-management.md)
+[← Previous](./12-functional-programming.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next →](./15-memory-management-advanced.md)
 
 ---
 
@@ -15,7 +19,7 @@ Giải thích (VI): Tài liệu này tập trung vào phần cốt lõi thườn
 - [JavaScript Basics](./00-javascript-basics.md)
 - [Closures](./03-closures.md)
 - [Event Loop & Async](./06-event-loop-async.md)
-- [Memory Management](./13-memory-management.md)
+- [Memory Management](./15-memory-management-advanced.md)
 
 ---
 

@@ -1,7 +1,11 @@
 # CSS Architecture - Comprehensive Theoretical Guide
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## From Fundamentals to Advanced Patterns
 
-[← Back to Responsive Design](./03-responsive-design.md) | [Next: Performance →](../08-performance/01-web-performance.md)
+[← Back to Responsive Design](./03-responsive-design.md) | [Next: Performance →](../06-browser-performance/04-web-performance-comprehensive.md)
 
 ---
 
@@ -827,4 +831,4 @@ Total Height = height (includes padding and border)
 
 ---
 
-[← Back to Responsive Design](./03-responsive-design.md) | [Next: Performance →](../08-performance/01-web-performance.md)
+[← Back to Responsive Design](./03-responsive-design.md) | [Next: Performance →](../06-browser-performance/04-web-performance-comprehensive.md)

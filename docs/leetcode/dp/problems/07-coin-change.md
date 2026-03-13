@@ -11,6 +11,10 @@ leetcode_url: "https://leetcode.com/problems/coin-change/"
 
 
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 ## Problem Description
 
  *  * You are given an integer array coins representing coins of different denominations  * and an integer amount representing a total amount of money.  *  * Return the fewest number of coins that you need to make up that amount. If that 

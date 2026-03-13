@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/kth-largest-element-in-an-array/"
 
 # Kth Largest Element in an Array
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 215. Kth Largest Element in an Array**
 
 ## Problem Description

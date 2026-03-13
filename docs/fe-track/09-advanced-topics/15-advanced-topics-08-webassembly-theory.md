@@ -1,4 +1,8 @@
 # WebAssembly Theory
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Understanding Low-Level Web Performance
 
 **English:** WebAssembly (Wasm) is a binary instruction format for a stack-based virtual machine, designed as a portable compilation target for programming languages, enabling deployment on the web for client and server applications.
@@ -840,4 +844,4 @@ A: Load Wasm module with `WebAssembly.instantiateStreaming()`, call exported fun
 
 ---
 
-[← Back to State Machines](./07-state-machines-theory.md) | [Next: Serverless Architecture →](./09-serverless-architecture-theory.md)
+[← Back to State Machines](./15-advanced-topics-07-state-machines-theory.md) | [Next: Serverless Architecture →](./15-advanced-topics-05-progressive-web-apps-theory.md)

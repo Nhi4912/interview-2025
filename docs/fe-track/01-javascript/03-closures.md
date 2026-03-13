@@ -1,4 +1,8 @@
 # Closures
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## JavaScript Fundamentals - Chapter 3
 
 [← Previous](./02-scope-hoisting.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next →](./04-prototypes-inheritance.md)

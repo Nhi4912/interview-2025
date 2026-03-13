@@ -9,6 +9,10 @@ tags: [Dynamic Programming, LeetCode, Interview Preparation]
 
 # Dynamic Programming Problems
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 **LeetCode Dynamic Programming problem collection for technical interviews**
 
 ## 📊 Overview
@@ -53,14 +57,14 @@ tags: [Dynamic Programming, LeetCode, Interview Preparation]
 ## 🔗 Navigation
 
 - [Back to LeetCode Index](../index.md)
-- [All Categories](../README.md)
+- [All Categories](../index.md)
  other_name="Tree/Graph" ;;
             "linked-list") other_name="Linked List" ;;
             "dp") other_name="Dynamic Programming" ;;
             "sorting-searching") other_name="Sorting/Searching" ;;
             *) other_name="" ;;
         esac
-        echo "- [](..//README.md)"
+        echo "- [](../index.md)"
     fi
 done)
 

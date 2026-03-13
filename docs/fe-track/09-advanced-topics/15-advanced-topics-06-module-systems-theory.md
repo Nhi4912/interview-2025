@@ -1,4 +1,8 @@
 # Module Systems Theory
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Understanding JavaScript Module Patterns and Bundlers
 
 **English:** Module systems provide mechanisms for organizing code into reusable, maintainable units with explicit dependencies, enabling better code organization, encapsulation, and dependency management.
@@ -1166,4 +1170,4 @@ A: Dynamic imports use `import()` function returning Promise. Enables lazy loadi
 
 ---
 
-[← Back to PWA](./05-progressive-web-apps-theory.md) | [Next: CSS Advanced →](./07-css-advanced-theory.md)
+[← Back to PWA](./15-advanced-topics-05-progressive-web-apps-theory.md) | [Next: CSS Advanced →](./17-frontend-theory-07-modern-css-architecture.md)

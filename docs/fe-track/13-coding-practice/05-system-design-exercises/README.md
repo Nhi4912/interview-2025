@@ -1,5 +1,9 @@
 # System Design Coding Exercises
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 > Bài tập coding cho các tình huống system design phổ biến. Focus vào implementation thực tế.
 
 ---
@@ -8,11 +12,11 @@
 
 | # | Problem | Difficulty | Time | Focus |
 |---|---------|------------|------|-------|
-| 1 | [News Feed](./news-feed.md) | 🔴 Hard | 60 min | Infinite Scroll, Virtualization |
-| 2 | [Chat Application](./chat-app.md) | 🔴 Hard | 60 min | WebSocket, Real-time |
-| 3 | [File Uploader](./file-uploader.md) | 🟡 Medium | 45 min | Chunking, Progress |
-| 4 | [Image Gallery](./image-gallery.md) | 🟡 Medium | 40 min | Lazy Loading, Lightbox |
-| 5 | [Todo App](./todo-app.md) | 🟢 Easy | 30 min | CRUD, State Management |
+| 1 | News Feed | 🔴 Hard | 60 min | Infinite Scroll, Virtualization |
+| 2 | Chat Application | 🔴 Hard | 60 min | WebSocket, Real-time |
+| 3 | File Uploader | 🟡 Medium | 45 min | Chunking, Progress |
+| 4 | Image Gallery | 🟡 Medium | 40 min | Lazy Loading, Lightbox |
+| 5 | Todo App | 🟢 Easy | 30 min | CRUD, State Management |
 
 ---
 

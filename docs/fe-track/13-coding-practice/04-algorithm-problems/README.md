@@ -1,5 +1,9 @@
 # Algorithm Problems for Frontend
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 > Các bài toán thuật toán thường gặp trong phỏng vấn frontend. Focus vào patterns thay vì memorize solutions.
 
 ---
@@ -8,10 +12,10 @@
 
 | Category | Count | Difficulty | Frequency |
 |----------|-------|------------|-----------|
-| [Array Problems](./array-problems.md) | 15+ | 🟢-🔴 | Very High |
-| [String Problems](./string-problems.md) | 10+ | 🟢-🟡 | High |
-| [Tree Problems](./tree-problems.md) | 8+ | 🟡-🔴 | Medium |
-| [Common Patterns](./common-patterns.md) | - | All | Reference |
+| Array Problems | 15+ | 🟢-🔴 | Very High |
+| String Problems | 10+ | 🟢-🟡 | High |
+| Tree Problems | 8+ | 🟡-🔴 | Medium |
+| Common Patterns | - | All | Reference |
 
 ---
 

@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/implement-strstr-/"
 
 # Implement strStr()
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 28. Implement strStr()**
 
 ## Problem Description

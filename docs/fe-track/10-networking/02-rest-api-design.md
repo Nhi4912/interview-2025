@@ -1,5 +1,9 @@
 # REST API Design - RESTful Principles
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > REST là architectural style phổ biến nhất cho Web APIs. Hiểu principles để design và consume APIs hiệu quả.
 
 ---

@@ -1,5 +1,9 @@
 # Coding Practice - Bài Tập Thực Hành
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > Bài tập coding thực tế cho phỏng vấn frontend Big Tech. Được tổ chức theo topic và độ khó.
 
 ---
@@ -241,4 +245,4 @@ INTERVIEW SIMULATION:
 
 ---
 
-> **Quay lại:** [Frontend Index](../README.md)
+> **Quay lại:** [Frontend Index](../../00-table-of-contents.md)

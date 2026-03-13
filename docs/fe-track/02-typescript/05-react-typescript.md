@@ -1,5 +1,9 @@
 # React with TypeScript / React với TypeScript
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 [← Previous: TypeScript Comprehensive](./04-typescript-comprehensive.md) | [Related: Advanced Types](./02-advanced-types.md) | [Related: Modern Features](./06-typescript-modern-features.md)
 
 ---

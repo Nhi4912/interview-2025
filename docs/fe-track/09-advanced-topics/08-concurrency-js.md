@@ -1,4 +1,8 @@
 # Concurrency & Parallelism Theory
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Understanding Concurrent and Parallel Computing
 
 **English:** Concurrency is about dealing with multiple tasks at once, while parallelism is about executing multiple tasks simultaneously. Both are essential for modern software performance.
@@ -1391,4 +1395,46 @@ A: Race conditions occur when outcome depends on timing of uncontrollable events
 
 ---
 
-[← Back to Compiler Theory](./10-compiler-theory.md) | [Next: Design Patterns →](./04-design-patterns.md)
+## Câu Hỏi Phỏng Vấn / Interview Q&A
+
+### Q: What are the phases of the JavaScript event loop, and what runs in each phase? / Các phase của event loop trong JavaScript là gì và mỗi phase chạy gì? 🟡 Mid
+
+**A:** The event loop cycles through phases: timers (setTimeout/setInterval callbacks), pending callbacks (I/O error callbacks), idle/prepare (internal), poll (retrieve new I/O events and execute callbacks), check (setImmediate callbacks), and close callbacks (e.g., socket.on('close')). After each phase, the microtask queue (Promise callbacks, queueMicrotask) is drained completely before moving to the next phase.
+
+Vietnamese explanation: Event loop của JavaScript không chỉ là một vòng lặp đơn giản — nó có nhiều phase theo thứ tự cố định. Điểm quan trọng nhất là **microtask queue** (Promise `.then`, `queueMicrotask`) được drain hoàn toàn sau mỗi task và sau mỗi phase, trước khi chuyển sang phase tiếp theo. Điều này giải thích tại sao `Promise.resolve().then(...)` luôn chạy trước `setTimeout(..., 0)` — chúng không cùng queue.
+
+---
+
+### Q: What is the difference between the microtask queue and the macrotask queue? / Sự khác biệt giữa microtask queue và macrotask queue là gì? 🟡 Mid
+
+**A:** Macrotasks (task queue) include: setTimeout, setInterval, setImmediate, I/O callbacks, MessageChannel. Microtasks include: Promise callbacks (.then/.catch/.finally), queueMicrotask, MutationObserver, and async/await continuations. After each macrotask completes, the engine drains the entire microtask queue before picking the next macrotask. This means a microtask can schedule another microtask and it will still run before any macrotask — potentially starving the task queue.
+
+Vietnamese explanation: Đây là câu hỏi cốt lõi phân biệt Junior và Mid. Nếu bạn chỉ nói "Promise chạy sau setTimeout" thì chưa đủ. Cần nhấn mạnh: microtask queue được drain **hoàn toàn** sau mỗi macrotask. Nếu một microtask tạo thêm microtask mới, chúng vẫn chạy trước macrotask tiếp theo — đây là nguồn gốc của bug "infinite microtask loop" làm đóng băng UI.
+
+---
+
+### Q: How do Web Workers enable parallelism in JavaScript, and what are their limitations? / Web Workers cho phép song song hóa trong JavaScript như thế nào và giới hạn của chúng là gì? 🟡 Mid
+
+**A:** Web Workers run JavaScript in a separate OS thread, achieving true parallelism. They communicate with the main thread via `postMessage` / `onmessage` using the structured clone algorithm (deep copy). Limitations: no DOM access, no access to `window`/`document`, message passing overhead for large data, each worker has its own memory space (no shared state by default). Use cases: image processing, cryptography, large dataset parsing, WebAssembly workloads.
+
+Vietnamese explanation: Web Workers giải quyết vấn đề JavaScript single-threaded bằng cách tạo thread thực sự của OS. Nhưng trade-off quan trọng là **overhead của message passing**: data được serialize/deserialize theo structured clone algorithm, nên truyền object lớn (e.g., ArrayBuffer 10MB) rất tốn kém. Giải pháp là dùng `Transferable objects` — transfer quyền sở hữu buffer thay vì copy — nhưng sau khi transfer, thread gốc không còn truy cập được nữa.
+
+---
+
+### Q: What are SharedArrayBuffer and Atomics, and why were they disabled then re-enabled? / SharedArrayBuffer và Atomics là gì, tại sao chúng bị tắt rồi lại được bật? 🔴 Senior
+
+**A:** `SharedArrayBuffer` allows multiple workers to share the same memory region — true shared-memory concurrency. `Atomics` provides low-level atomic operations (add, compareExchange, wait, notify) for synchronization without data races. They were disabled in 2018 after the Spectre CPU vulnerability was discovered — shared memory + high-resolution timers enabled timing side-channel attacks. They were re-enabled in 2020 under cross-origin isolation: pages must serve `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: require-corp` headers to opt in.
+
+Vietnamese explanation: Đây là câu Senior thực sự. `SharedArrayBuffer` + `Atomics` cho phép implement mutex, semaphore, lock-free data structures trong JS — những thứ mà trước đây chỉ có C/C++ mới làm được. Nhưng cái giá phải trả là bảo mật: Spectre exploit dùng shared memory + timer để đọc dữ liệu nhạy cảm từ process khác. Cross-origin isolation là "opt-in sandbox" để browser an toàn khi cho phép shared memory. Cần hiểu rõ khi design WebAssembly multi-thread hoặc high-performance computing trên browser.
+
+---
+
+### Q: How does concurrency differ from parallelism, and how does JavaScript achieve each? / Concurrency khác parallelism như thế nào, và JavaScript đạt được điều đó như thế nào? 🟢 Junior
+
+**A:** Concurrency means managing multiple tasks by interleaving execution (not necessarily simultaneously) — one core can be concurrent. Parallelism means tasks literally execute at the same instant on multiple CPU cores. JavaScript's main thread is concurrent (event loop interleaves async callbacks) but single-threaded — no parallelism. True parallelism in the browser requires Web Workers (multiple OS threads) or WebAssembly with threads + SharedArrayBuffer.
+
+Vietnamese explanation: Câu này thường bị nhầm lẫn. Ví dụ dễ hiểu: một barista pha cà phê cho 10 khách (concurrent) vs. 10 barista pha cùng lúc (parallel). JavaScript main thread là barista duy nhất — nó xử lý nhiều request nhưng không thực sự làm nhiều việc cùng một lúc. Khi bạn `await fetch(...)`, thread không chờ — nó đi làm việc khác, rồi quay lại khi fetch xong. Đây là concurrency qua event loop, không phải parallelism.
+
+---
+
+[← Back to Compiler Theory](./07-compiler-theory-js.md) | [Next: Design Patterns →](./03-design-patterns-ts.md)

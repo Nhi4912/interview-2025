@@ -1,4 +1,8 @@
 # Compiler Theory & Abstract Syntax Trees
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Understanding Code Compilation and Transformation
 
 **English:** Compiler theory studies the design and implementation of compilers, which translate source code from one language to another, typically from high-level to low-level languages.
@@ -1119,4 +1123,4 @@ A: Constant folding evaluates constant expressions at compile time (2 + 3 become
 
 ---
 
-[← Back to Memory Management](./09-memory-management-theory.md) | [Next: Concurrency Theory →](./11-concurrency-theory.md)
+[← Back to Memory Management](./06-memory-management-js.md) | [Next: Concurrency Theory →](./08-concurrency-js.md)

@@ -1,5 +1,9 @@
 # Next.js Fundamentals - Pages vs App Router - Nền Tảng Next.js
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > Next.js la React framework pho bien nhat. App Router voi React Server Components la tuong lai.
 
 ---
@@ -364,14 +368,14 @@ A: Nhung loi thuong gap:
 
 ## 🔗 Cross-References
 
-- [Server Components](./05-server-components.md) - RSC Deep Dive
-- [Rendering Strategies](./06-rendering-strategies.md) - SSR, SSG, ISR
-- [Data Fetching](./07-data-fetching.md) - Server & Client Patterns
-- [Routing & Layouts](./08-routing-layouts.md) - App Router Patterns
-- [Optimization](./09-optimization.md) - Performance Best Practices
+- [Server Components](./01-app-router-server-components.md) - RSC Deep Dive
+- [Rendering Strategies](./03-nextjs-architecture.md) - SSR, SSG, ISR
+- [Data Fetching](./02-data-fetching.md) - Server & Client Patterns
+- [Routing & Layouts](./01-app-router-server-components.md) - App Router Patterns
+- [Optimization](./03-nextjs-architecture.md) - Performance Best Practices
 - [Existing: Fundamentals](./00-nextjs-fundamentals.md) - Q&A Reference
 - [Existing: Architecture](./03-nextjs-architecture.md) - Architecture Patterns
 
 ---
 
-> **Tiep theo:** [05-server-components.md](./05-server-components.md) - React Server Components
+> **Tiep theo:** [05-server-components.md](./01-app-router-server-components.md) - React Server Components

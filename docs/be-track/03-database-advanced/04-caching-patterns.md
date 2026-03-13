@@ -1,5 +1,9 @@
 # Caching Patterns & Strategies
 
+
+> **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > Theory-focused guide (~85% theory, 15% examples). Bilingual: English headings + Vietnamese explanations.
 > Difficulty: 🟢 Junior | 🟡 Middle | 🔴 Senior
 

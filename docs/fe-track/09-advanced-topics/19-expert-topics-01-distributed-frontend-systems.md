@@ -1,5 +1,9 @@
 # Distributed Frontend Systems / Hệ Thống Frontend Phân Tán
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Tổng Quan / Overview
 
 - Tài liệu tập trung vào micro-frontend, federation, cache, edge, đồng bộ state, và quan sát hệ thống.
@@ -10,7 +14,7 @@
 - [Event-Driven Architecture](./17-frontend-theory-13-event-driven-architecture.md)
 - [Performance Engineering](./19-expert-topics-02-performance-engineering.md)
 - [Security Architecture](./19-expert-topics-03-security-architecture.md)
-- [Distributed Systems Theory](../16-theoretical-foundations-07-distributed-systems-theory.md)
+- [Distributed Systems Theory](./17-frontend-theory-12-http-networking-theory.md)
 
 ## Key Concepts / Khái Niệm Trọng Tâm
 

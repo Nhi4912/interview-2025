@@ -1,7 +1,11 @@
 # App Router & Server Components
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Next.js - Chapter 1
 
-[Back to Table of Contents](../../../00-table-of-contents.md) | [Next →](./02-data-fetching.md)
+[Back to Table of Contents](../../00-table-of-contents.md) | [Next →](./02-data-fetching.md)
 
 ---
 
@@ -19,7 +23,7 @@
 
 ## Cross References
 
-- [FE Track Table of Contents](../../../00-table-of-contents.md)
+- [FE Track Table of Contents](../../00-table-of-contents.md)
 - [Next.js Fundamentals](./00-nextjs-fundamentals.md)
 - [Data Fetching & Caching](./02-data-fetching.md)
 - [Next.js Architecture](./03-nextjs-architecture.md)

@@ -1,5 +1,9 @@
 # Virtual DOM and Reconciliation Internals
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 **Tổng Quan / Overview:** How modern UI runtimes model UI trees, diff changes, and schedule rendering work.
 **Giải thích:** Cách runtime UI hiện đại mô hình hóa cây giao diện, diff thay đổi và lập lịch render.
 

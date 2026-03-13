@@ -1,5 +1,9 @@
 # THEORY KNOWLEDGE INDEX / Chỉ Mục Lý Thuyết Dùng Chung
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../00-table-of-contents.md)
+
 ## Overview / Tổng Quan
 
 Tài liệu này là bản đồ đầy đủ cho thư mục `docs/shared/`, dùng làm nguồn lý thuyết chung cho cả Frontend và Backend.

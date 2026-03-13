@@ -1,4 +1,8 @@
 # Memory Management Theory
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Understanding Computer Memory Systems
 
 **English:** Memory management is the process of controlling and coordinating computer memory, assigning portions called blocks to various running programs to optimize overall system performance.
@@ -1100,4 +1104,4 @@ A: Cache coherence ensures multiple CPU caches have consistent views of memory. 
 
 ---
 
-[← Back to Database Theory](./08-database-theory.md) | [Next: Compiler Theory →](./10-compiler-theory.md)
+[← Back to Database Theory](./15-advanced-topics-01-http-protocols-theory.md) | [Next: Compiler Theory →](./07-compiler-theory-js.md)

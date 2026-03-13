@@ -1,4 +1,8 @@
 # Reactive Programming Theory
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Understanding Reactive Systems and Observables
 
 **English:** Reactive programming is a declarative programming paradigm concerned with data streams and the propagation of change, enabling asynchronous data flow and automatic updates.
@@ -962,4 +966,4 @@ A: mergeMap runs all inner observables in parallel, switchMap cancels previous a
 
 ---
 
-[← Back to API Design](./03-api-design-theory.md) | [Next: Module Systems →](./05-module-systems-theory.md)
+[← Back to API Design](./15-advanced-topics-03-api-design-theory.md) | [Next: Module Systems →](./15-advanced-topics-06-module-systems-theory.md)

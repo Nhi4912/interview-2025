@@ -1,4 +1,8 @@
 # Algorithm Visualizations / Trực Quan Hóa Thuật Toán
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Visual Learning - Chapter 2 / Học Trực Quan - Chương 2
 [Back to Table of Contents](../../00-table-of-contents.md)
 

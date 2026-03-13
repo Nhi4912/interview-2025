@@ -11,6 +11,10 @@ leetcode_url: "https://leetcode.com/problems/flatten-2d-vector/"
 
 
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 ## Problem Description
 
  *  * Design an iterator to flatten a 2D vector. It should support the following operations:  * - next and hasNext.  *  * Implement the Vector2D class: 

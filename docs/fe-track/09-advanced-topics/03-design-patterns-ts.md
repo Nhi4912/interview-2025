@@ -1,7 +1,11 @@
 # Design Patterns / Mẫu Thiết Kế
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Computer Science Fundamentals - Chapter 4 / Khoa Học Máy Tính Cơ Bản - Chương 4
 
-[← Previous: Complexity Analysis](./03-complexity-analysis.md) | [Back to Table of Contents](../../00-table-of-contents.md)
+[← Previous: Complexity Analysis](./08-web-performance-theory.md) | [Back to Table of Contents](../../00-table-of-contents.md)
 
 ---
 
@@ -688,4 +692,4 @@ Tránh khi:
 
 ---
 
-[← Previous: Complexity Analysis](./03-complexity-analysis.md) | [Back to Table of Contents](../../00-table-of-contents.md)
+[← Previous: Complexity Analysis](./08-web-performance-theory.md) | [Back to Table of Contents](../../00-table-of-contents.md)

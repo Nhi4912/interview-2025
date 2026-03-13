@@ -1,5 +1,9 @@
 # 00. Interview Market Overview 2025-2026 — Bản Đồ Thị Trường Phỏng Vấn Kỹ Thuật
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](00-table-of-contents.md)
+
 > **Audience:** Frontend (JS/TS/React) and Backend (Go) candidates targeting Google, Microsoft, Grab, Axon, Employment Hero, and Zalo/VNG.
 >
 > **Ngắn gọn bằng tiếng Việt:** Tài liệu này giúp bạn chọn đúng chiến lược ôn tập theo từng công ty thay vì học dàn trải. Mục tiêu là tăng xác suất pass bằng cách hiểu đúng “luật chơi” của mỗi interview loop.

@@ -1,5 +1,9 @@
 # CORS & Same-Origin Policy - Cross-Origin Security
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > Same-Origin Policy bảo vệ users khỏi malicious websites. CORS cho phép controlled cross-origin access.
 
 ---

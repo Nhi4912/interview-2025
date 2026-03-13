@@ -1,5 +1,9 @@
 # Modern TypeScript Features (4.0-5.3) - Theory / Tính Năng TypeScript Hiện Đại - Lý Thuyết
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Table of Contents / Mục Lục
 
 1. [TypeScript 4.x Features](#typescript-4x-features)
@@ -840,4 +844,4 @@ using declarations cung cấp quản lý tài nguyên rõ ràng. Automatic clean
 
 ---
 
-[← Previous: Modern JavaScript](../01-javascript-fundamentals/22-modern-javascript-features.md) | [Next: Modern React →](../03-react/10-modern-react-features.md) | [Back to Table of Contents](../../00-table-of-contents.md)
+[← Previous: Modern JavaScript](../01-javascript/22-modern-javascript-features.md) | [Next: Modern React →](../03-react/10-modern-react-features.md) | [Back to Table of Contents](../../00-table-of-contents.md)

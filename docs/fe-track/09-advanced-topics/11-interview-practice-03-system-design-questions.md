@@ -1,5 +1,9 @@
 # Interview Practice 03: Frontend System Design Questions
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Overview / Tổng Quan
 
 Frontend system design interview đánh giá khả năng thiết kế UI ở quy mô lớn: architecture, state, API contract,

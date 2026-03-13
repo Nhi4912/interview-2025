@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/missing-range/"
 
 # Missing Range
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 163. Missing Ranges**
 
 ## Problem Description

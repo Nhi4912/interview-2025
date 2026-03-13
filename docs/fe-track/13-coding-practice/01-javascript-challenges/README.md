@@ -1,5 +1,9 @@
 # JavaScript Challenges
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 > Implement các JavaScript APIs và utilities từ scratch. Đây là dạng bài phổ biến nhất trong phỏng vấn.
 
 ---
@@ -11,13 +15,13 @@
 | 1 | [Implement Promise](./implement-promise.md) | 🔴 Hard | All | 45 min |
 | 2 | [Array Methods](./implement-array-methods.md) | 🟢 Easy | All | 20 min |
 | 3 | [Debounce & Throttle](./debounce-throttle.md) | 🟢 Easy | All | 15 min |
-| 4 | [Deep Clone](./deep-clone.md) | 🟡 Medium | Google, Meta | 25 min |
+| 4 | Deep Clone | 🟡 Medium | Google, Meta | 25 min |
 | 5 | [Event Emitter](./event-emitter.md) | 🟡 Medium | All | 25 min |
-| 6 | [Curry & Compose](./curry-compose.md) | 🟡 Medium | All | 20 min |
-| 7 | [Memoize Function](./memoize.md) | 🟢 Easy | All | 15 min |
-| 8 | [Promise.all / race](./promise-combinators.md) | 🟡 Medium | All | 20 min |
-| 9 | [Flatten Object/Array](./flatten.md) | 🟡 Medium | All | 20 min |
-| 10 | [Async Utilities](./async-utilities.md) | 🔴 Hard | Meta, Netflix | 30 min |
+| 6 | Curry & Compose | 🟡 Medium | All | 20 min |
+| 7 | Memoize Function | 🟢 Easy | All | 15 min |
+| 8 | Promise.all / race | 🟡 Medium | All | 20 min |
+| 9 | Flatten Object/Array | 🟡 Medium | All | 20 min |
+| 10 | Async Utilities | 🔴 Hard | Meta, Netflix | 30 min |
 
 ---
 

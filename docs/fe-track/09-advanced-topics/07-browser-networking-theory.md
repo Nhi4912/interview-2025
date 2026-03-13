@@ -1,5 +1,9 @@
 # Browser Networking - Advanced Theory / Mạng Trình Duyệt - Lý Thuyết Nâng Cao
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Table of Contents / Mục Lục
 
 1. [HTTP Protocol Evolution](#http-protocol-evolution)

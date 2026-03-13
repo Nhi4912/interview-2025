@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/combination-sum/"
 
 # Combination Sum
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 39. Combination Sum**
 
 ## Problem Description

@@ -1,4 +1,8 @@
 # WebSockets & Real-Time Communication / WebSocket & Giao Tiếp Thời Gian Thực
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Web APIs - Chapter 3 / API Web - Chương 3
 
 [← Previous: Fetch & HTTP](./02-fetch-http.md) | [Back to Table of Contents](../../00-table-of-contents.md)

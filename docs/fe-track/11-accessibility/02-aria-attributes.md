@@ -1,5 +1,9 @@
 # ARIA Attributes - Accessible Rich Internet Applications
 
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 > ARIA provides semantics for custom components. First rule: Don't use ARIA if native HTML works.
 
 ---

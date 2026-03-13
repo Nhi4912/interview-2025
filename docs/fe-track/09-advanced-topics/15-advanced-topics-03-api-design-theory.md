@@ -1,4 +1,8 @@
 # API Design Theory - Comprehensive Guide
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Understanding API Architecture and Best Practices
 
 **English:** API (Application Programming Interface) design encompasses the principles, patterns, and practices for creating interfaces that enable software components to communicate effectively.
@@ -1376,4 +1380,46 @@ A: Fixed window (simple but allows bursts), sliding window (more accurate), toke
 
 ---
 
-[← Back to Cryptography](./02-cryptography-theory.md) | [Next: State Machines →](./04-state-machines-theory.md)
+## Câu Hỏi Phỏng Vấn / Interview Q&A
+
+### Q: What are the 6 REST architectural constraints, and why does violating any of them matter? / 6 ràng buộc kiến trúc REST là gì và tại sao vi phạm bất kỳ ràng buộc nào lại quan trọng? 🟡 Mid
+
+**A:** Roy Fielding's REST constraints: (1) Client-Server — separation of concerns between UI and data storage; (2) Stateless — each request contains all information needed, no session stored server-side; (3) Cacheable — responses must define cacheability; (4) Uniform Interface — consistent resource identification via URIs, manipulation through representations, self-descriptive messages, HATEOAS; (5) Layered System — client cannot tell if it is connected directly to end server; (6) Code on Demand (optional) — server can extend client functionality by transferring executable code (e.g., JavaScript). Most "REST APIs" are actually just HTTP APIs — they violate Uniform Interface (no HATEOAS) and are more precisely called REST-like or HTTP APIs.
+
+Vietnamese explanation: Đây là câu phân biệt người thực sự hiểu REST với người chỉ biết "CRUD qua HTTP". Điểm quan trọng nhất thường bị bỏ qua: **Stateless** có nghĩa là server không lưu session — mọi request phải tự chứa đủ context (token, params). Vi phạm điều này làm khó scale horizontal vì các server phải share session state. **HATEOAS** hầu như không ai implement trong thực tế, nhưng interviewer thường dùng nó để kiểm tra bạn có thực sự biết REST hay không.
+
+---
+
+### Q: When would you choose GraphQL over REST, and what are the trade-offs? / Khi nào nên chọn GraphQL thay vì REST và đánh đổi là gì? 🟡 Mid
+
+**A:** Choose GraphQL when: clients have diverse data needs (mobile vs web need different fields), over-fetching/under-fetching is a real problem, you need a strongly-typed schema as contract, or rapid frontend iteration is blocked by backend API changes. Trade-offs against REST: GraphQL adds complexity (resolvers, schema, DataLoader for N+1), harder to cache (POST requests, dynamic queries), harder to monitor (all requests hit one endpoint), and HTTP caching does not work naturally. REST is better for simple CRUD APIs, public APIs requiring CDN caching, or teams without GraphQL expertise.
+
+Vietnamese explanation: Câu trả lời quan trọng nhất là bạn hiểu **N+1 problem** trong GraphQL. Khi query `users { posts { comments } }`, naive implementation sẽ fire N+1 DB queries. DataLoader là giải pháp — batching + caching queries trong một request cycle. Ngoài ra, caching khó hơn REST vì GraphQL dùng POST và query body khác nhau mỗi lần. Trong thực tế production, nhiều team dùng persisted queries để giải quyết vấn đề này.
+
+---
+
+### Q: What advantages does gRPC provide over REST, and in what contexts is it most appropriate? / gRPC cung cấp những lợi thế gì so với REST và phù hợp nhất trong ngữ cảnh nào? 🔴 Senior
+
+**A:** gRPC advantages: (1) Protocol Buffers — binary serialization 3-10x smaller and faster than JSON; (2) HTTP/2 — multiplexing, header compression, server push; (3) Streaming — unary, server-streaming, client-streaming, bidirectional; (4) Strongly-typed contracts via .proto files with code generation; (5) Built-in deadlines/cancellation. Best fit: microservice-to-microservice internal communication, high-throughput systems, polyglot environments where contract enforcement matters, real-time streaming (live telemetry, chat). Not ideal for: public APIs (browser support requires grpc-web proxy), teams unfamiliar with Protobuf toolchain, or simple CRUD where REST's simplicity wins.
+
+Vietnamese explanation: gRPC thường được hỏi ở vị trí Senior/Backend-heavy. Key trade-off: binary protocol nghĩa là bạn không thể debug bằng `curl` hay đọc payload trong browser DevTools — cần tooling như `grpcurl` hoặc `grpc-ui`. Trong microservices architecture, gRPC giữa internal services + REST/GraphQL cho external clients là pattern phổ biến nhất. Điểm quan trọng với interviewer: biết khi nào **không** dùng gRPC quan trọng không kém khi nào dùng.
+
+---
+
+### Q: What are the main API versioning strategies and when should you use each? / Các chiến lược versioning API chính là gì và khi nào nên dùng mỗi loại? 🟡 Mid
+
+**A:** (1) URI versioning (`/v1/users`) — explicit, easy to route, easy to test in browser, but pollutes URL and breaks REST resource identity semantics; (2) Header versioning (`Accept: application/vnd.api.v2+json`) — clean URLs, true REST, but harder to test, requires client sophistication; (3) Query parameter (`?version=2`) — easy to override for testing, but query params are for filtering not versioning semantically; (4) No versioning (evolution) — use additive changes only, deprecate fields with warnings. In practice, URI versioning wins for public APIs due to simplicity. Internal APIs can use headers. Evolution strategy (GraphQL's model) avoids versioning entirely.
+
+Vietnamese explanation: Đây không chỉ là câu kỹ thuật mà còn là câu về **organizational trade-off**. URI versioning đơn giản và đồng nghiệp có thể debug dễ, nhưng bạn phải maintain `/v1` và `/v2` song song — tốn engineering cost. Chiến lược không versioning (deprecation + evolution) yêu cầu discipline cao: không được breaking change, phải communicate rõ với consumers, và monitor usage để biết khi nào safe to remove. Với public APIs có hàng nghìn consumers, versioning là bắt buộc. Với internal microservices, có thể evolve dần nếu team nhỏ và co-deploy được.
+
+---
+
+### Q: What is HATEOAS and why is it rarely implemented despite being a core REST constraint? / HATEOAS là gì và tại sao nó hiếm khi được implement dù là ràng buộc cốt lõi của REST? 🔴 Senior
+
+**A:** HATEOAS (Hypermedia As The Engine Of Application State) means API responses include links to available next actions — the client drives navigation from response data rather than hardcoded URLs. Example: a `GET /orders/123` response includes `{"status": "processing", "_links": {"cancel": "/orders/123/cancel", "track": "/orders/123/tracking"}}`. Benefits: decouples client from server URL structure, server controls available actions based on state. Rarely implemented because: significant server-side complexity to generate links, clients still need to understand link semantics (rel attributes), most clients are purpose-built and know their own URL patterns, and tooling/ecosystem support is weak compared to plain REST or GraphQL.
+
+Vietnamese explanation: HATEOAS là ví dụ điển hình về "đúng về lý thuyết nhưng khó về thực tế". Nếu implement đúng, client có thể hoàn toàn tự navigate API chỉ từ entry point — giống như browser navigate web từ một URL rồi follow links. Nhưng trong thực tế, mobile/web client đều biết exact endpoint mình cần — không cần server chỉ dẫn. Cost của implementation (generate, maintain, test links cho mọi resource state) không justify benefit. Biết điều này cho thấy bạn hiểu trade-off thực tế, không chỉ lý thuyết sách vở.
+
+---
+
+[← Back to Cryptography](./15-advanced-topics-02-cryptography-theory.md) | [Next: State Machines →](./15-advanced-topics-07-state-machines-theory.md)

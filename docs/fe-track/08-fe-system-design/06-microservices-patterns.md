@@ -1,4 +1,8 @@
 # Microservices Patterns - Advanced Theory
+
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../00-table-of-contents.md)
+
 ## Building Distributed Systems at Scale
 
 **English:** Microservices architecture is an approach to developing software systems as a collection of small, independent services that communicate through well-defined APIs, enabling scalability, flexibility, and faster development cycles.
@@ -969,4 +973,4 @@ A: Client-side: client queries service registry (Consul, Eureka), implements loa
 
 ---
 
-[← Back to Consensus Algorithms](./07-consensus-algorithms.md) | [Next: Event-Driven Architecture →](./09-event-driven-architecture.md)
+[← Back to Consensus Algorithms](./06-microservices-patterns.md) | [Next: Event-Driven Architecture →](./06-microservices-patterns.md)

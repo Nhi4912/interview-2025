@@ -9,6 +9,10 @@ leetcode_url: "https://leetcode.com/problems/letter-combinations-of-a-phone-numb
 
 # Letter Combinations of a Phone Number
 
+
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
 **LeetCode Problem # * 17. Letter Combinations of a Phone Number**
 
 ## Problem Description
