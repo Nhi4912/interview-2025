@@ -25,7 +25,30 @@
       "Bash(grep -rL \"### Q:\" /Users/nee/Documents/Documents/interview/docs/shared/02-system-design/*.md)",
       "Bash(xargs -I{} basename {} grep -rL \"### Q:\" /Users/nee/Documents/Documents/interview/docs/shared/01-cs-fundamentals/*.md)",
       "Bash(xargs -I{} basename {})",
-      "Bash(wc -l /Users/nee/Documents/Documents/interview/docs/shared/02-system-design/system-design-theory.md grep -n \"Interview Questions\\\\|## [0-9]\" /Users/nee/Documents/Documents/interview/docs/shared/02-system-design/system-design-theory.md)"
+      "Bash(wc -l /Users/nee/Documents/Documents/interview/docs/shared/02-system-design/system-design-theory.md grep -n \"Interview Questions\\\\|## [0-9]\" /Users/nee/Documents/Documents/interview/docs/shared/02-system-design/system-design-theory.md)",
+      "Bash(wc -l /Users/nee/Documents/Documents/interview/docs/be-track/01-golang/*.md /Users/nee/Documents/Documents/interview/docs/be-track/02-backend-knowledge/*.md)",
+      "Bash(grep -c '### Q:' /Users/nee/Documents/Documents/interview/docs/shared/02-system-design/*.md)",
+      "Bash(sort -t: -k2 -n)",
+      "Bash(grep -c '### Q:' /Users/nee/Documents/Documents/interview/docs/fe-track/**/*.md)",
+      "Bash(grep -c '### Q:' /Users/nee/Documents/Documents/interview/docs/shared/04-security/*.md /Users/nee/Documents/Documents/interview/docs/shared/05-software-engineering/*.md)",
+      "Bash(wc -l /Users/nee/Documents/Documents/interview/docs/shared/04-security/*.md /Users/nee/Documents/Documents/interview/docs/shared/05-software-engineering/*.md)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/fe-track/01-javascript/01-variables-data-types.md:*)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/fe-track/03-react/04-advanced-patterns.md:*)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/fe-track/03-react/09-performance-optimization.md:*)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/shared/02-system-design/caching-patterns.md:*)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/shared/05-software-engineering/03-sdlc-and-practices.md:*)",
+      "Bash(grep -rL '### Q:' /Users/nee/Documents/Documents/interview/docs/ --include=*.md)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/shared/03-database/database-theory.md:*)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/be-track/02-backend-knowledge/01-api-design.md:*)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/shared/03-database/02-indexing-and-optimization.md:*)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/shared/06-ai-and-agents/01-ml-fundamentals.md:*)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/shared/06-ai-and-agents/04-rag-and-embeddings.md:*)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/shared/06-ai-and-agents/07-ai-production-challenges.md:*)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/shared/01-cs-fundamentals/complexity-analysis.md:*)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/shared/01-cs-fundamentals/08-computation-theory.md:*)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/shared/01-cs-fundamentals/information-theory.md:*)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/shared/05-software-engineering/06-project-management.md:*)",
+      "Bash(git checkout:*)"
     ]
   }
 }
