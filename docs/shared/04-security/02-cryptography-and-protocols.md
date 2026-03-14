@@ -885,3 +885,84 @@ HASHING:                         ENCRYPTION:
 - Checklist ngắn nhưng giúp giảm lỗi cấu hình có thể gây sự cố nghiêm trọng ở production.
 ### Example / Ví dụ
 - Chạy kiểm tra tự động cho TLS config, cert expiry, và secret leakage trong pipeline CI/CD.
+
+---
+
+## Interview Q&A / Câu Hỏi Phỏng Vấn
+
+### Q: What is the difference between symmetric and asymmetric encryption? / Symmetric vs asymmetric encryption? 🟢 Junior
+
+**A:** **Symmetric**: same key for encrypt and decrypt. Fast (AES-256 ~1GB/s), but key distribution problem. **Asymmetric**: key pair (public encrypts, private decrypts). Solves key distribution, but slow (~100x). Real systems use both: asymmetric to exchange symmetric key (TLS handshake), symmetric for bulk data.
+
+```
+Symmetric (AES-256):
+same_key → encrypt → ciphertext → decrypt → plaintext
+Problem: how to share the key securely?
+
+Asymmetric (RSA/ECC):
+Bob's public key → encrypt → ciphertext
+Bob's private key → decrypt → plaintext
+
+TLS hybrid:
+1. Asymmetric: ECDHE key exchange → shared secret
+2. Derive symmetric session keys
+3. AES-GCM for all data (fast)
+```
+
+Vietnamese explanation: AES-GCM là symmetric standard hiện tại (authenticated encryption — detect tampering). RSA đang được replace bởi ECC (shorter keys, faster). "Don't roll your own crypto" là nguyên tắc vàng — dùng libsodium, Go crypto/tls, WebCrypto API.
+
+---
+
+### Q: What is the difference between hashing and encryption? / Hashing vs encryption? 🟢 Junior
+
+**A:** **Hashing**: one-way — cannot reverse to get input. Used for password storage, integrity, checksums. **Encryption**: two-way — can decrypt with key. Used for confidential data.
+
+```
+Hashing (one-way):
+"password123" → bcrypt(cost=12) → "$2b$12$xyz..."
+Cannot reverse → only verify by hashing again
+
+Encryption (two-way):
+plaintext + key → ciphertext → decrypt + key → plaintext
+
+Password storage: NEVER encrypt, ALWAYS hash with bcrypt/Argon2/scrypt
+- Slow by design → resist brute force
+- Salt (random per user) → prevent rainbow table attacks
+```
+
+Vietnamese explanation: MD5, SHA-1 broken (collision attacks) — không dùng for security. SHA-256 for checksums/integrity (fast OK). bcrypt/Argon2 for passwords (slow = intentional). "Why not SHA-256 for passwords?" → too fast (billions attempts/sec with GPU). HMAC = hash với secret key → message authentication (verify data + sender).
+
+---
+
+### Q: How does TLS/HTTPS work? / TLS/HTTPS hoạt động như thế nào? 🟡 Mid
+
+**A:** TLS 1.3 handshake (simplified 1-RTT):
+
+```
+Client                     Server
+──────                     ──────
+1. ClientHello           →  (TLS version, supported ciphers, random)
+2.                       ←  ServerHello + Certificate + ServerFinished
+   (verify cert against CA trust chain)
+3. ECDHE key exchange: compute shared secret
+4. Derive session keys from shared secret
+5. Encrypted data       ⟺  (AES-GCM with session keys)
+
+TLS 1.3 vs 1.2:
+- 1-RTT handshake (vs 2-RTT) → faster
+- 0-RTT resumption for returning visitors
+- Forward Secrecy by default (ECDHE always)
+- Removed weak algorithms (RSA key exchange, weak DH)
+```
+
+Vietnamese explanation: Certificate verification: browser checks cert signed by trusted CA. HSTS: tells browser "always HTTPS" → prevents SSL stripping. mTLS: both client AND server present certs → service-to-service auth in zero-trust. Let's Encrypt: free automated cert (ACME protocol). Certificate Pinning: mobile apps hardcode cert/pubkey → prevent fraudulent certs (risky to update).
+
+---
+
+## Interview Q&A Summary / Tổng Kết
+
+| Question | Level | Key Point |
+|----------|-------|-----------|
+| Symmetric vs asymmetric | 🟢 | Symmetric=fast+same key; asymmetric=key pair; TLS uses hybrid |
+| Hashing vs encryption | 🟢 | Hash=one-way+integrity; bcrypt for passwords; SHA-256 for checksums |
+| TLS/HTTPS | 🟡 | ECDHE key exchange → session keys; 1-RTT; forward secrecy |

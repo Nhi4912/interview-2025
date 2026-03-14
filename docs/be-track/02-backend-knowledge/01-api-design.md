@@ -1284,3 +1284,89 @@ Server nên **chấp nhận** input thiếu optional fields.
 3. **Vẽ diagram**: Rate limiting algorithms, request flow, architecture — vẽ ra giúp giải thích rõ hơn
 4. **Đừng chỉ biết lý thuyết**: Khi nói về Token Bucket, sẵn sàng nói "Tôi đã implement dùng Redis với MULTI/EXEC"
 5. **Phân biệt rõ concept**: 401 vs 403, PUT vs PATCH, authentication vs authorization — những chi tiết nhỏ thể hiện hiểu biết sâu
+
+---
+
+## Interview Q&A / Câu Hỏi Phỏng Vấn
+
+### Q: What is the difference between REST, GraphQL, and gRPC? / REST vs GraphQL vs gRPC khác nhau thế nào? 🟡 Mid
+
+**A:** Three API paradigms with different strengths:
+- **REST**: HTTP verbs + resources. Stateless, cacheable, wide tooling. Under/over-fetching common.
+- **GraphQL**: client specifies exact data needed. Eliminates over/under-fetching. Single endpoint. More complex caching.
+- **gRPC**: binary protocol (Protocol Buffers), HTTP/2. Extremely fast, bidirectional streaming. Best for internal service-to-service.
+
+```
+Choose REST when:     Choose GraphQL when:   Choose gRPC when:
+Public API            Multiple clients with  Internal microservices
+Simple CRUD           different data needs   Real-time streaming
+Wide compatibility    Complex, nested data   Performance critical
+Team knows REST       Rapid frontend iter.   Type-safe contracts
+```
+
+Vietnamese explanation: REST = flexible, widely understood. GraphQL = solves client data needs but server complexity increase (N+1 queries, complex caching). gRPC = performance king cho internal services (protobuf ~5x smaller than JSON, HTTP/2 multiplexing). Practical: nhiều companies dùng REST for public API + gRPC for internal + GraphQL for BFF (Backend for Frontend).
+
+---
+
+### Q: What is idempotency and why is it important in API design? / Idempotency là gì và tại sao quan trọng? 🟡 Mid
+
+**A:** An operation is **idempotent** if performing it multiple times has the same effect as performing it once. Critical for API reliability — clients need to safely retry on network failures.
+
+```
+HTTP methods and idempotency:
+GET     → idempotent (read only)
+PUT     → idempotent (full replace — same result each time)
+DELETE  → idempotent (delete already-deleted = no error)
+POST    → NOT idempotent (creates new resource each call)
+PATCH   → NOT idempotent by default (depends on implementation)
+
+Idempotency key pattern (for POST):
+Client sends: POST /payments + Idempotency-Key: uuid-123
+Server: if uuid-123 seen before → return cached response
+        if new → process, store result for uuid-123
+
+Use case: payment processing (retry on timeout — must not charge twice!)
+```
+
+Vietnamese explanation: Network is unreliable — clients must retry. GET/PUT/DELETE idempotent by design. POST not idempotent → use idempotency keys (Stripe, Square, Braintree all support this). Implementation: store idempotency key → result in Redis with TTL. Race condition: use DB unique constraint on idempotency key, let second write fail gracefully.
+
+---
+
+### Q: What is rate limiting and how do you implement it? / Rate limiting là gì và cách implement? 🔴 Senior
+
+**A:** Rate limiting restricts how many requests a client can make in a time window. Protects against abuse, DoS, ensures fair resource usage.
+
+```
+Algorithms:
+1. Fixed Window: count requests in current window (e.g., 100/min)
+   Simple but boundary burst problem (200 reqs at window edge)
+
+2. Sliding Window: track per-second within rolling window
+   More accurate, more memory
+
+3. Token Bucket: bucket refills at rate R, max capacity C
+   Allows bursts up to C, sustained rate R
+   (Stripe, AWS use token bucket)
+
+4. Leaky Bucket: queue requests, process at fixed rate
+   Smooths traffic, no bursts
+
+Implementation with Redis:
+MULTI
+  INCR rate_limit:user123:window
+  EXPIRE rate_limit:user123:window 60
+EXEC
+if count > limit → 429 Too Many Requests + Retry-After header
+```
+
+Vietnamese explanation: Distributed rate limiting: Redis is the standard (Lua script for atomicity). Headers: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`, `Retry-After`. Rate limit by: IP (unauthenticated), user ID (authenticated), API key (third-party). Tiered limits: free tier (100/min), paid tier (1000/min). Implement rate limiting at API Gateway level để không duplicate logic in every service.
+
+---
+
+## Interview Q&A Summary / Tổng Kết
+
+| Question | Level | Key Point |
+|----------|-------|-----------|
+| REST vs GraphQL vs gRPC | 🟡 | REST=public; GraphQL=flexible client data; gRPC=fast internal |
+| Idempotency | 🟡 | Same result multiple times; idempotency keys for safe POST retries |
+| Rate limiting | 🔴 | Token bucket preferred; Redis for distributed; 429 + Retry-After |

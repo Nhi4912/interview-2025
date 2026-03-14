@@ -615,3 +615,117 @@ Thường có thể đánh đổi không gian cho thời gian:
 ---
 
 [← Previous: Algorithms](./algorithms-theory.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next: Design Patterns →](./data-structures-theory.md)
+
+---
+
+## Interview Q&A Summary / Tổng hợp câu hỏi phỏng vấn
+
+### Q: What is Big O notation and why does it matter? / Big O là gì và tại sao quan trọng? 🟢 Junior
+
+**A:** Big O describes algorithm performance as input size n grows — ignoring constants and lower-order terms.
+
+```
+Common complexities (best → worst):
+O(1)       Constant    Array index access, hash lookup
+O(log n)   Logarithmic Binary search, balanced BST operations
+O(n)       Linear      Linear scan, single loop
+O(n log n) Linearithmic Merge sort, heap sort (optimal comparison sort)
+O(n²)      Quadratic   Bubble/insertion sort, nested loops
+O(2ⁿ)      Exponential Fibonacci naive recursion, subset enumeration
+O(n!)      Factorial   Permutations, brute-force TSP
+
+Visual growth comparison (n=1000):
+O(1)       → 1 operation
+O(log n)   → 10 operations
+O(n)       → 1,000 operations
+O(n log n) → 10,000 operations
+O(n²)      → 1,000,000 operations  ← often unacceptable at scale
+O(2ⁿ)      → 10^301 operations     ← computationally infeasible
+```
+
+**Rules for calculating Big O:**
+```
+1. Drop constants:   O(3n) → O(n)
+2. Drop lower terms: O(n² + n) → O(n²)
+3. Different inputs: O(n) for array A + O(m) for array B = O(n + m), NOT O(n²)
+4. Nested loops:     O(n) × O(n) = O(n²) — only if both depend on same n
+```
+
+**Best/Average/Worst case:**
+```
+Algorithm    Best      Average   Worst
+Quicksort    O(n logn) O(n logn) O(n²)  ← pivot always min/max
+Mergesort    O(n logn) O(n logn) O(n logn) — always predictable
+Binary search O(1)     O(log n)  O(log n)
+Hash lookup  O(1)      O(1)      O(n)   ← all keys collide
+```
+
+**Điểm quan trọng:** Big O đo lường scalability, không phải absolute speed. O(log n) đánh bại O(n) khi n lớn dù constant factor của O(log n) lớn hơn. Trong interview, luôn phân tích cả time và space complexity.
+
+### Q: How do you analyze space complexity? / Phân tích space complexity như thế nào? 🟡 Mid
+
+**A:**
+
+```
+Space complexity = extra memory your algorithm uses (beyond input)
+
+Common patterns:
+O(1)    Constant space: use fixed variables, in-place operations
+        Example: two-pointer, sliding window, bubble sort
+
+O(log n) Recursive call stack in balanced tree/binary search
+        Example: binary search recursion → log n stack frames
+
+O(n)    Store copy of input, or output proportional to n
+        Example: creating new array, hash map of all elements
+
+O(n²)   2D matrix proportional to input
+        Example: DP table for sequence alignment
+
+Recursive algorithms — count call stack depth:
+  fibonacci(n) → depth n → O(n) space
+  binary search(n) → depth log n → O(log n) space
+  merge sort → depth log n levels → O(n) total (merge step)
+
+Space vs Time tradeoff:
+  Naive:     O(n²) time, O(1) space
+  Optimized: O(n) time, O(n) space  ← hash map as cache
+  Example: Two Sum
+    Brute force: nested loop O(n²) time, O(1) space
+    Hash map: O(n) time, O(n) space (store seen values)
+```
+
+**Điểm interview:** Space complexity thường bị quên. Luôn mention cả time và space. Nếu dùng recursion, mention call stack space. Trade-off thường là O(n) space đổi lấy O(n) time improvement.
+
+### Q: What is amortized analysis? Give an example / Phân tích amortized là gì? 🔴 Senior
+
+**A:** Amortized analysis = average cost per operation over a sequence of N operations, even if some operations are expensive.
+
+```
+Classic example: Dynamic Array (ArrayList/Go slice)
+
+When append() causes resize:
+├── Allocate 2× current capacity
+├── Copy all elements to new array
+└── This resize is O(n) — expensive!
+
+But how often does resize happen?
+  capacity: 1 → 2 → 4 → 8 → 16 → 32 → ...
+  copies:   1 + 2 + 4 + 8 + 16 = 31 total copies for 16 elements
+  Average copies per append = 31/16 ≈ 2 → O(1) amortized!
+
+Formal accounting method:
+  "Charge" each append $3:
+  ├── $1 for the current append
+  ├── $1 to pay for future copy of this element
+  └── $1 to pay for copying an old element when resize happens
+  → Bank account always positive → O(1) amortized
+
+Other amortized examples:
+  Stack with push/pop + getMin: O(1) amortized with auxiliary stack
+  Fibonacci heap: decrease-key O(1) amortized
+  Union-Find (path compression): O(α(n)) ≈ O(1) amortized
+  HashMap: occasional O(n) rehash → O(1) amortized insert
+```
+
+**Điểm senior:** Amortized khác với average-case (probabilistic). Amortized là guarantee về sequence of operations, không phải single operation. Thường xuất hiện trong data structures với lazy operations (resize, consolidation, path compression).

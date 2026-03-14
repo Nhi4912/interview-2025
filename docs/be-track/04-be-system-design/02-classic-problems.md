@@ -512,3 +512,210 @@ Scale:
 ---
 
 **See also**: [Design Framework](./01-design-framework.md) | [Advanced Problems](./03-advanced-problems.md) | [Distributed Patterns](./04-distributed-patterns.md)
+
+---
+
+## Interview Q&A Summary / Tổng hợp câu hỏi phỏng vấn
+
+### Q: How would you design a URL shortener? / Thiết kế URL shortener như thế nào? 🟡 Mid
+
+**A:**
+
+```
+Requirements:
+  Functional: shorten URL, redirect short → long, custom aliases, expiry
+  Non-functional: 100M URLs, 10:1 read:write ratio, <10ms redirect latency
+
+Core Algorithm — short code generation:
+  Option 1: Base62 encode auto-increment ID
+  ├── ID=1 → "000001", ID=2 → "000002", ...
+  ├── Pros: simple, no collision
+  └── Cons: predictable (can enumerate), single point of ID generation
+
+  Option 2: Hash (MD5/SHA256 of long URL)
+  ├── MD5 → 128 bits → take first 6 chars → "dGh2aX"  
+  ├── Pros: deterministic (same URL → same short code)
+  └── Cons: collision possible (handle with counter suffix)
+
+  Option 3: Random token (recommended)
+  ├── random 6 chars from [A-Za-z0-9] → 62⁶ = 56B combinations
+  ├── Store in DB with uniqueness constraint
+  └── Retry on collision (< 0.001% probability)
+
+System Architecture:
+            ┌─────────┐    ┌──────────────┐    ┌──────────┐
+ Create ───►│  API    │───►│  Short Code  │───►│   DB     │
+            │ Gateway │    │  Generator   │    │(Postgres)│
+            └─────────┘    └──────────────┘    └─────┬────┘
+                                                      │
+            ┌─────────┐    ┌──────────────┐    ┌─────▼────┐
+ Redirect ─►│  CDN /  │───►│ Cache Layer  │───►│   DB     │
+            │ LB      │    │   (Redis)    │    │          │
+            └─────────┘    └──────────────┘    └──────────┘
+
+Redirect flow (hot path):
+1. GET /abc123 → check Redis cache
+2. Cache hit → 301/302 redirect (HTTP) → ~2ms total
+3. Cache miss → query DB → cache result → redirect → ~15ms
+
+HTTP 301 vs 302:
+├── 301 Permanent: browser caches redirect → fewer requests (good for CDN)
+└── 302 Temporary: browser always asks server → analytics work correctly
+
+Database schema:
+  urls: id, short_code(indexed), long_url, user_id, created_at, expires_at
+  clicks: id, url_id, timestamp, ip, user_agent (analytics)
+
+Scale to 100M URLs:
+├── DB: Postgres sharded by short_code hash range
+├── Cache: Redis with 80/20 rule (top 20% URLs = 80% traffic)
+└── Analytics: write clicks to Kafka → async aggregation
+```
+
+**Điểm interview:** URL shortener là câu classic để demo: DB schema design, caching strategy, HTTP fundamentals (301 vs 302), ID generation. Biết trade-off 301 vs 302 thường impressed interviewer.
+
+### Q: How would you design a rate limiter? / Thiết kế rate limiter như thế nào? 🔴 Senior
+
+**A:**
+
+```
+Rate limiting algorithms:
+
+1. Token Bucket (most common, recommended)
+   ├── Bucket holds N tokens, refills at R tokens/sec
+   ├── Each request consumes 1 token
+   ├── Request rejected if bucket empty
+   ├── Allows short bursts up to bucket capacity
+   └── Redis implementation:
+```
+
+```python
+def is_allowed(user_id, max_tokens=100, refill_rate=10):
+    key = f"rate:{user_id}"
+    pipe = redis.pipeline()
+    now = time.time()
+    pipe.hgetall(key)
+    # Fetch current state
+    state = pipe.execute()[0]
+    
+    tokens = float(state.get("tokens", max_tokens))
+    last_refill = float(state.get("last_refill", now))
+    
+    # Refill tokens
+    elapsed = now - last_refill
+    tokens = min(max_tokens, tokens + elapsed * refill_rate)
+    
+    if tokens >= 1:
+        tokens -= 1
+        redis.hset(key, mapping={"tokens": tokens, "last_refill": now})
+        redis.expire(key, 3600)
+        return True  # allowed
+    return False  # rejected
+```
+
+```
+2. Fixed Window Counter
+   ├── Count requests in fixed time window (e.g., 100 req/min)
+   └── Redis: INCR key:user:YYYYMMDDHHMM + EXPIRE 60
+
+   Problem: boundary burst — 100 req at 00:59 + 100 req at 01:00 = 200 in 2 sec
+
+3. Sliding Window Log
+   ├── Store timestamp of each request in sorted set
+   ├── Remove timestamps outside window, count remaining
+   └── Redis: ZADD + ZREMRANGEBYSCORE + ZCARD
+   ├── Pro: precise, no boundary burst
+   └── Con: memory per user × request rate
+
+4. Sliding Window Counter (best: precision + memory)
+   ├── Hybrid: use current + previous window proportionally
+   └── count = curr_window + prev_window × (1 - elapsed/window_size)
+
+Distributed rate limiting:
+  Problem: if 10 servers, each checks its own counter → 10× the limit
+  Solution: centralized Redis (single source of truth)
+  
+  Redis Lua script for atomicity:
+  local current = redis.call('INCR', KEYS[1])
+  if current == 1 then redis.call('EXPIRE', KEYS[1], ARGV[1]) end
+  if current > tonumber(ARGV[2]) then return 0 end
+  return 1
+
+Rate limit response:
+  HTTP 429 Too Many Requests
+  Retry-After: 60  (seconds until limit resets)
+  X-RateLimit-Limit: 100
+  X-RateLimit-Remaining: 0
+  X-RateLimit-Reset: 1678886400
+```
+
+**Điểm senior interview:** Biết 4 algorithms và trade-off của mỗi cái. Token bucket là best balance (burst + refill). Distributed rate limiting cần centralized store. Redis Lua script cho atomicity. Response headers là production detail được đánh giá cao.
+
+### Q: How would you design a notification system? / Thiết kế hệ thống notification? 🔴 Senior
+
+**A:**
+
+```
+Requirements:
+  Channels: email, SMS, push (iOS/Android), in-app
+  Scale: 10M users, 1M notifications/day
+  Types: transactional (order confirmation), marketing (promotions)
+  Features: user preferences, retry logic, delivery tracking
+
+Architecture:
+                  ┌────────────┐
+ Services ───────►│ Notification│
+ (Order svc,      │   API      │
+  Payment svc)    └─────┬──────┘
+                        │
+                        ▼
+                  ┌─────────────┐
+                  │   Message   │
+                  │    Queue    │
+                  │  (Kafka)    │
+                  └──┬──┬──┬───┘
+                     │  │  │
+          ┌──────────┘  │  └──────────┐
+          ▼             ▼             ▼
+    ┌──────────┐  ┌──────────┐  ┌──────────┐
+    │  Email   │  │   Push   │  │   SMS    │
+    │ Worker   │  │  Worker  │  │  Worker  │
+    │(SendGrid)│  │  (FCM/   │  │(Twilio)  │
+    └──────────┘  │  APNs)   │  └──────────┘
+                  └──────────┘
+                        │
+                  ┌──────────────┐
+                  │  Delivery    │
+                  │  Tracker DB  │
+                  └──────────────┘
+
+Key design decisions:
+
+1. User preferences (respect opt-outs)
+   ├── DB: notification_preferences(user_id, channel, type, enabled)
+   ├── Check before sending: if !preferences.IsEnabled(user, channel, type) skip
+   └── Cache preferences in Redis (updated infrequently)
+
+2. Retry logic
+   ├── Exponential backoff: 1s, 2s, 4s, 8s, 16s...
+   ├── Max retries: 3-5 attempts
+   ├── Dead letter queue (DLQ) for permanently failed notifications
+   └── Alert on high DLQ rate
+
+3. Deduplication
+   ├── Idempotency key: hash(user_id + type + reference_id)
+   ├── Check key before sending → skip if already delivered
+   └── Prevents duplicate notifications on retry
+
+4. Template management
+   ├── Templates in DB/S3 (not hardcoded)
+   ├── Localization: template_id + locale → localized template
+   └── Variable substitution: "Hello {{name}}, your order {{order_id}}..."
+
+5. Priority queues
+   ├── Transactional (high): order confirmation, OTP → immediate
+   ├── System (medium): password reset, alerts
+   └── Marketing (low): promotions, newsletters → can batch/delay
+```
+
+**Điểm senior:** Notification systems cần: user preferences/opt-outs (legal requirement), retry với DLQ, deduplication với idempotency keys, priority queues (user doesn't want marketing delayed OTP). Multi-channel routing qua queue decouples senders từ channel-specific logic.

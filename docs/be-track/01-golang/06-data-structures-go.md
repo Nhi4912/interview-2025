@@ -2612,3 +2612,189 @@ func main() {
 ---
 
 > **Next:** [02-algorithms.md](./07-algorithms-go.md) — Sorting, Searching, Dynamic Programming, Greedy
+
+---
+
+## Interview Q&A Summary / Tổng hợp câu hỏi phỏng vấn
+
+### Q: How do slices work in Go under the hood? / Slice trong Go hoạt động như thế nào? 🟡 Mid
+
+**A:**
+
+```go
+// A slice is a 3-field struct:
+type slice struct {
+    array unsafe.Pointer  // pointer to underlying array
+    len   int             // number of elements
+    cap   int             // capacity of underlying array
+}
+
+s := make([]int, 3, 5)
+// s = { array: *[5]int, len: 3, cap: 5 }
+// s[0..2] accessible, s[3..4] reserved but not visible
+
+// Append and capacity growth:
+s = append(s, 4)  // len=4, cap=5 (uses reserved space)
+s = append(s, 5)  // len=5, cap=5 (full)
+s = append(s, 6)  // len=6, cap=10 (new array allocated, ~2× growth)
+
+// GOTCHA: slice sharing
+a := []int{1, 2, 3, 4, 5}
+b := a[1:3]  // b = [2, 3], shares same backing array!
+b[0] = 99    // modifies a[1]!
+fmt.Println(a) // [1 99 3 4 5]
+
+// Safe copy:
+c := make([]int, len(b))
+copy(c, b)   // independent copy
+```
+
+**Memory efficiency patterns:**
+```go
+// Preallocate when size is known:
+result := make([]int, 0, len(input)) // avoids reallocations
+
+// Slice tricks:
+// Delete element at index i (order preserved):
+s = append(s[:i], s[i+1:]...)
+
+// Delete element (order not preserved — swap with last):
+s[i] = s[len(s)-1]
+s = s[:len(s)-1]
+
+// Filter in-place (reuse backing array):
+n := 0
+for _, x := range s {
+    if x > 0 {
+        s[n] = x
+        n++
+    }
+}
+s = s[:n]
+```
+
+**Điểm then chốt:** Slice là reference type — passing slice to function shares backing array. Mutations visible to caller. `append` may or may not share array depending on capacity. Always use `copy()` when you need independence. Pre-allocate with `make([]T, 0, n)` for performance.
+
+### Q: How do Go maps work and what are the gotchas? / Go maps hoạt động như thế nào? 🟡 Mid
+
+**A:**
+
+```go
+// Map basics
+m := make(map[string]int)
+m["key"] = 42
+
+// Safe access — comma-ok idiom
+v, ok := m["key"]  // ok=false if key doesn't exist (not panic)
+if !ok {
+    // key missing
+}
+
+// Map is nil by default — must initialize before writing
+var m2 map[string]int // m2 == nil
+m2["key"] = 1        // PANIC: assignment to nil map
+m2 = make(map[string]int) // fix
+
+// GOTCHA: maps are not safe for concurrent access
+// Concurrent read+write → panic: "concurrent map read and map write"
+
+// Solution 1: sync.RWMutex
+type SafeMap struct {
+    mu sync.RWMutex
+    m  map[string]int
+}
+func (sm *SafeMap) Get(k string) int {
+    sm.mu.RLock()
+    defer sm.mu.RUnlock()
+    return sm.m[k]
+}
+func (sm *SafeMap) Set(k string, v int) {
+    sm.mu.Lock()
+    defer sm.mu.Unlock()
+    sm.m[k] = v
+}
+
+// Solution 2: sync.Map (for concurrent workloads with many readers)
+var sm sync.Map
+sm.Store("key", 42)
+v, ok := sm.Load("key")
+sm.Range(func(k, v interface{}) bool { /* iterate */ return true })
+```
+
+**Performance notes:**
+```
+Map vs slice for small N:
+├── Map: O(1) average lookup, but hash overhead + cache unfriendly
+├── Slice linear scan: O(n) but cache-friendly → faster for n < ~50
+└── Use map when: lookup by key, deletion, N > 50
+
+Map iteration order: RANDOM (intentional in Go)
+├── Don't rely on iteration order
+└── Sort keys if ordered output needed: sort.Strings(keys)
+```
+
+**Điểm quan trọng:** Map không thread-safe — concurrent access gây panic, không phải silent corruption. `sync.Map` cho concurrent workloads. Map value không addressable (cannot take address of m["key"]) — phải assign to local variable first.
+
+### Q: How does Go's garbage collector work? / GC của Go hoạt động như thế nào? 🔴 Senior
+
+**A:**
+
+```
+Go GC: Tricolor Mark-and-Sweep (concurrent, low-latency)
+
+Three phases:
+1. Mark setup (STW ~0.5ms):
+   ├── Pause all goroutines briefly
+   ├── Enable write barrier (tracks pointer writes during mark)
+   └── Start mark workers (goroutines)
+
+2. Mark (concurrent):
+   ├── Scan goroutine stacks, globals, registers for roots
+   ├── Tricolor invariant:
+   │   White = not yet reached (will be collected)
+   │   Gray = reached but children not scanned
+   │   Black = fully scanned (keep)
+   └── Write barrier ensures new pointers correctly colored
+
+3. Sweep (concurrent):
+   └── Return white (unreachable) memory to heap
+
+STW (Stop The World) pauses:
+├── Go 1.5+: <1ms typically, <100µs in Go 1.14+
+└── Much lower than JVM's GC pauses
+
+GC trigger: when heap grows to 2× live set (GOGC=100 default)
+  GOGC=200 → GC less frequent (more memory, less CPU)
+  GOGC=50  → GC more frequent (less memory, more CPU)
+```
+
+**Reducing GC pressure:**
+```go
+// 1. sync.Pool — reuse allocations
+var bufPool = sync.Pool{
+    New: func() interface{} {
+        return make([]byte, 4096)
+    },
+}
+func handler(w http.ResponseWriter, r *http.Request) {
+    buf := bufPool.Get().([]byte)
+    defer bufPool.Put(buf)
+    // use buf
+}
+
+// 2. Avoid allocations in hot paths
+// Bad: creates new slice each call
+func bad() []byte { return make([]byte, 1024) }
+
+// Good: pass buffer in
+func good(buf []byte) []byte { return buf[:0] }
+
+// 3. Escape analysis: avoid heap allocation
+go build -gcflags="-m" ./...  // see what escapes to heap
+
+// 4. Stack vs heap:
+// Stack: local vars that don't escape — free, no GC
+// Heap: vars that escape (shared across goroutines, returned pointers)
+```
+
+**Điểm senior:** Biết GC là concurrent mark-and-sweep với STW < 1ms. GC pressure từ many small allocations. Tools: `go tool pprof` heap profile shows allocations, `GODEBUG=gctrace=1` shows GC events. sync.Pool là primary tool để giảm allocation pressure trong hot paths.

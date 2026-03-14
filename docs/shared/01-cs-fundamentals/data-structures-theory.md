@@ -601,3 +601,139 @@ Prefix search "car": root→c→a→r → all words below:
 ---
 
 **See also**: [Algorithms Theory](./algorithms-theory.md) | [Complexity Analysis](./complexity-analysis.md) | [LeetCode by Category](../../leetcode/)
+
+---
+
+## Interview Q&A / Câu Hỏi Phỏng Vấn
+
+### Q: When should you use an array vs a linked list? / Khi nào dùng array vs linked list? 🟢 Junior
+
+**A:** Use an **array** when you need O(1) random access by index, cache-friendly iteration, or fixed-size data. Use a **linked list** when you need frequent O(1) insertions/deletions at known positions without shifting elements.
+
+```
+Array: [0][1][2][3][4]  ← contiguous memory, cache-friendly
+        ↑ O(1) access anywhere, O(n) insert middle (shift)
+
+Linked List: [A]→[B]→[C]→[D]  ← scattered in memory
+              ↑ O(n) to reach node, O(1) insert at known node
+```
+
+Vietnamese explanation: Arrays chiếm vùng nhớ liên tục → cache locality tốt → iteration nhanh hơn linked list trong thực tế dù cùng O(n). Linked list thường được overhyped — thực tế production ít dùng vì pointer chasing gây cache miss. Go `slice` = dynamic array (append amortized O(1)). Khi nào linked list thực sự useful: LRU cache (doubly linked list + hash map), queue với O(1) enqueue/dequeue.
+
+---
+
+### Q: How does a hash table achieve O(1) lookup? What are the failure modes? / Hash table đạt O(1) như thế nào? Khi nào fail? 🟡 Mid
+
+**A:** Hash function maps key → bucket index in an array. Average O(1) insert/search/delete. Failure modes: (1) **Collision** — two keys hash to same bucket, resolved by chaining or open addressing; (2) **High load factor** — too many entries per bucket degrades to O(n); (3) **Poor hash function** — clusters entries.
+
+```
+key "alice" → hash() → 42 % N → bucket[42]
+key "bob"   → hash() → 42 % N → bucket[42]  ← collision!
+
+Chaining: bucket[42] → [alice:1] → [bob:2] → nil
+
+Load factor = entries / buckets
+Java HashMap: rehash when > 0.75
+Go map: rehash when ~6.5 entries/bucket
+```
+
+Vietnamese explanation: Worst case O(n) khi tất cả keys hash vào cùng bucket (hash DoS attack). Python/Java/Go đều hash randomization (seed per-process) để chống. Concurrent access: Go `sync.Map` cho concurrent reads + occasional writes; `map` + `sync.RWMutex` cho balanced read/write. Java HashMap Java 7: concurrent resize gây infinite loop — dùng `ConcurrentHashMap`.
+
+---
+
+### Q: What is a heap and when should you use it? / Heap là gì và khi nào dùng? 🟡 Mid
+
+**A:** A heap is a complete binary tree with the heap property: min-heap (parent ≤ children), max-heap (parent ≥ children). Operations: O(log n) insert/extract, O(1) peek-min/max. Best for: priority queues, top-K elements, scheduling.
+
+```
+Min-Heap:
+         1          ← root = minimum (O(1) peek)
+       /   \
+      3     2
+     / \   / \
+    7   5  4   6
+
+Array: [1, 3, 2, 7, 5, 4, 6]
+Parent(i) = (i-1)/2,  Left(i) = 2i+1,  Right(i) = 2i+2
+```
+
+Vietnamese explanation: Heap ≠ balanced BST. BST: O(log n) search any element; Heap: O(1) only for min/max. Interview pattern: "K largest elements" → min-heap of size K. "Running median" → two heaps (max-heap left half + min-heap right half). "Merge K sorted lists" → min-heap of K pointers. Go: `container/heap` interface requires `Len, Less, Swap, Push, Pop`.
+
+---
+
+### Q: Why does a BST need to be balanced? Compare AVL vs Red-Black tree. / Tại sao BST cần balanced? So sánh AVL vs Red-Black? 🟡 Mid
+
+**A:** A plain BST degenerates to O(n) linked list if inserting sorted data. Balanced BSTs maintain height O(log n) via rotations. **AVL**: strictly balanced (height diff ≤ 1), faster lookup, more rotations on insert. **Red-Black**: looser balance, fewer rotations, preferred in practice (std::map C++, TreeMap Java).
+
+```
+BST worst case (inserting 1,2,3,4,5):
+1
+ \
+  2
+   \
+    3      ← O(n) search!
+     \
+      4
+
+Red-Black Tree (same data):
+    2
+   / \
+  1   4      ← O(log n) guaranteed
+     / \
+    3   5
+```
+
+Vietnamese explanation: Database B+ Tree (multi-way, disk-optimized): node giữ nhiều keys (fill 4KB disk block), tất cả data ở leaf nodes (efficient range scan). PostgreSQL default index: B-tree. Redis sorted set: skip list (probabilistic, easier to implement than RB tree). Interview: "PostgreSQL index dùng gì?" → B-tree. "Redis sorted set?" → skip list.
+
+---
+
+### Q: What is the difference between adjacency matrix and adjacency list? / Ma trận kề vs danh sách kề khác nhau thế nào? 🟡 Mid
+
+**A:** Two graph representations with different trade-offs:
+- **Adjacency matrix**: V×V grid. O(1) edge existence check. O(V²) space — good for dense graphs.
+- **Adjacency list**: list of neighbors per vertex. O(V+E) space — good for sparse graphs. Most real-world graphs are sparse.
+
+```
+Graph: A→B, A→C, B→C
+
+Matrix (O(V²)):      List (O(V+E)):
+   A  B  C           A: [B, C]
+A [0, 1, 1]          B: [C]
+B [0, 0, 1]          C: []
+C [0, 0, 0]
+```
+
+Vietnamese explanation: Social network (1B users, ~500 friends each) → sparse → adjacency list. Dense graph (complete graph, small V) → matrix. BFS/DFS dùng adjacency list + visited set. "Detect cycle in directed graph" → DFS với white/gray/black coloring. Topological sort → DFS (reverse post-order) hoặc Kahn's algorithm (BFS + in-degree).
+
+---
+
+### Q: What is the difference between a stack and a queue? Give real-world uses. / Stack vs queue — ứng dụng thực tế? 🟢 Junior
+
+**A:** **Stack** (LIFO): push/pop from top. **Queue** (FIFO): enqueue at rear, dequeue from front. Both O(1) operations.
+
+```
+Stack (LIFO):              Queue (FIFO):
+push →  [5]                enqueue → [1][2][3][4] → dequeue
+        [3]
+        [1]
+ pop ↑
+
+Real uses:
+Stack: function call stack, undo/redo, bracket matching, browser back button
+Queue: BFS traversal, task scheduler, print spooler, network packet buffer
+```
+
+Vietnamese explanation: Call stack: mỗi function call push frame (local vars + return address), return = pop. Stack overflow = infinite recursion exceeds stack limit. Deque (double-ended): sliding window problems. Go channel = concurrent queue (buffered = fixed capacity). `container/ring` = circular buffer. Priority queue (heap-based) = queue where highest priority dequeued first.
+
+---
+
+## Interview Q&A Summary / Tổng Kết
+
+| Question | Level | Key Point |
+|----------|-------|-----------|
+| Array vs linked list | 🟢 | Array=cache-friendly O(1) access; linked list=O(1) insert at known node |
+| Hash table O(1) & failure modes | 🟡 | Hash→bucket; collision+load factor degrade performance |
+| Heap usage | 🟡 | Complete binary tree; O(1) min/max peek; top-K, priority queue patterns |
+| BST balance: AVL vs Red-Black | 🟡 | Plain BST degenerates; RB tree fewer rotations preferred in practice |
+| Graph: matrix vs adjacency list | 🟡 | Dense→matrix O(V²); sparse→list O(V+E); real graphs = sparse |
+| Stack vs queue | 🟢 | Stack=LIFO (call stack); Queue=FIFO (BFS, tasks) |

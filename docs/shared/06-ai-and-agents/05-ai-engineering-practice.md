@@ -1007,3 +1007,113 @@ export const tools = [
 - **KPI nên theo dõi:** p95 latency, success rate, quality score, token cost/request.
 - **Sai lầm thường gặp:** chỉ nói công nghệ mà không nói tác động đến business metric.
 - **Câu chốt an toàn:** `I would run an A/B experiment and pick the lowest-cost option that still meets quality SLO.`
+
+---
+
+## Interview Q&A Summary / Tổng hợp câu hỏi phỏng vấn
+
+### Q: How do you evaluate LLM applications in production? / Đánh giá ứng dụng LLM như thế nào? 🟡 Mid
+
+**A:**
+
+```
+LLM Evaluation Framework:
+
+Level 1: Unit tests (fast, cheap)
+├── Exact match: assert output == expected (only for deterministic tasks)
+├── Contains: assert "keyword" in output
+├── JSON schema validation: output parses correctly
+└── Tool call assertions: correct tool called with correct args
+
+Level 2: LLM-as-judge (flexible, scalable)
+├── Use GPT-4/Claude to evaluate output quality
+├── Score: "Rate this response 1-5 for helpfulness, accuracy, tone"
+├── Pairwise: "Which response A or B is better?"
+└── Rubric-based: "Does the answer cite sources? Yes/No"
+
+Level 3: Human evaluation (gold standard, expensive)
+├── Crowdsourcing (Scale AI, Labelbox)
+├── Internal red-teaming
+└── A/B testing with real users
+
+Metrics by task type:
+  Summarization: ROUGE, BERTScore, faithfulness
+  RAG:           faithfulness, answer relevance, context precision
+  Code gen:      pass@k (does code pass unit tests?)
+  Chat:          thumbs up/down, task completion rate
+  Agents:        success rate, steps to completion, cost/task
+```
+
+**Production monitoring:**
+```
+Leading indicators (real-time):
+├── Token latency (TTFT: Time To First Token)
+├── Total latency (p50, p95, p99)
+├── Error rate (API failures, JSON parse failures)
+└── Token usage (cost tracking)
+
+Lagging indicators (quality):
+├── User thumbs up/down rate
+├── Task completion rate
+├── Escalation rate (user asks to redo)
+└── A/B experiment metrics
+```
+
+**Điểm then chốt:** Evaluation là điểm yếu phổ biến nhất trong AI engineering. LLM-as-judge là approach pragmatic nhất cho production — dùng GPT-4/Claude làm giám khảo, đánh giá theo rubric cụ thể. Phải có eval pipeline trước khi deploy bất kỳ thay đổi nào.
+
+### Q: How do you handle prompt versioning and deployment? / Quản lý prompt versions như thế nào? 🔴 Senior
+
+**A:**
+
+```
+Prompt = code: treat it like code (version control, testing, deployment)
+
+Prompt versioning workflow:
+  Git repo:
+  ├── prompts/
+  │   ├── system_prompt_v1.txt
+  │   ├── system_prompt_v2.txt
+  │   └── configs/
+  │       ├── prod.yaml  → version: v2
+  │       └── staging.yaml → version: v3-experimental
+  └── tests/
+      └── prompt_evals.py
+
+Deployment strategies:
+
+  Shadow mode: new prompt runs alongside old, compare outputs
+  └── No user impact, validates quality before switching
+
+  Canary: route 5% traffic to new prompt, monitor metrics
+  └── Real traffic, limited blast radius
+
+  A/B test: 50/50 split, measure user outcomes (CTR, completion)
+  └── Statistical significance testing before full rollout
+
+  Feature flags: switch prompts without code deploy
+  └── LaunchDarkly, Unleash, etc.
+
+Prompt management tools:
+  LangSmith (LangChain): prompt versioning + eval + traces
+  Weights & Biases: experiment tracking
+  PromptLayer: prompt logging + versioning
+  Helicone: LLM observability + caching
+```
+
+**Testing before deployment:**
+```python
+# Example eval pipeline
+test_cases = [
+    {"input": "What is RAG?", "expected_contains": ["retrieval", "augmented"]},
+    {"input": "dangerous_prompt", "expected_not_contains": ["harmful_content"]},
+]
+
+for case in test_cases:
+    response = call_llm(new_prompt, case["input"])
+    assert all(kw in response for kw in case["expected_contains"])
+    # Run LLM-as-judge on quality score
+    score = judge_llm(response, rubric="helpful, accurate, safe")
+    assert score >= 4.0
+```
+
+**Điểm senior:** Prompt engineering cần rigor như software engineering. Không nên deploy prompt changes mà không có eval suite. Canary deployment và A/B testing là best practices cho production LLM systems. LangSmith/PromptLayer là tools phổ biến nhất để track prompt iterations.

@@ -988,4 +988,146 @@ A: Mutex is binary lock for mutual exclusion, owned by thread that locks it. Sem
 
 ---
 
+## Interview Q&A / Câu Hỏi Phỏng Vấn
+
+### Q: What is the difference between a process and a thread? / Process và thread khác nhau như thế nào? 🟢 Junior
+
+**A:** A process is an independent program with its own address space, PCB, file descriptors, and isolated memory. Context switch costs ~1-10µs (save/restore PCB + TLB flush). A thread is a lightweight unit within a process — shares heap/code/globals, has own stack + registers. Context switch costs ~100-300ns (just registers).
+
+```
+Process:                          Thread:
+┌──────────────────┐              ┌──────────────────┐
+│  Code / Data     │              │  Code / Data     │ ← shared
+│  Heap            │              │  Heap            │ ← shared
+│  Stack           │              │  Stack A │Stack B │ ← per-thread
+│  File Descriptors│              │  Registers A / B │ ← per-thread
+└──────────────────┘              └──────────────────┘
+Isolated — crash safe             Shared — race condition risk
+```
+
+Vietnamese explanation: Rule: dùng process cho isolation (Chrome: mỗi tab = 1 process → crash một tab không chết cả browser). Dùng thread cho concurrency trong cùng app (web server xử lý nhiều requests). Go goroutine: ~4KB stack (vs 1-8MB cho OS thread) → có thể tạo hàng triệu goroutines. M:N threading: Go scheduler maps M goroutines onto N OS threads → minimize syscall cost.
+
+---
+
+### Q: What causes a deadlock and how do you prevent it? / Deadlock xảy ra do đâu và cách phòng tránh? 🟡 Mid
+
+**A:** Deadlock requires ALL four Coffman conditions: (1) Mutual exclusion, (2) Hold & Wait, (3) No preemption, (4) Circular wait. Break any one to prevent deadlock.
+
+```
+Deadlock example:
+Thread A: holds Lock1 → waiting for Lock2
+Thread B: holds Lock2 → waiting for Lock1
+→ circular wait, both frozen forever
+
+Prevention strategies:
+1. Lock ordering: always acquire Lock1 before Lock2 (breaks circular wait)
+2. Timeout + retry: tryLock(timeout) → release and retry (breaks hold & wait)
+3. Resource allocation graph: detect cycle before granting
+4. Banker's algorithm: only grant if safe state maintained (avoidance)
+```
+
+Vietnamese explanation: "4 điều kiện Coffman" là câu hỏi kinh điển — phải thuộc. Thực tế: PostgreSQL auto-detects deadlock bằng cycle detection trong wait-for graph → kills one transaction. MySQL: innodb_lock_wait_timeout (default 50s) → transaction timeout. Go: `-race` flag detect data races (không phải deadlock) — dùng goroutine leak detector cho deadlock.
+
+---
+
+### Q: How does virtual memory work? / Virtual memory hoạt động như thế nào? 🟡 Mid
+
+**A:** Each process gets its own 64-bit virtual address space (2^48 usable on x86-64). MMU translates virtual → physical via page table. Demand paging: pages only loaded when accessed. Page fault → OS loads page from disk into RAM.
+
+```
+Virtual memory layout (per process):
+┌──────────────────┐ 0xFFFFFFFF
+│  Kernel space    │
+├──────────────────┤
+│  Stack (grows ↓) │
+│  ...             │
+│  Heap (grows ↑)  │
+├──────────────────┤
+│  Code / Data     │
+└──────────────────┘ 0x00000000
+
+TLB: hardware cache for recent page table entries
+TLB miss → expensive multi-level page table walk (~100ns)
+```
+
+Vietnamese explanation: Swap space = khi RAM đầy, OS đẩy cold pages ra disk (SSD ~100µs vs RAM ~100ns = 1000x slower). Thrashing = OS liên tục swap vào/ra → giảm bằng cách tăng RAM hoặc giảm processes. `mmap()` = map file vào virtual memory → cơ sở của Redis AOF, database buffer pool. Copy-on-write (COW): fork() copies page table entries, not actual pages → fast fork, pages only copied when written.
+
+---
+
+### Q: Explain CPU scheduling — how does the Linux CFS work? / Giải thích CPU scheduling — Linux CFS hoạt động thế nào? 🟡 Mid
+
+**A:** Modern OS (Linux, macOS) don't use simple Round Robin. Linux CFS (Completely Fair Scheduler): tracks each process's "virtual runtime" (vruntime) — CPU time weighted by priority (nice value). Always picks process with smallest vruntime next (stored in red-black tree).
+
+```
+CFS scheduling:
+vruntime = actual_runtime / weight (nice value)
+Lower nice = higher weight = lower vruntime increment per tick
+→ high-priority process accumulates vruntime slowly → scheduled more often
+
+Red-black tree ordered by vruntime:
+[proc_A: 100ms] [proc_B: 150ms] [proc_C: 200ms]
+→ always pick leftmost (smallest vruntime) = proc_A
+```
+
+Vietnamese explanation: "Fair" trong CFS: mỗi process nhận equal CPU share theo weight. Interactive process (UI, terminal) tự nhiên sleep nhiều → vruntime thấp → được ưu tiên khi wake up. Batch process = continuous CPU user → vruntime tăng nhanh → preempted. MLFQ (Multi-Level Feedback Queue): dùng trong nhiều systems — high priority → short quantum → interactive feel; CPU-bound → demoted lower priority.
+
+---
+
+### Q: What is the difference between mutex and semaphore? / Mutex và semaphore khác nhau thế nào? 🟡 Mid
+
+**A:** **Mutex**: binary lock (0/1) with **ownership** — only the thread that locked it can unlock. Used for mutual exclusion. **Semaphore**: counter, **no ownership** — one thread signals, another can wait. Binary semaphore enables signaling; counting semaphore controls access to N resources.
+
+```
+Mutex (ownership):             Semaphore (no ownership):
+Thread A: lock()               Producer: sem.signal() ← post
+... critical section ...       Consumer: sem.wait()   ← P operation
+Thread A: unlock()             (Thread B can signal what Thread A waits on)
+
+Counting semaphore (connection pool of 10):
+sem = Semaphore(10)
+acquire: sem.wait()   → decrement, block if 0
+release: sem.signal() → increment, wake waiter
+```
+
+Vietnamese explanation: Key difference: mutex có ownership (Thread B không thể unlock mutex của Thread A). Semaphore không có ownership → flexible signaling. Practical: mutex cho critical section, semaphore cho "N resources available" (rate limiting, DB connection pool). Go: `sync.Mutex`, `chan struct{}` as semaphore pattern, `golang.org/x/sync/semaphore`. Deadlock risk: mutex trong ISR (interrupt service routine) = không ổn vì mutex có sleeping wait.
+
+---
+
+### Q: How does the OS manage memory? What is fragmentation? / OS quản lý memory như thế nào? Fragmentation là gì? 🔴 Senior
+
+**A:** OS memory management: stack allocation (O(1), auto-freed, LIFO), heap allocation (dynamic, fragmentation risk). Two fragmentation types: **Internal**: allocated block larger than requested (alignment/padding waste). **External**: free memory exists but not contiguous enough for large allocation.
+
+```
+External fragmentation:
+[FREE 10KB][USED 5KB][FREE 10KB][USED 5KB][FREE 10KB]
+Request 25KB → FAILS (30KB free total but not contiguous!)
+
+Buddy system (powers of 2):
+32KB free → split for 10KB request: [16KB][8KB][used 8KB]
+Merge on free: adjacent buddies merge → reduces external fragmentation
+
+Go GC: concurrent tri-color mark-and-sweep
+- Mark: identify live objects
+- Sweep: collect garbage
+- Compaction: NOT done (Go uses free lists instead)
+- STW pause: < 1ms target (Go 1.21+)
+```
+
+Vietnamese explanation: Stack vs heap allocation: stack = O(1) deterministic, auto-freed; heap = O(1) amortized nhưng fragmentation + GC overhead. Go escape analysis: compiler decides stack vs heap — nếu object không escape khỏi function → stack (fast, no GC pressure). `go build -gcflags="-m"` xem escape analysis. jemalloc (Firefox, Rust allocator): thread-local arenas giảm lock contention. Virtual memory + paging giải quyết external fragmentation (any physical pages mapped to contiguous virtual range).
+
+---
+
+## Interview Q&A Summary / Tổng Kết
+
+| Question | Level | Key Point |
+|----------|-------|-----------|
+| Process vs thread | 🟢 | Process=isolated heavy; thread=shared memory lightweight; goroutine=4KB |
+| Deadlock causes & prevention | 🟡 | 4 Coffman conditions; break circular wait via lock ordering |
+| Virtual memory & paging | 🟡 | Demand paging; TLB caches translations; swap = 1000x slower than RAM |
+| CPU scheduling (CFS) | 🟡 | vruntime fairness; red-black tree; interactive processes naturally prioritized |
+| Mutex vs semaphore | 🟡 | Mutex has ownership; semaphore enables signaling & counting |
+| Memory fragmentation | 🔴 | Internal vs external; buddy allocator; escape analysis for stack vs heap |
+
+---
+
 [← Back to Concurrency Theory](./07-concurrency-and-parallelism.md) | [Next: Network Theory →](./networking-theory.md)

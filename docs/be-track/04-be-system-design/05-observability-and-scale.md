@@ -1190,3 +1190,103 @@ rồi đặt alert/runbook để giảm MTTR và tránh tái diễn."
 ### 🔴 [Senior] Q: Give a strong senior-level closing statement.
 **A:**
 “Reliability không phải tính năng phụ. Em xem nó như sản phẩm: có objective rõ, có telemetry đủ sâu để ra quyết định, có cơ chế phản ứng nhanh khi incident, và có vòng lặp học tập để hệ thống ổn định hơn theo thời gian.”
+
+---
+
+## Interview Q&A / Câu Hỏi Phỏng Vấn
+
+### Q: What are the three pillars of observability and how do they complement each other? / Ba trụ cột của observability bổ sung nhau thế nào? 🟢 Junior
+
+**A:** **Metrics**: numeric measurements over time (request rate, p99 latency, error rate). Best for alerting and dashboards. Cheap to store, aggregated. **Logs**: timestamped text events. Best for debugging specific errors. Expensive at scale. **Traces**: distributed request flow showing each service hop's latency. Best for root-causing latency issues across microservices.
+
+```
+Incident investigation workflow:
+1. Alert fires         → Metric: error rate > 1%
+2. Identify service    → Metric dashboard: checkout-service
+3. Find failing reqs   → Logs: 500 errors with trace_id=abc123
+4. Root cause          → Trace: slow DB query at hop 3 (250ms)
+
+Correlation key: trace_id links log entry ↔ trace span
+Stack: Prometheus (metrics) + Loki (logs) + Tempo (traces) → Grafana UI
+Alt: Datadog, NewRelic, Honeycomb (all-in-one)
+```
+
+Vietnamese explanation: Không pillar nào đủ một mình. Metric cho biết “có vấn đề”, log cho biết “lỗi gì”, trace cho biết “ở đâu trong call chain”. Correlation là key: inject `trace_id` vào mọi log → link từ alert → log → trace. Interview: luôn bắt đầu từ SLO → metric → alert, không bắt đầu từ tool.
+
+---
+
+### Q: What is the difference between SLI, SLO, and SLA? / SLI, SLO, SLA khác nhau thế nào? 🟡 Mid
+
+**A:** **SLI** (Service Level Indicator): actual measurement. e.g., “99.5% of requests < 200ms over last 30 days.” **SLO** (Service Level Objective): internal target. e.g., “99.9% of requests < 200ms.” **SLA** (Service Level Agreement): legal contract with customers. SLA ≤ SLO (SLO must be harder to breach than SLA).
+
+```
+Error budget = 1 - SLO
+99.9% SLO → 0.1% budget = ~43 min/month allowed downtime
+
+Error budget drives decisions:
+Budget remaining → deploy freely, experiment
+Budget exhausted → freeze deployments, focus reliability
+
+SLI → SLO → SLA
+Measurement → Internal Goal → External Contract
+```
+
+Vietnamese explanation: Error budget là khái niệm quan trọng nhất trong SRE. Google SRE Book: “If you have an SLO, you have an error budget. If you don't spend your error budget, you're not moving fast enough.” SLA breach = financial penalties. Thực tế: AWS EC2 SLA = 99.99%, internal SLO team = 99.999% (tighter). Interview: “Khi nào deploy feature mới vs focus reliability?” → error budget policy.
+
+---
+
+### Q: Explain the RED and USE methods for performance troubleshooting. / Phương pháp RED và USE? 🟡 Mid
+
+**A:** **RED** (for services): **R**ate (requests/sec), **E**rrors (error rate), **D**uration (latency). Best for user-facing services — mirrors user experience. **USE** (for resources): **U**tilization (% busy), **S**aturation (queue depth), **E**rrors. Best for infrastructure — CPU, disk, network.
+
+```
+RED for “why is checkout slow?”:
+→ Rate: 1000 req/s (normal)
+→ Errors: 0.1% (normal)
+→ Duration: p99 = 2s (↑ from 200ms baseline) ← problem here
+
+USE for “why is checkout DB slow?”:
+→ Utilization: CPU 95% (high!)
+→ Saturation: run queue = 8 (processes waiting for CPU)
+→ Errors: 0
+→ DB CPU saturated → scale up or optimize query
+```
+
+Vietnamese explanation: RED = user perspective → align với SLO. USE = resource perspective → capacity planning. Kết hợp: RED alert báo user impact → USE method tìm bottleneck resource. Google Golden Signals (SRE Book) = Latency, Traffic, Errors, Saturation ≈ RED + Saturation. Brendan Gregg (Netflix): USE method. Interview: “Describe your production slowdown approach” → RED first (user impact), then USE (resource bottleneck).
+
+---
+
+### Q: What database scaling strategies exist and when do you use each? / Các chiến lược scale database? 🔴 Senior
+
+**A:** Scaling strategies in order of complexity (try simpler first):
+
+```
+Traffic growth → strategy:
+< 1K req/s   → single DB + good indexes
+1K-10K       → read replicas (offload reads) + Redis cache
+10K-100K     → connection pooling (PgBouncer) + cache-aside
+100K+        → horizontal sharding or CQRS + specialized read stores
+
+Strategies:
+1. Vertical scaling: bigger machine. Easy but limited + SPOF.
+2. Read replicas: primary handles writes, replicas handle reads.
+   Replication lag = eventual consistency for reads.
+3. Caching (Redis): serve 80%+ traffic without hitting DB.
+4. Connection pooling: PgBouncer reuses connections (expensive to create).
+5. Sharding: partition data across DB instances by shard key.
+   Complex: cross-shard queries, rebalancing.
+6. CQRS: write to relational DB, project to denormalized read store.
+```
+
+Vietnamese explanation: “Premature sharding is root of many evils.” Vertical scaling + read replicas + caching giải quyết phần lớn use cases. Khi thực sự cần shard: chọn shard key cẩn thận (avoid hotspots: user_id tốt hơn created_at). Planetscale (Vitess), Citus (PostgreSQL), CockroachDB = distributed SQL options. Interview: “Design Twitter's DB” → không bắt đầu với sharding, bắt đầu từ read replicas + caching.
+
+---
+
+## Interview Q&A Summary / Tổng Kết
+
+| Question | Level | Key Point |
+|----------|-------|-----------|
+| Three pillars of observability | 🟢 | Metrics=alert; Logs=debug; Traces=latency root cause; trace_id links all |
+| SLI vs SLO vs SLA | 🟡 | SLI=measurement; SLO=internal target; SLA=contract; error budget drives decisions |
+| RED and USE methods | 🟡 | RED for services (user view); USE for resources (infra view) |
+| Database scaling strategies | 🔴 | Vertical→replicas→cache→sharding; don't shard prematurely |

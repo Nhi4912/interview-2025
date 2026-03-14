@@ -835,3 +835,158 @@ export async function answerWithRAG(question: string): Promise<string> {
 - **KPI nên theo dõi:** p95 latency, success rate, quality score, token cost/request.
 - **Sai lầm thường gặp:** chỉ nói công nghệ mà không nói tác động đến business metric.
 - **Câu chốt an toàn:** `I would run an A/B experiment and pick the lowest-cost option that still meets quality SLO.`
+
+---
+
+## Interview Q&A Summary / Tổng hợp câu hỏi phỏng vấn
+
+### Q: How does RAG work end-to-end? / RAG hoạt động như thế nào từ đầu đến cuối? 🟡 Mid
+
+**A:** RAG (Retrieval-Augmented Generation) = retrieve relevant context → augment prompt → generate.
+
+```
+RAG Pipeline:
+
+INDEXING (offline):
+Documents → [Chunking] → [Embedding Model] → Vectors → [Vector Store]
+  "User manual"    512 tokens      text→float[]     FAISS/Pinecone
+
+QUERYING (online):
+User Query → [Embedding] → [Vector Search] → Top-K chunks
+                 ↓
+         [Prompt Assembly]
+         "Context: {chunks}\nQuestion: {query}\nAnswer:"
+                 ↓
+              [LLM] → Response
+
+Architecture:
+                    ┌──────────────────┐
+   Documents ──────►│  Vector Database  │
+                    │  (FAISS/Pinecone/ │
+   Query ──embed──► │   Weaviate/Chroma)│
+                    └────────┬─────────┘
+                             │ top-K chunks
+                             ▼
+   Query ───────────► [Prompt Template] ──► LLM ──► Answer
+```
+
+**Chunking strategies:**
+```
+Fixed-size: split every N tokens (simple, may cut sentences)
+Sentence: split on sentence boundaries (better coherence)
+Recursive: try paragraph → sentence → word (Langchain default)
+Semantic: cluster semantically similar sentences (best quality, slower)
+
+Chunk overlap: add 10-20% overlap between chunks
+└── Prevents losing context at chunk boundaries
+```
+
+**Điểm then chốt:** RAG giải quyết 2 vấn đề của LLM: (1) knowledge cutoff — model không biết thông tin mới; (2) hallucination — grounding answer trong retrieved facts giảm hallucination đáng kể.
+
+### Q: How do embeddings work and what makes a good embedding model? / Embeddings hoạt động như thế nào? 🟡 Mid
+
+**A:**
+
+```
+Embedding = dense vector representation capturing semantic meaning
+
+"king"   → [0.21, -0.13, 0.87, ..., 0.44]  (1536 dimensions)
+"queen"  → [0.19, -0.11, 0.84, ..., 0.46]  (very similar!)
+"banana" → [-0.78, 0.92, -0.31, ..., 0.12] (very different)
+
+Similarity measure:
+  Cosine similarity = (A·B) / (|A| × |B|)
+  Range: -1 (opposite) to 1 (identical)
+  Efficient: can precompute norms, just dot product at query time
+
+How embeddings are trained:
+  Contrastive learning:
+  ├── Positive pairs (similar): "dog" + "puppy" → vectors should be close
+  ├── Negative pairs (different): "dog" + "algebra" → vectors should be far
+  └── Loss = maximize similarity of positives, minimize negatives
+```
+
+**Embedding model comparison:**
+```
+Model              Dims    Speed    Quality   Cost
+OpenAI ada-002     1536    Fast     Good      API ($)
+OpenAI text-3-small 1536  Fast     Better    API ($)
+sentence-transformers 768 Fast     Good      Free (local)
+BGE-M3             1024    Medium   SOTA      Free (local)
+Cohere Embed v3    1024    Fast     Great     API ($)
+
+Domain matters: general vs code vs legal vs medical embeddings
+```
+
+**Evaluation metrics:**
+```
+MTEB (Massive Text Embedding Benchmark):
+├── Retrieval: NDCG@10 on MS MARCO, BEIR
+├── STS: Spearman correlation
+└── Classification, clustering, reranking tasks
+```
+
+**Điểm quan trọng:** Embedding model selection ảnh hưởng lớn đến RAG quality. Cần evaluate trên domain-specific data của mình. Multilingual RAG cần multilingual embedding models (BGE-M3 supports 100+ languages).
+
+### Q: What are the main RAG failure modes and how do you improve RAG quality? / Cách cải thiện chất lượng RAG? 🔴 Senior
+
+**A:**
+
+```
+RAG Failure Modes:
+
+1. Retrieval failures
+   ├── Wrong chunks retrieved (semantic mismatch)
+   ├── Relevant chunk not retrieved (threshold too high)
+   └── Fix: hybrid search (dense + sparse BM25), reranking
+
+2. Context quality issues
+   ├── Chunks too small → missing context
+   ├── Chunks too large → noise dilutes signal
+   └── Fix: parent-child chunking, sentence window retrieval
+
+3. Generation failures
+   ├── LLM ignores retrieved context → hallucination anyway
+   ├── LLM contradicts context ("based on the docs... actually...")
+   └── Fix: stronger system prompt, citation enforcement
+
+4. Indexing issues
+   ├── Stale documents → outdated answers
+   ├── Duplicate content → wastes context window
+   └── Fix: document versioning, deduplication pipeline
+
+Advanced RAG techniques:
+                     Basic RAG → Advanced RAG → Modular RAG
+
+Hybrid search:
+  dense (embedding) + sparse (BM25/TF-IDF) → reciprocal rank fusion
+  └── Captures both semantic and keyword matches
+
+Reranking:
+  Query + top-50 chunks → Cross-encoder reranker → top-5 best chunks
+  └── Cross-encoder: reads query+doc together → more accurate but slower
+
+HyDE (Hypothetical Document Embedding):
+  Query → LLM generates "hypothetical answer" → embed that → search
+  └── Bridges vocabulary gap between query and indexed documents
+
+Multi-query retrieval:
+  "How to optimize DB?" → LLM generates 3 variations → retrieve for each → union
+  └── Increases recall for queries that can be phrased multiple ways
+
+Parent-child chunking:
+  Small child chunks (indexed) → retrieve → return parent chunk (more context)
+  └── Precision of small chunks + context of large chunks
+```
+
+**RAG evaluation:**
+```
+Metrics:
+  Faithfulness: is the answer supported by the context? (no hallucination)
+  Answer relevance: does the answer address the question?
+  Context relevance: is the retrieved context relevant?
+
+Tools: RAGAS, TruLens, DeepEval
+```
+
+**Điểm senior phải biết:** RAG không phải chỉ "embed + search". Production RAG cần hybrid search + reranking cho retrieval quality, evaluation pipeline để measure faithfulness, và document pipeline để keep index fresh. HyDE và multi-query là advanced tricks hay được hỏi.

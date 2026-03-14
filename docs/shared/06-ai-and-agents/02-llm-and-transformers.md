@@ -832,3 +832,170 @@ export async function runLLM(req: ChatRequest): Promise<ChatResponse> {
 - **KPI nên theo dõi:** p95 latency, success rate, quality score, token cost/request.
 - **Sai lầm thường gặp:** chỉ nói công nghệ mà không nói tác động đến business metric.
 - **Câu chốt an toàn:** `I would run an A/B experiment and pick the lowest-cost option that still meets quality SLO.`
+
+---
+
+## Interview Q&A Summary / Tổng hợp câu hỏi phỏng vấn
+
+### Q: How does the Transformer attention mechanism work? / Cơ chế attention trong Transformer hoạt động như thế nào? 🟡 Mid
+
+**A:** Self-attention allows each token to attend to all other tokens in the sequence.
+
+```
+Input: "The cat sat on the mat"
+         ↓ Embed each token
+
+For each token, compute 3 vectors:
+  Q (Query)  = "What am I looking for?"
+  K (Key)    = "What do I contain?"
+  V (Value)  = "What information do I pass forward?"
+
+Attention Score = softmax(Q·Kᵀ / √d_k) · V
+
+Step by step for token "cat":
+1. Q_cat · K_sat → score (how much "cat" should attend to "sat")
+2. Q_cat · K_the → score
+3. ... for all tokens
+4. softmax(scores) → attention weights (sum to 1.0)
+5. Weighted sum of V vectors → new representation of "cat"
+
+√d_k scaling: prevents dot products from getting too large
+  → which would push softmax into saturation (near-zero gradients)
+```
+
+**Multi-Head Attention:**
+```
+Instead of 1 attention head, use H heads in parallel:
+├── Each head learns different relationship types
+│   - Head 1: syntactic dependencies ("cat" ← "sat")
+│   - Head 2: coreference ("it" ← "cat")
+│   - Head 3: positional relationships
+├── Concatenate all heads → linear projection
+└── d_model = H × d_head (e.g., 512 = 8 × 64)
+```
+
+**Complexity:** O(n²) in sequence length — bottleneck for long contexts. Solutions: sparse attention (Longformer), linear attention, sliding window (Mistral).
+
+**Điểm then chốt:** Attention = "weighted lookup" — mỗi token tổng hợp thông tin từ tất cả token khác dựa trên relevance. Multi-head cho phép model học nhiều loại relationship song song.
+
+### Q: What is the difference between GPT, BERT, and T5 architectures? / Sự khác biệt giữa GPT, BERT, T5? 🟡 Mid
+
+**A:**
+
+```
+Architecture Comparison:
+              GPT            BERT           T5
+Type:         Decoder-only   Encoder-only   Encoder-Decoder
+Attention:    Causal (mask   Bidirectional  Both
+              future tokens)
+Pretraining:  Next-token     Masked LM      Text-to-Text
+              prediction     + NSP          ("prefix: input → output")
+Best for:     Generation     Classification All NLP tasks (unified)
+              (chat, code)   (sentiment,    (translation, QA,
+                             NER, QA)       summarization)
+
+Examples:
+  GPT family: GPT-4, Claude, Llama, Mistral, Gemini
+  BERT family: BERT, RoBERTa, DistilBERT, DeBERTa
+  T5 family: T5, FLAN-T5, mT5
+
+Why decoder-only dominates now:
+├── Simpler training objective (just predict next token)
+├── Scales better with data and compute
+├── In-context learning emerges at scale
+└── Can do classification, QA etc via prompting
+```
+
+**Cách nhớ:** GPT = generate text left-to-right (biết past, không thấy future). BERT = understand context fully (thấy cả past và future, nhưng không generate tốt). T5 = unify mọi task thành text→text. Modern LLMs mostly GPT-style decoder-only.
+
+### Q: What is fine-tuning vs prompt engineering vs RAG? When to use each? / Khi nào dùng fine-tuning vs prompt engineering vs RAG? 🔴 Senior
+
+**A:**
+
+```
+Approach Comparison:
+                  Prompt Eng    RAG              Fine-tuning
+Cost:             Very low      Medium           High (GPU, data)
+Latency:          Low           Medium (+retrieval) Low
+Data needed:      None          Documents        100s-10000s examples
+Knowledge:        Baked in LLM  External DB      Baked into weights
+Updates:          Instant       Update docs      Retrain/re-finetune
+Best for:         Format/style  Fresh knowledge  Tone/domain adapt
+                  instructions  (docs, KB)       task-specific behavior
+
+Decision flowchart:
+  Can the base model do the task with good prompting? 
+  → YES: use prompt engineering
+  → NO: Does the model need access to specific documents/data?
+         → YES: use RAG
+         → NO: Does the model need to behave differently (tone, format, domain)?
+                → YES: fine-tune
+                → NO: re-evaluate the problem
+```
+
+**Fine-tuning techniques:**
+```
+Full fine-tuning: update ALL parameters — expensive, risk of catastrophic forgetting
+LoRA (Low-Rank Adaptation): 
+├── Insert low-rank matrices ΔW = A·B (r << d)
+├── Only train A, B (millions vs billions params)
+├── Merge back at inference: W' = W + ΔW (no latency cost)
+└── QLoRA: quantize base model to 4-bit, LoRA adapters in fp16 → fits on 1 GPU
+```
+
+**RAG vs Fine-tuning in production:**
+- RAG for frequently changing information (news, product catalog)
+- Fine-tune for consistent behavior, style, format (customer service bot with specific tone)
+- Often combine both: fine-tune for behavior + RAG for knowledge
+
+**Điểm senior quan trọng:** Start with prompting, move to RAG if knowledge gap, fine-tune only when behavior/style needs to change permanently. LoRA/QLoRA là standard cho fine-tuning với budget giới hạn.
+
+### Q: What are common LLM failure modes and how do you handle them? / Các failure mode của LLM và cách xử lý? 🔴 Senior
+
+**A:**
+
+```
+Failure Mode 1: Hallucination
+├── Definition: model generates factually incorrect but confident-sounding text
+├── Causes: training data errors, knowledge gaps, over-extrapolation
+├── Mitigations:
+│   - RAG: ground answers in retrieved documents
+│   - Self-consistency: sample multiple responses, take majority
+│   - Citation requirement: force model to cite sources
+│   - Confidence calibration: ask model to express uncertainty
+└── Eval: factuality benchmarks (TruthfulQA, FActScorE)
+
+Failure Mode 2: Context window limits
+├── Problem: long documents exceed context length
+├── Mitigations:
+│   - Chunking + RAG (most common)
+│   - Hierarchical summarization
+│   - Long-context models (128k-1M tokens) — but attend poorly to middle
+└── "Lost in the middle" phenomenon: info at beginning/end recalled better
+
+Failure Mode 3: Prompt injection
+├── Malicious input overrides system prompt ("ignore previous instructions...")
+├── Mitigations:
+│   - Input sanitization
+│   - Separate system/user prompts clearly
+│   - Output validation + guardrails (Llama Guard, NeMo Guardrails)
+└── Defense in depth: multiple layers of validation
+
+Failure Mode 4: Inconsistency / Non-determinism
+├── Same prompt → different outputs
+├── Mitigations: temperature=0 for deterministic tasks
+└── Self-consistency voting for reasoning tasks
+
+Failure Mode 5: Prompt sensitivity
+├── Small wording changes → dramatically different outputs
+├── Mitigation: few-shot examples, chain-of-thought, structured output (JSON mode)
+```
+
+**Production guardrails stack:**
+```
+Input → [Prompt injection check] → [PII redaction] → LLM
+                                                        ↓
+Output ← [Factuality check] ← [Toxicity filter] ← [Format validation]
+```
+
+**Điểm interview:** Hallucination là failure mode phổ biến nhất được hỏi. RAG + citation + self-consistency là bộ 3 giải pháp chính. Biết rõ lost-in-the-middle problem khi dùng long context.

@@ -1037,3 +1037,66 @@ allow {
 ### 🔴 Q: Security fundamentals drill #70? `[Senior]`
 
 **A:** Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả.
+
+---
+
+## Interview Q&A / Câu Hỏi Phỏng Vấn
+
+### Q: What is the CIA triad in security? / CIA triad trong security là gì? 🟢 Junior
+
+**A:** Foundation of information security: **Confidentiality** (data accessible only to authorized parties), **Integrity** (data accurate and unmodified), **Availability** (systems accessible when needed). Security decisions balance all three.
+
+```
+CIA Triad:
+┌─────────────────────────────────────┐
+│ Confidentiality: data private        │ Threats: breach, eavesdrop
+│ Integrity: data tamper-evident       │ Threats: MITM, SQLi, corruption
+│ Availability: system accessible      │ Threats: DoS, hardware failure
+└─────────────────────────────────────┘
+```
+
+Vietnamese explanation: Ví dụ: encryption at rest = Confidentiality. Checksum/digital signature = Integrity. Load balancer + redundancy = Availability. Conflict: very strong encryption (great C) có thể slow system (hurts A). Interview: "Secure a REST API" → answer by CIA dimension.
+
+---
+
+### Q: What is the difference between authentication and authorization? / AuthN vs AuthZ? 🟢 Junior
+
+**A:** **Authentication (AuthN)**: verifying *who* you are — identity. **Authorization (AuthZ)**: verifying *what* you're allowed to do — permissions. HTTP status: 401 Unauthorized = authentication failed. 403 Forbidden = authenticated but not authorized.
+
+```
+Request flow:
+1. AuthN: JWT decoded → user is 'alice', role='user'
+2. AuthZ: alice requests DELETE /admin/users/123
+          → check: role='user' not 'admin' → 403 Forbidden
+```
+
+Vietnamese explanation: Common mistake: confuse 401 vs 403. 401 = not logged in or expired token. 403 = logged in but wrong permissions. JWT: self-contained token includes claims (roles, permissions) — no DB lookup for AuthZ. Layered: API Gateway (coarse-grained: is endpoint accessible to role?) + Service layer (fine-grained: does user own resource?).
+
+---
+
+### Q: What is defense in depth? / Defense in depth là gì? 🟡 Mid
+
+**A:** Layer multiple independent security controls. If one layer fails, others still protect. No single measure is perfect.
+
+```
+Web app defense layers:
+WAF           → block known attack patterns
+DDoS protection → availability
+Authentication  → identity verification
+Authorization   → permission checks
+Input validation → injection prevention
+Encryption      → data protection
+Audit logging   → detection + forensics
+```
+
+Vietnamese explanation: Principle of least privilege: mỗi component chỉ có permissions cần thiết. Zero-trust: "never trust, always verify" — authenticate every request kể cả internal. Network segmentation: services không access DB directly unless needed. Interview: "How secure microservices?" → answer layer by layer.
+
+---
+
+## Interview Q&A Summary / Tổng Kết
+
+| Question | Level | Key Point |
+|----------|-------|-----------|
+| CIA triad | 🟢 | Confidentiality+Integrity+Availability; all decisions balance these |
+| AuthN vs AuthZ | 🟢 | AuthN=who (401); AuthZ=what permissions (403) |
+| Defense in depth | 🟡 | Multiple independent layers; compromise one, others still protect |

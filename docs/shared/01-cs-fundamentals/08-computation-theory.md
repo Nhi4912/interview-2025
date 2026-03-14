@@ -822,3 +822,92 @@ Practical Relevance (Section 9) → applying all of the above in interviews
 | Lower bounds | Ω(n log n) sorting, Ω(log n) search → information-theoretic limits | 🟢-🟡 |
 | Lambda Calculus | Abstraction, application, reduction → foundation of FP | 🟡-🔴 |
 | Practical patterns | Recognize NP-hard, accept impossibility, use heuristics in production | 🟡-🔴 |
+
+---
+
+## Interview Q&A Summary / Tổng hợp câu hỏi phỏng vấn
+
+### Q: What is the P vs NP problem? / P vs NP là gì? 🔴 Senior
+
+**A:**
+
+```
+Complexity classes:
+  P  = problems solvable in polynomial time O(nᵏ) 
+       Examples: sorting, shortest path, matrix multiply
+       
+  NP = problems where solutions can be VERIFIED in polynomial time
+       Examples: Travelling Salesman, Graph Coloring, SAT, Sudoku
+       
+  P ⊆ NP (everything in P is also in NP — if you can solve it, you can verify it)
+  
+The question: Does P = NP?
+  If YES: every problem whose solution is easily checkable
+          can also be easily solved → cryptography breaks!
+  If NO:  some problems are inherently harder to solve than to verify
+          → current consensus: P ≠ NP (not proven)
+
+NP-Complete (hardest problems in NP):
+├── Every NP problem can be reduced to an NP-Complete problem
+├── If ANY NP-Complete problem is in P → P = NP
+└── Examples: Boolean SAT (Cook-Levin), 3-SAT, Vertex Cover, TSP, Knapsack
+
+NP-Hard: at least as hard as NP-Complete, but not necessarily in NP
+└── Halting Problem is NP-Hard but undecidable (not even in NP)
+```
+
+**Practical implications:**
+```
+For NP-Hard problems in practice:
+├── Approximation algorithms: find solution within guaranteed factor of optimal
+│   └── TSP: Christofides algorithm → 1.5× optimal
+├── Heuristics: genetic algorithms, simulated annealing (good but no guarantee)
+├── Fixed-parameter tractability: efficient when parameter k is small
+└── Exact algorithms with pruning: branch and bound, backtracking (for small n)
+```
+
+**Điểm interview:** P vs NP là câu hỏi mở nổi tiếng nhất trong CS (Millennium Prize $1M). Thực tế quan trọng hơn: biết phân loại problem là polynomial vs exponential, và biết khi nào cần approximation thay vì exact solution.
+
+### Q: What are Turing machines and computability? / Turing machine và computability là gì? 🔴 Senior
+
+**A:**
+
+```
+Turing Machine (TM) = theoretical model of computation
+├── Infinite tape (memory), read/write head, finite states
+├── Can simulate any algorithm → defines what is "computable"
+└── Church-Turing thesis: any effectively computable function 
+    can be computed by a Turing machine
+
+Halting Problem:
+  "Given a program P and input I, will P eventually halt?"
+  
+  Proof by contradiction (Turing, 1936):
+  Assume H(P, I) exists that solves Halting Problem
+  Construct D(P):
+    if H(P, P) says "halts" → loop forever
+    if H(P, P) says "loops" → halt
+  Run D(D):
+    if H(D, D) says "halts" → D loops → contradiction!
+    if H(D, D) says "loops" → D halts → contradiction!
+  
+  Therefore H cannot exist → Halting Problem is UNDECIDABLE
+
+Decidable vs Recognizable:
+  Decidable (Recursive): TM always halts with Yes/No
+  Recognizable (RE): TM halts on Yes, may loop on No
+  
+  Halting Problem: Recognizable but NOT Decidable
+```
+
+**Why it matters for software engineers:**
+```
+Practical implications:
+├── Static analysis tools cannot detect ALL bugs (Rice's theorem)
+│   └── Any non-trivial property of program behavior is undecidable
+├── No perfect virus scanner (detecting all malware is undecidable)
+├── No perfect termination checker (Rust/Haskell use decidable subsets)
+└── Complexity theory foundations (P vs NP builds on TM model)
+```
+
+**Điểm interview:** Halting Problem proof là một trong những proof quan trọng nhất trong CS. Thực tế: static analysis tools (ESLint, SonarQube) chỉ detect specific classes of bugs vì detecting arbitrary bugs là undecidable. Rice's theorem generalization cũng quan trọng.

@@ -732,3 +732,168 @@ Ba vấn đề này nghe giống nhau nhưng **nguyên nhân và giải pháp ho
 ---
 
 *Caching không chỉ là "thêm Redis" — nó đòi hỏi hiểu rõ access patterns, consistency requirements, và failure modes. Một cache strategy tốt bắt đầu từ việc đo lường (latency, hit ratio) chứ không phải giả định.*
+
+---
+
+## Interview Q&A Summary / Tổng hợp câu hỏi phỏng vấn
+
+### Q: What are the main cache invalidation strategies? / Các chiến lược cache invalidation? 🟡 Mid
+
+**A:**
+
+```
+Cache invalidation is one of the 2 hard problems in CS:
+"There are only two hard things in CS: cache invalidation and naming things." — Phil Karlton
+
+Strategies:
+
+1. TTL (Time To Live) — simplest
+   ├── Cache entry expires after fixed time
+   ├── Pro: simple, no invalidation logic needed
+   ├── Con: stale data until TTL expires
+   └── Use for: semi-static data (product prices, user profiles)
+
+2. Write-through
+   ├── Write to cache AND database simultaneously
+   ├── Pro: cache always consistent with DB
+   ├── Con: write latency = DB write latency (no benefit for write speed)
+   └── Use for: read-heavy with rare writes, consistency critical
+
+3. Write-around
+   ├── Write to DB only, cache not updated on write
+   ├── Cache populated on next read (miss → fill)
+   ├── Pro: avoids polluting cache with write-once data
+   └── Use for: bulk loads, data rarely re-read
+
+4. Write-behind (write-back)
+   ├── Write to cache immediately, async flush to DB later
+   ├── Pro: write very fast (just cache write)
+   ├── Con: data loss if cache dies before flush
+   └── Use for: high-write scenarios, eventual consistency OK
+
+5. Event-driven invalidation
+   ├── Database change → event → invalidate cache entries
+   ├── Example: order updated → clear order cache key
+   ├── Pro: cache always fresh
+   ├── Con: complex (need event pipeline), race conditions
+   └── Use for: microservices (CDC → Kafka → cache clear)
+
+6. Cache-aside (Lazy loading) — most common pattern
+   Read: cache miss → load from DB → store in cache → return
+   Write: write to DB → invalidate cache key (NOT update)
+   └── Simple, reliable, but first-request always slow (cold start)
+```
+
+**Điểm then chốt:** Không có một strategy phù hợp với tất cả. Cache-aside + TTL là default safe choice. Write-through cho consistency. Write-behind cho throughput. Event-driven cho microservices with CDC.
+
+### Q: How do you prevent cache stampede? / Ngăn chặn cache stampede như thế nào? 🔴 Senior
+
+**A:**
+
+```
+Cache Stampede = Thundering Herd
+When cache key expires, many concurrent requests all miss cache 
+simultaneously → all hit DB at once → DB overloaded
+
+Scenario:
+  t=0: 1000 req/s → cache hit (key expires at t=60)
+  t=60: key expires
+  t=60-60.1: 100 requests all miss cache, all query DB simultaneously
+  → DB gets 100× normal load → timeout → more requests queue up → cascade failure
+
+Prevention strategies:
+
+1. Mutex / Singleflight
+   ├── First request: gets lock, queries DB, populates cache
+   ├── Other requests: wait for lock, then read from cache
+   └── Go implementation:
+```
+
+```go
+var group singleflight.Group
+
+func GetUser(id string) (*User, error) {
+    result, err, _ := group.Do("user:"+id, func() (interface{}, error) {
+        // Only 1 goroutine runs this per key
+        user, err := db.GetUser(id)
+        if err != nil { return nil, err }
+        cache.Set("user:"+id, user, 5*time.Minute)
+        return user, nil
+    })
+    return result.(*User), err
+}
+```
+
+```
+2. Probabilistic Early Expiration (PER)
+   ├── Before TTL expires, some requests probabilistically refresh
+   └── Formula: if random() < β × log(ttl) × (now - created) / ttl → refresh
+   
+3. TTL Jitter
+   ├── Add random spread to TTLs to prevent synchronized expiry
+   └── TTL = base_ttl + random(0, base_ttl * 0.1)
+   
+4. Background refresh
+   ├── Async refresh when TTL is about to expire (< 20% remaining)
+   ├── Return slightly stale data while refreshing
+   └── "Stale-while-revalidate" pattern (HTTP Cache-Control too)
+
+5. Two-tier TTL (soft + hard)
+   ├── Soft TTL: treat as stale, try to refresh async
+   ├── Hard TTL: definitely invalid, block until refreshed
+   └── data.setExpiry(soft=4min, hard=5min)
+```
+
+**Điểm senior:** Singleflight là Go-native solution đơn giản nhất. TTL jitter là best practice phải áp dụng mặc định. Background refresh với stale-while-revalidate tốt cho UX (không block user). Biết tên "thundering herd" / "cache stampede" quan trọng trong phỏng vấn system design.
+
+### Q: When should you use Redis vs Memcached? / Khi nào dùng Redis vs Memcached? 🟡 Mid
+
+**A:**
+
+```
+Feature Comparison:
+                Redis              Memcached
+Data types:     Rich (string,      String only (key-value)
+                list, set, hash,
+                sorted set, stream)
+Persistence:    Yes (RDB + AOF)    No (memory only)
+Replication:    Yes (primary/replica) No (each node independent)
+Clustering:     Redis Cluster       Client-side sharding
+Pub/Sub:        Yes                 No
+Transactions:   Yes (MULTI/EXEC)    No
+Lua scripting:  Yes                 No
+Memory:         More overhead       More cache-efficient
+Threading:      Single-threaded*    Multi-threaded
+                (*v6+ I/O threads)
+
+Performance:
+├── Both: ~1M ops/sec single node
+├── Memcached: slightly faster for simple get/set (less overhead)
+└── Redis: faster for complex data structure operations
+
+Choose Redis when:
+├── Need data persistence (cache survives restart)
+├── Need pub/sub (real-time features)
+├── Need sorted sets (leaderboards, priority queues)
+├── Need streams (message queuing)
+├── Need atomic operations (rate limiting, distributed locks)
+└── Most new projects (unless you NEED Memcached's speed)
+
+Choose Memcached when:
+├── Pure caching, no persistence needed
+├── Multi-threaded is important (large servers, many CPU cores)
+└── Existing infrastructure already uses it
+```
+
+**Redis data structures → use cases:**
+```
+String:       session tokens, API response cache, counters (INCR)
+List:         recent activity feed, job queue (LPUSH/BRPOP)
+Hash:         user profile fields (HGET/HSET individual fields)
+Set:          unique visitors, tags, friend lists (SISMEMBER)
+Sorted Set:   leaderboard (ZADD score member, ZRANGE by score)
+Stream:       event log, message bus (XADD, XREAD)
+HyperLogLog:  approximate unique count (PFADD, PFCOUNT) — O(1) space!
+```
+
+**Điểm phỏng vấn:** Trong 90% cases, chọn Redis vì feature-rich hơn và maintain dễ hơn. Memcached còn dùng khi cần simplicity và có large-scale existing infrastructure. Biết Redis data structures và use case của mỗi loại là điểm cộng lớn.

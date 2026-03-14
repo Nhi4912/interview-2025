@@ -605,3 +605,56 @@ pipeline:
 | Target sprint | Kế hoạch xử lý |
 | Success metric | Cách đo hiệu quả sau khi trả nợ |
 
+
+---
+
+## Interview Q&A / Câu Hỏi Phỏng Vấn
+
+### Q: What is the difference between Agile and Scrum? / Agile và Scrum khác nhau thế nào? 🟢 Junior
+
+**A:** **Agile** is a *philosophy* (Agile Manifesto values). **Scrum** is a *framework* that implements Agile with specific roles, events, and artifacts.
+
+```
+Agile Manifesto values:
+- Individuals and interactions OVER processes and tools
+- Working software OVER comprehensive documentation
+- Customer collaboration OVER contract negotiation
+- Responding to change OVER following a plan
+
+Scrum (implements Agile):
+Roles: Product Owner, Scrum Master, Dev Team
+Events: Sprint (2-4w), Planning, Daily Standup, Review, Retro
+Artifacts: Product Backlog, Sprint Backlog, Increment
+```
+
+Vietnamese explanation: Agile = "why" và "what values." Scrum/Kanban = "how" to implement. Scrum cần mature team, clear PO, good refinement. Kanban tốt hơn cho support/maintenance work (flow-based, không theo sprint). Điểm quan trọng: demonstrate understanding of *principles* (deliver value, adapt, collaborate) không chỉ ceremonies.
+
+---
+
+### Q: What is CI/CD and what are the key pipeline stages? / CI/CD và các stages chính? 🟡 Mid
+
+**A:** **CI** (Continuous Integration): auto build+test on every push. **CD** (Continuous Delivery): auto deploy to staging. **CD** (Deployment): auto deploy to production on every passing build.
+
+```
+Pipeline stages:
+Source → Build → Test → Security → Staging → Smoke → Prod → Monitor
+
+Key metrics (DORA):
+Lead time: commit → production (elite: < 1 hour)
+Deployment frequency: (elite: multiple/day)
+MTTR: mean time to restore (elite: < 1 hour)
+Change failure rate: % causing incidents (elite: < 5%)
+```
+
+Deployment strategies: **Blue/Green** (2 identical envs, swap traffic). **Canary** (gradually route % to new version). **Feature flags** (deploy without activating feature).
+
+Vietnamese explanation: DORA 4 metrics là standard measure DevOps performance. Elite performers: deploy nhiều lần/ngày. Feature flags = decouple deploy từ release (ship code, turn on later). Tools: GitHub Actions, GitLab CI, ArgoCD (GitOps). "Shift left": security testing earlier in pipeline (SAST in CI, not just prod scan).
+
+---
+
+## Interview Q&A Summary / Tổng Kết
+
+| Question | Level | Key Point |
+|----------|-------|-----------|
+| Agile vs Scrum | 🟢 | Agile=philosophy; Scrum=framework; understand principles over ceremonies |
+| CI/CD pipeline | 🟡 | Build→test→security→staging→prod; DORA metrics; blue/green/canary |

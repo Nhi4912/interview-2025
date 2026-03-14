@@ -1220,3 +1220,65 @@ A: Clustered index determines physical order of data (one per table, usually pri
 ---
 
 [← Back to Algorithms](../01-cs-fundamentals/algorithms-theory.md) | [Next: Memory Management →](../01-cs-fundamentals/os-theory.md)
+
+---
+
+## Interview Q&A / Câu Hỏi Phỏng Vấn
+
+### Q: What are ACID properties in databases? / ACID properties trong database là gì? 🟢 Junior
+
+**A:** ACID ensures database transaction reliability: **Atomicity** (all or nothing — commit or rollback), **Consistency** (transaction takes DB from one valid state to another), **Isolation** (concurrent transactions don't see each other's intermediate state), **Durability** (committed data survives crashes).
+
+```
+Bank transfer (demonstrates all ACID):
+BEGIN;
+  UPDATE accounts SET balance = balance - 100 WHERE id = 1; ← debit
+  UPDATE accounts SET balance = balance + 100 WHERE id = 2; ← credit
+COMMIT;
+
+Atomicity: if credit fails → debit also rolled back (no money disappears)
+Consistency: total money in system unchanged before and after
+Isolation: other transactions see either both changes or neither
+Durability: after COMMIT, survives power failure (WAL log flushed to disk)
+```
+
+Vietnamese explanation: ACID vs BASE (NoSQL): Base = Basically Available, Soft state, Eventually consistent. SQL databases: ACID by default. NoSQL trade consistency for availability/performance. Isolation levels (least to most strict): Read Uncommitted, Read Committed, Repeatable Read, Serializable. PostgreSQL default: Read Committed. MySQL InnoDB default: Repeatable Read.
+
+---
+
+### Q: What is the difference between SQL and NoSQL databases? / SQL vs NoSQL khác nhau thế nào? 🟡 Mid
+
+**A:** **SQL** (relational): structured schema, ACID transactions, powerful JOIN queries, vertical scaling. Best for complex relationships, financial data. **NoSQL**: flexible schema, horizontal scaling, eventual consistency, optimized for specific access patterns. Subtypes: document (MongoDB), key-value (Redis), column-family (Cassandra), graph (Neo4j).
+
+```
+SQL (PostgreSQL, MySQL):
++ ACID transactions
++ JOIN across tables
++ Mature tooling
+- Schema changes costly
+- Vertical scaling (mostly)
+
+NoSQL (MongoDB, Cassandra, Redis):
++ Flexible schema
++ Horizontal scaling
++ Optimized read/write patterns
+- Limited JOIN support
+- Eventual consistency (usually)
+
+Choose SQL when:           Choose NoSQL when:
+Complex relationships      Simple access patterns (K/V)
+Financial transactions     High write throughput
+Reporting queries          Flexible schema
+Team knows SQL well        Horizontal scaling needed
+```
+
+Vietnamese explanation: "Use SQL" là safe default. NoSQL khi: (1) Schema highly variable (user-generated content). (2) Extreme write scale (Cassandra: 100K writes/sec). (3) Specific data structures (Redis for caching, sorted sets). (4) Document-oriented data without complex joins (MongoDB). Nhiều production systems dùng cả hai: PostgreSQL for source of truth + Redis for caching + Elasticsearch for search.
+
+---
+
+## Interview Q&A Summary / Tổng Kết
+
+| Question | Level | Key Point |
+|----------|-------|-----------|
+| ACID properties | 🟢 | Atomicity+Consistency+Isolation+Durability; bank transfer example |
+| SQL vs NoSQL | 🟡 | SQL=ACID+joins; NoSQL=flexible+scale; use SQL by default |

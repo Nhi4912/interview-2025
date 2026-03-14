@@ -1042,3 +1042,82 @@
 - Security fundamentals: `./01-security-fundamentals.md`
 - Cryptography and protocols: `./02-cryptography-and-protocols.md`
 
+
+---
+
+## Interview Q&A / Câu Hỏi Phỏng Vấn
+
+### Q: What is SQL injection and how do you prevent it? / SQL injection và cách phòng chống? 🟢 Junior
+
+**A:** SQL injection: user input concatenated into SQL queries → attacker modifies query structure to extract/modify data.
+
+```sql
+-- VULNERABLE:
+query = "SELECT * FROM users WHERE email = '" + userInput + "'";
+-- userInput = "admin' OR '1'='1"
+-- → "...WHERE email = 'admin' OR '1'='1'" → ALL users returned!
+
+-- PREVENTION — parameterized queries:
+query = "SELECT * FROM users WHERE email = $1", [userInput]
+-- Input treated as DATA not SQL → cannot escape string context
+```
+
+Prevention priority: (1) Parameterized queries (only reliable defense), (2) ORM (uses params by default), (3) Input validation (secondary), (4) WAF (last resort).
+
+Vietnamese explanation: SQLi là OWASP #1 nhiều năm. Parameterized queries là ONLY reliable prevention — input validation không đủ (attackers encode/obfuscate). Modern ORMs (Sequelize, Prisma, GORM) use params by default → SQLi extremely rare if ORM used correctly. Dangerous: blind SQLi (no error output, extract via true/false responses).
+
+---
+
+### Q: What is XSS and how do you prevent it? / XSS và cách phòng chống? 🟡 Mid
+
+**A:** Cross-Site Scripting: attacker injects malicious scripts into pages viewed by other users. Types: **Stored** (in DB, runs for all), **Reflected** (in URL), **DOM-based** (client-side JS reads malicious data).
+
+```javascript
+// VULNERABLE — user content as HTML
+element.innerHTML = userComment; // <script>stealCookies()</script>
+
+// PREVENTION:
+element.textContent = userComment;                 // escape as text
+element.innerHTML = DOMPurify.sanitize(userComment); // for rich text
+
+// Content Security Policy header:
+// Content-Security-Policy: default-src 'self'; script-src 'self'
+// → blocks inline scripts + external sources
+```
+
+Vietnamese explanation: React escapes JSX `{userComment}` by default → protected. `dangerouslySetInnerHTML` + user content = must DOMPurify sanitize. HttpOnly cookie flag: script cannot read → limits XSS damage. CSP = defense in depth: even if payload injected, blocks script execution. CORS ≠ XSS protection (different attack vectors).
+
+---
+
+### Q: What is CSRF and how is it prevented? / CSRF và cách phòng chống? 🟡 Mid
+
+**A:** Cross-Site Request Forgery: attacker tricks authenticated user's browser into making unwanted requests using their session cookies.
+
+```
+Attack flow:
+1. Alice logs into bank.com → session cookie set
+2. Alice visits evil.com (logged in)
+3. evil.com: <img src="https://bank.com/transfer?to=attacker&amount=1000">
+4. Browser sends request WITH Alice's cookie → transfer executed!
+
+Prevention:
+1. CSRF token: server generates random token, client sends in header/form
+   Attacker cannot read token (same-origin policy) → can't forge request
+
+2. SameSite cookie: SameSite=Lax/Strict
+   → cookie not sent with cross-site requests (modern default)
+
+3. JWT in Authorization header (not cookie) → immune to CSRF
+```
+
+Vietnamese explanation: SameSite=Lax (default in modern browsers): not sent for cross-site POST. SameSite=Strict: never sent cross-site. SPA + JWT in Authorization header: không vulnerable (browser không auto-send headers). CSRF chủ yếu affects cookie-based session auth. JWT in localStorage → vulnerable to XSS instead (tradeoff).
+
+---
+
+## Interview Q&A Summary / Tổng Kết
+
+| Question | Level | Key Point |
+|----------|-------|-----------|
+| SQL injection | 🟢 | Parameterized queries ONLY fix; ORMs use by default |
+| XSS | 🟡 | React escapes JSX; DOMPurify for rich text; CSP as defense in depth |
+| CSRF | 🟡 | CSRF token or SameSite cookie; JWT in header = immune |

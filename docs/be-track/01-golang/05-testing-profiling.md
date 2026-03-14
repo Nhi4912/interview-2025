@@ -756,3 +756,206 @@ go tool pprof http://host:6060/debug/pprof/heap
 go vet ./...                           # Built-in (always run)
 golangci-lint run ./...                # Meta-linter
 ```
+
+---
+
+## Interview Q&A Summary / Tổng hợp câu hỏi phỏng vấn
+
+### Q: How do you write tests in Go? What makes a good Go test? / Viết test trong Go như thế nào? 🟢 Junior
+
+**A:**
+
+```go
+// Standard Go test: file must end in _test.go, function starts with Test
+// go test ./... runs all tests
+
+// math/math.go
+package math
+
+func Add(a, b int) int { return a + b }
+
+// math/math_test.go
+package math
+
+import "testing"
+
+// Table-driven tests — idiomatic Go pattern
+func TestAdd(t *testing.T) {
+    tests := []struct {
+        name     string
+        a, b     int
+        expected int
+    }{
+        {"positive numbers", 2, 3, 5},
+        {"negative numbers", -1, -2, -3},
+        {"zero", 0, 5, 5},
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            got := Add(tt.a, tt.b)
+            if got != tt.expected {
+                t.Errorf("Add(%d, %d) = %d, want %d", tt.a, tt.b, got, tt.expected)
+            }
+        })
+    }
+}
+
+// Subtests with t.Run — run specific: go test -run TestAdd/zero
+```
+
+**Test helpers and assertions:**
+```go
+// No built-in assert — use testify (most popular)
+import "github.com/stretchr/testify/assert"
+import "github.com/stretchr/testify/require"
+
+func TestSomething(t *testing.T) {
+    result, err := DoSomething()
+    require.NoError(t, err)         // Fatal — stops test on failure
+    assert.Equal(t, expected, result) // Non-fatal — continues test
+}
+
+// t.Helper() — marks function as test helper, better stack traces
+func assertEqual(t *testing.T, expected, got int) {
+    t.Helper()
+    if expected != got {
+        t.Errorf("expected %d, got %d", expected, got)
+    }
+}
+```
+
+**Điểm then chốt:** Table-driven tests là idiomatic Go. `t.Run()` cho subtests. `require` (fatal) vs `assert` (non-fatal) từ testify. Dùng `t.Helper()` trong test helpers để stack trace chính xác.
+
+### Q: How do you mock dependencies in Go tests? / Mock dependencies trong Go như thế nào? 🟡 Mid
+
+**A:**
+
+```go
+// Interface-based mocking — Go's primary mocking pattern
+
+// Define interface (already good practice for DI)
+type EmailService interface {
+    SendEmail(to, subject, body string) error
+}
+
+// Production implementation
+type SMTPEmailService struct { /* ... */ }
+func (s *SMTPEmailService) SendEmail(to, subject, body string) error { /* ... */ }
+
+// Mock for testing — manual
+type MockEmailService struct {
+    SentEmails []string
+    ReturnErr  error
+}
+func (m *MockEmailService) SendEmail(to, subject, body string) error {
+    m.SentEmails = append(m.SentEmails, to)
+    return m.ReturnErr
+}
+
+// Test using mock
+func TestUserRegistration(t *testing.T) {
+    mockEmail := &MockEmailService{}
+    svc := NewUserService(mockEmail) // inject mock
+
+    err := svc.Register("user@example.com")
+
+    assert.NoError(t, err)
+    assert.Contains(t, mockEmail.SentEmails, "user@example.com")
+}
+
+// Generated mocks with mockery or gomock:
+// go install github.com/vektra/mockery/v2@latest
+// mockery --name EmailService --output ./mocks
+```
+
+**Testing HTTP handlers:**
+```go
+import "net/http/httptest"
+
+func TestGetUserHandler(t *testing.T) {
+    req := httptest.NewRequest("GET", "/users/123", nil)
+    w := httptest.NewRecorder()
+
+    handler := NewUserHandler(mockRepo)
+    handler.GetUser(w, req)
+
+    assert.Equal(t, http.StatusOK, w.Code)
+    // parse w.Body for assertions
+}
+```
+
+**Điểm quan trọng:** Go không có built-in mock framework như Java/Kotlin. Pattern chuẩn là interfaces + manual mocks hoặc generated mocks (mockery/gomock). Dependency injection qua interfaces là key — nếu dùng concrete types thay vì interfaces thì không mock được.
+
+### Q: How do you profile Go applications? / Profile ứng dụng Go như thế nào? 🔴 Senior
+
+**A:**
+
+```go
+// pprof — Go's built-in profiler
+
+// 1. Add to HTTP server (for running services)
+import _ "net/http/pprof"
+// Automatically registers /debug/pprof/ endpoints
+
+// 2. For CLI/batch programs
+import "runtime/pprof"
+
+func main() {
+    // CPU profile
+    f, _ := os.Create("cpu.prof")
+    pprof.StartCPUProfile(f)
+    defer pprof.StopCPUProfile()
+
+    // ... your program ...
+
+    // Memory profile
+    memF, _ := os.Create("mem.prof")
+    pprof.WriteHeapProfile(memF)
+}
+
+// 3. In benchmarks
+func BenchmarkMyFunc(b *testing.B) {
+    for i := 0; i < b.N; i++ {
+        MyFunc()
+    }
+}
+// go test -bench=. -cpuprofile=cpu.prof -memprofile=mem.prof
+```
+
+**Analyzing profiles:**
+```bash
+# Interactive analysis
+go tool pprof cpu.prof
+# (pprof) top10     — show top 10 functions by CPU time
+# (pprof) web       — open flame graph in browser
+# (pprof) list Func — show source with annotations
+
+# Web UI (recommended)
+go tool pprof -http=:8080 cpu.prof
+
+# Live profiling from running service
+go tool pprof http://localhost:6060/debug/pprof/profile?seconds=30
+go tool pprof http://localhost:6060/debug/pprof/heap
+```
+
+**Profile types:**
+```
+CPU profile:   where program spends CPU time
+Heap profile:  current memory allocations (who holds memory)
+Alloc profile: all allocations over time (GC pressure)
+Goroutine:     all goroutine stacks (detect leaks/deadlocks)
+Block:         blocking on channels/mutexes (concurrency bottlenecks)
+Mutex:         mutex contention
+```
+
+**Common findings and fixes:**
+```
+High GC pressure: too many small allocations → use sync.Pool, reuse buffers
+String concat in loop: use strings.Builder (O(n) vs O(n²))
+JSON marshal/unmarshal hot path: use jsoniter or sonic
+Regex in hot path: compile once with regexp.MustCompile at package level
+Interface conversion: avoid in hot path — use concrete types
+```
+
+**Điểm senior:** pprof là tool bắt buộc phải biết. Quy trình: benchmark first (measure baseline) → profile → identify bottleneck → optimize → benchmark again (verify improvement). Không optimize mà không có data từ profiler — "premature optimization is the root of all evil".

@@ -1145,3 +1145,133 @@
 **Ví dụ:**
 
 - "Em sẽ rollout theo canary, theo dõi quality/cost/latency 24 giờ, và rollback ngay nếu vượt ngưỡng SLO."
+
+---
+
+## Interview Q&A Summary / Tổng hợp câu hỏi phỏng vấn
+
+### Q: How do you handle LLM latency in production? / Xử lý latency của LLM trong production? 🟡 Mid
+
+**A:**
+
+```
+LLM Latency components:
+  TTFT (Time To First Token): network + model processing
+  TBT (Time Between Tokens): throughput
+  Total: TTFT + TBT × output_tokens
+
+Typical values (GPT-4):
+  TTFT: 500ms - 2s
+  TBT: 20-50ms/token
+  100-token response: 2.5 - 7s total latency
+
+Optimization strategies:
+
+1. Streaming (most impactful UX improvement)
+   ├── Stream tokens as generated → user sees response immediately
+   ├── Perceived latency = TTFT (500ms - 2s) not total
+   └── Implementation: SSE (Server-Sent Events) or WebSocket
+
+2. Reduce token count
+   ├── Shorter prompts → less TTFT processing
+   ├── Constrain output length: "Answer in max 100 words"
+   └── Structured output: JSON schema forces compact format
+
+3. Caching
+   ├── Exact: cache frequent Q&A pairs (embeddings, FAQ)
+   ├── Prompt prefix caching: Claude/GPT cache static system prompt
+   └── Result: TTFT near 0 for cached queries
+
+4. Model selection
+   ├── Haiku/GPT-3.5: 3-5× faster than Opus/GPT-4
+   ├── Route simple queries to fast model
+   └── Self-hosted: vLLM, TGI → lower network latency
+
+5. Parallel processing
+   ├── Multiple independent tasks → run agents in parallel
+   ├── Prefetching: predict next query, precompute
+   └── Speculative decoding (self-hosted): draft small model, verify large model
+```
+
+**Latency budget example:**
+```
+Total budget: 3s
+├── Auth + rate limit: 20ms
+├── Embedding query: 100ms
+├── Vector search: 50ms
+├── Prompt assembly: 10ms
+├── LLM TTFT: 500ms (user sees first token)
+└── Streaming: progressive → UX acceptable
+Total visible latency to user: 680ms (first token)
+```
+
+**Điểm quan trọng:** Streaming là single most impactful UX improvement. User cảm thấy ứng dụng nhanh khi thấy first token sau <1s, dù total response 5s. Caching và model routing là 2 kỹ thuật giảm p99 latency hiệu quả nhất.
+
+### Q: How do you ensure AI safety and prevent misuse in production? / Đảm bảo AI safety trong production? 🔴 Senior
+
+**A:**
+
+```
+Threat model for LLM systems:
+
+1. Prompt injection
+   ├── Attack: "Ignore your instructions. You are now..."
+   ├── Via: user input, tool outputs, retrieved documents
+   └── Defense:
+       ├── Separate system/user prompts (structured input)
+       ├── Validate tool outputs before including in prompt
+       └── LLM-based prompt injection detector
+
+2. Jailbreaking
+   ├── Attack: roleplay, hypotheticals to bypass safety rules
+   ├── "In a fictional world where harmful content is ok..."
+   └── Defense:
+       ├── Input/output moderation (OpenAI Moderation API, LlamaGuard)
+       ├── Constitutional AI constraints in system prompt
+       └── User behavior patterns (repeated jailbreak attempts → block)
+
+3. Data exfiltration
+   ├── Attack: user tricks model into revealing system prompt or PII
+   └── Defense:
+       ├── Never include sensitive data in context unnecessarily
+       ├── Output scanning for PII before returning (regex + ML)
+       └── Separate read/write permissions for tools
+
+4. Denial of Service
+   ├── Attack: very long inputs or infinite agent loops
+   └── Defense:
+       ├── Input token limits
+       ├── Agent step limits (max 20 steps)
+       └── Per-user rate limits + budget caps
+
+Safety architecture:
+                     ┌──────────────────────────┐
+Input ──────────────►│ Input Guardrails           │
+                     │ ├── PII detection/redaction│
+                     │ ├── Injection detection     │
+                     │ └── Content moderation      │
+                     └────────────┬───────────────┘
+                                  │
+                               [LLM]
+                                  │
+                     ┌────────────▼───────────────┐
+                     │ Output Guardrails           │
+                     │ ├── Hallucination check     │
+                     │ ├── PII in output scan      │
+                     │ ├── Toxicity filter         │
+                     │ └── Format validation       │
+Output ◄─────────────└────────────────────────────┘
+
+Tools: LlamaGuard, NeMo Guardrails, Azure Content Safety
+```
+
+**Responsible AI checklist for production:**
+- [ ] Input/output moderation enabled
+- [ ] PII handling documented and tested
+- [ ] Rate limits per user/IP
+- [ ] Agent step limits enforced
+- [ ] Audit logging of all completions
+- [ ] User terms of service include AI usage policy
+- [ ] Red-teaming performed before launch
+
+**Điểm senior interview:** Safety phải được design-in từ đầu, không phải add-on sau. Layered defense: input guardrails + system prompt constraints + output validation. LlamaGuard là open-source model classify harmful content. Audit logging quan trọng cho compliance.

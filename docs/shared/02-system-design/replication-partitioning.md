@@ -256,3 +256,60 @@ Single-writer per region pair thường đơn giản hơn để vận hành.
 - `docs/be-track/03-database-advanced/03-nosql-redis-mongo.md`
 - `docs/be-track/04-be-system-design/02-classic-problems.md`
 
+
+---
+
+## Interview Q&A / Câu Hỏi Phỏng Vấn
+
+### Q: What are the replication strategies and their trade-offs? / Các chiến lược replication? 🟡 Mid
+
+**A:** Three strategies: **Synchronous**: primary waits for all replicas to acknowledge. Strong consistency, higher latency. **Asynchronous**: primary responds after local write, replicates in background. Low latency, possible data loss on failover. **Semi-synchronous**: wait for at least one replica (MySQL default). Balanced.
+
+```
+Sync:   Client → Primary → Replica1 → Replica2 → ACK all → respond
+        Latency = max(replica RTTs). No data loss on failover.
+
+Async:  Client → Primary → respond immediately
+                              ↓ background
+                           Replica1, Replica2 (lag possible)
+        Latency = just primary. Risk: failover may lose uncommitted writes.
+
+Semi:   Wait for 1 replica → respond. Balance of both.
+```
+
+Vietnamese explanation: PostgreSQL streaming replication mặc định = async (set `synchronous_standby_names` for sync). MySQL Group Replication = semi-sync. Replication lag: replica có thể read stale data. Fix "read-your-writes": read từ primary sau write, hoặc session token route về synced replica. Interview: "Khi nào dùng async vs sync replication?" → business consistency requirements.
+
+---
+
+### Q: What is database sharding and how do you choose a shard key? / Database sharding và cách chọn shard key? 🔴 Senior
+
+**A:** Sharding splits data across multiple DB instances (horizontal partitioning). A **shard key** determines which shard a record belongs to.
+
+```
+Shard key strategies:
+1. Range-based: user_id 1-1M → Shard1, 1M-2M → Shard2
+   ✓ Range queries efficient
+   ✗ Hotspot risk (new users all hit last shard)
+
+2. Hash-based: hash(user_id) % N → shard
+   ✓ Even distribution
+   ✗ Range queries need scatter-gather (slow)
+
+3. Geographic: US → Shard-US, EU → Shard-EU
+   ✓ Data residency + latency
+   ✗ Uneven load if regions imbalanced
+
+Good shard key: high cardinality, even distribution, immutable,
+in most query predicates. Avoid: time-based (hotspot), low cardinality (status).
+```
+
+Vietnamese explanation: Chọn shard key là quyết định quan trọng nhất. Pitfalls: (1) `created_at` → all new writes to last shard. (2) `status` → imbalanced. (3) Sequential ID → same hotspot. Best: composite key (`tenant_id + user_id`). Consistent hashing: add/remove shards without full rehash. Cross-shard queries = expensive scatter-gather → design schema to avoid. Interview: don't jump to sharding — read replicas + caching first.
+
+---
+
+## Interview Q&A Summary / Tổng Kết
+
+| Question | Level | Key Point |
+|----------|-------|-----------|
+| Replication strategies | 🟡 | Sync=consistent; async=fast+lag; semi-sync=MySQL default balanced |
+| Sharding & shard key | 🔴 | High cardinality, even distribution, immutable; avoid time-based hotspots |

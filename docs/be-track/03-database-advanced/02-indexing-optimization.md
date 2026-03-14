@@ -1442,3 +1442,118 @@ Additional:
 ---
 
 *Document version: 2024. Focused on PostgreSQL & MySQL/InnoDB. Covers common interview topics at Employment Hero, Grab, and similar companies in Southeast Asia.*
+
+---
+
+## Interview Q&A / Câu Hỏi Phỏng Vấn
+
+### Q: What is a database index and how does it work internally? / Database index là gì và hoạt động nội bộ như thế nào? 🟢 Junior
+
+**A:** An index is a separate data structure (B+ Tree by default in PostgreSQL/MySQL) maintained alongside the table to speed up lookups. Without index → full table scan O(n). With B+ Tree index → O(log n) lookup.
+
+```
+Without index (10M rows):
+SELECT * FROM users WHERE email = 'a@b.com'
+→ Scan all 10M rows one by one → slow
+
+With B+ Tree index on email:
+Root [m..z]
+  /       \
+[a..l]  [m..z]     ← find 'a' branch (3 disk reads)
+  |
+[email='a@b.com', row_ptr=0x123]  → fetch row
+→ 3 reads instead of 10M ✓
+
+Index write cost: INSERT/UPDATE/DELETE must update ALL indexes on table
+```
+
+Vietnamese explanation: Index không free — write overhead (mỗi write phải update index), space overhead (B+ Tree cần storage). Trade-off: đánh index cho columns hay dùng trong WHERE, JOIN, ORDER BY. Đừng over-index write-heavy tables (events/logs). PostgreSQL: B-tree (default), Hash (equality only), GiST/GIN (full-text, JSON arrays). MySQL InnoDB: clustered index (PK = data storage order) → secondary indexes store PK as pointer.
+
+---
+
+### Q: What is the difference between clustered and non-clustered index? / Clustered vs non-clustered index? 🟡 Mid
+
+**A:** A **clustered index** determines physical row storage order — data rows ARE the index leaf nodes. One per table. In InnoDB, the primary key is always clustered. A **non-clustered index** is separate — leaf nodes store pointers (PK value) back to actual rows.
+
+```
+Clustered (InnoDB primary key):
+Leaf: [id=1, name=Alice, email=a@b.com, ...]  ← actual row data
+      [id=2, name=Bob,   email=b@c.com, ...]
+
+Non-clustered (secondary index on email):
+Leaf: [email='a@b.com', pk=1]  ← pointer, not actual row
+      [email='b@c.com', pk=2]
+→ lookup by email: index scan + PK lookup (2 reads = "double lookup")
+
+Covering index: include all needed columns in index
+→ avoid double lookup (Index Only Scan in PostgreSQL)
+```
+
+Vietnamese explanation: PostgreSQL không có clustered index như InnoDB — tất cả indexes đều non-clustered (heap table). InnoDB implications: (1) UUID as PK → random page splits (dùng ULID hoặc sequential UUID). (2) Secondary index lookup = 2 B-tree traversals. (3) Covering index = include columns avoid second lookup. Narrow PK (INT vs BIGINT vs UUID) ảnh hưởng secondary index size vì PK stored in every secondary index.
+
+---
+
+### Q: What is an N+1 query problem and how do you fix it? / N+1 query problem là gì và cách fix? 🟡 Mid
+
+**A:** N+1 occurs when you load N records then make a separate query for each — N+1 total queries instead of 1-2. Very common with ORMs using lazy loading.
+
+```
+N+1 Problem:
+// 1 query for 100 users
+users = db.query("SELECT * FROM users LIMIT 100")
+// 100 queries for their posts!
+for user in users:
+    posts = db.query("SELECT * FROM posts WHERE user_id = ?", user.id)
+→ 101 queries total!
+
+Fix — Eager loading (single JOIN):
+SELECT users.*, posts.*
+FROM users
+LEFT JOIN posts ON posts.user_id = users.id
+WHERE users.id IN (1,2,...,100)
+→ 1-2 queries total ✓
+
+Or: DataLoader pattern (batch by IDs, used in GraphQL)
+```
+
+Vietnamese explanation: N+1 phổ biến với ORM lazy loading (Rails `has_many`, Django ORM, GORM). Fix: (1) Eager loading — Rails `includes`, Django `prefetch_related`, GORM `Preload`. (2) DataLoader — batch all IDs, single IN query. (3) Denormalization — store frequently needed data together. Detection: enable query logging, count queries per request (> 10 similar queries = N+1 suspect). APM tools (Datadog, NewRelic) visualize N+1 patterns.
+
+---
+
+### Q: How do you use EXPLAIN ANALYZE to diagnose slow queries? / Dùng EXPLAIN ANALYZE để diagnose slow queries như thế nào? 🔴 Senior
+
+**A:** `EXPLAIN` shows execution plan without running. `EXPLAIN ANALYZE` runs the query and shows actual timing. Key nodes to recognize:
+
+```sql
+EXPLAIN ANALYZE
+SELECT * FROM orders WHERE user_id = 123 AND status = 'pending';
+
+-- Bad:
+Seq Scan on orders (cost=0..95000 rows=50000)
+  Filter: (user_id = 123 AND status = 'pending')
+  Rows Removed by Filter: 4950000
+  Actual time: 245ms
+
+-- After INDEX(user_id, status):
+Index Scan on orders_user_status_idx (cost=0.43..8.56 rows=5)
+  Index Cond: (user_id = 123 AND status = 'pending')
+  Actual time: 0.8ms  ← 300x faster!
+
+-- Even better: Index Only Scan (covering index)
+-- = no heap fetch needed
+```
+
+Key plan nodes: `Seq Scan` = full table scan (bad for large tables). `Index Scan` = using index. `Index Only Scan` = covering index hit (best). `Hash Join` / `Nested Loop` / `Merge Join` = join strategies. `cost=X..Y` = estimated; `actual time=Z` = real.
+
+Vietnamese explanation: `cost` là estimated (planner dùng statistics), `actual time` là real (ANALYZE mode). Nếu actual >> estimated → statistics stale → chạy `ANALYZE table_name`. Red flags: (1) `Seq Scan` trên bảng > 10K rows. (2) `Rows Removed by Filter` lớn → index không selective. (3) Nested Loop với large tables → thiếu index trên join column. PostgreSQL: `pg_stat_statements` track top N slow queries. MySQL: `slow_query_log` + `long_query_time=1`.
+
+---
+
+## Interview Q&A Summary / Tổng Kết
+
+| Question | Level | Key Point |
+|----------|-------|-----------|
+| How indexes work | 🟢 | B+ Tree O(log n); write overhead trade-off; cover columns in WHERE/JOIN |
+| Clustered vs non-clustered | 🟡 | InnoDB PK=clustered; secondary=double lookup; covering index avoids it |
+| N+1 query problem | 🟡 | ORM lazy loading trap; fix with eager loading or DataLoader batching |
+| EXPLAIN ANALYZE | 🔴 | Seq Scan bad; actual vs estimated cost; statistics stale = stale plan |

@@ -835,3 +835,160 @@ export async function runWeatherTool(rawArgs: unknown) {
 - **KPI nên theo dõi:** p95 latency, success rate, quality score, token cost/request.
 - **Sai lầm thường gặp:** chỉ nói công nghệ mà không nói tác động đến business metric.
 - **Câu chốt an toàn:** `I would run an A/B experiment and pick the lowest-cost option that still meets quality SLO.`
+
+---
+
+## Interview Q&A Summary / Tổng hợp câu hỏi phỏng vấn
+
+### Q: What is an LLM agent and how does ReAct work? / LLM agent là gì và ReAct hoạt động như thế nào? 🟡 Mid
+
+**A:** An LLM agent = LLM + tools + memory + planning, able to take multi-step actions autonomously.
+
+```
+ReAct Pattern (Reason + Act):
+┌────────────────────────────────────────────────┐
+│  Thought: I need to find the current weather    │
+│  Action: search("weather Tokyo today")          │
+│  Observation: "Tokyo: 18°C, partly cloudy"      │
+│                                                  │
+│  Thought: I have the weather, now format reply  │
+│  Action: respond("The weather in Tokyo is...")  │
+│  Final Answer: "Tokyo is 18°C, partly cloudy"  │
+└────────────────────────────────────────────────┘
+
+Loop: Thought → Action → Observation → Thought → ...
+      until Final Answer or max_steps reached
+```
+
+**Agent components:**
+```
+┌─────────────────────────────────────────────┐
+│                   Agent                      │
+│  ┌──────────┐  ┌────────┐  ┌─────────────┐ │
+│  │  LLM     │  │ Tools  │  │   Memory    │ │
+│  │(planner) │  │────────│  │─────────────│ │
+│  │          │  │search  │  │short-term:  │ │
+│  │          │  │calc    │  │conversation │ │
+│  │          │  │code    │  │             │ │
+│  │          │  │API     │  │long-term:   │ │
+│  └──────────┘  │files   │  │vector store │ │
+│                └────────┘  └─────────────┘ │
+└─────────────────────────────────────────────┘
+```
+
+**Tool calling (function calling) flow:**
+```json
+1. User: "What's 3456 * 789?"
+2. LLM → { "tool": "calculator", "args": {"expr": "3456 * 789"} }
+3. System executes calculator → 2726784
+4. LLM receives result → "3456 × 789 = 2,726,784"
+```
+
+**Điểm then chốt:** ReAct = ngôn ngữ + hành động + quan sát kết hợp. LLM không chỉ trả lời mà còn quyết định WHAT to do và sử dụng tools để gather info. Key insight: interleave reasoning traces with actions.
+
+### Q: What is the difference between single-agent and multi-agent architectures? / Khi nào dùng multi-agent? 🔴 Senior
+
+**A:**
+
+```
+Single Agent:
+  User → [Agent] → Tools → Response
+  ├── Simple, low latency
+  ├── Limited by single context window
+  └── Best for: straightforward tasks, clear tool use
+
+Multi-Agent Architectures:
+
+1. Orchestrator + Workers (Hierarchical)
+   User → [Orchestrator] → [Worker1] [Worker2] [Worker3]
+                          (researcher) (writer)  (critic)
+   ├── Orchestrator plans, delegates, aggregates
+   └── Best for: complex tasks needing specialization
+
+2. Parallel Agents
+   User → [Agent1, Agent2, Agent3] → Aggregator → Response
+   ├── All run same task independently, vote/merge
+   └── Best for: high-stakes decisions (self-consistency)
+
+3. Pipeline (Sequential)
+   User → [Researcher] → [Analyst] → [Writer] → Response
+   ├── Each agent processes previous output
+   └── Best for: data pipeline tasks, content generation
+
+4. Debate / Reflection
+   [Agent1] ←→ [Agent2] (critique each other) → Consensus
+   └── Best for: complex reasoning, catching errors
+```
+
+**When to use multi-agent:**
+- Task too complex for single context window
+- Parallel subtasks (research different topics simultaneously)  
+- Need specialization (researcher vs writer vs code generator)
+- Need verification (critic agent reviewing writer agent output)
+
+**Challenges:**
+- Cost: multiple LLM calls → 3-10x more expensive
+- Latency: especially sequential pipelines
+- Error propagation: early agent mistakes compound
+- Coordination complexity: orchestrator prompt engineering hard
+
+**Cách giải thích:** Multi-agent = chia nhỏ vấn đề phức tạp cho nhiều "chuyên gia" xử lý song song hoặc tuần tự. Trade-off chính là cost và latency tăng lên. Chỉ dùng khi single agent không đủ capability.
+
+### Q: How do you handle agent reliability and error recovery? / Làm thế nào để tăng reliability cho agents? 🔴 Senior
+
+**A:**
+
+```
+Reliability challenges:
+├── LLM non-determinism → different tool calls each run
+├── Tool failures → network errors, API limits
+├── Infinite loops → agent keeps calling same tool
+├── Context overflow → conversation too long for context window
+└── Prompt injection via tool outputs → tool returns malicious instructions
+
+Mitigation strategies:
+
+1. Structured outputs
+   ├── Force JSON schema: { "tool": "...", "args": {...}, "reason": "..." }
+   ├── Validate before executing
+   └── Retry with error message if invalid
+
+2. Step limits & timeouts
+   ├── max_steps=20, max_time=60s
+   └── Graceful degradation: return partial result with explanation
+
+3. Tool call validation
+   ├── Whitelist allowed tools and parameters
+   ├── Sandbox code execution (subprocess, container)
+   └── Rate limit tool calls (prevent runaway loops)
+
+4. Checkpointing & resumability
+   ├── Save agent state at each step
+   ├── Resume from last checkpoint on failure
+   └── Critical for long-running agents (research tasks)
+
+5. Observability
+   ├── Log every Thought/Action/Observation
+   ├── Trace IDs across all agent steps
+   └── Alert on error rate, step count, token spend
+
+6. Human-in-the-loop (HITL)
+   ├── High-stakes actions require human approval
+   ├── "Before I delete these files, confirm?"
+   └── Async approval via webhook/UI
+```
+
+**Production agent stack:**
+```
+Request → [Input validation] → [Agent + ReAct loop]
+                                        ↓
+                               [Tool executor + sandbox]
+                                        ↓
+                               [Output validator]
+                                        ↓
+                          [Observability: traces, metrics]
+                                        ↓
+                               Response (or HITL gate)
+```
+
+**Điểm senior phải biết:** Production agents cần structured outputs, step limits, observability, và human-in-the-loop cho high-stakes actions. Tool execution phải được sandboxed (đặc biệt code execution). Logging every ReAct step là critical cho debugging.

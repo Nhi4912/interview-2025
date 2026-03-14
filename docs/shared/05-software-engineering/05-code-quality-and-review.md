@@ -1808,3 +1808,50 @@ Old System ───────────────────────
 > - SOLID & Design Patterns: `docs/shared/05-software-engineering/01-solid-and-design-patterns.md`
 > - SDLC & Practices: `docs/shared/05-software-engineering/03-sdlc-and-practices.md`
 > - Testing Theory: `docs/shared/05-software-engineering/04-testing-theory.md`
+
+---
+
+## Interview Q&A / Câu Hỏi Phỏng Vấn
+
+### Q: What makes a good code review? / Code review tốt gồm những gì? 🟢 Junior
+
+**A:** A good code review checks: (1) **Correctness** — does it work? edge cases handled? (2) **Tests** — adequate coverage? (3) **Design** — right abstraction level? too complex? (4) **Readability** — future maintainers understand it? (5) **Security** — input validation, auth checks, no secrets in code?
+
+Key behaviors:
+- Comment on code, not the person ("This function is complex" not "You wrote bad code")
+- Ask questions instead of demanding ("Why did you choose X?")
+- Distinguish blocking ([must fix]) from suggestions ([nit], [optional])
+- Approve with context — explain what you checked
+
+Vietnamese explanation: Code review mục tiêu chính: knowledge transfer + defect prevention, không phải gatekeeping. Author checklist: self-review diff trước, add comments cho non-obvious decisions, ensure tests pass, description explains WHY not just WHAT. Google research: diminishing returns after 400 LOC/hour → review small PRs (< 400 lines ideal).
+
+---
+
+### Q: What is technical debt and how do you manage it? / Technical debt và cách manage? 🟡 Mid
+
+**A:** Technical debt: shortcuts taken now that create future cost. **Deliberate** (strategic): "Ship fast, refactor after funding." **Inadvertent**: developer didn't know better patterns. **Bit rot**: code degraded as system evolved.
+
+```
+Management strategies:
+- Tech debt backlog: track explicitly, prioritize like features
+- Boy Scout Rule: "leave code cleaner than you found it"
+- Strangler Fig: gradually replace legacy components
+- Threshold: debt slows dev by > 20% → prioritize payback
+
+How to pitch to management:
+"This feature takes 2 weeks now but 1 week after refactoring.
+ 3 features from now we break even."
+
+Metrics: "We spend 20% of sprint on bugs from this legacy module."
+```
+
+Vietnamese explanation: Không phải tất cả refactoring đều trả nợ — đôi khi là gold plating. Quantify impact cho management — đừng chỉ nói "code bad." Jeff Sutherland: debt không repaid = interest compounds → eventually pays all productivity. Ward Cunningham (coiner of term): "the debt metaphor" — technical debt không phải sin, là conscious trade-off cần repay.
+
+---
+
+## Interview Q&A Summary / Tổng Kết
+
+| Question | Level | Key Point |
+|----------|-------|-----------|
+| Good code review | 🟢 | Check correctness+tests+design+security; comment on code not person |
+| Technical debt | 🟡 | Track in backlog; quantify impact for mgmt; Boy Scout Rule |

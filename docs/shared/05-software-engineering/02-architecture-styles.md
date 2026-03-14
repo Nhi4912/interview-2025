@@ -773,3 +773,63 @@ Status: Accepted
 ### 🔴 Q: What ADR mistakes are common? `[Senior]`
 
 **A:** ADR quá chung chung, thiếu context đo được, không có trigger review lại, hoặc không cập nhật status khi quyết định thay đổi.
+
+---
+
+## Interview Q&A / Câu Hỏi Phỏng Vấn
+
+### Q: When should you choose microservices over a monolith? / Khi nào chọn microservices thay vì monolith? 🟡 Mid
+
+**A:** Start with a monolith; migrate when you hit specific pain points. Choose microservices when: different components need **independent scaling**, teams need **independent deployment**, or different parts need **different tech stacks**.
+
+```
+Monolith advantages:      Microservices advantages:
+Simple development        Independent scaling per service
+Easy debugging            Independent deployment per team
+No network overhead       Technology flexibility
+Transactional consistency Fault isolation
+
+Decision:
+Team < 10 devs?     → monolith
+Domain unclear?     → monolith
+Traffic uniform?    → monolith
+Team > 50 devs?     → consider services
+Domain well-known?  → services
+Traffic spiky/service? → services
+```
+
+Vietnamese explanation: "Monolith first" — Martin Fowler. Lý do: microservices = distributed systems complexity (network failures, distributed transactions, eventual consistency). Netflix, Uber bắt đầu monolith → split khi scale required. "Modular monolith" = middle ground: single deployment, separate modules with clear boundaries → easy to extract later. Conway's Law: system architecture mirrors team communication structure.
+
+---
+
+### Q: What is Event-Driven Architecture and when is it useful? / Event-Driven Architecture là gì? 🔴 Senior
+
+**A:** Components communicate by producing/consuming events asynchronously. No direct coupling between services. Producer emits event, consumers react independently.
+
+```
+Synchronous coupling (problem):
+OrderService → calls EmailService → calls InventoryService
+If any service down → whole flow fails
+
+Event-Driven (loose coupling):
+OrderService → emits OrderPlaced → Kafka
+                                  ↓
+                         EmailService (subscribes)
+                         InventoryService (subscribes)
+                         BillingService (subscribes)
+Each processes independently, retries on failure
+```
+
+Benefits: loose coupling, independent scaling, fault isolation, natural audit log.
+Challenges: eventual consistency, debugging harder (need distributed tracing), event ordering, schema evolution.
+
+Vietnamese explanation: EDA phổ biến trong microservices (Kafka, RabbitMQ, AWS EventBridge). Event sourcing = store events as source of truth. CQRS + EDA: write side emits events, read side consumes and updates read models. Pitfalls: event versioning (backward compat), poison pills (bad event crashes consumer → dead letter queue), ordering (Kafka: per-partition order only).
+
+---
+
+## Interview Q&A Summary / Tổng Kết
+
+| Question | Level | Key Point |
+|----------|-------|-----------|
+| Microservices vs monolith | 🟡 | Monolith first; microservices when team/scale requires; Conway's Law |
+| Event-Driven Architecture | 🔴 | Async events = loose coupling; resilient; eventual consistency tradeoff |

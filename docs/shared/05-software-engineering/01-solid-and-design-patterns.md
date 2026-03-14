@@ -1226,3 +1226,101 @@ BEHAVIORAL (how objects communicate):
 - Architecture styles: `./02-architecture-styles.md`
 - SDLC and engineering practices: `./03-sdlc-and-practices.md`
 
+
+---
+
+## Interview Q&A / Câu Hỏi Phỏng Vấn
+
+### Q: What are the SOLID principles? / SOLID principles là gì? 🟡 Mid
+
+**A:** 5 object-oriented design principles:
+- **S** — Single Responsibility: one reason to change per class
+- **O** — Open/Closed: open for extension, closed for modification
+- **L** — Liskov Substitution: subclasses substitutable for base class
+- **I** — Interface Segregation: many small interfaces vs one fat interface
+- **D** — Dependency Inversion: depend on abstractions not concretions
+
+```typescript
+// DIP — Dependency Inversion (enables testability)
+// BAD: high-level depends on low-level
+class UserService {
+  private db = new MySQLDatabase(); // tightly coupled
+}
+
+// GOOD: depend on abstraction
+interface Database { query(id: string): User; }
+class UserService {
+  constructor(private db: Database) {} // injected!
+}
+// Can now swap MySQL → PostgreSQL → mock in tests
+```
+
+Vietnamese explanation: SOLID là guidelines không phải rules cứng. DIP là foundation của Dependency Injection (Spring, NestJS, Go interfaces). LSP hay vi phạm: Rectangle vs Square (Square extends Rectangle nhưng setWidth/setHeight không work the same). OCP: dùng Strategy pattern (swap behavior) không dùng inheritance chain. Interview: explain bằng concrete violation example.
+
+---
+
+### Q: What is the Observer pattern? Where is it used in frontend? / Observer pattern trong frontend? 🟡 Mid
+
+**A:** Observer: one-to-many dependency — when Subject changes state, all Observers notified automatically.
+
+```typescript
+class EventEmitter {
+  private listeners = new Map<string, Set<Function>>();
+
+  on(event: string, fn: Function) {
+    if (!this.listeners.has(event)) this.listeners.set(event, new Set());
+    this.listeners.get(event)!.add(fn);
+  }
+  off(event: string, fn: Function) { this.listeners.get(event)?.delete(fn); }
+  emit(event: string, ...args: any[]) {
+    this.listeners.get(event)?.forEach(fn => fn(...args));
+  }
+}
+
+// Observer everywhere in frontend:
+// DOM addEventListener, Node.js EventEmitter, RxJS, Redux store, React Query cache
+```
+
+Vietnamese explanation: Publisher-Subscriber (Pub/Sub) = Observer + message broker (observers don't know about publisher). Key pitfall: memory leaks — không removeEventListener/unsubscribe → listeners retained in memory. React useEffect cleanup = unsubscribe pattern. Redux: store is Subject, connected components are Observers.
+
+---
+
+### Q: What is the Factory pattern and its variants? / Factory pattern và các variants? 🟡 Mid
+
+**A:** **Factory Method**: interface for creating objects, subclasses decide which class. **Abstract Factory**: create families of related objects — ensures consistency across product family.
+
+```typescript
+// Factory Method — one product type
+abstract class PaymentProcessor {
+  abstract createPayment(): Payment; // factory method
+  process(amount: number) {
+    const p = this.createPayment(); // delegates creation
+    p.charge(amount);
+  }
+}
+class StripeProcessor extends PaymentProcessor {
+  createPayment() { return new StripePayment(); }
+}
+
+// Abstract Factory — consistent product families
+interface UIFactory {
+  createButton(): Button;
+  createDialog(): Dialog;
+}
+class MacUIFactory implements UIFactory {
+  createButton() { return new MacButton(); }  // Mac-style
+  createDialog() { return new MacDialog(); }  // Mac-style (consistent!)
+}
+```
+
+Vietnamese explanation: Factory Method: decouple creation từ usage (know type at runtime). Abstract Factory: ensure consistency (all Mac-style, no mixing Mac button + Windows dialog). Practical React: component libraries use Abstract Factory for theming. Cross-platform apps: React Native components for iOS vs Android = Abstract Factory concept.
+
+---
+
+## Interview Q&A Summary / Tổng Kết
+
+| Question | Level | Key Point |
+|----------|-------|-----------|
+| SOLID principles | 🟡 | 5 OO design guidelines; DIP enables dependency injection |
+| Observer pattern | 🟡 | Subject notifies observers; DOM events, Redux, RxJS all use it |
+| Factory patterns | 🟡 | Factory Method=one product; Abstract Factory=consistent families |

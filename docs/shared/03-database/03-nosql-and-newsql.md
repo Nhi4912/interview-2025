@@ -157,3 +157,162 @@ Sau đó đưa 1-2 phương án và giải thích trade-off rõ ràng.
 - `docs/be-track/03-database-advanced/01-sql-fundamentals.md`
 - `docs/be-track/02-backend-knowledge/03-distributed-systems.md`
 
+
+---
+
+## Interview Q&A Summary / Tổng hợp câu hỏi phỏng vấn
+
+### Q: What are the main types of NoSQL databases and when to use each? / Các loại NoSQL database và khi nào dùng? 🟡 Mid
+
+**A:**
+
+```
+NoSQL Categories:
+
+1. Document Store
+   Examples: MongoDB, Firestore, CouchDB
+   Data model: JSON/BSON documents, schema-flexible
+   Strengths: nested data, schema evolution, dev speed
+   Weaknesses: no multi-document ACID (without transactions), joins expensive
+   Use when: 
+   ├── Content management (articles, user profiles)
+   ├── Catalog (product with varying attributes)
+   └── Prototype/MVP (fast schema iteration)
+
+2. Key-Value Store
+   Examples: Redis, DynamoDB (also document), Memcached
+   Data model: key → opaque value (string, list, set, hash)
+   Strengths: O(1) lookup, extreme throughput (Redis: 1M+ ops/sec)
+   Weaknesses: no range queries (key-only), limited data modeling
+   Use when:
+   ├── Caching (session, computed results)
+   ├── Rate limiting counters
+   └── Pub/Sub messaging
+
+3. Wide-Column (Column Family)
+   Examples: Cassandra, HBase, Google Bigtable
+   Data model: row key → column families → columns
+   Strengths: massive write throughput, linear scalability, time-series
+   Weaknesses: no ad-hoc queries, must design for access patterns
+   Use when:
+   ├── Time-series data (metrics, logs, IoT)
+   ├── Write-heavy workloads (activity feeds, audit logs)
+   └── Geo-distributed (Cassandra multi-datacenter)
+
+4. Graph Database
+   Examples: Neo4j, Amazon Neptune, ArangoDB
+   Data model: nodes + edges + properties
+   Strengths: relationship traversal (friend-of-friend in O(1))
+   Weaknesses: doesn't scale horizontally as well, niche use
+   Use when:
+   ├── Social networks (followers, friends)
+   ├── Fraud detection (transaction networks)
+   └── Recommendation engines (collaborative filtering)
+
+5. Search Engine
+   Examples: Elasticsearch, OpenSearch, Solr
+   Data model: inverted index over documents
+   Strengths: full-text search, faceted search, aggregations
+   Weaknesses: not primary storage, eventually consistent
+   Use when: search feature, log analytics (ELK stack)
+```
+
+**Điểm then chốt:** "What's your access pattern?" là câu hỏi đầu tiên khi chọn NoSQL. MongoDB nếu dữ liệu hierarchical. Redis cho caching/real-time. Cassandra cho time-series/high-write. Elasticsearch cho full-text search.
+
+### Q: What is the CAP theorem and BASE properties? / CAP theorem và BASE là gì? 🔴 Senior
+
+**A:**
+
+```
+CAP Theorem (Brewer, 2000):
+  In a distributed system, you can only guarantee 2 of 3:
+  
+  C - Consistency:   Every read sees most recent write (or error)
+  A - Availability:  Every request gets a response (no error)
+  P - Partition Tolerance: System works despite network partitions
+
+  Since network partitions WILL happen in distributed systems:
+  → Real choice is between CP and AP
+
+CP systems (sacrifice Availability):
+├── During partition: refuse to serve stale data → return error
+├── Examples: HBase, Zookeeper, etcd, Redis (single-node), MongoDB (strong)
+└── Use for: banking, inventory (correctness > availability)
+
+AP systems (sacrifice Consistency):
+├── During partition: serve potentially stale data → eventual consistency
+├── Examples: Cassandra, DynamoDB, CouchDB
+└── Use for: social media, DNS, shopping cart (availability > perfect consistency)
+
+PACELC extension (more complete):
+  PAC: partition → choose Availability or Consistency
+  ELC: else (no partition) → choose Latency or Consistency
+  └── Even without partitions, replication adds latency vs consistency trade-off
+```
+
+**BASE vs ACID:**
+```
+ACID (traditional RDBMS):
+├── Atomicity: transaction is all-or-nothing
+├── Consistency: database invariants maintained
+├── Isolation: concurrent transactions don't interfere
+└── Durability: committed data survives crashes
+
+BASE (NoSQL systems):
+├── Basically Available: system responds even if partially failed
+├── Soft state: state may change without input (due to replication convergence)
+└── Eventually Consistent: system converges to consistent state over time
+
+Example of eventual consistency:
+  Write to Cassandra (3 replicas):
+  t=0: write to replica 1 ✓
+  t=0: write to replica 2 ✓
+  t=50ms: replica 3 receives async update ✓
+  → During those 50ms, reads from replica 3 see stale data
+  → After 50ms: all replicas consistent
+```
+
+**Điểm phỏng vấn:** CAP là câu hỏi senior kinh điển. Thực tế: partition tolerance là bắt buộc (mạng luôn có khả năng phân vùng), nên choice thực sự là CP vs AP. Biết hệ thống nào là CP và AP trong ecosystem thường dùng.
+
+### Q: How does DynamoDB achieve its scalability? / DynamoDB scale như thế nào? 🔴 Senior
+
+**A:**
+
+```
+DynamoDB Architecture:
+  Managed NoSQL from AWS: key-value + document, single-digit ms latency
+
+Data model:
+├── Table → Items (rows) → Attributes (columns, flexible)
+├── Primary Key: Partition Key (PK) + optional Sort Key (SK)
+└── GSI (Global Secondary Index): alternate query patterns
+
+Partitioning:
+  PK → hashed → partition (managed node)
+  ├── Each partition: max 10GB, 3000 RCU, 1000 WCU
+  ├── SDK automatically routes requests to correct partition
+  └── Scales to unlimited partitions → linear scalability
+
+Hot partition problem:
+  Bad PK: user_id="admin" → all requests to 1 partition → throttled
+  Fix: 
+  ├── Choose high-cardinality PK (UUID, timestamp+random)
+  ├── Write sharding: PK = user_id + random_suffix (1-10)
+  └── DAX (DynamoDB Accelerator): in-memory cache, microsecond reads
+
+Query patterns — design first:
+  ✅ PK = user_id, SK = timestamp → "get user's recent orders" (range query)
+  ✅ GSI on email → "find user by email"
+  ❌ Filter scan → full table scan → O(n), expensive, avoid
+
+Single-table design:
+  One table, multiple entity types with composite keys:
+  PK=USER#123, SK=PROFILE       → user profile
+  PK=USER#123, SK=ORDER#456     → user's order
+  PK=ORDER#456, SK=ITEM#789     → order item
+  └── Enables "get user + their orders" in 1 query
+```
+
+**Pricing model:** On-demand (pay per request) vs Provisioned (set RCU/WCU, cheaper at steady load). Use on-demand for variable/unpredictable traffic.
+
+**Điểm senior:** DynamoDB design là về access patterns trước tiên. Single-table design là advanced pattern giúp minimize costs và queries. Hot partition là failure mode cần biết. DynamoDB Streams + Lambda là pattern cho event-driven với DynamoDB.

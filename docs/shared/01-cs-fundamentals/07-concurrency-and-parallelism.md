@@ -1235,4 +1235,124 @@ function on_button_click():
 
 ---
 
+---
+
+## Interview Q&A / Câu Hỏi Phỏng Vấn
+
+### Q: What is the difference between concurrency and parallelism? / Concurrency và parallelism khác nhau như thế nào? 🟢 Junior
+
+**A:** **Concurrency** is about *structure* — designing a program to handle multiple tasks that can overlap in time. **Parallelism** is about *execution* — actually running multiple tasks simultaneously on multiple CPU cores.
+
+```
+Concurrency (1 core, interleaved):
+Time → [Task A][Task B][Task A][Task B]
+       fast context switching = appears simultaneous
+
+Parallelism (multi-core, truly simultaneous):
+Core 1 → [Task A────────────]
+Core 2 → [Task B────────────]
+
+You can have concurrency without parallelism (Node.js single-threaded event loop)
+You need concurrency to have parallelism (parallel tasks must be designed concurrently)
+```
+
+Vietnamese explanation: Rob Pike: "Concurrency is about dealing with lots of things at once. Parallelism is about doing lots of things at once." Node.js: concurrency (event loop) nhưng không parallelism (single-threaded, trừ Worker Threads). Go: cả hai — concurrent bởi design, parallel khi GOMAXPROCS > 1 (default = CPU cores). Amdahl's Law: speedup limited by sequential portion — 95% parallel code → max 20x speedup dù infinite cores.
+
+---
+
+### Q: What is a race condition and how do you prevent it? / Race condition là gì và cách phòng tránh? 🟡 Mid
+
+**A:** A race condition occurs when program behavior depends on the relative timing/interleaving of thread execution. Multiple threads read/write shared state without synchronization → non-deterministic, incorrect results.
+
+```
+Race condition example:
+counter = 0
+
+Thread A:              Thread B:
+read counter (0)       read counter (0)   ← both read 0!
+increment → 1          increment → 1
+write counter (1)      write counter (1)
+                       → counter = 1, expected 2!
+
+Fix with mutex:
+lock()
+  read → increment → write  (atomic block)
+unlock()
+→ counter = 2 ✓
+```
+
+Vietnamese explanation: Data race (two threads access same memory without sync) ≠ race condition (logic depends on timing even with some sync). Ví dụ: check-then-act (if file exists → create) có race condition dù từng operation atomic. Prevention: mutex/lock cho shared mutable state, immutable data (no mutation = no race), message passing (Go: "don't communicate by sharing memory, share memory by communicating"). Tools: Go `-race` flag; ThreadSanitizer cho C/C++.
+
+---
+
+### Q: Explain deadlock vs livelock vs starvation. / Deadlock, livelock, starvation khác nhau thế nào? 🟡 Mid
+
+**A:** Three types of progress failure: **Deadlock**: threads permanently blocked waiting for each other. **Livelock**: threads keep responding to each other but make no real progress. **Starvation**: thread perpetually denied resources because others keep getting priority.
+
+```
+Deadlock (frozen):
+Thread A: holds Lock1, waiting for Lock2
+Thread B: holds Lock2, waiting for Lock1  → circular wait
+
+Livelock (busy but no progress):
+Thread A: releases Lock1 to let B proceed
+Thread B: releases Lock2 to let A proceed
+Thread A: takes Lock1 again...  → active but stuck
+
+Starvation:
+High-priority threads always run
+Low-priority thread never scheduled → waiting forever
+```
+
+Vietnamese explanation: Deadlock = no thread running. Livelock = all threads running but no progress (như hai người lịch sự nhường nhau mãi). Starvation = unfair scheduling. Phòng deadlock: lock ordering (luôn acquire Lock1 trước Lock2 = breaks circular wait), timeout. Database: deadlock detection + kill lowest-priority transaction (PostgreSQL auto-detects). Livelock: add randomization (random backoff như Ethernet CSMA/CD).
+
+---
+
+### Q: What is the Actor model and how does it differ from shared-memory concurrency? / Actor model so với shared-memory concurrency? 🔴 Senior
+
+**A:** The Actor model treats everything as an **actor** — independent unit with private state, a mailbox, and behavior. Actors communicate only via **message passing** (no shared memory). Each actor processes messages sequentially → no locks needed within an actor.
+
+```
+Shared-memory:                    Actor model:
+┌──────────┐                      ┌────────┐  msg  ┌────────┐
+│ Thread A │──→ shared state      │Actor A │──────→│Actor B │
+│ Thread B │──→ (needs locks)     │(private│       │(private│
+└──────────┘   deadlock risk      │ state) │       │ state) │
+                                  └────────┘       └────────┘
+                                  No shared state → no locks → no deadlock
+```
+
+Vietnamese explanation: Actor model dùng trong Erlang/Elixir (WhatsApp handles 2B users), Akka (Scala/Java), Go goroutine + channel (CSP — similar). Ưu điểm: fault isolation (actor crash không ảnh hưởng actor khác), distributed-ready (message có thể qua network). Supervision tree (Erlang): parent actor monitors children, restarts on crash → "let it crash" philosophy. CSP (Go channels): channel là first-class citizen, không phải actor mailbox.
+
+---
+
+### Q: What are memory ordering and happens-before relationships? / Memory ordering và happens-before là gì? 🔴 Senior
+
+**A:** Modern CPUs and compilers reorder instructions for performance. Memory ordering defines when writes by one thread become visible to others. **Happens-before**: if A happens-before B, then B sees A's effects.
+
+```
+Without sync (CPU can reorder):
+Thread A: x = 1; flag = true   (CPU may write flag before x!)
+Thread B: if (flag) print(x)   → may print 0 even after A wrote 1!
+
+With happens-before (mutex):
+Thread A: x = 1; lock(); flag = true; unlock()
+Thread B: lock(); if (flag) print(x); unlock()
+          ↑ acquire sees ALL writes before release → prints 1 ✓
+```
+
+Vietnamese explanation: Java Memory Model và C++ memory_order define happens-before. Go memory model: synchronization via channel send/receive, mutex lock/unlock establishes happens-before. `sync/atomic`: load/store/CAS với memory ordering guarantee. Double-checked locking pattern cần `volatile` trong Java (memory fence). Go: dùng channel/mutex → compiler handles ordering automatically. Practical: lý do tại sao race condition với global variable không có sync = undefined behavior trong Go.
+
+---
+
+## Interview Q&A Summary / Tổng Kết
+
+| Question | Level | Key Point |
+|----------|-------|-----------|
+| Concurrency vs parallelism | 🟢 | Concurrency=structure; parallelism=simultaneous execution; Amdahl's Law limits |
+| Race condition prevention | 🟡 | Shared mutable state → mutex or message passing; Go `-race` to detect |
+| Deadlock vs livelock vs starvation | 🟡 | Deadlock=frozen; livelock=busy no progress; starvation=unfair |
+| Actor model | 🔴 | Private state + message passing = no locks; Erlang supervision tree |
+| Memory ordering & happens-before | 🔴 | CPU reorders; sync primitives establish visibility guarantees |
+
 > **Next steps**: Xem implementation cụ thể trong `be-track/01-golang/03-concurrency.md` (Go goroutines, channels, select) và `fe-track/01-javascript/06-event-loop-async.md` (JS event loop, Promise, async/await).

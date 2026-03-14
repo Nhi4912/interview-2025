@@ -1286,3 +1286,99 @@ Example:
 - "How do you communicate technical constraints to business?" → Impact-first framing, options, quantification.
 
 ---
+
+---
+
+## Interview Q&A Summary / Tổng hợp câu hỏi phỏng vấn
+
+### Q: How do you estimate software projects? / Ước tính dự án phần mềm như thế nào? 🟡 Mid
+
+**A:**
+
+```
+Common estimation techniques:
+
+1. Story Points + Velocity (Agile)
+   ├── Relative sizing: compare to reference stories
+   ├── Fibonacci scale: 1, 2, 3, 5, 8, 13 (force trade-off decisions)
+   ├── Team velocity: avg story points/sprint (measure over 3+ sprints)
+   └── Capacity: velocity × sprints remaining = estimated total
+
+2. T-shirt sizing (quick, high-level)
+   XS (<1 day), S (1-2 days), M (3-5 days), L (1-2 weeks), XL (2+ weeks)
+   └── Good for roadmap planning, not sprint planning
+
+3. Three-point estimation
+   ├── Optimistic (O): best case
+   ├── Most Likely (M): normal case
+   ├── Pessimistic (P): worst case (unknown unknowns)
+   └── PERT estimate: E = (O + 4M + P) / 6
+
+4. Decomposition
+   ├── Break task into sub-tasks ≤ 1 day each
+   ├── Estimate each leaf node
+   └── Sum + buffer (20-30% for integration/testing)
+
+Cone of Uncertainty:
+  Early project: estimate can be 4× off in either direction
+  After design: 2×
+  After implementation: 1.1×
+  → Estimates improve as uncertainty reduces
+```
+
+**Common estimation mistakes:**
+```
+❌ Optimism bias: underestimate complexity ("it's just a CRUD endpoint")
+❌ Missing tasks: forgotten: tests, docs, code review, deployment, monitoring
+❌ No buffer: no time for debugging, unexpected dependencies
+❌ Ignoring interruptions: meetings, on-call, PRs to review
+
+✅ Add 30-50% buffer for unknown unknowns
+✅ Use historical velocity (past sprints)
+✅ Decompose to ≤1-day tasks before committing
+✅ Re-estimate when scope changes
+```
+
+**Điểm interview:** Estimation là skill quan trọng cho senior engineers. Key principle: đừng commit hard deadline trước khi decompose và estimate. "I need 2 days to spec it out before I can give you an estimate" là câu trả lời đúng đắn hơn là estimate ngay.
+
+### Q: How do you handle scope creep and stakeholder expectations? / Quản lý scope creep như thế nào? 🔴 Senior
+
+**A:**
+
+```
+Scope creep = unauthorized or unplanned feature additions mid-project
+
+Prevention:
+├── Written requirements: document scope explicitly, get sign-off
+├── Change control process: any new request goes through formal assessment
+│   └── "Yes AND it pushes deadline by X days / costs Y"
+├── MVP mindset: define minimal viable scope upfront
+└── Regular demos: show progress → stakeholders see what they're getting
+
+When scope creep happens:
+  New request → assess impact:
+  1. Estimate additional effort
+  2. Present options:
+     a. Add feature, extend deadline by X
+     b. Add feature, cut feature Y to maintain deadline
+     c. Defer to v2
+     d. Decline (doesn't serve user needs)
+  3. Document decision and get stakeholder approval
+
+Stakeholder communication principles:
+├── Proactive updates: bad news early is better than late surprise
+│   "We hit a dependency issue, delivery will be 3 days late"
+├── Data-driven: show burn-down charts, velocity trends
+├── Risk-based: "We're on track but X is a risk — here's our mitigation"
+└── Never overpromise to make stakeholders happy → credibility damage
+```
+
+**Senior engineer expectations:**
+```
+Junior:  executes tasks given to them
+Mid:     flags risks and blockers early
+Senior:  proactively manages expectations, negotiates scope vs time vs quality
+Staff:   shapes the roadmap, prevents scope creep by design
+```
+
+**Điểm senior:** Senior engineers cần skill "kỹ năng chính trị" — biết cách push back diplomatically, offer alternatives, và protect team từ unrealistic expectations. Framework: "Yes, AND here are the trade-offs" thay vì "No" hay overpromise.

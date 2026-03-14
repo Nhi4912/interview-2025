@@ -974,3 +974,192 @@ save_artifact(model, scaler, threshold, metrics={'f1': f1_score(y_val, val_prob 
 - **KPI nên theo dõi:** p95 latency, success rate, quality score, token cost/request.
 - **Sai lầm thường gặp:** chỉ nói công nghệ mà không nói tác động đến business metric.
 - **Câu chốt an toàn:** `I would run an A/B experiment and pick the lowest-cost option that still meets quality SLO.`
+
+---
+
+## Interview Q&A Summary / Tổng hợp câu hỏi phỏng vấn
+
+### Q: What is the difference between supervised, unsupervised, and reinforcement learning? / Phân biệt supervised, unsupervised, reinforcement learning? 🟢 Junior
+
+**A:** Three major ML paradigms:
+
+```
+Supervised Learning
+├── Training data: labeled (X → Y)
+├── Goal: learn mapping function f(X) ≈ Y
+├── Examples: classification (spam), regression (price prediction)
+└── Algorithms: linear regression, SVM, neural nets, decision trees
+
+Unsupervised Learning
+├── Training data: unlabeled (X only)
+├── Goal: discover hidden structure/patterns
+├── Examples: clustering customers, dimensionality reduction, anomaly detection
+└── Algorithms: K-Means, DBSCAN, PCA, autoencoders
+
+Reinforcement Learning
+├── Training data: environment feedback (reward/penalty)
+├── Goal: learn policy to maximize cumulative reward
+├── Examples: game playing (AlphaGo), robotics, recommendation systems
+└── Algorithms: Q-learning, PPO, A3C
+```
+
+**Khi nào dùng loại nào:**
+- **Supervised**: bạn có labeled data và rõ ràng output mong muốn (most production ML)
+- **Unsupervised**: không có labels, muốn khám phá cấu trúc dữ liệu (customer segmentation)
+- **Reinforcement**: tối ưu hóa sequential decisions với delayed reward (game AI, trading bots)
+
+### Q: What is overfitting and how do you prevent it? / Overfitting là gì và cách phòng tránh? 🟡 Mid
+
+**A:** Overfitting = model learns training data too well, including noise, and fails to generalize.
+
+```
+        Training Loss     Validation Loss
+Underfit:  ████████████     ████████████   (both high — model too simple)
+Good fit:  ████             ████           (both low — generalizes well)
+Overfit:   ██               ████████████   (train low, val high — memorized)
+```
+
+**Prevention techniques:**
+```
+1. Regularization
+   - L1 (Lasso): adds |weights| penalty → sparse weights (feature selection)
+   - L2 (Ridge): adds weights² penalty → small weights (all features kept)
+   - Dropout (neural nets): randomly zero out neurons during training
+
+2. Cross-validation
+   - K-Fold: split data into K folds, train on K-1, validate on 1, rotate
+   - Prevents lucky/unlucky train-val splits
+
+3. More data
+   - Data augmentation: flip, rotate, crop images; back-translation for text
+   - Synthetic data generation
+
+4. Early stopping
+   - Monitor validation loss, stop when it starts increasing
+
+5. Simpler model
+   - Reduce model capacity (fewer layers, smaller tree depth)
+   - Feature selection / dimensionality reduction
+```
+
+**Bias-Variance Tradeoff:**
+- High bias = underfitting (model too simple, wrong assumptions)
+- High variance = overfitting (model too complex, too sensitive to training data)
+- Goal: find sweet spot where bias + variance is minimized
+
+**Cách giải thích trong phỏng vấn:** Overfitting là khi model "học thuộc lòng" training set thay vì học quy luật tổng quát. Giải pháp chính là regularization, more data, và cross-validation. Trade-off cơ bản là bias vs variance.
+
+### Q: Explain gradient descent and its variants / Giải thích gradient descent và các biến thể? 🟡 Mid
+
+**A:** Gradient descent = optimization algorithm that iteratively updates model parameters to minimize loss.
+
+```python
+# Conceptual gradient descent
+θ = θ - α * ∇L(θ)
+# θ = parameters, α = learning rate, ∇L = gradient of loss
+
+# Three variants:
+# 1. Batch GD: use ALL training examples per update
+#    - Stable, but slow for large datasets
+# 2. Stochastic GD (SGD): use 1 example per update  
+#    - Fast, noisy, can escape local minima
+# 3. Mini-batch GD: use small batch (32-256) per update
+#    - Best of both worlds — most commonly used in practice
+```
+
+**Modern optimizers:**
+```
+SGD with Momentum
+├── Accumulate velocity in gradient direction
+├── Dampens oscillations, accelerates convergence
+└── θ = θ - v; v = β*v + α*∇L
+
+Adam (Adaptive Moment Estimation)
+├── Combines momentum + adaptive learning rates
+├── Maintains per-parameter moving avg of gradients and squared gradients
+├── Default choice for most deep learning
+└── m = β1*m + (1-β1)*∇L; v = β2*v + (1-β2)*∇L²; θ = θ - α*m/√v
+```
+
+**Learning rate intuition:**
+- Too high → diverge (loss explodes)
+- Too low → slow convergence, stuck in local minima
+- Learning rate schedules: warmup → decay (cosine, step, exponential)
+
+**Điểm quan trọng cho phỏng vấn:** Mini-batch GD + Adam optimizer là default trong deep learning. Hiểu learning rate scheduling (warmup + decay) rất quan trọng khi train LLMs.
+
+### Q: What are precision, recall, and F1? When to prioritize which? / Khi nào ưu tiên precision vs recall? 🟡 Mid
+
+**A:**
+
+```
+Confusion Matrix:
+                  Predicted Positive    Predicted Negative
+Actual Positive:  TP (True Positive)    FN (False Negative)
+Actual Negative:  FP (False Positive)   TN (True Negative)
+
+Precision = TP / (TP + FP)
+├── "Of all predicted positives, how many are actually positive?"
+└── Minimize: cost of false alarm (spam filter incorrectly flagging legit email)
+
+Recall = TP / (TP + FN)
+├── "Of all actual positives, how many did we catch?"
+└── Minimize: cost of missing positives (cancer detection missing real cases)
+
+F1 = 2 * (Precision * Recall) / (Precision + Recall)
+└── Harmonic mean — balanced when both matter equally
+```
+
+**Decision framework:**
+```
+High Recall priority (low FN):
+├── Medical diagnosis (missing cancer = fatal)
+├── Fraud detection (missing fraud = financial loss)
+└── Security threat detection
+
+High Precision priority (low FP):
+├── Spam filtering (blocking legit email = annoying)
+├── Legal document retrieval (irrelevant docs waste time)
+└── Product recommendation (irrelevant recs hurt UX)
+
+Both matter → F1 score
+Imbalanced classes → use AUC-ROC (threshold-independent)
+```
+
+**Cách nhớ:** Precision = khi bạn nói "yes", bạn đúng bao nhiêu %. Recall = trong tất cả cái thực sự "yes", bạn tìm được bao nhiêu. Medical domain thường ưu tiên recall (không bỏ sót bệnh nhân thật sự bệnh).
+
+### Q: What is the difference between bagging and boosting? / Sự khác biệt giữa bagging và boosting? 🔴 Senior
+
+**A:** Both are ensemble methods combining multiple weak learners, but different strategies:
+
+```
+Bagging (Bootstrap AGGregating)
+├── Train models in PARALLEL on random subsets of data
+├── Each model independent, votes equally (majority/average)
+├── Reduces VARIANCE (overfitting)
+├── Example: Random Forest
+│   └── N decision trees on bootstrap samples + random feature subsets
+└── Best for: high-variance, low-bias base models (deep trees)
+
+Boosting
+├── Train models SEQUENTIALLY, each correcting previous errors
+├── Later models focus more on misclassified examples (higher weights)
+├── Reduces BIAS (underfitting)
+├── Examples: AdaBoost, Gradient Boosting, XGBoost, LightGBM
+│   └── XGBoost: gradient descent in function space, regularized, fast
+└── Best for: high-bias, low-variance base models (shallow trees)
+
+Comparison:
+         Bagging          Boosting
+Speed:   Parallelizable   Sequential (slower)
+Overfit: Resistant        Can overfit (tune iterations, learning rate)
+Noise:   More robust      Sensitive to outliers
+SOTA:    Random Forest    XGBoost/LightGBM (Kaggle winner baseline)
+```
+
+**XGBoost vs LightGBM:**
+- XGBoost: level-wise tree growth, more regularization options
+- LightGBM: leaf-wise growth (faster), better on large datasets
+- CatBoost: handles categorical features natively
+
+**Điểm senior cần biết:** Boosting thường outperform bagging trên structured/tabular data. XGBoost là baseline default cho nhiều competition. Ensemble methods quan trọng hơn deep learning cho tabular data ở production.

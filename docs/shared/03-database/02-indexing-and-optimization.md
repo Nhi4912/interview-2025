@@ -241,3 +241,64 @@ Lặp lại theo chu kỳ release.
 - `docs/be-track/01-golang/05-testing-profiling.md`
 - `docs/fe-track/modules/10-cs-fundamentals.md`
 
+
+---
+
+## Interview Q&A / Câu Hỏi Phỏng Vấn
+
+### Q: How do you choose which columns to index? / Cách chọn columns nào cần đánh index? 🟡 Mid
+
+**A:** Index columns used in: **WHERE clauses** (filter conditions), **JOIN conditions** (foreign keys), **ORDER BY** (avoid sort), **GROUP BY**. Avoid indexing: low-cardinality columns (boolean, status with few values), write-heavy tables (every write updates indexes), columns rarely queried.
+
+```
+Index candidates:
+user_id, email, created_at, status (high-cardinality)
+
+Composite index order matters:
+INDEX(status, user_id, created_at)
+
+Query: WHERE status = 'active' AND user_id = 123 → uses index
+Query: WHERE user_id = 123                       → cannot use index fully
+       (first column must match for index use)
+
+ESR Rule (Equality, Sort, Range):
+= first, then ORDER BY, then range conditions
+INDEX(status, created_at) for:
+WHERE status = 'active' ORDER BY created_at → optimal
+```
+
+Vietnamese explanation: Composite index: left-prefix rule (mỗi query phải match từ leftmost column). Too many indexes: write overhead (each INSERT/UPDATE/DELETE updates all indexes). Monitor: `pg_stat_user_indexes` để tìm unused indexes. Index bloat: dead tuples từ UPDATE → vacuuming important. Partial index: `INDEX ON orders(user_id) WHERE status = 'pending'` — nhỏ hơn, nhanh hơn for specific queries.
+
+---
+
+### Q: What is a covering index and how does it help? / Covering index là gì và tại sao hữu ích? 🟡 Mid
+
+**A:** A covering index includes all columns needed by a query — the DB can satisfy the query entirely from the index without fetching the actual table rows (heap). This enables "Index Only Scan" — much faster.
+
+```sql
+-- Query needing user_id, email, created_at
+SELECT email, created_at FROM users WHERE user_id = 123;
+
+-- Without covering index:
+-- 1. Index scan: find rows with user_id=123 (get row pointers)
+-- 2. Heap fetch: go to table to get email, created_at
+-- = 2 I/O operations
+
+-- With covering index:
+CREATE INDEX ON users(user_id) INCLUDE (email, created_at);
+-- OR (PostgreSQL syntax):
+CREATE INDEX ON users(user_id, email, created_at);
+-- Query fully served from index — no heap fetch!
+-- EXPLAIN shows: "Index Only Scan"
+```
+
+Vietnamese explanation: INCLUDE clause (PostgreSQL 11+): columns added to leaf nodes only (not search key) → smaller index. Use for: frequently run queries with specific column sets, reporting queries, API response queries. Trade-off: larger index size. Check: `pg_stat_user_tables.idx_scan` và `heap_blks_read` ratio để xác định covering index value.
+
+---
+
+## Interview Q&A Summary / Tổng Kết
+
+| Question | Level | Key Point |
+|----------|-------|-----------|
+| Which columns to index | 🟡 | WHERE/JOIN/ORDER BY columns; ESR rule for composite; avoid low-cardinality |
+| Covering index | 🟡 | All needed columns in index → Index Only Scan; no heap fetch |

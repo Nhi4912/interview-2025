@@ -1801,3 +1801,86 @@ Need a test double?
 | Format | Test functions | Given-When-Then | Acceptance scenarios |
 | Scope | Unit | Feature | User story |
 | Drives | Code design | Shared understanding | Requirements clarity |
+
+---
+
+## Interview Q&A / Câu Hỏi Phỏng Vấn
+
+### Q: What is the testing pyramid and why does it matter? / Testing pyramid là gì và tại sao quan trọng? 🟢 Junior
+
+**A:** The testing pyramid (Mike Cohn): many **unit tests** (fast, cheap), fewer **integration tests**, few **E2E tests** (slow, expensive, brittle).
+
+```
+        /\
+       /E2E\         ← few (slow, brittle, expensive, high confidence)
+      /──────\
+     / Integration \ ← moderate (test service interactions)
+    /──────────────\
+   /   Unit Tests   \ ← many (fast, isolated, cheap)
+  /──────────────────\
+
+Testing trophy (Kent C. Dodds for frontend): emphasize integration
+tests — test components with DOM as user would interact
+```
+
+Vietnamese explanation: "Ice cream cone" anti-pattern = inverted pyramid (nhiều E2E ít unit → slow, flaky CI). Unit tests: test pure logic, business rules, edge cases. Integration: API endpoints, DB queries. E2E: critical user journeys only (checkout, login). React: `@testing-library` focus trên integration (component + DOM) không là isolated component logic.
+
+---
+
+### Q: What is the difference between mocking, stubbing, and spying? / Mock, stub, spy khác nhau? 🟡 Mid
+
+**A:** Test doubles: **Stub**: returns pre-configured responses, no verification. **Mock**: pre-programmed expectations — test fails if calls don't match. **Spy**: wraps real implementation, records calls for later assertion.
+
+```javascript
+// Stub — just returns data
+const db = { findUser: jest.fn().mockResolvedValue({ id: 1, name: 'Alice' }) };
+
+// Mock — verify it was called correctly
+const emailService = { send: jest.fn() };
+await sendWelcomeEmail(user, emailService);
+expect(emailService.send).toHaveBeenCalledWith({
+  to: 'alice@example.com', subject: 'Welcome!'
+});
+
+// Spy — wrap real implementation
+const consoleSpy = jest.spyOn(console, 'error');
+doSomethingThatLogs();
+expect(consoleSpy).toHaveBeenCalledWith('Expected error');
+consoleSpy.mockRestore();
+```
+
+Vietnamese explanation: In practice people use "mock" for all test doubles — don't be overly strict in interviews. Key principle: **mock only what you own** — not third-party libraries (mock too deep into implementation = brittle tests). Mock at boundaries (HTTP layer, DB layer). Test behavior (what it does) not implementation (how it does it).
+
+---
+
+### Q: What is TDD and what are its benefits? / TDD là gì và benefits? 🟡 Mid
+
+**A:** Test-Driven Development: write failing test → write minimal code to pass → refactor. Cycle: **Red** (failing) → **Green** (pass) → **Refactor**.
+
+```
+TDD cycle:
+1. Write failing test    ← define expected behavior
+2. Write MINIMAL code    ← just enough to pass
+3. Refactor for quality  ← still green
+4. Repeat
+
+Benefits:
+- Forces design thinking BEFORE coding (better API design)
+- Tests guaranteed to run (not written as afterthought)
+- Regression safety — changes caught immediately
+- Documentation by example
+
+Signal: if function hard to test → bad design (tight coupling, too many responsibilities)
+```
+
+Vietnamese explanation: TDD không phải about 100% coverage — about design feedback. BDD = TDD với business-readable language (Given/When/Then). Practical: nhiều teams dùng TDD cho critical business logic, skip cho simple CRUD. Kent Beck: "dùng TDD khi bạn chưa chắc chắn về design, skip khi obvious."
+
+---
+
+## Interview Q&A Summary / Tổng Kết
+
+| Question | Level | Key Point |
+|----------|-------|-----------|
+| Testing pyramid | 🟢 | Many unit, fewer integration, few E2E; avoid ice cream cone |
+| Mock vs stub vs spy | 🟡 | Stub=fake data; mock=verify calls; spy=wrap real; mock at boundaries |
+| TDD | 🟡 | Red→Green→Refactor; forces design; hard-to-test = bad design signal |

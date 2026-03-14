@@ -976,3 +976,121 @@ export async function handleQuestion(q: string, retriever: Retriever, generator:
 - **KPI nên theo dõi:** p95 latency, success rate, quality score, token cost/request.
 - **Sai lầm thường gặp:** chỉ nói công nghệ mà không nói tác động đến business metric.
 - **Câu chốt an toàn:** `I would run an A/B experiment and pick the lowest-cost option that still meets quality SLO.`
+
+---
+
+## Interview Q&A Summary / Tổng hợp câu hỏi phỏng vấn
+
+### Q: Design a RAG-based customer support chatbot / Thiết kế hệ thống chatbot hỗ trợ khách hàng dùng RAG 🔴 Senior
+
+**A:**
+
+```
+System Design: Customer Support Chatbot
+
+Requirements:
+  Functional: answer questions from knowledge base, escalate complex cases
+  Non-functional: <2s latency, 99.9% uptime, 10k concurrent users
+
+High-Level Architecture:
+┌─────────┐    ┌──────────────┐    ┌───────────────┐    ┌──────────┐
+│  User   │───►│  API Gateway │───►│  Chat Service │───►│   LLM    │
+│(web/app)│    │  (rate limit,│    │  (stateless)  │    │  (GPT-4/ │
+└─────────┘    │   auth)      │    └───────┬───────┘    │   Claude)│
+               └──────────────┘            │            └──────────┘
+                                           │
+                              ┌────────────┼────────────┐
+                              ▼            ▼            ▼
+                        ┌──────────┐ ┌─────────┐ ┌──────────┐
+                        │ Vector   │ │ Convo   │ │ Ticket   │
+                        │   DB     │ │ History │ │  System  │
+                        │(Pinecone)│ │(Redis)  │ │(Zendesk) │
+                        └──────────┘ └─────────┘ └──────────┘
+
+Request flow:
+1. User sends message
+2. API Gateway: auth + rate limit (100 req/min/user)
+3. Chat Service: load conversation history from Redis (last 10 turns)
+4. Embed user query → search Vector DB → retrieve top-5 chunks
+5. Assemble prompt: system + history + context + query
+6. Call LLM → stream response back to user
+7. Post-process: extract any required actions (escalate, create ticket)
+8. Store turn in Redis + log to analytics
+
+Indexing pipeline (offline):
+Documents → [Parser] → [Chunker] → [Embedder] → [Vector DB]
+                                                 + [BM25 index]
+
+Hybrid retrieval: dense + sparse → reranker → top-5 final chunks
+
+Escalation logic:
+├── Confidence threshold: if LLM uncertainty detected → escalate
+├── Sentiment: negative sentiment 3+ turns → human handoff
+├── Explicit keywords: "speak to human", "supervisor"
+└── Fallback: after 2 failed attempts → create ticket
+```
+
+**Scale considerations:**
+```
+Bottlenecks & solutions:
+├── LLM latency: streaming + async, response caching for common Q&As
+├── Vector search: approximate NN (HNSW in Pinecone/Weaviate), partition by tenant
+├── Context window: limit history to last 10 turns, summarize older history
+└── Cost: cache embeddings, use smaller model for simple queries (routing)
+
+Caching strategy:
+├── Semantic cache: if query embedding similar to cached query → return cached answer
+├── Embedding cache: cache embedding computation for repeated queries
+└── Tools: GPTCache, LangChain cache
+```
+
+**Điểm senior interview:** Design bài này cần cover: latency (streaming), scale (async, caching), reliability (fallback, HITL), cost (model routing, semantic cache), và observability (every turn logged). Biết trade-off giữa Pinecone (managed, expensive) vs Weaviate (self-hosted, cheaper).
+
+### Q: How do you design an AI system that's cost-efficient at scale? / Tối ưu cost cho AI system at scale? 🔴 Senior
+
+**A:**
+
+```
+Cost drivers in LLM systems:
+├── Token count: input + output tokens × price/token
+├── Model choice: GPT-4 ≈ 30× more expensive than GPT-3.5
+├── API calls per request: agents with many tool calls → high cost
+└── Embedding calls: N documents × embedding cost
+
+Optimization strategies:
+
+1. Model routing (cascade)
+   Simple query → cheap model (GPT-3.5/Haiku) → if uncertain → expensive model
+   ├── Classify query complexity first (small classifier)
+   ├── Route 80% simple queries to cheap model → ~5× cost reduction
+   └── Tools: RouteLLM, LiteLLM router
+
+2. Prompt optimization
+   ├── Reduce input tokens: remove unnecessary instructions, compress context
+   ├── Reduce output tokens: "Answer in 1 sentence" vs open-ended
+   └── Few-shot → chain-of-thought only when needed (CoT uses 2-3× tokens)
+
+3. Caching
+   ├── Exact cache: hash(prompt) → cached response (Redis, 24h TTL)
+   ├── Semantic cache: similar queries → reuse response (GPTCache)
+   └── Prompt prefix caching: static system prompt → Claude/GPT cache it (50% discount)
+
+4. Batching
+   ├── Batch embedding requests (reduce API calls)
+   ├── Async processing: queue non-realtime requests
+   └── OpenAI Batch API: 50% discount for async processing
+
+5. Fine-tuning smaller models
+   ├── Fine-tune GPT-3.5 on GPT-4 outputs → similar quality, 10× cheaper
+   ├── Distillation: small model learns from large model
+   └── For specific tasks: fine-tuned 7B >> general 70B
+
+Cost monitoring:
+├── Track tokens/request by user, feature, model
+├── Alert on cost anomalies (runaway agents)
+└── Set per-user/per-tenant budget limits
+```
+
+**Rule of thumb:** Start with expensive model to establish quality bar → measure → optimize with cheaper model → iterate. Never optimize cost before having correct output.
+
+**Điểm interview:** Biết model routing là key insight — không phải mọi query đều cần GPT-4. Semantic caching và prompt caching có thể giảm 30-60% cost. Fine-tuning cheaper model là long-term investment khi volume đủ lớn.

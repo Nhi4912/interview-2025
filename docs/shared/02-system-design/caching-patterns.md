@@ -270,3 +270,81 @@ Anti-pattern khác: dùng cache như DB chính mà không durability plan.
 - `docs/be-track/04-be-system-design/01-design-framework.md`
 - `docs/fe-track/modules/07-performance.md`
 
+
+---
+
+## Interview Q&A / Câu Hỏi Phỏng Vấn
+
+### Q: What is cache-aside pattern and when should you use it? / Cache-aside pattern là gì? 🟢 Junior
+
+**A:** Cache-aside (lazy loading): app manages cache directly. Check cache → miss → query DB → populate cache → return. On write: update DB then DELETE cache key (not update).
+
+```
+Read flow:
+1. App checks cache → MISS
+2. App queries DB
+3. App writes to cache (with TTL)
+4. App returns result
+
+Write flow:
+1. App updates DB
+2. App DELETEs cache key ← delete not update!
+3. Next read miss → populate fresh data
+```
+
+Vietnamese explanation: Cache-aside là pattern phổ biến nhất vì đơn giản và linh hoạt. "Tại sao DELETE thay vì UPDATE?" → UPDATE có race condition (2 threads đồng thời write → stale value wins). DELETE an toàn hơn. Use when: read-heavy, acceptable cache miss latency. Avoid: multiple services write same data (coordination hard).
+
+---
+
+### Q: What is cache stampede and how do you prevent it? / Cache stampede là gì và cách phòng? 🟡 Mid
+
+**A:** Cache stampede (thundering herd): when a popular cache key expires, many concurrent requests all miss and rush to query DB simultaneously — overwhelming it.
+
+```
+Stampede:
+Time T: hot_key expires (TTL=60s)
+→ 5000 concurrent requests all MISS
+→ 5000 simultaneous DB queries → DB overload!
+
+Prevention:
+1. Singleflight: first request queries DB, others wait for same result
+   (golang.org/x/sync/singleflight)
+
+2. TTL jitter: TTL = base + random(0, base/10)
+   → spread expiry across time
+
+3. Stale-while-revalidate: serve stale immediately,
+   refresh in background → no wait
+```
+
+Vietnamese explanation: Thundering herd phổ biến sau deployment (cache cleared) hoặc hot key expire. Thực tế: singleflight + TTL jitter là combination phổ biến nhất. Preemptive refresh: background worker refresh hot keys trước khi expire. Interview: luôn nhắc đến singleflight + jitter khi nói về stampede.
+
+---
+
+### Q: What is the difference between write-through and write-behind? / Write-through vs write-behind? 🟡 Mid
+
+**A:** **Write-through**: update cache AND DB synchronously on every write. Consistent but higher latency. **Write-behind** (write-back): update cache immediately, flush to DB asynchronously. Low latency but data loss risk if cache crashes.
+
+```
+Write-through:
+App → Cache + DB (sync)  ← consistent, always both updated
+Latency: DB write RTT
+
+Write-behind:
+App → Cache (sync, fast return)
+         ↓ async batch
+        DB (eventually)
+Risk: crash between cache write and DB flush = data loss
+```
+
+Vietnamese explanation: Write-through phổ biến hơn vì an toàn (no data loss). Write-behind: high-throughput counters, analytics where loss tolerable. Hybrid: write-through cho critical data (orders, payments), write-behind cho non-critical (view counts). Redis không có native write-behind — cần async worker implementation.
+
+---
+
+## Interview Q&A Summary / Tổng Kết
+
+| Question | Level | Key Point |
+|----------|-------|-----------|
+| Cache-aside pattern | 🟢 | App manages; check→miss→DB→cache; DELETE on write (not update) |
+| Cache stampede prevention | 🟡 | Singleflight + TTL jitter; stale-while-revalidate |
+| Write-through vs write-behind | 🟡 | Through=consistent+slower; behind=fast+data loss risk |

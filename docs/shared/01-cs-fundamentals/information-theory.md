@@ -702,3 +702,55 @@ A: Number of positions where two sequences differ. Important for error detection
 ---
 
 [← Back to Software Engineering](./08-computation-theory.md) | [Next: Discrete Mathematics →](./08-computation-theory.md)
+
+---
+
+## Interview Q&A Summary / Tổng hợp câu hỏi phỏng vấn
+
+### Q: What is entropy in information theory? / Entropy trong information theory là gì? 🔴 Senior
+
+**A:**
+
+```
+Shannon Entropy = measure of uncertainty/information in a random variable
+
+H(X) = -Σ p(x) × log₂(p(x))   [bits]
+
+Examples:
+  Fair coin (50/50):   H = -(0.5×log₂0.5 + 0.5×log₂0.5) = 1 bit
+  Biased coin (99/1%): H = -(0.99×log₂0.99 + 0.01×log₂0.01) ≈ 0.08 bits
+  4-sided fair die:    H = log₂(4) = 2 bits
+  
+Intuition:
+├── More uncertainty → higher entropy → more bits needed to encode
+├── Uniform distribution → maximum entropy
+└── Deterministic (one outcome) → zero entropy
+
+Information content of a single event:
+  I(x) = -log₂(p(x)) bits
+  "Rain in desert" (1% chance): I = -log₂(0.01) = 6.64 bits (surprising!)
+  "Sun in desert" (99% chance): I = -log₂(0.99) = 0.014 bits (not surprising)
+```
+
+**Applications in CS:**
+```
+1. Data compression
+   ├── Entropy = theoretical minimum bits per symbol
+   ├── Huffman coding: assign shorter codes to frequent symbols
+   └── Approaches entropy limit: ZIP, gzip, brotli
+
+2. Machine learning
+   ├── Cross-entropy loss: measure distance between predicted and true distribution
+   │   Loss = -Σ y × log(ŷ)   ← standard classification loss
+   ├── Information gain: used in decision tree splitting
+   └── KL divergence: D_KL(P||Q) = Σ p × log(p/q) ← VAE, RL policy
+
+3. Cryptography
+   ├── Entropy of random number generator crucial for key generation
+   └── Low entropy → predictable keys → broken security
+
+4. Network coding
+   └── Channel capacity theorem: max bits/second = bandwidth × log₂(1 + SNR)
+```
+
+**Điểm interview:** Entropy trong ML context quan trọng hơn: cross-entropy loss là default loss function cho classification. Information gain là basis của decision trees/random forests. Biết rằng entropy measures uncertainty — high entropy distribution = LLM output với temperature cao (more random).
