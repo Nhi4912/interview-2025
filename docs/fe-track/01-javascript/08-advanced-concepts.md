@@ -9,6 +9,66 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+Senior dev review code của bạn và hỏi:
+- "Tại sao bạn dùng `WeakMap` thay vì `Map` ở đây?" (memory leak prevention)
+- "Generator function này solve gì mà async/await không làm được?"
+- "Tại sao `Proxy` tốt hơn `Object.defineProperty` cho reactive systems?"
+
+Đây là những câu hỏi phân biệt mid và senior developer. Advanced JavaScript concepts không chỉ để phỏng vấn — chúng giải quyết những vấn đề real mà simple solutions không handle được.
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy / Liên Tưởng — Toolbox chuyên nghiệp:**
+Junior developer có hammer và screwdriver (basic tools). Senior developer còn có torque wrench, digital caliper, và oscilloscope — những công cụ không dùng hàng ngày, nhưng khi cần thì không có không được.
+
+Advanced JavaScript là những công cụ đặc biệt:
+
+| Concept | Dùng khi nào | Ví dụ thực tế |
+|---------|-------------|---------------|
+| **WeakMap/WeakSet** | Cần store metadata mà không gây memory leak | React's internal fiber tree |
+| **Generator/Iterator** | Lazy evaluation, infinite sequences, coroutines | `async/await` là syntax sugar cho Generator |
+| **Proxy/Reflect** | Intercept object operations, reactive systems | Vue 3 reactivity, Immer.js |
+| **Symbol** | Unique property keys, well-known protocols | Custom iteration (`Symbol.iterator`) |
+| **SharedArrayBuffer** | Share memory giữa Web Workers | High-performance computation |
+
+**Tại sao cần biết advanced concepts:**
+- Framework internals (Vue, MobX, Immer) dùng Proxy
+- Memory-efficient code dùng WeakMap/WeakSet
+- Custom iterables với `Symbol.iterator`
+- Generator patterns trong Redux-Saga
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+    [ES6 Features] + [Closures] + [Prototype Chain]
+                           │
+                           ▼
+              [ADVANCED JS CONCEPTS]
+                           │
+         ┌─────────────────┼─────────────────┐
+         ▼                 ▼                 ▼
+  [Memory-aware]    [Metaprogramming]  [Iterators/Gen]
+  WeakMap/WeakSet   Proxy/Reflect      Generator fn
+  Memory model      Symbol             Symbol.iterator
+  GC interaction    defineProperty     Custom iterables
+         │
+         ▼
+  [Runtime Advanced]
+  SharedArrayBuffer | Atomics | Worker threads
+         │
+         ▼
+  [Framework Internals]
+  Vue 3 (Proxy) | Immer (Proxy) | Redux-Saga (Generator)
+```
+
+---
+
 ## Overview / Tổng Quan
 
 **English:** Advanced JavaScript concepts are frequently tested in senior-level interviews at Big Tech companies. This chapter covers currying, composition, memoization, and other advanced patterns.

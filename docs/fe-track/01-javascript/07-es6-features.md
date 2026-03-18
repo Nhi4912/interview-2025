@@ -9,6 +9,66 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+Bạn join một team mới và thấy codebase full `var`, callback hell 5 tầng lồng nhau, và string concatenation bằng `+`. Code chạy được nhưng:
+- Đọc code mất 2x thời gian bình thường
+- Bug từ `var` hoisting xuất hiện ở những chỗ không ngờ tới
+- Promise refactor cũ không ai hiểu tại sao viết như vậy
+
+ES6 (2015) là bước ngoặt lớn nhất trong lịch sử JavaScript — từ "ngôn ngữ đồ chơi" thành ngôn ngữ production nghiêm túc.
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy / Liên Tưởng — Nâng cấp công cụ:**
+Trước ES6, viết JavaScript như dùng búa cũ để đóng đinh — được, nhưng tốn sức. ES6 cho bạn súng bắn đinh: cùng kết quả, gấp 3 lần nhanh hơn, ít lỗi hơn.
+
+| ES5 (cũ) | ES6+ (mới) | Tại sao tốt hơn |
+|----------|------------|-----------------|
+| `var x` | `let`/`const` | Block scope, không bị hoisting surprise |
+| `function(a,b){}` | `(a,b) => {}` | Ngắn gọn, kế thừa `this` từ context ngoài |
+| `'Hello ' + name` | `` `Hello ${name}` `` | Đọc dễ, multi-line, expression |
+| `{x: x, y: y}` | `{x, y}` | Destructuring, shorthand |
+| `.then().then()` | `async/await` | Đọc như synchronous code |
+| `arguments` object | Rest `...args` | Linh hoạt, rõ ràng hơn |
+
+**Tại sao ES6 là milestone quan trọng nhất:**
+- React, Vue, Angular đều yêu cầu ES6+ syntax
+- Node.js modules, TypeScript, bundlers đều build trên ES6
+- Phỏng vấn LUÔN có câu hỏi về arrow function, destructuring, và `const`/`let`
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+      [ES5 JavaScript]
+      (var, callbacks, prototype)
+              │
+              ▼
+      [ES6 FEATURES]  ← bạn đang ở đây
+              │
+    ┌─────────┼─────────┐
+    ▼         ▼         ▼
+[Variables] [Functions] [Data]
+let/const    Arrow fn   Destructuring
+Block scope  Default    Spread/Rest
+TDZ          params     Template lit
+             Classes    Symbol/Map/Set
+    │
+    ▼
+[Async ES6+]
+Promise → ES8 async/await → ES2022 await top-level
+    │
+    ▼
+[Modules]
+import/export → Tree shaking → Bundlers (Webpack/Vite)
+```
+
+---
+
 ## Overview / Tổng Quan
 
 **English:** ES6 (ECMAScript 2015) and later versions introduced powerful features that modernized JavaScript. Understanding these features is essential for technical interviews and modern development.
@@ -579,3 +639,23 @@ console.log(obj.b.c); // 3 (unchanged / không thay đổi)
 ---
 
 [← Previous: Event Loop & Async](./06-event-loop-async.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next: Advanced Concepts →](./08-advanced-concepts.md)
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Tôi có thể giải thích sự khác biệt giữa `let`, `const`, và `var` về scope và hoisting không?
+- [ ] Tôi có thể giải thích tại sao arrow function không có `this` riêng không?
+- [ ] Tôi có thể dùng destructuring để lấy giá trị từ nested object và array không?
+- [ ] Tôi có thể dùng spread operator để merge 2 arrays và 2 objects không?
+- [ ] Tôi có thể refactor một callback hell thành Promise chain, rồi thành async/await không?
+
+💬 **Feynman Prompt:** Giải thích `const` cho junior developer đang hỏi "tại sao dùng `const` nhưng vẫn thay đổi được array/object bên trong?" `const` thực sự bảo vệ cái gì?
+
+---
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on:** [Variables & Data Types](./01-variables-data-types.md) | [Scope & Hoisting](./02-scope-hoisting.md) — ES6 fixes và extends các concepts này
+- ➡️ **Enables:** [Async Patterns](./06-event-loop-async.md) | [Functional Programming](./12-functional-programming.md) | TypeScript (builds on ES6 classes)
+- 🔗 **Used everywhere:** React hooks syntax | Node.js imports | Modern API design

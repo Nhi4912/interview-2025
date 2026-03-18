@@ -9,6 +9,66 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+App của bạn có 50 components. User đăng nhập ở Header → cần cập nhật: sidebar menu, user avatar, notification bell, dashboard greeting, và permission checks ở 20 components khác nhau.
+
+Cách naive: lift state lên `App` component rồi prop-drill xuống 5 tầng. Code trở thành "prop drilling hell" — mỗi component trung gian phải nhận và pass xuống props mà nó không dùng.
+
+**State management giải quyết:** centralize shared state, let any component subscribe và update mà không cần prop drilling.
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy / Liên Tưởng — Database vs Local Variables:**
+- **Local state** (`useState`) = biến local trong hàm — chỉ component đó dùng
+- **Shared state** (Context/Redux) = database — nhiều components đọc/ghi
+- **Server state** (React Query) = cache layer của database — sync với API
+
+Chọn đúng tool:
+
+| Use case | Tool | Tại sao |
+|----------|------|---------|
+| 1 component's UI state | `useState` | Đơn giản, không cần global |
+| 2-3 components cùng cần | Lift state + props | Không phức tạp hóa |
+| Theme, auth user, locale | React Context | Read-mostly, ít update |
+| Complex app-wide state | Redux/Zustand | Predictable, devtools |
+| Server data (fetch/cache) | React Query/SWR | Caching, refetching, sync |
+| Form state | React Hook Form | Performance, validation |
+
+**Anti-pattern phổ biến:** Dùng Redux cho mọi thứ khi chỉ cần `useState`. Redux adds boilerplate — dùng khi benefit > cost.
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+      [React State Basics]
+      (useState, useReducer)
+              │
+              ▼
+     [STATE MANAGEMENT]  ← bạn đang ở đây
+              │
+    ┌─────────┼─────────┐
+    ▼         ▼         ▼
+[Local]   [Shared]  [Server]
+useState  Context   React Query
+useReducer Redux    SWR
+          Zustand   tRPC
+          Jotai
+    │
+    ▼
+[Choosing the right tool]
+Scope → frequency of update → team size → devtools need
+    │
+    ▼
+[Patterns]
+Flux | CQRS in frontend | Optimistic updates | Normalization
+```
+
+---
+
 ## Overview / Tổng Quan
 
 **English:** State management is crucial for building scalable React applications. This chapter covers Context API, Redux, Zustand, and modern state management patterns.
@@ -931,5 +991,23 @@ const TodoItem = React.memo(({ todo }) => {
 10. Type state với TypeScript
 
 ---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Tôi có thể giải thích khi nào dùng Context vs Redux không?
+- [ ] Tôi có thể implement Zustand store với actions và selectors không?
+- [ ] Tôi có thể giải thích tại sao React Query tốt hơn `useEffect` + `useState` để fetch data không?
+- [ ] Tôi có thể giải thích "optimistic updates" và trade-off của nó không?
+- [ ] Tôi có thể giải thích Redux middleware (thunk vs saga) và khi nào dùng cái nào không?
+
+💬 **Feynman Prompt:** Giải thích prop drilling và tại sao nó là vấn đề. Sau đó giải thích 2 cách khác nhau để giải quyết nó (Context và Redux) và khi nào chọn cái nào.
+
+---
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on:** [Hooks Deep Dive](./03-hooks-deep-dive.md) — `useContext`, `useReducer` là nền tảng của state management
+- ➡️ **Enables:** [Performance Optimization](./09-performance-optimization.md) — state structure ảnh hưởng render performance
+- 🔗 **Libraries:** Redux Toolkit | Zustand | Jotai | React Query | SWR | Recoil
 
 [← Previous: Advanced Patterns](./04-advanced-patterns.md) | [Back to Table of Contents](../../00-table-of-contents.md)

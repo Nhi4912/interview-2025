@@ -3,6 +3,68 @@
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 
+---
+
+## Real-World Scenario / Tình Huống Thực Tế
+
+Bạn build một trang web đẹp trên laptop. Designer hài lòng. Nhưng 60% users của bạn dùng điện thoại — và trên mobile, text nhỏ xíu, buttons không thể tap được, và horizontal scroll xuất hiện.
+
+**Vấn đề thực tế:**
+- 60% web traffic là mobile (Google Analytics data)
+- Google dùng mobile-first indexing — site không responsive = SEO kém
+- Thiết kế "desktop first" rồi thu nhỏ khó hơn nhiều so với "mobile first" rồi mở rộng
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy / Liên Tưởng — Nước trong bình:**
+Responsive design giống như nước: cùng nội dung, nhưng tự điều chỉnh theo hình dạng container (screen size). Một cột trên mobile, ba cột trên desktop — cùng một HTML, CSS khác nhau.
+
+**Mobile-first vs Desktop-first:**
+
+| Approach | Cách làm | Khi nào |
+|----------|----------|---------|
+| **Mobile-first** | Viết CSS cho mobile trước, dùng `min-width` media query để thêm desktop style | Recommended — progressive enhancement |
+| **Desktop-first** | Viết CSS cho desktop trước, dùng `max-width` để override cho mobile | Legacy approach — graceful degradation |
+
+**Core tools:**
+- **Media Queries:** `@media (min-width: 768px)` — apply CSS tại breakpoints
+- **Flexible units:** `%`, `vw`, `vh`, `rem`, `em` thay vì `px` cố định
+- **CSS Grid `auto-fit`:** `grid-template-columns: repeat(auto-fit, minmax(250px, 1fr))` — tự động responsive không cần media query
+- **Viewport meta tag:** `<meta name="viewport" content="width=device-width, initial-scale=1">` — bắt buộc cho mobile
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+      [CSS Fundamentals + Flexbox/Grid]
+              │
+              ▼
+     [RESPONSIVE DESIGN]  ← bạn đang ở đây
+              │
+    ┌─────────┼─────────┐
+    ▼         ▼         ▼
+[Viewport] [Media]  [Fluid]
+meta tag   Queries  Units
+           min/max  rem/em
+           width    vw/vh/%
+           prefers- clamp()
+           -scheme
+    │
+    ▼
+[Mobile-first workflow]
+Base CSS (mobile) → tablet breakpoint → desktop breakpoint
+    │
+    ▼
+[Advanced Responsive]
+Container queries | CSS Grid auto-fit | Fluid typography
+clamp(min, preferred, max) | aspect-ratio | fit-content
+```
+
+---
+
 ## Overview
 
 Responsive design không chỉ là media query.
@@ -1143,3 +1205,23 @@ Tình huống mẫu:
 
 Responsive design chất lượng cao là sự kết hợp của layout, content strategy, performance và accessibility.
 Trong phỏng vấn, hãy thể hiện bạn biết chọn pattern theo context thay vì áp dụng công thức cứng.
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Tôi có thể giải thích sự khác biệt giữa `min-width` và `max-width` media queries không?
+- [ ] Tôi có thể giải thích tại sao "mobile-first" tốt hơn "desktop-first" approach không?
+- [ ] Tôi có thể tạo một responsive layout mà không cần media query (chỉ dùng CSS Grid) không?
+- [ ] Tôi có thể giải thích `rem` vs `em` vs `px` và khi nào dùng cái nào không?
+- [ ] Tôi có thể implement fluid typography với `clamp()` không?
+
+💬 **Feynman Prompt:** Giải thích "mobile-first design" cho một backend developer. Tại sao bắt đầu từ màn hình nhỏ nhất lại dễ hơn là bắt đầu từ desktop rồi thu nhỏ?
+
+---
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on:** [CSS Fundamentals](./00-css-fundamentals.md) | [Grid & Flexbox](./01-grid-flexbox.md) — responsive design builds on layout tools
+- ➡️ **Enables:** [Core Web Vitals](../06-browser-performance/01-core-web-vitals.md) — CLS và LCP bị ảnh hưởng bởi responsive images và layout
+- 🔗 **Tools:** Tailwind CSS breakpoints | Bootstrap grid | CSS Container Queries (modern)

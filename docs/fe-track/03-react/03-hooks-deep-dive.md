@@ -8,6 +8,64 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+Bạn có một component `UserProfile` fetch data từ API, track form state, và debounce search. Với class component: 3 lifecycle methods, `this` binding issues, logic khó tái sử dụng giữa các components.
+
+Hooks giải quyết điều này bằng cách cho phép bạn "hook into" React features từ function components và tách logic thành custom hooks tái sử dụng.
+
+**Câu hỏi phỏng vấn phổ biến nhất về hooks:** "Tại sao không được gọi hooks trong điều kiện hoặc loop?" — đây chính là câu hỏi kiểm tra bạn có hiểu hooks hoạt động như thế nào hay không.
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy / Liên Tưởng — Plugin hệ thống:**
+React component giống như một cái điện thoại. Hooks là các plugin: `useState` là plugin bộ nhớ, `useEffect` là plugin side-effect scheduler, `useRef` là plugin trỏ trực tiếp vào hardware. Bạn có thể cắm nhiều plugin vào cùng một component, và thậm chí bundle chúng thành custom plugin (custom hooks).
+
+**Tại sao hooks thay thế class components:**
+
+| Class Components | Hooks | Tại sao Hooks tốt hơn |
+|-----------------|-------|----------------------|
+| `componentDidMount` + `componentDidUpdate` | `useEffect` | Gom cùng logic ở cùng chỗ |
+| Khó chia sẻ stateful logic | Custom Hooks | Logic tái sử dụng dễ dàng |
+| `this.state` + `this.setState` | `useState` | Đơn giản, predictable |
+| `this` binding phức tạp | Arrow functions | Không cần `bind` |
+
+**Rules of Hooks — và tại sao:**
+React dùng một linked list (array thứ tự) để track state của hooks. Nếu bạn gọi hooks trong `if`/`loop`, thứ tự thay đổi theo render → React không biết hook nào tương ứng state nào → crash.
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+   [React Fundamentals]
+   (JSX, Components, Props)
+           │
+           ▼
+   [HOOKS DEEP DIVE]  ← bạn đang ở đây
+           │
+   ┌───────┼───────┐
+   ▼       ▼       ▼
+[State] [Effect] [Ref/Context]
+useState  useEffect  useRef
+useReducer useLayoutEffect useContext
+           useInsertionEffect useMemo
+                              useCallback
+   │
+   ▼
+[Custom Hooks]
+Extract stateful logic → reuse across components
+useFetch | useDebounce | useLocalStorage
+   │
+   ▼
+[React 18+ Hooks]
+useTransition | useDeferredValue | useSyncExternalStore
+```
+
+---
+
 ## Tổng Quan / Overview
 
 **English:** This chapter is rewritten in bilingual EN/VI format for interview preparation. It focuses on conceptual clarity, practical examples, and common interview traps.
@@ -682,5 +740,23 @@ Tiếng Việt: useLayoutEffect không chạy trên server và sinh cảnh báo 
 - [ ] Can you explain how Strict Mode's double-invocation of effects helps surface bugs?
 
 ---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Tôi có thể giải thích tại sao "Rules of Hooks" tồn tại — hooks hoạt động như thế nào bên trong không?
+- [ ] Tôi có thể giải thích sự khác biệt giữa `useEffect` và `useLayoutEffect` không?
+- [ ] Tôi có thể giải thích khi nào dùng `useCallback` vs `useMemo` và tại sao over-optimization có hại không?
+- [ ] Tôi có thể tạo một custom hook `useFetch` với loading/error state không?
+- [ ] Tôi có thể giải thích `useReducer` vs `useState` và khi nào chọn cái nào không?
+
+💬 **Feynman Prompt:** Giải thích tại sao hook không được gọi trong `if` statement. Vẽ sơ đồ cho thấy điều gì xảy ra với React's internal state array nếu bạn vi phạm rule này.
+
+---
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on:** [React Fundamentals](./01-react-fundamentals.md) — cần hiểu components, state, và `UI = f(state)`
+- ➡️ **Enables:** [Advanced Patterns](./04-advanced-patterns.md) | [State Management](./05-state-management.md) | Custom hook libraries
+- 🔗 **In practice:** Every modern React component uses hooks — this is the core of React development
 
 [← Previous](./02-react-19-features.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next →](./04-advanced-patterns.md)

@@ -5,6 +5,74 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+Bạn được giao build layout này:
+- Header full width
+- Sidebar 250px cố định bên trái
+- Main content chiếm phần còn lại
+- Cards trong main content xếp 3 cột, wrap xuống dòng mới khi hết chỗ
+- Footer sticky ở dưới cùng
+
+Với CSS cũ (`float` + `clearfix`): hack không ngừng, browser bugs, vertical centering là ác mộng. Flexbox và Grid giải quyết toàn bộ trong 20 dòng CSS rõ ràng.
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy / Liên Tưởng:**
+- **Flexbox** = dây thun: kéo dãn và sắp xếp items theo **một chiều** (ngang HOẶC dọc). Tốt cho navbar, button groups, căn giữa 1 item.
+- **Grid** = bàn cờ vua: đặt items vào ô trên **hai chiều** (ngang VÀ dọc). Tốt cho page layout, card grids, dashboard.
+
+**Khi nào dùng cái nào:**
+
+| Situation | Use | Why |
+|-----------|-----|-----|
+| Navbar với logo + links | Flexbox | 1D: horizontal row |
+| Vertical centering 1 item | Flexbox | `align-items: center` |
+| Card grid (wrap to rows) | Grid | 2D: auto-fill columns |
+| Page layout (header/sidebar/content) | Grid | 2D: named areas |
+| Responsive với `auto-fit` | Grid | `minmax()` magic |
+| Items với dynamic size | Flexbox | `flex-grow`/`flex-shrink` |
+
+**Flexbox mental model:** parent là "flex container", children là "flex items". Container controls direction + alignment, items control their own growth/shrink.
+
+**Grid mental model:** define columns/rows on parent, place children into cells explicitly or let auto-placement algorithm decide.
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+      [CSS Box Model]
+      (margin, padding, border)
+              │
+              ▼
+     [CSS FLEXBOX & GRID]  ← bạn đang ở đây
+              │
+    ┌─────────┴─────────┐
+    ▼                   ▼
+[FLEXBOX]            [GRID]
+1-dimensional        2-dimensional
+flex-direction       grid-template-columns
+justify-content      grid-template-rows
+align-items          grid-template-areas
+flex-grow/shrink     gap
+flex-wrap            auto-fill/auto-fit
+              │          │
+              └────┬─────┘
+                   ▼
+          [Responsive Layout]
+          Media queries + Grid auto-fit
+          Mobile-first design
+                   │
+                   ▼
+          [Modern CSS Layout]
+          Container queries | Subgrid
+```
+
+---
+
 ## Câu Hỏi Phỏng Vấn / Interview Q&A
 
 ### Q: What are the Flexbox axes and how does flex-direction work? / Trục Flexbox và flex-direction hoạt động thế nào? 🟢 Junior
@@ -468,3 +536,23 @@ Vietnamese: Debug Flex/Grid dùng DevTools: Chrome/Firefox có inspector riêng 
   /* instead of: grid-template-columns: 1fr 1fr; */
 }
 ```
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Tôi có thể giải thích sự khác biệt giữa `justify-content` và `align-items` trong Flexbox không?
+- [ ] Tôi có thể tạo một responsive card grid tự động wrap với CSS Grid (`auto-fill`, `minmax`) không?
+- [ ] Tôi có thể căn giữa một element cả vertical và horizontal dùng Flexbox không?
+- [ ] Tôi có thể giải thích `flex: 1 1 auto` nghĩa là gì (grow, shrink, basis) không?
+- [ ] Tôi có thể giải thích khi nào dùng Grid và khi nào dùng Flexbox cho cùng một layout problem không?
+
+💬 **Feynman Prompt:** Giải thích Flexbox vs Grid cho một designer không biết code. Dùng ví dụ về sắp xếp đồ đạc trong phòng — khi nào dùng "xếp thành hàng" và khi nào dùng "chia ô theo bàn cờ"?
+
+---
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on:** [CSS Fundamentals](./00-css-fundamentals.md) — cần hiểu Box Model và display property trước
+- ➡️ **Enables:** [Responsive Design](./03-responsive-design.md) | [CSS Architecture](./02-css-architecture.md)
+- 🔗 **In practice:** Mọi modern layout dùng Flexbox hoặc Grid — đây là layout tools chính trong 2024

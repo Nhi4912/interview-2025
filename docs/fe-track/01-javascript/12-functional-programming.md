@@ -23,6 +23,81 @@ Giải thích (VI): Tài liệu này tập trung vào phần cốt lõi thườn
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+Bạn có array 10,000 users. Cần: lọc users active, lấy tên, sắp xếp alphabetically. Approach cũ:
+
+```javascript
+// Imperative: 15 dòng, mutable state, khó test
+let result = [];
+for (let i = 0; i < users.length; i++) {
+  if (users[i].active) {
+    result.push(users[i].name);
+  }
+}
+result.sort();
+```
+
+Approach functional:
+```javascript
+// Declarative: 1 dòng, no mutation, self-documenting
+const result = users.filter(u => u.active).map(u => u.name).sort();
+```
+
+Functional Programming (FP) là cách viết code predictable, testable, và composable hơn.
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy / Liên Tưởng — Nhà máy lắp ráp:**
+FP giống dây chuyền sản xuất: mỗi bước (function) nhận input → trả output mà không thay đổi gì bên ngoài. Bạn có thể kiểm tra từng bước độc lập.
+
+OOP: "đối tượng có trạng thái, gọi method để thay đổi trạng thái"
+FP: "dữ liệu bất biến, function biến đổi thành dữ liệu mới"
+
+| Khái niệm FP | Ý nghĩa | Ví dụ JavaScript |
+|-------------|---------|-----------------|
+| **Pure function** | Same input → same output, no side effects | `const add = (a,b) => a+b` |
+| **Immutability** | Không thay đổi data gốc | `[...arr, newItem]` thay vì `arr.push()` |
+| **Higher-order function** | Function nhận/trả function | `map`, `filter`, `reduce` |
+| **Composition** | Kết hợp nhiều function nhỏ thành pipeline | `compose(f, g)(x)` = `f(g(x))` |
+| **Currying** | Function nhận từng argument một | `add(1)(2)` = 3 |
+| **Closure** | Function "nhớ" scope ngoài | State trong React hooks |
+
+**Tại sao FP quan trọng trong frontend:**
+- React state management dựa trên immutability
+- Redux reducers PHẢI là pure functions
+- Array methods (`map`/`filter`/`reduce`) dùng FP concepts
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+    [Closures] + [Higher-order functions]
+                      │
+                      ▼
+           [FUNCTIONAL PROGRAMMING]
+                      │
+         ┌────────────┼────────────┐
+         ▼            ▼            ▼
+  [Pure functions] [Immutability] [Composition]
+  No side effects  Spread/Object  pipe/compose
+  Predictable      .assign        Chaining
+  Testable         Freeze         Transducers
+         │
+         ▼
+  [Array FP methods]
+  map → filter → reduce → flatMap → find
+         │
+         ▼
+  [React/Redux]
+  Pure components | Reducers | Selectors
+```
+
+---
+
 ## Core Concepts
 
 ### 1. Functional Programming Mindset
@@ -869,3 +944,23 @@ console.log(out);
 ```
 
 **Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Tôi có thể giải thích "pure function" và tại sao nó dễ test hơn không?
+- [ ] Tôi có thể implement `map`, `filter`, `reduce` từ đầu không dùng built-in không?
+- [ ] Tôi có thể giải thích immutability và cách spread operator giúp thực hiện nó không?
+- [ ] Tôi có thể viết một `compose` hoặc `pipe` function không?
+- [ ] Tôi có thể giải thích tại sao Redux reducer phải là pure function không?
+
+💬 **Feynman Prompt:** Giải thích "immutability" cho team lead đang hỏi tại sao không dùng `arr.push()` mà phải dùng `[...arr, item]`. Lợi ích thực tế là gì?
+
+---
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on:** [Closures](./03-closures.md) | [ES6 Features](./07-es6-features.md) — FP cần arrow functions, destructuring, spread
+- ➡️ **Enables:** [React State Management](../03-react/05-state-management.md) | Redux patterns | RxJS
+- 🔗 **In practice:** React hooks (closure-based state), Redux (pure reducers), Array methods (daily use)
