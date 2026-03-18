@@ -1,7 +1,59 @@
 # Algorithms Theory / Lý Thuyết Thuật Toán
 
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Data Structures](./data-structures-theory.md) | [Complexity Analysis](./complexity-analysis.md) | [LeetCode Practice](../../leetcode/)
+> **Prerequisites**: [Data Structures](./data-structures-theory.md) | [Complexity Analysis](./complexity-analysis.md)
+> **See also**: [LeetCode Practice](../../leetcode/)
+
+---
+
+## Real-World Scenario / Tình Huống Thực Tế
+
+Google Maps tìm đường đi ngắn nhất giữa 2 thành phố. Spotify gợi ý bài hát phù hợp. Netflix sắp xếp phim theo relevance. Tất cả đều dùng **algorithms** — các bước giải quyết vấn đề theo cách có thể tái sử dụng và đo lường.
+
+Biết thuật toán không chỉ để pass phỏng vấn — mà để **nhận ra pattern** khi gặp vấn đề thực tế:
+- "Cần tìm phần tử trong sorted array" → Binary Search O(log n) thay vì Linear Search O(n)
+- "Cần xử lý dữ liệu theo thứ tự ưu tiên" → Heap thay vì sort mỗi lần
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Algorithm là gì (Feynman)?** Như **công thức nấu ăn** — các bước rõ ràng, có thứ tự, đảm bảo ra đúng kết quả với bất kỳ input hợp lệ nào.
+
+**Tại sao cần học algorithm patterns thay vì từng bài cụ thể?**
+
+Có ~2500 bài LeetCode nhưng chỉ có ~15 patterns chính. Nhận ra pattern = biết approach ngay lập tức:
+
+```
+Pattern nhận ra →       Approach
+─────────────────────────────────────────
+Array có order     →    Two Pointers / Sliding Window
+Tìm min/max        →    Heap (Priority Queue)
+Shortest path      →    BFS (unweighted)
+Optimal choice     →    Dynamic Programming
+All possibilities  →    Backtracking
+Sorted array       →    Binary Search
+```
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[Data Structures] + [Complexity Analysis]
+           ↓
+    [Algorithm Patterns] ★ ← bạn đang ở đây
+           ↓
+┌──────────────────────────────────────────┐
+│  Sorting    Search     Graph     DP      │
+│  ────────   ──────     ─────     ──      │
+│  Quick      Binary     BFS       Memo    │
+│  Merge      Linear     DFS       Tabul.  │
+│  Heap       Two-ptr    Dijkstra  Kadane  │
+└──────────────────────────────────────────┘
+           ↓
+    [LeetCode Practice by Category]
+```
 
 ---
 

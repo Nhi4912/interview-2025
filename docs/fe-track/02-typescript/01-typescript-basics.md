@@ -1,15 +1,83 @@
 # TypeScript Basics / Cơ Bản TypeScript
 
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **Prerequisites**: [JavaScript Basics](../01-javascript/00-javascript-basics.md) | [Variables & Data Types](../01-javascript/01-variables-data-types.md)
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 
 ## TypeScript - Chapter 1 / TypeScript - Chương 1
 [Back to Table of Contents](../../00-table-of-contents.md) | [Next: Advanced Types →](./02-advanced-types.md) | [Related: Generics](./03-generics-deep-dive.md)
 
 ---
+
+## Real-World Scenario / Tình Huống Thực Tế
+
+Bạn viết hàm `calculateTotal(price, quantity)`. 3 tháng sau, một teammate gọi `calculateTotal("100", 5)` — không có error, nhưng kết quả là `"1005"` thay vì `500`. Bug này lọt qua code review, vào production, gây sai số tiền đơn hàng.
+
+**Với TypeScript:**
+```typescript
+function calculateTotal(price: number, quantity: number): number {
+  return price * quantity;
+}
+calculateTotal("100", 5); // ❌ Error tại compile time — không bao giờ chạy được
+```
+
+Đây là lý do 94% dự án lớn tại top tech companies dùng TypeScript: **bắt lỗi trước khi chạy**.
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy / Liên Tưởng — Hệ thống biển báo giao thông:**
+JavaScript là đường phố không có biển báo — xe có thể đi bất kỳ đâu, theo bất kỳ hướng nào. Nhanh để xây dựng, nhưng tai nạn (bugs) xảy ra liên tục.
+
+TypeScript thêm **biển báo** (type annotations):
+- `string` = đường một chiều (chỉ nhận text)
+- `number` = đường cao tốc (chỉ nhận số)
+- `interface` = bản đồ đường (định nghĩa cấu trúc object)
+- `TypeScript compiler` = cảnh sát giao thông — phát hiện vi phạm trước khi tham gia giao thông
+
+**TypeScript KHÔNG phải ngôn ngữ mới** — nó là JavaScript + type annotations. Browser vẫn chạy JavaScript. TypeScript compiler (tsc) chỉ là "kiểm tra trước khi xuất phát".
+
+**Tại sao JavaScript cần TypeScript:**
+| Vấn đề JS | TypeScript giải quyết |
+|-----------|----------------------|
+| `undefined is not a function` runtime error | Caught at compile time |
+| Không biết object có property nào | IntelliSense + type checking |
+| Refactor sợ vỡ | Compiler tìm hết chỗ cần sửa |
+| Code review không hiệu quả | Types = documentation tự cập nhật |
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+   [JavaScript] ─── TypeScript is a superset ───►
+                                                  │
+                          [TYPESCRIPT BASICS]  ← bạn đang ở đây
+                                  │
+              ┌───────────────────┼───────────────────┐
+              ▼                   ▼                   ▼
+    [Type Annotations]    [Interfaces & Types]  [Type Narrowing]
+    primitive types       interface vs type      typeof
+    function types        extends/implements     instanceof
+    object types          union & intersection   in / is
+              │                   │
+              └───────────────────┘
+                          │
+                          ▼
+              [Advanced Types] (Chapter 2)
+              Generics | Mapped types | Conditional types
+                          │
+                          ▼
+              [TypeScript + React/Next.js]
+              Props typing | Hooks typing | API responses
+```
+
+---
+
 ## Tổng Quan / Overview
 
-TypeScript provides static typing on top of JavaScript. This chapter focuses on foundational concepts used in junior-to-mid frontend interviews: annotations, interfaces vs types, unions/intersections, literal types, enums, assertions, narrowing, and tsconfig setup.
+TypeScript cung cấp static typing cho JavaScript. Chapter này tập trung vào các concepts nền tảng hay xuất hiện trong phỏng vấn junior-to-mid: annotations, interfaces vs types, unions/intersections, literal types, enums, assertions, narrowing, và tsconfig setup.
 
 Trong chương này bạn cần hiểu cách TypeScript mô hình hóa dữ liệu, cách compiler thu hẹp kiểu qua control-flow, và cách cấu hình strict mode để bắt lỗi sớm.
 
@@ -724,3 +792,23 @@ type Decision = { reason: string; risk: 'low' | 'high' };
 type Decision = { reason: string; risk: 'low' | 'high' };
 ```
 
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Tôi có thể giải thích sự khác biệt giữa `interface` và `type alias` và khi nào dùng cái nào không?
+- [ ] Tôi có thể giải thích Union type `string | number` và Intersection type `A & B` bằng ví dụ không?
+- [ ] Tôi có thể implement Type Guard với `typeof` và `instanceof` không?
+- [ ] Tôi có thể giải thích tại sao `as` (type assertion) nguy hiểm và khi nào dùng được không?
+- [ ] Tôi có thể cấu hình `tsconfig.json` với `strict: true` và giải thích từng strict option làm gì không?
+
+💬 **Feynman Prompt:** Giải thích TypeScript cho một JavaScript developer đang hỏi "tại sao tôi phải học thêm syntax mới khi JS đã chạy tốt?" Thuyết phục họ bằng một ví dụ bug thực tế.
+
+---
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on:** [JavaScript Variables & Data Types](../01-javascript/01-variables-data-types.md) — TypeScript extends JS type system
+- ➡️ **Enables:** [Advanced Types](./02-advanced-types.md) | [Generics](./03-generics-deep-dive.md) — type-level programming
+- 🔗 **Applied in:** React với TypeScript (`FC<Props>`, `useState<T>`) | Go interfaces (similar concept)

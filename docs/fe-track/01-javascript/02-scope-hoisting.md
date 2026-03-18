@@ -1,7 +1,8 @@
 # Scope & Hoisting / Phạm Vi & Kéo Lên
 
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../00-table-of-contents.md)
+> **Prerequisites**: [Variables & Data Types](./01-variables-data-types.md)
+> **See also**: [Closures](./03-closures.md) | [Table of Contents](../../00-table-of-contents.md)
 
 ## JavaScript Fundamentals - Chapter 2 / Kiến Thức Cơ Bản JavaScript - Chương 2
 
@@ -9,11 +10,65 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+Bạn gặp bug: gọi một function trước khi khai báo nó, nhưng nó vẫn chạy được. Hoặc ngược lại: dùng một `let` variable trước khi khai báo thì lỗi `ReferenceError`. Tại sao cùng là "dùng trước khai báo" nhưng kết quả lại khác nhau?
+
+```javascript
+greet();          // ✅ Works! (function declaration hoisted)
+function greet() { console.log("Hello"); }
+
+console.log(x);   // ❌ ReferenceError: Cannot access 'x' before initialization
+let x = 5;
+```
+
+Hiểu **scope** và **hoisting** giải thích toàn bộ hiện tượng trên — và là nền tảng để hiểu closures ở chapter tiếp theo.
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Scope (Phạm vi) là gì?** Như **bản đồ quyền truy cập** — quy định đoạn code nào được đọc/ghi biến nào. Không có scope thì tất cả biến đều global → xung đột tên, code không bảo trì được.
+
+```
+Không có scope:          Có scope:
+counter = 0 (global)     function A() { let counter = 0; } // riêng tư
+counter++ ở A            function B() { let counter = 0; } // không xung đột
+counter++ ở B
+→ không biết counter là của ai   → module hóa, an toàn
+```
+
+**Hoisting là gì?** JavaScript "đọc trước" toàn bộ file để tìm các khai báo (declarations), "kéo" chúng lên đầu scope trong bộ nhớ trước khi chạy từng dòng. Như một thư ký đọc mục lục sách trước khi đọc nội dung.
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[Variables: var/let/const] → [Scope & Hoisting] ★ ← bạn đang ở đây
+                                      ↓
+           ┌──────────────────────────┼────────────────────────┐
+      Global scope            Function scope              Block scope
+      (window/global)         (var, function decl)        (let, const, {})
+                                      ↓
+                            [Hoisting behavior]
+              ┌─────────────────────────┬─────────────────────────┐
+        function decl.            var declaration           let/const
+        (fully hoisted)           (hoisted, = undefined)   (hoisted, TDZ)
+                                      ↓
+                           [Temporal Dead Zone - TDZ]
+                         (khai báo nhưng chưa được init)
+                                      ↓
+                          [Closures] → chapter tiếp theo
+```
+
+---
+
 ## Overview / Tổng Quan
 
-**English:** Understanding scope and hoisting is fundamental to mastering JavaScript. These concepts determine how variables are accessed and when they become available in your code.
+**English:** Scope determines variable visibility; hoisting is JavaScript's behavior of moving declarations to the top of their scope before execution. Understanding these prevents the majority of "variable not defined" and unexpected-value bugs.
 
-**Tiếng Việt:** Hiểu về phạm vi và kéo lên là nền tảng để thành thạo JavaScript. Những khái niệm này xác định cách các biến được truy cập và khi nào chúng có sẵn trong code của bạn.
+**Tiếng Việt:** Scope quyết định biến nào truy cập được từ đâu. Hoisting là hành vi JS "kéo" khai báo lên đầu scope trước khi chạy từng dòng. Hiểu 2 khái niệm này loại bỏ phần lớn bug liên quan đến biến trong phỏng vấn và thực tế.
 
 ---
 
@@ -607,3 +662,25 @@ Giải thích: `var x` bên trong hàm được kéo lên đầu phạm vi hàm,
 ---
 
 [← Previous: Variables & Data Types](./01-variables-data-types.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next: Closures →](./03-closures.md)
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+Bạn đã hiểu bài nếu trả lời được:
+
+- [ ] Tôi có thể giải thích sự khác biệt giữa global, function, và block scope bằng ví dụ cụ thể
+- [ ] Tôi có thể vẽ hoisting behavior cho `var`, `let`, `const`, và `function declaration` — chỉ ra cái nào undefined, cái nào TDZ
+- [ ] Tôi có thể giải thích tại sao `greet()` trước `function greet(){}` hoạt động được
+- [ ] Tôi có thể giải thích Temporal Dead Zone mà không dùng thuật ngữ "TDZ"
+- [ ] Tôi biết tại sao nên dùng `const` > `let` > `var` trong dự án hiện đại
+
+**💬 Giải thích bằng lời của bạn:** "Hoisting giải quyết vấn đề gì? Nếu không có hoisting, code JavaScript sẽ khó viết hơn hay dễ hơn?" *(30 giây, không nhìn tài liệu)*
+
+---
+
+## Connections / Liên Kết Kiến Thức
+
+- ⬅️ **Cần biết trước:** [Variables & Data Types](./01-variables-data-types.md) — var/let/const là nền tảng của hoisting
+- ➡️ **Dùng scope để xây:** [Closures](./03-closures.md) — closure không thể hiểu nếu chưa biết lexical scope
+- ➡️ **Áp dụng vào:** [this keyword](./05-this-keyword.md) — `this` cũng liên quan đến execution context

@@ -5,6 +5,76 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+Năm 2010, Instagram ra mắt với 1 server duy nhất. Sau 3 tháng, họ có 1 triệu users — server sập.
+Năm 2012, Facebook mua Instagram với 1 tỷ users đang hoạt động mỗi ngày.
+
+**The question is:** làm thế nào một ứng dụng chia sẻ ảnh trở thành hệ thống phục vụ tỷ người dùng — xử lý hàng triệu uploads, likes, và feed requests mỗi giây — mà không sập?
+
+Câu trả lời: **System Design** — khoa học thiết kế hệ thống có thể scale.
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy / Liên Tưởng:**
+Hãy tưởng tượng bạn mở quán phở. Lúc đầu chỉ 5 khách/ngày: 1 đầu bếp, 1 bàn, 1 nồi là đủ.
+Nhưng nếu 5.000 khách/ngày? Bạn cần: nhiều bếp (horizontal scaling), chia ca (load balancing), kho lạnh riêng (caching), nhiều chi nhánh (distributed systems), và quy trình chuẩn (consistency).
+
+**System Design là gì?**
+Đó là quá trình đưa ra các quyết định kiến trúc để một hệ thống có thể:
+- **Scale**: phục vụ nhiều users hơn khi cần
+- **Reliable**: không sập khi một phần bị lỗi
+- **Maintainable**: dễ thêm tính năng mới mà không phá vỡ cái cũ
+
+**Tại sao phải học System Design?**
+- Phỏng vấn Senior/Staff tại big tech đều có vòng System Design
+- Quyết định kiến trúc sai tốn hàng tháng để sửa (Twitter mất 3 năm migrate khỏi Rails monolith)
+- Giúp bạn hiểu tại sao YouTube dùng CDN, Uber dùng geo-sharding, Discord dùng event streaming
+
+**Core trade-off mọi system designer phải biết:**
+> "You can have Consistency, Availability, or Partition tolerance — pick 2." — CAP Theorem
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+                    [SYSTEM DESIGN]
+                          │
+         ┌────────────────┼────────────────┐
+         ▼                ▼                ▼
+  [Requirements]    [Scalability]    [Reliability]
+  - Functional      - Horizontal     - Redundancy
+  - Non-functional  - Vertical       - Replication
+  - Constraints     - Partitioning   - Fault tolerance
+         │                │                │
+         └────────────────┼────────────────┘
+                          ▼
+              [Distributed Systems Core]
+                          │
+         ┌────────────────┼────────────────┐
+         ▼                ▼                ▼
+  [CAP Theorem]    [Consistency]     [Availability]
+  - CP systems     - Strong          - 99.9% uptime
+  - AP systems     - Eventual        - SLA/SLO/SLI
+  - CA (myth)      - Causal
+         │
+         ▼
+  [Building Blocks]
+  - Load Balancer → Cache → Message Queue → CDN
+  - SQL vs NoSQL → Sharding → Replication
+  - Microservices vs Monolith → Service Mesh
+```
+
+**Bạn đang ở đây trong lộ trình học:**
+```
+Data Structures ──► Algorithms ──► [SYSTEM DESIGN] ──► Distributed Systems ──► SRE/Infra
+```
+
+---
+
 ## 📋 Table of Contents
 
 1. [System Design Fundamentals](#system-design-fundamentals)
@@ -1028,3 +1098,23 @@ Vietnamese: 99.99% nghe đơn giản nhưng cần thiết kế xuyên suốt. Fa
 | Capacity estimation | 🟡 | DAU → QPS → Storage → identify bottleneck |
 | Monolith vs microservices | 🔴 | Default monolith; microservices earned via proven need + DevOps maturity |
 | High availability design | 🔴 | Eliminate SPOF at every layer + circuit breakers + chaos engineering |
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Tôi có thể giải thích sự khác biệt giữa vertical scaling và horizontal scaling không?
+- [ ] Tôi có thể vẽ sơ đồ CAP Theorem và giải thích tại sao không thể có cả 3 không?
+- [ ] Tôi có thể liệt kê 5 "building blocks" của system design (load balancer, cache, message queue, CDN, database)?
+- [ ] Tôi có thể giải thích khi nào nên dùng SQL vs NoSQL không?
+- [ ] Tôi có thể thiết kế một URL shortener đơn giản từ đầu không?
+
+💬 **Feynman Prompt:** Giải thích System Design cho người không biết lập trình bằng một ví dụ từ cuộc sống hàng ngày (quán ăn, siêu thị, bệnh viện...).
+
+---
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on:** [Algorithms Theory](../01-cs-fundamentals/algorithms-theory.md) | [Data Structures](../01-cs-fundamentals/data-structures-theory.md) — các nền tảng CS cần có trước khi học System Design
+- ➡️ **Enables:** [Caching Patterns](./caching-patterns.md) | [Replication & Partitioning](./replication-partitioning.md) — các pattern cụ thể của distributed systems
+- 🔗 **Applied in:** [Go Backend](../../be-track/) — implement các system design concepts bằng Go

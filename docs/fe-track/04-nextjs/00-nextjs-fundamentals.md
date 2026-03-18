@@ -1,13 +1,81 @@
 # Next.js Fundamentals / Nền Tảng Next.js
 
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **Prerequisites**: [React Fundamentals](../03-react/01-react-fundamentals.md) | [JavaScript Basics](../01-javascript/00-javascript-basics.md)
 > **See also**: [App Router & Server Components](./01-app-router-server-components.md) | [Data Fetching](./02-data-fetching.md) | [Architecture](./03-nextjs-architecture.md)
+
+---
+
+## Real-World Scenario / Tình Huống Thực Tế
+
+Bạn build e-commerce bằng React (Create React App). Sau khi launch:
+- Google không index sản phẩm — SEO score 0 vì trang render hoàn toàn ở client
+- Lần đầu tải trang mất 4.5 giây trên 3G (tải hết 800KB JS bundle rồi mới render)
+- Mỗi lần user vào trang sản phẩm, phải fetch API từ đầu dù data không thay đổi
+
+**Giải pháp**: Next.js — framework giải quyết cả 3 vấn đề này với SSG, SSR, và ISR.
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy / Liên Tưởng — Nhà hàng vs Siêu thị:**
+
+| Cách render | Analogy | Next.js strategy |
+|------------|---------|-----------------|
+| **CSR** (React thuần) | Đặt đồ ăn tại bàn — chef nấu ngay khi order | Client-Side Rendering |
+| **SSG** | Siêu thị bán đồ đóng hộp sẵn — nhanh, không cần nấu | Static Site Generation |
+| **SSR** | Nhà hàng nấu fresh cho từng khách — tươi mới, chậm hơn | Server-Side Rendering |
+| **ISR** | Siêu thị đổi hàng mỗi 1 giờ — fresh + fast | Incremental Static Regeneration |
+
+**Tại sao Next.js thống trị production React apps?**
+- 75% top React apps dùng Next.js (theo State of JS 2023)
+- Được Vercel maintain, tích hợp sâu với React Server Components (tương lai của React)
+- Built-in: routing, code splitting, image optimization, TypeScript, ESLint — không cần cấu hình
+
+**Khi nào dùng gì:**
+```
+Blog/Docs (data ít thay đổi) → SSG (getStaticProps)
+E-commerce product page       → ISR (revalidate: 3600)
+Dashboard (data real-time)    → SSR (getServerSideProps)
+Interactive features          → CSR (useEffect + fetch)
+```
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+    [React Fundamentals]
+    (Components, Hooks, State)
+            │
+            ▼
+    [NEXT.JS FUNDAMENTALS]  ← bạn đang ở đây
+            │
+   ┌────────┼────────┐
+   ▼        ▼        ▼
+[Routing] [Rendering] [APIs]
+File-based  SSG/SSR    Route
+App Router  ISR/CSR    Handlers
+Dynamic     Streaming  Middleware
+routes      Suspense
+   │        │
+   └────────┘
+            │
+            ▼
+   [App Router (Next.js 13+)]
+   Server Components | Client Components
+            │
+            ▼
+   [Performance & Deployment]
+   Image opt | Font opt | Vercel Edge
+```
 
 ---
 
 ## Tổng Quan / Overview
 
-Next.js is a React meta-framework providing file-based routing, multiple rendering strategies (SSG/SSR/ISR/CSR), API routes, image/font optimization, middleware, and built-in deployment support. This file covers foundational concepts every frontend candidate must know.
+Next.js là React meta-framework cung cấp file-based routing, nhiều rendering strategies (SSG/SSR/ISR/CSR), API routes, image/font optimization, middleware, và built-in deployment support. File này cover các concepts nền tảng mọi frontend candidate cần biết.
 
 ---
 
@@ -445,3 +513,23 @@ Vietnamese: Những lỗi ứng viên hay mắc:
 | Env Vars | `NEXT_PUBLIC_` = browser, otherwise server only | Prefix quyết định bảo mật |
 | Middleware | Edge Runtime, runs before every matched request | Nhanh, dùng cho auth/redirect |
 | Deployment | Vercel / Node.js / Docker / Static export | Tuỳ nhu cầu, Vercel đơn giản nhất |
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Tôi có thể giải thích khi nào nên dùng SSG vs SSR vs ISR vs CSR không?
+- [ ] Tôi có thể giải thích sự khác biệt giữa Pages Router và App Router không?
+- [ ] Tôi có thể giải thích Server Components là gì và tại sao chúng quan trọng không?
+- [ ] Tôi có thể implement một dynamic route với `[id]` và pre-generate paths không?
+- [ ] Tôi có thể giải thích Next.js xử lý image optimization như thế nào không?
+
+💬 **Feynman Prompt:** Giải thích SSG vs SSR cho một product manager. Tại sao trang blog nên dùng SSG còn dashboard nên dùng SSR?
+
+---
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on:** [React Fundamentals](../03-react/01-react-fundamentals.md) — cần hiểu React components, hooks, và server/client boundary
+- ➡️ **Enables:** [App Router & Server Components](./01-app-router-server-components.md) | [Data Fetching Patterns](./02-data-fetching.md)
+- 🔗 **Deployment:** Vercel (optimal) | Docker | Node.js standalone — mỗi có trade-off về cold start, edge, và cost

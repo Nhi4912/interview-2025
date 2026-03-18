@@ -1,7 +1,69 @@
 # CSS Fundamentals / Nền tảng CSS
 
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **Prerequisites**: [HTML5 Fundamentals](./00-html5-fundamentals.md)
 > **See also**: [HTML5 Fundamentals](./00-html5-fundamentals.md) | [Grid & Flexbox](./01-grid-flexbox.md) | [Modern CSS Features](./06-modern-css-features.md)
+
+---
+
+## Real-World Scenario / Tình Huống Thực Tế
+
+Designer giao cho bạn một button với style cụ thể. Bạn viết CSS, trông đúng trên Chrome. Nhưng:
+- Button bị đè bởi style khác ở chỗ khác trong codebase
+- Thay đổi padding làm vỡ layout của component bên cạnh
+- Trên mobile, text bị tràn ra ngoài
+
+**Nguyên nhân**: Bạn chưa hiểu **Cascade** (thứ tự ưu tiên), **Box Model** (cách tính kích thước), và **Specificity** (rule nào thắng). Ba khái niệm này quyết định 80% debugging CSS.
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy / Liên Tưởng — Bộ quần áo:**
+- **HTML** = cơ thể người (cấu trúc, nội dung)
+- **CSS** = quần áo (màu sắc, kích thước, vị trí)
+- **JavaScript** = chuyển động (hover, animation, tương tác)
+
+CSS không chỉ là "làm cho đẹp" — nó là hệ thống quy tắc với logic nghiêm ngặt:
+- **Cascade**: khi nhiều rule cùng nhắm vào 1 element, rule nào thắng?
+- **Specificity**: ID selector mạnh hơn class selector — có quy tắc tính điểm rõ ràng
+- **Box Model**: mọi element đều là hình chữ nhật — content + padding + border + margin
+- **Flow**: block elements xếp dọc, inline elements xếp ngang — Flexbox/Grid thay đổi điều này
+
+**Tại sao CSS khó hơn tưởng?**
+CSS không có error (syntax sai → browser bỏ qua, không báo lỗi), global scope mặc định (style lan sang element khác), và tính thừa kế (child thừa kế style của parent).
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+         [HTML STRUCTURE]
+                │
+                ▼
+        [CSS FUNDAMENTALS]  ← bạn đang ở đây
+                │
+    ┌───────────┼───────────┐
+    ▼           ▼           ▼
+[Cascade]   [Box Model]  [Selectors]
+Specificity  content      .class
+Inheritance  padding      #id
+Origin       border       [attr]
+             margin       :pseudo
+    │           │           │
+    └───────────┼───────────┘
+                ▼
+        [Layout Systems]
+        Flexbox | Grid | Position
+                │
+                ▼
+    [Responsive Design]
+    Media queries | Mobile-first
+                │
+                ▼
+    [Modern CSS]
+    Custom properties | @layer | CSS-in-JS
+```
 
 ---
 
@@ -405,3 +467,23 @@ body {
   background: inherit; /* background doesn't normally inherit */
 }
 ```
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Tôi có thể giải thích Specificity scoring (0-0-0) và tại sao ID > class > type không?
+- [ ] Tôi có thể vẽ Box Model và giải thích `box-sizing: border-box` làm gì không?
+- [ ] Tôi có thể giải thích tại sao `margin: auto` căn giữa horizontal nhưng không căn giữa vertical không?
+- [ ] Tôi có thể debug một layout bị "vỡ" bằng browser DevTools không?
+- [ ] Tôi có thể chọn giữa Flexbox và Grid cho một layout cụ thể không?
+
+💬 **Feynman Prompt:** Giải thích CSS Cascade cho một designer không biết code. Tại sao đôi khi thay đổi CSS không có tác dụng dù bạn chắc chắn đã viết đúng?
+
+---
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on:** [HTML5 Fundamentals](./00-html5-fundamentals.md) — cần hiểu DOM structure trước khi style nó
+- ➡️ **Enables:** [Grid & Flexbox](./01-grid-flexbox.md) | [Responsive Design](./03-responsive-design.md) — layout systems dựa trên CSS fundamentals
+- 🔗 **Related:** [Modern CSS](./06-modern-css-features.md) — Custom Properties, `@layer`, `container queries`

@@ -1,7 +1,8 @@
-# Variables & Data Types
+# Variables & Data Types / Biến & Kiểu Dữ Liệu
 
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../00-table-of-contents.md)
+> **Prerequisites**: [JavaScript Basics](./00-javascript-basics.md)
+> **See also**: [Scope & Hoisting](./02-scope-hoisting.md) | [Table of Contents](../../00-table-of-contents.md)
 
 ## JavaScript Fundamentals - Chapter 1
 
@@ -9,11 +10,58 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+Bạn đang code một giỏ hàng. Bạn cần lưu: tên sản phẩm (text), giá (số), có đang giảm giá không (true/false), danh sách items (array), thông tin user (object). JavaScript có nhiều kiểu dữ liệu khác nhau — chọn sai kiểu dẫn đến bug khó debug:
+
+```javascript
+// Bug kinh điển: so sánh kiểu sai
+const price = "100";          // string từ API
+if (price > 50) { ... }       // "100" > 50 → true (coercion ngầm!)
+if (price === 100) { ... }    // false! string vs number
+```
+
+Hiểu **kiểu dữ liệu** và **cách khai báo biến** là bước đầu tiên để tránh những bug như trên.
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Biến là gì?** Như một **chiếc hộp có nhãn** — nhãn là tên biến, thứ bên trong là giá trị. JavaScript là **dynamically typed** — cùng một chiếc hộp có thể chứa số hôm nay, string ngày mai.
+
+**Tại sao có 3 từ khai báo (var/let/const)?**
+- `var` — cũ, nhiều bug, **tránh dùng**
+- `let` — giá trị có thể thay đổi
+- `const` — giá trị không thể reassign (nhưng object/array bên trong vẫn mutable)
+
+**Tại sao JavaScript có kiểu `undefined` VÀ `null`?**
+- `undefined` = biến tồn tại nhưng chưa có giá trị (JS tự gán)
+- `null` = bạn **cố ý** nói "không có gì ở đây" (lập trình viên gán)
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[Variables & Data Types] ★ ← bạn đang ở đây
+        ↓
+  Primitive types:                Reference types:
+  number, string, boolean    →    object, array, function
+  null, undefined, Symbol         (lưu bằng reference, không phải value)
+  BigInt
+        ↓
+  var / let / const (cách khai báo)
+        ↓
+  [Scope & Hoisting] ← hiểu var vs let/const cần biết scope
+```
+
+---
+
 ## Tổng Quan / Overview
 
-JavaScript interview prep should be bilingual and practical: explain the concept in English, then reinforce it in Vietnamese with trade-offs and common pitfalls.
+JavaScript có **7 kiểu dữ liệu primitive** (number, string, boolean, null, undefined, Symbol, BigInt) và **kiểu reference** (object, array, function). Cách khai báo biến ảnh hưởng trực tiếp đến scope và hoisting — là nguồn gốc của nhiều bug phổ biến.
 
-Giải thích (VI): Tài liệu này tập trung vào phần cốt lõi thường gặp trong phỏng vấn Frontend. Mỗi mục có định nghĩa, lưu ý và ví dụ JavaScript ngắn gọn để bạn ôn tập nhanh.
+**Điểm quan trọng cho phỏng vấn:** `typeof null === 'object'` là bug lịch sử của JS, `NaN !== NaN`, và sự khác biệt giữa `==` (loose equality, có coercion) và `===` (strict equality, không coercion).
 
 ### Related Links / Liên Kết Liên Quan
 - [JavaScript Basics](./00-javascript-basics.md)

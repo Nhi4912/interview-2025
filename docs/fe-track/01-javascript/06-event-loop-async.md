@@ -1,7 +1,8 @@
-# Event Loop & Asynchronous JavaScript
+# Event Loop & Asynchronous JavaScript / Event Loop & JavaScript Bất Đồng Bộ
 
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../00-table-of-contents.md)
+> **Prerequisites**: [Closures](./03-closures.md) | [this keyword](./05-this-keyword.md)
+> **See also**: [ES6+ Features](./07-es6-features.md) | [Table of Contents](../../00-table-of-contents.md)
 
 ## JavaScript Fundamentals - Chapter 6
 
@@ -9,11 +10,78 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+JavaScript là **single-threaded** — chỉ làm một việc tại một thời điểm. Vậy làm sao một trang web có thể:
+- Fetch data từ API (mất vài giây)
+- Đồng thời hiển thị animation
+- Đồng thời phản hồi click của user
+
+Nếu fetch data bị "blocking" — browser sẽ đứng hình! Câu trả lời là **Event Loop** — cơ chế cho phép JavaScript làm nhiều việc mà không thực sự đa luồng.
+
+```javascript
+console.log('1. Bắt đầu fetch');        // ngay lập tức
+fetch('/api/data').then(() => {
+  console.log('3. Data về rồi');        // sau vài giây, nhưng không block!
+});
+console.log('2. Code tiếp tục chạy');  // ngay lập tức, không chờ fetch
+// Output: 1 → 2 → 3
+```
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy — Quán cà phê single barista:**
+
+Một barista (JavaScript thread) phục vụ khách:
+- Nhận order → ghi vào phiếu (task queue) → pha cà phê (synchronous work)
+- Trong khi máy pha cà phê chạy (I/O: fetch, setTimeout) → barista nhận order tiếp
+- Khi cà phê xong → barista phục vụ theo thứ tự phiếu
+
+Event Loop = người quản lý hàng đợi phiếu. Khi Call Stack trống → lấy task tiếp theo từ queue.
+
+**Tại sao không dùng đa luồng?**
+- DOM manipulation phải single-threaded (tránh race condition)
+- JavaScript được thiết kế cho browser từ đầu — simplicity over complexity
+- Async model đủ mạnh cho 99% use cases
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+JavaScript Runtime:
+┌─────────────────────────────────────────────────────┐
+│                                                     │
+│   Call Stack          Web APIs (browser)            │
+│   ┌─────────┐         ┌──────────────────────┐      │
+│   │ main()  │         │ setTimeout           │      │
+│   │ greet() │ ──────► │ fetch / XHR          │      │
+│   │ ...     │         │ DOM events           │      │
+│   └────┬────┘         └──────────┬───────────┘      │
+│        │ (empty)                 │ (callback ready) │
+│        ▼                        ▼                   │
+│   ┌──────────────────────────────────────────────┐  │
+│   │  Task Queue (Macrotasks)                     │  │
+│   │  [setTimeout cb] [setInterval cb] [I/O cb]  │  │
+│   └──────────────────────────────────────────────┘  │
+│   ┌──────────────────────────────────────────────┐  │
+│   │  Microtask Queue (Priority!)                 │  │
+│   │  [Promise.then] [queueMicrotask] [async/await│  │
+│   └──────────────────────────────────────────────┘  │
+│                                                     │
+│   EVENT LOOP: Stack empty? → drain microtasks → take 1 macrotask │
+└─────────────────────────────────────────────────────┘
+```
+
+---
+
 ## Tổng Quan / Overview
 
-JavaScript interview prep should be bilingual and practical: explain the concept in English, then reinforce it in Vietnamese with trade-offs and common pitfalls.
+**Event Loop** là cơ chế core của JavaScript runtime cho phép single-threaded JS xử lý asynchronous operations. Khi Call Stack trống, Event Loop ưu tiên **Microtask Queue** (Promise callbacks) trước, sau đó mới lấy task từ **Macrotask Queue** (setTimeout, I/O).
 
-Giải thích (VI): Tài liệu này tập trung vào phần cốt lõi thường gặp trong phỏng vấn Frontend. Mỗi mục có định nghĩa, lưu ý và ví dụ JavaScript ngắn gọn để bạn ôn tập nhanh.
+**Điểm mấu chốt cho phỏng vấn:** Microtasks (Promise.then, async/await) luôn chạy trước macrotasks (setTimeout) — hiểu điều này giải thích mọi câu đố về thứ tự output trong interview.
 
 ### Related Links / Liên Kết Liên Quan
 - [Closures](./03-closures.md)
@@ -905,3 +973,24 @@ console.log('D');
 ```
 
 **Interview Tip:** Draw a timeline verbally; interviewers love deterministic reasoning.
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Tôi có thể vẽ Event Loop diagram từ trí nhớ: Call Stack, Web APIs, Microtask Queue, Macrotask Queue
+- [ ] Tôi biết tại sao Promise.then chạy trước setTimeout(fn, 0)
+- [ ] Tôi có thể đoán output của đoạn code async bất kỳ với console.log, setTimeout, Promise
+- [ ] Tôi có thể giải thích async/await là syntactic sugar cho gì
+- [ ] Tôi biết Promise.all vs Promise.allSettled vs Promise.race — khác nhau khi nào
+
+**💬 Giải thích bằng lời:** "JavaScript single-threaded nhưng vẫn handle async được — cơ chế nào cho phép điều đó?" *(30 giây, dùng analogy barista)*
+
+---
+
+## Connections / Liên Kết Kiến Thức
+
+- ⬅️ **Cần biết trước:** [Closures](./03-closures.md) — callback trong setTimeout là closure
+- ⬅️ **Cần biết trước:** [this keyword](./05-this-keyword.md) — `this` hay bị mất trong async callbacks
+- ➡️ **Dùng trong React:** [React Hooks](../03-react/03-hooks-deep-dive.md) — useEffect là async pattern phổ biến nhất
+- ➡️ **Tiếp theo:** [ES6+ Features](./07-es6-features.md) — async/await, generators

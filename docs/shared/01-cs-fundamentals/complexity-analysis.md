@@ -1,15 +1,84 @@
 # Complexity Analysis / Phân Tích Độ Phức Tạp
 
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **Prerequisites**: [Data Structures](./data-structures-theory.md)
 > **See also**: [Algorithms Theory](./algorithms-theory.md) | [Data Structures](./data-structures-theory.md)
+
+---
+
+## Real-World Scenario / Tình Huống Thực Tế
+
+Bạn build tính năng "tìm kiếm sản phẩm" cho e-commerce. Với 100 sản phẩm: hoạt động tốt. Với 1 triệu sản phẩm: **browser đơ 30 giây** mỗi lần gõ ký tự.
+
+**Nguyên nhân**: Code dùng nested loop O(n²) — 1 triệu × 1 triệu = 1 nghìn tỷ phép tính.
+**Giải pháp**: Thay bằng hash map lookup O(1) — 1 triệu phép tính thay vì 1 nghìn tỷ.
+
+Đây là lý do tại sao mọi cuộc phỏng vấn kỹ thuật đều hỏi về **Big O** — nó là ngôn ngữ chung để đánh giá code có "scale" được không.
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy / Liên Tưởng — Tìm số điện thoại:**
+
+Bạn cần tìm số điện thoại của "Nguyễn Văn A":
+- **Danh bạ không sắp xếp** (O(n)): lật từng trang một → 500 trang = 500 lần lật
+- **Danh bạ sắp xếp theo tên** (O(log n)): mở giữa → đi đúng nửa → tiếp tục → 10 lần lật cho 500 trang
+- **Danh bạ có index theo chữ cái** (O(1)): mở thẳng tab "N" → 1 giây
+
+Big O = "nếu dữ liệu tăng 10x, thời gian tăng bao nhiêu?"
+
+| Kịch bản | Big O | 1,000 items | 1,000,000 items |
+|----------|-------|-------------|-----------------|
+| Hash map lookup | O(1) | 1 op | 1 op |
+| Binary search | O(log n) | 10 ops | 20 ops |
+| Linear scan | O(n) | 1,000 ops | 1,000,000 ops |
+| Nested loop | O(n²) | 1,000,000 ops | 10¹² ops (đơ!) |
+
+**Tại sao phải biết Complexity Analysis?**
+- Viết code chạy được ≠ viết code chạy nhanh. Phỏng vấn luôn hỏi: "Time complexity là gì?"
+- Giúp chọn đúng data structure: cần tìm nhanh → HashMap, cần sort → TreeSet
+- Phát hiện bottleneck trước khi production bị sập
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+       [DATA STRUCTURES]
+       (Array, HashMap, Tree...)
+              │
+              ▼
+    [COMPLEXITY ANALYSIS]  ← bạn đang ở đây
+              │
+    ┌─────────┼─────────┐
+    ▼         ▼         ▼
+[Time]   [Space]   [Amortized]
+ O(1)     O(1)      ArrayList
+ O(logn)  O(n)      append()
+ O(n)     O(n²)
+ O(n²)
+    │
+    ▼
+[Asymptotic Notations]
+ Big O (worst) | Theta (average) | Omega (best)
+    │
+    ▼
+[Master Theorem]
+ Analyze recursive algorithms: T(n) = aT(n/b) + f(n)
+    │
+    ▼
+[ALGORITHMS THEORY]
+ Choose right algorithm for the complexity you need
+```
 
 ---
 
 ## Overview / Tổng Quan
 
-**English:** Complexity analysis is the theoretical study of algorithm efficiency in terms of time and space. Understanding Big O notation and asymptotic analysis is fundamental to computer science and essential for evaluating algorithm performance.
+**English:** Big O notation describes algorithm efficiency — how time and space requirements grow as input size increases. Mastering this lets you predict performance before writing a single line of code.
 
-**Tiếng Việt:** Phân tích độ phức tạp là nghiên cứu lý thuyết về hiệu quả thuật toán về mặt thời gian và không gian. Hiểu ký hiệu Big O và phân tích tiệm cận là nền tảng của khoa học máy tính và cần thiết để đánh giá hiệu suất thuật toán.
+**Tiếng Việt:** Big O mô tả hiệu quả thuật toán — thời gian và bộ nhớ tăng thế nào khi dữ liệu tăng. Nắm vững Big O giúp bạn dự đoán hiệu suất trước khi viết code.
 
 ---
 
@@ -729,3 +798,23 @@ Other amortized examples:
 ```
 
 **Điểm senior:** Amortized khác với average-case (probabilistic). Amortized là guarantee về sequence of operations, không phải single operation. Thường xuất hiện trong data structures với lazy operations (resize, consolidation, path compression).
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Tôi có thể giải thích O(1), O(log n), O(n), O(n log n), O(n²) bằng ví dụ thực tế không?
+- [ ] Tôi có thể tính Big O của một đoạn code có nested loop không?
+- [ ] Tôi có thể giải thích tại sao HashMap lookup là O(1) nhưng đôi khi là O(n) không?
+- [ ] Tôi có thể phân biệt time complexity vs space complexity không?
+- [ ] Tôi có thể giải thích "amortized O(1)" của ArrayList.append() không?
+
+💬 **Feynman Prompt:** Giải thích Big O Notation cho người không biết lập trình. Dùng ví dụ tìm kiếm trong danh bạ điện thoại hoặc tìm sách trong thư viện.
+
+---
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on:** [Data Structures](./data-structures-theory.md) — cần hiểu data structures để phân tích complexity của chúng
+- ➡️ **Enables:** [Algorithms Theory](./algorithms-theory.md) — complexity analysis là ngôn ngữ để so sánh các giải thuật
+- 🔗 **Applied in:** LeetCode — mọi solution cần state time + space complexity

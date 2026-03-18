@@ -1,4 +1,4 @@
-# JavaScript Basics
+# JavaScript Basics / Nền Tảng JavaScript
 
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
@@ -9,11 +9,53 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+Bạn mở một trang web — ảnh load, button click được, data fetch từ server, animation chạy mượt. Tất cả đều do **một ngôn ngữ** điều khiển: JavaScript. Nhưng JavaScript ban đầu được tạo trong 10 ngày để validate form. Làm sao nó trở thành ngôn ngữ phổ biến nhất thế giới và chạy được cả ở browser lẫn server?
+
+Hiểu lịch sử và cơ chế JavaScript giúp bạn không chỉ viết code mà còn hiểu **tại sao** JavaScript hoạt động theo những cách kỳ lạ đó (type coercion, hoisting, async model...).
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Giải thích đơn giản (Feynman):** Tưởng tượng một trang web như tờ báo:
+- **HTML** = nội dung tờ báo (tiêu đề, bài viết, ảnh)
+- **CSS** = thiết kế tờ báo (màu sắc, font, layout)
+- **JavaScript** = người đưa tin tương tác — đọc phản hồi từ độc giả, cập nhật nội dung ngay lập tức mà không cần in lại tờ báo
+
+**Tại sao JavaScript quan trọng?**
+- Ngôn ngữ **duy nhất** chạy native trên mọi browser (không cần plugin)
+- Vừa chạy được ở **client** (browser) vừa ở **server** (Node.js) — một ngôn ngữ cho toàn stack
+- Top 1 ngôn ngữ phổ biến nhất 12 năm liên tiếp (Stack Overflow Survey 2024)
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+Bạn đang ở đây → [JavaScript Basics] ★
+                         ↓
+              [Variables & Data Types]
+                         ↓
+              [Scope & Hoisting]
+                         ↓
+              [Closures]         [Prototypes]
+                         ↓
+              [this keyword]
+                         ↓
+              [Event Loop & Async]
+                         ↓
+              [ES6+ Features]    [Functional Programming]
+```
+
+---
+
 ## Tổng Quan / Overview
 
-JavaScript interview prep should be bilingual and practical: explain the concept in English, then reinforce it in Vietnamese with trade-offs and common pitfalls.
+**JavaScript** là ngôn ngữ lập trình single-threaded, interpreted/JIT-compiled, dynamic typing. Chạy trên engine V8 (Chrome/Node.js) hoặc SpiderMonkey (Firefox). File này cung cấp bức tranh toàn cảnh trước khi đi vào từng khái niệm cụ thể.
 
-Giải thích (VI): Tài liệu này tập trung vào phần cốt lõi thường gặp trong phỏng vấn Frontend. Mỗi mục có định nghĩa, lưu ý và ví dụ JavaScript ngắn gọn để bạn ôn tập nhanh.
+**Giải thích:** Đây là chapter 0 — tổng quan về lịch sử, engine, và đặc điểm nổi bật của JS. Hãy đọc để có mental model trước khi học Variables, Scope, Closures...
 
 ### Related Links / Liên Kết Liên Quan
 - [Variables & Data Types](./01-variables-data-types.md)

@@ -35,6 +35,7 @@ Every content file must have:
 # Title in English / Tiêu đề tiếng Việt
 
 > **Track**: Shared | FE | BE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **Prerequisites**: [Prior topic](./relative-path.md)  ← optional, add when applicable
 > **See also**: [Related doc](./relative-path.md)
 ```
 
@@ -55,6 +56,10 @@ Vietnamese explanation: giải thích bằng tiếng Việt, tập trung vào đ
 - Create stubs or placeholder content ("Tactic 1...", "TODO: fill in")
 - Break bilingual format (every section needs both EN and VI)
 - Add files outside the docs/ directory structure
+- Write generic overview text that could appear in any file (e.g., "JavaScript interview prep should be bilingual and practical" — banned)
+- Duplicate Q&A answers within the same file — every answer must be unique
+- Jump straight to technical definitions without first showing a real-world scenario (Harvard Case Method)
+- Skip the "What & Why / Cái Gì & Tại Sao" section — all new content needs the Feynman explanation layer
 
 ## Knowledge Generation Workflow
 

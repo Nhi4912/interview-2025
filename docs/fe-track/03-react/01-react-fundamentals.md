@@ -2,17 +2,91 @@
 ## React - Chapter 1
 
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **Prerequisites**: [JavaScript Basics](../01-javascript/00-javascript-basics.md) | [Closures](../01-javascript/03-closures.md) | [Event Loop](../01-javascript/06-event-loop-async.md)
 > **See also**: [Hooks Deep Dive](./03-hooks-deep-dive.md) | [React Patterns](./08-react-patterns-advanced.md) | [Shared Theory](../../shared/01-cs-fundamentals/data-structures-theory.md)
 
 [Back to Table of Contents](../../00-table-of-contents.md) | [Next →](./02-react-19-features.md)
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+Bạn build một trang to-do list bằng JavaScript thuần. Mỗi lần user thêm/xóa task, bạn phải:
+1. Cập nhật data trong JS
+2. **Tự tay** tìm DOM element cần thay đổi
+3. **Tự tay** cập nhật innerHTML/textContent
+4. Đảm bảo UI và data không bị lệch nhau
+
+Với 50 tính năng, code trở thành mớ hỗn độn: data ở chỗ này, DOM manipulation ở chỗ khác, bug khi state không sync với UI.
+
+**React giải quyết điều này bằng một triết lý đơn giản:**
+> `UI = f(state)` — UI là hàm của state. Thay đổi state, React tự tính toán và cập nhật DOM.
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy / Liên Tưởng — Excel Spreadsheet:**
+Trong Excel, bạn gõ số vào ô A1. Ô B1 có công thức `=A1 * 2`. Ngay lập tức, B1 tự cập nhật — bạn không cần "nói" cho B1 biết A1 đã thay đổi.
+
+React hoạt động theo nguyên lý tương tự:
+- **State** = ô A1 (source of truth)
+- **Component** = công thức trong B1 (tự động re-render khi state thay đổi)
+- **Virtual DOM** = Excel tính toán xem ô nào thực sự cần cập nhật, không vẽ lại toàn bộ bảng
+
+**3 ý tưởng cốt lõi của React:**
+
+| Ý tưởng | Nghĩa là | Tại sao quan trọng |
+|---------|----------|-------------------|
+| **Declarative** | Mô tả UI trông như thế nào, không nói cách làm | Code dễ đọc, ít bug hơn imperative |
+| **Component-based** | UI = cây các component nhỏ, reusable | Tái sử dụng, test độc lập từng phần |
+| **Unidirectional data flow** | Data chỉ chạy từ parent → child | Dễ debug, predictable |
+
+**Tại sao React thống trị?**
+- Component model + Virtual DOM = DX tốt + performance ổn
+- Ecosystem khổng lồ (Next.js, React Native, Remix)
+- Facebook-backed → tương lai rõ ràng với React Server Components
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+    [JavaScript + DOM]
+    (Events, closures, async)
+            │
+            ▼
+    [REACT FUNDAMENTALS]  ← bạn đang ở đây
+            │
+   ┌────────┼────────┐
+   ▼        ▼        ▼
+[JSX]  [Components] [Virtual DOM]
+Transpile  Function   Reconciliation
+→ React.   Class      Fiber arch
+  createElement  Props/State  Diffing
+            │
+            ▼
+       [Hooks]
+   useState | useEffect
+   useRef | useContext
+   useMemo | useCallback
+            │
+            ▼
+   [Data Flow]
+   Props drilling → Context → Redux/Zustand
+            │
+            ▼
+   [Next.js / React Native]
+   Server Components | Mobile
+```
+
+---
+
 ## Tổng Quan / Overview
 
-**English:** This chapter is rewritten in bilingual EN/VI format for interview preparation. It focuses on conceptual clarity, practical examples, and common interview traps.
+**English:** React is a declarative UI library where `UI = f(state)`. This chapter explains the internals — JSX compilation, Virtual DOM, Fiber reconciliation — so you can reason about why React behaves the way it does, not just how to use it.
 
-**Tiếng Việt:** Chương này được viết lại theo định dạng song ngữ EN/VI để ôn luyện phỏng vấn. Nội dung tập trung vào hiểu bản chất, ví dụ thực tế và các bẫy thường gặp.
+**Tiếng Việt:** React là thư viện UI theo hướng khai báo: `UI = f(state)`. Chương này giải thích cơ chế bên trong — JSX compile như thế nào, Virtual DOM hoạt động ra sao, Fiber reconciliation là gì — để bạn hiểu tại sao React behave như vậy, không chỉ biết cách dùng.
 
 Xem thêm / Related: [01 React Fundamentals](./01-react-fundamentals.md), [03 Hooks Deep Dive](./03-hooks-deep-dive.md), [09 Performance](./09-performance-optimization.md).
 
@@ -1135,3 +1209,23 @@ Tiếng Việt: Định nghĩa component bên trong render tạo function refere
 - Checklist 178: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
 - Checklist 179: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
 - Checklist 180: Can you explain this chapter topic in EN first, then summarize in VI with one practical example?
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Tôi có thể giải thích JSX transpile thành gì và tại sao `React.createElement` cần không?
+- [ ] Tôi có thể vẽ Virtual DOM reconciliation flow từ state change → re-render → diff → commit không?
+- [ ] Tôi có thể giải thích tại sao `key` prop quan trọng trong list rendering không?
+- [ ] Tôi có thể giải thích sự khác biệt giữa function component và class component không?
+- [ ] Tôi có thể giải thích Fiber architecture và tại sao nó enable concurrent features không?
+
+💬 **Feynman Prompt:** Giải thích Virtual DOM cho một junior developer đang hỏi "tại sao không update DOM trực tiếp cho nhanh?" React làm gì để render nhanh hơn?
+
+---
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on:** [JavaScript Closures](../01-javascript/03-closures.md) | [Event Loop](../01-javascript/06-event-loop-async.md) — React hooks dùng closures; async rendering dùng event loop
+- ➡️ **Enables:** [Hooks Deep Dive](./03-hooks-deep-dive.md) | [React Patterns](./08-react-patterns-advanced.md) | [Next.js](../04-nextjs/00-nextjs-fundamentals.md)
+- 🔗 **Mental model:** `UI = f(state)` — master concept này, mọi React behavior đều giải thích được

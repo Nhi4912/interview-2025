@@ -8,6 +8,72 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**2017 — Equifax Data Breach:**
+Hacker khai thác một lỗ hổng Apache Struts chưa được vá. Trong 76 ngày, họ đánh cắp thông tin cá nhân của 147 triệu người (số CMND, địa chỉ, số thẻ tín dụng). Thiệt hại: $575 triệu tiền phạt, danh tiếng công ty sụp đổ.
+
+**Nguyên nhân:** Không có bảo mật theo chiều sâu. Một lỗ hổng → toàn bộ database bị lộ.
+
+**Câu hỏi:** Làm thế nào bạn thiết kế một hệ thống mà ngay cả khi bị xâm nhập vào một lớp, dữ liệu vẫn được bảo vệ?
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy / Liên Tưởng — Ngân Hàng:**
+Hãy tưởng tượng ngân hàng là hệ thống bảo mật hoàn hảo:
+
+| Security Concept | Ngân hàng analog |
+|-----------------|-----------------|
+| **Confidentiality** (Bảo mật) | Két sắt: chỉ chủ tài khoản mở được |
+| **Integrity** (Toàn vẹn) | Sổ giao dịch có chữ ký: không ai sửa số dư mà không bị phát hiện |
+| **Availability** (Sẵn sàng) | Ngân hàng mở cửa 24/7 ATM: luôn truy cập được khi cần |
+| **Authentication** | Thẻ ATM + PIN: xác nhận bạn là chủ tài khoản |
+| **Authorization** | Nhân viên ngân hàng chỉ thấy tài khoản của branch mình |
+| **Defense in Depth** | Cổng → bảo vệ → thẻ → PIN → két → camera → audit log |
+
+**Tại sao developer phải biết security?**
+- OWASP Top 10: 90% các vụ hack khai thác lỗi trong code của developer (SQL injection, XSS, broken auth)
+- Vá lỗi security sau khi release tốn gấp 30x so với phòng tránh từ đầu (IBM Systems Sciences Institute)
+- Phỏng vấn Senior tại các công ty tài chính, healthcare luôn có câu hỏi security
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+              [SECURITY FUNDAMENTALS]
+                        │
+         ┌──────────────┼──────────────┐
+         ▼              ▼              ▼
+   [CIA Triad]    [Core Principles]  [Attack Vectors]
+   Confidentiality  Least Privilege  - Injection (SQL/XSS)
+   Integrity        Fail Securely    - Auth bypass
+   Availability     Defense Depth    - IDOR
+         │              │              │
+         └──────────────┼──────────────┘
+                        ▼
+             [Authentication & Authorization]
+                        │
+         ┌──────────────┼──────────────┐
+         ▼              ▼              ▼
+   [Identity]     [Sessions]      [Tokens]
+   Username/Pass  Cookie/JWT      OAuth 2.0
+   MFA            Session hijack  OIDC/SSO
+         │
+         ▼
+   [Cryptography basics]
+   Hash → Encryption (symmetric/asymmetric) → TLS/HTTPS
+```
+
+**Bạn đang ở đây trong lộ trình học:**
+```
+CS Fundamentals → Networking → [SECURITY] → Web Security (XSS/CSRF) → Auth Systems → Penetration Testing
+```
+
+---
+
 ## 1. CIA Triad — Tam giác CIA
 
 ### 🟢 Q: What is the CIA Triad?
@@ -1100,3 +1166,23 @@ Vietnamese explanation: Principle of least privilege: mỗi component chỉ có 
 | CIA triad | 🟢 | Confidentiality+Integrity+Availability; all decisions balance these |
 | AuthN vs AuthZ | 🟢 | AuthN=who (401); AuthZ=what permissions (403) |
 | Defense in depth | 🟡 | Multiple independent layers; compromise one, others still protect |
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Tôi có thể giải thích CIA Triad bằng một ví dụ từ ngân hàng không?
+- [ ] Tôi có thể phân biệt Authentication vs Authorization bằng ví dụ cụ thể không?
+- [ ] Tôi có thể liệt kê 3 nguyên tắc bảo mật cốt lõi (Least Privilege, Defense in Depth, Fail Securely) không?
+- [ ] Tôi có thể giải thích tại sao HTTPS bảo vệ dữ liệu khi truyền không?
+- [ ] Tôi có thể mô tả 3 loại tấn công web phổ biến (SQL injection, XSS, CSRF) không?
+
+💬 **Feynman Prompt:** Giải thích "Defense in Depth" cho một người không biết lập trình, dùng ví dụ như nhà có nhiều lớp khóa, chuông báo động, camera...
+
+---
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on:** [Networking Fundamentals](../03-networking/) — hiểu HTTP/HTTPS/TLS trước khi học security
+- ➡️ **Enables:** [Web Security](../../fe-track/07-web-security/) | [Auth & Security](../../be-track/02-backend-knowledge/04-auth-security.md) — apply security concepts vào frontend và backend
+- 🔗 **Standards:** OWASP Top 10, NIST Cybersecurity Framework — industry references cho security decisions

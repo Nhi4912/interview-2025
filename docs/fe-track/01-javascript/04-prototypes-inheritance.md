@@ -9,11 +9,63 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+Bạn tạo 1000 objects `User`. Mỗi user cần method `greet()`. Nếu mỗi object lưu riêng một bản copy của `greet`, bạn dùng 1000x bộ nhớ không cần thiết. Giải pháp của JavaScript: **prototype** — một object dùng chung, được chia sẻ qua "chuỗi kế thừa".
+
+```javascript
+// Thay vì:
+user1.greet = function() {...}  // copy riêng
+user2.greet = function() {...}  // copy riêng (lãng phí!)
+
+// JavaScript làm:
+User.prototype.greet = function() {...}  // dùng chung 1 bản
+user1.greet === user2.greet  // true! — cùng reference
+```
+
+Đây là lý do tại sao `Array.prototype.map`, `String.prototype.split` tồn tại — tất cả array và string đều **chia sẻ** các method này qua prototype chain.
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Prototype là gì (Feynman)?** Như **bảng tên công ty trên tầng cao**. Mỗi nhân viên (object) có ID card riêng, nhưng không cần mang theo toàn bộ quy định công ty — họ **tra cứu lên tầng trên** khi cần.
+
+Khi bạn gọi `arr.map()`:
+1. JS tìm `map` trên `arr` — không có
+2. Tra lên `arr.__proto__` (= `Array.prototype`) — **có!** → dùng
+3. Nếu không có → tra tiếp lên `Object.prototype` → rồi `null`
+
+**Tại sao không dùng class từ đầu?** ES6 `class` chỉ là **syntactic sugar** — bên dưới vẫn là prototype. Hiểu prototype giúp bạn debug class inheritance bugs.
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[Closures] → [Prototypes & Inheritance] ★ ← bạn đang ở đây
+                        ↓
+        Prototype Chain (lookup từ dưới lên):
+        object → Constructor.prototype → Object.prototype → null
+
+        Cách tạo objects:
+        ┌─────────────────────────────────────┐
+        │ Object literal  { key: value }      │ ← đơn giản nhất
+        │ Constructor fn  new MyFn()          │ ← ES5
+        │ Object.create() Object.create(proto)│ ← explicit prototype
+        │ Class           class Foo extends.. │ ← ES6 syntactic sugar
+        └─────────────────────────────────────┘
+                        ↓
+        [this keyword] → chapter tiếp theo (this phụ thuộc prototype)
+```
+
+---
+
 ## Overview / Tổng Quan
 
-**English:** Prototypes are the mechanism by which JavaScript objects inherit features from one another. Understanding prototypal inheritance is fundamental to mastering JavaScript and essential for technical interviews.
+**English:** Prototypes are the mechanism by which JavaScript objects inherit features from one another. Every object has a `[[Prototype]]` (accessible via `__proto__` or `Object.getPrototypeOf()`). When you access a property, JS walks up the **prototype chain** until it finds it or reaches `null`.
 
-**Tiếng Việt:** Prototype là cơ chế mà các đối tượng JavaScript kế thừa tính năng từ nhau. Hiểu về kế thừa nguyên mẫu là nền tảng để thành thạo JavaScript và cần thiết cho phỏng vấn kỹ thuật.
+**Tiếng Việt:** Prototype là cơ chế kế thừa của JavaScript — mỗi object có `[[Prototype]]` trỏ đến object cha. Khi truy cập property không tồn tại, JS tự động tra lên prototype chain. ES6 `class` là syntax đẹp hơn cho cùng cơ chế này.
 
 ---
 
@@ -600,3 +652,23 @@ console.log(child.age); // 10
 
 [← Previous: Closures](./03-closures.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next: The `this` Keyword →](./05-this-keyword.md)
 
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Tôi có thể vẽ prototype chain của một array: `arr → Array.prototype → Object.prototype → null`
+- [ ] Tôi có thể giải thích tại sao `arr.map` hoạt động dù mình không define method đó trên arr
+- [ ] Tôi biết sự khác biệt giữa `Object.create(proto)`, constructor function, và ES6 class
+- [ ] Tôi có thể giải thích tại sao `class` trong ES6 chỉ là syntactic sugar
+- [ ] Tôi biết `instanceof` kiểm tra gì trong prototype chain
+
+**💬 Giải thích bằng lời:** "Tại sao mọi array đều có method `.map()` dù bạn không tự thêm vào?" *(30 giây không nhìn tài liệu)*
+
+---
+
+## Connections / Liên Kết Kiến Thức
+
+- ⬅️ **Cần biết trước:** [Closures](./03-closures.md) — cả 2 đều liên quan đến encapsulation và scope
+- ➡️ **Dùng prototype để hiểu:** [this keyword](./05-this-keyword.md) — `this` trong prototype method là object gọi method
+- ↔️ **So sánh với:** [Closures](./03-closures.md) — 2 cách tạo private state trong JavaScript

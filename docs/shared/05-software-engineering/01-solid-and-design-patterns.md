@@ -1,7 +1,76 @@
 # SOLID Principles & Design Patterns / Nguyên Tắc SOLID và Mẫu Thiết Kế
 
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **Prerequisites**: [OOP Basics](./00-programming-paradigms.md)
 > **See also**: [Architecture Styles](./02-architecture-styles.md) | [Code Quality](./05-code-quality-and-review.md)
+
+---
+
+## Real-World Scenario / Tình Huống Thực Tế
+
+Bạn viết một `PaymentService` xử lý thanh toán qua Stripe. 6 tháng sau, sếp nói: "Thêm PayPal đi." Bạn mở file ra và thấy `if (provider === "stripe") {...} else if (provider === "paypal") {...}` — code rải rác khắp nơi, test cũ bắt đầu fail, bug xuất hiện ở những chỗ không liên quan.
+
+**Vấn đề**: Code được viết mà không có nguyên tắc thiết kế. Mỗi lần thêm tính năng = phá vỡ những thứ đã hoạt động.
+
+**Giải pháp**: SOLID — 5 nguyên tắc giúp code **dễ mở rộng mà không sợ vỡ**.
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy / Liên Tưởng — Bộ phận trong công ty:**
+
+Hãy nghĩ code như một công ty. Công ty tốt có:
+- Mỗi **phòng ban** (class) chỉ làm **một việc** → không bị "kiêm nhiệm quá nhiều" (SRP)
+- Khi có dự án mới, **thêm phòng ban** thay vì đập hết cấu trúc cũ (OCP)
+- Nhân viên mới (subclass) làm được **mọi việc của người cũ** (LSP)
+- Không ép nhân viên IT học bán hàng (ISP)
+- Sếp giao việc qua **mô tả công việc**, không phải giao trực tiếp cho từng người (DIP)
+
+**Tại sao phải học SOLID?**
+- Phỏng vấn tại mọi công ty tech đều hỏi ít nhất 1-2 nguyên tắc SOLID
+- Code không có SOLID = "spaghetti code" — khó test, khó sửa, tốn kém bảo trì
+- Design Patterns (Factory, Strategy, Observer...) đều là SOLID in action — hiểu SOLID trước mới hiểu tại sao pattern đó tồn tại
+
+**3 câu hỏi để nhận ra vi phạm SOLID:**
+1. Class này có bao nhiêu lý do để thay đổi? (> 1 → vi phạm SRP)
+2. Muốn thêm tính năng có phải sửa code cũ không? (Có → vi phạm OCP)
+3. Có thể thay thế object bằng subtype mà không break không? (Không → vi phạm LSP)
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+         [OOP BASICS]
+         (class, inheritance, interface)
+                │
+                ▼
+         [SOLID PRINCIPLES]
+                │
+    ┌───────────┼───────────┐
+    ▼           ▼           ▼
+  [SRP]       [OCP]       [LSP]
+  1 reason    Open for    Subtypes
+  to change   extension,  must be
+              closed for  substitutable
+              modification
+    ▼           ▼           ▼
+  [ISP]       [DIP]
+  Small       Depend on
+  interfaces  abstractions
+    │
+    ▼
+[DESIGN PATTERNS]  ← SOLID enables these
+    │
+    ├── Creational: Factory, Builder, Singleton
+    ├── Structural: Adapter, Decorator, Facade
+    └── Behavioral: Strategy, Observer, Command
+    │
+    ▼
+[ARCHITECTURE PATTERNS]
+Layered, Hexagonal, Clean Architecture, Event-Driven
+```
 
 ---
 
@@ -1324,3 +1393,23 @@ Vietnamese explanation: Factory Method: decouple creation từ usage (know type 
 | SOLID principles | 🟡 | 5 OO design guidelines; DIP enables dependency injection |
 | Observer pattern | 🟡 | Subject notifies observers; DOM events, Redux, RxJS all use it |
 | Factory patterns | 🟡 | Factory Method=one product; Abstract Factory=consistent families |
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Tôi có thể giải thích SRP và cho ví dụ một class vi phạm nó không?
+- [ ] Tôi có thể giải thích OCP bằng ví dụ thêm payment provider mới không làm vỡ code cũ không?
+- [ ] Tôi có thể phân biệt Strategy Pattern vs State Pattern không?
+- [ ] Tôi có thể implement Observer Pattern (ví dụ event system) từ đầu không?
+- [ ] Tôi có thể chỉ ra 2 design patterns trong code React/Go tôi đang viết không?
+
+💬 **Feynman Prompt:** Giải thích "Open/Closed Principle" cho junior developer bằng ví dụ thực tế — tại sao thêm tính năng bằng cách "thêm code mới" tốt hơn "sửa code cũ"?
+
+---
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on:** OOP fundamentals (class, interface, inheritance) — SOLID chỉ apply được khi bạn hiểu OOP
+- ➡️ **Enables:** [Architecture Styles](./02-architecture-styles.md) — Clean Architecture, Hexagonal đều built on SOLID
+- 🔗 **Patterns in practice:** React components (SRP), Redux (Observer), React Context (DIP), Go interfaces (LSP)

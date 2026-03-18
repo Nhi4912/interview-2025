@@ -131,26 +131,80 @@ gaps_identified:     ["List of specific sub-topics missing"]
 # {English Title} / {Tiêu đề Tiếng Việt}
 
 > **Track**: {Shared | FE | BE} | **Difficulty**: {🟢 Junior | 🟡 Mid | 🔴 Senior}
-> **Prerequisites**: [{topic}]({relative-link})
+> **Prerequisites**: [{prior topic}]({relative-link})
 > **See also**: [{related}]({relative-link}) | [{related}]({relative-link})
+
+---
+
+## Real-World Scenario / Tình Huống Thực Tế
+
+{Concrete problem that motivates learning this concept. 3-5 sentences. Must answer: "why does this exist?"}
+{Tình huống thực tế cụ thể — vấn đề mà learner gặp nếu không biết khái niệm này}
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy / Liên Tưởng:**
+{Plain-language Feynman explanation — an analogy a non-programmer could follow}
+{Giải thích bằng liên tưởng đơn giản — không cần biết lập trình cũng hiểu được}
+
+{Table, diagram, or bullet points showing key insight}
+
+**Tại sao phải học topic này?**
+- {Reason 1: interview frequency / practical impact}
+- {Reason 2: connects to X which enables Y}
+- {Reason 3: prevents common bugs/mistakes}
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+{ASCII diagram showing:
+  [prerequisites] → [THIS TOPIC] → [what it enables]
+  Plus key sub-concepts branching from the center}
+```
+
+**Bạn đang ở đây trong lộ trình học:**
+```
+{Learning path: prior concept → [THIS] → next concept}
+```
 
 ---
 
 ## Overview / Tổng Quan
 
-{1-3 sentence English summary}
+{1-3 sentence English summary — topic-specific, not generic}
 
 {Giải thích tổng quan bằng tiếng Việt: mục tiêu, vì sao quan trọng với phỏng vấn, trade-off chính cần nhớ}
 
 ---
 
-## {Section Name} / {Tên mục tiếng Việt}
+## Core Concepts / Khái Niệm Cốt Lõi
+
+### {Concept Name} / {Tên khái niệm}
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+{Explain like explaining to a 5-year-old or non-programmer}
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+{Technical explanation with code/diagram if needed}
+
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+{When it breaks, common mistakes, senior-level nuances}
+
+---
+
+## Q&A Section / Câu Hỏi Phỏng Vấn
 
 ### Q: {English question}? / {Câu hỏi tiếng Việt}? 🟢 Junior
 
 **A:** {English answer — clear, concise, with code if essential}
 
 {Giải thích tiếng Việt: nhấn mạnh điểm quan trọng, trade-off, lỗi phổ biến}
+
+*(Continue with 🟡 Mid then 🔴 Senior questions — strictly ascending difficulty)*
 
 ---
 
@@ -164,15 +218,38 @@ gaps_identified:     ["List of specific sub-topics missing"]
 
 ---
 
-**See also**: [{next topic}]({link}) | [{related}]({link})
+## Self-Check / Tự Kiểm Tra
+
+- [ ] {Active recall question 1 — can I explain X in one sentence?}
+- [ ] {Active recall question 2 — can I draw Y from memory?}
+- [ ] {Active recall question 3 — can I name 2 real use cases?}
+- [ ] {Active recall question 4 — can I implement a basic example?}
+- [ ] {Active recall question 5 — can I compare this to the alternative?}
+
+💬 **Feynman Prompt:** {Explain [this concept] to someone who doesn't code, using [specific analogy].}
+
+---
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on:** [{prerequisite}]({link}) — {why it's needed}
+- ➡️ **Enables:** [{next topic}]({link}) — {what becomes possible}
+- 🔗 **Applied in:** {framework/language/pattern where this shows up}
 ```
 
 **Generation rules:**
-1. Never write placeholder content ("Tactic 1", "TODO: fill in")
-2. Every answer must have both EN explanation + VI reinforcement
-3. Code examples only when they clarify — not to pad content
-4. Max one code block per Q&A unless demonstrating contrast
-5. Vietnamese explanations focus on: WHY it matters + trade-offs + interview tips
+1. **Motivation before definition** — file MUST start with Real-World Scenario, not a definition (Harvard Case Method)
+2. **Feynman-first** — "What & Why" section uses analogy/metaphor, technical precision comes in Core Concepts
+3. **Spiral depth** — each Core Concept has 3 layers: Analogy → How It Works → Edge Cases
+4. **Kumon ordering** — Q&A items MUST progress 🟢→🟡→🔴, each builds on previous
+5. **Active recall required** — every file ends with Self-Check (3-5 checkboxes + Feynman prompt)
+6. Never write placeholder content ("Tactic 1", "TODO: fill in")
+7. Every answer must have both EN explanation + VI reinforcement
+8. Code examples only when they clarify — not to pad content
+9. Max one code block per Q&A unless demonstrating contrast
+10. Vietnamese explanations focus on: WHY it matters + trade-offs + interview tips
+11. **No generic overviews** — Overview must be specific to the file's topic (BANNED: "This file covers bilingual interview prep...")
+12. **No duplicate Q&A answers** — every answer must be unique within the file
 
 ---
 
@@ -193,6 +270,17 @@ Before marking a spec as done, verify:
 - [ ] No placeholder content (no "Tactic N", no "TODO", no stub bullets)
 - [ ] Code examples are real and runnable (tested mentally)
 - [ ] All difficulty levels covered (🟢🟡🔴)
+
+### Pedagogy (Harvard/Feynman/Kumon/Cambridge methods)
+- [ ] File starts with Real-World Scenario (not a definition) — Harvard Case Method
+- [ ] "What & Why" section uses analogy/metaphor a non-programmer understands — Feynman check
+- [ ] Core concepts have 3 spiral layers: Analogy → How It Works → Edge Cases
+- [ ] Q&A strictly ordered 🟢→🟡→🔴, each question builds on previous — Kumon check
+- [ ] Self-Check section present with 3-5 active recall checkboxes + Feynman prompt — Cambridge Supervision
+- [ ] Concept Map (ASCII diagram) shows learning path context
+- [ ] Connections section: ⬅️ prerequisites + ➡️ enables
+- [ ] No generic overview text (test: could this paragraph appear identically in another file?)
+- [ ] No duplicate Q&A answers within the same file
 
 ### Bilingual
 - [ ] Every Q has both EN and VI phrasing

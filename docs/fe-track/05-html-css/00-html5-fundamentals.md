@@ -5,6 +5,62 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+Bạn build một trang blog. Designer hài lòng, trông đẹp trên màn hình. Nhưng:
+- Người dùng mù đọc trang bằng screen reader: nghe thấy "div div div div button" — không hiểu gì
+- Google không index bài viết vì không biết đâu là tiêu đề, đâu là nội dung
+- SEO score thấp, traffic organic = 0
+
+**Nguyên nhân**: Toàn bộ layout dùng `<div>` và `<span>`. Browser không biết đây là header, nav, hay article. HTML5 semantic elements giải quyết vấn đề này.
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy / Liên Tưởng — Tòa nhà văn phòng:**
+Một tòa nhà không có biển chỉ dẫn: tất cả các phòng đều ghi "PHÒNG". Bạn phải vào từng phòng để biết đó là reception, phòng họp hay toilet.
+
+HTML không có semantic = `<div>` soup. HTML có semantic = biển chỉ dẫn rõ ràng:
+- `<header>` = lễ tân tầng trệt
+- `<nav>` = bảng hướng dẫn tầng
+- `<main>` = khu làm việc chính
+- `<article>` = một tài liệu/bài viết độc lập
+- `<aside>` = thông tin phụ (sidebar)
+- `<footer>` = thông tin liên hệ
+
+**Tại sao HTML5 quan trọng hơn bạn nghĩ:**
+- **Accessibility (a11y)**: Screen readers dùng semantic elements để navigate — ảnh hưởng trực tiếp đến 1 tỷ người khuyết tật
+- **SEO**: Google dùng HTML structure để hiểu content — `<h1>` một lần, `<article>` đúng chỗ
+- **Web APIs mới**: HTML5 mang đến `<video>`, `<canvas>`, Web Storage, Geolocation, Web Workers
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+      [HTML5 FUNDAMENTALS]  ← bạn đang ở đây
+              │
+    ┌─────────┼─────────┐
+    ▼         ▼         ▼
+[Semantic] [Forms]  [APIs]
+<header>   <input>  Web Storage
+<nav>      types    Canvas
+<main>     validation Geolocation
+<article>  <form>   Web Workers
+<section>           WebSocket
+<footer>
+    │
+    ▼
+[Accessibility]
+ARIA roles | alt text | tab order
+    │
+    ▼
+[CSS Fundamentals] → [JavaScript DOM]
+```
+
+---
+
 ## Câu Hỏi Phỏng Vấn / Interview Q&A
 
 ### Q: What is semantic HTML and why does it matter? / Semantic HTML là gì và tại sao quan trọng? 🟢 Junior
@@ -436,3 +492,23 @@ module:               Same as defer + ES module features
   <script type="module" src="/components/header.js"></script>
 </head>
 ```
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Tôi có thể liệt kê 8 semantic HTML5 elements và giải thích khi nào dùng mỗi cái không?
+- [ ] Tôi có thể giải thích tại sao semantic HTML quan trọng cho screen readers không?
+- [ ] Tôi có thể giải thích sự khác biệt giữa `<section>` và `<article>` không?
+- [ ] Tôi có thể implement một form với validation HTML5 native (không dùng JS) không?
+- [ ] Tôi có thể giải thích `<meta charset>`, `<meta viewport>` làm gì và tại sao cần không?
+
+💬 **Feynman Prompt:** Giải thích tại sao "semantic HTML" quan trọng. Dùng ví dụ về người mù đang dùng screen reader navigate trang web của bạn.
+
+---
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on:** Hiểu biết cơ bản về web browser (DOM, request/response) — không cần file cụ thể, đây là điểm khởi đầu
+- ➡️ **Enables:** [CSS Fundamentals](./00-css-fundamentals.md) — cần HTML structure để apply CSS
+- 🔗 **Related:** [Web Accessibility (a11y)](../07-web-security/) | ARIA roles | Screen reader testing

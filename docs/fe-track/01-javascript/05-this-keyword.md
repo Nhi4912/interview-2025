@@ -9,11 +9,75 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+Bạn có một object `user` với method `greet`. Bạn tách method ra và gọi sau — nhưng `this` bị mất:
+
+```javascript
+const user = {
+  name: 'Alice',
+  greet() { console.log(`Hello, ${this.name}`); }
+};
+
+user.greet();         // "Hello, Alice" ✅
+const fn = user.greet;
+fn();                 // "Hello, undefined" ❌ — this mất!
+setTimeout(user.greet, 100); // "Hello, undefined" ❌ — this mất!
+```
+
+Đây là bug phổ biến nhất với `this` — và là lý do React class components thường phải `.bind(this)` trong constructor. Hiểu `this` = hiểu tại sao React Hooks ra đời để giải quyết vấn đề này.
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy (Feynman):** `this` giống như **đại từ "tôi"** — nghĩa của nó phụ thuộc vào **ai đang nói**, không phải **câu được viết ở đâu**.
+
+```
+"Tôi muốn ăn phở" — nói bởi Alice → tôi = Alice
+"Tôi muốn ăn phở" — nói bởi Bob   → tôi = Bob
+(cùng một câu, nghĩa khác nhau)
+
+greet() { console.log(this.name) }  ← cùng function
+user.greet()     → this = user      ← "Alice nói"
+greet()          → this = global    ← "không ai nói"
+```
+
+**Quy tắc vàng để nhớ `this`:**
+
+| Cách gọi | `this` là |
+|----------|-----------|
+| `obj.method()` | `obj` |
+| `fn()` (standalone) | `global` / `undefined` (strict mode) |
+| `new Fn()` | object mới được tạo |
+| `fn.call(ctx)` / `fn.apply(ctx)` | `ctx` |
+| Arrow function | `this` của scope bao ngoài (lexical) |
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[Prototypes & Inheritance] → [this keyword] ★ ← bạn đang ở đây
+                                    ↓
+                   this được xác định lúc CALL TIME (không phải define time)
+                                    ↓
+          ┌──────────────────┬──────────────────┬──────────────┐
+    Method call         Standalone fn      Constructor      Arrow fn
+    obj.fn() → obj      fn() → global      new Fn() → {}   Lexical this
+                                    ↓
+          Explicit override: .call() .apply() .bind()
+                                    ↓
+          [Event Loop & Async] → stale this trong setTimeout
+```
+
+---
+
 ## Overview / Tổng Quan
 
-**English:** The `this` keyword is one of the most confusing concepts in JavaScript. Its value depends on how a function is called, not where it's defined. Understanding `this` is crucial for interviews and real-world JavaScript development.
+**English:** `this` refers to the **execution context** — who "owns" the current function call. Unlike lexical scope (determined at write time), `this` is dynamic — determined at **call time**. Arrow functions are the exception: they capture `this` lexically from their surrounding scope.
 
-**Tiếng Việt:** Từ khóa `this` là một trong những khái niệm gây nhầm lẫn nhất trong JavaScript. Giá trị của nó phụ thuộc vào cách hàm được gọi, không phải nơi nó được định nghĩa. Hiểu về `this` rất quan trọng cho phỏng vấn và phát triển JavaScript thực tế.
+**Tiếng Việt:** `this` là **execution context** — ai đang gọi hàm hiện tại. Khác với lexical scope (xác định lúc viết code), `this` là **dynamic** — xác định lúc hàm được gọi. Arrow function là ngoại lệ: chúng kế thừa `this` từ scope bao ngoài theo lexical rule.
 
 ---
 
@@ -706,3 +770,23 @@ console.log(obj.getName.call({ name: 'Call' })); // "Call" (explicit binding / r
 ---
 
 [← Previous: Prototypes & Inheritance](./04-prototypes-inheritance.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next: Event Loop & Async →](./06-event-loop-async.md)
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Tôi có thể điền `this` cho mỗi trường hợp: `obj.fn()`, `fn()`, `new Fn()`, `fn.call(ctx)`, arrow function
+- [ ] Tôi có thể giải thích tại sao React class components cần `.bind(this)` trong constructor
+- [ ] Tôi biết tại sao arrow function KHÔNG có `this` riêng (và khi nào điều này là lợi thế)
+- [ ] Tôi có thể phân biệt `.call()`, `.apply()`, và `.bind()` — cả 3 khác nhau ở chỗ nào
+- [ ] Tôi biết `this` trong strict mode khác gì non-strict mode khi gọi standalone
+
+**💬 Giải thích bằng lời:** "Tại sao `const fn = obj.greet; fn()` bị mất `this`? Giải thích bằng analogy 'ai đang nói'." *(30 giây)*
+
+---
+
+## Connections / Liên Kết Kiến Thức
+
+- ⬅️ **Cần biết trước:** [Prototypes & Inheritance](./04-prototypes-inheritance.md) — method trên prototype dùng `this`
+- ➡️ **Thường xảy ra với:** [Event Loop & Async](./06-event-loop-async.md) — `this` trong callback/setTimeout hay bị mất
+- ➡️ **Giải quyết trong React:** [React Hooks](../03-react/03-hooks-deep-dive.md) — hooks được tạo ra một phần để tránh `this` issues

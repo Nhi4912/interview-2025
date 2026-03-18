@@ -48,7 +48,12 @@
       "Bash(/Users/nee/Documents/Documents/interview/docs/shared/01-cs-fundamentals/08-computation-theory.md:*)",
       "Bash(/Users/nee/Documents/Documents/interview/docs/shared/01-cs-fundamentals/information-theory.md:*)",
       "Bash(/Users/nee/Documents/Documents/interview/docs/shared/05-software-engineering/06-project-management.md:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(wc -l /Users/nee/Documents/Documents/interview/docs/shared/**/*.md)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/fe-track/01-javascript/02-scope-hoisting.md:*)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/fe-track/01-javascript/04-prototypes-inheritance.md:*)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/fe-track/01-javascript/05-this-keyword.md:*)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/fe-track/01-javascript/06-event-loop-async.md:*)"
     ]
   }
 }
