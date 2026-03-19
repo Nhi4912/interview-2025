@@ -5,6 +5,20 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Lazada product search (thực tế):** Product catalog API call takes 200ms (DB join 5 tables). With cache-aside: first request misses (200ms), subsequent requests hit cache (1ms). All good until Black Friday: 10,000 users search for "iPhone" at midnight when TTL expires simultaneously → **cache stampede**: 10,000 DB queries in 1 second. DB overloaded, cache takes 30 seconds to rebuild → all 10,000 users see 30s timeout. Fix: singleflight (only 1 request rebuilds, others wait) + TTL jitter (random 60±10s expiry).
+
+**Bài học:** Cache giải quyết latency nhưng tạo ra stampede và stale data problems. Senior engineer designs around these failure modes.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Cache giống bộ nhớ ngắn hạn của não: không cần đi thư viện (database) mỗi lần muốn biết ngày sinh của bạn thân. Nhưng nếu thông tin trong bộ nhớ quá cũ (stale data), bạn có thể đưa ra thông tin sai. Eviction = quên đi thứ ít quan trọng để nhớ thứ mới hơn (LRU).
+
+**Why it matters:** Caching là một trong những kỹ thuật tối ưu hiệu quả nhất trong system design. Cache stampede và cache invalidation là hai vấn đề khó nhất — Senior phải biết cả hai.
+
+---
+
 ## Visual Overview / Sơ Đồ Tổng Quan
 
 ### Cache Position in System Architecture
@@ -348,3 +362,20 @@ Vietnamese explanation: Write-through phổ biến hơn vì an toàn (no data lo
 | Cache-aside pattern | 🟢 | App manages; check→miss→DB→cache; DELETE on write (not update) |
 | Cache stampede prevention | 🟡 | Singleflight + TTL jitter; stale-while-revalidate |
 | Write-through vs write-behind | 🟡 | Through=consistent+slower; behind=fast+data loss risk |
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I draw the Cache-Aside flow including read miss and write invalidation?
+- [ ] Can I explain cache stampede and describe 2 prevention strategies?
+- [ ] Can I compare Write-Through vs Write-Behind — when does data loss risk matter?
+- [ ] Can I explain TTL jitter and why it prevents thundering herd?
+- 💬 **Feynman Prompt:** Giải thích tại sao "delete on write" (cache invalidation) tốt hơn "update on write" — edge case nào mà update cache có thể dẫn đến inconsistency?
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [System Design Theory](./system-design-theory.md) — caching is core to scaling
+- ➡️ **Implementation**: [BE Caching Patterns](../../be-track/03-database-advanced/04-caching-patterns.md) — Redis implementation details
+- ➡️ **Applied in**: [Design Framework](../../be-track/04-be-system-design/01-design-framework.md) — caching discussed in every Deep Dive
+- 🔗 **Related**: [Replication & Partitioning](./replication-partitioning.md) — cache sits in front of replicated DB

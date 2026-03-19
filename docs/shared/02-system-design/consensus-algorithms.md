@@ -3,6 +3,18 @@
 > **Track**: Shared | **Difficulty**: 🔴 Senior
 > **See also**: [System Design Theory](./system-design-theory.md) | [Replication & Partitioning](./replication-partitioning.md) | [Distributed Systems](../../be-track/02-backend-knowledge/03-distributed-systems.md)
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Kubernetes cluster at Grab (thực tế):** K8s control plane dùng etcd (Raft consensus) để lưu cluster state. Trong một maintenance window, 2 trong 5 etcd nodes bị restart cùng lúc — cluster vẫn hoạt động (quorum = 3/5). Khi engineer accidentally restart node thứ 3, cluster mất quorum → etcd bị block, không thể deploy pod mới, không thể schedule workloads. Running pods vẫn OK (kubelet local state), nhưng control plane "frozen". Fix: restart etcd nodes từng cái, không quá 1 tại một thời điểm.
+
+**Bài học:** Consensus (Raft/Paxos) là không thể thiếu cho distributed systems với strong consistency. Quorum rule (majority) quyết định fault tolerance — hiểu điều này giúp design HA clusters đúng.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Consensus giống bầu chọn trong hội đồng: cần đa số phiếu (quorum) để ra quyết định. Nếu hội đồng có 5 thành viên, cần ít nhất 3 đồng ý. Raft là "chairman" (Leader) nhận proposals và broadcast → members ACK → leader commit khi nhận majority ACKs. Paxos là phiên bản phức tạp hơn của cùng nguyên lý.
+
+**Why it matters:** etcd (K8s), ZooKeeper (Kafka, Hadoop), và Consul (service discovery) đều dùng consensus algorithms. Senior engineer được expect biết Raft basics, quorum math, và failure scenarios.
+
 ## Achieving Agreement in Distributed Systems / Đạt Được Sự Đồng Thuận
 
 **English:** Consensus algorithms enable multiple nodes in a distributed system to agree on a single value or state, even in the presence of failures, forming the foundation of reliable distributed systems.
@@ -596,3 +608,20 @@ ETCDCTL_API=3 etcdctl snapshot restore /backup/etcd-snapshot.db \
 - Running workloads vẫn chạy (kubelet độc lập với etcd)
 - Đây là lý do tại sao K8s backup strategy = etcd snapshot
 - Khi phỏng vấn về K8s HA: luôn đề cập đến etcd quorum (3 hoặc 5 nodes, multi-AZ)
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I explain Raft's 3 roles (leader, follower, candidate) and state machine transitions?
+- [ ] Can I calculate fault tolerance for a 5-node cluster (can tolerate 2 failures)?
+- [ ] Can I explain why etcd uses 3 or 5 nodes (not 2 or 4)?
+- [ ] Can I describe what happens when a Raft cluster loses quorum?
+- 💬 **Feynman Prompt:** Giải thích tại sao "split-brain" (2 leaders trong 1 cluster) không thể xảy ra trong Raft — cơ chế nào ngăn chặn điều này?
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [Distributed Systems](../../be-track/02-backend-knowledge/03-distributed-systems.md) — CAP theorem context for why consensus is CP
+- ⬅️ **Built on**: [Replication & Partitioning](./replication-partitioning.md) — consensus enables single-leader replication
+- ➡️ **Applied in**: [Observability & Scale](../../be-track/04-be-system-design/05-observability-and-scale.md) — K8s/etcd HA discussed in scale section
+- 🔗 **Related**: [System Design Theory](./system-design-theory.md) — consensus is the foundation of distributed coordination

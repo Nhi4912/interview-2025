@@ -5,6 +5,20 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**VinID MySQL replication lag incident:** Production setup: 1 primary + 2 read replicas. Analytics team chạy heavy report queries trên replica. Khi primary có burst of writes (flash sale), replica replication lag tăng lên 45 giây. Result: user đặt hàng thành công nhưng refresh trang thấy "order not found" (vì đọc từ lagging replica). Fix: route critical reads (order status) đến primary, analytics reads đến replica with lag tolerance.
+
+**Bài học:** Replication lag không phải vấn đề lý thuyết — nó xảy ra trong production. Architect phải biết khi nào đọc từ primary vs replica.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Replication giống photocopy tài liệu: bản gốc (primary) được sao chép ra nhiều bản (replicas) để nhiều người cùng đọc. Vấn đề: nếu bản gốc vừa sửa xong, photocopy chưa cập nhật — bạn đọc phiên bản cũ. Sharding giống chia tài liệu thành nhiều quyển theo chủ đề (shard key) — mỗi người giữ một phần.
+
+**Why it matters:** Replication (cho read scale + HA) và sharding (cho write scale) là hai kỹ thuật scale DB quan trọng nhất. Senior phải biết khi nào dùng cái nào.
+
+---
+
 ## Visual Overview / Sơ Đồ Tổng Quan
 
 ### Replication Models
@@ -313,3 +327,20 @@ Vietnamese explanation: Chọn shard key là quyết định quan trọng nhất
 |----------|-------|-----------|
 | Replication strategies | 🟡 | Sync=consistent; async=fast+lag; semi-sync=MySQL default balanced |
 | Sharding & shard key | 🔴 | High cardinality, even distribution, immutable; avoid time-based hotspots |
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I explain the difference between synchronous and asynchronous replication (consistency vs performance)?
+- [ ] Can I describe 3 bad shard key choices and explain why each causes problems?
+- [ ] Can I explain when to use read replica vs primary for reads?
+- [ ] Can I describe how replication lag manifests as a user-visible bug?
+- 💬 **Feynman Prompt:** Giải thích tại sao "always route reads to primary" solves replication lag but is not a scalable solution — và khi nào bạn *phải* chấp nhận eventual consistency từ replica.
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [System Design Theory](./system-design-theory.md) — scaling strategies require replication understanding
+- ⬅️ **Built on**: [Consensus Algorithms](./consensus-algorithms.md) — single-leader replication needs consensus for leader election
+- ➡️ **Applied in**: [Sharding & Transactions](../../shared/03-database/04-sharding-and-transactions.md) — detailed sharding implementation
+- 🔗 **Related**: [Observability & Scale](../../be-track/04-be-system-design/05-observability-and-scale.md) — DB scaling is a core scale topic
