@@ -6,6 +6,41 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Shopee Interview (2023, ứng viên chia sẻ):** Câu hỏi "Design a URL shortener" — ứng viên nhảy thẳng vào database schema. Interviewer dừng lại: "Bao nhiêu URLs được tạo mỗi ngày? Cần analytics không? TTL có expiry không?" Không có answers, ứng viên không biết nên dùng SQL hay NoSQL, không biết scale cỡ nào. Kết quả: fail vòng system design.
+
+**Bài học:** Classic problems như URL shortener, rate limiter, notification system *có vẻ* đơn giản nhưng ẩn chứa nhiều trade-off. Framework 5 bước (requirements → estimation → HLD → deep dive → wrap-up) phải được áp dụng ngay cả với bài "đơn giản".
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Classic system design problems giống bài thi lái xe: không ai hỏi bạn "tự thiết kế một chiếc xe" — họ hỏi các tình huống điển hình (đường trơn, biển cấm, đường ưu tiên). Mỗi "classic problem" là một tập hợp trade-off quen thuộc mà senior engineer phải biết navigate trong 45 phút.
+
+**Why these problems:** URL shortener (hashing, redirect, analytics), rate limiter (token bucket, distributed counters), notification system (queue, fan-out, priority) — mỗi bài test một domain kiến thức khác nhau nhưng dùng chung framework.
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[Classic Problems — Key Trade-offs]
+        │
+        ├── URL Shortener
+        │     ├── Hashing strategy: MD5 vs base62 vs custom
+        │     ├── Read-heavy: cache aggressively
+        │     └── Analytics: async pipeline (Kafka → ClickHouse)
+        │
+        ├── Rate Limiter
+        │     ├── Algorithm: Token Bucket vs Sliding Window
+        │     ├── Distributed: Redis INCR + TTL vs Lua script
+        │     └── Where: API Gateway vs per-service vs user-level
+        │
+        └── Notification System
+              ├── Fan-out strategies: push vs pull per user type
+              ├── Priority queues: OTP > transactional > marketing
+              └── Deduplication: idempotency keys + DLQ
+```
+
+---
+
 ## How to Use This Guide / Cách Sử Dụng
 
 Mỗi bài toán trình bày theo framework 5 bước:
@@ -719,3 +754,20 @@ Key design decisions:
 ```
 
 **Điểm senior:** Notification systems cần: user preferences/opt-outs (legal requirement), retry với DLQ, deduplication với idempotency keys, priority queues (user doesn't want marketing delayed OTP). Multi-channel routing qua queue decouples senders từ channel-specific logic.
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I design a URL shortener end-to-end in 45 minutes without notes?
+- [ ] Can I compare Token Bucket vs Sliding Window rate limiting algorithms?
+- [ ] Can I explain the fan-out problem in notification systems and 2 solutions?
+- [ ] Can I choose between SQL and NoSQL for each classic problem and justify why?
+- 💬 **Feynman Prompt:** Giải thích tại sao URL shortener cần "read-heavy optimization" nhưng rate limiter cần "write-heavy optimization" — và điều đó dẫn đến kiến trúc khác nhau như thế nào.
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [Design Framework](./01-design-framework.md) — apply 5-step framework to each problem
+- ➡️ **Advanced**: [Advanced Problems](./03-advanced-problems.md) — search engine, video streaming, payment systems
+- 🔗 **Related**: [Message Queues](../02-backend-knowledge/08-message-queues.md) — notification system uses Kafka/RabbitMQ
+- 🔗 **Related**: [Caching Patterns](../03-database-advanced/04-caching-patterns.md) — URL shortener is a cache-heavy system

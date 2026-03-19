@@ -6,6 +6,46 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Grab Engineering Blog (public):** Lúc peak hour tại TP.HCM, 500,000 driver đang online liên tục gửi location updates 5 giây/lần — tức 100,000 writes/giây chỉ riêng location data. PostgreSQL truyền thống không chịu được. Grab dùng Redis Sorted Set với geohash làm score: `ZADD drivers {geohash_score} {driver_id}`, tra cứu nearby drivers bằng `ZRANGEBYSCORE`. Matching latency: < 200ms.
+
+**Bài học:** Ride-hailing không phải chỉ là CRUD app. Location indexing, real-time matching, và surge pricing phải được thiết kế từ đầu với scale constraints cụ thể.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Thiết kế hệ thống gọi xe giống điều phối taxi sân bay: có dispatcher (matching service), bộ đàm (WebSocket/MQTT cho real-time), bản đồ với vị trí xe cập nhật liên tục (location service), và hệ thống tính giá (fare service). Mỗi bộ phận phải làm việc trong < 1 giây để rider không bỏ đi.
+
+**Why this problem:** "Design Grab" là câu hỏi kinh điển ở Grab, Go-Jek, và Be. Nó test đồng thời: geospatial indexing, real-time communication, distributed matching, và payment processing — tất cả trong 45 phút.
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[Ride-Hailing Architecture]
+        │
+        ├── Location Service
+        │     ├── Driver pushes location every 5s (WebSocket/MQTT)
+        │     ├── Redis Sorted Set with geohash score
+        │     └── ZRANGEBYSCORE for nearby driver lookup
+        │
+        ├── Matching Service
+        │     ├── Rider request → find top-N nearby drivers
+        │     ├── Score = distance + rating + acceptance rate
+        │     └── Push via WebSocket, 30s timeout → reassign
+        │
+        ├── Trip Service
+        │     ├── State machine: requested → accepted → in-progress → completed
+        │     ├── Saga pattern: booking → payment → notification
+        │     └── PostgreSQL for trip records (ACID for payments)
+        │
+        └── Surge Pricing
+              ├── Supply/demand ratio per geo-cell
+              ├── Recalculated every 30s
+              └── Redis cache for price lookup
+```
+
+---
+
 ## Why This Matters / Tại Sao Quan Trọng
 
 Grab's core product là ride-hailing. Câu hỏi "Design Grab" hoặc "Design a ride-matching system" rất phổ biến ở phỏng vấn Grab, Go-Jek, và các công ty transport tech. Đây cũng là bài toán hay được dùng để test distributed systems knowledge ở Senior level.
@@ -349,3 +389,20 @@ SETNX driver:456:lock "trip:999" EX 15
 ---
 
 **See also**: [Classic System Design Problems](./02-classic-problems.md) | [Message Queues Go](../02-backend-knowledge/08-message-queues.md) | [Grab Company Guide](../../shared/07-company-guides/03-grab.md)
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I explain why Redis Sorted Set with geohash is used for driver location — not PostGIS?
+- [ ] Can I draw the trip state machine (5+ states) and explain transitions?
+- [ ] Can I calculate peak QPS for location updates given 500k drivers at 5s interval?
+- [ ] Can I explain how surge pricing is implemented without causing thundering herd?
+- 💬 **Feynman Prompt:** Giải thích tại sao matching service cần "timeout + reassign" logic — và điều gì xảy ra nếu driver accept sau khi đã được reassign cho rider khác?
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [Design Framework](./01-design-framework.md) — apply all 5 steps to this problem
+- ⬅️ **Built on**: [Distributed Patterns](./04-distributed-patterns.md) — Saga pattern for booking flow
+- ⬅️ **Built on**: [Message Queues](../02-backend-knowledge/08-message-queues.md) — Kafka for location event streaming
+- 🔗 **Company context**: [Grab Company Guide](../../shared/07-company-guides/03-grab.md) — interview expectations and past questions

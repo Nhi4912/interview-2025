@@ -5,6 +5,47 @@
 
 > Backend Track — System Design
 > Cross-referenced by: `01-design-framework.md`, `02-classic-problems.md`, `04-distributed-patterns.md`, `../02-backend-knowledge/02-microservices.md`, `../02-backend-knowledge/03-distributed-systems.md`, `../02-backend-knowledge/06-networking-go.md`, `../06-devops-infrastructure.md`, `../01-golang/05-testing-profiling.md`, `../../shared/02-system-design/system-design-theory.md`, `../../shared/02-system-design/replication-partitioning.md`, `../../shared/01-cs-fundamentals/networking-theory.md`
+
+---
+
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Axon Active SRE incident:** Production service bắt đầu trả error 503 lúc 2am. On-call engineer dùng Grafana: metric `http_requests_total{status="503"}` tăng đột biến → alert triggered. Trace ID từ error log dẫn đến Jaeger: request timeout ở database call. Log từ DB service: `too many connections (max 100)`. Root cause: connection pool leak sau deploy 10pm. Không có traces, engineer phải đoán mù trong 45 phút.
+
+**Bài học:** Three pillars of observability (metrics, logs, traces) không thể thiếu cái nào. Metrics alert bạn, traces chỉ cho bạn nơi, logs giải thích tại sao.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Observability giống bệnh viện: metrics là máy đo nhịp tim (alert khi bất thường), logs là bệnh án (chi tiết từng sự kiện), traces là X-ray (nhìn xuyên qua hệ thống từ đầu đến cuối). Thiếu bất kỳ cái nào, bác sĩ (SRE) chẩn đoán sai hoặc chậm.
+
+**Why it matters:** Mọi production system đều có incident. Thời gian từ "alert" đến "root cause" (MTTD + MTTR) quyết định business impact. Senior engineer thiết kế observability từ đầu, không thêm vào sau khi có incident.
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[Observability]
+        │
+        ├── Metrics (alert + trend)
+        │     ├── RED: Rate, Errors, Duration (per service)
+        │     ├── USE: Utilization, Saturation, Errors (per resource)
+        │     └── Tools: Prometheus (scrape) → Grafana (visualize)
+        │
+        ├── Logs (debug + audit)
+        │     ├── Structured JSON: {level, trace_id, user_id, message}
+        │     ├── Correlation: trace_id links log ↔ trace ↔ span
+        │     └── Tools: ELK stack, Loki, Cloud Logging
+        │
+        ├── Traces (latency root cause)
+        │     ├── Distributed trace: request across multiple services
+        │     ├── Span: single operation within a service
+        │     └── Tools: Jaeger, Zipkin, OpenTelemetry (standard)
+        │
+        └── SLO/SLA
+              ├── SLI: measurement (error rate, p99 latency)
+              ├── SLO: internal target (99.9% success rate)
+              └── Error budget: how much unreliability is allowed
+```
+
 ---
 ## 0) Study Orientation
 ### 🟢 [Junior] Q: What should I focus on first for observability + scale interviews?
@@ -1290,3 +1331,20 @@ Vietnamese explanation: “Premature sharding is root of many evils.” Vertical
 | SLI vs SLO vs SLA | 🟡 | SLI=measurement; SLO=internal target; SLA=contract; error budget drives decisions |
 | RED and USE methods | 🟡 | RED for services (user view); USE for resources (infra view) |
 | Database scaling strategies | 🔴 | Vertical→replicas→cache→sharding; don't shard prematurely |
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I explain the difference between metrics, logs, and traces — and when each is most useful?
+- [ ] Can I calculate error budget from an SLO percentage?
+- [ ] Can I compare RED vs USE methods — when to use each?
+- [ ] Can I describe the 4 database scaling steps in order (why is sharding last)?
+- 💬 **Feynman Prompt:** Một junior hỏi "tại sao cần cả 3 — metrics, logs, traces?" — dùng incident story để giải thích tại sao thiếu trace sẽ khiến MTTR tăng gấp đôi.
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [Testing & Profiling](../01-golang/05-testing-profiling.md) — pprof is the Go-specific profiling tool
+- ⬅️ **Built on**: [Distributed Systems](../02-backend-knowledge/03-distributed-systems.md) — distributed tracing spans multiple services
+- ➡️ **Applied in**: [Design Framework](./01-design-framework.md) — observability is always mentioned in Wrap-up step
+- 🔗 **Related**: [Ride-Hailing System](./06-ride-hailing-system.md) — full system needs all 3 observability pillars
