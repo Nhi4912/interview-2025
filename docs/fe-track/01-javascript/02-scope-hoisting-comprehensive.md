@@ -9,6 +9,20 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Tiki frontend bug (thực tế):** Component render cart items — developer dùng `var i` trong `for` loop với `setTimeout`. Kết quả: tất cả timeouts log cùng giá trị cuối cùng của `i`, không phải từng giá trị. Classic `var` hoisting + closure bug. Fix: đổi `var` → `let` (block-scoped) — 1 ký tự thay đổi, behavior hoàn toàn khác. `var i` hoist lên function scope; `let i` tạo block scope mới cho mỗi iteration.
+
+**Bài học:** Scope không phải academic — nó quyết định *khi nào* và *ở đâu* variable tồn tại. `var` vs `let` vs `const` behavior khác nhau về scope và hoisting là nguồn bug phổ biến nhất trong JS.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Scope giống phòng trong nhà: `var` là tờ giấy để ở phòng khách (function scope) — ai trong nhà đều thấy. `let/const` là tờ giấy trong ngăn kéo (block scope) — chỉ người trong phòng đó thấy. Hoisting giống việc JavaScript "đọc qua" toàn bộ code trước khi chạy — biến `var` được "kéo lên đầu" và khởi tạo là `undefined`, `let/const` được kéo lên nhưng **không** khởi tạo → Temporal Dead Zone.
+
+**Why it matters:** Scope và hoisting là nền tảng của mọi JS interview. Không hiểu TDZ, `this` binding, closure over loop variables → code đúng ngẫu nhiên, không đúng một cách có chủ đích.
+
+---
+
 ## Tổng Quan / Overview
 
 - **English:** This document explains lexical scope, scope chain, hoisting semantics, TDZ behavior, module boundaries, and advanced interview pitfalls.

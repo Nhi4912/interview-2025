@@ -9,6 +9,20 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**VNG frontend interview (ứng viên chia sẻ):** Câu hỏi "What's the difference between `class` and prototype-based inheritance?" Ứng viên: "class là OOP như Java." Interviewer: "How does `class` work under the hood in JS?" — ứng viên không biết `class` là syntactic sugar over prototype chain, không có true class-based inheritance. Fail.
+
+**Bài học:** React components, array methods (`map`, `filter`), and everything in JS runs on prototype chain. `class` syntax hides this — but interviews reveal understanding of what's actually happening.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Prototype chain giống gia phả: khi bạn tìm property trên object, JS "leo lên cây gia phả" đến `Object.prototype`. Nếu không tìm thấy ở con, tìm ở cha, tìm ở ông, tìm ở `Object.prototype`, cuối cùng là `null`. `class` syntax là "giấy khai sinh đẹp hơn" — cùng mechanism, khác presentation.
+
+**Why it matters:** Prototype chain giải thích: tại sao `[].map()` works, tại sao `instanceof` works, tại sao method sharing across instances. Framework questions (React class vs functional) touch on prototype concepts.
+
+---
+
 ## Tổng Quan / Overview
 
 - **English:** This guide moves from core prototype mechanics to class syntax, descriptors, Reflect/Proxy, mixins, and inheritance design strategy.

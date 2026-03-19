@@ -9,6 +9,26 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Shopee product page loading (thực tế):** Page cần load: product info, seller info, và related products. Developer dùng `await` cho từng cái theo thứ tự:
+```js
+const product = await fetchProduct(id)
+const seller = await fetchSeller(product.sellerId)
+const related = await fetchRelated(id)
+```
+Total wait: 300ms + 250ms + 200ms = 750ms. Fix: `Promise.all([fetchSeller, fetchRelated])` vì chúng không depend vào nhau → parallel: 300ms + max(250, 200) = 550ms. 27% faster với 3 dòng code.
+
+**Bài học:** `async/await` trông sequential nhưng có thể parallelized khi calls không depend nhau. Không biết `Promise.all` vs sequential `await` → để performance trên bàn.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Async trong JS giống phục vụ nhà hàng: `await` là ngồi chờ bếp nấu xong món 1 rồi mới gọi món 2. `Promise.all` là gọi tất cả món cùng lúc, chờ món nào làm lâu nhất. Event loop là người phục vụ: không idle trong khi chờ bếp — phục vụ bàn khác, quay lại khi bếp done (callback/microtask queue).
+
+**Why it matters:** Async programming là 50% của frontend development. Interview questions về Promise chains, microtask vs macrotask, `Promise.all` vs `Promise.allSettled` đều test understanding của event loop và async execution model.
+
+---
+
 ## Tổng Quan / Overview
 
 - **English:** This guide covers the full async JavaScript landscape: callbacks, Promise coordination, async/await, async iterators, cancellation, microtasks, and production reliability patterns.

@@ -9,6 +9,20 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Lazada product listing memory leak (thực tế):** Infinite scroll component attach event listener với closure — mỗi lần scroll thêm hàng, closure capture reference đến `productList` array ngày càng lớn. Sau 500 products, `productList` có 500 items nhưng closure trong event listener vẫn giữ reference. GC không collect được → memory leak, tab crash sau 30 phút. Fix: cleanup event listener khi component unmount (`useEffect` cleanup), không capture mutable state trong long-lived closures.
+
+**Bài học:** Closure không phải "hack" hay "advanced technique" — nó là default behavior của JS (functions giữ reference đến outer scope). Biết khi nào closure giữ reference too long = biết tránh memory leak.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Closure giống backpack của student: function mang theo "backpack" chứa mọi variable từ scope nơi nó được tạo. Kể cả khi ra khỏi classroom (outer scope), student vẫn dùng được đồ trong backpack. Problem: nếu backpack giữ reference đến thứ quá lớn (1000 products), nó chiếm memory mãi.
+
+**Why it matters:** Closure là core của React hooks (`useState`, `useEffect`), module pattern, currying, memoization. Không hiểu closure → không hiểu tại sao stale closure bugs xảy ra trong React.
+
+---
+
 ## Tổng Quan / Overview
 
 - **English:** This guide explains closures from engine internals ([[Environment]]) to lifecycle, practical patterns, React pitfalls, and memory safety.
