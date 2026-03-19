@@ -5,6 +5,20 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Tiki.vn search query timeout:** `SELECT * FROM products WHERE category='electronics' AND price < 1000000 ORDER BY created_at DESC LIMIT 20` — query mất 8 giây với 50 triệu rows. `EXPLAIN ANALYZE` shows: full table scan (Seq Scan), không có index. Fix 1: add index on `(category, price, created_at)` — composite index ESR order. Query time: 8s → 45ms. Fix 2: thêm index trên `created_at DESC` riêng cho sort — Index Only Scan.
+
+**Bài học:** Index không tự động. `EXPLAIN ANALYZE` là công cụ bắt buộc khi debug slow queries. Biết cách đọc query plan là kỹ năng phân biệt Junior vs Senior DB developer.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Database index giống mục lục sách: thay vì đọc từng trang (full table scan), bạn mở mục lục tìm trang số (B+Tree lookup) → nhảy thẳng đến trang đó. Composite index giống mục lục nhiều cấp (chương → mục → trang) — chỉ hữu ích nếu bạn search từ cấp đầu tiên.
+
+**Why it matters:** 80% performance issues ở production database là missing indexes hoặc wrong indexes. Biết B+Tree internals giúp predict query performance và design indexes đúng.
+
+---
+
 ## Visual Overview / Sơ Đồ Tổng Quan
 
 ### How B+Tree Index Works
@@ -302,3 +316,20 @@ Vietnamese explanation: INCLUDE clause (PostgreSQL 11+): columns added to leaf n
 |----------|-------|-----------|
 | Which columns to index | 🟡 | WHERE/JOIN/ORDER BY columns; ESR rule for composite; avoid low-cardinality |
 | Covering index | 🟡 | All needed columns in index → Index Only Scan; no heap fetch |
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I explain why B+Tree is used for indexes (not B-Tree or hash)?
+- [ ] Can I apply the ESR rule (Equality → Sort → Range) to design a composite index?
+- [ ] Can I read an EXPLAIN ANALYZE output and identify Seq Scan vs Index Scan?
+- [ ] Can I name 3 cases where an index exists but PostgreSQL still uses Seq Scan?
+- 💬 **Feynman Prompt:** Giải thích tại sao `WHERE status = 'active'` index không hiệu quả khi 90% rows có status='active' — và tại sao PostgreSQL chọn Seq Scan thay vì Index Scan trong trường hợp này.
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [Database Theory](./database-theory.md) — ACID properties affect what indexes guarantee
+- ➡️ **Applied in**: [BE Indexing](../../be-track/03-database-advanced/02-indexing-optimization.md) — implementation with EXPLAIN ANALYZE examples
+- 🔗 **Related**: [Sharding & Transactions](./04-sharding-and-transactions.md) — shard key selection follows index design principles
+- 🔗 **Related**: [NoSQL & NewSQL](./03-nosql-and-newsql.md) — NoSQL uses different index structures (LSM-Tree)

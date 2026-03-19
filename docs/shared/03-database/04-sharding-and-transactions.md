@@ -6,6 +6,20 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**VinCommerce (Winmart) inventory service:** Khi user checkout, 3 events cần happen trong 1 transaction: (1) trừ inventory, (2) tạo order record, (3) charge payment. Trong MySQL với default isolation level (REPEATABLE READ), hai users đồng thời checkout item cuối cùng — cả hai thấy `inventory = 1`, cả hai commit. Kết quả: `inventory = -1`. Fix: dùng `SELECT ... FOR UPDATE` (pessimistic locking) hoặc optimistic locking với `version` column.
+
+**Bài học:** Transaction isolation levels không phải academic — dirty read, non-repeatable read, phantom read xảy ra trong production nếu không chọn đúng isolation level.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Transaction isolation giống phòng thay đồ: Serializable = chỉ 1 người vào một lúc (consistent, chậm); Read Committed = bạn chỉ thấy đồ đã được treo đầy đủ (người khác vẫn có thể thêm đồ sau khi bạn vào); Read Uncommitted = thấy cả đồ người khác vừa đặt lên ghế (chưa finalized).
+
+**Why it matters:** Chọn sai isolation level = data corruption trong high-concurrency scenarios. Sharding là step cuối cùng khi scale — phải hiểu rõ tradeoffs.
+
+---
+
 ## Overview / Tổng Quan
 
 Hai chủ đề hay bị hỏi ở phỏng vấn Senior:
@@ -359,4 +373,21 @@ Vietnamese: Saga là giải pháp thực tế nhất cho distributed transaction
 **A:** 2PC is a protocol where a coordinator asks all participants to "prepare" (Phase 1), then commits or aborts (Phase 2). It provides ACID guarantees across distributed nodes but has critical drawbacks: coordinator is a SPOF, all participants block during Phase 1 waiting for Phase 2, and partial failure leaves participants in uncertain state.
 
 Vietnamese: 2PC đảm bảo strong consistency nhưng: (1) **Coordinator SPOF** — nếu coordinator crash sau Phase 1 và trước Phase 2, participants sẽ bị "stuck" (lock held, can't commit or abort). (2) **Blocking** — tất cả participants giữ locks trong suốt protocol → throughput thấp. (3) **Không scale** — latency của 2PC = sum of all participant latencies. Trong microservices scale lớn → Saga/eventual consistency là lựa chọn thực tế hơn. 2PC vẫn dùng trong single-database contexts (PostgreSQL distributed transactions với FDW, XA transactions).
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I name 4 transaction isolation levels and the anomaly each prevents?
+- [ ] Can I explain the difference between optimistic and pessimistic locking — when to use each?
+- [ ] Can I describe 3 bad shard key choices and explain why each causes problems?
+- [ ] Can I explain why 2PC is rarely used in microservices (SPOF, blocking, not scalable)?
+- 💬 **Feynman Prompt:** Giải thích Phantom Read — dùng ví dụ inventory checkout để show khi nào REPEATABLE READ không đủ và cần SERIALIZABLE.
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [Database Theory](./database-theory.md) — ACID is the theoretical foundation
+- ⬅️ **Built on**: [Indexing](./02-indexing-and-optimization.md) — shard key selection follows index principles
+- ➡️ **Applied in**: [Distributed Patterns](../../be-track/04-be-system-design/04-distributed-patterns.md) — Saga replaces 2PC in microservices
+- 🔗 **Related**: [Replication & Partitioning](../02-system-design/replication-partitioning.md) — sharding and replication often go together
 

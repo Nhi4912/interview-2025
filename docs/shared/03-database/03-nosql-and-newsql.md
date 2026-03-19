@@ -8,6 +8,20 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Shopee catalog at 500M products:** PostgreSQL không thể handle horizontal write scale cho catalog. Shopee dùng Elasticsearch cho full-text search (inverted index), Cassandra cho product events/activity log (write-heavy, append-only), và Redis cho hot product cache. PostgreSQL vẫn dùng cho orders và payments (ACID critical). Không có "one database fits all" — mỗi workload chọn DB phù hợp.
+
+**Bài học:** NoSQL là một họ rất đa dạng — key-value, document, wide-column, graph có internal structure khác nhau và được tối ưu cho access patterns khác nhau. Không thể so sánh Redis với Cassandra như là "NoSQL vs NoSQL".
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** NoSQL databases giống các loại phương tiện giao thông: Redis như xe máy (nhanh, nhẹ, ngắn hạn), Cassandra như tàu hàng (chậm hơn nhưng chở lượng lớn, đường dài), MongoDB như SUV (linh hoạt nhiều địa hình), Neo4j như hệ thống đường sắt (tối ưu cho mạng lưới kết nối). Mỗi loại có use case riêng.
+
+**Why it matters:** System design interviews ở Senior level luôn yêu cầu justify DB choice. Biết trade-offs giữa các NoSQL types và khi nào dùng NewSQL (CockroachDB, Spanner) là kiến thức phân biệt.
+
+---
+
 ## 1. NoSQL Overview / Tổng quan NoSQL
 
 ### 🟢 Q: What does NoSQL mean in modern systems? `[Junior]`
@@ -316,3 +330,20 @@ Single-table design:
 **Pricing model:** On-demand (pay per request) vs Provisioned (set RCU/WCU, cheaper at steady load). Use on-demand for variable/unpredictable traffic.
 
 **Điểm senior:** DynamoDB design là về access patterns trước tiên. Single-table design là advanced pattern giúp minimize costs và queries. Hot partition là failure mode cần biết. DynamoDB Streams + Lambda là pattern cho event-driven với DynamoDB.
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I name 4 NoSQL types with their internal data model and one production use case each?
+- [ ] Can I explain why Cassandra uses LSM-Tree instead of B+Tree (hint: write optimization)?
+- [ ] Can I describe when to use NewSQL (CockroachDB/Spanner) over traditional SQL?
+- [ ] Can I explain DynamoDB partition key vs sort key and what "hot partition" means?
+- 💬 **Feynman Prompt:** Giải thích tại sao MongoDB (document store) không phù hợp để replace Redis (key-value) cho session storage — dù cả hai đều là "NoSQL".
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [Database Theory](./database-theory.md) — ACID vs BASE, CAP theorem
+- ➡️ **Applied in**: [BE NoSQL Go](../../be-track/03-database-advanced/03-nosql-redis-mongo.md) — Redis and MongoDB implementation
+- 🔗 **Related**: [Indexing](./02-indexing-and-optimization.md) — NoSQL uses LSM-Tree vs B+Tree for indexes
+- 🔗 **Related**: [Sharding](./04-sharding-and-transactions.md) — NoSQL databases often have built-in sharding
