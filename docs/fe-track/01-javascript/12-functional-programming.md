@@ -1,966 +1,695 @@
-# Functional Programming in JavaScript
+# Functional Programming in JavaScript / Lập Trình Hàm trong JavaScript
 
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../00-table-of-contents.md)
+> **Prerequisites**: [Closures](./03-closures-comprehensive.md) | [ES6 Features](./07-es6-features.md)
+> **See also**: [Advanced Patterns](./17-advanced-patterns-theory.md) | [React Fundamentals](../03-react/01-react-fundamentals.md)
 
-## Principles, Patterns, and Interview Practice
-
-[← Previous](./12-functional-programming.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next →](./15-memory-management-advanced.md)
-
----
-
-## Tổng Quan / Overview
-
-JavaScript interview prep should be bilingual and practical: explain the concept in English, then reinforce it in Vietnamese with trade-offs and common pitfalls.
-
-Giải thích (VI): Tài liệu này tập trung vào phần cốt lõi thường gặp trong phỏng vấn Frontend. Mỗi mục có định nghĩa, lưu ý và ví dụ JavaScript ngắn gọn để bạn ôn tập nhanh.
-
-### Related Links / Liên Kết Liên Quan
-- [JavaScript Basics](./00-javascript-basics.md)
-- [Closures](./03-closures.md)
-- [Event Loop & Async](./06-event-loop-async.md)
-- [Memory Management](./15-memory-management-advanced.md)
+[← Previous: ES6 Features Deep](./11-es6-features-deep.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next →: JS Basics Theory](./13-javascript-basics-theory.md)
 
 ---
 
-## Real-World Scenario / Tình Huống Thực Tế
+## Real-World Scenario / Tình Huống Thực Tế 🏭
 
-Bạn có array 10,000 users. Cần: lọc users active, lấy tên, sắp xếp alphabetically. Approach cũ:
+> **Bối cảnh**: Team React của bạn tại một fintech startup gặp bug nghiêm trọng — Redux reducer
+> mutate state trực tiếp thay vì tạo bản sao mới. Kết quả: `React.memo` không re-render vì
+> reference equality vẫn giữ nguyên, dashboard hiển thị số dư cũ cho 2,000 user trong 3 giờ.
+>
+> Post-mortem xác định: developer viết `state.balance += amount` thay vì
+> `{ ...state, balance: state.balance + amount }`. Đây là lỗi **impure function** — vi phạm
+> nguyên tắc cốt lõi nhất của FP: **không bao giờ mutate input**.
+>
+> **Tại sao FP quan trọng cho interview?** React, Redux, RxJS — toàn bộ ecosystem frontend
+> hiện đại đều xây trên nền FP. Hiểu FP = hiểu *tại sao* React hoạt động như vậy.
+
+---
+
+## What & Why / Cái Gì & Tại Sao 🤔
+
+**Functional Programming** là paradigm lập trình xử lý computation như evaluation of mathematical
+functions — **không side effects, không shared state, data flows in → data flows out**.
+
+**Tương tự đời thường**: Hãy nghĩ về một **máy xay sinh tố**:
+- Bỏ trái cây vào (input) → nhận sinh tố ra (output)
+- Máy xay **không thay đổi trái cây gốc** trên bàn (no mutation)
+- Cùng trái cây + cùng cài đặt → **luôn ra cùng sinh tố** (deterministic)
+- Máy xay **không gửi email** hay **thay đổi nhiệt độ phòng** khi chạy (no side effects)
+
+**Ba trụ cột**: Pure functions + Immutability + Composition. Nắm 3 cái này = nắm 90% FP interview.
+
+---
+
+## Core Concepts / Khái Niệm Cốt Lõi
+
+---
+
+### 1. Pure Functions & Side Effects / Hàm Thuần & Tác Dụng Phụ
+
+> 🧠 **Memory Hook**: **"SEAMLESS"** — **S**ame input → **E**xact same output, **A**lways, with **M**ost **L**imited **E**ffects (zero **S**ide effect**S**)
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Khi codebase lớn lên, bug khó tìm nhất là bug do **shared mutable state** — function A thay đổi
+biến mà function B đang dùng, và bug chỉ xảy ra khi A chạy trước B.
+
+→ **Why?** Vì con người không thể track mental model của 50+ functions cùng modify 1 object.
+
+→ **Why?** Vì **temporal coupling** (thứ tự gọi hàm ảnh hưởng kết quả) là nguồn gốc của
+non-determinism — khiến code không test được, không debug được, không parallelize được.
+
+**Pure function giải quyết bằng cách loại bỏ hoàn toàn temporal coupling**: cùng input → cùng output, bất kể gọi lúc nào, bao nhiêu lần.
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+
+Hàm thuần giống **công thức nấu ăn**: 2 trứng + 1 muỗng đường → luôn ra cùng món bánh.
+Nếu kết quả phụ thuộc vào "tâm trạng đầu bếp" (global state) hay "thời tiết hôm nay"
+(external dependency) — đó không phải công thức đáng tin.
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
+```
+PURE vs IMPURE — Mental Model:
+
+  Pure Function                    Impure Function
+  ┌──────────┐                    ┌──────────┐
+  │ input ──►│── output           │ input ──►│── output
+  │          │                    │    ▲     │     │
+  │ NO side  │                    │    │     │     ▼
+  │ effects  │                    │ global   │  Database
+  └──────────┘                    │ state    │  Console
+                                  └──────────┘  Network
+
+  Referential Transparency:        Temporal Coupling:
+  add(2,3) can be replaced         getUser() returns different
+  with 5 ANYWHERE in code          results depending on WHEN called
+```
 
 ```javascript
-// Imperative: 15 dòng, mutable state, khó test
-let result = [];
-for (let i = 0; i < users.length; i++) {
-  if (users[i].active) {
-    result.push(users[i].name);
+// ✅ PURE — same input, same output, no side effects
+const add = (a, b) => a + b;
+const discount = (price, pct) => price * (1 - pct / 100);
+const toUpper = (str) => str.toUpperCase(); // String is immutable
+
+// ❌ IMPURE — depends on external state
+let taxRate = 0.1;
+const calcTax = (price) => price * taxRate; // reads external variable
+// calcTax(100) → 10 now, but if taxRate changes → different result
+
+// ❌ IMPURE — side effects
+const logAndAdd = (a, b) => {
+  console.log(a, b);  // side effect: I/O
+  return a + b;
+};
+
+// ✅ Making impure → pure: inject dependencies
+const calcTaxPure = (price, rate) => price * rate;
+// Now calcTaxPure(100, 0.1) → ALWAYS 10
+```
+
+**Redux reducer — the canonical FP example:**
+
+```javascript
+// ✅ Pure reducer — React/Redux depends on this
+const balanceReducer = (state = { balance: 0 }, action) => {
+  switch (action.type) {
+    case 'DEPOSIT':
+      return { ...state, balance: state.balance + action.amount }; // new object!
+    case 'WITHDRAW':
+      return { ...state, balance: state.balance - action.amount };
+    default:
+      return state; // same reference = no re-render
   }
+};
+
+// ❌ WRONG — mutates input, breaks React.memo / shallow comparison
+const brokenReducer = (state, action) => {
+  state.balance += action.amount; // MUTATION!
+  return state; // same reference → React thinks nothing changed
+};
+```
+
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
+- **Date, Math.random()** are inherently impure — inject them as parameters for testability
+- **Performance**: Creating new objects every time has GC cost — but V8's generational GC handles short-lived objects efficiently
+- **100% purity is impractical** — all useful programs have I/O. Goal: push side effects to the edges (boundaries) of your program
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| "`Array.sort()` is pure because it returns a sorted array" | `sort()` mutates the original array in-place | Use `[...arr].sort()` or `Array.from(arr).sort()` |
+| "Pure function = no function calls inside" | Pure functions CAN call other pure functions | Pure = no side effects + deterministic output |
+| "`toUpperCase()` mutates the string" | Strings are immutable in JS — always returns new string | `toUpperCase()` IS pure |
+| "If it returns `void`, it must be impure" | `void` doesn't exist in FP mental model — but `() => undefined` with no side effects is still pure | Focus on side effects, not return type |
+
+**🎯 Interview Pattern:**
+- Khi thấy câu hỏi về: "pure function", "side effects", "referential transparency"
+- → Nhớ đến: SEAMLESS — Same input, Exact same output, no side effects
+- → Mở đầu trả lời: "A pure function is deterministic and side-effect free — given the same inputs, it always returns the same output without modifying any external state. This is the foundation of React's rendering model, where pure components enable predictable UI updates."
+
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: [Closures](./03-closures-comprehensive.md) — pure functions often use closures for dependency injection
+- ➡️ Để hiểu: [React State Management](../03-react/05-state-management.md) — Redux is built entirely on pure reducer functions
+
+---
+
+### 2. Immutability & Array Methods / Tính Bất Biến & Phương Thức Mảng
+
+> 🧠 **Memory Hook**: **"Copy, don't corrupt"** — Mọi thay đổi tạo bản mới, bản gốc bất khả xâm phạm
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Trong UI framework: nếu bạn mutate object, framework không biết có gì thay đổi (vì reference giống nhau). React dùng `===` để so sánh → cần object mới để trigger re-render.
+
+→ **Why?** Vì deep comparison (`JSON.stringify` hoặc recursive check) quá chậm cho 60fps rendering — `O(n)` mỗi frame vs `O(1)` reference check.
+
+→ **Why?** Vì đây là trade-off cốt lõi: **memory (tạo object mới) vs speed (O(1) comparison)**. Immutability chọn dùng thêm memory để đổi lấy predictability + speed of change detection.
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+
+Hãy nghĩ immutability như **chỉnh sửa ảnh trên điện thoại**: khi bạn crop ảnh, app tạo **bản sao mới** — ảnh gốc vẫn nguyên trong thư viện. Bạn luôn có thể undo vì bản gốc không bao giờ bị thay đổi.
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
+```
+MUTATING vs IMMUTABLE Array Operations:
+
+  Mutating (avoid in FP)          Immutable (FP-safe)
+  ─────────────────────           ────────────────────
+  push(x)                    →    [...arr, x]
+  pop()                      →    arr.slice(0, -1)
+  splice(i, 1)               →    arr.filter((_, idx) => idx !== i)
+  sort()                     →    [...arr].sort()
+  reverse()                  →    [...arr].reverse()
+  arr[i] = x                 →    arr.map((v, idx) => idx === i ? x : v)
+
+  Object mutation:                Object immutable:
+  obj.key = val              →    { ...obj, key: val }
+  delete obj.key             →    const { key, ...rest } = obj
+
+  Nested update:
+  state.user.address.city = 'HCM'
+  →  { ...state, user: { ...state.user, address: { ...state.user.address, city: 'HCM' } } }
+  (This is why Immer exists!)
+```
+
+**Implement map, filter, reduce from scratch** — classic interview question:
+
+```javascript
+// ✅ Array.prototype.map — transform each element
+Array.prototype.myMap = function(callback) {
+  const result = [];
+  for (let i = 0; i < this.length; i++) {
+    result.push(callback(this[i], i, this));
+  }
+  return result; // NEW array, original untouched
+};
+
+// ✅ Array.prototype.filter — keep elements that pass test
+Array.prototype.myFilter = function(predicate) {
+  const result = [];
+  for (let i = 0; i < this.length; i++) {
+    if (predicate(this[i], i, this)) {
+      result.push(this[i]);
+    }
+  }
+  return result;
+};
+
+// ✅ Array.prototype.reduce — fold array into single value
+Array.prototype.myReduce = function(callback, initialValue) {
+  let accumulator = initialValue;
+  let startIndex = 0;
+
+  if (accumulator === undefined) {
+    if (this.length === 0) throw new TypeError('Reduce of empty array with no initial value');
+    accumulator = this[0];
+    startIndex = 1;
+  }
+
+  for (let i = startIndex; i < this.length; i++) {
+    accumulator = callback(accumulator, this[i], i, this);
+  }
+  return accumulator;
+};
+
+// Reduce is the most powerful — map and filter can be built from reduce:
+const mapViaReduce = (arr, fn) =>
+  arr.reduce((acc, item, i) => [...acc, fn(item, i)], []);
+
+const filterViaReduce = (arr, pred) =>
+  arr.reduce((acc, item, i) => pred(item, i) ? [...acc, item] : acc, []);
+```
+
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
+- **Shallow copy gotcha**: `{ ...obj }` and `[...arr]` only copy 1 level deep — nested objects still share references
+- **Performance**: Spreading large arrays in tight loops is `O(n)` per operation. For heavy state, use **structural sharing** (Immer, Immutable.js)
+- **`Object.freeze()`** is shallow — `Object.freeze({ a: { b: 1 } })` still allows `obj.a.b = 2`
+- **ES2024 change array by copy**: `toSorted()`, `toReversed()`, `toSpliced()`, `with()` — immutable versions built into the language
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| "Spread operator deep-copies objects" | Spread is **shallow** — nested objects still share references | Use `structuredClone()` or Immer for deep updates |
+| "`const` makes values immutable" | `const` prevents reassignment, NOT mutation: `const arr = []; arr.push(1)` works | `const` = constant binding, not constant value |
+| "`Object.freeze()` makes everything immutable" | Freeze is **shallow** — nested objects are still mutable | Use `structuredClone()` + freeze, or deep freeze utility |
+| "Immutable code is always slower" | V8 optimizes short-lived objects well; immutability enables `O(1)` change detection | Trade-off: slight allocation cost vs massive optimization opportunity |
+
+**🎯 Interview Pattern:**
+- Khi thấy câu hỏi về: "immutability", "spread operator", "implement map/filter/reduce"
+- → Nhớ đến: "Copy, don't corrupt" — tạo mới, không sửa gốc
+- → Mở đầu trả lời: "Immutability means never modifying existing data — instead, we create new copies with changes applied. This is fundamental to React's reconciliation because it enables O(1) change detection via reference equality, which is critical for 60fps rendering performance."
+
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: [ES6 Spread/Rest](./07-es6-features.md) — syntax cho immutable operations
+- ➡️ Để hiểu: [React Performance](../06-browser-performance/02-react-performance.md) — React.memo relies on immutable state updates
+
+---
+
+### 3. Higher-Order Functions, Compose & Pipe / Hàm Bậc Cao, Compose & Pipe
+
+> 🧠 **Memory Hook**: **"Functions are LEGO bricks"** — snap small pure functions together to build complex behavior
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Khi code lớn, bạn cần cách **tái sử dụng logic** mà không copy-paste. HOFs cho phép truyền
+behavior (function) như data — thay vì viết 10 hàm sort khác nhau, viết 1 hàm sort + truyền comparator.
+
+→ **Why?** Vì function là first-class citizen trong JS — có thể assign, pass, return như bất kỳ value nào.
+
+→ **Why?** Vì composition (ghép hàm nhỏ thành hàm lớn) là cách duy nhất để scale code mà **không tăng complexity** — mỗi hàm nhỏ dễ test, dễ đọc, dễ thay thế.
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+
+HOF giống **dây chuyền sản xuất trong nhà máy**: mỗi trạm (function) làm một việc đơn giản
+(rửa → cắt → nướng → đóng gói). Bạn có thể thêm/bớt/thay trạm mà không ảnh hưởng trạm khác.
+`compose` = nối các trạm lại thành dây chuyền hoàn chỉnh.
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
+```
+Higher-Order Function (HOF):
+A function that takes a function OR returns a function (or both)
+
+  Takes function:              Returns function:
+  ──────────────               ─────────────────
+  [1,2,3].map(fn)              const add = (a) => (b) => a + b
+  arr.filter(fn)               const withLogging = (fn) => (...args) => {
+  arr.sort(fn)                   console.log('calling', fn.name)
+  setTimeout(fn, ms)             return fn(...args)
+                                }
+
+  Compose vs Pipe — direction matters:
+  ──────────────────────────────────────
+  compose(f, g, h)(x)  =  f(g(h(x)))     ← right to left (math order)
+  pipe(f, g, h)(x)     =  h(g(f(x)))     ← left to right (reading order)
+
+  Data flow visualization:
+
+  pipe(trim, toLower, slugify)("  Hello World  ")
+       │         │         │
+       ▼         ▼         ▼
+  "Hello World" → "hello world" → "hello-world"
+```
+
+```javascript
+// ✅ Compose — right to left (mathematical notation f∘g)
+const compose = (...fns) =>
+  (x) => fns.reduceRight((acc, fn) => fn(acc), x);
+
+// ✅ Pipe — left to right (reading order, more intuitive)
+const pipe = (...fns) =>
+  (x) => fns.reduce((acc, fn) => fn(acc), x);
+
+// Real-world: data processing pipeline
+const trim = (s) => s.trim();
+const toLower = (s) => s.toLowerCase();
+const slugify = (s) => s.replace(/\s+/g, '-');
+
+const toSlug = pipe(trim, toLower, slugify);
+toSlug('  Hello World  '); // → "hello-world"
+
+// ✅ Currying — transform f(a, b, c) into f(a)(b)(c)
+const curry = (fn) => {
+  const arity = fn.length;
+  return function curried(...args) {
+    if (args.length >= arity) return fn(...args);
+    return (...moreArgs) => curried(...args, ...moreArgs);
+  };
+};
+
+const add = curry((a, b, c) => a + b + c);
+add(1)(2)(3);     // 6
+add(1, 2)(3);     // 6 — partial application
+add(1)(2, 3);     // 6
+
+// ✅ Practical currying: reusable specialized functions
+const multiply = curry((a, b) => a * b);
+const double = multiply(2);    // partially applied
+const triple = multiply(3);
+[1, 2, 3].map(double);        // [2, 4, 6]
+[1, 2, 3].map(triple);        // [3, 6, 9]
+
+// ✅ Real-world compose: React middleware-style
+const withAuth = (fetchFn) => (url, opts = {}) =>
+  fetchFn(url, { ...opts, headers: { ...opts.headers, Authorization: `Bearer ${getToken()}` } });
+
+const withRetry = (fetchFn, maxRetries = 3) => async (url, opts) => {
+  for (let i = 0; i <= maxRetries; i++) {
+    try { return await fetchFn(url, opts); }
+    catch (e) { if (i === maxRetries) throw e; }
+  }
+};
+
+const apiFetch = pipe(withAuth, (fn) => withRetry(fn, 2))(fetch);
+```
+
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
+- **Debugging**: Deep composition makes stack traces hard to read — use named functions instead of anonymous arrows
+- **TypeScript**: Typing compose/pipe generically is notoriously difficult — most libraries cap at ~10 functions
+- **Over-composition**: `compose(f)` is just `f` — don't compose single functions for "purity"
+- **Currying vs partial application**: Currying transforms arity one at a time; partial application fixes some args at once. `bind` does partial application, not currying
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| "compose and pipe are the same" | compose = right-to-left, pipe = left-to-right — args reversed | `compose(f,g)(x) = f(g(x))` vs `pipe(f,g)(x) = g(f(x))` |
+| "Currying = partial application" | Currying: `f(a,b,c)` → `f(a)(b)(c)`. Partial: fix some args, e.g., `f.bind(null, 1)` | Currying is a specific technique; partial application is the general concept |
+| "HOFs are only `map`/`filter`/`reduce`" | Any function taking or returning a function is HOF — `setTimeout`, `addEventListener`, decorators, middleware | HOF is the pattern, array methods are just common examples |
+| "Point-free style is always better" | `compose(map(toLower), filter(isActive))` can be less readable than explicit version | Use point-free when it aids clarity, explicit when it doesn't |
+
+**🎯 Interview Pattern:**
+- Khi thấy câu hỏi về: "compose", "pipe", "currying", "higher-order functions", "implement X"
+- → Nhớ đến: Functions are LEGO bricks — snap together small pure functions
+- → Mở đầu trả lời: "Higher-order functions accept or return functions, enabling composition — building complex behavior from simple, testable pieces. Compose chains functions right-to-left (math notation), while pipe chains left-to-right (reading order). Both are implemented with reduce over the function array."
+
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: [Closures](./03-closures-comprehensive.md) — currying and partial application rely on closures to capture arguments
+- ➡️ Để hiểu: [React Advanced Patterns](../03-react/04-advanced-patterns.md) — HOCs, render props, and custom hooks are all HOF patterns
+
+---
+
+## Interview Q&A / Hỏi Đáp Phỏng Vấn
+
+### Q1: Explain pure functions and why they matter for React/Redux. / Giải thích hàm thuần và tại sao chúng quan trọng cho React/Redux. 🟡 Mid
+
+**A:** A pure function has two properties: (1) given the same inputs, it always returns the same output (deterministic), and (2) it produces no side effects — no mutations, no I/O, no external state changes.
+
+For React: pure components render the same JSX for the same props, enabling `React.memo` to skip re-renders via shallow comparison. For Redux: reducers MUST be pure — `(state, action) => newState` — because Redux uses reference equality (`===`) to detect changes. If you mutate the existing state object instead of returning a new one, the reference stays the same and React won't re-render, even though the data changed.
+
+```javascript
+// ❌ Impure reducer — React dashboard shows stale balance
+const broken = (state, action) => {
+  state.balance += action.amount; // mutates!
+  return state; // same reference → no re-render
+};
+
+// ✅ Pure reducer — triggers proper re-render
+const correct = (state, action) => ({
+  ...state,
+  balance: state.balance + action.amount // new object!
+});
+```
+
+Giải thích tiếng Việt: Hàm thuần là hàm mà cùng input luôn cho cùng output, không có side effect. Trong React, điều này cho phép `React.memo` bỏ qua re-render thông qua so sánh nông. Trong Redux, reducer PHẢI thuần — nếu mutate state gốc, reference giữ nguyên → React không biết có thay đổi → UI hiển thị dữ liệu cũ.
+
+**💡 Interview Signal:**
+- ✅ Strong: Connects purity to React's rendering model (reference equality, `===` check), gives mutation bug example
+- ❌ Weak: Only defines "same input same output" without connecting to real framework behavior
+
+---
+
+### Q2: Implement `map`, `filter`, and `reduce` from scratch. / Implement `map`, `filter`, và `reduce` từ đầu. 🟡 Mid
+
+**A:** These three are the workhorses of functional programming in JavaScript. Each takes a callback and returns a new value without mutating the original array.
+
+```javascript
+// map: transform each element
+Array.prototype.myMap = function(cb) {
+  const result = [];
+  for (let i = 0; i < this.length; i++) {
+    result.push(cb(this[i], i, this));
+  }
+  return result;
+};
+
+// filter: keep elements passing the predicate
+Array.prototype.myFilter = function(pred) {
+  const result = [];
+  for (let i = 0; i < this.length; i++) {
+    if (pred(this[i], i, this)) result.push(this[i]);
+  }
+  return result;
+};
+
+// reduce: fold into a single value
+Array.prototype.myReduce = function(cb, init) {
+  let acc = init;
+  let i = 0;
+  if (acc === undefined) {
+    if (this.length === 0) throw new TypeError('Reduce of empty array with no initial value');
+    acc = this[0];
+    i = 1;
+  }
+  for (; i < this.length; i++) {
+    acc = cb(acc, this[i], i, this);
+  }
+  return acc;
+};
+```
+
+**Key interview point**: `reduce` is the most powerful — you can implement both `map` and `filter` using `reduce`:
+
+```javascript
+const map = (arr, fn) => arr.reduce((acc, x, i) => [...acc, fn(x, i)], []);
+const filter = (arr, p) => arr.reduce((acc, x, i) => p(x, i) ? [...acc, x] : acc, []);
+```
+
+Giải thích tiếng Việt: `map` biến đổi từng phần tử, `filter` giữ lại phần tử thỏa điều kiện, `reduce` gộp mảng thành 1 giá trị. Cả 3 đều tạo giá trị mới, không mutate mảng gốc. `reduce` mạnh nhất — có thể dùng nó implement cả `map` và `filter`. Khi implement từ đầu, nhớ truyền đủ 3 tham số cho callback (`element`, `index`, `array`) và handle edge case `reduce` không có initial value.
+
+**💡 Interview Signal:**
+- ✅ Strong: Handles edge case (empty array with no initial value), passes all 3 callback arguments, shows reduce implementing map/filter
+- ❌ Weak: Forgets `index` and `array` parameters, doesn't handle empty array edge case in reduce
+
+---
+
+### Q3: Implement a `memoize` function. / Implement hàm `memoize`. 🟡 Mid
+
+**A:** Memoize caches function results by arguments, returning the cached value for repeated calls with the same inputs. This is the technique behind `React.useMemo` and `reselect`.
+
+```javascript
+function memoize(fn) {
+  const cache = new Map();
+
+  return function(...args) {
+    const key = JSON.stringify(args);
+
+    if (cache.has(key)) return cache.get(key);
+
+    const result = fn.apply(this, args);
+    cache.set(key, result);
+    return result;
+  };
 }
-result.sort();
-```
 
-Approach functional:
-```javascript
-// Declarative: 1 dòng, no mutation, self-documenting
-const result = users.filter(u => u.active).map(u => u.name).sort();
-```
-
-Functional Programming (FP) là cách viết code predictable, testable, và composable hơn.
-
----
-
-## What & Why / Cái Gì & Tại Sao
-
-**Analogy / Liên Tưởng — Nhà máy lắp ráp:**
-FP giống dây chuyền sản xuất: mỗi bước (function) nhận input → trả output mà không thay đổi gì bên ngoài. Bạn có thể kiểm tra từng bước độc lập.
-
-OOP: "đối tượng có trạng thái, gọi method để thay đổi trạng thái"
-FP: "dữ liệu bất biến, function biến đổi thành dữ liệu mới"
-
-| Khái niệm FP | Ý nghĩa | Ví dụ JavaScript |
-|-------------|---------|-----------------|
-| **Pure function** | Same input → same output, no side effects | `const add = (a,b) => a+b` |
-| **Immutability** | Không thay đổi data gốc | `[...arr, newItem]` thay vì `arr.push()` |
-| **Higher-order function** | Function nhận/trả function | `map`, `filter`, `reduce` |
-| **Composition** | Kết hợp nhiều function nhỏ thành pipeline | `compose(f, g)(x)` = `f(g(x))` |
-| **Currying** | Function nhận từng argument một | `add(1)(2)` = 3 |
-| **Closure** | Function "nhớ" scope ngoài | State trong React hooks |
-
-**Tại sao FP quan trọng trong frontend:**
-- React state management dựa trên immutability
-- Redux reducers PHẢI là pure functions
-- Array methods (`map`/`filter`/`reduce`) dùng FP concepts
-
----
-
-## Concept Map / Bản Đồ Khái Niệm
-
-```
-    [Closures] + [Higher-order functions]
-                      │
-                      ▼
-           [FUNCTIONAL PROGRAMMING]
-                      │
-         ┌────────────┼────────────┐
-         ▼            ▼            ▼
-  [Pure functions] [Immutability] [Composition]
-  No side effects  Spread/Object  pipe/compose
-  Predictable      .assign        Chaining
-  Testable         Freeze         Transducers
-         │
-         ▼
-  [Array FP methods]
-  map → filter → reduce → flatMap → find
-         │
-         ▼
-  [React/Redux]
-  Pure components | Reducers | Selectors
-```
-
----
-
-## Core Concepts
-
-### 1. Functional Programming Mindset
-
-#### Overview / Tổng Quan
-Functional programming emphasizes predictable transformations over mutable state changes.
-
-#### Explanation / Giải thích
-Tư duy FP giúp code dễ test, dễ refactor và giảm bug side effects. Trong frontend, FP rất hữu ích cho data processing và state updates.
-
-#### Example / Ví dụ
-```javascript
-const addTax = (price, taxRate) => price * (1 + taxRate);
-console.log(addTax(100, 0.1));
-```
-
-### 2. Pure Functions
-
-#### Overview / Tổng Quan
-A pure function returns the same output for same input and causes no side effects.
-
-#### Explanation / Giải thích
-Hàm thuần không đọc/ghi trạng thái bên ngoài. Đây là nền tảng để test đơn giản và cache kết quả.
-
-#### Example / Ví dụ
-```javascript
-const pureSum = (a, b) => a + b;
-
-let count = 0;
-const impureInc = () => ++count;
-```
-
-### 3. Immutability
-
-#### Overview / Tổng Quan
-Instead of mutating existing data, return new data structures.
-
-#### Explanation / Giải thích
-Bất biến giúp theo dõi state transitions rõ ràng. Trong React, immutable update hỗ trợ so sánh tham chiếu tối ưu render.
-
-#### Example / Ví dụ
-```javascript
-const user = { name: 'Linh', skills: ['JS'] };
-const nextUser = { ...user, skills: [...user.skills, 'TS'] };
-
-console.log(user, nextUser);
-```
-
-### 4. First-Class and Higher-Order Functions
-
-#### Overview / Tổng Quan
-Functions can be passed, returned, and composed as values.
-
-#### Explanation / Giải thích
-Higher-order function nhận hàm khác làm input hoặc trả về hàm. Đây là mô hình chung của map/filter/reduce.
-
-#### Example / Ví dụ
-```javascript
-const apply = (fn, value) => fn(value);
-const double = x => x * 2;
-console.log(apply(double, 5));
-```
-
-### 5. map, filter, reduce Essentials
-
-#### Overview / Tổng Quan
-These array operators are core FP tools for transformation pipelines.
-
-#### Explanation / Giải thích
-map biến đổi từng phần tử, filter chọn phần tử theo điều kiện, reduce gộp danh sách thành một giá trị.
-
-#### Example / Ví dụ
-```javascript
-const nums = [1, 2, 3, 4];
-const result = nums
-  .map(n => n * 2)
-  .filter(n => n > 4)
-  .reduce((sum, n) => sum + n, 0);
-
-console.log(result);
-```
-
-### 6. Function Composition
-
-#### Overview / Tổng Quan
-Composition chains small functions to build complex behavior.
-
-#### Explanation / Giải thích
-Composition giúp tách logic thành bước nhỏ dễ đọc. Thường dùng `compose` hoặc `pipe` trong codebase FP.
-
-#### Example / Ví dụ
-```javascript
-const trim = s => s.trim();
-const lower = s => s.toLowerCase();
-const toSlug = s => s.replace(/\s+/g, '-');
-
-const pipe = (...fns) => input => fns.reduce((v, fn) => fn(v), input);
-const slugify = pipe(trim, lower, toSlug);
-console.log(slugify('  Hello FP World  '));
-```
-
-### 7. Currying in FP
-
-#### Overview / Tổng Quan
-Currying enables reusable partially-applied functions and cleaner composition.
-
-#### Explanation / Giải thích
-Currying tạo hàm chuyên biệt từ hàm tổng quát. Ví dụ tạo `addVAT` từ hàm `addRate`.
-
-#### Example / Ví dụ
-```javascript
-const addRate = rate => amount => amount * (1 + rate);
-const addVAT = addRate(0.1);
-console.log(addVAT(200));
-```
-
-### 8. Point-Free Style
-
-#### Overview / Tổng Quan
-Point-free style defines transformations without explicitly naming data arguments.
-
-#### Explanation / Giải thích
-Phong cách này gọn nhưng có thể khó đọc nếu lạm dụng. Hãy ưu tiên readability hơn "đẹp cú pháp".
-
-#### Example / Ví dụ
-```javascript
-const pipe = (...fns) => x => fns.reduce((v, fn) => fn(v), x);
-const exclaim = s => `${s}!`;
-const upper = s => s.toUpperCase();
-
-const shout = pipe(upper, exclaim);
-console.log(shout('fp'));
-```
-
-### 9. Functor Basics
-
-#### Overview / Tổng Quan
-A functor is a container-like structure with map that preserves context.
-
-#### Explanation / Giải thích
-Nói đơn giản: nếu có `map` để biến đổi value bên trong mà giữ nguyên "vỏ" thì đó là functor (ví dụ Array, Promise theo nghĩa thực hành).
-
-#### Example / Ví dụ
-```javascript
-const box = value => ({
-  map: fn => box(fn(value)),
-  fold: fn => fn(value)
+// Usage
+const expensiveCalc = memoize((n) => {
+  console.log('computing...');
+  return n * n;
 });
 
-const output = box(2).map(x => x + 3).map(x => x * 10).fold(x => x);
-console.log(output);
+expensiveCalc(5); // logs "computing...", returns 25
+expensiveCalc(5); // returns 25 (cached, no log)
 ```
 
-### 10. Monad Basics (Interview Level)
+**Follow-up: handle cache size limit (LRU):**
 
-#### Overview / Tổng Quan
-A monad extends functor with flatMap/chain to avoid nested contexts.
-
-#### Explanation / Giải thích
-Trong phỏng vấn JS, bạn không cần quá học thuật; chỉ cần giải thích flatMap giúp tránh nested container (Promise<Promise<T>>...).
-
-#### Example / Ví dụ
 ```javascript
-const result = Promise.resolve(5)
-  .then(x => Promise.resolve(x + 1))
-  .then(x => x * 2);
+function memoizeLRU(fn, maxSize = 100) {
+  const cache = new Map(); // Map preserves insertion order
 
-result.then(console.log);
-```
+  return function(...args) {
+    const key = JSON.stringify(args);
 
-### 11. FP Error Handling with Result-like Pattern
+    if (cache.has(key)) {
+      const value = cache.get(key);
+      cache.delete(key);    // remove
+      cache.set(key, value); // re-insert at end (most recent)
+      return value;
+    }
 
-#### Overview / Tổng Quan
-Instead of throwing everywhere, represent success/failure explicitly in data.
+    const result = fn.apply(this, args);
+    cache.set(key, result);
 
-#### Explanation / Giải thích
-Mẫu Result/Either giúp pipeline an toàn và dễ test. Bạn xử lý lỗi như dữ liệu thay vì exception side-channel.
+    if (cache.size > maxSize) {
+      const oldest = cache.keys().next().value;
+      cache.delete(oldest); // evict least recently used
+    }
 
-#### Example / Ví dụ
-```javascript
-const ok = value => ({ ok: true, value });
-const err = error => ({ ok: false, error });
-
-function parseNumber(input) {
-  const n = Number(input);
-  return Number.isFinite(n) ? ok(n) : err('Invalid number');
-}
-
-console.log(parseNumber('42'));
-```
-
-### 12. FP vs OOP Trade-offs
-
-#### Overview / Tổng Quan
-FP favors transformations and immutability; OOP favors stateful objects and encapsulation.
-
-#### Explanation / Giải thích
-Không có mô hình nào luôn tốt hơn. Thực tế thường là hybrid: FP cho data flow, OOP cho domain model/lifecycle phức tạp.
-
-#### Example / Ví dụ
-```javascript
-// FP style
-const withDiscount = (price, discount) => price * (1 - discount);
-
-// OOP style
-class Cart {
-  constructor(items = []) { this.items = items; }
-  total() { return this.items.reduce((s, i) => s + i.price, 0); }
+    return result;
+  };
 }
 ```
 
-### 13. Performance and Readability Balance
+**Caveats**: `JSON.stringify` doesn't handle circular references, functions, or `undefined` values. For production, use a WeakMap for object arguments or a custom serializer.
 
-#### Overview / Tổng Quan
-FP chains are expressive but may allocate intermediate arrays; optimize only where needed.
+Giải thích tiếng Việt: `memoize` cache kết quả hàm theo tham số — lần gọi tiếp theo với cùng args sẽ trả kết quả ngay từ cache thay vì tính lại. Đây là kỹ thuật đằng sau `useMemo` và `reselect`. Dùng `Map` để lưu cache, `JSON.stringify(args)` làm key. Phiên bản nâng cao thêm LRU eviction để giới hạn bộ nhớ — `Map` giữ thứ tự insertion, nên xóa key đầu tiên = xóa entry cũ nhất.
 
-#### Explanation / Giải thích
-Đừng tối ưu sớm. Trước hết viết rõ ràng, đo hiệu năng, rồi mới cân nhắc loop hoặc transducer khi pipeline rất lớn.
-
-#### Example / Ví dụ
-```javascript
-const items = Array.from({ length: 5 }, (_, i) => i + 1);
-const total = items.map(x => x * 2).filter(x => x > 5).reduce((a, b) => a + b, 0);
-console.log(total);
-```
-
-### 14. Interview Strategy for FP Questions
-
-#### Overview / Tổng Quan
-Define concept, show tiny transformation pipeline, then discuss trade-offs.
-
-#### Explanation / Giải thích
-Với câu FP, bạn nên trả lời theo khung: định nghĩa -> code ngắn -> lợi ích -> giới hạn.
-
-#### Example / Ví dụ
-```javascript
-const pipeline = value => [value]
-  .map(x => x + 1)
-  .map(x => x * 2)[0];
-
-console.log(pipeline(5));
-```
+**💡 Interview Signal:**
+- ✅ Strong: Shows LRU variant, mentions `JSON.stringify` limitations, connects to React.useMemo
+- ❌ Weak: Only shows basic version without discussing cache invalidation or memory concerns
 
 ---
 
-## Câu Hỏi Phỏng Vấn / Interview Q&A
+### Q4: Implement `compose` and `pipe`. Explain when to use each. / Implement `compose` và `pipe`. Giải thích khi nào dùng. 🔴 Senior
 
-### 🟢 [Junior] Q1. What is functional programming in JavaScript?
+**A:**
 
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
 ```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
+// compose: right-to-left execution (mathematical notation f∘g)
+const compose = (...fns) =>
+  (x) => fns.reduceRight((acc, fn) => fn(acc), x);
+
+// pipe: left-to-right execution (reading order)
+const pipe = (...fns) =>
+  (x) => fns.reduce((acc, fn) => fn(acc), x);
+
+// Verification:
+const double = x => x * 2;
+const inc = x => x + 1;
+const square = x => x * x;
+
+compose(square, inc, double)(3); // square(inc(double(3))) = square(inc(6)) = square(7) = 49
+pipe(double, inc, square)(3);    // square(inc(double(3))) = same: 49
 ```
 
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+**Async pipe (handles Promises in the chain):**
 
-### 🟡 [Mid] Q2. What defines a pure function?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
 ```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
+const asyncPipe = (...fns) =>
+  (x) => fns.reduce((acc, fn) => Promise.resolve(acc).then(fn), x);
+
+// Usage: data processing pipeline
+const fetchUser = async (id) => { /* ... */ };
+const extractEmail = (user) => user.email;
+const normalize = (email) => email.toLowerCase().trim();
+const validate = (email) => {
+  if (!email.includes('@')) throw new Error('Invalid email');
+  return email;
+};
+
+const getUserEmail = asyncPipe(fetchUser, extractEmail, normalize, validate);
+await getUserEmail(123); // → "user@example.com"
 ```
 
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🔴 [Senior] Q3. Why are side effects problematic?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🟢 [Junior] Q4. How does immutability help debugging?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🟡 [Mid] Q5. How to update nested objects immutably?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🔴 [Senior] Q6. What are first-class functions?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🟢 [Junior] Q7. Define higher-order function with example.
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🟡 [Mid] Q8. When to use map vs forEach?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🔴 [Senior] Q9. How does filter differ from find?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🟢 [Junior] Q10. How does reduce work conceptually?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🟡 [Mid] Q11. What mistakes happen with reduce initial value?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🔴 [Senior] Q12. What is function composition?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🟢 [Junior] Q13. Difference between compose and pipe?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🟡 [Mid] Q14. How does currying improve reuse?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🔴 [Senior] Q15. Currying vs partial application?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🟢 [Junior] Q16. What is point-free style?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🟡 [Mid] Q17. When does point-free hurt readability?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🔴 [Senior] Q18. What is referential transparency?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🟢 [Junior] Q19. How does memoization relate to purity?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🟡 [Mid] Q20. What is a functor (practical explanation)?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🔴 [Senior] Q21. What is a monad in interview-friendly terms?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🟢 [Junior] Q22. Why does flatMap matter?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🟡 [Mid] Q23. How do Promise chains resemble monadic bind?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🔴 [Senior] Q24. How to model errors functionally?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🟢 [Junior] Q25. Result/Either vs throw: trade-offs?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🟡 [Mid] Q26. FP vs OOP: when choose which?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🔴 [Senior] Q27. Can FP be used with React effectively?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🟢 [Junior] Q28. How do reducers reflect FP principles?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🟡 [Mid] Q29. How to avoid accidental mutation in teams?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🔴 [Senior] Q30. What libraries support FP in JS ecosystems?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🟢 [Junior] Q31. How to benchmark FP pipelines?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🟡 [Mid] Q32. What are transducers at high level?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🔴 [Senior] Q33. What anti-patterns appear in over-engineered FP code?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🟢 [Junior] Q34. How to teach FP to OOP-first teams?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🟡 [Mid] Q35. What senior-level FP trade-offs to mention?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🔴 [Senior] Q36. How to keep FP code readable for interviews?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🟢 [Junior] Q37. How does lazy evaluation appear in JS?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🟡 [Mid] Q38. How to compose async functions functionally?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🔴 [Senior] Q39. How to refactor imperative loops into FP style?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
-
-### 🟢 [Junior] Q40. What interview exercise commonly tests FP basics?
-
-**Answer (EN):** Give a concrete transformation example and explain why predictability/testability improves with pure data flow.
-
-**Giải thích (VI):** Hãy đưa ví dụ biến đổi dữ liệu cụ thể và giải thích vì sao luồng dữ liệu thuần giúp code dễ đoán và dễ kiểm thử hơn.
-
-**Ví dụ:**
-```javascript
-const numbers = [1, 2, 3];
-const out = numbers.map(n => n + 1).reduce((a, b) => a + b, 0);
-console.log(out);
-```
-
-**Interview Tip:** Balance theory with practical frontend examples (state updates, API mapping, form normalization).
+**When to use which:**
+- **`pipe`** — most teams prefer this because it reads left-to-right, matching natural reading order. Used in RxJS (`pipe` operator), fp-ts, and most FP utilities.
+- **`compose`** — matches mathematical notation (`f∘g`). Used when you want to read the transformation "outside-in" like nested function calls. Ramda uses `compose` as default.
+- **Rule of thumb**: if your team reads code left-to-right (most do), use `pipe`.
+
+Giải thích tiếng Việt: `compose` chạy phải→trái (theo ký hiệu toán học f∘g), `pipe` chạy trái→phải (theo thứ tự đọc tự nhiên). Cả hai implement bằng `reduce` / `reduceRight` trên mảng functions. Phần lớn team dùng `pipe` vì đọc tự nhiên hơn. Phiên bản async wrap mỗi bước trong `Promise.resolve().then()` để handle cả sync lẫn async functions.
+
+**💡 Interview Signal:**
+- ✅ Strong: Implements both, explains `reduce` vs `reduceRight`, shows async variant, gives team preference reasoning
+- ❌ Weak: Only implements one, can't explain the direction difference, forgets async consideration
 
 ---
 
-## Self-Check / Tự Kiểm Tra
+### Q5: Compare `flatMap` vs `map` + `flat`. When would you choose each, and what are the performance implications? / So sánh `flatMap` vs `map` + `flat`. Khi nào chọn cái nào? 🔴 Senior
 
-- [ ] Tôi có thể giải thích "pure function" và tại sao nó dễ test hơn không?
-- [ ] Tôi có thể implement `map`, `filter`, `reduce` từ đầu không dùng built-in không?
-- [ ] Tôi có thể giải thích immutability và cách spread operator giúp thực hiện nó không?
-- [ ] Tôi có thể viết một `compose` hoặc `pipe` function không?
-- [ ] Tôi có thể giải thích tại sao Redux reducer phải là pure function không?
+**A:** Both flatten one level after mapping, but they differ in performance and semantics.
 
-💬 **Feynman Prompt:** Giải thích "immutability" cho team lead đang hỏi tại sao không dùng `arr.push()` mà phải dùng `[...arr, item]`. Lợi ích thực tế là gì?
+```javascript
+const sentences = ['hello world', 'foo bar'];
+
+// map + flat (two passes)
+sentences.map(s => s.split(' ')).flat();
+// → ['hello', 'world', 'foo', 'bar']
+
+// flatMap (single pass — more efficient)
+sentences.flatMap(s => s.split(' '));
+// → ['hello', 'world', 'foo', 'bar']
+
+// flatMap can also REMOVE items (return empty array to filter)
+const nums = [1, 2, 3, 4, 5];
+nums.flatMap(n => n % 2 === 0 ? [n * 2] : []);
+// → [4, 8] — filter + map in one pass!
+```
+
+**Performance analysis:**
+
+```
+map + flat:
+  Pass 1 (map):  O(n) — creates intermediate array of arrays
+  Pass 2 (flat): O(n) — iterates again to flatten
+  Total: 2 passes + intermediate array allocation
+
+flatMap:
+  Single pass:   O(n) — maps and flattens in one iteration
+  Total: 1 pass, no intermediate array
+
+  Benchmark (10K elements):
+  map+flat:  ~0.8ms
+  flatMap:   ~0.5ms  (≈40% faster)
+```
+
+**When to choose:**
+- **`flatMap`**: When mapping 1-to-many (split words, expand ranges) or filter+map in one pass. Preferred for hot paths.
+- **`map` + `flat`**: When you need `flat(depth > 1)` — `flatMap` only flattens 1 level. Or when the mapping and flattening logic are conceptually separate.
+- **Monadic flatMap**: In FP theory, `flatMap` (aka `bind`/`chain`) is the fundamental operation for chaining computations that produce wrapped values (Array, Promise, Optional). This is why `Promise.then` is essentially `flatMap` — it unwraps the inner Promise.
+
+```javascript
+// Promise.then IS flatMap:
+Promise.resolve(1)
+  .then(x => Promise.resolve(x + 1))  // flatMap: unwraps inner Promise
+  .then(x => x + 1);                   // map: doesn't wrap
+// → Promise(3)
+```
+
+Giải thích tiếng Việt: `flatMap` = `map` + `flat(1)` trong một bước duy nhất, hiệu quả hơn vì chỉ duyệt 1 lần thay vì 2. Có thể dùng `flatMap` để filter+map cùng lúc (trả `[]` để loại bỏ, trả `[value]` để giữ). Trong lý thuyết FP, `flatMap` (hay `bind`/`chain`) là phép toán cơ bản để nối các computation tạo ra wrapped values — `Promise.then` thực chất chính là `flatMap`.
+
+**💡 Interview Signal:**
+- ✅ Strong: Explains monadic connection (Promise.then = flatMap), shows filter+map trick, gives performance numbers
+- ❌ Weak: Only says "it flattens after mapping" without performance analysis or monadic connection
 
 ---
 
-## Connections / Liên Kết
+## Interview Q&A Summary / Tổng Kết Q&A
 
-- ⬅️ **Built on:** [Closures](./03-closures.md) | [ES6 Features](./07-es6-features.md) — FP cần arrow functions, destructuring, spread
-- ➡️ **Enables:** [React State Management](../03-react/05-state-management.md) | Redux patterns | RxJS
-- 🔗 **In practice:** React hooks (closure-based state), Redux (pure reducers), Array methods (daily use)
+| # | Topic | Difficulty | Key Concept |
+|---|-------|-----------|-------------|
+| Q1 | Pure functions + React/Redux | 🟡 Mid | Deterministic, no side effects, reference equality |
+| Q2 | Implement map/filter/reduce | 🟡 Mid | New array, 3 callback args, reduce = universal |
+| Q3 | Implement memoize | 🟡 Mid | Map cache, JSON.stringify key, LRU eviction |
+| Q4 | Compose vs pipe | 🔴 Senior | reduceRight vs reduce, async variant |
+| Q5 | flatMap vs map+flat | 🔴 Senior | Single pass, filter+map trick, monadic connection |
+
+---
+
+## ⚡ Cold Call Simulation / Mô Phỏng Phỏng Vấn
+
+> 🎯 Interviewer asks cold: **"Explain functional programming principles and how they apply to React."**
+
+**30 giây đầu — mở đầu lý tưởng:**
+1. "Functional programming centers on three principles: pure functions, immutability, and composition — and React is built directly on all three."
+2. "Pure functions map to React components: same props → same JSX, enabling React.memo to skip re-renders via reference equality checks."
+3. "Immutability is why we never mutate state directly — `setState` creates a new state object so React can detect changes with an O(1) `===` comparison instead of expensive deep diffs."
+4. "Composition is the component model itself — small, focused components combined into complex UIs, just like composing pure functions in a pipe."
+
+---
+
+## Self-Check / Tự Kiểm Tra ⚡ (Đóng tài liệu lại trước khi làm)
+
+- [ ] **Retrieval**: Viết 3 nguyên tắc cốt lõi của FP từ trí nhớ — giải thích mỗi cái bằng 1 câu.
+- [ ] **Visual**: Vẽ diagram `compose(f, g, h)(x)` vs `pipe(f, g, h)(x)` — chỉ rõ hướng data flow.
+- [ ] **Application**: Redux reducer nhận `state = { items: [1,2,3] }` và action `ADD_ITEM(4)`. Viết reducer đúng (immutable) và sai (mutate). Giải thích tại sao sai gây bug UI.
+- [ ] **Debug**: `[3,1,2].sort()` trả về `[1,2,3]` — nhưng mảng gốc bây giờ là gì? Tại sao? Fix thế nào?
+- [ ] **Teach**: Giải thích `reduce` cho người chỉ biết vòng `for` — dùng ví dụ tính tổng mảng.
+
+💬 **Feynman Prompt:** Giải thích tại sao React yêu cầu immutable state updates, dùng ví dụ "ảnh và bản sao ảnh". Không dùng thuật ngữ kỹ thuật.
+
+🔁 **Spaced Repetition reminder:** Review this file again on 2026-03-22, then 2026-03-26, then 2026-04-02.
