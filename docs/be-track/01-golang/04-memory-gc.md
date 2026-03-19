@@ -1,11 +1,49 @@
 # Go Memory Management & Garbage Collection — Deep Dive
 
 > **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **Prerequisites**: [Go Concurrency](./03-concurrency.md)
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 
 > **Target:** Middle/Senior Go Backend Developer
 > **Companies:** Zalo, Grab, Axon, Employment Hero, Microsoft, Google
 > **Difficulty:** 🟢 Junior | 🟡 Middle | 🔴 Senior
+
+---
+
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Grab production incident:** Payment service chạy ổn định suốt 4 giờ, sau đó latency tăng đột biến mỗi 2-3 phút trong ~200ms. CPU spike nhỏ nhưng GC pause lớn. Root cause: `http.Request` objects đang bị giữ trong một cache map — GC phải scan toàn bộ live heap để tìm pointers, và live heap không bao giờ shrink.
+
+**Bài học:** Hiểu GC không phải là academic — nó quyết định SLA của production services. Khi interviewer hỏi về memory, họ muốn biết bạn có thể **debug GC problems**, không chỉ đọc lý thuyết.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Go's garbage collector giống **nhân viên dọn dẹp văn phòng làm ca đêm**. Trong khi bạn làm việc (goroutines chạy), GC âm thầm đánh dấu những vật không còn dùng và dọn dẹp. Vấn đề xảy ra khi GC phải **dừng mọi người lại** (Stop-The-World pause) để dọn — dù Go 1.14+ giảm STW xuống dưới 500μs.
+
+**Why you need to know this:** Memory leaks trong Go khác C++ — không phải "bộ nhớ bị mất vĩnh viễn" mà là "goroutine bị block mãi" hoặc "object không thể reachable nhưng vẫn có reference". Profiling bằng `pprof` là kỹ năng phân biệt mid vs senior.
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[Go Runtime]
+     │
+     ├──► [Stack] — goroutine-local, auto-grows, fast alloc
+     │
+     └──► [Heap] — shared, GC-managed
+              │
+              ├──► [Escape Analysis] — compiler decides stack vs heap
+              │       └── "does pointer escape function scope?"
+              │
+              ├──► [TCMalloc-inspired Allocator]
+              │       ├── mspan (8KB pages)
+              │       ├── mcache (per-P, no lock)
+              │       └── mcentral / mheap (global)
+              │
+              └──► [Tri-color Mark & Sweep GC]
+                      ├── Concurrent (runs with goroutines)
+                      ├── Write barrier (no missed pointers)
+                      └── GOGC env var (default 100 = 2x heap)
+```
 
 ---
 
@@ -957,3 +995,20 @@ Vietnamese explanation: Memory leak trong Go thường do: (1) goroutine leak �
 **A:** `sync.Pool` is a thread-safe cache of temporary objects that reduces GC pressure by reusing allocated objects instead of discarding them. Objects in the pool are freed during GC — there is **no guarantee** an object will still be there after the next GC. This makes it unsuitable for persistent state. Use cases: byte buffers (e.g., `bytes.Buffer`), JSON encoders/decoders, HTTP request/response objects in high-throughput paths. The standard library uses `sync.Pool` extensively in `fmt`, `encoding/json`, and `net/http`. Avoid using it for objects with complex state that needs resetting — you must reset the object before returning it to the pool.
 
 Vietnamese explanation: `sync.Pool` giải quyết vấn đề GC pressure trong high-throughput service. Thay vì allocate mới và GC sau mỗi request, pool tái sử dụng objects. Điểm quan trọng: **pool bị clear sau mỗi GC cycle**, nên không dùng cho objects cần tồn tại lâu dài. Pattern chuẩn: `Get()` lấy object → dùng → **reset state** → `Put()` trả lại. Nếu quên reset, object cũ có thể lẫn data của request trước — đây là security bug nghiêm trọng. `sync.Pool` thích hợp nhất cho `[]byte` buffers trong parsing/serialization hot paths.
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I explain the difference between stack and heap allocation in Go, and what escape analysis does?
+- [ ] Can I describe Go's tri-color mark-and-sweep GC in 3 sentences?
+- [ ] Can I name 3 common memory leak patterns in Go (goroutine leak, timer leak, map growth)?
+- [ ] Can I write a benchmark with `-bench` and use `pprof` to identify the hot allocation?
+- [ ] Can I explain when and why to use `sync.Pool`?
+- 💬 **Feynman Prompt:** Giải thích GC pause cho một backend dev mới — tại sao GC pause ảnh hưởng đến latency, và Go làm gì để giảm thiểu nó?
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [Go Concurrency](./03-concurrency.md) — goroutines are the unit of memory ownership
+- ➡️ **Enables**: [Go Testing & Profiling](./05-testing-profiling.md) — `pprof` memory profiling
+- 🔗 **Applied in**: [Distributed Systems](../02-backend-knowledge/03-distributed-systems.md) — memory pressure under high load

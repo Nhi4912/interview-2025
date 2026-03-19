@@ -1,7 +1,48 @@
 # Distributed Systems - Deep Theory
 
 > **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **Prerequisites**: [Microservices Architecture](./02-microservices.md), [Database Theory](../../shared/03-database/database-theory.md)
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
+
+---
+
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Shopee Flash Sale, 11.11:** 1 triệu user click "Buy" cùng lúc cho 1000 iPhone. Nếu dùng single database với `SELECT ... FOR UPDATE`, mọi request serialize — 1 giây để xử lý 1 request × 1 triệu request = 11 ngày. Giải pháp thực tế: Redis DECR (atomic, sub-millisecond) làm inventory counter, Kafka queue hóa orders, và chấp nhận rằng inventory count có thể temporarily negative — compensate sau.
+
+**Bài học:** Distributed systems không phải "làm hệ thống lớn hơn" — mà là **trade-off engineering**: consistency vs availability, latency vs throughput. CAP theorem, eventual consistency, và idempotency là vocabulary bạn cần để nói chuyện được với senior engineers.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Distributed system giống **chuỗi nhà hàng franchise** — mỗi chi nhánh (node) phục vụ khách riêng, inventory riêng, nhưng phải "eventually" đồng bộ với trung tâm. Khi mạng đứt (partition), chi nhánh phải chọn: từ chối bán (CP) hay bán dù có thể hết hàng thật (AP)? Không có câu trả lời đúng — phụ thuộc vào business requirement.
+
+**Why it matters for interviews:** Hầu hết hệ thống production ở Grab, Shopee, Tiki đều distributed. Hiểu CAP, consensus algorithms, và idempotency là baseline để discuss system design problems.
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[Distributed Systems Fundamentals]
+         │
+         ├──► CAP Theorem: C vs A khi có Partition (P là mandatory)
+         │       ├── CP: etcd, ZooKeeper, HBase, MongoDB (strong mode)
+         │       └── AP: Cassandra, DynamoDB, CouchDB
+         │
+         ├──► Consistency Models (spectrum)
+         │       Strong → Sequential → Causal → Eventual
+         │
+         ├──► Consensus Algorithms
+         │       ├── Paxos (theoretical foundation)
+         │       └── Raft (used in etcd, CockroachDB — easier to understand)
+         │
+         ├──► Distributed Transactions
+         │       ├── 2PC (blocking, single point of failure)
+         │       └── Saga (choreography / orchestration)
+         │
+         └──► Reliability Patterns
+                 ├── Idempotency (safe retries)
+                 ├── Exactly-once delivery (Kafka transactions)
+                 └── Vector clocks (causal ordering)
+```
 
 ---
 
@@ -1350,3 +1391,20 @@ Kafka "exactly-once":
 ---
 
 *Document version: 2026-03. Focus on theory and conceptual understanding for backend engineering interviews at scale-focused companies.*
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I explain CAP theorem and give one CP and one AP database example?
+- [ ] Can I describe the Raft consensus algorithm in 3 sentences (leader election, log replication, commitment)?
+- [ ] Can I explain why idempotency is critical for distributed operations (retries, at-least-once delivery)?
+- [ ] Can I design an idempotent payment API endpoint?
+- [ ] Can I compare 2PC vs Saga and explain why Saga is preferred in microservices?
+- 💬 **Feynman Prompt:** Giải thích eventual consistency cho một product manager — tại sao sau khi bạn post lên Facebook, bạn bè ở nước khác thấy post sau vài giây, và đó không phải là bug?
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [Microservices Architecture](./02-microservices.md) — microservices are distributed systems
+- ⬅️ **Built on**: [Database Theory](../../shared/03-database/database-theory.md) — ACID vs BASE, transactions
+- 🔗 **Applied in**: [System Design](../../shared/02-system-design/system-design-theory.md) — every scaled system faces CAP trade-offs

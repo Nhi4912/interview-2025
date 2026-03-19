@@ -1,7 +1,44 @@
 # Microservices Architecture - Deep Theory
 
 > **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **Prerequisites**: [API Design](./01-api-design.md)
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
+
+---
+
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Tiki.vn, 2019:** Monolith Rails app, 50+ developers, mỗi deploy phải release toàn bộ app — 1 bug trong Payment block cả team Catalog deploy. Black Friday traffic: chỉ cần scale Checkout service nhưng phải scale toàn bộ monolith. Quyết định: tách dần sang microservices theo **Strangler Fig pattern** — wrapping từng module trong API, không rewrite từ đầu.
+
+**Thực tế:** Microservices không phải "silver bullet". Amazon, Netflix phải build years of infrastructure (service mesh, distributed tracing, circuit breakers) trước khi benefit vượt cost. Interviewer hỏi để biết bạn hiểu trade-off, không phải để bạn ca ngợi microservices.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Monolith giống **một siêu thị lớn** — tất cả phòng ban trong cùng toà nhà, dễ quản lý khi nhỏ, nhưng khi mở rộng thì tắc nghẽn ở tất cả phòng khi chỉ 1 phòng đông. Microservices giống **khu mua sắm (mall)** — mỗi cửa hàng độc lập, tự quyết giờ mở cửa, tự scale nhân viên — nhưng cần parking lot, bảo vệ, wifi chung (infra overhead).
+
+**Why the decision matters:** Rule of thumb (Martin Fowler): *"Don't start with microservices. When the monolith becomes painful to change, migrate — not before."* Premature microservices thêm distributed systems complexity (network failures, eventual consistency) khi team chưa ready.
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[Monolith] ──growth──► [Modular Monolith] ──pain──► [Microservices]
+                                                           │
+                    ┌──────────────────────────────────────┤
+                    │                                      │
+              [Communication]                    [Data Management]
+              ├── Sync: REST/gRPC                ├── Database-per-service
+              └── Async: Kafka/RabbitMQ          └── Saga pattern (distributed tx)
+                    │
+              [Reliability Patterns]
+              ├── Circuit Breaker (Hystrix/resilience4j)
+              ├── Retry with backoff
+              └── Bulkhead (isolate failures)
+                    │
+              [Observability]
+              ├── Distributed Tracing (Jaeger/Zipkin)
+              ├── Centralized Logging (ELK)
+              └── Metrics (Prometheus/Grafana)
+```
 
 ---
 
@@ -1291,3 +1328,20 @@ Khi thiết kế microservices, trả lời các câu hỏi sau:
 | **Big Bang rewrite** | Rewrite entire monolith at once | Strangler Fig, incremental migration |
 | **No circuit breaker** | Cascade failures | Circuit breaker + fallback for all external calls |
 | **Ignoring CAP theorem** | Expecting strong consistency everywhere | Accept eventual consistency, design for it |
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I explain when NOT to use microservices (pre-product-market-fit, small team)?
+- [ ] Can I draw the Saga pattern (choreography vs orchestration) from memory?
+- [ ] Can I explain Circuit Breaker states (Closed → Open → Half-Open) with a real example?
+- [ ] Can I name 3 problems microservices introduce that monoliths don't have?
+- [ ] Can I describe Service Mesh and when you need one?
+- 💬 **Feynman Prompt:** Giải thích cho CEO (không biết code) tại sao chuyển sang microservices vừa giúp scale vừa làm hệ thống phức tạp hơn — và khi nào thì lợi ích vượt chi phí?
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [API Design](./01-api-design.md) — REST/gRPC communication between services
+- ➡️ **Enables**: [Distributed Systems](./03-distributed-systems.md) — microservices IS distributed systems
+- 🔗 **Applied in**: [System Design](../../shared/02-system-design/system-design-theory.md) — architectural decisions at scale

@@ -1,10 +1,47 @@
 # Testing & Profiling in Go — Deep Theory & Interview Questions
 
 > **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **Prerequisites**: [Go Interfaces & Generics](./02-interfaces-generics.md), [Go Memory & GC](./04-memory-gc.md)
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 
 > **Phạm vi**: Unit test, benchmark, fuzz, mocking, integration test, HTTP test, race detector, coverage, profiling, static analysis.
 > Tập trung lý thuyết sâu (~75%), code minh họa pattern (~25%) — phù hợp ôn phỏng vấn Golang Backend.
+
+---
+
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Zalo backend review:** PR được approve, CI xanh, deploy lên staging. 30 phút sau production báo lỗi: transfer amount đôi khi bị nhân đôi. `go test -race` locally không phát hiện vì không chạy concurrent test. Thêm `t.Parallel()` + `-race` flag → data race phát hiện ngay trên goroutine counter.
+
+**Bài học:** Testing trong Go không chỉ là "viết test". Race detector, benchmark, pprof profiling là công cụ phân biệt backend dev biết tìm bug production vs chỉ đảm bảo unit test xanh.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** `go test` giống **phòng thí nghiệm tích hợp** trong nhà máy sản xuất: không chỉ kiểm tra từng linh kiện (unit test), mà còn kiểm tra toàn bộ dây chuyền dưới tải nặng (benchmark), tìm tình huống bất thường (fuzz test), và đo hiệu năng thực tế (pprof). Tất cả đều built-in, không cần cài thêm gì.
+
+**Why Go's approach matters:** Mocking trong Go không cần framework — chỉ cần interface. Viết `DatabaseStore interface { Save(u User) error }` thì `FakeStore` chỉ là struct implement interface đó. Điều này giúp test nhanh hơn và không phụ thuộc vào magic reflection.
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[go test toolchain]
+     │
+     ├──► Unit Test (*_test.go, Test* prefix, t.Error/t.Fatal)
+     │       └── Table-driven tests (slice of struct → t.Run)
+     │
+     ├──► Benchmark (Benchmark* prefix, b.N loop)
+     │       └── pprof integration (cpu, mem, goroutine profiles)
+     │
+     ├──► Fuzz Test (Fuzz* prefix, f.Add seeds, Go 1.18+)
+     │
+     ├──► Integration Test (httptest.NewServer, testcontainers)
+     │
+     └──► Race Detector (-race flag → ThreadSanitizer)
+              └── Required in CI for concurrent code
+
+[Mocking without frameworks]
+     Dependency → interface → FakeImpl in _test.go
+```
 
 ---
 
@@ -959,3 +996,20 @@ Interface conversion: avoid in hot path — use concrete types
 ```
 
 **Điểm senior:** pprof là tool bắt buộc phải biết. Quy trình: benchmark first (measure baseline) → profile → identify bottleneck → optimize → benchmark again (verify improvement). Không optimize mà không có data từ profiler — "premature optimization is the root of all evil".
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I write a table-driven test with `t.Run` subtests from memory?
+- [ ] Can I explain why `go test -race` is essential for concurrent code?
+- [ ] Can I mock a database dependency using only Go interfaces (no mockery/gomock)?
+- [ ] Can I write a benchmark and read `ns/op`, `B/op`, `allocs/op` output?
+- [ ] Can I use `go tool pprof` to identify the top CPU-consuming function?
+- 💬 **Feynman Prompt:** Giải thích cách mock database trong Go cho một dev mới — tại sao dùng interface thay vì mock framework, và trade-off là gì?
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [Go Interfaces & Generics](./02-interfaces-generics.md) — mocking is just implementing an interface
+- ⬅️ **Built on**: [Go Memory & GC](./04-memory-gc.md) — pprof profiles memory and GC behavior
+- 🔗 **Applied in**: [API Design](../02-backend-knowledge/01-api-design.md) — `httptest` for testing HTTP handlers

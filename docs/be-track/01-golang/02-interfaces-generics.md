@@ -1,10 +1,48 @@
 # Interfaces & Generics in Go — Deep Theory & Interview Questions
 
 > **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **Prerequisites**: [Go Language Fundamentals](./01-language-fundamentals.md)
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 
 > **Phạm vi**: Interface semantics, internal representation (iface/eface), design principles, generics (Go 1.18+), reflection.
 > Tập trung lý thuyết sâu (~75%), code minh hoạ ngắn gọn (~25%) — phù hợp ôn phỏng vấn Golang Backend.
+
+---
+
+## Real-World Scenario / Tình Huống Thực Tế
+
+Bạn đang xây dựng **payment service** tại Grab. Ban đầu chỉ hỗ trợ Stripe. Sau 3 tháng, cần thêm VNPay, MoMo, ZaloPay. Nếu code ban đầu hardcode `StripeClient`, mỗi lần thêm payment method phải sửa business logic.
+
+**Interface giải quyết bằng cách:** `ProcessPayment(p PaymentProvider)` nhận bất kỳ struct nào có method `Charge(amount float64) error` — Stripe, VNPay, MoMo đều được, không cần sửa business logic, không cần khai báo `implements`. Sau Go 1.18, generics cho phép viết `Min[T constraints.Ordered](a, b T)` thay vì 3 hàm riêng cho `int`, `float64`, `string`.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Interface trong Go giống như **ổ cắm điện tiêu chuẩn**. Ổ cắm không biết cái gì cắm vào — điện thoại, máy tính, quạt — miễn là phích cắm đúng hình dạng (đúng method signature) là hoạt động. Nhà sản xuất thiết bị không cần xin phép người tạo ổ cắm.
+
+**Why Go's approach is different:** Java/C# require explicit `implements ClassName` — tight coupling between the type and the interface. Go's **implicit satisfaction** means any type automatically satisfies an interface if it has the right methods. This enables **retroactive design**: you define an interface AFTER the concrete types exist, which is impossible in Java without modifying the original class.
+
+**Why Generics (Go 1.18):** Before generics, writing a `Min` function required either `interface{}` (losing type safety) or 3 separate functions (`MinInt`, `MinFloat64`, `MinString`). Generics let you write it once with compile-time type checking.
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[Go Structs + Methods]
+        │
+        ▼
+[Interfaces — implicit satisfaction]
+        │
+        ├──► Small interfaces (io.Reader, io.Writer) → composability
+        ├──► Dependency injection → testability (mock = new struct)
+        ├──► Empty interface (any) → escape hatch for unknown types
+        │
+        ▼
+[Generics (Go 1.18) — type parameters]
+        │
+        ├──► Constraints → type-safe generics
+        └──► Replaces: interface{} + type assertion patterns
+
+[Reflection] ← inspect types at runtime (slower, use sparingly)
+```
 
 ---
 
@@ -864,3 +902,21 @@ Vietnamese explanation: Rule of thumb — **interfaces cho runtime polymorphism,
 **A:** A **type constraint** is an interface that restricts which types a generic type parameter can be. The `comparable` built-in constraint allows `==` and `!=`. The `constraints` package (or inline union types) allows arithmetic: `~int | ~float64`. The tilde `~` means "underlying type" — `~int` includes any named type whose underlying type is `int` (e.g., `type UserID int`). Custom constraints are defined as interfaces with a type set: `type Number interface { ~int | ~int64 | ~float64 }`. A type parameter can also be constrained by method sets: `type Stringer interface { String() string }`.
 
 Vietnamese explanation: Constraint trong generics là interface dùng ở vị trí type parameter. `comparable` là built-in, dùng cho map keys và `==` operations. Khi cần arithmetic operators (`+`, `-`, `*`), bạn phải dùng union constraint vì operators không thể express qua methods. Tilde `~` rất quan trọng — không có tilde, `type Celsius float64` sẽ không satisfy `float64` constraint dù underlying type là float64. Đây là câu hỏi phân biệt candidate hiểu sâu về generics.
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I explain why Go uses implicit interface satisfaction instead of explicit `implements`?
+- [ ] Can I draw the `iface` struct (type pointer + data pointer) from memory?
+- [ ] Can I name 3 real use cases where interfaces enable better testability?
+- [ ] Can I write a generic function with a custom type constraint?
+- [ ] Can I explain when to use interfaces vs generics vs `any`?
+- 💬 **Feynman Prompt:** Giải thích Go interfaces cho một Java developer — tại sao bạn không cần viết `implements`, và điều đó thay đổi cách thiết kế code như thế nào?
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [Go Language Fundamentals](./01-language-fundamentals.md) — struct methods, type system
+- ➡️ **Enables**: [Go Concurrency](./03-concurrency.md) — channels are interface-driven (`io.Reader`/`io.Writer`)
+- ➡️ **Enables**: [Go Testing](./05-testing-profiling.md) — mock = new struct satisfying interface, no frameworks needed
+- 🔗 **Applied in**: [API Design](../02-backend-knowledge/01-api-design.md) — handler interfaces for middleware chains
