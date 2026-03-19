@@ -1,1281 +1,556 @@
-# Prototypes & Inheritance - Comprehensive Bilingual Deep Dive
+# Prototypes & Inheritance — Deep Dive / Prototype & Kế Thừa — Chuyên Sâu
 
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../00-table-of-contents.md)
-
-## Prototype Chain, Class Sugar, Descriptors, Reflect/Proxy, and Advanced Patterns
-
-[← Closures](./03-closures-comprehensive.md) | [ES6 Features →](./11-es6-features-deep.md) | [Async](./09-async-comprehensive.md)
+> **Prerequisites**: [Closures](./03-closures-comprehensive.md) | [Scope & Hoisting](./02-scope-hoisting-comprehensive.md)
+> **See also**: [ES6 Features](./11-es6-features-deep.md) | [Advanced Patterns](./17-advanced-patterns-theory.md)
 
 ---
 
 ## Real-World Scenario / Tình Huống Thực Tế
 
-**VNG frontend interview (ứng viên chia sẻ):** Câu hỏi "What's the difference between `class` and prototype-based inheritance?" Ứng viên: "class là OOP như Java." Interviewer: "How does `class` work under the hood in JS?" — ứng viên không biết `class` là syntactic sugar over prototype chain, không có true class-based inheritance. Fail.
+**VNG frontend interview (2023 — ứng viên chia sẻ):**
 
-**Bài học:** React components, array methods (`map`, `filter`), and everything in JS runs on prototype chain. `class` syntax hides this — but interviews reveal understanding of what's actually happening.
+Interviewer hỏi: *"What happens under the hood when you call `[1,2,3].map(fn)`?"*
+
+Ứng viên: "JavaScript calls the `map` method on the array."
+
+Interviewer: "But where is `map` defined? Is it copied into every array?"
+
+Ứng viên: "...um, it's built-in?" — không biết `map` sống trên `Array.prototype`, shared across ALL arrays via prototype chain.
+
+**Kết quả:** Fail round 1. Câu hỏi tiếp: "How does `class` work under the hood?" — ứng viên nói "như Java" — fail luôn.
+
+**Bài học:** Mọi thứ trong JS dựa trên prototype chain. `class`, `extends`, `instanceof`, method sharing — tất cả là prototype. Biết prototype = hiểu JS từ gốc rễ.
+
+---
 
 ## What & Why / Cái Gì & Tại Sao
 
-**Analogy:** Prototype chain giống gia phả: khi bạn tìm property trên object, JS "leo lên cây gia phả" đến `Object.prototype`. Nếu không tìm thấy ở con, tìm ở cha, tìm ở ông, tìm ở `Object.prototype`, cuối cùng là `null`. `class` syntax là "giấy khai sinh đẹp hơn" — cùng mechanism, khác presentation.
+> 🧠 **Memory Hook**: **Prototype chain = cây gia phả. Tìm property: con → cha → ông → Object.prototype → null. `class` là "giấy khai sinh đẹp hơn" — cùng cơ chế.**
 
-**Why it matters:** Prototype chain giải thích: tại sao `[].map()` works, tại sao `instanceof` works, tại sao method sharing across instances. Framework questions (React class vs functional) touch on prototype concepts.
+**Tại sao JS dùng prototype (thay vì classical inheritance)?**
+→ Brendan Eich thiết kế JS năm 1995 dựa trên Self language — prototype-based, không phải class-based.
+→ Prototype cho phép object kế thừa từ object khác trực tiếp — không cần class làm blueprint.
+→ ES6 `class` syntax là convenience layer — compile to the same prototype mechanism.
+
+**Why this matters for 2026 interviews:**
+- `Array.prototype`, `Object.prototype` — mọi method bạn dùng hàng ngày sống ở đây
+- `instanceof` check, `hasOwnProperty`, `Object.create` — tất cả liên quan prototype
+- Framework internals (React Component class, Vue options API) đều dựa trên prototype chain
+- Senior interviews thường hỏi `new` keyword internals, `Object.create` vs `class`
 
 ---
 
-## Tổng Quan / Overview
+## Concept Map / Bản Đồ Khái Niệm
 
-- **English:** This guide moves from core prototype mechanics to class syntax, descriptors, Reflect/Proxy, mixins, and inheritance design strategy.
-- **Tiếng Việt (Giải thích):** Tài liệu này đi từ cơ chế prototype chain cốt lõi đến class syntax, descriptors, Reflect/Proxy, mixins và chiến lược thiết kế inheritance trong hệ thống lớn.
+```
+Every object has [[Prototype]] → points to another object
+                                           │
+                    ┌──────────────────────┤
+                    ▼                      ▼
+             [Object.prototype]     [Array.prototype]
+             .toString()             .map()
+             .hasOwnProperty()       .filter()
+             .valueOf()              .reduce()
+                    │
+                    ▼
+                  null ← end of chain
 
-- **Cross-reference:** Xem thêm: [Closures](./03-closures-comprehensive.md)
+class Syntax                    Prototype Reality
+──────────────────────────────────────────────
+class Animal {}           →    function Animal() {}
+class Dog extends Animal  →    Dog.prototype = Object.create(Animal.prototype)
+new Dog()                 →    Object.create(Dog.prototype) + Animal.call(this)
+```
+
+**Bạn đang ở đây trong lộ trình học:**
+```
+Closures → [PROTOTYPES & INHERITANCE] → Advanced Patterns → React Class Components
+```
 
 ---
 
-## Prototype Fundamentals
+## Overview / Tổng Quan
 
-- **Tổng Quan:** JavaScript inheritance dựa trên prototype chain thay vì class-based inheritance truyền thống.
-- **Giải thích:** Mọi object đều có liên kết [[Prototype]] để kế thừa thuộc tính.
-- **Ví dụ:** Các câu hỏi bên dưới dùng JavaScript thuần để mô tả cơ chế cốt lõi.
+JavaScript uses **prototype-based inheritance** — objects inherit directly from other objects via the `[[Prototype]]` chain, not from classes. ES6 `class` syntax is syntactic sugar that compiles to the same prototype mechanism.
 
-### 🟢 [Junior] Q01: What is __proto__ vs prototype and when should you use it?
+**Tiếng Việt:** JS dùng prototype-based inheritance — object kế thừa từ object khác thông qua [[Prototype]] chain, không phải từ class blueprint. Khi truy cập property/method trên object, JS walk up the prototype chain cho đến khi tìm thấy hoặc đến `null`. `class` syntax là sugar — dễ đọc hơn nhưng hoạt động y hệt dưới hood.
 
-- **Tổng Quan:** What is __proto__ vs prototype and when should you use it?
-- **Giải thích (VI):** __proto__ vs prototype là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** __proto__ vs prototype is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
+---
+
+## Core Concepts / Khái Niệm Cốt Lõi
+
+### 1. Prototype Chain / Chuỗi Prototype
+
+> 🧠 **Memory Hook**: **Every object has `[[Prototype]]`. Property lookup walks UP the chain. `Object.prototype` is the top. `null` is the end. `__proto__` is the getter/setter. `Object.getPrototypeOf(obj)` is the correct API.**
+
+**Tại sao prototype chain tồn tại?**
+→ Để SHARE methods across instances without copying — 1000 arrays, all sharing 1 `map` function on `Array.prototype`.
+→ Memory efficiency: methods live on prototype, not on each instance.
+→ Polymorphism: different objects can have same method name with different behavior via their prototype.
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+
+Hãy tưởng tượng cây gia phả: khi bạn hỏi "ông nội của bạn làm gì?" — trước tiên hỏi bạn, không có → hỏi cha, không có → hỏi ông, có → trả lời. Prototype chain giống vậy: tìm property ở object hiện tại, không có → leo lên prototype, không có → leo tiếp, đến `null` thì trả về `undefined`.
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
 ```javascript
-const user = { role: 'member' };
-const admin = Object.create(user);
-admin.name = 'Alice';
-console.log(admin.role);
-```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
-### 🟡 [Mid] Q02: Common pitfalls of __proto__ vs prototype in production systems?
-
-- **Tổng Quan:** Common pitfalls of __proto__ vs prototype in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-const user = { role: 'member' };
-const admin = Object.create(user);
-admin.name = 'Alice';
-console.log(admin.role);
-```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
-### 🔴 [Senior] Q03: How do you design a robust architecture around __proto__ vs prototype?
-
-- **Tổng Quan:** How do you design a robust architecture around __proto__ vs prototype?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-const user = { role: 'member' };
-const admin = Object.create(user);
-admin.name = 'Alice';
-console.log(admin.role);
-```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
-### 🟢 [Junior] Q04: What is prototype chain property lookup and when should you use it?
-
-- **Tổng Quan:** What is prototype chain property lookup and when should you use it?
-- **Giải thích (VI):** prototype chain property lookup là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** prototype chain property lookup is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-const user = { role: 'member' };
-const admin = Object.create(user);
-admin.name = 'Alice';
-console.log(admin.role);
-```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
-### 🟡 [Mid] Q05: Common pitfalls of prototype chain property lookup in production systems?
-
-- **Tổng Quan:** Common pitfalls of prototype chain property lookup in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-const user = { role: 'member' };
-const admin = Object.create(user);
-admin.name = 'Alice';
-console.log(admin.role);
-```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
-### 🔴 [Senior] Q06: How do you design a robust architecture around prototype chain property lookup?
-
-- **Tổng Quan:** How do you design a robust architecture around prototype chain property lookup?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-const user = { role: 'member' };
-const admin = Object.create(user);
-admin.name = 'Alice';
-console.log(admin.role);
-```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
-### 🟢 [Junior] Q07: What is Object.getPrototypeOf and Object.setPrototypeOf and when should you use it?
-
-- **Tổng Quan:** What is Object.getPrototypeOf and Object.setPrototypeOf and when should you use it?
-- **Giải thích (VI):** Object.getPrototypeOf and Object.setPrototypeOf là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** Object.getPrototypeOf and Object.setPrototypeOf is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-const user = { role: 'member' };
-const admin = Object.create(user);
-admin.name = 'Alice';
-console.log(admin.role);
-```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
-### 🟡 [Mid] Q08: Common pitfalls of Object.getPrototypeOf and Object.setPrototypeOf in production systems?
-
-- **Tổng Quan:** Common pitfalls of Object.getPrototypeOf and Object.setPrototypeOf in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-const user = { role: 'member' };
-const admin = Object.create(user);
-admin.name = 'Alice';
-console.log(admin.role);
-```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
-### 🔴 [Senior] Q09: How do you design a robust architecture around Object.getPrototypeOf and Object.setPrototypeOf?
-
-- **Tổng Quan:** How do you design a robust architecture around Object.getPrototypeOf and Object.setPrototypeOf?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-const user = { role: 'member' };
-const admin = Object.create(user);
-admin.name = 'Alice';
-console.log(admin.role);
-```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
-## Object.create and Constructor Functions
-
-- **Tổng Quan:** Object.create cho phép tạo object với prototype tùy ý.
-- **Giải thích:** Constructor function + prototype methods là pattern cổ điển nhưng vẫn quan trọng.
-- **Ví dụ:** Các câu hỏi bên dưới dùng JavaScript thuần để mô tả cơ chế cốt lõi.
-
-### 🟢 [Junior] Q10: What is Object.create usage and when should you use it?
-
-- **Tổng Quan:** What is Object.create usage and when should you use it?
-- **Giải thích (VI):** Object.create usage là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** Object.create usage is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-const user = { role: 'member' };
-const admin = Object.create(user);
-admin.name = 'Alice';
-console.log(admin.role);
-```
-- **Related / Liên quan:** Xem thêm: [Scope](./02-scope-hoisting-comprehensive.md)
-### 🟡 [Mid] Q11: Common pitfalls of Object.create usage in production systems?
-
-- **Tổng Quan:** Common pitfalls of Object.create usage in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-const user = { role: 'member' };
-const admin = Object.create(user);
-admin.name = 'Alice';
-console.log(admin.role);
-```
-- **Related / Liên quan:** Xem thêm: [Scope](./02-scope-hoisting-comprehensive.md)
-### 🔴 [Senior] Q12: How do you design a robust architecture around Object.create usage?
-
-- **Tổng Quan:** How do you design a robust architecture around Object.create usage?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-const user = { role: 'member' };
-const admin = Object.create(user);
-admin.name = 'Alice';
-console.log(admin.role);
-```
-- **Related / Liên quan:** Xem thêm: [Scope](./02-scope-hoisting-comprehensive.md)
-### 🟢 [Junior] Q13: What is constructor functions and when should you use it?
-
-- **Tổng Quan:** What is constructor functions and when should you use it?
-- **Giải thích (VI):** constructor functions là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** constructor functions is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-function Person(name) {
-  this.name = name;
-}
-Person.prototype.sayHi = function () {
-  return 'Hi ' + this.name;
+const animal = {
+  speak() { return `${this.name} makes a sound.`; }
 };
-```
-- **Related / Liên quan:** Xem thêm: [Scope](./02-scope-hoisting-comprehensive.md)
-### 🟡 [Mid] Q14: Common pitfalls of constructor functions in production systems?
 
-- **Tổng Quan:** Common pitfalls of constructor functions in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
+const dog = Object.create(animal); // dog.[[Prototype]] = animal
+dog.name = 'Rex';
+
+console.log(dog.speak()); // 'Rex makes a sound.'
+// dog.speak → not found on dog → found on animal → calls with dog as `this`
+
+// Verify the chain:
+Object.getPrototypeOf(dog) === animal;    // true
+dog.hasOwnProperty('speak');              // false — speak is on animal
+dog.hasOwnProperty('name');               // true — name is on dog itself
+```
+
+```
+Prototype chain diagram:
+dog object:
+┌─────────────────────────────────────┐
+│ name: 'Rex'    (own property)       │
+│ [[Prototype]] ──────────────────────┼──► animal object:
+└─────────────────────────────────────┘    ┌────────────────────────────┐
+                                           │ speak: function()          │
+                                           │ [[Prototype]] ─────────────┼──► Object.prototype
+                                           └────────────────────────────┘    ┌─────────────┐
+                                                                              │ toString()  │
+                                                                              │ valueOf()   │
+                                                                              │ [[Prototype]]──► null
+                                                                              └─────────────┘
+```
+
+**`__proto__` vs `prototype` — the confusing pair:**
 ```javascript
-function Person(name) {
-  this.name = name;
+function Dog(name) { this.name = name; }
+Dog.prototype.bark = function() { return 'Woof!'; };
+
+const rex = new Dog('Rex');
+
+rex.__proto__ === Dog.prototype;              // true (instance → constructor's .prototype)
+Dog.prototype.constructor === Dog;           // true (circular reference)
+Object.getPrototypeOf(rex) === Dog.prototype; // true (proper API, same result)
+
+// Summary:
+// .prototype → property on FUNCTION objects (blueprint for instances)
+// [[Prototype]] / __proto__ → property on ALL objects (the actual chain link)
+```
+
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
+- **Property shadowing**: setting `dog.speak = fn` creates own property, shadows prototype's `speak`
+- **Prototype mutation**: modifying `Array.prototype` affects ALL arrays — dangerous in shared code
+- **Performance**: deep prototype chains cause slower property lookups — V8 optimizes common patterns
+- **`Object.create(null)`**: creates object with NO prototype — pure dictionary, no `toString`, `hasOwnProperty`
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| "Dùng `__proto__` để set prototype" | `__proto__` is deprecated, not guaranteed in all engines | Dùng `Object.create()` hoặc `Object.setPrototypeOf()` |
+| "Method trên prototype là copy trong mỗi instance" | Methods shared via chain — NOT copied | 1000 arrays share 1 `Array.prototype.map` function |
+| Thêm methods vào `Array.prototype` | Pollutes global — conflicts với library code | Extend array via subclass: `class MyArray extends Array` |
+
+**🎯 Interview Pattern:**
+- Khi thấy: "how does `[].map()` work?", "what is `__proto__`?", "explain prototype chain"
+- → Walk up the chain: object → prototype → Object.prototype → null
+- → Answer opens with: *"Every object in JS has an internal [[Prototype]] link. When you access a property, JS first looks at the object itself, then walks up the prototype chain until it finds it or reaches null."*
+
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: [Closures](./03-closures-comprehensive.md) — `this` in methods uses same lexical/dynamic binding principles
+- ➡️ Để hiểu: `new` keyword internals and `class` below — they set up the prototype chain
+
+---
+
+### 2. The `new` Keyword — What Actually Happens / Từ Khóa `new` — Thực Sự Xảy Ra Gì
+
+> 🧠 **Memory Hook**: **`new Foo()` does 4 things: (1) create empty object, (2) set [[Prototype]] to `Foo.prototype`, (3) call `Foo` with `this` = new object, (4) return the object.**
+
+**Tại sao `new` keyword cần thiết?**
+→ Trước `class`, `new` là cách duy nhất để tạo objects với shared prototype.
+→ `new` làm constructor function behave như class: setup prototype link + initialize properties.
+→ Hiểu `new` = hiểu class syntax dưới hood.
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+
+`new` như nhà máy: bản thiết kế (constructor function) + nguyên liệu (`this`) → sản phẩm (instance). Bản thiết kế không tạo ra 1 copy của chính nó — chỉ cung cấp blueprint, chia sẻ methods qua prototype.
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
+```javascript
+function User(name, role) {
+  this.name = name;    // step 3: runs with this = new object
+  this.role = role;
 }
-Person.prototype.sayHi = function () {
-  return 'Hi ' + this.name;
+User.prototype.greet = function() {
+  return `Hi, I'm ${this.name} (${this.role})`;
 };
-```
-- **Related / Liên quan:** Xem thêm: [Scope](./02-scope-hoisting-comprehensive.md)
-### 🔴 [Senior] Q15: How do you design a robust architecture around constructor functions?
 
-- **Tổng Quan:** How do you design a robust architecture around constructor functions?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-function Person(name) {
-  this.name = name;
+const admin = new User('Nguyen', 'admin');
+
+// What new User('Nguyen', 'admin') does internally:
+function simulateNew(Constructor, ...args) {
+  // Step 1: Create empty object
+  const obj = {};
+
+  // Step 2: Set [[Prototype]] to Constructor.prototype
+  Object.setPrototypeOf(obj, Constructor.prototype);
+
+  // Step 3: Call constructor with obj as this
+  const result = Constructor.apply(obj, args);
+
+  // Step 4: Return obj (unless constructor explicitly returns an object)
+  return result instanceof Object ? result : obj;
 }
-Person.prototype.sayHi = function () {
-  return 'Hi ' + this.name;
+
+const admin2 = simulateNew(User, 'Nguyen', 'admin');
+console.log(admin2.greet()); // 'Hi, I'm Nguyen (admin)'
+```
+
+```
+Memory layout after new User():
+admin object:
+┌─────────────────────────────────┐
+│ name: 'Nguyen' (own)            │
+│ role: 'admin'  (own)            │
+│ [[Prototype]] ──────────────────┼──► User.prototype:
+└─────────────────────────────────┘    ┌──────────────────────────────┐
+                                       │ greet: function() { ... }    │
+                                       │ constructor: User (circular) │
+                                       │ [[Prototype]] ───────────────┼──► Object.prototype
+                                       └──────────────────────────────┘
+```
+
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
+- **Return value**: if constructor `return`s a primitive → ignored, obj returned. If returns an object → that object returned (not the new obj)
+- **Forgetting `new`**: `User('name', 'role')` without `new` — `this` is `undefined` (strict mode) or global. Use `class` to prevent: class constructors throw if called without `new`
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| "Constructor phải return object" | new handles return automatically | Không cần return trong constructor (trừ khi muốn override) |
+| Gọi constructor function mà không có `new` | `this` sẽ bị bind sai (global hoặc undefined) | Dùng `class` để enforce new, hoặc check: `if (!(this instanceof User)) return new User(name)` |
+
+**🎯 Interview Pattern:**
+- Khi thấy: "what does `new` do?", "implement your own `new`", "what happens without `new`?"
+- → 4 steps: create object → set prototype → call constructor → return
+- → Answer opens with: *"The `new` keyword does 4 things: creates an empty object, sets its [[Prototype]] to the constructor's .prototype, calls the constructor with `this` pointing to the new object, then returns the object."*
+
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: Prototype chain above
+- ➡️ Để hiểu: `class` syntax below — class is syntactic sugar that does these 4 steps automatically
+
+---
+
+### 3. ES6 `class` — Syntactic Sugar / Cú Pháp `class` — Đường Bao Phủ
+
+> 🧠 **Memory Hook**: **`class` = pretty syntax for prototype setup. Same engine, different paint. `extends` = set prototype chain. `super()` = call parent constructor.**
+
+**Tại sao `class` syntax ra đời?**
+→ Constructor functions + prototype assignment là verbose và error-prone.
+→ `class` syntax familiar với developers từ Java/C# — lower barrier.
+→ Enforces `new` usage (throws if called without `new`).
+→ Cleaner syntax for `extends` and `super` — prototype chain setup handled automatically.
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+
+`class` như form điền thông tin (khai sinh): thay vì viết tay mọi thứ (prototype assignment thủ công), bạn điền vào chỗ trống (class syntax) — kết quả giấy tờ như nhau, chỉ quy trình đẹp hơn.
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
+```javascript
+// Modern class syntax
+class Animal {
+  #sound; // private field (ES2022)
+
+  constructor(name) {
+    this.name = name;
+    this.#sound = 'generic sound';
+  }
+
+  speak() { // added to Animal.prototype
+    return `${this.name}: ${this.#sound}`;
+  }
+
+  static create(name) { // added to Animal (not prototype)
+    return new Animal(name);
+  }
+}
+
+class Dog extends Animal {
+  constructor(name) {
+    super(name);         // MUST call before using `this`
+    this.#sound = 'Woof'; // private field — cannot access from outside
+  }
+
+  fetch(item) {          // added to Dog.prototype
+    return `${this.name} fetches ${item}!`;
+  }
+}
+
+// What 'extends' compiles to (conceptually):
+// Dog.prototype = Object.create(Animal.prototype)
+// Dog.prototype.constructor = Dog
+// Object.setPrototypeOf(Dog, Animal) // for static method inheritance
+```
+
+```
+class hierarchy in memory:
+Dog class object:
+┌──────────────────────────────────────────────────┐
+│ [[Prototype]] ─────────────────────────────────► Animal (for static methods)
+└──────────────────────────────────────────────────┘
+
+Dog.prototype object:
+┌──────────────────────────────────────────────────┐
+│ fetch: function() { ... }                        │
+│ constructor: Dog                                 │
+│ [[Prototype]] ──────────────────────────────────► Animal.prototype
+└──────────────────────────────────────────────────┘
+
+Animal.prototype object:
+┌──────────────────────────────────────────────────┐
+│ speak: function() { ... }                        │
+│ constructor: Animal                              │
+│ [[Prototype]] ──────────────────────────────────► Object.prototype
+└──────────────────────────────────────────────────┘
+```
+
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
+- **Class declarations are NOT hoisted** (unlike function declarations) — `class` enters TDZ
+- **Methods are non-enumerable**: `Object.keys(Dog.prototype)` → empty (unlike prototype methods added manually)
+- **`super` in static methods**: refers to parent class; `super` in instance methods: refers to parent prototype
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| "`class` creates true class-based inheritance" | `class` is syntactic sugar over prototype chain | JS vẫn là prototype-based; `class` chỉ là syntax |
+| Không gọi `super()` trước dùng `this` | Derived class constructor: `this` uninitialized until super() | `super()` phải là dòng đầu tiên trong derived constructor |
+| Class methods được copy vào mỗi instance | Methods live on the prototype, shared | Only instance properties (`this.x`) are per-instance |
+
+**🎯 Interview Pattern:**
+- Khi thấy: "how does `class` work?", "difference between class and prototype?", "what does `extends` do?"
+- → Reveal the prototype mechanism behind the syntax
+- → Answer opens with: *"ES6 `class` is syntactic sugar over JavaScript's prototype system. `class Dog extends Animal` sets up Dog.prototype's [[Prototype]] to point to Animal.prototype — the same thing you'd do manually with Object.create(Animal.prototype)."*
+
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: `new` keyword internals above
+- ➡️ Để hiểu: [React Class Components](../03-react/01-react-fundamentals.md) — Component.prototype chain, lifecycle methods
+
+---
+
+## Q&A Section / Câu Hỏi Phỏng Vấn
+
+### Q: What is the prototype chain? How does property lookup work? / Prototype chain là gì? 🟢 Junior
+
+**A:** Every JavaScript object has an internal `[[Prototype]]` link pointing to another object. When you access a property, JS first looks at the object itself. If not found, it walks up the `[[Prototype]]` chain until it finds the property or reaches `null`.
+
+```javascript
+const arr = [1, 2, 3];
+// arr.map → not on arr itself
+// → found on Array.prototype.map (shared by ALL arrays)
+// → Array.prototype.[[Prototype]] = Object.prototype
+// → Object.prototype.[[Prototype]] = null (end)
+
+arr.hasOwnProperty('map'); // false — map is on Array.prototype
+```
+
+**Tiếng Việt:** Mỗi object có [[Prototype]] trỏ đến object khác. Property lookup: tìm trên object → không có → tìm trên prototype → không có → leo lên tiếp → đến `null` thì trả `undefined`. Đây là lý do `[].map()` hoạt động: `map` sống trên `Array.prototype`, shared bởi TẤT CẢ array — không copy vào từng array.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Giải thích chain lookup, nêu Array.prototype example, phân biệt own property vs inherited property
+- ❌ Weak: "Prototype là như class inheritance" — nhầm lẫn conceptual model
+
+---
+
+### Q: What does `new` actually do? Implement it manually / `new` thực sự làm gì? Tự implement? 🟢 Junior
+
+**A:** `new Constructor(args)` does 4 steps:
+
+```javascript
+// 1. Create empty object
+// 2. Set its [[Prototype]] to Constructor.prototype
+// 3. Call Constructor with this = that object
+// 4. Return the object (unless constructor returns a different object)
+
+function myNew(Constructor, ...args) {
+  const obj = Object.create(Constructor.prototype); // steps 1 + 2
+  const result = Constructor.apply(obj, args);       // step 3
+  return result instanceof Object ? result : obj;    // step 4
+}
+
+function User(name) { this.name = name; }
+const u = myNew(User, 'Nguyen');
+console.log(u.name);           // 'Nguyen'
+console.log(u instanceof User); // true
+```
+
+**Tiếng Việt:** `new` làm 4 bước: tạo empty object → set [[Prototype]] = Constructor.prototype → gọi Constructor với this = object → trả về object. Bước 4 có edge case: nếu constructor return một object khác, `new` trả về cái đó thay vì obj mới.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Implement được `myNew`, giải thích tại sao prototype link được set trước khi constructor runs, biết edge case của return value
+- ❌ Weak: Mô tả bằng lời mà không implement được
+
+---
+
+### Q: What is the difference between `class` and function + prototype? When to use each? 🟡 Mid
+
+**A:** They produce identical prototype chains — `class` is syntactic sugar:
+
+```javascript
+// Prototype-based (manual):
+function Animal(name) { this.name = name; }
+Animal.prototype.speak = function() { return this.name + ' speaks'; };
+
+// Class syntax (sugar):
+class Animal {
+  constructor(name) { this.name = name; }
+  speak() { return this.name + ' speaks'; }
+}
+
+// Result in memory: IDENTICAL prototype chain
+
+// Key behavioral differences:
+// class — cannot call without new (TypeError thrown)
+// class — constructor body is always in strict mode
+// class — methods are non-enumerable (Object.keys won't list them)
+// class — supports private fields: #field
+// class — hoisting: NOT hoisted (TDZ like let)
+```
+
+**Khi nào dùng class:** New code, when you need inheritance hierarchy, TypeScript projects, React class components (legacy).
+
+**Khi nào dùng prototype manually:** Library code that must avoid transpilation, performance-critical paths (class compiled to prototype anyway in modern engines), or when you need to manipulate the prototype chain dynamically.
+
+**Tiếng Việt:** `class` và prototype manual tạo ra kết quả memory giống hệt nhau. Khác biệt về syntax và một số behavior: `class` enforce `new`, strict mode tự động, methods non-enumerable, supports private `#fields`. Trong thực tế 2026: luôn dùng `class` syntax trong codebase mới — rõ ràng hơn, ít lỗi hơn, TypeScript support tốt hơn.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Nêu được non-enumerable methods, TDZ hoisting, strict mode enforcement, biết chúng compiles to same thing
+- ❌ Weak: "class hiện đại hơn" — không giải thích behavioral differences
+
+---
+
+### Q: Design a mixin system for JavaScript — multiple inheritance without prototype chain pollution 🔴 Senior
+
+**A:** JS `class` doesn't support multiple inheritance (single prototype chain). Solution: **mixins** via function composition:
+
+```javascript
+// Mixin approach: compose behaviors without inheritance
+const Serializable = (superclass) => class extends superclass {
+  serialize() {
+    return JSON.stringify(this);
+  }
+  static deserialize(data) {
+    return Object.assign(new this(), JSON.parse(data));
+  }
 };
-```
-- **Related / Liên quan:** Xem thêm: [Scope](./02-scope-hoisting-comprehensive.md)
-### 🟢 [Junior] Q16: What is new keyword internals and when should you use it?
 
-- **Tổng Quan:** What is new keyword internals and when should you use it?
-- **Giải thích (VI):** new keyword internals là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** new keyword internals is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-function Person(name) {
-  this.name = name;
-}
-Person.prototype.sayHi = function () {
-  return 'Hi ' + this.name;
+const Auditable = (superclass) => class extends superclass {
+  #auditLog = [];
+
+  logAction(action) {
+    this.#auditLog.push({ action, timestamp: Date.now() });
+  }
+
+  getAuditLog() { return [...this.#auditLog]; }
 };
-```
-- **Related / Liên quan:** Xem thêm: [Scope](./02-scope-hoisting-comprehensive.md)
-### 🟡 [Mid] Q17: Common pitfalls of new keyword internals in production systems?
 
-- **Tổng Quan:** Common pitfalls of new keyword internals in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-function Person(name) {
-  this.name = name;
-}
-Person.prototype.sayHi = function () {
-  return 'Hi ' + this.name;
+const Validatable = (superclass) => class extends superclass {
+  validate() {
+    return Object.entries(this.constructor.rules || {})
+      .every(([field, rule]) => rule(this[field]));
+  }
 };
-```
-- **Related / Liên quan:** Xem thêm: [Scope](./02-scope-hoisting-comprehensive.md)
-### 🔴 [Senior] Q18: How do you design a robust architecture around new keyword internals?
 
-- **Tổng Quan:** How do you design a robust architecture around new keyword internals?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-function Person(name) {
-  this.name = name;
+// Base class
+class Entity {
+  constructor(id) { this.id = id; }
 }
-Person.prototype.sayHi = function () {
-  return 'Hi ' + this.name;
-};
-```
-- **Related / Liên quan:** Xem thêm: [Scope](./02-scope-hoisting-comprehensive.md)
-## ES6 Class Syntax and Inheritance
 
-- **Tổng Quan:** class là cú pháp sugar trên prototype model.
-- **Giải thích:** extends/super giúp mô tả quan hệ kế thừa rõ ràng hơn.
-- **Ví dụ:** Các câu hỏi bên dưới dùng JavaScript thuần để mô tả cơ chế cốt lõi.
+// Compose mixins — order matters for MRO
+class Order extends Serializable(Auditable(Validatable(Entity))) {
+  static rules = {
+    id: (v) => v > 0,
+    total: (v) => v >= 0,
+  };
 
-### 🟢 [Junior] Q19: What is class syntax mechanics and when should you use it?
-
-- **Tổng Quan:** What is class syntax mechanics and when should you use it?
-- **Giải thích (VI):** class syntax mechanics là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** class syntax mechanics is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-class Animal {
-  speak() { return '...'; }
-}
-class Dog extends Animal {
-  speak() {
-    return super.speak() + ' woof';
+  constructor(id, total) {
+    super(id);
+    this.total = total;
   }
 }
+
+const order = new Order(1, 150);
+order.logAction('created');
+console.log(order.validate());        // true
+console.log(order.getAuditLog());     // [{action: 'created', ...}]
+console.log(order.serialize());       // '{"id":1,"total":150}'
 ```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟡 [Mid] Q20: Common pitfalls of class syntax mechanics in production systems?
 
-- **Tổng Quan:** Common pitfalls of class syntax mechanics in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-class Animal {
-  speak() { return '...'; }
-}
-class Dog extends Animal {
-  speak() {
-    return super.speak() + ' woof';
-  }
-}
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🔴 [Senior] Q21: How do you design a robust architecture around class syntax mechanics?
+**Why mixins over deep inheritance:**
+1. Avoids "fragile base class" — parent class changes break all children
+2. Behaviors can be composed independently — `Auditable` doesn't need `Serializable`
+3. Easier to test each mixin in isolation
+4. No diamond inheritance problem (JS has linear prototype chain)
 
-- **Tổng Quan:** How do you design a robust architecture around class syntax mechanics?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-class Animal {
-  speak() { return '...'; }
-}
-class Dog extends Animal {
-  speak() {
-    return super.speak() + ' woof';
-  }
-}
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟢 [Junior] Q22: What is extends and super and when should you use it?
+**Tiếng Việt:** Mixins là pattern thực tế tốt hơn deep inheritance cho business logic. Grab dùng pattern tương tự cho service classes: `AuthenticatedService(RateLimitedService(BaseService))`. Key insight: mixin là hàm nhận superclass → trả về class mới — cho phép compose behaviors linh hoạt mà không pollute prototype chain.
 
-- **Tổng Quan:** What is extends and super and when should you use it?
-- **Giải thích (VI):** extends and super là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** extends and super is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-class Animal {
-  speak() { return '...'; }
-}
-class Dog extends Animal {
-  speak() {
-    return super.speak() + ' woof';
-  }
-}
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟡 [Mid] Q23: Common pitfalls of extends and super in production systems?
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Implement mixin pattern, giải thích tại sao tốt hơn deep inheritance, biết MRO implications và private `#fields` trong mixins
+- ❌ Weak: "Dùng interface" — JS không có interface; hoặc deepening inheritance hierarchy thay vì composition
 
-- **Tổng Quan:** Common pitfalls of extends and super in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-class Animal {
-  speak() { return '...'; }
-}
-class Dog extends Animal {
-  speak() {
-    return super.speak() + ' woof';
-  }
-}
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🔴 [Senior] Q24: How do you design a robust architecture around extends and super?
+---
 
-- **Tổng Quan:** How do you design a robust architecture around extends and super?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-class Animal {
-  speak() { return '...'; }
-}
-class Dog extends Animal {
-  speak() {
-    return super.speak() + ' woof';
-  }
-}
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟢 [Junior] Q25: What is instance methods vs static methods and when should you use it?
+## Interview Q&A Summary / Tổng Kết Phỏng Vấn
 
-- **Tổng Quan:** What is instance methods vs static methods and when should you use it?
-- **Giải thích (VI):** instance methods vs static methods là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** instance methods vs static methods is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-class Animal {
-  speak() { return '...'; }
-}
-class Dog extends Animal {
-  speak() {
-    return super.speak() + ' woof';
-  }
-}
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟡 [Mid] Q26: Common pitfalls of instance methods vs static methods in production systems?
+| Question | Level | Key Point |
+|----------|-------|-----------|
+| What is prototype chain? | 🟢 | Walk up [[Prototype]] chain; methods on Array.prototype shared by all arrays |
+| What does `new` do? Implement it | 🟢 | 4 steps: create obj → set prototype → call constructor → return |
+| `class` vs prototype manually? | 🟡 | Same prototype chain; class adds: no-new enforcement, strict mode, non-enumerable methods, TDZ hoisting |
+| Mixin system design | 🔴 | Functional mixin pattern: `(superclass) => class extends superclass`; compose without deep hierarchy |
 
-- **Tổng Quan:** Common pitfalls of instance methods vs static methods in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-class Animal {
-  speak() { return '...'; }
-}
-class Dog extends Animal {
-  speak() {
-    return super.speak() + ' woof';
-  }
-}
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🔴 [Senior] Q27: How do you design a robust architecture around instance methods vs static methods?
+---
 
-- **Tổng Quan:** How do you design a robust architecture around instance methods vs static methods?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-class Animal {
-  speak() { return '...'; }
-}
-class Dog extends Animal {
-  speak() {
-    return super.speak() + ' woof';
-  }
-}
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-## Meta-programming and Object Semantics
+## ⚡ Cold Call Simulation / Mô Phỏng Phỏng Vấn
 
-- **Tổng Quan:** Descriptors, Reflect, Proxy mở ra meta-programming cấp cao.
-- **Giải thích:** Nắm các công cụ này giúp kiểm soát behavior object chính xác và an toàn.
-- **Ví dụ:** Các câu hỏi bên dưới dùng JavaScript thuần để mô tả cơ chế cốt lõi.
+> 🎯 Interviewer asks cold: **"How does `[1,2,3].map(fn)` actually find the `map` method?"**
 
-### 🟢 [Junior] Q28: What is property descriptors and when should you use it?
+**30 giây đầu — mở đầu lý tưởng:**
+1. "JavaScript uses prototype-based lookup — when you access a property, it first checks the object itself, then walks up the prototype chain."
+2. "The array `[1,2,3]` doesn't have `map` as its own property. Its [[Prototype]] points to `Array.prototype`, which does have `map` defined on it."
+3. "All arrays share a single `Array.prototype` object — `map` is not copied into each array, it's looked up via the prototype chain."
+4. "This is the same mechanism behind `class extends` — `extends` sets up the [[Prototype]] links so method lookups walk from child prototype to parent prototype."
 
-- **Tổng Quan:** What is property descriptors and when should you use it?
-- **Giải thích (VI):** property descriptors là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** property descriptors is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-const obj = {};
-Object.defineProperty(obj, 'id', {
-  value: 1,
-  writable: false,
-  enumerable: true,
-  configurable: false
-});
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟡 [Mid] Q29: Common pitfalls of property descriptors in production systems?
+---
 
-- **Tổng Quan:** Common pitfalls of property descriptors in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-const obj = {};
-Object.defineProperty(obj, 'id', {
-  value: 1,
-  writable: false,
-  enumerable: true,
-  configurable: false
-});
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🔴 [Senior] Q30: How do you design a robust architecture around property descriptors?
+## Self-Check / Tự Kiểm Tra ⚡
+> **Đóng tài liệu lại trước khi làm — Close this doc before attempting.**
 
-- **Tổng Quan:** How do you design a robust architecture around property descriptors?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-const obj = {};
-Object.defineProperty(obj, 'id', {
-  value: 1,
-  writable: false,
-  enumerable: true,
-  configurable: false
-});
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟢 [Junior] Q31: What is Object.defineProperty patterns and when should you use it?
+- [ ] **Retrieval**: Viết ra 4 bước của `new` keyword từ trí nhớ — không nhìn lại.
+- [ ] **Visual**: Vẽ prototype chain cho `new Dog()` extends `Animal` — từ Dog instance lên đến `null`. Bao gồm tên các objects và links.
+- [ ] **Application**: `class Dog extends Animal {}` — `new Dog()` → kết quả gọi `dog.speak()` tìm `speak` ở đâu? Trace từng bước.
+- [ ] **Debug**: `const d = Dog()` (không có `new`) — lỗi gì xảy ra? Tại sao `class` khác function constructor ở đây?
+- [ ] **Teach**: Giải thích tại sao `[].map()` hoạt động cho người không biết JS, dùng analogy "thư viện dùng chung" không dùng từ "prototype".
 
-- **Tổng Quan:** What is Object.defineProperty patterns and when should you use it?
-- **Giải thích (VI):** Object.defineProperty patterns là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** Object.defineProperty patterns is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-const obj = {};
-Object.defineProperty(obj, 'id', {
-  value: 1,
-  writable: false,
-  enumerable: true,
-  configurable: false
-});
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟡 [Mid] Q32: Common pitfalls of Object.defineProperty patterns in production systems?
+💬 **Feynman Prompt:** Giải thích prototype chain cho người không biết lập trình, dùng analogy "cây gia phả" — không dùng từ "prototype", "[[Prototype]]", "inheritance".
 
-- **Tổng Quan:** Common pitfalls of Object.defineProperty patterns in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-const obj = {};
-Object.defineProperty(obj, 'id', {
-  value: 1,
-  writable: false,
-  enumerable: true,
-  configurable: false
-});
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🔴 [Senior] Q33: How do you design a robust architecture around Object.defineProperty patterns?
+🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày → 7 ngày → 14 ngày** để chuyển vào long-term memory.
 
-- **Tổng Quan:** How do you design a robust architecture around Object.defineProperty patterns?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-const obj = {};
-Object.defineProperty(obj, 'id', {
-  value: 1,
-  writable: false,
-  enumerable: true,
-  configurable: false
-});
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟢 [Junior] Q34: What is Reflect API and when should you use it?
+---
 
-- **Tổng Quan:** What is Reflect API and when should you use it?
-- **Giải thích (VI):** Reflect API là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** Reflect API is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-const target = { x: 1 };
-const proxy = new Proxy(target, {
-  get(t, p, r) {
-    return Reflect.get(t, p, r);
-  }
-});
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟡 [Mid] Q35: Common pitfalls of Reflect API in production systems?
+## Connections / Liên Kết
 
-- **Tổng Quan:** Common pitfalls of Reflect API in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-const target = { x: 1 };
-const proxy = new Proxy(target, {
-  get(t, p, r) {
-    return Reflect.get(t, p, r);
-  }
-});
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🔴 [Senior] Q36: How do you design a robust architecture around Reflect API?
-
-- **Tổng Quan:** How do you design a robust architecture around Reflect API?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-const target = { x: 1 };
-const proxy = new Proxy(target, {
-  get(t, p, r) {
-    return Reflect.get(t, p, r);
-  }
-});
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟢 [Junior] Q37: What is Proxy-based inheritance patterns and when should you use it?
-
-- **Tổng Quan:** What is Proxy-based inheritance patterns and when should you use it?
-- **Giải thích (VI):** Proxy-based inheritance patterns là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** Proxy-based inheritance patterns is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-const target = { x: 1 };
-const proxy = new Proxy(target, {
-  get(t, p, r) {
-    return Reflect.get(t, p, r);
-  }
-});
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟡 [Mid] Q38: Common pitfalls of Proxy-based inheritance patterns in production systems?
-
-- **Tổng Quan:** Common pitfalls of Proxy-based inheritance patterns in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-const target = { x: 1 };
-const proxy = new Proxy(target, {
-  get(t, p, r) {
-    return Reflect.get(t, p, r);
-  }
-});
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🔴 [Senior] Q39: How do you design a robust architecture around Proxy-based inheritance patterns?
-
-- **Tổng Quan:** How do you design a robust architecture around Proxy-based inheritance patterns?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-const target = { x: 1 };
-const proxy = new Proxy(target, {
-  get(t, p, r) {
-    return Reflect.get(t, p, r);
-  }
-});
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-## Advanced Inheritance Techniques
-
-- **Tổng Quan:** Mixins và Symbol.hasInstance cung cấp cơ chế mở rộng linh hoạt.
-- **Giải thích:** Nhưng cần kiểm soát độ phức tạp để tránh hard-to-debug behavior.
-- **Ví dụ:** Các câu hỏi bên dưới dùng JavaScript thuần để mô tả cơ chế cốt lõi.
-
-### 🟢 [Junior] Q40: What is mixins composition and when should you use it?
-
-- **Tổng Quan:** What is mixins composition and when should you use it?
-- **Giải thích (VI):** mixins composition là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** mixins composition is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-const canLog = (Base) => class extends Base {
-  log(msg) { console.log(msg); }
-};
-class Service {}
-class UserService extends canLog(Service) {}
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-### 🟡 [Mid] Q41: Common pitfalls of mixins composition in production systems?
-
-- **Tổng Quan:** Common pitfalls of mixins composition in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-const canLog = (Base) => class extends Base {
-  log(msg) { console.log(msg); }
-};
-class Service {}
-class UserService extends canLog(Service) {}
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-### 🔴 [Senior] Q42: How do you design a robust architecture around mixins composition?
-
-- **Tổng Quan:** How do you design a robust architecture around mixins composition?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-const canLog = (Base) => class extends Base {
-  log(msg) { console.log(msg); }
-};
-class Service {}
-class UserService extends canLog(Service) {}
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-### 🟢 [Junior] Q43: What is Symbol.hasInstance customization and when should you use it?
-
-- **Tổng Quan:** What is Symbol.hasInstance customization and when should you use it?
-- **Giải thích (VI):** Symbol.hasInstance customization là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** Symbol.hasInstance customization is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-class Even {
-  static [Symbol.hasInstance](value) {
-    return Number.isInteger(value) && value % 2 === 0;
-  }
-}
-console.log(2 instanceof Even);
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-### 🟡 [Mid] Q44: Common pitfalls of Symbol.hasInstance customization in production systems?
-
-- **Tổng Quan:** Common pitfalls of Symbol.hasInstance customization in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-class Even {
-  static [Symbol.hasInstance](value) {
-    return Number.isInteger(value) && value % 2 === 0;
-  }
-}
-console.log(2 instanceof Even);
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-### 🔴 [Senior] Q45: How do you design a robust architecture around Symbol.hasInstance customization?
-
-- **Tổng Quan:** How do you design a robust architecture around Symbol.hasInstance customization?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-class Even {
-  static [Symbol.hasInstance](value) {
-    return Number.isInteger(value) && value % 2 === 0;
-  }
-}
-console.log(2 instanceof Even);
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-### 🟢 [Junior] Q46: What is composition over inheritance decisions and when should you use it?
-
-- **Tổng Quan:** What is composition over inheritance decisions and when should you use it?
-- **Giải thích (VI):** composition over inheritance decisions là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** composition over inheritance decisions is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-const canLog = (Base) => class extends Base {
-  log(msg) { console.log(msg); }
-};
-class Service {}
-class UserService extends canLog(Service) {}
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-### 🟡 [Mid] Q47: Common pitfalls of composition over inheritance decisions in production systems?
-
-- **Tổng Quan:** Common pitfalls of composition over inheritance decisions in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-const canLog = (Base) => class extends Base {
-  log(msg) { console.log(msg); }
-};
-class Service {}
-class UserService extends canLog(Service) {}
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-### 🔴 [Senior] Q48: How do you design a robust architecture around composition over inheritance decisions?
-
-- **Tổng Quan:** How do you design a robust architecture around composition over inheritance decisions?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-const canLog = (Base) => class extends Base {
-  log(msg) { console.log(msg); }
-};
-class Service {}
-class UserService extends canLog(Service) {}
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-## Performance and Design Trade-offs
-
-- **Tổng Quan:** Shape stability, method sharing, và dynamic proxy ảnh hưởng performance.
-- **Giải thích:** Cần cân bằng giữa flexibility và predictability cho runtime optimization.
-- **Ví dụ:** Các câu hỏi bên dưới dùng JavaScript thuần để mô tả cơ chế cốt lõi.
-
-### 🟢 [Junior] Q49: What is prototype method sharing memory impact and when should you use it?
-
-- **Tổng Quan:** What is prototype method sharing memory impact and when should you use it?
-- **Giải thích (VI):** prototype method sharing memory impact là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** prototype method sharing memory impact is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-function Person(name) {
-  this.name = name;
-}
-Person.prototype.sayHi = function () {
-  return 'Hi ' + this.name;
-};
-```
-- **Related / Liên quan:** Xem thêm: [Scope](./02-scope-hoisting-comprehensive.md)
-### 🟡 [Mid] Q50: Common pitfalls of prototype method sharing memory impact in production systems?
-
-- **Tổng Quan:** Common pitfalls of prototype method sharing memory impact in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-function Person(name) {
-  this.name = name;
-}
-Person.prototype.sayHi = function () {
-  return 'Hi ' + this.name;
-};
-```
-- **Related / Liên quan:** Xem thêm: [Scope](./02-scope-hoisting-comprehensive.md)
-### 🔴 [Senior] Q51: How do you design a robust architecture around prototype method sharing memory impact?
-
-- **Tổng Quan:** How do you design a robust architecture around prototype method sharing memory impact?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-function Person(name) {
-  this.name = name;
-}
-Person.prototype.sayHi = function () {
-  return 'Hi ' + this.name;
-};
-```
-- **Related / Liên quan:** Xem thêm: [Scope](./02-scope-hoisting-comprehensive.md)
-### 🟢 [Junior] Q52: What is dynamic prototype mutation risks and when should you use it?
-
-- **Tổng Quan:** What is dynamic prototype mutation risks and when should you use it?
-- **Giải thích (VI):** dynamic prototype mutation risks là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** dynamic prototype mutation risks is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-const user = { role: 'member' };
-const admin = Object.create(user);
-admin.name = 'Alice';
-console.log(admin.role);
-```
-- **Related / Liên quan:** Xem thêm: [Scope](./02-scope-hoisting-comprehensive.md)
-### 🟡 [Mid] Q53: Common pitfalls of dynamic prototype mutation risks in production systems?
-
-- **Tổng Quan:** Common pitfalls of dynamic prototype mutation risks in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-const user = { role: 'member' };
-const admin = Object.create(user);
-admin.name = 'Alice';
-console.log(admin.role);
-```
-- **Related / Liên quan:** Xem thêm: [Scope](./02-scope-hoisting-comprehensive.md)
-### 🔴 [Senior] Q54: How do you design a robust architecture around dynamic prototype mutation risks?
-
-- **Tổng Quan:** How do you design a robust architecture around dynamic prototype mutation risks?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-const user = { role: 'member' };
-const admin = Object.create(user);
-admin.name = 'Alice';
-console.log(admin.role);
-```
-- **Related / Liên quan:** Xem thêm: [Scope](./02-scope-hoisting-comprehensive.md)
-### 🟢 [Junior] Q55: What is designing maintainable inheritance trees and when should you use it?
-
-- **Tổng Quan:** What is designing maintainable inheritance trees and when should you use it?
-- **Giải thích (VI):** designing maintainable inheritance trees là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** designing maintainable inheritance trees is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-class Animal {
-  speak() { return '...'; }
-}
-class Dog extends Animal {
-  speak() {
-    return super.speak() + ' woof';
-  }
-}
-```
-- **Related / Liên quan:** Xem thêm: [Scope](./02-scope-hoisting-comprehensive.md)
-### 🟡 [Mid] Q56: Common pitfalls of designing maintainable inheritance trees in production systems?
-
-- **Tổng Quan:** Common pitfalls of designing maintainable inheritance trees in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-class Animal {
-  speak() { return '...'; }
-}
-class Dog extends Animal {
-  speak() {
-    return super.speak() + ' woof';
-  }
-}
-```
-- **Related / Liên quan:** Xem thêm: [Scope](./02-scope-hoisting-comprehensive.md)
-### 🔴 [Senior] Q57: How do you design a robust architecture around designing maintainable inheritance trees?
-
-- **Tổng Quan:** How do you design a robust architecture around designing maintainable inheritance trees?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-class Animal {
-  speak() { return '...'; }
-}
-class Dog extends Animal {
-  speak() {
-    return super.speak() + ' woof';
-  }
-}
-```
-- **Related / Liên quan:** Xem thêm: [Scope](./02-scope-hoisting-comprehensive.md)
-## Câu Hỏi Phỏng Vấn / Interview Q&A
-
-### 🟢 [Junior] Q58: What is debugging prototype chain issues and when should you use it?
-
-- **Tổng Quan:** What is debugging prototype chain issues and when should you use it?
-- **Giải thích (VI):** debugging prototype chain issues là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** debugging prototype chain issues is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-const user = { role: 'member' };
-const admin = Object.create(user);
-admin.name = 'Alice';
-console.log(admin.role);
-```
-- **Related / Liên quan:** Liên quan: [Scope](./02-scope-hoisting-comprehensive.md)
-### 🟡 [Mid] Q59: Common pitfalls of debugging prototype chain issues in production systems?
-
-- **Tổng Quan:** Common pitfalls of debugging prototype chain issues in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-const user = { role: 'member' };
-const admin = Object.create(user);
-admin.name = 'Alice';
-console.log(admin.role);
-```
-- **Related / Liên quan:** Liên quan: [Scope](./02-scope-hoisting-comprehensive.md)
-### 🔴 [Senior] Q60: How do you design a robust architecture around debugging prototype chain issues?
-
-- **Tổng Quan:** How do you design a robust architecture around debugging prototype chain issues?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-const user = { role: 'member' };
-const admin = Object.create(user);
-admin.name = 'Alice';
-console.log(admin.role);
-```
-- **Related / Liên quan:** Liên quan: [Scope](./02-scope-hoisting-comprehensive.md)
-### 🟢 [Junior] Q61: What is class vs constructor function interview answer and when should you use it?
-
-- **Tổng Quan:** What is class vs constructor function interview answer and when should you use it?
-- **Giải thích (VI):** class vs constructor function interview answer là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** class vs constructor function interview answer is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-class Animal {
-  speak() { return '...'; }
-}
-class Dog extends Animal {
-  speak() {
-    return super.speak() + ' woof';
-  }
-}
-```
-- **Related / Liên quan:** Liên quan: [ES6](./11-es6-features-deep.md)
-### 🟡 [Mid] Q62: Common pitfalls of class vs constructor function interview answer in production systems?
-
-- **Tổng Quan:** Common pitfalls of class vs constructor function interview answer in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-class Animal {
-  speak() { return '...'; }
-}
-class Dog extends Animal {
-  speak() {
-    return super.speak() + ' woof';
-  }
-}
-```
-- **Related / Liên quan:** Liên quan: [ES6](./11-es6-features-deep.md)
-### 🔴 [Senior] Q63: How do you design a robust architecture around class vs constructor function interview answer?
-
-- **Tổng Quan:** How do you design a robust architecture around class vs constructor function interview answer?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-class Animal {
-  speak() { return '...'; }
-}
-class Dog extends Animal {
-  speak() {
-    return super.speak() + ' woof';
-  }
-}
-```
-- **Related / Liên quan:** Liên quan: [ES6](./11-es6-features-deep.md)
-### 🟢 [Junior] Q64: What is descriptor-based API hardening and when should you use it?
-
-- **Tổng Quan:** What is descriptor-based API hardening and when should you use it?
-- **Giải thích (VI):** descriptor-based API hardening là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** descriptor-based API hardening is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-const obj = {};
-Object.defineProperty(obj, 'id', {
-  value: 1,
-  writable: false,
-  enumerable: true,
-  configurable: false
-});
-```
-- **Related / Liên quan:** Liên quan: [Closures](./03-closures-comprehensive.md)
-### 🟡 [Mid] Q65: Common pitfalls of descriptor-based API hardening in production systems?
-
-- **Tổng Quan:** Common pitfalls of descriptor-based API hardening in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-const obj = {};
-Object.defineProperty(obj, 'id', {
-  value: 1,
-  writable: false,
-  enumerable: true,
-  configurable: false
-});
-```
-- **Related / Liên quan:** Liên quan: [Closures](./03-closures-comprehensive.md)
-### 🔴 [Senior] Q66: How do you design a robust architecture around descriptor-based API hardening?
-
-- **Tổng Quan:** How do you design a robust architecture around descriptor-based API hardening?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-const obj = {};
-Object.defineProperty(obj, 'id', {
-  value: 1,
-  writable: false,
-  enumerable: true,
-  configurable: false
-});
-```
-- **Related / Liên quan:** Liên quan: [Closures](./03-closures-comprehensive.md)
-### 🟢 [Junior] Q67: What is proxy and reflect in domain modeling and when should you use it?
-
-- **Tổng Quan:** What is proxy and reflect in domain modeling and when should you use it?
-- **Giải thích (VI):** proxy and reflect in domain modeling là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** proxy and reflect in domain modeling is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-const target = { x: 1 };
-const proxy = new Proxy(target, {
-  get(t, p, r) {
-    return Reflect.get(t, p, r);
-  }
-});
-```
-- **Related / Liên quan:** Liên quan: [ES6](./11-es6-features-deep.md)
-### 🟡 [Mid] Q68: Common pitfalls of proxy and reflect in domain modeling in production systems?
-
-- **Tổng Quan:** Common pitfalls of proxy and reflect in domain modeling in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-const target = { x: 1 };
-const proxy = new Proxy(target, {
-  get(t, p, r) {
-    return Reflect.get(t, p, r);
-  }
-});
-```
-- **Related / Liên quan:** Liên quan: [ES6](./11-es6-features-deep.md)
-### 🔴 [Senior] Q69: How do you design a robust architecture around proxy and reflect in domain modeling?
-
-- **Tổng Quan:** How do you design a robust architecture around proxy and reflect in domain modeling?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-const target = { x: 1 };
-const proxy = new Proxy(target, {
-  get(t, p, r) {
-    return Reflect.get(t, p, r);
-  }
-});
-```
-- **Related / Liên quan:** Liên quan: [ES6](./11-es6-features-deep.md)
-### 🟢 [Junior] Q70: What is mixin strategy for large codebase and when should you use it?
-
-- **Tổng Quan:** What is mixin strategy for large codebase and when should you use it?
-- **Giải thích (VI):** mixin strategy for large codebase là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** mixin strategy for large codebase is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-const canLog = (Base) => class extends Base {
-  log(msg) { console.log(msg); }
-};
-class Service {}
-class UserService extends canLog(Service) {}
-```
-- **Related / Liên quan:** Liên quan: [Async](./09-async-comprehensive.md)
-### 🟡 [Mid] Q71: Common pitfalls of mixin strategy for large codebase in production systems?
-
-- **Tổng Quan:** Common pitfalls of mixin strategy for large codebase in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-const canLog = (Base) => class extends Base {
-  log(msg) { console.log(msg); }
-};
-class Service {}
-class UserService extends canLog(Service) {}
-```
-- **Related / Liên quan:** Liên quan: [Async](./09-async-comprehensive.md)
-### 🔴 [Senior] Q72: How do you design a robust architecture around mixin strategy for large codebase?
-
-- **Tổng Quan:** How do you design a robust architecture around mixin strategy for large codebase?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-const canLog = (Base) => class extends Base {
-  log(msg) { console.log(msg); }
-};
-class Service {}
-class UserService extends canLog(Service) {}
-```
-- **Related / Liên quan:** Liên quan: [Async](./09-async-comprehensive.md)
-### 🟢 [Junior] Q73: What is Symbol.hasInstance real-world use and when should you use it?
-
-- **Tổng Quan:** What is Symbol.hasInstance real-world use and when should you use it?
-- **Giải thích (VI):** Symbol.hasInstance real-world use là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** Symbol.hasInstance real-world use is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-class Even {
-  static [Symbol.hasInstance](value) {
-    return Number.isInteger(value) && value % 2 === 0;
-  }
-}
-console.log(2 instanceof Even);
-```
-- **Related / Liên quan:** Liên quan: [ES6](./11-es6-features-deep.md)
-### 🟡 [Mid] Q74: Common pitfalls of Symbol.hasInstance real-world use in production systems?
-
-- **Tổng Quan:** Common pitfalls of Symbol.hasInstance real-world use in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-class Even {
-  static [Symbol.hasInstance](value) {
-    return Number.isInteger(value) && value % 2 === 0;
-  }
-}
-console.log(2 instanceof Even);
-```
-- **Related / Liên quan:** Liên quan: [ES6](./11-es6-features-deep.md)
-### 🔴 [Senior] Q75: How do you design a robust architecture around Symbol.hasInstance real-world use?
-
-- **Tổng Quan:** How do you design a robust architecture around Symbol.hasInstance real-world use?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-class Even {
-  static [Symbol.hasInstance](value) {
-    return Number.isInteger(value) && value % 2 === 0;
-  }
-}
-console.log(2 instanceof Even);
-```
-- **Related / Liên quan:** Liên quan: [ES6](./11-es6-features-deep.md)
-### 🟢 [Junior] Q76: What is inheritance anti-patterns and when should you use it?
-
-- **Tổng Quan:** What is inheritance anti-patterns and when should you use it?
-- **Giải thích (VI):** inheritance anti-patterns là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** inheritance anti-patterns is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-class Animal {
-  speak() { return '...'; }
-}
-class Dog extends Animal {
-  speak() {
-    return super.speak() + ' woof';
-  }
-}
-```
-- **Related / Liên quan:** Liên quan: [Closures](./03-closures-comprehensive.md)
-### 🟡 [Mid] Q77: Common pitfalls of inheritance anti-patterns in production systems?
-
-- **Tổng Quan:** Common pitfalls of inheritance anti-patterns in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-class Animal {
-  speak() { return '...'; }
-}
-class Dog extends Animal {
-  speak() {
-    return super.speak() + ' woof';
-  }
-}
-```
-- **Related / Liên quan:** Liên quan: [Closures](./03-closures-comprehensive.md)
-### 🔴 [Senior] Q78: How do you design a robust architecture around inheritance anti-patterns?
-
-- **Tổng Quan:** How do you design a robust architecture around inheritance anti-patterns?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-class Animal {
-  speak() { return '...'; }
-}
-class Dog extends Animal {
-  speak() {
-    return super.speak() + ' woof';
-  }
-}
-```
-- **Related / Liên quan:** Liên quan: [Closures](./03-closures-comprehensive.md)
-### 🟢 [Junior] Q79: What is Object.create interview whiteboard and when should you use it?
-
-- **Tổng Quan:** What is Object.create interview whiteboard and when should you use it?
-- **Giải thích (VI):** Object.create interview whiteboard là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** Object.create interview whiteboard is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-const user = { role: 'member' };
-const admin = Object.create(user);
-admin.name = 'Alice';
-console.log(admin.role);
-```
-- **Related / Liên quan:** Liên quan: [Scope](./02-scope-hoisting-comprehensive.md)
-### 🟡 [Mid] Q80: Common pitfalls of Object.create interview whiteboard in production systems?
-
-- **Tổng Quan:** Common pitfalls of Object.create interview whiteboard in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-const user = { role: 'member' };
-const admin = Object.create(user);
-admin.name = 'Alice';
-console.log(admin.role);
-```
-- **Related / Liên quan:** Liên quan: [Scope](./02-scope-hoisting-comprehensive.md)
-### 🔴 [Senior] Q81: How do you design a robust architecture around Object.create interview whiteboard?
-
-- **Tổng Quan:** How do you design a robust architecture around Object.create interview whiteboard?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-const user = { role: 'member' };
-const admin = Object.create(user);
-admin.name = 'Alice';
-console.log(admin.role);
-```
-- **Related / Liên quan:** Liên quan: [Scope](./02-scope-hoisting-comprehensive.md)
+- ⬅️ **Built on:** [Closures](./03-closures-comprehensive.md) — `this` in prototype methods uses dynamic binding (not lexical)
+- ➡️ **Enables:** [Advanced Patterns](./17-advanced-patterns-theory.md) — decorator, mixin, factory patterns
+- ➡️ **Enables:** [React Fundamentals](../03-react/01-react-fundamentals.md) — `class Component extends React.Component` — prototype chain in action
+- 🔗 **Applied in:** Every array method call, `instanceof`, `Object.create`, React class components, Angular decorators
