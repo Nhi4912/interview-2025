@@ -5,6 +5,20 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Tiki product search với RAG (thực tế):** User search "tai nghe không dây chống ồn tốt cho gaming" — full-text search chỉ match từ khóa, miss sản phẩm có mô tả "noise-cancelling wireless headset for gamers" (khác từ khóa, cùng nghĩa). Sau khi implement embedding-based search: embed query và product descriptions vào vector space, tìm nearest neighbors bằng cosine similarity. Search relevancy (NDCG@10) tăng 35%.
+
+**Bài học:** Embeddings "hiểu" ngữ nghĩa, keyword search chỉ match text. RAG = embeddings + context injection vào LLM prompt — giải quyết cả hallucination (factual grounding) và semantic search (relevancy).
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Embedding giống tọa độ GPS cho từ ngữ: "king" và "queen" ở gần nhau trong không gian 1536 chiều, "cat" và "dog" gần nhau, "cat" và "king" xa nhau. RAG giống "cheat sheet" trong phòng thi: trước khi LLM trả lời, hệ thống tìm tài liệu liên quan nhất và đưa vào prompt — LLM viết câu trả lời dựa trên cheat sheet.
+
+**Why it matters:** RAG là pattern #1 để build production AI features. Embedding-based search là foundation cho semantic search, recommendation systems, và duplicate detection.
+
+---
+
 ## 1. Embeddings Basics / Nền tảng embedding
 
 ### 🟢 Q: What is an embedding? `[Junior]`
@@ -990,3 +1004,20 @@ Tools: RAGAS, TruLens, DeepEval
 ```
 
 **Điểm senior phải biết:** RAG không phải chỉ "embed + search". Production RAG cần hybrid search + reranking cho retrieval quality, evaluation pipeline để measure faithfulness, và document pipeline để keep index fresh. HyDE và multi-query là advanced tricks hay được hỏi.
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I explain why cosine similarity is used for embedding comparison (not Euclidean)?
+- [ ] Can I describe the 4 steps of a RAG pipeline (embed → store → retrieve → generate)?
+- [ ] Can I compare dense retrieval (embeddings) vs sparse retrieval (BM25) — hybrid approach?
+- [ ] Can I explain what "chunking strategy" is and why it matters for retrieval quality?
+- 💬 **Feynman Prompt:** Giải thích tại sao RAG giải quyết hallucination better than "just fine-tuning" — dùng ví dụ product price to show khi nào mỗi approach fails.
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [LLM & Transformers](./02-llm-and-transformers.md) — embeddings come from transformer models
+- ➡️ **Applied in**: [AI System Design](./06-ai-system-design.md) — semantic search architecture using RAG
+- 🔗 **Related**: [Agent Patterns](./03-agent-patterns.md) — agents use RAG for knowledge retrieval
+- 🔗 **Related**: [NoSQL & NewSQL](../03-database/03-nosql-and-newsql.md) — vector databases are a new DB type

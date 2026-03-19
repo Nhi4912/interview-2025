@@ -5,6 +5,20 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**VinAI churn prediction model:** Đội data science build model predict customer churn. Training accuracy: 95%. Production 2 tuần sau: accuracy 60%. Root cause: training data từ tháng 1-6, deploy tháng 8 — mùa hè users có behavior khác (data drift). Fix: retrain weekly với sliding window, monitor feature distribution. Lesson: accuracy on test set ≠ accuracy in production.
+
+**Bài học:** ML là engineering discipline với production challenges riêng: data drift, model degradation, feature skew. "ML Fundamentals" không chỉ là algorithms — là understanding failure modes.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Machine Learning giống dạy trẻ nhận biết chó: bạn cho xem 1000 ảnh (training data), trẻ học pattern. Nếu chỉ cho xem ảnh chó trắng (bias), trẻ sẽ nói chó đen không phải chó (underfitting). Nếu trẻ nhớ từng ảnh cụ thể (overfitting), không nhận ra chó thật. Training accuracy là "bài test ở nhà", production accuracy là "bài test ở trường mới".
+
+**Why it matters:** AI/ML roles đang tăng mạnh tại Grab, VinAI, Shopee. Developer không chuyên ML được expect biết train/deploy cycle, evaluation metrics, và failure modes để collaborate với ML team.
+
+---
+
 ## 1. Machine Learning Overview / Tổng quan Machine Learning
 
 ### 🟢 Q: What is Machine Learning from a software engineer perspective? `[Junior]`
@@ -1163,3 +1177,20 @@ SOTA:    Random Forest    XGBoost/LightGBM (Kaggle winner baseline)
 - CatBoost: handles categorical features natively
 
 **Điểm senior cần biết:** Boosting thường outperform bagging trên structured/tabular data. XGBoost là baseline default cho nhiều competition. Ensemble methods quan trọng hơn deep learning cho tabular data ở production.
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I explain the bias-variance tradeoff with a concrete example?
+- [ ] Can I describe 3 evaluation metrics beyond accuracy (precision, recall, F1, AUC-ROC) and when to use each?
+- [ ] Can I explain what data drift is and how to detect it in production?
+- [ ] Can I compare supervised vs unsupervised learning with use cases?
+- 💬 **Feynman Prompt:** Giải thích tại sao model với 95% accuracy có thể vô dụng cho fraud detection — và metric nào phù hợp hơn (hint: class imbalance).
+
+## Connections / Liên Kết
+
+- ➡️ **Applied in**: [LLM & Transformers](./02-llm-and-transformers.md) — deep learning foundation
+- ➡️ **Applied in**: [AI Engineering Practice](./05-ai-engineering-practice.md) — ML ops and deployment
+- 🔗 **Related**: [AI Evaluation Testing](./08-ai-evaluation-testing.md) — how to evaluate ML models
+- 🔗 **Related**: [Information Theory](../01-cs-fundamentals/information-theory.md) — entropy is used in decision trees

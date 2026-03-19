@@ -5,6 +5,20 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**VinAI document search system:** Build internal search cho 500,000 legal documents. Naive approach: embed all documents + vector search → GPT-4 cost $0.10/query × 10,000 queries/day = $1,000/day. Optimization: (1) smaller embedding model (text-embedding-3-small, 5x cheaper), (2) semantic caching (same-meaning queries reuse result), (3) route simple queries to smaller model (GPT-3.5), GPT-4 only for complex ones. Result: cost giảm từ $1,000 → $85/day với same quality.
+
+**Bài học:** AI system design không chỉ là "architecture" mà là cost optimization. Model routing, caching, và right-sizing là skills phân biệt AI engineer với "just call GPT-4 for everything".
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** AI system design giống thiết kế nhà hàng: không phải mọi món đều cần head chef (GPT-4) — một số có thể do cook thông thường làm (smaller model), và những món đã làm rồi có thể serve từ tủ (semantic cache). Quan trọng: know which dish needs which chef.
+
+**Why it matters:** "Design an AI-powered feature" là câu hỏi phổ biến ở Senior interviews tại AI-heavy companies (VinAI, Grab AI, Shopee AI). Không có framework → câu trả lời vague và không thực tế.
+
+---
+
 ## 1. Pattern 1: Semantic Search Architecture / Kiến trúc tìm kiếm ngữ nghĩa
 
 ### 🟡 Q: How does semantic search architecture work end-to-end? `[Mid]`
@@ -1094,3 +1108,20 @@ Cost monitoring:
 **Rule of thumb:** Start with expensive model to establish quality bar → measure → optimize with cheaper model → iterate. Never optimize cost before having correct output.
 
 **Điểm interview:** Biết model routing là key insight — không phải mọi query đều cần GPT-4. Semantic caching và prompt caching có thể giảm 30-60% cost. Fine-tuning cheaper model là long-term investment khi volume đủ lớn.
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I design a semantic search system end-to-end (data ingestion → embedding → storage → query → response)?
+- [ ] Can I explain 3 cost optimization strategies for production LLM systems?
+- [ ] Can I compare RAG vs fine-tuning — when to use each for a given use case?
+- [ ] Can I describe model routing architecture and routing criteria?
+- 💬 **Feynman Prompt:** Giải thích tại sao "establish quality bar first, optimize cost later" là đúng — và ví dụ khi cost optimization trước dẫn đến technical debt.
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [RAG & Embeddings](./04-rag-and-embeddings.md) — semantic search uses RAG pattern
+- ⬅️ **Built on**: [Agent Patterns](./03-agent-patterns.md) — complex AI systems often use agents
+- ➡️ **Applied in**: [AI Production Challenges](./07-ai-production-challenges.md) — production-specific design concerns
+- 🔗 **Related**: [Design Framework](../../be-track/04-be-system-design/01-design-framework.md) — same 5-step framework applies to AI system design

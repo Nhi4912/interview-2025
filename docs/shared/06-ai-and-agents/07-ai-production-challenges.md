@@ -5,6 +5,20 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Grab content moderation LLM rollout (thực tế):** Sau 2 tuần fine-tuning, model deployed to production. Week 3: performance degraded from 92% to 78% accuracy. Root cause: production traffic distribution shifted (user behavior changes after feature announcement). No monitoring was set up for model performance in production — only infrastructure metrics (latency, errors). Fix: implement model monitoring dashboard tracking accuracy, confidence distribution, and drift metrics.
+
+**Bài học:** AI production challenges are different from traditional software: the model can "silently fail" (produce wrong outputs without throwing errors). Monitoring, drift detection, and rollback capability are not optional.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Production AI giống xe tự lái: infrastructure monitoring (latency, errors) giống dashboard tốc độ và nhiên liệu. Model monitoring giống camera và sensors check xem xe có "thấy đường đúng không". Thiếu cái thứ hai → xe vẫn chạy nhưng có thể đang đi nhầm đường.
+
+**Why it matters:** AI features fail in ways that don't show up in standard monitoring. Developers deploying AI features need to design for model drift, prompt injection, hallucination, and cost overrun from day 1.
+
+---
+
 ## Mục Tiêu Tài Liệu
 
 - Chuẩn bị câu trả lời phỏng vấn về reliability, cost, security, latency, compliance trong hệ AI.
@@ -1275,3 +1289,20 @@ Tools: LlamaGuard, NeMo Guardrails, Azure Content Safety
 - [ ] Red-teaming performed before launch
 
 **Điểm senior interview:** Safety phải được design-in từ đầu, không phải add-on sau. Layered defense: input guardrails + system prompt constraints + output validation. LlamaGuard là open-source model classify harmful content. Audit logging quan trọng cho compliance.
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I describe 3 types of LLM failures and monitoring metrics for each?
+- [ ] Can I explain model drift and describe an early detection strategy?
+- [ ] Can I design a rollback strategy for a deployed LLM feature?
+- [ ] Can I explain why AI safety guardrails must be layered (not single point of defense)?
+- 💬 **Feynman Prompt:** Giải thích tại sao "model performance in staging ≠ model performance in production" — 3 factors causing this gap và how to minimize each.
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [AI System Design](./06-ai-system-design.md) — production considerations inform design
+- ⬅️ **Built on**: [AI Engineering Practice](./05-ai-engineering-practice.md) — prompt safety is part of engineering
+- ➡️ **Applied in**: [AI Evaluation Testing](./08-ai-evaluation-testing.md) — evals catch production challenges
+- 🔗 **Related**: [Observability & Scale](../../be-track/04-be-system-design/05-observability-and-scale.md) — AI monitoring uses same pillars as service observability

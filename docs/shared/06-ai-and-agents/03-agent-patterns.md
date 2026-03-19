@@ -5,6 +5,20 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Shopee customer service agent (thực tế):** LLM-powered agent có thể: (1) check order status via API tool, (2) initiate refund via payment tool, (3) escalate to human if confidence < 80%. Vấn đề ban đầu: agent loop vô hạn khi API timeout — agent cứ retry refund tool mà không có step limit. Fix: max 5 tool calls per conversation, timeout cho mỗi tool call, human handoff khi uncertain. Result: 70% queries resolved automatically, 0 infinite loop incidents.
+
+**Bài học:** Agent patterns không phải "just call LLM with tools" — cần: step limits, error handling, observability, và human-in-the-loop. Production agents fail in creative ways that need systematic safeguards.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** AI Agent giống robot thực hiện task: LLM là "não" (reasoning), tools là "tay" (actions), memory là "sổ tay" (context). ReAct pattern là "nghĩ → hành động → quan sát → nghĩ lại" — như người giải quyết vấn đề step by step. Không có guardrails, robot có thể đi vào vòng lặp vô tận.
+
+**Why it matters:** Agent-based AI features đang được build tại mọi tech company. Backend developer được expect biết ReAct pattern, tool calling, và failure modes để implement và debug agent workflows.
+
+---
+
 ## 1. What is an AI Agent? / AI Agent là gì
 
 ### 🟢 Q: What is the difference between workflows and agents (Anthropic framing)? `[Junior]`
@@ -992,3 +1006,20 @@ Request → [Input validation] → [Agent + ReAct loop]
 ```
 
 **Điểm senior phải biết:** Production agents cần structured outputs, step limits, observability, và human-in-the-loop cho high-stakes actions. Tool execution phải được sandboxed (đặc biệt code execution). Logging every ReAct step là critical cho debugging.
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I explain ReAct pattern (Reason + Act) with a concrete example?
+- [ ] Can I describe 3 failure modes of AI agents and mitigations for each?
+- [ ] Can I explain the difference between single-agent and multi-agent systems?
+- [ ] Can I design a simple customer service agent with appropriate guardrails?
+- 💬 **Feynman Prompt:** Giải thích tại sao "infinite loop" là a common agent failure — và design một stop condition mechanism that catches both obvious loops and subtle ones.
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [LLM & Transformers](./02-llm-and-transformers.md) — LLM is the reasoning engine
+- ⬅️ **Built on**: [RAG & Embeddings](./04-rag-and-embeddings.md) — agents use RAG for knowledge retrieval
+- ➡️ **Applied in**: [AI System Design](./06-ai-system-design.md) — agent architecture in production systems
+- 🔗 **Related**: [AI Production Challenges](./07-ai-production-challenges.md) — production deployment of agents

@@ -6,6 +6,20 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Shopee review summarization feature:** Team deploy LLM to summarize product reviews. "Looks good" in manual testing. 1 week later, user complaints: summaries biased toward negative reviews (hallucinated negatives even for good products). Root cause: no systematic evaluation — only 5 manual test cases. Fix: build eval dataset of 200 product+reviews pairs with gold-standard summaries, measure factuality (RAGAS), run eval on every prompt change. Caught next regression in 3 days.
+
+**Bài học:** "Looks good to me" is not an evaluation strategy. LLM outputs are probabilistic — need systematic eval pipeline with metrics to detect regressions before production.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** AI eval giống food safety testing: không thể chỉ taste-test 5 mẫu và gọi đó là "safe for production". Cần systematic testing với diverse samples, defined quality criteria, và regression detection. Khác biệt: AI "test failures" không throw exceptions — output vẫn trả về, chỉ sai về mặt quality.
+
+**Why it matters:** Eval is the foundation of responsible AI deployment. Companies that deploy LLM features without evals get surprised by quality regressions. Senior AI engineers design eval pipelines as part of the feature, not after the fact.
+
+---
+
 ## Overview / Tổng Quan
 
 Evaluating AI systems is fundamentally different from evaluating traditional software:
@@ -341,3 +355,20 @@ Vietnamese: Regression test cho AI khác software test thông thường vì: (1)
 ---
 
 **See also**: [AI Engineering Practice](./05-ai-engineering-practice.md) | [AI Production Challenges](./07-ai-production-challenges.md) | [Agent Patterns](./03-agent-patterns.md)
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I explain the difference between traditional unit tests and LLM evals?
+- [ ] Can I describe 3 RAGAS metrics (faithfulness, answer relevance, context recall)?
+- [ ] Can I design a minimal eval dataset for a customer service chatbot?
+- [ ] Can I explain why "LLM-as-judge" can be cost-effective and when it fails?
+- 💬 **Feynman Prompt:** Giải thích tại sao factuality và faithfulness là different metrics in RAG evaluation — ví dụ khi answer là faithful but not factual (hay ngược lại).
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [ML Fundamentals](./01-ml-fundamentals.md) — evaluation metrics (precision, recall) apply to AI evals too
+- ⬅️ **Built on**: [AI Engineering Practice](./05-ai-engineering-practice.md) — eval suite is part of prompt engineering workflow
+- ⬅️ **Built on**: [AI Production Challenges](./07-ai-production-challenges.md) — evals catch the challenges described there
+- 🔗 **Related**: [Testing Theory](../05-software-engineering/04-testing-theory.md) — AI eval is a specialized form of software testing

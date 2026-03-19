@@ -5,6 +5,20 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Momo chatbot hallucination incident:** Momo deploy LLM-powered customer support chatbot. User hỏi "Phí chuyển tiền sang ngân hàng ABC là bao nhiêu?" — chatbot trả lời "0.1%" (hallucinated từ training data của bank khác). User chuyển tiền và bị tính phí 0.5%. Complaint, refund request. Fix: implement RAG (Retrieval Augmented Generation) — chatbot search real-time fee schedule trước khi trả lời. Hallucination về fees giảm từ 15% → 2%.
+
+**Bài học:** LLMs generate plausible-sounding text, không guarantee accurate text. Production LLM systems cần guardrails: RAG cho factual queries, output validation, human escalation cho edge cases.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** LLM giống một người rất giỏi đọc và viết — đọc hàng tỷ trang sách và có thể viết về bất kỳ chủ đề nào. Nhưng họ đôi khi "nhớ sai" (hallucinate) vì đã đọc quá nhiều. Transformer architecture là cơ chế "đọc và hiểu" — attention mechanism giống việc highlight phần quan trọng khi đọc một câu dài.
+
+**Why it matters:** LLM integration là skill mới bắt buộc cho backend/fullstack developers. Biết tokenization, context window, temperature, và RAG là baseline để build AI-powered features đúng cách.
+
+---
+
 ## 1. Large Language Models / LLM là gì
 
 ### 🟢 Q: What is a Large Language Model (LLM)? `[Junior]`
@@ -999,3 +1013,20 @@ Output ← [Factuality check] ← [Toxicity filter] ← [Format validation]
 ```
 
 **Điểm interview:** Hallucination là failure mode phổ biến nhất được hỏi. RAG + citation + self-consistency là bộ 3 giải pháp chính. Biết rõ lost-in-the-middle problem khi dùng long context.
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I explain what attention mechanism does in plain language (not math)?
+- [ ] Can I describe 3 causes of hallucination and mitigation for each?
+- [ ] Can I explain the difference between in-context learning (few-shot) and fine-tuning?
+- [ ] Can I explain "lost-in-the-middle" problem with context window?
+- 💬 **Feynman Prompt:** Giải thích tại sao LLM không thể "just search the internet" to answer — và tại sao RAG là better architecture than training model on live data.
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [ML Fundamentals](./01-ml-fundamentals.md) — neural networks are the foundation
+- ➡️ **Applied in**: [RAG & Embeddings](./04-rag-and-embeddings.md) — RAG is the primary hallucination mitigation
+- ➡️ **Applied in**: [AI Engineering Practice](./05-ai-engineering-practice.md) — prompt engineering for LLMs
+- 🔗 **Related**: [Agent Patterns](./03-agent-patterns.md) — LLMs are the reasoning engine for agents
