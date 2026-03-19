@@ -9,6 +9,18 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Axon Active interview, ứng viên chia sẻ (2024):** Round Technical — bài toán "implement a rate limiter". Candidate 1: dùng simple counter, fail edge case (distributed environment). Interviewer follow-up: "What if there are 3 server instances?" — không biết answer. Candidate 2: implement Token Bucket, proactively mention "distributed version cần Redis INCR với TTL, hoặc sliding window log in Redis". Hired.
+
+**Bài học:** Axon Active phỏng vấn focused on practical distributed systems knowledge. Candidates who consider edge cases proactively — without being asked — signal Senior-level thinking.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Axon Active interview là "job simulation" — interviewers want to see how you'd approach problems you'll actually face on the job. This guide maps the interview to Axon's actual project types.
+
+---
+
 ## 1. Company Overview / Tổng Quan Công Ty
 
 ### About Axon

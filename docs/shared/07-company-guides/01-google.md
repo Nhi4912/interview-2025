@@ -9,6 +9,18 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Google L5 interview, ứng viên chia sẻ (2024):** Coding round — LeetCode Hard, graph problem. Candidate implemented O(V+E) BFS solution correct. Interviewer: "Can you optimize?" Candidate thêm heuristic nhưng không analyze complexity. Feedback: "Good solution, not strong communicator — didn't proactively explain approach tradeoffs." Key insight: Google evaluates thinking process, not just output. Another candidate with O(n²) solution but excellent communication ("Here's why I chose this, here's what would make it faster, here's the tradeoff") got stronger signal.
+
+**Bài học:** Google interview scoring là process-first, output-second. Communicate your thinking aloud constantly — interviewers grade your decision-making process.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Google interview giống thesis defense — không chỉ đúng mà phải explain logic, defend decisions, và acknowledge limitations. Guide này giúp bạn prepare "thesis defense mode" cho mỗi round.
+
+---
+
 ## 1. Company Overview / Tổng Quan Công Ty
 
 ### About Google

@@ -9,6 +9,18 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Zalo interview, ứng viên chia sẻ (2024):** System design round — "Design Zalo chat system for 70 million users." Candidate 1: propose REST API cho realtime messages. Interviewer: "70 triệu users gửi message, REST polling every second = 70 triệu requests/second. Hệ thống chịu được không?" — candidate freeze. Candidate 2: propose WebSocket với connection pooling, Redis pub/sub cho message routing, mention heartbeat để handle NAT timeout. Hired.
+
+**Bài học:** Zalo phỏng vấn dựa trên scale của chính họ — 70M users, Vietnamese market. Candidate biết domain (realtime messaging, geolocation, notification at scale) có lợi thế rõ ràng.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Zalo/VNG interview là "build what we have" — biết technical stack và scale của Zalo giúp candidate answer với production-relevant context, không chỉ generic solutions.
+
+---
+
 ## 1. Company Overview / Tổng Quan Công Ty
 
 ### About Zalo/VNG

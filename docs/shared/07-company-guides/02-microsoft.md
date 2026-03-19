@@ -9,6 +9,18 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Microsoft Azure team interview, ứng viên chia sẻ (2024):** Behavioral round — "Tell me about a time you had a conflict with a teammate." Candidate 1: "We disagreed but eventually agreed." — pass coding, fail behavioral. Candidate 2: "Disagreed on API design — I documented both approaches with pros/cons, shared with team, we aligned on mine after review. Lesson: data beats opinions." Hired. Microsoft values growth mindset + structured problem-solving in conflict.
+
+**Bài học:** Microsoft STAR story format + growth mindset signal là quantifiable differentiators. Technical skill is necessary but not sufficient — behavioral responses must show data-driven thinking.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Microsoft interview giống "360-degree review simulation" — evaluate ý không chỉ là technical competence mà cultural fit (growth mindset), collaboration, và impact orientation. Guide này chuẩn bị cả hai chiều.
+
+---
+
 ## 1. Company Overview / Tổng Quan Công Ty
 
 ### About Microsoft

@@ -9,6 +9,18 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Grab SE interview, ứng viên chia sẻ (2024):** Round System Design — câu hỏi "Design the driver-rider matching system for Grab". Ứng viên vẽ architecture đẹp nhưng khi interviewer hỏi: "Với 500,000 drivers online peak hour, how do you find nearby drivers in < 200ms?" — ứng viên không biết geospatial indexing. Fail. Candidate 2 cùng tuần: biết Redis Sorted Set với geohash, giải thích `GEORADIUS` command, discuss trade-off vs PostGIS. Pass.
+
+**Bài học:** Grab interviews test production-level knowledge, không chỉ textbook. Guide này map interview content đến Grab's actual technical domains.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Chuẩn bị phỏng vấn Grab giống chuẩn bị thi chạy marathon — không phải chạy nhanh nhất 100m mà biết pace, strategy, và domain của course. Guide này là "race course map" cho Grab interview.
+
+---
+
 ## 1. Company Overview / Tổng Quan Công Ty
 
 ### About Grab

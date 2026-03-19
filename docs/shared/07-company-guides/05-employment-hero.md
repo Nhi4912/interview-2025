@@ -9,6 +9,18 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Employment Hero interview, ứng viên chia sẻ (2024):** Behavioral round — "Tell me about a time you had to push back on a feature request." Candidate 1: "I always do what PM says." Fail — culture mismatch. Candidate 2: "Product wanted to ship feature fast without tests. I showed data: similar features without tests needed 3x rework time. We added tests, shipped 1 week later, 0 post-launch bugs." Hired — demonstrated ownership, data-driven, and technical leadership.
+
+**Bài học:** Employment Hero coi trọng behavioral signals ngang kỹ năng kỹ thuật. Guide này chuẩn bị cả technical depth và leadership stories.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** EH interview là "team fit audit" — they're evaluating "can this person work autonomously and influence decisions?" Technical skills are table stakes; behavioral signals determine the offer.
+
+---
+
 ## 1. Company Overview / Tổng Quan Công Ty
 
 ### About Employment Hero
