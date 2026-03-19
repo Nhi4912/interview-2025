@@ -1,99 +1,421 @@
-# Performance Optimization / Toi Uu Hieu Nang
-## React - Chapter 9
+# React Performance Optimization / Tối Ưu Hiệu Năng React
 
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [React Fundamentals](./01-react-fundamentals.md) | [Hooks Deep Dive](./03-hooks-deep-dive.md) | [Browser Performance](../../fe-track/06-browser-performance/01-core-web-vitals.md)
+> **Prerequisites**: [React Fundamentals](./01-react-fundamentals.md) | [Hooks Deep Dive](./03-hooks-deep-dive.md)
+> **See also**: [Core Web Vitals](../06-browser-performance/01-core-web-vitals.md) | [React 19 Features](./02-react-19-features.md)
 
-[← Previous](./08-react-patterns-advanced.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next →](./10-modern-react-features.md)
+[← Previous: Advanced Patterns](./08-react-patterns-advanced.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next →: Modern React Features](./10-modern-react-features.md)
 
 ---
 
-## Real-World Scenario / Tình Huống Thực Tế
+## Real-World Scenario / Tình Huống Thực Tế 🏭
 
-**Lazada mobile web:** `<ProductList>` render 50 items. Product manager report: scroll lag và input delay. Dev thêm `React.memo` vào mọi component, `useMemo` vào mọi computed value — lag không giảm, code phức tạp hơn. Profile bằng React DevTools Profiler → bottleneck thực sự là **một hàm filter không được memo** đang re-compute 200ms mỗi keystroke, không phải render children.
+> **Bối cảnh**: Lazada mobile web — `<ProductList>` render 50 items. PM report: scroll lag và
+> input delay. Dev thêm `React.memo` vào MỌI component, `useMemo` vào MỌI computed value —
+> lag không giảm, code phức tạp hơn. Profile bằng React DevTools Profiler → bottleneck thực sự
+> là **một hàm filter không được memo** đang re-compute 200ms mỗi keystroke, không phải children re-render.
+>
+> **Bài học**: Optimization mà không đo là premature optimization. Rule:
+> **Profile first, optimize second**. 80% React performance problems là:
+> (1) unnecessary re-renders, (2) expensive computations không memo, (3) large lists không virtualized.
 
-**Bài học:** Optimization mà không đo là premature optimization. Rule: **Profile first, optimize second**. 80% React performance problems là: (1) unnecessary re-renders, (2) expensive computations không được memo, (3) wrong virtualization.
+---
 
-## What & Why / Cái Gì & Tại Sao
+## What & Why / Cái Gì & Tại Sao 🤔
 
-**Analogy:** Tối ưu React giống tối ưu nhà hàng: không phải thêm đầu bếp (memo mọi thứ), mà phân tích bottleneck — hóa ra vấn đề là máy POS chậm (một hàm tính toán). Thêm đầu bếp tốn tiền nhưng không giúp ích gì khi POS vẫn chậm.
+**Tương tự đời thường**: Tối ưu React giống tối ưu nhà hàng — không phải thêm đầu bếp (memo mọi thứ),
+mà phân tích bottleneck. Hóa ra vấn đề là máy POS chậm (một hàm tính toán). Thêm đầu bếp tốn tiền
+nhưng không giúp khi POS vẫn chậm.
 
 **Three causes of React slowness:**
-1. **Too many renders** — `React.memo` + stable references
-2. **Expensive renders** — `useMemo` for heavy computations
-3. **Large lists** — virtualization (react-window/react-virtual)
-
-## Concept Map / Bản Đồ Khái Niệm
+1. **Too many renders** → architectural patterns + React.memo
+2. **Expensive renders** → useMemo for heavy computations
+3. **Large lists** → virtualization (react-window / @tanstack/virtual)
 
 ```
-[React Performance]
+[React Performance Optimization]
         │
-        ├── Identify problem first → React DevTools Profiler
+        ├── 1. Measure first → React DevTools Profiler
         │
-        ├── Render optimization
+        ├── 2. Render optimization
+        │       ├── Architectural: state colocation, composition, context split
         │       ├── React.memo — skip re-render if props unchanged (===)
         │       ├── useCallback — stable function reference for memo'd children
         │       └── useMemo — cache expensive computed values
         │
-        ├── List virtualization
-        │       └── react-window / @tanstack/virtual — only render visible items
+        ├── 3. Load optimization
+        │       ├── Code splitting — React.lazy + Suspense
+        │       ├── List virtualization — only render visible items
+        │       └── Image/asset optimization — formats, lazy loading, priority
         │
-        └── Code splitting
-                ├── React.lazy + Suspense — lazy load components
-                └── Dynamic import — split vendor bundles
+        └── 4. Concurrent features
+                ├── useTransition — non-urgent state updates
+                └── useDeferredValue — stale value during heavy renders
 ```
 
 ---
 
-## Tong Quan / Overview
-
-**English:** This chapter covers React performance optimization techniques for interview preparation. It focuses on when and why to optimize, not just how — because premature optimization is the most common mistake interviewers probe for.
-
-**Tieng Viet:** Chuong nay bao gom cac ky thuat toi uu hieu nang React cho phong van. Trong tam la khi nao va tai sao can toi uu, khong chi la cach lam — vi toi uu som la loi pho bien nhat ma interviewer hay hoi.
-
-## Table of Contents / Muc Luc
-1. [Performance Mental Model](#performance-mental-model)
-2. [React.memo Correct Usage](#reactmemo-correct-usage)
-3. [useMemo and useCallback Strategy](#usememo-and-usecallback-strategy)
-4. [Avoiding Unnecessary Re-renders](#avoiding-unnecessary-re-renders)
-5. [Code Splitting with lazy and Suspense](#code-splitting-with-lazy-and-suspense)
-6. [List Virtualization](#list-virtualization)
-7. [Bundle Analysis Workflow](#bundle-analysis-workflow)
-8. [Profiler API and DevTools](#profiler-api-and-devtools)
-9. [why-did-you-render](#why-did-you-render)
-10. [Concurrent Rendering Benefits](#concurrent-rendering-benefits)
-11. [Server Components for Performance](#server-components-for-performance)
-12. [Image and Asset Optimization](#image-and-asset-optimization)
-13. [Cau Hoi Phong Van / Interview Q&A](#cau-hoi-phong-van--interview-qa)
+## Core Concepts / Khái Niệm Cốt Lõi
 
 ---
 
-## Performance Mental Model
+### 1. Re-render Prevention — Architecture Before Memo / Ngăn Re-render — Kiến Trúc Trước Memo
 
-### Giai thich / Explanation
+> 🧠 **Memory Hook**: **"Architecture > memo"** — move state down, lift content up, split context. These three patterns eliminate 80% of re-render issues without any API calls
 
-**English:** Measure first, optimize bottlenecks, and validate user-perceived wins. Never optimize without profiling data.
+**Tại sao tồn tại? / Why does this exist?**
 
-**Tieng Viet:** Do dac truoc, toi uu nut nghen, va xac minh cai thien nguoi dung cam nhan duoc. Khong bao gio toi uu khi chua co du lieu profiling.
+React re-renders all children when parent state changes — by design. This is "pessimistic rendering":
+assume everything needs update, let diffing figure out what actually changed.
 
-### Key Points / Y Chinh
-- **RAIL model applies to React**: Response (<100ms), Animation (<16ms/frame), Idle (use idle time for deferred work), Load (<1s for critical path). Trong React, moi interaction nen render xong trong 100ms de nguoi dung cam thay "instant".
-- **Rendering != DOM update**: React render phase (calling your component function) is cheap; the commit phase (actual DOM mutations) is expensive. Nhieu nguoi nham lan giua hai phase nay — re-render khong phai luc nao cung xau.
-- **The biggest win is usually architectural**: Moving state down, lifting state up correctly, or splitting contexts will outperform any amount of `memo()`. Cai thien kien truc luon mang lai hieu qua lon hon bat ky ky thuat memo nao.
-- **Profile in production mode**: Development mode adds extra checks (double-rendering in StrictMode, prop validation) that distort measurements. Luon do hieu nang o production build.
-- **Core Web Vitals are your target metrics**: LCP, FID/INP, CLS map directly to user experience. Interviewers expect you to connect React optimization to these metrics.
-- **React DevTools Profiler > console.time**: The Profiler shows component-level render times, commit frequencies, and what triggered each render. console.time chi do tong thoi gian, khong cho biet component nao gay cham.
-- **Avoid premature optimization trap in interviews**: When asked "how to optimize React", start with "I would first measure to identify the bottleneck" — this shows maturity. Bat dau voi "toi se do dac truoc" the hien su truong thanh.
-- **80/20 rule**: Typically 20% of components cause 80% of performance issues. Focus on hot paths — lists, frequently updating components, heavy computations.
+→ **Why?** Vì React không track dependency graph giữa state và component output. Nó không biết
+component B không dùng state X — nên re-render tất cả để safe.
 
-### Vi du / Example
+→ **Why?** Vì tracking dependencies tự động (à la Vue/Svelte) có complexity cost. React chọn
+simplicity (re-render all) + opt-in optimization (memo) thay vì magic reactivity. React Compiler
+(React 19) là bước đầu tiên toward automatic optimization.
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+
+Re-render trong React giống **họp toàn công ty**: khi CEO (root component) thay đổi quyết định,
+MỌI NGƯỜI phải tham dự họp (re-render) dù chỉ 1 team bị ảnh hưởng. Giải pháp: **đừng để CEO
+giữ quyết định đó** — chuyển nó xuống team leader (move state down), hoặc cho team họp riêng
+(composition pattern).
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
+```
+THREE PATTERNS — ranked by effectiveness:
+
+  1. STATE COLOCATION (move state down):
+  ─────────────────────────────────────
+  ❌ Before:                       ✅ After:
+  <App>  ← owns mousePos          <App>
+    <Nav />     ← re-renders!       <Nav />         ← NOT affected
+    <Content /> ← re-renders!       <Content />     ← NOT affected
+    <Cursor pos={mousePos} />        <MouseTracker>  ← owns mousePos
+                                       <Cursor />
+                                     </MouseTracker>
+
+  2. COMPOSITION (children as props):
+  ──────────────────────────────────
+  ❌ Before:                       ✅ After:
+  <ScrollTracker>                  <ScrollTracker>
+    {/* state changes here */}       {children}  ← children DON'T re-render
+    <ExpensiveList />                             because they're passed from
+  </ScrollTracker>                               parent, not created here
+
+  3. CONTEXT SPLITTING:
+  ─────────────────────
+  ❌ Before: One big context       ✅ After: Split by update frequency
+  <AppContext value={{              <ThemeCtx value={theme}>   ← rare
+    theme, user, cart,               <AuthCtx value={user}>   ← rare
+    mousePos                           <CartCtx value={cart}>  ← frequent
+  }}>                                    <MouseCtx value={pos}> ← very frequent
+  {/* ALL consumers re-render        {children}
+    on ANY change */}                </MouseCtx>...
+```
+
 ```tsx
-// Profile before optimizing: wrap suspicious subtrees
+// ✅ Pattern 1: State colocation
+// BAD: state at top → entire tree re-renders
+function App() {
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  return (
+    <div onMouseMove={e => setMousePos({ x: e.clientX, y: e.clientY })}>
+      <Cursor position={mousePos} />
+      <ExpensiveNavigation />  {/* re-renders 60x/sec! */}
+      <ExpensiveContent />     {/* re-renders 60x/sec! */}
+    </div>
+  );
+}
+
+// GOOD: isolate fast-changing state
+function App() {
+  return (
+    <>
+      <MouseTracker />         {/* only this re-renders */}
+      <ExpensiveNavigation />  {/* never re-renders from mouse */}
+      <ExpensiveContent />
+    </>
+  );
+}
+
+// ✅ Pattern 2: Composition (children as props)
+function ScrollTracker({ children }: { children: ReactNode }) {
+  const [scrollY, setScrollY] = useState(0);
+  useEffect(() => {
+    const handler = () => setScrollY(window.scrollY);
+    window.addEventListener('scroll', handler);
+    return () => window.removeEventListener('scroll', handler);
+  }, []);
+
+  return (
+    <div>
+      <ProgressBar progress={scrollY / document.body.scrollHeight} />
+      {children}  {/* children DON'T re-render on scroll! */}
+    </div>
+  );
+}
+
+// ✅ React.memo — ONLY after architectural patterns fail
+const ExpensiveChart = memo(function ExpensiveChart({ data }: { data: readonly number[] }) {
+  return <svg>{/* expensive SVG calculation */}</svg>;
+});
+
+// Parent MUST stabilize props for memo to work
+function Dashboard() {
+  const [filter, setFilter] = useState('all');
+  const chartData = useMemo(() => processData(rawData, filter), [rawData, filter]);
+  const handleClick = useCallback((id: string) => navigate(`/item/${id}`), []);
+
+  return <ExpensiveChart data={chartData} onClick={handleClick} />;
+}
+```
+
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
+- **Memo does NOT prevent context re-renders**: If a memo'd component consumes a context that changes, it still re-renders
+- **Children prop breaks memo**: `<Memo><Child/></Memo>` — `children` is new JSX every render → memo useless
+- **React.memo adds memory overhead**: Stores previous props for comparison. In lists with thousands of items, this cost adds up
+- **React 19 Compiler**: Auto-inserts memo where beneficial — manual memo becomes unnecessary. But understanding WHY is still essential for interviews
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| "Just add React.memo to everything" | Memo without stable props is a no-op. Memo adds comparison overhead. | Fix architecture first (state colocation, composition) |
+| Inline objects as props to memo'd child | `style={{ color: 'red' }}` creates new ref every render → defeats memo | Extract to constant or `useMemo` |
+| "useMemo/useCallback improve raw speed" | They exist for referential stability, not computation speed. The overhead may exceed savings for cheap computations | Only use when the value is passed to a memo'd child OR computation >1ms |
+| Optimizing without profiling | You might optimize the wrong thing — like the Lazada example where memo'd children weren't the bottleneck | Always profile first with React DevTools |
+
+**🎯 Interview Pattern:**
+- Khi thấy câu hỏi về: "React performance", "unnecessary re-renders", "React.memo"
+- → Nhớ đến: "Architecture > memo" — colocation, composition, context split
+- → Mở đầu trả lời: "I'd start by profiling with React DevTools to identify the actual bottleneck — most developers jump to React.memo without measuring. The most effective optimizations are architectural: moving state closer to where it's used, using composition to prevent parent re-renders from affecting children, and splitting contexts by update frequency. React.memo is a last resort when these patterns don't apply."
+
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: [React Fundamentals — Reconciliation](./01-react-fundamentals.md) — how React decides what to re-render
+- ➡️ Để hiểu: [Core Web Vitals — INP](../06-browser-performance/01-core-web-vitals.md) — connecting re-render optimization to user-facing metrics
+
+---
+
+### 2. Code Splitting & List Virtualization / Tách Code & Ảo Hóa Danh Sách
+
+> 🧠 **Memory Hook**: **"Don't ship what you don't show"** — lazy-load invisible routes, virtualize invisible rows
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Average web page ships 400KB+ JS. User trên 3G mobile phải chờ 5-10 giây để parse + execute.
+Nhưng user chỉ thấy 1 page tại 1 thời điểm, và chỉ thấy ~20 rows trong list 10,000 items.
+
+→ **Why?** Vì browser phải download, parse, compile, execute TOÀN BỘ JS trước khi interactive.
+Mỗi KB JS thêm ~1ms parse time trên mobile.
+
+→ **Why?** Vì đây là trade-off giữa **initial load speed** (load less code) và **navigation speed**
+(have code ready). Code splitting + prefetch cho cả hai: load minimum upfront, prefetch rest
+during idle time.
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+
+- **Code splitting** giống **buffet thay vì full course dinner**: thay vì bưng tất cả 12 món ra
+  lúc đầu (bundle), chỉ bưng món đang ăn (current route), món tiếp theo chuẩn bị sẵn (prefetch).
+- **Virtualization** giống **cửa sổ tàu lửa**: bạn chỉ thấy cảnh qua cửa sổ (visible rows),
+  không cần toàn bộ quang cảnh 1000km tồn tại cùng lúc trong bộ nhớ.
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
+```
+CODE SPLITTING — load paths:
+
+  Without splitting:
+  [──────── 400KB app.js ────────] → 5s mobile parse
+  User waits... waits... interactive!
+
+  With route splitting:
+  [── 80KB core.js ──] → 1s parse → interactive!
+     └── prefetch: [settings.js] [profile.js] during idle
+
+  With component splitting:
+  [── 80KB core.js ──] → interactive!
+     └── on hover: [chart.js]  → instant when clicked
+
+VIRTUALIZATION — DOM management:
+
+  Without:  10,000 items → 10,000 DOM nodes → 2s layout
+  With:     10,000 items → ~30 DOM nodes → <1ms layout
+
+  ┌──────────────────────────┐
+  │  ░░░░ overscan (3)  ░░░░ │  ← rendered but off-screen
+  │ ┌──────────────────────┐ │
+  │ │ visible item 1       │ │  ← user sees these
+  │ │ visible item 2       │ │
+  │ │ ...                  │ │
+  │ │ visible item 20      │ │
+  │ └──────────────────────┘ │
+  │  ░░░░ overscan (3)  ░░░░ │  ← rendered but off-screen
+  └──────────────────────────┘
+     Items 24-9976: NOT in DOM at all
+```
+
+```tsx
+// ✅ Route-level splitting (baseline — every app should do this)
+import { lazy, Suspense } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
+
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Settings = lazy(() => import('./pages/Settings'));
+
+// ✅ Prefetch on hover — hides latency
+const ChartModule = lazy(() => import('./components/Chart'));
+function ChartButton() {
+  const prefetch = () => { import('./components/Chart'); };
+  return (
+    <button onMouseEnter={prefetch} onClick={() => setShow(true)}>
+      Show Chart
+    </button>
+  );
+}
+
+// ✅ Always pair lazy with ErrorBoundary
+function App() {
+  return (
+    <ErrorBoundary fallback={<RetryMessage />}>
+      <Suspense fallback={<DashboardSkeleton />}>
+        <Dashboard />
+      </Suspense>
+    </ErrorBoundary>
+  );
+}
+
+// ✅ List virtualization with react-window
+import { FixedSizeList } from 'react-window';
+
+const Row = memo(({ index, style, data }: RowProps) => (
+  <div style={style} role="row" aria-rowindex={index + 1}>
+    <span>{data[index].name}</span>
+    <span>{data[index].price}</span>
+  </div>
+));
+
+function ProductList({ items }: { items: Item[] }) {
+  return (
+    <FixedSizeList
+      height={600}
+      itemCount={items.length}
+      itemSize={50}
+      itemData={items}
+      overscanCount={5}
+      role="grid"
+      aria-rowcount={items.length}
+    >
+      {Row}
+    </FixedSizeList>
+  );
+}
+```
+
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
+- **React.lazy SSR**: Doesn't work with SSR — use `next/dynamic` or `@loadable/component` instead
+- **Chunk granularity**: Too many small chunks → waterfall requests. Too few → no benefit. Aim for 50-150KB gzip per chunk
+- **Virtualization accessibility**: Off-screen items don't exist in DOM → breaks screen readers. Add `aria-rowcount`/`aria-rowindex`
+- **Variable-height items**: Require measurement → layout thrashing. Use `react-virtuoso` (auto-measures) or estimate heights
+- **Virtualization threshold**: Overkill for <200 items. Profile first — simple list might be fast enough
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Not code-splitting at all | Initial JS bundle bloats → slow first interaction on mobile | At minimum: route-level splitting for every app |
+| Lazy-loading the LCP image | Hero image is the largest visible element — lazy-loading delays LCP | Use `priority` (Next.js) or `loading="eager"` for LCP images |
+| Virtualizing a 50-item list | Library overhead > rendering 50 DOM nodes directly | Only virtualize when list >500 items AND causing measured perf issues |
+| No ErrorBoundary around Suspense | Network failure → white screen crash | Always wrap lazy components with ErrorBoundary + retry button |
+
+**🎯 Interview Pattern:**
+- Khi thấy câu hỏi về: "code splitting", "lazy loading", "list performance", "virtualization"
+- → Nhớ đến: "Don't ship what you don't show"
+- → Mở đầu trả lời: "Code splitting reduces initial bundle by loading code on demand — route-level splitting is the baseline, component-level for heavy features like charts and modals. For large lists, virtualization renders only visible items, keeping DOM node count constant regardless of data size. Both share the same principle: don't make the browser process what the user can't see."
+
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: [ES6 — Dynamic import](../01-javascript/07-es6-features.md) — `import()` syntax enables code splitting
+- ➡️ Để hiểu: [Bundle Optimization](../06-browser-performance/03-bundle-optimization.md) — webpack analysis and tree shaking
+
+---
+
+### 3. Profiling, Concurrent Features & Measurement / Profiling, Concurrent & Đo Lường
+
+> 🧠 **Memory Hook**: **"Profile → Identify → Fix → Verify"** — optimization without measurement is guessing
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Developer intuition về performance thường sai. Component bạn nghĩ chậm thì nhanh,
+component bạn không nghi ngờ thì gây 80% lag. Profiling cho data thay vì guessing.
+
+→ **Why?** Vì React's rendering model là complex — re-render ≠ DOM update. Một component
+re-render 1000 lần nhưng nếu output giống nhau, DOM không thay đổi → user không thấy lag.
+
+→ **Why?** Vì user-facing metric (INP, LCP) mới quan trọng — không phải component render time.
+Cần tools connect React internals → browser metrics → user experience.
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+
+Profiling giống **khám bệnh trước khi uống thuốc**: bác sĩ đo huyết áp, xét nghiệm máu, rồi
+mới kê đơn. Nếu uống thuốc random (thêm memo random), có thể không hiệu quả hoặc gây tác dụng phụ.
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
+```
+PROFILING WORKFLOW:
+
+  1. IDENTIFY → React DevTools Profiler
+     ├── Flamegraph: see component tree with render times
+     ├── Ranked view: slowest components at top
+     └── "Why did this render?": props? state? parent?
+
+  2. MEASURE → Profiler API
+     ├── actualDuration: time rendering CHANGED parts
+     ├── baseDuration: time rendering WITHOUT memo
+     └── If actual << base → memo is working
+
+  3. FIX → Apply targeted optimization
+     └── ONE change at a time, measure again
+
+  4. VERIFY → Core Web Vitals
+     ├── LCP < 2.5s (loading speed)
+     ├── INP < 200ms (interaction responsiveness)
+     └── CLS < 0.1 (visual stability)
+
+CONCURRENT FEATURES — priority-based rendering:
+
+  useTransition: wraps setState as non-urgent
+  ───────────────────────────────────────────
+  User types "react"  →  Input updates IMMEDIATELY (high priority)
+                      →  Filter results update LATER (low priority)
+                      →  UI stays responsive during heavy filtering
+
+  useDeferredValue: returns "stale" value during heavy renders
+  ──────────────────────────────────────────────────────────
+  const deferredQuery = useDeferredValue(query);
+  // Shows old results with opacity:0.7 while computing new ones
+  // NO artificial delay like debounce — renders ASAP when idle
+```
+
+```tsx
+// ✅ Profiler API — send render metrics to analytics
 import { Profiler, ProfilerOnRenderCallback } from 'react';
 
-const onRender: ProfilerOnRenderCallback = (id, phase, actualDuration) => {
-  if (actualDuration > 16) {
-    console.warn(`Slow render: ${id} took ${actualDuration.toFixed(1)}ms (${phase})`);
+const onRender: ProfilerOnRenderCallback = (
+  id, phase, actualDuration, baseDuration, startTime, commitTime
+) => {
+  if (actualDuration > 16) { // > 1 frame budget
+    performanceMonitor.report({
+      component: id,
+      phase,
+      actual: actualDuration,
+      base: baseDuration,
+      memoSavings: baseDuration - actualDuration,
+    });
   }
 };
 
@@ -104,698 +426,216 @@ function App() {
     </Profiler>
   );
 }
-```
 
-### Interview Notes / Ghi Chu Phong Van
-- Always frame performance answers with "measure first, then optimize" — interviewers penalize premature optimization.
-- Show awareness that React's reconciliation is already optimized; your job is to avoid making it do unnecessary work.
-- Connect rendering performance to user-facing metrics (INP, LCP) rather than abstract benchmarks.
-
-Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md)
-
-## React.memo Correct Usage
-
-### Giai thich / Explanation
-
-**English:** `React.memo` is a higher-order component that skips re-rendering when props haven't changed (shallow comparison by default). It only works when props are referentially stable.
-
-**Tieng Viet:** `React.memo` la HOC bo qua re-render khi props khong doi (so sanh nong mac dinh). Chi hieu qua khi props on dinh ve reference.
-
-### Key Points / Y Chinh
-- **When to use memo**: Only wrap components that (a) render often with the same props, (b) have expensive render output (deep trees, complex calculations), AND (c) receive referentially stable props. Neu thieu bat ky dieu kien nao, memo co the lam code phuc tap ma khong co loi.
-- **Shallow comparison pitfall**: Objects/arrays created inline in JSX (`style={{ color: 'red' }}`, `items={data.filter(...)}`) create new references every render, defeating memo entirely. Day la loi pho bien nhat.
-- **Custom comparator trade-off**: `memo(Component, areEqual)` lets you provide a custom comparison, but deep comparison can be more expensive than just re-rendering. Chi dung khi ban biet chinh xac field nao can so sanh.
-- **Memo does NOT prevent re-render from context**: If the component consumes a context that changes, memo won't help — it only checks props. Memo khong chan re-render tu context thay doi.
-- **Children prop breaks memo**: `<Memoized><Child /></Memoized>` — the `children` prop is a new JSX element each render, so memo is useless. Truyen children qua render prop hoac dung composition pattern.
-- **React Compiler (React Forget) will auto-memoize**: In React 19+, the compiler automatically adds memoization. Manual memo will become less necessary, but understanding the concept is still important for interviews.
-- **Memo adds memory overhead**: Each memoized component stores the previous props for comparison. In lists with thousands of items, this memory cost adds up. Can nhac giua memory va CPU trade-off.
-- **Test memo effectiveness with Profiler**: Before and after wrapping with memo, compare render counts and durations in React DevTools. If no improvement, remove memo to keep code simple.
-
-### Vi du / Example
-```tsx
-import { memo, useCallback } from 'react';
-
-// Good: stable primitive props
-const ExpensiveChart = memo(function ExpensiveChart({ data, width }: {
-  data: readonly number[];
-  width: number;
-}) {
-  // Imagine expensive SVG calculation here
-  return <svg width={width}>{/* ... */}</svg>;
-});
-
-// Parent must stabilize the data reference
-function Dashboard() {
-  const [filter, setFilter] = useState('all');
-  // useMemo ensures data reference only changes when rawData or filter changes
-  const chartData = useMemo(() => processData(rawData, filter), [rawData, filter]);
-
-  return <ExpensiveChart data={chartData} width={800} />;
-}
-```
-
-### Interview Notes / Ghi Chu Phong Van
-- Explain that memo is shallow by default, and why that matters for objects/arrays.
-- Mention that memo without stabilizing props is a code smell, not an optimization.
-- Senior-level: discuss how React Compiler will make manual memo obsolete.
-
-Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md)
-
-## useMemo and useCallback Strategy
-
-### Giai thich / Explanation
-
-**English:** `useMemo` caches computed values; `useCallback` caches function references. Both exist to maintain referential stability, not for raw speed.
-
-**Tieng Viet:** `useMemo` cache gia tri tinh toan; `useCallback` cache tham chieu ham. Ca hai ton tai de giu on dinh reference, khong phai de tang toc do tinh toan.
-
-### Key Points / Y Chinh
-- **useMemo is NOT free**: It adds overhead (dependency comparison + storing previous value). Only use when the computation is genuinely expensive (>1ms) OR the result is passed as a prop to a memoized child. useMemo khong mien phi — no them chi phi so sanh dependencies.
-- **useCallback is useMemo for functions**: `useCallback(fn, deps)` === `useMemo(() => fn, deps)`. Its primary purpose is stabilizing function props for memoized children, NOT avoiding function creation.
-- **Dependency array mistakes cause stale closures**: Missing a dependency means the callback captures old values. ESLint's `exhaustive-deps` rule is your safety net — never disable it without understanding why. Thieu dependency gay ra stale closure.
-- **When NOT to use**: Simple computations (filtering a 50-item list), functions only used inside the same component (no memoized child), or values that change every render anyway. Dung thua gay phuc tap khong can thiet.
-- **Reference stability chain**: For memo to work, ALL props must be stable. One unstable prop (e.g., inline callback) breaks the entire chain. Mot prop khong on dinh pha vo toan bo chuoi memo.
-- **Expensive computation threshold**: Use `console.time` to measure. If computation takes <1ms, the memoization overhead may exceed the savings. Nguong tinh toan dat ~ >1ms.
-- **Object pattern**: When passing multiple related values, prefer a single memoized object over multiple memoized primitives: `useMemo(() => ({ x, y, z }), [x, y, z])`. Gom nhieu gia tri vao 1 object memo.
-- **React 19 React Compiler auto-detects**: The compiler analyzes your code and automatically inserts useMemo/useCallback where beneficial. Writing clean code without manual memoization will be the recommended approach going forward.
-
-### Vi du / Example
-```tsx
-import { useMemo, useCallback, memo } from 'react';
-
-function SearchResults({ query, items }: { query: string; items: Item[] }) {
-  // useMemo: expensive filtering + sorting on large dataset
-  const filtered = useMemo(() => {
-    return items
-      .filter(item => item.name.toLowerCase().includes(query.toLowerCase()))
-      .sort((a, b) => a.relevance - b.relevance);
-  }, [query, items]);
-
-  // useCallback: stabilize handler passed to memoized child
-  const handleSelect = useCallback((id: string) => {
-    analytics.track('select', { id, query });
-    navigate(`/item/${id}`);
-  }, [query]);
-
-  return <MemoizedList items={filtered} onSelect={handleSelect} />;
-}
-
-const MemoizedList = memo(function ItemList({ items, onSelect }: Props) {
-  return <ul>{items.map(item => (
-    <li key={item.id} onClick={() => onSelect(item.id)}>{item.name}</li>
-  ))}</ul>;
-});
-```
-
-### Interview Notes / Ghi Chu Phong Van
-- Key insight: useMemo/useCallback exist for referential stability, not computation speed.
-- Common trap: interviewers ask "should you useMemo everything?" — answer is no, explain the overhead.
-- Show awareness of the full chain: useMemo/useCallback only help if the consumer (child) is also memoized.
-
-Cross-reference: [Hooks](./03-hooks-deep-dive.md)
-
-## Avoiding Unnecessary Re-renders
-
-### Giai thich / Explanation
-
-**English:** Most performance problems come from unnecessary re-renders cascading through the tree. The solution is usually architectural, not memoization.
-
-**Tieng Viet:** Hau het van de hieu nang den tu re-render khong can thiet lan truyen qua tree. Giai phap thuong la kien truc, khong phai memo.
-
-### Key Points / Y Chinh
-- **State colocation**: Move state as close as possible to where it's used. A setState at the root re-renders the entire tree; a setState in a leaf only re-renders that leaf. Dat state gan noi su dung nhat.
-- **Component composition ("children as props" pattern)**: Pass the expensive subtree as `children` so the parent can re-render without affecting it. Vi du: `<ScrollTracker><ExpensiveList /></ScrollTracker>` — ExpensiveList won't re-render when scroll position changes.
-- **Context splitting**: A single large context that holds both frequently-changing values (mouse position) and rarely-changing values (theme) will re-render ALL consumers on every change. Split into separate contexts. Tach context theo tan suat thay doi.
-- **Context value stabilization**: Always memoize the context value object: `useMemo(() => ({ user, permissions }), [user, permissions])`. Without this, every provider render creates a new object reference. Luon memo gia tri context.
-- **Key-based remounting vs. re-rendering**: Changing `key` forces unmount + remount (expensive). Only use when you truly need to reset internal state. Key thay doi = unmount + mount moi, khong phai re-render.
-- **Extracting frequently-updating parts**: If a timer updates every second, extract it into its own component so the parent tree isn't re-rendered every second. Trich xuat phan cap nhat thuong xuyen thanh component rieng.
-- **useRef for values that don't need re-render**: Store mutable values (timers, previous values, DOM refs) in `useRef` instead of `useState` to avoid triggering re-renders. Dung useRef cho gia tri khong can render lai.
-- **Batch updates**: React 18+ automatically batches all state updates (including async ones). In older versions, only event handlers were batched. Hieu ve batching giup tranh re-render thua.
-
-### Vi du / Example
-```tsx
-// BAD: All children re-render when position changes
-function App() {
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  return (
-    <div onMouseMove={e => setMousePos({ x: e.clientX, y: e.clientY })}>
-      <Cursor position={mousePos} />
-      <ExpensiveNavigation />  {/* re-renders on every mouse move! */}
-      <ExpensiveContent />     {/* re-renders on every mouse move! */}
-    </div>
-  );
-}
-
-// GOOD: Isolate the fast-changing state
-function App() {
-  return (
-    <div>
-      <MouseTracker />          {/* Only this re-renders on mouse move */}
-      <ExpensiveNavigation />   {/* Never re-renders from mouse move */}
-      <ExpensiveContent />
-    </div>
-  );
-}
-
-function MouseTracker() {
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  return (
-    <div onMouseMove={e => setMousePos({ x: e.clientX, y: e.clientY })}>
-      <Cursor position={mousePos} />
-    </div>
-  );
-}
-```
-
-### Interview Notes / Ghi Chu Phong Van
-- Lead with composition patterns before reaching for memo — this shows architectural thinking.
-- "Move state down" and "lift content up" are the two most powerful patterns — explain both with examples.
-- Explain the difference between re-render (React calling your function) and DOM update (committing changes).
-
-Cross-reference: [Hooks](./03-hooks-deep-dive.md) · [Patterns](./08-react-patterns-advanced.md)
-
-## Code Splitting with lazy and Suspense
-
-### Giai thich / Explanation
-
-**English:** Code splitting reduces initial bundle size by loading code on demand. `React.lazy` + `Suspense` make this declarative.
-
-**Tieng Viet:** Code splitting giam kich thuoc bundle ban dau bang cach tai code theo yeu cau. `React.lazy` + `Suspense` lam viec nay khai bao (declarative).
-
-### Key Points / Y Chinh
-- **Route-level splitting is the baseline**: Every route should be a lazy-loaded chunk. This is the highest-impact, lowest-effort optimization. Tach theo route la muc toi thieu.
-- **Component-level splitting for heavy features**: Modals, charts, rich text editors, and date pickers are good candidates — they're large but not needed immediately. Tach component nang nhu modal, chart, editor.
-- **Suspense fallback UX matters**: A blank page during loading is worse than no splitting. Use skeleton screens, not spinners, for content areas. Always match the fallback layout to the loaded content to avoid layout shift (CLS). Fallback nen la skeleton, khong phai spinner.
-- **Prefetching strategies**: Preload chunks on hover (`onMouseEnter`), on route match, or during idle time with `requestIdleCallback`. This hides loading latency. Tai truoc khi hover hoac khi idle.
-- **Named exports need a wrapper**: `React.lazy` only supports default exports. For named exports, create a re-export file: `export { MyComponent as default } from './MyComponent'`. lazy chi ho tro default export.
-- **Error boundaries are required for production**: If the chunk fails to load (network error), Suspense won't catch it. Wrap lazy components with an ErrorBoundary that shows a retry button. Phai co ErrorBoundary de xu ly loi tai chunk.
-- **SSR limitation**: `React.lazy` doesn't support SSR natively. For SSR apps (Next.js), use `next/dynamic` or the `@loadable/component` library instead. lazy khong ho tro SSR — dung next/dynamic.
-- **Granularity trade-off**: Too many small chunks create waterfall requests; too few large chunks negate the benefit. Aim for chunks between 50KB-150KB gzipped. Qua nhieu chunk nho tao waterfall; qua it chunk lon khong co loi.
-
-### Vi du / Example
-```tsx
-import { lazy, Suspense } from 'react';
-import { ErrorBoundary } from 'react-error-boundary';
-
-// Route-level splitting
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Settings = lazy(() => import('./pages/Settings'));
-
-// Prefetch on hover
-const ChartModule = lazy(() => import('./components/Chart'));
-function ChartButton() {
-  const prefetch = () => { import('./components/Chart'); }; // triggers chunk load
-  return (
-    <button onMouseEnter={prefetch} onClick={() => setShowChart(true)}>
-      Show Chart
-    </button>
-  );
-}
-
-// Always pair with ErrorBoundary
-function App() {
-  return (
-    <ErrorBoundary fallback={<RetryMessage />}>
-      <Suspense fallback={<DashboardSkeleton />}>
-        <Dashboard />
-      </Suspense>
-    </ErrorBoundary>
-  );
-}
-```
-
-### Interview Notes / Ghi Chu Phong Van
-- Distinguish route-level vs. component-level splitting and when each is appropriate.
-- Mention the prefetching pattern — this shows you think about perceived performance, not just bundle size.
-- For SSR questions, pivot to `next/dynamic` or `@loadable/component`.
-
-Cross-reference: [Patterns](./08-react-patterns-advanced.md)
-
-## List Virtualization
-
-### Giai thich / Explanation
-
-**English:** Virtualization renders only the visible items in a long list, keeping DOM node count constant regardless of data size. Essential for lists with 1000+ items.
-
-**Tieng Viet:** Virtualization chi render cac item hien thi tren man hinh, giu so luong DOM node khong doi bat ke data lon bao nhieu. Bat buoc cho danh sach 1000+ item.
-
-### Key Points / Y Chinh
-- **DOM nodes are the bottleneck**: A list of 10,000 items means 10,000+ DOM nodes, which slows layout, paint, and memory. Virtualization keeps only ~20-50 nodes in the DOM at any time. DOM node la nut nghen — virtualization giu chi 20-50 node.
-- **react-window vs react-virtuoso**: `react-window` (by Brian Vaughn, React team) is lightweight (~6KB) but requires fixed or known item heights. `react-virtuoso` handles dynamic heights automatically but is larger (~15KB). Chon react-window cho item co dinh, react-virtuoso cho item dong.
-- **Variable height items are hard**: If items have different heights, the virtualizer needs to measure them. This causes layout thrashing. Solutions: estimate heights upfront, measure after first render, or use CSS `contain: strict`. Item cao khac nhau can do luong, gay layout thrash.
-- **Scroll restoration**: When navigating away and back, restore the scroll position. Libraries like `react-virtuoso` handle this; with `react-window`, you need to save/restore `scrollOffset` manually. Luu va khoi phuc vi tri scroll khi di chuyen trang.
-- **Search/filter with virtualization**: Filtering a virtualized list requires resetting the scroll position and recalculating the item count. Don't forget to scroll to top on filter change. Khi filter, reset scroll ve dau.
-- **Accessibility**: Virtualized lists can break screen readers because off-screen items don't exist in the DOM. Add `aria-rowcount`, `aria-rowindex`, and ensure keyboard navigation works. Virtualization co the pha vo screen reader — can them aria attributes.
-- **Overscan count trade-off**: Rendering a few extra items above and below the viewport (overscan) prevents blank flashes during fast scrolling but increases DOM node count. 3-5 items overscan is typical. Overscan 3-5 item tranh trang trang khi scroll nhanh.
-- **Alternative: pagination or infinite scroll**: For some UIs, pagination is simpler and more accessible than virtualization. Virtualization shines for "browse/scan" patterns; pagination is better for "search/find" patterns. Pagination don gian hon va accessible hon cho nhieu truong hop.
-
-### Vi du / Example
-```tsx
-import { FixedSizeList as List } from 'react-window';
-
-interface RowProps {
-  index: number;
-  style: React.CSSProperties;
-  data: Item[];
-}
-
-const Row = memo(function Row({ index, style, data }: RowProps) {
-  const item = data[index];
-  return (
-    <div style={style} role="row" aria-rowindex={index + 1}>
-      <span>{item.name}</span>
-      <span>{item.price}</span>
-    </div>
-  );
-});
-
-function ProductList({ items }: { items: Item[] }) {
-  return (
-    <List
-      height={600}
-      itemCount={items.length}
-      itemSize={50}         // fixed row height
-      itemData={items}
-      overscanCount={5}
-      role="grid"
-      aria-rowcount={items.length}
-    >
-      {Row}
-    </List>
-  );
-}
-```
-
-### Interview Notes / Ghi Chu Phong Van
-- Know the threshold: virtualization is overkill for <200 items — profile first.
-- Mention accessibility pitfalls; this differentiates senior candidates.
-- Compare react-window (fixed heights, small) vs react-virtuoso (dynamic heights, larger) and when to pick each.
-
-## Bundle Analysis Workflow
-
-### Giai thich / Explanation
-
-**English:** Bundle analysis identifies what's actually in your JavaScript bundles, finds unexpectedly large dependencies, and guides code splitting decisions.
-
-**Tieng Viet:** Bundle analysis xac dinh nhung gi thuc su nam trong JavaScript bundle, tim cac dependency lon bat ngo, va huong dan quyet dinh code splitting.
-
-### Key Points / Y Chinh
-- **webpack-bundle-analyzer is the standard tool**: It generates an interactive treemap showing each module's size (stat, parsed, gzipped). Run with `ANALYZE=true next build` in Next.js. webpack-bundle-analyzer tao treemap tuong tac hien thi kich thuoc module.
-- **Source map explorer for production**: Unlike bundle analyzer (which needs webpack stats), `source-map-explorer` works with any source map and shows the actual production bundle composition. Dung source-map-explorer khi khong co webpack stats.
-- **Common culprits**: moment.js (300KB+ with all locales — switch to dayjs/date-fns), lodash (import specific functions, not the whole library), icon libraries (import individual icons, not the full set). Cac thu pham pho bien: moment.js, lodash, icon libraries.
-- **Tree shaking requirements**: ESM (`import/export`) is required; CommonJS (`require`) cannot be tree-shaken. Check that your dependencies ship ESM builds. Ensure `sideEffects: false` in package.json. Tree shaking can ESM — CommonJS khong the tree-shake.
-- **Import cost awareness**: Use the "Import Cost" VS Code extension to see the size of each import inline. Set a team budget: warn at 50KB, error at 100KB for any single import. Dung extension Import Cost de thay kich thuoc import.
-- **Dynamic import for optional features**: Features like PDF export, chart rendering, or admin panels that only 10% of users need should be dynamically imported. Day la low-hanging fruit. Dynamic import cho feature chi 10% user can.
-- **Duplicate dependency detection**: Multiple versions of the same library (e.g., two versions of `lodash`) inflate bundles. Use `npm ls <package>` or the analyzer to detect duplicates, then resolve with npm `overrides`/`resolutions`. Phat hien duplicate dependency bang npm ls.
-- **Set a performance budget**: Define maximum bundle sizes per route (e.g., initial JS <200KB gzipped) and enforce in CI with tools like `bundlesize` or Lighthouse CI. Dat performance budget va kiem tra trong CI.
-
-### Vi du / Example
-```bash
-# Next.js bundle analysis
-ANALYZE=true npm run build
-
-# Source map explorer
-npx source-map-explorer build/static/js/*.js
-
-# Check for duplicate dependencies
-npm ls lodash
-# If multiple versions found:
-# Add to package.json: "overrides": { "lodash": "4.17.21" }
-
-# Import specific functions (tree-shakeable)
-# BAD:  import _ from 'lodash'           // 70KB
-# GOOD: import debounce from 'lodash/debounce'  // 2KB
-```
-
-### Interview Notes / Ghi Chu Phong Van
-- Demonstrate a workflow: analyze → identify largest modules → apply targeted fix (lazy load, replace library, tree-shake).
-- Mention specific numbers (moment.js is 300KB, dayjs is 2KB) to show real-world experience.
-- Performance budgets in CI show you think about preventing regressions, not just fixing current issues.
-
-## Profiler API and DevTools
-
-### Giai thich / Explanation
-
-**English:** The React Profiler (both the API and DevTools panel) measures render performance at the component level, showing what rendered, why, and how long it took.
-
-**Tieng Viet:** React Profiler (ca API va DevTools) do hieu nang render o cap component, hien thi cai gi rendered, tai sao, va mat bao lau.
-
-### Key Points / Y Chinh
-- **Profiler API (`<Profiler>`)**: Wraps a subtree and calls `onRender(id, phase, actualDuration, baseDuration, startTime, commitTime)`. Use `actualDuration` (time spent rendering changed components) vs `baseDuration` (time to render entire subtree without memo). actualDuration la thoi gian thuc te; baseDuration la thoi gian khong co memo.
-- **DevTools "Why did this render?" feature**: Enable "Record why each component rendered" in DevTools settings. It shows whether re-render was caused by props change, state change, or parent re-render. Bat "Record why each component rendered" de biet nguyen nhan re-render.
-- **Flamegraph vs Ranked view**: Flamegraph shows the component tree with render times (width = duration). Ranked view sorts by render duration, so the slowest components are at the top. Ranked view sap xep theo thoi gian, tien cho tim component cham nhat.
-- **Highlight updates setting**: Enable "Highlight updates when components render" to visually see which parts of the UI re-render during interactions. Blue borders = fast, yellow/red = slow. Bat highlight updates de thay truc quan component nao re-render.
-- **Production profiling**: Production builds strip the Profiler by default. To profile production, build with `--profile` flag: `react-scripts build --profile` or set `reactStrictMode: false` in Next.js config. Profile production bang --profile flag.
-- **Interaction tracing (deprecated but concept matters)**: The idea of tracing a user interaction through the render pipeline is now handled by browser Performance API and React's `useTransition`. Hieu khai niem trace interaction du API cu da deprecated.
-- **Commit frequency analysis**: If a component commits many times per second (e.g., 60 times for a mouse move), that's a signal to debounce or move state. Check the "commits" selector in DevTools. Neu component commit nhieu lan/giay, can debounce hoac chuyen state.
-- **Compare before/after**: Always profile before optimizing, apply one change, then profile again. Multiple changes at once make it impossible to attribute improvement. Luon profile truoc va sau, chi thay doi mot thu moi lan.
-
-### Vi du / Example
-```tsx
-import { Profiler, ProfilerOnRenderCallback } from 'react';
-
-const logRender: ProfilerOnRenderCallback = (
-  id,           // "ProductList"
-  phase,        // "mount" | "update"
-  actualDuration,  // ms spent rendering changed parts
-  baseDuration,    // ms to render entire subtree (no memo)
-  startTime,
-  commitTime
-) => {
-  // Send to analytics in production
-  if (actualDuration > 16) {
-    performanceMonitor.reportSlowRender({
-      component: id,
-      phase,
-      duration: actualDuration,
-      timestamp: commitTime,
-    });
-  }
-};
-
-function App() {
-  return (
-    <Profiler id="ProductList" onRender={logRender}>
-      <ProductList />
-    </Profiler>
-  );
-}
-```
-
-### Interview Notes / Ghi Chu Phong Van
-- Know the difference between `actualDuration` and `baseDuration` — this is a common interview question.
-- Mention production profiling (most candidates only know dev profiling).
-- Show a workflow: Profiler → identify slow component → apply optimization → verify improvement.
-
-## why-did-you-render
-
-### Giai thich / Explanation
-
-**English:** `@welldone-software/why-did-you-render` monkey-patches React to log when components re-render unnecessarily (same props/state producing the same output).
-
-**Tieng Viet:** `why-did-you-render` monkey-patch React de log khi component re-render khong can thiet (cung props/state tao ra cung output).
-
-### Key Points / Y Chinh
-- **Setup**: Import before React in your entry point (`wdyr.ts` imported first). Assign `Component.whyDidYouRender = true` to opt-in specific components, or set `trackAllPureComponents: true` globally. Import truoc React va danh dau component can theo doi.
-- **What it detects**: (1) Re-renders where props are deep-equal but referentially different (new object/array every render). (2) State updates that produce the same state. (3) Hooks that return new references unnecessarily. Phat hien 3 loai re-render thua.
-- **Development only**: Never ship this in production — it adds significant overhead and console noise. Gate behind `process.env.NODE_ENV === 'development'`. Chi dung trong development, khong bao gio ship len production.
-- **Common findings**: Inline object props (`style={{ margin: 10 }}`), functions created in render, context value objects not memoized, and selector functions returning new arrays. Cac loi pho bien: inline object, function tao trong render, context value khong memo.
-- **Pairs with React.memo**: After wrapping a component with memo, use WDYR to verify that memo is actually preventing re-renders. If WDYR still logs updates, your props aren't stable. Dung WDYR de kiem tra memo co hoat dong khong.
-- **Hook tracking**: WDYR can track hooks — it shows which hook (by index) caused a re-render and whether the new value is deep-equal to the old one. Cuc ky huu ich cho debug useEffect va useMemo. WDYR theo doi hook — chi ra hook nao gay re-render.
-- **Console output interpretation**: WDYR logs show "prev" and "next" values side by side. If they look identical, the issue is referential inequality. If they differ, the re-render is legitimate. Log hien thi prev/next — neu giong nhau la van de reference.
-- **Alternative in React 19+**: The React Compiler makes WDYR largely unnecessary by automatically memoizing. But for React 18 codebases, WDYR remains the best debugging tool for unnecessary re-renders.
-
-### Vi du / Example
-```tsx
-// wdyr.ts — must be imported FIRST in your app entry point
-import React from 'react';
-
-if (process.env.NODE_ENV === 'development') {
-  const whyDidYouRender = require('@welldone-software/why-did-you-render');
-  whyDidYouRender(React, {
-    trackAllPureComponents: true,  // track all memo/PureComponent
-    trackHooks: true,              // track hook-caused re-renders
-    logOnDifferentValues: false,   // only log unnecessary re-renders
-  });
-}
-
-// Mark specific components for tracking
-function MyExpensiveComponent(props: Props) { /* ... */ }
-MyExpensiveComponent.whyDidYouRender = true;
-```
-
-### Interview Notes / Ghi Chu Phong Van
-- Present WDYR as a debugging tool for development, not a production solution.
-- Explain the difference between "referentially different but deep-equal" vs "actually different" — this is the core concept.
-- Mention that React Compiler will reduce the need for WDYR in future codebases.
-
-## Concurrent Rendering Benefits
-
-### Giai thich / Explanation
-
-**English:** Concurrent rendering (React 18+) allows React to interrupt long renders, prioritize urgent updates, and keep the UI responsive during heavy computation.
-
-**Tieng Viet:** Concurrent rendering (React 18+) cho phep React gian doan render dai, uu tien update gap, va giu UI phan hoi khi tinh toan nang.
-
-### Key Points / Y Chinh
-- **Automatic batching**: React 18 batches ALL state updates (including inside setTimeout, Promises, and native event handlers), reducing re-renders. In React 17, only React event handlers were batched. React 18 batch tat ca state updates — React 17 chi batch trong event handler.
-- **useTransition for non-urgent updates**: Wrap expensive state updates in `startTransition(() => setState(...))` to mark them as non-urgent. React will keep the UI responsive by yielding to higher-priority updates (typing, clicking). Dung useTransition cho update khong gap — React se uu tien input cua user.
-- **useDeferredValue for expensive derived values**: `const deferredQuery = useDeferredValue(query)` gives you a "stale" value during heavy renders. Show the old results while computing new ones, avoiding UI freeze. useDeferredValue tra ve gia tri "cu" trong khi tinh toan gia tri moi.
-- **Suspense for data fetching**: Combined with libraries like React Query/SWR or React's `use()` hook, Suspense provides declarative loading states without manual `isLoading` boolean management. Suspense + data fetching library = khai bao loading state.
-- **Transitions vs debouncing**: `startTransition` is better than `debounce` for search-as-you-type because it doesn't add artificial delay — it renders as fast as possible while staying responsive. Transition khong them delay nhu debounce — render nhanh nhat co the.
-- **Concurrent mode requirements**: Components must be pure (no side effects during render), idempotent (same input = same output), and resilient to being called multiple times. StrictMode double-renders to catch violations. Component can pure, idempotent, va chiu duoc goi nhieu lan.
-- **isPending for transition feedback**: `const [isPending, startTransition] = useTransition()` gives you `isPending` to show a subtle loading indicator (opacity change, progress bar) during long transitions. isPending cho phep hien thi loading indicator tinh te.
-- **Streaming SSR with Suspense**: Concurrent features enable streaming HTML from the server, sending the shell immediately and filling in Suspense boundaries as data loads. This dramatically improves TTFB and LCP. Streaming SSR gui HTML shell truoc, dien Suspense boundaries sau.
-
-### Vi du / Example
-```tsx
-import { useState, useTransition, useDeferredValue } from 'react';
-
+// ✅ useTransition — keep UI responsive during heavy state update
 function SearchPage() {
   const [query, setQuery] = useState('');
   const [isPending, startTransition] = useTransition();
-
-  // Typing updates immediately (high priority)
-  // Filter results update is deferred (low priority)
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setQuery(e.target.value);  // urgent: update input immediately
-  };
-
   const deferredQuery = useDeferredValue(query);
 
   return (
     <div>
-      <input value={query} onChange={handleChange} />
-      <div style={{ opacity: query !== deferredQuery ? 0.7 : 1 }}>
-        <SearchResults query={deferredQuery} />
+      <input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)} // instant (high priority)
+      />
+      <div style={{ opacity: isPending ? 0.7 : 1 }}>
+        <SearchResults query={deferredQuery} /> {/* deferred (low priority) */}
       </div>
     </div>
   );
 }
-```
 
-### Interview Notes / Ghi Chu Phong Van
-- Explain the mental model: urgent updates (typing) vs transitions (filtering results).
-- Know the difference between useTransition (wraps the update) and useDeferredValue (wraps the value).
-- Explain why startTransition is superior to debounce: no artificial delay, works with React's scheduler.
-
-## Server Components for Performance
-
-### Giai thich / Explanation
-
-**English:** React Server Components (RSC) run on the server and send rendered output (not component code) to the client, eliminating JavaScript bundle size for those components.
-
-**Tieng Viet:** React Server Components (RSC) chay tren server va gui output da render (khong phai code component) cho client, loai bo JavaScript bundle cho cac component do.
-
-### Key Points / Y Chinh
-- **Zero client-side JS**: Server Components don't add any JavaScript to the client bundle. A 50KB markdown parser used only in a Server Component costs 0KB on the client. Server Component khong them JS nao vao client bundle.
-- **Direct database/API access**: Server Components can directly query databases, read files, or call internal APIs without exposing credentials or creating API endpoints. Saves an entire network round-trip. Truy cap truc tiep DB/API khong can endpoint.
-- **When to use Client vs Server**: Use Server Components for static content, data fetching, and heavy dependencies. Use Client Components for interactivity (useState, useEffect, event handlers, browser APIs). Server = static/data; Client = interactive/browser API.
-- **Serialization boundary**: Props passed from Server to Client Components must be serializable (no functions, classes, or Date objects). This is the "use client" boundary. Props tu Server → Client phai serializable — khong truyen function, class.
-- **Streaming and progressive rendering**: RSC output streams progressively. The server sends the first bytes immediately, and Suspense boundaries fill in as data resolves. Users see content faster. RSC stream tung phan — user thay content som hon.
-- **Bundle size impact is dramatic**: Large dependencies (syntax highlighters, markdown parsers, date libraries) that only run on the server are completely excluded from the client bundle. In Next.js App Router, this is the default. Dependency chi chay tren server = 0KB client.
-- **Composition pattern**: Server Components can import Client Components, but not vice versa. Client Components receive Server Component output as children. This is the core architectural pattern. Server import Client OK; Client khong import Server — truyen qua children.
-- **Cache and revalidation**: RSC results can be cached at the edge (CDN) and revalidated on demand (`revalidatePath`/`revalidateTag`). This combines static performance with dynamic data. Cache RSC result tren CDN, revalidate khi can.
-
-### Vi du / Example
-```tsx
-// app/products/page.tsx — Server Component (default in Next.js App Router)
-import { db } from '@/lib/database';        // Direct DB access
-import { ProductList } from './ProductList'; // Client Component
-
-export default async function ProductsPage() {
-  // This runs on the server — no API endpoint needed
-  const products = await db.product.findMany({
-    orderBy: { createdAt: 'desc' },
-    take: 50,
-  });
-
-  // Pass serializable data to Client Component
-  return <ProductList initialProducts={products} />;
-}
-
-// app/products/ProductList.tsx — Client Component
-'use client';
-import { useState } from 'react';
-
-export function ProductList({ initialProducts }: { initialProducts: Product[] }) {
-  const [filter, setFilter] = useState('');
-  const filtered = initialProducts.filter(p =>
-    p.name.toLowerCase().includes(filter.toLowerCase())
-  );
-
-  return (
-    <>
-      <input value={filter} onChange={e => setFilter(e.target.value)} />
-      <ul>{filtered.map(p => <li key={p.id}>{p.name}</li>)}</ul>
-    </>
-  );
+// ✅ why-did-you-render — development debugging
+// wdyr.ts (import FIRST in entry point)
+if (process.env.NODE_ENV === 'development') {
+  const whyDidYouRender = require('@welldone-software/why-did-you-render');
+  whyDidYouRender(React, { trackAllPureComponents: true, trackHooks: true });
 }
 ```
 
-### Interview Notes / Ghi Chu Phong Van
-- Clearly explain the mental model: Server Components are about REDUCING client JavaScript, not about server-side rendering (SSR is different).
-- Know the serialization boundary rules — what can and cannot cross "use client".
-- Mention real-world bundle savings: "We moved our markdown parser to a Server Component and saved 80KB of client JS."
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
 
-## Image and Asset Optimization
+- **Profile in production mode**: Dev mode double-renders (StrictMode), distorting measurements. Build with `--profile` flag
+- **useTransition vs debounce**: Transition has no artificial delay — renders ASAP while staying responsive. Debounce adds fixed delay regardless of device speed
+- **useDeferredValue vs useTransition**: Use `useTransition` when you control the `setState`. Use `useDeferredValue` when you receive the value as a prop
+- **Bundle analysis tools**: `webpack-bundle-analyzer` for interactive treemap, `source-map-explorer` for production source maps
+- **Performance budgets**: Set max bundle sizes per route (e.g., initial JS <200KB gzip) and enforce in CI
 
-### Giai thich / Explanation
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-**English:** Images are typically the largest assets on a page. Proper format selection, sizing, lazy loading, and preloading strategies directly impact LCP and bandwidth.
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Profiling in development mode | StrictMode double-renders distort measurements | Build with `--profile` for production profiling |
+| Using debounce instead of useTransition for search | Debounce adds artificial delay; useTransition renders ASAP | useTransition = no delay, responsive during computation |
+| "Re-render = slow" | Re-render (calling component fn) is cheap; DOM update is expensive. React diffs to minimize DOM changes | Only problematic when render creates expensive computation or excessive DOM mutations |
+| Multiple changes at once, then measuring | Can't attribute improvement to specific change | One optimization at a time, measure before and after each |
 
-**Tieng Viet:** Hinh anh thuong la asset lon nhat tren trang. Chon dinh dang dung, kich thuoc phu hop, lazy loading va preloading anh huong truc tiep den LCP va bandwidth.
+**🎯 Interview Pattern:**
+- Khi thấy câu hỏi về: "how to optimize slow React app", "profiling", "useTransition"
+- → Nhớ đến: "Profile → Identify → Fix → Verify"
+- → Mở đầu trả lời: "I'd start by measuring: run Lighthouse for Core Web Vitals, profile with React DevTools to identify slow components, then apply targeted fixes one at a time. For interaction responsiveness, useTransition marks state updates as non-urgent so the UI stays responsive during heavy computation — it's superior to debounce because it has no artificial delay."
 
-### Key Points / Y Chinh
-- **Next.js Image component**: Automatically serves WebP/AVIF, generates responsive sizes, lazy loads by default, and prevents CLS with required width/height. Always prefer `next/image` over raw `<img>`. next/image tu dong toi uu dinh dang, kich thuoc, lazy load va tranh CLS.
-- **LCP image must not be lazy loaded**: The hero image (likely your LCP element) should have `priority={true}` (Next.js) or `loading="eager"` + `fetchpriority="high"`. Lazy loading your LCP image hurts performance. Hinh LCP khong duoc lazy load — dung priority.
-- **Modern formats**: WebP is 25-35% smaller than JPEG; AVIF is 50% smaller. Use `<picture>` with fallbacks or let Next.js Image handle format negotiation automatically. WebP nho hon JPEG 25-35%; AVIF nho hon 50%.
-- **Responsive images with srcset**: Serve different sizes for different viewports. A 2000px hero image on a 375px phone wastes bandwidth. Use `sizes` attribute to tell the browser which image to download. Dung srcset + sizes de browser tai hinh phu hop voi man hinh.
-- **Blur placeholder for perceived performance**: Show a tiny blurred version (10x10px base64 inline) while the full image loads. This eliminates CLS and feels instant. `next/image` supports `placeholder="blur"` out of the box. Blur placeholder giup trang cam thay nhanh hon.
-- **Font optimization**: Self-host fonts, use `font-display: swap` to avoid FOIT (flash of invisible text), subset fonts to include only needed characters (Latin vs full Unicode). Self-host font, dung font-display: swap, va subset font.
-- **Preload critical assets**: Use `<link rel="preload">` for above-the-fold images, critical fonts, and key CSS. In Next.js, use the `preload` option in `next/font`. Preload asset quan trong cho above-the-fold.
-- **SVG optimization**: For icons and illustrations, use inline SVG (no extra HTTP request), or a sprite sheet. Run SVGO to remove metadata and reduce size by 30-60%. Inline SVG cho icon; chay SVGO de giam kich thuoc 30-60%.
-
-### Vi du / Example
-```tsx
-import Image from 'next/image';
-
-// Hero image — LCP element, must preload
-function Hero() {
-  return (
-    <Image
-      src="/hero.jpg"
-      alt="Product showcase"
-      width={1200}
-      height={600}
-      priority              // preloads, no lazy loading
-      placeholder="blur"
-      blurDataURL="data:image/jpeg;base64,/9j/4AAQ..."  // 10px blurred
-      sizes="(max-width: 768px) 100vw, 1200px"
-    />
-  );
-}
-
-// Below-the-fold image — lazy loaded by default
-function ProductCard({ product }: { product: Product }) {
-  return (
-    <Image
-      src={product.imageUrl}
-      alt={product.name}
-      width={400}
-      height={300}
-      // loading="lazy" is default — no need to specify
-      placeholder="blur"
-      blurDataURL={product.blurHash}
-    />
-  );
-}
-```
-
-### Interview Notes / Ghi Chu Phong Van
-- Connect image optimization to Core Web Vitals: LCP (hero image speed), CLS (layout shift from images without dimensions).
-- Know the difference between `loading="lazy"` (browser-native) and `priority` (framework-level preloading).
-- Mention format negotiation: server sends WebP to Chrome, JPEG to Safari 14, AVIF to modern browsers.
-
-Cross-reference: [Browser Performance](../../fe-track/06-browser-performance/01-core-web-vitals.md)
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: [Core Web Vitals — INP](../06-browser-performance/01-core-web-vitals.md) — target metrics for optimization
+- ➡️ Để hiểu: [React 19 Compiler](./02-react-19-features.md) — automates most memoization decisions
 
 ---
 
-## Cau Hoi Phong Van / Interview Q&A
+## Interview Q&A / Hỏi Đáp Phỏng Vấn
 
-### Q1: When should you use React.memo? / Khi nao nen dung React.memo? 🟢 Junior
+### Q1: When should you use React.memo, and when does it NOT help? / Khi nào dùng React.memo, khi nào không? 🟢 Junior
 
-**A:** Use React.memo when a component (a) re-renders frequently with the same props, (b) has expensive render output, and (c) receives referentially stable props. Without all three conditions, memo adds complexity without benefit.
+**A:** Use React.memo when ALL three conditions are met: (a) component re-renders frequently with the same props, (b) render output is expensive (deep tree, complex SVG), and (c) props are referentially stable.
 
-Giai thich: memo chi hieu qua khi ca 3 dieu kien thoa man — render thuong xuyen voi cung props, render dat, va props on dinh reference. Thieu mot trong ba thi memo them phuc tap ma khong co loi.
+Memo does NOT help when: inline objects/functions as props create new references every render, the component consumes changing context, or children are passed as JSX (new element each render).
 
-**Key trap:** Inline objects/functions as props defeat memo entirely because they create new references every render. Always stabilize props with useMemo/useCallback before wrapping children with memo.
+```tsx
+// ❌ Memo useless — inline style creates new object every render
+<MemoComponent style={{ color: 'red' }} />
 
-### Q2: What is the difference between useMemo and useCallback? / useMemo va useCallback khac nhau the nao? 🟢 Junior
+// ✅ Memo works — props are referentially stable
+const style = useMemo(() => ({ color: 'red' }), []);
+<MemoComponent style={style} />
+```
 
-**A:** `useCallback(fn, deps)` is syntactic sugar for `useMemo(() => fn, deps)`. useMemo caches a computed value; useCallback caches a function reference. Both maintain referential stability for memoized children.
+Giải thích tiếng Việt: Memo chỉ hiệu quả khi cả 3 điều kiện thỏa: re-render thường xuyên + render đắt + props ổn định reference. Inline objects/functions phá vỡ memo vì tạo ref mới mỗi render.
 
-Giai thich: useCallback la duong cu phap cua useMemo cho function. Ca hai deu giu on dinh reference — useCallback cho function, useMemo cho gia tri tinh toan.
-
-**Key trap:** Neither actually prevents function creation — the function is created every render, but useCallback returns the cached version if deps haven't changed. The savings come from the downstream memo, not from avoiding function creation.
-
-### Q3: How do you prevent unnecessary re-renders without memo? / Lam sao ngan re-render thua khong can memo? 🟡 Mid
-
-**A:** Three architectural patterns are more effective than memo: (1) **State colocation** — move state down to the component that uses it. (2) **Children as props** — pass expensive subtrees as `children` so they don't re-render when parent state changes. (3) **Context splitting** — separate frequently-changing values into their own context.
-
-Giai thich: Ba pattern kien truc hieu qua hon memo: (1) Dat state gan noi dung, (2) Truyen component qua children, (3) Tach context theo tan suat thay doi. Day la cach nghi cua senior — uu tien kien truc truoc ky thuat.
-
-### Q4: Explain useTransition vs useDeferredValue / Giai thich useTransition va useDeferredValue 🟡 Mid
-
-**A:** `useTransition` wraps a state update to mark it as non-urgent — React yields to higher-priority updates (typing). `useDeferredValue` wraps a value to get a "stale" version during heavy renders. Use useTransition when you control the setState call; use useDeferredValue when you receive the value as a prop.
-
-Giai thich: useTransition bao setState la khong gap; useDeferredValue bao gia tri co the dung ban cu. Dung useTransition khi ban kiem soat setState; dung useDeferredValue khi nhan gia tri qua prop.
-
-**Key insight:** Both are superior to debounce because they don't add artificial delay — React renders as fast as possible while staying responsive to user input.
-
-### Q5: How does code splitting improve performance? / Code splitting cai thien hieu nang the nao? 🟢 Junior
-
-**A:** Code splitting reduces the initial JavaScript bundle size by loading code on demand. Route-level splitting (each page is a separate chunk) is the baseline. Component-level splitting (lazy-loading modals, charts, heavy features) provides further gains. Combined with prefetching on hover/idle, users rarely see loading states.
-
-Giai thich: Code splitting giam JS ban dau bang cach tai theo yeu cau. Tach theo route la muc toi thieu, tach component nang cung cap loi ich them. Ket hop voi prefetch khi hover/idle, user it khi thay loading.
-
-### Q6: What is virtualization and when should you use it? / Virtualization la gi va khi nao nen dung? 🟡 Mid
-
-**A:** Virtualization renders only visible items in a long list, keeping DOM node count constant (~20-50 nodes) regardless of data size. Use it when lists exceed ~500-1000 items. Below that threshold, the virtualization library overhead (measuring, scroll handling) may exceed the benefit. Consider pagination as a simpler alternative for search/filter UIs.
-
-Giai thich: Virtualization chi render item hien thi, giu DOM node co dinh. Dung khi list vuot 500-1000 item. Duoi nguong do, overhead cua library co the lon hon loi ich. Pagination don gian hon cho UI tim kiem.
-
-**Key trade-off:** Virtualized lists can break accessibility (screen readers can't see off-screen items). Add `aria-rowcount`/`aria-rowindex` and ensure keyboard navigation works.
-
-### Q7: How do React Server Components improve performance? / React Server Components cai thien hieu nang the nao? 🟡 Mid
-
-**A:** RSC run on the server and send rendered output (not component JS) to the client. This means large dependencies used only for rendering (markdown parsers, syntax highlighters, date formatters) cost zero client-side JavaScript. RSC can also directly access databases, eliminating API round-trips.
-
-Giai thich: RSC chay tren server, gui output da render — khong gui JS. Dependency chi dung de render co gia 0KB client JS. RSC cung truy cap DB truc tiep, bo round-trip API.
-
-**Key distinction:** RSC is NOT the same as SSR. SSR renders to HTML for faster first paint but still sends all component JS. RSC eliminates the JS entirely for server-only components.
-
-### Q8: How do you profile React performance in production? / Lam sao profile hieu nang React tren production? 🔴 Senior
-
-**A:** Production builds strip the Profiler by default. Build with `--profile` flag to keep it. Use the `<Profiler>` API to send render durations to your analytics service. Key metrics: `actualDuration` (time to render changed parts) vs `baseDuration` (time without memoization). Compare these to find where memo is most effective. Supplement with browser Performance API, Lighthouse CI, and real-user monitoring (RUM) via web-vitals library.
-
-Giai thich: Build voi --profile de giu Profiler trong production. Dung API Profiler de gui thoi gian render len analytics. actualDuration vs baseDuration cho biet memo hieu qua o dau. Ket hop voi Performance API, Lighthouse CI, va RUM.
-
-### Q9: What is the React Compiler (React Forget) and how does it change optimization? / React Compiler la gi va no thay doi toi uu hoa nhu the nao? 🔴 Senior
-
-**A:** The React Compiler (formerly React Forget) automatically analyzes your components at build time and inserts memoization (useMemo, useCallback, memo) where it determines they would be beneficial. This means manual memoization becomes largely unnecessary. However, the compiler requires components to follow React's rules (pure, no side effects during render), so it also serves as a code quality enforcement tool.
-
-Giai thich: React Compiler tu dong phan tich va chen memo khi can thiet tai build time. Manual memo tro nen it can thiet. Nhung Compiler yeu cau component tuan thu rules of React (pure, khong side effect khi render), nen no cung la cong cu kiem tra chat luong code.
-
-**Interview impact:** "I write clean React following the rules of hooks and purity. The compiler handles memoization. I focus on architecture — state colocation, component composition, context splitting — rather than sprinkling memo everywhere."
-
-### Q10: Design a performance optimization strategy for a slow React dashboard / Thiet ke chien luoc toi uu cho React dashboard cham 🔴 Senior
-
-**A:** Follow this systematic approach:
-
-1. **Measure**: Run Lighthouse, check Core Web Vitals (LCP, INP, CLS). Profile with React DevTools to identify slow components.
-2. **Bundle**: Run webpack-bundle-analyzer. Replace heavy deps (moment→dayjs). Code-split by route. Lazy-load charts and modals.
-3. **Rendering**: Use React Profiler to find components that render too often. Apply state colocation, context splitting, composition patterns. Only then consider memo.
-4. **Lists**: Virtualize any list >500 items with react-window or react-virtuoso.
-5. **Data**: Move data fetching to Server Components where possible. Use streaming SSR for progressive loading.
-6. **Assets**: Optimize images (WebP/AVIF, responsive sizes, priority for LCP). Self-host and subset fonts.
-7. **Prevent regression**: Set performance budgets in CI. Monitor real-user metrics with web-vitals.
-
-Giai thich: Cach tiep can co he thong: Do dac → Bundle → Rendering → Lists → Data → Assets → Ngan hoi quy. Moi buoc co cong cu va chi so cu the. Day la cach tra loi cho thay tu duy toan dien cua senior engineer.
+**💡 Interview Signal:**
+- ✅ Strong: Lists all 3 conditions, gives specific example of memo failing (inline style), mentions React 19 Compiler making memo auto
+- ❌ Weak: Only says "use memo when component re-renders a lot" without understanding reference stability
 
 ---
 
-## Self-Check / Tự Kiểm Tra
+### Q2: How do you prevent unnecessary re-renders WITHOUT memo? / Ngăn re-render thua không cần memo? 🟡 Mid
 
-- [ ] Can I use React DevTools Profiler to identify which component is causing unnecessary re-renders?
-- [ ] Can I explain when `React.memo` does NOT help (unstable props/callbacks)?
-- [ ] Can I explain the difference between `useMemo` (cache value) vs `useCallback` (cache function)?
-- [ ] Can I implement list virtualization with `@tanstack/virtual` for a 10,000-item list?
-- [ ] Can I use `React.lazy` + `Suspense` to split a heavy chart library into a separate chunk?
-- 💬 **Feynman Prompt:** Giải thích tại sao thêm `React.memo` vào mọi component không phải là giải pháp tốt — khi nào memo hóa làm performance tệ hơn?
+**A:** Three architectural patterns are more effective than memo:
 
-## Connections / Liên Kết
+1. **State colocation**: Move state to the component that uses it → parent tree doesn't re-render
+2. **Children as props**: `<Parent>{expensiveChildren}</Parent>` — children don't re-render when Parent's state changes because they're created by Parent's parent
+3. **Context splitting**: Separate theme (rare updates) from cart (frequent updates) into different contexts
 
-- ⬅️ **Built on**: [Hooks Deep Dive](./03-hooks-deep-dive.md) — useMemo/useCallback mechanics
-- ⬅️ **Built on**: [Core Web Vitals](../06-browser-performance/01-core-web-vitals.md) — performance metrics to optimize toward
-- 🔗 **Applied in**: [React 19](./02-react-19-features.md) — React Compiler automates most of this
+```tsx
+// ✅ Composition: ExpensiveList doesn't re-render on scroll
+function ScrollTracker({ children }: { children: ReactNode }) {
+  const [scrollY, setScrollY] = useState(0);
+  // scrollY changes but children are from PARENT scope → unaffected
+  return <div>{children}</div>;
+}
+
+<ScrollTracker>
+  <ExpensiveList />  {/* never re-renders from scroll! */}
+</ScrollTracker>
+```
+
+Giải thích tiếng Việt: 3 pattern kiến trúc hiệu quả hơn memo: (1) Đặt state gần nơi dùng, (2) Truyền component qua children (children từ parent scope không bị ảnh hưởng), (3) Tách context theo tần suất thay đổi.
+
+**💡 Interview Signal:**
+- ✅ Strong: Explains all 3 patterns with code, mentions that architecture > memo shows senior thinking
+- ❌ Weak: Jumps straight to "use React.memo" without considering composition
+
+---
+
+### Q3: Explain useTransition vs useDeferredValue. / Giải thích useTransition vs useDeferredValue. 🟡 Mid
+
+**A:** Both mark work as non-urgent for concurrent rendering, but apply differently:
+
+- **`useTransition`**: Wraps a **setState call** — you mark the update as non-urgent. Returns `[isPending, startTransition]`.
+- **`useDeferredValue`**: Wraps a **value** — you get a "stale" version during heavy renders. Input: current value. Output: deferred value.
+
+**Rule**: Use `useTransition` when you control the `setState`. Use `useDeferredValue` when you receive the value as a prop.
+
+Both are superior to debounce: no artificial delay — React renders as fast as possible while staying responsive to user input.
+
+Giải thích tiếng Việt: `useTransition` wrap setState, `useDeferredValue` wrap value. Dùng useTransition khi bạn kiểm soát setState, useDeferredValue khi nhận value qua prop. Cả hai hơn debounce vì không thêm delay giả — React render nhanh nhất có thể.
+
+**💡 Interview Signal:**
+- ✅ Strong: Gives clear decision rule (control setState vs receive as prop), compares to debounce
+- ❌ Weak: Confuses the two or can't explain when to use which
+
+---
+
+### Q4: How do you profile React performance in production? / Profile React performance trên production? 🔴 Senior
+
+**A:** Production builds strip the Profiler by default. Three approaches:
+
+1. **Build with `--profile` flag**: Keeps Profiler API in production bundle. Use `<Profiler onRender>` to send render durations to analytics.
+2. **Key metrics**: `actualDuration` (time rendering changed parts) vs `baseDuration` (time without memo). If actual << base → memo is effective.
+3. **RUM via web-vitals**: `web-vitals` library reports INP, LCP, CLS from real users. Correlate React render times with user-facing metrics.
+
+```tsx
+// Production: report slow renders to analytics
+<Profiler id="ProductList" onRender={(id, phase, actual) => {
+  if (actual > 16) analytics.report({ component: id, duration: actual });
+}}>
+  <ProductList />
+</Profiler>
+```
+
+Supplement with browser Performance API, Lighthouse CI for automated checks, and webpack-bundle-analyzer for bundle composition.
+
+Giải thích tiếng Việt: Production build xóa Profiler mặc định — build với `--profile` để giữ. Dùng `actualDuration` vs `baseDuration` để đo hiệu quả memo. Kết hợp web-vitals RUM cho metrics thực tế, Lighthouse CI cho checks tự động.
+
+**💡 Interview Signal:**
+- ✅ Strong: Knows `--profile` flag, explains actual vs base duration, connects to RUM/Core Web Vitals
+- ❌ Weak: Only knows dev profiling, can't explain production measurement
+
+---
+
+### Q5: Design a performance optimization strategy for a slow React dashboard. / Thiết kế chiến lược tối ưu cho React dashboard chậm. 🔴 Senior
+
+**A:** Systematic 7-step approach:
+
+1. **Measure**: Lighthouse + Core Web Vitals (LCP, INP, CLS). React DevTools Profiler for component-level data
+2. **Bundle**: `webpack-bundle-analyzer` → replace heavy deps (moment→dayjs), code-split by route, lazy-load charts/modals
+3. **Rendering**: Profiler → identify hot components. Apply: state colocation, context splitting, composition. Memo as last resort
+4. **Lists**: Virtualize any list >500 items (react-window for fixed heights, react-virtuoso for dynamic)
+5. **Data**: Server Components for static content. TanStack Query for client-side caching with stale-while-revalidate
+6. **Assets**: next/image for automatic format/size optimization. `priority` for LCP image. Self-host and subset fonts
+7. **Prevent regression**: Performance budgets in CI (bundlesize/Lighthouse CI). Monitor RUM with web-vitals
+
+**Key interview point**: Start with "I would measure first" — this shows maturity. Then work top-down: bundle → rendering → lists → assets → prevention.
+
+Giải thích tiếng Việt: 7 bước có hệ thống: Đo → Bundle → Rendering → Lists → Data → Assets → Ngăn hồi quy. Bắt đầu bằng "tôi sẽ đo trước" thể hiện sự trưởng thành. Mỗi bước có tool và metric cụ thể.
+
+**💡 Interview Signal:**
+- ✅ Strong: Systematic approach starting with measurement, specific tools at each step, mentions prevention (CI budgets)
+- ❌ Weak: Lists random optimizations without prioritization or measurement
+
+---
+
+## Interview Q&A Summary / Tổng Kết Q&A
+
+| # | Topic | Difficulty | Key Concept |
+|---|-------|-----------|-------------|
+| Q1 | React.memo conditions | 🟢 Junior | 3 conditions: frequent + expensive + stable refs |
+| Q2 | Re-render prevention without memo | 🟡 Mid | State colocation, composition, context split |
+| Q3 | useTransition vs useDeferredValue | 🟡 Mid | Control setState vs receive value; no delay > debounce |
+| Q4 | Production profiling | 🔴 Senior | --profile flag, actual vs base duration, RUM |
+| Q5 | Optimization strategy | 🔴 Senior | Measure → Bundle → Render → Lists → Assets → Prevent |
+
+---
+
+## ⚡ Cold Call Simulation / Mô Phỏng Phỏng Vấn
+
+> 🎯 Interviewer asks cold: **"How do you approach React performance optimization?"**
+
+**30 giây đầu — mở đầu lý tưởng:**
+1. "I always start by measuring — running Lighthouse for Core Web Vitals and React DevTools Profiler to identify the actual bottleneck, because optimization without data is just guessing."
+2. "The most effective optimizations are usually architectural, not API-level: moving state closer to where it's used, using composition to prevent parent re-renders from cascading, and splitting contexts by update frequency."
+3. "For initial load, I ensure route-level code splitting as a baseline and virtualize any list over 500 items. For interaction responsiveness, useTransition marks heavy updates as non-urgent, keeping typing and clicking responsive."
+4. "The one anti-pattern I always watch for is premature memo — adding React.memo without stable props is a no-op that adds complexity. In React 19, the Compiler handles memoization automatically, so I focus on architecture instead."
+
+---
+
+## Self-Check / Tự Kiểm Tra ⚡ (Đóng tài liệu lại trước khi làm)
+
+- [ ] **Retrieval**: Viết 3 architectural patterns ngăn re-render từ trí nhớ — mỗi cái 1 câu + ví dụ.
+- [ ] **Visual**: Vẽ diagram component tree khi state colocation di chuyển state từ App xuống MouseTracker — components nào tránh được re-render?
+- [ ] **Application**: ProductList có 10,000 items, filter input lag 200ms. Profiler cho thấy filter function chậm, không phải children re-render. Bạn fix thế nào? Viết code.
+- [ ] **Debug**: `React.memo(Chart)` nhưng Chart vẫn re-render mỗi frame. Props là `{ data, onClick }`. Nguyên nhân? Fix?
+- [ ] **Teach**: Giải thích tại sao useTransition tốt hơn debounce cho search, bằng ví dụ "nhà hàng có bồi bàn thông minh vs bộ hẹn giờ cứng".
+
+💬 **Feynman Prompt:** Giải thích tại sao thêm React.memo vào mọi component không phải giải pháp tốt — khi nào memo làm performance tệ hơn?
+
+🔁 **Spaced Repetition reminder:** Review this file again on 2026-03-22, then 2026-03-26, then 2026-04-02.
