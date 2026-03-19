@@ -1,9 +1,7 @@
 # The `this` Keyword / Từ Khóa `this`
 
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../00-table-of-contents.md)
-
-## JavaScript Fundamentals - Chapter 5 / Kiến Thức Cơ Bản JavaScript - Chương 5
+> **See also**: [Prototypes & Inheritance](./04-prototypes-inheritance.md) | [Closures](./03-closures-comprehensive.md)
 
 [← Previous: Prototypes & Inheritance](./04-prototypes-inheritance.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next: Event Loop & Async →](./06-event-loop-async.md)
 
@@ -11,46 +9,49 @@
 
 ## Real-World Scenario / Tình Huống Thực Tế
 
-Bạn có một object `user` với method `greet`. Bạn tách method ra và gọi sau — nhưng `this` bị mất:
+**Production bug tại Tiki (2023):** Team checkout có class `CartManager` với method `handleCheckout`. Khi user click nút "Thanh toán", họ truyền method như event handler — và `this.cartItems` suddenly trở thành `undefined`, gây crash toàn bộ checkout flow:
 
 ```javascript
-const user = {
-  name: 'Alice',
-  greet() { console.log(`Hello, ${this.name}`); }
-};
-
-user.greet();         // "Hello, Alice" ✅
-const fn = user.greet;
-fn();                 // "Hello, undefined" ❌ — this mất!
-setTimeout(user.greet, 100); // "Hello, undefined" ❌ — this mất!
+class CartManager {
+  constructor() {
+    this.cartItems = [];
+    // ❌ Bug: this mất khi method được detach khỏi object
+    document.getElementById('checkout-btn').addEventListener('click', this.handleCheckout);
+  }
+  handleCheckout() {
+    console.log(this.cartItems.length); // TypeError: Cannot read properties of undefined
+  }
+}
 ```
 
-Đây là bug phổ biến nhất với `this` — và là lý do React class components thường phải `.bind(this)` trong constructor. Hiểu `this` = hiểu tại sao React Hooks ra đời để giải quyết vấn đề này.
+**Fix:** Bind `this` hoặc dùng arrow function. Nhưng **tại sao** `this` bị mất? Và tại sao arrow function fix được? Đây là câu hỏi thực sự — câu trả lời nằm trong cách JS xác định `this` tại **call time**.
 
 ---
 
 ## What & Why / Cái Gì & Tại Sao
 
-**Analogy (Feynman):** `this` giống như **đại từ "tôi"** — nghĩa của nó phụ thuộc vào **ai đang nói**, không phải **câu được viết ở đâu**.
+**Analogy (Feynman):** `this` giống như **đại từ "tôi"** — nghĩa phụ thuộc vào **ai đang nói**, không phải **câu được viết ở đâu**.
 
 ```
-"Tôi muốn ăn phở" — nói bởi Alice → tôi = Alice
-"Tôi muốn ăn phở" — nói bởi Bob   → tôi = Bob
-(cùng một câu, nghĩa khác nhau)
+"Tôi muốn ăn phở" — Alice nói → tôi = Alice
+"Tôi muốn ăn phở" — Bob nói   → tôi = Bob
+(cùng câu chữ, nghĩa khác nhau vì ngữ cảnh khác)
 
-greet() { console.log(this.name) }  ← cùng function
-user.greet()     → this = user      ← "Alice nói"
-greet()          → this = global    ← "không ai nói"
+handleCheckout() { this.cartItems }  ← cùng function code
+manager.handleCheckout()  → this = manager   ✅
+btn.addEventListener('click', handleCheckout) → this = btn ❌
 ```
 
-**Quy tắc vàng để nhớ `this`:**
+**Quy tắc vàng — `this` = object ở bên trái dấu chấm khi gọi hàm:**
 
 | Cách gọi | `this` là |
 |----------|-----------|
 | `obj.method()` | `obj` |
-| `fn()` (standalone) | `global` / `undefined` (strict mode) |
-| `new Fn()` | object mới được tạo |
-| `fn.call(ctx)` / `fn.apply(ctx)` | `ctx` |
+| `fn()` standalone | `global` / `undefined` (strict mode) |
+| `new Fn()` | object mới tạo ra |
+| `fn.call(ctx, ...)` | `ctx` |
+| `fn.apply(ctx, [...])` | `ctx` |
+| `fn.bind(ctx)()` | `ctx` (cố định) |
 | Arrow function | `this` của scope bao ngoài (lexical) |
 
 ---
@@ -58,735 +59,477 @@ greet()          → this = global    ← "không ai nói"
 ## Concept Map / Bản Đồ Khái Niệm
 
 ```
-[Prototypes & Inheritance] → [this keyword] ★ ← bạn đang ở đây
-                                    ↓
-                   this được xác định lúc CALL TIME (không phải define time)
-                                    ↓
-          ┌──────────────────┬──────────────────┬──────────────┐
-    Method call         Standalone fn      Constructor      Arrow fn
-    obj.fn() → obj      fn() → global      new Fn() → {}   Lexical this
-                                    ↓
-          Explicit override: .call() .apply() .bind()
-                                    ↓
-          [Event Loop & Async] → stale this trong setTimeout
+[Prototypes] → [this keyword] ★ ← bạn đang ở đây
+                     |
+              this xác định tại CALL TIME
+              (không phải definition time)
+                     |
+     ┌───────────────┼────────────────┬──────────────┐
+  Implicit        Default         Explicit        New
+  obj.fn()        fn()           .call/.apply    new Fn()
+  this = obj    this = global    this = ctx      this = {}
+                (undefined        (bạn chỉ định)
+                 strict mode)
+                     |
+              EXCEPTION: Arrow fn
+              this = lexical scope (captured at definition)
+                     |
+              [Closures] → arrow fn dùng closure để giữ this
 ```
 
 ---
 
-## Overview / Tổng Quan
-
-**English:** `this` refers to the **execution context** — who "owns" the current function call. Unlike lexical scope (determined at write time), `this` is dynamic — determined at **call time**. Arrow functions are the exception: they capture `this` lexically from their surrounding scope.
-
-**Tiếng Việt:** `this` là **execution context** — ai đang gọi hàm hiện tại. Khác với lexical scope (xác định lúc viết code), `this` là **dynamic** — xác định lúc hàm được gọi. Arrow function là ngoại lệ: chúng kế thừa `this` từ scope bao ngoài theo lexical rule.
+## Core Concepts / Khái Niệm Cốt Lõi
 
 ---
 
-## Table of Contents / Mục Lục
+### 1. The 4 Binding Rules / 4 Quy Tắc Ràng Buộc
 
-1. [What is `this`? / `this` Là Gì?](#what-is-this--this-là-gì)
-2. [Global Context / Ngữ Cảnh Toàn Cục](#global-context--ngữ-cảnh-toàn-cục)
-3. [Function Context / Ngữ Cảnh Hàm](#function-context--ngữ-cảnh-hàm)
-4. [Method Context / Ngữ Cảnh Phương Thức](#method-context--ngữ-cảnh-phương-thức)
-5. [Constructor Context / Ngữ Cảnh Constructor](#constructor-context--ngữ-cảnh-constructor)
-6. [Arrow Functions / Hàm Mũi Tên](#arrow-functions--hàm-mũi-tên)
-7. [Explicit Binding / Ràng Buộc Tường Minh](#explicit-binding--ràng-buộc-tường-minh)
-8. [Common Pitfalls / Lỗi Thường Gặp](#common-pitfalls--lỗi-thường-gặp)
-9. [Interview Questions / Câu Hỏi Phỏng Vấn](#interview-questions--câu-hỏi-phỏng-vấn)
+> 🧠 **Memory Hook:** "**DINE** — Default, Implicit, New, Explicit — priority tăng dần từ trái sang phải."
 
----
+**Tại sao tồn tại? / Why does this exist?**
+JavaScript được thiết kế để code chạy trong nhiều **ngữ cảnh** khác nhau (browser, Node, Web Workers). Thay vì yêu cầu lập trình viên luôn tường minh truyền context, JS tự động gắn context vào `this` dựa trên cách hàm được gọi.
+→ Tại sao không pass context tường minh? → Vì object-oriented code như `user.greet()` tự nhiên hơn `greet(user)`.
+→ Tại sao điều đó gây bug? → Vì khi tách method khỏi object, "người nói" thay đổi nhưng code không biết.
 
-## What is `this`? / `this` Là Gì?
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
 
-### Definition / Định Nghĩa
+Tưởng tượng bạn có một tờ giấy nhắn: "Gọi cho **tôi** khi xong." Nghĩa của "tôi" phụ thuộc vào ai để lại tờ giấy. Nếu bạn photocopy tờ giấy và đưa cho người khác, "tôi" vẫn chỉ tác giả gốc — trừ khi arrow function được dùng (khi đó "tôi" = người cầm tờ giấy).
 
-**English:** `this` is a special keyword that refers to the context in which a function is executed. Its value is determined by how the function is called (runtime binding), not where it's defined (lexical binding).
-
-**Tiếng Việt:** `this` là một từ khóa đặc biệt tham chiếu đến ngữ cảnh mà hàm được thực thi. Giá trị của nó được xác định bởi cách hàm được gọi (ràng buộc runtime), không phải nơi nó được định nghĩa (ràng buộc lexical).
+#### Layer 2: How the 4 Rules Work / Cơ Chế 4 Quy Tắc
 
 ```javascript
-// this value depends on how function is called
-// Giá trị this phụ thuộc vào cách hàm được gọi
+// Rule 1: DEFAULT — fn() standalone, this = global (or undefined in strict mode)
+function showThis() { console.log(this); }
+showThis(); // global object / undefined
 
-function showThis() {
-  console.log(this);
-}
+// Rule 2: IMPLICIT — obj.fn(), this = obj (object to the LEFT of the dot)
+const user = { name: 'Alice', greet() { console.log(this.name); } };
+user.greet(); // 'Alice' — this = user
 
-// Different calls, different 'this' / Các lời gọi khác nhau, 'this' khác nhau
-showThis(); // Window (in browser) or global (in Node.js)
-const obj = { method: showThis };
-obj.method(); // obj
-new showThis(); // new empty object / đối tượng rỗng mới
+// Rule 3: EXPLICIT — .call/.apply/.bind, this = what YOU specify
+function greet() { console.log(this.name); }
+greet.call({ name: 'Bob' }); // 'Bob'
+
+// Rule 4: NEW — new Fn(), this = newly created object
+function Person(name) { this.name = name; }
+const p = new Person('Carol'); // this = {} → becomes { name: 'Carol' }
 ```
 
-### The Four Rules / Bốn Quy Tắc
+```
+Priority order (high → low):
+new Fn() > .call/.apply/.bind > obj.fn() > fn()
 
-**English:** There are four main rules that determine what `this` refers to:
-
-**Tiếng Việt:** Có bốn quy tắc chính xác định `this` tham chiếu đến gì:
-
-1. **Default Binding** / Ràng Buộc Mặc Định
-2. **Implicit Binding** / Ràng Buộc Ngầm Định
-3. **Explicit Binding** / Ràng Buộc Tường Minh
-4. **New Binding** / Ràng Buộc New
-
----
-
-## Global Context / Ngữ Cảnh Toàn Cục
-
-### In Browser / Trong Trình Duyệt
-
-**English:** In the global execution context, `this` refers to the global object (`window` in browsers).
-
-**Tiếng Việt:** Trong ngữ cảnh thực thi toàn cục, `this` tham chiếu đến đối tượng toàn cục (`window` trong trình duyệt).
-
-```javascript
-// Global context / Ngữ cảnh toàn cục
-console.log(this); // Window object (in browser)
-                   // Đối tượng Window (trong trình duyệt)
-
-this.globalVar = 'I am global';
-console.log(window.globalVar); // "I am global"
-
-var x = 10;
-console.log(this.x); // 10 (var creates property on global object)
-                     // 10 (var tạo thuộc tính trên đối tượng toàn cục)
-
-let y = 20;
-console.log(this.y); // undefined (let doesn't create property on global object)
-                     // undefined (let không tạo thuộc tính trên đối tượng toàn cục)
+When two rules conflict, HIGHER priority wins.
 ```
 
-### In Strict Mode / Trong Chế Độ Strict
+#### Layer 3: The Context Loss Problem / Vấn Đề Mất Context
 
 ```javascript
-'use strict';
-
-function showThis() {
-  console.log(this);
-}
-
-showThis(); // undefined (not Window in strict mode)
-            // undefined (không phải Window trong chế độ strict)
-
-// Without strict mode / Không có chế độ strict
-function showThisNonStrict() {
-  console.log(this);
-}
-
-showThisNonStrict(); // Window object / Đối tượng Window
-```
-
----
-
-## Function Context / Ngữ Cảnh Hàm
-
-### Default Binding / Ràng Buộc Mặc Định
-
-**English:** When a function is called without any context, `this` defaults to the global object (or `undefined` in strict mode).
-
-**Tiếng Việt:** Khi một hàm được gọi mà không có ngữ cảnh nào, `this` mặc định là đối tượng toàn cục (hoặc `undefined` trong chế độ strict).
-
-```javascript
-function greet() {
-  console.log(this.name);
-}
-
-var name = 'Global Name';
-greet(); // "Global Name" (this = window)
-         // "Global Name" (this = window)
-
-// In strict mode / Trong chế độ strict
-'use strict';
-function greetStrict() {
-  console.log(this); // undefined
-  // console.log(this.name); // ❌ TypeError: Cannot read property 'name' of undefined
-}
-
-greetStrict();
-```
-
-### Function as Callback / Hàm Như Callback
-
-```javascript
-const person = {
-  name: 'John',
-  greet: function() {
-    console.log(`Hello, I'm ${this.name}`);
+const timer = {
+  seconds: 0,
+  start() {
+    // ❌ Callback loses context — this = global when called by setInterval
+    setInterval(function() {
+      this.seconds++; // this = window, NOT timer!
+    }, 1000);
   }
 };
 
-person.greet(); // "Hello, I'm John" (this = person)
+// ✅ Fix 1: Arrow function (lexical this)
+start() {
+  setInterval(() => {
+    this.seconds++; // this = timer (captured from start's scope)
+  }, 1000);
+}
 
-// Losing context when passed as callback / Mất ngữ cảnh khi truyền như callback
-setTimeout(person.greet, 1000); // "Hello, I'm undefined" (this = window/global)
-
-// Solution 1: Arrow function / Giải pháp 1: Hàm mũi tên
-setTimeout(() => person.greet(), 1000); // "Hello, I'm John"
-
-// Solution 2: bind() / Giải pháp 2: bind()
-setTimeout(person.greet.bind(person), 1000); // "Hello, I'm John"
+// ✅ Fix 2: bind
+start() {
+  setInterval(function() {
+    this.seconds++;
+  }.bind(this), 1000);
+}
 ```
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `setTimeout(obj.method, 100)` — dùng trong React class | Tách method khỏi object, `this` mất | `setTimeout(() => obj.method(), 100)` hoặc `bind(this)` trong constructor |
+| Nghĩ `this` xác định lúc viết code | `this` xác định lúc **gọi hàm** (call time), không phải definition time | Trace lại call site — ai đang gọi function này? |
+| Dùng arrow function cho object method | Arrow fn không có `this` riêng → `this` = outer scope (thường là `window`) | Dùng regular function cho methods, arrow fn cho callbacks bên trong |
+| `bind()` gọi hai lần: `fn.bind(a).bind(b)` | `bind()` chỉ lấy binding đầu tiên, `b` bị ignore | `bind()` tạo ra function "sealed" — không thể re-bind |
+
+**🎯 Interview Pattern:**
+- Khi thấy: câu hỏi về "tại sao `this` là undefined?" hoặc "predict the output với method callback"
+- → Nhớ đến: quy tắc "this = object bên trái dấu chấm tại call site"
+- → Mở đầu: "Trong JavaScript, `this` không phải là lexical scope — nó được xác định tại **call time**. Khi method được truyền như callback, nó mất đi object context..."
+
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: [Scope & Hoisting](./02-scope-hoisting-comprehensive.md) — hiểu lexical scope trước
+- ➡️ Để hiểu: [Closures](./03-closures-comprehensive.md) — arrow function dùng closure để capture `this`
 
 ---
 
-## Method Context / Ngữ Cảnh Phương Thức
+### 2. Arrow Functions & Lexical `this` / Arrow Function & `this` Lexical
 
-### Implicit Binding / Ràng Buộc Ngầm Định
+> 🧠 **Memory Hook:** "Arrow function KHÔNG có `this` riêng — nó **mượn** `this` từ nơi nó được VIẾT (definition time), không phải nơi nó được GỌI."
 
-**English:** When a function is called as a method of an object, `this` refers to that object.
+**Tại sao tồn tại? / Why does this exist?**
+Trước ES6, pattern phổ biến là `var self = this` — lưu `this` vào biến để dùng trong nested function. Arrow function ra đời để xóa bỏ pattern xấu này.
+→ Tại sao `var self = this` là xấu? → Verbose, dễ nhầm tên biến, không rõ intent.
+→ Tại sao arrow function sạch hơn? → Vì nó biểu đạt rõ ràng: "function này không có this riêng, nó thuộc về context bao ngoài."
 
-**Tiếng Việt:** Khi một hàm được gọi như một phương thức của đối tượng, `this` tham chiếu đến đối tượng đó.
+#### Layer 1: Simple Analogy
+
+Arrow function giống người phụ tá — họ không có chức danh riêng, họ luôn đại diện cho **sếp của họ** (scope bao ngoài). Dù người phụ tá đi đâu, "sếp" vẫn là người tuyển dụng họ.
+
+#### Layer 2: Arrow vs Regular — The Mechanics
 
 ```javascript
-const user = {
-  name: 'Alice',
-  age: 25,
-  greet() {
-    console.log(`Hi, I'm ${this.name} and I'm ${this.age} years old`);
+const obj = {
+  name: 'Team',
+
+  // ❌ Arrow function as method — NO own this
+  arrowMethod: () => {
+    console.log(this.name); // undefined — this = window (arrow captures global this)
   },
-  getInfo() {
-    return {
-      name: this.name,
-      age: this.age
+
+  // ✅ Regular function as method — HAS own this
+  regularMethod() {
+    console.log(this.name); // 'Team' — this = obj
+
+    // ❌ Regular function as callback — loses this
+    [1, 2, 3].forEach(function(n) {
+      console.log(this.name); // undefined
+    });
+
+    // ✅ Arrow function as callback — captures this from regularMethod
+    [1, 2, 3].forEach(n => {
+      console.log(this.name); // 'Team' — this captured from regularMethod's scope
+    });
+  }
+};
+```
+
+```
+Mental model for arrow functions:
+
+  const outer = function() {   ← this = whatever calls outer()
+    const inner = () => {      ← this = captured from outer (same reference)
+      // inner.this === outer.this, always
     };
-  }
-};
-
-user.greet(); // "Hi, I'm Alice and I'm 25 years old"
-console.log(user.getInfo()); // { name: 'Alice', age: 25 }
-```
-
-### Nested Objects / Đối Tượng Lồng Nhau
-
-```javascript
-const company = {
-  name: 'Tech Corp',
-  employee: {
-    name: 'Bob',
-    greet() {
-      console.log(`I work at ${this.name}`);
-    }
-  }
-};
-
-company.employee.greet(); // "I work at Bob" (this = employee object)
-                          // "I work at Bob" (this = đối tượng employee)
-
-// Only the immediate parent matters / Chỉ cha mẹ trực tiếp quan trọng
-```
-
-### Method Assignment / Gán Phương Thức
-
-```javascript
-const person = {
-  name: 'Charlie',
-  sayName() {
-    console.log(this.name);
-  }
-};
-
-person.sayName(); // "Charlie"
-
-// Assigning to variable loses context / Gán cho biến mất ngữ cảnh
-const sayName = person.sayName;
-sayName(); // undefined (this = window/global)
-
-// Assigning to another object / Gán cho đối tượng khác
-const anotherPerson = {
-  name: 'David',
-  sayName: person.sayName
-};
-
-anotherPerson.sayName(); // "David" (this = anotherPerson)
-```
-
----
-
-## Constructor Context / Ngữ Cảnh Constructor
-
-### Using `new` Keyword / Sử Dụng Từ Khóa `new`
-
-**English:** When a function is called with `new`, `this` refers to the newly created object.
-
-**Tiếng Việt:** Khi một hàm được gọi với `new`, `this` tham chiếu đến đối tượng mới được tạo.
-
-```javascript
-function Person(name, age) {
-  this.name = name;
-  this.age = age;
-  this.greet = function() {
-    console.log(`Hello, I'm ${this.name}`);
   };
-}
-
-const john = new Person('John', 30);
-john.greet(); // "Hello, I'm John" (this = john)
-
-console.log(john.name); // "John"
-console.log(john.age); // 30
 ```
 
-### ES6 Classes / Lớp ES6
+#### Layer 3: Arrow Functions Cannot Be Constructors
 
 ```javascript
-class Animal {
-  constructor(name, species) {
-    this.name = name;
-    this.species = species;
-  }
-  
-  speak() {
-    console.log(`${this.name} is a ${this.species}`);
-  }
-  
-  getInfo() {
-    return {
-      name: this.name,
-      species: this.species
-    };
-  }
-}
+const Foo = () => {};
+new Foo(); // ❌ TypeError: Foo is not a constructor
 
-const cat = new Animal('Whiskers', 'Cat');
-cat.speak(); // "Whiskers is a Cat" (this = cat)
-console.log(cat.getInfo()); // { name: 'Whiskers', species: 'Cat' }
+// Arrow functions also cannot use .call/.apply/.bind to change this
+const fn = () => console.log(this);
+fn.call({ name: 'ignored' }); // Still logs outer this — bind is silently ignored
 ```
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Dùng arrow fn cho object methods | Arrow fn không có this riêng → `this` = window/global | Dùng regular function syntax cho methods |
+| Nghĩ `.bind()` hoạt động trên arrow fn | Arrow fn's `this` sealed tại definition — `.bind()` bị ignore | Arrow fn không thể re-bind, đây là feature không phải bug |
+| Class field arrow fn: `method = () => {}` | Tốt cho callback context, nhưng tạo 1 function per instance thay vì shared prototype | Cân nhắc trade-off memory vs convenience |
+
+**🎯 Interview Pattern:**
+- Khi thấy: "Tại sao arrow function trong setTimeout không bị mất `this`?"
+- → Nhớ đến: arrow function = lexical `this`, captured tại definition time
+- → Mở đầu: "Arrow function không có `this` binding riêng. Nó captures `this` từ enclosing scope tại thời điểm định nghĩa..."
+
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: [Closures](./03-closures-comprehensive.md) — arrow fn dùng closure mechanism để capture `this`
+- ➡️ Để hiểu: React hooks — tại sao hooks thay thế class components với `this` binding phức tạp
 
 ---
 
-## Arrow Functions / Hàm Mũi Tên
+### 3. Explicit Binding: call / apply / bind
 
-### Lexical `this` / `this` Từ Vựng
+> 🧠 **Memory Hook:** "**Call** ngay — **Apply** với **A**rray — **Bind** sau."
 
-**English:** Arrow functions don't have their own `this`. They inherit `this` from the enclosing lexical scope.
+**Tại sao tồn tại? / Why does this exist?**
+Đôi khi bạn cần mượn method của object A để dùng cho object B. Thay vì copy method, JavaScript cho phép bạn tạm thời (call/apply) hoặc vĩnh viễn (bind) thay đổi `this`.
+→ Tại sao cần điều này? → Function reuse — một function làm việc với nhiều objects khác nhau mà không cần inheritance.
 
-**Tiếng Việt:** Hàm mũi tên không có `this` riêng. Chúng kế thừa `this` từ phạm vi từ vựng bao quanh.
+#### Layer 1: Simple Analogy
 
-```javascript
-const person = {
-  name: 'Emma',
-  regularFunction: function() {
-    console.log('Regular:', this.name);
-  },
-  arrowFunction: () => {
-    console.log('Arrow:', this.name);
-  }
-};
+`call` và `apply` giống việc "mượn microphone" — bạn dùng microphone của người khác để nói chuyện ngay lúc đó, rồi trả lại. `bind` giống "thuê microphone" — bạn giữ nó và có thể dùng nhiều lần.
 
-person.regularFunction(); // "Regular: Emma" (this = person)
-person.arrowFunction(); // "Arrow: undefined" (this = global/window)
-```
-
-### Practical Use Cases / Trường Hợp Sử Dụng Thực Tế
+#### Layer 2: call vs apply vs bind
 
 ```javascript
-// Problem with regular functions / Vấn đề với hàm thông thường
-const counter = {
-  count: 0,
-  start: function() {
-    setInterval(function() {
-      this.count++; // ❌ this = window, not counter
-      console.log(this.count); // NaN
-    }, 1000);
-  }
-};
-
-// Solution 1: Arrow function / Giải pháp 1: Hàm mũi tên
-const counter1 = {
-  count: 0,
-  start: function() {
-    setInterval(() => {
-      this.count++; // ✅ this = counter1
-      console.log(this.count); // 1, 2, 3...
-    }, 1000);
-  }
-};
-
-// Solution 2: Store this / Giải pháp 2: Lưu this
-const counter2 = {
-  count: 0,
-  start: function() {
-    const self = this;
-    setInterval(function() {
-      self.count++; // ✅ self = counter2
-      console.log(self.count); // 1, 2, 3...
-    }, 1000);
-  }
-};
-
-// Solution 3: bind() / Giải pháp 3: bind()
-const counter3 = {
-  count: 0,
-  start: function() {
-    setInterval(function() {
-      this.count++; // ✅ this = counter3
-      console.log(this.count); // 1, 2, 3...
-    }.bind(this), 1000);
-  }
-};
-```
-
-### Arrow Functions in Classes / Hàm Mũi Tên Trong Lớp
-
-```javascript
-class Button {
-  constructor(label) {
-    this.label = label;
-    this.clickCount = 0;
-  }
-  
-  // Regular method / Phương thức thông thường
-  click() {
-    this.clickCount++;
-    console.log(`${this.label} clicked ${this.clickCount} times`);
-  }
-  
-  // Arrow function as class field / Hàm mũi tên như trường lớp
-  clickArrow = () => {
-    this.clickCount++;
-    console.log(`${this.label} clicked ${this.clickCount} times`);
-  }
-}
-
-const button = new Button('Submit');
-
-// Regular method loses context / Phương thức thông thường mất ngữ cảnh
-const clickHandler = button.click;
-// clickHandler(); // ❌ TypeError
-
-// Arrow function preserves context / Hàm mũi tên giữ ngữ cảnh
-const clickArrowHandler = button.clickArrow;
-clickArrowHandler(); // ✅ "Submit clicked 1 times"
-```
-
----
-
-## Explicit Binding / Ràng Buộc Tường Minh
-
-### call() Method / Phương Thức call()
-
-**English:** `call()` invokes a function with a specified `this` value and arguments provided individually.
-
-**Tiếng Việt:** `call()` gọi một hàm với giá trị `this` được chỉ định và các đối số được cung cấp riêng lẻ.
-
-```javascript
-function greet(greeting, punctuation) {
-  console.log(`${greeting}, I'm ${this.name}${punctuation}`);
-}
-
-const person1 = { name: 'Alice' };
-const person2 = { name: 'Bob' };
-
-greet.call(person1, 'Hello', '!'); // "Hello, I'm Alice!"
-greet.call(person2, 'Hi', '.'); // "Hi, I'm Bob."
-
-// Borrowing methods / Mượn phương thức
-const numbers = [1, 2, 3, 4, 5];
-const max = Math.max.call(null, ...numbers);
-console.log(max); // 5
-```
-
-### apply() Method / Phương Thức apply()
-
-**English:** `apply()` is similar to `call()`, but takes arguments as an array.
-
-**Tiếng Việt:** `apply()` tương tự như `call()`, nhưng nhận đối số dưới dạng mảng.
-
-```javascript
-function introduce(greeting, hobby) {
-  console.log(`${greeting}, I'm ${this.name} and I like ${hobby}`);
-}
-
-const person = { name: 'Charlie' };
-
-introduce.apply(person, ['Hey', 'coding']); // "Hey, I'm Charlie and I like coding"
-
-// Practical example / Ví dụ thực tế
-const numbers = [5, 6, 2, 3, 7];
-const max = Math.max.apply(null, numbers);
-console.log(max); // 7
-
-// Modern alternative with spread / Thay thế hiện đại với spread
-const maxSpread = Math.max(...numbers);
-console.log(maxSpread); // 7
-```
-
-### bind() Method / Phương Thức bind()
-
-**English:** `bind()` creates a new function with a fixed `this` value. It doesn't invoke the function immediately.
-
-**Tiếng Việt:** `bind()` tạo một hàm mới với giá trị `this` cố định. Nó không gọi hàm ngay lập tức.
-
-```javascript
-const person = {
-  name: 'Diana',
-  greet: function(greeting) {
-    console.log(`${greeting}, I'm ${this.name}`);
-  }
-};
-
-// Create bound function / Tạo hàm đã ràng buộc
-const greetDiana = person.greet.bind(person);
-greetDiana('Hello'); // "Hello, I'm Diana"
-
-// Partial application / Áp dụng một phần
-const sayHello = person.greet.bind(person, 'Hello');
-sayHello(); // "Hello, I'm Diana"
-
-// Event handlers / Xử lý sự kiện
-class Counter {
-  constructor() {
-    this.count = 0;
-    this.increment = this.increment.bind(this);
-  }
-  
-  increment() {
-    this.count++;
-    console.log(this.count);
-  }
-}
-
-const counter = new Counter();
-const btn = document.querySelector('button');
-// btn.addEventListener('click', counter.increment); // ✅ Works / Hoạt động
-```
-
----
-
-## Common Pitfalls / Lỗi Thường Gặp
-
-### Pitfall 1: Losing Context / Mất Ngữ Cảnh
-
-```javascript
-const user = {
-  name: 'Frank',
-  greet() {
-    console.log(`Hello, ${this.name}`);
-  }
-};
-
-user.greet(); // ✅ "Hello, Frank"
-
-const greet = user.greet;
-greet(); // ❌ "Hello, undefined" (lost context / mất ngữ cảnh)
-
-// Fix / Sửa
-const boundGreet = user.greet.bind(user);
-boundGreet(); // ✅ "Hello, Frank"
-```
-
-### Pitfall 2: Nested Functions / Hàm Lồng Nhau
-
-```javascript
-const obj = {
-  name: 'Grace',
-  outer() {
-    console.log(this.name); // "Grace"
-    
-    function inner() {
-      console.log(this.name); // undefined (this = window/global)
-    }
-    inner();
-  }
-};
-
-obj.outer();
-
-// Fix with arrow function / Sửa với hàm mũi tên
-const obj2 = {
-  name: 'Grace',
-  outer() {
-    console.log(this.name); // "Grace"
-    
-    const inner = () => {
-      console.log(this.name); // "Grace" (inherits this / kế thừa this)
-    };
-    inner();
-  }
-};
-
-obj2.outer();
-```
-
-### Pitfall 3: Array Methods / Phương Thức Mảng
-
-```javascript
-const person = {
-  name: 'Henry',
-  hobbies: ['reading', 'coding', 'gaming'],
-  
-  showHobbies() {
-    this.hobbies.forEach(function(hobby) {
-      console.log(`${this.name} likes ${hobby}`); // ❌ this = undefined
-    });
-  }
-};
-
-person.showHobbies(); // "undefined likes reading", etc.
-
-// Fix 1: Arrow function / Sửa 1: Hàm mũi tên
-const person1 = {
-  name: 'Henry',
-  hobbies: ['reading', 'coding', 'gaming'],
-  
-  showHobbies() {
-    this.hobbies.forEach(hobby => {
-      console.log(`${this.name} likes ${hobby}`); // ✅
-    });
-  }
-};
-
-// Fix 2: thisArg parameter / Sửa 2: Tham số thisArg
-const person2 = {
-  name: 'Henry',
-  hobbies: ['reading', 'coding', 'gaming'],
-  
-  showHobbies() {
-    this.hobbies.forEach(function(hobby) {
-      console.log(`${this.name} likes ${hobby}`); // ✅
-    }, this); // Pass this as second argument / Truyền this như đối số thứ hai
-  }
-};
-```
-
----
-
-## Câu Hỏi Phỏng Vấn / Interview Q&A
-
-### 🟡 [Mid] Question 1: What determines the value of `this`?
-
-**English Answer:**
-The value of `this` is determined by how a function is called, not where it's defined. There are four binding rules:
-1. Default binding (global object or undefined in strict mode)
-2. Implicit binding (object calling the method)
-3. Explicit binding (call, apply, bind)
-4. New binding (constructor function with new keyword)
-
-**Tiếng Việt:**
-Giá trị của `this` được xác định bởi cách hàm được gọi, không phải nơi nó được định nghĩa. Có bốn quy tắc ràng buộc:
-1. Ràng buộc mặc định (đối tượng toàn cục hoặc undefined trong chế độ strict)
-2. Ràng buộc ngầm định (đối tượng gọi phương thức)
-3. Ràng buộc tường minh (call, apply, bind)
-4. Ràng buộc new (hàm constructor với từ khóa new)
-
-### 🟡 [Mid] Question 2: How do arrow functions handle `this`?
-
-**English Answer:**
-Arrow functions don't have their own `this` binding. They lexically capture the `this` value from the enclosing scope where they're defined. This makes them useful for callbacks and nested functions where you want to preserve the outer `this` context.
-
-**Tiếng Việt:**
-Hàm mũi tên không có ràng buộc `this` riêng. Chúng bắt giữ giá trị `this` từ phạm vi bao quanh nơi chúng được định nghĩa. Điều này làm cho chúng hữu ích cho callback và hàm lồng nhau khi bạn muốn giữ ngữ cảnh `this` bên ngoài.
-
-```javascript
-const obj = {
-  value: 42,
-  regular: function() {
-    setTimeout(function() {
-      console.log(this.value); // undefined
-    }, 100);
-  },
-  arrow: function() {
-    setTimeout(() => {
-      console.log(this.value); // 42
-    }, 100);
-  }
-};
-```
-
-### 🟢 [Junior] Question 3: Difference between call, apply, and bind?
-
-**English Answer:**
-- `call()`: Invokes function immediately with specified `this` and individual arguments
-- `apply()`: Invokes function immediately with specified `this` and array of arguments
-- `bind()`: Returns a new function with specified `this`, doesn't invoke immediately
-
-**Tiếng Việt:**
-- `call()`: Gọi hàm ngay lập tức với `this` được chỉ định và các đối số riêng lẻ
-- `apply()`: Gọi hàm ngay lập tức với `this` được chỉ định và mảng đối số
-- `bind()`: Trả về hàm mới với `this` được chỉ định, không gọi ngay lập tức
-
-```javascript
-function greet(greeting, punctuation) {
+function introduce(greeting, punctuation) {
   return `${greeting}, I'm ${this.name}${punctuation}`;
 }
 
-const person = { name: 'Ivy' };
+const alice = { name: 'Alice' };
+const bob   = { name: 'Bob' };
 
-// call - immediate invocation / gọi ngay lập tức
-console.log(greet.call(person, 'Hello', '!')); // "Hello, I'm Ivy!"
+// call — invoke immediately, args as comma-separated
+introduce.call(alice, 'Hello', '!');  // "Hello, I'm Alice!"
+introduce.call(bob, 'Hi', '.');       // "Hi, I'm Bob."
 
-// apply - immediate invocation with array / gọi ngay lập tức với mảng
-console.log(greet.apply(person, ['Hi', '.'])); // "Hi, I'm Ivy."
+// apply — invoke immediately, args as array
+// Useful when args already in an array
+introduce.apply(alice, ['Hey', '?']); // "Hey, I'm Alice?"
 
-// bind - returns new function / trả về hàm mới
-const boundGreet = greet.bind(person, 'Hey');
-console.log(boundGreet('?')); // "Hey, I'm Ivy?"
+// bind — returns NEW function, doesn't invoke
+const aliceIntro = introduce.bind(alice, 'Xin chào');
+aliceIntro('!');  // "Xin chào, I'm Alice!" — can call later
+aliceIntro('...'); // "Xin chào, I'm Alice..." — with different ending
 ```
 
-### 🟡 [Mid] Question 4: Predict the output
+```
+Real use case: Borrowing Array methods for array-like objects
+
+function logArgs() {
+  // arguments object is array-like but not an Array
+  const args = Array.prototype.slice.call(arguments);
+  // Modern: Array.from(arguments) or [...arguments]
+  console.log(args);
+}
+```
+
+#### Layer 3: Partial Application with bind
+
+```javascript
+// bind for partial application (currying lite)
+function multiply(a, b) { return a * b; }
+
+const double = multiply.bind(null, 2); // pre-fill first argument
+const triple = multiply.bind(null, 3);
+
+double(5);  // 10
+triple(5);  // 15
+
+// React class component pattern
+class Button extends React.Component {
+  constructor(props) {
+    super(props);
+    this.handleClick = this.handleClick.bind(this); // bind once in constructor
+  }
+  handleClick() { /* this = Button instance */ }
+}
+```
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `fn.bind(ctx)` mà quên gọi kết quả | `bind` trả về function mới, không tự gọi | `const bound = fn.bind(ctx); bound();` |
+| Dùng `apply` khi có spread: `fn.apply(ctx, arr)` | Modern JS có spread: `fn.call(ctx, ...arr)` — rõ hơn | `fn.call(ctx, ...arr)` |
+| Re-binding: `fn.bind(a).bind(b)` | `b` bị ignore — bound function không thể re-bind | Chỉ bind một lần; để thay đổi context thì tạo function mới |
+
+**🎯 Interview Pattern:**
+- Khi thấy: "Sự khác biệt call, apply, bind?"
+- → Mở đầu: "Cả ba đều override `this`, khác ở cách invoke: call ngay với args riêng lẻ, apply ngay với array, bind trả về function mới để gọi sau..."
+
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: The 4 binding rules (section 1 trên)
+- ➡️ Để hiểu: Function currying & partial application patterns
+
+---
+
+## Interview Q&A / Câu Hỏi Phỏng Vấn
+
+### Q1: `this` trong JavaScript được xác định như thế nào? / How is `this` determined? 🟢 Junior
+
+**A:** `this` is determined at **call time** by the 4 binding rules (in priority order): new > explicit (.call/.apply/.bind) > implicit (obj.method()) > default (standalone fn → global/undefined).
+
+Giá trị `this` được xác định tại **call time** theo 4 quy tắc ưu tiên giảm dần: new binding → explicit binding (.call/.apply/.bind) → implicit binding (obj.method()) → default binding (fn() standalone → global/undefined).
+
+**💡 Interview Signal:**
+- ✅ Strong: Nêu được 4 rules theo thứ tự ưu tiên, giải thích call time vs definition time, đưa được ví dụ context loss
+- ❌ Weak: "this là object hiện tại" — quá vague, không giải thích được tại sao `fn()` lại là global
+
+---
+
+### Q2: Tại sao arrow function không có `this` riêng? / Why do arrow functions lack their own `this`? 🟡 Mid
+
+**A:** Arrow functions were designed to solve the "lost context" problem in callbacks. They lexically capture `this` from the enclosing scope at **definition time** — they have no `[[ThisValue]]` internal slot of their own. Because of this, they cannot be used as constructors (`new`), and `.bind()` cannot change their `this`.
+
+Arrow function được thiết kế để giải quyết vấn đề mất context trong callbacks. Chúng capture `this` từ lexical scope tại **definition time** — không có `[[ThisValue]]` internal slot riêng. Vì vậy, không thể dùng `new`, và `.bind()` không thể thay đổi `this` của chúng.
 
 ```javascript
 const obj = {
-  name: 'Object',
-  getName: function() {
-    return this.name;
+  val: 10,
+  method() {
+    const fn = () => this.val; // captures this from method's scope
+    return fn(); // 10 — regardless of how fn is called
   }
 };
-
-console.log(obj.getName()); // ?
-const getName = obj.getName;
-console.log(getName()); // ?
-console.log(obj.getName.call({ name: 'Call' })); // ?
 ```
 
-**Answer / Đáp Án:**
+**💡 Interview Signal:**
+- ✅ Strong: Đề cập `[[ThisValue]]` slot, giải thích tại sao arrow fn không thể là constructor, biết `.bind()` bị ignore
+- ❌ Weak: "Arrow function thì this là outer scope" — đúng nhưng không giải thích được cơ chế
+
+---
+
+### Q3: Predict the output — class event handler bug 🟡 Mid
+
 ```javascript
-console.log(obj.getName()); // "Object" (implicit binding / ràng buộc ngầm định)
-const getName = obj.getName;
-console.log(getName()); // undefined (default binding / ràng buộc mặc định)
-console.log(obj.getName.call({ name: 'Call' })); // "Call" (explicit binding / ràng buộc tường minh)
+class Timer {
+  constructor() {
+    this.count = 0;
+    document.getElementById('btn').addEventListener('click', this.tick);
+  }
+  tick() {
+    this.count++; // What is 'this' here?
+    console.log(this.count);
+  }
+}
+const t = new Timer();
+// User clicks button — what happens?
 ```
 
----
+**A:** `this.count` throws TypeError. When `tick` is passed as event handler, `this` = the DOM button element (event handlers set `this` to the element). `this.count` on a DOM element = undefined; `undefined++` = NaN.
 
-## Key Takeaways / Điểm Chính
+**Fix options:**
+```javascript
+// Fix 1: Arrow function in constructor
+constructor() {
+  this.count = 0;
+  document.getElementById('btn').addEventListener('click', () => this.tick());
+}
 
-**English:**
-1. `this` value depends on how function is called, not where it's defined
-2. Four binding rules: default, implicit, explicit, new
-3. Arrow functions inherit `this` from enclosing scope
-4. Use `bind()` to create functions with fixed `this`
-5. Common pitfalls: losing context in callbacks, nested functions, array methods
-6. Strict mode changes default binding to `undefined`
+// Fix 2: bind in constructor
+constructor() {
+  this.tick = this.tick.bind(this); // rebind to instance
+  document.getElementById('btn').addEventListener('click', this.tick);
+}
 
-**Tiếng Việt:**
-1. Giá trị `this` phụ thuộc vào cách hàm được gọi, không phải nơi nó được định nghĩa
-2. Bốn quy tắc ràng buộc: mặc định, ngầm định, tường minh, new
-3. Hàm mũi tên kế thừa `this` từ phạm vi bao quanh
-4. Sử dụng `bind()` để tạo hàm với `this` cố định
-5. Lỗi thường gặp: mất ngữ cảnh trong callback, hàm lồng nhau, phương thức mảng
-6. Chế độ strict thay đổi ràng buộc mặc định thành `undefined`
+// Fix 3: Class field arrow function (modern)
+tick = () => { this.count++; }; // arrow fn — no own this, captures instance
+```
 
----
-
-[← Previous: Prototypes & Inheritance](./04-prototypes-inheritance.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next: Event Loop & Async →](./06-event-loop-async.md)
-
----
-
-## Self-Check / Tự Kiểm Tra
-
-- [ ] Tôi có thể điền `this` cho mỗi trường hợp: `obj.fn()`, `fn()`, `new Fn()`, `fn.call(ctx)`, arrow function
-- [ ] Tôi có thể giải thích tại sao React class components cần `.bind(this)` trong constructor
-- [ ] Tôi biết tại sao arrow function KHÔNG có `this` riêng (và khi nào điều này là lợi thế)
-- [ ] Tôi có thể phân biệt `.call()`, `.apply()`, và `.bind()` — cả 3 khác nhau ở chỗ nào
-- [ ] Tôi biết `this` trong strict mode khác gì non-strict mode khi gọi standalone
-
-**💬 Giải thích bằng lời:** "Tại sao `const fn = obj.greet; fn()` bị mất `this`? Giải thích bằng analogy 'ai đang nói'." *(30 giây)*
+**💡 Interview Signal:**
+- ✅ Strong: Biết event handlers set `this` = DOM element, giải thích đúng TypeError, biết cả 3 fix options và trade-offs
+- ❌ Weak: Chỉ nói "this bị mất" không giải thích `this` = DOM element cụ thể
 
 ---
 
-## Connections / Liên Kết Kiến Thức
+### Q4: Implement `Function.prototype.bind` from scratch 🔴 Senior
 
-- ⬅️ **Cần biết trước:** [Prototypes & Inheritance](./04-prototypes-inheritance.md) — method trên prototype dùng `this`
-- ➡️ **Thường xảy ra với:** [Event Loop & Async](./06-event-loop-async.md) — `this` trong callback/setTimeout hay bị mất
-- ➡️ **Giải quyết trong React:** [React Hooks](../03-react/03-hooks-deep-dive.md) — hooks được tạo ra một phần để tránh `this` issues
+**A:**
+
+```javascript
+Function.prototype.myBind = function(context, ...partialArgs) {
+  const originalFn = this; // 'this' here = the function being bound
+
+  return function bound(...callArgs) {
+    // Handle new keyword: if called with new, ignore the bound context
+    if (new.target) {
+      return new originalFn(...partialArgs, ...callArgs);
+    }
+    return originalFn.call(context, ...partialArgs, ...callArgs);
+  };
+};
+
+// Test
+function greet(greeting, name) {
+  return `${greeting}, ${name}! I'm ${this.title}`;
+}
+const formal = greet.myBind({ title: 'Dr.' }, 'Hello');
+console.log(formal('Alice')); // "Hello, Alice! I'm Dr."
+
+// Verify new keyword behavior
+function Person(name) { this.name = name; }
+const BoundPerson = Person.myBind({ ignored: true });
+const p = new BoundPerson('Bob'); // this = new object, NOT { ignored: true }
+console.log(p.name); // "Bob" ✅
+```
+
+**Key insight:** Native `bind` preserves the ability to use `new` on the bound function — the bound context is ignored when `new` is used. The `new.target` check handles this edge case.
+
+Insight quan trọng: `bind` native vẫn cho phép dùng `new` trên bound function — context bị ignore khi dùng `new`. Check `new.target` để xử lý edge case này.
+
+**💡 Interview Signal:**
+- ✅ Strong: Implement đúng `new.target` check, xử lý partial application, hiểu `this` trong `myBind` = function được bind
+- ❌ Weak: Implement cơ bản `return originalFn.call(context)` — bỏ qua `new` behavior và partial application
+
+---
+
+### Q5: `this` trong React class vs functional components — tại sao Hooks ra đời? 🔴 Senior (Evaluate/Design)
+
+**A:** React class components expose `this` problems at scale:
+
+1. **Constructor binding boilerplate**: Every method used as event handler must be bound in constructor — or forgotten (silent bug)
+2. **Arrow field functions**: `onClick = () => {}` creates a **new function per instance**, breaking PureComponent's `shouldComponentUpdate` (referential inequality)
+3. **HOC wrapping obscures `this`**: Higher-Order Components wrap components — `this` becomes the HOC wrapper, not the original component
+
+**React Hooks solve all three:**
+```javascript
+// Class: 3 problems
+class Comp extends React.Component {
+  constructor(props) {
+    super(props);
+    this.handleClick = this.handleClick.bind(this); // ① boilerplate
+  }
+  handleClick = () => {}; // ② new fn per instance
+
+  render() { return <button onClick={this.handleClick}>...</button>; }
+}
+
+// Hooks: no this at all
+function Comp() {
+  const handleClick = useCallback(() => {}, []); // ✅ stable reference
+  return <button onClick={handleClick}>...</button>;
+}
+```
+
+**Trade-offs:** Hooks require understanding closure (stale closure bugs), class components are more explicit about object lifecycle. For new code: hooks. For large existing class codebases: migrate incrementally.
+
+**💡 Interview Signal:**
+- ✅ Strong: Giải thích 3 pain points cụ thể, liên kết đến React Hooks, biết trade-off stale closure với hooks
+- ❌ Weak: "Hooks dễ hơn class" — không đủ depth cho Senior level
+
+---
+
+## ⚡ Cold Call Simulation / Mô Phỏng Phỏng Vấn
+
+> 🎯 Interviewer hỏi cold: **"Tại sao `this` lại là `undefined` trong function này?"**
+
+```javascript
+class Fetcher {
+  constructor() {
+    this.url = 'https://api.example.com';
+  }
+  fetchData() {
+    fetch(this.url).then(function(res) {
+      console.log(this.url); // undefined — why?
+    });
+  }
+}
+```
+
+**30 giây đầu — mở đầu lý tưởng:**
+1. "`this` trong JavaScript được xác định tại call time — callback function trong `.then()` là standalone call, không gắn với object nào."
+2. "Khi `.then(callback)` thực thi, JavaScript gọi callback như `callback()` — không có object context — nên `this` = global hoặc `undefined` trong strict mode."
+3. "Ví dụ cụ thể: `fetch(url).then(fn)` → fetch call `fn()` internally, không gọi `fetcher.fn()`, nên không có implicit binding."
+4. "Fix: thay `function(res)` bằng `(res) =>` — arrow function capture `this` từ `fetchData`'s scope = Fetcher instance."
+
+---
+
+## Self-Check / Tự Kiểm Tra ⚡
+
+> **Đóng tài liệu lại trước khi làm — không nhìn lại!**
+
+- [ ] **Retrieval**: Liệt kê 4 binding rules theo thứ tự ưu tiên từ trí nhớ. Viết ra giấy.
+- [ ] **Visual**: Vẽ sơ đồ cho câu hỏi "tại sao `setTimeout(obj.method, 100)` mất `this`?" — không nhìn lại.
+- [ ] **Application**: Team muốn dùng `class EventBus`. Methods sẽ được truyền như callbacks nhiều nơi. Bạn xử lý `this` binding như thế nào? (3+ approaches)
+- [ ] **Debug**: `const fn = obj.method; fn();` log ra `undefined`. Nguyên nhân? Fix không cần thay đổi call site?
+- [ ] **Teach**: Giải thích tại sao arrow function không có `this` riêng cho người mới học JS — dùng 1 câu ví dụ thực tế.
+
+💬 **Feynman Prompt:** Giải thích vì sao `greet.call(bob)` hoạt động như "mượn microphone" — không dùng thuật ngữ kỹ thuật.
+
+🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày** → **7 ngày** → **14 ngày**.
