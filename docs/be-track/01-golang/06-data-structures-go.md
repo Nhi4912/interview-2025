@@ -5,6 +5,20 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Grab Go service (thực tế):** Team viết service aggregates driver analytics — mỗi request tạo `map[string]int` để đếm events, sau đó bỏ đi. Với 10,000 QPS, GC pressure cực cao vì mỗi map allocation escape lên heap. Fix: dùng `sync.Pool` để reuse maps, reset về empty state trước khi put back. Allocation giảm 70%, GC pause giảm từ 5ms xuống còn 0.8ms.
+
+**Bài học:** Chọn đúng data structure không chỉ về correctness (Big-O) mà còn về allocation pattern và GC impact — đặc biệt quan trọng trong hot paths.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Data structures là các loại hộp chứa: slice như ngăn kéo có số thứ tự (truy cập nhanh theo index), map như hộp có nhãn (tìm nhanh theo key), linked list như chuỗi hạt (insert/delete giữa chừng rẻ). Chọn sai hộp → mất performance như phải lật từng hạt trong chuỗi để tìm một hạt cụ thể.
+
+**Why it matters:** Go interview coding round luôn test data structures. Biết khi nào dùng slice vs map vs heap vs sync.Pool — và tại sao — là điểm phân biệt mid vs senior.
+
+---
+
 ## Visual: Data Structures Decision Map / Sơ Đồ Chọn Cấu Trúc Dữ Liệu
 
 ```
@@ -2798,3 +2812,20 @@ go build -gcflags="-m" ./...  // see what escapes to heap
 ```
 
 **Điểm senior:** Biết GC là concurrent mark-and-sweep với STW < 1ms. GC pressure từ many small allocations. Tools: `go tool pprof` heap profile shows allocations, `GODEBUG=gctrace=1` shows GC events. sync.Pool là primary tool để giảm allocation pressure trong hot paths.
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I explain Go slice internals (len, cap, backing array) and when append copies?
+- [ ] Can I describe 3 ways to implement a stack/queue using Go built-ins?
+- [ ] Can I explain why map is not safe for concurrent use and how to fix it?
+- [ ] Can I implement a min-heap using `container/heap` from scratch?
+- 💬 **Feynman Prompt:** Giải thích tại sao `sync.Pool` không phải là "cache" — và tại sao objects trong Pool có thể bị GC xóa bất kỳ lúc nào (hint: design intent của Pool).
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [Language Fundamentals](./01-language-fundamentals.md) — slice/map/struct basics
+- ⬅️ **Built on**: [Memory & GC](./04-memory-gc.md) — allocation patterns affect GC
+- ➡️ **Applied in**: [Algorithms Go](./07-algorithms-go.md) — data structures are the building blocks
+- 🔗 **Theory**: [CS Data Structures](../../shared/01-cs-fundamentals/data-structures-theory.md) — language-agnostic theory

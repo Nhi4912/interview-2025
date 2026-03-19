@@ -8,6 +8,20 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Zalo backend refactor (thực tế):** Service có `NewUserService(db, cache, emailer, smsProvider, logger, metrics, config)` — 7 dependencies, mỗi lần thêm feature phải thay đổi constructor signature ở 15 nơi. Refactor sang Functional Options pattern: `NewUserService(db, opts...)` với `WithCache(cache)`, `WithLogger(logger)` — optional dependencies không breaking, có defaults an toàn. Tương tự, Pipeline pattern (middleware chain) thay thế nested if/else trong request processing.
+
+**Bài học:** Advanced Go patterns không phải "fancy code" — chúng giải quyết vấn đề maintainability thực tế: API stability, testability, và separation of concerns.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Advanced patterns giống công thức nấu ăn của đầu bếp chuyên nghiệp: không nhất thiết phức tạp hơn, nhưng giải quyết được vấn đề mà người mới gặp khó khăn (flavor balance, texture, timing). Functional Options giống việc đầu bếp có "seasoning kit" — dùng cái nào tùy dish, không bắt buộc mọi thứ.
+
+**Why it matters:** Senior Go developers được nhận ra qua việc họ dùng patterns này một cách tự nhiên — không phải vì "biết thuật ngữ" mà vì đã gặp vấn đề mà pattern giải quyết.
+
+---
+
 ## Learning Objectives
 
 ### 🟡 Q: What should you be able to explain after finishing this document? `[Mid]`
@@ -1250,3 +1264,18 @@ Vietnamese explanation: Goroutine leak xảy ra khi: (1) job channel không bao 
 Vietnamese explanation: Những điều thường sai: (1) **không set timeout** cho `Shutdown` — nếu một request hung, server không bao giờ thoát; (2) **background goroutines không nghe context** — chúng tiếp tục chạy sau khi main goroutine exit, gây resource leak trong Kubernetes pod chưa terminate hẳn; (3) **database connections không được drain** — transactions bị rollback mà không có retry ở client; (4) **load balancer chưa kịp drain** trước khi Kubernetes gửi SIGTERM — cần `preStop` hook sleep 5–10s. Kết hợp tốt: `signal.NotifyContext` + `errgroup` + `sync.WaitGroup` cho tất cả background workers.
 
 ---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I implement Functional Options pattern for a struct with 5+ optional fields?
+- [ ] Can I explain why `errgroup` is safer than `sync.WaitGroup` for goroutine coordination?
+- [ ] Can I implement a middleware chain (Pipeline pattern) for an HTTP handler in Go?
+- [ ] Can I describe the correct graceful shutdown sequence and 3 things that commonly go wrong?
+- 💬 **Feynman Prompt:** Giải thích tại sao `Options` struct pattern và Functional Options pattern đều giải quyết "too many constructor args" — và khi nào bạn chọn cái nào.
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [Interfaces & Generics](./02-interfaces-generics.md) — patterns leverage interfaces heavily
+- ⬅️ **Built on**: [Concurrency](./03-concurrency.md) — errgroup and worker pool patterns
+- ⬅️ **Built on**: [OS for Go](../02-backend-knowledge/05-os-go.md) — graceful shutdown uses OS signals
+- 🔗 **Applied in**: [Microservices](../02-backend-knowledge/02-microservices.md) — patterns appear in service implementations

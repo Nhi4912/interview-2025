@@ -5,6 +5,20 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Axon Active coding interview (ứng viên chia sẻ 2024):** Câu hỏi "Find all subarrays with sum equal to K" — ứng viên dùng O(n²) brute force. Interviewer hỏi: "Có thể làm O(n) không?" Ứng viên không recognize pattern "prefix sum + hash map" vì trong practice chỉ học algorithm riêng lẻ, không học *khi nào* áp dụng pattern nào. Kết quả: fail vòng technical.
+
+**Bài học:** Coding interview không test việc *biết* algorithms — test việc *recognize pattern* từ problem description và implement sạch trong 20 phút.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Algorithm patterns giống toolbox của thợ mộc: sliding window như thước kẹp (đo khoảng cách liên tục), two pointers như hai tay cùng làm (một đầu từng bên), binary search như mở sách ở giữa (loại bỏ nửa còn lại mỗi bước). Biết tool nào dùng khi nào quan trọng hơn biết tên của tool.
+
+**Why it matters:** 80% Go coding interviews tại top tech companies (Grab, Shopee, VNG) dùng 7-8 core patterns. Master những pattern này = solve được 70% bài mà không cần học thuộc mọi algorithm.
+
+---
+
 ## Visual: Algorithm Pattern Map / Bản Đồ Các Mẫu Thuật Toán
 
 ```
@@ -3313,3 +3327,20 @@ func main() {
 ---
 
 > **Tong ket**: Algorithms interview khong phai test "biet nhieu thuat toan" ma test **problem-solving skill** — kha nang nhan dien pattern, chon dung approach, implement sach se, va phan tich complexity. Luyen deu dan 1-2 bai/ngay, focus vao **hieu sau** hon **lam nhieu**.
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I identify which pattern applies to a problem in under 2 minutes?
+- [ ] Can I implement binary search without off-by-one errors from memory?
+- [ ] Can I implement BFS and DFS for a graph using Go idioms (queue via slice, stack via slice)?
+- [ ] Can I explain time and space complexity for sliding window, two pointers, and DP?
+- 💬 **Feynman Prompt:** Giải thích tại sao "prefix sum" có thể giải quyết "subarray sum = K" trong O(n) — vẽ bảng ví dụ để chứng minh.
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [Data Structures Go](./06-data-structures-go.md) — algorithms operate on data structures
+- ⬅️ **Theory**: [Algorithms Theory](../../shared/01-cs-fundamentals/algorithms-theory.md) — complexity analysis and algorithm design
+- ➡️ **Practice**: [LeetCode](../../leetcode/) — apply patterns to real problems
+- 🔗 **Related**: [Complexity Analysis](../../shared/01-cs-fundamentals/complexity-analysis.md) — Big-O is the language of algorithm comparison
