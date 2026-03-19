@@ -5,6 +5,20 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Leetcode interview at Shopee (ứng viên chia sẻ):** Câu hỏi "Design a leaderboard system" — ứng viên dùng array + linear scan: O(n) per update. Với 1M players, mỗi score update cần scan toàn bộ → 1M operations. Interviewer gợi ý: "Có data structure nào tốt hơn không?" Câu trả lời: Redis Sorted Set (Balanced BST internally) → O(log n) update và O(log n + k) range query. Biết data structure phù hợp = 100x performance improvement với 1 dòng code thay đổi.
+
+**Bài học:** Data structures là công cụ — chọn đúng công cụ quyết định hiệu năng. Biết time/space complexity của mỗi operation là kiến thức bắt buộc.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Data structures là các loại hộp chứa đồ: array như ngăn kéo có đánh số (truy cập nhanh, sắp xếp lại chậm), linked list như chuỗi hạt (thêm/xóa giữa chừng dễ), hash table như tủ có nhãn (tìm ngay bằng tên), heap như tháp cao nhất luôn ở đỉnh (min/max nhanh). Chọn sai hộp = làm chậm mọi thứ không cần thiết.
+
+**Why it matters:** Mọi algorithm đều cần data structure phù hợp. Interview coding round thường test việc chọn DS đúng cho bài toán cho trước. Đây là nền tảng của mọi kỹ thuật tối ưu.
+
+---
+
 ## How to Read This Guide / Cách Đọc Tài Liệu Này
 
 Mỗi cấu trúc dữ liệu được trình bày theo format:
@@ -737,3 +751,20 @@ Vietnamese explanation: Call stack: mỗi function call push frame (local vars +
 | BST balance: AVL vs Red-Black | 🟡 | Plain BST degenerates; RB tree fewer rotations preferred in practice |
 | Graph: matrix vs adjacency list | 🟡 | Dense→matrix O(V²); sparse→list O(V+E); real graphs = sparse |
 | Stack vs queue | 🟢 | Stack=LIFO (call stack); Queue=FIFO (BFS, tasks) |
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I give the time complexity for all major operations of: array, linked list, hash table, heap, and BST?
+- [ ] Can I explain when a hash collision degrades O(1) to O(n) and how to prevent it?
+- [ ] Can I name 3 real production use cases where a heap is the right data structure?
+- [ ] Can I draw the internal structure of a hash table (buckets + chaining)?
+- 💬 **Feynman Prompt:** Giải thích tại sao Redis Sorted Set (backed by skip list) được chọn cho leaderboard thay vì B-Tree — trade-off cụ thể là gì?
+
+## Connections / Liên Kết
+
+- ➡️ **Applied in**: [Algorithms Theory](./algorithms-theory.md) — algorithms need the right data structure
+- ➡️ **Applied in**: [Data Structures Go](../../be-track/01-golang/06-data-structures-go.md) — Go implementation of these structures
+- 🔗 **Practice**: [LeetCode](../../leetcode/) — interview problems test data structure selection
+- 🔗 **Related**: [Complexity Analysis](./complexity-analysis.md) — Big-O is how we compare data structures

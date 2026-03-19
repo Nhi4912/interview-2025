@@ -8,6 +8,20 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**SonarQube static analysis:** Khi bạn chạy SonarQube trên codebase, nó detect: null pointer dereference, SQL injection, infinite loops — nhưng không bao giờ 100% chính xác (false positives). Tại sao? Vì *detecting arbitrary bugs in arbitrary code là undecidable* (Rice's Theorem). SonarQube detect một *subset* của bugs bằng cách analyze specific patterns — không thể detect tất cả.
+
+**Bài học:** Computation Theory giải thích giới hạn căn bản của machines — không chỉ giới hạn về tốc độ mà về khả năng *về mặt lý thuyết*. Turing Machine, Halting Problem, và P vs NP là những khái niệm Senior engineer nên biết.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Computation Theory giống luật giao thông cho computer science: Turing Machine định nghĩa "xe" (gì là máy tính được), Halting Problem nói "một số đường không có điểm đến" (có bài toán không giải được), P vs NP nói "một số đường đi rất dài" (có bài toán không thể giải nhanh).
+
+**Why it matters:** Phỏng vấn Google/Microsoft thường hỏi P vs NP, NP-complete. Biết Turing completeness giải thích tại sao mọi ngôn ngữ lập trình đều "tương đương" về lý thuyết. Halting Problem giải thích giới hạn của static analysis tools.
+
+---
+
 ## 0. Learning Goals
 
 - Hiểu bản chất của tính toán: cái gì tính được, cái gì không, và tại sao.
@@ -911,3 +925,20 @@ Practical implications:
 ```
 
 **Điểm interview:** Halting Problem proof là một trong những proof quan trọng nhất trong CS. Thực tế: static analysis tools (ESLint, SonarQube) chỉ detect specific classes of bugs vì detecting arbitrary bugs là undecidable. Rice's theorem generalization cũng quan trọng.
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I explain what makes a language "Turing complete" and name 2 examples?
+- [ ] Can I describe the Halting Problem and why it's undecidable (no solution can exist)?
+- [ ] Can I explain the difference between P, NP, and NP-complete?
+- [ ] Can I name 2 NP-complete problems and explain why they matter in practice?
+- 💬 **Feynman Prompt:** Giải thích tại sao "no program can determine if another program halts" — dùng proof by contradiction để explain, không chỉ state the fact.
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [Complexity Analysis](./complexity-analysis.md) — P vs NP is the big question in complexity
+- ⬅️ **Built on**: [Algorithms Theory](./algorithms-theory.md) — NP-complete problems need approximation algorithms
+- 🔗 **Related**: [Information Theory](./information-theory.md) — both study fundamental limits of computation/communication
+- 🔗 **Applied**: Understanding why 100% static analysis is impossible (Rice's Theorem)

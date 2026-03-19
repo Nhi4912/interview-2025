@@ -5,6 +5,16 @@
 
 ## Mathematical Foundations / Nền Tảng Toán Học
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**AI Engineer tại VinAI:** Khi fine-tuning language model cho Vietnamese, engineer gặp câu hỏi: "Tại sao cross-entropy loss là default cho classification?" Câu trả lời nằm trong Information Theory: cross-entropy đo *khoảng cách* giữa predicted distribution và true distribution. Minimize cross-entropy = maximize likelihood = model học đúng. Không biết entropy, không hiểu tại sao loss function được thiết kế như vậy.
+
+**Bài học:** Information Theory là nền tảng toán học của ML/AI, data compression (zip, WebP), và cryptography. Senior engineer trong AI/ML roles được expect biết entropy, mutual information, và KL divergence.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Entropy giống "mức độ bất ngờ" của thông tin. Tung đồng xu công bằng: kết quả = 1 bit information (50/50 surprise). Tung đồng xu giả luôn ra mặt ngửa: 0 bit information (không có gì bất ngờ). Gzip compress file tốt khi file có low entropy (nhiều patterns lặp lại) — không compress được file random (high entropy).
+
 **English:** Information theory is the mathematical study of quantifying, storing, and communicating information, providing the theoretical foundation for data compression, error correction, and communication systems.
 
 **Tiếng Việt:** Lý thuyết thông tin là nghiên cứu toán học về định lượng, lưu trữ và truyền thông tin, cung cấp nền tảng lý thuyết cho nén dữ liệu, sửa lỗi và hệ thống truyền thông.
@@ -754,3 +764,20 @@ Information content of a single event:
 ```
 
 **Điểm interview:** Entropy trong ML context quan trọng hơn: cross-entropy loss là default loss function cho classification. Information gain là basis của decision trees/random forests. Biết rằng entropy measures uncertainty — high entropy distribution = LLM output với temperature cao (more random).
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I calculate entropy for a fair coin flip and an unfair coin (p=0.9)?
+- [ ] Can I explain why cross-entropy is the standard loss function for classification?
+- [ ] Can I describe the difference between entropy and cross-entropy?
+- [ ] Can I explain why gzip cannot compress a truly random file?
+- 💬 **Feynman Prompt:** Giải thích tại sao "temperature" trong LLM generation liên quan đến entropy — và temperature=0 (argmax) tương ứng với entropy bằng bao nhiêu?
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [Complexity Analysis](./complexity-analysis.md) — information-theoretic lower bounds
+- ➡️ **Applied in**: [ML Fundamentals](../../shared/06-ai-and-agents/01-ml-fundamentals.md) — entropy, cross-entropy loss, information gain
+- 🔗 **Related**: [Computation Theory](./08-computation-theory.md) — both study fundamental limits of information processing
+- 🔗 **Applied**: Data compression algorithms (Huffman, LZ77), error correction codes (Hamming)

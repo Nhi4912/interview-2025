@@ -8,6 +8,20 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Grab Go service (thực tế):** Service xử lý driver matching chạy 8 goroutines để fetch data song song (location, rating, availability). Developer dùng shared `map` để collect results — không có mutex. Kết quả: race condition, map corrupted, service crash với `fatal error: concurrent map writes`. Fix: `sync.Mutex` hoặc `sync.Map` hoặc channel để aggregate. `go test -race` phát hiện race condition ngay trong CI.
+
+**Bài học:** Concurrent code đúng khác với concurrent code nhanh. Race condition thường xảy ra intermittently — khó reproduce và debug. Understanding memory model prevents bugs trước khi chúng xảy ra.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Concurrency giống nhiều người cùng dùng chung một cái bếp: có thể nấu nhiều món cùng lúc (concurrent), nhưng chỉ một người dùng bếp tại một thời điểm (single CPU). Parallelism là nhiều bếp (multiple CPUs). Mutex là "biển hiệu bếp đang có người dùng" — ngăn collision. Deadlock là hai người cầm dao và thớt của nhau — cả hai đều chờ mãi.
+
+**Why it matters:** Backend systems inherently concurrent. Không hiểu mutex, deadlock, race condition → không debug được production issues.
+
+---
+
 ## 0. Learning Goals
 
 - Hiểu rõ sự khác biệt giữa concurrency (đồng thời) và parallelism (song song), không nhầm lẫn hai khái niệm.
@@ -1356,3 +1370,20 @@ Vietnamese explanation: Java Memory Model và C++ memory_order define happens-be
 | Memory ordering & happens-before | 🔴 | CPU reorders; sync primitives establish visibility guarantees |
 
 > **Next steps**: Xem implementation cụ thể trong `be-track/01-golang/03-concurrency.md` (Go goroutines, channels, select) và `fe-track/01-javascript/06-event-loop-async.md` (JS event loop, Promise, async/await).
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I explain the difference between concurrency and parallelism with a concrete example?
+- [ ] Can I describe 4 necessary conditions for deadlock (Coffman conditions)?
+- [ ] Can I explain why `go test -race` catches race conditions that don't appear in normal testing?
+- [ ] Can I compare mutex vs channel for goroutine coordination — when to use each?
+- 💬 **Feynman Prompt:** Giải thích tại sao concurrent `map` writes cause `fatal error` in Go (không chỉ data corruption) — Go runtime làm gì khi detect race condition trên map?
+
+## Connections / Liên Kết
+
+- ➡️ **Applied in**: [Go Concurrency](../../be-track/01-golang/03-concurrency.md) — Go-specific implementation
+- ➡️ **Applied in**: [JS Event Loop](../../fe-track/01-javascript/06-event-loop-async.md) — JS single-threaded concurrency model
+- 🔗 **Related**: [OS Theory](./os-theory.md) — threads and processes are the OS-level primitives
+- 🔗 **Related**: [Distributed Systems](../../be-track/02-backend-knowledge/03-distributed-systems.md) — distributed concurrency at scale
