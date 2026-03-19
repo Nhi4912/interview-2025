@@ -3,6 +3,44 @@
 > **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Zalo Chat Infrastructure (thực tế):** Zalo hỗ trợ 70 triệu user nhắn tin. Đội kỹ thuật gặp vấn đề: WebSocket connections từ mobile app bị drop sau 30 phút không có activity — do NAT gateway timeout. Fix: implement heartbeat (ping/pong mỗi 25s) trong Go WebSocket handler. Thứ hai, service-to-service calls trong data center bị TCP SYN timeout khi server bận — diagnose bằng `netstat -an | grep SYN_RECEIVED`. Fix: tăng `net.core.somaxconn` (listen backlog).
+
+**Bài học:** Network protocols không trừu tượng — chúng ảnh hưởng trực tiếp đến connection stability, latency, và throughput. Go developer cần hiểu TCP để debug đúng tầng.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Mạng máy tính giống hệ thống bưu chính có phân cấp: IP là địa chỉ bưu điện (biết gửi đâu), TCP là dịch vụ chuyển phát đảm bảo (có tracking, retry nếu mất), UDP là bỏ vào hòm thư không biết đến nơi chưa. HTTP là nội dung thư (format và ngôn ngữ). TLS là phong bì bảo mật (mã hóa trước khi gửi).
+
+**Why it matters:** Khi service bị chậm, vấn đề thường ở network layer: connection timeout, DNS resolution delay, TLS handshake, TCP congestion. Không biết networking, không debug được root cause.
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[Networking Stack for Go Backend]
+        │
+        ├── TCP/IP
+        │     ├── 3-way handshake: SYN → SYN-ACK → ACK
+        │     ├── Keep-alive: detect dead connections
+        │     └── TIME_WAIT: 2*MSL after close (ports held ~60s)
+        │
+        ├── HTTP Protocol Evolution
+        │     ├── HTTP/1.1: pipelining, keep-alive, head-of-line blocking
+        │     ├── HTTP/2: multiplexing, header compression, server push
+        │     └── HTTP/3: QUIC (UDP-based), 0-RTT, no HOL blocking
+        │
+        ├── TLS
+        │     ├── TLS 1.3: 1-RTT handshake (vs 2-RTT in 1.2)
+        │     ├── mTLS: mutual auth (both sides present certificate)
+        │     └── Certificate pinning: prevent MITM
+        │
+        └── Go Networking
+              ├── net.Listener: TCP server socket
+              ├── http.Transport: connection pooling, timeouts
+              └── context.WithTimeout: prevent goroutine leak on network calls
+```
+
 ## Kiến thức Mạng máy tính cho Go Backend Developer (Middle/Senior)
 
 > **Target**: Zalo (VNG), Grab, Axon, Employment Hero, Microsoft, Google
@@ -2638,3 +2676,20 @@ Before Interview:
 > - Go Documentation: net, net/http, crypto/tls packages
 > - gRPC Official Documentation: grpc.io
 > - Cloudflare Learning Center: cloudflare.com/learning
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I explain the TCP 3-way handshake and what happens in each step?
+- [ ] Can I compare HTTP/1.1 vs HTTP/2 vs HTTP/3 and when to use each?
+- [ ] Can I explain TLS 1.3 handshake and how it achieves 1-RTT?
+- [ ] Can I describe the Go `http.Transport` connection pool and which parameters matter?
+- 💬 **Feynman Prompt:** Giải thích tại sao TIME_WAIT state tồn tại — và tại sao đây là "feature, not a bug" dù nó giữ ports bận thêm ~60 giây.
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [OS for Go](./05-os-go.md) — networking I/O builds on OS socket model
+- ➡️ **Enables**: [gRPC & Protobuf](./09-grpc-protobuf.md) — gRPC runs on HTTP/2
+- ➡️ **Enables**: [Resilience Patterns](./07-resilience-patterns.md) — circuit breaker monitors network failures
+- 🔗 **Related**: [CS Networking Theory](../../shared/01-cs-fundamentals/networking-theory.md) — deeper protocol theory

@@ -9,6 +9,42 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Employment Hero production incident:** Go service consume nhiều CPU bất thường sau deploy. Dùng `pprof` thấy goroutine count tăng từ 500 → 50,000 sau 2 tiếng. Root cause: goroutine leak — mỗi request tạo goroutine gọi downstream service với `http.Get()`, nhưng nếu downstream timeout, goroutine block mãi mãi vì không có `context.WithTimeout`. Fix: thêm context timeout + kiểm tra goroutine count bằng `runtime.NumGoroutine()` trong metrics.
+
+**Bài học:** Go runtime (goroutine scheduler, GC, memory model) không phải black box — biết cách nó hoạt động giúp debug vấn đề production mà không cần restart server.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** OS là nhà quản lý tài nguyên — CPU như nhân viên, processes như phòng ban, threads như cá nhân trong phòng. Go thêm một tầng nữa: goroutines như micro-tasks trong mỗi thread, và Go scheduler (G-M-P model) phân công công việc cho OS threads mà không cần lập trình viên quản lý trực tiếp.
+
+**Why it matters:** Go ẩn đi sự phức tạp của OS threads, nhưng khi debug memory leak, goroutine leak, hay CPU spike, phải hiểu Go runtime scheduling để tìm root cause.
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[OS Concepts for Go]
+        │
+        ├── Process vs Thread vs Goroutine
+        │     ├── Process: isolated memory space, expensive context switch
+        │     ├── Thread: shared memory, OS-managed, ~1MB stack
+        │     └── Goroutine: Go-managed, ~8KB stack, M:N scheduling
+        │
+        ├── Go Scheduler (G-M-P Model)
+        │     ├── G = Goroutine (work unit)
+        │     ├── M = Machine (OS thread)
+        │     ├── P = Processor (execution context, GOMAXPROCS count)
+        │     └── Work stealing: idle P steals from busy P's queue
+        │
+        └── Signals & Graceful Shutdown
+              ├── SIGTERM: graceful (Kubernetes pre-kill)
+              ├── SIGKILL: cannot catch (hard kill)
+              └── Pattern: signal.NotifyContext → server.Shutdown(ctx)
+```
+
+---
+
 ## Table of Contents
 
 1. [Process vs Thread](#1-process-vs-thread)
@@ -1999,5 +2035,22 @@ Vietnamese explanation: Khi hết fd (`EMFILE: too many open files`): `net.Liste
 **A:** Go exposes signal handling via `signal.Notify(ch, syscall.SIGTERM, syscall.SIGINT)` which routes signals to a buffered channel. Go 1.16+ provides `signal.NotifyContext(ctx, ...)` which cancels a context when the signal arrives.
 
 Vietnamese explanation: Signals là cơ chế IPC của Unix để OS/process gửi thông báo bất đồng bộ. `SIGTERM` (15) là "please terminate gracefully" — Kubernetes gửi cái này trước khi kill. `SIGKILL` (9) không thể catch — đây là hard kill. `SIGINT` là Ctrl+C. Pattern sai: ignore signal và cho OS force-kill — in-flight requests bị drop, DB transactions không complete. Pattern đúng với `signal.NotifyContext`: context cancel trigger `server.Shutdown(ctx)` → drain connections → cancel background workers → flush buffers → exit 0. Buffer size của signal channel phải ít nhất 1 để không miss signal nếu goroutine chưa ready receive.
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I explain the G-M-P scheduler model and what GOMAXPROCS controls?
+- [ ] Can I identify 3 causes of goroutine leaks and how to detect them with pprof?
+- [ ] Can I explain the difference between mutex and channel for goroutine coordination?
+- [ ] Can I write the correct graceful shutdown pattern for a Go HTTP server?
+- 💬 **Feynman Prompt:** Giải thích tại sao goroutines có thể có hàng triệu trong một process Go nhưng OS threads chỉ có vài trăm — cơ chế nào làm điều này có thể?
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [Go Concurrency](../01-golang/03-concurrency-channels.md) — goroutines and channels are the Go concurrency model
+- ⬅️ **Built on**: [Memory & GC](../01-golang/04-memory-gc.md) — GC pauses are an OS-level interaction
+- ➡️ **Applied in**: [Testing & Profiling](../01-golang/05-testing-profiling.md) — pprof uses OS-level profiling hooks
+- 🔗 **Related**: [Networking for Go](./06-networking-go.md) — TCP/socket programming builds on OS I/O model
 
 ---
