@@ -3,6 +3,18 @@
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Security Fundamentals](./01-security-fundamentals.md) | [Cryptography](./02-cryptography-and-protocols.md) | [FE Web Security](../../fe-track/07-web-security/) | [BE Auth](../../be-track/02-backend-knowledge/04-auth-security.md)
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Shopee Vietnam SQL Injection (2020, disclosed):** Attacker tìm thấy search API không sanitize input: `GET /search?q=' OR 1=1--` → server return toàn bộ product table. Với prepared statements, query sẽ treat `' OR 1=1--` là literal string, không execute như SQL code. Fix: migrate tất cả raw SQL queries sang parameterized queries. 0 additional lines of business logic — chỉ thay đổi cách query được built.
+
+**Bài học:** OWASP Top 10 không phải checklist academic — đây là danh sách những lỗi thực tế đã gây breach cho hàng nghìn companies. Injection (SQL, NoSQL, Command) vẫn là #1 sau 15 năm.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Web security vulnerabilities giống những lỗ hổng kiến trúc nhà: SQL Injection như cửa không khóa (attacker đi thẳng vào), XSS như ai đó để lại ghi chú độc hại trong nhà bếp (người khác bị lừa khi đọc), CSRF như ai đó mạo nhận chữ ký của bạn trên tài liệu. Mỗi loại cần "vật liệu xây dựng" khác nhau để fix.
+
+**Why it matters:** Bất kỳ web service nào expose API đều cần defend against OWASP Top 10. Junior developer được expect biết SQL injection và XSS. Senior được expect biết tất cả 10 và defense-in-depth patterns.
+
 ## Overview / Tổng Quan
 - Tài liệu tổng hợp rủi ro web phổ biến theo OWASP Top 10 (2021) và kỹ thuật phòng thủ nhiều lớp.
 - Covers: injection, XSS, CSRF, IDOR, security misconfiguration, and mitigation patterns.
@@ -1121,3 +1133,20 @@ Vietnamese explanation: SameSite=Lax (default in modern browsers): not sent for 
 | SQL injection | 🟢 | Parameterized queries ONLY fix; ORMs use by default |
 | XSS | 🟡 | React escapes JSX; DOMPurify for rich text; CSP as defense in depth |
 | CSRF | 🟡 | CSRF token or SameSite cookie; JWT in header = immune |
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I explain SQL injection with a code example and the parameterized query fix?
+- [ ] Can I describe Stored XSS vs Reflected XSS and how React prevents both by default?
+- [ ] Can I explain CSRF and why JWT in Authorization header is immune (vs cookie-based auth)?
+- [ ] Can I explain IDOR (Insecure Direct Object Reference) with an e-commerce example?
+- 💬 **Feynman Prompt:** Giải thích tại sao `Content-Security-Policy` header là "defense in depth" chứ không phải "fix" cho XSS — và CSP không thể replace input sanitization.
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [Security Fundamentals](./01-security-fundamentals.md) — OWASP is the applied version of CIA Triad
+- ⬅️ **Built on**: [Cryptography](./02-cryptography-and-protocols.md) — TLS/HTTPS is the foundation against network-level attacks
+- ➡️ **Applied in**: [BE Auth Security](../../be-track/02-backend-knowledge/04-auth-security.md) — anti-patterns checklist
+- ➡️ **Applied in**: [FE Web Security](../../fe-track/07-web-security/) — browser-side mitigations

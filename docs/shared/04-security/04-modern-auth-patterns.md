@@ -5,6 +5,20 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Tiki "Login with Google" incident:** Tiki implement OAuth 2.0 để cho phép login bằng Google. Developer dùng Implicit Flow (access token returned directly in redirect URL) — bị deprecated vì access token in URL fragment bị leak qua browser history và Referer header. Google Analytics log URL → token bị expose. Fix: migrate sang Authorization Code Flow with PKCE. Thêm 1 round-trip nhưng token không bao giờ xuất hiện trong URL.
+
+**Bài học:** OAuth 2.0 có nhiều flows với security characteristics khác nhau. Chọn sai flow = security hole. Implicit Flow bị RFC recommend-against từ 2019.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** OAuth giống valet parking: bạn đưa chìa khóa đỗ xe (access token) cho valet (third-party app) để họ đỗ xe thay bạn — nhưng không cần đưa chìa khóa nhà (password). Authorization Code Flow là valet đưa phiếu giữ xe (authorization code) → exchange lấy chìa khóa thật (access token) ở bãi xe (server-side) — không qua URL.
+
+**Why it matters:** OAuth 2.0 và OIDC là auth standard cho modern apps. Senior engineer phải biết các flows, PKCE, và khi nào dùng cái nào.
+
+---
+
 ## Visual Overview / Sơ Đồ Tổng Quan
 
 ### OAuth 2.0 Authorization Code Flow
@@ -1292,3 +1306,20 @@ Vietnamese explanation: JWT phù hợp khi cần scale ngang vì không cần sh
 **A:** Passwordless replaces shared-secret passwords with cryptographic proof of identity. Main patterns: (1) **Magic link** — server emails a one-time signed URL; user clicks to authenticate. (2) **OTP/TOTP** — time-based one-time password from an authenticator app (TOTP, RFC 6238) or SMS OTP. (3) **Passkeys / WebAuthn** — the device generates an asymmetric key pair; private key never leaves the device; server stores only the public key; authentication is a challenge-response signed by the private key, optionally gated by biometrics. Security gains: eliminates password reuse, phishing (passkeys are origin-bound), credential stuffing, and breach exposure of hashed passwords. Trade-offs: magic links depend on email security; SMS OTP is vulnerable to SIM swapping; passkeys require device enrollment and recovery planning; account recovery flows become the new attack surface.
 
 Vietnamese explanation: Passkeys (WebAuthn) là gold standard vì private key không bao giờ rời thiết bị và credential bị bind vào origin (chống phishing). Trade-off: recovery khi mất thiết bị phức tạp hơn reset password; cần backup authenticator hoặc recovery code. SMS OTP tiện lợi nhưng yếu vì SIM swap. Trong phỏng vấn Senior, cần thảo luận account recovery design và multi-device enrollment strategy.
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I draw the OAuth 2.0 Authorization Code Flow with PKCE step by step?
+- [ ] Can I explain the difference between OAuth 2.0 (authorization) and OIDC (authentication)?
+- [ ] Can I explain why Implicit Flow was deprecated and what PKCE solves?
+- [ ] Can I compare magic link vs TOTP vs Passkeys — security trade-offs of each?
+- 💬 **Feynman Prompt:** Giải thích tại sao "Login with Google" không cho Google biết password của bạn ở Tiki — và điều gì thực sự được truyền giữa Tiki server và Google server.
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [Cryptography](./02-cryptography-and-protocols.md) — JWT uses RS256, PKCE uses SHA-256 hash
+- ⬅️ **Built on**: [Security Fundamentals](./01-security-fundamentals.md) — authentication is the first CIA pillar defense
+- ➡️ **Applied in**: [BE Auth Security](../../be-track/02-backend-knowledge/04-auth-security.md) — Go implementation of JWT and OAuth
+- 🔗 **Related**: [Web Security OWASP](./03-web-security-owasp.md) — broken authentication is OWASP #7

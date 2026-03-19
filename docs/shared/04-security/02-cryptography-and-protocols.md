@@ -3,6 +3,18 @@
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Security Fundamentals](./01-security-fundamentals.md) | [Web Security & OWASP](./03-web-security-owasp.md) | [Modern Auth](./04-modern-auth-patterns.md)
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**VNG ZaloPay HTTPS incident (thực tế):** Developer mới join team tự hỏi "tại sao không dùng HTTP cho internal service-to-service? Chỉ nội bộ mà". 3 tháng sau, security audit phát hiện man-in-the-middle attack từ compromised internal server — API keys bị intercept qua HTTP. Fix: mTLS cho tất cả service-to-service. **Root cause:** không hiểu TLS không chỉ encrypt mà còn authenticate — HTTPS không chỉ là "HTTPS = private", mà là "HTTPS = encrypted + authenticated".
+
+**Bài học:** Cryptography không phải academic — nó quyết định có thể bị exploit hay không. Biết TLS handshake, certificate validation, và khi nào dùng symmetric vs asymmetric là kiến thức bảo vệ production system.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Symmetric encryption giống khóa nhà — cùng chìa khóa mở và khóa (nhanh, nhưng phải chia sẻ chìa khóa an toàn). Asymmetric giống hộp thư với ổ khóa: ai cũng có thể bỏ thư vào (public key encrypt), chỉ bạn mới mở được (private key decrypt). TLS dùng asymmetric để trao đổi session key, sau đó dùng symmetric (nhanh hơn) cho data transfer.
+
+**Why it matters:** HTTPS, JWT signing, password hashing, API keys — tất cả dùng cryptography. Hiểu sai → dùng sai → security hole.
+
 ## Overview / Tổng Quan
 - Tài liệu trình bày nền tảng mật mã học và giao thức bảo mật cho phỏng vấn backend/frontend.
 - Covers: symmetric/asymmetric encryption, TLS, hashing, digital signatures, PKI.
@@ -966,3 +978,20 @@ Vietnamese explanation: Certificate verification: browser checks cert signed by 
 | Symmetric vs asymmetric | 🟢 | Symmetric=fast+same key; asymmetric=key pair; TLS uses hybrid |
 | Hashing vs encryption | 🟢 | Hash=one-way+integrity; bcrypt for passwords; SHA-256 for checksums |
 | TLS/HTTPS | 🟡 | ECDHE key exchange → session keys; 1-RTT; forward secrecy |
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I explain the TLS 1.3 handshake in 3 steps and what "1-RTT" means?
+- [ ] Can I explain why bcrypt (not SHA-256) for passwords — what makes bcrypt better?
+- [ ] Can I explain forward secrecy and why it matters if private key is compromised later?
+- [ ] Can I describe the difference between code signing and message authentication?
+- 💬 **Feynman Prompt:** Giải thích tại sao HTTPS không chỉ là "encrypted" mà còn là "authenticated" — và tại sao MITM attack không thể work với valid HTTPS (hint: certificate chain).
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [Security Fundamentals](./01-security-fundamentals.md) — CIA Triad: confidentiality (encryption) + integrity (hashing)
+- ➡️ **Applied in**: [Modern Auth](./04-modern-auth-patterns.md) — JWT uses RS256/HS256, OAuth uses PKCE
+- ➡️ **Applied in**: [Networking](../../be-track/02-backend-knowledge/06-networking-go.md) — TLS in Go HTTP/gRPC
+- 🔗 **Related**: [Web Security](./03-web-security-owasp.md) — cryptographic mitigations for OWASP vulnerabilities
