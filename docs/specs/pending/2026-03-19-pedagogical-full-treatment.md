@@ -82,7 +82,7 @@
 | `06-testing.md` | 🔄 | ❌ | |
 | `07-hooks-comprehensive.md` | ❌ | ❌ | |
 | `08-react-patterns-advanced.md` | ❌ | ❌ | |
-| `09-performance-optimization.md` | 🔄 | ❌ | |
+| `09-performance-optimization.md` | ✅ | ✅ | Done session 4 |
 | `10-modern-react-features.md` | ❌ | ❌ | |
 
 ### Tier 4: Next.js (`fe-track/04-nextjs/`)
@@ -90,7 +90,7 @@
 | File | Phase 1 | Phase 2 | Notes |
 |------|---------|---------|-------|
 | `00-nextjs-fundamentals.md` | 🔄 | ❌ | |
-| `01-app-router-server-components.md` | ❌ | ❌ | **Priority** |
+| `01-app-router-server-components.md` | ✅ | ✅ | Done session 4 |
 | `02-data-fetching.md` | ❌ | ❌ | |
 | `03-nextjs-architecture.md` | 🔄 | ❌ | |
 | `04-nextjs-fundamentals-appRouter.md` | 🔄 | ❌ | |
@@ -151,5 +151,5 @@ Start with files marked **Priority** in Tier 1-3. For each file:
 ## Stats
 
 - Total fe-track theory files tracked: ~75
-- Phase 2 done (✅): **14** (02-scope-hoisting-comprehensive, 03-closures-comprehensive, 05-this-keyword, 06-event-loop-async, 07-es6-features, 08-advanced-concepts, 09-async-comprehensive, 10-prototypes-inheritance-deep, 12-functional-programming, 01-typescript-basics, 01-react-fundamentals, 02-react-19-features, 03-hooks-deep-dive, 05-state-management, 01-core-web-vitals)
-- Remaining for Phase 2: ~60
+- Phase 2 done (✅): **16** (02-scope-hoisting-comprehensive, 03-closures-comprehensive, 05-this-keyword, 06-event-loop-async, 07-es6-features, 08-advanced-concepts, 09-async-comprehensive, 10-prototypes-inheritance-deep, 12-functional-programming, 01-typescript-basics, 01-react-fundamentals, 02-react-19-features, 03-hooks-deep-dive, 05-state-management, 01-core-web-vitals, 09-performance-optimization, 01-app-router-server-components)
+- Remaining for Phase 2: ~58
