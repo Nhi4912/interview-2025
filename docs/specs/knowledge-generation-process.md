@@ -183,16 +183,41 @@ gaps_identified:     ["List of specific sub-topics missing"]
 
 ## Core Concepts / Khái Niệm Cốt Lõi
 
-### {Concept Name} / {Tên khái niệm}
+### {Concept Name} / {Tên Khái Niệm}
+
+> 🧠 **Memory Hook**: {killer sentence OR mnemonic OR one visual sketch — must be memorable alone}
+
+**Tại sao tồn tại? / Why does this exist?**
+{1-2 sentences: what problem was being solved when this concept was invented}
+→ **Why?** {Level 2: why was that problem important?}
+→ **Why?** {Level 3: what fundamental constraint makes this necessary?}
 
 #### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
-{Explain like explaining to a 5-year-old or non-programmer}
+{Explain to a curious 12-year-old. No jargon. One paragraph max.}
 
 #### Layer 2: How It Works / Cơ Chế Hoạt Động
-{Technical explanation with code/diagram if needed}
+{Technical: internals, algorithm, data structure involved.}
+
+```
+[VISUAL: ASCII diagram, comparison table, or memory sketch — MANDATORY]
+```
 
 #### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
-{When it breaks, common mistakes, senior-level nuances}
+{When it breaks, performance limits, version differences, common gotchas.}
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| {wrong mental model} | {reason it's wrong} | {correct understanding} |
+
+**🎯 Interview Pattern:**
+- Khi thấy câu hỏi về: {trigger keywords in the question}
+- → Nhớ đến: {this concept/approach}
+- → Mở đầu trả lời: *"{strong opening 1-2 sentences}"*
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+- 📚 Cần biết trước: [{prereq concept}]({link})
+- ➡️ Để hiểu tiếp: [{next concept}]({link})
 
 ---
 
@@ -204,7 +229,11 @@ gaps_identified:     ["List of specific sub-topics missing"]
 
 {Giải thích tiếng Việt: nhấn mạnh điểm quan trọng, trade-off, lỗi phổ biến}
 
-*(Continue with 🟡 Mid then 🔴 Senior questions — strictly ascending difficulty)*
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: {what a strong candidate includes — specific detail that shows real understanding}
+- ❌ Weak: {what a weak candidate says — the surface-level answer that misses the key point}
+
+*(Continue 🟡 Mid then 🔴 Senior — strictly ascending. 🔴 must reach Bloom's L4 Analysis or L5 Evaluation)*
 
 ---
 
@@ -218,38 +247,63 @@ gaps_identified:     ["List of specific sub-topics missing"]
 
 ---
 
-## Self-Check / Tự Kiểm Tra
+## ⚡ Cold Call Simulation / Mô Phỏng Phỏng Vấn
 
-- [ ] {Active recall question 1 — can I explain X in one sentence?}
-- [ ] {Active recall question 2 — can I draw Y from memory?}
-- [ ] {Active recall question 3 — can I name 2 real use cases?}
-- [ ] {Active recall question 4 — can I implement a basic example?}
-- [ ] {Active recall question 5 — can I compare this to the alternative?}
+> 🎯 Interviewer asks cold: **"{the single hardest / most common question on this topic}"**
 
-💬 **Feynman Prompt:** {Explain [this concept] to someone who doesn't code, using [specific analogy].}
+**30 giây đầu — mở đầu lý tưởng / Ideal 30-second opening:**
+1. {Scope confirmation + define — 1 sentence}
+2. {Core mechanism — 1 sentence}
+3. {Concrete example from real production — 1 sentence}
+4. {Trade-off or edge case — 1 sentence}
+
+*Sau đó mở rộng theo hướng interviewer dẫn dắt.*
+
+---
+
+## Self-Check / Tự Kiểm Tra ⚡
+> **Đóng tài liệu lại trước khi làm — Close the doc before attempting.**
+
+- [ ] **Retrieval**: Viết định nghĩa của {concept} từ trí nhớ, không nhìn lại. So sánh với Layer 2.
+- [ ] **Visual**: Vẽ {key diagram} ra giấy từ trí nhớ. So sánh với ASCII diagram trên.
+- [ ] **Application**: {Concrete scenario A} vs {Concrete scenario B} — bạn dùng cách nào? Tại sao?
+- [ ] **Debug**: {Describe a common bug caused by misunderstanding this concept} — nguyên nhân? Fix?
+- [ ] **Teach**: Giải thích {concept} cho người không biết lập trình bằng 1 câu liên tưởng.
+
+💬 **Feynman Prompt:** {Explain [concept] to someone who doesn't code, using [specific analogy from Layer 1]. No jargon allowed.}
+
+🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày → 7 ngày → 14 ngày** để chuyển vào long-term memory.
 
 ---
 
 ## Connections / Liên Kết
 
-- ⬅️ **Built on:** [{prerequisite}]({link}) — {why it's needed}
-- ➡️ **Enables:** [{next topic}]({link}) — {what becomes possible}
-- 🔗 **Applied in:** {framework/language/pattern where this shows up}
+- ⬅️ **Built on:** [{prerequisite}]({link}) — {why it's needed to understand THIS}
+- ➡️ **Enables:** [{next topic}]({link}) — {what becomes possible after mastering THIS}
+- 🔗 **Applied in:** {framework/language/pattern where this shows up most}
 ```
 
 **Generation rules:**
 1. **Motivation before definition** — file MUST start with Real-World Scenario, not a definition (Harvard Case Method)
 2. **Feynman-first** — "What & Why" section uses analogy/metaphor, technical precision comes in Core Concepts
-3. **Spiral depth** — each Core Concept has 3 layers: Analogy → How It Works → Edge Cases
-4. **Kumon ordering** — Q&A items MUST progress 🟢→🟡→🔴, each builds on previous
-5. **Active recall required** — every file ends with Self-Check (3-5 checkboxes + Feynman prompt)
-6. Never write placeholder content ("Tactic 1", "TODO: fill in")
-7. Every answer must have both EN explanation + VI reinforcement
-8. Code examples only when they clarify — not to pad content
-9. Max one code block per Q&A unless demonstrating contrast
-10. Vietnamese explanations focus on: WHY it matters + trade-offs + interview tips
-11. **No generic overviews** — Overview must be specific to the file's topic (BANNED: "This file covers bilingual interview prep...")
-12. **No duplicate Q&A answers** — every answer must be unique within the file
+3. **Root-cause tracing** — every Core Concept starts with "Why does this exist?" — 2+ levels of why before defining
+4. **Dual coding mandatory** — every Core Concept MUST have both text + visual (ASCII/table/diagram). No exceptions.
+5. **Memory hook required** — every Core Concept has a killer sentence, mnemonic, or visual sketch
+6. **Spiral depth** — each Core Concept has 3 layers: Analogy → How It Works → Edge Cases
+7. **Common mistakes mandatory** — every Core Concept has ❌ wrong model → ✅ correct with reason
+8. **Interview pattern** — every Core Concept has 🎯 trigger + concept + opening sentence template
+9. **Knowledge chain** — every Core Concept ends with 📚 prereq + ➡️ enables
+10. **Kumon ordering** — Q&A items MUST progress 🟢→🟡→🔴, each builds on previous
+11. **Bloom's L4-L6 for Senior** — 🔴 questions MUST require Analysis/Evaluation/Creation, not recall
+12. **Interview signal** — every Q&A has 💡 ✅ strong answer + ❌ weak answer markers
+13. **Cold call simulation** — after Q&A Summary, add ⚡ section with 4-sentence 30-second answer
+14. **Retrieval Self-Check** — close-doc instruction + Retrieval/Visual/Application/Debug/Teach items
+15. **Spaced repetition** — Self-Check ends with 🔁 3 → 7 → 14 day reminder
+16. Never write placeholder content ("Tactic 1", "TODO: fill in")
+17. Every answer must have both EN explanation + VI reinforcement
+18. Code examples only when they clarify — not to pad content
+19. **No generic overviews** — Overview must be specific to the file's topic
+20. **No duplicate Q&A answers** — every answer must be unique within the file
 
 ---
 
@@ -271,15 +325,26 @@ Before marking a spec as done, verify:
 - [ ] Code examples are real and runnable (tested mentally)
 - [ ] All difficulty levels covered (🟢🟡🔴)
 
-### Pedagogy (Harvard/Feynman/Kumon/Cambridge methods)
+### Pedagogy — Intro Sections (Phase 1)
 - [ ] File starts with Real-World Scenario (not a definition) — Harvard Case Method
 - [ ] "What & Why" section uses analogy/metaphor a non-programmer understands — Feynman check
-- [ ] Core concepts have 3 spiral layers: Analogy → How It Works → Edge Cases
-- [ ] Q&A strictly ordered 🟢→🟡→🔴, each question builds on previous — Kumon check
-- [ ] Self-Check section present with 3-5 active recall checkboxes + Feynman prompt — Cambridge Supervision
 - [ ] Concept Map (ASCII diagram) shows learning path context
-- [ ] Connections section: ⬅️ prerequisites + ➡️ enables
 - [ ] No generic overview text (test: could this paragraph appear identically in another file?)
+
+### Pedagogy — Deep Content (Phase 2)
+- [ ] Each Core Concept has Memory Hook (🧠 killer sentence / mnemonic / visual sketch)
+- [ ] Each Core Concept has "Why does this exist?" with 2+ levels of "why" — First Principles
+- [ ] Each Core Concept has a visual (ASCII / table / diagram) — Dual Coding mandatory
+- [ ] Each Core Concept has Common Mistakes table (❌ wrong model → ✅ correct)
+- [ ] Each Core Concept has 🎯 Interview Pattern (trigger → concept → opening sentence)
+- [ ] Each Core Concept has 🔑 Knowledge Chain (📚 prereq + ➡️ enables)
+- [ ] 🔴 Senior Q&A reaches Bloom's L4-L6 (Analyze/Evaluate/Create — NOT just definitions)
+- [ ] Each Q&A has 💡 Interview Signal (✅ strong answer vs ❌ weak answer)
+- [ ] Q&A strictly ordered 🟢→🟡→🔴, each builds on previous — Kumon check
+- [ ] ⚡ Cold Call Simulation section after Q&A Summary (4-sentence 30-second answer)
+- [ ] Self-Check uses retrieval format with close-doc instruction — not passive "can I explain?"
+- [ ] Self-Check has Retrieval + Visual + Application + Debug + Teach items
+- [ ] 🔁 Spaced repetition reminder (3 → 7 → 14 days)
 - [ ] No duplicate Q&A answers within the same file
 
 ### Bilingual
