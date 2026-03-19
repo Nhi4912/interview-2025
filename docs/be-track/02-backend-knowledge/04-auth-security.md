@@ -3,6 +3,43 @@
 > **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Grab security incident (2021, public):** Một backend service expose internal API không có authentication vì developer nghĩ "service này chỉ dùng nội bộ". Attacker scan tìm được, gọi thẳng vào endpoint để lấy ride history của driver khác. Fix: mọi service-to-service call đều phải có mTLS + JWT validation, kể cả internal. "Internal" không có nghĩa là "safe".
+
+**Bài học:** Security là defense in depth — không có single layer nào đủ. JWT, mTLS, rate limiting, và audit logging phải kết hợp cùng nhau.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Authentication là thẻ căn cước ("bạn là ai"), Authorization là thẻ nhân viên có in phòng ban ("bạn được vào đâu"). JWT là thẻ có QR code — bảo vệ tự verify được mà không cần gọi về trung tâm. Session token là thẻ vật lý — phải gọi về trung tâm để verify, nhưng có thể thu hồi ngay lập tức.
+
+**Why it matters:** Mọi backend API đều cần authentication. Sai lựa chọn (dùng JWT khi cần revocation, dùng session khi cần stateless scale) gây ra security holes hoặc performance bottlenecks.
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[Auth & Security]
+        │
+        ├── Authentication (Who are you?)
+        │     ├── JWT: stateless, self-contained, hard to revoke
+        │     ├── Session: stateful, easy revoke, needs session store
+        │     └── mTLS: mutual cert validation (service-to-service)
+        │
+        ├── Authorization (What can you do?)
+        │     ├── RBAC: role → permissions
+        │     ├── ABAC: attributes (user, resource, environment)
+        │     └── OAuth 2.0: delegated authorization (3rd party)
+        │
+        └── Security Patterns
+              ├── Defense in depth: multiple layers
+              ├── Least privilege: minimal access
+              ├── Secret management: Vault/env vars, rotation
+              └── Audit logging: who did what when
+
+```
+
+---
+
 ## Kiến thức Auth & Security cho Go Backend Developer (Middle/Senior)
 
 > **Target**: Zalo (VNG), Grab, Axon, Employment Hero, Microsoft, Google
@@ -1492,3 +1529,19 @@ Quick reference:
 ---
 
 > **Tóm tắt cho phỏng vấn**: Authentication là "bạn là ai", Authorization là "bạn được làm gì". JWT cho stateless/microservices, session cho monolith. OAuth 2.0 cho delegated authorization, OIDC thêm authentication layer. Luôn hash password bằng argon2id/bcrypt. Bảo mật là defense in depth - không có silver bullet, phải kết hợp nhiều lớp.
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I explain why JWT is hard to revoke and what solutions exist (blacklist, short TTL)?
+- [ ] Can I compare OAuth 2.0 Authorization Code flow vs Client Credentials flow?
+- [ ] Can I explain the difference between symmetric (HS256) and asymmetric (RS256) JWT signing?
+- [ ] Can I name 3 common auth anti-patterns and why they're dangerous?
+- 💬 **Feynman Prompt:** Giải thích cho PM tại sao "logout" không thực sự work với JWT — và tại sao đây là tradeoff có chủ ý, không phải bug.
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [Distributed Systems](./03-distributed-systems.md) — stateless auth (JWT) is required for horizontal scaling
+- ➡️ **Applied in**: [API Design](./01-api-design.md) — auth headers, rate limiting, API key patterns
+- 🔗 **Theory**: [Security Fundamentals](../../shared/04-security/01-security-fundamentals.md) — CIA Triad, OWASP Top 10

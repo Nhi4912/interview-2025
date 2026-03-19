@@ -6,6 +6,42 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Grab Driver-Dispatch Service (thực tế):** Service tính toán driver matching nhận 50,000 location updates/giây từ driver app. Dùng REST/JSON: payload 850 bytes/request, tổng bandwidth 42 MB/s. Sau khi migrate sang gRPC/protobuf: payload 95 bytes/request (11x nhỏ hơn), bandwidth 4.8 MB/s, latency giảm 40% vì HTTP/2 multiplexing loại bỏ TCP handshake overhead.
+
+**Bài học:** gRPC không phải "REST mà cool hơn" — nó giải quyết bài toán cụ thể: high-throughput internal service communication với strongly-typed contracts.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** REST giống điện thoại: bạn gọi, đọc số, bên kia nghe và ghi lại. gRPC giống tín hiệu nhị phân giữa hai máy tính: nhanh hơn, chính xác hơn, ít lỗi hơn — nhưng con người không đọc được. Protocol Buffers là ngôn ngữ chung mà cả hai máy đều hiểu, được generate thành code tự động.
+
+**Why it matters:** Microservices cần internal communication hiệu quả. JSON/REST tốn CPU để parse text, tốn bandwidth, không có schema enforcement. gRPC giải quyết cả 3.
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[gRPC Stack]
+        │
+        ├── Protocol Buffers (.proto file)
+        │     ├── Schema definition → code generation
+        │     ├── Binary serialization (3-10x smaller than JSON)
+        │     └── Strong typing: compile-time contract
+        │
+        ├── HTTP/2 Transport
+        │     ├── Multiplexing: multiple streams on 1 TCP connection
+        │     ├── Header compression (HPACK)
+        │     └── Server push capability
+        │
+        └── RPC Patterns
+              ├── Unary: 1 request → 1 response (like REST)
+              ├── Server Streaming: 1 request → N responses
+              ├── Client Streaming: N requests → 1 response
+              └── Bidirectional: N requests ↔ N responses (WebSocket-like)
+```
+
+---
+
 ## Overview / Tổng Quan
 
 gRPC là RPC framework của Google, dùng Protocol Buffers (protobuf) cho serialization và HTTP/2 cho transport. Hay được hỏi ở phỏng vấn Grab, Axon, Zalo vì đây là standard cho internal microservice communication.
@@ -476,4 +512,21 @@ conn, _ := grpc.Dial(addr,
 ```
 
 Vietnamese: gRPC retry policy quan trọng cần biết: (1) Chỉ retry **idempotent operations** hoặc operations có retry-safe guarantee. (2) `UNAVAILABLE` = server unavailable → safe to retry. `RESOURCE_EXHAUSTED` = rate limit → retry sau backoff. `DEADLINE_EXCEEDED` = timeout → thường không nên retry (đã hết deadline). (3) Hedged requests: gửi request đến multiple backends đồng thời, lấy response đầu tiên — tradeoff: server load vs latency tail reduction. Dùng cho read-only operations trong low latency systems.
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I explain why protobuf binary is smaller than JSON (field numbers vs field names)?
+- [ ] Can I compare 4 gRPC streaming patterns and name a use case for each?
+- [ ] Can I explain how HTTP/2 multiplexing eliminates the head-of-line blocking problem?
+- [ ] Can I name 3 gRPC status codes and when each should trigger a retry?
+- 💬 **Feynman Prompt:** Giải thích tại sao bạn cần generate code từ `.proto` file thay vì chỉ dùng JSON schema — lợi ích cụ thể là gì ở production?
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [API Design](./01-api-design.md) — REST vs gRPC is a core API design decision
+- ⬅️ **Built on**: [Microservices](./02-microservices.md) — gRPC is the standard for internal service communication
+- ➡️ **Applied in**: [Distributed Patterns](../04-be-system-design/04-distributed-patterns.md) — gRPC bidirectional streaming for real-time patterns
+- 🔗 **Related**: [Networking for Go](./06-networking-go.md) — HTTP/2 and TLS fundamentals
 

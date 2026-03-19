@@ -8,6 +8,46 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**VNG ZaloPay (thực tế):** Đội kỹ thuật cần lưu trữ session tokens cho 50 triệu user — nếu dùng PostgreSQL, mỗi request authentication phải JOIN 3 bảng và query mất 15ms. Sau khi migrate session data sang Redis (Hash type), latency giảm xuống 0.3ms. Đồng thời, user profile không có schema cố định (một số user có trường `business_account`, một số không) — MongoDB phù hợp hơn PostgreSQL vì schema-on-read.
+
+**Bài học:** NoSQL không thay thế SQL — mỗi loại giải quyết một bài toán khác nhau. Biết *khi nào* dùng gì quan trọng hơn biết cú pháp.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** SQL giống bảng Excel có cột cố định — dữ liệu ngăn nắp, query phức tạp dễ viết. NoSQL giống ngăn kéo linh hoạt: document store như thư mục (bỏ bất kỳ loại tài liệu nào vào), key-value store như tủ khóa (tra cứu nhanh bằng số tủ), graph store như mạng xã hội (kết nối giữa các node).
+
+**Why it matters:** Scale ≥ 10 triệu users, SQL bắt đầu gặp giới hạn về write throughput và flexible schema. NoSQL được thiết kế để horizontal scale từ đầu.
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[NoSQL Landscape]
+        │
+        ├── Key-Value: Redis, DynamoDB
+        │     ├── O(1) read/write by key
+        │     ├── No query flexibility
+        │     └── Use: sessions, caches, counters
+        │
+        ├── Document: MongoDB, Firestore
+        │     ├── JSON/BSON documents, flexible schema
+        │     ├── Rich queries within document
+        │     └── Use: user profiles, catalogs, content
+        │
+        ├── Wide-Column: Cassandra, HBase
+        │     ├── Row key + column families
+        │     ├── Optimized for write-heavy time-series
+        │     └── Use: IoT data, activity logs, metrics
+        │
+        └── Graph: Neo4j, Amazon Neptune
+              ├── Nodes + edges + properties
+              ├── Efficient relationship traversal
+              └── Use: social networks, fraud detection, recommendations
+```
+
+---
+
 ## 1. SQL vs NoSQL — Khi Nào Dùng Gì
 
 ### Q: SQL và NoSQL khác nhau cơ bản ở điểm nào? `[Junior]`
@@ -963,3 +1003,20 @@ Bạn cần gì?
 ---
 
 *Tài liệu tham khảo: Redis documentation, MongoDB University, Elasticsearch: The Definitive Guide, Designing Data-Intensive Applications (Martin Kleppmann), Apache Cassandra documentation.*
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I name 4 NoSQL types and one production use case for each?
+- [ ] Can I explain CAP theorem and which side Redis, Cassandra, and MongoDB each choose?
+- [ ] Can I describe 3 Redis eviction policies and when to use each?
+- [ ] Can I explain the difference between MongoDB sharding and replication?
+- 💬 **Feynman Prompt:** Giải thích tại sao bạn không thể dùng Redis làm primary database cho e-commerce orders — dù Redis cũng có persistence (RDB/AOF).
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [SQL Fundamentals](./01-sql-fundamentals.md) — understand SQL constraints before learning what NoSQL trades away
+- ⬅️ **Built on**: [Indexing Optimization](./02-indexing-optimization.md) — MongoDB indexes follow same B-Tree principles
+- ➡️ **Enables**: [Caching Patterns](./04-caching-patterns.md) — Redis is the primary caching tool
+- 🔗 **Applied in**: [System Design Framework](../04-be-system-design/01-design-framework.md) — DB selection is a core Step 3 decision

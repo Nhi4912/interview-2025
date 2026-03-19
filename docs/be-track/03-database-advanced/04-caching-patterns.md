@@ -8,6 +8,48 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Shopee Product Page (thực tế):** Trang chi tiết sản phẩm call 3 APIs: product info, seller info, và review count — mỗi cái query DB riêng. Tổng latency: 450ms. Sau khi implement Cache-Aside với Redis TTL 60s: product info hit cache (0.3ms), seller info hit cache (0.3ms), chỉ có review count query DB. Tổng latency: ~50ms. DB load giảm 80%.
+
+**Vấn đề mới xuất hiện:** Khi sản phẩm flash sale bắt đầu, 100,000 user đồng loạt vào trang → Redis key expire cùng lúc → **Cache Stampede**: 100,000 requests đổ vào DB. Fix: probabilistic early expiration + mutex lock khi rebuild cache.
+
+**Bài học:** Caching giải quyết latency nhưng tạo ra vấn đề mới: cache invalidation, stampede, stale data. Senior engineer giải thích được cả vấn đề và giải pháp.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Cache giống bàn làm việc: thay vì đi xuống kho (database) mỗi lần cần tài liệu, bạn để tài liệu thường dùng trên bàn. Bàn nhỏ (memory đắt) nên phải chọn lọc tài liệu nào để lên — đây là eviction policy (LRU, LFU).
+
+**Why it matters:** Database disk I/O: ~1-10ms. Redis in-memory: ~0.1ms. Chênh lệch 100x. Ở scale 10,000 QPS, caching là sự khác biệt giữa server $1,000/tháng và $100,000/tháng.
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[Caching Patterns]
+        │
+        ├── Cache-Aside (Lazy Loading)
+        │     ├── App checks cache first, fallback to DB
+        │     ├── Cache miss = DB query + populate cache
+        │     └── Risk: cache stampede on cold start
+        │
+        ├── Write-Through
+        │     ├── Write to cache + DB simultaneously
+        │     ├── Cache always fresh
+        │     └── Cost: every write hits both stores
+        │
+        ├── Write-Behind (Write-Back)
+        │     ├── Write to cache only, async flush to DB
+        │     ├── Faster writes, risk data loss on crash
+        │     └── Use: high-write workloads, analytics
+        │
+        └── Cache Invalidation Strategies
+              ├── TTL: simple, safe, some staleness
+              ├── Event-driven: DB triggers Redis DEL
+              └── Versioning: cache key includes version hash
+```
+
+---
+
 ## 1. Why Caching
 
 ### 🟢 Q: Tại sao caching quan trọng? Latency numbers every programmer should know?
@@ -897,3 +939,20 @@ HyperLogLog:  approximate unique count (PFADD, PFCOUNT) — O(1) space!
 ```
 
 **Điểm phỏng vấn:** Trong 90% cases, chọn Redis vì feature-rich hơn và maintain dễ hơn. Memcached còn dùng khi cần simplicity và có large-scale existing infrastructure. Biết Redis data structures và use case của mỗi loại là điểm cộng lớn.
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I explain Cache Stampede and 2 ways to prevent it?
+- [ ] Can I compare Cache-Aside vs Write-Through vs Write-Behind — when to use each?
+- [ ] Can I explain the difference between LRU, LFU, and TTL eviction policies?
+- [ ] Can I describe what happens if cache and DB go out of sync (stale data problem)?
+- 💬 **Feynman Prompt:** Giải thích cho một junior tại sao "cache invalidation is one of the two hard problems in computer science" — dùng ví dụ product price change trong e-commerce.
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [NoSQL & Redis](./03-nosql-redis-mongo.md) — Redis is the primary cache store
+- ⬅️ **Built on**: [Resilience Patterns](../02-backend-knowledge/07-resilience-patterns.md) — cache stampede is a resilience problem
+- ➡️ **Enables**: [System Design Framework](../04-be-system-design/01-design-framework.md) — caching is always discussed in Deep Dive phase
+- 🔗 **Theory**: [Shared Caching Patterns](../../shared/03-databases/caching-patterns.md) — broader theory with CDN and application cache layers
