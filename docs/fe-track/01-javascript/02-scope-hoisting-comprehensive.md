@@ -1,1257 +1,531 @@
-# Scope & Hoisting - Comprehensive Bilingual Deep Dive
+# Scope & Hoisting — Comprehensive / Scope & Hoisting — Toàn Diện
 
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../00-table-of-contents.md)
-
-## Lexical Scope, Hoisting, TDZ, Module Scope, and Interview Pitfalls
-
-[← Variables](./01-variables-data-types.md) | [Closures →](./03-closures-comprehensive.md) | [Async](./09-async-comprehensive.md)
+> **Prerequisites**: [JavaScript Basics](./00-javascript-basics.md)
+> **See also**: [Closures](./03-closures-comprehensive.md) | [Execution Context](./16-execution-context-theory.md)
 
 ---
 
 ## Real-World Scenario / Tình Huống Thực Tế
 
-**Tiki frontend bug (thực tế):** Component render cart items — developer dùng `var i` trong `for` loop với `setTimeout`. Kết quả: tất cả timeouts log cùng giá trị cuối cùng của `i`, không phải từng giá trị. Classic `var` hoisting + closure bug. Fix: đổi `var` → `let` (block-scoped) — 1 ký tự thay đổi, behavior hoàn toàn khác. `var i` hoist lên function scope; `let i` tạo block scope mới cho mỗi iteration.
+**Tiki cart animation bug (production):**
 
-**Bài học:** Scope không phải academic — nó quyết định *khi nào* và *ở đâu* variable tồn tại. `var` vs `let` vs `const` behavior khác nhau về scope và hoisting là nguồn bug phổ biến nhất trong JS.
+```javascript
+// BUG: all setTimeout callbacks log the SAME value
+for (var i = 0; i < cartItems.length; i++) {
+  setTimeout(() => showItemAnimation(i), i * 100); // all show cartItems.length!
+}
+```
+
+Senior engineer reviewed this in PR, approved it — shipped. 3000 users saw broken animations. Root cause: `var i` is function-scoped → all closures share 1 `i` variable → loop finishes before timeouts fire → `i = cartItems.length` for all callbacks.
+
+Fix: change 1 character — `var` → `let`. Block-scoped `i`, new binding per iteration.
+
+**Bài học:** Không hiểu scope → shipping bugs mà code review không catch được vì code trông bình thường.
+
+---
 
 ## What & Why / Cái Gì & Tại Sao
 
-**Analogy:** Scope giống phòng trong nhà: `var` là tờ giấy để ở phòng khách (function scope) — ai trong nhà đều thấy. `let/const` là tờ giấy trong ngăn kéo (block scope) — chỉ người trong phòng đó thấy. Hoisting giống việc JavaScript "đọc qua" toàn bộ code trước khi chạy — biến `var` được "kéo lên đầu" và khởi tạo là `undefined`, `let/const` được kéo lên nhưng **không** khởi tạo → Temporal Dead Zone.
+> 🧠 **Memory Hook**: **`var` = tờ giấy phòng khách (function scope). `let/const` = tờ giấy ngăn kéo (block scope). Hoisting = JS "đọc qua" code trước khi chạy.**
 
-**Why it matters:** Scope và hoisting là nền tảng của mọi JS interview. Không hiểu TDZ, `this` binding, closure over loop variables → code đúng ngẫu nhiên, không đúng một cách có chủ đích.
+**Tại sao JS có scope?**
+→ Vì nếu không có scope, mọi variable đều global → 2 files dùng cùng tên `i` sẽ conflict.
+→ Vì cần isolate variables: library không nên pollute user's code.
+→ Hoisting tồn tại vì JS engine thực hiện 2 pass: parse (collect declarations) → execute.
+
+**Why this matters in 2026 interviews:**
+- Scope/hoisting là câu hỏi Junior #1 tại mọi Vietnamese tech company
+- `var` bugs vẫn xuất hiện trong legacy codebases (Tiki, VNG)
+- TDZ (Temporal Dead Zone) là gotcha phổ biến khi migrate var → let/const
+- Module scope là nền tảng để hiểu bundlers (Webpack, Vite)
 
 ---
 
-## Tổng Quan / Overview
+## Concept Map / Bản Đồ Khái Niệm
 
-- **English:** This document explains lexical scope, scope chain, hoisting semantics, TDZ behavior, module boundaries, and advanced interview pitfalls.
-- **Tiếng Việt (Giải thích):** Tài liệu này giúp bạn hiểu sâu scope chain, cơ chế hoisting của từng loại declaration, TDZ, module scope và các bẫy phỏng vấn hay gặp.
+```
+                    SCOPE
+                      │
+        ┌─────────────┼─────────────┐
+        ▼             ▼             ▼
+   [Global]      [Function]     [Block]
+    (var)          (var)        (let/const)
+        │             │             │
+        └──────────────────────────┘
+                      │
+                 SCOPE CHAIN
+                 (lookup order)
+                      │
+                  CLOSURES
+                 (captures scope)
 
-- **Cross-reference:** Xem thêm: [Closures](./03-closures-comprehensive.md)
+HOISTING (compile phase):
+var → hoisted + initialized to undefined
+function declaration → hoisted + fully initialized
+let/const → hoisted + NOT initialized (TDZ)
+class → hoisted + NOT initialized (TDZ)
+```
+
+**Bạn đang ở đây trong lộ trình học:**
+```
+JS Basics → [SCOPE & HOISTING] → Closures → Execution Context → Async
+```
 
 ---
 
-## Scope Foundations
+## Overview / Tổng Quan
 
-- **Tổng Quan:** Scope quyết định nơi biến có thể được truy cập.
-- **Giải thích:** Hiểu đúng scope giúp tránh bug shadowing và leak biến toàn cục.
-- **Ví dụ:** Các câu hỏi bên dưới dùng JavaScript thuần để mô tả cơ chế cốt lõi.
+**Scope** defines where variables are accessible. **Hoisting** is the JS engine's behavior of moving declarations to the top of their scope during the compile phase.
 
-### 🟢 [Junior] Q01: What is global scope and when should you use it?
+**Tiếng Việt:** Scope xác định vùng mà variable có thể truy cập được. Hoisting là hành vi của JS engine khi "kéo" declarations lên đầu scope trong compile phase. Hiểu đúng 2 khái niệm này giải thích được 80% bugs mà junior developers gặp phải với `var`, function declarations, và TDZ errors.
 
-- **Tổng Quan:** What is global scope and when should you use it?
-- **Giải thích (VI):** global scope là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** global scope is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
+---
+
+## Core Concepts / Khái Niệm Cốt Lõi
+
+### 1. The Three Scope Types / Ba Loại Scope
+
+> 🧠 **Memory Hook**: **Global → Function → Block. `var` knows only 2 (global + function). `let/const` knows all 3.**
+
+**Tại sao có 3 loại scope?**
+→ Global scope: cần 1 nơi chia sẻ variables giữa files (nhưng ít dùng để tránh collision).
+→ Function scope: mỗi function cần sandbox riêng — caller không thấy local variables.
+→ Block scope: cần `i` trong for-loop không leak ra ngoài — `let` giải quyết vấn đề này ES6 đưa vào.
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+
+Hãy tưởng tượng tòa nhà văn phòng:
+- **Global scope**: bảng thông báo ở lobby — ai cũng thấy, ai cũng sửa được
+- **Function scope**: phòng làm việc riêng — chỉ người trong phòng thấy
+- **Block scope**: ngăn kéo trong phòng — chỉ người đang dùng ngăn kéo đó thấy
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
 ```javascript
-const globalVar = 'global';
+var globalVar = 'lobby';       // accessible everywhere
 
-function demo() {
-  const functionVar = 'function';
+function myRoom() {
+  var roomVar = 'my room';     // only inside myRoom()
+  let blockVar = 'temporary';  // only in this block
+
   if (true) {
-    const blockVar = 'block';
-    console.log(globalVar, functionVar, blockVar);
+    var stillRoom = 'var ignores blocks'; // still function-scoped!
+    let blockOnly = 'block-scoped';       // dies here
+    console.log(blockOnly); // ✅
   }
+  console.log(stillRoom); // ✅ var ignores the if-block boundary
+  console.log(blockOnly); // ❌ ReferenceError
+}
+
+console.log(globalVar); // ✅
+console.log(roomVar);   // ❌ ReferenceError
+```
+
+```
+Scope boundaries for var vs let/const:
+┌─────────────────────────────────────────────┐
+│ function myRoom() {         function scope  │
+│   var x;  ◄─────── x lives here            │
+│   if (true) {   block scope                 │
+│     var y;   ◄── y still lives in function! │
+│     let z;   ◄── z lives ONLY in this block │
+│   }                                         │
+│   console.log(y); // ✅ var ignores blocks  │
+│   console.log(z); // ❌ ReferenceError      │
+│ }                                           │
+└─────────────────────────────────────────────┘
+```
+
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
+- `var` in a `for` loop inside a function: scoped to the **function**, not the loop body
+- `let`/`const` in a `for` loop: **new binding per iteration** — key for closure-in-loop pattern
+- `const` is block-scoped but the VALUE can change for objects/arrays (reference is const, not contents)
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| "`var` inside `if` is scoped to `if`" | var is function-scoped, ignores blocks | var leaks out of any block except functions |
+| "`const` means immutable" | const means the binding cannot be reassigned | `const arr = []; arr.push(1)` is valid — array itself can mutate |
+| "let and const are not hoisted" | They ARE hoisted, but not initialized (TDZ) | `typeof let_var` before declaration → ReferenceError, not undefined |
+
+**🎯 Interview Pattern:**
+- Khi thấy: "what scope does this variable have?", "why does this print X not Y?"
+- → First: identify which keyword (`var`/`let`/`const`), then identify nearest enclosing function scope (for var) or block scope (for let/const)
+- → Answer opens with: *"var is function-scoped, so it ignores block boundaries like if/for. let and const are block-scoped, creating a new binding for each block."*
+
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: [JavaScript Basics](./00-javascript-basics.md) — variable declarations
+- ➡️ Để hiểu: [Closures](./03-closures-comprehensive.md) — closures capture scope chain
+
+---
+
+### 2. Scope Chain & Lexical Scope / Chuỗi Scope & Lexical Scope
+
+> 🧠 **Memory Hook**: **Scope chain = lookup order: inner → outer → global. Always walks UP, never down. Determined at WRITE time, not run time.**
+
+**Tại sao JS dùng lexical scope (thay vì dynamic scope)?**
+→ Vì nếu scope được xác định lúc runtime (dynamic scope), behavior của function thay đổi tùy ai gọi nó — rất khó predict.
+→ Lexical scope: behavior được xác định tại thời điểm viết code — dễ reason about hơn nhiều.
+→ Đây là design decision của Brendan Eich năm 1995, vẫn đúng đến ngày nay.
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+
+Bạn cần tìm một cuốn sách. Trước tiên tìm trong phòng mình (inner scope). Không có → tìm trong nhà (outer scope). Không có → tìm trong thư viện công cộng (global). Đây là scope chain — luôn tìm từ trong ra ngoài.
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
+```javascript
+const ENV = 'production'; // global
+
+function getConfig() {
+  const baseUrl = 'https://api.grab.com'; // getConfig scope
+
+  function buildUrl(path) {
+    // buildUrl has no 'baseUrl' or 'ENV' — walks up the chain
+    return `${baseUrl}/${path}?env=${ENV}`; // ✅ found via scope chain
+  }
+
+  return buildUrl('/drivers');
 }
 ```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
-### 🟡 [Mid] Q02: Common pitfalls of global scope in production systems?
 
-- **Tổng Quan:** Common pitfalls of global scope in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
+```
+Scope chain lookup for 'baseUrl' inside buildUrl:
+buildUrl scope ──► not found
+    │
+    ▼
+getConfig scope ──► FOUND: baseUrl = 'https://api.grab.com'
+    │ (would continue if not found)
+    ▼
+global scope ──► ENV = 'production'
+```
+
+**Lexical vs Dynamic scope:**
 ```javascript
-const globalVar = 'global';
+const x = 'global';
 
-function demo() {
-  const functionVar = 'function';
+function foo() {
+  console.log(x); // JS uses LEXICAL scope → always 'global'
+}
+
+function bar() {
+  const x = 'bar';
+  foo(); // if dynamic scope: 'bar'. Lexical scope: 'global'
+}
+
+bar(); // → 'global' (lexical: foo's scope chain set at definition time)
+```
+
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
+- `with` statement (deprecated): the only way to create dynamic scope in JS — banned in strict mode
+- `eval` with string: can add variables to surrounding scope — another reason to ban eval
+- Arrow functions: no own `this`, but they DO have their own scope chain (same as regular functions for variable lookup)
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| "Function's scope is determined when called" | Scope chain set at definition time (lexical) | Where the function is WRITTEN determines its scope, not where it's called |
+| "Inner scope can access outer scope AND vice versa" | One-way: inner can access outer; outer CANNOT access inner | Scope chain goes up only, never down |
+| "`this` follows lexical scope" | `this` is dynamic (set by call site), not lexical | Arrow function's `this` is lexical; regular function's `this` is dynamic |
+
+**🎯 Interview Pattern:**
+- Khi thấy: "what does this log?", "can function A access variable from function B?"
+- → Draw the scope chain: where is each variable defined? Walk up from inner to outer.
+- → Answer opens with: *"JavaScript uses lexical scope — the scope chain is determined at the time the function is written, not when it's called. So I need to look at where this function is defined in the source code."*
+
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: Three scope types above
+- ➡️ Để hiểu: [Closures](./03-closures-comprehensive.md) — closure = function + scope chain
+
+---
+
+### 3. Hoisting in Detail / Hoisting Chi Tiết
+
+> 🧠 **Memory Hook**:
+> ```
+> var       → hoisted + undefined     (usable but wrong value)
+> function  → hoisted + FULL body     (ready to call immediately)
+> let/const → hoisted + TDZ           (unusable until declaration line)
+> class     → hoisted + TDZ           (same as let)
+> ```
+
+**Tại sao JS hoist?**
+→ Vì JS engine làm 2 pass: compile phase (collect all declarations) → execute phase (run code).
+→ `function declarations` được hoist fully để cho phép mutual recursion (A gọi B, B gọi A) mà không cần order function definitions.
+→ `var` hoist là "accident" của design — useful nếu biết, dangerous nếu không biết.
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+
+Hãy tưởng tượng trước khi học sinh vào lớp, giáo viên đọc qua danh sách học sinh (compile phase). Khi lớp bắt đầu (execute phase), giáo viên đã biết tên tất cả học sinh — nhưng chưa biết đặc điểm của họ. Đây là hoisting: declarations known, values not assigned yet.
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
+```javascript
+// What you write:
+console.log(a);  // undefined (not ReferenceError!)
+var a = 5;
+console.log(a);  // 5
+
+greet();         // ✅ works! function declaration fully hoisted
+function greet() { console.log('hello'); }
+
+// What JS engine sees (conceptually):
+var a;           // declaration hoisted, value undefined
+function greet() { console.log('hello'); } // fully hoisted
+
+console.log(a);  // undefined
+a = 5;           // assignment stays in place
+console.log(a);  // 5
+greet();         // works
+```
+
+```
+Hoisting comparison table:
+┌──────────────────┬────────────┬─────────────────────────────────────┐
+│ Declaration      │ Hoisted?   │ Usable before declaration?          │
+├──────────────────┼────────────┼─────────────────────────────────────┤
+│ var x            │ ✅ yes     │ ✅ yes (but value = undefined)      │
+│ function f() {}  │ ✅ yes     │ ✅ yes (full function body)         │
+│ let x            │ ✅ yes     │ ❌ no (TDZ → ReferenceError)       │
+│ const x          │ ✅ yes     │ ❌ no (TDZ → ReferenceError)       │
+│ class C {}       │ ✅ yes     │ ❌ no (TDZ → ReferenceError)       │
+│ var f = () => {} │ ✅ yes     │ ✅ f hoisted (undefined), not body  │
+│ let f = () => {} │ ✅ yes     │ ❌ no (TDZ)                        │
+└──────────────────┴────────────┴─────────────────────────────────────┘
+```
+
+**TDZ (Temporal Dead Zone):**
+```javascript
+console.log(x); // ❌ ReferenceError: Cannot access 'x' before initialization
+let x = 5;
+// The TDZ for x starts at top of block, ends at the declaration line
+```
+
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
+- **Function expression vs declaration**: `var fn = function() {}` — `fn` is hoisted (value: undefined), function body is NOT. Calling `fn()` before assignment → `TypeError: fn is not a function`
+- **Class hoisting**: classes extend `let` behavior — TDZ applies. Cannot use class before declaration.
+- **Hoisting in blocks**: `let`/`const` are hoisted to the TOP OF THEIR BLOCK (not function top) and enter TDZ until declaration
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| "`let` is not hoisted" | let IS hoisted to top of block, just in TDZ | The TDZ error from using let before declaration is different from ReferenceError of non-existent var |
+| "Function expressions are fully hoisted" | Only the variable declaration is hoisted, not the function body | `var fn = () => {}` → fn is undefined before that line |
+| "Hoisting physically moves code" | Hoisting is a mental model; JS engine doesn't move code | Engine processes declarations in compile phase, executions in execute phase |
+
+**🎯 Interview Pattern:**
+- Khi thấy: "what does this log?", "why TypeError vs ReferenceError?"
+- → Identify declaration type → apply hoisting rules → determine what value is accessible at that point
+- → Answer opens with: *"This depends on which type of declaration. var is hoisted and initialized to undefined, so accessing it before assignment gives undefined. let/const are hoisted but in TDZ, so accessing before declaration gives ReferenceError."*
+
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: The three scope types
+- ➡️ Để hiểu: [Execution Context](./16-execution-context-theory.md) — hoisting is part of creation phase
+
+---
+
+## Q&A Section / Câu Hỏi Phỏng Vấn
+
+### Q: What is the difference between var, let, and const regarding scope? 🟢 Junior
+
+**A:** The key difference is scope type:
+- `var`: **function-scoped** — accessible anywhere within the enclosing function (ignores blocks)
+- `let`: **block-scoped** — accessible only within `{}` where declared
+- `const`: **block-scoped** same as let, plus the binding cannot be reassigned
+
+```javascript
+function example() {
+  var a = 1;
+  let b = 2;
+
   if (true) {
-    const blockVar = 'block';
-    console.log(globalVar, functionVar, blockVar);
+    var a = 10;  // same variable! overwrites outer a
+    let b = 20;  // different variable — new block scope
+    console.log(a, b); // 10, 20
   }
+  console.log(a, b); // 10, 2 (var a was overwritten; let b wasn't)
 }
 ```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
-### 🔴 [Senior] Q03: How do you design a robust architecture around global scope?
 
-- **Tổng Quan:** How do you design a robust architecture around global scope?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
+**Tiếng Việt:** `var` là function-scoped — mọi block `if/for/while` đều bị ignore. `let/const` là block-scoped — mỗi `{}` tạo scope riêng. Trong loop: `var i` → 1 variable dùng chung cho tất cả iterations; `let i` → 1 variable mới mỗi iteration (quan trọng cho closures trong loop).
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Giải thích được loop closure bug với var vs let, nêu const không ngăn mutation (chỉ ngăn reassignment)
+- ❌ Weak: "let/const là modern hơn, dùng chúng thay var" — đúng nhưng không giải thích tại sao
+
+---
+
+### Q: What does this code log and why? 🟢 Junior
+
 ```javascript
-const globalVar = 'global';
+console.log(x);
+var x = 5;
+console.log(y);
+let y = 10;
+```
 
-function demo() {
-  const functionVar = 'function';
-  if (true) {
-    const blockVar = 'block';
-    console.log(globalVar, functionVar, blockVar);
-  }
+**A:** First `console.log(x)` → `undefined`. Second `console.log(y)` → `ReferenceError`.
+
+Why:
+- `var x` is **hoisted** and initialized to `undefined` in compile phase. At runtime, the declaration has been processed but value isn't assigned yet → `undefined`.
+- `let y` is **hoisted but enters TDZ** (Temporal Dead Zone). Accessing `y` before its declaration line throws `ReferenceError: Cannot access 'y' before initialization`.
+
+**Tiếng Việt:** var được hoist VÀ khởi tạo với `undefined` → dùng trước khai báo được (nhưng value là undefined). let/const được hoist nhưng ở trong TDZ → dùng trước khai báo throw ReferenceError. TDZ là "vùng chết" từ đầu scope đến dòng khai báo — variable tồn tại nhưng không dùng được.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Phân biệt `undefined` (var) vs `ReferenceError` (let TDZ), giải thích compile phase vs execute phase
+- ❌ Weak: "var prints undefined because it's undefined" — không giải thích tại sao
+
+---
+
+### Q: Explain the classic for-loop closure bug and all fixes 🟡 Mid
+
+**A:** The bug:
+```javascript
+for (var i = 0; i < 3; i++) {
+  setTimeout(() => console.log(i), 100);
 }
+// Prints: 3, 3, 3 — NOT 0, 1, 2
 ```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
-### 🟢 [Junior] Q04: What is function scope and when should you use it?
 
-- **Tổng Quan:** What is function scope and when should you use it?
-- **Giải thích (VI):** function scope là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** function scope is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
+Why: `var i` is function-scoped → single `i` shared by all 3 closures. Loop completes before timeouts fire → `i = 3` for all.
+
+**Three fixes:**
 ```javascript
-const globalVar = 'global';
-
-function demo() {
-  const functionVar = 'function';
-  if (true) {
-    const blockVar = 'block';
-    console.log(globalVar, functionVar, blockVar);
-  }
+// Fix 1: let — new binding per iteration (best)
+for (let i = 0; i < 3; i++) {
+  setTimeout(() => console.log(i), 100); // 0, 1, 2 ✅
 }
-```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
-### 🟡 [Mid] Q05: Common pitfalls of function scope in production systems?
 
-- **Tổng Quan:** Common pitfalls of function scope in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-const globalVar = 'global';
-
-function demo() {
-  const functionVar = 'function';
-  if (true) {
-    const blockVar = 'block';
-    console.log(globalVar, functionVar, blockVar);
-  }
+// Fix 2: IIFE — manually create new scope (pre-ES6)
+for (var i = 0; i < 3; i++) {
+  ((j) => setTimeout(() => console.log(j), 100))(i);
 }
+
+// Fix 3: forEach (avoids var loop entirely)
+[0, 1, 2].forEach(i => setTimeout(() => console.log(i), 100));
 ```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
-### 🔴 [Senior] Q06: How do you design a robust architecture around function scope?
 
-- **Tổng Quan:** How do you design a robust architecture around function scope?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
+**Tiếng Việt:** Key insight: `let` tạo **new binding per iteration** — như thể có 3 biến `i` riêng biệt cho 3 iterations. `var` chỉ có 1 biến, bị chia sẻ bởi tất cả closures.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Giải thích "shared binding vs new binding per iteration", biết cả 3 fixes và trade-offs
+- ❌ Weak: Chỉ nói "dùng let" — đúng nhưng không demonstrate understanding
+
+---
+
+### Q: What is the Temporal Dead Zone? Give a non-obvious example 🟡 Mid
+
+**A:** TDZ is the period between entering a scope and the variable's declaration line — accessing during TDZ throws `ReferenceError`.
+
+Non-obvious example where TDZ bites:
 ```javascript
-const globalVar = 'global';
+let x = 1;
 
-function demo() {
-  const functionVar = 'function';
-  if (true) {
-    const blockVar = 'block';
-    console.log(globalVar, functionVar, blockVar);
-  }
+function example() {
+  console.log(x); // ❌ ReferenceError — NOT 1 from outer scope!
+  let x = 2;      // inner x is in TDZ from function start to here
 }
+
+example();
 ```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
-### 🟢 [Junior] Q07: What is block scope and when should you use it?
 
-- **Tổng Quan:** What is block scope and when should you use it?
-- **Giải thích (VI):** block scope là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** block scope is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
+Surprise: even though outer `x = 1` exists, the inner `let x` declaration **shadows** it from the top of the function block — creating TDZ for inner `x`. The outer `x` is invisible during TDZ.
+
+**Tiếng Việt:** TDZ xảy ra ngay từ đầu scope của variable, không phải từ đầu function. Trong ví dụ trên, `let x` trong function tạo TDZ cho `x` từ đầu function đến dòng `let x = 2` — trong thời gian đó, outer `x` bị shadow. Đây là gotcha phổ biến khi refactor `var` → `let` trong legacy code.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Explain shadowing + TDZ interaction, biết TDZ starts at block entry (not function top)
+- ❌ Weak: "TDZ là lỗi khi dùng let trước khai báo" — đúng nhưng bỏ qua shadowing behavior
+
+---
+
+### Q: Design a scope strategy for a large-scale FE codebase — minimize global pollution, maximize encapsulation 🔴 Senior
+
+**A:** For a Grab-scale FE app with multiple teams and micro-frontends:
+
 ```javascript
-const globalVar = 'global';
+// Layer 1: ES modules as scope boundary (modern, preferred)
+// Each .js file is its own module scope — nothing leaks by default
+export const config = { ... };  // intentionally shared
+const _internal = { ... };      // module-private, never exported
 
-function demo() {
-  const functionVar = 'function';
-  if (true) {
-    const blockVar = 'block';
-    console.log(globalVar, functionVar, blockVar);
-  }
-}
-```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
-### 🟡 [Mid] Q08: Common pitfalls of block scope in production systems?
-
-- **Tổng Quan:** Common pitfalls of block scope in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-const globalVar = 'global';
-
-function demo() {
-  const functionVar = 'function';
-  if (true) {
-    const blockVar = 'block';
-    console.log(globalVar, functionVar, blockVar);
-  }
-}
-```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
-### 🔴 [Senior] Q09: How do you design a robust architecture around block scope?
-
-- **Tổng Quan:** How do you design a robust architecture around block scope?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-const globalVar = 'global';
-
-function demo() {
-  const functionVar = 'function';
-  if (true) {
-    const blockVar = 'block';
-    console.log(globalVar, functionVar, blockVar);
-  }
-}
-```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
-## Lexical Scoping and Scope Chain
-
-- **Tổng Quan:** JavaScript dùng lexical scope, không phải dynamic scope.
-- **Giải thích:** Resolver tìm biến theo vị trí khai báo trong source code và leo scope chain.
-- **Ví dụ:** Các câu hỏi bên dưới dùng JavaScript thuần để mô tả cơ chế cốt lõi.
-
-### 🟢 [Junior] Q10: What is lexical scope and when should you use it?
-
-- **Tổng Quan:** What is lexical scope and when should you use it?
-- **Giải thích (VI):** lexical scope là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** lexical scope is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-const globalVar = 'global';
-
-function demo() {
-  const functionVar = 'function';
-  if (true) {
-    const blockVar = 'block';
-    console.log(globalVar, functionVar, blockVar);
-  }
-}
-```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md), [Async](./09-async-comprehensive.md)
-### 🟡 [Mid] Q11: Common pitfalls of lexical scope in production systems?
-
-- **Tổng Quan:** Common pitfalls of lexical scope in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-const globalVar = 'global';
-
-function demo() {
-  const functionVar = 'function';
-  if (true) {
-    const blockVar = 'block';
-    console.log(globalVar, functionVar, blockVar);
-  }
-}
-```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md), [Async](./09-async-comprehensive.md)
-### 🔴 [Senior] Q12: How do you design a robust architecture around lexical scope?
-
-- **Tổng Quan:** How do you design a robust architecture around lexical scope?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-const globalVar = 'global';
-
-function demo() {
-  const functionVar = 'function';
-  if (true) {
-    const blockVar = 'block';
-    console.log(globalVar, functionVar, blockVar);
-  }
-}
-```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md), [Async](./09-async-comprehensive.md)
-### 🟢 [Junior] Q13: What is scope chain lookup and when should you use it?
-
-- **Tổng Quan:** What is scope chain lookup and when should you use it?
-- **Giải thích (VI):** scope chain lookup là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** scope chain lookup is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-const globalVar = 'global';
-
-function demo() {
-  const functionVar = 'function';
-  if (true) {
-    const blockVar = 'block';
-    console.log(globalVar, functionVar, blockVar);
-  }
-}
-```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md), [Async](./09-async-comprehensive.md)
-### 🟡 [Mid] Q14: Common pitfalls of scope chain lookup in production systems?
-
-- **Tổng Quan:** Common pitfalls of scope chain lookup in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-const globalVar = 'global';
-
-function demo() {
-  const functionVar = 'function';
-  if (true) {
-    const blockVar = 'block';
-    console.log(globalVar, functionVar, blockVar);
-  }
-}
-```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md), [Async](./09-async-comprehensive.md)
-### 🔴 [Senior] Q15: How do you design a robust architecture around scope chain lookup?
-
-- **Tổng Quan:** How do you design a robust architecture around scope chain lookup?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-const globalVar = 'global';
-
-function demo() {
-  const functionVar = 'function';
-  if (true) {
-    const blockVar = 'block';
-    console.log(globalVar, functionVar, blockVar);
-  }
-}
-```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md), [Async](./09-async-comprehensive.md)
-### 🟢 [Junior] Q16: What is variable shadowing and when should you use it?
-
-- **Tổng Quan:** What is variable shadowing and when should you use it?
-- **Giải thích (VI):** variable shadowing là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** variable shadowing is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-const globalVar = 'global';
-
-function demo() {
-  const functionVar = 'function';
-  if (true) {
-    const blockVar = 'block';
-    console.log(globalVar, functionVar, blockVar);
-  }
-}
-```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md), [Async](./09-async-comprehensive.md)
-### 🟡 [Mid] Q17: Common pitfalls of variable shadowing in production systems?
-
-- **Tổng Quan:** Common pitfalls of variable shadowing in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-const globalVar = 'global';
-
-function demo() {
-  const functionVar = 'function';
-  if (true) {
-    const blockVar = 'block';
-    console.log(globalVar, functionVar, blockVar);
-  }
-}
-```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md), [Async](./09-async-comprehensive.md)
-### 🔴 [Senior] Q18: How do you design a robust architecture around variable shadowing?
-
-- **Tổng Quan:** How do you design a robust architecture around variable shadowing?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-const globalVar = 'global';
-
-function demo() {
-  const functionVar = 'function';
-  if (true) {
-    const blockVar = 'block';
-    console.log(globalVar, functionVar, blockVar);
-  }
-}
-```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md), [Async](./09-async-comprehensive.md)
-## Hoisting Matrix
-
-- **Tổng Quan:** Hoisting khác nhau giữa var, let, const, function, class.
-- **Giải thích:** Hiểu matrix hoisting giúp dự đoán runtime chính xác trong interview.
-- **Ví dụ:** Các câu hỏi bên dưới dùng JavaScript thuần để mô tả cơ chế cốt lõi.
-
-### 🟢 [Junior] Q19: What is var hoisting and when should you use it?
-
-- **Tổng Quan:** What is var hoisting and when should you use it?
-- **Giải thích (VI):** var hoisting là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** var hoisting is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-console.log(a); // undefined
-var a = 10;
-
-// console.log(b); // ReferenceError
-let b = 20;
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟡 [Mid] Q20: Common pitfalls of var hoisting in production systems?
-
-- **Tổng Quan:** Common pitfalls of var hoisting in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-console.log(a); // undefined
-var a = 10;
-
-// console.log(b); // ReferenceError
-let b = 20;
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🔴 [Senior] Q21: How do you design a robust architecture around var hoisting?
-
-- **Tổng Quan:** How do you design a robust architecture around var hoisting?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-console.log(a); // undefined
-var a = 10;
-
-// console.log(b); // ReferenceError
-let b = 20;
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟢 [Junior] Q22: What is let/const hoisting and TDZ and when should you use it?
-
-- **Tổng Quan:** What is let/const hoisting and TDZ and when should you use it?
-- **Giải thích (VI):** let/const hoisting and TDZ là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** let/const hoisting and TDZ is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-function run() {
-  // console.log(x); // ReferenceError: TDZ
-  let x = 42;
-  return x;
-}
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟡 [Mid] Q23: Common pitfalls of let/const hoisting and TDZ in production systems?
-
-- **Tổng Quan:** Common pitfalls of let/const hoisting and TDZ in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-function run() {
-  // console.log(x); // ReferenceError: TDZ
-  let x = 42;
-  return x;
-}
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🔴 [Senior] Q24: How do you design a robust architecture around let/const hoisting and TDZ?
-
-- **Tổng Quan:** How do you design a robust architecture around let/const hoisting and TDZ?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-function run() {
-  // console.log(x); // ReferenceError: TDZ
-  let x = 42;
-  return x;
-}
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟢 [Junior] Q25: What is function declaration hoisting and when should you use it?
-
-- **Tổng Quan:** What is function declaration hoisting and when should you use it?
-- **Giải thích (VI):** function declaration hoisting là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** function declaration hoisting is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-console.log(a); // undefined
-var a = 10;
-
-// console.log(b); // ReferenceError
-let b = 20;
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟡 [Mid] Q26: Common pitfalls of function declaration hoisting in production systems?
-
-- **Tổng Quan:** Common pitfalls of function declaration hoisting in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-console.log(a); // undefined
-var a = 10;
-
-// console.log(b); // ReferenceError
-let b = 20;
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🔴 [Senior] Q27: How do you design a robust architecture around function declaration hoisting?
-
-- **Tổng Quan:** How do you design a robust architecture around function declaration hoisting?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-console.log(a); // undefined
-var a = 10;
-
-// console.log(b); // ReferenceError
-let b = 20;
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟢 [Junior] Q28: What is class hoisting behavior and when should you use it?
-
-- **Tổng Quan:** What is class hoisting behavior and when should you use it?
-- **Giải thích (VI):** class hoisting behavior là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** class hoisting behavior is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-function run() {
-  // console.log(x); // ReferenceError: TDZ
-  let x = 42;
-  return x;
-}
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟡 [Mid] Q29: Common pitfalls of class hoisting behavior in production systems?
-
-- **Tổng Quan:** Common pitfalls of class hoisting behavior in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-function run() {
-  // console.log(x); // ReferenceError: TDZ
-  let x = 42;
-  return x;
-}
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🔴 [Senior] Q30: How do you design a robust architecture around class hoisting behavior?
-
-- **Tổng Quan:** How do you design a robust architecture around class hoisting behavior?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-function run() {
-  // console.log(x); // ReferenceError: TDZ
-  let x = 42;
-  return x;
-}
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-## TDZ in Detail
-
-- **Tổng Quan:** TDZ là khoảng thời gian biến tồn tại nhưng chưa initialized.
-- **Giải thích:** Access biến trong TDZ gây ReferenceError để bảo vệ tính rõ ràng.
-- **Ví dụ:** Các câu hỏi bên dưới dùng JavaScript thuần để mô tả cơ chế cốt lõi.
-
-### 🟢 [Junior] Q31: What is temporal dead zone and when should you use it?
-
-- **Tổng Quan:** What is temporal dead zone and when should you use it?
-- **Giải thích (VI):** temporal dead zone là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** temporal dead zone is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-function run() {
-  // console.log(x); // ReferenceError: TDZ
-  let x = 42;
-  return x;
-}
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟡 [Mid] Q32: Common pitfalls of temporal dead zone in production systems?
-
-- **Tổng Quan:** Common pitfalls of temporal dead zone in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-function run() {
-  // console.log(x); // ReferenceError: TDZ
-  let x = 42;
-  return x;
-}
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🔴 [Senior] Q33: How do you design a robust architecture around temporal dead zone?
-
-- **Tổng Quan:** How do you design a robust architecture around temporal dead zone?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-function run() {
-  // console.log(x); // ReferenceError: TDZ
-  let x = 42;
-  return x;
-}
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟢 [Junior] Q34: What is default parameters and TDZ edge cases and when should you use it?
-
-- **Tổng Quan:** What is default parameters and TDZ edge cases and when should you use it?
-- **Giải thích (VI):** default parameters and TDZ edge cases là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** default parameters and TDZ edge cases is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-function run() {
-  // console.log(x); // ReferenceError: TDZ
-  let x = 42;
-  return x;
-}
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟡 [Mid] Q35: Common pitfalls of default parameters and TDZ edge cases in production systems?
-
-- **Tổng Quan:** Common pitfalls of default parameters and TDZ edge cases in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-function run() {
-  // console.log(x); // ReferenceError: TDZ
-  let x = 42;
-  return x;
-}
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🔴 [Senior] Q36: How do you design a robust architecture around default parameters and TDZ edge cases?
-
-- **Tổng Quan:** How do you design a robust architecture around default parameters and TDZ edge cases?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-function run() {
-  // console.log(x); // ReferenceError: TDZ
-  let x = 42;
-  return x;
-}
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟢 [Junior] Q37: What is TDZ in loops and when should you use it?
-
-- **Tổng Quan:** What is TDZ in loops and when should you use it?
-- **Giải thích (VI):** TDZ in loops là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** TDZ in loops is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-function run() {
-  // console.log(x); // ReferenceError: TDZ
-  let x = 42;
-  return x;
-}
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟡 [Mid] Q38: Common pitfalls of TDZ in loops in production systems?
-
-- **Tổng Quan:** Common pitfalls of TDZ in loops in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-function run() {
-  // console.log(x); // ReferenceError: TDZ
-  let x = 42;
-  return x;
-}
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🔴 [Senior] Q39: How do you design a robust architecture around TDZ in loops?
-
-- **Tổng Quan:** How do you design a robust architecture around TDZ in loops?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-function run() {
-  // console.log(x); // ReferenceError: TDZ
-  let x = 42;
-  return x;
-}
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-## Historical and Module Scope Patterns
-
-- **Tổng Quan:** IIFE từng là công cụ tạo scope riêng trước ES modules.
-- **Giải thích:** Ngày nay module scope thay thế nhiều nhu cầu IIFE nhưng vẫn cần biết để đọc code cũ.
-- **Ví dụ:** Các câu hỏi bên dưới dùng JavaScript thuần để mô tả cơ chế cốt lõi.
-
-### 🟢 [Junior] Q40: What is IIFE isolation pattern and when should you use it?
-
-- **Tổng Quan:** What is IIFE isolation pattern and when should you use it?
-- **Giải thích (VI):** IIFE isolation pattern là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** IIFE isolation pattern is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-(function initApp() {
-  const secret = 'only in IIFE';
-  console.log('initialized');
+// Layer 2: Object namespace for legacy code (no bundler)
+const GrabApp = GrabApp || {};
+GrabApp.drivers = (function() {
+  const _state = {};     // private to this IIFE
+  return { getState() { return _state; } };
 })();
+
+// Layer 3: Variable declaration discipline
+const MAX_RETRIES = 3;    // const for values that shouldn't change
+let requestCount = 0;     // let only if you need to reassign
+// Never: var in new code
+
+// Layer 4: Strict mode to catch implicit globals
+'use strict'; // undeclared x = 1 → TypeError
+
+// Layer 5: Micro-frontend sandboxing
+(function(window) {
+  // Isolated scope — accidental var declarations stay here
+  // Each micro-frontend wrapped in its own IIFE
+})(window);
 ```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
-### 🟡 [Mid] Q41: Common pitfalls of IIFE isolation pattern in production systems?
 
-- **Tổng Quan:** Common pitfalls of IIFE isolation pattern in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-(function initApp() {
-  const secret = 'only in IIFE';
-  console.log('initialized');
-})();
-```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
-### 🔴 [Senior] Q42: How do you design a robust architecture around IIFE isolation pattern?
+**Tiếng Việt:** Strategy tốt nhất: (1) ES modules làm scope boundary chính, (2) `const` mặc định + `let` khi cần reassign + không bao giờ `var`, (3) `'use strict'` để catch accidental globals, (4) IIFE namespace cho legacy code không có bundler, (5) IIFE wrapping cho micro-frontends. Với Tree-shaking: ES modules cho phép bundler xóa unused exports — IIFE namespace không tree-shakeable.
 
-- **Tổng Quan:** How do you design a robust architecture around IIFE isolation pattern?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-(function initApp() {
-  const secret = 'only in IIFE';
-  console.log('initialized');
-})();
-```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
-### 🟢 [Junior] Q43: What is module scope in ES modules and when should you use it?
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Phân layer (ES modules > IIFE > strict mode), xét micro-frontend scale, mention tree-shaking implications
+- ❌ Weak: "Dùng let/const và modules" — quá đơn giản cho Senior level, thiếu scale/team considerations
 
-- **Tổng Quan:** What is module scope in ES modules and when should you use it?
-- **Giải thích (VI):** module scope in ES modules là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** module scope in ES modules is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-// user.js
-const privateToken = 'abc';
-export function getUser() {
-  return { id: 1 };
-}
-```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
-### 🟡 [Mid] Q44: Common pitfalls of module scope in ES modules in production systems?
+---
 
-- **Tổng Quan:** Common pitfalls of module scope in ES modules in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-// user.js
-const privateToken = 'abc';
-export function getUser() {
-  return { id: 1 };
-}
-```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
-### 🔴 [Senior] Q45: How do you design a robust architecture around module scope in ES modules?
+## Interview Q&A Summary / Tổng Kết Phỏng Vấn
 
-- **Tổng Quan:** How do you design a robust architecture around module scope in ES modules?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-// user.js
-const privateToken = 'abc';
-export function getUser() {
-  return { id: 1 };
-}
-```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
-### 🟢 [Junior] Q46: What is strict mode scope differences and when should you use it?
+| Question | Level | Key Point |
+|----------|-------|-----------|
+| var vs let vs const scope | 🟢 | var = function scope, let/const = block scope; const only prevents reassignment |
+| Hoisting code output | 🟢 | var → undefined; let/const → ReferenceError (TDZ) |
+| for-loop closure bug | 🟡 | var = shared binding; let = new binding per iteration; 3 fixes |
+| TDZ non-obvious example | 🟡 | inner let shadows outer var from top of block; TDZ + shadowing interaction |
+| Large-scale scope strategy | 🔴 | ES modules > IIFE > strict mode; layers for legacy + modern; tree-shaking awareness |
 
-- **Tổng Quan:** What is strict mode scope differences and when should you use it?
-- **Giải thích (VI):** strict mode scope differences là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** strict mode scope differences is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-'use strict';
-function f() {
-  // accidental = 1; // ReferenceError in strict mode
-  let local = 1;
-  return local;
-}
-```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
-### 🟡 [Mid] Q47: Common pitfalls of strict mode scope differences in production systems?
+---
 
-- **Tổng Quan:** Common pitfalls of strict mode scope differences in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-'use strict';
-function f() {
-  // accidental = 1; // ReferenceError in strict mode
-  let local = 1;
-  return local;
-}
-```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
-### 🔴 [Senior] Q48: How do you design a robust architecture around strict mode scope differences?
+## ⚡ Cold Call Simulation / Mô Phỏng Phỏng Vấn
 
-- **Tổng Quan:** How do you design a robust architecture around strict mode scope differences?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-'use strict';
-function f() {
-  // accidental = 1; // ReferenceError in strict mode
-  let local = 1;
-  return local;
-}
-```
-- **Related / Liên quan:** Xem thêm: [Closures](./03-closures-comprehensive.md)
-## Dangerous Constructs and Function Forms
+> 🎯 Interviewer asks cold: **"Why does this `for` loop with `var` print 3, 3, 3 instead of 0, 1, 2?"**
 
-- **Tổng Quan:** eval/with làm code khó tối ưu và khó phân tích.
-- **Giải thích:** Arrow function và regular function khác nhau về this/arguments/new target.
-- **Ví dụ:** Các câu hỏi bên dưới dùng JavaScript thuần để mô tả cơ chế cốt lõi.
+**30 giây đầu — mở đầu lý tưởng:**
+1. "This is a classic scope + closure interaction bug — `var` is function-scoped, so all 3 iterations share the exact same `i` variable."
+2. "The loop finishes executing synchronously before any of the setTimeout callbacks run, so by the time they fire, `i` has already reached its final value of 3."
+3. "Each closure captures a reference to `i`, not a copy of its value — so all 3 closures print 3."
+4. "The fix: change `var` to `let` — block-scoped `let` creates a new binding per iteration, so each closure captures its own separate `i`."
 
-### 🟢 [Junior] Q49: What is eval and scope impact and when should you use it?
+---
 
-- **Tổng Quan:** What is eval and scope impact and when should you use it?
-- **Giải thích (VI):** eval and scope impact là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** eval and scope impact is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-function testEval() {
-  const a = 1;
-  eval('console.log(a)');
-}
-testEval();
-```
-- **Related / Liên quan:** Xem thêm: [Prototypes](./10-prototypes-inheritance-deep.md)
-### 🟡 [Mid] Q50: Common pitfalls of eval and scope impact in production systems?
+## Self-Check / Tự Kiểm Tra ⚡
+> **Đóng tài liệu lại trước khi làm — Close this doc before attempting.**
 
-- **Tổng Quan:** Common pitfalls of eval and scope impact in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-function testEval() {
-  const a = 1;
-  eval('console.log(a)');
-}
-testEval();
-```
-- **Related / Liên quan:** Xem thêm: [Prototypes](./10-prototypes-inheritance-deep.md)
-### 🔴 [Senior] Q51: How do you design a robust architecture around eval and scope impact?
+- [ ] **Retrieval**: Không nhìn lại — viết ra: `var` scope là gì? `let` scope là gì? Khác nhau điểm gì trong for-loop?
+- [ ] **Visual**: Vẽ scope chain cho đoạn code này từ trí nhớ: `const x = 1; function a() { const y = 2; function b() { console.log(x, y); } }` — b() tìm x và y ở đâu?
+- [ ] **Application**: Code này print gì: `console.log(typeof undeclaredVar)` vs `console.log(typeof letVar); let letVar = 1`? Tại sao khác nhau?
+- [ ] **Debug**: Bạn refactor code từ `var` sang `let` trong 1 function và bắt đầu thấy `ReferenceError`. Nguyên nhân có thể là gì?
+- [ ] **Teach**: Giải thích cho người không biết lập trình tại sao `var` trong for-loop gây bug, dùng analogy "nhân viên dùng chung notepad".
 
-- **Tổng Quan:** How do you design a robust architecture around eval and scope impact?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-function testEval() {
-  const a = 1;
-  eval('console.log(a)');
-}
-testEval();
-```
-- **Related / Liên quan:** Xem thêm: [Prototypes](./10-prototypes-inheritance-deep.md)
-### 🟢 [Junior] Q52: What is with statement risks and when should you use it?
+💬 **Feynman Prompt:** Giải thích Temporal Dead Zone cho 1 người chưa bao giờ code. Không dùng từ "hoisting", "TDZ", "scope" — chỉ dùng analogy thực tế.
 
-- **Tổng Quan:** What is with statement risks and when should you use it?
-- **Giải thích (VI):** with statement risks là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** with statement risks is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-const user = { name: 'Buu' };
-// with (user) {
-//   console.log(name);
-// }
-// Tránh dùng 'with' vì gây mơ hồ scope
-```
-- **Related / Liên quan:** Xem thêm: [Prototypes](./10-prototypes-inheritance-deep.md)
-### 🟡 [Mid] Q53: Common pitfalls of with statement risks in production systems?
+🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày → 7 ngày → 14 ngày** để chuyển vào long-term memory.
 
-- **Tổng Quan:** Common pitfalls of with statement risks in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-const user = { name: 'Buu' };
-// with (user) {
-//   console.log(name);
-// }
-// Tránh dùng 'with' vì gây mơ hồ scope
-```
-- **Related / Liên quan:** Xem thêm: [Prototypes](./10-prototypes-inheritance-deep.md)
-### 🔴 [Senior] Q54: How do you design a robust architecture around with statement risks?
+---
 
-- **Tổng Quan:** How do you design a robust architecture around with statement risks?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-const user = { name: 'Buu' };
-// with (user) {
-//   console.log(name);
-// }
-// Tránh dùng 'with' vì gây mơ hồ scope
-```
-- **Related / Liên quan:** Xem thêm: [Prototypes](./10-prototypes-inheritance-deep.md)
-### 🟢 [Junior] Q55: What is arrow vs regular function scope behavior and when should you use it?
+## Connections / Liên Kết
 
-- **Tổng Quan:** What is arrow vs regular function scope behavior and when should you use it?
-- **Giải thích (VI):** arrow vs regular function scope behavior là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** arrow vs regular function scope behavior is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-const obj = {
-  value: 10,
-  regular() { return this.value; },
-  arrow: () => this
-};
-console.log(obj.regular());
-```
-- **Related / Liên quan:** Xem thêm: [Prototypes](./10-prototypes-inheritance-deep.md)
-### 🟡 [Mid] Q56: Common pitfalls of arrow vs regular function scope behavior in production systems?
-
-- **Tổng Quan:** Common pitfalls of arrow vs regular function scope behavior in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-const obj = {
-  value: 10,
-  regular() { return this.value; },
-  arrow: () => this
-};
-console.log(obj.regular());
-```
-- **Related / Liên quan:** Xem thêm: [Prototypes](./10-prototypes-inheritance-deep.md)
-### 🔴 [Senior] Q57: How do you design a robust architecture around arrow vs regular function scope behavior?
-
-- **Tổng Quan:** How do you design a robust architecture around arrow vs regular function scope behavior?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-const obj = {
-  value: 10,
-  regular() { return this.value; },
-  arrow: () => this
-};
-console.log(obj.regular());
-```
-- **Related / Liên quan:** Xem thêm: [Prototypes](./10-prototypes-inheritance-deep.md)
-## Câu Hỏi Phỏng Vấn / Interview Q&A
-
-### 🟢 [Junior] Q58: What is predicting output with nested scopes and when should you use it?
-
-- **Tổng Quan:** What is predicting output with nested scopes and when should you use it?
-- **Giải thích (VI):** predicting output with nested scopes là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** predicting output with nested scopes is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-const globalVar = 'global';
-
-function demo() {
-  const functionVar = 'function';
-  if (true) {
-    const blockVar = 'block';
-    console.log(globalVar, functionVar, blockVar);
-  }
-}
-```
-- **Related / Liên quan:** Liên quan: [Closures](./03-closures-comprehensive.md)
-### 🟡 [Mid] Q59: Common pitfalls of predicting output with nested scopes in production systems?
-
-- **Tổng Quan:** Common pitfalls of predicting output with nested scopes in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-const globalVar = 'global';
-
-function demo() {
-  const functionVar = 'function';
-  if (true) {
-    const blockVar = 'block';
-    console.log(globalVar, functionVar, blockVar);
-  }
-}
-```
-- **Related / Liên quan:** Liên quan: [Closures](./03-closures-comprehensive.md)
-### 🔴 [Senior] Q60: How do you design a robust architecture around predicting output with nested scopes?
-
-- **Tổng Quan:** How do you design a robust architecture around predicting output with nested scopes?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-const globalVar = 'global';
-
-function demo() {
-  const functionVar = 'function';
-  if (true) {
-    const blockVar = 'block';
-    console.log(globalVar, functionVar, blockVar);
-  }
-}
-```
-- **Related / Liên quan:** Liên quan: [Closures](./03-closures-comprehensive.md)
-### 🟢 [Junior] Q61: What is hoisting trap in legacy code and when should you use it?
-
-- **Tổng Quan:** What is hoisting trap in legacy code and when should you use it?
-- **Giải thích (VI):** hoisting trap in legacy code là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** hoisting trap in legacy code is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-console.log(a); // undefined
-var a = 10;
-
-// console.log(b); // ReferenceError
-let b = 20;
-```
-- **Related / Liên quan:** Liên quan: [Async](./09-async-comprehensive.md)
-### 🟡 [Mid] Q62: Common pitfalls of hoisting trap in legacy code in production systems?
-
-- **Tổng Quan:** Common pitfalls of hoisting trap in legacy code in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-console.log(a); // undefined
-var a = 10;
-
-// console.log(b); // ReferenceError
-let b = 20;
-```
-- **Related / Liên quan:** Liên quan: [Async](./09-async-comprehensive.md)
-### 🔴 [Senior] Q63: How do you design a robust architecture around hoisting trap in legacy code?
-
-- **Tổng Quan:** How do you design a robust architecture around hoisting trap in legacy code?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-console.log(a); // undefined
-var a = 10;
-
-// console.log(b); // ReferenceError
-let b = 20;
-```
-- **Related / Liên quan:** Liên quan: [Async](./09-async-comprehensive.md)
-### 🟢 [Junior] Q64: What is TDZ debugging strategy and when should you use it?
-
-- **Tổng Quan:** What is TDZ debugging strategy and when should you use it?
-- **Giải thích (VI):** TDZ debugging strategy là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** TDZ debugging strategy is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-function run() {
-  // console.log(x); // ReferenceError: TDZ
-  let x = 42;
-  return x;
-}
-```
-- **Related / Liên quan:** Liên quan: [ES6 Features](./11-es6-features-deep.md)
-### 🟡 [Mid] Q65: Common pitfalls of TDZ debugging strategy in production systems?
-
-- **Tổng Quan:** Common pitfalls of TDZ debugging strategy in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-function run() {
-  // console.log(x); // ReferenceError: TDZ
-  let x = 42;
-  return x;
-}
-```
-- **Related / Liên quan:** Liên quan: [ES6 Features](./11-es6-features-deep.md)
-### 🔴 [Senior] Q66: How do you design a robust architecture around TDZ debugging strategy?
-
-- **Tổng Quan:** How do you design a robust architecture around TDZ debugging strategy?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-function run() {
-  // console.log(x); // ReferenceError: TDZ
-  let x = 42;
-  return x;
-}
-```
-- **Related / Liên quan:** Liên quan: [ES6 Features](./11-es6-features-deep.md)
-### 🟢 [Junior] Q67: What is module boundary design and when should you use it?
-
-- **Tổng Quan:** What is module boundary design and when should you use it?
-- **Giải thích (VI):** module boundary design là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** module boundary design is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-// user.js
-const privateToken = 'abc';
-export function getUser() {
-  return { id: 1 };
-}
-```
-- **Related / Liên quan:** Liên quan: [Prototypes](./10-prototypes-inheritance-deep.md)
-### 🟡 [Mid] Q68: Common pitfalls of module boundary design in production systems?
-
-- **Tổng Quan:** Common pitfalls of module boundary design in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-// user.js
-const privateToken = 'abc';
-export function getUser() {
-  return { id: 1 };
-}
-```
-- **Related / Liên quan:** Liên quan: [Prototypes](./10-prototypes-inheritance-deep.md)
-### 🔴 [Senior] Q69: How do you design a robust architecture around module boundary design?
-
-- **Tổng Quan:** How do you design a robust architecture around module boundary design?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-// user.js
-const privateToken = 'abc';
-export function getUser() {
-  return { id: 1 };
-}
-```
-- **Related / Liên quan:** Liên quan: [Prototypes](./10-prototypes-inheritance-deep.md)
-### 🟢 [Junior] Q70: What is safe migration var to let/const and when should you use it?
-
-- **Tổng Quan:** What is safe migration var to let/const and when should you use it?
-- **Giải thích (VI):** safe migration var to let/const là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** safe migration var to let/const is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-console.log(a); // undefined
-var a = 10;
-
-// console.log(b); // ReferenceError
-let b = 20;
-```
-- **Related / Liên quan:** Liên quan: [Closures](./03-closures-comprehensive.md)
-### 🟡 [Mid] Q71: Common pitfalls of safe migration var to let/const in production systems?
-
-- **Tổng Quan:** Common pitfalls of safe migration var to let/const in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-console.log(a); // undefined
-var a = 10;
-
-// console.log(b); // ReferenceError
-let b = 20;
-```
-- **Related / Liên quan:** Liên quan: [Closures](./03-closures-comprehensive.md)
-### 🔴 [Senior] Q72: How do you design a robust architecture around safe migration var to let/const?
-
-- **Tổng Quan:** How do you design a robust architecture around safe migration var to let/const?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-console.log(a); // undefined
-var a = 10;
-
-// console.log(b); // ReferenceError
-let b = 20;
-```
-- **Related / Liên quan:** Liên quan: [Closures](./03-closures-comprehensive.md)
-### 🟢 [Junior] Q73: What is scope and security concerns and when should you use it?
-
-- **Tổng Quan:** What is scope and security concerns and when should you use it?
-- **Giải thích (VI):** scope and security concerns là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** scope and security concerns is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-'use strict';
-function f() {
-  // accidental = 1; // ReferenceError in strict mode
-  let local = 1;
-  return local;
-}
-```
-- **Related / Liên quan:** Liên quan: [ES6 Features](./11-es6-features-deep.md)
-### 🟡 [Mid] Q74: Common pitfalls of scope and security concerns in production systems?
-
-- **Tổng Quan:** Common pitfalls of scope and security concerns in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-'use strict';
-function f() {
-  // accidental = 1; // ReferenceError in strict mode
-  let local = 1;
-  return local;
-}
-```
-- **Related / Liên quan:** Liên quan: [ES6 Features](./11-es6-features-deep.md)
-### 🔴 [Senior] Q75: How do you design a robust architecture around scope and security concerns?
-
-- **Tổng Quan:** How do you design a robust architecture around scope and security concerns?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-'use strict';
-function f() {
-  // accidental = 1; // ReferenceError in strict mode
-  let local = 1;
-  return local;
-}
-```
-- **Related / Liên quan:** Liên quan: [ES6 Features](./11-es6-features-deep.md)
-### 🟢 [Junior] Q76: What is arrow function interview puzzles and when should you use it?
-
-- **Tổng Quan:** What is arrow function interview puzzles and when should you use it?
-- **Giải thích (VI):** arrow function interview puzzles là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** arrow function interview puzzles is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-const obj = {
-  value: 10,
-  regular() { return this.value; },
-  arrow: () => this
-};
-console.log(obj.regular());
-```
-- **Related / Liên quan:** Liên quan: [Async](./09-async-comprehensive.md)
-### 🟡 [Mid] Q77: Common pitfalls of arrow function interview puzzles in production systems?
-
-- **Tổng Quan:** Common pitfalls of arrow function interview puzzles in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-const obj = {
-  value: 10,
-  regular() { return this.value; },
-  arrow: () => this
-};
-console.log(obj.regular());
-```
-- **Related / Liên quan:** Liên quan: [Async](./09-async-comprehensive.md)
-### 🔴 [Senior] Q78: How do you design a robust architecture around arrow function interview puzzles?
-
-- **Tổng Quan:** How do you design a robust architecture around arrow function interview puzzles?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-const obj = {
-  value: 10,
-  regular() { return this.value; },
-  arrow: () => this
-};
-console.log(obj.regular());
-```
-- **Related / Liên quan:** Liên quan: [Async](./09-async-comprehensive.md)
+- ⬅️ **Built on:** [JavaScript Basics](./00-javascript-basics.md) — variable declarations (var/let/const)
+- ➡️ **Enables:** [Closures](./03-closures-comprehensive.md) — closure captures the scope chain defined here
+- ➡️ **Enables:** [Execution Context](./16-execution-context-theory.md) — hoisting is part of creation phase
+- 🔗 **Applied in:** Every JS file — scope decisions affect performance (closures), correctness (TDZ), and maintainability (var bugs)

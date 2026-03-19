@@ -1,1347 +1,695 @@
-# Closures - Comprehensive Bilingual Deep Dive
+# Closures — Comprehensive Deep Dive / Closure — Toàn Diện
 
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../00-table-of-contents.md)
-
-## Internal Mechanics, Lifecycle, Patterns, React Hooks, and Memory Safety
-
-[← Scope & Hoisting](./02-scope-hoisting-comprehensive.md) | [Prototypes →](./10-prototypes-inheritance-deep.md) | [Async](./09-async-comprehensive.md)
+> **Prerequisites**: [Scope & Hoisting](./02-scope-hoisting-comprehensive.md)
+> **See also**: [Prototypes](./10-prototypes-inheritance-deep.md) | [Async](./09-async-comprehensive.md) | [React Hooks](../03-react/03-hooks-deep-dive.md)
 
 ---
 
 ## Real-World Scenario / Tình Huống Thực Tế
 
-**Lazada product listing memory leak (thực tế):** Infinite scroll component attach event listener với closure — mỗi lần scroll thêm hàng, closure capture reference đến `productList` array ngày càng lớn. Sau 500 products, `productList` có 500 items nhưng closure trong event listener vẫn giữ reference. GC không collect được → memory leak, tab crash sau 30 phút. Fix: cleanup event listener khi component unmount (`useEffect` cleanup), không capture mutable state trong long-lived closures.
+**Lazada infinite scroll memory leak (production 2023):**
 
-**Bài học:** Closure không phải "hack" hay "advanced technique" — nó là default behavior của JS (functions giữ reference đến outer scope). Biết khi nào closure giữ reference too long = biết tránh memory leak.
+Một engineer build infinite scroll component — mỗi scroll event attach một listener mới:
+
+```javascript
+// BUG: every scroll creates new closure capturing growing productList
+function attachScrollListener(productList) {
+  window.addEventListener('scroll', function handleScroll() {
+    if (isNearBottom()) loadMore(productList); // closure holds productList reference
+  });
+}
+// Called 500 times → 500 closures, each holding growing array reference
+// GC cannot collect → tab crashes after 30 minutes
+```
+
+Fix: cleanup với `useEffect` return function. **1 dòng cleanup code tiết kiệm 500MB RAM.**
+
+**Bài học cốt lõi:** Closure không phải "advanced technique" — nó là DEFAULT BEHAVIOR của JS. Mọi function đều là closure. Hiểu closure = hiểu tại sao React hooks hoạt động, tại sao stale closure xảy ra, và tại sao memory leak khó debug.
+
+---
 
 ## What & Why / Cái Gì & Tại Sao
 
-**Analogy:** Closure giống backpack của student: function mang theo "backpack" chứa mọi variable từ scope nơi nó được tạo. Kể cả khi ra khỏi classroom (outer scope), student vẫn dùng được đồ trong backpack. Problem: nếu backpack giữ reference đến thứ quá lớn (1000 products), nó chiếm memory mãi.
+> 🧠 **Memory Hook**: **Closure = function + snapshot của môi trường nơi nó được sinh ra.**
+> Như student mang theo backpack từ classroom — ra ngoài rồi vẫn dùng được đồ trong đó.
 
-**Why it matters:** Closure là core của React hooks (`useState`, `useEffect`), module pattern, currying, memoization. Không hiểu closure → không hiểu tại sao stale closure bugs xảy ra trong React.
+**Tại sao JS cần closure?**
+→ Vì functions cần dùng data mà không muốn expose ra global scope.
+→ Vì global variables gây bug khi nhiều functions cùng modify — closure tạo "private state" cho từng function.
+→ Vì đây là cách duy nhất để function "nhớ" context của nó sau khi outer function đã return.
+
+**Why you must know this for 2026 interviews:**
+- React hooks (`useState`, `useEffect`, `useCallback`) đều dựa trên closure internals
+- Stale closure là bug #1 khó debug của React developers (tất cả công ty đều hỏi)
+- Module pattern, debounce, throttle, memoization — tất cả dùng closure
+- Memory leak từ closure xuất hiện trong Senior system design interviews
 
 ---
 
-## Tổng Quan / Overview
+## Concept Map / Bản Đồ Khái Niệm
 
-- **English:** This guide explains closures from engine internals ([[Environment]]) to lifecycle, practical patterns, React pitfalls, and memory safety.
-- **Tiếng Việt (Giải thích):** Tài liệu này phân tích closure từ bản chất engine ([[Environment]]), vòng đời bộ nhớ, pattern thực chiến, đến lỗi phổ biến trong React và hệ thống lớn.
+```
+[Lexical Scope] → CLOSURE ← [Function Creation]
+                     │
+          ┌──────────┼──────────┐
+          ▼          ▼          ▼
+    [Private    [Persistent  [Stale
+     State]      Memory]     Closure
+     Module      debounce/   in React]
+     Pattern     memoize
+```
 
-- **Cross-reference:** Xem thêm: [Scope & Hoisting](./02-scope-hoisting-comprehensive.md)
+**Bạn đang ở đây trong lộ trình học:**
+```
+Scope & Hoisting → [CLOSURE] → Prototypes → Async/Event Loop → React Hooks
+```
 
 ---
 
-## Closure Core Theory
+## Overview / Tổng Quan
 
-- **Tổng Quan:** Closure = function + lexical environment được giữ lại.
-- **Giải thích:** Closure không phải cú pháp đặc biệt mà là hành vi runtime của hàm.
-- **Ví dụ:** Các câu hỏi bên dưới dùng JavaScript thuần để mô tả cơ chế cốt lõi.
+A closure is a function that retains access to its **lexical environment** — the variables in scope at the time it was created — even after the outer function has returned.
 
-### 🟢 [Junior] Q01: What is closure definition and when should you use it?
+**Tiếng Việt:** Closure là function giữ reference đến lexical environment (môi trường scope) nơi nó được tạo ra, kể cả sau khi outer function đã kết thúc. Không phải cú pháp đặc biệt — mọi function trong JS đều là closure. Điều quan trọng là biết khi nào closure **giữ reference quá lâu** và gây memory leak.
 
-- **Tổng Quan:** What is closure definition and when should you use it?
-- **Giải thích (VI):** closure definition là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** closure definition is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-function makeCounter() {
-  let count = 0;
-  return () => ++count;
-}
-const counter = makeCounter();
-console.log(counter());
-```
-- **Related / Liên quan:** Xem thêm: [Scope & Hoisting](./02-scope-hoisting-comprehensive.md)
-### 🟡 [Mid] Q02: Common pitfalls of closure definition in production systems?
+---
 
-- **Tổng Quan:** Common pitfalls of closure definition in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-function makeCounter() {
-  let count = 0;
-  return () => ++count;
-}
-const counter = makeCounter();
-console.log(counter());
-```
-- **Related / Liên quan:** Xem thêm: [Scope & Hoisting](./02-scope-hoisting-comprehensive.md)
-### 🔴 [Senior] Q03: How do you design a robust architecture around closure definition?
+## Core Concepts / Khái Niệm Cốt Lõi
 
-- **Tổng Quan:** How do you design a robust architecture around closure definition?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-function makeCounter() {
-  let count = 0;
-  return () => ++count;
-}
-const counter = makeCounter();
-console.log(counter());
-```
-- **Related / Liên quan:** Xem thêm: [Scope & Hoisting](./02-scope-hoisting-comprehensive.md)
-### 🟢 [Junior] Q04: What is [[Environment]] internal slot and when should you use it?
+### 1. The [[Environment]] Slot / Slot [[Environment]]
 
-- **Tổng Quan:** What is [[Environment]] internal slot and when should you use it?
-- **Giải thích (VI):** [[Environment]] internal slot là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** [[Environment]] internal slot is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
+> 🧠 **Memory Hook**: Mỗi function object có 1 internal slot `[[Environment]]` — một pointer đến scope chain nơi nó được tạo. Đây là cơ chế thực sự của closure.
+
+**Tại sao [[Environment]] tồn tại?**
+→ JS engine cần biết function tìm variable ở đâu khi gọi.
+→ Nếu không có [[Environment]], function chỉ có thể dùng global scope — không có private state.
+→ [[Environment]] là cách JS implement lexical scoping: scope được xác định tại thời điểm viết code, không phải khi gọi.
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+
+Hãy tưởng tượng bạn đang làm việc trong văn phòng (outer function). Trước khi ra về, bạn đặt một máy trả lời tự động (inner function) trong phòng. Cái máy này có thể truy cập tất cả giấy tờ trong phòng (closure variables) — kể cả sau khi bạn đã về nhà.
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
 ```javascript
 function outer() {
-  const config = { env: 'prod' };
-  return function inner() {
-    return config.env;
+  const config = { apiUrl: 'https://api.grab.com' }; // stays in memory
+
+  return function inner() {       // inner.[[Environment]] → outer's scope
+    return config.apiUrl;         // looks up scope chain, finds config
   };
 }
-```
-- **Related / Liên quan:** Xem thêm: [Scope & Hoisting](./02-scope-hoisting-comprehensive.md)
-### 🟡 [Mid] Q05: Common pitfalls of [[Environment]] internal slot in production systems?
 
-- **Tổng Quan:** Common pitfalls of [[Environment]] internal slot in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-function outer() {
-  const config = { env: 'prod' };
-  return function inner() {
-    return config.env;
-  };
-}
+const getUrl = outer();  // outer() finishes, but config is NOT garbage collected
+                         // because getUrl.[[Environment]] still references it
+console.log(getUrl());   // 'https://api.grab.com'
 ```
-- **Related / Liên quan:** Xem thêm: [Scope & Hoisting](./02-scope-hoisting-comprehensive.md)
-### 🔴 [Senior] Q06: How do you design a robust architecture around [[Environment]] internal slot?
 
-- **Tổng Quan:** How do you design a robust architecture around [[Environment]] internal slot?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-function outer() {
-  const config = { env: 'prod' };
-  return function inner() {
-    return config.env;
-  };
-}
 ```
-- **Related / Liên quan:** Xem thêm: [Scope & Hoisting](./02-scope-hoisting-comprehensive.md)
-### 🟢 [Junior] Q07: What is closure vs plain function reference and when should you use it?
+Memory model:
+┌──────────────────────────────────────────┐
+│  getUrl (function object)                │
+│  [[Environment]] ──────────────────────► │ outer's scope record
+│                                          │ { config: {apiUrl: '...'} }
+└──────────────────────────────────────────┘
+         ▲ GC cannot collect config
+         │ because getUrl still points to it
+```
 
-- **Tổng Quan:** What is closure vs plain function reference and when should you use it?
-- **Giải thích (VI):** closure vs plain function reference là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** closure vs plain function reference is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
+- **All functions are closures** — even `function foo() {}` at top level closes over the global scope
+- **Shared environment**: multiple inner functions from same outer scope share the same environment record → they see each other's mutations
+
 ```javascript
 function makeCounter() {
-  let count = 0;
-  return () => ++count;
-}
-const counter = makeCounter();
-console.log(counter());
-```
-- **Related / Liên quan:** Xem thêm: [Scope & Hoisting](./02-scope-hoisting-comprehensive.md)
-### 🟡 [Mid] Q08: Common pitfalls of closure vs plain function reference in production systems?
-
-- **Tổng Quan:** Common pitfalls of closure vs plain function reference in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-function makeCounter() {
-  let count = 0;
-  return () => ++count;
-}
-const counter = makeCounter();
-console.log(counter());
-```
-- **Related / Liên quan:** Xem thêm: [Scope & Hoisting](./02-scope-hoisting-comprehensive.md)
-### 🔴 [Senior] Q09: How do you design a robust architecture around closure vs plain function reference?
-
-- **Tổng Quan:** How do you design a robust architecture around closure vs plain function reference?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-function makeCounter() {
-  let count = 0;
-  return () => ++count;
-}
-const counter = makeCounter();
-console.log(counter());
-```
-- **Related / Liên quan:** Xem thêm: [Scope & Hoisting](./02-scope-hoisting-comprehensive.md)
-## Lifecycle: Creation to Garbage Collection
-
-- **Tổng Quan:** Closure được tạo khi function được tạo và giữ dữ liệu cho tới khi không còn reachable.
-- **Giải thích:** Phải hiểu vòng đời để tránh memory leak trong app dài hạn.
-- **Ví dụ:** Các câu hỏi bên dưới dùng JavaScript thuần để mô tả cơ chế cốt lõi.
-
-### 🟢 [Junior] Q10: What is closure creation phase and when should you use it?
-
-- **Tổng Quan:** What is closure creation phase and when should you use it?
-- **Giải thích (VI):** closure creation phase là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** closure creation phase is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-function makeCounter() {
-  let count = 0;
-  return () => ++count;
-}
-const counter = makeCounter();
-console.log(counter());
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-### 🟡 [Mid] Q11: Common pitfalls of closure creation phase in production systems?
-
-- **Tổng Quan:** Common pitfalls of closure creation phase in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-function makeCounter() {
-  let count = 0;
-  return () => ++count;
-}
-const counter = makeCounter();
-console.log(counter());
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-### 🔴 [Senior] Q12: How do you design a robust architecture around closure creation phase?
-
-- **Tổng Quan:** How do you design a robust architecture around closure creation phase?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-function makeCounter() {
-  let count = 0;
-  return () => ++count;
-}
-const counter = makeCounter();
-console.log(counter());
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-### 🟢 [Junior] Q13: What is retained variables and GC and when should you use it?
-
-- **Tổng Quan:** What is retained variables and GC and when should you use it?
-- **Giải thích (VI):** retained variables and GC là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** retained variables and GC is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-function attachListener(node) {
-  const bigData = new Array(10000).fill('x');
-  function onClick() {
-    console.log(bigData.length);
-  }
-  node.addEventListener('click', onClick);
-  return () => node.removeEventListener('click', onClick);
-}
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-### 🟡 [Mid] Q14: Common pitfalls of retained variables and GC in production systems?
-
-- **Tổng Quan:** Common pitfalls of retained variables and GC in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-function attachListener(node) {
-  const bigData = new Array(10000).fill('x');
-  function onClick() {
-    console.log(bigData.length);
-  }
-  node.addEventListener('click', onClick);
-  return () => node.removeEventListener('click', onClick);
-}
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-### 🔴 [Senior] Q15: How do you design a robust architecture around retained variables and GC?
-
-- **Tổng Quan:** How do you design a robust architecture around retained variables and GC?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-function attachListener(node) {
-  const bigData = new Array(10000).fill('x');
-  function onClick() {
-    console.log(bigData.length);
-  }
-  node.addEventListener('click', onClick);
-  return () => node.removeEventListener('click', onClick);
-}
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-### 🟢 [Junior] Q16: What is memory leaks from closures and when should you use it?
-
-- **Tổng Quan:** What is memory leaks from closures and when should you use it?
-- **Giải thích (VI):** memory leaks from closures là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** memory leaks from closures is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-function attachListener(node) {
-  const bigData = new Array(10000).fill('x');
-  function onClick() {
-    console.log(bigData.length);
-  }
-  node.addEventListener('click', onClick);
-  return () => node.removeEventListener('click', onClick);
-}
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-### 🟡 [Mid] Q17: Common pitfalls of memory leaks from closures in production systems?
-
-- **Tổng Quan:** Common pitfalls of memory leaks from closures in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-function attachListener(node) {
-  const bigData = new Array(10000).fill('x');
-  function onClick() {
-    console.log(bigData.length);
-  }
-  node.addEventListener('click', onClick);
-  return () => node.removeEventListener('click', onClick);
-}
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-### 🔴 [Senior] Q18: How do you design a robust architecture around memory leaks from closures?
-
-- **Tổng Quan:** How do you design a robust architecture around memory leaks from closures?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-function attachListener(node) {
-  const bigData = new Array(10000).fill('x');
-  function onClick() {
-    console.log(bigData.length);
-  }
-  node.addEventListener('click', onClick);
-  return () => node.removeEventListener('click', onClick);
-}
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-## Practical Patterns
-
-- **Tổng Quan:** Closure thường dùng để đóng gói state và tạo API nhỏ gọn.
-- **Giải thích:** Module pattern, factory, decorator, memoization đều dựa trên closure.
-- **Ví dụ:** Các câu hỏi bên dưới dùng JavaScript thuần để mô tả cơ chế cốt lõi.
-
-### 🟢 [Junior] Q19: What is module pattern and when should you use it?
-
-- **Tổng Quan:** What is module pattern and when should you use it?
-- **Giải thích (VI):** module pattern là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** module pattern is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-const Cart = (() => {
-  const items = [];
-  function add(item) { items.push(item); }
-  function total() { return items.length; }
-  return { add, total };
-})();
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟡 [Mid] Q20: Common pitfalls of module pattern in production systems?
-
-- **Tổng Quan:** Common pitfalls of module pattern in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-const Cart = (() => {
-  const items = [];
-  function add(item) { items.push(item); }
-  function total() { return items.length; }
-  return { add, total };
-})();
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🔴 [Senior] Q21: How do you design a robust architecture around module pattern?
-
-- **Tổng Quan:** How do you design a robust architecture around module pattern?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-const Cart = (() => {
-  const items = [];
-  function add(item) { items.push(item); }
-  function total() { return items.length; }
-  return { add, total };
-})();
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟢 [Junior] Q22: What is revealing module pattern and when should you use it?
-
-- **Tổng Quan:** What is revealing module pattern and when should you use it?
-- **Giải thích (VI):** revealing module pattern là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** revealing module pattern is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-const auth = (() => {
-  let token = null;
-  function setToken(v) { token = v; }
-  function isLoggedIn() { return Boolean(token); }
-  return { setToken, isLoggedIn };
-})();
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟡 [Mid] Q23: Common pitfalls of revealing module pattern in production systems?
-
-- **Tổng Quan:** Common pitfalls of revealing module pattern in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-const auth = (() => {
-  let token = null;
-  function setToken(v) { token = v; }
-  function isLoggedIn() { return Boolean(token); }
-  return { setToken, isLoggedIn };
-})();
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🔴 [Senior] Q24: How do you design a robust architecture around revealing module pattern?
-
-- **Tổng Quan:** How do you design a robust architecture around revealing module pattern?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-const auth = (() => {
-  let token = null;
-  function setToken(v) { token = v; }
-  function isLoggedIn() { return Boolean(token); }
-  return { setToken, isLoggedIn };
-})();
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟢 [Junior] Q25: What is factory functions with private state and when should you use it?
-
-- **Tổng Quan:** What is factory functions with private state and when should you use it?
-- **Giải thích (VI):** factory functions with private state là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** factory functions with private state is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-function createUser(name) {
-  let points = 0;
+  let n = 0;
   return {
-    name,
-    addPoint() { points++; },
-    getPoints() { return points; }
+    inc: () => ++n,  // both share same environment record
+    get: () => n,    // if inc() runs, get() sees the change
   };
 }
 ```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟡 [Mid] Q26: Common pitfalls of factory functions with private state in production systems?
 
-- **Tổng Quan:** Common pitfalls of factory functions with private state in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
+**❌ Sai lầm thường gặp / Common Mistakes:**
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| "Closure copies variable values" | Closure giữ REFERENCE đến variable, không copy value | Closure có thể thấy variable thay đổi sau khi được tạo |
+| "Outer function phải là parent function" | Closure capture toàn bộ scope chain, không chỉ direct parent | Closure capture tất cả scopes lồng nhau đến global |
+| "Closure xảy ra khi dùng `return`" | Closure được tạo ngay khi function được định nghĩa | Mọi function object đã là closure từ khi tạo |
+
+**🎯 Interview Pattern:**
+- Khi thấy câu hỏi về: "how does function remember variables?", "why can inner function access outer variables?"
+- → Nhớ đến: [[Environment]] internal slot + scope chain lookup
+- → Mở đầu trả lời: *"Every function in JavaScript has an internal [[Environment]] slot that holds a reference to the scope in which it was created. This is how closures work — it's not magic syntax, it's the default behavior of all functions."*
+
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: [Scope & Hoisting](./02-scope-hoisting-comprehensive.md) — lexical scope phải hiểu trước
+- ➡️ Để hiểu: [React Hooks](../03-react/03-hooks-deep-dive.md) — useState/useEffect internals dùng closure
+
+---
+
+### 2. Memory Lifecycle & GC / Vòng Đời Bộ Nhớ
+
+> 🧠 **Memory Hook**: **"GC releases memory when there are zero references."** Closure creates a reference. Event listener that's never removed = closure that's never released.
+
+**Tại sao closure gây memory leak?**
+→ Closure giữ reference → GC không collect → memory tăng.
+→ Nếu closure được attach vào long-lived object (DOM, global), nó sống mãi.
+→ Đây là nguồn gốc của class "unexplained memory growth" bugs ở production.
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+
+GC như người dọn nhà: chỉ vứt đồ khi không ai cần nữa. Closure là "người" đang giữ reference đến đồ. Nếu bạn đặt closure vào event listener mà không bao giờ remove, người dọn nhà không bao giờ vứt được đồ đó.
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
 ```javascript
-function createUser(name) {
-  let points = 0;
+// Pattern A: safe — closure is short-lived
+function processOrder(orderId) {
+  const orderData = fetchOrder(orderId); // large object
+  return orderData.total;               // closure used once, then GC'd
+}
+
+// Pattern B: LEAK — closure attached to permanent object
+function setupShopeeCart() {
+  const cartItems = [];  // grows unbounded
+
+  document.getElementById('addBtn').addEventListener('click', function() {
+    cartItems.push(getSelectedItem()); // closure captures cartItems FOREVER
+    // cartItems held in memory until page unload or listener removed
+  });
+}
+
+// Pattern B fixed:
+function setupShopeeCart() {
+  const cartItems = [];
+
+  function handleAdd() {
+    cartItems.push(getSelectedItem());
+  }
+
+  document.getElementById('addBtn').addEventListener('click', handleAdd);
+
+  return () => {  // cleanup function
+    document.getElementById('addBtn').removeEventListener('click', handleAdd);
+  };
+}
+```
+
+```
+Memory lifecycle:
+closure created → scope record in heap
+     │
+     ├─ if attached to short-lived var → GC when var goes out of scope ✅
+     └─ if attached to DOM/global → lives until explicitly removed ⚠️
+```
+
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
+- `removeEventListener` phải dùng **cùng function reference** — anonymous function không remove được
+- In React: `useEffect` cleanup runs before next effect + on unmount — always return cleanup function
+- `WeakRef` / `WeakMap` as alternative when you want GC to collect: cache that doesn't prevent GC
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Dùng anonymous arrow function trong addEventListener | Không thể removeEventListener vì không có reference | Lưu function reference vào biến trước khi add |
+| Không cleanup useEffect trong React | Closure giữ stale reference, memory tăng theo component mount | Luôn return cleanup function từ useEffect |
+| Nghĩ `null`-ing variable là đủ để GC | GC collect khi KHÔNG CÒN reference nào — set null chỉ release 1 reference | Đảm bảo tất cả closures pointing to object đều bị released |
+
+**🎯 Interview Pattern:**
+- Khi thấy: "memory leak in React", "how to prevent closure memory issues", "GC and closures"
+- → Think: reference chain — ai đang hold reference đến gì?
+- → Answer opens with: *"Closures prevent garbage collection by holding references. The fix is always about breaking the reference chain — removeEventListener, useEffect cleanup, or WeakMap for optional caching."*
+
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: [Memory Management](./15-memory-management-advanced.md)
+- ➡️ Để hiểu: [React Performance](../06-browser-performance/02-react-performance.md) — memoization patterns
+
+---
+
+### 3. Practical Patterns / Patterns Thực Chiến
+
+> 🧠 **Memory Hook**: **4 patterns dùng closure nhất: Module (private state), Memoize (cache), Debounce/Throttle (timing control), Currying (partial application).**
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+
+- **Module**: két sắt — private state bên trong, chỉ expose API
+- **Memoize**: notepad — ghi lại kết quả đã tính để không tính lại
+- **Debounce**: nhân viên biếng — đợi bạn ngừng gõ phím 300ms mới thực sự làm việc
+- **Throttle**: bảo vệ cổng — cho qua tối đa 1 lần/giây dù bạn gọi bao nhiêu lần
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
+**Module Pattern:**
+```javascript
+// Private state via closure — classic pattern before ES modules
+const ShopeeCart = (() => {
+  let items = [];        // private — cannot access from outside
+  let discount = 0;      // private
+
   return {
-    name,
-    addPoint() { points++; },
-    getPoints() { return points; }
+    add(item) { items.push(item); },
+    remove(id) { items = items.filter(i => i.id !== id); },
+    getTotal() { return items.reduce((s, i) => s + i.price, 0) * (1 - discount); },
+    applyDiscount(pct) { discount = pct / 100; },
   };
-}
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🔴 [Senior] Q27: How do you design a robust architecture around factory functions with private state?
+})();
 
-- **Tổng Quan:** How do you design a robust architecture around factory functions with private state?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-function createUser(name) {
-  let points = 0;
-  return {
-    name,
-    addPoint() { points++; },
-    getPoints() { return points; }
-  };
-}
+ShopeeCart.add({ id: 1, price: 100 });
+ShopeeCart.applyDiscount(10);
+console.log(ShopeeCart.getTotal()); // 90
+// ShopeeCart.items → undefined (private!)
 ```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟢 [Junior] Q28: What is decorator wrappers and when should you use it?
 
-- **Tổng Quan:** What is decorator wrappers and when should you use it?
-- **Giải thích (VI):** decorator wrappers là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** decorator wrappers is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-const withTiming = (fn) => (...args) => {
-  const start = performance.now();
-  const result = fn(...args);
-  console.log('ms', performance.now() - start);
-  return result;
-};
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟡 [Mid] Q29: Common pitfalls of decorator wrappers in production systems?
-
-- **Tổng Quan:** Common pitfalls of decorator wrappers in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-const withTiming = (fn) => (...args) => {
-  const start = performance.now();
-  const result = fn(...args);
-  console.log('ms', performance.now() - start);
-  return result;
-};
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🔴 [Senior] Q30: How do you design a robust architecture around decorator wrappers?
-
-- **Tổng Quan:** How do you design a robust architecture around decorator wrappers?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-const withTiming = (fn) => (...args) => {
-  const start = performance.now();
-  const result = fn(...args);
-  console.log('ms', performance.now() - start);
-  return result;
-};
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟢 [Junior] Q31: What is memoization cache and when should you use it?
-
-- **Tổng Quan:** What is memoization cache and when should you use it?
-- **Giải thích (VI):** memoization cache là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** memoization cache is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
+**Memoize:**
 ```javascript
 function memoize(fn) {
-  const cache = new Map();
-  return (key) => {
+  const cache = new Map(); // closure: cache lives as long as memoized fn does
+  return function(...args) {
+    const key = JSON.stringify(args);
     if (cache.has(key)) return cache.get(key);
-    const value = fn(key);
-    cache.set(key, value);
-    return value;
+    const result = fn.apply(this, args);
+    cache.set(key, result);
+    return result;
   };
 }
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🟡 [Mid] Q32: Common pitfalls of memoization cache in production systems?
 
-- **Tổng Quan:** Common pitfalls of memoization cache in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
+const expensiveCalc = memoize((n) => n * n);
+expensiveCalc(100); // computed
+expensiveCalc(100); // from cache — O(1)
+```
+
+**Debounce (Grab search box):**
 ```javascript
-function memoize(fn) {
-  const cache = new Map();
-  return (key) => {
-    if (cache.has(key)) return cache.get(key);
-    const value = fn(key);
-    cache.set(key, value);
-    return value;
+function debounce(fn, ms) {
+  let timerId; // closure: timerId persists across calls
+  return function(...args) {
+    clearTimeout(timerId);
+    timerId = setTimeout(() => fn.apply(this, args), ms);
   };
 }
-```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-### 🔴 [Senior] Q33: How do you design a robust architecture around memoization cache?
 
-- **Tổng Quan:** How do you design a robust architecture around memoization cache?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
+const search = debounce(fetchResults, 300);
+// User types: 'G' 'r' 'a' 'b' → only 1 API call after they stop
+```
+
+```
+Pattern comparison:
+┌─────────────┬────────────────┬──────────────────────────────┐
+│ Pattern     │ Closure holds  │ Use case                     │
+├─────────────┼────────────────┼──────────────────────────────┤
+│ Module      │ private state  │ Encapsulation, private vars  │
+│ Memoize     │ cache Map      │ Expensive pure functions     │
+│ Debounce    │ timerId        │ Search input, resize handler │
+│ Throttle    │ lastRun time   │ Scroll handler, API rate     │
+│ Once        │ called flag    │ Init functions, event once   │
+└─────────────┴────────────────┴──────────────────────────────┘
+```
+
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
+- **Memoize unbounded cache**: grows forever — add LRU eviction for long-running apps
+- **Debounce leading edge**: sometimes need immediate first call + suppress subsequent (search suggestions vs form submit)
+- **Module pattern vs ES modules**: module pattern runs immediately (IIFE), ES modules are static — use ES modules for tree-shaking
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Tạo debounce function bên trong render/loop | Mỗi render tạo closure mới → timerId reset → debounce không hoạt động | Tạo debounced function 1 lần bên ngoài, hoặc dùng useCallback |
+| Memoize với mutable args | JSON.stringify({a:1}) === JSON.stringify({a:1}) nhưng nếu object có circular ref → error | Dùng WeakMap với object args, hoặc stable key strategy |
+| IIFE module pattern với large data | Data live forever (tied to module lifecycle) | Prefer class hoặc ES module nếu cần tree-shaking |
+
+**🎯 Interview Pattern:**
+- Khi thấy: "implement debounce", "create private state", "optimize expensive function"
+- → Think: which closure pattern fits? Module/Memoize/Debounce/Throttle/Once
+- → Answer opens with: *"This is a classic use case for closures — specifically the [pattern] pattern where we use a closure to maintain [state] across calls."*
+
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: [Scope & Hoisting](./02-scope-hoisting-comprehensive.md) — block scope for let in loops
+- ➡️ Để hiểu: [React Hooks](../03-react/03-hooks-deep-dive.md) — useCallback/useMemo internals
+
+---
+
+### 4. Stale Closures in React / Stale Closure trong React
+
+> 🧠 **Memory Hook**: **"Stale closure = function was created when state had value X, but state has since changed to Y. Function still sees X."**
+
+**Tại sao stale closure xảy ra trong React?**
+→ Mỗi render, React tạo một function instance mới với snapshot của state tại thời điểm đó.
+→ Nếu bạn capture function đó vào setTimeout/interval/event listener, nó "đóng băng" với old state value.
+→ Đây là bug phổ biến nhất React developers gặp ở production.
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+
+Hãy tưởng tượng bạn viết tờ nhắc (function) với thông tin hiện tại (state). Sau đó bạn gửi tờ nhắc vào tương lai (setTimeout). Khi tờ nhắc đến, nó vẫn có thông tin cũ — không biết rằng thông tin đã thay đổi.
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
 ```javascript
-function memoize(fn) {
-  const cache = new Map();
-  return (key) => {
-    if (cache.has(key)) return cache.get(key);
-    const value = fn(key);
-    cache.set(key, value);
-    return value;
+// BUG: stale closure
+function ChatComponent() {
+  const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      console.log(message); // STALE: always logs '' (initial value)
+      // closure captured 'message' at render time = ''
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []); // [] means effect runs once → closure from first render only
+
+  return <input onChange={e => setMessage(e.target.value)} />;
+}
+
+// FIX 1: Add message to deps (recreate interval when message changes)
+useEffect(() => {
+  const interval = setInterval(() => {
+    console.log(message); // fresh closure each time message changes
+  }, 1000);
+  return () => clearInterval(interval);
+}, [message]); // effect re-runs with fresh closure
+
+// FIX 2: useRef for always-current value (no stale closure)
+const messageRef = useRef('');
+messageRef.current = message; // update ref on every render
+
+useEffect(() => {
+  const interval = setInterval(() => {
+    console.log(messageRef.current); // always current — ref is not a closure variable
+  }, 1000);
+  return () => clearInterval(interval);
+}, []); // safe with empty deps
+```
+
+```
+Stale closure timeline:
+Render 1: message=''   → closure A created with message=''
+  → setInterval runs closure A every 1s
+Render 2: message='hi' → closure B created with message='hi'
+  → BUT interval still runs closure A (captures '')
+
+Fix: either recreate interval (FIX 1) or escape closure via ref (FIX 2)
+```
+
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
+- `useRef` solution: no re-render triggered, always current, but no reactive behavior
+- `useCallback` with deps: stable function reference, but deps must be complete
+- `useReducer` for complex state: dispatch is stable reference, no stale closure issues
+- Third-party event emitters: always use ref pattern — you can't control their subscription lifecycle
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `useEffect(() => {}, [])` với function inside that reads state | Empty deps → stale closure từ first render | Add state to deps hoặc dùng useRef |
+| Dùng useRef khi cần reactive behavior | Thay đổi ref.current không trigger re-render | Dùng useState + deps array |
+| `useCallback` với empty deps | Callback capture initial state values, never updates | useCallback deps phải include tất cả state/props mà callback đọc |
+
+**🎯 Interview Pattern:**
+- Khi thấy: "setInterval shows old value", "event handler uses wrong state", "why is my callback stale"
+- → Diagnose: khi nào closure được created vs khi nào state changed
+- → Answer opens with: *"This is a stale closure. The function was created during render N with state value X, but state has since changed to Y. The function still sees the old value because closures capture references to the environment at creation time."*
+
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: [Closures Core](#1-the-environment-slot--slot-environment) — must understand closure mechanics first
+- ➡️ Để hiểu: [React Hooks](../03-react/03-hooks-deep-dive.md) — useEffect/useCallback rules
+
+---
+
+## Q&A Section / Câu Hỏi Phỏng Vấn
+
+### Q: What is a closure in JavaScript? / Closure là gì? 🟢 Junior
+
+**A:** A closure is a function that retains access to variables from its outer lexical scope, even after the outer function has returned. Every JavaScript function is a closure — when created, it gets an internal `[[Environment]]` reference pointing to the scope where it was defined.
+
+```javascript
+function makeAdder(x) {
+  return function(y) { return x + y; }; // captures x from outer scope
+}
+const add5 = makeAdder(5);
+console.log(add5(3)); // 8 — x=5 is remembered even after makeAdder returned
+```
+
+**Tiếng Việt:** Closure là function giữ reference đến lexical environment nơi nó được tạo. Không phải cú pháp đặc biệt — mọi function trong JS đều là closure. Key point: closure captures variable REFERENCES (không phải values), nên nếu variable thay đổi, closure thấy giá trị mới nhất.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Nói "every function is a closure", giải thích [[Environment]] slot, phân biệt capture reference vs value, đưa example thực tế (counter, module pattern)
+- ❌ Weak: "Closure là function bên trong function" — đúng nhưng không đủ, bỏ qua cơ chế thực sự
+
+---
+
+### Q: Classic closure bug with `var` in a loop — explain and fix / Bug var trong vòng lặp? 🟢 Junior
+
+**A:** The classic bug:
+```javascript
+for (var i = 0; i < 3; i++) {
+  setTimeout(() => console.log(i), 100); // prints 3, 3, 3 — not 0, 1, 2
+}
+```
+Why: `var` is function-scoped — all 3 closures share the **same `i` variable**. By the time setTimeout fires, the loop has finished and `i = 3`.
+
+**Three fixes:**
+```javascript
+// Fix 1: let (block-scoped — new binding per iteration)
+for (let i = 0; i < 3; i++) {
+  setTimeout(() => console.log(i), 100); // 0, 1, 2 ✅
+}
+
+// Fix 2: IIFE (create new scope per iteration — pre-ES6)
+for (var i = 0; i < 3; i++) {
+  ((j) => setTimeout(() => console.log(j), 100))(i);
+}
+
+// Fix 3: bind
+for (var i = 0; i < 3; i++) {
+  setTimeout(console.log.bind(null, i), 100);
+}
+```
+
+**Tiếng Việt:** `var` là function-scoped → tất cả closures trong loop share cùng 1 biến `i`. Khi setTimeout callback chạy, loop đã xong và `i = 3`. Fix chuẩn nhất: dùng `let` — mỗi iteration tạo 1 block scope mới, 1 binding mới cho `i`.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Giải thích shared vs separate binding, biết cả 3 cách fix, biết tại sao `let` fix được
+- ❌ Weak: Chỉ nói "dùng let thay var" mà không giải thích tại sao
+
+---
+
+### Q: How does debounce work? Implement it / Debounce hoạt động thế nào? Implement? 🟡 Mid
+
+**A:** Debounce delays execution until `ms` milliseconds have passed since the last call. Uses closure to persist `timerId` across calls:
+
+```javascript
+function debounce(fn, ms) {
+  let timerId; // closure: persists across invocations
+  return function debounced(...args) {
+    clearTimeout(timerId);           // cancel previous pending call
+    timerId = setTimeout(() => {
+      fn.apply(this, args);          // execute with correct `this` and args
+      timerId = null;
+    }, ms);
   };
 }
+
+// Usage: search input at Grab — only call API after 300ms of no typing
+const search = debounce(fetchSearchResults, 300);
+input.addEventListener('input', search);
 ```
-- **Related / Liên quan:** Xem thêm: [ES6 Features](./11-es6-features-deep.md)
-## Utility Patterns: once/debounce/throttle
 
-- **Tổng Quan:** Utility function phổ biến trong frontend hầu hết dựa vào closure.
-- **Giải thích:** Closure giữ timer, flag, state giữa nhiều lần gọi.
-- **Ví dụ:** Các câu hỏi bên dưới dùng JavaScript thuần để mô tả cơ chế cốt lõi.
+Key: `timerId` is in the closure — each call to the debounced function shares the same `timerId`, so `clearTimeout` cancels the previous pending call.
 
-### 🟢 [Junior] Q34: What is once function implementation and when should you use it?
+**Tiếng Việt:** Debounce dùng closure để "nhớ" `timerId` giữa các lần gọi. Mỗi lần gọi: clear timer cũ, tạo timer mới. Chỉ khi không gọi thêm trong `ms` miliseconds, callback mới thực sự chạy. **Throttle** khác ở chỗ: cho qua tối đa 1 lần mỗi `ms` (dùng `lastRun` timestamp thay `timerId`).
 
-- **Tổng Quan:** What is once function implementation and when should you use it?
-- **Giải thích (VI):** once function implementation là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** once function implementation is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Implement được, giải thích closure role (timerId persistence), phân biệt debounce vs throttle, biết leading/trailing edge variants
+- ❌ Weak: Chỉ biết khái niệm mà không implement được, hoặc không giải thích tại sao cần closure
+
+---
+
+### Q: What is a stale closure in React? How to debug and fix? / Stale closure trong React là gì? 🟡 Mid
+
+**A:** A stale closure happens when a callback function captures a state/prop value from an earlier render, and continues using that old value even after state has updated.
+
 ```javascript
-function makeCounter() {
-  let count = 0;
-  return () => ++count;
-}
-const counter = makeCounter();
-console.log(counter());
+// Bug: message always '' in interval
+const [message, setMessage] = useState('');
+useEffect(() => {
+  setInterval(() => sendHeartbeat(message), 1000); // stale! always ''
+}, []);
+
+// Fix 1: deps array — fresh closure per state change
+useEffect(() => {
+  const id = setInterval(() => sendHeartbeat(message), 1000);
+  return () => clearInterval(id); // cleanup is critical
+}, [message]);
+
+// Fix 2: useRef — escape closure entirely
+const msgRef = useRef(message);
+useEffect(() => { msgRef.current = message; });
+useEffect(() => {
+  setInterval(() => sendHeartbeat(msgRef.current), 1000);
+}, []);
 ```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-### 🟡 [Mid] Q35: Common pitfalls of once function implementation in production systems?
 
-- **Tổng Quan:** Common pitfalls of once function implementation in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-function makeCounter() {
-  let count = 0;
-  return () => ++count;
-}
-const counter = makeCounter();
-console.log(counter());
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-### 🔴 [Senior] Q36: How do you design a robust architecture around once function implementation?
+**Tiếng Việt:** Stale closure xảy ra vì React re-render tạo function instances mới, nhưng nếu function đó bị capture vào interval/listener/setTimeout với empty deps, nó "đông cứng" với state cũ. Cách debug: thêm `console.log` trong callback, nếu thấy giá trị cũ thì đó là stale closure. Hai fix: (1) add state to deps, (2) useRef để escape closure.
 
-- **Tổng Quan:** How do you design a robust architecture around once function implementation?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-function makeCounter() {
-  let count = 0;
-  return () => ++count;
-}
-const counter = makeCounter();
-console.log(counter());
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-### 🟢 [Junior] Q37: What is debounce with closure state and when should you use it?
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Giải thích render cycle tạo new function instances, biết cả 2 fix strategies, biết khi nào dùng cái nào (useRef khi không cần reactive, deps khi cần reactive)
+- ❌ Weak: "Thêm dependency vào useEffect" mà không giải thích tại sao nó fix
 
-- **Tổng Quan:** What is debounce with closure state and when should you use it?
-- **Giải thích (VI):** debounce with closure state là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** debounce with closure state is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-function debounce(fn, wait = 300) {
-  let t;
-  return (...args) => {
-    clearTimeout(t);
-    t = setTimeout(() => fn(...args), wait);
-  };
-}
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-### 🟡 [Mid] Q38: Common pitfalls of debounce with closure state in production systems?
+---
 
-- **Tổng Quan:** Common pitfalls of debounce with closure state in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-function debounce(fn, wait = 300) {
-  let t;
-  return (...args) => {
-    clearTimeout(t);
-    t = setTimeout(() => fn(...args), wait);
-  };
-}
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-### 🔴 [Senior] Q39: How do you design a robust architecture around debounce with closure state?
+### Q: Design a production-safe event listener system using closures — prevent memory leaks at scale 🔴 Senior
 
-- **Tổng Quan:** How do you design a robust architecture around debounce with closure state?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-function debounce(fn, wait = 300) {
-  let t;
-  return (...args) => {
-    clearTimeout(t);
-    t = setTimeout(() => fn(...args), wait);
-  };
-}
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-### 🟢 [Junior] Q40: What is throttle with closure state and when should you use it?
+**A:** For a large FE app (Shopee product listing with 1000s of components), a centralized listener registry using closures:
 
-- **Tổng Quan:** What is throttle with closure state and when should you use it?
-- **Giải thích (VI):** throttle with closure state là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** throttle with closure state is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
 ```javascript
-function throttle(fn, wait = 300) {
-  let last = 0;
-  return (...args) => {
-    const now = Date.now();
-    if (now - last >= wait) {
-      last = now;
-      fn(...args);
+// Production pattern: centralized cleanup registry
+function createEventManager() {
+  const registry = new Map(); // componentId → [cleanup functions]
+
+  return {
+    add(componentId, element, event, handler, options) {
+      element.addEventListener(event, handler, options);
+
+      if (!registry.has(componentId)) registry.set(componentId, []);
+      registry.get(componentId).push(() => {
+        element.removeEventListener(event, handler, options);
+      });
+    },
+
+    cleanup(componentId) {
+      const cleanups = registry.get(componentId) ?? [];
+      cleanups.forEach(fn => fn());
+      registry.delete(componentId);
+    },
+
+    cleanupAll() {
+      registry.forEach((_, id) => this.cleanup(id));
     }
   };
 }
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-### 🟡 [Mid] Q41: Common pitfalls of throttle with closure state in production systems?
 
-- **Tổng Quan:** Common pitfalls of throttle with closure state in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
+// Usage in React-like framework:
+const eventManager = createEventManager();
+
+function ProductCard({ id }) {
+  onMount(() => {
+    eventManager.add(id, window, 'scroll', handleScroll);
+    eventManager.add(id, document, 'click', handleOutsideClick);
+  });
+
+  onUnmount(() => eventManager.cleanup(id)); // removes ALL listeners for this component
+}
+```
+
+**Why this design:**
+1. Closures capture `element + event + handler` triplet — each cleanup function knows exactly what to remove
+2. Registry prevents double-registration and provides bulk cleanup
+3. `Map` (vs object) handles componentId as any type; `WeakMap` if components are objects (auto-GC when component destroyed)
+
+**Tiếng Việt:** Thiết kế trên tách biệt concerns: component chỉ cần gọi `add/cleanup`, không cần quản lý references. Registry pattern dùng closure để "nhớ" đủ thông tin để cleanup. Ở scale lớn (Shopee với 1000 product cards), pattern này ngăn memory leak hệ thống — không chỉ ngăn 1 component bị leak.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Thiết kế registry pattern, nhắc đến WeakMap for auto-GC, xét edge cases (duplicate registration, component unmount order), biết trade-off Map vs WeakMap
+- ❌ Weak: Chỉ nói "dùng removeEventListener" — đúng nhưng không address scale, không có systematic cleanup
+
+---
+
+### Q: Closure-based private state vs ES2022 class private fields (`#`) — when to use each? 🔴 Senior
+
+**A:** Both achieve encapsulation but have fundamentally different trade-offs:
+
 ```javascript
-function throttle(fn, wait = 300) {
-  let last = 0;
-  return (...args) => {
-    const now = Date.now();
-    if (now - last >= wait) {
-      last = now;
-      fn(...args);
-    }
+// Closure-based private state
+function createUser(name) {
+  let _name = name;         // truly private — no reflection possible
+  let _loginCount = 0;
+
+  return {
+    login() { _loginCount++; console.log(`${_name} logged in`); },
+    getName() { return _name; },
+    // _name, _loginCount not accessible from outside AT ALL
   };
 }
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-### 🔴 [Senior] Q42: How do you design a robust architecture around throttle with closure state?
 
-- **Tổng Quan:** How do you design a robust architecture around throttle with closure state?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-function throttle(fn, wait = 300) {
-  let last = 0;
-  return (...args) => {
-    const now = Date.now();
-    if (now - last >= wait) {
-      last = now;
-      fn(...args);
-    }
-  };
+// ES2022 class private fields
+class User {
+  #name;           // accessible via Object.getOwnPropertyNames? No.
+  #loginCount = 0; // but: reflected in DevTools, accessible within class hierarchy
+
+  constructor(name) { this.#name = name; }
+  login() { this.#loginCount++; }
 }
 ```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-## Closures in React Hooks
 
-- **Tổng Quan:** Hooks sử dụng closure rất mạnh nhưng dễ gặp stale closure bug.
-- **Giải thích:** Cần hiểu dependency array, useRef, useCallback để kiểm soát.
-- **Ví dụ:** Các câu hỏi bên dưới dùng JavaScript thuần để mô tả cơ chế cốt lõi.
+**When closure-based:**
+- Need truly zero-footprint private (no DevTools visibility)
+- Functional programming style (no `this` binding issues)
+- Dynamic object creation without class overhead
+- Legacy code compatibility (pre-ES2022 environments)
 
-### 🟢 [Junior] Q43: What is stale closure in useEffect and when should you use it?
+**When class `#` private:**
+- Need `instanceof` checks, inheritance chains
+- Team is familiar with OOP patterns
+- Need TypeScript class decorators
+- Better performance for many instances (prototype chain, not per-object function copies)
 
-- **Tổng Quan:** What is stale closure in useEffect and when should you use it?
-- **Giải thích (VI):** stale closure in useEffect là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** stale closure in useEffect is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-function useStableHandler(onSubmit) {
-  const ref = React.useRef(onSubmit);
-  ref.current = onSubmit;
-  return React.useCallback((...args) => ref.current(...args), []);
-}
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-### 🟡 [Mid] Q44: Common pitfalls of stale closure in useEffect in production systems?
+**Tiếng Việt:** Trade-off chính: closure private state tạo per-object function copies (memory overhead với 10000+ instances), trong khi class private fields dùng prototype chain (shared methods). Với Shopee có 1000 ProductCard instances, class `#` tốt hơn về memory. Với 1-3 singletons (ShopeeCart module), closure OK.
 
-- **Tổng Quan:** Common pitfalls of stale closure in useEffect in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-function useStableHandler(onSubmit) {
-  const ref = React.useRef(onSubmit);
-  ref.current = onSubmit;
-  return React.useCallback((...args) => ref.current(...args), []);
-}
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-### 🔴 [Senior] Q45: How do you design a robust architecture around stale closure in useEffect?
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Biết performance difference (per-instance vs prototype), xét inheritance, TypeScript implications, không chỉ nói "cả 2 đều OK"
+- ❌ Weak: "Closure cũ hơn, class modern hơn" — đây là oversimplification, mỗi cái có trường hợp tốt hơn
 
-- **Tổng Quan:** How do you design a robust architecture around stale closure in useEffect?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-function useStableHandler(onSubmit) {
-  const ref = React.useRef(onSubmit);
-  ref.current = onSubmit;
-  return React.useCallback((...args) => ref.current(...args), []);
-}
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-### 🟢 [Junior] Q46: What is stable callback strategy and when should you use it?
+---
 
-- **Tổng Quan:** What is stable callback strategy and when should you use it?
-- **Giải thích (VI):** stable callback strategy là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** stable callback strategy is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-function useStableHandler(onSubmit) {
-  const ref = React.useRef(onSubmit);
-  ref.current = onSubmit;
-  return React.useCallback((...args) => ref.current(...args), []);
-}
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-### 🟡 [Mid] Q47: Common pitfalls of stable callback strategy in production systems?
+## Interview Q&A Summary / Tổng Kết Phỏng Vấn
 
-- **Tổng Quan:** Common pitfalls of stable callback strategy in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-function useStableHandler(onSubmit) {
-  const ref = React.useRef(onSubmit);
-  ref.current = onSubmit;
-  return React.useCallback((...args) => ref.current(...args), []);
-}
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-### 🔴 [Senior] Q48: How do you design a robust architecture around stable callback strategy?
+| Question | Level | Key Point |
+|----------|-------|-----------|
+| What is a closure? | 🟢 | Every function has [[Environment]] slot; captures reference not value |
+| var bug in loops | 🟢 | All closures share 1 var binding; let creates separate binding per iteration |
+| Implement debounce | 🟡 | Closure persists timerId across calls; clearTimeout + setTimeout pattern |
+| Stale closure in React | 🟡 | Empty deps freezes closure at render N; fix: deps array or useRef |
+| Production listener registry | 🔴 | Registry + closure-per-listener pattern; WeakMap for auto-GC at scale |
+| Closure vs class `#` private | 🔴 | Memory: closure = per-instance functions; `#` = shared prototype. Choose based on instance count and inheritance needs |
 
-- **Tổng Quan:** How do you design a robust architecture around stable callback strategy?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-function useStableHandler(onSubmit) {
-  const ref = React.useRef(onSubmit);
-  ref.current = onSubmit;
-  return React.useCallback((...args) => ref.current(...args), []);
-}
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-### 🟢 [Junior] Q49: What is event handler closure pitfalls and when should you use it?
+---
 
-- **Tổng Quan:** What is event handler closure pitfalls and when should you use it?
-- **Giải thích (VI):** event handler closure pitfalls là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** event handler closure pitfalls is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-function useStableHandler(onSubmit) {
-  const ref = React.useRef(onSubmit);
-  ref.current = onSubmit;
-  return React.useCallback((...args) => ref.current(...args), []);
-}
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-### 🟡 [Mid] Q50: Common pitfalls of event handler closure pitfalls in production systems?
+## ⚡ Cold Call Simulation / Mô Phỏng Phỏng Vấn
 
-- **Tổng Quan:** Common pitfalls of event handler closure pitfalls in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-function useStableHandler(onSubmit) {
-  const ref = React.useRef(onSubmit);
-  ref.current = onSubmit;
-  return React.useCallback((...args) => ref.current(...args), []);
-}
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-### 🔴 [Senior] Q51: How do you design a robust architecture around event handler closure pitfalls?
+> 🎯 Interviewer asks cold: **"Explain the stale closure problem in React useEffect and how you'd fix it."**
 
-- **Tổng Quan:** How do you design a robust architecture around event handler closure pitfalls?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-function useStableHandler(onSubmit) {
-  const ref = React.useRef(onSubmit);
-  ref.current = onSubmit;
-  return React.useCallback((...args) => ref.current(...args), []);
-}
-```
-- **Related / Liên quan:** Xem thêm: [Async](./09-async-comprehensive.md)
-## Interview Challenges and Debugging
+**30 giây đầu — mở đầu lý tưởng:**
+1. "Stale closure means a callback captured a state value at render time, and continues using that old value even after state updates — because closures capture references at creation time."
+2. "In useEffect with empty deps `[]`, the effect runs once and its closure freezes the initial state values."
+3. "Concrete example: `setInterval(() => sendMessage(text), 1000)` with `[]` deps — `text` is always empty string no matter what the user types."
+4. "Two fixes: add `text` to deps array (fresh closure per state change), or use `useRef` to escape the closure entirely when you don't need reactive behavior."
 
-- **Tổng Quan:** Nhiều câu interview kiểm tra khả năng đọc scope + closure.
-- **Giải thích:** Thói quen trace lexical environment giúp giải nhanh và chính xác.
-- **Ví dụ:** Các câu hỏi bên dưới dùng JavaScript thuần để mô tả cơ chế cốt lõi.
+*Sau đó offer to go deeper on either fix strategy.*
 
-### 🟢 [Junior] Q52: What is loop + closure classic bug and when should you use it?
+---
 
-- **Tổng Quan:** What is loop + closure classic bug and when should you use it?
-- **Giải thích (VI):** loop + closure classic bug là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** loop + closure classic bug is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-function makeCounter() {
-  let count = 0;
-  return () => ++count;
-}
-const counter = makeCounter();
-console.log(counter());
-```
-- **Related / Liên quan:** Xem thêm: [Scope & Hoisting](./02-scope-hoisting-comprehensive.md)
-### 🟡 [Mid] Q53: Common pitfalls of loop + closure classic bug in production systems?
+## Self-Check / Tự Kiểm Tra ⚡
+> **Đóng tài liệu lại trước khi làm — Close this doc before attempting.**
 
-- **Tổng Quan:** Common pitfalls of loop + closure classic bug in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-function makeCounter() {
-  let count = 0;
-  return () => ++count;
-}
-const counter = makeCounter();
-console.log(counter());
-```
-- **Related / Liên quan:** Xem thêm: [Scope & Hoisting](./02-scope-hoisting-comprehensive.md)
-### 🔴 [Senior] Q54: How do you design a robust architecture around loop + closure classic bug?
+- [ ] **Retrieval**: Viết định nghĩa closure từ trí nhớ — bao gồm [[Environment]] slot và sự khác biệt giữa capture reference vs value. Không nhìn lại.
+- [ ] **Visual**: Vẽ memory diagram: outer function returns, inner function still references outer variable. Ai prevent GC? So sánh với ASCII diagram trong Layer 2.
+- [ ] **Application**: Bạn có 1000 product cards, mỗi cái có scroll listener. Bạn dùng pattern gì để tránh leak? (Không hint — viết code từ đầu)
+- [ ] **Debug**: Code này print gì: `for (var i=0; i<3; i++) setTimeout(()=>console.log(i), 0)` — và tại sao?
+- [ ] **Teach**: Giải thích stale closure trong React cho người chưa biết React, dùng analogy "tờ nhắc từ quá khứ".
 
-- **Tổng Quan:** How do you design a robust architecture around loop + closure classic bug?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-function makeCounter() {
-  let count = 0;
-  return () => ++count;
-}
-const counter = makeCounter();
-console.log(counter());
-```
-- **Related / Liên quan:** Xem thêm: [Scope & Hoisting](./02-scope-hoisting-comprehensive.md)
-### 🟢 [Junior] Q55: What is closure and async callback race and when should you use it?
+💬 **Feynman Prompt:** Giải thích tại sao closure gây memory leak bằng cách nào đó mà bố/mẹ bạn hiểu được — không dùng từ "closure", "GC", hay "reference".
 
-- **Tổng Quan:** What is closure and async callback race and when should you use it?
-- **Giải thích (VI):** closure and async callback race là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** closure and async callback race is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-async function getProfile() {
-  try {
-    const res = await fetch('/api/profile');
-    if (!res.ok) throw new Error('HTTP error');
-    return await res.json();
-  } catch (error) {
-    console.error('Get profile failed:', error.message);
-    throw error;
-  }
-}
-```
-- **Related / Liên quan:** Xem thêm: [Scope & Hoisting](./02-scope-hoisting-comprehensive.md)
-### 🟡 [Mid] Q56: Common pitfalls of closure and async callback race in production systems?
+🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày → 7 ngày → 14 ngày** để chuyển vào long-term memory.
 
-- **Tổng Quan:** Common pitfalls of closure and async callback race in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-async function getProfile() {
-  try {
-    const res = await fetch('/api/profile');
-    if (!res.ok) throw new Error('HTTP error');
-    return await res.json();
-  } catch (error) {
-    console.error('Get profile failed:', error.message);
-    throw error;
-  }
-}
-```
-- **Related / Liên quan:** Xem thêm: [Scope & Hoisting](./02-scope-hoisting-comprehensive.md)
-### 🔴 [Senior] Q57: How do you design a robust architecture around closure and async callback race?
+---
 
-- **Tổng Quan:** How do you design a robust architecture around closure and async callback race?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-async function getProfile() {
-  try {
-    const res = await fetch('/api/profile');
-    if (!res.ok) throw new Error('HTTP error');
-    return await res.json();
-  } catch (error) {
-    console.error('Get profile failed:', error.message);
-    throw error;
-  }
-}
-```
-- **Related / Liên quan:** Xem thêm: [Scope & Hoisting](./02-scope-hoisting-comprehensive.md)
-### 🟢 [Junior] Q58: What is closure readability and maintainability and when should you use it?
+## Connections / Liên Kết
 
-- **Tổng Quan:** What is closure readability and maintainability and when should you use it?
-- **Giải thích (VI):** closure readability and maintainability là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** closure readability and maintainability is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-function makeCounter() {
-  let count = 0;
-  return () => ++count;
-}
-const counter = makeCounter();
-console.log(counter());
-```
-- **Related / Liên quan:** Xem thêm: [Scope & Hoisting](./02-scope-hoisting-comprehensive.md)
-### 🟡 [Mid] Q59: Common pitfalls of closure readability and maintainability in production systems?
-
-- **Tổng Quan:** Common pitfalls of closure readability and maintainability in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-function makeCounter() {
-  let count = 0;
-  return () => ++count;
-}
-const counter = makeCounter();
-console.log(counter());
-```
-- **Related / Liên quan:** Xem thêm: [Scope & Hoisting](./02-scope-hoisting-comprehensive.md)
-### 🔴 [Senior] Q60: How do you design a robust architecture around closure readability and maintainability?
-
-- **Tổng Quan:** How do you design a robust architecture around closure readability and maintainability?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-function makeCounter() {
-  let count = 0;
-  return () => ++count;
-}
-const counter = makeCounter();
-console.log(counter());
-```
-- **Related / Liên quan:** Xem thêm: [Scope & Hoisting](./02-scope-hoisting-comprehensive.md)
-## Câu Hỏi Phỏng Vấn / Interview Q&A
-
-### 🟢 [Junior] Q61: What is build secure encapsulation with closures and when should you use it?
-
-- **Tổng Quan:** What is build secure encapsulation with closures and when should you use it?
-- **Giải thích (VI):** build secure encapsulation with closures là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** build secure encapsulation with closures is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-const Cart = (() => {
-  const items = [];
-  function add(item) { items.push(item); }
-  function total() { return items.length; }
-  return { add, total };
-})();
-```
-- **Related / Liên quan:** Liên quan: [Scope](./02-scope-hoisting-comprehensive.md)
-### 🟡 [Mid] Q62: Common pitfalls of build secure encapsulation with closures in production systems?
-
-- **Tổng Quan:** Common pitfalls of build secure encapsulation with closures in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-const Cart = (() => {
-  const items = [];
-  function add(item) { items.push(item); }
-  function total() { return items.length; }
-  return { add, total };
-})();
-```
-- **Related / Liên quan:** Liên quan: [Scope](./02-scope-hoisting-comprehensive.md)
-### 🔴 [Senior] Q63: How do you design a robust architecture around build secure encapsulation with closures?
-
-- **Tổng Quan:** How do you design a robust architecture around build secure encapsulation with closures?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-const Cart = (() => {
-  const items = [];
-  function add(item) { items.push(item); }
-  function total() { return items.length; }
-  return { add, total };
-})();
-```
-- **Related / Liên quan:** Liên quan: [Scope](./02-scope-hoisting-comprehensive.md)
-### 🟢 [Junior] Q64: What is closure memory profiling workflow and when should you use it?
-
-- **Tổng Quan:** What is closure memory profiling workflow and when should you use it?
-- **Giải thích (VI):** closure memory profiling workflow là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** closure memory profiling workflow is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-function attachListener(node) {
-  const bigData = new Array(10000).fill('x');
-  function onClick() {
-    console.log(bigData.length);
-  }
-  node.addEventListener('click', onClick);
-  return () => node.removeEventListener('click', onClick);
-}
-```
-- **Related / Liên quan:** Liên quan: [Async](./09-async-comprehensive.md)
-### 🟡 [Mid] Q65: Common pitfalls of closure memory profiling workflow in production systems?
-
-- **Tổng Quan:** Common pitfalls of closure memory profiling workflow in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-function attachListener(node) {
-  const bigData = new Array(10000).fill('x');
-  function onClick() {
-    console.log(bigData.length);
-  }
-  node.addEventListener('click', onClick);
-  return () => node.removeEventListener('click', onClick);
-}
-```
-- **Related / Liên quan:** Liên quan: [Async](./09-async-comprehensive.md)
-### 🔴 [Senior] Q66: How do you design a robust architecture around closure memory profiling workflow?
-
-- **Tổng Quan:** How do you design a robust architecture around closure memory profiling workflow?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-function attachListener(node) {
-  const bigData = new Array(10000).fill('x');
-  function onClick() {
-    console.log(bigData.length);
-  }
-  node.addEventListener('click', onClick);
-  return () => node.removeEventListener('click', onClick);
-}
-```
-- **Related / Liên quan:** Liên quan: [Async](./09-async-comprehensive.md)
-### 🟢 [Junior] Q67: What is memoization invalidation strategy and when should you use it?
-
-- **Tổng Quan:** What is memoization invalidation strategy and when should you use it?
-- **Giải thích (VI):** memoization invalidation strategy là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** memoization invalidation strategy is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-function memoize(fn) {
-  const cache = new Map();
-  return (key) => {
-    if (cache.has(key)) return cache.get(key);
-    const value = fn(key);
-    cache.set(key, value);
-    return value;
-  };
-}
-```
-- **Related / Liên quan:** Liên quan: [ES6 Features](./11-es6-features-deep.md)
-### 🟡 [Mid] Q68: Common pitfalls of memoization invalidation strategy in production systems?
-
-- **Tổng Quan:** Common pitfalls of memoization invalidation strategy in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-function memoize(fn) {
-  const cache = new Map();
-  return (key) => {
-    if (cache.has(key)) return cache.get(key);
-    const value = fn(key);
-    cache.set(key, value);
-    return value;
-  };
-}
-```
-- **Related / Liên quan:** Liên quan: [ES6 Features](./11-es6-features-deep.md)
-### 🔴 [Senior] Q69: How do you design a robust architecture around memoization invalidation strategy?
-
-- **Tổng Quan:** How do you design a robust architecture around memoization invalidation strategy?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-function memoize(fn) {
-  const cache = new Map();
-  return (key) => {
-    if (cache.has(key)) return cache.get(key);
-    const value = fn(key);
-    cache.set(key, value);
-    return value;
-  };
-}
-```
-- **Related / Liên quan:** Liên quan: [ES6 Features](./11-es6-features-deep.md)
-### 🟢 [Junior] Q70: What is functional decorator composition and when should you use it?
-
-- **Tổng Quan:** What is functional decorator composition and when should you use it?
-- **Giải thích (VI):** functional decorator composition là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** functional decorator composition is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-const withTiming = (fn) => (...args) => {
-  const start = performance.now();
-  const result = fn(...args);
-  console.log('ms', performance.now() - start);
-  return result;
-};
-```
-- **Related / Liên quan:** Liên quan: [Prototypes](./10-prototypes-inheritance-deep.md)
-### 🟡 [Mid] Q71: Common pitfalls of functional decorator composition in production systems?
-
-- **Tổng Quan:** Common pitfalls of functional decorator composition in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-const withTiming = (fn) => (...args) => {
-  const start = performance.now();
-  const result = fn(...args);
-  console.log('ms', performance.now() - start);
-  return result;
-};
-```
-- **Related / Liên quan:** Liên quan: [Prototypes](./10-prototypes-inheritance-deep.md)
-### 🔴 [Senior] Q72: How do you design a robust architecture around functional decorator composition?
-
-- **Tổng Quan:** How do you design a robust architecture around functional decorator composition?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-const withTiming = (fn) => (...args) => {
-  const start = performance.now();
-  const result = fn(...args);
-  console.log('ms', performance.now() - start);
-  return result;
-};
-```
-- **Related / Liên quan:** Liên quan: [Prototypes](./10-prototypes-inheritance-deep.md)
-### 🟢 [Junior] Q73: What is react closure bugs under concurrent rendering and when should you use it?
-
-- **Tổng Quan:** What is react closure bugs under concurrent rendering and when should you use it?
-- **Giải thích (VI):** react closure bugs under concurrent rendering là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** react closure bugs under concurrent rendering is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-function useStableHandler(onSubmit) {
-  const ref = React.useRef(onSubmit);
-  ref.current = onSubmit;
-  return React.useCallback((...args) => ref.current(...args), []);
-}
-```
-- **Related / Liên quan:** Liên quan: [Async](./09-async-comprehensive.md)
-### 🟡 [Mid] Q74: Common pitfalls of react closure bugs under concurrent rendering in production systems?
-
-- **Tổng Quan:** Common pitfalls of react closure bugs under concurrent rendering in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-function useStableHandler(onSubmit) {
-  const ref = React.useRef(onSubmit);
-  ref.current = onSubmit;
-  return React.useCallback((...args) => ref.current(...args), []);
-}
-```
-- **Related / Liên quan:** Liên quan: [Async](./09-async-comprehensive.md)
-### 🔴 [Senior] Q75: How do you design a robust architecture around react closure bugs under concurrent rendering?
-
-- **Tổng Quan:** How do you design a robust architecture around react closure bugs under concurrent rendering?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-function useStableHandler(onSubmit) {
-  const ref = React.useRef(onSubmit);
-  ref.current = onSubmit;
-  return React.useCallback((...args) => ref.current(...args), []);
-}
-```
-- **Related / Liên quan:** Liên quan: [Async](./09-async-comprehensive.md)
-### 🟢 [Junior] Q76: What is once/debounce/throttle implementation comparison and when should you use it?
-
-- **Tổng Quan:** What is once/debounce/throttle implementation comparison and when should you use it?
-- **Giải thích (VI):** once/debounce/throttle implementation comparison là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** once/debounce/throttle implementation comparison is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-function debounce(fn, wait = 300) {
-  let t;
-  return (...args) => {
-    clearTimeout(t);
-    t = setTimeout(() => fn(...args), wait);
-  };
-}
-```
-- **Related / Liên quan:** Liên quan: [Async](./09-async-comprehensive.md)
-### 🟡 [Mid] Q77: Common pitfalls of once/debounce/throttle implementation comparison in production systems?
-
-- **Tổng Quan:** Common pitfalls of once/debounce/throttle implementation comparison in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-function debounce(fn, wait = 300) {
-  let t;
-  return (...args) => {
-    clearTimeout(t);
-    t = setTimeout(() => fn(...args), wait);
-  };
-}
-```
-- **Related / Liên quan:** Liên quan: [Async](./09-async-comprehensive.md)
-### 🔴 [Senior] Q78: How do you design a robust architecture around once/debounce/throttle implementation comparison?
-
-- **Tổng Quan:** How do you design a robust architecture around once/debounce/throttle implementation comparison?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-function debounce(fn, wait = 300) {
-  let t;
-  return (...args) => {
-    clearTimeout(t);
-    t = setTimeout(() => fn(...args), wait);
-  };
-}
-```
-- **Related / Liên quan:** Liên quan: [Async](./09-async-comprehensive.md)
-### 🟢 [Junior] Q79: What is closure interview whiteboard approach and when should you use it?
-
-- **Tổng Quan:** What is closure interview whiteboard approach and when should you use it?
-- **Giải thích (VI):** closure interview whiteboard approach là khái niệm nền tảng. Ở mức Junior, bạn cần nắm định nghĩa, vòng đời cơ bản và tình huống dùng phổ biến khi viết feature.
-- **Giải thích (EN):** closure interview whiteboard approach is a foundational concept. At junior level, explain definition, basic lifecycle, and typical usage in product code.
-- **Ví dụ (JavaScript):**
-```javascript
-function makeCounter() {
-  let count = 0;
-  return () => ++count;
-}
-const counter = makeCounter();
-console.log(counter());
-```
-- **Related / Liên quan:** Liên quan: [Scope](./02-scope-hoisting-comprehensive.md)
-### 🟡 [Mid] Q80: Common pitfalls of closure interview whiteboard approach in production systems?
-
-- **Tổng Quan:** Common pitfalls of closure interview whiteboard approach in production systems?
-- **Giải thích (VI):** Ở mức Mid, bạn phải chỉ ra rủi ro thực tế (bug khó tái hiện, race condition, memory issue, readability) và cách giảm thiểu có hệ thống.
-- **Giải thích (EN):** At mid level, discuss real-world pitfalls (hard-to-reproduce bugs, race conditions, memory issues, readability) and mitigation strategy.
-- **Ví dụ (JavaScript):**
-```javascript
-function makeCounter() {
-  let count = 0;
-  return () => ++count;
-}
-const counter = makeCounter();
-console.log(counter());
-```
-- **Related / Liên quan:** Liên quan: [Scope](./02-scope-hoisting-comprehensive.md)
-### 🔴 [Senior] Q81: How do you design a robust architecture around closure interview whiteboard approach?
-
-- **Tổng Quan:** How do you design a robust architecture around closure interview whiteboard approach?
-- **Giải thích (VI):** Mức Senior tập trung vào trade-off kiến trúc: tách trách nhiệm, đo lường, quan sát lỗi, fallback strategy, và tiêu chí chọn giải pháp cho team lớn.
-- **Giải thích (EN):** Senior discussion should cover architecture trade-offs: separation of concerns, observability, fallback strategy, and decision criteria for teams.
-- **Ví dụ (JavaScript):**
-```javascript
-function makeCounter() {
-  let count = 0;
-  return () => ++count;
-}
-const counter = makeCounter();
-console.log(counter());
-```
-- **Related / Liên quan:** Liên quan: [Scope](./02-scope-hoisting-comprehensive.md)
+- ⬅️ **Built on:** [Scope & Hoisting](./02-scope-hoisting-comprehensive.md) — lexical scope là nền tảng của closure
+- ➡️ **Enables:** [React Hooks](../03-react/03-hooks-deep-dive.md) — useState/useEffect internals dùng closure; stale closure là core hook pattern
+- ➡️ **Enables:** [Async Patterns](./09-async-comprehensive.md) — Promise chains và async/await dùng closure để maintain context
+- 🔗 **Applied in:** Module pattern (pre-ES modules), debounce/throttle utilities, memoization, React hooks
