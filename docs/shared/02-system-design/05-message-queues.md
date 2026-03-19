@@ -6,6 +6,20 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Shopee Order Service (thực tế):** Khi user đặt hàng, hệ thống cần: (1) trừ inventory, (2) charge payment, (3) gửi email xác nhận, (4) notify warehouse. Nếu gọi synchronous, một bước chậm → toàn bộ request timeout. Sau khi migrate sang event-driven: Order service emit `OrderCreated` event vào Kafka → 4 services consume independently, retry riêng biệt khi fail. Response time: 2s → 150ms.
+
+**Bài học:** Message queue giải quyết temporal coupling — producer và consumer không cần online cùng lúc. Nhưng tạo ra eventual consistency — cần thiết kế idempotency từ đầu.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Message queue giống hệ thống phiếu đặt đồ ăn ở nhà hàng: khách (producer) đưa phiếu cho cashier (broker), bếp (consumer) lấy phiếu theo thứ tự. Khách không cần chờ bếp nấu xong mới ngồi xuống. Kafka là nhà hàng lưu lại *toàn bộ lịch sử phiếu* (log-based) — bếp mới có thể đọc lại từ đầu.
+
+**Why it matters:** Mọi hệ thống scale > 1 service đều cần async communication. Biết Kafka vs RabbitMQ, at-least-once vs exactly-once, và Saga pattern là kiến thức bắt buộc cho Senior Backend.
+
+---
+
 ## Overview / Tổng Quan
 
 Message queues và event streaming là backbone của distributed systems hiện đại — cho phép decoupling các services, xử lý async, và scale độc lập.
@@ -299,3 +313,20 @@ Vietnamese: DLQ là pattern cực kỳ quan trọng trong production. Không có
 ---
 
 **See also**: [BE Message Queues (Go)](../../be-track/02-backend-knowledge/08-message-queues.md) | [Distributed Patterns](../../be-track/04-be-system-design/04-distributed-patterns.md) | [Replication & Partitioning](./replication-partitioning.md)
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I explain why "consumers ≤ partitions" is a hard limit in Kafka?
+- [ ] Can I describe the Outbox Pattern and why it solves the dual-write problem?
+- [ ] Can I compare Kafka and RabbitMQ — use case for each?
+- [ ] Can I explain at-least-once delivery and what "idempotent consumer" means?
+- 💬 **Feynman Prompt:** Giải thích tại sao Kafka lưu messages như log (không xóa sau khi consume) — và lợi ích cụ thể là gì khi cần replay events.
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [System Design Theory](./system-design-theory.md) — async communication patterns
+- ➡️ **Applied in**: [Distributed Patterns](../../be-track/04-be-system-design/04-distributed-patterns.md) — Saga uses message queues
+- ➡️ **Applied in**: [Event Sourcing & CQRS](./07-event-sourcing-cqrs.md) — events published to message queues
+- 🔗 **Implementation**: [BE Message Queues Go](../../be-track/02-backend-knowledge/08-message-queues.md) — Go-specific consumer patterns

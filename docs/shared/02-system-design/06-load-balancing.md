@@ -5,6 +5,20 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**VNG MoMo payment gateway:** Trong sự kiện 11.11, một trong 8 API servers bị memory leak và response time tăng lên 5s. Với Round Robin load balancing, 12.5% traffic vẫn bị route đến server chậm. Sau khi switch sang Least Connections với active health check: server chậm tự động nhận ít requests hơn, health check detect và drain traffic trong 30s. User impact: từ 12.5% bị slow → gần 0%.
+
+**Bài học:** Load balancing algorithm không chỉ là "chia đều" — phải kết hợp với health check và drain logic để handle real-world failure modes.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Load balancer giống người điều phối hàng tại siêu thị: quan sát hàng nào ngắn nhất (Least Connections) và hướng khách đến đó. Round Robin là "lần lượt mỗi người một quầy" — đơn giản nhưng không biết quầy nào đang bận. IP Hash là "người quen quầy quen" — đảm bảo consistency nhưng mất tác dụng khi server fail.
+
+**Why it matters:** Load balancer là component đầu tiên trong hầu hết production systems. Sai algorithm hoặc thiếu health check = single point of failure khi một server chậm.
+
+---
+
 ## Overview / Tổng Quan
 
 Load balancer phân phối incoming traffic đến nhiều servers — ngăn bất kỳ server đơn lẻ nào bị quá tải.
@@ -287,3 +301,20 @@ Vietnamese: Đây là câu hỏi hay gặp khi phỏng vấn về K8s hoặc mic
 ---
 
 **See also**: [System Design Theory](./system-design-theory.md) | [Replication & Partitioning](./replication-partitioning.md) | [Message Queues](./05-message-queues.md)
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I compare Round Robin, Least Connections, and IP Hash — use cases and trade-offs?
+- [ ] Can I explain the difference between liveness and readiness health checks?
+- [ ] Can I describe L4 vs L7 load balancing and when gRPC requires special consideration?
+- [ ] Can I explain why sticky sessions are anti-pattern for horizontal scaling?
+- 💬 **Feynman Prompt:** Giải thích tại sao DNS load balancing không đủ để route traffic away từ failed server ngay lập tức — kể cả khi server đã down hoàn toàn.
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [System Design Theory](./system-design-theory.md) — horizontal scaling requires load balancing
+- ⬅️ **Built on**: [Replication & Partitioning](./replication-partitioning.md) — read replicas are behind load balancers
+- ➡️ **Applied in**: [Design Framework](../../be-track/04-be-system-design/01-design-framework.md) — load balancer appears in every High-Level Design
+- 🔗 **Related**: [Resilience Patterns](../../be-track/02-backend-knowledge/07-resilience-patterns.md) — circuit breaker complements load balancer health checks

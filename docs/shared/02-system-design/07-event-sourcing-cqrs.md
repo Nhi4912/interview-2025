@@ -5,6 +5,20 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Axon Active banking module:** Hệ thống lưu số dư tài khoản — user complain số dư hiển thị sai sau một loạt transactions. Debug: không có audit log đủ chi tiết để tái hiện timeline của transactions. Sau khi migrate sang Event Sourcing: thay vì lưu `balance = 500`, lưu `[Deposit +200, Withdrawal -100, Deposit +400]` — số dư được tính bằng cách replay events. Bug trở nên reproducible: developer replay events đến thời điểm bất kỳ để xem state tại đó.
+
+**Bài học:** Event Sourcing đổi "current state" thành "history of changes" — giải quyết audit trail và time-travel debugging nhưng thêm complexity. Chỉ dùng khi lợi ích này thực sự cần.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Event Sourcing giống sổ kế toán kép (double-entry bookkeeping): không ghi "số dư = 500", mà ghi "ngày 1: +200, ngày 2: -100, ngày 3: +400". Số dư 500 là *kết quả* của các ghi chép, không phải dữ liệu gốc. CQRS giống tách bộ phận kế toán (write: ghi giao dịch) và báo cáo (read: xem tổng hợp) thành hai phòng riêng.
+
+**Why it matters:** Event Sourcing + CQRS là pattern Senior phải biết cho banking, e-commerce, và audit-heavy systems. Nhưng cũng phải biết *khi nào không nên dùng*.
+
+---
+
 ## Overview / Tổng Quan
 
 Hai pattern này giải quyết vấn đề khác nhau nhưng thường dùng cùng nhau:
@@ -299,3 +313,20 @@ Vietnamese: Đây là một trong những điểm mạnh nhất của Event Sour
 ---
 
 **See also**: [Message Queues](./05-message-queues.md) | [Distributed Patterns](../../be-track/04-be-system-design/04-distributed-patterns.md)
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I explain the difference between Event Sourcing and having an audit log table?
+- [ ] Can I describe what a "projection" is and how it builds a read model from events?
+- [ ] Can I explain the Snapshot Pattern and when it's necessary?
+- [ ] Can I name 3 scenarios where you should NOT use Event Sourcing?
+- 💬 **Feynman Prompt:** Giải thích tại sao "never delete old event types" trong Event Sourcing — điều gì xảy ra nếu bạn xóa một event type mà vẫn còn events cũ trong store?
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [Message Queues](./05-message-queues.md) — events are published to message queues for downstream consumers
+- ⬅️ **Built on**: [Distributed Patterns](../../be-track/04-be-system-design/04-distributed-patterns.md) — Saga pattern pairs naturally with Event Sourcing
+- ➡️ **Applied in**: [Advanced System Design](../../be-track/04-be-system-design/03-advanced-problems.md) — payment and booking systems use ES+CQRS
+- 🔗 **Related**: [Database Sharding](../03-database/04-sharding-and-transactions.md) — event store has different sharding needs than OLTP DB
