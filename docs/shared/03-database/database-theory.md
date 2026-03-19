@@ -1,7 +1,62 @@
 # Database Theory / Lý Thuyết Cơ Sở Dữ Liệu
 
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **Prerequisites**: [Data Structures](../01-cs-fundamentals/data-structures-theory.md)
 > **See also**: [Indexing & Optimization](./02-indexing-and-optimization.md) | [NoSQL & NewSQL](./03-nosql-and-newsql.md) | [BE Database Advanced](../../be-track/03-database-advanced/)
+
+---
+
+## Real-World Scenario / Tình Huống Thực Tế
+
+E-commerce app của bạn bắt đầu chậm. User phàn nàn checkout mất 8 giây. Bạn xem query logs: `SELECT * FROM orders JOIN users JOIN products WHERE ...` đang chạy full table scan trên bảng 10 triệu rows.
+
+**Không có index → O(n) scan.** Add index đúng chỗ → O(log n) B-Tree lookup → query xuống còn 50ms.
+
+Đây là lý do mọi developer cần hiểu database internals: không chỉ biết cách write queries, mà biết **tại sao** query chậm và cách fix.
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy / Liên Tưởng — Thư viện:**
+- **Table** = kệ sách (rows = sách, columns = thông tin mỗi cuốn)
+- **Index** = mục lục — không có mục lục phải đọc từng trang (full scan)
+- **Transaction** = quy trình mượn sách: chưa ký giấy xong thì chưa tính là đã mượn
+- **ACID** = đảm bảo thư viện không bao giờ mất sách (Durability), không đếm nhầm (Consistency)
+
+| Concept | "Chết vì không biết" example |
+|---------|------------------------------|
+| **Index** | Full table scan trên bảng 10M rows |
+| **N+1 query** | Load 100 posts + 100 queries riêng cho comments |
+| **Transaction** | Double charge user vì race condition |
+| **Normalization** | Duplicate data → inconsistency khi update |
+| **NoSQL trade-offs** | Chọn MongoDB vì "flexible" → schema chaos |
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+    [Data Structures: B-Tree, Hash Table]
+                    │
+                    ▼
+           [DATABASE THEORY]  ← bạn đang ở đây
+                    │
+         ┌──────────┼──────────┐
+         ▼          ▼          ▼
+  [Relational]  [Storage]  [Transactions]
+  Tables/Keys   B-Tree idx   ACID
+  Normalization  WAL/Redo    Isolation levels
+  SQL/joins      Heap files  Deadlocks
+         │
+         ▼
+  [NoSQL: Document | Key-Value | Column | Graph]
+         │
+         ▼
+  [Scale: Sharding | Replication | Connection pool]
+```
+
+---
 
 ## Foundations of Data Management / Nền Tảng Quản Lý Dữ Liệu
 
@@ -1282,3 +1337,23 @@ Vietnamese explanation: "Use SQL" là safe default. NoSQL khi: (1) Schema highly
 |----------|-------|-----------|
 | ACID properties | 🟢 | Atomicity+Consistency+Isolation+Durability; bank transfer example |
 | SQL vs NoSQL | 🟡 | SQL=ACID+joins; NoSQL=flexible+scale; use SQL by default |
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Tôi có thể giải thích ACID và cho ví dụ khi nào mỗi property quan trọng không?
+- [ ] Tôi có thể giải thích B-Tree index hoạt động như thế nào và tại sao `WHERE email = ?` nhanh hơn `WHERE LOWER(email) = ?` không?
+- [ ] Tôi có thể giải thích N+1 query problem và cách dùng JOIN hoặc eager loading để fix không?
+- [ ] Tôi có thể giải thích khi nào nên dùng SQL vs NoSQL không?
+- [ ] Tôi có thể giải thích transaction isolation levels (Read Committed vs Repeatable Read vs Serializable) không?
+
+💬 **Feynman Prompt:** Giải thích database index cho manager không biết kỹ thuật. Tại sao thêm index làm SELECT nhanh hơn nhưng INSERT/UPDATE chậm hơn?
+
+---
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on:** [Data Structures](../01-cs-fundamentals/data-structures-theory.md) — B-Tree, Hash Table là cấu trúc bên trong database engines
+- ➡️ **Enables:** [Indexing & Optimization](./02-indexing-and-optimization.md) | [Sharding & Transactions](./04-sharding-and-transactions.md)
+- 🔗 **Applied in:** Every backend system | ORM (GORM, Sequelize) generates SQL — you still need to understand it

@@ -1,7 +1,64 @@
 # Core Web Vitals / Chỉ Số Web Cốt Lõi
 
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **Prerequisites**: [HTML5 Fundamentals](../05-html-css/00-html5-fundamentals.md)
 > **See also**: [React Performance](./02-react-performance.md) | [Bundle Optimization](./03-bundle-optimization.md) | [Web Performance Comprehensive](./04-web-performance-comprehensive.md)
+
+---
+
+## Real-World Scenario / Tình Huống Thực Tế
+
+Pinterest giảm perceived load time 40% → search traffic tăng 15%, sign-up conversion tăng 15%.
+
+Từ 2021, **Core Web Vitals là Google ranking factor**. Site chậm = mất SEO + mất users.
+
+**3 metrics Google đo:**
+- **LCP** (Largest Contentful Paint): bao lâu content chính xuất hiện? (target: ≤ 2.5s)
+- **CLS** (Cumulative Layout Shift): layout có nhảy lung tung không? (target: ≤ 0.1)
+- **INP** (Interaction to Next Paint): bao lâu sau click mới có response? (target: ≤ 200ms)
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy / Liên Tưởng — Vào quán cà phê:**
+- **LCP** = bao lâu đến khi menu được đưa ra (content chính hiển thị)
+- **CLS** = bàn ghế có bị di chuyển khi bạn sắp ngồi không (layout shift)
+- **INP** = bao lâu sau khi gọi món mới được ghi nhận (responsiveness)
+
+| Metric | Good | Poor | Common cause | Fix |
+|--------|------|------|-------------|-----|
+| LCP | ≤ 2.5s | > 4s | Large image, render-blocking CSS | WebP, preload, inline critical CSS |
+| CLS | ≤ 0.1 | > 0.25 | Images without dimensions, late ads | Always set `width`/`height` |
+| INP | ≤ 200ms | > 500ms | Heavy JS on main thread | Code split, Web Workers, debounce |
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+      [Browser Rendering Pipeline]
+      (Parse HTML → CSSOM → Layout → Paint)
+              │
+              ▼
+     [CORE WEB VITALS]  ← bạn đang ở đây
+              │
+    ┌─────────┼─────────┐
+    ▼         ▼         ▼
+  [LCP]     [CLS]    [INP]
+  Largest   Layout   Interaction
+  Content   Shift    Next Paint
+  Paint
+    │
+    ▼
+[Measurement Tools]
+Lighthouse | PageSpeed Insights | Chrome DevTools | web-vitals.js
+    │
+    ▼
+[Optimization Strategies]
+Critical CSS | Image optimization | Code splitting
+Preload hints | CDN | Service Worker caching
+```
 
 ---
 
@@ -369,3 +426,23 @@ Root causes & fixes:
 
 Vietnamese: INP cao nhất thường do: (1) Heavy JS on main thread — profiler sẽ thấy "Long Tasks" màu đỏ trong Performance tab. (2) Expensive React re-renders sau click — dùng `useTransition` để defer update, tránh block visual feedback. (3) Layout thrashing trong handler — đọc `offsetHeight` rồi set style, browser phải recalculate layout synchronously.
 
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Tôi có thể giải thích LCP, CLS, và INP bằng ví dụ cụ thể từ trang web thực không?
+- [ ] Tôi có thể giải thích tại sao CLS tăng khi dùng Google Fonts và cách fix bằng `font-display: swap` không?
+- [ ] Tôi có thể dùng Chrome DevTools Performance tab để identify LCP element không?
+- [ ] Tôi có thể giải thích critical rendering path và cách optimize nó không?
+- [ ] Tôi có thể giải thích tại sao Next.js `<Image>` component tốt hơn `<img>` cho Core Web Vitals không?
+
+💬 **Feynman Prompt:** Giải thích Core Web Vitals cho CEO đang hỏi "tại sao phải invest vào performance?" Thuyết phục bằng số liệu từ Pinterest, Amazon, và Google Search ranking impact.
+
+---
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on:** [HTML5 Fundamentals](../05-html-css/00-html5-fundamentals.md) | [CSS Fundamentals](../05-html-css/00-css-fundamentals.md) — CLS liên quan đến CSS và HTML image attributes
+- ➡️ **Enables:** [React Performance](./02-react-performance.md) | [Bundle Optimization](./03-bundle-optimization.md)
+- 🔗 **Tools:** Lighthouse | PageSpeed Insights | Chrome UX Report | web-vitals npm package

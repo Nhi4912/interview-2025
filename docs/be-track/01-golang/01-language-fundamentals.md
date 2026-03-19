@@ -1,11 +1,64 @@
 # Go Language Fundamentals
 
 > **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../00-table-of-contents.md)
+> **Prerequisites**: Programming basics (any language) | [OS Theory](../../shared/01-cs-fundamentals/os-theory.md)
+> **See also**: [Table of Contents](../../00-table-of-contents.md) | [Go Concurrency](./03-concurrency.md)
 
 > **Focus**: ~75% theory (WHY & HOW internally), ~25% code examples
 > **Format**: Q&A, Bilingual (English headings + Vietnamese explanations)
 > **Difficulty**: `[Junior]` `[Mid]` `[Senior]`
+
+---
+
+## Real-World Scenario / Tình Huống Thực Tế
+
+Grab cần xử lý hàng triệu ride requests đồng thời với latency thấp. Python gặp khó khăn với CPU-bound concurrency. Java có JVM startup overhead. **Go được chọn vì:**
+- Goroutines (2KB/goroutine vs 1MB/OS thread) → hàng triệu concurrent connections
+- Compile to native binary — không có JVM cold start, deploy Docker image nhỏ hơn
+- Simple syntax giảm onboarding time cho team lớn
+
+Go là ngôn ngữ chính tại Grab, Google, CloudFlare, Docker, Kubernetes — và đang phổ biến tại tech companies Vietnam.
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy / Liên Tưởng:** Go được thiết kế tại Google để giải quyết "C có performance, Python có simplicity" — nhưng một ngôn ngữ có cả hai.
+
+**Những gì Go cố tình KHÔNG có (và tại sao):**
+
+| Bị bỏ | Lý do |
+|-------|-------|
+| Class inheritance | Composition > Inheritance — dùng embedding |
+| Exceptions (try/catch) | Explicit `if err != nil` → không bỏ qua lỗi |
+| Implicit type conversion | Forces clarity, prevents bugs |
+| Generics (trước Go 1.18) | Simplicity first — added later when clearly needed |
+
+**Go's killer features:** Goroutines + Channels + Interfaces (implicit) + Fast compile
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+    [GO LANGUAGE FUNDAMENTALS]  ← bạn đang ở đây
+                    │
+         ┌──────────┼──────────┐
+         ▼          ▼          ▼
+  [Types]      [Functions]  [Error Handling]
+  Primitives   First-class  if err != nil
+  Structs      Defer/panic  errors.Is/As
+  Interfaces   Closures     Wrapping
+  Pointers     Multiple ret Custom errors
+         │
+         ▼
+  [Go Concurrency](./03-concurrency.md)
+  Goroutines | Channels | sync | Context
+         │
+         ▼
+  [Go Interfaces & Generics](./02-interfaces-generics.md)
+  Implicit interface | Type constraints | Generic functions
+```
 
 ---
 
@@ -1116,3 +1169,23 @@ var _ io.Reader = (*MyType)(nil)
 ---
 
 > **Next**: [02-interfaces-and-generics.md](./02-interfaces-generics.md) — Interface internals, type assertion, generics
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Tôi có thể giải thích tại sao Go không có exceptions và cách handle errors thay thế không?
+- [ ] Tôi có thể giải thích sự khác biệt giữa pointer receiver và value receiver không?
+- [ ] Tôi có thể giải thích Go interfaces là implicit và tại sao điều này tốt hơn explicit implementation không?
+- [ ] Tôi có thể giải thích `defer` hoạt động như thế nào và use case phổ biến không?
+- [ ] Tôi có thể giải thích khi nào Go escape variable lên heap thay vì giữ trên stack không?
+
+💬 **Feynman Prompt:** Giải thích "why Go doesn't have try/catch" cho developer đến từ Java/Python. Tại sao `if err != nil` pattern thực ra tốt hơn exceptions trong nhiều trường hợp?
+
+---
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on:** [OS Theory](../../shared/01-cs-fundamentals/os-theory.md) — Go stack/heap, goroutines built on OS primitives
+- ➡️ **Enables:** [Go Concurrency](./03-concurrency.md) | [Go Interfaces](./02-interfaces-generics.md) | [Go Testing](./05-testing-profiling.md)
+- 🔗 **Used at:** Grab, CloudFlare, Docker, Kubernetes, every major cloud infra tool

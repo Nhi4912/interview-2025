@@ -1,7 +1,67 @@
 # Networking Theory / Lý Thuyết Mạng Máy Tính
 
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **Prerequisites**: [OS Theory](./os-theory.md)
 > **See also**: [OS Theory](./os-theory.md) | [FE Networking](../../fe-track/10-networking/) | [BE Networking](../../be-track/02-backend-knowledge/06-networking-go.md)
+
+---
+
+## Real-World Scenario / Tình Huống Thực Tế
+
+User ở Hà Nội gõ `https://google.com` và nhấn Enter. Trong vòng 200ms:
+1. DNS lookup → IP address `142.250.x.x`
+2. TCP 3-way handshake → connection established
+3. TLS 1.3 handshake → encrypted channel (1 RTT)
+4. HTTP/2 request → multiplexed response
+5. Browser nhận HTML, render trang
+
+Hiểu networking = hiểu tại sao app chậm (DNS lookup? TCP latency? TLS overhead?), tại sao CORS error xảy ra, và tại sao HTTPS bảo vệ users.
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy / Liên Tưởng — Gửi thư quốc tế:**
+- **IP** = địa chỉ nhà — xác định nơi đến
+- **TCP** = dịch vụ bưu chính có xác nhận — đảm bảo thư đến đủ, đúng thứ tự
+- **UDP** = thả thư vào thùng — nhanh hơn, không đảm bảo
+- **HTTP** = ngôn ngữ trong thư — request/response format
+- **DNS** = danh bạ điện thoại — chuyển tên miền thành IP
+- **HTTPS/TLS** = phong bì bịt kín — chỉ người nhận đọc được
+
+| Concept | Frontend Impact |
+|---------|----------------|
+| HTTP/1.1 vs HTTP/2 | Bundle strategies, request waterfalls |
+| DNS lookup | Preconnect hints, DNS prefetch |
+| TLS handshake | HSTS, certificate pinning |
+| CORS | Every API call từ browser |
+| WebSocket | Real-time (chat, notifications) |
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+         [NETWORKING THEORY]
+                    │
+         ┌──────────┼──────────┐
+         ▼          ▼          ▼
+  [Protocols]  [Transport]  [Application]
+  OSI model    TCP vs UDP    HTTP/1.1/2/3
+  IP routing   3-way shake   REST/GraphQL
+  DNS          TLS/SSL       WebSocket/SSE
+  ARP/ICMP     Flow control  CORS/CSP
+         │
+         ▼
+  [Performance]
+  Latency | Bandwidth | RTT | CDN | Caching headers
+         │
+         ▼
+  [Applied: Security]
+  HTTPS | Certificate chain | HSTS | TLS 1.3
+```
+
+---
 
 ## Understanding Computer Networks and Communication / Hiểu về Mạng Máy Tính
 
@@ -1408,3 +1468,23 @@ Vietnamese: HOL blocking là vấn đề cơ bản của queue — một item đ
 | TCP 3-way handshake & TIME_WAIT | 🔴 | TIME_WAIT = 2×MSL prevents stale packet collision |
 | Head-of-line blocking | 🔴 | HTTP/2 fixes app-level HOL; HTTP/3 fixes transport-level HOL |
 [← Back to Operating Systems](./os-theory.md) | [Next: Software Engineering →](./08-computation-theory.md)
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Tôi có thể giải thích TCP 3-way handshake và tại sao nó tốn thời gian không?
+- [ ] Tôi có thể giải thích HTTPS/TLS và tại sao HTTP plain-text không an toàn không?
+- [ ] Tôi có thể giải thích tại sao HTTP/2 nhanh hơn HTTP/1.1 (multiplexing, header compression) không?
+- [ ] Tôi có thể giải thích CORS và cách server cần cấu hình để allow cross-origin requests không?
+- [ ] Tôi có thể giải thích khi nào dùng WebSocket thay vì REST API không?
+
+💬 **Feynman Prompt:** Giải thích HTTPS cho người dùng thông thường đang hỏi "tại sao browser hiện ổ khóa xanh?" Dữ liệu được bảo vệ như thế nào trong khi truyền?
+
+---
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on:** [OS Theory](./os-theory.md) — sockets là OS-level concept; networking builds on OS I/O model
+- ➡️ **Enables:** [Security Fundamentals](../04-security/01-security-fundamentals.md) | [HTTP Fundamentals](../../fe-track/10-networking/01-http-fundamentals.md)
+- 🔗 **Applied in:** Every API call | CDN configuration | WebSocket/SSE for real-time | Browser Network DevTools

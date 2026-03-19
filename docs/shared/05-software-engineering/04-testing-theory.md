@@ -1,11 +1,72 @@
 # Testing Theory — Lý thuyết Kiểm thử Phần mềm
 
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **Prerequisites**: [SOLID & Design Patterns](./01-solid-and-design-patterns.md)
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 > - `docs/shared/05-software-engineering/03-sdlc-and-practices.md`
 > - `docs/be-track/01-golang/05-testing-profiling.md`
 > - `docs/fe-track/03-react/06-testing.md`
-> - `docs/fe-track/09-advanced-topics/13-tools-ecosystem-02-testing.md`
+
+---
+
+## Real-World Scenario / Tình Huống Thực Tế
+
+Bạn refactor payment function để thêm discount logic. Không có tests. Deploy lên production. 3 giờ sau: 200 khách bị charge sai tiền. Rollback khẩn cấp, hotfix, postmortem — một ngày làm việc mất.
+
+**Với tests:**
+- Unit test cho discount logic: catch bug ngay lúc viết code (30 giây)
+- Integration test cho payment flow: catch regression trước khi merge
+- E2E test cho checkout: catch UI bugs trước khi deploy
+
+Testing không phải về "code coverage 100%" — nó về **confidence to change code without fear**.
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy / Liên Tưởng — Lưới an toàn của circus:**
+Tests giống lưới an toàn. Không có lưới: mọi bước đi đều sợ. Có lưới: thử những động tác phức tạp hơn — refactor bolder, move faster.
+
+**Testing Pyramid:**
+```
+       /  E2E  \        ← Ít nhất: chậm, đắt, brittle (UI changes)
+      /─────────\
+     /Integration\      ← Vừa phải: test contracts giữa layers
+    /─────────────\
+   /     Unit     \     ← Nhiều nhất: nhanh, rẻ, focused
+  /─────────────────\
+```
+
+| Test type | Speed | Cost | Tests what |
+|-----------|-------|------|------------|
+| **Unit** | ms | Low | Pure logic, functions, classes |
+| **Integration** | 100ms-1s | Medium | DB queries, API calls, module interaction |
+| **E2E** | 5-30s | High | Full user journey from UI to DB |
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+      [TESTING THEORY]
+              │
+    ┌─────────┼─────────┐
+    ▼         ▼         ▼
+[Unit]  [Integration] [E2E]
+Jest/Vitest  Supertest   Playwright
+RTL          DB testing  Cypress
+    │
+    ▼
+[Methodologies]
+TDD (write test first) | BDD (Given/When/Then)
+Property-based | Mutation testing | Contract testing
+    │
+    ▼
+[CI/CD Integration]
+Tests gate every PR → No broken code reaches main
+```
+
+---
 
 ---
 
@@ -1884,3 +1945,23 @@ Vietnamese explanation: TDD không phải about 100% coverage — about design f
 | Testing pyramid | 🟢 | Many unit, fewer integration, few E2E; avoid ice cream cone |
 | Mock vs stub vs spy | 🟡 | Stub=fake data; mock=verify calls; spy=wrap real; mock at boundaries |
 | TDD | 🟡 | Red→Green→Refactor; forces design; hard-to-test = bad design signal |
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Tôi có thể giải thích Testing Pyramid và tại sao có nhiều unit tests hơn E2E tests không?
+- [ ] Tôi có thể viết unit test với mock cho một function phụ thuộc vào external service không?
+- [ ] Tôi có thể giải thích sự khác biệt giữa mock, stub, và spy không?
+- [ ] Tôi có thể giải thích TDD và khi nào nên (và không nên) dùng nó không?
+- [ ] Tôi có thể giải thích "80% coverage" có nghĩa gì và tại sao 100% coverage không phải mục tiêu không?
+
+💬 **Feynman Prompt:** Thuyết phục một developer đang nói "tôi viết code cẩn thận, không cần tests" bằng một tình huống production thực tế.
+
+---
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on:** [SOLID Principles](./01-solid-and-design-patterns.md) — code dễ test = code có good separation of concerns
+- ➡️ **Enables:** [Code Quality & Review](./05-code-quality-and-review.md) | CI/CD pipelines | Refactoring with confidence
+- 🔗 **Tools:** Jest/Vitest (unit) | Testing Library (React) | Playwright/Cypress (E2E) | Supertest (API) | Go testing package

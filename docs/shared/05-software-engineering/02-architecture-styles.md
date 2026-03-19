@@ -1,7 +1,63 @@
 # Architecture Styles / Các Phong Cách Kiến Trúc
 
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **Prerequisites**: [SOLID & Design Patterns](./01-solid-and-design-patterns.md)
 > **See also**: [SOLID & Design Patterns](./01-solid-and-design-patterns.md) | [System Design Theory](../02-system-design/system-design-theory.md)
+
+---
+
+## Real-World Scenario / Tình Huống Thực Tế
+
+Netflix bắt đầu là một monolith Ruby on Rails app. Khi scale lên 100M+ users, mỗi lần deploy một tính năng nhỏ đòi hỏi test và redeploy TOÀN BỘ ứng dụng. Một bug nhỏ trong payments code có thể làm sập video streaming.
+
+**Quyết định**: Migrate sang microservices — 500+ services, mỗi service deploy độc lập. Kết quả: payments deploy không ảnh hưởng video streaming.
+
+**Nhưng**: Martin Fowler nói "Don't start with microservices." — tại sao? Vì microservices là complexity trả trước cho benefit sau. Với team nhỏ, monolith thường là lựa chọn tốt hơn.
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy / Liên Tưởng:**
+- **Monolith** = căn hộ: một không gian, dễ xây, nhưng sửa một phòng ảnh hưởng phòng khác
+- **Microservices** = chung cư: nhiều căn độc lập, nhưng cần quản lý hạ tầng chung
+- **Serverless** = khách sạn: chỉ trả tiền khi có khách, không lo maintenance
+
+**Decision framework:**
+
+| Câu hỏi | Gợi ý |
+|---------|-------|
+| Team < 10 người? | Monolith — đơn giản hơn |
+| Cần scale từng part độc lập? | Microservices |
+| Workload spiky, không đều? | Serverless |
+| Event-driven, loosely coupled? | Event-driven architecture |
+| Legacy system integration? | Strangler fig pattern |
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+      [SOLID Principles] + [System Design]
+                    │
+                    ▼
+         [ARCHITECTURE STYLES]  ← bạn đang ở đây
+                    │
+         ┌──────────┼──────────┐
+         ▼          ▼          ▼
+  [Monolith]  [Microservices] [Event-driven]
+  Layered      Service mesh    Event sourcing
+  Hexagonal    API Gateway     CQRS / Pub-Sub
+  Clean Arch   Service disco   Choreography
+         │
+         ▼
+  [Serverless / Edge]
+  FaaS | BaaS | Edge functions
+         │
+         ▼
+  [Frontend Architecture]
+  MPA | SPA | SSR | Islands | Micro-frontends
+```
 
 ---
 
@@ -833,3 +889,23 @@ Vietnamese explanation: EDA phổ biến trong microservices (Kafka, RabbitMQ, A
 |----------|-------|-----------|
 | Microservices vs monolith | 🟡 | Monolith first; microservices when team/scale requires; Conway's Law |
 | Event-Driven Architecture | 🔴 | Async events = loose coupling; resilient; eventual consistency tradeoff |
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Tôi có thể giải thích khi nào nên chọn Monolith vs Microservices không?
+- [ ] Tôi có thể giải thích Hexagonal Architecture (Ports & Adapters) và tại sao nó giúp testing không?
+- [ ] Tôi có thể giải thích Event Sourcing và CQRS và khi nào cần chúng không?
+- [ ] Tôi có thể thiết kế một hệ thống với microservices và giải thích service discovery, circuit breaker không?
+- [ ] Tôi có thể giải thích tại sao Clean Architecture tách domain logic khỏi infrastructure không?
+
+💬 **Feynman Prompt:** Giải thích sự khác biệt giữa Monolith và Microservices cho CEO. Dùng ví dụ nhà hàng: một bếp lớn (monolith) vs nhiều food stations (microservices) — trade-off về tốc độ, chi phí, và quản lý.
+
+---
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on:** [SOLID & Design Patterns](./01-solid-and-design-patterns.md) | [System Design Theory](../02-system-design/system-design-theory.md)
+- ➡️ **Enables:** Microservices patterns | Distributed Systems | Frontend architecture decisions
+- 🔗 **Real examples:** Netflix (microservices) | Shopify (modular monolith) | Vercel (serverless/edge)

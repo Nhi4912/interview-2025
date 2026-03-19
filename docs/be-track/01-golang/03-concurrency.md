@@ -1,11 +1,72 @@
 # Go Concurrency — Deep Theory & Interview Questions
 
 > **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **Prerequisites**: [Go Fundamentals](./01-language-fundamentals.md) | [OS Theory](../../shared/01-cs-fundamentals/os-theory.md)
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 
 > **Phạm vi**: Goroutines, Scheduler (GMP), Channels, sync, Context, Concurrency Patterns, Race/Deadlock.
 > Đây là chủ đề **quan trọng nhất** trong phỏng vấn Go — Google, Zalo, Grab đều hỏi sâu.
 > ~70% lý thuyết, ~30% code minh họa. Bilingual: English headings + Vietnamese explanations.
+
+---
+
+## Real-World Scenario / Tình Huống Thực Tế
+
+API server nhận 10,000 requests/second. Mỗi request: validate → DB query → external API call → response.
+
+**OS threads approach:** 10,000 threads × 1MB stack = **10GB RAM** chỉ cho threads. Không khả thi.
+
+**Go goroutines:** 10,000 goroutines × 2KB stack = **20MB RAM**. Go scheduler (GMP model) multiplexes M goroutines lên N OS threads trên P logical processors.
+
+Đây là lý do Go scale tốt cho high-concurrency backends — và là chủ đề hỏi nhiều nhất trong Go interviews.
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy / Liên Tưởng — Nhà bếp restaurant:**
+- **OS Thread** = đầu bếp thực (expensive, giới hạn 8-32 per machine)
+- **Goroutine** = task/order cần làm (có thể có hàng nghìn)
+- **Go Scheduler** = manager phân công task cho đầu bếp có sẵn
+- **Channel** = khay truyền đồ giữa các đầu bếp (communicate, không share trực tiếp)
+
+**Go Concurrency Philosophy:**
+> "Don't communicate by sharing memory; share memory by communicating." — Rob Pike
+
+| Pattern | Khi nào | Tool |
+|---------|---------|------|
+| Goroutine | Mọi concurrent task | `go func()` |
+| Channel | Communicate between goroutines | `make(chan T)` |
+| Mutex | Protect shared state (đơn giản) | `sync.Mutex` |
+| WaitGroup | Wait for goroutines to finish | `sync.WaitGroup` |
+| Context | Cancellation, timeout, deadlines | `context.Context` |
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+    [OS Threads & CPU Scheduling]
+              │
+              ▼
+     [GO CONCURRENCY]  ← bạn đang ở đây
+              │
+    ┌─────────┼─────────┐
+    ▼         ▼         ▼
+[Goroutine] [Channel] [sync pkg]
+go keyword   buffered   Mutex/RWMutex
+GMP model    unbuffered  WaitGroup
+Stack growth  select     Once/Map
+              close      atomic ops
+    │
+    ▼
+[Patterns]
+Worker pool | Fan-out/fan-in | Pipeline | Semaphore
+    │
+    ▼
+[Pitfalls to avoid]
+Race conditions | Deadlock | Goroutine leak | Channel leak
+```
 
 ---
 
@@ -1725,3 +1786,23 @@ Vietnamese explanation: Context tạo thành **cây phân cấp**: cancel parent
 ---
 
 > **Tổng kết**: Concurrency là DNA của Go. Hiểu sâu GMP, channels, patterns sẽ giúp bạn trả lời 70%+ câu hỏi phỏng vấn Go tại các công ty lớn. Luôn chạy `-race` trong CI, luôn có exit strategy cho goroutines, và prefer simplicity over cleverness.
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Tôi có thể giải thích GMP scheduler model và tại sao goroutines nhẹ hơn OS threads không?
+- [ ] Tôi có thể giải thích sự khác biệt giữa buffered và unbuffered channels không?
+- [ ] Tôi có thể implement một worker pool với goroutines và channels không?
+- [ ] Tôi có thể giải thích goroutine leak là gì và cách detect/prevent nó không?
+- [ ] Tôi có thể giải thích khi nào dùng `sync.Mutex` vs channel cho shared state không?
+
+💬 **Feynman Prompt:** Giải thích Go concurrency model cho developer Java quen với threads. Tại sao "goroutines + channels" tốt hơn "threads + locks" trong hầu hết trường hợp?
+
+---
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on:** [Go Fundamentals](./01-language-fundamentals.md) | [OS Theory](../../shared/01-cs-fundamentals/os-theory.md) — goroutines map to OS threads via scheduler
+- ➡️ **Enables:** [Distributed Systems](../02-backend-knowledge/03-distributed-systems.md) | [Go Memory & GC](./04-memory-gc.md)
+- 🔗 **Patterns used in production:** Worker pools in API handlers | Fan-out for parallel DB queries | Context for request cancellation

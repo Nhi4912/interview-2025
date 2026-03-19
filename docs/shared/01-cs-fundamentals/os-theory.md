@@ -3,6 +3,62 @@
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Concurrency & Parallelism](./07-concurrency-and-parallelism.md) | [Go OS](../../be-track/02-backend-knowledge/05-os-go.md)
 
+---
+
+## Real-World Scenario / Tình Huống Thực Tế
+
+Node.js server của bạn xử lý 1000 concurrent requests. Bỗng nhiên memory tăng liên tục cho đến khi process crash: `Error: EMFILE: too many open files`.
+
+**Nguyên nhân:** Mỗi network connection là một file descriptor. OS có giới hạn (thường 1024 hoặc 65536). Không đóng connections đúng cách → leak descriptors → crash.
+
+Không hiểu OS concepts → không debug được loại bug này. OS ảnh hưởng trực tiếp đến backend performance và stability.
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy / Liên Tưởng — Quản lý văn phòng:**
+OS là manager của một văn phòng lớn:
+- **Process** = nhân viên (có bàn làm việc riêng, không truy cập bàn người khác)
+- **Thread** = các task mà một nhân viên làm song song (share cùng bàn)
+- **Memory management** = manager phân bổ bàn làm việc
+- **Scheduler** = quyết định ai được dùng CPU và khi nào
+- **File descriptors** = thẻ mượn đồ dùng văn phòng (có giới hạn số lượng)
+
+| OS Concept | Ảnh hưởng đến code |
+|-----------|-------------------|
+| Process vs Thread | Node.js single-threaded, Go goroutines, Docker containers |
+| Memory (stack/heap) | Memory leaks, stack overflow, GC tuning |
+| File descriptors | Connection pooling, "too many open files" |
+| System calls | I/O performance, blocking vs non-blocking |
+| Scheduling | CPU-bound vs I/O-bound optimization |
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+        [OPERATING SYSTEM THEORY]
+                    │
+         ┌──────────┼──────────┐
+         ▼          ▼          ▼
+  [Processes]  [Memory]    [I/O & Files]
+  Process/Thread  Virtual mem  File descriptors
+  Context switch  Paging/seg   Sockets
+  Scheduling      Stack/Heap   System calls
+  IPC             GC impact    Buffering
+         │
+         ▼
+  [Concurrency Primitives]
+  Mutex | Semaphore | Condition variable | Spinlock
+         │
+         ▼
+  [Applied to Software]
+  Node.js event loop | Go goroutines | Docker namespaces
+```
+
+---
+
 ## Understanding System Software Fundamentals / Hiểu về Phần Mềm Hệ Thống
 
 **English:** An operating system is system software that manages computer hardware, software resources, and provides common services for computer programs, acting as an intermediary between users and computer hardware.
@@ -1131,3 +1187,23 @@ Vietnamese explanation: Stack vs heap allocation: stack = O(1) deterministic, au
 ---
 
 [← Back to Concurrency Theory](./07-concurrency-and-parallelism.md) | [Next: Network Theory →](./networking-theory.md)
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Tôi có thể giải thích sự khác biệt giữa Process và Thread, và khi nào dùng cái nào không?
+- [ ] Tôi có thể giải thích tại sao context switching tốn kém và cách minimize nó không?
+- [ ] Tôi có thể giải thích virtual memory và tại sao nó cho phép chạy nhiều process hơn RAM vật lý không?
+- [ ] Tôi có thể giải thích mutex vs semaphore và tại sao cần chúng khi có shared state không?
+- [ ] Tôi có thể giải thích tại sao Node.js single-threaded không block I/O (event loop + kernel async I/O) không?
+
+💬 **Feynman Prompt:** Giải thích sự khác biệt giữa Process và Thread cho người mới học lập trình. Dùng ví dụ từ cuộc sống thực.
+
+---
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on:** [Computer Architecture] — CPU, memory hierarchy là hardware layer bên dưới OS
+- ➡️ **Enables:** [Concurrency & Parallelism](./07-concurrency-and-parallelism.md) | [System Design](../02-system-design/) — concurrency patterns dựa trên OS primitives
+- 🔗 **Applied in:** Node.js event loop | Go goroutines | Docker containers (namespaces/cgroups) | JVM GC

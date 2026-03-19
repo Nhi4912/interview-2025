@@ -1,10 +1,68 @@
 # API Design — Deep Theory & Interview Questions
 
 > **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../00-table-of-contents.md)
+> **Prerequisites**: [Networking Theory](../../shared/01-cs-fundamentals/networking-theory.md) | [Go Fundamentals](../01-golang/01-language-fundamentals.md)
+> **See also**: [Table of Contents](../../00-table-of-contents.md) | [Microservices](./02-microservices.md)
 
 > **Phạm vi**: REST, gRPC, GraphQL, API Gateway, Rate Limiting, Security, Documentation.
 > Tập trung lý thuyết sâu, so sánh trade-off, ít code — phù hợp ôn phỏng vấn Backend.
+
+---
+
+## Real-World Scenario / Tình Huống Thực Tế
+
+Mobile app cần hiển thị user profile với posts, followers, recent activity. Với REST:
+- `GET /users/123` → 1 request
+- `GET /users/123/posts` → 2nd request
+- `GET /users/123/followers` → 3rd request
+
+3 round trips trên mobile 3G ở Việt Nam = ~900ms latency. Users chờ và bounce.
+
+**GraphQL:** 1 query, 1 round trip, chỉ lấy data cần thiết. **gRPC:** nếu đây là internal service-to-service call, binary protocol nhanh hơn JSON ~3-5x.
+
+Chọn đúng API protocol là quyết định kiến trúc, không thể dễ dàng thay đổi sau.
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy / Liên Tưởng:** API là "hợp đồng" giữa các services. Thiết kế tốt = hợp đồng rõ ràng, backward compatible, không thay đổi tùy tiện.
+
+| Protocol | Best for | Trade-off |
+|----------|----------|-----------|
+| **REST** | Public APIs, browser clients, CRUD | Verbose, multiple round trips |
+| **gRPC** | Internal microservices, streaming | Binary (not browser-friendly), codegen |
+| **GraphQL** | Mobile/BFF, flexible queries | Complex caching, N+1 risk |
+| **WebSocket** | Real-time (chat, live data) | Stateful, harder to scale |
+
+**REST Stateless principle → horizontal scaling:**
+Server không lưu session → bất kỳ instance nào xử lý được bất kỳ request nào → scale dễ dàng với load balancer.
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+      [HTTP + Networking Fundamentals]
+              │
+              ▼
+     [API DESIGN]  ← bạn đang ở đây
+              │
+    ┌─────────┼─────────┐
+    ▼         ▼         ▼
+[REST]    [gRPC]   [GraphQL]
+Resources  Protobuf  Schema/SDL
+HATEOAS    Streaming  Resolvers
+Versioning  Codegen   DataLoader (N+1 fix)
+    │
+    ▼
+[Cross-cutting]
+Auth (JWT/OAuth2) | Rate limiting | Caching | Versioning
+    │
+    ▼
+[API Gateway]
+Single entry point | Kong | AWS API GW | rate limit/auth here
+```
 
 ---
 
@@ -1370,3 +1428,23 @@ Vietnamese explanation: Distributed rate limiting: Redis is the standard (Lua sc
 | REST vs GraphQL vs gRPC | 🟡 | REST=public; GraphQL=flexible client data; gRPC=fast internal |
 | Idempotency | 🟡 | Same result multiple times; idempotency keys for safe POST retries |
 | Rate limiting | 🔴 | Token bucket preferred; Redis for distributed; 429 + Retry-After |
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Tôi có thể giải thích 6 constraints của REST và tại sao Stateless constraint quan trọng cho scaling không?
+- [ ] Tôi có thể giải thích khi nào nên dùng gRPC thay vì REST không?
+- [ ] Tôi có thể giải thích N+1 problem trong GraphQL và cách DataLoader giải quyết không?
+- [ ] Tôi có thể thiết kế rate limiting strategy (token bucket vs sliding window) không?
+- [ ] Tôi có thể giải thích API versioning strategies (URL vs header vs content negotiation) không?
+
+💬 **Feynman Prompt:** Giải thích sự khác biệt giữa REST và GraphQL cho một junior developer. Khi nào nên chọn cái nào — và tại sao không phải lúc nào cũng dùng GraphQL?
+
+---
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on:** [Networking Theory](../../shared/01-cs-fundamentals/networking-theory.md) — HTTP là nền tảng của REST/gRPC/GraphQL
+- ➡️ **Enables:** [Microservices](./02-microservices.md) | [Auth & Security](./04-auth-security.md) — API design is foundational to microservices
+- 🔗 **Tools:** Swagger/OpenAPI (REST docs) | gRPC-gateway | Apollo GraphQL | Kong/Nginx API Gateway

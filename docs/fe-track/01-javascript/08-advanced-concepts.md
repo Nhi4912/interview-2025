@@ -631,3 +631,23 @@ Hàm thuần túy phải:
 ---
 
 [← Previous: ES6+ Features](./07-es6-features.md) | [Back to Table of Contents](../../00-table-of-contents.md)
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Tôi có thể giải thích sự khác biệt giữa `WeakMap` và `Map` về memory và garbage collection không?
+- [ ] Tôi có thể implement một custom iterable với `Symbol.iterator` không?
+- [ ] Tôi có thể tạo một Proxy để intercept property access và log nó không?
+- [ ] Tôi có thể giải thích tại sao `async/await` là syntactic sugar cho Generator + Promise không?
+- [ ] Tôi có thể giải thích khi nào nên dùng Generator thay vì async/await không?
+
+💬 **Feynman Prompt:** Giải thích `WeakMap` cho developer đang hỏi "tại sao không dùng `Map` cho mọi thứ?" Khi nào memory leak xảy ra và WeakMap ngăn nó thế nào?
+
+---
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on:** [ES6 Features](./07-es6-features.md) | [Closures](./03-closures.md) | [Event Loop](./06-event-loop-async.md)
+- ➡️ **Enables:** [Memory Management](./15-memory-management-advanced.md) | Framework internals understanding
+- 🔗 **In frameworks:** Vue 3 reactivity (Proxy) | Immer.js (Proxy) | Redux-Saga (Generator) | React Fiber (Iterator-like)

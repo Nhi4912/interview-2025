@@ -53,7 +53,21 @@
       "Bash(/Users/nee/Documents/Documents/interview/docs/fe-track/01-javascript/02-scope-hoisting.md:*)",
       "Bash(/Users/nee/Documents/Documents/interview/docs/fe-track/01-javascript/04-prototypes-inheritance.md:*)",
       "Bash(/Users/nee/Documents/Documents/interview/docs/fe-track/01-javascript/05-this-keyword.md:*)",
-      "Bash(/Users/nee/Documents/Documents/interview/docs/fe-track/01-javascript/06-event-loop-async.md:*)"
+      "Bash(/Users/nee/Documents/Documents/interview/docs/fe-track/01-javascript/06-event-loop-async.md:*)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/shared/05-software-engineering/01-solid-and-design-patterns.md:*)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/fe-track/05-html-css/00-css-fundamentals.md:*)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/fe-track/05-html-css/00-html5-fundamentals.md:*)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/fe-track/04-nextjs/00-nextjs-fundamentals.md:*)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/fe-track/02-typescript/01-typescript-basics.md:*)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/fe-track/03-react/01-react-fundamentals.md:*)",
+      "Bash(find /Users/nee/Documents/Documents/interview/docs/be-track /Users/nee/Documents/Documents/interview/docs/leetcode -name *.md)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/fe-track/01-javascript/08-advanced-concepts.md:*)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/shared/01-cs-fundamentals/os-theory.md:*)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/shared/01-cs-fundamentals/networking-theory.md:*)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/shared/05-software-engineering/02-architecture-styles.md:*)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/shared/05-software-engineering/04-testing-theory.md:*)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/be-track/01-golang/01-language-fundamentals.md:*)",
+      "Bash(/Users/nee/Documents/Documents/interview/docs/be-track/01-golang/03-concurrency.md:*)"
     ]
   }
 }
