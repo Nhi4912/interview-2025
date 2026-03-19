@@ -14,6 +14,23 @@ tags: [Design, LeetCode, Interview Preparation]
 
 **LeetCode Design problem collection for technical interviews**
 
+## 🎯 Why This Category Matters / Tại Sao Quan Trọng
+
+Design problems kiểm tra khả năng chọn đúng data structure cho một API specification. Đây là bridge giữa coding interviews và system design interviews.
+
+**Real-world Design Problems:**
+- **LRU Cache** → Browser cache, CDN cache, database query cache (Redis eviction)
+- **Min Stack** → Undo/redo systems, expression evaluation
+- **LFU Cache** → CDN với frequency-based eviction
+- **Design Twitter** → Mini system design with data structures
+
+**Pattern:** Mọi design problem đều có format:
+1. Identify operations cần O(1) hoặc O(log n)
+2. Chọn data structure cho mỗi operation
+3. Combine structures (thường HashMap + Doubly LinkedList cho LRU)
+
+**Interview tip:** Khi gặp design problem, hỏi về expected time complexity TRƯỚC KHI code.
+
 ## 📊 Overview
 
 - **Total Problems**: 9

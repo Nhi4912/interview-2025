@@ -14,6 +14,29 @@ tags: [Backtracking, LeetCode, Interview Preparation]
 
 **LeetCode Backtracking problem collection for technical interviews**
 
+## 🎯 Why This Category Matters / Tại Sao Quan Trọng
+
+Backtracking = "thử và sai một cách có hệ thống". Khi brute force quá chậm nhưng không có optimal substructure cho DP, backtracking là câu trả lời.
+
+**Template tư duy:**
+```
+backtrack(state):
+  if isGoal(state): record solution; return
+  for each choice:
+    if isValid(choice):
+      make choice
+      backtrack(state + choice)
+      undo choice  ← KEY: revert state
+```
+
+**Real-world backtracking:**
+- Sudoku solver (constraint satisfaction)
+- Regex matching engine
+- Chess engine (game tree search)
+- Network routing (find all paths)
+
+**Interview signal:** Khi đề bài hỏi "tìm TẤT CẢ combinations/permutations/subsets" → Backtracking.
+
 ## 📊 Overview
 
 - **Total Problems**: 11

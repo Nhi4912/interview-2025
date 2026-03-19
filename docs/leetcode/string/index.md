@@ -14,6 +14,24 @@ tags: [String, LeetCode, Interview Preparation]
 
 **LeetCode String problem collection for technical interviews**
 
+## 🎯 Why This Category Matters / Tại Sao Quan Trọng
+
+Strings là input type phổ biến nhất trong interviews — search engines, compilers, bioinformatics đều xử lý strings.
+
+**Key patterns:**
+- **Two Pointers / Sliding Window**: longest substring without repeat, minimum window substring
+- **HashMap for frequency**: anagram check, character count
+- **KMP / Rabin-Karp**: pattern matching in O(n) — used in `grep`, text editors
+- **Palindrome**: expand from center, DP approach
+
+**Real-world string algorithms:**
+- `git diff` uses LCS (Longest Common Subsequence)
+- Google autocomplete uses trie + prefix matching
+- DNA sequencing uses edit distance (Levenshtein)
+- Compilers use regex (finite automata)
+
+**Interview tip:** Strings trong JavaScript/Go are immutable — khi cần nhiều modification, convert sang array/slice trước.
+
 ## 📊 Overview
 
 - **Total Problems**: 19

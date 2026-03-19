@@ -14,6 +14,26 @@ tags: [Dynamic Programming, LeetCode, Interview Preparation]
 
 **LeetCode Dynamic Programming problem collection for technical interviews**
 
+## 🎯 Why This Category Matters / Tại Sao Quan Trọng
+
+Dynamic Programming là topic khó nhất nhưng cũng phân biệt rõ nhất mid vs senior. **Mọi Google, Meta, Amazon interview** đều có ít nhất 1 DP problem.
+
+**Insight then chốt:** DP không phải magic — nó là "brute force + memoization". Mọi DP problem có 2 dạng:
+1. **Top-down (Memoization)**: đệ quy + cache kết quả đã tính
+2. **Bottom-up (Tabulation)**: loop từ base case lên, build bảng kết quả
+
+**Real-world DP:**
+- Autocomplete & spell check (edit distance)
+- Route planning (shortest path with constraints)
+- Resource allocation (knapsack in scheduling)
+- DNA sequence alignment (bioinformatics)
+
+**Pattern recognition:**
+- "Tối ưu/tối thiểu/tối đa" → DP
+- "Đếm số cách" → DP
+- "Có thể/không thể" → DP
+- Overlapping subproblems → DP
+
 ## 📊 Overview
 
 - **Total Problems**: 11

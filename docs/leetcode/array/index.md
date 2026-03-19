@@ -14,6 +14,18 @@ tags: [Array, LeetCode, Interview Preparation]
 
 **LeetCode Array problem collection for technical interviews**
 
+## 🎯 Why This Category Matters / Tại Sao Quan Trọng
+
+Arrays là data structure phổ biến nhất trong interviews — **~40% LeetCode problems** involve arrays. Lý do: arrays map trực tiếp đến RAM (contiguous memory), nên mọi ngôn ngữ đều có arrays, và mọi algorithm interview đều bắt đầu từ đây.
+
+**Real-world patterns trong arrays:**
+- **Two Pointers**: sort colors, remove duplicates — O(n) thay vì O(n²)
+- **Sliding Window**: max sum subarray, longest substring — Google Search, Kafka consumers
+- **Hash Map**: two sum, contains duplicate — caching, deduplication
+- **Prefix Sum**: range queries — analytics dashboards, financial calculations
+
+**Interview frequency**: Arrays xuất hiện trong 80% coding interviews tại FAANG. Master arrays trước mọi category khác.
+
 ## 📊 Overview
 
 - **Total Problems**: 26

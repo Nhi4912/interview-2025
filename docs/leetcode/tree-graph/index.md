@@ -14,6 +14,28 @@ tags: [Tree/Graph, LeetCode, Interview Preparation]
 
 **LeetCode Tree/Graph problem collection for technical interviews**
 
+## 🎯 Why This Category Matters / Tại Sao Quan Trọng
+
+Trees và Graphs model **hierarchical và relational data** — mọi real system đều có chúng.
+
+**Real-world Trees:**
+- DOM tree (browser) — React's Virtual DOM traversal
+- File system (Linux `find`, Git commits)
+- Database B-Tree index (mọi SQL index dùng B-Tree)
+- Organization chart (HR systems)
+
+**Real-world Graphs:**
+- Social network (Facebook friends: BFS cho "people you may know")
+- Google Maps (Dijkstra cho shortest path)
+- Dependency resolution (npm/pip packages: topological sort)
+- Web crawler (BFS)
+
+**Must-know patterns:**
+- **BFS**: shortest path, level-order traversal → queue
+- **DFS**: all paths, detect cycles, connected components → stack/recursion
+- **Binary Search Tree**: O(log n) search, insert, delete
+- **Topological Sort**: dependency ordering, course prerequisites
+
 ## 📊 Overview
 
 - **Total Problems**: 18
