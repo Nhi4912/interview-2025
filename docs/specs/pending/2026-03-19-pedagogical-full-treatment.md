@@ -1,7 +1,7 @@
 # Pedagogical Full Treatment — Progress Tracker
 
 > **Purpose**: Track which fe-track + shared files have Phase 1 (intro) and Phase 2 (deep content) pedagogical treatment.
-> **Updated**: 2026-03-19
+> **Updated**: 2026-03-19 (session 2)
 >
 > **Legend**:
 > - ❌ Not started — no pedagogical sections
@@ -34,16 +34,16 @@
 | `00-javascript-basics.md` | 🔄 | ❌ | Core intro file |
 | `01-variables-data-types.md` | 🔄 | ❌ | |
 | `02-scope-hoisting.md` | 🔄 | ❌ | Short version |
-| `02-scope-hoisting-comprehensive.md` | 🔄 | ❌ | **Priority** |
+| `02-scope-hoisting-comprehensive.md` | ✅ | ✅ | Done session 1 |
 | `03-closures.md` | 🔄 | ❌ | Short version |
-| `03-closures-comprehensive.md` | 🔄 | ❌ | **Priority** |
+| `03-closures-comprehensive.md` | ✅ | ✅ | Done session 1 |
 | `04-prototypes-inheritance.md` | 🔄 | ❌ | |
-| `05-this-keyword.md` | 🔄 | ❌ | **Priority** |
-| `06-event-loop-async.md` | 🔄 | ❌ | **Priority** |
+| `05-this-keyword.md` | ✅ | ✅ | Done session 2 |
+| `06-event-loop-async.md` | ✅ | ✅ | Done session 2 |
 | `07-es6-features.md` | 🔄 | ❌ | |
 | `08-advanced-concepts.md` | 🔄 | ❌ | |
-| `09-async-comprehensive.md` | 🔄 | ❌ | **Priority** |
-| `10-prototypes-inheritance-deep.md` | 🔄 | ❌ | **Priority** |
+| `09-async-comprehensive.md` | ✅ | ✅ | Done session 1 |
+| `10-prototypes-inheritance-deep.md` | ✅ | ✅ | Done session 2 |
 | `11-es6-features-deep.md` | ❌ | ❌ | |
 | `12-functional-programming.md` | 🔄 | ❌ | |
 | `13-javascript-basics-theory.md` | ❌ | ❌ | |
@@ -61,7 +61,7 @@
 
 | File | Phase 1 | Phase 2 | Notes |
 |------|---------|---------|-------|
-| `01-typescript-basics.md` | 🔄 | ❌ | **Priority** |
+| `01-typescript-basics.md` | ✅ | ✅ | Done session 2 |
 | `01-type-system-basics.md` | ❌ | ❌ | |
 | `02-advanced-types.md` | ❌ | ❌ | |
 | `03-generics-deep-dive.md` | ❌ | ❌ | |
@@ -74,7 +74,7 @@
 
 | File | Phase 1 | Phase 2 | Notes |
 |------|---------|---------|-------|
-| `01-react-fundamentals.md` | 🔄 | ❌ | **Priority** |
+| `01-react-fundamentals.md` | ✅ | ✅ | Done session 2 |
 | `02-react-19-features.md` | 🔄 | ❌ | |
 | `03-hooks-deep-dive.md` | 🔄 | ❌ | **Priority** |
 | `04-advanced-patterns.md` | ❌ | ❌ | |
@@ -151,6 +151,5 @@ Start with files marked **Priority** in Tier 1-3. For each file:
 ## Stats
 
 - Total fe-track theory files tracked: ~75
-- Phase 1 done (🔄): ~34
-- Phase 2 done (✅): 0
-- Remaining for Phase 2: ~75
+- Phase 2 done (✅): **7** (02-scope-hoisting-comprehensive, 03-closures-comprehensive, 05-this-keyword, 06-event-loop-async, 09-async-comprehensive, 10-prototypes-inheritance-deep, 01-typescript-basics, 01-react-fundamentals)
+- Remaining for Phase 2: ~67
