@@ -8,6 +8,20 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Axon Active project delay (ứng viên chia sẻ):** Mid-level developer estimate 2 weeks cho một feature — PM accepts. Week 1: discovered external API dependency not documented. Week 2: API has rate limiting requiring architecture change. Week 3: "I need 1 more week". PM angry — deadline already communicated to client. Root cause: không có risk identification upfront, không có buffer, không communicate blocker ngay khi phát hiện.
+
+**Bài học:** Estimation và communication là technical skills, không chỉ "soft skills". Senior engineer đưa estimates với explicit assumptions, risks, và updates proactively — không phải perfect accuracy.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Project management trong engineering giống planning một chuyến đi: estimation là "bao lâu đến?" (phải kể cả traffic, dừng đổ xăng, nghỉ ngơi), risk identification là "nếu cao tốc kẹt thì sao?", scope management là "đi thêm điểm nào thì trễ bao nhiêu?". Senior developer là người lái biết đường, cung cấp thông tin cho PM để ra quyết định.
+
+**Why it matters:** "Tell me about a time you missed a deadline" và "How do you handle scope creep" là câu hỏi phổ biến ở Senior interviews. Không có framework để trả lời → câu trả lời sẽ vague và không thuyết phục.
+
+---
+
 ## 0. Learning Goals — Mục tiêu học tập
 
 Sau khi hoàn thành chương này, bạn cần:
@@ -1382,3 +1396,20 @@ Staff:   shapes the roadmap, prevents scope creep by design
 ```
 
 **Điểm senior:** Senior engineers cần skill "kỹ năng chính trị" — biết cách push back diplomatically, offer alternatives, và protect team từ unrealistic expectations. Framework: "Yes, AND here are the trade-offs" thay vì "No" hay overpromise.
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I give an estimation with explicit assumptions and risk factors (not just a number)?
+- [ ] Can I explain scope creep with a concrete example and how to handle it?
+- [ ] Can I describe when to escalate a blocker vs solve it yourself?
+- [ ] Can I explain the difference between velocity (what team did) and capacity (what team can do)?
+- 💬 **Feynman Prompt:** Giải thích tại sao "I need 1 more week" said at deadline is worse than "I'm blocked, here's why" said on day 3 — và what the senior engineer does differently.
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [SDLC Practices](./03-sdlc-and-practices.md) — Scrum/Agile provides the ceremonies for PM
+- ➡️ **Applied in**: [Code Quality](./05-code-quality-and-review.md) — technical debt is tracked in project backlog
+- 🔗 **Related**: [System Design Framework](../../be-track/04-be-system-design/01-design-framework.md) — estimation skills are tested in system design interviews too
+- 🔗 **Context**: [Company Guides](../07-company-guides/) — each company has different PM culture and expectations

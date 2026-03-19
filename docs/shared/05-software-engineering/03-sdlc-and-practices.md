@@ -9,6 +9,20 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Employment Hero CI/CD incident:** Team deploy hotfix lúc 4pm thứ 6 mà không có CI pipeline — tests bị skip "vì khẩn cấp". Kết quả: regression bug xuất hiện lúc 5pm, team phải hotfix lại, deploy thủ công, broken lại lần nữa. 3 giờ incident vào cuối tuần. Sau đó: tất cả deployments bắt buộc phải qua CI pipeline kể cả hotfix (pipeline chạy 8 phút). Câu thần chú: "Never skip CI, even for hotfixes — especially for hotfixes."
+
+**Bài học:** SDLC practices không phải overhead — chúng là safety net. CI/CD, code review, và automated tests tốn 30% thời gian build nhưng tiết kiệm 300% thời gian sửa bugs production.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** SDLC giống quy trình sản xuất ô tô: Waterfall như chế tạo xong cả xe mới test (risk: đúc sai toàn bộ khung). Agile như chế tạo theo module, test từng phần (safer). CI/CD như dây chuyền lắp ráp tự động: mỗi commit = một xe được test ngay trên dây chuyền trước khi xuất xưởng.
+
+**Why it matters:** Senior engineers được hỏi về SDLC, Agile, và CI/CD trong behavioral interviews. Không hiểu "tại sao" các practices này tồn tại → trả lời thiếu chiều sâu.
+
+---
+
 ## 1. Waterfall — Waterfall trong SDLC
 
 ### 🟢 Q: What is Waterfall? `[Junior]`
@@ -658,3 +672,20 @@ Vietnamese explanation: DORA 4 metrics là standard measure DevOps performance. 
 |----------|-------|-----------|
 | Agile vs Scrum | 🟢 | Agile=philosophy; Scrum=framework; understand principles over ceremonies |
 | CI/CD pipeline | 🟡 | Build→test→security→staging→prod; DORA metrics; blue/green/canary |
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I explain the difference between Agile (philosophy) and Scrum (framework)?
+- [ ] Can I describe the 4 DORA metrics and what "elite" looks like for each?
+- [ ] Can I compare blue/green vs canary deployment — when to use each?
+- [ ] Can I explain why feature flags are better than long-lived feature branches?
+- 💬 **Feynman Prompt:** Giải thích tại sao "skip CI for hotfix" là phản trực giác — và tại sao hotfix deployment thực ra *rủi ro hơn* normal deployment, không phải ít hơn.
+
+## Connections / Liên Kết
+
+- ➡️ **Applied in**: [Testing Theory](./04-testing-theory.md) — automated tests are the foundation of CI
+- ➡️ **Applied in**: [Code Quality](./05-code-quality-and-review.md) — code review is part of the SDLC gate
+- 🔗 **Related**: [Go Testing](../../be-track/01-golang/05-testing-profiling.md) — Go-specific CI practices
+- 🔗 **Related**: [Observability](../../be-track/04-be-system-design/05-observability-and-scale.md) — DORA metrics need observability to measure
