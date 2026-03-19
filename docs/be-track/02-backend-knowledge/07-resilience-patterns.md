@@ -1,7 +1,44 @@
 # Resilience Patterns
 
 > **Track**: BE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **Prerequisites**: [Distributed Systems](./03-distributed-systems.md)
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
+
+---
+
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Grab, 2019 incident:** Payment service gọi Fraud Detection service. Fraud Detection bị slow (200ms → 5s). Vì không có Circuit Breaker, tất cả payment threads block chờ Fraud Detection — payment service cũng dần đơ theo (cascading failure). Toàn bộ Grab payment down 8 phút. Fix: Circuit Breaker mở sau 5 failures liên tiếp, fallback sang "allow with manual review later".
+
+**Bài học:** Distributed systems fail in unpredictable ways. Resilience patterns là "safety net" — không phải optional. Circuit Breaker, Retry với backoff, Timeout, và Bulkhead là bộ tứ cần biết trước khi làm bất kỳ service production nào.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Resilience patterns giống **hệ thống điện tử nhà bạn**:
+- **Circuit Breaker** = cầu dao — khi quá tải, ngắt để bảo vệ toàn hệ thống
+- **Bulkhead** = tường ngăn thủy thủ thuyền — một khoang thủng không chìm toàn tàu
+- **Retry** = gọi điện lại khi bận — nhưng cần exponential backoff để không DDoS chính mình
+- **Rate Limit** = giới hạn xe vào hầm — tránh tắc đường ở điểm nghẽn
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[Request arrives at service]
+        │
+        ├── Rate Limiter → reject if too many requests (protect service)
+        │
+        ├── Circuit Breaker → fast fail if upstream is down (protect caller)
+        │       States: Closed → Open (after N failures) → Half-Open (probe)
+        │
+        ├── Bulkhead → separate thread pools per dependency (prevent cascade)
+        │
+        ├── Timeout → don't wait forever (release resources)
+        │
+        └── Retry → retry on transient failures
+                └── Exponential backoff + jitter (prevent thundering herd)
+```
+
+---
 
 ## Go Backend Interview Guide (Mid-Senior)
 

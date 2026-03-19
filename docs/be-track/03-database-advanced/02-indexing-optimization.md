@@ -5,6 +5,43 @@
 
 > Theory-focused guide (~85% theory, 15% SQL/examples). Bilingual: English headings + Vietnamese explanations.
 > Difficulty: 🟢 Junior | 🟡 Middle | 🔴 Senior
+> **Prerequisites**: [SQL Fundamentals](./01-sql-fundamentals.md)
+
+---
+
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Tiki.vn product search:** `SELECT * FROM products WHERE category = 'phone' AND price < 5000000 ORDER BY sold_count DESC LIMIT 20` — query này chạy 3 giây vì cần full table scan 10 triệu products. DBA thêm composite index `(category, price, sold_count)` — query xuống 5ms. Nhưng khi thêm index thứ 8 vào bảng, INSERT vào `products` chậm lại 40%.
+
+**Bài học:** Index là con dao hai lưỡi. Đúng index = read nhanh. Quá nhiều index = write chậm. Senior DB engineer biết đọc `EXPLAIN ANALYZE` và hiểu execution plan trước khi thêm/xóa index.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Index giống **mục lục cuốn sách**. Không có index: đọc từ trang 1 đến trang cuối để tìm từ "goroutine". Có index: tra mục lục → trang 247 ngay. B-Tree index như mục lục theo alphabet. Hash index như từ điển tra bằng key. Partial index như mục lục chỉ liệt kê chương quan trọng.
+
+**Why this is interviewed:** Query optimization là kỹ năng thực tế nhất mà engineer dùng hàng ngày. Không có team nào không có "slow query" problem. Biết `EXPLAIN ANALYZE` là baseline expectation cho backend mid/senior.
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[Database Index Types]
+        │
+        ├── B-Tree (default) → range queries, ORDER BY, LIKE 'prefix%'
+        ├── Hash → equality only (=), faster than B-Tree for point lookups
+        ├── GIN → arrays, JSONB, full-text search
+        ├── GiST → geometric, range types
+        └── Partial → index WHERE condition (smaller, faster for specific filters)
+        │
+[Composite Index Rule: column order matters]
+        (a, b, c) → can use: a | a,b | a,b,c
+                    cannot use: b | c | b,c alone (without a)
+        │
+[EXPLAIN ANALYZE output]
+        Seq Scan → full table scan (bad for large tables)
+        Index Scan → uses index (good)
+        Index Only Scan → no heap access (best)
+        Bitmap Heap Scan → batch index reads (good for many rows)
+```
 
 ---
 

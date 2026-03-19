@@ -5,6 +5,44 @@
 
 > **Phương pháp**: ~85% lý thuyết / 15% SQL ví dụ. Q&A format.
 > **Difficulty**: 🟢 Junior | 🟡 Middle | 🔴 Senior
+> **Prerequisites**: [Database Theory](../../shared/03-database/database-theory.md)
+
+---
+
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Shopee Flash Sale, 11.11:** `SELECT * FROM orders WHERE user_id = ?` chạy 8 giây vì bảng `orders` có 500 triệu rows và không có index trên `user_id`. DBA thêm index: query xuống 2ms. Nhưng sau đó, INSERT rate giảm 30% vì index cần được cập nhật với mỗi lần insert.
+
+**Bài học:** SQL không phải "write query, it works". Biết khi nào query chậm, tại sao, và cách fix mà không tạo vấn đề mới (index overhead) là kỹ năng phân biệt junior vs senior backend dev.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Database giống **thư viện khổng lồ**. SQL là ngôn ngữ yêu cầu: "Lấy cho tôi tất cả sách của tác giả 'Nguyễn Du'." Không có index = nhân viên phải duyệt từng cuốn sách trong kho (full scan). Có index = nhân viên dùng catalogue theo tên tác giả (O(log n) lookup). ACID = cam kết: mượn sách phải được ghi đầy đủ vào sổ, không mất thông tin.
+
+**Why SQL mastery matters:** JOIN, index, isolation levels, và transactions xuất hiện trong 90% backend interviews. Tiki, Grab, Shopee đều có database problems trong vòng phỏng vấn technical.
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[SQL & Relational Databases]
+        │
+        ├── Relational Model → tables, rows, foreign keys, normalization
+        │
+        ├── Query Execution → parser → optimizer → executor → result
+        │       └── EXPLAIN ANALYZE: see query plan, cost, rows
+        │
+        ├── Indexing → B-Tree (range), Hash (equality), GIN (full-text)
+        │       └── Trade-off: faster reads, slower writes
+        │
+        ├── Transactions (ACID)
+        │       ├── Atomicity — all or nothing
+        │       ├── Consistency — constraints always valid
+        │       ├── Isolation — concurrent transactions don't interfere
+        │       └── Durability — committed data survives crashes
+        │
+        └── Isolation Levels (weakest → strongest)
+                READ UNCOMMITTED → READ COMMITTED → REPEATABLE READ → SERIALIZABLE
+```
 
 ---
 
