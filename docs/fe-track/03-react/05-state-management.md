@@ -1,1013 +1,760 @@
 # State Management / Quản Lý Trạng Thái
 
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../00-table-of-contents.md)
+> **Prerequisites**: [React Fundamentals](./01-react-fundamentals.md) | [Hooks Deep Dive](./03-hooks-deep-dive.md)
+> **See also**: [React Performance](../06-browser-performance/02-react-performance.md) | [Functional Programming](../01-javascript/12-functional-programming.md)
 
-## React - Chapter 5 / React - Chương 5
-
-[← Previous: Advanced Patterns](./04-advanced-patterns.md) | [Back to Table of Contents](../../00-table-of-contents.md)
-
----
-
-## Real-World Scenario / Tình Huống Thực Tế
-
-App của bạn có 50 components. User đăng nhập ở Header → cần cập nhật: sidebar menu, user avatar, notification bell, dashboard greeting, và permission checks ở 20 components khác nhau.
-
-Cách naive: lift state lên `App` component rồi prop-drill xuống 5 tầng. Code trở thành "prop drilling hell" — mỗi component trung gian phải nhận và pass xuống props mà nó không dùng.
-
-**State management giải quyết:** centralize shared state, let any component subscribe và update mà không cần prop drilling.
+[← Previous: Advanced Patterns](./04-advanced-patterns.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next →: Testing](./06-testing.md)
 
 ---
 
-## What & Why / Cái Gì & Tại Sao
+## Real-World Scenario / Tình Huống Thực Tế 🏭
 
-**Analogy / Liên Tưởng — Database vs Local Variables:**
-- **Local state** (`useState`) = biến local trong hàm — chỉ component đó dùng
-- **Shared state** (Context/Redux) = database — nhiều components đọc/ghi
-- **Server state** (React Query) = cache layer của database — sync với API
+> **Bối cảnh**: App e-commerce có 50+ components. User đăng nhập ở Header → cần cập nhật:
+> sidebar menu, user avatar, notification bell, dashboard greeting, permission checks ở 20
+> components khác nhau. Team dùng Context cho TẤT CẢ — auth, cart, theme, notifications.
+>
+> Kết quả: mỗi khi cart thêm 1 item, **mọi component subscribed to ANY context đều re-render**
+> — kể cả Header chỉ đọc theme. Performance tụt từ 60fps xuống 15fps trên mobile.
+>
+> Post-mortem: Context không có **selector mechanism** — không thể subscribe chỉ 1 field.
+> Team migrate cart + notifications sang Zustand (fine-grained subscriptions), giữ Context
+> cho theme + locale (ít update). Performance recovered.
+>
+> **Interview insight**: Biết khi nào KHÔNG dùng Redux/Context quan trọng hơn biết API của chúng.
 
-Chọn đúng tool:
+---
+
+## What & Why / Cái Gì & Tại Sao 🤔
+
+**State management** = cách organize, share, và update data across components.
+
+**Tương tự đời thường**: Quản lý state giống **hệ thống giao tiếp trong công ty**:
+- **Local state** (`useState`) = ghi chú cá nhân — chỉ bạn cần
+- **Context** = bảng thông báo ở sảnh — ai đi qua cũng thấy, nhưng mỗi khi thay đổi phải in lại TOÀN BỘ bảng
+- **Redux/Zustand** = hệ thống email nội bộ — mỗi người chỉ subscribe topic cần, nhận notification chính xác
+
+**Decision framework:**
 
 | Use case | Tool | Tại sao |
 |----------|------|---------|
-| 1 component's UI state | `useState` | Đơn giản, không cần global |
+| 1 component UI state | `useState` | Đơn giản, không global |
 | 2-3 components cùng cần | Lift state + props | Không phức tạp hóa |
-| Theme, auth user, locale | React Context | Read-mostly, ít update |
-| Complex app-wide state | Redux/Zustand | Predictable, devtools |
-| Server data (fetch/cache) | React Query/SWR | Caching, refetching, sync |
+| Theme, auth, locale | React Context | Read-mostly, ít update |
+| Complex app-wide state | Redux/Zustand | Predictable, fine-grained |
+| Server data (fetch/cache) | TanStack Query/SWR | Caching, refetching, sync |
 | Form state | React Hook Form | Performance, validation |
 
-**Anti-pattern phổ biến:** Dùng Redux cho mọi thứ khi chỉ cần `useState`. Redux adds boilerplate — dùng khi benefit > cost.
+---
+
+## Core Concepts / Khái Niệm Cốt Lõi
 
 ---
 
-## Concept Map / Bản Đồ Khái Niệm
+### 1. Context API & Its Re-render Problem / Context API & Vấn Đề Re-render
+
+> 🧠 **Memory Hook**: **"Context = broadcast radio"** — when the station updates, ALL listeners re-render, even if they only care about weather and the update was sports news
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Prop drilling qua 5-10 tầng component rất khó maintain. Context cho phép component ở bất kỳ
+depth nào "subscribe" trực tiếp đến shared data.
+
+→ **Why?** Vì React's data flow là one-way (parent → child). Không có mechanism built-in để
+sibling components share state mà không đi qua common ancestor.
+
+→ **Why?** Vì one-way data flow là design choice CỐ Ý — predictable, debuggable, nhưng đánh đổi
+convenience. Context là escape hatch cho cases cần cross-cutting data (theme, auth, locale).
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+
+Context giống **đài phát thanh**: mọi người (components) bật radio lên nghe cùng kênh.
+Khi đài phát tin mới (provider value thay đổi), TẤT CẢ người nghe đều nhận signal —
+dù tin đó không liên quan đến họ. Đây là lý do Context không phù hợp cho state hay update thường xuyên.
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
 
 ```
-      [React State Basics]
-      (useState, useReducer)
-              │
-              ▼
-     [STATE MANAGEMENT]  ← bạn đang ở đây
-              │
-    ┌─────────┼─────────┐
-    ▼         ▼         ▼
-[Local]   [Shared]  [Server]
-useState  Context   React Query
-useReducer Redux    SWR
-          Zustand   tRPC
-          Jotai
-    │
-    ▼
-[Choosing the right tool]
-Scope → frequency of update → team size → devtools need
-    │
-    ▼
-[Patterns]
-Flux | CQRS in frontend | Optimistic updates | Normalization
+Context re-render behavior:
+
+  <ThemeContext.Provider value={{ theme, user, cart }}>
+       │
+       ├── <Header />     ← uses theme only
+       ├── <Sidebar />    ← uses user only
+       └── <CartIcon />   ← uses cart only
+
+  When cart changes:
+  → Provider creates new value object
+  → ALL consumers re-render (Header, Sidebar, CartIcon)
+  → Even though Header and Sidebar don't use cart!
+
+  WHY? Context uses reference equality (===) on the value.
+  New object = new reference = all consumers re-render.
 ```
-
----
-
-## Overview / Tổng Quan
-
-**English:** State management is crucial for building scalable React applications. This chapter covers Context API, Redux, Zustand, and modern state management patterns.
-
-**Tiếng Việt:** Quản lý trạng thái rất quan trọng để xây dựng ứng dụng React có thể mở rộng. Chương này bao gồm Context API, Redux, Zustand và các mẫu quản lý trạng thái hiện đại.
-
----
-
-## Context API / API Context
-
-### Basic Context / Context Cơ Bản
 
 ```typescript
-import { createContext, useContext, useState, ReactNode } from 'react';
+// ✅ Pattern: split contexts by update frequency
+const ThemeContext = createContext<Theme>('light');      // rarely changes
+const AuthContext = createContext<AuthState | null>(null); // changes on login/logout
+const CartContext = createContext<CartState>({ items: [] }); // changes frequently
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-}
-
-interface AuthContextType {
-  user: User | null;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
-  isAuthenticated: boolean;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-
-  const login = async (email: string, password: string) => {
-    // API call / Gọi API
-    const response = await fetch('/api/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password })
-    });
-    const userData = await response.json();
-    setUser(userData);
-  };
-
-  const logout = () => {
-    setUser(null);
-  };
-
-  const value = {
-    user,
-    login,
-    logout,
-    isAuthenticated: !!user
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth() {
+// ✅ Custom hook with guard
+function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be within AuthProvider');
   return context;
 }
 
-// Usage / Sử dụng
-function App() {
+// ✅ Provider composition — avoid "provider hell" nesting
+function AppProviders({ children }: { children: ReactNode }) {
   return (
-    <AuthProvider>
-      <Dashboard />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <CartProvider>
+          {children}
+        </CartProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
-function Dashboard() {
-  const { user, logout, isAuthenticated } = useAuth();
+// ✅ Optimization: memoize provider value
+function CartProvider({ children }: { children: ReactNode }) {
+  const [items, setItems] = useState<CartItem[]>([]);
 
-  if (!isAuthenticated) {
-    return <Login />;
-  }
+  // Without useMemo: new object every render → all consumers re-render
+  const value = useMemo(() => ({
+    items,
+    addItem: (item: CartItem) => setItems(prev => [...prev, item]),
+    removeItem: (id: string) => setItems(prev => prev.filter(i => i.id !== id)),
+    total: items.reduce((sum, i) => sum + i.price * i.qty, 0)
+  }), [items]);
 
-  return (
-    <div>
-      <h1>Welcome, {user?.name}</h1>
-      <button onClick={logout}>Logout / Đăng xuất</button>
-    </div>
-  );
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 ```
 
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
+- **`useMemo` on value** only prevents re-renders when the Provider's parent re-renders — it does NOT prevent consumer re-renders when the value actually changes
+- **React 19 `use()` hook**: Can read Context conditionally (inside if/loops), unlike `useContext`
+- **No selector**: Context has no way to subscribe to a subset of the value — `useContextSelector` is a community solution, not built-in
+- **Server Components**: Context is client-only in Next.js App Router — use module scope or props for server components
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| "Context replaces Redux" | Context has no middleware, devtools, selectors, or time-travel | Context = DI mechanism, Redux = state management library |
+| Putting everything in one Context | Any update re-renders ALL consumers | Split by update frequency: theme (rare) vs cart (frequent) |
+| Not memoizing provider value | Parent re-render → new object → unnecessary consumer re-renders | Always `useMemo` the value object |
+| "Context is slow" | Context itself isn't slow — the problem is over-broad subscriptions | Context is fine for low-frequency data (theme, locale, auth) |
+
+**🎯 Interview Pattern:**
+- Khi thấy câu hỏi về: "Context API", "prop drilling", "when to use Context"
+- → Nhớ đến: "Broadcast radio" — all listeners re-render on any change
+- → Mở đầu trả lời: "Context solves prop drilling by letting any component subscribe to shared data, but it lacks a selector mechanism — when the value changes, all consumers re-render regardless of which part they use. This makes Context ideal for low-frequency updates like theme and locale, but problematic for high-frequency state like shopping carts. For those, I'd use Zustand or Redux which support fine-grained subscriptions."
+
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: [React Fundamentals](./01-react-fundamentals.md) — component tree, re-rendering, reconciliation
+- ➡️ Để hiểu: [React Performance](../06-browser-performance/02-react-performance.md) — measuring and fixing re-render issues
+
 ---
 
-## Redux Toolkit / Bộ Công Cụ Redux
+### 2. Redux Architecture — Flux Pattern, Middleware, Selectors / Kiến Trúc Redux
 
-### Store Setup / Thiết Lập Store
+> 🧠 **Memory Hook**: **"Redux = strict accountant"** — every transaction (action) is logged, every balance change (state) goes through one ledger (store), and you can replay the entire history
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Facebook (2014) had a bug: notification badge showed "1 new message" but no unread messages existed.
+Root cause: multiple models updating each other in unpredictable order (MVC with bidirectional data flow).
+
+→ **Why?** Vì two-way binding giữa multiple models tạo ra **cascading updates** — Model A
+updates View, View updates Model B, Model B updates Model A → infinite loop hoặc inconsistent state.
+
+→ **Why?** Vì Flux/Redux enforces **unidirectional data flow**: Action → Reducer → State → View.
+Mỗi state change traceable, predictable, time-travel debuggable. Trade-off: more boilerplate
+cho predictability tuyệt đối.
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+
+Redux giống **hệ thống kế toán**: mọi giao dịch (action) phải có chứng từ (action object),
+mọi thay đổi số dư (state) chỉ đi qua 1 sổ cái (store) qua kế toán (reducer). Không ai
+được sửa trực tiếp vào sổ — chỉ submit chứng từ. Nhờ vậy, kiểm toán (DevTools time-travel)
+rất dễ dàng.
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
+```
+Redux Data Flow (unidirectional):
+
+  ┌──────────┐   dispatch(action)   ┌──────────┐
+  │   View   │ ──────────────────► │  Store   │
+  │(Component)│                     │          │
+  └──────────┘                     │ reducer  │
+       ▲                           │ (pure fn)│
+       │                           └────┬─────┘
+       │         new state              │
+       └────────────────────────────────┘
+
+  With Middleware:
+  Component → dispatch(action) → [Middleware Chain] → Reducer → Store → Component
+                                  │ logger │ thunk │ analytics │
+
+  Middleware signature:
+  store => next => action => { /* before */ next(action) /* after */ }
+```
 
 ```typescript
-import { configureStore, createSlice, PayloadAction } from '@reduxjs/toolkit';
+// Modern Redux Toolkit setup
+import { configureStore, createSlice, createAsyncThunk, createSelector } from '@reduxjs/toolkit';
 
-interface Todo {
-  id: string;
-  text: string;
-  completed: boolean;
-}
-
-interface TodoState {
-  items: Todo[];
-  filter: 'all' | 'active' | 'completed';
-}
-
-const initialState: TodoState = {
-  items: [],
-  filter: 'all'
-};
-
-const todoSlice = createSlice({
-  name: 'todos',
-  initialState,
+// ✅ Slice = reducer + actions auto-generated
+const cartSlice = createSlice({
+  name: 'cart',
+  initialState: { items: [] as CartItem[], loading: false },
   reducers: {
-    addTodo: (state, action: PayloadAction<string>) => {
-      state.items.push({
-        id: crypto.randomUUID(),
-        text: action.payload,
-        completed: false
-      });
+    addItem: (state, action: PayloadAction<CartItem>) => {
+      // RTK uses Immer under the hood — "mutation" syntax is safe!
+      state.items.push(action.payload);
     },
-    toggleTodo: (state, action: PayloadAction<string>) => {
-      const todo = state.items.find(t => t.id === action.payload);
-      if (todo) {
-        todo.completed = !todo.completed;
-      }
+    removeItem: (state, action: PayloadAction<string>) => {
+      state.items = state.items.filter(i => i.id !== action.payload);
     },
-    deleteTodo: (state, action: PayloadAction<string>) => {
-      state.items = state.items.filter(t => t.id !== action.payload);
-    },
-    setFilter: (state, action: PayloadAction<TodoState['filter']>) => {
-      state.filter = action.payload;
+    updateQuantity: (state, action: PayloadAction<{ id: string; qty: number }>) => {
+      const item = state.items.find(i => i.id === action.payload.id);
+      if (item) item.qty = action.payload.qty;
     }
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchCart.pending, (state) => { state.loading = true; })
+      .addCase(fetchCart.fulfilled, (state, action) => {
+        state.loading = false;
+        state.items = action.payload;
+      });
   }
 });
 
-export const { addTodo, toggleTodo, deleteTodo, setFilter } = todoSlice.actions;
-
-export const store = configureStore({
-  reducer: {
-    todos: todoSlice.reducer
-  }
+// ✅ Async thunk — handles loading/error lifecycle
+const fetchCart = createAsyncThunk('cart/fetch', async (userId: string) => {
+  const res = await fetch(`/api/cart/${userId}`);
+  return res.json();
 });
 
-export type RootState = ReturnType<typeof store.getState>;
-export type AppDispatch = typeof store.dispatch;
-```
+// ✅ Memoized selector — prevents unnecessary re-renders
+const selectCartTotal = createSelector(
+  [(state: RootState) => state.cart.items],
+  (items) => items.reduce((sum, i) => sum + i.price * i.qty, 0)
+);
 
-### Using Redux / Sử Dụng Redux
-
-```typescript
-import { useSelector, useDispatch } from 'react-redux';
-import { RootState, AppDispatch, addTodo, toggleTodo } from './store';
-
-function TodoList() {
-  const todos = useSelector((state: RootState) => state.todos.items);
-  const filter = useSelector((state: RootState) => state.todos.filter);
-  const dispatch = useDispatch<AppDispatch>();
-
-  const filteredTodos = todos.filter(todo => {
-    if (filter === 'active') return !todo.completed;
-    if (filter === 'completed') return todo.completed;
-    return true;
-  });
-
-  return (
-    <div>
-      <input
-        onKeyPress={(e) => {
-          if (e.key === 'Enter') {
-            dispatch(addTodo(e.currentTarget.value));
-            e.currentTarget.value = '';
-          }
-        }}
-      />
-      <ul>
-        {filteredTodos.map(todo => (
-          <li key={todo.id}>
-            <input
-              type="checkbox"
-              checked={todo.completed}
-              onChange={() => dispatch(toggleTodo(todo.id))}
-            />
-            {todo.text}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-```
-
----
-
-## Zustand
-
-### Simple Store / Store Đơn Giản
-
-```typescript
-import create from 'zustand';
-
-interface CounterStore {
-  count: number;
-  increment: () => void;
-  decrement: () => void;
-  reset: () => void;
-}
-
-const useCounterStore = create<CounterStore>((set) => ({
-  count: 0,
-  increment: () => set((state) => ({ count: state.count + 1 })),
-  decrement: () => set((state) => ({ count: state.count - 1 })),
-  reset: () => set({ count: 0 })
-}));
-
-// Usage / Sử dụng
-function Counter() {
-  const { count, increment, decrement, reset } = useCounterStore();
-
-  return (
-    <div>
-      <h1>Count: {count}</h1>
-      <button onClick={increment}>+</button>
-      <button onClick={decrement}>-</button>
-      <button onClick={reset}>Reset</button>
-    </div>
-  );
-}
-```
-
----
-
-## Advanced Redux Patterns / Mẫu Redux Nâng Cao
-
-### Redux Middleware / Middleware Redux
-
-**English:** Middleware provides a way to extend Redux with custom functionality, intercepting actions before they reach the reducer.
-
-**Tiếng Việt:** Middleware cung cấp cách mở rộng Redux với chức năng tùy chỉnh, chặn actions trước khi chúng đến reducer.
-
-```typescript
-// Logger Middleware
-const loggerMiddleware = (store) => (next) => (action) => {
-  console.log('Dispatching:', action);
-  console.log('Previous State:', store.getState());
-  
+// ✅ Custom middleware — logging
+const logger: Middleware = (store) => (next) => (action) => {
+  console.log('dispatching', action.type);
   const result = next(action);
-  
-  console.log('Next State:', store.getState());
+  console.log('next state', store.getState());
   return result;
 };
 
-// Async Middleware (Redux Thunk)
-import { createAsyncThunk } from '@reduxjs/toolkit';
-
-export const fetchUser = createAsyncThunk(
-  'users/fetchById',
-  async (userId: string, thunkAPI) => {
-    const response = await fetch(`/api/users/${userId}`);
-    if (!response.ok) {
-      return thunkAPI.rejectWithValue('Failed to fetch user');
-    }
-    return response.json();
-  }
-);
-
-// Using in slice
-const userSlice = createSlice({
-  name: 'user',
-  initialState: {
-    data: null,
-    loading: false,
-    error: null
-  },
-  reducers: {},
-  extraReducers: (builder) => {
-    builder
-      .addCase(fetchUser.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchUser.fulfilled, (state, action) => {
-        state.loading = false;
-        state.data = action.payload;
-      })
-      .addCase(fetchUser.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      });
-  }
+const store = configureStore({
+  reducer: { cart: cartSlice.reducer },
+  middleware: (getDefault) => getDefault().concat(logger)
 });
 ```
 
-### Redux Selectors / Bộ Chọn Redux
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
 
-**English:** Selectors are functions that extract and derive data from the Redux store, enabling memoization and performance optimization.
+- **RTK's Immer**: `state.items.push()` LOOKS like mutation but is actually Immer producing immutable update. Only works inside `createSlice` reducers — NOT in regular functions
+- **Selector parameterization**: `createSelector` with per-component arguments needs `useMemo` to create separate memoization cache per component instance
+- **Redux vs server state**: Redux is NOT for API cache — use TanStack Query/SWR for fetch/cache/revalidation. Redux for truly client-only state (UI state, form wizard steps)
+- **Bundle size**: Redux Toolkit ≈ 11KB gzip. Zustand ≈ 1.2KB. For small apps, RTK may be overkill
 
-**Tiếng Việt:** Selectors là các hàm trích xuất và suy ra dữ liệu từ Redux store, cho phép memoization và tối ưu hóa hiệu suất.
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-```typescript
-import { createSelector } from '@reduxjs/toolkit';
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| "Redux is slow because it re-renders everything" | Redux `useSelector` only re-renders when selected value changes (reference equality) | Performance issues come from bad selectors, not Redux itself |
+| Putting API cache in Redux | Redux doesn't handle caching, stale data, or background refetching | Use TanStack Query for server state, Redux for client state |
+| Creating new objects in selectors without `createSelector` | `useSelector(() => items.filter(...))` creates new array each render → infinite re-render loop | Always use `createSelector` for derived data |
+| "Immer syntax means I can mutate anywhere" | Immer wrapping only exists inside `createSlice` reducers | Outside reducers, spread operators are still required |
 
-// Basic selector
-const selectTodos = (state: RootState) => state.todos.items;
-const selectFilter = (state: RootState) => state.todos.filter;
+**🎯 Interview Pattern:**
+- Khi thấy câu hỏi về: "Redux", "Flux", "state management architecture", "middleware"
+- → Nhớ đến: "Strict accountant" — unidirectional flow, every change logged
+- → Mở đầu trả lời: "Redux enforces unidirectional data flow — Action → Middleware → Reducer → Store → View. This was created to solve Facebook's cascading update problem where bidirectional data binding caused inconsistent state. Redux Toolkit modernizes the API with `createSlice` (auto-generates actions from reducers using Immer) and `createAsyncThunk` (handles async loading lifecycle)."
 
-// Memoized selector
-const selectFilteredTodos = createSelector(
-  [selectTodos, selectFilter],
-  (todos, filter) => {
-    console.log('Computing filtered todos...');
-    switch (filter) {
-      case 'active':
-        return todos.filter(todo => !todo.completed);
-      case 'completed':
-        return todos.filter(todo => todo.completed);
-      default:
-        return todos;
-    }
-  }
-);
-
-// Selector with parameters
-const selectTodoById = createSelector(
-  [selectTodos, (state: RootState, todoId: string) => todoId],
-  (todos, todoId) => todos.find(todo => todo.id === todoId)
-);
-
-// Usage
-function TodoList() {
-  const filteredTodos = useSelector(selectFilteredTodos);
-  return (
-    <ul>
-      {filteredTodos.map(todo => (
-        <TodoItem key={todo.id} todo={todo} />
-      ))}
-    </ul>
-  );
-}
-```
-
-### Redux Normalization / Chuẩn Hóa Redux
-
-**English:** Normalize nested data structures to improve performance and simplify updates.
-
-**Tiếng Việt:** Chuẩn hóa cấu trúc dữ liệu lồng nhau để cải thiện hiệu suất và đơn giản hóa cập nhật.
-
-```typescript
-import { createEntityAdapter, createSlice } from '@reduxjs/toolkit';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-}
-
-// Create entity adapter
-const usersAdapter = createEntityAdapter<User>({
-  selectId: (user) => user.id,
-  sortComparer: (a, b) => a.name.localeCompare(b.name)
-});
-
-const usersSlice = createSlice({
-  name: 'users',
-  initialState: usersAdapter.getInitialState({
-    loading: false,
-    error: null
-  }),
-  reducers: {
-    userAdded: usersAdapter.addOne,
-    usersReceived: usersAdapter.setAll,
-    userUpdated: usersAdapter.updateOne,
-    userRemoved: usersAdapter.removeOne
-  }
-});
-
-// Selectors
-export const {
-  selectAll: selectAllUsers,
-  selectById: selectUserById,
-  selectIds: selectUserIds
-} = usersAdapter.getSelectors((state: RootState) => state.users);
-
-// Usage
-function UserList() {
-  const users = useSelector(selectAllUsers);
-  const dispatch = useDispatch();
-  
-  return (
-    <ul>
-      {users.map(user => (
-        <li key={user.id}>
-          {user.name}
-          <button onClick={() => dispatch(userRemoved(user.id))}>
-            Delete
-          </button>
-        </li>
-      ))}
-    </ul>
-  );
-}
-```
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: [Functional Programming — Pure Functions](../01-javascript/12-functional-programming.md) — reducers MUST be pure
+- ➡️ Để hiểu: [Advanced Patterns](./04-advanced-patterns.md) — middleware pattern is a HOF chain, same as Express middleware
 
 ---
 
-## Advanced Zustand Patterns / Mẫu Zustand Nâng Cao
+### 3. Modern Alternatives — Zustand, Jotai, Signals / Giải Pháp Hiện Đại
 
-### Zustand with Middleware / Zustand với Middleware
+> 🧠 **Memory Hook**: **"Zustand = Redux without the ceremony"** — same concept (external store + subscriptions), but API fits in a tweet
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Redux Toolkit giảm boilerplate so với Redux gốc, nhưng vẫn cần: store setup, Provider wrapper,
+typed hooks, slice files. Cho small-to-medium apps, đó là overkill.
+
+→ **Why?** Vì React's own state primitives (`useState`, Context) có limitations (Context re-render,
+no selector), nhưng Redux adds too much structure for simple cases.
+
+→ **Why?** Vì modern libraries exploit a key insight: **external store + `useSyncExternalStore`**
+= fine-grained subscriptions WITHOUT Provider wrappers. Zustand, Jotai, Valtio all use this API
+internally, just with different mental models.
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+
+Nếu Redux là **ERP system** (SAP, Oracle — powerful nhưng setup phức tạp), thì:
+- **Zustand** = Google Sheets — simple, mọi người edit real-time, đủ cho 90% use cases
+- **Jotai** = Post-it notes — mỗi atom là 1 note nhỏ, combine khi cần
+- **Signals** = reactive spreadsheet cells — update 1 cell, chỉ cells phụ thuộc re-calculate
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
+```
+Mental model comparison:
+
+  Context:     Provider (top-down)  →  All consumers re-render
+  Redux:       Store → Selectors   →  Only selected slice re-renders
+  Zustand:     Store → Selectors   →  Only selected slice re-renders (no Provider!)
+  Jotai:       Atoms (bottom-up)   →  Only dependent atoms re-render
+  Signals:     Fine-grained        →  No component re-render, DOM updates directly
+
+  Bundle size (gzip):
+  Redux Toolkit: ~11KB    Context: 0KB (built-in)
+  Zustand:       ~1.2KB   Jotai:   ~3KB
+  @preact/signals-react: ~2KB
+```
 
 ```typescript
-import create from 'zustand';
-import { persist, devtools } from 'zustand/middleware';
+// ✅ Zustand — the pragmatic choice for most apps
+import { create } from 'zustand';
+import { devtools, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 
-interface TodoStore {
-  todos: Todo[];
-  addTodo: (text: string) => void;
-  toggleTodo: (id: string) => void;
-  deleteTodo: (id: string) => void;
+interface CartStore {
+  items: CartItem[];
+  addItem: (item: CartItem) => void;
+  removeItem: (id: string) => void;
+  total: () => number;
 }
 
-// With persistence and devtools
-const useTodoStore = create<TodoStore>()(
+const useCartStore = create<CartStore>()(
   devtools(
     persist(
-      immer((set) => ({
-        todos: [],
-        
-        addTodo: (text) => set((state) => {
-          state.todos.push({
-            id: crypto.randomUUID(),
-            text,
-            completed: false
-          });
+      immer((set, get) => ({
+        items: [],
+        addItem: (item) => set((state) => { state.items.push(item); }),
+        removeItem: (id) => set((state) => {
+          state.items = state.items.filter(i => i.id !== id);
         }),
-        
-        toggleTodo: (id) => set((state) => {
-          const todo = state.todos.find(t => t.id === id);
-          if (todo) {
-            todo.completed = !todo.completed;
-          }
-        }),
-        
-        deleteTodo: (id) => set((state) => {
-          state.todos = state.todos.filter(t => t.id !== id);
-        })
+        total: () => get().items.reduce((sum, i) => sum + i.price * i.qty, 0),
       })),
-      { name: 'todo-storage' }
+      { name: 'cart-storage' } // localStorage persistence
     )
   )
 );
-```
 
-### Zustand Slices / Phân Đoạn Zustand
-
-```typescript
-// Split store into slices
-interface UserSlice {
-  user: User | null;
-  setUser: (user: User) => void;
-  clearUser: () => void;
+// Usage — no Provider needed!
+function CartIcon() {
+  // Fine-grained: only re-renders when items.length changes
+  const count = useCartStore((state) => state.items.length);
+  return <span>Cart ({count})</span>;
 }
 
-interface SettingsSlice {
-  theme: 'light' | 'dark';
-  language: string;
-  setTheme: (theme: 'light' | 'dark') => void;
-  setLanguage: (language: string) => void;
+function CartTotal() {
+  const total = useCartStore((state) => state.total());
+  return <span>Total: ${total}</span>;
 }
 
-const createUserSlice = (set): UserSlice => ({
-  user: null,
-  setUser: (user) => set({ user }),
-  clearUser: () => set({ user: null })
-});
+// ✅ Jotai — atomic, bottom-up approach
+import { atom, useAtom, useAtomValue } from 'jotai';
 
-const createSettingsSlice = (set): SettingsSlice => ({
-  theme: 'light',
-  language: 'en',
-  setTheme: (theme) => set({ theme }),
-  setLanguage: (language) => set({ language })
-});
-
-// Combine slices
-const useStore = create<UserSlice & SettingsSlice>()((...a) => ({
-  ...createUserSlice(...a),
-  ...createSettingsSlice(...a)
-}));
-
-// Usage with selectors
-function UserProfile() {
-  const user = useStore((state) => state.user);
-  const setUser = useStore((state) => state.setUser);
-  
-  return <div>{user?.name}</div>;
-}
-
-function ThemeToggle() {
-  const theme = useStore((state) => state.theme);
-  const setTheme = useStore((state) => state.setTheme);
-  
-  return (
-    <button onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>
-      Toggle Theme
-    </button>
-  );
-}
-```
-
----
-
-## Jotai - Atomic State Management
-
-**English:** Jotai provides primitive and flexible state management with an atomic approach.
-
-**Tiếng Việt:** Jotai cung cấp quản lý trạng thái nguyên thủy và linh hoạt với cách tiếp cận atomic.
-
-```typescript
-import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
-
-// Primitive atoms
-const countAtom = atom(0);
-const nameAtom = atom('');
-
-// Derived atoms
-const doubleCountAtom = atom((get) => get(countAtom) * 2);
-
-// Write-only atoms
-const incrementAtom = atom(
-  null,
-  (get, set) => set(countAtom, get(countAtom) + 1)
+const itemsAtom = atom<CartItem[]>([]);
+const totalAtom = atom((get) =>
+  get(itemsAtom).reduce((sum, i) => sum + i.price * i.qty, 0)
 );
 
-// Async atoms
-const userAtom = atom(async (get) => {
-  const userId = get(userIdAtom);
-  const response = await fetch(`/api/users/${userId}`);
-  return response.json();
-});
+// Derived atom: only components reading totalAtom re-render when total changes
+function CartTotal() {
+  const total = useAtomValue(totalAtom);
+  return <span>Total: ${total}</span>;
+}
 
-// Usage
-function Counter() {
-  const [count, setCount] = useAtom(countAtom);
-  const doubleCount = useAtomValue(doubleCountAtom);
-  const increment = useSetAtom(incrementAtom);
-  
+// ✅ Zustand slices pattern — scaling for large apps
+interface AuthSlice {
+  user: User | null;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => void;
+}
+
+interface UISlice {
+  theme: 'light' | 'dark';
+  sidebarOpen: boolean;
+  toggleTheme: () => void;
+  toggleSidebar: () => void;
+}
+
+const useStore = create<AuthSlice & UISlice>()(
+  devtools((...a) => ({
+    // Auth slice
+    user: null,
+    login: async (email, password) => {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      });
+      const user = await res.json();
+      a[0]({ user });
+    },
+    logout: () => a[0]({ user: null }),
+
+    // UI slice
+    theme: 'light',
+    sidebarOpen: true,
+    toggleTheme: () => a[0]((s) => ({ theme: s.theme === 'light' ? 'dark' : 'light' })),
+    toggleSidebar: () => a[0]((s) => ({ sidebarOpen: !s.sidebarOpen })),
+  }))
+);
+```
+
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
+- **Zustand equality**: Default is `Object.is` — if you return an object from selector, use `shallow` comparator to avoid false re-renders
+- **Jotai provider**: Optional, but needed for testing (isolate atom state per test) or multiple independent stores
+- **SSR**: Zustand needs hydration handling — initial state from server may differ from client store
+- **Recoil**: Facebook's solution, but development has stalled in 2024. Community moving to Jotai
+- **Signals**: Bypass React's rendering model entirely — controversial, may break with future React features
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| "Zustand can't scale" | Zustand has slices, middleware, devtools, persist — covers enterprise needs | Scale with slice pattern, same as Redux but less boilerplate |
+| Subscribing to entire Zustand store | `useStore()` with no selector re-renders on ANY change | Always pass a selector: `useStore(s => s.count)` |
+| "Jotai and Recoil are the same" | Jotai is provider-less, simpler API; Recoil requires RecoilRoot and string keys | Jotai is more maintained and growing faster in 2025-2026 |
+| Mixing server state and client state in one store | Server state needs cache invalidation, refetching, background sync — different lifecycle | TanStack Query for server state, Zustand/Redux for client state |
+
+**🎯 Interview Pattern:**
+- Khi thấy câu hỏi về: "state management comparison", "which library to choose", "Zustand vs Redux"
+- → Nhớ đến: "Zustand = Redux without the ceremony"
+- → Mở đầu trả lời: "I'd categorize state management by the type of state: client UI state (Zustand for simple, Redux for complex), server/async state (TanStack Query), and cross-cutting concerns like theme (Context). Zustand has become my default for client state because it offers fine-grained subscriptions like Redux but with ~1KB bundle and no Provider boilerplate. I reach for Redux Toolkit when I need time-travel debugging or complex middleware chains."
+
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: [Hooks — useSyncExternalStore](./03-hooks-deep-dive.md) — how external stores integrate with React
+- ➡️ Để hiểu: [React Performance](../06-browser-performance/02-react-performance.md) — selector optimization prevents wasted renders
+
+---
+
+## Interview Q&A / Hỏi Đáp Phỏng Vấn
+
+### Q1: What is prop drilling and how do you solve it? / Prop drilling là gì và giải quyết thế nào? 🟢 Junior
+
+**A:** Prop drilling is passing data through multiple intermediate components that don't use it, just to reach a deeply nested component.
+
+```
+<App user={user}>            ← has data
+  <Layout user={user}>       ← doesn't use, just passes
+    <Sidebar user={user}>    ← doesn't use, just passes
+      <UserMenu user={user}> ← actually uses it
+```
+
+**Solutions (in order of complexity):**
+1. **Component composition**: Pass components as children to avoid drilling through intermediaries
+2. **React Context**: For data needed by many components at different depths (theme, auth)
+3. **External store (Zustand)**: For frequently-updated state needing fine-grained subscriptions
+4. **Custom hooks**: Abstract the subscription logic — consumers call `useAuth()` not `useContext(AuthCtx)`
+
+```typescript
+// ✅ Composition — most underrated solution
+function App() {
+  const user = useUser();
   return (
-    <div>
-      <p>Count: {count}</p>
-      <p>Double: {doubleCount}</p>
-      <button onClick={increment}>Increment</button>
-    </div>
+    <Layout>
+      <Sidebar>
+        <UserMenu user={user} /> {/* passed directly, no drilling */}
+      </Sidebar>
+    </Layout>
   );
 }
 ```
 
+Giải thích tiếng Việt: Prop drilling là truyền data qua nhiều tầng component trung gian chỉ để đến component sâu bên trong. Giải pháp đơn giản nhất thường bị bỏ qua: **component composition** — truyền component đã có data thay vì data qua nhiều tầng. Context cho data ít update, Zustand/Redux cho data update thường xuyên.
+
+**💡 Interview Signal:**
+- ✅ Strong: Mentions composition first (not just Context/Redux), explains trade-offs of each solution
+- ❌ Weak: Jumps straight to "use Redux" without considering simpler alternatives
+
 ---
 
-## Recoil - Facebook's State Management
+### Q2: Context API vs Redux — when to use each? / Context API vs Redux — khi nào dùng? 🟡 Mid
 
-**English:** Recoil provides a graph-based state management solution with fine-grained reactivity.
+**A:** They solve different problems despite both providing "global state":
 
-**Tiếng Việt:** Recoil cung cấp giải pháp quản lý trạng thái dựa trên đồ thị với khả năng phản ứng chi tiết.
+| Criterion | Context API | Redux (Toolkit) |
+|-----------|-------------|-----------------|
+| **Purpose** | Dependency injection | State management |
+| **Re-render** | All consumers on any change | Only selected slice via selectors |
+| **Middleware** | None | Logger, thunk, saga, analytics |
+| **DevTools** | React DevTools (basic) | Redux DevTools (time-travel!) |
+| **Selector** | No built-in selector | `createSelector` with memoization |
+| **Bundle** | 0KB (built-in) | ~11KB gzip |
+
+**Decision rule:**
+- **Context**: Theme, locale, auth token — data that changes rarely and is read by many
+- **Redux**: Shopping cart, complex form wizard, real-time dashboard — data with complex update logic and frequent changes
 
 ```typescript
-import { atom, selector, useRecoilState, useRecoilValue } from 'recoil';
+// ❌ Anti-pattern: Context for frequently-updated state
+<CartContext.Provider value={{ items, addItem, removeItem }}>
+  {/* ALL consumers re-render when any item changes */}
+</CartContext.Provider>
 
-// Atoms
-const todoListState = atom({
-  key: 'todoListState',
-  default: []
-});
+// ✅ Zustand/Redux: fine-grained subscription
+const count = useCartStore(state => state.items.length); // only this re-renders
+```
 
-const todoListFilterState = atom({
-  key: 'todoListFilterState',
-  default: 'all'
-});
+Giải thích tiếng Việt: Context là mechanism truyền data (dependency injection), Redux là state management library. Khác biệt quan trọng nhất: Context re-render TẤT CẢ consumers khi value thay đổi, Redux chỉ re-render components mà selected data thay đổi. Dùng Context cho data ít thay đổi (theme, locale), Redux/Zustand cho state phức tạp thay đổi thường xuyên.
 
-// Selectors
-const filteredTodoListState = selector({
-  key: 'filteredTodoListState',
-  get: ({ get }) => {
-    const filter = get(todoListFilterState);
-    const list = get(todoListState);
-    
-    switch (filter) {
-      case 'completed':
-        return list.filter(item => item.completed);
-      case 'active':
-        return list.filter(item => !item.completed);
-      default:
-        return list;
+**💡 Interview Signal:**
+- ✅ Strong: Frames Context as DI (not state management), explains re-render difference with specific example
+- ❌ Weak: Only compares API surface without understanding the re-render implication
+
+---
+
+### Q3: How does Redux middleware work? Implement a custom middleware. / Redux middleware hoạt động thế nào? Implement custom middleware. 🟡 Mid
+
+**A:** Middleware is a chain of higher-order functions that intercept actions between dispatch and reducer. Signature: `store => next => action => result`.
+
+```typescript
+// Middleware chain visualization:
+// dispatch(action)
+//   → logger(action)
+//     → thunk(action)
+//       → analytics(action)
+//         → reducer(state, action) → new state
+
+// ✅ Custom: API error handler middleware
+const apiErrorMiddleware: Middleware = (store) => (next) => (action) => {
+  const result = next(action); // let action reach reducer first
+
+  // Check if any async thunk was rejected
+  if (action.type?.endsWith('/rejected')) {
+    const { status } = action.payload || {};
+
+    if (status === 401) {
+      store.dispatch(logout());        // force logout
+      store.dispatch(showToast({ message: 'Session expired', type: 'error' }));
+    } else if (status === 503) {
+      store.dispatch(showToast({ message: 'Service unavailable', type: 'warning' }));
     }
   }
-});
 
-const todoListStatsState = selector({
-  key: 'todoListStatsState',
-  get: ({ get }) => {
-    const todoList = get(todoListState);
-    const totalNum = todoList.length;
-    const totalCompletedNum = todoList.filter(item => item.completed).length;
-    const totalUncompletedNum = totalNum - totalCompletedNum;
-    const percentCompleted = totalNum === 0 ? 0 : totalCompletedNum / totalNum * 100;
-    
-    return {
-      totalNum,
-      totalCompletedNum,
-      totalUncompletedNum,
-      percentCompleted
-    };
-  }
-});
-
-// Usage
-function TodoList() {
-  const todoList = useRecoilValue(filteredTodoListState);
-  const [filter, setFilter] = useRecoilState(todoListFilterState);
-  
-  return (
-    <div>
-      <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-        <option value="all">All</option>
-        <option value="active">Active</option>
-        <option value="completed">Completed</option>
-      </select>
-      <ul>
-        {todoList.map(todo => (
-          <TodoItem key={todo.id} todo={todo} />
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function TodoStats() {
-  const stats = useRecoilValue(todoListStatsState);
-  
-  return (
-    <div>
-      <p>Total: {stats.totalNum}</p>
-      <p>Completed: {stats.totalCompletedNum}</p>
-      <p>Progress: {stats.percentCompleted.toFixed(0)}%</p>
-    </div>
-  );
-}
-```
-
----
-
-## State Management Comparison / So Sánh Quản Lý Trạng Thái
-
-### When to Use Each Solution / Khi Nào Sử Dụng Mỗi Giải Pháp
-
-**Context API:**
-- ✅ Simple global state
-- ✅ Theme, locale, auth
-- ✅ Small to medium apps
-- ❌ Frequent updates
-- ❌ Complex state logic
-
-**Redux:**
-- ✅ Complex state logic
-- ✅ Time-travel debugging
-- ✅ Large applications
-- ✅ Predictable state updates
-- ❌ Boilerplate (mitigated by Redux Toolkit)
-- ❌ Learning curve
-
-**Zustand:**
-- ✅ Minimal boilerplate
-- ✅ Simple API
-- ✅ Good performance
-- ✅ No providers needed
-- ❌ Less ecosystem
-- ❌ No time-travel debugging
-
-**Jotai:**
-- ✅ Atomic approach
-- ✅ Bottom-up architecture
-- ✅ TypeScript support
-- ✅ Minimal re-renders
-- ❌ Newer library
-- ❌ Smaller community
-
-**Recoil:**
-- ✅ Fine-grained reactivity
-- ✅ Async support
-- ✅ Graph-based
-- ✅ Facebook backing
-- ❌ Still experimental
-- ❌ API may change
-
----
-
-## Performance Optimization / Tối Ưu Hóa Hiệu Suất
-
-### Selector Optimization / Tối Ưu Hóa Selector
-
-```typescript
-// ❌ Bad: Creates new array every time
-function TodoList() {
-  const todos = useSelector((state: RootState) => 
-    state.todos.filter(todo => !todo.completed)
-  );
-  // Component re-renders even if filtered result is the same
-}
-
-// ✅ Good: Memoized selector
-const selectActiveTodos = createSelector(
-  [(state: RootState) => state.todos],
-  (todos) => todos.filter(todo => !todo.completed)
-);
-
-function TodoList() {
-  const todos = useSelector(selectActiveTodos);
-  // Only re-renders when active todos actually change
-}
-```
-
-### Zustand Selector Optimization
-
-```typescript
-// ❌ Bad: Subscribes to entire store
-function Component() {
-  const store = useStore();
-  return <div>{store.user.name}</div>;
-  // Re-renders on any store change
-}
-
-// ✅ Good: Selective subscription
-function Component() {
-  const userName = useStore((state) => state.user.name);
-  return <div>{userName}</div>;
-  // Only re-renders when user.name changes
-}
-
-// ✅ Better: Shallow equality
-import shallow from 'zustand/shallow';
-
-function Component() {
-  const { name, email } = useStore(
-    (state) => ({ name: state.user.name, email: state.user.email }),
-    shallow
-  );
-  return <div>{name} - {email}</div>;
-}
-```
-
----
-
-## Interview Questions / Câu Hỏi Phỏng Vấn
-
-### Q1: What is prop drilling and how do you solve it? — 🟢 [Junior]
-
-**English Answer:**
-Prop drilling is passing props through multiple component layers to reach a deeply nested component. Solutions:
-1. Context API for global state
-2. State management libraries (Redux, Zustand)
-3. Component composition
-4. Render props or custom hooks
-
-**Tiếng Việt:**
-Prop drilling là việc truyền props qua nhiều lớp component để đến component lồng sâu. Giải pháp:
-1. Context API cho trạng thái toàn cục
-2. Thư viện quản lý trạng thái (Redux, Zustand)
-3. Kết hợp component
-4. Render props hoặc custom hooks
-
-### Q2: Redux vs Context API - when to use each? — 🟡 [Mid]
-
-**English Answer:**
-- **Context API**: Simple global state, theme, auth, small apps
-- **Redux**: Complex state logic, time-travel debugging, large apps, middleware needs
-
-**Key differences:**
-- Redux has better DevTools
-- Context causes re-renders of all consumers
-- Redux has middleware ecosystem
-- Context is built into React
-
-**Tiếng Việt:**
-- **Context API**: Trạng thái toàn cục đơn giản, theme, auth, ứng dụng nhỏ
-- **Redux**: Logic trạng thái phức tạp, gỡ lỗi time-travel, ứng dụng lớn, cần middleware
-
-### Q3: How does Redux middleware work? — 🟡 [Mid]
-
-**English Answer:**
-Middleware provides a third-party extension point between dispatching an action and the moment it reaches the reducer. It's a chain of functions with signature:
-```typescript
-const middleware = (store) => (next) => (action) => {
-  // Before reducer
-  const result = next(action);
-  // After reducer
   return result;
 };
-```
 
-Common use cases:
-- Logging
-- Async actions (thunk, saga)
-- Analytics
-- Error reporting
-
-### Q4: What are selectors and why use them? — 🟢 [Junior]
-
-**English Answer:**
-Selectors are functions that extract and compute derived data from the store. Benefits:
-1. **Encapsulation**: Hide store structure
-2. **Memoization**: Prevent unnecessary recalculations
-3. **Composability**: Build complex selectors from simple ones
-4. **Testability**: Easy to unit test
-
-```typescript
-const selectCompletedTodos = createSelector(
-  [selectTodos],
-  (todos) => todos.filter(todo => todo.completed)
-);
-```
-
-### Q5: How do you handle async actions in Redux? — 🔴 [Senior]
-
-**English Answer:**
-Three main approaches:
-
-1. **Redux Thunk**: Dispatch functions instead of actions
-```typescript
-const fetchUser = (id) => async (dispatch) => {
-  dispatch({ type: 'FETCH_START' });
-  try {
-    const user = await api.fetchUser(id);
-    dispatch({ type: 'FETCH_SUCCESS', payload: user });
-  } catch (error) {
-    dispatch({ type: 'FETCH_ERROR', payload: error });
+// ✅ Custom: analytics middleware
+const analyticsMiddleware: Middleware = () => (next) => (action) => {
+  if (action.type === 'cart/addItem') {
+    analytics.track('item_added', {
+      productId: action.payload.id,
+      price: action.payload.price
+    });
   }
+  return next(action);
 };
-```
 
-2. **Redux Toolkit createAsyncThunk**: Built-in async handling
-3. **Redux Saga**: Generator-based side effects
-
----
-
-## Best Practices / Thực Hành Tốt Nhất
-
-### State Structure / Cấu Trúc Trạng Thái
-
-**English:**
-1. **Normalize nested data**: Use entity adapters
-2. **Keep state minimal**: Derive data with selectors
-3. **Separate UI state from server state**: Consider React Query
-4. **Use TypeScript**: Type safety for state and actions
-5. **Organize by feature**: Co-locate related code
-
-**Tiếng Việt:**
-1. **Chuẩn hóa dữ liệu lồng nhau**: Sử dụng entity adapters
-2. **Giữ state tối thiểu**: Suy ra dữ liệu với selectors
-3. **Tách UI state khỏi server state**: Xem xét React Query
-4. **Sử dụng TypeScript**: Type safety cho state và actions
-5. **Tổ chức theo tính năng**: Đặt code liên quan gần nhau
-
-### Performance Tips / Mẹo Hiệu Suất
-
-```typescript
-// 1. Use shallow equality for objects
-import shallow from 'zustand/shallow';
-
-const { name, email } = useStore(
-  (state) => ({ name: state.name, email: state.email }),
-  shallow
-);
-
-// 2. Split selectors
-const name = useSelector((state) => state.user.name);
-const email = useSelector((state) => state.user.email);
-// Better than: const user = useSelector((state) => state.user);
-
-// 3. Memoize expensive computations
-const expensiveData = useMemo(() => {
-  return computeExpensiveValue(data);
-}, [data]);
-
-// 4. Use React.memo for components
-const TodoItem = React.memo(({ todo }) => {
-  return <li>{todo.text}</li>;
+const store = configureStore({
+  reducer: rootReducer,
+  middleware: (getDefault) =>
+    getDefault().concat(apiErrorMiddleware, analyticsMiddleware)
 });
 ```
 
----
+**Key insight**: `next(action)` passes to the NEXT middleware (not the reducer directly). Only the last middleware passes to the reducer. This is the **chain of responsibility** pattern — same as Express middleware.
 
-## Key Takeaways / Điểm Chính
+Giải thích tiếng Việt: Middleware là chuỗi HOF (Higher-Order Functions) chặn actions giữa dispatch và reducer. Mỗi middleware nhận `store`, trả về function nhận `next` (middleware tiếp theo), trả về function nhận `action`. Gọi `next(action)` để chuyển action xuống chain. Real-world use: error handling (401 → logout), analytics tracking, logging.
 
-**English:**
-1. Choose state management based on app complexity
-2. Context API for simple global state
-3. Redux for complex state with time-travel debugging
-4. Zustand for lightweight, minimal boilerplate
-5. Jotai/Recoil for atomic state management
-6. Use selectors for derived data and memoization
-7. Normalize nested data structures
-8. Optimize with selective subscriptions
-9. Consider React Query for server state
-10. Type your state with TypeScript
-
-**Tiếng Việt:**
-1. Chọn quản lý trạng thái dựa trên độ phức tạp ứng dụng
-2. Context API cho trạng thái toàn cục đơn giản
-3. Redux cho trạng thái phức tạp với gỡ lỗi time-travel
-4. Zustand cho lightweight, ít boilerplate
-5. Jotai/Recoil cho quản lý trạng thái atomic
-6. Sử dụng selectors cho dữ liệu suy ra và memoization
-7. Chuẩn hóa cấu trúc dữ liệu lồng nhau
-8. Tối ưu hóa với selective subscriptions
-9. Xem xét React Query cho server state
-10. Type state với TypeScript
+**💡 Interview Signal:**
+- ✅ Strong: Shows practical middleware (error handler, analytics), explains chain of responsibility pattern
+- ❌ Weak: Only shows logger middleware, can't explain `next` vs `dispatch` difference
 
 ---
 
-## Self-Check / Tự Kiểm Tra
+### Q4: Design a state management solution for a large e-commerce app. What would you choose and why? / Thiết kế state management cho app e-commerce lớn. Chọn gì? 🔴 Senior
 
-- [ ] Tôi có thể giải thích khi nào dùng Context vs Redux không?
-- [ ] Tôi có thể implement Zustand store với actions và selectors không?
-- [ ] Tôi có thể giải thích tại sao React Query tốt hơn `useEffect` + `useState` để fetch data không?
-- [ ] Tôi có thể giải thích "optimistic updates" và trade-off của nó không?
-- [ ] Tôi có thể giải thích Redux middleware (thunk vs saga) và khi nào dùng cái nào không?
+**A:** I'd split by **state type** — no single solution handles all cases:
 
-💬 **Feynman Prompt:** Giải thích prop drilling và tại sao nó là vấn đề. Sau đó giải thích 2 cách khác nhau để giải quyết nó (Context và Redux) và khi nào chọn cái nào.
+```
+E-commerce State Architecture:
+
+┌─────────────────────────────────────────────────┐
+│                   State Types                    │
+├──────────────┬────────────────┬─────────────────┤
+│ Server State │  Client State  │ Cross-cutting   │
+│              │                │                 │
+│ TanStack     │  Zustand       │ React Context   │
+│ Query        │                │                 │
+│              │                │                 │
+│ • Products   │ • Cart (local) │ • Theme         │
+│ • Orders     │ • UI state     │ • Locale (i18n) │
+│ • User data  │ • Form wizard  │ • Auth token    │
+│ • Reviews    │ • Filters/sort │ • Feature flags │
+│              │ • Modals       │                 │
+│ Cache +      │ Fine-grained   │ Read-mostly,    │
+│ revalidation │ subscriptions  │ rare updates    │
+└──────────────┴────────────────┴─────────────────┘
+```
+
+```typescript
+// Server state: TanStack Query (caching, dedup, background refetch)
+const { data: products, isLoading } = useQuery({
+  queryKey: ['products', { category, page }],
+  queryFn: () => fetchProducts({ category, page }),
+  staleTime: 5 * 60 * 1000, // 5min cache
+});
+
+// Client state: Zustand (fine-grained, persistent cart)
+const useCartStore = create(
+  persist(
+    immer((set) => ({
+      items: [],
+      addItem: (item) => set(s => { s.items.push(item); }),
+    })),
+    { name: 'cart' }
+  )
+);
+
+// Cross-cutting: Context (theme/locale — rarely changes)
+const ThemeContext = createContext<'light' | 'dark'>('light');
+```
+
+**Why NOT Redux for everything?**
+- Products/orders = server state → TanStack Query handles caching, revalidation, pagination, optimistic updates out of the box. Replicating this in Redux requires RTK Query (which IS good, but adds complexity).
+- Cart = client-only → Zustand at 1.2KB with persist middleware. Redux Toolkit works too but is 10x the bundle for this use case.
+- Theme/locale → Context is perfect: changes rarely, read by many, 0KB.
+
+**Why NOT Zustand for everything?**
+- Zustand doesn't have built-in request deduplication, background refetching, or stale-while-revalidate. For server state, TanStack Query is purpose-built.
+
+Giải thích tiếng Việt: Không có "1 tool cho mọi thứ". Chia state theo loại: Server state (products, orders) → TanStack Query (cache, revalidation). Client state (cart, UI) → Zustand (nhẹ, fine-grained). Cross-cutting (theme, locale) → Context (built-in, 0KB). Redux Toolkit vẫn tốt cho client state phức tạp, nhưng Zustand đủ cho 90% e-commerce cases.
+
+**💡 Interview Signal:**
+- ✅ Strong: Splits by state type, justifies each choice with specific tradeoffs, mentions what each tool does NOT handle
+- ❌ Weak: Answers "I'd use Redux for everything" or "I'd use Zustand for everything" without nuance
 
 ---
 
-## Connections / Liên Kết
+### Q5: Implement optimistic update in a state management system. / Implement optimistic update trong state management. 🔴 Senior
 
-- ⬅️ **Built on:** [Hooks Deep Dive](./03-hooks-deep-dive.md) — `useContext`, `useReducer` là nền tảng của state management
-- ➡️ **Enables:** [Performance Optimization](./09-performance-optimization.md) — state structure ảnh hưởng render performance
-- 🔗 **Libraries:** Redux Toolkit | Zustand | Jotai | React Query | SWR | Recoil
+**A:** Optimistic update = update UI immediately, then sync with server. If server fails, rollback.
 
-[← Previous: Advanced Patterns](./04-advanced-patterns.md) | [Back to Table of Contents](../../00-table-of-contents.md)
+```typescript
+// ✅ Zustand: optimistic delete with rollback
+const useTodoStore = create<TodoStore>()(
+  immer((set, get) => ({
+    todos: [] as Todo[],
+
+    deleteTodo: async (id: string) => {
+      // 1. Snapshot for rollback
+      const previousTodos = get().todos;
+
+      // 2. Optimistic: remove immediately
+      set((state) => {
+        state.todos = state.todos.filter(t => t.id !== id);
+      });
+
+      try {
+        // 3. Sync with server
+        await fetch(`/api/todos/${id}`, { method: 'DELETE' });
+      } catch (error) {
+        // 4. Rollback on failure
+        set({ todos: previousTodos });
+        toast.error('Failed to delete, restored');
+      }
+    }
+  }))
+);
+
+// ✅ TanStack Query: built-in optimistic update
+const deleteTodoMutation = useMutation({
+  mutationFn: (id: string) => fetch(`/api/todos/${id}`, { method: 'DELETE' }),
+
+  onMutate: async (id) => {
+    // Cancel in-flight queries to prevent overwrite
+    await queryClient.cancelQueries({ queryKey: ['todos'] });
+
+    // Snapshot
+    const previous = queryClient.getQueryData<Todo[]>(['todos']);
+
+    // Optimistic remove
+    queryClient.setQueryData<Todo[]>(['todos'], (old) =>
+      old?.filter(t => t.id !== id)
+    );
+
+    return { previous }; // context for rollback
+  },
+
+  onError: (_err, _id, context) => {
+    // Rollback
+    queryClient.setQueryData(['todos'], context?.previous);
+  },
+
+  onSettled: () => {
+    // Refetch to ensure server/client sync
+    queryClient.invalidateQueries({ queryKey: ['todos'] });
+  }
+});
+```
+
+**Key pattern**: Snapshot → Optimistic update → Try server → Rollback on error → Refetch to sync.
+
+TanStack Query's `onMutate`/`onError`/`onSettled` lifecycle handles this elegantly. The `cancelQueries` call prevents a stale fetch from overwriting our optimistic update.
+
+Giải thích tiếng Việt: Optimistic update = cập nhật UI ngay lập tức (không chờ server), nếu server fail thì rollback. Pattern: Snapshot → Update ngay → Gọi server → Error thì rollback → Success thì refetch để sync. TanStack Query có lifecycle `onMutate`/`onError`/`onSettled` xử lý elegant. Key: luôn `cancelQueries` trước để prevent stale fetch overwrite optimistic data.
+
+**💡 Interview Signal:**
+- ✅ Strong: Shows snapshot/rollback pattern, mentions `cancelQueries`, handles both Zustand and TanStack Query approaches
+- ❌ Weak: Only shows "update then fetch" without rollback or race condition handling
+
+---
+
+## Interview Q&A Summary / Tổng Kết Q&A
+
+| # | Topic | Difficulty | Key Concept |
+|---|-------|-----------|-------------|
+| Q1 | Prop drilling solutions | 🟢 Junior | Composition > Context > External store |
+| Q2 | Context vs Redux | 🟡 Mid | DI vs state management, re-render scope |
+| Q3 | Redux middleware | 🟡 Mid | Chain of responsibility, `store => next => action` |
+| Q4 | Architecture design | 🔴 Senior | Split by state type: server/client/cross-cutting |
+| Q5 | Optimistic updates | 🔴 Senior | Snapshot → optimistic → server → rollback |
+
+---
+
+## ⚡ Cold Call Simulation / Mô Phỏng Phỏng Vấn
+
+> 🎯 Interviewer asks cold: **"How would you choose a state management solution for a new React project?"**
+
+**30 giây đầu — mở đầu lý tưởng:**
+1. "I'd start by categorizing the state: server state (API data) goes to TanStack Query for automatic caching and revalidation, client state goes to Zustand or Redux, and cross-cutting concerns like theme use React Context."
+2. "Context is ideal for low-frequency data because it re-renders ALL consumers on any change — it lacks a selector mechanism, so it's poor for frequently-updated state."
+3. "For client state, Zustand is my default — it provides Redux-like fine-grained subscriptions at 1KB, without Provider boilerplate. I'd reach for Redux Toolkit when I need time-travel debugging or complex middleware chains."
+4. "The biggest mistake I've seen is using one tool for everything — putting API cache in Redux misses TanStack Query's stale-while-revalidate, while using Context for cart state causes unnecessary re-renders across the entire app."
+
+---
+
+## Self-Check / Tự Kiểm Tra ⚡ (Đóng tài liệu lại trước khi làm)
+
+- [ ] **Retrieval**: Viết từ trí nhớ — khi nào dùng Context, khi nào dùng Redux, khi nào dùng Zustand? Mỗi cái 1 câu giải thích.
+- [ ] **Visual**: Vẽ diagram data flow của Redux: Action → Middleware → Reducer → Store → Component.
+- [ ] **Application**: Cart Context re-render toàn bộ app khi thêm item. Bạn fix thế nào? Viết code refactor sang Zustand.
+- [ ] **Debug**: `useSelector(() => state.todos.filter(t => !t.done))` gây infinite re-render. Tại sao? Fix thế nào?
+- [ ] **Teach**: Giải thích prop drilling cho người mới học React bằng ví dụ "truyền thư trong lớp học".
+
+💬 **Feynman Prompt:** Giải thích khác biệt giữa Context và Redux bằng ví dụ "đài phát thanh vs email". Không dùng thuật ngữ kỹ thuật.
+
+🔁 **Spaced Repetition reminder:** Review this file again on 2026-03-22, then 2026-03-26, then 2026-04-02.
