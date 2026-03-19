@@ -6,6 +6,43 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Tiki Order Processing (real incident):** Khi Tiki ra mắt chương trình Flash Sale, đội backend gặp vấn đề: service xử lý đơn hàng nhận 50,000 events/giây từ Kafka nhưng bị lag 30 giây. Root cause: consumer commit offset *trước* khi xử lý xong — nếu pod crash, messages bị mất hoàn toàn. Fix: chuyển sang manual commit *sau* khi xử lý, thêm dead-letter queue cho poisoned messages. Lag giảm về 0, zero message loss.
+
+**Bài học:** Message queue không tự đảm bảo delivery. Ordering, idempotency, và consumer group management phải được thiết kế chủ động.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Message queue giống bưu điện: producer bỏ thư (message) vào hòm thư (queue/topic), consumer lấy thư ra xử lý. Bưu điện không quan tâm producer và consumer có online cùng lúc không — đây là **async decoupling**. Kafka giống bưu điện lưu lại toàn bộ lịch sử thư (log), RabbitMQ giống bưu điện xóa thư khi đã giao.
+
+**Why it matters:** Mọi hệ thống microservices đều cần async communication để scale. Khi một service chậm, message queue hấp thụ áp lực thay vì gây cascading failure.
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[Message Queue Patterns]
+        │
+        ├── Kafka (log-based)
+        │     ├── Topic → Partitions → Offsets
+        │     ├── Consumer Group → parallel consumers ≤ partitions
+        │     ├── At-least-once: commit AFTER processing
+        │     └── Exactly-once: idempotent + transactional producer
+        │
+        ├── RabbitMQ (broker-based)
+        │     ├── Exchange → Routing → Queue
+        │     ├── ACK/NACK: consumer signals success/failure
+        │     └── DLQ: rejected messages → Dead Letter Exchange
+        │
+        └── Go Patterns
+              ├── Consumer group loop + graceful shutdown (context cancel)
+              ├── Manual offset commit (sarama AutoCommit=false)
+              ├── Semaphore for bounded concurrency
+              └── Outbox Pattern: DB write + message in same transaction
+```
+
+---
+
 ## Overview / Tổng Quan
 
 Phần này tập trung vào **implementation và production patterns** với Go — Kafka consumer, RabbitMQ worker, và các patterns phổ biến khi dùng message queues ở backend Go.
@@ -386,3 +423,20 @@ func (h *handler) ConsumeClaim(sess sarama.ConsumerGroupSession, claim sarama.Co
 ---
 
 **See also**: [Shared Message Queues Theory](../../shared/02-system-design/05-message-queues.md) | [Resilience Patterns](./07-resilience-patterns.md) | [Distributed Patterns](../04-be-system-design/04-distributed-patterns.md)
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I explain why committing offset *before* processing causes message loss?
+- [ ] Can I describe the difference between at-least-once and exactly-once delivery in Kafka?
+- [ ] Can I explain what a consumer group does and why consumers ≤ partitions is a hard limit?
+- [ ] Can I implement graceful shutdown for a Kafka consumer in Go (context + signal)?
+- 💬 **Feynman Prompt:** Giải thích Outbox Pattern cho một junior dev — tại sao không thể chỉ "publish Kafka message rồi commit DB" trong hai bước riêng lẻ?
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [Distributed Systems](./03-distributed-systems.md) — CAP theorem explains why message queues trade consistency for availability
+- ⬅️ **Built on**: [Resilience Patterns](./07-resilience-patterns.md) — Dead-letter queues are a resilience mechanism
+- ➡️ **Enables**: [Distributed Patterns](../04-be-system-design/04-distributed-patterns.md) — Saga pattern uses message queues for cross-service transactions
+- 🔗 **Theory**: [Shared Message Queues](../../shared/02-system-design/05-message-queues.md) — architecture and delivery semantics

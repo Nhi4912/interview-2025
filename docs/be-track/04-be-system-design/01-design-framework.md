@@ -5,6 +5,41 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**FAANG-style interview (thực tế):** Một kỹ sư mid-level phỏng vấn vào Shopee bị reject vì dành 25 phút đầu vẽ database schema mà không clarify requirements. Interviewer đã dừng và hỏi: "Hệ thống cần hỗ trợ bao nhiêu QPS?" — ứng viên không biết. Kết quả: architecture không phù hợp với scale, không có thời gian deep dive vào bottlenecks.
+
+**Bài học:** System design interview là bài kiểm tra *tư duy có cấu trúc*, không phải kiểm tra kiến thức. Framework 5 bước cho phép phân bổ 45 phút đúng nơi, đúng lúc.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** System design interview giống kiến trúc sư xây tòa nhà: bước đầu tiên không phải vẽ bản thiết kế — mà là hỏi chủ đầu tư "bao nhiêu người sẽ ở? Ngân sách là bao nhiêu? Địa chấn mức mấy?" Requirements trước, architecture sau.
+
+**Why structure matters:** Không có framework, ứng viên thường sa vào chi tiết quá sớm (database schema, API endpoint) mà quên clarify scale — dẫn đến architecture sai từ đầu. Framework giúp interviewer thấy rõ *tư duy hệ thống*, không chỉ kiến thức kỹ thuật.
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[System Design Interview — 45 min]
+        │
+        ├── Step 1 (5min): Requirements → FR (what) + NFR (how well)
+        │     └── Output: scope + scale constraints
+        │
+        ├── Step 2 (5min): Estimation → QPS, storage, bandwidth
+        │     └── Output: choose SQL vs NoSQL, cache size, server count
+        │
+        ├── Step 3 (10min): High-Level Design → API + data model + diagram
+        │     └── Output: interviewer sees breadth of knowledge
+        │
+        ├── Step 4 (15min): Deep Dive → bottleneck + tradeoffs
+        │     └── Output: shows depth + production experience
+        │
+        └── Step 5 (5min): Wrap-up → monitoring + failure modes + next steps
+              └── Output: shows production-ready thinking
+```
+
+---
+
 ## 1. System Design Interview Framework
 
 ### Q: Trình bày framework 5 bước để approach một bài System Design Interview? 🟢 [Junior]
@@ -708,3 +743,20 @@ FINAL REMINDERS:
 *Difficulty: 🟢 Basic (Junior) | 🟡 Intermediate (Mid-level) | 🔴 Advanced (Senior)*
 
 *References: System Design Interview (Alex Xu), Designing Data-Intensive Applications (Martin Kleppmann), Google SRE Book*
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I recite the 5 steps and their time allocations from memory?
+- [ ] Can I calculate QPS from DAU without looking at notes?
+- [ ] Can I explain the difference between functional and non-functional requirements with 2 examples each?
+- [ ] Can I name 3 signals that show production-ready thinking during Wrap-up?
+- 💬 **Feynman Prompt:** Một junior hỏi: "Tại sao phải hỏi requirements trước? Cứ vẽ architecture đi rồi điều chỉnh sau?" — giải thích tại sao cách đó sai trong interview context.
+
+## Connections / Liên Kết
+
+- ➡️ **Applies to**: [Classic System Design Problems](./02-classic-problems.md) — framework in practice for URL shortener, chat, etc.
+- ➡️ **Applies to**: [Ride-Hailing System](./06-ride-hailing-system.md) — full 45-min walkthrough using this framework
+- 🔗 **Theory**: [Distributed Systems](../02-backend-knowledge/03-distributed-systems.md) — CAP, consistency models for Step 4 Deep Dive
+- 🔗 **Theory**: [Database Advanced](../03-database-advanced/01-sql-fundamentals.md) — DB selection criteria for Step 3 High-Level Design
