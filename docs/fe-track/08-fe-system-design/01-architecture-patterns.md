@@ -9,6 +9,41 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**VinID super-app:** Monolithic React SPA với 15 feature teams. Mỗi release bị block vì team A chờ team B merge. Bundle size tăng liên tục — user download code của features họ không dùng. Giải pháp: migrate sang **Module Federation** (Webpack 5) — mỗi team deploy micro-frontend độc lập, main shell lazy-load features on demand. Release từ hàng tuần → hàng ngày.
+
+**Bài học:** Frontend architecture không chỉ là "components và hooks". Ở scale lớn, cần nghĩ đến team independence, deployment boundaries, và shared dependencies — giống như backend microservices nhưng ở phía frontend.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Frontend architecture như thiết kế tòa nhà văn phòng: Monolith = mọi phòng ban cùng một tòa nhà (tiện nhưng chật). Micro-frontends = tòa nhà riêng cho mỗi phòng ban (linh hoạt nhưng cần elevator/lobby chung — shell app).
+
+**When architecture matters:** Architecture không quan trọng cho app nhỏ. Nó trở nên critical khi: >5 teams, >100k LOC, >50 routes, hoặc cần independent deployment.
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[Frontend Architecture Patterns]
+        │
+        ├── Monolith SPA ──► small team, fast iteration
+        │
+        ├── Modular Monolith ──► shared repo, feature-based folder structure
+        │       └── enforced by ESLint module boundaries
+        │
+        ├── Micro-frontends ──► independent teams, independent deployment
+        │       ├── Module Federation (Webpack 5) — runtime sharing
+        │       ├── iframes — strong isolation, worse UX
+        │       └── Web Components — framework agnostic
+        │
+        └── Design decisions:
+                ├── Routing: shell-owned vs each MFE owns routes
+                ├── State: global store vs per-MFE local state
+                └── Shared deps: singleton (React) vs duplicated (lodash)
+```
+
+---
+
 ## Overview / Tổng Quan
 
 **English:** Understanding frontend architecture patterns is crucial for building scalable, maintainable applications and succeeding in senior-level interviews at Big Tech companies.
@@ -693,3 +728,20 @@ Kiến trúc phân lớp tổ chức code thành các lớp ngang (Trình bày, 
 ---
 
 [Back to Table of Contents](../../00-table-of-contents.md) | [Next: Micro-Frontends →](./01-architecture-patterns.md)
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I explain Micro-frontends vs Modular Monolith — and when each is appropriate?
+- [ ] Can I describe Module Federation and how it enables runtime dependency sharing?
+- [ ] Can I explain the tradeoffs of iframes vs Module Federation vs Web Components for MFE?
+- [ ] Can I design the routing strategy for a shell app with 3 micro-frontend teams?
+- [ ] Can I explain how shared state (auth, cart) works across micro-frontends?
+- 💬 **Feynman Prompt:** Giải thích Micro-frontends cho một backend engineer quen với microservices — tương đồng nào áp dụng được và khác biệt nào quan trọng nhất?
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [React Fundamentals](../03-react/01-react-fundamentals.md) — component model scales to MFE
+- ⬅️ **Built on**: [Microservices](../../be-track/02-backend-knowledge/02-microservices.md) — same decomposition principles apply
+- 🔗 **Applied in**: [System Design Theory](../../shared/02-system-design/system-design-theory.md) — frontend architecture is part of system design

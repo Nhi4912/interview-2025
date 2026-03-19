@@ -9,6 +9,41 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Grab Driver App (React Native, same principles):** Dashboard với map + order list + chat. User reports: typing in chat box bị lag. Profiler shows: mỗi keystroke re-render toàn bộ app vì `<App>` state chứa chat input. `<Map>` (expensive render) re-renders với mỗi ký tự. Fix: tách chat state xuống `<ChatBox>`, memo hóa `<Map>` với `React.memo`. Keystroke lag biến mất.
+
+**Bài học:** React performance vấn đề luôn bắt đầu bằng Profiler, không phải bằng code. "Where is the re-render happening và tại sao?" là câu hỏi đầu tiên.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** React re-render như hệ thống thông báo trong văn phòng: khi một người thay đổi bảng trắng (state), mọi người ngồi quanh (child components) đều ngẩng đầu lên xem có liên quan không. `React.memo` = "chỉ nhìn lên khi có thông báo trực tiếp cho mình".
+
+**Key insight:** React không tự động biết computation nào đắt hay rẻ. `useMemo` và `useCallback` chỉ hữu ích khi chi phí của computation **lớn hơn** chi phí của so sánh dependencies.
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[React re-render triggers]
+        │ prop change / state change / context change / parent re-render
+        ▼
+[Unnecessary re-render?]
+        │
+        ├── Child component re-renders despite same props?
+        │       └── React.memo(Component) → skip if props unchanged
+        │
+        ├── Expensive calculation re-runs every render?
+        │       └── useMemo(() => compute(), [deps]) → cache result
+        │
+        ├── Callback recreated causing child React.memo to miss?
+        │       └── useCallback(fn, [deps]) → stable reference
+        │
+        └── Long list renders all items?
+                └── react-window / @tanstack/virtual → virtualization
+```
+
+---
+
 ## Overview / Tổng Quan
 
 **English:** React performance optimization is crucial for building fast, responsive applications. This chapter covers memoization, code splitting, lazy loading, and advanced techniques frequently discussed in Big Tech interviews.
@@ -794,3 +829,20 @@ React.memo thêm chi phí cho việc so sánh prop. Chỉ sử dụng khi:
 ---
 
 [← Previous: Core Web Vitals](./01-core-web-vitals.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next: Bundle Optimization →](./03-bundle-optimization.md)
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I use Chrome DevTools Performance tab to identify and diagnose a React rendering bottleneck?
+- [ ] Can I explain the difference between `shouldComponentUpdate`, `React.PureComponent`, and `React.memo`?
+- [ ] Can I set up `react-window` for a virtualized list of 10,000 items?
+- [ ] Can I explain `React.lazy` + dynamic `import()` and what gets placed in a separate chunk?
+- [ ] Can I describe code-splitting strategy for a Next.js app with 20 routes?
+- 💬 **Feynman Prompt:** Giải thích virtualization cho một FE dev mới — tại sao render 10,000 DOM nodes cùng lúc làm scroll lag, và react-window giải quyết điều đó như thế nào?
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [Core Web Vitals](./01-core-web-vitals.md) — LCP/INP metrics that performance optimization improves
+- ⬅️ **Built on**: [React Hooks Deep Dive](../03-react/03-hooks-deep-dive.md) — useMemo/useCallback internals
+- ➡️ **Enables**: [Rendering Optimization Theory](./05-rendering-optimization-theory.md) — browser-level optimization

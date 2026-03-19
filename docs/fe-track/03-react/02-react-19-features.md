@@ -7,6 +7,40 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Shopee FE team, 2024:** Form checkout có 12 input fields. Mỗi keystroke trigger re-render toàn bộ form vì state management phức tạp. Devs thêm `useMemo`/`useCallback` ở khắp nơi để fix — kết quả: code khó đọc, dễ bug (stale closure). React 19 giải quyết bằng **React Compiler** (tự động memo hóa) và **`useActionState`** (form mutation không cần reducer phức tạp).
+
+**Thực tế phỏng vấn:** React 19 là chủ đề hot trong 2024-2025 interviews. Biết được sự khác nhau giữa `useFormStatus` vs `useActionState` và khi nào cần `useOptimistic` sẽ giúp bạn stand out.
+
+## What & Why / Cái Gì & Tại Sao
+
+**React Compiler** — giống như TypeScript compiler tự suy luận kiểu, React Compiler tự suy luận dependencies và thêm memo hóa tự động. Bạn không cần viết `useMemo`/`useCallback` thủ công nữa.
+
+**Actions pattern** — trước React 19, form submission cần: `useState(isLoading)` + `useState(error)` + `try/catch` + `finally setLoading(false)`. Actions pattern đóng gói toàn bộ lifecycle này vào một hook.
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[React 18 — manual optimization]
+        │
+        │  React 19 improvements
+        ▼
+[React Compiler] → auto-memoize → no more useMemo/useCallback boilerplate
+        │
+[Actions Pattern]
+        ├── useActionState  — form state + submission + error in one hook
+        ├── useFormStatus   — pending/error for nested form components
+        └── useOptimistic   — optimistic UI before server confirms
+        │
+[New APIs]
+        ├── use()           — read Context/Promise inside render (no hook rules)
+        ├── ref as prop     — no more forwardRef boilerplate
+        └── Server Actions  — async functions that run server-side from client
+```
+
+---
+
 ## Tong Quan / Overview
 
 **English:** React 19 is a major release that introduces the React Compiler for automatic memoization, Actions for form-based mutations, new hooks (`useActionState`, `useFormStatus`, `useOptimistic`), the `use()` API for reading resources in render, ref-as-prop, native document metadata, asset loading primitives, and stable Server Components. This chapter covers each feature with interview-focused analysis.
@@ -842,3 +876,21 @@ Giải thích tiếng Việt: Các lỗi migrate phổ biến: đổi tên useFo
 - [ ] Can you explain the three error callback tiers (onCaughtError, onUncaughtError, onRecoverableError)? Bạn có thể giải thích 3 callback lỗi?
 - [ ] Can you compare Activity API with Vue's keep-alive and explain the effect cleanup behavior? Bạn có thể so sánh Activity API với Vue keep-alive?
 - [ ] Can you list the top React 19 migration pitfalls (renamed APIs, removed features)? Bạn có thể liệt kê các lỗi migrate React 19 phổ biến?
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I explain what the React Compiler does and when it ships?
+- [ ] Can I distinguish `useActionState` vs `useFormStatus` — which goes where in the component tree?
+- [ ] Can I explain `useOptimistic` and name a real UI scenario where it improves UX?
+- [ ] Can I explain why `use()` breaks the Rules of Hooks and what that enables?
+- [ ] Can I compare Server Actions vs API Routes — when to use each?
+- 💬 **Feynman Prompt:** Giải thích React Actions pattern cho một dev đã biết React 18 — tại sao `useActionState` thay thế pattern `isLoading + error state + try/catch`?
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [React Fundamentals](./01-react-fundamentals.md) — component model, hooks basics
+- ⬅️ **Built on**: [Hooks Deep Dive](./03-hooks-deep-dive.md) — hook mental model
+- ➡️ **Enables**: [React Performance](./09-performance-optimization.md) — React Compiler removes manual memo needs
+- 🔗 **Applied in**: [Next.js App Router](../04-nextjs/04-nextjs-fundamentals-appRouter.md) — Server Actions use React 19 `"use server"`

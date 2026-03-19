@@ -1,7 +1,47 @@
 # Next.js Architecture & Patterns
 
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **Prerequisites**: [Next.js Fundamentals](./00-nextjs-fundamentals.md)
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
+
+---
+
+## Real-World Scenario / Tình Huống Thực Tế
+
+**VnExpress.net migration:** News site với 10 triệu page views/ngày. Pages Router SSR: mỗi request render HTML trên server → 200ms TTFB, high server cost. Sau khi migrate sang App Router với React Server Components + ISR (Incremental Static Regeneration): HTML được cache và served từ CDN edge, TTFB giảm xuống 30ms, server cost giảm 60%.
+
+**Bài học:** Next.js architecture = chọn đúng rendering strategy cho từng page type. Không có "one size fits all" — marketing pages dùng SSG, news feed dùng ISR, dashboard dùng CSR.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Next.js rendering strategies giống các mô hình nhà hàng:
+- **SSG** = cơm hộp làm sẵn từ sáng — nhanh nhất, nhưng nguội nếu đặt trễ
+- **ISR** = cơm hộp làm sẵn nhưng restock mỗi 60 giây — gần như nhanh, luôn tươi
+- **SSR** = order mới nấu — luôn fresh, nhưng phải chờ
+- **CSR** = tự nấu ở bàn — server không cần làm gì, nhưng client phải chờ JS load
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[Page request]
+      │
+      ▼
+[Where is HTML generated?]
+      │
+      ├── Build time (CDN) ──► SSG: getStaticProps
+      │       └── with revalidate ──► ISR: revalidate every N seconds
+      │
+      ├── Server per request ──► SSR: getServerSideProps / Server Component
+      │
+      └── Browser ──► CSR: useEffect + fetch
+                      (or React Server Components streaming)
+
+[App Router vs Pages Router]
+App Router:  Server Components by default → less JS to client
+Pages Router: Client Components by default → explicit opt-in needed
+```
+
+---
 
 ## Building Production-Ready Applications
 
@@ -599,3 +639,20 @@ A: Use next/image component which provides automatic optimization, lazy loading,
 ---
 
 [← Back to Data Fetching](./02-data-fetching.md) | [Next: React Patterns →](../03-react/08-react-patterns-advanced.md)
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I name the 4 rendering strategies (SSG, ISR, SSR, CSR) and give a real page type for each?
+- [ ] Can I explain what ISR `revalidate` does and what happens during the revalidation window?
+- [ ] Can I draw the request flow for SSR (user → CDN → server → HTML → client hydration)?
+- [ ] Can I explain when to use API Routes vs Server Actions vs external APIs?
+- [ ] Can I describe the Pages Router vs App Router key differences for a new project choice?
+- 💬 **Feynman Prompt:** Giải thích cho product manager tại sao một trang cần SSR (dashboard user) trong khi trang khác dùng SSG (about page) — và tại sao ISR là lựa chọn phổ biến nhất cho news sites?
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [Next.js Fundamentals](./00-nextjs-fundamentals.md) — rendering mental model
+- ➡️ **Enables**: [App Router](./04-nextjs-fundamentals-appRouter.md) — App Router builds on these strategies
+- 🔗 **Applied in**: [System Design](../../shared/02-system-design/system-design-theory.md) — rendering strategy is a system design decision

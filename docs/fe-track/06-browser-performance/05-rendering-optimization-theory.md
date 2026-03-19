@@ -1,7 +1,43 @@
 # Rendering Optimization - Theoretical Guide
 
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **Prerequisites**: [Core Web Vitals](./01-core-web-vitals.md)
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
+
+---
+
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Batdongsan.com.vn (real estate):** User scroll qua danh sách bất động sản — scroll jerky, không smooth. Chrome DevTools Performance tab: mỗi scroll event trigger `layout` (reflow) vì code đọc `element.offsetHeight` trong animation loop. Fix: đọc layout properties trước (read phase), sau đó thực hiện DOM mutations (write phase). Kết quả: scroll từ 20 FPS lên 60 FPS.
+
+**Bài học:** Browser rendering pipeline không phải magic. Biết khi nào code trigger reflow vs repaint vs composite quyết định hiệu năng UI ở 60 FPS hay không.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Browser rendering giống quy trình in ấn: JavaScript viết nội dung → Style tính màu sắc → Layout đo kích thước và vị trí → Paint tô màu → Composite ghép các lớp. Forcing browser làm lại Layout giữa chừng (reflow) như yêu cầu in lại toàn bộ tài liệu mỗi khi thay một từ.
+
+**Why 60 FPS matters:** Mỗi frame có 16.67ms (1000ms/60). Layout + Paint chiếm nhiều thời gian nhất. Mục tiêu: giữ JavaScript < 10ms mỗi frame để browser còn thời gian render.
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[Pixel Pipeline (browser rendering)]
+        │
+        JS → Style → Layout → Paint → Composite
+        │
+        Optimization: skip expensive stages
+        │
+        ├── Skip Layout + Paint: only transform/opacity → GPU Composite only
+        ├── Skip Layout: change color → repaint only (no reflow)
+        └── Trigger Layout: change width/height/position → full pipeline (slow)
+        │
+[Layout thrashing (forced reflow)]
+        Read offsetHeight → Write style → Read offsetHeight → Write style...
+        ↑ Interleaving reads and writes forces multiple layout calculations
+        Fix: batch reads first, then batch writes (FastDOM pattern)
+```
+
+---
 
 ## Understanding Browser Rendering Performance
 
@@ -477,3 +513,20 @@ A: content-visibility: auto skips rendering off-screen content. Browser only ren
 ---
 
 [← Back to Web Performance](./04-web-performance-comprehensive.md) | [Next: Bundle Optimization →](./03-bundle-optimization.md)
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I name the 5 stages of the pixel pipeline and which CSS properties trigger each?
+- [ ] Can I explain layout thrashing and the FastDOM pattern to fix it?
+- [ ] Can I explain why `transform` and `opacity` are the only properties safe for 60 FPS animations?
+- [ ] Can I use Chrome DevTools Performance → Layers panel to identify composited layers?
+- [ ] Can I explain `will-change: transform` — what it does and when to remove it?
+- 💬 **Feynman Prompt:** Giải thích tại sao `position: fixed` trên một element làm chậm scroll — và tại sao dùng `transform: translateZ(0)` "fix" được điều đó (hint: composite layer)?
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [Core Web Vitals](./01-core-web-vitals.md) — CLS and INP are directly affected by rendering performance
+- ⬅️ **Built on**: [React Performance](./02-react-performance.md) — React's virtual DOM avoids unnecessary browser layout
+- 🔗 **Applied in**: [CSS Fundamentals](../05-html-css/00-css-fundamentals.md) — CSS property choices affect rendering pipeline

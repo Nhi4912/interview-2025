@@ -8,6 +8,43 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Lazada mobile web:** `<ProductList>` render 50 items. Product manager report: scroll lag và input delay. Dev thêm `React.memo` vào mọi component, `useMemo` vào mọi computed value — lag không giảm, code phức tạp hơn. Profile bằng React DevTools Profiler → bottleneck thực sự là **một hàm filter không được memo** đang re-compute 200ms mỗi keystroke, không phải render children.
+
+**Bài học:** Optimization mà không đo là premature optimization. Rule: **Profile first, optimize second**. 80% React performance problems là: (1) unnecessary re-renders, (2) expensive computations không được memo, (3) wrong virtualization.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Tối ưu React giống tối ưu nhà hàng: không phải thêm đầu bếp (memo mọi thứ), mà phân tích bottleneck — hóa ra vấn đề là máy POS chậm (một hàm tính toán). Thêm đầu bếp tốn tiền nhưng không giúp ích gì khi POS vẫn chậm.
+
+**Three causes of React slowness:**
+1. **Too many renders** — `React.memo` + stable references
+2. **Expensive renders** — `useMemo` for heavy computations
+3. **Large lists** — virtualization (react-window/react-virtual)
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[React Performance]
+        │
+        ├── Identify problem first → React DevTools Profiler
+        │
+        ├── Render optimization
+        │       ├── React.memo — skip re-render if props unchanged (===)
+        │       ├── useCallback — stable function reference for memo'd children
+        │       └── useMemo — cache expensive computed values
+        │
+        ├── List virtualization
+        │       └── react-window / @tanstack/virtual — only render visible items
+        │
+        └── Code splitting
+                ├── React.lazy + Suspense — lazy load components
+                └── Dynamic import — split vendor bundles
+```
+
+---
+
 ## Tong Quan / Overview
 
 **English:** This chapter covers React performance optimization techniques for interview preparation. It focuses on when and why to optimize, not just how — because premature optimization is the most common mistake interviewers probe for.
@@ -745,3 +782,20 @@ Giai thich: React Compiler tu dong phan tich va chen memo khi can thiet tai buil
 7. **Prevent regression**: Set performance budgets in CI. Monitor real-user metrics with web-vitals.
 
 Giai thich: Cach tiep can co he thong: Do dac → Bundle → Rendering → Lists → Data → Assets → Ngan hoi quy. Moi buoc co cong cu va chi so cu the. Day la cach tra loi cho thay tu duy toan dien cua senior engineer.
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I use React DevTools Profiler to identify which component is causing unnecessary re-renders?
+- [ ] Can I explain when `React.memo` does NOT help (unstable props/callbacks)?
+- [ ] Can I explain the difference between `useMemo` (cache value) vs `useCallback` (cache function)?
+- [ ] Can I implement list virtualization with `@tanstack/virtual` for a 10,000-item list?
+- [ ] Can I use `React.lazy` + `Suspense` to split a heavy chart library into a separate chunk?
+- 💬 **Feynman Prompt:** Giải thích tại sao thêm `React.memo` vào mọi component không phải là giải pháp tốt — khi nào memo hóa làm performance tệ hơn?
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [Hooks Deep Dive](./03-hooks-deep-dive.md) — useMemo/useCallback mechanics
+- ⬅️ **Built on**: [Core Web Vitals](../06-browser-performance/01-core-web-vitals.md) — performance metrics to optimize toward
+- 🔗 **Applied in**: [React 19](./02-react-19-features.md) — React Compiler automates most of this

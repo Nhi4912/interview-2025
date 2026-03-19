@@ -8,6 +8,44 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Topcv.vn (job board):** Pages Router với CSR — Google bot không index job listings vì chúng được fetch client-side sau JS load. SEO score thấp, organic traffic giảm 40%. Chuyển sang App Router với Server Components: job data được render trực tiếp trong HTML → Google index ngay, organic traffic tăng 65% sau 3 tháng.
+
+**Bài học:** Sự khác biệt App Router vs Pages Router không chỉ là API — nó ảnh hưởng trực tiếp đến SEO, performance, và bundle size. Senior FE dev cần biết khi nào dùng `"use client"` và tại sao Server Components là default tốt hơn.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Server Components (App Router default):** Component chạy trên server, output là HTML — không có JS gửi xuống client, không có `useState`/`useEffect`. Phù hợp cho static content, data fetching.
+
+**Client Components (`"use client"`):** Component chạy trên client, có interactivity. Cần cho: event handlers, browser APIs, hooks.
+
+**Analogy:** Server Component giống trang web tĩnh — nhanh, không JS. Client Component giống app động — interactivity nhưng tốn JS. App Router mặc định Server Component để tối thiểu JS, chỉ dùng Client khi cần.
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[App Router (Next.js 13+)]
+        │
+        ├── File conventions
+        │       ├── page.tsx       — route segment
+        │       ├── layout.tsx     — persistent wrapper
+        │       ├── loading.tsx    — Suspense boundary
+        │       ├── error.tsx      — error boundary
+        │       └── route.ts       — API endpoint
+        │
+        ├── Component types
+        │       ├── Server Component (default) — runs on server, no JS to client
+        │       └── Client Component ("use client") — runs on browser, interactive
+        │
+        └── Data fetching
+                ├── fetch() in Server Components (cached by default)
+                ├── Server Actions (async functions with "use server")
+                └── Client-side: TanStack Query / SWR
+```
+
+---
+
 ## 🎯 Overview
 
 **Difficulty:** 🟢 Junior | 🟡 Mid | 🔴 Senior
@@ -549,3 +587,20 @@ Vietnamese: Lỗi hay gặp nhất khi phỏng vấn: trộn lẫn `getServerSid
 ---
 
 > **Tiếp theo:** [05-server-components.md](./01-app-router-server-components.md) - React Server Components
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I explain what `"use client"` does and when a component MUST be a Client Component?
+- [ ] Can I describe the App Router file conventions (page, layout, loading, error, route)?
+- [ ] Can I explain the difference between fetch caching in App Router vs Pages Router?
+- [ ] Can I draw the Server Component + Client Component composition tree (donut pattern)?
+- [ ] Can I compare Pages Router `getServerSideProps` with App Router Server Component async function?
+- 💬 **Feynman Prompt:** Giải thích Server Components cho một React dev đã biết Class Components — component này "chạy ở đâu", tại sao không có useState, và điều gì thay đổi trong cách bạn fetch data?
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [Next.js Architecture](./03-nextjs-architecture.md) — rendering strategies
+- ⬅️ **Built on**: [React 19](../03-react/02-react-19-features.md) — Server Actions, use() API
+- 🔗 **Applied in**: [System Design](../../shared/02-system-design/system-design-theory.md) — SSR/SSG architecture decisions

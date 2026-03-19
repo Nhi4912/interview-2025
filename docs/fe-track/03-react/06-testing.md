@@ -9,6 +9,41 @@
 
 ---
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+**Tiki FE team:** Component `<PaymentButton>` được test với `enzyme.shallow()` — test xanh. Production crash vì `onClick` không được gọi đúng khi button bị disabled. Root cause: shallow rendering không mount child components nên không test real DOM interaction. Sau khi chuyển sang React Testing Library (RTL), test viết theo user behavior (`userEvent.click`) → bắt được bug trước khi deploy.
+
+**Bài học:** "Testing implementation details" vs "testing behavior" là câu hỏi phổ biến nhất trong FE testing interviews. RTL's philosophy: test cách user dùng app, không test internal state.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Testing React components giống như kiểm tra xe trước khi bán: không phải tháo động cơ ra xem từng chi tiết (unit test internal state), mà ngồi vào lái thử — phanh, đèn, điều hoà (behavior testing). Người dùng không biết bạn dùng `useState` hay `useReducer` — họ chỉ quan tâm button bấm có chạy không.
+
+**Testing pyramid for React:**
+- Unit: utility functions, hooks (React Testing Library + `renderHook`)
+- Integration: component với real dependencies (RTL + MSW for API mocking)
+- E2E: user flows end-to-end (Playwright/Cypress)
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[React Testing Ecosystem]
+        │
+        ├── Jest (test runner + assertions)
+        │
+        ├── React Testing Library (RTL)
+        │       ├── render() — mount component in jsdom
+        │       ├── screen.getBy* — query by role, text, label (a11y-first)
+        │       ├── userEvent — simulate realistic user interactions
+        │       └── @testing-library/jest-dom — custom matchers
+        │
+        ├── MSW (Mock Service Worker) — intercept network at service worker level
+        │
+        └── Playwright/Cypress — E2E browser automation
+```
+
+---
+
 ## Overview / Tổng Quan
 
 **English:** Testing ensures code quality and prevents regressions. This chapter covers unit testing, integration testing, and E2E testing for React applications.
@@ -889,3 +924,20 @@ Snapshot testing captures component output and compares it to a saved snapshot. 
 ---
 
 [Back to Table of Contents](../../00-table-of-contents.md)
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+- [ ] Can I write a test using `screen.getByRole` and explain why role-based queries are preferred?
+- [ ] Can I explain the difference between `getBy`, `queryBy`, and `findBy` (async) in RTL?
+- [ ] Can I mock an API call with MSW and test both success and error states?
+- [ ] Can I test a custom hook with `renderHook` and `act`?
+- [ ] Can I explain the testing pyramid and where E2E tests (Playwright) fit vs unit tests?
+- 💬 **Feynman Prompt:** Giải thích tại sao React Testing Library khuyến khích query by role thay vì by class hay test-id — điều gì thay đổi trong cách bạn viết component khi theo triết lý đó?
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [React Fundamentals](./01-react-fundamentals.md) — component model
+- ⬅️ **Built on**: [Hooks Deep Dive](./03-hooks-deep-dive.md) — custom hooks need `renderHook`
+- 🔗 **Applied in**: [TypeScript Basics](../02-typescript/01-typescript-basics.md) — typed test utilities
