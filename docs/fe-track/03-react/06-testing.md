@@ -1,943 +1,803 @@
 # React Testing / Kiểm Thử React
 
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../00-table-of-contents.md)
-
-## React - Chapter 6 / React - Chương 6
-
-[Back to Table of Contents](../../00-table-of-contents.md)
+> **Prerequisites**: [React Fundamentals](./01-react-fundamentals.md), [Hooks Deep Dive](./03-hooks-deep-dive.md)
+> **See also**: [Performance Optimization](./09-performance-optimization.md)
 
 ---
 
 ## Real-World Scenario / Tình Huống Thực Tế
 
-**Tiki FE team:** Component `<PaymentButton>` được test với `enzyme.shallow()` — test xanh. Production crash vì `onClick` không được gọi đúng khi button bị disabled. Root cause: shallow rendering không mount child components nên không test real DOM interaction. Sau khi chuyển sang React Testing Library (RTL), test viết theo user behavior (`userEvent.click`) → bắt được bug trước khi deploy.
+Tiki's checkout team had 300+ unit tests, all green. They released a "confirm payment" button update — and 3% of production sessions failed because the button was disabled when it shouldn't be. Root cause: every test used `enzyme.shallow()` — never actually mounting child components. The `disabled` prop depended on a child hook's state, which shallow rendering never evaluated.
 
-**Bài học:** "Testing implementation details" vs "testing behavior" là câu hỏi phổ biến nhất trong FE testing interviews. RTL's philosophy: test cách user dùng app, không test internal state.
+After switching to React Testing Library (RTL):
+- Tests query by ARIA role (`screen.getByRole('button', { name: /confirm payment/i }`)
+- Tests click via `userEvent.click` (simulates real browser events)
+- Bugs that shallow rendering missed: caught before deploy
+
+The team's rule after the incident: **"If your test can pass while the button is broken, your test is broken."** This is RTL's core philosophy: test what users experience, not implementation details.
+
+---
 
 ## What & Why / Cái Gì & Tại Sao
 
-**Analogy:** Testing React components giống như kiểm tra xe trước khi bán: không phải tháo động cơ ra xem từng chi tiết (unit test internal state), mà ngồi vào lái thử — phanh, đèn, điều hoà (behavior testing). Người dùng không biết bạn dùng `useState` hay `useReducer` — họ chỉ quan tâm button bấm có chạy không.
+**English:** React testing is about building confidence that UI behaves correctly from the *user's perspective*. The key distinction: testing *what the component does* (user behavior) vs testing *how it's implemented* (internal state, method calls).
 
-**Testing pyramid for React:**
-- Unit: utility functions, hooks (React Testing Library + `renderHook`)
-- Integration: component với real dependencies (RTL + MSW for API mocking)
-- E2E: user flows end-to-end (Playwright/Cypress)
-
-## Concept Map / Bản Đồ Khái Niệm
-
-```
-[React Testing Ecosystem]
-        │
-        ├── Jest (test runner + assertions)
-        │
-        ├── React Testing Library (RTL)
-        │       ├── render() — mount component in jsdom
-        │       ├── screen.getBy* — query by role, text, label (a11y-first)
-        │       ├── userEvent — simulate realistic user interactions
-        │       └── @testing-library/jest-dom — custom matchers
-        │
-        ├── MSW (Mock Service Worker) — intercept network at service worker level
-        │
-        └── Playwright/Cypress — E2E browser automation
-```
+**Tiếng Việt:** Testing React là xây dựng sự tin tưởng rằng UI hoạt động đúng từ góc nhìn *người dùng*. Phân biệt quan trọng: test *component làm gì* (user behavior) vs test *cách implement* (internal state, method calls).
 
 ---
 
-## Overview / Tổng Quan
+## Core Concept 1: Testing Library Philosophy & Query Strategy / Triết Lý RTL & Chiến Lược Query
 
-**English:** Testing ensures code quality and prevents regressions. This chapter covers unit testing, integration testing, and E2E testing for React applications.
+> 🧠 **Memory Hook**: "Query like a user would find it — by label, role, text. Not by CSS class or test ID."
+>
+> `screen.getByRole('button', { name: /submit/i })` finds the same button a screen reader finds.
 
-**Tiếng Việt:** Kiểm thử đảm bảo chất lượng code và ngăn chặn hồi quy. Chương này bao gồm kiểm thử đơn vị, kiểm thử tích hợp và kiểm thử E2E cho ứng dụng React.
+**Tại sao tồn tại? / Why does this exist?**
+
+Enzyme's `shallow()` and `instance()` tests break every time you refactor internals — even when behavior is identical. They test the *how*, not the *what*.
+→ Why does "testing implementation details" hurt? Because you can't refactor safely, and tests give false confidence (pass but app is broken).
+→ Why role-based queries? Because they mirror how assistive technology (screen readers) access the DOM — if the test can find it, a screen reader can too.
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+
+Testing a car: implementation test = "check if `startEngine()` method was called on the Engine object." Behavior test = "turn the key → does the car move?" Users don't care about method calls; they care about the car moving.
+
+RTL forces you to test what users experience: clicks, text content, form submissions, loading states — not useState values or component method calls.
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
+```tsx
+// ❌ Implementation test (Enzyme style) — breaks on refactor
+const wrapper = shallow(<LoginButton />);
+wrapper.instance().setState({ loading: true }); // breaks when useState replaces class state
+expect(wrapper.find('.btn-spinner')).toHaveLength(1); // breaks when className changes
+
+// ✅ Behavior test (RTL style) — survives refactor
+render(<LoginButton />);
+await userEvent.click(screen.getByRole('button', { name: /login/i }));
+expect(screen.getByRole('button', { name: /logging in/i })).toBeDisabled();
+```
+
+**Query priority (RTL's recommended order):**
+
+```tsx
+// 1. By Role — most semantic, mirrors a11y (PREFERRED)
+screen.getByRole('button', { name: /submit/i })
+screen.getByRole('textbox', { name: /email/i })
+screen.getByRole('checkbox', { name: /remember me/i })
+
+// 2. By Label — tied to accessible label
+screen.getByLabelText(/email address/i)
+
+// 3. By Placeholder — weaker (not always accessible)
+screen.getByPlaceholderText(/enter email/i)
+
+// 4. By Text — for non-interactive elements
+screen.getByText(/total: \$99/i)
+
+// 5. By Test ID — escape hatch only (use sparingly)
+screen.getByTestId('payment-summary')
+
+// Query variants:
+// getBy    → throws if not found (use for: element must exist)
+// queryBy  → returns null if not found (use for: asserting absence)
+// findBy   → returns promise, polls until found (use for: async)
+screen.getByRole(...)     // throws immediately
+screen.queryByRole(...)   // null if not found
+await screen.findByRole(...) // waits up to 1000ms
+```
+
+```
+RTL QUERY DECISION TREE:
+
+  Element should exist right now?
+  ├── YES → getByRole / getByLabelText / getByText
+  └── NO → check after async?
+      ├── YES → findByRole (waits)
+      └── NO → queryByRole (returns null, no throw)
+
+  Asserting absence:
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  // ❌ getByRole would throw — can't chain .not on thrown error
+```
+
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
+```tsx
+// Multiple elements with same role — use name to disambiguate
+const deleteButtons = screen.getAllByRole('button', { name: /delete/i });
+expect(deleteButtons).toHaveLength(3); // assert count
+await userEvent.click(deleteButtons[0]); // click first one
+
+// within() — scope queries to a subtree
+const todoItem = screen.getByRole('listitem', { name: /buy groceries/i });
+const deleteBtn = within(todoItem).getByRole('button', { name: /delete/i });
+await userEvent.click(deleteBtn);
+// ✅ Clicks delete on THIS item, not any delete button on the page
+```
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `fireEvent.click()` instead of `userEvent.click()` | fireEvent dispatches synthetic event; userEvent simulates real browser behavior (mousedown + mouseup + click + focus) | Always `userEvent.click()` for interactions |
+| Querying by `data-testid` for every element | Tight coupling to implementation, adds noise to HTML | Use role/label/text; reserve testid for last resort |
+| `container.querySelector('.spinner')` | CSS class can change without behavior changing | Use `screen.getByRole('status')` or `screen.getByText(/loading/i)` |
+| Missing `await` on `userEvent` | RTL v14+: all user events are async | `await userEvent.click()`, `await userEvent.type()` |
+
+**🎯 Interview Pattern:**
+- Khi thấy câu hỏi về: "how to test React components", "RTL vs Enzyme", "a11y testing"
+- → Nhớ đến: RTL queries by user-visible attributes (role, label, text) — test behavior not implementation
+- → Mở đầu trả lời: "I use React Testing Library, querying by ARIA role or label — the same way a screen reader would find elements. This ensures tests survive refactors and catch accessibility regressions."
+
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: [React component rendering, JSX, hooks](./01-react-fundamentals.md)
+- ➡️ Để hiểu: [E2E testing with Playwright, CI/CD integration]
 
 ---
 
-## Jest & React Testing Library
+## Core Concept 2: Async Testing & Mocking / Test Bất Đồng Bộ & Mocking
 
-### Component Testing / Kiểm Thử Component
+> 🧠 **Memory Hook**: "findBy = 'find me eventually'. waitFor = 'keep checking until this is true'. MSW = 'fake the internet at the service worker level'."
+>
+> Three layers of async: component state updates, API calls, user event propagation.
 
-```typescript
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { Counter } from './Counter';
+**Tại sao tồn tại? / Why does this exist?**
 
-describe('Counter', () => {
-  test('renders initial count / hiển thị số đếm ban đầu', () => {
-    render(<Counter initialCount={0} />);
-    expect(screen.getByText('Count: 0')).toBeInTheDocument();
-  });
+React is async — state updates, data fetching, transitions all happen asynchronously. Tests that don't handle async correctly either flake (sometimes pass, sometimes fail) or give false positives (pass before the async work completes).
+→ Why use MSW instead of mocking `fetch` directly? Because MSW intercepts at the network level — it works with any HTTP library (fetch, axios, SWR, React Query) without changing how you mock.
+→ Why not just mock everything? Because mocked tests can pass while real integrations fail. Mock at boundaries, not everywhere.
 
-  test('increments count / tăng số đếm', async () => {
-    render(<Counter initialCount={0} />);
-    const button = screen.getByRole('button', { name: /increment/i });
-    
-    await userEvent.click(button);
-    expect(screen.getByText('Count: 1')).toBeInTheDocument();
-  });
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
 
-  test('handles async operations / xử lý thao tác bất đồng bộ', async () => {
-    render(<AsyncComponent />);
-    
-    await waitFor(() => {
-      expect(screen.getByText('Loaded')).toBeInTheDocument();
-    });
-  });
+Testing async code is like testing a vending machine — you press the button, wait for the machine to process (async), then check if the item appeared. `waitFor` is you patiently checking the output slot every few milliseconds.
+
+MSW is like a "flight simulator" for APIs — it intercepts requests at the network level and returns fake responses, so components work exactly as in production but with controlled data.
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
+```tsx
+// Pattern 1: findBy for elements that appear after async operations
+test('shows user data after fetch', async () => {
+  render(<UserProfile userId="123" />);
+
+  // ❌ Too early — data hasn't loaded yet
+  // expect(screen.getByText('Alice')).toBeInTheDocument();
+
+  // ✅ Wait for element to appear (polls until found or timeout)
+  const name = await screen.findByText('Alice');
+  expect(name).toBeInTheDocument();
 });
-```
 
-### Hook Testing / Kiểm Thử Hook
+// Pattern 2: waitFor for assertions that require multiple retries
+test('disables button while loading', async () => {
+  render(<SubmitButton />);
+  await userEvent.click(screen.getByRole('button', { name: /submit/i }));
 
-```typescript
-import { renderHook, act } from '@testing-library/react';
-import { useCounter } from './useCounter';
-
-describe('useCounter', () => {
-  test('increments counter / tăng bộ đếm', () => {
-    const { result } = renderHook(() => useCounter());
-    
-    act(() => {
-      result.current.increment();
-    });
-    
-    expect(result.current.count).toBe(1);
+  await waitFor(() => {
+    expect(screen.getByRole('button')).toBeDisabled();
   });
+  // waitFor retries the callback until it passes (or times out)
 });
-```
 
----
-
-## Advanced Testing Patterns / Mẫu Kiểm Thử Nâng Cao
-
-### Testing Custom Hooks / Kiểm Thử Custom Hooks
-
-```typescript
-import { renderHook, act, waitFor } from '@testing-library/react';
-
-// Custom hook to test
-function useFetch(url: string) {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  
-  useEffect(() => {
-    fetch(url)
-      .then(res => res.json())
-      .then(setData)
-      .catch(setError)
-      .finally(() => setLoading(false));
-  }, [url]);
-  
-  return { data, loading, error };
-}
-
-// Test
-describe('useFetch', () => {
-  beforeEach(() => {
-    global.fetch = jest.fn();
-  });
-  
-  test('fetches data successfully / lấy dữ liệu thành công', async () => {
-    const mockData = { id: 1, name: 'Test' };
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      json: async () => mockData
-    });
-    
-    const { result } = renderHook(() => useFetch('/api/data'));
-    
-    expect(result.current.loading).toBe(true);
-    
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
-    });
-    
-    expect(result.current.data).toEqual(mockData);
-    expect(result.current.error).toBeNull();
-  });
-  
-  test('handles errors / xử lý lỗi', async () => {
-    const mockError = new Error('Network error');
-    (global.fetch as jest.Mock).mockRejectedValueOnce(mockError);
-    
-    const { result } = renderHook(() => useFetch('/api/data'));
-    
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
-    });
-    
-    expect(result.current.error).toEqual(mockError);
-    expect(result.current.data).toBeNull();
-  });
-  
-  test('refetches on URL change / lấy lại khi URL thay đổi', async () => {
-    const mockData1 = { id: 1 };
-    const mockData2 = { id: 2 };
-    
-    (global.fetch as jest.Mock)
-      .mockResolvedValueOnce({ json: async () => mockData1 })
-      .mockResolvedValueOnce({ json: async () => mockData2 });
-    
-    const { result, rerender } = renderHook(
-      ({ url }) => useFetch(url),
-      { initialProps: { url: '/api/data/1' } }
-    );
-    
-    await waitFor(() => {
-      expect(result.current.data).toEqual(mockData1);
-    });
-    
-    rerender({ url: '/api/data/2' });
-    
-    await waitFor(() => {
-      expect(result.current.data).toEqual(mockData2);
-    });
-  });
-});
-```
-
-### Testing Context / Kiểm Thử Context
-
-```typescript
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-
-// Context to test
-const ThemeContext = createContext<ThemeContextType | null>(null);
-
-function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  
-  return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
-      {children}
-    </ThemeContext.Provider>
-  );
-}
-
-function useTheme() {
-  const context = useContext(ThemeContext);
-  if (!context) throw new Error('useTheme must be used within ThemeProvider');
-  return context;
-}
-
-// Component using context
-function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
-  
-  return (
-    <button onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>
-      Current theme: {theme}
-    </button>
-  );
-}
-
-// Tests
-describe('ThemeContext', () => {
-  test('provides theme value / cung cấp giá trị theme', () => {
-    render(
-      <ThemeProvider>
-        <ThemeToggle />
-      </ThemeProvider>
-    );
-    
-    expect(screen.getByText(/Current theme: light/i)).toBeInTheDocument();
-  });
-  
-  test('toggles theme / chuyển đổi theme', async () => {
-    const user = userEvent.setup();
-    
-    render(
-      <ThemeProvider>
-        <ThemeToggle />
-      </ThemeProvider>
-    );
-    
-    const button = screen.getByRole('button');
-    
-    await user.click(button);
-    expect(screen.getByText(/Current theme: dark/i)).toBeInTheDocument();
-    
-    await user.click(button);
-    expect(screen.getByText(/Current theme: light/i)).toBeInTheDocument();
-  });
-  
-  test('throws error when used outside provider / ném lỗi khi dùng ngoài provider', () => {
-    // Suppress console.error for this test
-    const spy = jest.spyOn(console, 'error').mockImplementation();
-    
-    expect(() => {
-      render(<ThemeToggle />);
-    }).toThrow('useTheme must be used within ThemeProvider');
-    
-    spy.mockRestore();
-  });
-});
-```
-
-### Testing Async Components / Kiểm Thử Component Bất Đồng Bộ
-
-```typescript
-import { render, screen, waitFor } from '@testing-library/react';
-
-// Async component
-function UserProfile({ userId }: { userId: string }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  
-  useEffect(() => {
-    fetch(`/api/users/${userId}`)
-      .then(res => res.json())
-      .then(setUser)
-      .catch(setError)
-      .finally(() => setLoading(false));
-  }, [userId]);
-  
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error.message}</div>;
-  return <div>User: {user.name}</div>;
-}
-
-// Tests
-describe('UserProfile', () => {
-  beforeEach(() => {
-    global.fetch = jest.fn();
-  });
-  
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-  
-  test('shows loading state / hiển thị trạng thái loading', () => {
-    (global.fetch as jest.Mock).mockImplementation(
-      () => new Promise(() => {}) // Never resolves
-    );
-    
-    render(<UserProfile userId="1" />);
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
-  });
-  
-  test('displays user data / hiển thị dữ liệu người dùng', async () => {
-    const mockUser = { id: '1', name: 'John Doe' };
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      json: async () => mockUser
-    });
-    
-    render(<UserProfile userId="1" />);
-    
-    await waitFor(() => {
-      expect(screen.getByText('User: John Doe')).toBeInTheDocument();
-    });
-  });
-  
-  test('displays error message / hiển thị thông báo lỗi', async () => {
-    const mockError = new Error('Failed to fetch');
-    (global.fetch as jest.Mock).mockRejectedValueOnce(mockError);
-    
-    render(<UserProfile userId="1" />);
-    
-    await waitFor(() => {
-      expect(screen.getByText(/Error: Failed to fetch/i)).toBeInTheDocument();
-    });
-  });
-});
-```
-
-### Testing Forms / Kiểm Thử Form
-
-```typescript
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-
-// Form component
-function LoginForm({ onSubmit }: { onSubmit: (data: any) => void }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState<any>({});
-  
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const newErrors: any = {};
-    if (!email) newErrors.email = 'Email is required';
-    if (!password) newErrors.password = 'Password is required';
-    
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-    
-    onSubmit({ email, password });
-  };
-  
-  return (
-    <form onSubmit={handleSubmit}>
-      <div>
-        <label htmlFor="email">Email</label>
-        <input
-          id="email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        {errors.email && <span role="alert">{errors.email}</span>}
-      </div>
-      
-      <div>
-        <label htmlFor="password">Password</label>
-        <input
-          id="password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        {errors.password && <span role="alert">{errors.password}</span>}
-      </div>
-      
-      <button type="submit">Login</button>
-    </form>
-  );
-}
-
-// Tests
-describe('LoginForm', () => {
-  test('submits form with valid data / gửi form với dữ liệu hợp lệ', async () => {
-    const user = userEvent.setup();
-    const handleSubmit = jest.fn();
-    
-    render(<LoginForm onSubmit={handleSubmit} />);
-    
-    await user.type(screen.getByLabelText(/email/i), 'test@example.com');
-    await user.type(screen.getByLabelText(/password/i), 'password123');
-    await user.click(screen.getByRole('button', { name: /login/i }));
-    
-    expect(handleSubmit).toHaveBeenCalledWith({
-      email: 'test@example.com',
-      password: 'password123'
-    });
-  });
-  
-  test('shows validation errors / hiển thị lỗi validation', async () => {
-    const user = userEvent.setup();
-    const handleSubmit = jest.fn();
-    
-    render(<LoginForm onSubmit={handleSubmit} />);
-    
-    await user.click(screen.getByRole('button', { name: /login/i }));
-    
-    expect(screen.getByText('Email is required')).toBeInTheDocument();
-    expect(screen.getByText('Password is required')).toBeInTheDocument();
-    expect(handleSubmit).not.toHaveBeenCalled();
-  });
-  
-  test('clears errors when user types / xóa lỗi khi người dùng nhập', async () => {
-    const user = userEvent.setup();
-    
-    render(<LoginForm onSubmit={jest.fn()} />);
-    
-    // Trigger validation errors
-    await user.click(screen.getByRole('button', { name: /login/i }));
-    expect(screen.getByText('Email is required')).toBeInTheDocument();
-    
-    // Type in email field
-    await user.type(screen.getByLabelText(/email/i), 'test@example.com');
-    
-    // Submit again
-    await user.click(screen.getByRole('button', { name: /login/i }));
-    
-    // Email error should be gone
-    expect(screen.queryByText('Email is required')).not.toBeInTheDocument();
-  });
-});
-```
-
----
-
-## Integration Testing / Kiểm Thử Tích Hợp
-
-### Testing with Redux / Kiểm Thử với Redux
-
-```typescript
-import { render, screen } from '@testing-library/react';
-import { Provider } from 'react-redux';
-import { configureStore } from '@reduxjs/toolkit';
-import userEvent from '@testing-library/user-event';
-
-// Helper to render with Redux
-function renderWithRedux(
-  component: React.ReactElement,
-  {
-    preloadedState = {},
-    store = configureStore({
-      reducer: { todos: todoReducer },
-      preloadedState
-    }),
-    ...renderOptions
-  } = {}
-) {
-  function Wrapper({ children }: { children: React.ReactNode }) {
-    return <Provider store={store}>{children}</Provider>;
-  }
-  
-  return {
-    ...render(component, { wrapper: Wrapper, ...renderOptions }),
-    store
-  };
-}
-
-// Tests
-describe('TodoList with Redux', () => {
-  test('displays todos from store / hiển thị todos từ store', () => {
-    const preloadedState = {
-      todos: {
-        items: [
-          { id: '1', text: 'Test todo', completed: false }
-        ]
-      }
-    };
-    
-    renderWithRedux(<TodoList />, { preloadedState });
-    
-    expect(screen.getByText('Test todo')).toBeInTheDocument();
-  });
-  
-  test('adds new todo / thêm todo mới', async () => {
-    const user = userEvent.setup();
-    const { store } = renderWithRedux(<TodoList />);
-    
-    const input = screen.getByPlaceholderText(/add todo/i);
-    await user.type(input, 'New todo{enter}');
-    
-    const state = store.getState();
-    expect(state.todos.items).toHaveLength(1);
-    expect(state.todos.items[0].text).toBe('New todo');
-  });
-});
-```
-
-### Testing with React Router / Kiểm Thử với React Router
-
-```typescript
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import userEvent from '@testing-library/user-event';
-
-// Helper to render with router
-function renderWithRouter(
-  component: React.ReactElement,
-  { initialEntries = ['/'] } = {}
-) {
-  return render(
-    <MemoryRouter initialEntries={initialEntries}>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/users/:id" element={component} />
-      </Routes>
-    </MemoryRouter>
-  );
-}
-
-// Tests
-describe('Navigation', () => {
-  test('navigates to about page / điều hướng đến trang about', async () => {
-    const user = userEvent.setup();
-    
-    render(
-      <MemoryRouter>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-        </Routes>
-      </MemoryRouter>
-    );
-    
-    await user.click(screen.getByText(/about/i));
-    expect(screen.getByText(/about page/i)).toBeInTheDocument();
-  });
-  
-  test('displays user based on route param / hiển thị user dựa trên route param', () => {
-    renderWithRouter(<UserProfile />, {
-      initialEntries: ['/users/123']
-    });
-    
-    expect(screen.getByText(/user 123/i)).toBeInTheDocument();
-  });
-});
-```
-
----
-
-## Mocking / Mock
-
-### Mocking API Calls / Mock API Calls
-
-```typescript
-import { rest } from 'msw';
+// Pattern 3: MSW for API mocking (preferred over jest.mock(fetch))
 import { setupServer } from 'msw/node';
+import { http, HttpResponse } from 'msw';
 
-// Setup MSW server
 const server = setupServer(
-  rest.get('/api/users/:id', (req, res, ctx) => {
-    const { id } = req.params;
-    return res(
-      ctx.json({
-        id,
-        name: 'John Doe',
-        email: 'john@example.com'
-      })
-    );
-  })
+  http.get('/api/user/:id', ({ params }) => {
+    return HttpResponse.json({ id: params.id, name: 'Alice', email: 'alice@example.com' });
+  }),
+  http.post('/api/posts', async ({ request }) => {
+    const body = await request.json();
+    return HttpResponse.json({ id: '1', ...body }, { status: 201 });
+  }),
 );
 
 beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
+afterEach(() => server.resetHandlers()); // reset per-test overrides
 afterAll(() => server.close());
 
-// Tests
-test('fetches and displays user / lấy và hiển thị user', async () => {
-  render(<UserProfile userId="1" />);
-  
-  await waitFor(() => {
-    expect(screen.getByText('John Doe')).toBeInTheDocument();
-  });
+test('shows user profile', async () => {
+  render(<UserProfile userId="123" />);
+  expect(screen.getByText(/loading/i)).toBeInTheDocument();
+  expect(await screen.findByText('Alice')).toBeInTheDocument();
+  expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
 });
 
-test('handles server error / xử lý lỗi server', async () => {
+// Override handler for specific test (error scenario)
+test('shows error when fetch fails', async () => {
   server.use(
-    rest.get('/api/users/:id', (req, res, ctx) => {
-      return res(ctx.status(500));
+    http.get('/api/user/:id', () => {
+      return new HttpResponse(null, { status: 500 });
     })
   );
-  
-  render(<UserProfile userId="1" />);
-  
-  await waitFor(() => {
-    expect(screen.getByText(/error/i)).toBeInTheDocument();
-  });
+
+  render(<UserProfile userId="123" />);
+  expect(await screen.findByRole('alert')).toHaveTextContent(/failed to load/i);
 });
 ```
 
-### Mocking Modules / Mock Modules
+```
+ASYNC TESTING TOOLS:
 
-```typescript
-// Mock entire module
-jest.mock('./api', () => ({
-  fetchUser: jest.fn()
-}));
+  findByX()              waitFor()               act()
+  ──────────────         ───────────────         ──────────
+  Polls for element      Retries assertion       Wraps state
+  to appear in DOM       until passes            update code
+  Timeout: 1000ms        Timeout: 1000ms
 
-import { fetchUser } from './api';
+  Use for:               Use for:                Use for:
+  "wait for text         "wait for complex       renderHook,
+  to appear"             assertion"              direct dispatch
+```
 
-test('uses mocked API / sử dụng API đã mock', async () => {
-  (fetchUser as jest.Mock).mockResolvedValueOnce({
-    id: '1',
-    name: 'Test User'
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
+```tsx
+// Testing custom hooks with renderHook
+import { renderHook, act } from '@testing-library/react';
+
+test('useCounter increments', () => {
+  const { result } = renderHook(() => useCounter(0));
+  expect(result.current.count).toBe(0);
+
+  act(() => {
+    result.current.increment();
   });
-  
-  render(<UserProfile userId="1" />);
-  
-  await waitFor(() => {
-    expect(screen.getByText('Test User')).toBeInTheDocument();
-  });
-  
-  expect(fetchUser).toHaveBeenCalledWith('1');
+  expect(result.current.count).toBe(1);
 });
 
-// Mock specific functions
-jest.mock('./utils', () => ({
-  ...jest.requireActual('./utils'),
-  formatDate: jest.fn(() => '2024-01-01')
-}));
+// Testing hooks that need providers (context)
+test('useCart works with CartProvider', () => {
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <CartProvider>{children}</CartProvider>
+  );
+  const { result } = renderHook(() => useCart(), { wrapper });
+
+  act(() => {
+    result.current.addItem({ id: '1', name: 'Widget', price: 10 });
+  });
+  expect(result.current.items).toHaveLength(1);
+  expect(result.current.total).toBe(10);
+});
+
+// Common flakiness fix: act() warnings
+// If you see "Warning: An update to Component inside a test was not wrapped in act()"
+// → Usually means an async state update happened after the test ended
+// → Fix: ensure all async work resolves before test finishes
+test('avoids act warning', async () => {
+  render(<DataComponent />);
+  // ✅ wait for all async work to complete before test ends
+  await screen.findByText('loaded');
+  // now all state updates are done
+});
 ```
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `jest.mock('node-fetch')` | Brittle — tied to specific HTTP library, breaks when you switch to axios | Use MSW — library-agnostic, works at network level |
+| Forgetting `afterEach(() => server.resetHandlers())` | Handler overrides from one test leak into others → flaky tests | Always reset handlers after each test |
+| `await waitFor(() => {})` with empty callback | Never throws, always passes | Put the assertion inside waitFor |
+| Testing loading state after data loads | Race condition — data may load before assertion | Assert loading immediately after render, THEN await the loaded state |
+
+**🎯 Interview Pattern:**
+- Khi thấy câu hỏi về: "test API calls in React", "mock network requests", "async component testing"
+- → Nhớ đến: MSW + findBy for happy path, server.use() override for error scenarios
+- → Mở đầu trả lời: "I use MSW to mock at the network level — it intercepts actual fetch/axios calls, so the component behavior is identical to production. Then findBy to await the result, and server.use() to test error scenarios."
+
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: [useEffect, async data fetching](./03-hooks-deep-dive.md)
+- ➡️ Để hiểu: [E2E testing, CI test pipelines]
 
 ---
 
-## Snapshot Testing / Kiểm Thử Snapshot
+## Core Concept 3: Test Architecture & Coverage Strategy / Kiến Trúc Test & Chiến Lược Coverage
 
-```typescript
-import { render } from '@testing-library/react';
+> 🧠 **Memory Hook**: "Testing pyramid: many unit (fast, cheap), some integration (medium), few E2E (slow, expensive). Each layer tests what the layers below can't."
+>
+> Unit tests catch logic bugs. Integration tests catch component wiring bugs. E2E tests catch user flow bugs.
 
-test('matches snapshot / khớp với snapshot', () => {
-  const { container } = render(<Button>Click me</Button>);
-  expect(container.firstChild).toMatchSnapshot();
+**Tại sao tồn tại? / Why does this exist?**
+
+Writing only unit tests gives false confidence (passing tests, broken integrations). Writing only E2E tests is too slow — 10 min CI pipeline per PR kill velocity.
+→ Why maintain all three layers? Different failure modes need different detection strategies.
+→ Why is 100% coverage a bad goal? Coverage measures lines executed, not behaviors tested. You can have 100% coverage and still miss critical user paths.
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+
+Testing pyramid = quality assurance at a factory:
+- Unit tests = inspect each part individually (fast, many)
+- Integration tests = assemble parts, test subassemblies (medium)
+- E2E tests = test the complete product in real conditions (slow, few — only for critical scenarios)
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
+```tsx
+// Unit test — pure logic, no rendering
+// test pure functions directly (no component needed)
+describe('formatPrice', () => {
+  it('formats VND correctly', () => {
+    expect(formatPrice(50000, 'VND')).toBe('50.000 ₫');
+    expect(formatPrice(0, 'VND')).toBe('0 ₫');
+    expect(formatPrice(-100, 'VND')).toBe('-100 ₫');
+  });
 });
 
-// Update snapshots with: jest --updateSnapshot
+// Integration test — multiple components working together
+describe('CheckoutFlow', () => {
+  test('complete purchase flow', async () => {
+    // Arrange: MSW intercepts, real store
+    const { store } = renderWithProviders(<CheckoutPage />);
+
+    // Act: user fills form and submits
+    await userEvent.type(screen.getByLabelText(/card number/i), '4242424242424242');
+    await userEvent.type(screen.getByLabelText(/expiry/i), '12/25');
+    await userEvent.click(screen.getByRole('button', { name: /pay now/i }));
+
+    // Assert: confirm screen appears, store updates
+    expect(await screen.findByText(/order confirmed/i)).toBeInTheDocument();
+    expect(store.getState().cart.items).toHaveLength(0);
+  });
+});
+
+// Custom renderWithProviders — reusable setup
+function renderWithProviders(
+  ui: ReactElement,
+  {
+    preloadedState = {},
+    store = setupStore(preloadedState),
+    ...renderOptions
+  }: RenderOptions & { preloadedState?: Partial<RootState>; store?: AppStore } = {}
+) {
+  function Wrapper({ children }: { children: ReactNode }) {
+    return (
+      <Provider store={store}>
+        <QueryClient client={queryClient}>
+          <BrowserRouter>
+            {children}
+          </BrowserRouter>
+        </QueryClient>
+      </Provider>
+    );
+  }
+  return { store, ...render(ui, { wrapper: Wrapper, ...renderOptions }) };
+}
+
+// E2E test (Playwright) — real browser, real server
+// playwright.config.ts sets baseURL
+test('user can complete checkout', async ({ page }) => {
+  await page.goto('/products/widget-pro');
+  await page.getByRole('button', { name: 'Add to Cart' }).click();
+  await page.getByRole('link', { name: 'Checkout' }).click();
+  await page.getByLabel('Email').fill('test@example.com');
+  await page.getByRole('button', { name: 'Place Order' }).click();
+  await expect(page.getByText('Order Confirmed')).toBeVisible();
+});
 ```
 
----
+**Coverage strategy:**
 
-## Accessibility Testing / Kiểm Thử Khả Năng Truy Cập
+```
+WHAT TO TEST AT EACH LEVEL:
 
-```typescript
-import { render } from '@testing-library/react';
+  Unit tests (Jest + RTL, 60-70% of tests):
+  - Pure utility functions
+  - Custom hooks in isolation
+  - Simple components (stateless, no side effects)
+  - Edge cases and error paths
+
+  Integration tests (Jest + RTL + MSW, 20-30%):
+  - Multi-component workflows (form → validation → submission)
+  - Context/store interactions
+  - API request/response cycles
+  - Error boundaries
+
+  E2E tests (Playwright, 5-10%):
+  - Critical user journeys (login, checkout, sign-up)
+  - Cross-page flows
+  - Real API integration smoke tests
+
+  WHAT NOT TO TEST:
+  - Third-party library internals
+  - CSS/styling (use visual regression tools if needed)
+  - Component implementation details
+  - Generated code
+```
+
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
+```tsx
+// Snapshot tests — use sparingly
+// ✅ Good: stable, small components (icons, design tokens)
+test('Icon renders correctly', () => {
+  const { container } = render(<CheckIcon />);
+  expect(container).toMatchSnapshot();
+});
+
+// ❌ Bad: dynamic, large components — snapshots become noise
+test('Dashboard snapshot', () => {
+  const { container } = render(<Dashboard user={mockUser} />);
+  expect(container).toMatchSnapshot();
+  // 300-line snapshot that changes every time you touch the UI
+  // People blindly update it: git commit -m "update snapshots"
+});
+
+// Accessibility testing (jest-axe)
 import { axe, toHaveNoViolations } from 'jest-axe';
-
 expect.extend(toHaveNoViolations);
 
-test('has no accessibility violations / không có vi phạm accessibility', async () => {
+test('LoginForm has no a11y violations', async () => {
   const { container } = render(<LoginForm onSubmit={jest.fn()} />);
   const results = await axe(container);
   expect(results).toHaveNoViolations();
 });
-
-// Test specific ARIA attributes
-test('has correct ARIA attributes / có thuộc tính ARIA đúng', () => {
-  render(<Button disabled>Submit</Button>);
-  
-  const button = screen.getByRole('button');
-  expect(button).toHaveAttribute('aria-disabled', 'true');
-});
 ```
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| 100% line coverage target | Coverage measures execution not behavior — 100% coverage with 0 meaningful assertions | Target meaningful scenarios (happy path, error, edge cases) |
+| Snapshot everything | Snapshots become "click update" reflexes, not real regression detection | Use snapshots only for stable, small pure components |
+| `beforeEach(() => jest.clearAllMocks())` forgetting `resetHandlers` | MSW handler overrides persist across tests | Both `clearAllMocks()` AND `server.resetHandlers()` in afterEach |
+| Testing too many implementation details | Tests break on every refactor | Test the observable outcome (what user sees) |
+
+**🎯 Interview Pattern:**
+- Khi thấy câu hỏi về: "testing strategy", "unit vs integration vs E2E", "how much to test"
+- → Nhớ đến: testing pyramid + "test user behavior not implementation" + MSW for API boundary
+- → Mở đầu trả lời: "I follow the testing pyramid — unit tests for pure logic and hooks, integration tests for component workflows with MSW for API mocking, and E2E with Playwright for critical user journeys. The goal is confidence in behavior, not coverage numbers."
+
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: [React hooks, async data fetching](./03-hooks-deep-dive.md)
+- ➡️ Để hiểu: [CI/CD integration, Playwright E2E]
 
 ---
 
-## E2E Testing with Playwright / Kiểm Thử E2E với Playwright
+## Interview Q&A / Câu Hỏi Phỏng Vấn
 
-```typescript
-import { test, expect } from '@playwright/test';
+### Q: What is the difference between `getBy`, `queryBy`, and `findBy` queries in RTL? 🟢 Junior
 
-test.describe('Todo App', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:3000');
-  });
-  
-  test('adds new todo / thêm todo mới', async ({ page }) => {
-    await page.fill('[placeholder="Add todo"]', 'New todo');
-    await page.press('[placeholder="Add todo"]', 'Enter');
-    
-    await expect(page.locator('text=New todo')).toBeVisible();
-  });
-  
-  test('completes todo / hoàn thành todo', async ({ page }) => {
-    await page.fill('[placeholder="Add todo"]', 'Test todo');
-    await page.press('[placeholder="Add todo"]', 'Enter');
-    
-    await page.click('[type="checkbox"]');
-    
-    await expect(page.locator('text=Test todo')).toHaveClass(/completed/);
-  });
-  
-  test('filters todos / lọc todos', async ({ page }) => {
-    // Add completed and active todos
-    await page.fill('[placeholder="Add todo"]', 'Active todo');
-    await page.press('[placeholder="Add todo"]', 'Enter');
-    
-    await page.fill('[placeholder="Add todo"]', 'Completed todo');
-    await page.press('[placeholder="Add todo"]', 'Enter');
-    await page.click('[type="checkbox"]:last-of-type');
-    
-    // Filter active
-    await page.click('text=Active');
-    await expect(page.locator('text=Active todo')).toBeVisible();
-    await expect(page.locator('text=Completed todo')).not.toBeVisible();
-    
-    // Filter completed
-    await page.click('text=Completed');
-    await expect(page.locator('text=Completed todo')).toBeVisible();
-    await expect(page.locator('text=Active todo')).not.toBeVisible();
-  });
-});
+**A:** These three query variants handle different timing requirements:
+
+- **`getBy`**: Synchronous, throws if element not found. Use when the element *must* exist right now.
+- **`queryBy`**: Synchronous, returns `null` if not found. Use when asserting an element is *absent*.
+- **`findBy`**: Async (returns Promise), polls until element appears or times out. Use when element appears after async work.
+
+```tsx
+// getBy — element must exist now (throws if missing)
+const button = screen.getByRole('button', { name: /submit/i });
+
+// queryBy — asserting absence (getBy would throw, making the test unusable)
+expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+
+// findBy — element appears after API call
+render(<UserProfile userId="1" />);
+const name = await screen.findByText('Alice'); // waits up to 1000ms
+expect(name).toBeInTheDocument();
 ```
+
+**Giải thích:** Rule of thumb đơn giản: dùng `getBy` cho elements phải tồn tại ngay, `queryBy` cho assertions về sự vắng mặt, `findBy` cho bất cứ thứ gì xuất hiện sau async operation.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Explains the null vs throw difference for getBy vs queryBy, gives the use case for each (not just "it's async")
+- ❌ Weak: "findBy is for async, getBy is sync" without explaining queryBy or why the null vs throw distinction matters
 
 ---
 
-## Testing Best Practices / Thực Hành Tốt Nhất
+### Q: Why is `userEvent` preferred over `fireEvent` in RTL? 🟡 Mid
 
-### Test Structure / Cấu Trúc Test
+**A:** `userEvent` simulates real user interactions with all the accompanying browser events. `fireEvent` dispatches a single synthetic event.
 
-**English:**
-1. **Arrange**: Set up test data and conditions
-2. **Act**: Execute the code being tested
-3. **Assert**: Verify the results
+```tsx
+// fireEvent.click dispatches one event: click
+fireEvent.click(button);
+// Events fired: click
 
-**Tiếng Việt:**
-1. **Arrange**: Thiết lập dữ liệu và điều kiện test
-2. **Act**: Thực thi code đang được test
-3. **Assert**: Xác minh kết quả
+// userEvent.click dispatches the full browser sequence:
+await userEvent.click(button);
+// Events fired: pointerover → pointerenter → mouseover → mouseenter →
+//               pointermove → mousemove → pointerdown → mousedown →
+//               focus → pointerup → mouseup → click
 
-```typescript
-test('example test', async () => {
-  // Arrange
-  const user = userEvent.setup();
-  const handleClick = jest.fn();
-  render(<Button onClick={handleClick}>Click me</Button>);
-  
-  // Act
-  await user.click(screen.getByRole('button'));
-  
-  // Assert
-  expect(handleClick).toHaveBeenCalledTimes(1);
-});
+// This matters when components use:
+// - onMouseEnter / onMouseLeave hover effects
+// - onFocus / onBlur form validation
+// - Keyboard handlers that respond to specific key sequences
+// - Drag interactions
+
+// Example: button disabled on hover (unusual but happens)
+function HoverDisabledButton() {
+  const [disabled, setDisabled] = useState(false);
+  return (
+    <button
+      disabled={disabled}
+      onMouseEnter={() => setDisabled(true)} // weird, but test should catch it
+      onClick={() => console.log('clicked')}
+    >
+      Click me
+    </button>
+  );
+}
+
+// fireEvent would miss this bug:
+fireEvent.click(button); // doesn't trigger mouseEnter, button "works"
+
+// userEvent catches it:
+await userEvent.click(button);
+// triggers mouseEnter → disabled=true → click doesn't fire → bug caught ✅
 ```
 
-### What to Test / Cái Gì Cần Test
+**Giải thích:** `fireEvent` là shortcut cho synthetic events — phù hợp cho test edge cases. `userEvent` mô phỏng đầy đủ chuỗi browser events như người dùng thực sự — đây là default choice cho mọi user interaction.
 
-**✅ DO Test:**
-- User interactions
-- Component rendering
-- State changes
-- API calls
-- Error handling
-- Accessibility
-- Edge cases
-
-**❌ DON'T Test:**
-- Implementation details
-- Third-party libraries
-- Styles (unless critical)
-- Trivial code
-
-### Query Priority / Ưu Tiên Query
-
-**English:** Use queries in this order:
-1. `getByRole` - Most accessible
-2. `getByLabelText` - Form elements
-3. `getByPlaceholderText` - Forms
-4. `getByText` - Non-interactive elements
-5. `getByTestId` - Last resort
-
-**Tiếng Việt:** Sử dụng queries theo thứ tự:
-1. `getByRole` - Dễ truy cập nhất
-2. `getByLabelText` - Phần tử form
-3. `getByPlaceholderText` - Forms
-4. `getByText` - Phần tử không tương tác
-5. `getByTestId` - Phương án cuối cùng
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Explains the event sequence difference, gives a real scenario where it matters (hover, focus, keyboard)
+- ❌ Weak: "userEvent is newer/better" without explaining WHY — the browser event sequence simulation
 
 ---
 
-## Interview Questions / Câu Hỏi Phỏng Vấn
+### Q: How do you set up MSW for API mocking and test both success and error states? 🟡 Mid
 
-### Q1: What is the difference between unit, integration, and E2E tests? — 🟢 [Junior]
+**A:** MSW intercepts at the service worker / Node.js network level — works with any HTTP library.
 
-**English Answer:**
-- **Unit tests**: Test individual components/functions in isolation
-- **Integration tests**: Test how multiple components work together
-- **E2E tests**: Test entire user flows in a real browser
+```tsx
+// setup: src/mocks/server.ts
+import { setupServer } from 'msw/node';
+import { http, HttpResponse } from 'msw';
 
-**Pyramid:**
-```
-     /\
-    /E2E\      (Few, slow, expensive)
-   /------\
-  /Integr.\   (Some, medium speed)
- /----------\
-/   Unit     \ (Many, fast, cheap)
-```
+export const handlers = [
+  http.get('/api/posts', () => {
+    return HttpResponse.json([
+      { id: '1', title: 'Hello World' },
+      { id: '2', title: 'Testing with MSW' },
+    ]);
+  }),
+  http.post('/api/posts', async ({ request }) => {
+    const body = await request.json();
+    return HttpResponse.json({ id: '3', ...body }, { status: 201 });
+  }),
+];
 
-### Q2: How do you test async code in React? — 🟡 [Mid]
+export const server = setupServer(...handlers);
 
-**English Answer:**
-Use `waitFor`, `findBy` queries, or `act`:
+// test file
+import { server } from '../mocks/server';
+import { http, HttpResponse } from 'msw';
 
-```typescript
-// waitFor
-await waitFor(() => {
-  expect(screen.getByText('Loaded')).toBeInTheDocument();
+beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());
+
+test('shows posts list', async () => {
+  render(<PostsList />);
+  expect(await screen.findByText('Hello World')).toBeInTheDocument();
+  expect(screen.getByText('Testing with MSW')).toBeInTheDocument();
 });
 
-// findBy (combines getBy + waitFor)
-const element = await screen.findByText('Loaded');
+test('shows error when API fails', async () => {
+  // Override for this test only
+  server.use(
+    http.get('/api/posts', () => {
+      return new HttpResponse(null, { status: 500, statusText: 'Internal Server Error' });
+    })
+  );
 
-// act (for state updates)
-act(() => {
-  result.current.increment();
+  render(<PostsList />);
+  expect(await screen.findByRole('alert')).toHaveTextContent(/failed to load/i);
+});
+
+test('shows empty state', async () => {
+  server.use(
+    http.get('/api/posts', () => HttpResponse.json([]))
+  );
+
+  render(<PostsList />);
+  expect(await screen.findByText(/no posts yet/i)).toBeInTheDocument();
 });
 ```
 
-### Q3: What is the difference between getBy, queryBy, and findBy? — 🟢 [Junior]
+**Giải thích:** MSW's key advantage: `onUnhandledRequest: 'error'` sẽ fail test nếu component gọi API endpoint nào không được mock — giúp phát hiện unexpected fetches ngay khi test chạy.
 
-**English Answer:**
-- **getBy**: Throws error if not found (use for elements that should exist)
-- **queryBy**: Returns null if not found (use to assert non-existence)
-- **findBy**: Returns promise, waits for element (use for async)
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Shows `server.resetHandlers()` after each test, uses `server.use()` override for error case, mentions `onUnhandledRequest: 'error'` for catching unmocked calls
+- ❌ Weak: Only shows the happy path setup without mentioning handler cleanup or error state override
 
-```typescript
-// Element should exist
-const button = screen.getByRole('button');
+---
 
-// Element should NOT exist
-expect(screen.queryByText('Error')).not.toBeInTheDocument();
+### Q: How do you test a custom hook that depends on Context and makes an API call? 🔴 Senior
 
-// Element will appear
-const message = await screen.findByText('Success');
-```
+**A:** Use `renderHook` with a `wrapper` prop that provides the required context, and MSW for the API.
 
-### Q4: How do you test custom hooks? — 🟡 [Mid]
+```tsx
+// The hook under test
+function useUserProfile(userId: string) {
+  const { authToken } = useAuth(); // depends on AuthContext
+  const [profile, setProfile] = useState<User | null>(null);
+  const [error, setError] = useState<Error | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-**English Answer:**
-Use `renderHook` from React Testing Library:
+  useEffect(() => {
+    fetch(`/api/users/${userId}`, {
+      headers: { Authorization: `Bearer ${authToken}` },
+    })
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then(setProfile)
+      .catch(setError)
+      .finally(() => setIsLoading(false));
+  }, [userId, authToken]);
 
-```typescript
-const { result, rerender } = renderHook(
-  ({ count }) => useCounter(count),
-  { initialProps: { count: 0 } }
+  return { profile, error, isLoading };
+}
+
+// Test
+import { renderHook, waitFor } from '@testing-library/react';
+import { AuthProvider } from '../contexts/AuthContext';
+
+// MSW handler
+server.use(
+  http.get('/api/users/:id', ({ params }) => {
+    return HttpResponse.json({ id: params.id, name: 'Alice', email: 'alice@example.com' });
+  })
 );
 
-act(() => {
-  result.current.increment();
+test('fetches user profile with auth token', async () => {
+  // Wrapper provides the required context
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <AuthProvider initialToken="test-jwt-token">
+      {children}
+    </AuthProvider>
+  );
+
+  const { result } = renderHook(
+    () => useUserProfile('user-123'),
+    { wrapper }
+  );
+
+  // Initially loading
+  expect(result.current.isLoading).toBe(true);
+  expect(result.current.profile).toBeNull();
+
+  // Wait for async completion
+  await waitFor(() => {
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  expect(result.current.profile?.name).toBe('Alice');
+  expect(result.current.error).toBeNull();
 });
 
-expect(result.current.count).toBe(1);
+test('handles API error', async () => {
+  server.use(
+    http.get('/api/users/:id', () => new HttpResponse(null, { status: 404 }))
+  );
+
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <AuthProvider initialToken="test-token">{children}</AuthProvider>
+  );
+  const { result } = renderHook(() => useUserProfile('user-999'), { wrapper });
+
+  await waitFor(() => {
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  expect(result.current.error?.message).toContain('404');
+  expect(result.current.profile).toBeNull();
+});
 ```
 
-### Q5: What is snapshot testing and when to use it? — 🔴 [Senior]
+**Giải thích:** Key pattern: `wrapper` option on `renderHook` cung cấp context mà hook cần. Kết hợp `waitFor` để chờ async state thay đổi. MSW xử lý network layer.
 
-**English Answer:**
-Snapshot testing captures component output and compares it to a saved snapshot. Use for:
-- Detecting unintended changes
-- Testing static content
-- Regression testing
-
-**Avoid for:**
-- Dynamic content
-- Frequently changing UI
-- As primary testing strategy
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Uses `wrapper` prop correctly, shows both happy path and error path, uses `waitFor` for the loading state transition, covers the auth header use case
+- ❌ Weak: Only tests the sync initial state, doesn't wait for async completion, or doesn't provide required context
 
 ---
 
-## Key Takeaways / Điểm Chính
+### Q: Design a testing strategy for a Checkout component that involves form validation, API calls, and state management. 🔴 Senior
 
-**English:**
-1. Test user behavior, not implementation details
-2. Use React Testing Library for component tests
-3. Mock external dependencies (API, modules)
-4. Test accessibility with jest-axe
-5. Use MSW for API mocking
-6. Follow AAA pattern (Arrange, Act, Assert)
-7. Prefer integration tests over unit tests
-8. Use E2E tests for critical user flows
-9. Maintain high test coverage (80%+)
-10. Write tests that give confidence
+**A:** Layered testing — each layer tests what the layers below can't.
 
-**Tiếng Việt:**
-1. Kiểm thử hành vi người dùng, không phải chi tiết triển khai
-2. Sử dụng React Testing Library cho kiểm thử component
-3. Mock các phụ thuộc bên ngoài (API, modules)
-4. Kiểm thử accessibility với jest-axe
-5. Sử dụng MSW cho API mocking
-6. Tuân theo mẫu AAA (Arrange, Act, Assert)
-7. Ưu tiên integration tests hơn unit tests
-8. Sử dụng E2E tests cho luồng người dùng quan trọng
-9. Duy trì độ bao phủ kiểm thử cao (80%+)
-10. Viết tests mang lại sự tự tin
+```tsx
+// Layer 1: Unit tests — pure logic, no rendering
+describe('validateCheckoutForm', () => {
+  it('requires card number', () => {
+    expect(validateCheckout({ cardNumber: '' })).toEqual({
+      errors: { cardNumber: 'Card number required' }
+    });
+  });
+  it('validates card number format (Luhn)', () => {
+    expect(validateCheckout({ cardNumber: '1234' })).toEqual({
+      errors: { cardNumber: 'Invalid card number' }
+    });
+  });
+});
+
+// Layer 2: Integration tests — full component with MSW
+describe('CheckoutForm integration', () => {
+  test('shows validation errors without submitting', async () => {
+    render(<CheckoutForm />, { wrapper: AppProviders });
+    await userEvent.click(screen.getByRole('button', { name: /pay/i }));
+    expect(screen.getByRole('alert', { name: /card number/i })).toBeInTheDocument();
+    // MSW handler not called — no network request made
+  });
+
+  test('submits and shows success', async () => {
+    server.use(http.post('/api/checkout', () => HttpResponse.json({ orderId: 'ord_123' })));
+
+    render(<CheckoutForm />, { wrapper: AppProviders });
+    await userEvent.type(screen.getByLabelText(/card/i), '4242424242424242');
+    await userEvent.type(screen.getByLabelText(/expiry/i), '12/25');
+    await userEvent.type(screen.getByLabelText(/cvv/i), '123');
+    await userEvent.click(screen.getByRole('button', { name: /pay/i }));
+
+    // Button shows loading state
+    expect(screen.getByRole('button')).toBeDisabled();
+    // Success screen appears
+    expect(await screen.findByText(/order confirmed: ord_123/i)).toBeInTheDocument();
+  });
+
+  test('shows error on payment failure', async () => {
+    server.use(http.post('/api/checkout', () =>
+      HttpResponse.json({ error: 'Card declined' }, { status: 402 })
+    ));
+    render(<CheckoutForm />, { wrapper: AppProviders });
+    // fill form, submit...
+    expect(await screen.findByRole('alert')).toHaveTextContent(/card declined/i);
+    // Form is still visible (not redirected)
+    expect(screen.getByRole('button', { name: /pay/i })).toBeInTheDocument();
+  });
+});
+
+// Layer 3: E2E — critical path only (Playwright)
+// test.spec.ts
+test('user completes checkout with real payment sandbox', async ({ page }) => {
+  await page.goto('/checkout');
+  await page.getByLabel('Card Number').fill('4242424242424242');
+  // ...
+  await expect(page.getByText(/order confirmed/i)).toBeVisible({ timeout: 5000 });
+});
+```
+
+Key architecture decisions:
+1. **Unit tests for validation logic** — fast, exhaustive edge case coverage without rendering
+2. **Integration tests for UX flows** — MSW for API, test the complete user interaction sequence
+3. **One happy-path E2E** — real browser, real network (sandbox), proves all layers integrate
+4. **`renderWithProviders` helper** — encapsulates all required providers (Redux, QueryClient, Router) in one reusable wrapper
+
+**Giải thích:** Không cần E2E test mọi validation case — unit tests đã cover đó. E2E chỉ cho critical path (complete purchase). Integration tests cover mọi UX state: validation errors, loading, success, API failure.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Identifies which layer handles each concern (unit for pure logic, integration for UX flows, E2E for the happy path), shows concrete test for each failure mode, mentions the provider wrapper pattern
+- ❌ Weak: Only mentions "write tests for each state" without explaining the layer separation or showing how the layers differ
 
 ---
 
-[Back to Table of Contents](../../00-table-of-contents.md)
+## ⚡ Cold Call Simulation / Mô Phỏng Phỏng Vấn
+
+> 🎯 Interviewer asks cold: **"How do you approach testing React components, and what's the difference between your testing levels?"**
+
+**30 giây đầu — mở đầu lý tưởng:**
+1. "I follow the testing pyramid — many fast unit tests for pure logic, some integration tests with React Testing Library for component workflows, and a few E2E tests with Playwright for critical user journeys."
+2. "For component tests, I use RTL and query by ARIA role or label — the same way screen readers access elements. This makes tests resilient to CSS and implementation changes."
+3. "For API mocking, I use MSW — it intercepts at the network level so the component behaves identically to production, and I can test error scenarios by overriding handlers per test."
+4. "The key philosophy is testing what users experience: can they see the confirmation message, is the submit button disabled while loading, does an error show when the API fails — not whether `setState` was called with the right argument."
 
 ---
 
-## Self-Check / Tự Kiểm Tra
+## Self-Check / Tự Kiểm Tra ⚡ (Đóng tài liệu lại trước khi làm)
 
-- [ ] Can I write a test using `screen.getByRole` and explain why role-based queries are preferred?
-- [ ] Can I explain the difference between `getBy`, `queryBy`, and `findBy` (async) in RTL?
-- [ ] Can I mock an API call with MSW and test both success and error states?
-- [ ] Can I test a custom hook with `renderHook` and `act`?
-- [ ] Can I explain the testing pyramid and where E2E tests (Playwright) fit vs unit tests?
-- 💬 **Feynman Prompt:** Giải thích tại sao React Testing Library khuyến khích query by role thay vì by class hay test-id — điều gì thay đổi trong cách bạn viết component khi theo triết lý đó?
+- [ ] **Retrieval**: Viết từ trí nhớ: khi nào dùng `getBy`, `queryBy`, `findBy`? Sự khác biệt trong return value?
+- [ ] **Visual**: Vẽ sơ đồ testing pyramid: unit / integration / E2E — mỗi layer test gì? Tools nào?
+- [ ] **Application**: Bạn cần test một `<SearchBar>` gọi `/api/search?q=...` khi user type — dùng MSW và RTL như thế nào?
+- [ ] **Debug**: Test fails với "Warning: An update to Component inside a test was not wrapped in act()" — nguyên nhân và fix?
+- [ ] **Teach**: Giải thích tại sao `userEvent.click()` tốt hơn `fireEvent.click()` bằng 1 câu tương tự.
 
-## Connections / Liên Kết
+💬 **Feynman Prompt:** Giải thích tại sao React Testing Library khuyến khích query by role thay vì by CSS class — và điều gì thay đổi trong cách bạn viết component khi follow triết lý đó.
 
-- ⬅️ **Built on**: [React Fundamentals](./01-react-fundamentals.md) — component model
-- ⬅️ **Built on**: [Hooks Deep Dive](./03-hooks-deep-dive.md) — custom hooks need `renderHook`
-- 🔗 **Applied in**: [TypeScript Basics](../02-typescript/01-typescript-basics.md) — typed test utilities
+🔁 **Spaced Repetition reminder:** Review lại file này sau 3 ngày, rồi 7 ngày, rồi 14 ngày.

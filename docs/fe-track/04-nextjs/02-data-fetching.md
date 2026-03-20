@@ -1,1227 +1,750 @@
 # Next.js App Router Data Fetching / Lấy Dữ Liệu Trong Next.js App Router
 
-> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../00-table-of-contents.md)
+> **Track**: FE | **Difficulty**: 🟡 Mid → 🔴 Senior
+> **Prerequisites**: [App Router & Server Components](./01-app-router-server-components.md)
+> **See also**: [Next.js Architecture](./03-nextjs-architecture.md)
 
-## Overview
+---
 
-Data fetching trong Next.js App Router là sự kết hợp giữa React Server Components, caching semantics của `fetch()`, streaming, và chiến lược revalidation.
-Tài liệu này tập trung góc nhìn phỏng vấn: hiểu đúng cơ chế trước khi tối ưu.
+## Real-World Scenario / Tình Huống Thực Tế
 
-### Overview / Tổng Quan
-- Trọng tâm server-side trước: RSC, cache, ISR, static params.
-- Mở rộng sang client-side: SWR, React Query cho trạng thái tương tác cao.
-- Bao gồm mutation path: Route Handlers và Server Actions.
+Tiki's catalog team migrated their product pages from Pages Router to App Router. The marketing pages (product listings, category pages) served 80K+ requests/day — all publicly cacheable. The account/cart pages served 20K/day — all personalized, never cacheable.
 
-### Explanation / Giải thích
-Sai lầm phổ biến là coi mọi data fetching giống nhau.
-Thực tế cần phân loại:
-1. Dữ liệu public ổn định (cache lâu).
-2. Dữ liệu cá nhân hoá (cache cẩn thận).
-3. Dữ liệu realtime/interactive (client cache).
-4. Mutation cần consistency (invalidate + revalidate đúng nơi).
+Before migration: everything used `getServerSideProps` — even static marketing pages that changed once a week. Server was overwhelmed.
 
-### Example / Ví dụ
-Trang blog marketing có thể pre-render + ISR.
-Trang dashboard người dùng cần fetch động và kiểm soát cache theo session.
+After migration:
+- Marketing pages: `fetch(url, { next: { revalidate: 3600 } })` — served from CDN, 98% cache hit ratio
+- Account pages: `fetch(url, { cache: 'no-store' })` — dynamic, always fresh
+- Flash sales: `revalidateTag('flash-sale')` triggered by CMS webhook — updated within seconds of admin action
 
-## Server-side Data Fetching in App Router
+**The insight:** Data fetching strategy in Next.js is about classifying data by *freshness requirements + security sensitivity*, then choosing the right cache primitive for each class.
 
-### Overview / Tổng Quan
-Trong App Router, page/layout là Server Components mặc định, nên có thể `await fetch()` trực tiếp.
+---
 
-### Explanation / Giải thích
-Lợi ích:
-- giảm JS gửi xuống client,
-- truy cập data source ở server,
-- phối hợp tốt với streaming và cache.
+## What & Why / Cái Gì & Tại Sao
 
-### Example / Ví dụ
+**English:** Next.js App Router data fetching is built on React Server Components + an extended `fetch()` with cache semantics. The key mental model: *location of data fetch = location of render* — fetch in the component that needs the data, not a parent.
+
+**Tiếng Việt:** Data fetching trong App Router xây dựng trên React Server Components + `fetch()` mở rộng với cache semantics. Mental model quan trọng: *fetch gần nơi cần dùng* — không cần truyền data qua nhiều cấp component nữa.
+
+---
+
+## Core Concept 1: Cache Semantics & Request Deduplication / Ngữ Nghĩa Cache & Deduplication
+
+> 🧠 **Memory Hook**: "Three modes: **force-cache** (frozen), **revalidate** (ISR — thaw on schedule), **no-store** (never frozen)"
+>
+> Each `fetch()` call in Next.js has an explicit cache contract, not implicit like Pages Router.
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Server Components run on every request by default — without caching, every product page would hit the database 1000 times for the same catalog data.
+→ Why can't we just cache at the CDN? Because the data needs to be mixed with per-user data before rendering — we need component-level cache control.
+→ Why not cache everything? Because personalized data (cart, auth state) must never be shared across users.
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+
+`fetch()` in Next.js is like a coffee machine with three settings:
+- `force-cache`: "Make one batch in the morning, serve it all day" (static)
+- `revalidate: 60`: "Make a new batch every 60 seconds if anyone orders" (ISR)
+- `no-store`: "Fresh brew for every single customer" (dynamic)
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
 ```tsx
+// Static: never re-fetch (equivalent to getStaticProps)
+const res = await fetch('https://api.example.com/config', {
+  cache: 'force-cache',
+});
+
+// ISR: stale-while-revalidate on schedule
+const res = await fetch('https://api.example.com/products', {
+  next: { revalidate: 3600 }, // seconds
+});
+
+// Dynamic: always fresh (equivalent to getServerSideProps)
+const res = await fetch('https://api.example.com/cart', {
+  cache: 'no-store',
+});
+
+// Tag-based: revalidate by event, not time
+const res = await fetch('https://api.example.com/posts', {
+  next: { tags: ['posts'] },
+});
+// Elsewhere: await revalidateTag('posts') // in Server Action or Route Handler
+
+// Request deduplication — same URL in same render pass = one actual HTTP request
+async function Header() {
+  const user = await fetch('/api/me'); // request 1
+  // ...
+}
+async function Sidebar() {
+  const user = await fetch('/api/me'); // SAME request — deduplicated, uses memoized result
+  // ...
+}
+```
+
+```
+NEXT.JS FETCH CACHE MODES:
+
+  fetch(url, options)
+       │
+       ├── cache: 'force-cache'    → Data Store → serve cached forever
+       │
+       ├── next: { revalidate: N } → Data Store → serve cached
+       │                              until N seconds → background refetch
+       │                              (stale-while-revalidate)
+       │
+       ├── cache: 'no-store'       → Upstream API → fresh every request
+       │
+       └── next: { tags: [...] }   → Data Store → serve cached
+                                     until revalidateTag() called
+                                     (event-driven)
+
+  Route-level override:
+    export const dynamic = 'force-dynamic'  → all fetches = no-store
+    export const revalidate = 60            → all fetches = revalidate: 60
+```
+
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
+```tsx
+// Opting a whole route into dynamic mode (overrides all fetch cache)
+export const dynamic = 'force-dynamic'; // in page.tsx or layout.tsx
+
+// Cookies/headers/searchParams automatically make route dynamic
+// (Next.js detects usage at build time)
+import { cookies } from 'next/headers';
 export default async function Page() {
-  const res = await fetch('https://api.example.com/posts', {
-    next: { revalidate: 300 },
-  })
+  const session = cookies().get('session'); // → route becomes dynamic automatically
+}
 
-  if (!res.ok) throw new Error('Failed to fetch posts')
+// ISR: "stale" period — user gets old data until background regen completes
+// For consistent reads (e.g., checkout), use no-store
+// For marketing content, ISR is fine — milliseconds of stale is acceptable
 
-  const posts = await res.json()
-  return <pre>{JSON.stringify(posts, null, 2)}</pre>
+// Pitfall: cache: 'force-cache' on personalized endpoint
+const userProfile = await fetch('/api/me', { cache: 'force-cache' });
+// ❌ First user's profile served to all users from cache!
+// ✅ Use no-store for any user-specific data
+```
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `cache: 'force-cache'` for personalized data | Caches first user's data, serves to everyone | Always `no-store` for user-specific data |
+| Using `no-store` everywhere | Defeats purpose of App Router caching, high server load | Classify data, use ISR for public content |
+| `revalidate: 0` to disable cache | Equivalent to `no-store` but confusing intent | Use `cache: 'no-store'` explicitly |
+| Forgetting that cookies() makes route dynamic | Entire route re-renders on every request | OK for dynamic routes, avoid in static segments |
+
+**🎯 Interview Pattern:**
+- Khi thấy câu hỏi về: "Next.js data freshness", "when to cache", "ISR vs SSR"
+- → Nhớ đến: classify data first (public stable vs personalized vs real-time), then pick cache mode
+- → Mở đầu trả lời: "I classify the data by freshness requirement and security sensitivity first — static content gets `revalidate`, personalized data gets `no-store`, and event-driven content gets tag-based revalidation."
+
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: [Server Components, App Router basics](./01-app-router-server-components.md)
+- ➡️ Để hiểu: [On-demand revalidation, Server Actions](./03-nextjs-architecture.md)
+
+---
+
+## Core Concept 2: Parallel Fetching, Streaming & Error Handling / Fetch Song Song, Streaming & Xử Lý Lỗi
+
+> 🧠 **Memory Hook**: "Waterfall = serial highway with traffic lights. Promise.all = parallel highway. Suspense = show the road while painting the rest."
+>
+> The goal: users see *something* immediately, not a blank page waiting for the slowest query.
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Sequential fetch creates "data waterfalls" — total wait time = sum of all queries. A page with 4 independent queries at 200ms each waits 800ms if sequential.
+→ Why does this matter? Because TTFB (Time To First Byte) directly impacts Core Web Vitals and user experience.
+→ Why not just fetch everything in parallel always? Sometimes queries ARE dependent (need user ID to fetch user data). Structure determines strategy.
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+
+Parallel fetching = ordering all dishes at once (they come when ready). Sequential = ordering starter, waiting for it, then ordering main. Streaming = the chef brings each dish immediately when it's ready, instead of waiting for the full order.
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
+```tsx
+// ❌ Sequential waterfall — total time = 200ms + 150ms + 300ms = 650ms
+async function ProductPage({ params }: { params: { id: string } }) {
+  const product = await getProduct(params.id);     // 200ms
+  const reviews = await getReviews(params.id);     // 150ms — waits for product
+  const related = await getRelatedProducts(params.id); // 300ms — waits for reviews
+  return <div>...</div>;
+}
+
+// ✅ Parallel — total time = max(200ms, 150ms, 300ms) = 300ms
+async function ProductPage({ params }: { params: { id: string } }) {
+  const [product, reviews, related] = await Promise.all([
+    getProduct(params.id),
+    getReviews(params.id),
+    getRelatedProducts(params.id),
+  ]);
+  return <div>...</div>;
+}
+
+// ✅ Streaming with Suspense — show fast parts immediately
+async function ProductPage({ params }: { params: { id: string } }) {
+  // Fast data — no Suspense
+  const product = await getProduct(params.id); // 50ms
+  return (
+    <div>
+      <ProductHeader product={product} />  {/* renders immediately */}
+
+      <Suspense fallback={<ReviewsSkeleton />}>
+        <Reviews productId={params.id} />  {/* streams when ready (~150ms) */}
+      </Suspense>
+
+      <Suspense fallback={<RelatedSkeleton />}>
+        <RelatedProducts productId={params.id} />  {/* streams when ready (~300ms) */}
+      </Suspense>
+    </div>
+  );
+}
+
+// Reviews component fetches independently
+async function Reviews({ productId }: { productId: string }) {
+  const reviews = await getReviews(productId); // fetch happens here, not parent
+  return <ReviewList reviews={reviews} />;
 }
 ```
 
-## `fetch()` Caching Options in Next.js
+**Error handling — server components:**
 
-### Overview / Tổng Quan
-`fetch()` trong Next.js mở rộng cache behavior qua `cache` và `next`.
-
-### Explanation / Giải thích
-- `cache: 'force-cache'`: ưu tiên static/cache.
-- `cache: 'no-store'`: luôn lấy mới (dynamic).
-- `next: { revalidate: seconds }`: ISR theo thời gian.
-- `next: { tags: ['posts'] }`: revalidate theo tag.
-
-### Example / Ví dụ
 ```tsx
-await fetch(url, { cache: 'no-store' })
-await fetch(url, { next: { revalidate: 60 } })
-await fetch(url, { next: { tags: ['profile', 'dashboard'] } })
-```
+// error.tsx — segment-level error boundary (must be Client Component)
+'use client';
+export default function Error({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  return (
+    <div>
+      <h2>Something went wrong</h2>
+      <p>{error.message}</p>
+      <button onClick={reset}>Try again</button>
+    </div>
+  );
+}
 
-## React Server Components Data Patterns
+// not-found.tsx — 404 boundary
+// Triggered by: notFound() in any Server Component
+import { notFound } from 'next/navigation';
 
-### Overview / Tổng Quan
-RSC ưu tiên data-fetch gần nơi render, giảm prop drilling từ client.
+async function ProductPage({ params }: { params: { id: string } }) {
+  const product = await getProduct(params.id);
+  if (!product) notFound(); // renders not-found.tsx
 
-### Explanation / Giải thích
-Pattern thường dùng:
-- fetch trực tiếp trong page segment,
-- tách helper function server-only,
-- dùng `Promise.all` cho fetch song song,
-- wrap vùng chậm bằng Suspense.
+  return <div>{product.name}</div>;
+}
 
-### Example / Ví dụ
-```tsx
-async function getUser(id: string) {
-  const res = await fetch(`https://api.example.com/users/${id}`, { cache: 'no-store' })
-  if (!res.ok) throw new Error('User fetch failed')
-  return res.json()
+// Expected vs unexpected errors — Server Actions return Result types
+async function createPost(data: FormData) {
+  'use server';
+  try {
+    const post = await db.post.create({ data: parseFormData(data) });
+    revalidateTag('posts');
+    return { success: true, post };
+  } catch (e) {
+    // Don't throw — return error for UI handling
+    return { success: false, error: 'Failed to create post' };
+  }
 }
 ```
 
-## `generateStaticParams`
+```
+STREAMING TIMELINE:
 
-### Overview / Tổng Quan
-Dùng để tạo danh sách dynamic params tại build time cho static routes.
+  Request arrives
+       │
+       ├── [0ms]   Shell HTML sent (layout, static parts)
+       ├── [50ms]  ProductHeader streamed (fast query done)
+       ├── [150ms] Reviews streamed (medium query done)
+       └── [300ms] Related products streamed (slowest query done)
 
-### Explanation / Giải thích
-Phù hợp với nội dung có tập slug biết trước hoặc giới hạn.
-Kết hợp tốt với ISR để cập nhật incremental sau build.
+  vs No Streaming:
+       │
+       └── [300ms] Everything sent at once (waited for slowest)
 
-### Example / Ví dụ
+  With Suspense: user sees skeleton → content appears progressively
+  Without:       user sees loading spinner → full page appears
+```
+
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
 ```tsx
+// Dependent data: can't parallelize fully, but can start early
+async function UserDashboard({ userId }: { userId: string }) {
+  const user = await getUser(userId); // must come first
+
+  // But once we have user, fetch everything else in parallel
+  const [orders, preferences, notifications] = await Promise.all([
+    getOrders(user.id),
+    getPreferences(user.id),
+    getNotifications(user.id),
+  ]);
+  // ...
+}
+
+// Sequential is sometimes intentional: read-after-write consistency
+// After creating a post, re-fetch the list to get the updated state
+async function createAndRedirect(formData: FormData) {
+  'use server';
+  await createPost(formData);
+  revalidateTag('posts');      // invalidate cache
+  redirect('/posts');          // redirect to fresh list
+}
+```
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `await` inside a loop: `for (const id of ids) await fetch(id)` | Serial — N × request time | `Promise.all(ids.map(id => fetch(id)))` |
+| Wrapping everything in one huge Suspense | User sees blank page until all data ready | Multiple Suspense boundaries — one per independent slow section |
+| Not handling `!res.ok` | Silent data errors — component renders undefined | Always check `if (!res.ok) throw new Error(...)` or `notFound()` |
+| Using `error.tsx` for expected errors (404, validation) | Error page for user typos is poor UX | Use `notFound()` for 404, return error objects from Server Actions |
+
+**🎯 Interview Pattern:**
+- Khi thấy câu hỏi về: "slow page load", "data waterfall", "streaming"
+- → Nhớ đến: identify independent queries → parallelize with Promise.all → stream slow parts with Suspense
+- → Mở đầu trả lời: "I'd first identify which data fetches are independent vs dependent. Independent ones run in parallel with Promise.all; slow independent sections get their own Suspense boundary so the fast parts stream first."
+
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: [React Suspense, async Server Components](./01-app-router-server-components.md)
+- ➡️ Để hiểu: [Performance optimization, Core Web Vitals](../06-browser-performance/01-core-web-vitals.md)
+
+---
+
+## Core Concept 3: Mutation Patterns — Server Actions & Route Handlers / Pattern Mutation
+
+> 🧠 **Memory Hook**: "Server Actions = API route that lives next to the component that calls it. Route Handler = standalone API endpoint."
+>
+> Server Actions collapse the client→server boundary: no `fetch('/api/...')`, just a function call.
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Traditional mutations: write component → write API route → write fetch call → handle loading/error states separately. That's 4 layers of boilerplate for "save this form to the database."
+→ Why do we need Route Handlers at all? For webhooks, third-party integrations, or when you need an actual HTTP endpoint (not just a function call).
+→ Why not just use Server Actions for everything? Server Actions are tied to the Next.js runtime — Route Handlers can be deployed as standalone REST/GraphQL endpoints.
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+
+Server Actions = calling a co-worker directly — "Hey, save this." Fast, direct, no email thread.
+Route Handlers = sending an official request form through the system — necessary for external parties, but more overhead for internal use.
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
+```tsx
+// Server Action — defined with 'use server'
+// Option 1: inline in Server Component
+async function submitForm(formData: FormData) {
+  'use server'; // runs on server
+  const title = formData.get('title') as string;
+  await db.post.create({ data: { title } });
+  revalidateTag('posts');
+  redirect('/posts');
+}
+
+export default function NewPostPage() {
+  return (
+    <form action={submitForm}>
+      <input name="title" />
+      <button type="submit">Create</button>
+    </form>
+  );
+}
+
+// Option 2: separate 'use server' file (import from Client Components)
+// actions.ts
+'use server';
+export async function createPost(prevState: unknown, formData: FormData) {
+  const title = formData.get('title') as string;
+  if (!title) return { error: 'Title required' };
+  await db.post.create({ data: { title } });
+  revalidateTag('posts');
+  return { success: true };
+}
+
+// Client Component calling Server Action with useActionState
+'use client';
+import { useActionState } from 'react';
+import { createPost } from './actions';
+
+export function NewPostForm() {
+  const [state, formAction, isPending] = useActionState(createPost, null);
+  return (
+    <form action={formAction}>
+      <input name="title" />
+      <button disabled={isPending}>
+        {isPending ? 'Creating...' : 'Create Post'}
+      </button>
+      {state?.error && <p className="error">{state.error}</p>}
+    </form>
+  );
+}
+
+// Route Handler — app/api/posts/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+
+export async function GET(request: NextRequest) {
+  const posts = await db.post.findMany();
+  return NextResponse.json(posts);
+}
+
+export async function POST(request: NextRequest) {
+  const body = await request.json();
+  const post = await db.post.create({ data: body });
+  return NextResponse.json(post, { status: 201 });
+}
+
+// Use Route Handlers for: webhooks, external API integrations, file uploads
+export async function POST(request: NextRequest) {
+  // Webhook from Stripe — must be raw body
+  const sig = request.headers.get('stripe-signature');
+  const body = await request.text(); // raw for signature verification
+  const event = stripe.webhooks.constructEvent(body, sig!, process.env.STRIPE_SECRET!);
+  // handle event...
+  return NextResponse.json({ received: true });
+}
+```
+
+```
+SERVER ACTION vs ROUTE HANDLER:
+
+                    Server Action       Route Handler
+  ──────────────────────────────────────────────────────
+  Calling method      Function call      HTTP fetch
+  Client Component?   ✅ (with import)   ✅ (fetch)
+  Server Component?   ✅ (inline form)   Only via fetch
+  External services?  ❌ (Next.js only)  ✅ (HTTP endpoint)
+  Webhook receiver?   ❌                 ✅
+  Progressive enhance ✅ (form fallback) ❌
+  Return value        State/redirect     HTTP response
+  Best for            Forms, mutations   External APIs, webhooks
+```
+
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
+```tsx
+// Optimistic updates with Server Actions
+'use client';
+import { useOptimistic } from 'react';
+import { toggleLike } from './actions';
+
+function LikeButton({ post }: { post: Post }) {
+  const [optimisticPost, addOptimistic] = useOptimistic(
+    post,
+    (state, liked: boolean) => ({ ...state, liked, likes: state.likes + (liked ? 1 : -1) })
+  );
+
+  async function handleLike() {
+    addOptimistic(!optimisticPost.liked); // instant UI update
+    await toggleLike(post.id);            // server mutation (may fail)
+    // if server fails, React reverts to the original `post` value
+  }
+
+  return (
+    <button onClick={handleLike}>
+      {optimisticPost.liked ? '❤️' : '🤍'} {optimisticPost.likes}
+    </button>
+  );
+}
+
+// Security: Server Actions must validate input
+export async function deletePost(postId: string) {
+  'use server';
+  const session = await getServerSession();
+  if (!session) throw new Error('Unauthorized');
+
+  const post = await db.post.findUnique({ where: { id: postId } });
+  if (post?.authorId !== session.user.id) throw new Error('Forbidden');
+
+  await db.post.delete({ where: { id: postId } });
+  revalidateTag('posts');
+}
+```
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| No auth check in Server Action | Server Actions are callable by anyone with JS | Always validate session + authorization |
+| `throw` for expected errors (validation) | Causes error boundary to trigger | Return `{ error: 'message' }` for expected failures |
+| Calling `revalidatePath('/')` for everything | Invalidates entire cache for small mutation | Use targeted `revalidateTag('posts')` |
+| Using Server Action for external webhook | External services call HTTP endpoints, not Next.js functions | Use Route Handler for incoming webhooks |
+
+**🎯 Interview Pattern:**
+- Khi thấy câu hỏi về: "form submission in Next.js", "avoid API boilerplate", "mutation + cache update"
+- → Nhớ đến: Server Action = function call, useActionState for pending/error state, revalidateTag for targeted cache update
+- → Mở đầu trả lời: "I'd use a Server Action here — it runs on the server, has direct database access, and I can call `revalidateTag` to update just the affected cache entries after the mutation."
+
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: [Server Actions, 'use server' directive](./01-app-router-server-components.md)
+- ➡️ Để hiểu: [Full-stack Next.js architecture patterns](./03-nextjs-architecture.md)
+
+---
+
+## Interview Q&A / Câu Hỏi Phỏng Vấn
+
+### Q: What's the difference between `cache: 'force-cache'`, `next: { revalidate }`, and `cache: 'no-store'`? 🟢 Junior
+
+**A:** These are Next.js's three cache modes for server-side data fetching:
+
+- `force-cache`: Fetch once, serve forever from cache. Use for: truly static data (site config, rarely-changing content).
+- `next: { revalidate: N }`: ISR — serve from cache, but background-refresh after N seconds if someone requests it. Use for: public content that changes occasionally (blog posts, product catalog).
+- `no-store`: Never cache — fresh fetch every request. Use for: personalized data (user profile, cart, auth state).
+
+```tsx
+// Choose based on data type:
+const siteConfig = await fetch('/api/config', { cache: 'force-cache' }); // static forever
+const products = await fetch('/api/products', { next: { revalidate: 3600 } }); // hourly
+const cart = await fetch('/api/cart', { cache: 'no-store' }); // always fresh
+```
+
+**Giải thích:** Quy tắc phân loại: dữ liệu công khai và ổn định → `force-cache`, công khai nhưng thay đổi định kỳ → `revalidate`, cá nhân hoá hoặc nhạy cảm → `no-store`.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Gives a real data classification rule (public stable vs periodic vs personalized), mentions the security risk of caching personalized data
+- ❌ Weak: Only knows "no-store = dynamic" without explaining the tradeoffs or when to choose each
+
+---
+
+### Q: How does `generateStaticParams` work and when would you use it? 🟢 Junior
+
+**A:** `generateStaticParams` pre-generates the list of dynamic route params at build time, so Next.js can statically render those pages.
+
+```tsx
+// app/products/[id]/page.tsx
 export async function generateStaticParams() {
-  const posts = await fetch('https://api.example.com/posts').then(r => r.json())
-  return posts.map((post: { slug: string }) => ({ slug: post.slug }))
+  const products = await fetch('/api/products/all').then(r => r.json());
+  return products.map((p: Product) => ({ id: p.id }));
+  // Returns: [{ id: '1' }, { id: '2' }, ...{ id: '10000' }]
+}
+
+export default async function ProductPage({ params }: { params: { id: string } }) {
+  const product = await getProduct(params.id);
+  return <ProductView product={product} />;
 }
 ```
 
-## Incremental Static Regeneration (ISR)
+Use it when: you have a known set of paths (or can enumerate them) and want them pre-rendered for speed. Combine with `revalidate` for ISR — pages are rebuilt on-demand after the schedule expires.
 
-### Overview / Tổng Quan
-ISR cho phép page tĩnh được cập nhật định kỳ mà không rebuild toàn bộ site.
+For paths NOT in `generateStaticParams`: by default Next.js renders them dynamically on first request. Set `export const dynamicParams = false` to 404 them instead.
 
-### Explanation / Giải thích
-Với `revalidate`, Next.js phục vụ bản cache cũ rồi tạo bản mới ở background khi hết hạn.
-Đây là trade-off giữa freshness và cost.
+**Giải thích:** Tương tự `getStaticPaths` trong Pages Router nhưng đơn giản hơn. Với 10K sản phẩm, có thể chỉ pre-render top 100 (nhất), còn lại render on-demand và cache sau đó.
 
-### Example / Ví dụ
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Mentions the `dynamicParams` option, explains what happens for paths NOT in the list, shows the return shape correctly
+- ❌ Weak: Only knows the function signature without explaining the "what about paths not returned" edge case
+
+---
+
+### Q: Explain how to avoid data waterfalls in React Server Components. 🟡 Mid
+
+**A:** Waterfalls happen when each `await` blocks the next. The fix: identify which fetches are independent, then run them in parallel.
+
 ```tsx
-await fetch('https://api.example.com/guides', {
-  next: { revalidate: 600 },
-})
-```
+// ❌ Waterfall: 3 independent fetches run serially = 650ms total
+async function Dashboard({ userId }: { userId: string }) {
+  const user = await getUser(userId);       // 200ms
+  const orders = await getOrders(userId);   // 250ms — waits for user
+  const analytics = await getAnalytics(userId); // 200ms — waits for orders
+  return <div>...</div>;
+}
 
-## Streaming with Suspense
+// ✅ Parallel: 3 independent fetches run together = 250ms total
+async function Dashboard({ userId }: { userId: string }) {
+  const [user, orders, analytics] = await Promise.all([
+    getUser(userId),
+    getOrders(userId),
+    getAnalytics(userId),
+  ]);
+  return <div>...</div>;
+}
 
-### Overview / Tổng Quan
-Streaming gửi HTML từng phần, giúp người dùng thấy nội dung sớm hơn.
-
-### Explanation / Giải thích
-Tách vùng chậm vào component async + Suspense fallback.
-Người dùng tương tác sớm với phần đã sẵn sàng.
-
-### Example / Ví dụ
-```tsx
-import { Suspense } from 'react'
-
-export default function DashboardPage() {
+// ✅ Streaming: show fast parts immediately, stream slow parts
+async function Dashboard({ userId }: { userId: string }) {
+  const user = await getUser(userId); // 50ms — fast, render immediately
   return (
     <>
-      <Summary />
-      <Suspense fallback={<p>Loading chart...</p>}>
-        <SlowChart />
+      <UserHeader user={user} />
+      <Suspense fallback={<OrdersSkeleton />}>
+        <Orders userId={userId} />     {/* streams at ~250ms */}
+      </Suspense>
+      <Suspense fallback={<AnalyticsSkeleton />}>
+        <Analytics userId={userId} />  {/* streams at ~200ms */}
       </Suspense>
     </>
-  )
+  );
 }
 ```
 
-## Parallel vs Sequential Data Fetching
+**Giải thích:** Rule of thumb: dùng `Promise.all` khi tất cả data cần có trước khi render. Dùng Suspense khi muốn stream — tách components tách biệt và để Next.js stream từng phần khi sẵn sàng.
 
-### Overview / Tổng Quan
-Fetch song song giảm tổng thời gian chờ nếu các request độc lập.
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Distinguishes Promise.all (parallel, wait for all) vs Suspense streaming (progressive), gives timing numbers to show impact
+- ❌ Weak: Only mentions "use Promise.all" without explaining when streaming is better
 
-### Explanation / Giải thích
-- Sequential: request B đợi request A.
-- Parallel: chạy đồng thời bằng `Promise.all`.
+---
 
-### Example / Ví dụ
+### Q: When would you choose a Route Handler over a Server Action, and vice versa? 🟡 Mid
+
+**A:** The decision tree:
+
+**Use Server Action when:**
+- Mutation from a form or button click in your own Next.js app
+- You want progressive enhancement (form works without JS)
+- The mutation and its cache invalidation are tightly coupled
+- No external service needs to call this endpoint
+
+**Use Route Handler when:**
+- External service needs to call this endpoint (webhooks from Stripe, GitHub, Slack)
+- You need a standard REST/GraphQL API for mobile apps or third-party consumers
+- File upload endpoint (needs raw body parsing)
+- You need custom HTTP headers or status codes in response
+
 ```tsx
-const [user, stats] = await Promise.all([getUser(userId), getStats(userId)])
+// Server Action: form mutation in your app
+export async function updateProfile(formData: FormData) {
+  'use server';
+  await db.user.update({ where: { id: session.userId }, data: parseForm(formData) });
+  revalidateTag('profile');
+  redirect('/profile');
+}
+
+// Route Handler: Stripe webhook (must be HTTP endpoint)
+// app/api/webhooks/stripe/route.ts
+export async function POST(req: NextRequest) {
+  const sig = req.headers.get('stripe-signature')!;
+  const body = await req.text(); // raw body for signature verification
+  const event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_SECRET!);
+  // handle event, update database...
+  return NextResponse.json({ received: true });
+}
 ```
 
-## Error Handling in Data Fetching
+**Giải thích:** Server Actions là "internal RPC" — perfect cho mutations trong app. Route Handlers là "external HTTP API" — cần khi thế giới bên ngoài cần gọi vào. Đừng dùng Route Handler cho form submission nếu không có lý do cụ thể — Server Action ít boilerplate hơn nhiều.
 
-### Overview / Tổng Quan
-Error handling cần rõ ràng giữa expected errors và unexpected failures.
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Names "external service webhooks" as the clear Route Handler use case, mentions progressive enhancement for Server Actions, gives webhook example
+- ❌ Weak: "Route Handlers are for APIs" — too vague, doesn't explain when Server Actions are better
 
-### Explanation / Giải thích
-- Dùng `if (!res.ok)` để xử lý HTTP errors.
-- Dùng `error.tsx` cho segment-level boundary.
-- Có logging/monitoring cho lỗi production.
+---
 
-### Example / Ví dụ
-Trong page server:
+### Q: Design the data fetching architecture for an e-commerce product detail page that serves both anonymous and logged-in users. 🔴 Senior
+
+**A:** The challenge: anonymous users get cached pages (fast CDN), logged-in users need personalized data (dynamic). We need both at different granularities.
+
+```
+Architecture decision:
+
+  /products/[id]/page.tsx
+  ├── Static shell (generateStaticParams + ISR revalidate: 3600)
+  │   ├── Product info, images, description → cached
+  │   └── Price, availability → ISR (changes occasionally)
+  │
+  ├── Client boundary for personalized sections
+  │   ├── <Suspense fallback={...}>
+  │   │   └── <PersonalizedPrice /> → client component, SWR
+  │   ├── <Suspense fallback={...}>
+  │   │   └── <CartButton userId={...} /> → reads from client state
+  │   └── <Suspense fallback={...}>
+  │       └── <RecentlyViewed /> → localStorage + client
+```
+
 ```tsx
-if (res.status === 404) {
-  notFound()
+// Main page — static product data
+export async function generateStaticParams() {
+  return getTopProducts(1000).then(ps => ps.map(p => ({ id: p.id })));
+}
+export const revalidate = 3600; // product info changes rarely
+
+export default async function ProductPage({ params }: { params: { id: string } }) {
+  const product = await getProduct(params.id); // cached, fast
+  if (!product) notFound();
+
+  return (
+    <div>
+      <ProductGallery images={product.images} />
+      <ProductInfo product={product} />
+
+      {/* Personalized price: uses server component but no-store */}
+      <Suspense fallback={<PriceSkeleton />}>
+        <DynamicPrice productId={product.id} />
+      </Suspense>
+
+      {/* Cart interaction: client component */}
+      <Suspense fallback={<AddToCartSkeleton />}>
+        <AddToCartButton productId={product.id} />
+      </Suspense>
+
+      {/* Related products: cached */}
+      <Suspense fallback={<RelatedSkeleton />}>
+        <RelatedProducts category={product.category} />
+      </Suspense>
+    </div>
+  );
+}
+
+// Dynamic price — personalized, always fresh
+async function DynamicPrice({ productId }: { productId: string }) {
+  const pricing = await fetch(`/api/pricing/${productId}`, {
+    cache: 'no-store',
+    headers: { Cookie: cookies().toString() }, // include session for B2B pricing
+  });
+  const { price, discount } = await pricing.json();
+  return <PriceDisplay price={price} discount={discount} />;
+}
+
+// Related products — cached separately from main product
+async function RelatedProducts({ category }: { category: string }) {
+  const related = await fetch(`/api/products?category=${category}&limit=4`, {
+    next: { revalidate: 7200 }, // cached 2 hours — changes rarely
+  });
+  return <ProductGrid products={await related.json()} />;
 }
 ```
 
-## Client-side Fetching (SWR, React Query)
+Key architecture decisions:
+1. **Separate cache boundaries**: product info (ISR 1hr) vs pricing (no-store) vs related (ISR 2hr)
+2. **Suspense per independent section**: streams progressively, fast product info appears first
+3. **No auth in page.tsx**: auth state lives in dedicated `DynamicPrice` component to preserve ISR for the page shell
+4. **Edge: flash sale pricing** — use `revalidateTag('pricing')` triggered by admin CMS action
 
-### Overview / Tổng Quan
-Client-side fetching phù hợp dữ liệu tương tác cao: polling, optimistic update, local cache sync.
+**Giải thích:** Không một strategy nào phù hợp toàn bộ page. Phân tách page thành "product data" (stable, cacheable) và "user-specific data" (dynamic). ISR phục vụ 95% traffic từ CDN; chỉ personalized sections mới hit server on every request.
 
-### Explanation / Giải thích
-- **SWR**: API gọn, stale-while-revalidate.
-- **React Query**: query/mutation orchestration mạnh, cache lifecycle rõ.
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Identifies different cache strategies per data type, uses multiple Suspense boundaries, explains auth isolation to preserve ISR, considers flash sale scenario
+- ❌ Weak: "Put everything in getServerSideProps" — misses caching opportunity, doesn't distinguish stable vs personalized data
 
-### Example / Ví dụ
-```tsx
-'use client'
-import useSWR from 'swr'
+---
 
-const fetcher = (url: string) => fetch(url).then(r => r.json())
+## ⚡ Cold Call Simulation / Mô Phỏng Phỏng Vấn
 
-export function ProfileWidget() {
-  const { data, isLoading } = useSWR('/api/profile', fetcher)
-  if (isLoading) return <p>Loading...</p>
-  return <p>{data.name}</p>
-}
-```
+> 🎯 Interviewer asks cold: **"How does Next.js App Router data fetching differ from Pages Router, and when would you use each cache mode?"**
 
-## Revalidation Strategies
+**30 giây đầu — mở đầu lý tưởng:**
+1. "App Router moves data fetching from page-level functions into individual Server Components — you fetch data right where you render it, eliminating prop drilling."
+2. "The fetch API is extended with cache modes: `force-cache` for static, `revalidate` for ISR, and `no-store` for dynamic — each fetch call has its own cache contract."
+3. "I classify data by freshness requirement: public stable content gets ISR, personalized data gets no-store, and event-driven content uses tag-based revalidation."
+4. "This matters because it lets a single page have mixed cache strategies — the product info is CDN-cached while the user's price tier is always fresh, without a page-level compromise."
 
-### Time-based Revalidation
-#### Overview / Tổng Quan
-Cập nhật theo khoảng thời gian cố định.
+---
 
-#### Explanation / Giải thích
-Dễ vận hành, phù hợp dữ liệu thay đổi theo chu kỳ.
+## Self-Check / Tự Kiểm Tra ⚡ (Đóng tài liệu lại trước khi làm)
 
-#### Example / Ví dụ
-`next: { revalidate: 300 }`
+- [ ] **Retrieval**: Viết 3 cache modes của fetch trong Next.js App Router từ trí nhớ — không nhìn lại.
+- [ ] **Visual**: Vẽ timeline streaming: request đến → shell HTML → ReviewsSkeleton → ReviewsContent. Bao nhiêu ms mỗi bước?
+- [ ] **Application**: Trang order history cần: header (static logo), user info (dynamic), order list (cached 5 min). Bạn fetch như thế nào?
+- [ ] **Debug**: Product page dùng `force-cache` nhưng user sees other user's cart data. Nguyên nhân là gì? Fix như thế nào?
+- [ ] **Teach**: Giải thích ISR (`revalidate: 60`) bằng 1 câu analogy — không dùng thuật ngữ kỹ thuật.
 
-### On-demand Revalidation
-#### Overview / Tổng Quan
-Kích hoạt revalidate khi có sự kiện (CMS publish, admin update).
+💬 **Feynman Prompt:** Giải thích sự khác biệt giữa Server Actions và Route Handlers như đang giải thích cho một developer mới biết Next.js.
 
-#### Explanation / Giải thích
-Giảm fetch không cần thiết, freshness tốt hơn cho event-driven content.
-
-#### Example / Ví dụ
-Dùng `revalidateTag('posts')` sau mutation.
-
-## Route Handlers for APIs
-
-### Overview / Tổng Quan
-Route Handler (`app/api/.../route.ts`) cung cấp endpoint server-side trong App Router.
-
-### Explanation / Giải thích
-Dùng khi cần API trung gian: auth gate, aggregation, webhooks, hoặc che private upstream.
-
-### Example / Ví dụ
-```ts
-import { NextResponse } from 'next/server'
-
-export async function GET() {
-  return NextResponse.json({ ok: true })
-}
-```
-
-## Server Actions for Mutations
-
-### Overview / Tổng Quan
-Server Actions cho phép mutation chạy ở server, gọi trực tiếp từ form/action.
-
-### Explanation / Giải thích
-Ưu điểm:
-- giảm boilerplate API cho action đơn giản,
-- giữ secret logic ở server,
-- tích hợp tốt với revalidation.
-
-### Example / Ví dụ
-```tsx
-'use server'
-
-import { revalidateTag } from 'next/cache'
-
-export async function createPost(_: unknown, formData: FormData) {
-  const title = String(formData.get('title') ?? '')
-  // save to db ...
-  revalidateTag('posts')
-  return { ok: true, title }
-}
-```
-
-## Decision Framework: Which Fetching Pattern to Choose?
-
-### Overview / Tổng Quan
-Không có một pattern cho mọi route.
-
-### Explanation / Giải thích
-- SEO + cacheable content: Server fetch + ISR.
-- Personalized content: dynamic fetch (`no-store`) + auth-aware boundary.
-- Highly interactive widgets: client cache (SWR/React Query).
-- Mutation-heavy flows: Server Actions + targeted revalidation.
-
-### Example / Ví dụ
-Trang product detail dùng ISR, còn giỏ hàng/notification panel dùng client fetch.
-
-## Common Pitfalls
-
-### Overview / Tổng Quan
-- Accidentally caching personalized data.
-- N+1 fetch giữa nested components.
-- Blocking waterfalls do fetch tuần tự không cần thiết.
-- Revalidate quá rộng gây tăng load server.
-
-### Explanation / Giải thích
-Pitfall thường xuất phát từ thiếu phân loại dữ liệu theo freshness/security requirements.
-
-### Example / Ví dụ
-Nếu profile API trả dữ liệu user nhưng fetch bằng `force-cache` tại route công khai, có thể gây leak cache.
-
-## Related References / Tài Liệu Liên Quan
-- [App Router & Server Components](./01-app-router-server-components.md)
-- [Next.js Architecture](./03-nextjs-architecture.md)
-- [Caching Patterns](../../shared/02-system-design/caching-patterns.md)
-
-## Câu Hỏi Phỏng Vấn / Interview Q&A
-
-### Q1. 🟢 [Junior] What changed with data fetching in App Router compared to Pages Router?
-**Tổng Quan**
-Câu hỏi đánh giá khả năng chọn đúng pattern data fetching theo yêu cầu business và kỹ thuật.
-
-**Giải thích**
-App Router cho phép fetch trực tiếp trong Server Component, kết hợp streaming/cache semantics tốt hơn, giảm phụ thuộc vào getServerSideProps/getStaticProps.
-
-**Ví dụ**
-- Trình bày theo khung: loại dữ liệu → freshness target → cache policy → invalidation.
-- Nêu 1 risk và 1 biện pháp giám sát (logging/metrics).
-- Nếu có trải nghiệm production, thêm ví dụ migration cụ thể.
-
-
-### Q2. 🟢 [Junior] When should you use `cache: "no-store"`?
-**Tổng Quan**
-Câu hỏi đánh giá khả năng chọn đúng pattern data fetching theo yêu cầu business và kỹ thuật.
-
-**Giải thích**
-Khi dữ liệu cá nhân hoá hoặc cần luôn mới theo request (ví dụ dashboard user, admin real-time state).
-
-**Ví dụ**
-- Trình bày theo khung: loại dữ liệu → freshness target → cache policy → invalidation.
-- Nêu 1 risk và 1 biện pháp giám sát (logging/metrics).
-- Nếu có trải nghiệm production, thêm ví dụ migration cụ thể.
-
-
-### Q3. 🟢 [Junior] How does `next: { revalidate }` work conceptually?
-**Tổng Quan**
-Câu hỏi đánh giá khả năng chọn đúng pattern data fetching theo yêu cầu business và kỹ thuật.
-
-**Giải thích**
-Nó định nghĩa TTL cho cached response; khi hết hạn, request mới kích hoạt background regeneration.
-
-**Ví dụ**
-- Trình bày theo khung: loại dữ liệu → freshness target → cache policy → invalidation.
-- Nêu 1 risk và 1 biện pháp giám sát (logging/metrics).
-- Nếu có trải nghiệm production, thêm ví dụ migration cụ thể.
-
-
-### Q4. 🟢 [Junior] What is the role of `generateStaticParams`?
-**Tổng Quan**
-Câu hỏi đánh giá khả năng chọn đúng pattern data fetching theo yêu cầu business và kỹ thuật.
-
-**Giải thích**
-Tạo danh sách params cho route động ở build time để pre-render và tăng tốc truy cập ban đầu.
-
-**Ví dụ**
-- Trình bày theo khung: loại dữ liệu → freshness target → cache policy → invalidation.
-- Nêu 1 risk và 1 biện pháp giám sát (logging/metrics).
-- Nếu có trải nghiệm production, thêm ví dụ migration cụ thể.
-
-
-### Q5. 🟢 [Junior] How to avoid data waterfall in RSC?
-**Tổng Quan**
-Câu hỏi đánh giá khả năng chọn đúng pattern data fetching theo yêu cầu business và kỹ thuật.
-
-**Giải thích**
-Tách fetch độc lập và chạy song song bằng Promise.all; chỉ để sequential khi có dependency thực sự.
-
-**Ví dụ**
-- Trình bày theo khung: loại dữ liệu → freshness target → cache policy → invalidation.
-- Nêu 1 risk và 1 biện pháp giám sát (logging/metrics).
-- Nếu có trải nghiệm production, thêm ví dụ migration cụ thể.
-
-
-### Q6. 🟢 [Junior] Why use Suspense with streaming?
-**Tổng Quan**
-Câu hỏi đánh giá khả năng chọn đúng pattern data fetching theo yêu cầu business và kỹ thuật.
-
-**Giải thích**
-Để chia trang thành vùng ưu tiên, giảm time-to-first-meaningful-content cho user.
-
-**Ví dụ**
-- Trình bày theo khung: loại dữ liệu → freshness target → cache policy → invalidation.
-- Nêu 1 risk và 1 biện pháp giám sát (logging/metrics).
-- Nếu có trải nghiệm production, thêm ví dụ migration cụ thể.
-
-
-### Q7. 🟢 [Junior] How do you handle 404/500 in fetch flow?
-**Tổng Quan**
-Câu hỏi đánh giá khả năng chọn đúng pattern data fetching theo yêu cầu business và kỹ thuật.
-
-**Giải thích**
-Check `res.ok`, map 404 sang `notFound()`, còn lỗi khác để error boundary xử lý và log.
-
-**Ví dụ**
-- Trình bày theo khung: loại dữ liệu → freshness target → cache policy → invalidation.
-- Nêu 1 risk và 1 biện pháp giám sát (logging/metrics).
-- Nếu có trải nghiệm production, thêm ví dụ migration cụ thể.
-
-
-### Q8. 🟡 [Mid] When choose SWR over server fetch?
-**Tổng Quan**
-Câu hỏi đánh giá khả năng chọn đúng pattern data fetching theo yêu cầu business và kỹ thuật.
-
-**Giải thích**
-Khi component cần auto revalidate phía client, tương tác nhẹ, và không cần orchestration mutation phức tạp.
-
-**Ví dụ**
-- Trình bày theo khung: loại dữ liệu → freshness target → cache policy → invalidation.
-- Nêu 1 risk và 1 biện pháp giám sát (logging/metrics).
-- Nếu có trải nghiệm production, thêm ví dụ migration cụ thể.
-
-
-### Q9. 🟡 [Mid] When React Query is a better fit?
-**Tổng Quan**
-Câu hỏi đánh giá khả năng chọn đúng pattern data fetching theo yêu cầu business và kỹ thuật.
-
-**Giải thích**
-Khi app có nhiều mutation, optimistic update, cache invalidation graph phức tạp, và cần devtools mạnh.
-
-**Ví dụ**
-- Trình bày theo khung: loại dữ liệu → freshness target → cache policy → invalidation.
-- Nêu 1 risk và 1 biện pháp giám sát (logging/metrics).
-- Nếu có trải nghiệm production, thêm ví dụ migration cụ thể.
-
-
-### Q10. 🟡 [Mid] What are tag-based revalidation benefits?
-**Tổng Quan**
-Câu hỏi đánh giá khả năng chọn đúng pattern data fetching theo yêu cầu business và kỹ thuật.
-
-**Giải thích**
-Invalidate theo domain dữ liệu (posts, profile) chính xác hơn so với revalidate toàn route.
-
-**Ví dụ**
-- Trình bày theo khung: loại dữ liệu → freshness target → cache policy → invalidation.
-- Nêu 1 risk và 1 biện pháp giám sát (logging/metrics).
-- Nếu có trải nghiệm production, thêm ví dụ migration cụ thể.
-
-
-### Q11. 🟡 [Mid] How Route Handlers fit in architecture?
-**Tổng Quan**
-Câu hỏi đánh giá khả năng chọn đúng pattern data fetching theo yêu cầu business và kỹ thuật.
-
-**Giải thích**
-Chúng đóng vai trò BFF/API boundary trong Next app, thêm auth/aggregation/rate-limit ở server.
-
-**Ví dụ**
-- Trình bày theo khung: loại dữ liệu → freshness target → cache policy → invalidation.
-- Nêu 1 risk và 1 biện pháp giám sát (logging/metrics).
-- Nếu có trải nghiệm production, thêm ví dụ migration cụ thể.
-
-
-### Q12. 🟡 [Mid] Server Actions vs API routes for mutation?
-**Tổng Quan**
-Câu hỏi đánh giá khả năng chọn đúng pattern data fetching theo yêu cầu business và kỹ thuật.
-
-**Giải thích**
-Server Actions giảm boilerplate cho form flows; API routes phù hợp public API hoặc integration đa client.
-
-**Ví dụ**
-- Trình bày theo khung: loại dữ liệu → freshness target → cache policy → invalidation.
-- Nêu 1 risk và 1 biện pháp giám sát (logging/metrics).
-- Nếu có trải nghiệm production, thêm ví dụ migration cụ thể.
-
-
-### Q13. 🟡 [Mid] How to prevent caching private data accidentally?
-**Tổng Quan**
-Câu hỏi đánh giá khả năng chọn đúng pattern data fetching theo yêu cầu business và kỹ thuật.
-
-**Giải thích**
-Phân loại endpoint rõ ràng, set `no-store` cho dữ liệu nhạy cảm, và review cache policy trong PR.
-
-**Ví dụ**
-- Trình bày theo khung: loại dữ liệu → freshness target → cache policy → invalidation.
-- Nêu 1 risk và 1 biện pháp giám sát (logging/metrics).
-- Nếu có trải nghiệm production, thêm ví dụ migration cụ thể.
-
-
-### Q14. 🟡 [Mid] How do you design revalidation strategy at scale?
-**Tổng Quan**
-Câu hỏi đánh giá khả năng chọn đúng pattern data fetching theo yêu cầu business và kỹ thuật.
-
-**Giải thích**
-Kết hợp TTL theo domain + event-driven invalidation + observability để cân bằng freshness và cost.
-
-**Ví dụ**
-- Trình bày theo khung: loại dữ liệu → freshness target → cache policy → invalidation.
-- Nêu 1 risk và 1 biện pháp giám sát (logging/metrics).
-- Nếu có trải nghiệm production, thêm ví dụ migration cụ thể.
-
-
-### Q15. 🟡 [Mid] What is a good interview answer for data fetching trade-offs?
-**Tổng Quan**
-Câu hỏi đánh giá khả năng chọn đúng pattern data fetching theo yêu cầu business và kỹ thuật.
-
-**Giải thích**
-Nêu matrix theo SEO/freshness/personalization/interaction rồi map từng route vào pattern phù hợp.
-
-**Ví dụ**
-- Trình bày theo khung: loại dữ liệu → freshness target → cache policy → invalidation.
-- Nêu 1 risk và 1 biện pháp giám sát (logging/metrics).
-- Nếu có trải nghiệm production, thêm ví dụ migration cụ thể.
-
-
-### Q16. 🔴 [Senior] How to reason about ISR consistency?
-**Tổng Quan**
-Câu hỏi đánh giá khả năng chọn đúng pattern data fetching theo yêu cầu business và kỹ thuật.
-
-**Giải thích**
-ISR là eventual consistency; cần xác định chấp nhận stale bao lâu và luồng critical nào cần no-store.
-
-**Ví dụ**
-- Trình bày theo khung: loại dữ liệu → freshness target → cache policy → invalidation.
-- Nêu 1 risk và 1 biện pháp giám sát (logging/metrics).
-- Nếu có trải nghiệm production, thêm ví dụ migration cụ thể.
-
-
-### Q17. 🔴 [Senior] How to debug stale data issues in Next.js?
-**Tổng Quan**
-Câu hỏi đánh giá khả năng chọn đúng pattern data fetching theo yêu cầu business và kỹ thuật.
-
-**Giải thích**
-Kiểm tra cache options, tags, TTL, route segment config và log timestamp response theo environment.
-
-**Ví dụ**
-- Trình bày theo khung: loại dữ liệu → freshness target → cache policy → invalidation.
-- Nêu 1 risk và 1 biện pháp giám sát (logging/metrics).
-- Nếu có trải nghiệm production, thêm ví dụ migration cụ thể.
-
-
-### Q18. 🔴 [Senior] What is the impact of fetch location in component tree?
-**Tổng Quan**
-Câu hỏi đánh giá khả năng chọn đúng pattern data fetching theo yêu cầu business và kỹ thuật.
-
-**Giải thích**
-Fetch đặt sâu giúp scope rõ nhưng có thể khó tổng hợp; fetch đặt cao dễ điều phối nhưng tăng coupling.
-
-**Ví dụ**
-- Trình bày theo khung: loại dữ liệu → freshness target → cache policy → invalidation.
-- Nêu 1 risk và 1 biện pháp giám sát (logging/metrics).
-- Nếu có trải nghiệm production, thêm ví dụ migration cụ thể.
-
-
-### Q19. 🔴 [Senior] How to combine Server Actions with optimistic UI?
-**Tổng Quan**
-Câu hỏi đánh giá khả năng chọn đúng pattern data fetching theo yêu cầu business và kỹ thuật.
-
-**Giải thích**
-Dùng optimistic state ở client rồi sync lại bằng revalidateTag/path để đảm bảo eventual correctness.
-
-**Ví dụ**
-- Trình bày theo khung: loại dữ liệu → freshness target → cache policy → invalidation.
-- Nêu 1 risk và 1 biện pháp giám sát (logging/metrics).
-- Nếu có trải nghiệm production, thêm ví dụ migration cụ thể.
-
-
-### Q20. 🔴 [Senior] Senior-level architecture call for mixed fetching?
-**Tổng Quan**
-Câu hỏi đánh giá khả năng chọn đúng pattern data fetching theo yêu cầu business và kỹ thuật.
-
-**Giải thích**
-Tách route theo domain: marketing static/ISR, app shell dynamic, widgets realtime client cache, mutation via actions.
-
-**Ví dụ**
-- Trình bày theo khung: loại dữ liệu → freshness target → cache policy → invalidation.
-- Nêu 1 risk và 1 biện pháp giám sát (logging/metrics).
-- Nếu có trải nghiệm production, thêm ví dụ migration cụ thể.
-
-
-### Data Fetching Drill 1: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-### Data Fetching Drill 2: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-### Data Fetching Drill 3: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-### Data Fetching Drill 4: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-### Data Fetching Drill 5: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-### Data Fetching Drill 6: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-### Data Fetching Drill 7: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-### Data Fetching Drill 8: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-### Data Fetching Drill 9: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-### Data Fetching Drill 10: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-### Data Fetching Drill 11: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-### Data Fetching Drill 12: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-### Data Fetching Drill 13: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-### Data Fetching Drill 14: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-### Data Fetching Drill 15: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-### Data Fetching Drill 16: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-### Data Fetching Drill 17: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-### Data Fetching Drill 18: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-### Data Fetching Drill 19: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-### Data Fetching Drill 20: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-### Data Fetching Drill 21: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-### Data Fetching Drill 22: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-### Data Fetching Drill 23: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-### Data Fetching Drill 24: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-### Data Fetching Drill 25: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-### Data Fetching Drill 26: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-### Data Fetching Drill 27: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-### Data Fetching Drill 28: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-### Data Fetching Drill 29: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-### Data Fetching Drill 30: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-### Data Fetching Drill 31: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-### Data Fetching Drill 32: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-### Data Fetching Drill 33: Architecture Scenario
-**Tổng Quan**
-Scenario nhằm luyện tư duy chọn chiến lược data fetching trong Next.js App Router.
-
-**Giải thích**
-- Xác định route này thuộc marketing, product, hay authenticated app.
-- Đánh giá yêu cầu SEO, độ mới dữ liệu, và mức cá nhân hoá.
-- Quyết định server/client fetch và policy cache tương ứng.
-- Thiết kế fallback/loading/error boundary.
-- Định nghĩa revalidation trigger theo thời gian hoặc sự kiện.
-
-**Ví dụ**
-Case mẫu:
-1. Trang danh sách bài viết: ISR `revalidate: 300` + tag `posts`.
-2. Trang profile: `no-store` vì dữ liệu private.
-3. Widget notification: client polling bằng SWR.
-4. Form tạo bài viết: Server Action + `revalidateTag('posts')`.
-5. Error strategy: segment-level `error.tsx` + centralized logging.
-
-
-## Summary / Tóm Tắt
-
-Data fetching trong Next.js App Router là bài toán kiến trúc, không chỉ là gọi API.
-Trả lời phỏng vấn tốt khi bạn thể hiện được cách cân bằng SEO, freshness, personalization, và complexity vận hành.
+🔁 **Spaced Repetition reminder:** Review lại file này sau 3 ngày, rồi 7 ngày, rồi 14 ngày.
