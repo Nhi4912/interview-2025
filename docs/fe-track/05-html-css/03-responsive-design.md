@@ -305,6 +305,11 @@ Responsive đúng phải bao gồm accessibility.
 
 > 🧠 **Memory Hook**: "Mobile-first = write the small version first, then EXPAND. Desktop-first = write the big version first, then SHRINK. Shrinking is harder — you end up hiding content, not redesigning."
 
+**Tại sao tồn tại? / Why does this exist?**
+Smartphones bắt đầu phổ biến ~2010 — web đã có sẵn rồi, đa phần được thiết kế cho desktop.
+→ **Why?** "Desktop-first" dẫn đến CSS phức tạp — override 20 desktop properties cho mobile, dễ miss edge case.
+→ **Why?** Mobile-first = progressive enhancement: bắt đầu từ minimum viable experience, thêm features khi screen lớn hơn. Kết quả CSS thường nhỏ hơn và dễ maintain hơn.
+
 ```
 Mobile-first (min-width):        Desktop-first (max-width):
 Base CSS = mobile                Base CSS = desktop
@@ -326,11 +331,20 @@ Progressive ENHANCEMENT          Graceful DEGRADATION
 - → Think: Mobile-first audit: what content is essential? what loads but stays hidden?
 - → Answer opens with: "I'd start with a content audit — decide what's essential on mobile, then use mobile-first CSS with `min-width` media queries to progressively enhance for larger screens."
 
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+- 📚 Cần biết: [CSS Grid & Flexbox](./01-grid-flexbox.md) — layout tools used in responsive design
+- ➡️ Để hiểu: [Core Web Vitals](../06-browser-performance/01-core-web-vitals.md) — mobile-first directly impacts LCP and CLS scores
+
 ---
 
 ### 2. Fluid Layout (No Media Queries)
 
 > 🧠 **Memory Hook**: "clamp(min, preferred, max) = 'at least min, at most max, ideally preferred'. Three numbers, no media queries."
+
+**Tại sao tồn tại? / Why does this exist?**
+Media query breakpoints tạo ra "jumps" — bố cục thay đổi đột ngột ở 768px, 1024px thay vì scale mượt.
+→ **Why?** Vì viewport-relative units (`vw`) không có lower/upper bound — text có thể quá nhỏ ở 320px hoặc quá lớn ở 4K.
+→ **Why?** `clamp()` kết hợp cả hai: viewport-responsive + bounded. Giảm số lượng media query cần thiết từ nhiều về zero cho typography và spacing.
 
 ```css
 /* Fluid typography — scales between 1rem and 1.5rem */
@@ -349,11 +363,20 @@ grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
 | Using `vh` for full-height elements on mobile | Browser chrome (address bar) isn't included in `vh` → layout jumps | Use `dvh` (dynamic viewport height) |
 | Fixed `px` breakpoints (768px, 1024px) | Maps to specific devices, not content needs | Use `rem`-based breakpoints (48rem, 64rem) that respect font size |
 
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+- 📚 Cần biết: CSS custom properties — `clamp()` thường dùng với `var(--text-base)` pattern
+- ➡️ Để hiểu: Container Queries (mục 3 bên dưới) — tiếp theo trong fluid component evolution
+
 ---
 
 ### 3. Container Queries vs Media Queries
 
 > 🧠 **Memory Hook**: "Media query = 'how wide is the WINDOW?' Container query = 'how wide is MY BOX?' Component doesn't care about the window."
+
+**Tại sao tồn tại? / Why does this exist?**
+Media queries check viewport width — nhưng component card trong sidebar 300px và trong main 800px đều nhận cùng CSS khi viewport ≥ 600px.
+→ **Why?** Component-driven architecture (React, Vue) cần components tự responsive theo context — không thể hard-code assumptions về viewport.
+→ **Why?** Container queries (2023) giải quyết: component query container width của chính mình, hoạt động đúng dù đặt ở đâu trong layout.
 
 ```
 Media query problem:

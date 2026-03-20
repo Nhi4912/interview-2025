@@ -3,16 +3,278 @@
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 
-## Table of Contents / Mục Lục
+## Real-World Scenario / Tình Huống Thực Tế
 
-1. [Metaprogramming Fundamentals](#metaprogramming-fundamentals)
-2. [Reflection](#reflection)
-3. [Dynamic Code Generation](#dynamic-code-generation)
-4. [DSL Creation](#dsl-creation)
-5. [Code Transformation](#code-transformation)
-6. [Interview Questions](#interview-questions)
+**TypeORM entity validation:** Mỗi entity class cần validate 20+ fields. Option A: call `validate(user.email, 'email')` manually in every service → 200 lines of imperative code. Option B: Decorators + Reflect Metadata: `@IsEmail() email: string` — decorator attaches metadata to the property, validator reads it at runtime. When `validate(user)` is called, it uses `Reflect.getMetadata` to find all validation rules and applies them automatically. This is how NestJS, TypeORM, and class-validator work internally.
+
+**Bài học:** Metaprogramming là code that treats code as data — mở ra khả năng tạo frameworks, ORMs, validation libraries. `Reflect.metadata`, `Symbol.iterator`, tagged templates là các tools cốt lõi.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Metaprogramming giống thợ in offset (printing) — bạn không in từng trang một, bạn tạo ra bản in (plate) rồi dùng nó để in hàng ngàn trang giống nhau. Code that writes code multiplies your leverage.
+
+**Scope:** Note: Proxy basics and Symbol covered in [11-es6-features-deep.md](./11-es6-features-deep.md) and [17-advanced-patterns-theory.md](./17-advanced-patterns-theory.md). This file focuses on Reflect API, Reflect.metadata (class-validator pattern), tagged templates, and DSL creation.
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[JavaScript Metaprogramming]
+        │
+        ├── Reflect API
+        │       ├── Mirrors Proxy traps as static methods
+        │       ├── Reflect.get/set/has/deleteProperty/apply/construct
+        │       └── Returns boolean (not throws) — functional style
+        │
+        ├── Reflect.metadata (metadata API via reflect-metadata package)
+        │       ├── Attach metadata to classes/properties at definition
+        │       ├── Read metadata at runtime
+        │       └── Powers: class-validator, TypeORM, NestJS DI
+        │
+        ├── Tagged Template Literals
+        │       ├── tag`template ${expr}` → tag(strings, ...values)
+        │       └── Powers: styled-components, gql`...`, sql`...`
+        │
+        └── DSL via Method Chaining + Builder
+                query.select('*').from('users').where('age > 18').limit(10)
+                Each method returns 'this' for chaining → execute at terminal op
+```
 
 ---
+
+## Core Concepts / Khái Niệm Cốt Lõi
+
+---
+
+### 1. Reflect API — Metaprogramming at the Language Level
+
+**🧠 Memory Hook:** "**Reflect = the manual override buttons for JavaScript's built-in operations. What Proxy traps intercept, Reflect methods do by default.**"
+
+**Why does this exist? / Tại sao tồn tại?**
+
+- Why do we need `Reflect` when we have direct operators? Because operators like `delete`, property access, and `new` throw errors or behave inconsistently. `Reflect` provides a consistent functional API — every operation returns a value instead of throwing, mirroring exactly what Proxy traps receive
+- Why is `Reflect` designed to mirror Proxy traps? By design — inside a Proxy trap, you use `Reflect.get(target, key, receiver)` to invoke the default behavior. It's the exact same method signature as the trap parameter signature. This makes Proxy + Reflect natural partners
+- Why use `Reflect.has` instead of `in` operator? `in` throws on null/undefined. `Reflect.has(null, 'key')` returns `false`. Functional code prefers values over exceptions
+
+**Visual — Reflect vs Operators:**
+
+```javascript
+// Traditional operators vs Reflect equivalents:
+obj.prop             // Reflect.get(obj, 'prop')
+obj.prop = value     // Reflect.set(obj, 'prop', value) → returns boolean
+delete obj.prop      // Reflect.deleteProperty(obj, 'prop') → returns boolean
+'prop' in obj        // Reflect.has(obj, 'prop') → returns boolean
+new Ctor(...args)    // Reflect.construct(Ctor, args) → new instance
+fn.apply(ctx, args)  // Reflect.apply(fn, ctx, args)
+
+// In Proxy trap — using Reflect for default behavior:
+const handler = {
+  set(target, key, value, receiver) {
+    if (typeof value !== 'string') throw new TypeError('Strings only')
+    return Reflect.set(target, key, value, receiver)  // ← default set
+    // return true  ← BUG: doesn't set the value!
+    // Not using Reflect: breaks prototype chain for accessor properties
+  }
+}
+
+// Reflect.metadata (requires reflect-metadata package):
+import 'reflect-metadata'
+
+function validate(rules: object) {
+  return (target: any, key: string) => {
+    Reflect.defineMetadata('validation', rules, target, key)
+  }
+}
+
+class User {
+  @validate({ required: true, email: true })
+  email: string
+
+  @validate({ required: true, minLength: 2 })
+  name: string
+}
+
+// Runtime validation:
+function validateObject(obj: any) {
+  const keys = Object.keys(obj)
+  for (const key of keys) {
+    const rules = Reflect.getMetadata('validation', obj, key)
+    if (rules) applyRules(obj[key], rules)
+  }
+}
+```
+
+**Common Mistakes:**
+
+| ❌ Wrong | ✅ Correct |
+|---|---|
+| `return true` inside Proxy `set` trap without setting value | Use `Reflect.set(target, key, value, receiver)` to actually set AND return true |
+| Forgetting `receiver` in `Reflect.get/set` in Proxy | `receiver` is needed for proper prototype chain `get`/`set` — omitting breaks accessors |
+| Using `Reflect.metadata` without `reflect-metadata` polyfill | TC39 spec doesn't include metadata — need `import 'reflect-metadata'` first |
+| Calling `Reflect.apply(fn, null, args)` on arrow functions with `this` | Arrow functions don't have own `this` — `receiver` is ignored but no error |
+
+**🎯 Interview Pattern:**
+- **Trigger**: "Proxy + Reflect" / "how NestJS DI works" / "Reflect.metadata"
+- **Concept**: Reflect mirrors Proxy trap API; Reflect.metadata for runtime type information
+- **Opening**: "Reflect provides functional versions of JavaScript's built-in operations — the same operations that Proxy can intercept. Inside a Proxy trap, I always use `Reflect.get/set` with the receiver to invoke default behavior correctly. For framework features like class-validator, `Reflect.defineMetadata` attaches rules at decoration time and `Reflect.getMetadata` reads them at runtime..."
+
+**🔑 Knowledge Chain:**
+- **Prereq**: Proxy traps (see 11-es6-features-deep.md), decorators (17-advanced-patterns-theory.md)
+- **Enables**: NestJS DI, TypeORM entity validation, class-validator, Angular DI container
+
+---
+
+### 2. Tagged Template Literals — DSL at the Language Level
+
+**🧠 Memory Hook:** "**`tag\`template ${expr}\`` calls `tag(strings, ...values)`. The tag function receives strings as array and expressions as args. It decides what to return.**"
+
+**Why does this exist? / Tại sao tồn tại?**
+
+- Why are template literals not enough? Regular `` `Hello ${name}` `` is just string interpolation. You can't process the expressions — they're already evaluated to strings
+- Why do tagged templates receive strings and expressions separately? Because the tag function needs to process each expression (escape SQL injection, apply CSS minification, wrap GraphQL types) before combining with the string parts
+- Why is this considered "metaprogramming"? Because you're using JavaScript's own syntax to build a mini-language. `sql\`SELECT * FROM users WHERE id = ${userId}\`` looks like SQL but is JavaScript — the tag function handles the escaping and parameterization
+
+**Visual — Tagged Template Mechanics:**
+
+```javascript
+// Tag function signature: (strings: TemplateStringsArray, ...values: any[]) => any
+function highlight(strings, ...values) {
+  return strings.reduce((result, str, i) => {
+    const val = values[i - 1]
+    return result + (val !== undefined ? `<mark>${val}</mark>` : '') + str
+  })
+}
+
+const name = 'World'
+const result = highlight`Hello ${name}! Today is ${new Date()}.`
+// → 'Hello <mark>World</mark>! Today is <mark>Fri Mar...</mark>.'
+
+// Real-world: SQL safe parameterization
+function sql(strings, ...values) {
+  const params = []
+  const query = strings.reduce((sql, str, i) => {
+    if (i > 0) {
+      params.push(values[i - 1])  // escape: use $1, $2 placeholders
+      return sql + `$${i}`        // NOT string interpolation — parameterized
+    }
+    return sql + str
+  })
+  return { query, params }  // { query: "SELECT... WHERE id = $1", params: [42] }
+}
+
+const userId = 42
+const { query, params } = sql`SELECT * FROM users WHERE id = ${userId}`
+// Prevents SQL injection: userId is a parameter, not inline string
+
+// Real-world: styled-components (simplified)
+const css = (strings, ...values) => strings.reduce((a, s, i) =>
+  a + (values[i - 1] ?? '') + s)
+const Button = styled.button`
+  background: ${props => props.primary ? 'blue' : 'white'};
+  color: ${props => props.primary ? 'white' : 'blue'};
+`
+```
+
+**Common Mistakes:**
+
+| ❌ Wrong | ✅ Correct |
+|---|---|
+| Using template literals for SQL instead of tagged templates | `` `SELECT ... WHERE id = ${userId}` `` — SQL injection risk; use tagged `sql\`\`` |
+| Forgetting `strings` array has one more element than `values` | `strings.length === values.length + 1` — always |
+| Returning non-string from tagged template | Tag can return anything: DOM element, styled component, Query object |
+| Using `eval()` for "template-like" dynamic code generation | Tagged templates are safe (no code execution) vs `eval` (executes arbitrary code) |
+
+**🎯 Interview Pattern:**
+- **Trigger**: "SQL injection prevention" / "styled-components internals" / "template literal tag"
+- **Concept**: Tag function receives strings + expressions separately — can process before combining
+- **Opening**: "Tagged template literals pass the string parts and expression parts separately to a tag function. `sql\`WHERE id = ${userId}\`` — the sql function can put `userId` in parameterized position instead of inline. That's how SQL injection is prevented. styled-components uses the same mechanism — the tag function processes prop functions embedded in the template..."
+
+**🔑 Knowledge Chain:**
+- **Prereq**: Template literals, higher-order functions
+- **Enables**: styled-components, graphql-tag (`gql\`\``), secure SQL queries, i18n libraries
+
+---
+
+### 3. DSL via Method Chaining (Fluent Interface)
+
+**🧠 Memory Hook:** "**Each method returns `this`. Terminal method executes. Builder accumulates config; executor runs it.**"
+
+**Why does this exist? / Tại sao tồn tại?**
+
+- Why is method chaining a metaprogramming technique? Because it creates an internal DSL — code that reads like a specialized language (`query.select('*').from('users').where('age > 18').limit(10)`) but is standard JavaScript
+- Why return `this` in each method? So the next method can be called on the same object. Each method mutates the internal state and returns the builder for chaining
+- Why is the builder/executor separation important? The execution (`execute()`, `build()`, `.all()`) should happen last — this allows validation, query optimization, logging, or lazy evaluation before the actual work runs
+
+**Visual — Method Chaining Pattern:**
+
+```javascript
+class QueryBuilder {
+  #table = null
+  #conditions = []
+  #limit = null
+  #fields = ['*']
+
+  select(...fields) {
+    this.#fields = fields
+    return this  // ← key: return this for chaining
+  }
+
+  from(table) {
+    this.#table = table
+    return this
+  }
+
+  where(condition) {
+    this.#conditions.push(condition)
+    return this
+  }
+
+  limit(n) {
+    this.#limit = n
+    return this
+  }
+
+  build() {  // ← terminal operation: no return this
+    const where = this.#conditions.length
+      ? `WHERE ${this.#conditions.join(' AND ')}`
+      : ''
+    const limit = this.#limit ? `LIMIT ${this.#limit}` : ''
+    return `SELECT ${this.#fields.join(', ')} FROM ${this.#table} ${where} ${limit}`.trim()
+  }
+}
+
+const query = new QueryBuilder()
+  .select('name', 'email')
+  .from('users')
+  .where('age > 18')
+  .where('active = true')
+  .limit(10)
+  .build()
+// → 'SELECT name, email FROM users WHERE age > 18 AND active = true LIMIT 10'
+```
+
+**Common Mistakes:**
+
+| ❌ Wrong | ✅ Correct |
+|---|---|
+| Terminal method returns `this` | Terminal method (`.build()`, `.execute()`) returns the result, not `this` |
+| Mutating original object on each chain call | For immutable API: return `new QueryBuilder({...state, newProp: value})` |
+| No validation in terminal method | Validate completeness (e.g., `this.#table === null → throw Error`) at execute time |
+| Deeply nested chain with 20+ calls | Break into named intermediate variables for readability |
+
+**🎯 Interview Pattern:**
+- **Trigger**: "fluent API" / "query builder" / "jQuery-like chaining" / "builder pattern"
+- **Concept**: Each method returns `this`; terminal method executes; builder accumulates config
+- **Opening**: "Method chaining creates a fluent interface — every method returns `this` except the terminal method which executes the accumulated config. This is how query builders, test frameworks (Jest's `expect(x).toBe(y)`), and stream APIs work. The key design decision is separating the builder from the executor..."
+
+**🔑 Knowledge Chain:**
+- **Prereq**: `this` binding, object methods
+- **Enables**: Custom query builders, test assertion libraries, animation timelines, pipeline APIs
+
+---
+
+## Reference Theory / Tài Liệu Tham Khảo
+
+
 
 ## Metaprogramming Fundamentals / Cơ Bản Metaprogramming
 
@@ -854,125 +1116,81 @@ console.log(html.build());
 
 ---
 
-## Câu Hỏi Phỏng Vấn / Interview Q&A
+## Interview Q&A / Câu Hỏi Phỏng Vấn
 
-### 🔴 [Senior] Q1: What is metaprogramming and why use it?
+### Q: Why should you use `Reflect.set(target, key, value, receiver)` inside a Proxy `set` trap instead of just `return true`? 🔴 Senior
 
-**English Answer:**
+**A:** `return true` inside a `set` trap signals "operation succeeded" to the caller without actually setting the value on the target. This silently discards the write. `Reflect.set(target, key, value, receiver)` does the actual assignment using JavaScript's standard property assignment semantics — including invoking any `set` accessor on the prototype chain via the `receiver` parameter. Omitting `receiver` breaks accessor properties inherited from prototypes. The trap should always return `Reflect.set(...)` to properly propagate the write while intercepting it.
 
-**Metaprogramming** is code that manipulates code.
+`return true` trong Proxy `set` trap báo hiệu thành công nhưng không thực sự set value — data lost silently. `Reflect.set(target, key, value, receiver)` thực hiện assignment đúng, kể cả accessor properties qua prototype chain (cần `receiver`).
 
-**Techniques:**
-1. **Reflection**: Inspect code structure
-2. **Introspection**: Examine objects
-3. **Intercession**: Modify behavior
-4. **Code Generation**: Create code dynamically
-
-**Use Cases:**
-- Frameworks and libraries
-- ORMs and query builders
-- Validation frameworks
-- Serialization/deserialization
-- Dependency injection
-- Aspect-oriented programming
-
-**Benefits:**
-- Reduce boilerplate
-- Increase flexibility
-- Enable DSLs
-- Runtime adaptation
-
-**Drawbacks:**
-- Complexity
-- Performance overhead
-- Harder debugging
-- Less type safety
-
-**Tiếng Việt:**
-
-Metaprogramming là code thao tác code. Dùng cho frameworks, ORMs, validation, serialization, DI, AOP.
-
-### 🔴 [Senior] Q2: Explain Reflect API and its advantages
-
-**English Answer:**
-
-**Reflect API** provides methods for interceptable operations:
-
-**Methods:**
-- `Reflect.get/set` - Property access
-- `Reflect.has` - Property existence
-- `Reflect.deleteProperty` - Delete property
-- `Reflect.construct` - Create instance
-- `Reflect.apply` - Call function
-- `Reflect.defineProperty` - Define property
-- `Reflect.getPrototypeOf/setPrototypeOf` - Prototype access
-
-**Advantages over operators:**
-1. **Return values**: Boolean instead of throwing
-2. **Consistency**: Uniform API
-3. **Functional**: Can be used with apply/call
-4. **Proxy integration**: Same traps as Proxy
-
-**Example:**
-```typescript
-// Old way
-try {
-  delete obj.prop;
-} catch (e) {}
-
-// Reflect way
-const success = Reflect.deleteProperty(obj, 'prop');
-```
-
-**Tiếng Việt:**
-
-Reflect API cung cấp methods cho các thao tác có thể chặn. Ưu điểm: return values, consistency, functional, proxy integration.
-
-### 🔴 [Senior] Q3: How to create a DSL in JavaScript?
-
-**English Answer:**
-
-**Steps to create DSL:**
-
-1. **Define Domain**: Identify problem domain
-2. **Design Syntax**: Create intuitive API
-3. **Implement Builder**: Fluent interface
-4. **Add Validation**: Check correctness
-5. **Generate Output**: Produce result
-
-**Patterns:**
-- **Method Chaining**: `query.where().and().orderBy()`
-- **Builder Pattern**: Step-by-step construction
-- **Template Strings**: Tagged templates
-- **Proxy**: Intercept operations
-
-**Example:**
-```typescript
-// SQL-like DSL
-const query = select('name', 'age')
-  .from('users')
-  .where('age', '>', 18)
-  .orderBy('name')
-  .limit(10);
-```
-
-**Tiếng Việt:**
-
-Tạo DSL: định nghĩa domain, thiết kế syntax, triển khai builder, thêm validation, tạo output. Dùng method chaining, builder pattern, template strings, proxy.
+**💡 Interview Signal:**
+- ✅ Strong: Explains silent data loss bug, explains `receiver` parameter's role in prototype accessor calls
+- ❌ Weak: "Use Reflect.set to be correct" — no explanation of WHY it's needed
 
 ---
 
-## Summary / Tóm Tắt
+### Q: How do tagged template literals work? Give a security use case. 🟡 Mid
 
-**Key Concepts:**
-1. Metaprogramming manipulates code at runtime
-2. Reflection inspects and modifies objects
-3. Dynamic code generation creates functions/classes
-4. DSLs provide domain-specific syntax
-5. Proxy and Reflect enable intercession
-6. Metadata adds extra information
-7. Use for frameworks, ORMs, validation
+**A:** Tagged templates call the tag function with two arguments: `strings` (array of literal string parts) and `...values` (evaluated expressions). The tag function decides what to do with them. For SQL injection prevention: instead of `` `WHERE id = ${userId}` `` (interpolates userId directly into the string), use `` sql`WHERE id = ${userId}` ``. The `sql` tag function puts `userId` into a parameterized slot (`$1`) and returns `{ query, params }` — the database driver handles escaping. This is how `pg-promise`, `slonik`, and ORMs prevent injection.
+
+Tagged templates: tag function receives `(strings, ...values)` — strings array and evaluated expressions separately. SQL security: `sql\`WHERE id = ${userId}\`` → puts userId in parameterized slot, not inline string. Prevents SQL injection.
+
+**💡 Interview Signal:**
+- ✅ Strong: Explains `strings` array + `...values` signature, gives SQL injection prevention as concrete security use case
+- ❌ Weak: "Tagged templates are used in styled-components" — correct but no mechanism explanation
 
 ---
+
+### Q: How does `Reflect.metadata` enable the class-validator pattern? 🔴 Senior
+
+**A:** `Reflect.defineMetadata(key, value, target, propertyKey)` stores metadata on a class property at decoration time. When `@IsEmail()` is applied to `user.email`, it calls `Reflect.defineMetadata('validation:rules', { email: true }, UserClass.prototype, 'email')`. At runtime, `validate(user)` calls `Reflect.getMetadata('validation:rules', user, key)` for each property to retrieve and apply the rules. This requires the `reflect-metadata` polyfill (TC39 metadata proposal not yet finalized). NestJS uses this pattern for everything: `@Injectable()`, `@Controller('/path')`, `@Body()` — all store metadata that the framework reads at bootstrap.
+
+`Reflect.defineMetadata` attaches rules to properties at decoration time. At runtime, validator calls `Reflect.getMetadata` to retrieve rules per property. Requires `reflect-metadata` polyfill. NestJS/class-validator pattern.
+
+**💡 Interview Signal:**
+- ✅ Strong: Explains decoration-time vs runtime split, mentions reflect-metadata requirement, NestJS usage
+- ❌ Weak: "Decorators add metadata" — no mechanism on how metadata is stored or retrieved
+
+---
+
+## Q&A Summary / Tóm Tắt Q&A
+
+| # | Topic | Level | One-liner |
+|---|-------|-------|-----------|
+| 1 | Reflect.set in Proxy trap | 🔴 | `return true` discards write; `Reflect.set(..., receiver)` sets correctly via prototype chain |
+| 2 | Tagged template security | 🟡 | `sql\`WHERE id = ${x}\`` puts `x` in parameter slot — prevents SQL injection |
+| 3 | Reflect.metadata pattern | 🔴 | `defineMetadata` at decoration, `getMetadata` at runtime — powers NestJS/class-validator |
+
+---
+
+## ⚡ Cold Call Simulation
+
+**Q: "How would you implement SQL injection prevention using tagged template literals?"**
+
+**30-second answer:**
+
+"Tagged templates receive the string parts and expression parts separately. I'd write a `sql` tag function that takes `strings` (the literal SQL parts) and `...values` (the user-supplied values). Instead of concatenating them directly — which would put raw user input into the query string — the function builds the SQL template with numbered placeholders like `$1`, `$2` where each expression was, and returns the query string plus a `params` array with the actual values. The database driver then executes the parameterized query, handling escaping properly. So `sql\`SELECT * FROM users WHERE id = ${userId}\`` returns `{ query: 'SELECT * FROM users WHERE id = $1', params: [userId] }`. The key insight is that the tag function has access to the expression values before they're interpolated, which is exactly where the injection would happen if you used regular template strings."
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+> **Close this doc. Then answer from memory.**
+
+- **Retrieval**: What does `Reflect.set(target, key, value, receiver)` do that `return true` inside a Proxy trap doesn't?
+- **Visual**: Sketch the tagged template call `sql\`WHERE id = ${userId} AND active = ${isActive}\`` — what arguments does the `sql` function receive?
+- **Application**: You want to add `@Required` and `@MinLength(5)` decorators that work with a `validate(obj)` function. How do you implement the metadata storage?
+- **Debug**: Your Proxy `set` trap uses `Reflect.set(target, key, value)` (no receiver). A property inherited from the prototype has a setter. What breaks and why?
+- **Teach**: Explain tagged template literals to a junior using the "form with labeled fields" analogy.
+
+🔁 **Spaced repetition**: Review in 3 days → 7 days → 14 days
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [ES6+ Features Deep](./11-es6-features-deep.md) — Proxy and Symbol.toPrimitive
+- ⬅️ **Built on**: [Advanced Patterns](./17-advanced-patterns-theory.md) — Decorators
+- 🔗 **Applied in**: [TypeScript Advanced](../02-typescript/02-advanced-types.md) — TypeScript emits decorator metadata via reflect-metadata
+- 🔗 **Applied in**: [React Patterns](../03-react/08-react-patterns-advanced.md) — styled-components tagged templates
 
 [← Previous: Advanced Patterns](./17-advanced-patterns-theory.md) | [Next: Concurrency Models →](./19-concurrency-models-theory.md) | [Back to Table of Contents](../../00-table-of-contents.md)
