@@ -3,16 +3,251 @@
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 
-## Table of Contents / Mục Lục
+## Real-World Scenario / Tình Huống Thực Tế
 
-1. [Event Loop](#event-loop)
-2. [Async Patterns](#async-patterns)
-3. [Web Workers](#web-workers)
-4. [Shared Memory](#shared-memory)
-5. [Async Iterators](#async-iterators)
-6. [Interview Questions](#interview-questions)
+**Shopee product search:** User types in search box → main thread runs debounced search + renders autocomplete. Suddenly background task: processing 100,000 product entries for local filtering — locks the main thread for 2 seconds. UI freezes. Fix: offload filtering to a Web Worker. Worker receives the dataset, processes it on a separate thread, posts results back. Main thread stays responsive. Users see smooth autocomplete while background processing runs in parallel.
+
+**Bài học:** JavaScript's single-threaded model is not a limitation for most apps. But compute-heavy tasks must be moved to Web Workers to avoid blocking the UI. Web Workers + SharedArrayBuffer enable true parallelism in JavaScript — understanding when and how to use them is a Senior-level skill.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Scope:** Event Loop and async/await basics → xem [06-event-loop-async.md](./06-event-loop-async.md) and [09-async-comprehensive.md](./09-async-comprehensive.md) (both ✅). This file focuses on **Web Workers** (true parallelism), **SharedArrayBuffer + Atomics** (shared memory coordination), and **Async Iterators** (streaming data protocol).
+
+**Analogy:** Web Workers là separate kitchen staff — họ làm việc song song với bếp chính (main thread). Communication qua `postMessage` như đặt đơn qua cửa sổ. SharedArrayBuffer là shared cutting board cả hai kitchen có thể dùng — Atomics là the lock preventing two chefs from cutting at the same time.
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[JavaScript Concurrency]
+        │
+        ├── Single-threaded: Event Loop handles concurrency via microtasks + macrotasks
+        │       (see 06-event-loop-async.md for deep dive)
+        │
+        ├── Web Workers — true parallelism (separate thread)
+        │       ├── Dedicated Worker: one-to-one with page
+        │       ├── Shared Worker: shared across tabs (same origin)
+        │       ├── Service Worker: intercept network requests, offline caching
+        │       ├── Communication: postMessage() / onmessage (structured clone)
+        │       └── No DOM access in workers
+        │
+        ├── SharedArrayBuffer + Atomics — shared memory across threads
+        │       ├── SharedArrayBuffer: raw memory shared between main thread and workers
+        │       ├── Atomics.load/store: thread-safe reads/writes
+        │       ├── Atomics.compareExchange: CAS (compare-and-swap)
+        │       ├── Atomics.wait/notify: synchronization primitive
+        │       └── Requires COOP/COEP headers (Spectre mitigation)
+        │
+        └── Async Iterators — streaming protocol
+                Symbol.asyncIterator → [Symbol.asyncIterator]() returns async iterator
+                for await...of: calls .next(), awaits Promise<{value, done}>
+                Async generators: async function* — suspend with yield, async with await
+```
 
 ---
+
+## Core Concepts / Khái Niệm Cốt Lõi
+
+---
+
+### 1. Web Workers — True Parallelism
+
+**🧠 Memory Hook:** "**Web Worker = separate JS thread. postMessage = the only door. No DOM. No shared state by default.**"
+
+**Why does this exist? / Tại sao tồn tại?**
+
+- Why can't the main thread do heavy computation? Because the main thread handles rendering, user events, and JavaScript execution. A heavy computation blocks the rendering loop — users see frozen UI
+- Why is `postMessage` the only communication channel? Because sharing memory between threads is dangerous (race conditions, data corruption). Structured Clone — the algorithm behind `postMessage` — serializes data to prevent sharing mutable references. (SharedArrayBuffer is the opt-in exception with explicit synchronization)
+- Why are there 3 types of workers? Different use cases: Dedicated (private to one page), Shared (accessible from multiple tabs), Service (intercepts network — enables PWA offline)
+
+**Visual — Web Worker Communication:**
+
+```javascript
+// main.js — main thread
+const worker = new Worker('./worker.js')
+
+// Send data to worker (structured clone — deep copy):
+worker.postMessage({ type: 'PROCESS', data: largeArray })
+
+// Receive results:
+worker.onmessage = (event) => {
+  const { result } = event.data
+  renderResults(result)  // ← back on main thread, can touch DOM
+}
+
+// worker.js — worker thread (no window, no document, no DOM)
+self.onmessage = (event) => {
+  if (event.data.type === 'PROCESS') {
+    const result = heavyComputation(event.data.data)  // ← runs in parallel
+    self.postMessage({ result })
+  }
+}
+
+// Optimization: Transferable Objects (zero-copy transfer)
+const buffer = new ArrayBuffer(1024 * 1024)  // 1MB
+worker.postMessage({ buffer }, [buffer])  // transfer ownership — O(1) instead of O(n)
+// ⚠️ After transfer: buffer is detached in main thread — can't use it
+```
+
+**Common Mistakes:**
+
+| ❌ Wrong | ✅ Correct |
+|---|---|
+| Accessing DOM from worker | Workers have no DOM access — return computed data, update DOM in main thread |
+| Sending large objects via postMessage | Use Transferable Objects (ArrayBuffer, MessagePort) for zero-copy transfer |
+| Creating worker inline for simple tasks | Workers have startup cost (~5ms) — only worth it for tasks >10ms computation |
+| Forgetting error handling | `worker.onerror = (e) => { }` — uncaught worker errors don't propagate automatically |
+
+**🎯 Interview Pattern:**
+- **Trigger**: "UI freeze" / "heavy computation" / "main thread blocking" / "parallelism in JS"
+- **Concept**: Web Worker = separate thread, postMessage for communication, no DOM access
+- **Opening**: "When computation would block the main thread for more than ~16ms, I'd move it to a Web Worker. Workers run on a separate OS thread, so the main thread stays responsive. Communication is via `postMessage` — structured clone serializes data, or you can use Transferable Objects for zero-copy transfer of ArrayBuffers..."
+
+**🔑 Knowledge Chain:**
+- **Prereq**: Event Loop basics, ArrayBuffer
+- **Enables**: Parallel image/video processing, client-side search, crypto in browser, Offscreen Canvas
+
+---
+
+### 2. SharedArrayBuffer + Atomics
+
+**🧠 Memory Hook:** "**SharedArrayBuffer = shared whiteboard. Atomics = the rule: only one person writes at a time. Requires COOP/COEP headers.**"
+
+**Why does this exist? / Tại sao tồn tại?**
+
+- Why do we need shared memory when we have postMessage? Because postMessage serializes (copies) data — sending a 50MB dataset between workers is a 50MB copy. SharedArrayBuffer shares a single backing memory — no copying, zero allocation
+- Why do we need Atomics? Because if two workers read-modify-write the same memory location concurrently without coordination, you get race conditions. Atomics provides atomic operations: `compareExchange` (compare old value, set new only if match — basis of lock-free algorithms), `wait`/`notify` (sleeping/waking threads)
+- Why was SharedArrayBuffer disabled by default after 2018? The Spectre CPU vulnerability — shared memory allows timing attacks. Re-enabled when browsers added Cross-Origin Isolation: `Cross-Origin-Opener-Policy: same-origin` + `Cross-Origin-Embedder-Policy: require-corp` headers
+
+**Visual — SharedArrayBuffer + Atomics:**
+
+```javascript
+// main.js:
+const sharedBuffer = new SharedArrayBuffer(4)  // 4 bytes = 1 Int32
+const shared = new Int32Array(sharedBuffer)
+
+const worker = new Worker('./worker.js')
+worker.postMessage({ sharedBuffer })  // pass reference (not copy!)
+
+// Wait for worker to be done (blocking in main thread — avoid in production!):
+Atomics.wait(shared, 0, 0)  // wait until shared[0] !== 0
+
+// worker.js:
+self.onmessage = (event) => {
+  const shared = new Int32Array(event.data.sharedBuffer)
+  // Both main thread and worker share the SAME memory
+
+  // Atomic increment (thread-safe):
+  Atomics.add(shared, 0, 1)  // atomic: read-add-write as one operation
+
+  // Wake up main thread:
+  Atomics.notify(shared, 0, 1)
+}
+
+// Cross-Origin Isolation required — server headers:
+// Cross-Origin-Opener-Policy: same-origin
+// Cross-Origin-Embedder-Policy: require-corp
+```
+
+**Common Mistakes:**
+
+| ❌ Wrong | ✅ Correct |
+|---|---|
+| Non-atomic read-modify-write: `shared[0]++` in worker | Use `Atomics.add(shared, 0, 1)` for thread-safe increment |
+| Forgetting COOP/COEP headers | SharedArrayBuffer returns `undefined` without cross-origin isolation |
+| Using SharedArrayBuffer for general JS object sharing | Only raw binary data — use shared array of typed integers/floats, not objects |
+| `Atomics.wait` on main browser thread | `Atomics.wait` is blocking — not allowed on main thread (would freeze UI). Use `Atomics.waitAsync` |
+
+**🎯 Interview Pattern:**
+- **Trigger**: "cross-worker communication" / "high-performance shared state" / "WASM + workers"
+- **Concept**: SharedArrayBuffer = zero-copy shared memory; Atomics = thread-safe operations; COOP/COEP required
+- **Opening**: "For passing large datasets between workers efficiently, SharedArrayBuffer shares a single backing memory — no serialization. Both threads view the same bytes. Atomics provides the synchronization: `compareExchange` for lock-free algorithms, `wait`/`notify` for sleeping/waking. There's a security requirement: Cross-Origin Isolation headers (COOP + COEP) must be set or SharedArrayBuffer is disabled..."
+
+**🔑 Knowledge Chain:**
+- **Prereq**: Web Workers (postMessage), ArrayBuffer/TypedArrays
+- **Enables**: WebAssembly multi-threading, high-performance client-side computation, lock-free data structures
+
+---
+
+### 3. Async Iterators & `for await...of`
+
+**🧠 Memory Hook:** "**Async iterator = iterator where `.next()` returns a Promise. `for await...of` is `for...of` that awaits each `.next()`.**"
+
+**Why does this exist? / Tại sao tồn tại?**
+
+- Why isn't regular `for...of` enough for async data? Because `for...of` calls `.next()` synchronously and expects `{value, done}` immediately. Async data sources (file reading, event streams, paginated APIs) need each value to be awaited before requesting the next
+- Why is the pull-based model important? Async iterators are pull-based — the consumer controls the pace by awaiting each value. This is different from push-based (EventEmitter) where the producer controls the rate. Pull-based is composable and handles backpressure naturally
+- Why does Node.js use async iterators for streams? Because `for await (const chunk of readableStream)` is far cleaner than `stream.on('data', ...) + stream.on('end', ...)` while maintaining the same backpressure semantics
+
+**Visual — Async Iterator Protocol:**
+
+```javascript
+// The protocol:
+const asyncIterable = {
+  [Symbol.asyncIterator]() {
+    let page = 1
+    return {
+      async next() {
+        const data = await fetch(`/api/items?page=${page++}`)
+        const items = await data.json()
+        if (items.length === 0) return { done: true, value: undefined }
+        return { done: false, value: items }
+      }
+    }
+  }
+}
+
+// Consumer:
+for await (const page of asyncIterable) {
+  console.log('Got page:', page)
+  // Awaits each fetch before requesting next page — natural backpressure
+}
+
+// Async generator (simplest way to create async iterable):
+async function* paginate(url) {
+  let page = 1
+  while (true) {
+    const res = await fetch(`${url}?page=${page++}`)
+    const items = await res.json()
+    if (items.length === 0) return
+    yield items  // ← pauses here, resumes when consumer awaits .next()
+  }
+}
+
+for await (const items of paginate('/api/products')) {
+  processItems(items)
+}
+
+// Node.js streams as async iterators:
+const fs = require('fs')
+const stream = fs.createReadStream('large-file.csv')
+for await (const chunk of stream) {
+  processChunk(chunk)  // backpressure handled automatically
+}
+```
+
+**Common Mistakes:**
+
+| ❌ Wrong | ✅ Correct |
+|---|---|
+| `for...of` on async iterable (not for await) | `for await...of` — without `await`, you get Promise objects, not resolved values |
+| Forgetting to handle early termination | `for await` calls `.return()` on iterator when broken — clean up resources in `finally` in generator |
+| `await` inside `for...of` (not `for await`) | `await` in `for...of` runs sequentially but doesn't use iterator protocol — use `for await` |
+| Creating async iterables manually (verbose) | Use `async function*` generator — cleanest syntax |
+
+**🎯 Interview Pattern:**
+- **Trigger**: "paginated API" / "streaming data" / "consume async data source" / "Node.js streams"
+- **Concept**: Async iterator protocol; `for await...of`; async generators
+- **Opening**: "Async iterators extend the iterator protocol to async data sources. `for await...of` awaits each `.next()` call before pulling the next item — pull-based with natural backpressure. The easiest way to create them is `async function*` generators. Node.js streams implement `[Symbol.asyncIterator]`, so you can `for await...of` them directly..."
+
+**🔑 Knowledge Chain:**
+- **Prereq**: Regular iterators (`Symbol.iterator`), async/await, generators
+- **Enables**: Paginated API consumers, stream processing, real-time data feeds, reactive programming patterns
+
+---
+
+## Reference Theory / Tài Liệu Tham Khảo
+
+
 
 ## Event Loop / Vòng Lặp Sự Kiện
 
@@ -882,103 +1117,201 @@ class AsyncIteratorHelpers {
 
 ## Câu Hỏi Phỏng Vấn / Interview Q&A
 
-### 🟡 [Mid] Q1: Explain the JavaScript event loop
+### 🟡 [Mid] Q1: When should you use a Web Worker? What are its constraints? / Khi nào nên dùng Web Worker? Các giới hạn là gì?
 
-**English Answer:**
+**A:** Use a Web Worker when a computation would block the main thread for more than ~16ms (one frame at 60fps). Web Workers run on a separate OS thread — the main thread stays responsive for rendering and user events.
 
-**Event Loop** manages asynchronous operations:
+**Constraints:**
+- No DOM access — workers can't read or write `document` / `window`. Return computed data, let the main thread update the UI.
+- Communication only via `postMessage` — data is serialized (structured clone). Use Transferable Objects (`ArrayBuffer`, `MessagePort`) for zero-copy O(1) transfer of large binary data.
+- Worker startup cost is ~5ms — not worth it for sub-millisecond tasks.
+- Dedicated workers are 1:1 with a page. Shared workers are shared across same-origin tabs. Service workers intercept network requests (PWA offline).
 
-**Components:**
-1. **Call Stack**: Execution contexts
-2. **Task Queue (Macrotask)**: setTimeout, setInterval, I/O
-3. **Microtask Queue**: Promises, queueMicrotask
-4. **Web APIs**: Browser APIs
+**Tiếng Việt:** Dùng Web Worker khi computation >16ms để tránh block main thread. Worker không có DOM access — chỉ truyền dữ liệu qua `postMessage`. Với binary data lớn, dùng Transferable Objects để transfer ownership O(1) thay vì copy O(n).
 
-**Execution Order:**
-1. Execute synchronous code
-2. Execute all microtasks
-3. Execute one macrotask
-4. Execute all microtasks again
-5. Render (if needed)
-6. Repeat
-
-**Example:**
-```javascript
-console.log('1');
-setTimeout(() => console.log('2'), 0);
-Promise.resolve().then(() => console.log('3'));
-console.log('4');
-// Output: 1, 4, 3, 2
-```
-
-**Tiếng Việt:**
-
-Event loop quản lý thao tác bất đồng bộ. Thứ tự: sync code → microtasks → macrotask → microtasks → render.
-
-### 🟡 [Mid] Q2: What are Web Workers and when to use them?
-
-**English Answer:**
-
-**Web Workers** run scripts in background threads.
-
-**Types:**
-1. **Dedicated Worker**: One-to-one with page
-2. **Shared Worker**: Shared across tabs
-3. **Service Worker**: For offline/caching
-
-**Use Cases:**
-- Heavy computations
-- Image/video processing
-- Data parsing
-- Cryptography
-- Background sync
-
-**Limitations:**
-- No DOM access
-- No window object
-- Communication via messages
-- Separate global scope
-
-**Tiếng Việt:**
-
-Web Workers chạy scripts trong luồng nền. Dùng cho tính toán nặng, xử lý ảnh/video, parsing dữ liệu, cryptography.
-
-### 🔴 [Senior] Q3: Explain SharedArrayBuffer and Atomics
-
-**English Answer:**
-
-**SharedArrayBuffer** shares memory between workers.
-
-**Atomics** provide atomic operations:
-- `Atomics.add/sub` - Arithmetic
-- `Atomics.load/store` - Access
-- `Atomics.compareExchange` - Compare and swap
-- `Atomics.wait/notify` - Synchronization
-
-**Use Cases:**
-- High-performance computing
-- Parallel algorithms
-- Shared state between workers
-- Lock-free data structures
-
-**Security:** Disabled by default due to Spectre vulnerability. Requires COOP/COEP headers.
-
-**Tiếng Việt:**
-
-SharedArrayBuffer chia sẻ bộ nhớ giữa workers. Atomics cung cấp thao tác atomic. Dùng cho tính toán hiệu suất cao, thuật toán song song.
+💡 **Interview Signal:**
+- ✅ Strong: Mentions the 16ms frame budget threshold; explains structured clone vs Transferable distinction; mentions worker startup cost trade-off
+- ❌ Weak: "Web Workers run code in background" — true but missing when/why to use them and the DOM/communication constraints
 
 ---
 
-## Summary / Tóm Tắt
+### 🟡 [Mid] Q2: Why does `for await...of` exist? How does the async iterator protocol work? / Tại sao `for await...of` tồn tại? Giao thức async iterator hoạt động như thế nào?
 
-**Key Concepts:**
-1. Event loop manages async operations
-2. Microtasks execute before macrotasks
-3. Web Workers enable parallel execution
-4. SharedArrayBuffer shares memory
-5. Atomics provide thread-safe operations
-6. Async iterators for async data
-7. Various async patterns for control flow
+**A:** Regular `for...of` calls `.next()` synchronously and expects `{value, done}` immediately. That breaks for async data sources (paginated APIs, file streams) where each item needs to be awaited before requesting the next.
+
+**Protocol:** An async iterable must implement `[Symbol.asyncIterator]()` returning an object with `async next()` → `Promise<{value, done}>`.
+
+`for await...of` sugar:
+1. Calls `[Symbol.asyncIterator]()` to get the iterator
+2. Calls `.next()`, **awaits** the returned Promise
+3. Extracts `{value, done}`, runs loop body with `value`
+4. Repeats until `done: true`
+5. On `break`/`return`, calls `.return()` on iterator — generator `finally` blocks run for cleanup
+
+**Easiest creation:** `async function*` generator — combine `await` (pause for async I/O) and `yield` (pause and emit a value).
+
+```javascript
+async function* paginate(url) {
+  let page = 1
+  while (true) {
+    const items = await fetch(`${url}?page=${page++}`).then(r => r.json())
+    if (items.length === 0) return
+    yield items  // ← emits one page at a time; consumer controls pace
+  }
+}
+
+for await (const page of paginate('/api/products')) {
+  renderPage(page)  // natural backpressure — next fetch waits until consumer is ready
+}
+```
+
+**Tiếng Việt:** `for await...of` là `for...of` nhưng await mỗi `.next()`. Protocol: `[Symbol.asyncIterator]()` trả về object có `async next()`. Cách đơn giản nhất: `async function*` generator kết hợp `await` (chờ I/O) và `yield` (phát giá trị). Khi `break`, `.return()` được gọi — generator `finally` cleanup chạy đúng.
+
+💡 **Interview Signal:**
+- ✅ Strong: Explains pull-based vs push-based; mentions backpressure; knows `.return()` is called on break for cleanup; compares to EventEmitter (push)
+- ❌ Weak: "for await is like for...of but for Promises" — misses the protocol, pull model, and backpressure
+
+---
+
+### 🔴 [Senior] Q3: Why do we need Atomics when we have `postMessage`? Explain `Atomics.compareExchange`. / Tại sao cần Atomics khi đã có `postMessage`?
+
+**A:** `postMessage` serializes (deep-copies) data. Sending 50MB between workers costs 50MB of allocation and copying. `SharedArrayBuffer` shares a single backing memory — both threads view the same bytes, zero copying.
+
+But sharing memory creates **race conditions**: if two workers do `shared[0]++` (read-modify-write) concurrently, one increment is lost — they both read the same old value, compute +1, write back the same result.
+
+**Atomics** provides operations that are guaranteed indivisible:
+- `Atomics.add(view, i, 1)` — atomic increment, never races
+- `Atomics.compareExchange(view, i, expected, replacement)` — **CAS**: read the value, compare it to `expected`; if they match, write `replacement`; return the old value. The entire operation is atomic. Used to build mutexes, lock-free queues, spinlocks.
+
+**Security requirement:** SharedArrayBuffer was disabled after Spectre (2018) because shared memory enables timing attacks — attackers could measure memory access patterns. Re-enabled with Cross-Origin Isolation: servers must send `Cross-Origin-Opener-Policy: same-origin` + `Cross-Origin-Embedder-Policy: require-corp` headers. `Atomics.wait` is also blocked on the main browser thread (blocking would freeze UI) — use `Atomics.waitAsync` instead.
+
+**Tiếng Việt:** `postMessage` copy data — tốn kém cho dataset lớn. `SharedArrayBuffer` chia sẻ bộ nhớ gốc không copy. Nhưng cần Atomics để tránh race condition. `compareExchange` là CAS (compare-and-swap): đọc → so sánh expected → nếu khớp thì ghi replacement — toàn bộ là một thao tác nguyên tử. SharedArrayBuffer cần COOP/COEP headers (Spectre mitigation). `Atomics.wait` bị block trên main thread — dùng `Atomics.waitAsync`.
+
+💡 **Interview Signal:**
+- ✅ Strong: Explains why postMessage is insufficient for large data (copy cost); describes the race condition without Atomics; explains CAS semantics of `compareExchange`; mentions Spectre and COOP/COEP requirement
+- ❌ Weak: "SharedArrayBuffer lets workers share memory, Atomics makes it thread-safe" — correct but surface level; interviewer will ask *how* and *why*
+
+---
+
+### 🔴 [Senior] Q4: Design a client-side image processing pipeline using Web Workers. How do you avoid copying large buffers? / Thiết kế pipeline xử lý ảnh phía client với Web Workers.
+
+**A:** Image processing is CPU-intensive (filters, color transforms, WASM codecs). Doing it on the main thread causes UI jank.
+
+**Design:**
+
+```javascript
+// main.js
+async function processImage(imageFile) {
+  const worker = new Worker('./image-worker.js')
+
+  // Get raw pixels via OffscreenCanvas or ImageBitmap
+  const bitmap = await createImageBitmap(imageFile)
+  // Transfer ImageBitmap — zero-copy, ownership moves to worker
+  worker.postMessage({ type: 'PROCESS', bitmap }, [bitmap])
+  // ⚠️ bitmap is now detached on main thread
+
+  return new Promise((resolve) => {
+    worker.onmessage = (e) => {
+      // Worker returns processed ArrayBuffer — transfer back
+      const processedBuffer = e.data.buffer
+      resolve(processedBuffer)
+      worker.terminate()
+    }
+  })
+}
+
+// image-worker.js
+self.onmessage = async (e) => {
+  const { bitmap } = e.data
+  const offscreen = new OffscreenCanvas(bitmap.width, bitmap.height)
+  const ctx = offscreen.getContext('2d')
+  ctx.drawImage(bitmap, 0, 0)
+  const imageData = ctx.getImageData(0, 0, bitmap.width, bitmap.height)
+
+  // Heavy processing — e.g., grayscale
+  const pixels = imageData.data  // Uint8ClampedArray
+  for (let i = 0; i < pixels.length; i += 4) {
+    const avg = (pixels[i] + pixels[i+1] + pixels[i+2]) / 3
+    pixels[i] = pixels[i+1] = pixels[i+2] = avg
+  }
+
+  const processed = imageData.data.buffer
+  self.postMessage({ buffer: processed }, [processed])  // transfer back
+}
+```
+
+**Key decisions:**
+- Transfer `ImageBitmap` (Transferable) → zero-copy from main to worker
+- Use `OffscreenCanvas` in worker for canvas API without main thread
+- Transfer result `ArrayBuffer` back — zero-copy again
+- Worker pool pattern for batch processing (4 workers = 4 CPU cores utilized)
+- For WASM-based processing: load `.wasm` in worker via `WebAssembly.instantiateStreaming`
+
+**Tiếng Việt:** Pipeline: `createImageBitmap` trên main thread → transfer (zero-copy) sang worker → xử lý pixel trên worker (CPU không block UI) → transfer ArrayBuffer kết quả về main thread. Dùng `OffscreenCanvas` trong worker để vẽ canvas. Worker pool để xử lý batch song song với N CPU cores.
+
+💡 **Interview Signal:**
+- ✅ Strong: Uses Transferable Objects (not postMessage copy) for both directions; mentions OffscreenCanvas; discusses worker pooling for batch; connects to WASM for codec use cases
+- ❌ Weak: "Create a worker and postMessage the image data" — misses zero-copy transfer and the OffscreenCanvas pattern; will cause O(n) copy on large images
+
+---
+
+## Q&A Summary / Tóm Tắt Q&A
+
+| # | Topic | Key Insight |
+|---|-------|-------------|
+| Q1 | Web Workers — when/constraints | >16ms threshold; no DOM; postMessage serializes; Transferable = zero-copy |
+| Q2 | Async iterators — protocol | `[Symbol.asyncIterator]` + `async next()`; `for await` awaits each next(); pull-based backpressure |
+| Q3 | SharedArrayBuffer + Atomics | postMessage copies; SAB shares; CAS (`compareExchange`) for lock-free algorithms; COOP/COEP required |
+| Q4 | Image processing pipeline | ImageBitmap Transferable + OffscreenCanvas + worker pool = zero-copy parallel processing |
+
+---
+
+## ⚡ Cold Call Simulation
+
+**Q: "A user reports that scrolling freezes when processing a CSV file with 500,000 rows in the browser. How do you fix this?"**
+
+**30-second answer:**
+"The CSV parsing is blocking the main thread — each row processed synchronously keeps the thread busy, so scroll events can't fire. The fix is a Web Worker: pass the raw CSV text to the worker via `postMessage`, let the worker parse all rows, then `postMessage` the results back. The main thread never blocks. If the CSV is very large (>10MB), use a Transferable `ArrayBuffer` for zero-copy transfer instead of string copying. In the worker, I'd also chunk the processing with `yield`-based streaming if possible — parse and return rows in batches so the main thread can render progressively."
+
+---
+
+## Retrieval Self-Check / Tự Kiểm Tra
+
+**Close this document. Answer from memory:**
+
+**Retrieval:**
+1. What are the 3 types of Web Workers and their use cases?
+2. Why does `postMessage` not use Transferable Objects by default?
+3. What is the async iterator protocol — what method/symbol does an object need?
+4. Why was SharedArrayBuffer disabled in 2018? What headers re-enable it?
+5. What does `Atomics.compareExchange(view, i, expected, replacement)` do atomically?
+
+**Visual:**
+- Draw the Web Worker communication model: main thread ↔ postMessage ↔ worker. Where does DOM live? Where does heavy computation go?
+- Draw the async iterator pull model: consumer calls `.next()` → awaits → gets value → calls `.next()` again. How is this different from EventEmitter?
+
+**Application:**
+- When would you use a SharedArrayBuffer instead of postMessage for worker communication?
+- Your app processes 1000 images. Design a solution that doesn't freeze the UI and uses CPU cores efficiently.
+
+**Debug:**
+- `SharedArrayBuffer` returns `undefined` in your code. What's the likely cause?
+- `Atomics.wait` throws an error on the main thread. Why? What's the fix?
+
+**Teach:**
+- Explain async iterators to a junior developer using the "room service" analogy: you call room service (`.next()`), wait for them to bring the food (await Promise), eat it, then call again — you control the pace.
+
+---
+
+🔁 **Spaced Repetition:** Review in 3 days → 7 days → 14 days. Focus: Transferable Objects pattern, CAS/compareExchange semantics, async iterator protocol.
+
+---
+
+## Connections / Liên Kết
+
+- **Prereqs**: [06-event-loop-async.md](./06-event-loop-async.md) (Event Loop deep dive), [09-async-comprehensive.md](./09-async-comprehensive.md) (async/await, generators)
+- **See also**: [15-memory-management-advanced.md](./15-memory-management-advanced.md) (GC and ArrayBuffer memory model), [20-module-systems-theory.md](./20-module-systems-theory.md)
+- **FE performance**: Web Workers connect to [06-browser-performance/05-rendering-optimization-theory.md](../06-browser-performance/05-rendering-optimization-theory.md) — Workers are the solution to long JS tasks that block the pixel pipeline
 
 ---
 
