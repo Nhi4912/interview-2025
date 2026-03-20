@@ -44,24 +44,177 @@
 
 ---
 
-## Overview / Tổng Quan
-
-**English:** Understanding frontend architecture patterns is crucial for building scalable, maintainable applications and succeeding in senior-level interviews at Big Tech companies.
-
-**Tiếng Việt:** Hiểu các mẫu kiến trúc frontend là rất quan trọng để xây dựng ứng dụng có thể mở rộng, dễ bảo trì và thành công trong phỏng vấn cấp cao tại các công ty Big Tech.
+## Core Concepts / Khái Niệm Cốt Lõi
 
 ---
 
-## Table of Contents / Mục Lục
-1. [MVC Pattern / Mẫu MVC](#mvc-pattern--mẫu-mvc)
-2. [Component-Based Architecture / Kiến Trúc Dựa Trên Component](#component-based-architecture--kiến-trúc-dựa-trên-component)
-3. [Layered Architecture / Kiến Trúc Phân Lớp](#layered-architecture--kiến-trúc-phân-lớp)
-4. [Micro-Frontend Architecture / Kiến Trúc Micro-Frontend](#micro-frontend-architecture--kiến-trúc-micro-frontend)
-5. [Module Federation / Liên Kết Module](#module-federation--liên-kết-module)
-6. [Design Patterns / Các Mẫu Thiết Kế](#design-patterns--các-mẫu-thiết-kế)
-7. [Interview Questions / Câu Hỏi Phỏng Vấn](#interview-questions--câu-hỏi-phỏng-vấn)
+### 1. The Architecture Spectrum: Monolith → Micro-frontends
+
+**🧠 Memory Hook:** "**Teams first, code second** — if your teams are fighting over merges, your architecture is wrong"
+
+**Why does this exist? / Tại sao tồn tại?**
+
+- Why do large teams hit problems with monolithic SPAs? Because 15 teams editing the same codebase = merge conflicts, blocked releases, one team's bug blocks everyone's deploy
+- Why can't discipline alone fix this? Because at scale, discipline doesn't scale — you need technical enforcement of deployment boundaries, not process enforcement
+- Why is the spectrum not just "monolith vs MFE"? Because Modular Monolith is the sweet spot for 2-5 teams — shared repo with enforced module boundaries, no operational complexity of MFE
+
+**Definition:** Frontend architecture patterns define how teams split, share, and deploy code. The decision is driven by team size and deployment independence needs, not by technical preference.
+
+**Visual — Architecture Spectrum:**
+
+```
+[1-2 Teams, fast iteration]        [3-5 Teams]       [5+ Teams, independent deploy]
+          ↓                             ↓                          ↓
+    Monolith SPA          →    Modular Monolith    →    Module Federation MFE
+    - 1 bundle                 - Feature folders        - Per-team bundles
+    - Fast start               - ESLint boundaries      - Runtime sharing
+    - Shared deploys           - 1 CI/CD pipeline       - Independent deploys
+    - Easy shared state        - Shared state easy       - Shell app orchestrates
+                                                    → iframe MFE (max isolation)
+                                                         - Hard isolation
+                                                         - Poor UX (routing, auth)
+                                                         - Compliance use cases
+```
+
+**Common Mistakes:**
+
+| ❌ Wrong | ✅ Correct |
+|---|---|
+| "MFE is always better at scale" | MFE adds operational cost — only justified with 5+ independent teams |
+| "MFE = microservices for frontend, same benefits" | Same decomposition principles, different constraints: shared DOM, CSS leakage, single React instance |
+| "iframes are the safe MFE choice" | iframes have poor UX (scroll, routing, shared auth) — only for strict compliance isolation |
+| "Module Federation replaces npm packages" | MFE is for app-level code; npm is still correct for library dependencies |
+
+**🎯 Interview Pattern:**
+- **Trigger**: "scale the frontend" / "multiple teams" / "independent deployment" / "frontend system design"
+- **Concept**: Architecture spectrum driven by team count and deployment independence
+- **Opening**: "Frontend architecture decisions are driven by team boundaries, not technology preference. For 1-4 teams, a modular monolith with enforced ESLint boundaries is usually right. Beyond 5 teams needing independent deploys, Module Federation gives MFE benefits without iframe UX drawbacks..."
+
+**🔑 Knowledge Chain:**
+- **Prereq**: Component-based thinking (React), webpack bundling basics
+- **Enables**: Module Federation config, shell app routing, shared state design across MFEs
 
 ---
+
+### 2. Module Federation (Runtime Code Sharing)
+
+**🧠 Memory Hook:** "**npm shares at build time; Module Federation shares at runtime** — the remote loads in the user's browser, not in your CI pipeline"
+
+**Why does this exist? / Tại sao tồn tại?**
+
+- Why can't teams just publish npm packages to share UI components? Because when a shared package changes, all consumers must update, rebuild, and redeploy — eliminating deployment independence
+- Why was runtime sharing impossible before Webpack 5? Because bundles were self-contained — no mechanism to consume a remote module graph from another origin at runtime
+- Why does Module Federation solve this? Each team exposes modules that others load dynamically at runtime. The shell doesn't rebuild when a remote team deploys — users automatically get the latest remote code
+
+**Definition:** Webpack 5 Module Federation enables multiple independently-deployed JavaScript applications to share code at runtime. Each "remote" exposes modules; "hosts" consume them via dynamic `import()`.
+
+**Visual — Module Federation Config:**
+
+```
+Shell App (host)               Team A (remote)          Team B (remote)
+webpack.config:                webpack.config:          webpack.config:
+  remotes: {                     exposes: {               exposes: {
+    teamA: 'teamA@cdn-a/...',      './ProductList':          './Cart':
+    teamB: 'teamB@cdn-b/...',        './src/ProductList'       './src/Cart'
+  },                           },                       },
+  shared: {                    shared: {                shared: {
+    react: {singleton:true},     react: {singleton:true}  react: {singleton:true}
+    'react-dom': {singleton:true}
+  }
+
+At runtime in user's browser:
+const ProductList = lazy(() => import('teamA/ProductList'))
+// → fetches Team A's bundle from THEIR CDN
+// → React: loaded once (singleton) — prevents "two Reacts" bug
+// → Team A deploys → users get new code without shell redeploy
+```
+
+**Common Mistakes:**
+
+| ❌ Wrong | ✅ Correct |
+|---|---|
+| Forgetting `singleton: true` for React | Two React instances = hook rules violated, Context breaks silently |
+| Exposing everything (too many modules) | Expose only stable, slow-changing modules (design system, auth utils) |
+| No version pinning on shared deps | Version mismatch = silent runtime crash in production |
+| Remote breaking changes without backward compat | Shell loads whatever remote is deployed — remotes must maintain backward compat |
+
+**🎯 Interview Pattern:**
+- **Trigger**: "micro-frontends implementation" / "runtime dependency sharing" / "independent team deployment"
+- **Concept**: Webpack Module Federation — expose/consume/shared config
+- **Opening**: "Module Federation lets each team deploy independently. The key is three config options: `remotes` defines what to consume and from where, `exposes` defines what your bundle shares, and `shared: { react: { singleton: true } }` ensures one React instance across all remotes..."
+
+**🔑 Knowledge Chain:**
+- **Prereq**: Webpack code splitting, dynamic `import()`, CDN hosting
+- **Enables**: Shell app orchestration, independent team CI/CD pipelines, shared design system distribution
+
+---
+
+### 3. Layered Frontend Architecture (Separation of Concerns)
+
+**🧠 Memory Hook:** "**UI → Business → Data → Network** — each layer talks only to the layer directly below it. Components never call `fetch` directly."
+
+**Why does this exist? / Tại sao tồn tại?**
+
+- Why can't components just call `fetch()` directly? In simple apps they can, but when the API changes, you must update every component that called it — no single point of change
+- Why add Service and Repository layers? Inversion of control: components don't know if data comes from REST, GraphQL, or localStorage — they call a service interface
+- Why does testability improve dramatically? Each layer is independently testable with mocked dependencies — unit test the service with a mock repository; test the repository with a mock HTTP client
+
+**Definition:** Layered architecture organizes frontend code into horizontal concerns: Presentation (components/pages) → Business Logic (services/use cases) → Data Access (repositories/API clients) → Infrastructure (HTTP, storage). Each layer has one responsibility; dependencies flow only downward.
+
+**Visual — Layer Dependencies:**
+
+```
+┌─────────────────────────────────────────────┐
+│  Presentation Layer                          │
+│  components/, pages/                         │
+│  "What does the user see?"                   │
+│  → calls: Services                           │
+└──────────────────┬──────────────────────────┘
+                   ↓ (one-way dependency)
+┌─────────────────────────────────────────────┐
+│  Business Logic Layer                        │
+│  services/, use-cases/                       │
+│  "What are the rules?"                       │
+│  → calls: Repositories                       │
+└──────────────────┬──────────────────────────┘
+                   ↓
+┌─────────────────────────────────────────────┐
+│  Data Access Layer                           │
+│  repositories/, api-clients/                 │
+│  "How do we get/store data?"                 │
+│  → calls: Infrastructure                     │
+└──────────────────┬──────────────────────────┘
+                   ↓
+┌─────────────────────────────────────────────┐
+│  Infrastructure Layer                        │
+│  http-client.ts, storage.ts                  │
+│  "External world boundary"                   │
+└─────────────────────────────────────────────┘
+
+Testing: mock the layer below → test layer above in isolation
+```
+
+**Common Mistakes:**
+
+| ❌ Wrong | ✅ Correct |
+|---|---|
+| Components calling `fetch()` directly | Components call service; service calls repository; repository calls HTTP client |
+| Business logic in React components (validation, formatting) | Extract to service layer — components are for rendering, not rules |
+| Repositories returning raw API shapes | Repositories map API response to domain models — insulates UI from API changes |
+| Layering for small apps | Layering adds indirection cost — only justified at 50k+ LOC or team handoffs |
+
+**🎯 Interview Pattern:**
+- **Trigger**: "how do you structure large FE app" / "testability" / "separation of concerns" / "frontend architecture"
+- **Concept**: Layered architecture with one-way dependency flow
+- **Opening**: "In large frontends, I separate into 4 layers: Presentation (components), Business Logic (services with validation/transformation), Data Access (repositories that abstract API shape), and Infrastructure (HTTP client). Each layer only talks to the layer below — this makes every layer independently testable and swappable..."
+
+**🔑 Knowledge Chain:**
+- **Prereq**: SOLID principles, dependency injection concepts
+- **Enables**: TDD for frontend services, swapping REST → GraphQL without touching components, team boundary enforcement
+
+---
+
+## Reference: Pattern Implementations / Tham Khảo Triển Khai
 
 ## MVC Pattern / Mẫu MVC
 
@@ -673,72 +826,113 @@ userStore.setUser({ id: '1', name: 'John' });
 
 ---
 
-## Interview Questions / Câu Hỏi Phỏng Vấn
+## Interview Q&A / Câu Hỏi Phỏng Vấn
 
-### Q1: What is the difference between MVC and Component-Based architecture?
-### C1: Sự khác biệt giữa kiến trúc MVC và kiến trúc dựa trên Component là gì?
+### Q: When would you choose Micro-frontends over a Modular Monolith? / Khi nào chọn Micro-frontends thay vì Modular Monolith? 🟡 Mid
 
-**English Answer:**
-- **MVC**: Separates concerns into Model (data), View (UI), and Controller (logic). Traditional pattern for web applications.
-- **Component-Based**: Breaks UI into reusable, self-contained components. Each component manages its own state and logic. Modern approach used in React, Vue, Angular.
+**A:** Choose Micro-frontends when teams need truly independent deployment cycles — different release cadences, different tech stacks, or organizational autonomy. A Modular Monolith (single repo with enforced module boundaries via ESLint) is almost always better for <5 teams: simpler CI/CD, easier shared state, no runtime dependency version conflicts. The cost of MFE is real: operational complexity, shared dep management, cross-MFE routing setup.
 
-**Câu Trả Lời Tiếng Việt:**
-- **MVC**: Tách các mối quan tâm thành Model (dữ liệu), View (giao diện), và Controller (logic). Mẫu truyền thống cho ứng dụng web.
-- **Dựa Trên Component**: Chia giao diện thành các component có thể tái sử dụng, độc lập. Mỗi component quản lý state và logic riêng. Cách tiếp cận hiện đại được sử dụng trong React, Vue, Angular.
+Chọn Micro-frontends khi các teams cần deploy độc lập thực sự — release cadence khác nhau hoặc tech stack khác nhau. Với <5 teams, Modular Monolith (repo chung + ESLint module boundaries) luôn tốt hơn: CI/CD đơn giản, shared state dễ, không có runtime dependency conflicts.
 
-### Q2: What is Layered Architecture and why use it?
-### C2: Kiến trúc phân lớp là gì và tại sao sử dụng nó?
-
-**English Answer:**
-Layered architecture organizes code into horizontal layers (Presentation, Business Logic, Data Access, Infrastructure). Benefits:
-- Separation of concerns
-- Easier testing
-- Better maintainability
-- Clear dependencies
-- Easier to scale teams
-
-**Câu Trả Lời Tiếng Việt:**
-Kiến trúc phân lớp tổ chức code thành các lớp ngang (Trình bày, Logic Nghiệp vụ, Truy cập Dữ liệu, Hạ tầng). Lợi ích:
-- Tách biệt các mối quan tâm
-- Dễ kiểm thử hơn
-- Bảo trì tốt hơn
-- Phụ thuộc rõ ràng
-- Dễ mở rộng nhóm hơn
+**💡 Interview Signal:**
+- ✅ Strong: Frames decision around team count and deployment independence, mentions operational cost of MFE, knows Modular Monolith as the middle ground
+- ❌ Weak: "MFE is better for large apps" — size isn't the driver, team independence is
 
 ---
 
-## Summary / Tóm Tắt
+### Q: How does Module Federation prevent "two React instances" in micro-frontends? / Module Federation ngăn "hai React instances" thế nào? 🟡 Mid
 
-**English:**
-- Choose architecture based on project needs
-- MVC for traditional web apps
-- Component-based for modern SPAs
-- Layered for complex business logic
-- Use design patterns appropriately
-- Consider team size and expertise
+**A:** By marking React as a `singleton: true` in the `shared` config across all remotes and the host. When the shell loads a remote bundle, Webpack checks if React is already in the shared scope — if so, it reuses the existing instance instead of loading a second copy. Without `singleton: true`, each remote bundle includes its own React → hooks throw errors across MFE boundaries because the hook registry is per-React-instance.
 
-**Tiếng Việt:**
-- Chọn kiến trúc dựa trên nhu cầu dự án
-- MVC cho ứng dụng web truyền thống
-- Dựa trên component cho SPA hiện đại
-- Phân lớp cho logic nghiệp vụ phức tạp
-- Sử dụng mẫu thiết kế phù hợp
-- Xem xét quy mô và chuyên môn của nhóm
+Cấu hình `shared: { react: { singleton: true } }` trong tất cả remotes và host. Webpack kiểm tra shared scope trước khi load — nếu React đã tồn tại, dùng lại. Nếu không có `singleton: true`, mỗi remote load React riêng → hooks fail vì hook registry là per-instance.
+
+**💡 Interview Signal:**
+- ✅ Strong: Explains singleton checking mechanism, hook registry failure mode, where to configure
+- ❌ Weak: "Just use the same version everywhere" — version matching is necessary but not sufficient without `singleton: true`
 
 ---
 
-[Back to Table of Contents](../../00-table-of-contents.md) | [Next: Micro-Frontends →](./01-architecture-patterns.md)
+### Q: How do you handle shared state (auth, cart) across micro-frontends? / Shared state (auth, cart) hoạt động thế nào trong micro-frontends? 🟡 Mid
+
+**A:** Three approaches in order of preference: (1) **Shell-owned global state**: shell holds auth/cart state, passes down via URL params or custom events; (2) **Shared library via Module Federation**: a dedicated `@shared/state` remote exposes a Zustand/Redux store — all MFEs import the same singleton; (3) **Backend-as-truth**: no frontend shared state — each MFE reads from API/cookie directly, backend session is the source of truth. Option 3 is most scalable but adds latency; option 2 requires careful singleton management.
+
+Ba cách: (1) Shell giữ state, truyền xuống qua events/URL; (2) Module Federation expose shared store (Zustand singleton); (3) Không có frontend shared state — mỗi MFE đọc từ API/cookie, backend là source of truth. Option 3 scale tốt nhất nhưng thêm latency.
+
+**💡 Interview Signal:**
+- ✅ Strong: Gives 3 options with tradeoffs, mentions custom events / Module Federation singleton / backend-as-truth
+- ❌ Weak: "Use Redux" — doesn't address how to share a Redux store across independently-deployed bundles
+
+---
+
+### Q: What are the trade-offs of Atomic Design (Atoms/Molecules/Organisms)? / Atomic Design có trade-offs gì? 🟢 Junior
+
+**A:** Atomic Design structures components hierarchically by complexity: Atoms (Button, Input) → Molecules (SearchBar, FormField) → Organisms (ProductCard, Header) → Templates → Pages. Benefits: clear reusability boundaries, easy to spot over-engineered components. Drawbacks: the Atom/Molecule boundary is subjective and causes team debates; deeply nested hierarchies slow down new developers; "organisms" often become over-large.
+
+Atomic Design phân cấp theo độ phức tạp: Atoms → Molecules → Organisms → Templates → Pages. Ưu: ranh giới reusability rõ ràng. Nhược: ranh giới Atom/Molecule chủ quan gây tranh cãi team; hierarchy sâu làm chậm onboarding; organisms dễ bị bloat.
+
+**💡 Interview Signal:**
+- ✅ Strong: Knows the 5 levels, names at least 2 trade-offs, shows pragmatic awareness that strict adherence causes problems
+- ❌ Weak: "Atomic Design means make small reusable components" — misses the hierarchy and its real-world friction
+
+---
+
+### Q: Design a micro-frontend architecture for a fintech super-app with 8 teams (banking, investments, payments, insurance...). / Thiết kế MFE architecture cho fintech super-app với 8 teams. 🔴 Senior
+
+**A:** Shell app orchestrates routing and shared state; 8 team remotes expose their feature modules via Module Federation. Key decisions:
+
+1. **Routing**: Shell owns top-level routes (`/banking/*`, `/investments/*`), delegates sub-routing to each MFE via react-router nested routes
+2. **Shared state**: Auth token in httpOnly cookie (backend-managed) + custom event bus for cross-MFE notifications; no shared Redux store (too tight coupling)
+3. **Shared dependencies**: `shared: { react: singleton, 'react-dom': singleton, '@design-system': singleton }` — pin major versions across all teams
+4. **Isolation**: Each MFE's CSS in Shadow DOM or CSS Modules with team prefix to prevent leakage
+5. **Resilience**: Each remote wrapped in Error Boundary — if Investments MFE fails, Banking still works
+
+Compliance note: some insurance modules may need iframe isolation for regulatory sandboxing.
+
+Shell điều phối routing + Module Federation expose. Auth qua httpOnly cookie (backend). Custom events cho cross-MFE notifications. Design system là shared singleton. CSS isolation qua Shadow DOM hoặc CSS Modules prefix. Error Boundaries bọc từng remote — failure isolated.
+
+**💡 Interview Signal:**
+- ✅ Strong: Covers routing strategy, shared state approach, dependency singleton config, CSS isolation, resilience via Error Boundaries
+- ❌ Weak: "Each team builds their own React app and we combine them" — doesn't address shared deps, routing ownership, or failure isolation
+
+---
+
+## Q&A Summary / Tóm Tắt Q&A
+
+| # | Topic | Level | One-liner |
+|---|-------|-------|-----------|
+| 1 | MFE vs Modular Monolith | 🟡 | Team count + deploy independence → MFE; complexity cost is real |
+| 2 | Module Federation singleton | 🟡 | `shared: { react: { singleton: true } }` — one hook registry |
+| 3 | Shared state across MFEs | 🟡 | Shell events → shared remote store → backend-as-truth (ascending scale) |
+| 4 | Atomic Design tradeoffs | 🟢 | Clear boundaries but subjective hierarchy causes team friction |
+| 5 | Fintech super-app MFE design | 🔴 | Shell routing + cookie auth + singleton deps + CSS isolation + Error Boundaries |
+
+---
+
+## ⚡ Cold Call Simulation
+
+**Q: "Your company has 8 frontend teams all editing one React repo — releases are blocked weekly. What do you do?"**
+
+**30-second answer:**
+
+"First question: do all 8 teams actually need independent deploys, or just fewer merge conflicts? If it's the latter, I'd start with a Modular Monolith — enforce module boundaries with ESLint, one team owns one folder, strict import rules prevent cross-team coupling. That solves 80% of merge conflicts with zero operational overhead. If teams genuinely need independent deploys — different release cadences, different tech stacks — then I'd migrate to Module Federation: each team gets their own bundle and CDN deploy, the shell app dynamically loads remotes at runtime. Key config: React and the design system as `singleton: true` in shared. The shell owns top-level routing; each team owns sub-routes. Auth state lives in an httpOnly cookie so no shared Redux store is needed across bundles."
+
+---
+
+[Back to Table of Contents](../../00-table-of-contents.md) | [Next: Scalability →](./02-scalability.md)
 
 ---
 
 ## Self-Check / Tự Kiểm Tra
 
-- [ ] Can I explain Micro-frontends vs Modular Monolith — and when each is appropriate?
-- [ ] Can I describe Module Federation and how it enables runtime dependency sharing?
-- [ ] Can I explain the tradeoffs of iframes vs Module Federation vs Web Components for MFE?
-- [ ] Can I design the routing strategy for a shell app with 3 micro-frontend teams?
-- [ ] Can I explain how shared state (auth, cart) works across micro-frontends?
-- 💬 **Feynman Prompt:** Giải thích Micro-frontends cho một backend engineer quen với microservices — tương đồng nào áp dụng được và khác biệt nào quan trọng nhất?
+> **Close this doc. Then answer from memory.**
+
+- **Retrieval**: Name the 3 architecture options on the monolith→MFE spectrum and the team size trigger for each
+- **Visual**: Sketch the Module Federation config — what goes in `remotes`, `exposes`, and `shared`? Why `singleton: true` for React?
+- **Application**: You join a 6-team company with one repo. Merge conflicts block releases every week. Walk through your first 3 decisions.
+- **Debug**: Teams report that React hooks throw "Invalid hook call" errors after the new MFE remote was deployed. What went wrong and how do you fix it?
+- **Teach**: Explain Module Federation to a backend engineer who knows microservices — what's the equivalent of "service registry", what's the equivalent of "service mesh"?
+
+🔁 **Spaced repetition**: Review in 3 days → 7 days → 14 days
 
 ## Connections / Liên Kết
 
