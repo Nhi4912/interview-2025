@@ -115,7 +115,7 @@
 | File | Phase 1 | Phase 2 | Notes |
 |------|---------|---------|-------|
 | `01-core-web-vitals.md` | ✅ | ✅ | Done session 3 |
-| `02-react-performance.md` | 🔄 | ❌ | |
+| `02-react-performance.md` | ✅ | ✅ | Done session 5 |
 | `03-bundle-optimization.md` | ❌ | ❌ | |
 | `04-web-performance-comprehensive.md` | ❌ | ❌ | |
 | `05-rendering-optimization-theory.md` | 🔄 | ❌ | |
@@ -151,5 +151,5 @@ Start with files marked **Priority** in Tier 1-3. For each file:
 ## Stats
 
 - Total fe-track theory files tracked: ~75
-- Phase 2 done (✅): **25** (02-scope-hoisting-comprehensive, 03-closures-comprehensive, 05-this-keyword, 06-event-loop-async, 07-es6-features, 08-advanced-concepts, 09-async-comprehensive, 10-prototypes-inheritance-deep, 12-functional-programming, 01-typescript-basics, 01-react-fundamentals, 02-react-19-features, 03-hooks-deep-dive, 05-state-management, 01-core-web-vitals, 09-performance-optimization, 01-app-router-server-components, 01-type-system-basics, 02-advanced-types, 03-generics-deep-dive, 04-advanced-patterns, 06-testing, 02-data-fetching, 07-hooks-comprehensive, 08-react-patterns-advanced)
-- Remaining for Phase 2: ~49
+- Phase 2 done (✅): **26** (02-scope-hoisting-comprehensive, 03-closures-comprehensive, 05-this-keyword, 06-event-loop-async, 07-es6-features, 08-advanced-concepts, 09-async-comprehensive, 10-prototypes-inheritance-deep, 12-functional-programming, 01-typescript-basics, 01-react-fundamentals, 02-react-19-features, 03-hooks-deep-dive, 05-state-management, 01-core-web-vitals, 09-performance-optimization, 01-app-router-server-components, 01-type-system-basics, 02-advanced-types, 03-generics-deep-dive, 04-advanced-patterns, 06-testing, 02-data-fetching, 07-hooks-comprehensive, 08-react-patterns-advanced, 02-react-performance)
+- Remaining for Phase 2: ~48
