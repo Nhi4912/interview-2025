@@ -3,17 +3,245 @@
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 
-## Table of Contents / Mục Lục
+## Real-World Scenario / Tình Huống Thực Tế
 
-1. [Execution Context Fundamentals](#execution-context-fundamentals)
-2. [Call Stack](#call-stack)
-3. [Lexical Environment](#lexical-environment)
-4. [Variable Environment](#variable-environment)
-5. [This Binding](#this-binding)
-6. [Scope Chain](#scope-chain)
-7. [Interview Questions](#interview-questions)
+**React class component bug:** `this.handleClick` passed as prop to child button. Click → `TypeError: Cannot read properties of undefined (reading 'setState')`. Root cause: `this` binding is determined at *call site*, not *definition site*. When child calls `onClick()` without an object, `this` is `undefined` (strict mode) or `window` (sloppy). Fix: `this.handleClick = this.handleClick.bind(this)` in constructor, or use arrow function property.
+
+**Bài học:** `this` là tính năng JavaScript được hỏi nhiều nhất trong phỏng vấn Senior vì nó liên quan trực tiếp đến bugs phổ biến nhất trong React class components và event handlers. Biết 5 binding rules và priority order là yêu cầu tối thiểu.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Scope và this — hai khái niệm bị nhầm lẫn:** Scope được quyết định bởi *where code is written* (lexical). `this` được quyết định bởi *how function is called* (dynamic). Arrow functions break this pattern by capturing `this` lexically — they solve the "lost this" problem.
+
+**Scope của doc này:** Deep dive vào `this` binding rules và Execution Context lifecycle. Scope/hoisting basics → xem [02-scope-hoisting-comprehensive.md](./02-scope-hoisting-comprehensive.md). Creation Phase → xem [13-javascript-basics-theory.md](./13-javascript-basics-theory.md).
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[Execution Context]
+        │
+        ├── Components: LexicalEnvironment + VariableEnvironment + ThisBinding
+        │
+        ├── Call Stack (LIFO)
+        │       Global Context → Function Context → ... → stack overflow
+        │
+        ├── This Binding — 5 Rules (priority: new > explicit > implicit > default)
+        │       1. Default: fn() → undefined (strict) or globalThis (sloppy)
+        │       2. Implicit: obj.fn() → obj
+        │       3. Explicit: fn.call(ctx) / fn.apply(ctx) / fn.bind(ctx) → ctx
+        │       4. New: new Fn() → newly created object
+        │       5. Arrow: no own 'this' → captures enclosing context lexically
+        │
+        └── Scope vs Context
+                Scope (lexical, write-time): which variables can be accessed
+                Context (dynamic, runtime): what 'this' refers to in this call
+```
 
 ---
+
+## Core Concepts / Khái Niệm Cốt Lõi
+
+---
+
+### 1. The 5 `this` Binding Rules
+
+**🧠 Memory Hook:** "**DIEN-A: Default, Implicit, Explicit, New, Arrow — in REVERSE order of priority**"
+
+**Why does this exist? / Tại sao tồn tại?**
+
+- Why is `this` dynamic (determined at call time) instead of lexical? Because `this` models the *receiver* of a method call — `obj.method()` should let `method` refer to `obj`. The same function `fn` should work when called as `a.fn()` (this=a) and `b.fn()` (this=b) without modification
+- Why did arrow functions change this? Because inner callbacks lost `this` binding — `function onSuccess() { this.setState(...) }` inside `fetch().then()` would lose `this`. Arrow functions capture `this` lexically from their enclosing context, solving this problem
+- Why does the `new` binding have highest priority? Because `new` explicitly creates a new object to be the receiver — overriding any implicit or explicit binding makes no sense when constructing
+
+**Visual — 5 Rules with Priority:**
+
+```javascript
+// 1. Default (lowest priority): no explicit receiver
+function greet() { console.log(this) }
+greet()           // undefined (strict mode) | globalThis (sloppy)
+
+// 2. Implicit: object before the dot is `this`
+const obj = { name: 'Buu', greet() { console.log(this.name) } }
+obj.greet()       // 'Buu'
+
+// PITFALL: lost this — detaching method from object
+const fn = obj.greet
+fn()              // undefined — no object before the dot!
+
+// 3. Explicit: call/apply/bind
+function greet() { console.log(this.name) }
+greet.call({ name: 'An' })      // 'An'
+greet.apply({ name: 'Binh' })   // 'Binh'
+const bound = greet.bind({ name: 'Cuong' })
+bound()                         // 'Cuong' (permanently bound)
+
+// 4. New (highest non-arrow priority): creates new object
+function Person(name) { this.name = name }
+const p = new Person('Dung')   // p.name === 'Dung'
+
+// 5. Arrow: lexical this (captures from definition context)
+class Timer {
+  start() {
+    setInterval(() => {
+      console.log(this)  // ← 'this' from start()'s context = Timer instance
+    }, 1000)
+  }
+}
+
+Priority: new > explicit (.bind wins over .call) > implicit > default
+```
+
+**Common Mistakes:**
+
+| ❌ Wrong | ✅ Correct |
+|---|---|
+| `const fn = obj.method; fn()` expecting `this === obj` | Detaching loses binding — use `const fn = obj.method.bind(obj)` |
+| Using `function` in `forEach`/`map` callback and expecting outer `this` | Use arrow function: `array.forEach(item => this.process(item))` |
+| `fn.bind(ctx)` in render method creates new function every render | Bind in constructor or use arrow function property |
+| Arrow function as object method: `const obj = { fn: () => { this... } }` | Arrow captures `this` from module scope (globalThis/undefined), not from `obj` |
+
+**🎯 Interview Pattern:**
+- **Trigger**: "what is `this`" / "why is `this` undefined" / "React class component binding"
+- **Concept**: 5 binding rules, lost-this pitfall, arrow function solution
+- **Opening**: "There are 5 `this` binding rules in priority order: new > explicit (.bind/.call/.apply) > implicit (object method) > default (global/undefined). The most common bug is 'lost this' — detaching a method from its object drops the implicit binding. Arrow functions solve this by capturing `this` lexically..."
+
+**🔑 Knowledge Chain:**
+- **Prereq**: Functions as first-class values, objects, `new` keyword
+- **Enables**: React class components, event handlers, method chaining patterns, understanding `bind` overhead
+
+---
+
+### 2. Scope vs Context — The Most Confused Distinction
+
+**🧠 Memory Hook:** "**Scope = WHERE you wrote the code (lexical). Context = HOW you called the function (runtime). Arrow functions make `this` lexical too.**"
+
+**Why does this exist? / Tại sao tồn tại?**
+
+- Why is scope lexical while `this` is dynamic? They model different things. Scope models variable resolution (static analysis can determine this). `this` models method dispatch (depends on runtime call pattern)
+- Why does this distinction matter for closures? A closure captures scope (variables from enclosing lexical environment) but NOT context (`this` from the enclosing call). Arrow functions are the exception — they capture both scope AND `this`
+- Why is this confusion so common? In many OOP languages, scope and context are unified — `this` is always the enclosing class. JavaScript's separation is unusual and catches developers from other languages by surprise
+
+**Visual — Scope vs Context Interaction:**
+
+```javascript
+const value = 'global'
+
+const obj = {
+  value: 'obj',
+  getValueByScope() {
+    // Closure: captures 'value' variable from lexical scope
+    const inner = function() { return value }  // ← 'global' (scope lookup)
+    return inner()
+  },
+  getValueByContext() {
+    // this: depends on how getValueByContext is called
+    return this.value  // ← 'obj' if called as obj.getValueByContext()
+  }
+}
+
+// Scope is fixed (lexical):
+const detached = obj.getValueByScope
+detached()  // still returns 'global' — scope doesn't change
+
+// Context changes:
+detached2 = obj.getValueByContext
+detached2()   // 'global' — this context changed!
+obj.getValueByContext()  // 'obj' — this context = obj
+
+// Arrow functions unify scope and this:
+const obj2 = {
+  value: 'obj2',
+  outer() {
+    const inner = () => this.value  // ← 'obj2' (captures both scope AND this)
+    return inner()
+  }
+}
+obj2.outer()  // 'obj2'
+```
+
+**Common Mistakes:**
+
+| ❌ Wrong | ✅ Correct |
+|---|---|
+| "Closure captures `this`" | Closure captures scope variables, NOT `this` — use arrow function to capture `this` |
+| Arrow function as a class method to capture `this` | Arrow property methods work but can't be overridden via prototype |
+| `const { method } = obj; method()` expecting obj's `this` | Destructuring detaches from object — use `obj.method()` or bind |
+| "Scope and context are the same thing" | Scope = variable resolution (lexical). Context = `this` resolution (dynamic, except arrows) |
+
+**🎯 Interview Pattern:**
+- **Trigger**: "closure and this" / "scope vs context" / "why does this arrow function work here"
+- **Concept**: Scope is lexical (write-time), context is dynamic (call-time), arrows unify both
+- **Opening**: "Scope and context are often confused. Scope is determined by where code is written — a closure captures the variables of its enclosing lexical environment. Context is `this` — determined by how the function is called at runtime. Arrow functions are unique: they don't have their own `this`, so they capture `this` lexically from the surrounding code, the same way closures capture variables..."
+
+**🔑 Knowledge Chain:**
+- **Prereq**: Closures, `this` binding rules
+- **Enables**: React hooks design rationale (hooks use closures, not `this`), event handler patterns
+
+---
+
+### 3. Execution Context Lifecycle
+
+**🧠 Memory Hook:** "**Global context is created once. Each function call creates a new context. Context = {LexEnv + VarEnv + ThisBinding}. Pushed to stack on call, popped on return.**"
+
+**Why does this exist? / Tại sao tồn tại?**
+
+- Why does JavaScript need an "execution context" object? Because function calls are reentrant — recursive functions need separate environments for each active call. The context object is JavaScript's solution to tracking which variables and `this` belong to which invocation
+- Why is `this` part of the execution context (not scope)? Because `this` varies per call even for the same function — each execution context gets its own `this` binding determined at creation time
+- Why does understanding this matter for async debugging? `async/await` suspends the execution context but preserves it (its local variables remain valid). Understanding the context stack helps debug why variables are still accessible after `await`
+
+**Visual — Context Lifecycle:**
+
+```
+JavaScript starts:
+  [Global EC created: {LexEnv, VarEnv, ThisBinding = globalThis}]
+  [Global EC pushed to Call Stack]
+
+Call foo():
+  [foo EC created: {LexEnv, VarEnv, ThisBinding = ?}]
+  [foo EC pushed to Call Stack]
+  Call Stack: [Global EC] [foo EC] ← foo runs
+
+  foo calls bar():
+    [bar EC created: {LexEnv, VarEnv, ThisBinding = ?}]
+    [bar EC pushed to Call Stack]
+    Call Stack: [Global EC] [foo EC] [bar EC] ← bar runs
+
+  bar returns:
+    [bar EC popped]
+    Call Stack: [Global EC] [foo EC] ← foo continues
+
+foo returns:
+  [foo EC popped]
+  Call Stack: [Global EC] ← global continues
+
+Stack overflow:
+  Recursive function never reaches base case
+  → Call Stack fills up → RangeError: Maximum call stack size exceeded
+```
+
+**Common Mistakes:**
+
+| ❌ Wrong | ✅ Correct |
+|---|---|
+| "Local variables are destroyed immediately when function returns" | The EC is popped, but closures that captured the env can keep it alive |
+| "Stack overflow only happens with infinite recursion" | Large but finite recursion can also overflow — ~10,000 frames in V8 |
+| "`async` functions use a different stack" | `async` functions are still on the call stack; `await` pauses and resumes the same context |
+| "Eval context is the same as function context" | Eval EC can introduce variables into the enclosing scope in sloppy mode — that's why eval is dangerous |
+
+**🎯 Interview Pattern:**
+- **Trigger**: "execution context" / "call stack" / "what happens when function is called"
+- **Concept**: EC lifecycle — creation, push to stack, execution, pop on return
+- **Opening**: "Every function call creates a new execution context with three components: Lexical Environment (block-scoped bindings), Variable Environment (var-scoped bindings, functionally the same in modern JS), and This Binding. It's pushed onto the call stack, code runs, then it's popped on return. Closures keep the Lexical Environment alive even after the context is popped..."
+
+**🔑 Knowledge Chain:**
+- **Prereq**: Variable environments (let/const/var), `this` binding rules
+- **Enables**: Debugging stack traces, understanding async/await suspension, closure memory model, TDZ explanation
+
+---
+
+## Reference Theory / Tài Liệu Tham Khảo
+
+
 
 ## Execution Context Fundamentals / Cơ Bản Ngữ Cảnh Thực Thi
 
@@ -658,89 +886,101 @@ class ThisBindingExamples {
 
 ---
 
-## Câu Hỏi Phỏng Vấn / Interview Q&A
+## Interview Q&A / Câu Hỏi Phỏng Vấn
 
-### 🟡 [Mid] Q1: Explain execution context and call stack
+### Q: What are the 5 `this` binding rules? Give the priority order. 🟡 Mid
 
-**English Answer:**
+**A:** In priority order (highest to lowest): (1) **New**: `new Fn()` → `this` = newly created object; (2) **Explicit**: `.call(ctx)`, `.apply(ctx)`, `.bind(ctx)` → `this` = ctx; (3) **Implicit**: `obj.fn()` → `this` = obj; (4) **Default**: `fn()` → `undefined` (strict) or `globalThis` (sloppy); (5) **Arrow** (special — not a rule but a bypass): arrow functions don't have own `this`, capture lexically from enclosing context.
 
-**Execution Context** contains:
-1. Variable Environment (var declarations)
-2. Lexical Environment (let/const declarations)
-3. This binding
+5 rules theo thứ tự priority: New > Explicit (call/apply/bind) > Implicit (object method) > Default (bare call). Arrow function không có `this` riêng — capture từ enclosing context lexically.
 
-**Types:**
-- Global execution context
-- Function execution context
-- Eval execution context
+**💡 Interview Signal:**
+- ✅ Strong: All 5 rules named, correct priority order, explains arrow function as "no own this"
+- ❌ Weak: "this depends on how function is called" — true but no specifics on the 5 rules
 
-**Call Stack:**
-- LIFO structure
-- Manages execution contexts
-- Stack overflow when limit exceeded
+---
 
-**Execution Flow:**
-1. Create global context
-2. Push onto call stack
-3. When function called, create function context
-4. Push function context onto stack
-5. When function returns, pop context
-6. Continue with previous context
+### Q: What is the difference between scope and context (`this`)? 🟢 Junior
 
-**Tiếng Việt:**
+**A:** Scope determines which variables a function can access — resolved **lexically** at write-time based on where the function is defined. Context (`this`) determines which object a function operates on — resolved **dynamically** at call-time based on how the function is invoked. Arrow functions blur this line: they capture `this` lexically (like scope), so they're the exception to the dynamic rule.
 
-Execution context chứa Variable Environment, Lexical Environment và This binding. Call stack quản lý các contexts theo LIFO.
+Scope = visibility of variables, determined at write-time (lexical). Context = `this`, determined at call-time (dynamic). Arrow functions exception: họ capture `this` lexically như scope variables.
 
-### 🟡 [Mid] Q2: What is the difference between scope and context?
+**💡 Interview Signal:**
+- ✅ Strong: Names lexical (write-time) vs dynamic (call-time), gives arrow function as exception
+- ❌ Weak: "Context is this" — no lexical vs dynamic distinction
 
-**English Answer:**
+---
 
-**Scope:**
-- Refers to variable visibility
-- Determined by code structure (lexical)
-- Created at write-time
-- Types: global, function, block
+### Q: Explain what happens step-by-step when a function is called. 🟡 Mid
 
-**Context:**
-- Refers to 'this' value
-- Determined by how function is called
-- Created at runtime
-- Can be changed with call/apply/bind
+**A:** (1) A new Execution Context is created with 3 components: Lexical Environment (for `let`/`const`/function bindings), Variable Environment (for `var` bindings), and `this` binding (determined by the call pattern). (2) During the Creation Phase, bindings are set up: `var` → `undefined`, function declarations → full function objects, `let`/`const` → TDZ (uninitialized). `this` is also determined here. (3) The EC is pushed onto the Call Stack. (4) Execution Phase runs the function body line by line. (5) On return, EC is popped. Local bindings are GC-eligible *unless* a closure captures the Lexical Environment.
 
-**Example:**
+Khi function được gọi: (1) Tạo EC với LexEnv + VarEnv + ThisBinding; (2) Creation Phase: set up bindings (var→undefined, fn→hoisted, let/const→TDZ), determine `this`; (3) Push to Call Stack; (4) Execute body; (5) Pop on return. Closure giữ LexEnv alive sau khi EC popped.
+
+**💡 Interview Signal:**
+- ✅ Strong: Names 3 EC components, Creation/Execution phases, mentions closure keeping LexEnv alive
+- ❌ Weak: "Function scope is created and destroyed" — no mention of EC structure or phases
+
+---
+
+### Q: Why does `const fn = obj.method; fn()` lose `this`, and what are 3 ways to fix it? 🟡 Mid
+
+**A:** "Lost this" happens because `fn()` is a bare function call — no object before the dot, so `this` defaults to `undefined` (strict) or `globalThis` (sloppy). The object-method association is a call-time lookup, not a property of the function itself. Three fixes: (1) `fn.bind(obj)` — permanently bind; (2) Arrow function property: `method = () => { ... }` in class — captures `this` lexically at class instantiation; (3) Wrapper: `const fn = (...args) => obj.method(...args)`.
+
+"Lost this": detach method → bare function call → default binding. Fixes: (1) `bind(obj)` ngay khi detach; (2) Arrow function property trong class; (3) Wrapper function.
+
+**💡 Interview Signal:**
+- ✅ Strong: Explains the default binding mechanism, gives 3 distinct solutions with trade-offs
+- ❌ Weak: "Use arrow functions" — one solution only; doesn't explain the root cause
+
+---
+
+## Q&A Summary / Tóm Tắt Q&A
+
+| # | Topic | Level | One-liner |
+|---|-------|-------|-----------|
+| 1 | 5 `this` binding rules | 🟡 | new > explicit > implicit > default; arrow = lexical capture |
+| 2 | Scope vs context | 🟢 | Scope: lexical (write-time). `this`: dynamic (call-time). Arrow: exception |
+| 3 | Function call lifecycle | 🟡 | Create EC → Creation Phase → Push to stack → Execute → Pop; closure keeps LexEnv |
+| 4 | Lost `this` + 3 fixes | 🟡 | Detach → bare call → default binding. Fix: bind / arrow property / wrapper |
+
+---
+
+## ⚡ Cold Call Simulation
+
+**Q: "Explain why this React class component has a bug and how to fix it."**
+
 ```javascript
-const obj = {
-  value: 42,
-  getValue() {
-    // Scope: can access 'value' via this
-    // Context: this = obj
-    return this.value;
-  }
-};
-
-const getValue = obj.getValue;
-// Scope: still same
-// Context: this = globalThis or undefined
-getValue(); // undefined or error
+class Button extends React.Component {
+  handleClick() { this.setState({ clicked: true }) }
+  render() { return <button onClick={this.handleClick}>Click</button> }
+}
 ```
 
-**Tiếng Việt:**
+**30-second answer:**
 
-Scope liên quan đến khả năng hiển thị biến (lexical), context liên quan đến giá trị 'this' (runtime).
-
----
-
-## Summary / Tóm Tắt
-
-**Key Concepts:**
-1. Execution context has three components
-2. Call stack manages contexts (LIFO)
-3. Lexical environment determines scope
-4. This binding depends on call site
-5. Closures capture lexical environment
-6. Block scope with let/const
-7. Temporal Dead Zone for let/const
+"The bug is 'lost this'. When JSX sets `onClick={this.handleClick}`, it copies the method reference without the object — equivalent to `const fn = button.handleClick`. When the user clicks, React calls `fn()` — a bare function call with no object before the dot. By the 5 `this` binding rules, that's the default binding: `undefined` in strict mode (which React uses). So `this.setState` throws. Three fixes: in the constructor, `this.handleClick = this.handleClick.bind(this)` — permanently binds; or convert to an arrow function property `handleClick = () => { ... }` — arrow captures `this` lexically at class instantiation; or use `onClick={() => this.handleClick()}` in the render — but this creates a new function every render. The arrow property pattern is the modern React class component convention."
 
 ---
+
+## Self-Check / Tự Kiểm Tra
+
+> **Close this doc. Then answer from memory.**
+
+- **Retrieval**: Name the 5 `this` binding rules and their priority order. No looking.
+- **Visual**: Draw the Call Stack state when `foo()` calls `bar()` calls `baz()`. What happens when `baz` returns?
+- **Application**: You have `const { method } = someObject; method()`. What is `this` inside `method`? How do you fix it to refer to `someObject`?
+- **Debug**: An arrow function as an object method doesn't have access to the object via `this`. Explain why.
+- **Teach**: Explain "lost this" to a junior using a restaurant analogy — the waiter knows the menu but doesn't know which table they're serving when called out of context.
+
+🔁 **Spaced repetition**: Review in 3 days → 7 days → 14 days
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [JavaScript Basics Theory](./13-javascript-basics-theory.md) — Execution Context Creation Phase basics
+- ⬅️ **Built on**: [Scope & Hoisting](./02-scope-hoisting-comprehensive.md) — Lexical scope and TDZ
+- 🔗 **Applied in**: [This Keyword](./05-this-keyword.md) — practical `this` binding in React and Node.js
+- 🔗 **Applied in**: [React Hooks](../03-react/03-hooks-deep-dive.md) — hooks use closures (scope) not `this` (context)
 
 [← Previous: Memory Management](./15-memory-management-advanced.md) | [Next: Advanced Patterns →](./17-advanced-patterns-theory.md) | [Back to Table of Contents](../../00-table-of-contents.md)
