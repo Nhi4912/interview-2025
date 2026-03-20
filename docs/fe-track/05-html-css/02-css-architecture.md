@@ -3,6 +3,188 @@
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 
+## Real-World Scenario / Tình Huống Thực Tế
+
+Bạn vừa join một startup đang scale từ 3 lên 15 frontend devs. Codebase có ~80 components, mỗi người viết CSS theo style riêng: một số dùng BEM, một số dùng utility classes tay, một số inline style. Button `.btn-primary` bị override 7 chỗ khác nhau. Dark mode chưa ai làm vì không biết bắt đầu từ đâu.
+
+Tech lead giao bạn một việc: **design CSS architecture cho codebase mới**, migrate dần từ codebase cũ. Timeline: 3 tháng.
+
+**Câu hỏi thực tế**: BEM, CSS Modules, hay Tailwind? Token hay variable? Cascade Layers hay không? Làm sao enforce convention cho team 15 người?
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**CSS Architecture là gì?**
+Là hệ thống quy tắc tổ chức CSS: naming convention, file structure, scope isolation, token strategy — để nhiều người cùng làm mà không conflict.
+
+**Tại sao cần nó?**
+- **Level 1 — Immediate pain**: Không có convention → mỗi dev viết style khác nhau → specificity war → `!important` chồng chất → không ai dám sửa CSS cũ vì sợ break.
+- **Level 2 — Scale pain**: 15 devs, 80 components, 3 teams — không có scope isolation → style leak giữa components → visual regression hàng tuần → release chậm.
+- **Level 3 — Product pain**: Product cần dark mode, white-label, accessible themes → không có design tokens → phải hard-code màu 200+ chỗ → mỗi brand request = 2-week sprint.
+
+**Tóm lại**: CSS architecture là "governance layer" giữa design và implementation. Thiếu nó, cost-of-change tăng theo cấp số nhân với team size.
+
+---
+
+## Concept Map / Sơ Đồ Khái Niệm
+
+```
+CSS Architecture
+├── Methodology (naming + structure)
+│   ├── BEM → predictable naming, no cascade dependency
+│   ├── OOCSS → separate structure from skin
+│   ├── SMACSS → 5-layer categorization
+│   ├── ITCSS → specificity pyramid (Generic→Elements→Objects→Components→Utilities)
+│   └── Atomic/Utility-first → Tailwind, no custom CSS
+│
+├── Scope Isolation (prevent leaking)
+│   ├── CSS Modules → build-time hash scoping
+│   ├── CSS-in-JS → runtime scoping (Styled Components)
+│   └── Cascade Layers (@layer) → manual specificity control
+│
+└── Token Strategy (design → code)
+    ├── Design Tokens → semantic names (--color-brand-primary)
+    ├── CSS Custom Properties → runtime theming
+    └── Theme Switching → [data-theme="dark"] scope
+```
+
+---
+
+## Core Concepts / Khái Niệm Cốt Lõi
+
+### Core Concept 1: CSS Methodology Trade-offs — BEM vs Atomic vs Hybrid
+
+🧠 **Memory Hook**: BEM = blueprint (stable, verbose). Atomic = lego bricks (fast, repetitive). Hybrid = blueprint + lego for adjustments.
+
+**Why does this exist? / Tại sao tồn tại?**
+- **Level 1**: Dev viết `.card`, `.card-header`, `.card-body` không nhất quán → 10 devs = 10 naming styles → không ai biết class nào dùng được.
+- **Level 2**: Cần convention có thể enforce bằng linter + review — naming phải mang ý nghĩa (component? modifier? state?).
+
+**Visual — BEM vs Atomic spectrum**:
+```
+Verbose ←————————————————————————→ Terse
+BEM                    SMACSS/OOCSS          Atomic/Tailwind
+.card__header--active  .card.is-active       flex items-center gap-4
+
+Pros: readable, stable   balanced             fast, no CSS files
+Cons: verbose, long HTML  moderate            HTML bloat, hard search
+```
+
+**Common Mistakes / Sai lầm thường gặp**:
+| ❌ Wrong | ✅ Correct |
+|----------|-----------|
+| BEM everywhere including utilities | BEM for components, utilities for adjustments |
+| `div__span--modifier` (nesting DOM) | BEM reflects component structure, not DOM nesting |
+| `.button--red`, `.button--blue` | `.button--primary`, `.button--danger` (semantic, not color) |
+| Atomic CSS without design system | Atomic only works with token-constrained design system |
+
+🎯 **Interview Pattern**:
+- **Trigger**: "Which CSS methodology do you prefer?" / "How do you organize CSS?"
+- **Concept**: BEM-Atomic-Hybrid trade-off based on team size and product stage
+- **Opening**: "It depends on team size and design system maturity — I use BEM for components and utility layer for adjustments, because..."
+
+🔑 **Knowledge Chain**:
+- **Prereq**: CSS specificity, cascade rules
+- **Enables**: CSS Modules integration, Tailwind config, linting setup
+
+---
+
+### Core Concept 2: CSS Scope Isolation — Modules, Cascade Layers, CSS-in-JS
+
+🧠 **Memory Hook**: CSS Modules = build-time prison (hash). Cascade Layers = specificity firewall. CSS-in-JS = runtime jail (class generated per render).
+
+**Why does this exist? / Tại sao tồn tại?**
+- **Level 1**: Global CSS + multiple components → `.title` in `Card.css` overrides `.title` in `Modal.css` → style leak → visual regression every release.
+- **Level 2**: Need isolation guarantees at either build-time (CSS Modules) or runtime (CSS-in-JS) — or manual layer discipline (Cascade Layers).
+
+**Visual — isolation mechanisms**:
+```css
+/* CSS Modules — build-time hash */
+/* Input: .card { } in Card.module.css */
+/* Output: .card_abc123 { }  ← guaranteed unique */
+
+/* Cascade Layers — manual specificity control */
+@layer reset, base, components, utilities;
+@layer components { .card { color: red; } }  /* lower specificity than utilities layer */
+@layer utilities { .text-red { color: red; } } /* wins — even if lower in file */
+
+/* Without layers: file order + specificity determines winner (unpredictable) */
+/* With layers: layer order always determines winner (predictable) */
+```
+
+**Common Mistakes / Sai lầm thường gặp**:
+| ❌ Wrong | ✅ Correct |
+|----------|-----------|
+| CSS Modules + global class names in same element | Use `:global()` intentionally for third-party overrides |
+| `@layer` without declaring order first | Always declare `@layer reset, base, components, utilities;` at top |
+| CSS-in-JS for static styles | CSS-in-JS best for dynamic styles; use CSS Modules for static |
+| Assume CSS Modules prevents all leaks | `:global()` and keyframe names still leak |
+
+🎯 **Interview Pattern**:
+- **Trigger**: "How do you prevent CSS style conflicts?" / "CSS Modules or CSS-in-JS?"
+- **Concept**: Scope isolation trade-off — build-time vs runtime vs manual layer control
+- **Opening**: "I prefer CSS Modules for component scope because it's zero-runtime and gives build-time guarantees, but Cascade Layers are the platform-native solution..."
+
+🔑 **Knowledge Chain**:
+- **Prereq**: CSS specificity algorithm, build tooling (webpack/vite)
+- **Enables**: Design token theming, multi-team parallel development
+
+---
+
+### Core Concept 3: Design Tokens + CSS Custom Properties for Theming
+
+🧠 **Memory Hook**: Token = "decision captured as name" (`--color-brand-primary`, not `#0066cc`). Variable = runtime slot. Token feeds variable.
+
+**Why does this exist? / Tại sao tồn tại?**
+- **Level 1**: Hard-coded `color: #0066cc` in 200 components → product wants dark mode → need to change 200 files → impossible to maintain.
+- **Level 2**: Need a single source of truth for design decisions (color, spacing, typography) that can change at runtime — CSS Custom Properties enable this; design tokens name it semantically.
+
+**Visual — token hierarchy**:
+```css
+/* Design Token Layer (semantic names) */
+:root {
+  --color-brand-primary: #0066cc;  /* primitive */
+  --color-surface-bg: #ffffff;      /* semantic */
+  --space-md: 16px;
+}
+
+/* Theme Override (runtime, zero JS) */
+[data-theme="dark"] {
+  --color-brand-primary: #4da6ff;
+  --color-surface-bg: #1a1a2e;
+}
+
+/* Component consumes tokens, not primitives */
+.button {
+  background: var(--color-brand-primary);  /* ✅ themed */
+  /* background: #0066cc;  ❌ hard-coded, unthemeable */
+}
+```
+
+**Common Mistakes / Sai lầm thường gặp**:
+| ❌ Wrong | ✅ Correct |
+|----------|-----------|
+| `--blue: #0066cc` (color-named token) | `--color-brand-primary: #0066cc` (semantic) |
+| Override token inside component | Override token at theme scope (`[data-theme]`) |
+| Use CSS variables for layout constants | CSS variables are runtime (good for theme); use Sass vars/constants for static layout |
+| JS-driven theme with `className` toggle | CSS-driven with `data-theme` attribute — zero JS, instant |
+
+🎯 **Interview Pattern**:
+- **Trigger**: "How would you implement dark mode?" / "What are design tokens?"
+- **Concept**: Token → CSS Custom Property → runtime theme switching via data attribute
+- **Opening**: "Design tokens capture design decisions as semantic names — `--color-brand-primary` instead of `#0066cc` — so the component layer never knows about specific color values..."
+
+🔑 **Knowledge Chain**:
+- **Prereq**: CSS Custom Properties, cascade specificity
+- **Enables**: Multi-brand theming, accessible high-contrast mode, design system integration
+
+---
+
+## Reference Theory / Lý Thuyết Tham Khảo
+
+> (Existing content continues below)
+
 ## Overview
 
 Trong các dự án FE thực tế, CSS thường hỏng không phải vì thiếu syntax, mà vì thiếu kiến trúc.
@@ -407,869 +589,186 @@ Khi trả lời câu hỏi CSS architecture:
 - [CSS Architecture Comprehensive](./04-css-architecture-comprehensive.md)
 - [CSS Architecture Theory](./07-css-architecture-theory.md)
 
-## Câu Hỏi Phỏng Vấn / Interview Q&A
+---
+
+## Interview Q&A
 
-### Q1. 🟢 [Junior] BEM solves what core problem in large projects?
-**Tổng Quan**
-Câu hỏi này kiểm tra khả năng hiểu mục tiêu kiến trúc CSS thay vì chỉ nhớ định nghĩa.
+### Q1: What is BEM and what problem does it solve? / BEM là gì và nó giải quyết vấn đề gì? 🟢 Junior
+
+**A:** BEM (Block-Element-Modifier) is a CSS naming convention: `.block__element--modifier`. It solves **naming collision and readability** at scale by making class names self-documenting and independent of DOM nesting.
 
-**Giải thích**
-BEM giải quyết xung đột naming và ambiguity giữa component, giúp class name trở thành contract rõ ràng trong team.
+```css
+/* BEM naming — readable, no cascade dependency */
+.card { }                         /* Block */
+.card__header { }                 /* Element */
+.card__header--featured { }       /* Modifier */
+.card--dark { }                   /* Block modifier */
 
-**Ví dụ**
-- Bối cảnh thực tế: team 5-10 người, nhiều module dùng chung.
-- Cách trả lời ngắn: nêu problem → approach → trade-off.
-- Follow-up thường gặp: "Nếu scale gấp đôi, bạn thay đổi gì?"
+/* ❌ Without BEM — context-dependent, fragile */
+.card .header { }                 /* Breaks if DOM structure changes */
+.card .header.featured { }        /* Specificity conflict risk */
+```
 
+BEM giải quyết 3 vấn đề cốt lõi: (1) **predictability** — đọc class name biết ngay context; (2) **no cascade dependency** — không cần nesting selector; (3) **teamwork** — mọi người dùng cùng convention, review dễ hơn.
+
+**Trade-off**: HTML verbose hơn. Ở team lớn, BEM + linter tốt hơn tự do naming. Ở project nhỏ với utility-first framework như Tailwind, BEM overhead không đáng.
+
+💡 **Interview Signal**:
+- ✅ Strong: "BEM makes CSS predictable by encoding component structure in class names, eliminating cascade dependency — I can move `.card__header` anywhere in the DOM and it still works."
+- ❌ Weak: "BEM is a naming convention for CSS" (definition without trade-off understanding)
+
+---
+
+### Q2: CSS Modules vs CSS-in-JS — when to use each? / CSS Modules vs CSS-in-JS — khi nào dùng cái nào? 🟡 Mid
+
+**A:** CSS Modules provides **build-time scope** (zero runtime cost); CSS-in-JS provides **runtime scope with dynamic styling**. Choose based on whether styles need to react to JavaScript state.
+
+```tsx
+// CSS Modules — static styles, build-time hash
+// Button.module.css → .button_abc123 { }
+import styles from './Button.module.css'
+<button className={styles.button}>Click</button>
+
+// CSS-in-JS (Styled Components) — dynamic styles
+// ✅ Good when styles depend on props/state
+const Button = styled.button<{ $variant: 'primary' | 'danger' }>`
+  background: ${p => p.$variant === 'primary' ? 'blue' : 'red'};
+`
+
+// Rule: if style depends on JS value at runtime → CSS-in-JS
+// Rule: if style is static/semi-static → CSS Modules (faster, SSR-friendly)
+```
+
+**Decision matrix**:
+| Factor | CSS Modules | CSS-in-JS |
+|--------|------------|-----------|
+| Runtime cost | None | ~5-15KB + style recalc |
+| Dynamic styles | Via CSS vars only | Native |
+| SSR | Simple | Needs hydration (RSC issues) |
+| Co-location | Separate `.module.css` | Same file |
 
-### Q2. 🟢 [Junior] When should we avoid strict BEM everywhere?
-**Tổng Quan**
-Câu hỏi này kiểm tra khả năng hiểu mục tiêu kiến trúc CSS thay vì chỉ nhớ định nghĩa.
+CSS Modules + CSS custom properties thường là sweet spot cho production: static performance với dynamic theming qua tokens.
 
-**Giải thích**
-Khi dự án nhỏ hoặc prototype ngắn hạn, strict BEM toàn bộ có thể tạo overhead naming không cần thiết.
+💡 **Interview Signal**:
+- ✅ Strong: "CSS Modules for static component styles, CSS-in-JS only when styles must react to JS state — CSS Modules is zero-runtime and SSR-friendly which matters for Next.js."
+- ❌ Weak: "CSS-in-JS is better because it's co-located" (ignores SSR complexity and runtime cost)
 
-**Ví dụ**
-- Bối cảnh thực tế: team 5-10 người, nhiều module dùng chung.
-- Cách trả lời ngắn: nêu problem → approach → trade-off.
-- Follow-up thường gặp: "Nếu scale gấp đôi, bạn thay đổi gì?"
+---
 
+### Q3: How do you implement dark mode with design tokens? / Làm thế nào implement dark mode với design tokens? 🟡 Mid
 
-### Q3. 🟢 [Junior] How is OOCSS different from BEM?
-**Tổng Quan**
-Câu hỏi này kiểm tra khả năng hiểu mục tiêu kiến trúc CSS thay vì chỉ nhớ định nghĩa.
+**A:** Use **semantic CSS custom properties** (tokens) scoped to theme attributes. Components consume tokens, never raw colors — theme switch is a single attribute change.
 
-**Giải thích**
-OOCSS tập trung nguyên tắc tái sử dụng object (structure/skin), còn BEM tập trung naming theo block-element-modifier.
+```css
+/* Token definitions — semantic, not color-named */
+:root {
+  --color-surface-bg: #ffffff;
+  --color-surface-text: #1a1a1a;
+  --color-brand-primary: #0066cc;
+  --space-md: 16px;
+}
 
-**Ví dụ**
-- Bối cảnh thực tế: team 5-10 người, nhiều module dùng chung.
-- Cách trả lời ngắn: nêu problem → approach → trade-off.
-- Follow-up thường gặp: "Nếu scale gấp đôi, bạn thay đổi gì?"
+/* Dark theme override */
+[data-theme="dark"] {
+  --color-surface-bg: #1a1a2e;
+  --color-surface-text: #e8e8f0;
+  --color-brand-primary: #4da6ff;
+}
 
+/* Component uses tokens only */
+.card {
+  background: var(--color-surface-bg);    /* ✅ auto-themed */
+  color: var(--color-surface-text);
+  /* background: #ffffff; ❌ unthemeable */
+}
+```
 
-### Q4. 🟢 [Junior] Explain SMACSS categories quickly.
-**Tổng Quan**
-Câu hỏi này kiểm tra khả năng hiểu mục tiêu kiến trúc CSS thay vì chỉ nhớ định nghĩa.
+```javascript
+// Theme switch: single DOM attribute, zero JS style calculation
+document.documentElement.setAttribute('data-theme', 'dark')
+// CSS cascade handles everything — no JS loop over components
+```
 
-**Giải thích**
-SMACSS chia rule theo vai trò: Base, Layout, Module, State, Theme để tổ chức và review dễ hơn.
+**Why `data-theme` over class toggle?**: `data-theme` is more semantic, can be scoped to subtree (`<div data-theme="dark">`), and works with CSS `:has()` for complex conditional theming.
 
-**Ví dụ**
-- Bối cảnh thực tế: team 5-10 người, nhiều module dùng chung.
-- Cách trả lời ngắn: nêu problem → approach → trade-off.
-- Follow-up thường gặp: "Nếu scale gấp đôi, bạn thay đổi gì?"
+💡 **Interview Signal**:
+- ✅ Strong: "Semantic tokens mean the component never knows about specific color values — dark mode is just overriding token values at the root scope, zero component changes needed."
+- ❌ Weak: "Add a `.dark` class to body and write `.dark .card { background: #1a1a2e }`" (hardcodes colors in each component, doesn't scale)
 
+---
 
-### Q5. 🟢 [Junior] What is the practical value of ITCSS?
-**Tổng Quan**
-Câu hỏi này kiểm tra khả năng hiểu mục tiêu kiến trúc CSS thay vì chỉ nhớ định nghĩa.
+### Q4: How do you enforce CSS architecture in a 15-person team? / Làm thế nào enforce CSS architecture trong team 15 người? 🔴 Senior
 
-**Giải thích**
-ITCSS kiểm soát cascade qua layer từ generic đến cụ thể, giúp giảm specificity war.
+**A:** Enforcement requires **automated tooling** + **process gates** + **token constraints** — convention documents alone fail at scale.
 
-**Ví dụ**
-- Bối cảnh thực tế: team 5-10 người, nhiều module dùng chung.
-- Cách trả lời ngắn: nêu problem → approach → trade-off.
-- Follow-up thường gặp: "Nếu scale gấp đôi, bạn thay đổi gì?"
+```json
+// stylelint.config.js — enforce BEM + token usage
+{
+  "rules": {
+    "selector-class-pattern": "^[a-z][a-z0-9]*(__[a-z][a-z0-9]*)?(--[a-z][a-z0-9]*)?$",
+    "custom-property-pattern": "^(color|space|font|size|radius)-",
+    "declaration-property-value-disallowed-list": {
+      "color": ["#[0-9a-fA-F]+", "rgb\\("],  // enforce token usage
+      "background-color": ["#[0-9a-fA-F]+", "rgb\\("]
+    }
+  }
+}
+```
 
+**Enforcement layers**:
+1. **Linting** (automated): `stylelint` BEM pattern + disallow raw color values (must use tokens)
+2. **PR template**: CSS review checklist — specificity, token usage, no `!important` without comment
+3. **Token as constraint**: Design system exports tokens → devs *can't* hardcode colors because tokens are the only documented values
+4. **Visual regression CI**: Chromatic/Percy on PR — catches unintended style changes before merge
+5. **Architectural decision record (ADR)**: Document why BEM+Modules over alternatives → new devs understand rather than fight the system
 
-### Q6. 🟢 [Junior] Atomic CSS benefits and risks?
-**Tổng Quan**
-Câu hỏi này kiểm tra khả năng hiểu mục tiêu kiến trúc CSS thay vì chỉ nhớ định nghĩa.
+**Common failure mode**: Convention document → devs ignore → entropy. Fix: make the correct path the path of least resistance (linter + token system make wrong approach harder than right approach).
 
-**Giải thích**
-Lợi ích: tốc độ và consistency; rủi ro: HTML dài, khó đọc nếu team thiếu convention.
+💡 **Interview Signal**:
+- ✅ Strong: "Make the correct approach the path of least resistance — linting enforces naming, design tokens make hardcoding harder than using tokens, and visual regression CI catches drift automatically."
+- ❌ Weak: "Write a style guide document" (documents without enforcement fail at team scale)
 
-**Ví dụ**
-- Bối cảnh thực tế: team 5-10 người, nhiều module dùng chung.
-- Cách trả lời ngắn: nêu problem → approach → trade-off.
-- Follow-up thường gặp: "Nếu scale gấp đôi, bạn thay đổi gì?"
+---
 
+## Q&A Summary / Tóm Tắt
 
-### Q7. 🟢 [Junior] CSS Modules vs CSS-in-JS in SSR context?
-**Tổng Quan**
-Câu hỏi này kiểm tra khả năng hiểu mục tiêu kiến trúc CSS thay vì chỉ nhớ định nghĩa.
+| Question | Core Insight |
+|----------|-------------|
+| What is BEM? | Naming convention → no cascade dependency, predictable, teamwork-friendly |
+| CSS Modules vs CSS-in-JS | Modules = build-time scope (zero cost); CSS-in-JS = runtime dynamic styling |
+| Dark mode with tokens | Semantic tokens → theme = attribute change, zero component edits |
+| Enforce at team scale | Linting + token constraints + visual regression CI — automation beats documentation |
 
-**Giải thích**
-CSS Modules thường đơn giản và nhẹ hơn cho SSR; CSS-in-JS cần cân nhắc runtime/SSR extraction tuỳ library.
+---
 
-**Ví dụ**
-- Bối cảnh thực tế: team 5-10 người, nhiều module dùng chung.
-- Cách trả lời ngắn: nêu problem → approach → trade-off.
-- Follow-up thường gặp: "Nếu scale gấp đôi, bạn thay đổi gì?"
+## ⚡ Cold Call Simulation
 
+**Q: "You have 30 seconds — what is CSS architecture and why does it matter?"**
 
-### Q8. 🟡 [Mid] Tailwind is architecture or just utilities?
-**Tổng Quan**
-Câu hỏi này kiểm tra khả năng hiểu mục tiêu kiến trúc CSS thay vì chỉ nhớ định nghĩa.
+> "CSS architecture is the system of conventions for naming, structuring, and scoping CSS so a team can scale without specificity conflicts. Without it, you get specificity wars, `!important` everywhere, and style leaks between components. The core tools are: a naming convention like BEM, scope isolation via CSS Modules or Cascade Layers, and design tokens for theming. The goal is making CSS predictable and safe to change — at 15 devs, that means automated enforcement via linting, not just documentation."
 
-**Giải thích**
-Tailwind là utility-first system + token scale; kiến trúc nằm ở config, convention, component API.
+---
 
-**Ví dụ**
-- Bối cảnh thực tế: team 5-10 người, nhiều module dùng chung.
-- Cách trả lời ngắn: nêu problem → approach → trade-off.
-- Follow-up thường gặp: "Nếu scale gấp đôi, bạn thay đổi gì?"
+## Retrieval Self-Check / Kiểm Tra Ghi Nhớ
 
+> Close this document. Answer from memory:
 
-### Q9. 🟡 [Mid] How to prevent CSS specificity wars?
-**Tổng Quan**
-Câu hỏi này kiểm tra khả năng hiểu mục tiêu kiến trúc CSS thay vì chỉ nhớ định nghĩa.
+**Retrieval**:
+1. What are the 3 problems BEM solves?
+2. What is the key difference between CSS Modules and CSS-in-JS scope isolation?
+3. What does a semantic design token look like vs a color-named one?
+4. Name 3 layers of CSS architecture enforcement for a team.
 
-**Giải thích**
-Giữ selector nông, tránh id selector cho UI, dùng layer nhất quán, review rule cấm `!important` không lý do.
+**Visual**: Sketch the token hierarchy — primitive → semantic → component consumption.
 
-**Ví dụ**
-- Bối cảnh thực tế: team 5-10 người, nhiều module dùng chung.
-- Cách trả lời ngắn: nêu problem → approach → trade-off.
-- Follow-up thường gặp: "Nếu scale gấp đôi, bạn thay đổi gì?"
+**Application**: You're migrating a legacy codebase with 200 global CSS files. What's your migration strategy using Cascade Layers?
 
+**Debug**: A dark mode implementation requires updating 50 component files for every new theme. What went wrong in the architecture and how do you fix it?
 
-### Q10. 🟡 [Mid] Best naming convention for states?
-**Tổng Quan**
-Câu hỏi này kiểm tra khả năng hiểu mục tiêu kiến trúc CSS thay vì chỉ nhớ định nghĩa.
+**Teach**: Explain design tokens and CSS custom properties to a junior dev who knows basic CSS.
 
-**Giải thích**
-Dùng prefix ổn định như `is-`, `has-`, `can-` để biểu thị state rõ ràng.
+---
 
-**Ví dụ**
-- Bối cảnh thực tế: team 5-10 người, nhiều module dùng chung.
-- Cách trả lời ngắn: nêu problem → approach → trade-off.
-- Follow-up thường gặp: "Nếu scale gấp đôi, bạn thay đổi gì?"
+🔁 **Spaced Repetition**: Review in 3 days → 7 days → 14 days.
+Focus on: BEM trade-offs, CSS Modules vs CSS-in-JS decision matrix, token hierarchy, team enforcement strategy.
 
-
-### Q11. 🟡 [Mid] How do you organize CSS files in a monorepo?
-**Tổng Quan**
-Câu hỏi này kiểm tra khả năng hiểu mục tiêu kiến trúc CSS thay vì chỉ nhớ định nghĩa.
-
-**Giải thích**
-Tách package tokens chung, component styles theo module, utilities dùng chung có versioning rõ.
-
-**Ví dụ**
-- Bối cảnh thực tế: team 5-10 người, nhiều module dùng chung.
-- Cách trả lời ngắn: nêu problem → approach → trade-off.
-- Follow-up thường gặp: "Nếu scale gấp đôi, bạn thay đổi gì?"
-
-
-### Q12. 🟡 [Mid] What is a scalable theming approach?
-**Tổng Quan**
-Câu hỏi này kiểm tra khả năng hiểu mục tiêu kiến trúc CSS thay vì chỉ nhớ định nghĩa.
-
-**Giải thích**
-Dùng design tokens + CSS variables + theme scope, component chỉ consume token thay vì hard-code value.
-
-**Ví dụ**
-- Bối cảnh thực tế: team 5-10 người, nhiều module dùng chung.
-- Cách trả lời ngắn: nêu problem → approach → trade-off.
-- Follow-up thường gặp: "Nếu scale gấp đôi, bạn thay đổi gì?"
-
-
-### Q13. 🟡 [Mid] How to migrate from legacy global CSS?
-**Tổng Quan**
-Câu hỏi này kiểm tra khả năng hiểu mục tiêu kiến trúc CSS thay vì chỉ nhớ định nghĩa.
-
-**Giải thích**
-Làm dần theo strangler pattern: đóng băng global cũ, viết mới bằng module/token, refactor theo feature boundary.
-
-**Ví dụ**
-- Bối cảnh thực tế: team 5-10 người, nhiều module dùng chung.
-- Cách trả lời ngắn: nêu problem → approach → trade-off.
-- Follow-up thường gặp: "Nếu scale gấp đôi, bạn thay đổi gì?"
-
-
-### Q14. 🟡 [Mid] When is `!important` acceptable?
-**Tổng Quan**
-Câu hỏi này kiểm tra khả năng hiểu mục tiêu kiến trúc CSS thay vì chỉ nhớ định nghĩa.
-
-**Giải thích**
-Chỉ nên dùng trong utility override có chủ đích hoặc xử lý integration edge-case đã document.
-
-**Ví dụ**
-- Bối cảnh thực tế: team 5-10 người, nhiều module dùng chung.
-- Cách trả lời ngắn: nêu problem → approach → trade-off.
-- Follow-up thường gặp: "Nếu scale gấp đôi, bạn thay đổi gì?"
-
-
-### Q15. 🟡 [Mid] How do design tokens improve CSS architecture?
-**Tổng Quan**
-Câu hỏi này kiểm tra khả năng hiểu mục tiêu kiến trúc CSS thay vì chỉ nhớ định nghĩa.
-
-**Giải thích**
-Token tách quyết định thiết kế khỏi implementation, giúp đổi theme/brand mà ít sửa component.
-
-**Ví dụ**
-- Bối cảnh thực tế: team 5-10 người, nhiều module dùng chung.
-- Cách trả lời ngắn: nêu problem → approach → trade-off.
-- Follow-up thường gặp: "Nếu scale gấp đôi, bạn thay đổi gì?"
-
-
-### Q16. 🔴 [Senior] What metrics indicate CSS architecture health?
-**Tổng Quan**
-Câu hỏi này kiểm tra khả năng hiểu mục tiêu kiến trúc CSS thay vì chỉ nhớ định nghĩa.
-
-**Giải thích**
-Số lượng override, tỷ lệ selector sâu, tốc độ fix bug UI, tần suất regressions visual.
-
-**Ví dụ**
-- Bối cảnh thực tế: team 5-10 người, nhiều module dùng chung.
-- Cách trả lời ngắn: nêu problem → approach → trade-off.
-- Follow-up thường gặp: "Nếu scale gấp đôi, bạn thay đổi gì?"
-
-
-### Q17. 🔴 [Senior] How do you handle 3rd-party component styling safely?
-**Tổng Quan**
-Câu hỏi này kiểm tra khả năng hiểu mục tiêu kiến trúc CSS thay vì chỉ nhớ định nghĩa.
-
-**Giải thích**
-Bao scope integration layer, tránh sửa global mạnh tay, ưu tiên API theme của thư viện.
-
-**Ví dụ**
-- Bối cảnh thực tế: team 5-10 người, nhiều module dùng chung.
-- Cách trả lời ngắn: nêu problem → approach → trade-off.
-- Follow-up thường gặp: "Nếu scale gấp đôi, bạn thay đổi gì?"
-
-
-### Q18. 🔴 [Senior] Can utility-first and semantic CSS coexist?
-**Tổng Quan**
-Câu hỏi này kiểm tra khả năng hiểu mục tiêu kiến trúc CSS thay vì chỉ nhớ định nghĩa.
-
-**Giải thích**
-Có, semantic cho structure component, utility cho adjustment nhỏ để giữ tốc độ và readability.
-
-**Ví dụ**
-- Bối cảnh thực tế: team 5-10 người, nhiều module dùng chung.
-- Cách trả lời ngắn: nêu problem → approach → trade-off.
-- Follow-up thường gặp: "Nếu scale gấp đôi, bạn thay đổi gì?"
-
-
-### Q19. 🔴 [Senior] How do you enforce architecture in team?
-**Tổng Quan**
-Câu hỏi này kiểm tra khả năng hiểu mục tiêu kiến trúc CSS thay vì chỉ nhớ định nghĩa.
-
-**Giải thích**
-Document convention, lint rule, PR checklist, và refactor budget theo sprint.
-
-**Ví dụ**
-- Bối cảnh thực tế: team 5-10 người, nhiều module dùng chung.
-- Cách trả lời ngắn: nêu problem → approach → trade-off.
-- Follow-up thường gặp: "Nếu scale gấp đôi, bạn thay đổi gì?"
-
-
-### Q20. 🔴 [Senior] What is the biggest CSS architecture mistake?
-**Tổng Quan**
-Câu hỏi này kiểm tra khả năng hiểu mục tiêu kiến trúc CSS thay vì chỉ nhớ định nghĩa.
-
-**Giải thích**
-Không có shared convention ngay từ đầu, dẫn đến mỗi dev một style và chi phí hợp nhất rất cao.
-
-**Ví dụ**
-- Bối cảnh thực tế: team 5-10 người, nhiều module dùng chung.
-- Cách trả lời ngắn: nêu problem → approach → trade-off.
-- Follow-up thường gặp: "Nếu scale gấp đôi, bạn thay đổi gì?"
-
-
-### Architecture Drill 1: Pattern Review
-**Tổng Quan**
-Bài drill này mô phỏng review CSS PR trong môi trường production.
-
-**Giải thích**
-- Xác định methodology đang dùng (BEM/OOCSS/SMACSS/ITCSS/Atomic).
-- Kiểm tra naming có nhất quán với guideline không.
-- Đánh giá mức độ coupling giữa component và layout.
-- Kiểm tra token usage và khả năng theme switching.
-- Ước lượng chi phí bảo trì sau 3-6 tháng.
-
-**Ví dụ**
-Checklist ngắn:
-1. Có class trạng thái rõ ràng (`is-`, `has-`) chưa?
-2. Có selector vượt quá 3 level không?
-3. Có hard-coded color thay vì token không?
-4. Có dùng `!important` mà thiếu comment lý do không?
-5. Có cross-reference với docs kiến trúc hiện tại không?
-
-
-### Architecture Drill 2: Pattern Review
-**Tổng Quan**
-Bài drill này mô phỏng review CSS PR trong môi trường production.
-
-**Giải thích**
-- Xác định methodology đang dùng (BEM/OOCSS/SMACSS/ITCSS/Atomic).
-- Kiểm tra naming có nhất quán với guideline không.
-- Đánh giá mức độ coupling giữa component và layout.
-- Kiểm tra token usage và khả năng theme switching.
-- Ước lượng chi phí bảo trì sau 3-6 tháng.
-
-**Ví dụ**
-Checklist ngắn:
-1. Có class trạng thái rõ ràng (`is-`, `has-`) chưa?
-2. Có selector vượt quá 3 level không?
-3. Có hard-coded color thay vì token không?
-4. Có dùng `!important` mà thiếu comment lý do không?
-5. Có cross-reference với docs kiến trúc hiện tại không?
-
-
-### Architecture Drill 3: Pattern Review
-**Tổng Quan**
-Bài drill này mô phỏng review CSS PR trong môi trường production.
-
-**Giải thích**
-- Xác định methodology đang dùng (BEM/OOCSS/SMACSS/ITCSS/Atomic).
-- Kiểm tra naming có nhất quán với guideline không.
-- Đánh giá mức độ coupling giữa component và layout.
-- Kiểm tra token usage và khả năng theme switching.
-- Ước lượng chi phí bảo trì sau 3-6 tháng.
-
-**Ví dụ**
-Checklist ngắn:
-1. Có class trạng thái rõ ràng (`is-`, `has-`) chưa?
-2. Có selector vượt quá 3 level không?
-3. Có hard-coded color thay vì token không?
-4. Có dùng `!important` mà thiếu comment lý do không?
-5. Có cross-reference với docs kiến trúc hiện tại không?
-
-
-### Architecture Drill 4: Pattern Review
-**Tổng Quan**
-Bài drill này mô phỏng review CSS PR trong môi trường production.
-
-**Giải thích**
-- Xác định methodology đang dùng (BEM/OOCSS/SMACSS/ITCSS/Atomic).
-- Kiểm tra naming có nhất quán với guideline không.
-- Đánh giá mức độ coupling giữa component và layout.
-- Kiểm tra token usage và khả năng theme switching.
-- Ước lượng chi phí bảo trì sau 3-6 tháng.
-
-**Ví dụ**
-Checklist ngắn:
-1. Có class trạng thái rõ ràng (`is-`, `has-`) chưa?
-2. Có selector vượt quá 3 level không?
-3. Có hard-coded color thay vì token không?
-4. Có dùng `!important` mà thiếu comment lý do không?
-5. Có cross-reference với docs kiến trúc hiện tại không?
-
-
-### Architecture Drill 5: Pattern Review
-**Tổng Quan**
-Bài drill này mô phỏng review CSS PR trong môi trường production.
-
-**Giải thích**
-- Xác định methodology đang dùng (BEM/OOCSS/SMACSS/ITCSS/Atomic).
-- Kiểm tra naming có nhất quán với guideline không.
-- Đánh giá mức độ coupling giữa component và layout.
-- Kiểm tra token usage và khả năng theme switching.
-- Ước lượng chi phí bảo trì sau 3-6 tháng.
-
-**Ví dụ**
-Checklist ngắn:
-1. Có class trạng thái rõ ràng (`is-`, `has-`) chưa?
-2. Có selector vượt quá 3 level không?
-3. Có hard-coded color thay vì token không?
-4. Có dùng `!important` mà thiếu comment lý do không?
-5. Có cross-reference với docs kiến trúc hiện tại không?
-
-
-### Architecture Drill 6: Pattern Review
-**Tổng Quan**
-Bài drill này mô phỏng review CSS PR trong môi trường production.
-
-**Giải thích**
-- Xác định methodology đang dùng (BEM/OOCSS/SMACSS/ITCSS/Atomic).
-- Kiểm tra naming có nhất quán với guideline không.
-- Đánh giá mức độ coupling giữa component và layout.
-- Kiểm tra token usage và khả năng theme switching.
-- Ước lượng chi phí bảo trì sau 3-6 tháng.
-
-**Ví dụ**
-Checklist ngắn:
-1. Có class trạng thái rõ ràng (`is-`, `has-`) chưa?
-2. Có selector vượt quá 3 level không?
-3. Có hard-coded color thay vì token không?
-4. Có dùng `!important` mà thiếu comment lý do không?
-5. Có cross-reference với docs kiến trúc hiện tại không?
-
-
-### Architecture Drill 7: Pattern Review
-**Tổng Quan**
-Bài drill này mô phỏng review CSS PR trong môi trường production.
-
-**Giải thích**
-- Xác định methodology đang dùng (BEM/OOCSS/SMACSS/ITCSS/Atomic).
-- Kiểm tra naming có nhất quán với guideline không.
-- Đánh giá mức độ coupling giữa component và layout.
-- Kiểm tra token usage và khả năng theme switching.
-- Ước lượng chi phí bảo trì sau 3-6 tháng.
-
-**Ví dụ**
-Checklist ngắn:
-1. Có class trạng thái rõ ràng (`is-`, `has-`) chưa?
-2. Có selector vượt quá 3 level không?
-3. Có hard-coded color thay vì token không?
-4. Có dùng `!important` mà thiếu comment lý do không?
-5. Có cross-reference với docs kiến trúc hiện tại không?
-
-
-### Architecture Drill 8: Pattern Review
-**Tổng Quan**
-Bài drill này mô phỏng review CSS PR trong môi trường production.
-
-**Giải thích**
-- Xác định methodology đang dùng (BEM/OOCSS/SMACSS/ITCSS/Atomic).
-- Kiểm tra naming có nhất quán với guideline không.
-- Đánh giá mức độ coupling giữa component và layout.
-- Kiểm tra token usage và khả năng theme switching.
-- Ước lượng chi phí bảo trì sau 3-6 tháng.
-
-**Ví dụ**
-Checklist ngắn:
-1. Có class trạng thái rõ ràng (`is-`, `has-`) chưa?
-2. Có selector vượt quá 3 level không?
-3. Có hard-coded color thay vì token không?
-4. Có dùng `!important` mà thiếu comment lý do không?
-5. Có cross-reference với docs kiến trúc hiện tại không?
-
-
-### Architecture Drill 9: Pattern Review
-**Tổng Quan**
-Bài drill này mô phỏng review CSS PR trong môi trường production.
-
-**Giải thích**
-- Xác định methodology đang dùng (BEM/OOCSS/SMACSS/ITCSS/Atomic).
-- Kiểm tra naming có nhất quán với guideline không.
-- Đánh giá mức độ coupling giữa component và layout.
-- Kiểm tra token usage và khả năng theme switching.
-- Ước lượng chi phí bảo trì sau 3-6 tháng.
-
-**Ví dụ**
-Checklist ngắn:
-1. Có class trạng thái rõ ràng (`is-`, `has-`) chưa?
-2. Có selector vượt quá 3 level không?
-3. Có hard-coded color thay vì token không?
-4. Có dùng `!important` mà thiếu comment lý do không?
-5. Có cross-reference với docs kiến trúc hiện tại không?
-
-
-### Architecture Drill 10: Pattern Review
-**Tổng Quan**
-Bài drill này mô phỏng review CSS PR trong môi trường production.
-
-**Giải thích**
-- Xác định methodology đang dùng (BEM/OOCSS/SMACSS/ITCSS/Atomic).
-- Kiểm tra naming có nhất quán với guideline không.
-- Đánh giá mức độ coupling giữa component và layout.
-- Kiểm tra token usage và khả năng theme switching.
-- Ước lượng chi phí bảo trì sau 3-6 tháng.
-
-**Ví dụ**
-Checklist ngắn:
-1. Có class trạng thái rõ ràng (`is-`, `has-`) chưa?
-2. Có selector vượt quá 3 level không?
-3. Có hard-coded color thay vì token không?
-4. Có dùng `!important` mà thiếu comment lý do không?
-5. Có cross-reference với docs kiến trúc hiện tại không?
-
-
-### Architecture Drill 11: Pattern Review
-**Tổng Quan**
-Bài drill này mô phỏng review CSS PR trong môi trường production.
-
-**Giải thích**
-- Xác định methodology đang dùng (BEM/OOCSS/SMACSS/ITCSS/Atomic).
-- Kiểm tra naming có nhất quán với guideline không.
-- Đánh giá mức độ coupling giữa component và layout.
-- Kiểm tra token usage và khả năng theme switching.
-- Ước lượng chi phí bảo trì sau 3-6 tháng.
-
-**Ví dụ**
-Checklist ngắn:
-1. Có class trạng thái rõ ràng (`is-`, `has-`) chưa?
-2. Có selector vượt quá 3 level không?
-3. Có hard-coded color thay vì token không?
-4. Có dùng `!important` mà thiếu comment lý do không?
-5. Có cross-reference với docs kiến trúc hiện tại không?
-
-
-### Architecture Drill 12: Pattern Review
-**Tổng Quan**
-Bài drill này mô phỏng review CSS PR trong môi trường production.
-
-**Giải thích**
-- Xác định methodology đang dùng (BEM/OOCSS/SMACSS/ITCSS/Atomic).
-- Kiểm tra naming có nhất quán với guideline không.
-- Đánh giá mức độ coupling giữa component và layout.
-- Kiểm tra token usage và khả năng theme switching.
-- Ước lượng chi phí bảo trì sau 3-6 tháng.
-
-**Ví dụ**
-Checklist ngắn:
-1. Có class trạng thái rõ ràng (`is-`, `has-`) chưa?
-2. Có selector vượt quá 3 level không?
-3. Có hard-coded color thay vì token không?
-4. Có dùng `!important` mà thiếu comment lý do không?
-5. Có cross-reference với docs kiến trúc hiện tại không?
-
-
-### Architecture Drill 13: Pattern Review
-**Tổng Quan**
-Bài drill này mô phỏng review CSS PR trong môi trường production.
-
-**Giải thích**
-- Xác định methodology đang dùng (BEM/OOCSS/SMACSS/ITCSS/Atomic).
-- Kiểm tra naming có nhất quán với guideline không.
-- Đánh giá mức độ coupling giữa component và layout.
-- Kiểm tra token usage và khả năng theme switching.
-- Ước lượng chi phí bảo trì sau 3-6 tháng.
-
-**Ví dụ**
-Checklist ngắn:
-1. Có class trạng thái rõ ràng (`is-`, `has-`) chưa?
-2. Có selector vượt quá 3 level không?
-3. Có hard-coded color thay vì token không?
-4. Có dùng `!important` mà thiếu comment lý do không?
-5. Có cross-reference với docs kiến trúc hiện tại không?
-
-
-### Architecture Drill 14: Pattern Review
-**Tổng Quan**
-Bài drill này mô phỏng review CSS PR trong môi trường production.
-
-**Giải thích**
-- Xác định methodology đang dùng (BEM/OOCSS/SMACSS/ITCSS/Atomic).
-- Kiểm tra naming có nhất quán với guideline không.
-- Đánh giá mức độ coupling giữa component và layout.
-- Kiểm tra token usage và khả năng theme switching.
-- Ước lượng chi phí bảo trì sau 3-6 tháng.
-
-**Ví dụ**
-Checklist ngắn:
-1. Có class trạng thái rõ ràng (`is-`, `has-`) chưa?
-2. Có selector vượt quá 3 level không?
-3. Có hard-coded color thay vì token không?
-4. Có dùng `!important` mà thiếu comment lý do không?
-5. Có cross-reference với docs kiến trúc hiện tại không?
-
-
-### Architecture Drill 15: Pattern Review
-**Tổng Quan**
-Bài drill này mô phỏng review CSS PR trong môi trường production.
-
-**Giải thích**
-- Xác định methodology đang dùng (BEM/OOCSS/SMACSS/ITCSS/Atomic).
-- Kiểm tra naming có nhất quán với guideline không.
-- Đánh giá mức độ coupling giữa component và layout.
-- Kiểm tra token usage và khả năng theme switching.
-- Ước lượng chi phí bảo trì sau 3-6 tháng.
-
-**Ví dụ**
-Checklist ngắn:
-1. Có class trạng thái rõ ràng (`is-`, `has-`) chưa?
-2. Có selector vượt quá 3 level không?
-3. Có hard-coded color thay vì token không?
-4. Có dùng `!important` mà thiếu comment lý do không?
-5. Có cross-reference với docs kiến trúc hiện tại không?
-
-
-### Architecture Drill 16: Pattern Review
-**Tổng Quan**
-Bài drill này mô phỏng review CSS PR trong môi trường production.
-
-**Giải thích**
-- Xác định methodology đang dùng (BEM/OOCSS/SMACSS/ITCSS/Atomic).
-- Kiểm tra naming có nhất quán với guideline không.
-- Đánh giá mức độ coupling giữa component và layout.
-- Kiểm tra token usage và khả năng theme switching.
-- Ước lượng chi phí bảo trì sau 3-6 tháng.
-
-**Ví dụ**
-Checklist ngắn:
-1. Có class trạng thái rõ ràng (`is-`, `has-`) chưa?
-2. Có selector vượt quá 3 level không?
-3. Có hard-coded color thay vì token không?
-4. Có dùng `!important` mà thiếu comment lý do không?
-5. Có cross-reference với docs kiến trúc hiện tại không?
-
-
-### Architecture Drill 17: Pattern Review
-**Tổng Quan**
-Bài drill này mô phỏng review CSS PR trong môi trường production.
-
-**Giải thích**
-- Xác định methodology đang dùng (BEM/OOCSS/SMACSS/ITCSS/Atomic).
-- Kiểm tra naming có nhất quán với guideline không.
-- Đánh giá mức độ coupling giữa component và layout.
-- Kiểm tra token usage và khả năng theme switching.
-- Ước lượng chi phí bảo trì sau 3-6 tháng.
-
-**Ví dụ**
-Checklist ngắn:
-1. Có class trạng thái rõ ràng (`is-`, `has-`) chưa?
-2. Có selector vượt quá 3 level không?
-3. Có hard-coded color thay vì token không?
-4. Có dùng `!important` mà thiếu comment lý do không?
-5. Có cross-reference với docs kiến trúc hiện tại không?
-
-
-### Architecture Drill 18: Pattern Review
-**Tổng Quan**
-Bài drill này mô phỏng review CSS PR trong môi trường production.
-
-**Giải thích**
-- Xác định methodology đang dùng (BEM/OOCSS/SMACSS/ITCSS/Atomic).
-- Kiểm tra naming có nhất quán với guideline không.
-- Đánh giá mức độ coupling giữa component và layout.
-- Kiểm tra token usage và khả năng theme switching.
-- Ước lượng chi phí bảo trì sau 3-6 tháng.
-
-**Ví dụ**
-Checklist ngắn:
-1. Có class trạng thái rõ ràng (`is-`, `has-`) chưa?
-2. Có selector vượt quá 3 level không?
-3. Có hard-coded color thay vì token không?
-4. Có dùng `!important` mà thiếu comment lý do không?
-5. Có cross-reference với docs kiến trúc hiện tại không?
-
-
-### Architecture Drill 19: Pattern Review
-**Tổng Quan**
-Bài drill này mô phỏng review CSS PR trong môi trường production.
-
-**Giải thích**
-- Xác định methodology đang dùng (BEM/OOCSS/SMACSS/ITCSS/Atomic).
-- Kiểm tra naming có nhất quán với guideline không.
-- Đánh giá mức độ coupling giữa component và layout.
-- Kiểm tra token usage và khả năng theme switching.
-- Ước lượng chi phí bảo trì sau 3-6 tháng.
-
-**Ví dụ**
-Checklist ngắn:
-1. Có class trạng thái rõ ràng (`is-`, `has-`) chưa?
-2. Có selector vượt quá 3 level không?
-3. Có hard-coded color thay vì token không?
-4. Có dùng `!important` mà thiếu comment lý do không?
-5. Có cross-reference với docs kiến trúc hiện tại không?
-
-
-### Architecture Drill 20: Pattern Review
-**Tổng Quan**
-Bài drill này mô phỏng review CSS PR trong môi trường production.
-
-**Giải thích**
-- Xác định methodology đang dùng (BEM/OOCSS/SMACSS/ITCSS/Atomic).
-- Kiểm tra naming có nhất quán với guideline không.
-- Đánh giá mức độ coupling giữa component và layout.
-- Kiểm tra token usage và khả năng theme switching.
-- Ước lượng chi phí bảo trì sau 3-6 tháng.
-
-**Ví dụ**
-Checklist ngắn:
-1. Có class trạng thái rõ ràng (`is-`, `has-`) chưa?
-2. Có selector vượt quá 3 level không?
-3. Có hard-coded color thay vì token không?
-4. Có dùng `!important` mà thiếu comment lý do không?
-5. Có cross-reference với docs kiến trúc hiện tại không?
-
-
-### Architecture Drill 21: Pattern Review
-**Tổng Quan**
-Bài drill này mô phỏng review CSS PR trong môi trường production.
-
-**Giải thích**
-- Xác định methodology đang dùng (BEM/OOCSS/SMACSS/ITCSS/Atomic).
-- Kiểm tra naming có nhất quán với guideline không.
-- Đánh giá mức độ coupling giữa component và layout.
-- Kiểm tra token usage và khả năng theme switching.
-- Ước lượng chi phí bảo trì sau 3-6 tháng.
-
-**Ví dụ**
-Checklist ngắn:
-1. Có class trạng thái rõ ràng (`is-`, `has-`) chưa?
-2. Có selector vượt quá 3 level không?
-3. Có hard-coded color thay vì token không?
-4. Có dùng `!important` mà thiếu comment lý do không?
-5. Có cross-reference với docs kiến trúc hiện tại không?
-
-
-### Architecture Drill 22: Pattern Review
-**Tổng Quan**
-Bài drill này mô phỏng review CSS PR trong môi trường production.
-
-**Giải thích**
-- Xác định methodology đang dùng (BEM/OOCSS/SMACSS/ITCSS/Atomic).
-- Kiểm tra naming có nhất quán với guideline không.
-- Đánh giá mức độ coupling giữa component và layout.
-- Kiểm tra token usage và khả năng theme switching.
-- Ước lượng chi phí bảo trì sau 3-6 tháng.
-
-**Ví dụ**
-Checklist ngắn:
-1. Có class trạng thái rõ ràng (`is-`, `has-`) chưa?
-2. Có selector vượt quá 3 level không?
-3. Có hard-coded color thay vì token không?
-4. Có dùng `!important` mà thiếu comment lý do không?
-5. Có cross-reference với docs kiến trúc hiện tại không?
-
-
-### Architecture Drill 23: Pattern Review
-**Tổng Quan**
-Bài drill này mô phỏng review CSS PR trong môi trường production.
-
-**Giải thích**
-- Xác định methodology đang dùng (BEM/OOCSS/SMACSS/ITCSS/Atomic).
-- Kiểm tra naming có nhất quán với guideline không.
-- Đánh giá mức độ coupling giữa component và layout.
-- Kiểm tra token usage và khả năng theme switching.
-- Ước lượng chi phí bảo trì sau 3-6 tháng.
-
-**Ví dụ**
-Checklist ngắn:
-1. Có class trạng thái rõ ràng (`is-`, `has-`) chưa?
-2. Có selector vượt quá 3 level không?
-3. Có hard-coded color thay vì token không?
-4. Có dùng `!important` mà thiếu comment lý do không?
-5. Có cross-reference với docs kiến trúc hiện tại không?
-
-
-### Architecture Drill 24: Pattern Review
-**Tổng Quan**
-Bài drill này mô phỏng review CSS PR trong môi trường production.
-
-**Giải thích**
-- Xác định methodology đang dùng (BEM/OOCSS/SMACSS/ITCSS/Atomic).
-- Kiểm tra naming có nhất quán với guideline không.
-- Đánh giá mức độ coupling giữa component và layout.
-- Kiểm tra token usage và khả năng theme switching.
-- Ước lượng chi phí bảo trì sau 3-6 tháng.
-
-**Ví dụ**
-Checklist ngắn:
-1. Có class trạng thái rõ ràng (`is-`, `has-`) chưa?
-2. Có selector vượt quá 3 level không?
-3. Có hard-coded color thay vì token không?
-4. Có dùng `!important` mà thiếu comment lý do không?
-5. Có cross-reference với docs kiến trúc hiện tại không?
-
-
-### Architecture Drill 25: Pattern Review
-**Tổng Quan**
-Bài drill này mô phỏng review CSS PR trong môi trường production.
-
-**Giải thích**
-- Xác định methodology đang dùng (BEM/OOCSS/SMACSS/ITCSS/Atomic).
-- Kiểm tra naming có nhất quán với guideline không.
-- Đánh giá mức độ coupling giữa component và layout.
-- Kiểm tra token usage và khả năng theme switching.
-- Ước lượng chi phí bảo trì sau 3-6 tháng.
-
-**Ví dụ**
-Checklist ngắn:
-1. Có class trạng thái rõ ràng (`is-`, `has-`) chưa?
-2. Có selector vượt quá 3 level không?
-3. Có hard-coded color thay vì token không?
-4. Có dùng `!important` mà thiếu comment lý do không?
-5. Có cross-reference với docs kiến trúc hiện tại không?
-
-
-### Architecture Drill 26: Pattern Review
-**Tổng Quan**
-Bài drill này mô phỏng review CSS PR trong môi trường production.
-
-**Giải thích**
-- Xác định methodology đang dùng (BEM/OOCSS/SMACSS/ITCSS/Atomic).
-- Kiểm tra naming có nhất quán với guideline không.
-- Đánh giá mức độ coupling giữa component và layout.
-- Kiểm tra token usage và khả năng theme switching.
-- Ước lượng chi phí bảo trì sau 3-6 tháng.
-
-**Ví dụ**
-Checklist ngắn:
-1. Có class trạng thái rõ ràng (`is-`, `has-`) chưa?
-2. Có selector vượt quá 3 level không?
-3. Có hard-coded color thay vì token không?
-4. Có dùng `!important` mà thiếu comment lý do không?
-5. Có cross-reference với docs kiến trúc hiện tại không?
-
-
-### Architecture Drill 27: Pattern Review
-**Tổng Quan**
-Bài drill này mô phỏng review CSS PR trong môi trường production.
-
-**Giải thích**
-- Xác định methodology đang dùng (BEM/OOCSS/SMACSS/ITCSS/Atomic).
-- Kiểm tra naming có nhất quán với guideline không.
-- Đánh giá mức độ coupling giữa component và layout.
-- Kiểm tra token usage và khả năng theme switching.
-- Ước lượng chi phí bảo trì sau 3-6 tháng.
-
-**Ví dụ**
-Checklist ngắn:
-1. Có class trạng thái rõ ràng (`is-`, `has-`) chưa?
-2. Có selector vượt quá 3 level không?
-3. Có hard-coded color thay vì token không?
-4. Có dùng `!important` mà thiếu comment lý do không?
-5. Có cross-reference với docs kiến trúc hiện tại không?
-
-
-### Architecture Drill 28: Pattern Review
-**Tổng Quan**
-Bài drill này mô phỏng review CSS PR trong môi trường production.
-
-**Giải thích**
-- Xác định methodology đang dùng (BEM/OOCSS/SMACSS/ITCSS/Atomic).
-- Kiểm tra naming có nhất quán với guideline không.
-- Đánh giá mức độ coupling giữa component và layout.
-- Kiểm tra token usage và khả năng theme switching.
-- Ước lượng chi phí bảo trì sau 3-6 tháng.
-
-**Ví dụ**
-Checklist ngắn:
-1. Có class trạng thái rõ ràng (`is-`, `has-`) chưa?
-2. Có selector vượt quá 3 level không?
-3. Có hard-coded color thay vì token không?
-4. Có dùng `!important` mà thiếu comment lý do không?
-5. Có cross-reference với docs kiến trúc hiện tại không?
-
-
-### Architecture Drill 29: Pattern Review
-**Tổng Quan**
-Bài drill này mô phỏng review CSS PR trong môi trường production.
-
-**Giải thích**
-- Xác định methodology đang dùng (BEM/OOCSS/SMACSS/ITCSS/Atomic).
-- Kiểm tra naming có nhất quán với guideline không.
-- Đánh giá mức độ coupling giữa component và layout.
-- Kiểm tra token usage và khả năng theme switching.
-- Ước lượng chi phí bảo trì sau 3-6 tháng.
-
-**Ví dụ**
-Checklist ngắn:
-1. Có class trạng thái rõ ràng (`is-`, `has-`) chưa?
-2. Có selector vượt quá 3 level không?
-3. Có hard-coded color thay vì token không?
-4. Có dùng `!important` mà thiếu comment lý do không?
-5. Có cross-reference với docs kiến trúc hiện tại không?
-
-
-### Architecture Drill 30: Pattern Review
-**Tổng Quan**
-Bài drill này mô phỏng review CSS PR trong môi trường production.
-
-**Giải thích**
-- Xác định methodology đang dùng (BEM/OOCSS/SMACSS/ITCSS/Atomic).
-- Kiểm tra naming có nhất quán với guideline không.
-- Đánh giá mức độ coupling giữa component và layout.
-- Kiểm tra token usage và khả năng theme switching.
-- Ước lượng chi phí bảo trì sau 3-6 tháng.
-
-**Ví dụ**
-Checklist ngắn:
-1. Có class trạng thái rõ ràng (`is-`, `has-`) chưa?
-2. Có selector vượt quá 3 level không?
-3. Có hard-coded color thay vì token không?
-4. Có dùng `!important` mà thiếu comment lý do không?
-5. Có cross-reference với docs kiến trúc hiện tại không?
-
-
-## Summary / Tóm Tắt
-
-Kiến trúc CSS tốt là nền tảng để frontend scale bền vững.
-Khi trả lời phỏng vấn, hãy luôn nói theo ngữ cảnh team + trade-off + chiến lược migration.
