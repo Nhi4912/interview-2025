@@ -3,16 +3,214 @@
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 
-## Table of Contents / Mục Lục
+## Real-World Scenario / Tình Huống Thực Tế
 
-1. [Memory Model](#memory-model)
-2. [Garbage Collection](#garbage-collection)
-3. [Memory Leaks](#memory-leaks)
-4. [Optimization Techniques](#optimization-techniques)
-5. [WeakMap and WeakSet](#weakmap-and-weakset)
-6. [Interview Questions](#interview-questions)
+**Momo e-wallet memory leak:** Single-page app memory usage tăng dần từ 80MB → 600MB sau 2 giờ sử dụng. Chrome DevTools Memory tab → Heap Snapshot comparison → tìm thấy 50,000+ `EventListener` objects không được cleanup. Root cause: `document.addEventListener('visibilitychange', handler)` được gọi mỗi lần user navigate — cùng một event listener được register nhiều lần. Fix: `removeEventListener` trong cleanup, hoặc AbortController signal. Result: memory ổn định ở 90MB.
+
+**Bài học:** Memory leaks trong JavaScript không crash app ngay lập tức — chúng tích lũy dần (death by a thousand cuts). Biết 5 leak patterns phổ biến + cách dùng Chrome DevTools Memory tab là kỹ năng debug cần thiết ở level Senior.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** JavaScript memory management giống hotel: Stack là reception desk (fast, nhỏ, LIFO — mỗi function call là một check-in/check-out). Heap là các phòng (lớn, dynamic, managed). Garbage Collector là housekeeping: đi qua từng phòng, check xem có guest nào vẫn có key không (reachable). Phòng không có guest nào hold key → được clean và reallocated.
+
+**Why GC exists:** Manual memory management (C/C++) là error-prone — double free, use-after-free bugs. JS designed for web developers who shouldn't need to `malloc`/`free`. Trade-off: GC pauses (STW events) vs developer convenience.
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[JavaScript Memory Management]
+        │
+        ├── Memory Allocation
+        │       ├── Stack: function frames, primitives, references (LIFO, ~1MB, fast)
+        │       └── Heap: objects, arrays, closures (dynamic, GC-managed)
+        │
+        ├── Garbage Collection (V8: Orinoco GC)
+        │       ├── Mark-and-Sweep: trace from roots → mark reachable → sweep rest
+        │       ├── Generational: New Space (young, fast, Scavenge) + Old Space (survived 2 GCs, Major GC)
+        │       ├── Incremental: spread Major GC over frames (avoid long STW pauses)
+        │       └── Concurrent: GC runs on helper threads while JS runs
+        │
+        ├── Memory Leaks (5 common patterns)
+        │       ├── Forgotten setInterval/setTimeout
+        │       ├── Event listeners never removed
+        │       ├── Closures capturing large objects
+        │       ├── Detached DOM nodes (removed from DOM but held in JS reference)
+        │       └── Unbounded caches (Map/array growing without eviction)
+        │
+        └── WeakMap/WeakSet — leak-safe caching
+                Keys held weakly → GC can collect even if key still in WeakMap
+```
 
 ---
+
+## Core Concepts / Khái Niệm Cốt Lõi
+
+---
+
+### 1. Stack vs Heap + Mark-and-Sweep GC
+
+**🧠 Memory Hook:** "**Stack = fast LIFO hotel check-in/out. Heap = permanent rooms managed by GC. GC asks: does anyone still hold a key to this room?**"
+
+**Why does this exist? / Tại sao tồn tại?**
+
+- Why do we need two memory regions (Stack and Heap)? Because function-local data has perfectly predictable lifetime (created at call, destroyed at return) — this fits stack perfectly. Objects live longer, are shared, and have unpredictable lifetimes — they need dynamic allocation on the heap
+- Why does JavaScript need garbage collection at all? Because objects' lifetimes are determined at runtime — you can't statically know when to free `const user = {}` in every possible execution path. GC observes reachability: if no code can reach an object, it's safe to free
+- Why is mark-and-sweep the dominant algorithm? Because it correctly handles cycles (`a.ref = b; b.ref = a` — both unreachable despite pointing to each other). Reference counting (an alternative) fails on cycles.
+
+**Visual — GC Roots and Reachability:**
+
+```
+GC Roots (always reachable):
+  - Global object (window/globalThis)
+  - Currently executing function's local variables
+  - Variables in all active closures
+
+Mark Phase:
+  Root → A → B → C  ← all marked reachable
+              ↘ D   ← marked reachable
+  E → F             ← F has no reference from roots
+
+Sweep Phase:
+  E and F: NOT marked → deallocated ← memory freed
+  A, B, C, D: marked → survive GC
+
+Circular references (handled by mark-and-sweep):
+  let x = {}; let y = {}; x.ref = y; y.ref = x;
+  x = null; y = null;
+  // Both x and y are unreachable from roots → swept
+  // Reference counting would fail here (refcount = 1 for each)
+```
+
+**Common Mistakes:**
+
+| ❌ Wrong | ✅ Correct |
+|---|---|
+| "Setting variable to null frees memory immediately" | Marks the object unreachable from that reference — GC runs at its own schedule |
+| "Circular references always cause memory leaks in JS" | Mark-and-sweep handles cycles — only old IE using ref counting had this problem |
+| "More GC = good, memory is always being freed" | Frequent GC = frequent pauses (STW) — excessive allocation is the real problem |
+| "V8 GC runs on the main thread" | Modern V8 (Orinoco): concurrent + incremental — most GC work runs off main thread |
+
+**🎯 Interview Pattern:**
+- **Trigger**: "how does garbage collection work" / "memory management" / "prevent memory leaks"
+- **Concept**: Reachability-based GC, mark-and-sweep handles cycles, roots → mark → sweep
+- **Opening**: "JavaScript uses mark-and-sweep GC. Starting from GC roots — globals, active stack frames, closures — it traverses all reachable objects and marks them. Everything unmarked gets swept. This correctly handles cycles, which is why setting `x = null; y = null` on mutually-referencing objects frees both..."
+
+**🔑 Knowledge Chain:**
+- **Prereq**: JavaScript objects and references (heap vs stack model)
+- **Enables**: Understanding why WeakMap is necessary, diagnosing memory leaks, V8 performance optimization
+
+---
+
+### 2. Memory Leak Patterns — The 5 Killers
+
+**🧠 Memory Hook:** "**TEC-DU: Timers, Event listeners, Closures, Detached DOM, Unbounded caches**"
+
+**Why does this exist? / Tại sao tồn tại?**
+
+- Why do event listeners cause leaks? Because `addEventListener` creates a reference from the DOM element to the handler — and often the handler closes over other objects. If the element lives on (or the handler is never removed), all closed-over objects stay alive
+- Why are setInterval leaks common? Because `setInterval` holds a reference to the callback via the timer system — if you navigate away without clearing it, the callback (and everything it closes over) stays alive for the session
+- Why does detached DOM cause leaks? You remove a node from the DOM, but you still hold a JavaScript reference to it. The node is logically "gone" but the GC can't collect it — worse, it keeps the entire DOM subtree alive
+
+**Visual — Leak Detection in Chrome DevTools:**
+
+```
+Chrome DevTools → Memory tab → Heap Snapshot:
+
+Snapshot 1 (baseline): 50 MB
+[Navigate app for 10 minutes]
+Snapshot 2: 180 MB
+
+Comparison view: Retained Size Δ:
+  EventListener: +50,000 objects, +120 MB ← LEAK FOUND
+
+Fix: Track all addEventListener calls, pair with removeEventListener
+     Or: Use AbortController signal:
+
+const controller = new AbortController()
+element.addEventListener('click', handler, { signal: controller.signal })
+// Later: controller.abort() removes all listeners at once
+
+setInterval leak:
+  const id = setInterval(fn, 1000)
+  // componentDidMount equivalent
+  return () => clearInterval(id)  // ← always cleanup in useEffect return
+```
+
+**Common Mistakes:**
+
+| ❌ Wrong | ✅ Correct |
+|---|---|
+| Adding event listeners in loop/component re-render without cleanup | Use `useEffect` return cleanup or `AbortController` |
+| `const cache = new Map(); cache.set(obj, data)` growing unbounded | WeakMap for object-keyed caches (auto GC) or LRU eviction for size-bounded Map |
+| Closure capturing `this` in React class component timer | `clearInterval` in `componentWillUnmount` or use hooks with cleanup |
+| Holding reference to `detachedNode` for reuse | Truly detach by setting variable to `null` or rebuilding from fresh DOM |
+
+**🎯 Interview Pattern:**
+- **Trigger**: "memory leak" / "app gets slow over time" / "heap snapshot"
+- **Concept**: TEC-DU pattern — 5 common leak sources; Chrome DevTools heap snapshot comparison
+- **Opening**: "Memory leaks in JavaScript come from 5 main patterns I call TEC-DU: Timers not cleared, Event listeners not removed, Closures over large data, Detached DOM nodes still referenced, Unbounded caches. I'd start with Chrome DevTools Memory tab, take heap snapshot comparison before/after a suspect flow, and filter by Retained Size to find the leak..."
+
+**🔑 Knowledge Chain:**
+- **Prereq**: GC reachability (previous concept), closures, event system
+- **Enables**: Production memory debugging, React `useEffect` cleanup discipline, WeakMap use cases
+
+---
+
+### 3. Generational GC + V8's Orinoco
+
+**🧠 Memory Hook:** "**Most objects die young. New Space is fast and small. Old Space is large and collected less often. Write barriers track cross-generation references.**"
+
+**Why does this exist? / Tại sao tồn tại?**
+
+- Why does V8 split memory into "new space" and "old space"? Because of the **generational hypothesis**: most objects die very young — a temporary `{}` in a loop, a React render result. Running full GC on every allocation would be too slow. New Space (young generation) is small and collected often. Old Space collects rarely.
+- Why does "surviving 2 GCs" promote an object to Old Space? Because if an object survived 2 collections, it's probably long-lived — a module, a cache, a component instance. Old Space GC (Major GC) runs much less frequently.
+- Why do write barriers matter? When an Old Space object references a New Space object, GC needs to know — otherwise it can't correctly collect New Space without scanning all of Old Space. Write barriers intercept assignments and update "remembered sets" of cross-generation pointers.
+
+**Visual — V8 Heap Structure:**
+
+```
+V8 Heap (simplified):
+┌────────────────────────────────────────────────────────┐
+│  New Space (~32MB)                                       │
+│  ┌──────────────────┐  ┌──────────────────┐             │
+│  │  From-space       │  │  To-space         │             │
+│  │  (current alloc) │→GC│ (copy survivors) │             │
+│  └──────────────────┘  └──────────────────┘             │
+│  GC = Minor (Scavenge): fast, ~1ms, runs often          │
+│  Survived 2 GCs → promoted to Old Space               │
+├────────────────────────────────────────────────────────┤
+│  Old Space (~1.5GB+)                                     │
+│  Long-lived objects (modules, closures, class instances)│
+│  GC = Major (Mark-Sweep-Compact): slow, 50-100ms       │
+│  V8 uses Incremental + Concurrent to spread this cost  │
+└────────────────────────────────────────────────────────┘
+│  Large Object Space (LOB): objects > 512KB, never moved │
+│  Code Space: compiled JIT code                          │
+```
+
+**Common Mistakes:**
+
+| ❌ Wrong | ✅ Correct |
+|---|---|
+| "GC pauses are always short" | Major GC (Old Space) can be 50-100ms without incremental — V8's concurrent GC reduces this |
+| Allocating large objects frequently in hot paths | Large objects go to LOB and are never moved — fragmentation and less efficient GC |
+| "`delete obj.prop` frees memory" | `delete` removes the property but doesn't trigger GC — the object is still reachable |
+| Worrying about GC without profiling | 90% of memory issues are leaks (objects not freed), not GC algorithm choice — profile first |
+
+**🎯 Interview Pattern:**
+- **Trigger**: "V8 internals" / "GC performance" / "why does my app have long pauses" / "minor vs major GC"
+- **Concept**: Generational hypothesis → New Space Scavenge (fast, frequent) + Old Space Major GC (slow, rare)
+- **Opening**: "V8 uses generational GC based on the observation that most objects die young. New Space is ~32MB and collected with fast Scavenge — roughly 1ms. Objects surviving 2 collections promote to Old Space where Major GC runs less often but takes longer. V8's Orinoco GC runs most of this concurrently with the main thread to avoid long pauses..."
+
+**🔑 Knowledge Chain:**
+- **Prereq**: Mark-and-sweep GC basics (previous concept)
+- **Enables**: Understanding `--max-old-space-size` Node.js flag, diagnosing GC-related jank in DevTools, server-side memory budgeting
+
+---
+
+## Reference Theory / Tài Liệu Tham Khảo
+
+
 
 ## Memory Model / Mô Hình Bộ Nhớ
 
@@ -806,68 +1004,101 @@ class WeakReferenceExamples {
 
 ---
 
-## Câu Hỏi Phỏng Vấn / Interview Q&A
+## Interview Q&A / Câu Hỏi Phỏng Vấn
 
-### 🔴 [Senior] Q1: Explain how garbage collection works in JavaScript
+### Q: Explain how JavaScript garbage collection works — include how it handles circular references. 🟡 Mid
 
-**English Answer:**
+**A:** JavaScript uses mark-and-sweep GC. Starting from GC roots (global objects, active stack frames, active closures), the GC traverses all reachable objects and marks them. Everything not marked is swept (freed). Circular references are handled correctly: if `a.ref = b; b.ref = a` and both `a` and `b` are set to `null`, neither is reachable from roots — both get swept. (Old reference-counting approach would fail here — this is why IE6 had the famous closure memory leak bug.)
 
-JavaScript uses automatic garbage collection with mark-and-sweep algorithm:
+JavaScript dùng mark-and-sweep: trace từ roots → mark reachable → sweep unmarked. Circular references được xử lý đúng vì GC check reachability từ roots, không phải reference count. Đây là lý do IE6 có memory leak bug với closures (dùng ref counting cũ không xử lý được cycles).
 
-**Mark Phase:**
-1. Start from GC roots (global objects, stack)
-2. Traverse all reachable objects
-3. Mark each reachable object
-
-**Sweep Phase:**
-1. Scan all objects in heap
-2. Deallocate unmarked objects
-3. Coalesce free memory blocks
-
-**Optimizations:**
-- **Generational GC**: Young and old generations
-- **Incremental GC**: Spread work over time
-- **Concurrent GC**: Run in parallel with application
-
-**Tiếng Việt:**
-
-JavaScript sử dụng thu gom rác tự động với thuật toán đánh dấu và quét, có tối ưu hóa theo thế hệ và concurrent.
-
-### 🔴 [Senior] Q2: What causes memory leaks in JavaScript?
-
-**English Answer:**
-
-Common causes:
-1. **Forgotten timers**: `setInterval` not cleared
-2. **Event listeners**: Not removed when done
-3. **Closures**: Capturing large objects unnecessarily
-4. **Detached DOM**: Keeping references to removed nodes
-5. **Global variables**: Accidental globals
-6. **Unbounded caches**: Growing without limit
-
-**Prevention:**
-- Clear timers and listeners
-- Use WeakMap/WeakSet for caches
-- Avoid global variables
-- Use strict mode
-- Profile memory regularly
-
-**Tiếng Việt:**
-
-Nguyên nhân phổ biến: timers quên xóa, event listeners, closures, DOM nodes tách rời, biến toàn cục, cache không giới hạn.
+**💡 Interview Signal:**
+- ✅ Strong: Names roots, explains mark/sweep phases, explicitly mentions cycle handling, mentions why ref-counting fails
+- ❌ Weak: "JavaScript automatically frees unused objects" — no mechanism, no cycle explanation
 
 ---
 
-## Summary / Tóm Tắt
+### Q: Name the 5 most common memory leak patterns and how to fix each. 🟡 Mid
 
-**Key Concepts:**
-1. Stack for primitives and references, heap for objects
-2. Mark-and-sweep garbage collection
-3. Generational GC for optimization
-4. Common memory leak patterns
-5. WeakMap/WeakSet for weak references
-6. Memory profiling tools
+**A:** The TEC-DU patterns:
+1. **Timers**: `setInterval`/`setTimeout` holding callback + closure → `clearInterval(id)` in cleanup
+2. **Event listeners**: `addEventListener` never `removeEventListener` → use AbortController signal in React effects
+3. **Closures**: Handler closing over large data structure unnecessarily → nullify captured refs when done
+4. **Detached DOM**: Node removed from DOM but reference held in JS → set variable to `null` when done
+5. **Unbounded caches**: `Map` growing forever → LRU eviction policy or `WeakMap` for object keys
+
+Detect: Chrome DevTools → Memory → Heap Snapshot comparison. Filter by "Retained Size Δ" to find growing object types.
+
+TEC-DU: Timers, Event listeners, Closures, Detached DOM, Unbounded caches. Chrome DevTools Memory tab → Heap Snapshot comparison → filter "Retained Size Δ" để tìm leak.
+
+**💡 Interview Signal:**
+- ✅ Strong: Names 5 patterns with concrete fixes, mentions heap snapshot comparison workflow
+- ❌ Weak: "Use WeakMap" or "Remove event listeners" — partial list without detection strategy
 
 ---
+
+### Q: What is the generational hypothesis and how does V8's GC exploit it? 🔴 Senior
+
+**A:** The generational hypothesis: most objects die young — temporary objects created during a function call, React render intermediates, loop temporaries. V8 exploits this by dividing the heap into New Space (~32MB, collected with fast Scavenge GC every few seconds, <1ms) and Old Space (collected with Major Mark-Sweep-Compact, which is slower but runs rarely). Objects surviving 2 New Space collections are promoted to Old Space. This means the common case (allocate temp object → use → discard) is extremely fast. Long-lived objects pay the Old Space Major GC cost infrequently.
+
+Generational hypothesis: hầu hết objects chết trẻ. V8: New Space (~32MB) → Scavenge GC nhanh (<1ms). Objects sống sót 2 lần GC → promote sang Old Space → Major GC chậm nhưng hiếm. Hot path chỉ trigger fast Scavenge.
+
+**💡 Interview Signal:**
+- ✅ Strong: States the hypothesis explicitly, names Scavenge vs Major GC, explains promotion threshold, gives performance implication
+- ❌ Weak: "V8 has young and old generation" — states the fact without the hypothesis behind it or the performance reasoning
+
+---
+
+### Q: Why should you prefer WeakMap over Map for caching objects? 🟢 Junior
+
+**A:** When you cache data keyed by an object (e.g., `cache.set(domNode, computedValue)`), using `Map` prevents GC from collecting `domNode` even after it's removed from the DOM — Map holds a strong reference. `WeakMap` holds keys weakly: if `domNode` has no other references, GC can collect it along with the cache entry automatically. The practical consequence: WeakMap caches don't need manual eviction — they self-clean when the key object is GC'd. Trade-off: WeakMap is not iterable (no `.keys()`, `.forEach()`) because GC timing is non-deterministic.
+
+`Map` giữ strong reference → DOM node không bị GC dù đã remove. `WeakMap` giữ weak reference → khi không còn reference nào khác đến key, GC tự xóa cả key lẫn cache entry. Không cần manual eviction. Trade-off: không iterable vì GC timing không xác định.
+
+**💡 Interview Signal:**
+- ✅ Strong: Explains strong vs weak reference, mentions self-cleaning behavior, mentions non-iterability trade-off
+- ❌ Weak: "WeakMap doesn't prevent GC" — correct but misses why that matters for caching and the non-iterable trade-off
+
+---
+
+## Q&A Summary / Tóm Tắt Q&A
+
+| # | Topic | Level | One-liner |
+|---|-------|-------|-----------|
+| 1 | Mark-and-sweep + cycles | 🟡 | Roots → mark reachable → sweep rest; handles cycles (ref-counting can't) |
+| 2 | Memory leak patterns | 🟡 | TEC-DU: Timers, Events, Closures, Detached DOM, Unbounded caches |
+| 3 | Generational GC | 🔴 | Most objects die young → New Space Scavenge (fast) + Old Space Major GC (rare) |
+| 4 | WeakMap vs Map for caches | 🟢 | WeakMap = self-cleaning (weak keys), not iterable; Map = strong keys, need eviction |
+
+---
+
+## ⚡ Cold Call Simulation
+
+**Q: "Your React single-page app gets slower over 2 hours of use. Memory usage climbs from 50MB to 400MB. How do you diagnose and fix it?"**
+
+**30-second answer:**
+
+"First, I'd open Chrome DevTools → Memory tab and take a heap snapshot as a baseline. Then I'd reproduce the usage pattern for 30 minutes and take a second snapshot. I'd compare the two snapshots and sort by 'Retained Size Δ' to find which object types grew. If I see `EventListener` objects growing, that's a classic event listener leak — I'd search the codebase for `addEventListener` calls without corresponding cleanup. In React, that means `useEffect` hooks missing a return cleanup function. If I see DOM nodes growing in count, I likely have detached DOM — references held in component state after the node is removed. The fix: ensure `useEffect` returns a cleanup that calls `removeEventListener`, cancels timers with `clearTimeout`, and aborts fetches with `AbortController`. I'd also audit any `setInterval` calls to verify they're paired with `clearInterval` in the cleanup."
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+> **Close this doc. Then answer from memory.**
+
+- **Retrieval**: Explain mark-and-sweep in 3 sentences. Why does it correctly handle circular references?
+- **Visual**: Draw V8's heap regions — New Space and Old Space. What triggers promotion from New to Old?
+- **Application**: You have `const cache = new Map()` in a module. Users report the app slows after 10 minutes. What's the likely issue and fix?
+- **Debug**: Chrome DevTools heap snapshot shows `HTMLElement` count growing by 500 after each navigation. What's the cause and how do you fix it?
+- **Teach**: Explain to a junior why `weakMap.set(element, data)` is better than `map.set(element, data)` for DOM-related caches — use the "hotel key" analogy.
+
+🔁 **Spaced repetition**: Review in 3 days → 7 days → 14 days
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [JavaScript Type System](./14-javascript-type-system-theory.md) — V8 SMI/HeapNumber connects to heap allocation
+- ⬅️ **Built on**: [ES6+ Features Deep](./11-es6-features-deep.md) — WeakMap and WeakSet covered there
+- 🔗 **Applied in**: [React Performance](../03-react/09-performance-optimization.md) — `useEffect` cleanup prevents event listener leaks
+- 🔗 **Applied in**: [Browser Performance](../06-browser-performance/05-rendering-optimization-theory.md) — GC pauses affect rendering frame budget
 
 [← Previous: Type System Theory](./14-javascript-type-system-theory.md) | [Next: Execution Context →](./16-execution-context-theory.md) | [Back to Table of Contents](../../00-table-of-contents.md)
