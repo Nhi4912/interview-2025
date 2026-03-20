@@ -67,6 +67,72 @@ Origin       border       [attr]
 
 ---
 
+## Core Concepts Overview / Tổng Quan Khái Niệm
+
+### 1. The Cascade & Specificity
+
+> 🧠 **Memory Hook**: "CSS = 3-layer conflict resolver: WHO said it (origin) → HOW specific (selector) → WHICH came last (order)"
+
+**Why does the cascade exist?** Multiple stylesheets (browser default, third-party libraries, your own code) all apply to the same elements. Without a conflict resolution algorithm, the last file loaded would always win — making CSS order-dependent and fragile. The cascade makes resolution predictable.
+
+**Common Mistakes:**
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Adding `!important` to fix specificity wars | Creates a new specificity arms race | Restructure selectors to avoid high specificity |
+| `#id` selector for component styles | Too high specificity, breaks override chain | Use `.class` selectors for components |
+| Forgetting source order matters when specificity ties | Last declaration wins, not first | Put more specific overrides after defaults |
+
+**🎯 Interview Pattern:**
+- Khi thấy: "Why isn't my CSS working / my style is being overridden?"
+- → Think: Cascade — check origin, specificity, then source order
+- → Answer opens with: "I'd check three things in cascade order: is there an `!important` or inline style overriding it, which selector has higher specificity, and which declaration comes last in source order."
+
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: Basic HTML elements and how browsers apply default stylesheets
+- ➡️ Để hiểu: CSS architecture patterns (BEM, `@layer`) which are solutions to specificity problems
+
+---
+
+### 2. Box Model
+
+> 🧠 **Memory Hook**: "Every element is a box: Content → Padding → Border → Margin (C-P-B-M = 'Can't Paint By Memory')"
+
+**Why does box model exist?** Browsers need a layout algorithm for 2D rectangles. The box model standardizes how size is calculated — but the default `content-box` violates the principle of least surprise (setting `width: 200px` then getting a 242px element). `border-box` was added to fix this.
+
+```
+┌─────── margin ─────────────┐
+│  ┌───── border ──────────┐ │
+│  │  ┌── padding ───────┐ │ │
+│  │  │    content area  │ │ │
+│  │  │  width × height  │ │ │
+│  │  └─────────────────┘ │ │
+│  └─────────────────────-─┘ │
+└───────────────────────────-┘
+content-box: total = width + padding×2 + border×2
+border-box:  total = width (padding+border shrinks content)
+```
+
+**Common Mistakes:**
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Not setting `box-sizing: border-box` globally | Each element calculates size differently, math is hard | `*, *::before, *::after { box-sizing: border-box }` |
+| Using `margin` to add space inside elements | Margin is outside the box — adds space between elements | Use `padding` for internal space |
+
+---
+
+### 3. Positioning & Stacking
+
+> 🧠 **Memory Hook**: "Static = river flow. Relative = nudge in river. Absolute = fly above. Fixed = helicopter. Sticky = raft that anchors to shore."
+
+**Common Mistakes:**
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `position: absolute` without positioned ancestor | Positions relative to viewport or `<html>`, not intended parent | Add `position: relative` to parent |
+| `position: fixed` breaking inside `transform` parent | `transform` creates new stacking context, becomes containing block | Remove `transform` from ancestor, or use `position: sticky` |
+| `z-index` not working | `z-index` only works on positioned elements (non-static) | Add `position: relative` to element |
+
+---
+
 ## Câu Hỏi Phỏng Vấn / Interview Q&A
 
 ### Q: How does the CSS cascade work? / CSS cascade hoạt động như thế nào? 🟢 Junior
@@ -94,6 +160,10 @@ p { color: blue; }
 /* !important overrides everything (avoid in production) */
 p { color: purple !important; }
 ```
+
+**💡 Interview Signal:**
+- ✅ Strong: Explains all three cascade layers in order (origin → specificity → source), mentions `@layer` as the modern tool for managing cascade origin, knows `!important` affects origin not specificity
+- ❌ Weak: "The more specific selector wins" (incomplete — misses origin and source order which matter in real codebases)
 
 ---
 
@@ -124,6 +194,10 @@ p.card                     /* (0, 1, 1) */
 :is(.card, #main)          /* (1, 0, 0) -- takes highest argument */
 :not(.card)                /* (0, 1, 0) -- specificity of argument */
 ```
+
+**💡 Interview Signal:**
+- ✅ Strong: Gives the (A,B,C) tuple, explains that `!important` is about cascade origin not specificity, knows `:where()` has zero specificity (useful for library defaults) and `:is()` inherits max specificity of its arguments
+- ❌ Weak: "ID selectors are more specific than classes" (true but surface-level — misses the tuple system, inline style placement, and modern pseudo-class nuances)
 
 ---
 
@@ -171,6 +245,10 @@ Vietnamese: Box model có 4 lớp: content, padding, border, margin. Mặc đị
 └───────────────────────┘
 ```
 
+**💡 Interview Signal:**
+- ✅ Strong: Explains `content-box` vs `border-box` with actual math (200px + 20px padding×2 + 1px border×2 = 242px), recommends `*, *::before, *::after { box-sizing: border-box }` as universal reset
+- ❌ Weak: "border-box includes padding and border in the width" (correct but needs to mention WHY it matters — prevents layout surprises when adding padding to sized elements)
+
 ---
 
 ### Q: Explain the CSS display property / Giải thích property display 🟢 Junior
@@ -188,6 +266,10 @@ Key values:
 - `contents` -- element box disappears, children promoted to parent
 
 Vietnamese: `display` quyết định cách element tham gia layout. `block`: chiếm full width, xuống dòng mới. `inline`: chảy theo text, không set được width/height. `inline-block`: chảy theo text nhưng set được kích thước. `flex`/`grid`: tạo flex/grid container. `none`: xóa khỏi layout hoàn toàn (cả visual lẫn accessibility). `contents`: bỏ box của element, children được promote lên parent.
+
+**💡 Interview Signal:**
+- ✅ Strong: Knows `display: none` is inaccessible (screen readers skip it too) vs `visibility: hidden` (hidden visually, still in accessibility tree), and explains `inline` vs `inline-block` difference (width/height and vertical spacing)
+- ❌ Weak: "block takes full width, inline flows with text" (misses the outer/inner display type model and accessibility implications of `none`)
 
 ---
 
@@ -230,6 +312,10 @@ Vietnamese: `static`: vị trí mặc định trong flow. `relative`: vẫn tron
   transform: translateX(-50%);
 }
 ```
+
+**💡 Interview Signal:**
+- ✅ Strong: Knows the `fixed` position gotcha (transform/filter on ancestor breaks viewport positioning), explains `sticky` requires parent with enough scroll height, mentions `z-index` only works on non-static elements
+- ❌ Weak: "absolute positions relative to the parent" (common mistake — it's relative to the nearest *positioned* ancestor, not just any parent)
 
 ---
 
@@ -277,6 +363,10 @@ h1 {
 }
 ```
 
+**💡 Interview Signal:**
+- ✅ Strong: Explains `font-display` trade-offs (`swap` vs `optional`), knows how `size-adjust`/`ascent-override` prevent CLS by matching fallback font metrics, mentions variable fonts (`font-weight: 100 900` range)
+- ❌ Weak: "Use woff2 and preload fonts" (performance basics, but misses the CLS prevention mechanism which is the most impactful detail)
+
 ---
 
 ### Q: What CSS color formats exist and when to use each? / Các format màu trong CSS 🟢 Junior
@@ -312,6 +402,10 @@ Vietnamese: CSS có nhiều format màu: hex (#ff0000) phổ biến nhất, HSL 
   /* SVG icon inside inherits color via fill: currentColor */
 }
 ```
+
+**💡 Interview Signal:**
+- ✅ Strong: Recommends HSL for design tokens (easy to create tint/shade variants by adjusting L), mentions oklch for perceptually uniform gradients and P3 wide gamut, explains `currentColor` for SVG icon theming
+- ❌ Weak: "Use hex or RGB for colors" (doesn't show awareness of why HSL is better for systematic design tokens or modern color spaces)
 
 ---
 
@@ -354,6 +448,10 @@ h1   { font-size: 2rem; }     /* 32px -- always relative to root */
 .prose { max-width: 65ch; }
 ```
 
+**💡 Interview Signal:**
+- ✅ Strong: Explains `rem` respects user browser font-size preferences (accessibility), knows `vh` doesn't account for mobile browser chrome (use `dvh`), uses `clamp()` for fluid sizing without media queries
+- ❌ Weak: "rem is like em but relative to root" (correct but doesn't explain why it's better — the key point is no compounding and accessibility compliance)
+
 ---
 
 ### Q: Explain CSS selectors: types, combinators, and performance / Selectors: loại, combinator, và performance 🔴 Senior
@@ -392,6 +490,10 @@ tr:nth-child(even) { background: #f5f5f5; }
   border-color: red;
 }
 ```
+
+**💡 Interview Signal:**
+- ✅ Strong: Knows browsers match right-to-left (so `.nav ul li a` triggers on every `<a>`), explains `:has()` as the long-awaited "parent selector" with upward-traversal cost, and knows `:where()` has zero specificity for library defaults
+- ❌ Weak: "Keep selectors short for performance" (correct but vague — specifics like right-to-left matching and `:has()` cost signal real experience)
 
 ---
 
@@ -434,6 +536,10 @@ li::marker {
 }
 ```
 
+**💡 Interview Signal:**
+- ✅ Strong: Distinguishes pseudo-class (element state, no new DOM node) vs pseudo-element (creates virtual DOM node), knows `::before/::after` don't work on void elements like `<img>/<input>`, and prefers `:focus-visible` over `:focus` for accessible keyboard indicators
+- ❌ Weak: "Pseudo-class uses one colon, pseudo-element uses two" (syntactic rule only — doesn't show understanding of the semantic difference)
+
 ---
 
 ### Q: How does CSS inheritance work? Which properties inherit? / CSS inheritance hoạt động ra sao? 🟡 Mid
@@ -468,9 +574,37 @@ body {
 }
 ```
 
+**💡 Interview Signal:**
+- ✅ Strong: Knows which categories inherit (text/font-related) vs don't (box/layout), explains `unset` as "smart reset" (inherits if the property normally inherits, reverts to initial otherwise), and uses `all: unset` for complete component isolation
+- ❌ Weak: "Some properties inherit, like color and font-size" (correct but junior-level — senior answer includes the pattern of WHY certain properties inherit and the `inherit`/`initial`/`unset`/`revert` reset keywords)
+
 ---
 
-## Self-Check / Tự Kiểm Tra
+## ⚡ Cold Call Simulation / Mô Phỏng Phỏng Vấn
+
+> 🎯 Interviewer asks cold: **"Why isn't my CSS working? I wrote `.sidebar .card { color: red }` but the card text is blue."**
+
+**30 giây đầu — mở đầu lý tưởng:**
+1. "I'd debug the cascade in three steps: first check if there's an inline style or `!important` declaration — those win regardless of selector."
+2. "Then compare specificity: `.sidebar .card` is (0,2,0) — if another rule like `#main .card` (1,1,0) or `<p style='color:blue'>` exists, it wins."
+3. "Finally check source order: if two rules have equal specificity, the one that appears later in the stylesheet wins — so importing order matters."
+4. "In DevTools, the Styles panel shows crossed-out rules and their specificity scores — that's the fastest way to diagnose this."
+
+---
+
+## Self-Check / Tự Kiểm Tra ⚡ (Đóng tài liệu lại trước khi làm)
+
+- [ ] **Retrieval**: Viết từ trí nhớ 3 bước cascade resolution (origin → specificity → order) và công thức tính specificity (A,B,C) — không nhìn lại.
+- [ ] **Visual**: Vẽ Box Model ra giấy: 4 lớp từ trong ra ngoài, chỉ rõ phần nào được tính trong `width` với `content-box` và `border-box`.
+- [ ] **Application**: Button có style `.btn { color: blue }` và `#submit.btn { color: red }`. Màu cuối cùng là gì? Specificity của mỗi rule?
+- [ ] **Debug**: `position: fixed` modal không nằm cố định trên viewport mà lại scroll theo trang. Nguyên nhân có thể là gì?
+- [ ] **Teach**: Giải thích `rem` vs `em` cho junior developer bằng một câu tương tự cụ thể — tại sao `rem` an toàn hơn?
+
+💬 **Feynman Prompt:** Giải thích CSS Cascade cho một designer không biết code. Tại sao đôi khi thay đổi CSS không có tác dụng dù bạn chắc chắn đã viết đúng?
+
+🔁 **Spaced Repetition reminder:** Review file này lại sau 3 ngày, sau đó 7 ngày, sau đó 14 ngày.
+
+---
 
 - [ ] Tôi có thể giải thích Specificity scoring (0-0-0) và tại sao ID > class > type không?
 - [ ] Tôi có thể vẽ Box Model và giải thích `box-sizing: border-box` làm gì không?
