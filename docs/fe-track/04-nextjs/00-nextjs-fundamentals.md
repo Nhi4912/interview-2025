@@ -73,9 +73,50 @@ routes      Suspense
 
 ---
 
-## Tổng Quan / Overview
+## Core Concepts Overview
 
-Next.js là React meta-framework cung cấp file-based routing, nhiều rendering strategies (SSG/SSR/ISR/CSR), API routes, image/font optimization, middleware, và built-in deployment support. File này cover các concepts nền tảng mọi frontend candidate cần biết.
+### 🧠 Rendering Strategy Quick Reference
+
+> **Memory Hook**: "**S**SG = static forever, **I**SR = intervals, **S**SR = server always, **C**SR = client-side. Performance order: SSG > ISR > SSR > CSR."
+
+```
+Page type               Strategy          Why
+────────────────────────────────────────────────────────
+Blog / Marketing        SSG               Never changes, CDN-served
+News / E-commerce       ISR (revalidate)  Changes hourly, still fast
+Dashboard / Real-time   SSR or CSR        Per-request or per-user data
+Private SaaS features   CSR               Auth-gated, SEO irrelevant
+```
+
+**Common Mistake**: Using SSR for content that changes once/day — pay server cost for every request when ISR would serve from CDN. Use `revalidate: 86400` instead.
+
+**🎯 Pattern**: When asked "which strategy for [page]?" → Ask: "How often does the data change AND is it personalized?" → Map to strategy.
+
+---
+
+### 🧠 Next.js Optimization Built-ins
+
+> **Memory Hook**: "Three free wins: `next/image` (WebP + lazy + CLS prevention), `next/font` (zero-FOUT self-hosted), `next/script` (controlled third-party loading)."
+
+**Common Mistake**: Using regular `<img>` for LCP images → no preload, no WebP, no responsive srcset. Always `<Image priority>` for above-fold images.
+
+**🎯 Pattern**: "How would you optimize a Next.js page's LCP?" → `<Image priority>` + correct `sizes` + ISR/SSG for fast TTFB.
+
+---
+
+### 🧠 App Router Mental Model
+
+> **Memory Hook**: "Server Component = **zero JS** shipped. Add `'use client'` for: **HEEL** — **H**ooks, **E**vent handlers, **E**ffects, **L**ifecycle/browser APIs."
+
+```
+'use client' infections: marks entire import subtree as client-side
+Security boundary:       NO prefix → server only | NEXT_PUBLIC_ → bundled into JS
+Edge constraint:         Middleware = no Node.js APIs, no DB queries
+```
+
+**Common Mistake**: `'use client'` on `app/layout.tsx` — turns the entire app into Client Components. Only mark leaf interactive components.
+
+**🎯 Pattern**: "Why does my Server Component need `'use client'`?" → Check for hooks/events/browser APIs in the component or its imports.
 
 ---
 
@@ -94,6 +135,10 @@ export default function HomePage() {
   return <h1>Hello Next.js</h1>; // Rendered on server, zero JS sent to client
 }
 ```
+
+**💡 Interview Signal:**
+- ✅ Strong: Mentions Server Components as default (zero JS to client), names all four rendering strategies, mentions file-based routing
+- ❌ Weak: "Next.js is a React framework with SSR" (misses the Server Components shift and App Router specifics)
 
 ---
 
@@ -121,6 +166,10 @@ export default async function BlogPost({ params }: { params: { slug: string } })
   return <article><h1>{post.title}</h1></article>;
 }
 ```
+
+**💡 Interview Signal:**
+- ✅ Strong: Explains `[param]` vs `[...slug]` vs `[[...slug]]` distinctions, mentions that `page.tsx` is what makes a route public
+- ❌ Weak: "Files in `app/` become routes" (correct but doesn't distinguish optional catch-all or explain the `page.tsx` requirement)
 
 ---
 
@@ -165,6 +214,10 @@ export default async function ProductPage() {
 }
 ```
 
+**💡 Interview Signal:**
+- ✅ Strong: Uses data freshness as the decision criterion for each strategy, spontaneously mentions trade-offs (SSR = higher TTFB/server cost, SSG = stale)
+- ❌ Weak: "SSG is fast, SSR is slow" (oversimplified — misses ISR and doesn't explain when to choose each)
+
 ---
 
 ### Q: How does data fetching work in Next.js App Router? / Data fetching hoạt động thế nào trong App Router? 🟢 Junior
@@ -192,6 +245,10 @@ export default async function UsersPage() {
   );
 }
 ```
+
+**💡 Interview Signal:**
+- ✅ Strong: Mentions request deduplication, explains all three cache options (`force-cache`/`no-store`/`revalidate`), notes data is fetched at component level (not page level)
+- ❌ Weak: "Use fetch in Server Components" (correct but doesn't mention the cache options or deduplication)
 
 ---
 
@@ -226,6 +283,10 @@ export async function GET(
   return NextResponse.json(user);
 }
 ```
+
+**💡 Interview Signal:**
+- ✅ Strong: Compares Route Handlers vs Server Actions (no HTTP overhead for mutations), mentions Web API standard vs Node.js req/res
+- ❌ Weak: "Route Handlers create API endpoints" (correct but doesn't distinguish from Server Actions or explain Web API standard)
 
 ---
 
@@ -271,6 +332,10 @@ export default function Hero() {
 }
 ```
 
+**💡 Interview Signal:**
+- ✅ Strong: Mentions `priority` for LCP, explains `sizes` for responsive images, notes request-time optimization vs build-time, names CLS prevention
+- ❌ Weak: "next/image converts to WebP and lazy loads" (correct but misses CLS prevention, `priority` flag, and responsive srcset)
+
 ---
 
 ### Q: How does next/font work and why is it important? / next/font hoạt động thế nào? 🟢 Junior
@@ -306,6 +371,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   );
 }
 ```
+
+**💡 Interview Signal:**
+- ✅ Strong: Mentions all three benefits: privacy (no Google request), performance (same domain, no DNS), CLS prevention (CSS size-adjust fallback)
+- ❌ Weak: "next/font self-hosts Google Fonts" (correct but misses the CLS mechanism which is the most important performance detail)
 
 ---
 
@@ -344,6 +413,10 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   };
 }
 ```
+
+**💡 Interview Signal:**
+- ✅ Strong: Distinguishes static `metadata` vs dynamic `generateMetadata`, explains merge/override behavior from layout→page, mentions title templates and Open Graph support
+- ❌ Weak: "You export a metadata object from the page" (misses layout inheritance, title templates, and when to use dynamic generation)
 
 ---
 
@@ -384,6 +457,10 @@ function ClientComponent() {
   return <div>{apiUrl}</div>;
 }
 ```
+
+**💡 Interview Signal:**
+- ✅ Strong: Explains the `NEXT_PUBLIC_` prefix as a security boundary (not just "for browser access"), mentions that prefixed vars are inlined at build time into the JS bundle (so secrets can be extracted from bundle if accidentally prefixed)
+- ❌ Weak: "Use NEXT_PUBLIC_ to access env vars in the browser" (correct but missing the security implication — senior question is about the leak risk)
 
 ---
 
@@ -431,6 +508,10 @@ export const config = {
 };
 ```
 
+**💡 Interview Signal:**
+- ✅ Strong: Leads with Edge Runtime constraint (no Node.js APIs), explains `matcher` config to avoid running on static assets, gives concrete use case (auth check + redirect)
+- ❌ Weak: "Middleware runs before the request and can redirect" (misses why it's fast — Edge Runtime — and the limitation that makes it unsuitable for DB queries)
+
 ---
 
 ### Q: How do you deploy a Next.js application? / Cách deploy ứng dụng Next.js? 🟡 Mid
@@ -475,6 +556,10 @@ module.exports = {
 };
 ```
 
+**💡 Interview Signal:**
+- ✅ Strong: Knows the feature matrix (what static export loses: SSR, API routes, middleware, image optimization), explains `output: 'standalone'` for smaller Docker images, mentions ISR requires a running server (not static)
+- ❌ Weak: "Deploy to Vercel or self-host with Docker" (surface-level — doesn't show understanding of what each target supports/loses)
+
 ---
 
 ### Q: What are common Next.js interview pitfalls? / Những lỗi phỏng vấn phổ biến về Next.js? 🔴 Senior
@@ -496,6 +581,10 @@ Vietnamese: Những lỗi ứng viên hay mắc:
 5. **Không nói trade-off**: Luôn đề cập cost khi chọn strategy — SSR tăng server cost, SSG tăng build time, ISR có stale window.
 6. **Quên streaming**: Streaming SSR với Suspense giúp gửi shell HTML ngay, data chậm stream sau — cải thiện TTFB đáng kể.
 
+**💡 Interview Signal:**
+- ✅ Strong: Spots the `'use client'` subtree infection issue AND the App Router caching-by-default gotcha — these are the two that most commonly trip up experienced React developers new to Next.js
+- ❌ Weak: "Don't mix up Pages and App Router" (too generic — interviewer wants specific technical pitfalls like fetch caching semantics or Suspense boundaries)
+
 ---
 
 ## Quick Recap
@@ -516,15 +605,29 @@ Vietnamese: Những lỗi ứng viên hay mắc:
 
 ---
 
-## Self-Check / Tự Kiểm Tra
+## ⚡ Cold Call Simulation / Mô Phỏng Phỏng Vấn
 
-- [ ] Tôi có thể giải thích khi nào nên dùng SSG vs SSR vs ISR vs CSR không?
-- [ ] Tôi có thể giải thích sự khác biệt giữa Pages Router và App Router không?
-- [ ] Tôi có thể giải thích Server Components là gì và tại sao chúng quan trọng không?
-- [ ] Tôi có thể implement một dynamic route với `[id]` và pre-generate paths không?
-- [ ] Tôi có thể giải thích Next.js xử lý image optimization như thế nào không?
+> 🎯 Interviewer asks cold: **"You have a Next.js e-commerce site with 50,000 product pages. Product data changes about once per hour. What rendering strategy do you use and why?"**
 
-💬 **Feynman Prompt:** Giải thích SSG vs SSR cho một product manager. Tại sao trang blog nên dùng SSG còn dashboard nên dùng SSR?
+**30 giây đầu — mở đầu lý tưởng:**
+1. "ISR — Incremental Static Regeneration — is the right choice: pages are statically generated at build time and re-generated in the background every hour via `revalidate`."
+2. "This means the CDN serves pre-built HTML instantly (same TTFB as SSG), but product data stays fresh within a 1-hour window — matching the update cadence."
+3. "Concretely: `fetch(url, { next: { revalidate: 3600 } })` in the Server Component, and `generateStaticParams()` to pre-render the top 1,000 products at build time with `fallback: 'blocking'` for the rest."
+4. "Trade-off to mention: SSR would give real-time data but adds server cost per request; CSR would be bad for SEO; pure SSG would require a full redeploy every hour — ISR hits the sweet spot."
+
+---
+
+## Self-Check / Tự Kiểm Tra ⚡ (Đóng tài liệu lại trước khi làm)
+
+- [ ] **Retrieval**: Viết từ trí nhớ 4 rendering strategies và 1 use case cụ thể cho mỗi cái — không nhìn lại tài liệu.
+- [ ] **Visual**: Vẽ sơ đồ request lifecycle cho ISR: build time → CDN cache → first request after revalidate window → background regeneration.
+- [ ] **Application**: Shopee flash sale page cần real-time inventory. SSG, SSR, ISR hay CSR? Tại sao? (Hint: answer không phải SSG)
+- [ ] **Debug**: App Router fetch không trả data mới dù đã sửa DB. Nguyên nhân có thể là gì? Cách fix?
+- [ ] **Teach**: Giải thích cho người không biết lập trình tại sao một số trang web load ngay lập tức còn một số thì chậm — dùng khái niệm SSG vs SSR.
+
+💬 **Feynman Prompt:** Giải thích ISR cho một product manager bằng ngôn ngữ kinh doanh: tại sao không phải rebuild toàn bộ site mỗi khi có thay đổi nhỏ?
+
+🔁 **Spaced Repetition reminder:** Review file này lại sau 3 ngày, sau đó 7 ngày, sau đó 14 ngày.
 
 ---
 
