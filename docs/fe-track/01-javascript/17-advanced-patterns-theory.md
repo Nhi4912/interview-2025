@@ -3,16 +3,259 @@
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 
-## Table of Contents / Mục Lục
+## Real-World Scenario / Tình Huống Thực Tế
 
-1. [Decorators](#decorators)
-2. [Mixins](#mixins)
-3. [Proxies and Reflection](#proxies-and-reflection)
-4. [Symbols and Well-Known Symbols](#symbols-and-well-known-symbols)
-5. [Advanced Object Patterns](#advanced-object-patterns)
-6. [Interview Questions](#interview-questions)
+**NestJS API server:** 50 API endpoints đều cần: authentication check, rate limiting, logging, error handling. Option A: add these 4 concerns manually in every handler → 200 lines of duplicate code, easily forgotten. Option B: Decorators: `@Auth @RateLimit @Log @HandleErrors`. One decorator applied once — cross-cutting concerns separated from business logic. TypeScript decorators are used everywhere in Angular, NestJS, and MobX exactly for this pattern.
+
+**Bài học:** Advanced patterns solve *structural* problems — not "how to write logic" but "how to organize code at scale". Decorators, Mixins, and Proxy are the JavaScript equivalent of AOP (Aspect-Oriented Programming) and flexible composition patterns.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy:** Decorators = đầu bếp quấn thức ăn vào lá chuối (wrapping) — thêm flavor mà không thay đổi nội dung bên trong. Mixins = LEGO bricks — ghép capabilities từ nhiều nguồn thay vì inherit từ một parent. Proxy = người bảo vệ đứng trước đối tượng — intercept mọi thao tác.
+
+**Scope:** Note: Proxy and Symbol are also covered in depth in [11-es6-features-deep.md](./11-es6-features-deep.md). This file focuses on Decorators, Mixins, and advanced Object composition patterns.
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[Advanced JavaScript Patterns]
+        │
+        ├── Decorators (cross-cutting concerns)
+        │       ├── Class decorator: modify class constructor/prototype
+        │       ├── Method decorator: wrap function with behavior
+        │       ├── Property decorator: modify property descriptor
+        │       └── Execution order: @C @B @A fn → A wraps → B wraps → C wraps
+        │
+        ├── Mixins (composition over inheritance)
+        │       ├── Problem: deep class hierarchies → fragile, diamond problem
+        │       ├── Mixin factory: function returning class extending Base
+        │       └── Use: const Mixed = LogMixin(SerializeMixin(Base))
+        │
+        ├── Advanced Object Patterns
+        │       ├── Object.defineProperty → writable, enumerable, configurable, get/set
+        │       ├── Object.freeze/seal → immutability levels
+        │       ├── Property descriptors → deep control over property behavior
+        │       └── Object.assign / spread → shallow merge patterns
+        │
+        └── Well-known Symbols
+                Symbol.iterator → makes object iterable (for...of, spread)
+                Symbol.toPrimitive → control coercion (hint: number/string/default)
+                Symbol.hasInstance → control instanceof behavior
+```
 
 ---
+
+## Core Concepts / Khái Niệm Cốt Lõi
+
+---
+
+### 1. Decorators — Cross-Cutting Concerns as Functions
+
+**🧠 Memory Hook:** "**A decorator is a function that takes a function and returns a function. The outer function adds behavior; the inner function does the real work.**"
+
+**Why does this exist? / Tại sao tồn tại?**
+
+- Why do cross-cutting concerns (logging, auth, timing) need a special pattern? Because duplicating them in every function violates DRY and scatters the concern across the codebase. When the auth logic changes, you update 50 functions
+- Why is the decorator pattern preferred over inheritance for this? Because inheritance couples the concern to the class hierarchy. A decorator is composable and reusable across unrelated classes — `@Memoize` can wrap any function, not just subclasses of `MemoizableBase`
+- Why does execution order matter for stacked decorators? Because decorators are applied bottom-to-top: `@Log @Validate fn` means `log(validate(fn))`. The outermost decorator runs first when the function is called
+
+**Visual — Decorator Mechanics:**
+
+```javascript
+// Manual decorator (how it works without syntax sugar):
+function memoize(fn) {
+  const cache = new Map()
+  return function(...args) {
+    const key = JSON.stringify(args)
+    if (cache.has(key)) return cache.get(key)
+    const result = fn.apply(this, args)
+    cache.set(key, result)
+    return result
+  }
+}
+
+// Usage:
+const expensive = memoize(function computeFibonacci(n) {
+  if (n <= 1) return n
+  return computeFibonacci(n - 1) + computeFibonacci(n - 2)
+})
+
+// TypeScript decorator syntax (TC39 Stage 3):
+class UserService {
+  @log           // executes 3rd (outermost)
+  @validate      // executes 2nd
+  @memoize       // executes 1st (innermost — wraps fn first)
+  async getUser(id: string): Promise<User> {
+    return await db.find(id)
+  }
+}
+// Stacking order: memoize wraps fn → validate wraps memoized → log wraps validated
+// Call order: log's code → validate's code → memoize's code → original fn
+
+// NestJS real-world example:
+@Controller('/users')
+@UseGuards(AuthGuard)
+class UserController {
+  @Get('/:id')
+  @RateLimit({ max: 100, window: '1m' })
+  async getUser(@Param('id') id: string) { ... }
+}
+```
+
+**Common Mistakes:**
+
+| ❌ Wrong | ✅ Correct |
+|---|---|
+| `@memoize` on async functions without cache key design | Async return is a Promise — serialize args to cache key; handle concurrent same-key calls |
+| Decorators mutating the original class/method | Decorators should return new wrapped version — preserve original via `Reflect.apply` |
+| Forgetting `this` context in decorator implementation | Use `fn.apply(this, args)` or arrow wrapper to preserve receiver |
+| TypeScript decorators = TC39 decorators | TypeScript had legacy decorator syntax (experimentalDecorators) before TC39 Stage 3 — different API |
+
+**🎯 Interview Pattern:**
+- **Trigger**: "cross-cutting concerns" / "how NestJS/Angular decorators work" / "memoization"
+- **Concept**: Higher-order function that wraps behavior; stacked decorators execute bottom-up
+- **Opening**: "A decorator is a higher-order function — it takes a function (or class method) and returns a new function that adds behavior. The classic example is memoization: the decorator wraps the original with a cache lookup. In TypeScript frameworks like NestJS, stacked decorators like `@Auth @RateLimit @Log` each wrap the handler from bottom to top..."
+
+**🔑 Knowledge Chain:**
+- **Prereq**: Higher-order functions, closures, `apply`/`this` binding
+- **Enables**: NestJS/Angular decorator usage, implementing memoization/retry/timing utilities, AOP patterns
+
+---
+
+### 2. Mixins — Composition Over Inheritance
+
+**🧠 Memory Hook:** "**Inheritance = 'IS-A' (one parent only). Mixin = 'CAN-DO' (compose multiple capabilities). JavaScript class mixins = functions that return classes.**"
+
+**Why does this exist? / Tại sao tồn tại?**
+
+- Why is deep inheritance problematic? Because it creates tight coupling — subclasses depend on all ancestors. Changing `Animal` can break `Dog → CanineAnimal → Animal`. The "fragile base class" problem
+- Why can't you just use multiple inheritance? JavaScript classes only support single inheritance. Even if they didn't, the diamond problem (two parents both inherit from same grandparent — which version of the method do you use?) creates ambiguity
+- Why do functional mixins solve this? A mixin is a factory function that adds capabilities to any class. `const WithLogging = (Base) => class extends Base { log() {...} }`. You compose: `class MyClass extends WithLogging(WithRetry(BaseClass))` — clean, explicit, no ambiguity
+
+**Visual — Mixin Pattern:**
+
+```javascript
+// Problem: Can't inherit from both EventEmitter AND Serializable
+// class Widget extends EventEmitter, Serializable { }  // ← INVALID
+
+// Mixin solution:
+const Serializable = (Base) => class extends Base {
+  serialize() { return JSON.stringify(this) }
+  static deserialize(data) { return Object.assign(new this(), JSON.parse(data)) }
+}
+
+const Loggable = (Base) => class extends Base {
+  log(msg) { console.log(`[${this.constructor.name}] ${msg}`) }
+}
+
+const EventEmittable = (Base) => class extends Base {
+  on(event, handler) { /* ... */ }
+  emit(event, data) { /* ... */ }
+}
+
+// Compose capabilities:
+class Widget extends Serializable(Loggable(EventEmittable(HTMLElement))) {
+  constructor(props) {
+    super(props)
+    this.log('Widget created')
+  }
+}
+
+// Alternative: functional mixin (Object.assign approach)
+const TimestampMixin = {
+  createdAt: null,
+  init() { this.createdAt = Date.now() }
+}
+
+Object.assign(Widget.prototype, TimestampMixin)
+```
+
+**Common Mistakes:**
+
+| ❌ Wrong | ✅ Correct |
+|---|---|
+| Method name collision between mixins (silent overwrite) | Check for conflicts; document which mixin owns which methods |
+| Using `Object.assign` for class-based mixins (copies, not inherits) | Functional mixins (`(Base) => class extends Base`) for proper prototype chain |
+| Deep class hierarchies trying to avoid mixins | Prefer composition (mixins) over deep hierarchies; 3+ levels is a code smell |
+| Mixing concerns (one mixin does logging + auth + caching) | One mixin, one concern — same SRP as modules/classes |
+
+**🎯 Interview Pattern:**
+- **Trigger**: "multiple inheritance" / "composition vs inheritance" / "share behavior across unrelated classes"
+- **Concept**: Functional mixin factory pattern; composition vs inheritance
+- **Opening**: "JavaScript doesn't have multiple inheritance, but mixins solve the same problem through composition. A mixin is a function that takes a base class and returns a new class extending it with additional capabilities. You compose them: `class Foo extends A(B(C(Base)))`. Each adds one concern — no diamond problem, explicit composition..."
+
+**🔑 Knowledge Chain:**
+- **Prereq**: JavaScript classes, prototype chain, higher-order functions
+- **Enables**: React Higher-Order Components (same principle), Vue 2 mixins, TypeScript interfaces + mixin composition
+
+---
+
+### 3. Property Descriptors — Deep Object Control
+
+**🧠 Memory Hook:** "**Every object property has a descriptor: 4 flags — writable, enumerable, configurable, and value (or get/set for accessors).**"
+
+**Why does this exist? / Tại sao tồn tại?**
+
+- Why do plain property assignments not give you enough control? `obj.x = 5` creates a writable, enumerable, configurable property. But what if you want a constant that can't be changed even by accident? Or a computed property that recalculates on access?
+- Why does `Object.freeze` not affect nested objects? Because `freeze` marks all own properties as `writable: false, configurable: false` — but property values that are objects are still references to mutable objects. You need deep freeze for full immutability.
+- Why does `enumerable: false` matter? Non-enumerable properties are hidden from `for...in`, `Object.keys()`, and `JSON.stringify`. This is how many built-in methods work — `toString`, `hasOwnProperty` are non-enumerable on Object.prototype, which is why they don't show up in `for...in` loops.
+
+**Visual — Property Descriptors:**
+
+```javascript
+// All properties have these flags:
+Object.defineProperty(obj, 'version', {
+  value: '1.0.0',
+  writable: false,       // can't change the value
+  enumerable: false,     // hidden from for...in, Object.keys, JSON.stringify
+  configurable: false    // can't delete or redefine the property
+})
+
+// Accessor descriptor (get/set):
+Object.defineProperty(obj, 'fullName', {
+  get() { return `${this.firstName} ${this.lastName}` },
+  set(name) { [this.firstName, this.lastName] = name.split(' ') },
+  enumerable: true,
+  configurable: true
+})
+
+// Immutability levels:
+const obj = { a: 1, nested: { b: 2 } }
+Object.freeze(obj)
+obj.a = 999      // silently fails (strict: throws TypeError)
+obj.nested.b = 999  // WORKS — freeze is shallow!
+
+// Check descriptor:
+Object.getOwnPropertyDescriptor(obj, 'a')
+// { value: 1, writable: false, enumerable: true, configurable: false }
+
+// Object.seal: no new props, no delete — but existing props still writable
+// Object.freeze: no new props, no delete, no mutation of existing props (shallow)
+```
+
+**Common Mistakes:**
+
+| ❌ Wrong | ✅ Correct |
+|---|---|
+| `Object.freeze` thinking it deeply freezes nested objects | Freeze is shallow — need recursive deep freeze for nested immutability |
+| Forgetting `enumerable: true` when using `defineProperty` | Default is `false` — property won't appear in `Object.keys` or `JSON.stringify` |
+| `configurable: false` with `writable: true` — can you later make it non-writable? | Yes: `writable` can go `true → false` even when `configurable: false`, but not `false → true` |
+| Using `delete obj.prop` on a `configurable: false` property | Silently fails in sloppy mode, throws `TypeError` in strict mode |
+
+**🎯 Interview Pattern:**
+- **Trigger**: "immutable object" / "getter/setter" / "hide a property from JSON" / "Object.freeze"
+- **Concept**: 4-flag property descriptor; freeze is shallow; accessor properties
+- **Opening**: "Every object property has a 4-flag descriptor: `writable`, `enumerable`, `configurable`, and either `value` for data properties or `get`/`set` for accessor properties. `Object.freeze` sets `writable: false, configurable: false` on all own properties — but it's shallow. Nested objects are still mutable. For true immutability you need a recursive deep freeze..."
+
+**🔑 Knowledge Chain:**
+- **Prereq**: Objects, prototype chain, property access
+- **Enables**: Vue 3 reactivity (`Object.defineProperty` for Vue 2 reactivity, Proxy for Vue 3), immutable state patterns, private-by-convention APIs
+
+---
+
+## Reference Theory / Tài Liệu Tham Khảo
+
+
 
 ## Decorators / Decorators
 
@@ -918,104 +1161,94 @@ console.log(Symbol.keyFor(globalSym1)); // 'app.id'
 
 ---
 
-## Câu Hỏi Phỏng Vấn / Interview Q&A
+## Interview Q&A / Câu Hỏi Phỏng Vấn
 
-### 🔴 [Senior] Q1: Explain decorators and their use cases
+### Q: How does the decorator pattern work in JavaScript — and what's the execution order when decorators are stacked? 🔴 Senior
 
-**English Answer:**
+**A:** A decorator is a higher-order function that takes a target (class, method, property) and returns a modified version. For functions: `function log(fn) { return function(...args) { console.log('calling'); return fn.apply(this, args) } }`. When stacked (`@A @B @C fn`), decorators are applied bottom-to-top at class definition time: `A(B(C(fn)))`. When the function is called, outermost executes first (A's wrapper runs, then B's, then C's, then the actual function). TypeScript uses this pattern extensively — NestJS `@Controller`, Angular `@Component`, MobX `@observable` are all decorators.
 
-**Decorators** are functions that modify classes, methods, properties, or parameters.
+Decorator = higher-order function bọc target với thêm behavior. Stack `@A @B @C`: applied bottom-up `A(B(C(fn)))`, called top-down (A → B → C → fn). Execution order: bottom-to-top at definition, top-to-bottom at call.
 
-**Use Cases:**
-1. **Logging**: Track method calls
-2. **Validation**: Validate inputs
-3. **Memoization**: Cache results
-4. **Authorization**: Check permissions
-5. **Timing**: Measure performance
-6. **Retry Logic**: Retry failed operations
-
-**Example:**
-```typescript
-@log
-@validate
-@memoize
-async fetchData(id: number) {
-  // Implementation
-}
-```
-
-**Execution Order:** Bottom to top (memoize → validate → log)
-
-**Tiếng Việt:**
-
-Decorators là hàm sửa đổi classes, methods, properties hoặc parameters. Dùng cho logging, validation, memoization, authorization, timing, retry logic.
-
-### 🔴 [Senior] Q2: What are mixins and when to use them?
-
-**English Answer:**
-
-**Mixins** add functionality through composition instead of inheritance.
-
-**When to Use:**
-- Need multiple inheritance
-- Share behavior across unrelated classes
-- Avoid deep inheritance hierarchies
-- Add optional features
-
-**Advantages:**
-- Flexible composition
-- Avoid diamond problem
-- Reusable code
-- No tight coupling
-
-**Disadvantages:**
-- Can be complex
-- Name conflicts possible
-- Harder to trace
-
-**Tiếng Việt:**
-
-Mixins thêm chức năng qua composition thay vì inheritance. Dùng khi cần đa kế thừa, chia sẻ hành vi, tránh hierarchy sâu.
-
-### 🔴 [Senior] Q3: Explain Proxy and its use cases
-
-**English Answer:**
-
-**Proxy** intercepts operations on objects.
-
-**Traps Available:**
-- get, set, has, deleteProperty
-- apply, construct
-- getPrototypeOf, setPrototypeOf
-- defineProperty, getOwnPropertyDescriptor
-- ownKeys, preventExtensions, isExtensible
-
-**Use Cases:**
-1. **Validation**: Validate property values
-2. **Logging**: Track property access
-3. **Computed Properties**: Calculate on access
-4. **Private Properties**: Hide properties
-5. **Negative Indices**: Array[-1]
-6. **Observable**: React to changes
-7. **Memoization**: Cache function results
-
-**Tiếng Việt:**
-
-Proxy chặn các thao tác trên objects. Dùng cho validation, logging, computed properties, private properties, observable, memoization.
+**💡 Interview Signal:**
+- ✅ Strong: Explains HOF mechanism, bottom-up application order, top-down call order with concrete example
+- ❌ Weak: "Decorators add metadata to classes" — describes TypeScript emit behavior, not the runtime mechanism
 
 ---
 
-## Summary / Tóm Tắt
+### Q: When would you use mixins over class inheritance? 🔴 Senior
 
-**Key Concepts:**
-1. Decorators modify behavior declaratively
-2. Mixins enable composition over inheritance
-3. Proxies intercept object operations
-4. Symbols create unique property keys
-5. Well-known symbols customize behavior
-6. Reflect API provides meta-programming
-7. Patterns enable advanced architectures
+**A:** Use mixins when: (1) you need to share behavior across *unrelated* classes — `Serializable` behavior should apply to both `User` and `Product`, which have no natural common ancestor; (2) you need multiple capabilities that don't fit a single hierarchy — a `Widget` that is both `EventEmittable` and `Serializable` and `Loggable`; (3) you want to avoid deep inheritance hierarchies (>3 levels) which become fragile. Functional mixin pattern: `const Mixin = (Base) => class extends Base { ... }`, composed as `class Foo extends A(B(C(Base)))`. Avoid when capabilities are naturally hierarchical (`Animal → Dog → Poodle`), or when prototype chain debugging becomes difficult with deep mixin stacks.
+
+Dùng mixins khi cần share behavior qua unrelated classes hoặc cần multiple capabilities. Functional mixin pattern: `(Base) => class extends Base { }`. Tránh khi hierarchy là tự nhiên hoặc debug trở nên khó.
+
+**💡 Interview Signal:**
+- ✅ Strong: "Unrelated classes" as key trigger, functional mixin pattern syntax, mentions trade-off (debugging difficulty)
+- ❌ Weak: "Mixins are better than inheritance" — no nuance on when each is appropriate
 
 ---
+
+### Q: What is `Object.freeze` and what does it NOT protect? 🟡 Mid
+
+**A:** `Object.freeze(obj)` makes all own properties of `obj` non-writable and non-configurable, and prevents adding new properties. It returns the frozen object. What it does NOT protect: (1) **Nested objects** — `obj.nested` is still mutable because freeze is shallow; (2) **Prototype chain** — methods on `obj`'s prototype are unchanged; (3) **The frozen variable** — `obj = newObj` can reassign the variable (you need `const` for that). For true deep immutability: recursive deep freeze, or use `immer`/`Immutable.js`.
+
+`Object.freeze` làm tất cả own properties non-writable/non-configurable. Không bảo vệ: nested objects (shallow!), prototype methods, variable reassignment. Deep immutability cần recursive freeze hoặc immer.
+
+**💡 Interview Signal:**
+- ✅ Strong: Names all 3 limitations (shallow, prototype, variable), gives deep freeze solution
+- ❌ Weak: "Object.freeze makes it immutable" — incomplete without mentioning shallow limitation
+
+---
+
+### Q: What is `Object.defineProperty` used for? Give a real-world use case. 🟡 Mid
+
+**A:** `Object.defineProperty` lets you create properties with precise control over 4 flags: `writable`, `enumerable`, `configurable`, and `value` (or `get`/`set` for accessors). Real-world use case: **Vue 2 reactivity**. Vue 2 used `Object.defineProperty` to intercept property access on reactive objects — the `get` trap collected subscribers (watchers), the `set` trap notified them. Also used for: non-enumerable constants (invisible to `Object.keys`/`JSON.stringify`), computed/accessor properties, read-only public APIs.
+
+`defineProperty` tạo property với kiểm soát 4 flags: writable, enumerable, configurable, value (hoặc get/set). Vue 2 reactivity dùng `get`/`set` accessor để track watchers. Dùng cho: non-enumerable constants, computed properties, read-only APIs.
+
+**💡 Interview Signal:**
+- ✅ Strong: Names all 4 flags, gives Vue 2 reactivity use case with get/set mechanism, mentions non-enumerable use case
+- ❌ Weak: "You can define properties with more control" — no specific flags or use cases
+
+---
+
+## Q&A Summary / Tóm Tắt Q&A
+
+| # | Topic | Level | One-liner |
+|---|-------|-------|-----------|
+| 1 | Decorator execution order | 🔴 | Applied bottom-up at definition; executed top-down at call |
+| 2 | Mixins vs inheritance | 🔴 | Mixins for unrelated classes + multiple capabilities; inheritance for natural IS-A hierarchies |
+| 3 | `Object.freeze` limitations | 🟡 | Shallow only; nested objects still mutable; prototype + variable unaffected |
+| 4 | `Object.defineProperty` | 🟡 | 4-flag control; Vue 2 reactivity was built on get/set accessors |
+
+---
+
+## ⚡ Cold Call Simulation
+
+**Q: "How would you implement a `@memoize` decorator in TypeScript?"**
+
+**30-second answer:**
+
+"A `@memoize` decorator is a higher-order function that wraps the target method. I'd implement it like this: the decorator receives the method descriptor, saves the original function, and replaces the `value` with a wrapper. The wrapper uses a `Map` to cache results keyed by serialized arguments. On each call, it checks the cache first — cache hit returns immediately, miss calls the original and stores the result. For the key, I'd use `JSON.stringify(args)` for simple primitives, or a WeakMap keyed by `this` plus args for methods that depend on object state. TypeScript decorator syntax: `descriptor.value = function(...args) { const key = JSON.stringify(args); if (cache.has(key)) return cache.get(key); const result = original.apply(this, args); cache.set(key, result); return result }`. One consideration: cache invalidation — the cache lives on the function, so stale results persist unless you expose a `clearCache` method."
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+> **Close this doc. Then answer from memory.**
+
+- **Retrieval**: Describe the execution order of `@A @B @C fn` when called. When is each decorator applied?
+- **Visual**: Draw the mixin composition chain for `class Foo extends A(B(C(Base)))`. Which method wins if both A and B define `log()`?
+- **Application**: You have `const obj = { a: 1, nested: { b: 2 } }; Object.freeze(obj)`. Can you change `obj.a`? What about `obj.nested.b`?
+- **Debug**: Vue 2 had a known reactivity limitation: adding new properties to a reactive object didn't trigger updates. Explain why, given that Vue 2 used `Object.defineProperty`.
+- **Teach**: Explain decorators to a junior using the "wrapper" metaphor — what is being wrapped and what does the wrapper add?
+
+🔁 **Spaced repetition**: Review in 3 days → 7 days → 14 days
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [ES6+ Features Deep](./11-es6-features-deep.md) — Proxy and Symbol covered there in detail
+- ⬅️ **Built on**: [Advanced Concepts](./08-advanced-concepts.md) — Higher-order functions, composition
+- 🔗 **Applied in**: [React Patterns](../03-react/08-react-patterns-advanced.md) — Higher-Order Components are the React analog of decorators
+- 🔗 **Applied in**: [TypeScript Advanced](../02-typescript/02-advanced-types.md) — Decorator types and metadata
 
 [← Previous: Execution Context](./16-execution-context-theory.md) | [Next: Metaprogramming →](./18-metaprogramming-theory.md) | [Back to Table of Contents](../../00-table-of-contents.md)
