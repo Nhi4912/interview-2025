@@ -3,17 +3,214 @@
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 
-## Table of Contents / Mục Lục
+## Real-World Scenario / Tình Huống Thực Tế
 
-1. [Type System Fundamentals](#type-system-fundamentals)
-2. [Dynamic Typing Theory](#dynamic-typing-theory)
-3. [Type Coercion Deep Dive](#type-coercion-deep-dive)
-4. [Abstract Operations](#abstract-operations)
-5. [Type Checking Algorithms](#type-checking-algorithms)
-6. [Memory Representation](#memory-representation)
-7. [Interview Questions](#interview-questions)
+**Bug in payment API validation:** `typeof amount === 'number'` passed for `NaN` — `typeof NaN === 'number'` returns `true`. Payment was processed with `NaN` amount. Fix: `typeof amount === 'number' && !Number.isNaN(amount) && isFinite(amount)`. Root cause: `typeof` tells you the spec type, not "is this a valid usable number" — those are different questions.
+
+**Bài học:** `typeof` là spec-level type tag, không phải validation tool. `typeof null === 'object'`, `typeof NaN === 'number'`, `typeof function() {} === 'function'` (dù function là object). Biết chính xác `typeof` trả về gì — và khi nào dùng `instanceof`, `Array.isArray`, hoặc `Object.prototype.toString.call` thay thế.
+
+## What & Why / Cái Gì & Tại Sao
+
+**Scope:** File này focus vào type system internals — `typeof` oddities, runtime type checking tools, và memory representation. Coercion algorithms → xem [13-javascript-basics-theory.md](./13-javascript-basics-theory.md). Practical variable usage → xem [01-variables-data-types.md](./01-variables-data-types.md).
+
+**Analogy:** JavaScript type system giống ID system ở airport: `typeof` là loại giấy tờ ("passport" vs "driver's license"), còn nội dung trong đó (tên, ngày sinh) là value. Tương tự: `typeof null === 'object'` nghĩa là "loại giấy tờ là object" nhưng `null` không phải real object — như "passport" expired, loại đúng nhưng không usable.
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[JavaScript Type System]
+        │
+        ├── typeof operator
+        │       ├── Returns: "undefined", "boolean", "number", "bigint", "string", "symbol", "object", "function"
+        │       ├── typeof null === "object"   ← historical bug (null has object bit set in 32-bit era)
+        │       ├── typeof NaN === "number"    ← NaN IS a Number type by spec
+        │       └── typeof function === "function"  ← exception: callable objects get own tag
+        │
+        ├── Type checking tools (when typeof is insufficient)
+        │       ├── Array.isArray(x)           ← never use typeof/instanceof for arrays
+        │       ├── x instanceof Constructor   ← checks prototype chain, fails across iframes
+        │       ├── Object.prototype.toString.call(x)  ← returns "[object Array]", "[object Date]", etc.
+        │       └── Number.isNaN(x)            ← only NaN returns true (unlike global isNaN which coerces)
+        │
+        └── Memory representation (V8 conceptual model)
+                ├── SMI (Small Integer): 31-bit integers stored inline, no heap allocation
+                ├── HeapNumber: floating point numbers stored on heap
+                ├── Pointer: reference to heap object (function, array, plain object)
+                └── Tagged union: type tag bits distinguish SMI vs pointer
+```
 
 ---
+
+## Core Concepts / Khái Niệm Cốt Lõi
+
+---
+
+### 1. `typeof` — What It Checks and Why It Lies
+
+**🧠 Memory Hook:** "**`typeof` returns the spec type tag, not your intuitive idea of the type. `null` has the Object tag. `NaN` has the Number tag.**"
+
+**Why does this exist? / Tại sao tồn tại?**
+
+- Why does `typeof null === 'object'`? In the original 1995 V8 implementation, values were stored as 32-bit words where the low 3 bits were a type tag. `null` was stored as 0x00000000 — the null pointer. The Object type tag was also `000`. So `typeof null` read the tag bits, saw `000`, and returned `'object'`. A 30-year-old bug kept for backward compatibility.
+- Why does `typeof NaN === 'number'`? Because `NaN` (Not-a-Number) is defined in IEEE 754 as a special floating-point value. It's still in the Number space — it's a *failed* number operation result, not a different type. The name is misleading.
+- Why does `typeof function() {} === 'function'`? Functions are objects in JavaScript, but they're callable objects. ECMAScript spec added a special case for callable objects to return `'function'` — the only Object subtype that gets its own typeof tag.
+
+**Visual — typeof return values:**
+
+```javascript
+typeof undefined    // "undefined"
+typeof null         // "object"      ← BUG: null is NOT an object
+typeof true         // "boolean"
+typeof 42           // "number"
+typeof NaN          // "number"      ← NaN IS a number type
+typeof ""           // "string"
+typeof Symbol()     // "symbol"
+typeof 42n          // "bigint"
+typeof {}           // "object"
+typeof []           // "object"      ← array is an object
+typeof function(){} // "function"    ← exception: callable object gets own tag
+
+// Safe null check (because typeof null is broken):
+value !== null && typeof value === 'object'
+
+// Safe array check:
+Array.isArray(value)  // NOT typeof value === 'object'
+```
+
+**Common Mistakes:**
+
+| ❌ Wrong | ✅ Correct |
+|---|---|
+| `typeof value === 'object'` to check for objects | Includes null — use `value !== null && typeof value === 'object'` |
+| `typeof value === 'number'` to validate numbers | Also passes for `NaN` — add `&& !Number.isNaN(value) && isFinite(value)` |
+| `typeof [] === 'array'` | `typeof` never returns `'array'` — use `Array.isArray()` |
+| Using `typeof` for class instances | `typeof new Date()` → `'object'` (not `'date'`) — use `instanceof` or `Object.prototype.toString` |
+
+**🎯 Interview Pattern:**
+- **Trigger**: "type checking" / "validate this value" / "why typeof null is object"
+- **Concept**: typeof type tags, the null historical bug, NaN as valid Number type
+- **Opening**: "typeof checks the spec-level type tag, not your intuitive type. The infamous `typeof null === 'object'` is a 30-year bug from 32-bit tag bits — null's 0x000 collided with the Object tag. For reliable type checks I use `Array.isArray`, `Number.isNaN`, and `Object.prototype.toString.call` depending on what I need..."
+
+**🔑 Knowledge Chain:**
+- **Prereq**: JavaScript primitive vs object types
+- **Enables**: Type guards in TypeScript, runtime validation, debugging `null` reference errors
+
+---
+
+### 2. Type Checking Beyond `typeof`
+
+**🧠 Memory Hook:** "**`typeof` → type family. `instanceof` → prototype chain. `Object.prototype.toString.call` → exact built-in tag. Use the right tool for each job.**"
+
+**Why does this exist? / Tại sao tồn tại?**
+
+- Why isn't `typeof` enough? It only distinguishes 8 type families. You can't distinguish `null` from `{}`, `Date` from `RegExp`, or `Array` from a plain `{}`
+- Why does `instanceof` sometimes fail? Because `instanceof` traverses the prototype chain of the value and checks against the constructor's `.prototype`. Across iframes or workers, `Array` from frame A has a different prototype than `Array` from frame B — `frameB_array instanceof frameA_Array` → `false` even though both are arrays
+- Why does `Object.prototype.toString.call` work reliably? Because it reads the `Symbol.toStringTag` slot or the internal `[[Class]]` slot — a built-in tag that doesn't depend on the prototype chain
+
+**Visual — Type Checking Decision Tree:**
+
+```
+What do you need to check?
+        │
+        ├── Is it a specific primitive type? → typeof
+        │       e.g. typeof x === 'string'
+        │
+        ├── Is it an array? → Array.isArray(x)
+        │       (never instanceof Array — breaks across iframes)
+        │
+        ├── Is it a class instance? → x instanceof ClassName
+        │       e.g. x instanceof Date, x instanceof MyClass
+        │       ⚠️ Fails across iframes/workers
+        │
+        ├── Is it a specific built-in type? → Object.prototype.toString.call(x)
+        │       '[object Array]', '[object Date]', '[object RegExp]',
+        │       '[object Null]', '[object Undefined]', '[object Function]'
+        │
+        └── Is it a valid number (not NaN, not Infinity)?
+                → typeof x === 'number' && Number.isNaN(x) === false && isFinite(x)
+                Note: Number.isNaN(x) ≠ isNaN(x)
+                  isNaN("hello") → true (coerces "hello" to NaN first)
+                  Number.isNaN("hello") → false (no coercion — only true for actual NaN)
+```
+
+**Common Mistakes:**
+
+| ❌ Wrong | ✅ Correct |
+|---|---|
+| `isNaN(value)` for NaN check | `Number.isNaN(value)` — global `isNaN` coerces: `isNaN("hello") === true` |
+| `value instanceof Array` cross-frame | `Array.isArray(value)` — checks the internal `[[IsArray]]` slot |
+| `typeof value === 'null'` | `typeof null === 'object'` — use `value === null` |
+| `value.constructor === Object` | Fails if constructor was reassigned; use `Object.prototype.toString.call` |
+
+**🎯 Interview Pattern:**
+- **Trigger**: "how to check if value is an array" / "type checking in production" / "Number.isNaN vs isNaN"
+- **Concept**: Each type checking method has a different mechanism and appropriate use case
+- **Opening**: "I use different tools for different type checks: `typeof` for primitive families, `Array.isArray` for arrays (reliable across iframes), `instanceof` for class instances within same realm, and `Number.isNaN` not global `isNaN` to avoid the coercion trap..."
+
+**🔑 Knowledge Chain:**
+- **Prereq**: Prototype chain, `typeof` behavior
+- **Enables**: TypeScript type guards, runtime validation libraries (Zod/Yup), defensive programming patterns
+
+---
+
+### 3. Memory Representation — How V8 Stores Types
+
+**🧠 Memory Hook:** "**SMI = small integer inline (free). HeapNumber = float on heap (cost). Pointer = heap reference (all objects). Changing `let x = 42` to `x = 42.5` allocates a HeapNumber.**"
+
+**Why does this exist? / Tại sao tồn tại?**
+
+- Why do we care about V8 internals for interview prep? Because understanding that integers are stored differently from floats explains *why* `42 | 0` (bitwise OR for floor) is faster than `Math.floor` for small numbers — SMI avoids heap allocation
+- Why does V8 store integers specially (SMI)? Because integer arithmetic is extremely common. Allocating a heap object for every `i++` in a loop would be prohibitively slow. V8 stores integers ≤ 2^30-1 inline in the pointer itself using tag bits — zero allocation cost
+- Why do objects that *start* as integer arrays become slower? V8 tracks "element kinds" — if you add a float to an `[1, 2, 3]` array, V8 must transition from `PACKED_SMI_ELEMENTS` to `PACKED_DOUBLE_ELEMENTS`, reallocating the backing store. One `arr.push(3.14)` degrades the whole array.
+
+**Definition:** V8 uses a **tagged pointer** representation: the lowest bit of each value indicates whether it's an SMI (31-bit integer, stored inline) or a pointer to a heap object. HeapNumbers are allocated for non-integer Number values. This means `42` and `42.0` have different internal representations.
+
+**Visual — V8 Value Representation:**
+
+```
+Tagged pointer (64-bit):
+  bit 0 = 0 → SMI (Small Integer): value in upper 32 bits, no heap alloc
+  bit 0 = 1 → Pointer: points to heap object
+
+SMI: let x = 42
+  [0x0000002A << 1 | 0] ← no heap allocation, lives on stack
+
+HeapNumber: let x = 42.5
+  [pointer → HeapNumber { value: 42.5 }] ← heap allocation
+
+V8 Array element kinds (transitions are one-way ← SLOW):
+  PACKED_SMI_ELEMENTS    [1, 2, 3]              ← fastest
+        ↓ add float
+  PACKED_DOUBLE_ELEMENTS [1, 2, 3.14]           ← backing store reallocated
+        ↓ add undefined/delete
+  PACKED_ELEMENTS        [1, 2, undefined, 4]   ← boxing overhead
+        ↓ create holes
+  HOLEY_ELEMENTS         [1, , , 4]             ← slowest, prototype chain checks
+```
+
+**Common Mistakes:**
+
+| ❌ Wrong | ✅ Correct |
+|---|---|
+| Mixing integers and floats in performance-critical arrays | Initialize arrays with consistent types; avoid degrading element kinds |
+| `arr.length = 0` to clear a large array | `arr = []` is sometimes faster — creates a fresh array with fresh element kind |
+| Adding `undefined` to array holes | Creates `HOLEY_ELEMENTS` — V8 must check prototype chain for each access |
+| Premature optimization without profiling | These micro-optimizations matter only in hot loops (>10k iterations) — profile first |
+
+**🎯 Interview Pattern:**
+- **Trigger**: "JavaScript performance" / "V8 internals" / "why is this loop slow"
+- **Concept**: SMI/HeapNumber representation, array element kind transitions
+- **Opening**: "V8 stores integers ≤ 2^30 as SMIs — inline in the pointer itself, zero allocation. Floats go to the heap as HeapNumbers. For arrays, V8 tracks element kinds and optimizes accordingly — mixing floats into an integer array forces a backing store reallocation. In hot loops, keeping array types homogeneous is a meaningful optimization..."
+
+**🔑 Knowledge Chain:**
+- **Prereq**: Heap/stack memory model, Number type
+- **Enables**: V8 performance optimization, understanding why profilers show memory allocations in loops, hidden class theory
+
+---
+
+## Reference: Type System Internals / Tài Liệu Tham Khảo
+
+
 
 ## Type System Fundamentals / Cơ Bản Hệ Thống Kiểu
 
@@ -678,77 +875,94 @@ class EqualityComparison {
 
 ---
 
-## Câu Hỏi Phỏng Vấn / Interview Q&A
+## Interview Q&A / Câu Hỏi Phỏng Vấn
 
-### 🟡 [Mid] Q1: Explain the difference between == and ===
+### Q: Why does `typeof null === 'object'` and why hasn't it been fixed? 🟢 Junior
 
-**English Answer:**
+**A:** Historical bug from 1995. The original JavaScript engine stored values as 32-bit words where the low 3 bits were a type tag. `null` was the null pointer (all zeros). The Object type tag was `000`. `typeof null` read those 3 bits, saw `000`, and returned `'object'`. By the time this was recognized as a bug, breaking the web to fix it was deemed worse than the bug itself — billions of `if (typeof x === 'object' && x !== null)` patterns would break. Now it's forever in the spec as "historical bug retained for compatibility."
 
-`==` (Abstract Equality) performs type coercion before comparison:
-- Converts operands to the same type
-- Follows complex coercion rules
-- `null == undefined` is `true`
-- `0 == '0'` is `true`
+Đây là lỗi lịch sử từ 1995 khi `null` (con trỏ null, all bits zero) trùng với Object type tag (`000`). Không thể fix vì sẽ phá vỡ hàng tỷ trang web đã check `typeof x === 'object'`.
 
-`===` (Strict Equality) does NOT perform type coercion:
-- Requires same type and value
-- More predictable behavior
-- Recommended for most cases
-
-**Special Cases:**
-```javascript
-// NaN
-NaN === NaN // false
-Object.is(NaN, NaN) // true
-
-// +0 and -0
-+0 === -0 // true
-Object.is(+0, -0) // false
-```
-
-**Tiếng Việt:**
-
-`==` thực hiện chuyển đổi kiểu trước khi so sánh, trong khi `===` không chuyển đổi kiểu.
-
-### 🔴 [Senior] Q2: How does type coercion work in JavaScript?
-
-**English Answer:**
-
-Type coercion uses abstract operations:
-
-1. **ToPrimitive**: Converts objects to primitives
-   - Calls `Symbol.toPrimitive` if exists
-   - Otherwise calls `valueOf()` then `toString()`
-
-2. **ToNumber**: Converts to number
-   - `undefined` → `NaN`
-   - `null` → `0`
-   - `true` → `1`, `false` → `0`
-   - Strings parsed as numbers
-
-3. **ToString**: Converts to string
-   - Primitives converted directly
-   - Objects call `toString()` method
-
-4. **ToBoolean**: Converts to boolean
-   - Falsy: `false`, `0`, `''`, `null`, `undefined`, `NaN`
-   - Everything else is truthy
-
-**Tiếng Việt:**
-
-Chuyển đổi kiểu sử dụng các thao tác trừu tượng như ToPrimitive, ToNumber, ToString, ToBoolean.
+**💡 Interview Signal:**
+- ✅ Strong: Explains the 32-bit tag bits mechanism, the null pointer collision, why backward compat prevents fixing
+- ❌ Weak: "It's a bug in JavaScript" — without the 'why' mechanism, shows no spec depth
 
 ---
 
-## Summary / Tóm Tắt
+### Q: What's the difference between `isNaN()` and `Number.isNaN()`? 🟢 Junior
 
-**Key Concepts:**
-1. JavaScript uses dynamic, weak typing
-2. Type coercion follows ECMAScript abstract operations
-3. Multiple equality algorithms (==, ===, Object.is)
-4. Understanding type system crucial for avoiding bugs
-5. Prefer strict equality (===) for predictable behavior
+**A:** Global `isNaN(value)` first converts `value` to a number via `ToNumber`, THEN checks if it's NaN. So `isNaN("hello") === true` because `ToNumber("hello") === NaN`. `Number.isNaN(value)` does NOT coerce — it only returns `true` if `value` is already of type Number and is the NaN value. `Number.isNaN("hello") === false`. Use `Number.isNaN` for reliable NaN detection; only use global `isNaN` if you specifically want coercion.
+
+`isNaN()` coerce trước rồi mới check — `isNaN("hello") === true`. `Number.isNaN()` không coerce — chỉ `true` cho actual NaN value. Dùng `Number.isNaN` trong production.
+
+**💡 Interview Signal:**
+- ✅ Strong: Explains the ToNumber coercion in global isNaN, gives string example, recommends Number.isNaN
+- ❌ Weak: "Number.isNaN is newer and safer" — correct but no explanation of the coercion difference
 
 ---
+
+### Q: How would you reliably check if something is an array across different execution contexts (iframes)? 🟡 Mid
+
+**A:** `Array.isArray(value)`. Not `value instanceof Array` — `instanceof` checks the prototype chain, and `Array` from iframe A has a different `Array.prototype` than `Array` from the main frame. `frameArray instanceof Array` → `false` even though it clearly is an array. `Array.isArray` reads the internal `[[IsArray]]` slot which is set by the spec during array construction — it works across realms. For general type introspection: `Object.prototype.toString.call(value)` returns `'[object Array]'`, `'[object Date]'`, etc. — reliable across all contexts.
+
+`instanceof Array` fails cross-frame vì mỗi frame có `Array.prototype` khác nhau. `Array.isArray` đọc internal `[[IsArray]]` slot — reliable across realms. `Object.prototype.toString.call` cho introspection chi tiết.
+
+**💡 Interview Signal:**
+- ✅ Strong: Names the cross-realm failure mode of `instanceof`, explains `[[IsArray]]` internal slot, mentions `Object.prototype.toString` for general introspection
+- ❌ Weak: "Use Array.isArray" without explaining why instanceof is insufficient
+
+---
+
+### Q: V8 stores small integers differently from floats — why does this matter for performance? 🔴 Senior
+
+**A:** V8 uses a tagged pointer system. Small integers (≤ 2^30-1, called SMIs) are stored inline in the pointer word itself — zero heap allocation. Floating-point numbers require a HeapNumber object on the heap. This means: (1) `i++` in an integer loop has no heap cost; (2) mixing floats into an integer array forces V8 to transition from `PACKED_SMI_ELEMENTS` to `PACKED_DOUBLE_ELEMENTS` — a backing store reallocation that can't be reversed. For hot loops processing numeric data, keeping arrays homogeneous (all integers or all floats) avoids these transitions. The same mechanism explains why V8's hidden classes deoptimize when you add properties in non-uniform order.
+
+V8 SMI (small integer) được lưu inline trong pointer — zero heap allocation. Float → HeapNumber trên heap. Trong hot loops: array `[1,2,3]` với một `push(3.14)` trigger backing store reallocation (`PACKED_SMI_ELEMENTS` → `PACKED_DOUBLE_ELEMENTS`). Giữ array types homogeneous trong performance-critical code.
+
+**💡 Interview Signal:**
+- ✅ Strong: Explains SMI/HeapNumber distinction, element kind transitions, connects to practical loop optimization
+- ❌ Weak: "Use typed arrays for performance" — correct optimization but doesn't explain the V8 type representation reason
+
+---
+
+## Q&A Summary / Tóm Tắt Q&A
+
+| # | Topic | Level | One-liner |
+|---|-------|-------|-----------|
+| 1 | `typeof null === 'object'` | 🟢 | 32-bit tag bits: null pointer (0x000) collided with Object tag — historical bug |
+| 2 | `isNaN` vs `Number.isNaN` | 🟢 | Global `isNaN` coerces first; `Number.isNaN` doesn't — always use Number.isNaN |
+| 3 | Cross-realm array check | 🟡 | `instanceof` breaks across iframes; `Array.isArray` uses `[[IsArray]]` slot |
+| 4 | SMI vs HeapNumber | 🔴 | SMI = inline integer (free); HeapNumber = heap float (allocation cost) |
+
+---
+
+## ⚡ Cold Call Simulation
+
+**Q: "Why should you use `Number.isNaN` instead of the global `isNaN`?"**
+
+**30-second answer:**
+
+"The global `isNaN` function first converts the argument to a number using the ToNumber abstract operation, then checks if the result is NaN. So `isNaN('hello')` returns `true` — not because `'hello'` is NaN, but because `ToNumber('hello')` is NaN. This gives false positives for any non-numeric string. `Number.isNaN` is a strict check: it returns `true` only if the value is already of Number type and is specifically the NaN value. `Number.isNaN('hello')` returns `false`. The same distinction applies to `isFinite` vs `Number.isFinite`. When validating numbers in production code, always use the Number-namespaced versions to avoid the coercion trap."
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+> **Close this doc. Then answer from memory.**
+
+- **Retrieval**: Why does `typeof null === 'object'`? Name the original cause and why it hasn't been fixed.
+- **Visual**: Draw the V8 type representation — what's an SMI? What's a HeapNumber? When does V8 allocate on the heap?
+- **Application**: You need to check if a value is a valid finite number (not NaN, not Infinity). Write the check.
+- **Debug**: `isNaN(userInput)` returns `true` even though `userInput = "123abc"`. Is that correct? How do you fix the validation?
+- **Teach**: Explain to a junior dev why `typeof value === 'object' && value !== null` is the correct "is this an object?" check — 2 sentences.
+
+🔁 **Spaced repetition**: Review in 3 days → 7 days → 14 days
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [JavaScript Basics Theory](./13-javascript-basics-theory.md) — Abstract Operations (ToPrimitive, ToNumber, Abstract Equality)
+- ⬅️ **Built on**: [Variables & Data Types](./01-variables-data-types.md) — practical type usage
+- 🔗 **Applied in**: [TypeScript Type System](../02-typescript/01-type-system-basics.md) — TypeScript's type narrowing builds on typeof/instanceof/Array.isArray
+- 🔗 **Applied in**: [Memory Management](./15-memory-management-advanced.md) — SMI/HeapNumber connects to GC and memory optimization
 
 [← Previous: JavaScript Basics Theory](./13-javascript-basics-theory.md) | [Next: Memory Management →](./15-memory-management-advanced.md) | [Back to Table of Contents](../../00-table-of-contents.md)
