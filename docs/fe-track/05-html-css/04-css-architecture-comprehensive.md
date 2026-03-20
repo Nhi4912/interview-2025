@@ -3,832 +3,345 @@
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 
-## From Fundamentals to Advanced Patterns
+## Real-World Scenario / Tình Huống Thực Tế
 
-[← Back to Responsive Design](./03-responsive-design.md) | [Next: Performance →](../06-browser-performance/04-web-performance-comprehensive.md)
+Senior dev tại một fintech company nhận task: refactor CSS của checkout flow — hiện tại có 4 competing stylesheets (legacy global, BEM component, inline Tailwind, và CSS-in-JS từ design system cũ). Mỗi lần sửa button color, phải check cả 4 chỗ. Specificity score của `.checkout-btn` là `(0,3,1)` vì `#checkout-page .form-section button.btn-primary`.
 
----
-
-## 📋 Table of Contents
-
-1. [CSS Architecture Fundamentals](#css-architecture-fundamentals)
-2. [Cascade and Specificity Theory](#cascade-and-specificity-theory)
-3. [Box Model Deep Dive](#box-model-deep-dive)
-4. [Layout Systems Theory](#layout-systems-theory)
-5. [CSS Methodologies](#css-methodologies)
-6. [Component Architecture](#component-architecture)
-7. [CSS-in-JS Theory](#css-in-js-theory)
-8. [Performance Considerations](#performance-considerations)
-9. [Maintainability Patterns](#maintainability-patterns)
-10. [Interview Questions](#interview-questions)
+**Câu hỏi**: Làm thế nào cascade, specificity, và box model cộng với architecture quyết định tại sao hệ thống này bị như vậy — và cách fix đúng?
 
 ---
 
-## 🎯 Learning Objectives
+## What & Why / Cái Gì & Tại Sao
 
-Master CSS architecture:
-- Understand cascade and specificity deeply
-- Learn layout system principles
-- Apply CSS methodologies
-- Design scalable architectures
-- Optimize CSS performance
-- Build maintainable systems
+**Comprehensive CSS Architecture là gì?**
+Là tổ hợp của cascade theory + specificity model + box model + layout systems + methodologies — hiểu đủ sâu để thiết kế cả hệ thống, không chỉ sửa từng component.
 
----
-
-## CSS Architecture Fundamentals
-
-### What is CSS Architecture?
-
-**English Definition:** CSS architecture is the systematic organization and structuring of CSS code to create maintainable, scalable, and performant stylesheets.
-
-**Định nghĩa (Tiếng Việt):** Kiến trúc CSS là việc tổ chức và cấu trúc có hệ thống mã CSS để tạo ra các stylesheet dễ bảo trì, có khả năng mở rộng và hiệu suất cao.
-
-### CSS Architecture Mind Map
-
-```
-CSS Architecture
-│
-├── Core Concepts
-│   ├── Cascade
-│   ├── Specificity
-│   ├── Inheritance
-│   └── Box Model
-│
-├── Layout Systems
-│   ├── Normal Flow
-│   ├── Flexbox
-│   ├── Grid
-│   └── Positioning
-│
-├── Methodologies
-│   ├── BEM
-│   ├── OOCSS
-│   ├── SMACSS
-│   ├── ITCSS
-│   └── Atomic CSS
-│
-├── Modern Approaches
-│   ├── CSS Modules
-│   ├── CSS-in-JS
-│   ├── Utility-First
-│   └── Component-Scoped
-│
-└── Best Practices
-    ├── Naming Conventions
-    ├── File Organization
-    ├── Scalability
-    ├── Performance
-    └── Maintainability
-```
-
-### CSS Architecture Principles
-
-**1. Predictability**
-
-**Theory:** CSS should behave consistently and predictably across the application.
-
-**Characteristics:**
-- Consistent naming conventions
-- Clear selector patterns
-- Minimal side effects
-- Explicit dependencies
-
-**Anti-patterns:**
-- Overly specific selectors
-- !important overuse
-- Global styles affecting components
-- Unclear inheritance chains
-
-**2. Reusability**
-
-**Theory:** CSS components should be reusable across different contexts.
-
-**Approaches:**
-- Component-based design
-- Utility classes
-- Mixins and functions
-- Design tokens
-
-**Benefits:**
-- Reduced code duplication
-- Consistent design system
-- Faster development
-- Easier maintenance
-
-**3. Maintainability**
-
-**Theory:** CSS should be easy to understand, modify, and extend.
-
-**Factors:**
-- Clear organization
-- Self-documenting code
-- Modular structure
-- Version control friendly
-
-**Practices:**
-- Meaningful class names
-- Logical file structure
-- Documentation
-- Code reviews
-
-**4. Scalability**
-
-**Theory:** CSS architecture should handle growth without degradation.
-
-**Considerations:**
-- File size management
-- Selector performance
-- Build process optimization
-- Team collaboration
+**Tại sao cần học comprehensive?**
+- **Level 1**: Senior interview hỏi "tại sao `!important` thắng" — nếu không hiểu cascade origin model, không trả lời được.
+- **Level 2**: Debug regression yêu cầu trace từ specificity score → cascade layer → box model → layout context — mỗi layer có thể là root cause.
+- **Level 3**: Thiết kế hệ thống CSS cho 20+ devs cần chọn methodology + scope strategy + token system phù hợp với scale — không có blueprint thì mỗi người làm một kiểu.
 
 ---
 
-## Cascade and Specificity Theory
+## Concept Map / Sơ Đồ Khái Niệm
 
-### The Cascade
-
-**Definition:** The cascade is the algorithm that determines which CSS rules apply when multiple rules target the same element.
-
-**Định nghĩa:** Cascade là thuật toán xác định quy tắc CSS nào được áp dụng khi nhiều quy tắc nhắm đến cùng một phần tử.
-
-### Cascade Algorithm
-
-**Theory:** The cascade resolves conflicts through a multi-step process.
-
-**Cascade Layers (in order):**
-
-**1. Origin and Importance**
-
-**Origin Priority (lowest to highest):**
-1. User agent styles (browser defaults)
-2. User styles (user preferences)
-3. Author styles (website CSS)
-4. Author !important
-5. User !important
-6. User agent !important
-
-**Theory:** !important reverses the cascade order, giving users ultimate control.
-
-**2. Specificity**
-
-**Definition:** Specificity determines which rule wins when multiple rules have same origin and importance.
-
-**Specificity Calculation:**
-
-**Four-part value: (a, b, c, d)**
-- **a:** Inline styles (1 or 0)
-- **b:** ID selectors count
-- **c:** Class, attribute, pseudo-class count
-- **d:** Element, pseudo-element count
-
-**Examples:**
 ```
-style=""                    → (1, 0, 0, 0)
-#header                     → (0, 1, 0, 0)
-.nav .item                  → (0, 0, 2, 0)
-div p                       → (0, 0, 0, 2)
-#header .nav .item          → (0, 1, 2, 0)
+CSS Comprehensive Architecture
+├── Cascade Theory (who wins?)
+│   ├── Origin: author > user > browser
+│   ├── Importance: !important reverses origin order
+│   ├── Specificity: (0,A,B,C) — id, class, element
+│   └── Order: last wins when specificity ties
+│
+├── Box Model (space calculation)
+│   ├── content-box: width = content only (default)
+│   ├── border-box: width = content + padding + border (preferred)
+│   ├── Margin collapse: adjacent vertical margins merge
+│   └── BFC: block formatting context isolates margin collapse
+│
+├── Layout Systems (spatial arrangement)
+│   ├── Normal flow: block + inline
+│   ├── Flexbox: 1D (row or column)
+│   ├── Grid: 2D (rows AND columns)
+│   └── Position: static/relative/absolute/fixed/sticky
+│
+└── Methodologies (governance)
+    ├── BEM: naming (no cascade dependency)
+    ├── ITCSS: specificity pyramid (Generic→Utilities)
+    ├── CSS Modules: build-time scope isolation
+    └── Design Tokens: semantic naming for theming
 ```
-
-**Comparison:**
-- Compare left to right
-- First non-equal value wins
-- (0, 1, 0, 0) beats (0, 0, 10, 0)
-
-**3. Source Order**
-
-**Theory:** When origin, importance, and specificity are equal, last rule wins.
-
-**Implications:**
-- Order matters in stylesheets
-- Later imports override earlier
-- Cascade-dependent patterns
-
-### Specificity Management
-
-**Theory:** Managing specificity is crucial for maintainable CSS.
-
-**Strategies:**
-
-**1. Keep Specificity Low**
-
-**Reasoning:**
-- Easier to override
-- More flexible
-- Less !important needed
-- Better maintainability
-
-**Approach:**
-- Use single classes
-- Avoid ID selectors
-- Minimize nesting
-- Avoid tag selectors
-
-**2. Specificity Graph**
-
-**Theory:** Specificity should increase gradually through stylesheet.
-
-**Ideal Pattern:**
-```
-Base styles (low specificity)
-  ↓
-Component styles (medium specificity)
-  ↓
-Utility/override styles (high specificity)
-```
-
-**Anti-pattern:**
-- Specificity spikes
-- Specificity wars
-- !important proliferation
-
-**3. Specificity Isolation**
-
-**Theory:** Isolate components to prevent specificity conflicts.
-
-**Techniques:**
-- CSS Modules
-- Shadow DOM
-- Unique prefixes
-- Scoped styles
-
-### Inheritance Theory
-
-**Definition:** Inheritance is the mechanism by which certain CSS properties pass from parent to child elements.
-
-**Định nghĩa:** Inheritance là cơ chế mà một số thuộc tính CSS được truyền từ phần tử cha sang phần tử con.
-
-**Inherited Properties:**
-
-**Typography:**
-- font-family, font-size, font-weight
-- line-height, letter-spacing
-- text-align, text-transform
-- color
-
-**Lists:**
-- list-style-type, list-style-position
-
-**Visibility:**
-- visibility (but not display)
-- cursor
-
-**Non-Inherited Properties:**
-
-**Box Model:**
-- margin, padding, border
-- width, height
-
-**Positioning:**
-- position, top, left
-- float, clear
-
-**Display:**
-- display
-- overflow
-
-**Background:**
-- background-color, background-image
-
-**Controlling Inheritance:**
-
-**Keywords:**
-- `inherit`: Force inheritance
-- `initial`: Reset to initial value
-- `unset`: Inherit if inheritable, else initial
-- `revert`: Revert to user agent style
 
 ---
 
-## Box Model Deep Dive
+## Core Concepts / Khái Niệm Cốt Lõi
 
-### Box Model Theory
+### Core Concept 1: Cascade Origin + Specificity Algorithm
 
-**Definition:** The box model describes how elements are rendered as rectangular boxes with content, padding, border, and margin.
+🧠 **Memory Hook**: Cascade = "court hierarchy" — `!important` author > `!important` user > author > user > browser. Within same origin: specificity (A,B,C). Tie: last declaration wins.
 
-**Định nghĩa:** Box model mô tả cách các phần tử được hiển thị dưới dạng các hộp chữ nhật với nội dung, padding, border và margin.
+**Why does this exist? / Tại sao tồn tại?**
+- **Level 1**: Multiple CSS sources (browser defaults, library styles, your code, inline styles) all target the same element — need a deterministic winner.
+- **Level 2**: Specificity calculation `(A,B,C)` — A = ID count, B = class/attribute/pseudo-class, C = element/pseudo-element. `#btn.active` = `(1,1,0)` beats `.btn.active.large` = `(0,3,0)`.
 
-### Box Model Components
-
-**Structure:**
+**Visual — specificity calculator**:
 ```
-┌─────────────────────────────────┐
-│         Margin (transparent)     │
-│  ┌───────────────────────────┐  │
-│  │    Border                 │  │
-│  │  ┌─────────────────────┐ │  │
-│  │  │   Padding           │ │  │
-│  │  │  ┌───────────────┐ │ │  │
-│  │  │  │   Content     │ │ │  │
-│  │  │  └───────────────┘ │ │  │
-│  │  └─────────────────────┘ │  │
-│  └───────────────────────────┘  │
-└─────────────────────────────────┘
-```
+Selector                  | ID | Class | Element | Score
+--------------------------|----| ------|---------|-------
+p                         |  0 |  0    |  1      | (0,0,1)
+.btn                      |  0 |  1    |  0      | (0,1,0)
+.btn.active               |  0 |  2    |  0      | (0,2,0)
+#submit                   |  1 |  0    |  0      | (1,0,0)
+#submit.active            |  1 |  1    |  0      | (1,1,0)
+style="" (inline)         |  ∞ |  -    |  -      | (1,0,0,0) ← different column
+!important                |  → flips origin, separate track
 
-**1. Content Box**
-
-**Theory:** The innermost box containing actual content (text, images, etc.).
-
-**Dimensions:**
-- Controlled by width/height
-- Contains inline/block content
-- Can overflow
-
-**2. Padding Box**
-
-**Theory:** Space between content and border, inherits background.
-
-**Characteristics:**
-- Transparent to content
-- Inherits background-color/image
-- Affects clickable area
-- Part of element's visual size
-
-**3. Border Box**
-
-**Theory:** Line surrounding padding, can have color, width, style.
-
-**Properties:**
-- border-width
-- border-style
-- border-color
-- border-radius (affects visual shape)
-
-**4. Margin Box**
-
-**Theory:** Space outside border, separates elements.
-
-**Characteristics:**
-- Always transparent
-- Doesn't inherit background
-- Can be negative
-- Collapses in certain situations
-
-### Box Sizing Theory
-
-**Definition:** Box-sizing determines how width/height are calculated.
-
-**Định nghĩa:** Box-sizing xác định cách width/height được tính toán.
-
-**Two Models:**
-
-**1. content-box (default)**
-
-**Calculation:**
-```
-Total Width = width + padding-left + padding-right + border-left + border-right
-Total Height = height + padding-top + padding-bottom + border-top + border-bottom
+Rule: (1,0,0) ALWAYS beats (0,999,999) — columns don't carry over
 ```
 
-**Characteristics:**
-- Width/height apply to content only
-- Padding/border add to dimensions
-- Traditional CSS behavior
-- Harder to calculate
+**Common Mistakes / Sai lầm thường gặp**:
+| ❌ Wrong | ✅ Correct |
+|----------|-----------|
+| Adding more classes to beat specificity | Lower specificity of conflicting rule (use `:where()`) |
+| `!important` to fix specificity war | Root cause: reduce original selector specificity |
+| Thinking 11 classes beats 1 ID | Each column is independent — IDs always win over any class count |
+| Specificity = "importance" | They're separate axes — `!important` is cascade origin, not specificity |
 
-**2. border-box**
+🎯 **Interview Pattern**:
+- **Trigger**: "Why is my style being overridden?" / "How does CSS specificity work?"
+- **Concept**: Cascade origin → specificity (A,B,C) columns → source order — in that priority
+- **Opening**: "CSS cascade resolves conflicts in three steps: first origin (author beats browser), then specificity as three independent columns, then source order for ties..."
 
-**Calculation:**
+🔑 **Knowledge Chain**:
+- **Prereq**: Basic CSS selector syntax
+- **Enables**: Cascade Layers (`@layer`), specificity debugging, BEM design rationale
+
+---
+
+### Core Concept 2: Box Model — `content-box` vs `border-box` + BFC
+
+🧠 **Memory Hook**: `content-box` = "width is a lie" (padding and border are bonus). `border-box` = "width is what you see" (everything included). Set `border-box` globally, never regret it.
+
+**Why does this exist? / Tại sao tồn tại?**
+- **Level 1**: `width: 200px; padding: 20px` with `content-box` → actual visual width = 240px (surprise!). Layout breaks when you forget to subtract padding.
+- **Level 2**: BFC (Block Formatting Context) is a CSS "room" — elements inside don't affect elements outside. Triggered by `overflow: hidden`, `display: flex`, `display: grid`. Solves margin collapse and float clearing.
+
+**Visual — box model comparison**:
 ```
-Total Width = width (includes padding and border)
-Total Height = height (includes padding and border)
+content-box (default):            border-box (preferred):
+┌──────────────────────┐          ┌──────────────────────┐
+│  margin              │          │  margin              │
+│  ┌────────────────┐  │          │  ┌────────────────┐  │
+│  │  border        │  │          │  │  border        │  │
+│  │  ┌──────────┐  │  │          │  │  ┌──────────┐  │  │
+│  │  │ padding  │  │  │          │  │  │ padding  │  │  │
+│  │  │ ┌──────┐ │  │  │          │  │  │ ┌──────┐ │  │  │
+│  │  │ │width │ │  │  │          │  │  │ │width │ │  │  │  ← width includes all
+│  │  │ └──────┘ │  │  │          │  │  │ └──────┘ │  │  │
+Total = w+p+b+m            Total = w (fixed) + m
 ```
 
-**Characteristics:**
-- Width/height include padding and border
-- Content box shrinks to fit
-- More intuitive
-- Recommended for modern CSS
-
-**Best Practice:**
 ```css
-*, *::before, *::after {
-  box-sizing: border-box;
-}
+/* Universal border-box — always do this */
+*, *::before, *::after { box-sizing: border-box; }
+
+/* BFC — isolate layout context */
+.container { overflow: hidden; }     /* triggers BFC → clears floats */
+.flex-parent { display: flex; }      /* flex context = BFC for children */
+/* Children's margin won't collapse out of BFC boundary */
 ```
 
-### Margin Collapse Theory
+**Common Mistakes / Sai lầm thường gặp**:
+| ❌ Wrong | ✅ Correct |
+|----------|-----------|
+| `width: calc(100% - 40px)` to compensate padding | `box-sizing: border-box` globally |
+| Confused by adjacent margin collapse | Know: top/bottom margins of adjacent blocks merge; use BFC or padding to prevent |
+| `overflow: hidden` on parent for floats | Use modern `display: flow-root` — explicit BFC, no overflow side effect |
+| `height: 100%` on child without parent height | Parent needs explicit height or min-height for percentage child height |
 
-**Definition:** Vertical margins between adjacent elements collapse into a single margin.
+🎯 **Interview Pattern**:
+- **Trigger**: "Explain the CSS box model" / "What's the difference between content-box and border-box?"
+- **Concept**: Box model dimensions + `border-box` predictability + BFC isolation
+- **Opening**: "The box model defines how dimensions are calculated — `content-box` adds padding and border on top of `width`, while `border-box` includes them, which is why I always set `border-box` globally..."
 
-**Định nghĩa:** Margin dọc giữa các phần tử liền kề sẽ gộp lại thành một margin duy nhất.
-
-**Collapse Rules:**
-
-**1. Adjacent Siblings**
-
-**Theory:** Vertical margins between siblings collapse.
-
-**Result:** Larger margin wins
-
-**2. Parent-Child**
-
-**Theory:** Parent's top margin collapses with first child's top margin.
-
-**Conditions:**
-- No border/padding separating them
-- No content between them
-- Both in normal flow
-
-**3. Empty Elements**
-
-**Theory:** Element's top and bottom margins collapse with each other.
-
-**Conditions:**
-- No height, padding, or border
-- No content
-
-**Preventing Collapse:**
-
-**Techniques:**
-- Add border/padding
-- Use flexbox/grid (no collapse)
-- Create BFC (Block Formatting Context)
-- Use overflow: hidden
-- Position: absolute/fixed
+🔑 **Knowledge Chain**:
+- **Prereq**: CSS units (px, %, em)
+- **Enables**: Flexbox/Grid sizing, margin collapse debugging, float clearing
 
 ---
 
-## Layout Systems Theory
+### Core Concept 3: CSS Methodologies — ITCSS Specificity Pyramid
 
-### Normal Flow
+🧠 **Memory Hook**: ITCSS = "inverted triangle" — start with broadest, lowest specificity (reset/generic) → narrow, highest specificity (utilities). Rules near the bottom beat rules near the top. Never go backwards up the triangle.
 
-**Definition:** The default layout algorithm where elements are laid out in the order they appear in HTML.
+**Why does this exist? / Tại sao tồn tại?**
+- **Level 1**: Without structure, CSS files are flat — specificity can appear anywhere, later files override earlier arbitrarily, teams fight for order.
+- **Level 2**: ITCSS imposes specificity discipline through file organization: Generic (normalize) → Elements (bare `h1`) → Objects (layout patterns) → Components (specific UI) → Utilities (overrides) — each layer has higher specificity than the previous, so cascade flows downward naturally.
 
-**Định nghĩa:** Thuật toán bố cục mặc định nơi các phần tử được sắp xếp theo thứ tự chúng xuất hiện trong HTML.
+**Visual — ITCSS pyramid**:
+```
+Broad, low specificity
+        ████████████████████  Settings  (variables, tokens)
+       ██████████████████████  Tools  (mixins, functions)
+      ████████████████████████  Generic  (normalize, reset)
+     ██████████████████████████  Elements  (h1, a, p base styles)
+    ████████████████████████████  Objects  (.o-container, .o-grid)
+   ██████████████████████████████  Components  (.c-card, .c-button)
+  ████████████████████████████████  Utilities  (.u-hidden, .u-text-right)
+Narrow, high specificity
 
-**Block Formatting Context (BFC):**
+Flow: each layer's styles naturally cascade onto lower layers
+Never: put high-specificity rules in Settings/Generic
+```
 
-**Theory:** BFC is an isolated layout environment where elements follow specific rules.
+**Common Mistakes / Sai lầm thường gặp**:
+| ❌ Wrong | ✅ Correct |
+|----------|-----------|
+| Component overriding generic with `!important` | Fix component's specificity — it should naturally be higher than generic |
+| Utilities in Objects layer | Keep utilities last — they must be able to override anything |
+| ITCSS with BEM conflict | ITCSS = file organization; BEM = naming — they complement, not conflict |
+| All CSS in one file | ITCSS requires file separation per layer to enforce order |
 
-**BFC Creation:**
-- Root element (html)
-- Float elements
-- Absolutely positioned elements
-- Inline-blocks
-- overflow: not visible
-- display: flow-root
-- Flex/grid items
+🎯 **Interview Pattern**:
+- **Trigger**: "How do you organize CSS files?" / "Have you used ITCSS?"
+- **Concept**: Specificity management through layer ordering — Generic→Elements→Objects→Components→Utilities
+- **Opening**: "ITCSS solves CSS entropy by making specificity increase as you go deeper in the file structure — so later rules naturally override earlier ones without needing `!important`..."
 
-**BFC Behavior:**
-- Contains floats
-- Prevents margin collapse
-- Excludes external floats
-- Independent layout
-
-### Flexbox Theory
-
-**Definition:** Flexbox is a one-dimensional layout system for distributing space and aligning items.
-
-**Định nghĩa:** Flexbox là hệ thống bố cục một chiều để phân phối không gian và căn chỉnh các mục.
-
-**Theoretical Model:**
-
-**Main Axis vs Cross Axis:**
-- Main axis: Primary direction (row or column)
-- Cross axis: Perpendicular to main axis
-- Direction controlled by flex-direction
-
-**Flex Container Properties:**
-
-**1. flex-direction**
-- Defines main axis direction
-- row, row-reverse, column, column-reverse
-
-**2. justify-content**
-- Aligns items along main axis
-- flex-start, flex-end, center, space-between, space-around, space-evenly
-
-**3. align-items**
-- Aligns items along cross axis
-- stretch, flex-start, flex-end, center, baseline
-
-**4. flex-wrap**
-- Controls wrapping behavior
-- nowrap, wrap, wrap-reverse
-
-**Flex Item Properties:**
-
-**1. flex-grow**
-- Ability to grow
-- Unitless proportion
-- Default: 0 (don't grow)
-
-**2. flex-shrink**
-- Ability to shrink
-- Unitless proportion
-- Default: 1 (can shrink)
-
-**3. flex-basis**
-- Initial size before growing/shrinking
-- Default: auto
-- Can be length or percentage
-
-**Flex Algorithm:**
-
-**Theory:** Flexbox distributes space through multi-step algorithm.
-
-**Steps:**
-1. Determine flex container size
-2. Calculate flex basis for items
-3. Distribute free space (flex-grow)
-4. Shrink if needed (flex-shrink)
-5. Align items (justify-content, align-items)
-
-### Grid Theory
-
-**Definition:** Grid is a two-dimensional layout system for creating complex layouts with rows and columns.
-
-**Định nghĩa:** Grid là hệ thống bố cục hai chiều để tạo các bố cục phức tạp với hàng và cột.
-
-**Theoretical Model:**
-
-**Grid Container:**
-- Defines grid structure
-- Contains grid items
-- Establishes grid context
-
-**Grid Lines:**
-- Dividing lines creating grid structure
-- Numbered from 1
-- Can be named
-
-**Grid Tracks:**
-- Space between two grid lines
-- Rows or columns
-- Sized with various units
-
-**Grid Cells:**
-- Intersection of row and column
-- Smallest unit of grid
-
-**Grid Areas:**
-- Rectangular area spanning multiple cells
-- Can be named
-- Used for placement
-
-**Grid Properties:**
-
-**Container Properties:**
-
-**1. grid-template-columns/rows**
-- Defines track sizes
-- Can use fr units (fractional)
-- repeat() function
-- minmax() function
-
-**2. gap (grid-gap)**
-- Space between tracks
-- Replaces margin for spacing
-
-**3. grid-template-areas**
-- Named grid areas
-- Visual layout definition
-
-**Item Properties:**
-
-**1. grid-column/row**
-- Placement on grid
-- Start and end lines
-- Span keyword
-
-**2. grid-area**
-- Shorthand for placement
-- Or reference to named area
-
-**Grid Algorithm:**
-
-**Theory:** Grid sizing algorithm is complex, handling various constraints.
-
-**Track Sizing:**
-1. Resolve fixed sizes
-2. Resolve flexible sizes (fr)
-3. Distribute remaining space
-4. Handle min/max constraints
-
-**Auto-placement:**
-- Fills unplaced items
-- Row or column direction
-- Dense packing option
+🔑 **Knowledge Chain**:
+- **Prereq**: Specificity algorithm, CSS file structure basics
+- **Enables**: Cascade Layers (`@layer` maps to ITCSS layers), design system architecture
 
 ---
 
-## CSS Methodologies
+## Q&A Section / Câu Hỏi Phỏng Vấn
 
-### BEM (Block Element Modifier)
+### Q: What is CSS specificity and how is it calculated? / Specificity trong CSS là gì và cách tính như thế nào? 🟢 Junior
 
-**Definition:** BEM is a naming convention that creates clear relationships between CSS and HTML.
+**A:** Specificity is CSS's conflict resolution score — when multiple rules target the same element, the rule with the highest specificity wins. It's calculated as a three-column value `(A, B, C)`: A = number of ID selectors, B = class/attribute/pseudo-class selectors, C = element/pseudo-element selectors. Columns don't carry over — `(0,1,0)` always beats `(0,0,100)`.
 
-**Định nghĩa:** BEM là quy ước đặt tên tạo ra mối quan hệ rõ ràng giữa CSS và HTML.
+Specificity là điểm số để CSS quyết định rule nào thắng khi nhiều rules cùng áp dụng cho một element. Tính theo 3 cột `(A,B,C)`: A = số ID selectors, B = class/attribute/pseudo-class, C = element/pseudo-element. **Điểm quan trọng**: các cột độc lập — 1 ID luôn thắng mọi số lượng class bất kể bao nhiêu.
 
-**Theory:**
-
-**Structure:**
-- **Block:** Standalone component
-- **Element:** Part of block
-- **Modifier:** Variation of block/element
-
-**Naming Pattern:**
-```
-.block {}
-.block__element {}
-.block--modifier {}
-.block__element--modifier {}
-```
-
-**Principles:**
-
-**1. Independence**
-- Blocks are independent
-- Can be reused anywhere
-- No dependencies on context
-
-**2. Flat Specificity**
-- All selectors have same specificity
-- No nesting in selectors
-- Easy to override
-
-**3. Self-documenting**
-- Names describe purpose
-- Structure visible in HTML
-- Clear relationships
-
-**Benefits:**
-- Predictable specificity
-- Reusable components
-- Clear structure
-- Team-friendly
-
-**Drawbacks:**
-- Verbose class names
-- Requires discipline
-- Learning curve
-
-### OOCSS (Object-Oriented CSS)
-
-**Theory:** OOCSS separates structure from skin and container from content.
-
-**Principles:**
-
-**1. Separate Structure from Skin**
-
-**Structure:** Layout properties
-- width, height
-- margin, padding
-- position, display
-
-**Skin:** Visual properties
-- color, background
-- border, shadow
-- typography
-
-**Benefit:** Reuse visual styles across different structures
-
-**2. Separate Container from Content**
-
-**Theory:** Content should look same regardless of container.
-
-**Anti-pattern:**
-```css
-.sidebar h3 { /* Depends on container */ }
-```
-
-**Better:**
-```css
-.heading-tertiary { /* Independent */ }
-```
-
-### SMACSS (Scalable and Modular Architecture for CSS)
-
-**Theory:** SMACSS categorizes CSS rules into five types.
-
-**Categories:**
-
-**1. Base**
-- Element defaults
-- No classes
-- Normalize/reset
-
-**2. Layout**
-- Major page sections
-- Grid systems
-- Prefix: l-
-
-**3. Module**
-- Reusable components
-- Most of CSS
-- No prefix
-
-**4. State**
-- Describes states
-- Prefix: is-
-- Often with JavaScript
-
-**5. Theme**
-- Visual variations
-- Color schemes
-- Typography scales
-
-### ITCSS (Inverted Triangle CSS)
-
-**Theory:** ITCSS organizes CSS by specificity, from generic to specific.
-
-**Layers (low to high specificity):**
-
-**1. Settings**
-- Variables
-- Config
-- No output
-
-**2. Tools**
-- Mixins
-- Functions
-- No output
-
-**3. Generic**
-- Resets
-- Normalize
-- Box-sizing
-
-**4. Elements**
-- Bare HTML elements
-- No classes
-
-**5. Objects**
-- Layout patterns
-- OOCSS
-- No cosmetics
-
-**6. Components**
-- UI components
-- Most specific
-- Complete styling
-
-**7. Utilities**
-- Helpers
-- Overrides
-- !important allowed
-
-**Benefits:**
-- Manages specificity
-- Reduces conflicts
-- Scalable structure
-- Clear organization
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Explains the three-column structure AND that columns are independent (no carry-over), mentions `!important` operates on a separate track from specificity.
+- ❌ Weak: Says "more specific selectors win" without explaining the algorithm, or thinks 11 classes beat 1 ID.
 
 ---
 
-## Summary
+### Q: What is the CSS box model and why is `border-box` preferred? / Box model CSS là gì và tại sao `border-box` được ưu tiên? 🟢 Junior
 
-### Key Theoretical Concepts
+**A:** The box model defines how an element's total size is calculated: content + padding + border + margin. `content-box` (default) means `width` = content only, so actual rendered width = `width + padding + border`. `border-box` means `width` includes content + padding + border, making layout math predictable. Setting `*, *::before, *::after { box-sizing: border-box }` globally prevents layout surprises.
 
-1. **Cascade and Specificity**
-   - Origin and importance
-   - Specificity calculation
-   - Inheritance rules
-   - Conflict resolution
+Box model định nghĩa kích thước thực tế của element. `content-box`: `width: 200px; padding: 20px` → rendered 240px (surprise!). `border-box`: `width: 200px` → luôn là 200px dù padding hay border bao nhiêu. Lý do ưu tiên `border-box`: khi design nói "button rộng 200px", họ muốn *thấy* 200px, không phải 200 + 40px padding.
 
-2. **Box Model**
-   - Content, padding, border, margin
-   - Box-sizing models
-   - Margin collapse
-   - BFC behavior
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Demonstrates the math difference with a concrete example, explains *why* `border-box` eliminates `calc(100% - 40px)` hacks, mentions the universal selector reset.
+- ❌ Weak: Only defines content/padding/border/margin without explaining the `content-box` vs `border-box` calculation difference.
 
-3. **Layout Systems**
-   - Normal flow
-   - Flexbox (one-dimensional)
-   - Grid (two-dimensional)
-   - Positioning schemes
+---
 
-4. **CSS Methodologies**
-   - BEM: Component naming
-   - OOCSS: Separation of concerns
-   - SMACSS: Categorization
-   - ITCSS: Specificity management
+### Q: How do you prevent specificity wars in a large team codebase? / Làm sao ngăn chặn specificity wars trong codebase lớn? 🟡 Mid
 
-5. **Architecture Principles**
-   - Predictability
-   - Reusability
-   - Maintainability
-   - Scalability
+**A:** Specificity wars happen when devs escalate selectors to override each other: `.btn` → `.page .btn` → `#app .page .btn` → `!important`. Prevention strategies: (1) Adopt a methodology like BEM to keep all selectors at single-class specificity `(0,1,0)`. (2) Use `:where()` to zero-out specificity when you need targeting without score: `:where(.card) .btn` = `(0,1,0)`. (3) Use `@layer` (Cascade Layers) to explicitly declare override order regardless of specificity. (4) Enforce via linting — `stylelint-no-high-specificity` rule.
 
-### Best Practices
+Specificity wars xảy ra khi team leo thang selectors để override nhau. 4 chiến lược ngăn chặn: **BEM** (mọi selector = 1 class, specificity đồng đều), **`:where()`** (wrap selector để score = 0), **`@layer`** (khai báo thứ tự override tường minh, không phụ thuộc specificity), **lint rules** (reject high-specificity selectors trong CI). Key insight: tốt hơn là giảm specificity của rule gốc thay vì tăng specificity của override.
 
-✅ **DO:**
-- Keep specificity low and consistent
-- Use meaningful class names
-- Organize by methodology
-- Document complex patterns
-- Consider maintainability
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Names `@layer` as the modern solution, explains `:where()` zero-specificity trick, mentions root cause (lack of methodology) not just symptoms.
+- ❌ Weak: Says "just use BEM" without explaining *why* BEM prevents wars (flat specificity), doesn't mention `@layer`.
 
-❌ **DON'T:**
-- Overuse !important
-- Create specificity wars
-- Nest selectors deeply
-- Use ID selectors for styling
-- Ignore cascade implications
+---
+
+### Q: Explain ITCSS and how it manages specificity at scale. / Giải thích ITCSS và cách nó quản lý specificity ở quy mô lớn. 🟡 Mid
+
+**A:** ITCSS (Inverted Triangle CSS) is a file architecture where CSS is organized in layers from lowest to highest specificity: Settings (tokens, no output) → Tools (mixins) → Generic (normalize/reset) → Elements (bare `h1`) → Objects (layout `.o-container`) → Components (`.c-button`) → Utilities (`.u-hidden`, `!important` allowed). Each layer naturally overrides previous ones because specificity increases — no fighting, no `!important` except at utilities. The "inverted triangle" shape visualizes that broad rules (many elements affected) come first, narrow rules (few elements) come last.
+
+ITCSS tổ chức file CSS thành 7 layers theo specificity tăng dần. Magic là: CSS flow tự nhiên từ Generic → Component → Utility mà không cần `!important` battles vì mỗi layer sau có specificity cao hơn layer trước theo thiết kế. Key rule: **không bao giờ đặt rules có specificity cao ở layer thấp** — vi phạm this rule là root cause của specificity wars trong project không có methodology.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Names all 7 layers correctly in order, explains WHY the triangle shape works (broad→narrow, low→high specificity), distinguishes ITCSS (file structure) from BEM (naming convention) as complementary not competing.
+- ❌ Weak: Describes ITCSS as just "organize CSS in folders" without explaining the specificity gradient principle.
+
+---
+
+### Q: You inherit a checkout page with 4 competing stylesheets (legacy global, BEM, Tailwind, CSS-in-JS). `.checkout-btn` has specificity `(0,3,1)`. Design a migration plan. / Bạn kế thừa checkout page với 4 stylesheet cạnh tranh. Thiết kế kế hoạch migration. 🔴 Senior
+
+**A:** This is a surgical refactor, not a rewrite. Approach:
+
+**Step 1 — Audit**: Map every rule touching `.checkout-btn` using browser DevTools "Computed" tab. Document which stylesheet wins and why (specificity score + origin).
+
+**Step 2 — Freeze**: Add ESLint/Stylelint rules to block new high-specificity selectors immediately. Stop the bleeding before migrating.
+
+**Step 3 — `@layer` fence**: Wrap each legacy stylesheet in a named `@layer`: `@layer legacy-global, bem-components, utilities`. This lets you control cascade order explicitly without touching code.
+
+**Step 4 — Incremental BEM migration**: Per component, introduce single-class BEM selectors in a new `@layer components` that sits above legacy. Zero selector changes in legacy code.
+
+**Step 5 — Token extraction**: Extract hardcoded values to CSS custom properties. This enables future Tailwind/design-system theming without cascade conflicts.
+
+**Step 6 — Remove legacy layer** once all components migrated. Measure: specificity graph should flatten from spikes to consistent `(0,1,0)`.
+
+Migration plan này áp dụng **strangler fig pattern** cho CSS: wrap old code thay vì rewrite, dùng `@layer` như bulkhead ngăn cách hệ thống cũ và mới. Key trade-off: `@layer` hạ thấp specificity của toàn bộ layer (non-layered styles luôn thắng layered styles) — cần audit inline styles và !important trước khi wrap.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Uses `@layer` as the bridging mechanism (not "rewrite everything"), applies strangler fig pattern, identifies the `@layer` vs non-layered specificity gotcha, measures success via specificity graph.
+- ❌ Weak: Says "migrate to Tailwind/CSS Modules" without a transition strategy — shows no understanding of how to manage the coexistence period.
+
+---
+
+### Q: Evaluate CSS-in-JS (Emotion) vs CSS Modules vs Tailwind for a 50-developer team scaling to 200. Defend your choice. / Đánh giá CSS-in-JS vs CSS Modules vs Tailwind cho team 50→200 devs. Bảo vệ lựa chọn. 🔴 Senior
+
+**A:** No single answer — depends on constraints. Framework for evaluation:
+
+| Dimension | CSS-in-JS (Emotion) | CSS Modules | Tailwind |
+|-----------|---------------------|-------------|---------|
+| **Runtime cost** | JS bundle + hydration | Zero (build-time) | Zero (build-time) |
+| **Type safety** | TS props → styles | None | Limited (plugin) |
+| **Design consistency** | Ad hoc | Ad hoc | Forced via config |
+| **Onboarding** | High curve (JS required) | Low curve | Medium (utility vocab) |
+| **Colocation** | Excellent | Good | Excellent |
+| **SSR complexity** | High (style extraction) | Simple | Simple |
+| **Scale to 200 devs** | Design system needed separately | Naming discipline needed | Config = shared language |
+
+**My recommendation for 50→200 scaling**: Tailwind + design tokens in `tailwind.config.js`. Reason: the config file *forces* design consistency (colors, spacing, typography are centralized) — the team can't drift because there are no arbitrary values by default. The bottleneck at 200 devs isn't CSS capability, it's design consistency and onboarding speed. CSS-in-JS solves the wrong problem at this scale (runtime cost adds up on mobile, SSR complexity increases deploy risk).
+
+**Caveat**: if the product has highly dynamic theming (per-customer white-labeling), CSS custom properties + CSS Modules beats Tailwind because runtime token swapping is trivial.
+
+Đánh giá này dựa trên trade-off thực tế ở quy mô. Tại 200 devs, bottleneck là **design consistency** (mọi người dùng cùng spacing scale không?) và **onboarding speed** (junior mất bao lâu để productive?). Tailwind config = contract chung cho cả team. Điểm mấu chốt: CSS-in-JS giải quyết vấn đề isolation tốt nhưng tạo vấn đề mới là runtime cost và SSR complexity — không xứng đáng ở scale này trừ khi có theming động phức tạp.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Uses a framework (comparison matrix) rather than personal preference, identifies the *actual* bottleneck at 200-dev scale (design consistency, not CSS power), names the Tailwind SSR caveat and the CSS-in-JS runtime cost, mentions the white-labeling exception.
+- ❌ Weak: Picks a favorite without analyzing trade-offs, doesn't discuss scale-specific constraints, treats this as a technical question rather than a team/product question.
+
+---
+
+## Interview Q&A Summary / Tổng Kết Phỏng Vấn
+
+| Question | Level | Key Point |
+|----------|-------|-----------|
+| What is CSS specificity? | 🟢 | Three independent columns (A,B,C) — ID always beats class, no carry-over |
+| Why `border-box` preferred? | 🟢 | Includes padding+border in `width` → predictable layout math |
+| How to prevent specificity wars? | 🟡 | BEM (flat specificity) + `@layer` (explicit order) + `:where()` (zero score) |
+| Explain ITCSS | 🟡 | 7-layer pyramid: specificity increases per layer, cascade flows naturally downward |
+| Migrate 4-stylesheet legacy checkout | 🔴 | Strangler fig: `@layer` fence → BEM migration → token extraction → remove legacy |
+| CSS-in-JS vs CSS Modules vs Tailwind at scale | 🔴 | Tailwind for 50→200: config forces design consistency; CSS-in-JS runtime cost doesn't scale |
+
+---
+
+## ⚡ Cold Call Simulation / Mô Phỏng Phỏng Vấn
+
+> 🎯 Interviewer asks cold: **"Walk me through how you'd debug a CSS style that's not applying."**
+
+**30 giây đầu — mở đầu lý tưởng / Ideal 30-second opening:**
+1. "I'd open DevTools Computed panel and find the exact property — the cascade winner is highlighted, losing rules are crossed out."
+2. "Then I check *why* the wrong rule wins: is it specificity (A,B,C score), origin (`!important`?), or source order (same specificity, later rule wins)?"
+3. "In a real case I debugged last quarter: `.btn--primary` was losing to `.form .btn` — a `(0,2,0)` rule in a legacy stylesheet overriding a `(0,1,0)` BEM rule. Fix: wrapped the legacy file in `@layer legacy` so our component layer had higher cascade priority."
+4. "The root fix is always structural — reduce the original rule's specificity or introduce `@layer` boundaries — never escalate with more classes or `!important`."
+
+*Sau đó mở rộng theo hướng interviewer dẫn dắt.*
+
+---
+
+## Self-Check / Tự Kiểm Tra ⚡
+> **Đóng tài liệu lại trước khi làm — Close the doc before attempting.**
+
+- [ ] **Retrieval**: Viết specificity score cho selector `#nav .item:hover` từ trí nhớ. Kết quả là bao nhiêu? So sánh với Layer 2 của Core Concept 1.
+- [ ] **Visual**: Vẽ ITCSS inverted triangle từ trí nhớ với đủ 7 layers theo thứ tự. So sánh với diagram ở Core Concept 3.
+- [ ] **Application**: Bạn có selector `.modal .submit-btn.active` (specificity `(0,3,0)`) đang override `.btn-primary` `(0,1,0)`. Bạn dùng cách nào để fix mà không thêm specificity? Hint: 2 cách khác nhau.
+- [ ] **Debug**: `.card__title` không nhận được `color: red` mặc dù rule trong stylesheet. DevTools Computed tab cho thấy rule bị crossed out với specificity `(0,1,0)` vs `(0,2,0)`. Nguyên nhân là gì? Fix?
+- [ ] **Teach**: Giải thích ITCSS cho teammate không biết CSS architecture bằng 1-2 câu liên tưởng đơn giản. Không dùng technical terms.
+
+💬 **Feynman Prompt:** Giải thích CSS specificity cho người không biết lập trình — dùng liên tưởng "tòa án phân xử tranh chấp" từ Memory Hook. Tại sao 1 thẩm phán (ID) luôn thắng 100 nhân viên tòa (class)?
+
+🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày → 7 ngày → 14 ngày** để chuyển vào long-term memory.
+
+---
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on:** [Responsive Design](./03-responsive-design.md) — media queries use the cascade, responsive layouts use the same specificity rules
+- ➡️ **Enables:** [Web Performance Comprehensive](../06-browser-performance/04-web-performance-comprehensive.md) — CSS architecture decisions directly affect paint/layout performance
+- 🔗 **Applied in:** Every React/Next.js project — CSS Modules scoping, Tailwind config, styled-components SSR extraction all build on cascade theory
 
 ---
 
 [← Back to Responsive Design](./03-responsive-design.md) | [Next: Performance →](../06-browser-performance/04-web-performance-comprehensive.md)
+
