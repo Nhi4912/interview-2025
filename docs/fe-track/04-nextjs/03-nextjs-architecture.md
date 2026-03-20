@@ -1,658 +1,527 @@
-# Next.js Architecture & Patterns
+# Next.js Architecture & Rendering Strategies / Kiến Trúc & Chiến Lược Render Next.js
 
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **Prerequisites**: [Next.js Fundamentals](./00-nextjs-fundamentals.md)
-> **See also**: [Table of Contents](../../00-table-of-contents.md)
+> **Prerequisites**: [Next.js App Router & RSC](./01-app-router-server-components.md) | [Data Fetching](./02-data-fetching.md)
+> **See also**: [App Router Fundamentals](./04-nextjs-fundamentals-appRouter.md) | [Core Web Vitals](../06-browser-performance/01-core-web-vitals.md)
+
+[← Back to Data Fetching](./02-data-fetching.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next →](./04-nextjs-fundamentals-appRouter.md)
 
 ---
 
 ## Real-World Scenario / Tình Huống Thực Tế
 
-**VnExpress.net migration:** News site với 10 triệu page views/ngày. Pages Router SSR: mỗi request render HTML trên server → 200ms TTFB, high server cost. Sau khi migrate sang App Router với React Server Components + ISR (Incremental Static Regeneration): HTML được cache và served từ CDN edge, TTFB giảm xuống 30ms, server cost giảm 60%.
+**English:** VnExpress.net (10M page views/day) migration from Pages Router SSR to App Router. Before: every article request rendered on server → 200ms TTFB, 40 EC2 instances. After: news articles on ISR (revalidate: 60s) served from Cloudflare CDN edge → TTFB 30ms, 8 EC2 instances. The key insight: not "use the fastest thing everywhere" but "match rendering strategy to data freshness requirements per page type."
 
-**Bài học:** Next.js architecture = chọn đúng rendering strategy cho từng page type. Không có "one size fits all" — marketing pages dùng SSG, news feed dùng ISR, dashboard dùng CSR.
+**Tiếng Việt:** VnExpress.net migrate từ Pages Router SSR sang App Router. Trước: mỗi request render trên server, 200ms TTFB, 40 EC2. Sau: bài viết dùng ISR (revalidate: 60s), CDN edge → TTFB 30ms, 8 EC2. Bài học: không có "one size fits all" — chọn rendering strategy phù hợp với tần suất thay đổi dữ liệu.
+
+---
 
 ## What & Why / Cái Gì & Tại Sao
 
-**Analogy:** Next.js rendering strategies giống các mô hình nhà hàng:
-- **SSG** = cơm hộp làm sẵn từ sáng — nhanh nhất, nhưng nguội nếu đặt trễ
-- **ISR** = cơm hộp làm sẵn nhưng restock mỗi 60 giây — gần như nhanh, luôn tươi
-- **SSR** = order mới nấu — luôn fresh, nhưng phải chờ
-- **CSR** = tự nấu ở bàn — server không cần làm gì, nhưng client phải chờ JS load
+**What**: Next.js rendering strategy = the decision of **where** and **when** HTML is generated — at build time (SSG/ISR), at request time on server (SSR), or in the browser (CSR). Each strategy has a different trade-off between freshness, performance, and server cost.
 
-## Concept Map / Bản Đồ Khái Niệm
+**Why it matters**: Choosing SSR for a blog post that changes once a day means paying server cost for every single visit. Choosing SSG for a user dashboard with real-time data means showing stale content. The wrong choice is either wasteful or incorrect.
+
+**The decision heuristic:**
 
 ```
-[Page request]
-      │
-      ▼
-[Where is HTML generated?]
-      │
-      ├── Build time (CDN) ──► SSG: getStaticProps
-      │       └── with revalidate ──► ISR: revalidate every N seconds
-      │
-      ├── Server per request ──► SSR: getServerSideProps / Server Component
-      │
-      └── Browser ──► CSR: useEffect + fetch
-                      (or React Server Components streaming)
-
-[App Router vs Pages Router]
-App Router:  Server Components by default → less JS to client
-Pages Router: Client Components by default → explicit opt-in needed
+How fresh does the data need to be?
+        │
+        ├── Days/weeks (static content) ──────────── SSG
+        │
+        ├── Minutes/hours (semi-fresh) ─────────── ISR (revalidate: N)
+        │
+        ├── Per-request (always fresh, not personalized) ── SSR / Server Component
+        │
+        └── Per-user (authenticated, personalized) ──── CSR or SSR with auth
 ```
 
 ---
 
-## Building Production-Ready Applications
+## Core Concept 1: Rendering Strategy Decision Framework
 
-**English:** Next.js is a React framework that provides infrastructure and optimizations for building production-ready web applications with features like server-side rendering, static generation, and API routes.
+> 🧠 **Memory Hook**: "**S**SG = **S**tatic forever. **I**SR = **I**ntermittent refresh. **S**SR = **S**erver every time. **C**SR = **C**lient always. Order by performance: SSG > ISR > SSR > CSR."
 
-**Tiếng Việt:** Next.js là framework React cung cấp cơ sở hạ tầng và tối ưu hóa để xây dựng ứng dụng web sẵn sàng production với các tính năng như server-side rendering, static generation và API routes.
+**Tại sao tồn tại? / Why does this exist?**
+The web has always had a tension between static (fast, cacheable) and dynamic (fresh, personalized) content.
+→ Why can't everything be static? User-specific content (cart, profile, notifications) cannot be pre-generated.
+→ Why can't everything be server-rendered? Each SSR request adds 50-300ms latency and server cost — serving 10M static pages from CDN costs ~0.
 
-## Rendering Strategies
+### Layer 1: The Four Strategies
 
-### Static Site Generation (SSG)
-
-**Theory:** Pages are generated at build time and reused on each request.
-
-**When to Use:**
-- Marketing pages
-- Blog posts
-- Documentation
-- E-commerce product pages
-- Content that doesn't change often
-
-**Benefits:**
-- Fastest performance
-- Best SEO
-- Can be cached on CDN
-- Lower server costs
-
-**getStaticProps:**
-```javascript
-export async function getStaticProps(context) {
-  const data = await fetchData();
-  
-  return {
-    props: { data },
-    revalidate: 60 // ISR: Regenerate every 60 seconds
-  };
-}
+```
+Strategy  │ HTML generated  │ When             │ Best for
+──────────┼─────────────────┼──────────────────┼──────────────────────────
+SSG       │ Build time       │ Once             │ Marketing, blog, docs
+ISR       │ Build + revalidate│ After N seconds  │ News, catalog, e-commerce
+SSR       │ Server           │ Every request     │ Personalized, real-time
+CSR       │ Browser          │ After JS loads    │ Private dashboards, SaaS app
 ```
 
-**getStaticPaths:**
-```javascript
-export async function getStaticPaths() {
-  const posts = await getAllPosts();
-  
-  return {
-    paths: posts.map(post => ({
-      params: { id: post.id }
-    })),
-    fallback: 'blocking' // or true, false
-  };
-}
-```
+### Layer 2: Pages Router vs App Router Syntax
 
-### Server-Side Rendering (SSR)
-
-**Theory:** Pages are generated on each request on the server.
-
-**When to Use:**
-- Personalized content
-- Real-time data
-- User-specific pages
-- Frequently changing data
-
-**Benefits:**
-- Always fresh data
-- Good SEO
-- Personalization
-- Secure data fetching
-
-**getServerSideProps:**
-```javascript
-export async function getServerSideProps(context) {
-  const { req, res, params, query } = context;
-  
-  const data = await fetchUserData(req.cookies.token);
-  
-  return {
-    props: { data }
-  };
-}
-```
-
-### Incremental Static Regeneration (ISR)
-
-**Theory:** Update static pages after build without rebuilding entire site.
-
-**Benefits:**
-- Static performance
-- Fresh content
-- Scalable
-- Best of both worlds
-
-**Configuration:**
-```javascript
+**SSG (Pages Router):**
+```tsx
+// getStaticProps runs at build time, returns props
 export async function getStaticProps() {
-  const data = await fetchData();
-  
+  const posts = await fetchPosts();
+  return { props: { posts }, revalidate: 60 };  // revalidate: 60 → ISR
+}
+
+// Dynamic routes: tell Next.js which slugs to pre-generate
+export async function getStaticPaths() {
+  const posts = await fetchPosts();
   return {
-    props: { data },
-    revalidate: 10 // Regenerate every 10 seconds
+    paths: posts.map(p => ({ params: { slug: p.slug } })),
+    fallback: 'blocking'  // generate unknown slugs on demand, then cache
   };
 }
 ```
 
-**Revalidation Strategies:**
-- Time-based: `revalidate: seconds`
-- On-demand: `res.revalidate('/path')`
-- Stale-while-revalidate pattern
+**SSG/ISR (App Router):**
+```tsx
+// Server Component with fetch cache config = ISR/SSG
+export default async function BlogPage() {
+  const posts = await fetch('https://api.example.com/posts', {
+    next: { revalidate: 60 }  // ISR: regenerate at most every 60s
+    // cache: 'force-cache'   // SSG: never revalidate (default in App Router)
+    // cache: 'no-store'      // SSR: never cache
+  }).then(r => r.json());
 
-### Client-Side Rendering (CSR)
+  return <PostList posts={posts} />;
+}
+```
 
-**Theory:** Pages render in browser using JavaScript.
+**SSR (Pages Router):**
+```tsx
+// Runs on server per request — has access to cookies, headers
+export async function getServerSideProps(context) {
+  const { req } = context;
+  const user = await validateToken(req.cookies.token);
+  const data = await fetchUserData(user.id);
+  return { props: { data } };
+}
+```
 
-**When to Use:**
-- Private dashboards
-- User-specific data
-- Interactive applications
-- Non-SEO critical pages
-
-**Implementation:**
-```javascript
+**CSR (any router):**
+```tsx
+'use client';
 function Dashboard() {
   const { data, loading } = useSWR('/api/user', fetcher);
-  
-  if (loading) return <Loading />;
-  return <div>{data.name}</div>;
+  if (loading) return <Skeleton />;
+  return <DashboardUI data={data} />;
 }
 ```
 
-## Routing System
+### Layer 3: Fallback Strategy in getStaticPaths
 
-### File-Based Routing
-
-**Theory:** File system determines routes automatically.
-
-**Structure:**
 ```
-pages/
-  index.js          → /
-  about.js          → /about
-  blog/
-    index.js        → /blog
-    [slug].js       → /blog/:slug
-  api/
-    users.js        → /api/users
+fallback: false     → 404 for unknown paths (only pre-generated paths valid)
+fallback: true      → show fallback UI immediately, generate in background (fast UX)
+fallback: 'blocking'→ wait for generation on server, no fallback UI (simpler, SEO-safe)
 ```
 
-### Dynamic Routes
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-**Patterns:**
-- `[id].js` - Single dynamic segment
-- `[...slug].js` - Catch-all routes
-- `[[...slug]].js` - Optional catch-all
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Using SSR for content that changes once/day | Every request hits server + database unnecessarily | Use ISR (`revalidate: 86400`) — serve from CDN, regenerate daily |
+| Using SSG for user-specific content | Build-time generation doesn't know which user is viewing | Use CSR or SSR with authentication |
+| `getServerSideProps` with no auth check | Server-side code runs but doesn't mean it's secure | Always validate session/token in `getServerSideProps` or middleware |
+| Using CSR for SEO-critical pages | Google bot sees empty HTML until JS runs | Use SSG, ISR, or SSR for any page you want indexed |
 
-**Accessing Parameters:**
-```javascript
-import { useRouter } from 'next/router';
+**🎯 Interview Pattern:**
+- Khi thấy: "What rendering strategy would you choose for [page type]?"
+- → Nhớ: Data freshness requirement → strategy. Then mention the trade-offs.
+- → Mở đầu: "I'd start with the data freshness question: how often does this page's data change and does it need to be personalized? A product catalog changes hourly → ISR. A user order history is personalized → SSR or CSR. A marketing page never changes → SSG."
 
-function Post() {
-  const router = useRouter();
-  const { id } = router.query;
-  
-  return <div>Post: {id}</div>;
-}
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: [Data Fetching — cache modes in App Router](./02-data-fetching.md)
+- ➡️ Để hiểu: [Core Web Vitals — how rendering strategy affects LCP/TTFB](../06-browser-performance/01-core-web-vitals.md)
+
+---
+
+## Core Concept 2: Next.js Performance Optimization
+
+> 🧠 **Memory Hook**: "Next.js built-ins are free performance wins: `next/image` for zero-config WebP + lazy loading, `next/font` for zero layout shift fonts, `next/script` for controlled third-party loading."
+
+**Tại sao tồn tại? / Why does this exist?**
+Images are the #1 cause of poor LCP (Largest Contentful Paint). Fonts cause layout shift. Third-party scripts (analytics, ads) block rendering.
+→ Why do developers consistently get these wrong? Browser defaults require manual optimization; Next.js components enforce best practices automatically.
+→ Why not just use `<img>` and `<link rel="preload">`? Manual optimization requires knowing responsive breakpoints, WebP support detection, CDN URL generation — each component automates all of this.
+
+### Layer 1: next/image — LCP Optimization
+
+```tsx
+import Image from 'next/image';
+
+// ✅ next/image provides:
+// - Automatic WebP/AVIF conversion
+// - Responsive srcset generation
+// - Lazy loading by default
+// - Intrinsic size prevents layout shift (required width/height)
+// - Blur placeholder while loading
+
+<Image
+  src="/hero.jpg"
+  alt="Product hero"
+  width={1200}
+  height={630}
+  priority              // LCP image: preload, don't lazy load
+  placeholder="blur"    // show blurred version while loading
+  blurDataURL="data:..." // base64 tiny preview
+  sizes="(max-width: 768px) 100vw, 50vw"  // responsive hint
+/>
+
+// For remote images: add domain to next.config.js
+// images: { domains: ['cdn.shopee.vn'] }
 ```
 
-### Nested Routes
+**`priority` flag**: use on above-the-fold images (hero, logo). Adds `<link rel="preload">` and disables lazy loading. LCP score improves significantly.
 
-**Theory:** Create nested layouts with shared UI.
+### Layer 2: next/font — CLS Prevention
 
-**App Directory Structure:**
-```
-app/
-  layout.js         → Root layout
-  page.js           → Home page
-  dashboard/
-    layout.js       → Dashboard layout
-    page.js         → Dashboard page
-    settings/
-      page.js       → Settings page
-```
+```tsx
+import { Inter, Noto_Sans } from 'next/font/google';
 
-### Route Groups
+// Font is downloaded at build time, served from same origin (no CORS, faster)
+// CSS size-adjust prevents layout shift during font swap
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+});
 
-**Theory:** Organize routes without affecting URL structure.
-
-**Syntax:**
-```
-app/
-  (marketing)/
-    about/
-      page.js       → /about
-    contact/
-      page.js       → /contact
-  (shop)/
-    products/
-      page.js       → /products
-```
-
-## Data Fetching Patterns
-
-### SWR (Stale-While-Revalidate)
-
-**Theory:** React Hooks library for data fetching with caching and revalidation.
-
-**Features:**
-- Automatic revalidation
-- Focus revalidation
-- Interval polling
-- Optimistic updates
-- Error retry
-
-**Usage:**
-```javascript
-import useSWR from 'swr';
-
-function Profile() {
-  const { data, error, mutate } = useSWR('/api/user', fetcher, {
-    revalidateOnFocus: true,
-    revalidateOnReconnect: true,
-    refreshInterval: 30000
-  });
-  
-  if (error) return <div>Failed to load</div>;
-  if (!data) return <div>Loading...</div>;
-  
-  return <div>Hello {data.name}</div>;
-}
-```
-
-### React Query Integration
-
-**Theory:** Powerful data synchronization for React.
-
-**Setup:**
-```javascript
-import { QueryClient, QueryClientProvider } from 'react-query';
-
-const queryClient = new QueryClient();
-
-function App({ Component, pageProps }) {
+// app/layout.tsx
+export default function RootLayout({ children }) {
   return (
-    <QueryClientProvider client={queryClient}>
-      <Component {...pageProps} />
-    </QueryClientProvider>
+    <html className={inter.variable}>
+      <body>{children}</body>
+    </html>
   );
 }
 ```
 
-### Parallel Data Fetching
+### Layer 3: next/script — Third-Party Control
 
-**Theory:** Fetch multiple data sources simultaneously.
+```tsx
+import Script from 'next/script';
 
-**Pattern:**
-```javascript
-export async function getStaticProps() {
-  const [posts, categories, tags] = await Promise.all([
-    fetchPosts(),
-    fetchCategories(),
-    fetchTags()
-  ]);
-  
-  return {
-    props: { posts, categories, tags }
-  };
-}
+// strategy="beforeInteractive" — critical (polyfills) — blocks render
+// strategy="afterInteractive"  — analytics, ads — loads after hydration (default)
+// strategy="lazyOnload"        — low-priority (chat widget) — loads during idle time
+// strategy="worker"            — offload to web worker (experimental)
+
+<Script
+  src="https://www.googletagmanager.com/gtm.js?id=GTM-XXXX"
+  strategy="afterInteractive"
+/>
 ```
 
-## API Routes
+**Middleware for edge optimization:**
+```tsx
+// middleware.ts — runs on Cloudflare/Vercel edge, NOT in Node.js
+import { NextRequest, NextResponse } from 'next/server';
 
-### REST API Pattern
-
-**Theory:** Create backend API endpoints within Next.js.
-
-**Structure:**
-```
-pages/api/
-  users/
-    index.js        → GET /api/users
-    [id].js         → GET /api/users/:id
-  posts/
-    index.js        → GET, POST /api/posts
-    [id].js         → GET, PUT, DELETE /api/posts/:id
-```
-
-**Implementation:**
-```javascript
-export default async function handler(req, res) {
-  const { method, query, body } = req;
-  
-  switch (method) {
-    case 'GET':
-      const users = await getUsers();
-      res.status(200).json(users);
-      break;
-      
-    case 'POST':
-      const user = await createUser(body);
-      res.status(201).json(user);
-      break;
-      
-    default:
-      res.setHeader('Allow', ['GET', 'POST']);
-      res.status(405).end(`Method ${method} Not Allowed`);
-  }
-}
-```
-
-### Middleware Pattern
-
-**Theory:** Run code before request is completed.
-
-**Use Cases:**
-- Authentication
-- Logging
-- Redirects
-- Headers modification
-
-**Implementation:**
-```javascript
-// middleware.js
-export function middleware(request) {
+export function middleware(request: NextRequest) {
   const token = request.cookies.get('token');
-  
-  if (!token) {
+
+  if (!token && request.nextUrl.pathname.startsWith('/dashboard')) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
-  
-  return NextResponse.next();
+
+  // A/B testing: set cookie to deterministically assign variant
+  const variant = Math.random() > 0.5 ? 'a' : 'b';
+  const response = NextResponse.next();
+  response.cookies.set('ab-variant', variant);
+  return response;
 }
 
 export const config = {
-  matcher: '/dashboard/:path*'
+  matcher: ['/dashboard/:path*', '/checkout/:path*'],
 };
 ```
 
-## Performance Optimization
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-### Image Optimization
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `<img>` instead of `next/image` for LCP images | No WebP, no responsive srcset, no preload optimization | Use `<Image priority />` for above-fold images; check Lighthouse LCP score |
+| Importing Google Fonts with `<link>` in HTML | Causes FOUT (flash of unstyled text) and extra network round-trip | Use `next/font/google` — builds font into bundle, zero-FOUT |
+| Using middleware for heavy computation | Middleware runs on edge with limited runtime (no Node.js APIs, 128MB limit) | Middleware only for routing logic (auth redirects, geo, A/B flags) — heavy work goes in API routes |
 
-**Theory:** Next.js Image component automatically optimizes images.
+**🎯 Interview Pattern:**
+- Khi thấy: "How would you optimize LCP for a Next.js e-commerce product page?"
+- → Nhớ: `next/image priority` + correct `sizes` + fetch from fast CDN
+- → Mở đầu: "I'd check what the LCP element is with Lighthouse — typically the hero image. Then use `<Image priority>` to preload it, add correct `sizes` for responsive images, and ensure the image is served from a CDN close to the user."
 
-**Features:**
-- Lazy loading
-- Responsive images
-- WebP format
-- Blur placeholder
-- Priority loading
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: [Core Web Vitals — LCP, CLS metrics](../06-browser-performance/01-core-web-vitals.md)
+- ➡️ Để hiểu: [Bundle Optimization — code splitting strategy](../06-browser-performance/03-bundle-optimization.md)
 
-**Usage:**
-```javascript
-import Image from 'next/image';
+---
 
-function Hero() {
-  return (
-    <Image
-      src="/hero.jpg"
-      alt="Hero"
-      width={1200}
-      height={600}
-      priority
-      placeholder="blur"
-      blurDataURL="data:image/..."
-    />
-  );
+## Core Concept 3: SEO Architecture & Metadata
+
+> 🧠 **Memory Hook**: "App Router SEO = export `metadata` (static) or `generateMetadata` (dynamic) from `page.tsx`. Never use `<head>` tags directly."
+
+**Tại sao tồn tại? / Why does this exist?**
+Search engine bots parse HTML `<head>` for title, description, Open Graph, and structured data. Missing or duplicate tags hurt ranking.
+→ Why can't you just add `<head>` tags in components? Nested `<head>` tags conflict; React doesn't deduplicate them reliably. Next.js Metadata API centralizes and deduplicates.
+→ Why do dynamic pages need `generateMetadata`? A product page's title is `"Nike Air Max - Size 42 | VN"` — the title comes from database data, not build-time constants.
+
+### Layer 1: Metadata API
+
+```tsx
+// Static metadata (known at build time)
+// app/about/page.tsx
+export const metadata: Metadata = {
+  title: 'About Us | VnExpress',
+  description: 'Learn about VnExpress — Vietnam\'s largest online newspaper',
+  openGraph: {
+    title: 'About Us | VnExpress',
+    description: 'Vietnam\'s largest online newspaper',
+    images: [{ url: '/og-about.jpg', width: 1200, height: 630 }],
+  },
+};
+
+// Dynamic metadata (from params/data)
+// app/news/[slug]/page.tsx
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  const article = await fetchArticle(params.slug);
+
+  return {
+    title: `${article.title} | VnExpress`,
+    description: article.excerpt,
+    openGraph: {
+      title: article.title,
+      images: [{ url: article.coverImage }],
+    },
+    alternates: {
+      canonical: `https://vnexpress.net/news/${params.slug}`,
+    },
+  };
 }
 ```
 
-### Code Splitting
+### Layer 2: Structured Data (JSON-LD)
 
-**Theory:** Automatically split code by routes and dynamic imports.
+```tsx
+// Improves rich snippets in Google Search results
+export default async function ArticlePage({ params }: { params: { slug: string } }) {
+  const article = await fetchArticle(params.slug);
 
-**Dynamic Imports:**
-```javascript
-import dynamic from 'next/dynamic';
-
-const DynamicComponent = dynamic(() => import('../components/Heavy'), {
-  loading: () => <p>Loading...</p>,
-  ssr: false
-});
-```
-
-### Font Optimization
-
-**Theory:** Optimize web fonts with next/font.
-
-**Usage:**
-```javascript
-import { Inter } from 'next/font/google';
-
-const inter = Inter({ subsets: ['latin'] });
-
-export default function App({ Component, pageProps }) {
-  return (
-    <main className={inter.className}>
-      <Component {...pageProps} />
-    </main>
-  );
-}
-```
-
-## State Management
-
-### Server State vs Client State
-
-**Server State:**
-- Data from API
-- Cached and synchronized
-- Use SWR or React Query
-
-**Client State:**
-- UI state
-- Form state
-- Use React Context or Zustand
-
-### Context Pattern
-
-**Theory:** Share state across components without prop drilling.
-
-**Implementation:**
-```javascript
-// context/AuthContext.js
-const AuthContext = createContext();
-
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  
-  return (
-    <AuthContext.Provider value={{ user, setUser }}>
-      {children}
-    </AuthContext.Provider>
-  );
-}
-
-export const useAuth = () => useContext(AuthContext);
-
-// _app.js
-function App({ Component, pageProps }) {
-  return (
-    <AuthProvider>
-      <Component {...pageProps} />
-    </AuthProvider>
-  );
-}
-```
-
-## SEO Optimization
-
-### Meta Tags
-
-**Theory:** Optimize meta tags for search engines and social media.
-
-**Implementation:**
-```javascript
-import Head from 'next/head';
-
-function Page() {
-  return (
-    <>
-      <Head>
-        <title>Page Title</title>
-        <meta name="description" content="Page description" />
-        <meta property="og:title" content="Page Title" />
-        <meta property="og:description" content="Description" />
-        <meta property="og:image" content="/og-image.jpg" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <link rel="canonical" href="https://example.com/page" />
-      </Head>
-      <div>Content</div>
-    </>
-  );
-}
-```
-
-### Structured Data
-
-**Theory:** Add JSON-LD structured data for rich snippets.
-
-**Implementation:**
-```javascript
-function Article({ article }) {
   const structuredData = {
     '@context': 'https://schema.org',
-    '@type': 'Article',
+    '@type': 'NewsArticle',
     headline: article.title,
-    author: {
-      '@type': 'Person',
-      name: article.author
-    },
-    datePublished: article.date
+    author: { '@type': 'Person', name: article.author },
+    datePublished: article.publishedAt,
+    image: article.coverImage,
   };
-  
+
   return (
     <>
-      <Head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-        />
-      </Head>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
       <article>{/* content */}</article>
     </>
   );
 }
 ```
 
-### Sitemap Generation
+### Layer 3: Sitemap & Robots
 
-**Theory:** Generate sitemap for search engines.
+```tsx
+// app/sitemap.ts — Auto-generates /sitemap.xml
+import { MetadataRoute } from 'next';
 
-**Implementation:**
-```javascript
-// pages/sitemap.xml.js
-function generateSiteMap(posts) {
-  return `<?xml version="1.0" encoding="UTF-8"?>
-    <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-      ${posts.map(post => `
-        <url>
-          <loc>https://example.com/posts/${post.slug}</loc>
-          <lastmod>${post.date}</lastmod>
-        </url>
-      `).join('')}
-    </urlset>
-  `;
-}
-
-export async function getServerSideProps({ res }) {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const posts = await getAllPosts();
-  const sitemap = generateSiteMap(posts);
-  
-  res.setHeader('Content-Type', 'text/xml');
-  res.write(sitemap);
-  res.end();
-  
-  return { props: {} };
+
+  return [
+    { url: 'https://example.com', lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
+    ...posts.map(post => ({
+      url: `https://example.com/posts/${post.slug}`,
+      lastModified: new Date(post.updatedAt),
+      changeFrequency: 'weekly' as const,
+      priority: 0.8,
+    })),
+  ];
+}
+
+// app/robots.ts — Auto-generates /robots.txt
+export default function robots(): MetadataRoute.Robots {
+  return {
+    rules: { userAgent: '*', allow: '/', disallow: '/private/' },
+    sitemap: 'https://example.com/sitemap.xml',
+  };
 }
 ```
 
-## Deployment Strategies
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-### Vercel Deployment
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Using `<Head>` (Pages Router) in App Router | Pages Router `Head` component doesn't work in App Router | Use `export const metadata` or `generateMetadata` from `page.tsx` |
+| Same `title` on every page | Google penalizes duplicate titles; confuses users in tabs | Dynamic `generateMetadata` per page; use title template: `{ template: '%s | Site Name' }` |
+| Forgetting `canonical` for paginated/filtered pages | Duplicate content penalty when `?page=2` and `/` show similar content | Always set `alternates.canonical` on pages with query-string variants |
 
-**Theory:** Optimized hosting platform for Next.js.
+**🎯 Interview Pattern:**
+- Khi thấy: "How would you improve the SEO of a Next.js news site?"
+- → Nhớ: Dynamic metadata + structured data + sitemap + canonical URLs + ISR for fresh content
+- → Mở đầu: "I'd check four areas: metadata (dynamic `generateMetadata` per article with OpenGraph), structured data (JSON-LD for NewsArticle schema), sitemap.ts for auto-generated sitemap, and rendering strategy — articles should use ISR so Google sees fresh HTML, not stale SSG."
 
-**Features:**
-- Automatic deployments
-- Preview deployments
-- Edge network
-- Analytics
-- Zero configuration
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: [App Router Server Components — RSC HTML output](./01-app-router-server-components.md)
+- ➡️ Để hiểu: [Core Web Vitals — how page speed affects SEO ranking](../06-browser-performance/01-core-web-vitals.md)
 
-### Self-Hosting
+---
 
-**Theory:** Deploy on your own infrastructure.
+## Interview Q&A / Câu Hỏi Phỏng Vấn
 
-**Options:**
-- Node.js server
-- Docker container
-- Static export
-- Serverless functions
+### Q: When would you choose SSG, ISR, SSR, and CSR for a real Next.js project? Give examples. 🟡 Mid
 
-**Build Commands:**
-```bash
-# Production build
-npm run build
+**A:** The decision criterion is data freshness vs server cost:
 
-# Start production server
-npm start
+- **SSG** (`cache: 'force-cache'` or `getStaticProps` without `revalidate`): content never changes at runtime. Examples: marketing homepage, privacy policy, documentation.
 
-# Static export
-npm run build && npm run export
+- **ISR** (`revalidate: N`): content changes periodically but doesn't need to be fresh per-request. Examples: news articles (revalidate: 60), product catalog (revalidate: 3600), blog posts (revalidate: 86400).
+
+- **SSR** (`cache: 'no-store'` or `getServerSideProps`): content must be fresh AND/OR personalized per user. Examples: search results (query in URL), personalized recommendations, pages that read cookies/headers.
+
+- **CSR** (client fetch with SWR/React Query): content is private to the authenticated user, SEO doesn't matter, real-time updates needed. Examples: user dashboard, notification feed, chat.
+
+In a real e-commerce app: homepage SSG, product pages ISR, search SSR, cart CSR.
+
+Tiếng Việt: SSG cho content tĩnh, ISR cho content thay đổi theo giờ/ngày, SSR cho content cần fresh mỗi request hoặc personalized, CSR cho content private không cần SEO. E-commerce: homepage SSG, product ISR, search SSR, cart CSR.
+
+**💡 Interview Signal:**
+- ✅ Strong: Uses data freshness as the criterion, gives concrete examples from production scenarios, mentions the e-commerce breakdown
+- ❌ Weak: "SSR is slower than SSG" (correct but doesn't address when to choose each)
+
+---
+
+### Q: What is the difference between `getStaticProps` and a Server Component that fetches data? 🟡 Mid
+
+**A:** Both run on the server and can access databases/APIs without shipping code to the client. The key differences:
+
+1. **Execution model**: `getStaticProps` is a function exported from a Pages Router page, runs at build time (or ISR revalidation). A Server Component's `async` function body runs on every request (or is cached by Next.js fetch cache).
+
+2. **Cache control**: `getStaticProps` cache is controlled by the `revalidate` return value. Server Component cache is controlled per-`fetch` call (`next: { revalidate: N }` or `cache: 'force-cache'`).
+
+3. **Granularity**: `getStaticProps` applies to the entire page. Server Component cache is per-fetch call — different fetches in the same page component can have different cache strategies.
+
+4. **Streaming**: `getStaticProps` must complete before HTML is sent. Server Components support streaming with `<Suspense>` — slow data can stream in later without blocking the shell.
+
+Tiếng Việt: Cả hai chạy trên server và không ship code xuống client. Khác biệt: `getStaticProps` áp dụng cho cả page, cache control qua `revalidate`. Server Component cache per-fetch call, hỗ trợ streaming với Suspense. App Router linh hoạt hơn vì mỗi fetch có thể có cache strategy riêng.
+
+**💡 Interview Signal:**
+- ✅ Strong: Mentions per-fetch granularity, streaming advantage, and the execution model difference
+- ❌ Weak: "getStaticProps is for Pages Router, Server Components are for App Router" (syntactically correct but doesn't explain the conceptual differences)
+
+---
+
+### Q: How do you optimize a Next.js page that has poor LCP? Walk through your approach. 🔴 Senior
+
+**A:**
+
+**Step 1 — Measure**: run Lighthouse or PageSpeed Insights to identify the LCP element (usually a hero image or large text block) and the current LCP time.
+
+**Step 2 — Image optimization** (if LCP is an image):
+- Replace `<img>` with `<Image priority>` — this adds `<link rel="preload">`, generates WebP, creates responsive srcset
+- Add `sizes` attribute matching the CSS layout (`sizes="(max-width: 768px) 100vw, 50vw"`)
+- Ensure image is served from a CDN close to the user
+
+**Step 3 — Rendering strategy**: if the page is SSR, switch to ISR or SSG if the LCP content isn't personalized — CDN-served static HTML loads faster than SSR response.
+
+**Step 4 — Fonts**: replace `<link href="fonts.googleapis.com">` with `next/font/google` — eliminates FOUT (flash of unstyled text) and extra DNS lookup.
+
+**Step 5 — Third-party scripts**: audit `<script>` tags, move non-critical ones to `strategy="afterInteractive"` or `"lazyOnload"` using `next/script`.
+
+Tiếng Việt: Bước 1: đo LCP element bằng Lighthouse. Bước 2: nếu LCP là ảnh → `<Image priority>` + đúng `sizes`. Bước 3: kiểm tra rendering strategy — static HTML từ CDN luôn nhanh hơn SSR. Bước 4: font → `next/font`. Bước 5: third-party script → `next/script` với đúng strategy.
+
+**💡 Interview Signal:**
+- ✅ Strong: Follows measure → identify element → specific tooling for each cause; mentions rendering strategy impact on TTFB
+- ❌ Weak: "Use next/image" (correct but doesn't explain the full diagnostic + multi-factor approach)
+
+---
+
+### Q: What does `fallback: 'blocking'` vs `fallback: true` do in `getStaticPaths`? 🟡 Mid
+
+**A:** Both generate pages on-demand for paths not pre-generated at build time. The difference is what the user sees during generation:
+
+- **`fallback: true`**: immediately renders a "fallback" UI (you check `router.isFallback` to show a skeleton) while Next.js generates the page in the background. Faster perceived experience but requires handling the fallback state in the component.
+
+- **`fallback: 'blocking'`**: the server waits for the page to be generated before responding. The user sees nothing (their request hangs) until generation completes, then the full page is sent. No special fallback handling needed in the component, but the user waits.
+
+- **`fallback: false`**: any path not pre-generated returns 404. Use for finite datasets where all paths are known at build time.
+
+**When to use**: `'blocking'` is safer for SEO (Google doesn't see an incomplete page). `true` is better for UX (immediate visual feedback).
+
+Tiếng Việt: `fallback: true` → render skeleton ngay, generate background (cần xử lý `router.isFallback`). `'blocking'` → user chờ server generate xong, không cần xử lý fallback UI. `false` → 404 cho path không tồn tại. Dùng `'blocking'` cho SEO-critical pages, `true` cho UX-critical pages.
+
+**💡 Interview Signal:**
+- ✅ Strong: Explains the user experience difference, mentions the SEO/UX trade-off, notes `router.isFallback` for `true`
+- ❌ Weak: "blocking waits, true shows fallback" (correct but doesn't explain when to choose which)
+
+---
+
+### Q: How would you architect the rendering strategy for a Shopee-like e-commerce site? 🔴 Senior
+
+**A:** Map each page type to the right strategy based on freshness requirements and personalization:
+
+```
+Page Type           Strategy    Reason
+────────────────────────────────────────────────────────────────
+Homepage            SSG/ISR     Marketing content, updates daily
+Category listing    ISR (1h)    Products change, not per-request
+Product detail      ISR (5m)    Price/stock changes, SEO critical
+Search results      SSR         Query-dependent, no caching
+Cart/Checkout       CSR         Auth-only, real-time stock check
+User profile        CSR         Private, personalized
+Order history       SSR         Auth-required, server-side session
+Flash sale page     SSR + CDN   Countdown timer, real-time inventory
 ```
 
-## Câu Hỏi Phỏng Vấn / Interview Q&A
+**Global patterns:**
+- Middleware handles auth redirect (runs at edge, sub-1ms)
+- Next.js Image component for all product images (WebP + responsive)
+- `generateMetadata` per product page (title, OG image) for SEO
+- On-demand revalidation via webhook from Shopee's product management system — when a product updates, `revalidateTag('product-123')` immediately purges the ISR cache
 
-**Q: What's the difference between SSG and SSR? — 🟢 [Junior]**
+Tiếng Việt: Map từng loại page: homepage ISR (daily), category ISR (hourly), product ISR (5 phút), search SSR (query-dependent), cart/profile CSR (auth-only). Middleware ở edge cho auth redirect. On-demand revalidation qua webhook khi product data thay đổi.
 
-A: SSG generates pages at build time (fast, cacheable), while SSR generates pages on each request (fresh data, personalized). SSG is better for static content, SSR for dynamic content.
-
-**Q: When to use ISR? — 🟡 [Mid]**
-
-A: Use ISR when you want static performance but need to update content periodically without rebuilding. It's perfect for e-commerce, blogs, and content sites.
-
-**Q: How does Next.js handle code splitting? — 🔴 [Senior]**
-
-A: Next.js automatically splits code by routes. Each page only loads necessary JavaScript. You can also use dynamic imports for component-level splitting.
-
-**Q: What are API routes used for? — 🟢 [Junior]**
-
-A: API routes create backend endpoints within Next.js for handling server-side logic, database operations, authentication, and external API calls.
-
-**Q: How to optimize images in Next.js? — 🟡 [Mid]**
-
-A: Use next/image component which provides automatic optimization, lazy loading, responsive images, WebP format, and blur placeholders.
+**💡 Interview Signal:**
+- ✅ Strong: Differentiates every page type with a reason, mentions middleware at edge, on-demand revalidation for CMS integration
+- ❌ Weak: "Use SSR for dynamic pages and SSG for static pages" (too generic — a senior is expected to enumerate specific page types)
 
 ---
 
-[← Back to Data Fetching](./02-data-fetching.md) | [Next: React Patterns →](../03-react/08-react-patterns-advanced.md)
+## ⚡ Cold Call Simulation / Mô Phỏng Phỏng Vấn
+
+> 🎯 Interviewer asks cold: **"VnExpress.net has 10 million page views/day. Their current Pages Router SSR setup has 200ms TTFB. How would you architect this?"**
+
+**30 giây đầu — mở đầu lý tưởng:**
+1. "I'd start by categorizing page types: breaking news changes frequently but is the same for all users → ISR is perfect. User profile/reading history is personalized → SSR or CSR."
+2. "For news articles: migrate to App Router with `revalidate: 60` — fetch HTML cached at CDN edge, TTFB drops from 200ms (server) to ~30ms (edge)."
+3. "For SEO: each article gets dynamic `generateMetadata` with title and OpenGraph, plus JSON-LD structured data for NewsArticle schema — improves Google rich snippets."
+4. "For performance: `<Image priority>` on hero images, `next/font` for Vietnamese fonts, and middleware at edge for auth redirects — all zero server overhead."
 
 ---
 
-## Self-Check / Tự Kiểm Tra
+## Self-Check / Tự Kiểm Tra ⚡ (Đóng tài liệu lại trước khi làm)
 
-- [ ] Can I name the 4 rendering strategies (SSG, ISR, SSR, CSR) and give a real page type for each?
-- [ ] Can I explain what ISR `revalidate` does and what happens during the revalidation window?
-- [ ] Can I draw the request flow for SSR (user → CDN → server → HTML → client hydration)?
-- [ ] Can I explain when to use API Routes vs Server Actions vs external APIs?
-- [ ] Can I describe the Pages Router vs App Router key differences for a new project choice?
-- 💬 **Feynman Prompt:** Giải thích cho product manager tại sao một trang cần SSR (dashboard user) trong khi trang khác dùng SSG (about page) — và tại sao ISR là lựa chọn phổ biến nhất cho news sites?
+- [ ] **Retrieval**: Viết ra 4 rendering strategies (SSG/ISR/SSR/CSR) với ví dụ 1 page type thực tế cho mỗi loại — không nhìn lại.
+- [ ] **Visual**: Vẽ lại decision tree "data freshness → strategy" từ trí nhớ.
+- [ ] **Application**: Lazada muốn page product detail có SEO tốt và inventory fresh. Bạn chọn strategy nào? Giải thích revalidation strategy.
+- [ ] **Debug**: `getStaticPaths` với `fallback: false` nhưng users gặp 404 cho các product page hợp lệ mới được thêm vào DB sau khi deploy. Nguyên nhân? Fix thế nào?
+- [ ] **Teach**: Giải thích ISR cho backend developer Go: "Nó hoạt động như cache với TTL, nhưng có gì khác so với Redis cache thông thường?"
 
-## Connections / Liên Kết
+💬 **Feynman Prompt:** "Giải thích sự khác biệt giữa SSG và ISR bằng ví dụ 'cuốn sách in' vs 'tờ báo in mỗi ngày' — không dùng từ 'static', 'revalidate', hay 'cache'."
 
-- ⬅️ **Built on**: [Next.js Fundamentals](./00-nextjs-fundamentals.md) — rendering mental model
-- ➡️ **Enables**: [App Router](./04-nextjs-fundamentals-appRouter.md) — App Router builds on these strategies
-- 🔗 **Applied in**: [System Design](../../shared/02-system-design/system-design-theory.md) — rendering strategy is a system design decision
+🔁 **Spaced Repetition reminder:** Ôn lại file này sau **3 ngày**, **7 ngày**, và **14 ngày**.
+
+[← Back to Data Fetching](./02-data-fetching.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next →](./04-nextjs-fundamentals-appRouter.md)

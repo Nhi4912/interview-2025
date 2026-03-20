@@ -1,606 +1,616 @@
-# Next.js Fundamentals / Nền Tảng Next.js - App Router vs Pages Router
+# Next.js Fundamentals — App Router / Nền Tảng Next.js - App Router
 
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **Topics**: Next.js, App Router, Pages Router, Server Components, Routing
-> **See also**: [Server Components](./01-app-router-server-components.md) | [Data Fetching](./02-data-fetching.md) | [Architecture](./03-nextjs-architecture.md)
+> **Prerequisites**: [React Server Components](./01-app-router-server-components.md) | [Data Fetching](./02-data-fetching.md)
+> **See also**: [Architecture & Rendering Strategies](./03-nextjs-architecture.md) | [React Hooks](../03-react/03-hooks-deep-dive.md)
 
-> Next.js là React framework phổ biến nhất. App Router với React Server Components là tương lai.
+[← Back to Architecture](./03-nextjs-architecture.md) | [Back to Table of Contents](../../00-table-of-contents.md)
 
 ---
 
 ## Real-World Scenario / Tình Huống Thực Tế
 
-**Topcv.vn (job board):** Pages Router với CSR — Google bot không index job listings vì chúng được fetch client-side sau JS load. SEO score thấp, organic traffic giảm 40%. Chuyển sang App Router với Server Components: job data được render trực tiếp trong HTML → Google index ngay, organic traffic tăng 65% sau 3 tháng.
+**English:** Topcv.vn (job board) — Pages Router with CSR: Google bot couldn't index job listings because they were fetched client-side after JS load. SEO score low, organic traffic dropped 40%. After migration to App Router with Server Components: job data renders in HTML directly → Google indexes immediately → organic traffic +65% in 3 months.
 
-**Bài học:** Sự khác biệt App Router vs Pages Router không chỉ là API — nó ảnh hưởng trực tiếp đến SEO, performance, và bundle size. Senior FE dev cần biết khi nào dùng `"use client"` và tại sao Server Components là default tốt hơn.
+**Tiếng Việt:** Topcv.vn (job board) — Pages Router với CSR: Google bot không index được listing vì fetch client-side sau khi JS load. SEO thấp, traffic organic giảm 40%. Sau khi migrate sang App Router: job data render trong HTML server-side → Google index ngay → traffic tăng 65% sau 3 tháng.
+
+**Why this matters**: App Router's file conventions and Server Component defaults directly impact SEO, bundle size, and developer experience. Understanding when to use `"use client"` is the #1 architectural decision in every Next.js app.
+
+---
 
 ## What & Why / Cái Gì & Tại Sao
 
-**Server Components (App Router default):** Component chạy trên server, output là HTML — không có JS gửi xuống client, không có `useState`/`useEffect`. Phù hợp cho static content, data fetching.
+**App Router** (Next.js 13+) is the modern routing system built on React Server Components. Key shifts from Pages Router:
+- **Server Components by default** → less JavaScript shipped to browser, better SEO
+- **File system = URL** → `app/blog/[slug]/page.tsx` generates `/blog/:slug`
+- **Nested layouts** → `layout.tsx` persists state across child route navigations
+- **Co-located special files** → `loading.tsx`, `error.tsx`, `not-found.tsx` are automatic Suspense/Error boundaries
 
-**Client Components (`"use client"`):** Component chạy trên client, có interactivity. Cần cho: event handlers, browser APIs, hooks.
-
-**Analogy:** Server Component giống trang web tĩnh — nhanh, không JS. Client Component giống app động — interactivity nhưng tốn JS. App Router mặc định Server Component để tối thiểu JS, chỉ dùng Client khi cần.
-
-## Concept Map / Bản Đồ Khái Niệm
-
-```
-[App Router (Next.js 13+)]
-        │
-        ├── File conventions
-        │       ├── page.tsx       — route segment
-        │       ├── layout.tsx     — persistent wrapper
-        │       ├── loading.tsx    — Suspense boundary
-        │       ├── error.tsx      — error boundary
-        │       └── route.ts       — API endpoint
-        │
-        ├── Component types
-        │       ├── Server Component (default) — runs on server, no JS to client
-        │       └── Client Component ("use client") — runs on browser, interactive
-        │
-        └── Data fetching
-                ├── fetch() in Server Components (cached by default)
-                ├── Server Actions (async functions with "use server")
-                └── Client-side: TanStack Query / SWR
-```
+**The mental model**: each folder in `app/` is a route segment. Files in that folder define behavior (page content, layout, loading state, error state, API endpoint).
 
 ---
 
-## 🎯 Overview
+## Core Concept 1: App Router File Conventions & Routing
 
-**Difficulty:** 🟢 Junior | 🟡 Mid | 🔴 Senior
+> 🧠 **Memory Hook**: "**PLER + T + R** = Page, Layout, Error, (not-found) — the 5 files every route can have. Plus Template and Route for special cases."
 
-Next.js extends React với server-side rendering, static site generation, file-based routing, API routes, và React Server Components. App Router (Next.js 13+) là version mới được recommend cho tất cả project mới.
+**Tại sao tồn tại? / Why does this exist?**
+Pages Router required separate patterns for layouts (custom `_app.js`, `_document.js`), loading states (manual), and error boundaries (class components).
+→ Why is that a problem? Each pattern was different — developers had to learn 5 different systems to build one route.
+→ Why is file-based routing better than explicit route configs? Convention over configuration — no routing boilerplate, IDE can navigate directly from file to URL.
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    NEXT.JS EVOLUTION                             │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                   │
-│   PAGES ROUTER (Legacy)           APP ROUTER (Next.js 13+)       │
-│   ┌─────────────────────┐        ┌─────────────────────┐        │
-│   │ pages/              │        │ app/                │        │
-│   │ ├── index.js        │        │ ├── layout.tsx      │        │
-│   │ ├── about.js        │        │ ├── page.tsx        │        │
-│   │ └── api/            │        │ ├── about/          │        │
-│   │                     │        │ │   └── page.tsx    │        │
-│   │ • getServerSideProps│        │ └── api/            │        │
-│   │ • getStaticProps    │        │                     │        │
-│   │ • Client Components │        │ • Server Components │        │
-│   └─────────────────────┘        │ • Streaming         │        │
-│                                  │ • Nested Layouts    │        │
-│   Migration: Still supported     └─────────────────────┘        │
-│   but App Router is recommended for new projects                │
-│                                                                   │
-└─────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 📖 What - Định Nghĩa
-
-**Next.js** là React meta-framework cung cấp:
-- **File-based routing**: Folder structure = URL structure
-- **Multiple rendering strategies**: SSG, SSR, ISR, Streaming
-- **React Server Components**: Default trong App Router
-- **API Routes / Route Handlers**: Backend endpoints trong cùng project
-- **Built-in optimizations**: Image, Font, Script, Code splitting
-
-### Project Structure (App Router)
-
-```
-my-app/
-├── app/
-│   ├── layout.tsx         # Root layout (required)
-│   ├── page.tsx           # Home page (/)
-│   ├── loading.tsx        # Loading UI
-│   ├── error.tsx          # Error UI
-│   ├── not-found.tsx      # 404 page
-│   │
-│   ├── about/
-│   │   └── page.tsx       # /about
-│   │
-│   ├── blog/
-│   │   ├── page.tsx       # /blog
-│   │   └── [slug]/
-│   │       └── page.tsx   # /blog/:slug
-│   │
-│   ├── dashboard/
-│   │   ├── layout.tsx     # Nested layout
-│   │   ├── page.tsx       # /dashboard
-│   │   └── settings/
-│   │       └── page.tsx   # /dashboard/settings
-│   │
-│   └── api/
-│       └── users/
-│           └── route.ts   # API route
-│
-├── components/
-├── lib/
-└── public/
-```
-
-### Special Files
-
-| File | Purpose |
-|------|---------|
-| `layout.tsx` | Shared UI, persists across navigations |
-| `page.tsx` | Unique UI for a route |
-| `loading.tsx` | Loading UI (Suspense boundary) |
-| `error.tsx` | Error UI (Error boundary) |
-| `not-found.tsx` | Not found UI |
-| `template.tsx` | Re-rendered layout (unlike layout) |
-| `route.ts` | API endpoint |
-
----
-
-## 🤔 Why - Tại Sao Quan Trọng
-
-1. **Industry standard**: Next.js là framework React #1 cho production apps
-2. **Performance by default**: Server Components giảm JS bundle, built-in optimizations
-3. **DX tốt**: File-based routing, hot reload, TypeScript support
-4. **Flexible rendering**: Chọn đúng strategy cho từng use case (SSG, SSR, ISR)
-5. **Full-stack**: Frontend + API routes trong cùng codebase
-
----
-
-## 🔧 How - Cách Hoạt Động
-
-### File-based Routing
-
-```typescript
-// app/page.tsx → /
-export default function HomePage() {
-    return <h1>Home</h1>;
-}
-
-// app/about/page.tsx → /about
-export default function AboutPage() {
-    return <h1>About</h1>;
-}
-
-// app/blog/[slug]/page.tsx → /blog/:slug
-export default function BlogPost({ params }: { params: { slug: string } }) {
-    return <h1>Post: {params.slug}</h1>;
-}
-
-// app/shop/[...categories]/page.tsx → /shop/a/b/c (catch-all)
-export default function Shop({ params }: { params: { categories: string[] } }) {
-    return <h1>Categories: {params.categories.join('/')}</h1>;
-}
-
-// app/[[...slug]]/page.tsx → optional catch-all (matches / too)
-```
-
-### Route Groups
+### Layer 1: Special Files Reference
 
 ```
 app/
-├── (marketing)/
-│   ├── about/page.tsx      # /about
-│   └── contact/page.tsx    # /contact
-│
-├── (shop)/
-│   ├── products/page.tsx   # /products
-│   └── cart/page.tsx       # /cart
-│
-└── layout.tsx              # Shared layout
-
-# () doesn't affect URL, just for organization
+├── layout.tsx      ← Shared UI — persists across child navigations (state preserved)
+├── page.tsx        ← Route UI — renders for this specific URL
+├── loading.tsx     ← Suspense fallback — shown while page.tsx is streaming
+├── error.tsx       ← Error boundary — must be 'use client'
+├── not-found.tsx   ← Shown when notFound() is called or no match
+├── template.tsx    ← Like layout but re-creates on every navigation (analytics)
+└── route.ts        ← API endpoint (GET, POST, PUT, DELETE handlers)
 ```
 
-### Parallel Routes
+**layout vs template distinction:**
+```tsx
+// layout.tsx — state is PRESERVED on navigation
+// Sidebar open/closed state persists when navigating between /dashboard/settings and /dashboard/analytics
 
-```typescript
-// app/layout.tsx
-export default function Layout({
-    children,
-    modal,
-    sidebar
-}: {
-    children: React.ReactNode;
-    modal: React.ReactNode;
-    sidebar: React.ReactNode;
-}) {
-    return (
-        <div>
-            {sidebar}
-            {children}
-            {modal}
-        </div>
-    );
-}
-```
-
-### Layouts & Templates
-
-```typescript
-// app/layout.tsx - Required, persists across navigations
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-    return (
-        <html lang="en">
-            <body>
-                <Header />
-                <main>{children}</main>
-                <Footer />
-            </body>
-        </html>
-    );
-}
-
-// app/dashboard/template.tsx - Re-renders on every navigation
+// template.tsx — re-creates on every navigation
+// Use for: page view analytics (useEffect fires on every nav), animation resets
 'use client';
-export default function Template({ children }: { children: React.ReactNode }) {
-    useEffect(() => {
-        console.log('Page viewed'); // Runs on every nav
-    }, []);
-    return <div>{children}</div>;
+export default function Template({ children }) {
+  useEffect(() => analytics.pageView(), []);  // fires every navigation
+  return <div>{children}</div>;
 }
 ```
 
-### Loading & Error States
+### Layer 2: Dynamic Routes
 
-```typescript
-// app/dashboard/loading.tsx - Auto Suspense boundary
-export default function Loading() {
-    return <div className="loading"><Spinner /><p>Loading...</p></div>;
+```
+[slug]        → /blog/my-post           (single segment)
+[...slug]     → /docs/react/hooks/api   (catch-all, requires ≥1 segment)
+[[...slug]]   → /docs AND /docs/react   (optional catch-all, matches 0+ segments)
+(group)       → URL unchanged, just for layout organization
+@slot         → Parallel route (renders alongside main children)
+```
+
+```tsx
+// app/blog/[slug]/page.tsx
+export default function BlogPost({ params }: { params: { slug: string } }) {
+  return <h1>Post: {params.slug}</h1>;
 }
 
-// app/dashboard/error.tsx - Must be Client Component
+// Route groups: (marketing) doesn't affect URL
+// app/(marketing)/about/page.tsx → /about
+// app/(shop)/products/page.tsx   → /products
+// Each group can have its own layout.tsx
+
+// Parallel routes: @modal slot
+// app/layout.tsx receives { children, modal } as separate slots
+export default function Layout({ children, modal }) {
+  return <><div>{children}</div>{modal}</>;
+}
+```
+
+### Layer 3: Loading and Error Hierarchy
+
+```
+Suspense cascade: loading.tsx wraps page.tsx automatically
+Error cascade:    error.tsx catches errors from page.tsx AND children layouts
+                  root error.tsx = global error boundary (must also handle layout.tsx errors)
+
+If segment has:   loading.tsx = automatic <Suspense> wrapping page.tsx
+                  error.tsx   = automatic <ErrorBoundary> wrapping loading.tsx + page.tsx
+```
+
+```tsx
+// error.tsx must be Client Component (needs onClick/retry state)
 'use client';
 export default function Error({
-    error, reset
-}: { error: Error & { digest?: string }; reset: () => void }) {
-    useEffect(() => { console.error(error); }, [error]);
-    return (
-        <div>
-            <h2>Something went wrong!</h2>
-            <button onClick={reset}>Try again</button>
-        </div>
-    );
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  return (
+    <div>
+      <h2>Something went wrong!</h2>
+      <button onClick={reset}>Retry</button>  {/* triggers re-render to retry */}
+    </div>
+  );
 }
 ```
 
-### Navigation
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-```typescript
-import Link from 'next/link';
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Adding `loading.tsx` but data fetch is in a Client Component | loading.tsx wraps the Suspense boundary for Server Component streaming only | For Client Component loading: use `useEffect` + state, or Suspense with `use()` hook |
+| Using `template.tsx` for every layout | Re-creates on every navigation → state lost, more expensive | Only use `template.tsx` when you specifically need re-creation (page analytics, animation reset) |
+| `error.tsx` as Server Component | Needs `onClick={reset}` → must be interactive → must be Client Component | Always add `'use client'` to `error.tsx` files |
+| Forgetting `not-found.tsx` for dynamic routes | Unmatched dynamic segments show React error instead of graceful 404 | Create `not-found.tsx` and call `notFound()` from the page when item is not found |
 
-// Declarative
-<Link href="/about">About</Link>
-<Link href="/about" prefetch={false}>About</Link>
+**🎯 Interview Pattern:**
+- Khi thấy: "How do you handle loading states in Next.js App Router?"
+- → Nhớ: `loading.tsx` = automatic Suspense for Server Components; Server Component `async` data = streams through Suspense boundary
+- → Mở đầu: "In App Router, creating a `loading.tsx` file next to a `page.tsx` automatically wraps the page in a Suspense boundary — the loading UI shows while the Server Component fetches data. For Client Components, I manage loading state with hooks."
 
-// Programmatic
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: [React 19 — Suspense and streaming](../03-react/10-modern-react-features.md)
+- ➡️ Để hiểu: [Data Fetching — parallel fetching with Suspense](./02-data-fetching.md)
+
+---
+
+## Core Concept 2: Server/Client Component Composition
+
+> 🧠 **Memory Hook**: "Default = Server (no JS shipped). Add `'use client'` when you need: **HEEL** — **H**ooks, **E**vent handlers, **E**ffects, **L**ifecycle/browser APIs."
+
+**Tại sao tồn tại? / Why does this exist?**
+Before React Server Components, every component ran in the browser — meaning every library, template, and data transformation shipped as JavaScript.
+→ Why is that a problem? A markdown blog post renderer (gray-matter, remark, rehype = ~100KB) ships to every visitor even though it runs once at build time.
+→ Why doesn't Next.js just auto-detect? React can't statically determine which APIs will be called at runtime without explicit hints — the `'use client'` directive is that hint.
+
+### Layer 1: The Decision Rule
+
+```
+Add 'use client' when component needs ANY of:
+├── useState, useReducer, useContext
+├── useEffect, useLayoutEffect, useRef
+├── Custom hooks (that use the above)
+├── onClick, onChange, onSubmit (any event handler)
+├── window, document, navigator (browser APIs)
+└── Third-party libraries that use the above internally
+    (e.g., react-select, framer-motion, chart.js wrappers)
+
+Keep as Server Component when:
+├── Fetching data (async/await directly in component)
+├── Accessing backend resources (DB, filesystem, env secrets)
+├── Rendering static content (markdown, HTML from CMS)
+└── Using server-only libraries (DB clients, PDF generators)
+```
+
+### Layer 2: Composition Patterns
+
+```tsx
+// ✅ Donut pattern: Server Component wraps Client Component
+// Server shell fetches data + renders static HTML
+// Client "hole" handles interactivity
+
+// app/product/[id]/page.tsx (Server Component)
+async function ProductPage({ params }) {
+  const product = await db.products.findById(params.id);  // Server: direct DB
+
+  return (
+    <div>
+      <h1>{product.name}</h1>           {/* Server-rendered HTML */}
+      <p>${product.price}</p>
+      <AddToCartButton productId={params.id} />  {/* Client Component island */}
+    </div>
+  );
+}
+
+// components/AddToCartButton.tsx
 'use client';
-import { useRouter } from 'next/navigation';
-
-function LoginButton() {
-    const router = useRouter();
-    const handleLogin = async () => {
-        await login();
-        router.push('/dashboard');
-        // router.replace('/dashboard'); // No back
-        // router.refresh(); // Refresh current route
-    };
-    return <button onClick={handleLogin}>Login</button>;
+function AddToCartButton({ productId }) {
+  const [added, setAdded] = useState(false);
+  return (
+    <button onClick={() => { addToCart(productId); setAdded(true); }}>
+      {added ? '✓ Added' : 'Add to Cart'}
+    </button>
+  );
 }
 ```
 
-### API Routes (Route Handlers)
+**Server Actions — mutations without API routes:**
+```tsx
+// app/actions.ts
+'use server';  // marks functions as Server Actions
 
-```typescript
-// app/api/users/route.ts
+export async function createPost(formData: FormData) {
+  const title = formData.get('title') as string;
+  await db.post.create({ data: { title } });
+  revalidatePath('/blog');  // purge cache immediately
+  redirect('/blog');
+}
+
+// Server Component: native form, works without JS (progressive enhancement)
+export default function NewPostPage() {
+  return (
+    <form action={createPost}>
+      <input name="title" />
+      <button>Create</button>
+    </form>
+  );
+}
+
+// Client Component: with pending state
+'use client';
+export function PostFormWithPending() {
+  const [state, formAction, isPending] = useActionState(createPost, null);
+  return (
+    <form action={formAction}>
+      <input name="title" />
+      <button disabled={isPending}>{isPending ? 'Creating...' : 'Create'}</button>
+    </form>
+  );
+}
+```
+
+### Layer 3: Environment Variables
+
+```
+Variable type           Accessible in              Rule
+────────────────────────────────────────────────────────────────
+NEXT_PUBLIC_API_URL     Server + Client Components  Bundled into JS at build time
+DATABASE_URL            Server only (SC, SA, Middleware)  Never sent to browser
+JWT_SECRET              Server only                 ← NEVER add NEXT_PUBLIC_ prefix
+```
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `'use client'` at root layout or high-level pages | Turns entire subtree into Client Components — defeats Server Component benefit | Only mark leaf interactive components as `'use client'` |
+| Importing a `'use client'` component from a Server Component with `async` | Allowed, but if the CC is heavy (chart lib), consider lazy loading | Use `dynamic(() => import(...), { ssr: false })` for heavy CC that doesn't need SSR |
+| Forgetting that `'use client'` infects imports | All modules imported from a `'use client'` file become client modules | Keep server-only code (DB, secrets) in separate files not imported from CC |
+| Using `process.env.NEXT_PUBLIC_SECRET` for sensitive values | Bundled into JS — visible in browser source | Remove `NEXT_PUBLIC_` prefix; access in Server Component or Server Action |
+
+**🎯 Interview Pattern:**
+- Khi thấy: "Why is 'use client' needed? Can you just use hooks everywhere?"
+- → Nhớ: Server Components run in a different environment (no browser APIs, no React state) — 'use client' signals the bundler to include the file in the browser bundle
+- → Mở đầu: "Server Components run on the server where `window`, `useState`, and event handlers don't exist. `'use client'` is a bundler directive — it tells Next.js to include that file and its imports in the client JavaScript bundle."
+
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: [React Server Components — architecture](./01-app-router-server-components.md)
+- ➡️ Để hiểu: [Architecture & Rendering Strategies — rendering decision framework](./03-nextjs-architecture.md)
+
+---
+
+## Core Concept 3: Middleware, Navigation & Advanced Routing
+
+> 🧠 **Memory Hook**: "Middleware runs at the **edge** (not Node.js) — instant, no cold start. Think of it as the bouncer: checks credentials before the door, redirects before any page renders."
+
+**Tại sao tồn tại? / Why does this exist?**
+Authentication redirects used to happen after the page rendered — the user saw a flash of protected content before being redirected.
+→ Why is edge middleware better? It runs at Cloudflare/Vercel edge nodes (~30ms from user), checks auth before any response is sent.
+→ Why can't you just check auth in getServerSideProps/Server Component? You can, but that means the server starts rendering the page before realizing the user isn't authenticated — wasted work and possible security risk.
+
+### Layer 1: Middleware Patterns
+
+```tsx
+// middleware.ts — runs on Vercel/Cloudflare edge, not Node.js
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(request: NextRequest) {
-    const users = await getUsers();
-    return NextResponse.json(users);
-}
-
-export async function POST(request: NextRequest) {
-    const body = await request.json();
-    const user = await createUser(body);
-    return NextResponse.json(user, { status: 201 });
-}
-```
-
----
-
-## 🕐 When - Khi Nào Sử Dụng
-
-| Scenario | Recommendation |
-|----------|---------------|
-| New project | App Router (always) |
-| Existing Pages Router | Migrate incrementally |
-| Static marketing site | SSG with App Router |
-| Dynamic dashboard | SSR with App Router |
-| API backend | Route Handlers |
-| SEO-critical | SSG or SSR (not CSR) |
-
----
-
-## 💡 Interview Questions
-
-### Q: Next.js là gì và tại sao nên dùng? / What is Next.js and why use it? 🟢 Junior
-
-**A:** Next.js is a React meta-framework that adds server-side rendering (SSR), static site generation (SSG), file-based routing, API routes, and React Server Components on top of React. App Router (Next.js 13+) is the modern version with Server Components as default.
-
-Vietnamese: Next.js là React framework phổ biến nhất, cung cấp SSR, SSG, routing dựa trên file-system, và API routes. App Router là version mới với Server Components mặc định — giảm JS bundle, cải thiện SEO và performance. Lý do dùng: industry standard, performance out-of-the-box, full-stack trong cùng codebase.
-
----
-
-### Q: What is the difference between layout.tsx and page.tsx? / Sự khác biệt giữa layout.tsx và page.tsx? 🟢 Junior
-
-**A:** `layout.tsx` defines shared UI that persists across navigations — its state is preserved when the user navigates between child routes. `page.tsx` defines the unique content for a specific route and re-renders on every navigation to that route.
-
-Vietnamese: `layout.tsx` là shared UI, **không bị re-render** khi navigate giữa các route con (state được giữ nguyên). `page.tsx` là nội dung unique của từng route, render lại khi truy cập route đó. Dùng layout cho Header/Sidebar/Footer, dùng page cho content chính.
-
----
-
-### Q: What is Middleware in Next.js and when do you use it? / Middleware trong Next.js là gì? 🟢 Junior
-
-**A:** Middleware runs before every matched request at the Edge Runtime. It is placed at `middleware.ts` at the project root and is used for authentication checks, redirects, A/B testing, and request logging — all before the page renders.
-
-```typescript
-// middleware.ts
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-
 export function middleware(request: NextRequest) {
-    const token = request.cookies.get('token');
-    if (!token) {
-        return NextResponse.redirect(new URL('/login', request.url));
-    }
-    return NextResponse.next();
+  const pathname = request.nextUrl.pathname;
+
+  // Pattern 1: Auth guard
+  const token = request.cookies.get('token');
+  if (!token && pathname.startsWith('/dashboard')) {
+    return NextResponse.redirect(new URL(`/login?next=${pathname}`, request.url));
+  }
+
+  // Pattern 2: Geo-based redirect
+  const country = request.geo?.country;
+  if (country === 'VN' && !pathname.startsWith('/vn')) {
+    return NextResponse.redirect(new URL(`/vn${pathname}`, request.url));
+  }
+
+  // Pattern 3: A/B testing (set cookie, read in component)
+  const response = NextResponse.next();
+  if (!request.cookies.has('variant')) {
+    response.cookies.set('variant', Math.random() > 0.5 ? 'a' : 'b');
+  }
+  return response;
 }
 
+// Matcher: only run on matched routes (avoid running on _next, api, public)
 export const config = {
-    matcher: '/dashboard/:path*'
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };
 ```
 
-Vietnamese: Middleware chạy trên Edge Runtime trước khi request đến page/API. Đặt ở `middleware.ts` root project. Dùng cho: auth guard (redirect nếu chưa login), A/B testing, geo-based redirects, logging. Chú ý: chạy trên Edge nên không dùng được Node.js APIs.
+**Edge Runtime constraints**: no Node.js APIs (`fs`, `crypto`, `Buffer`), limited to Web APIs. No cold start (always warm). Max 128MB memory. Ideal for: routing, auth token validation, request modification — not for: DB queries, heavy computation.
 
----
+### Layer 2: Navigation — Link vs useRouter
 
-### Q: App Router vs Pages Router — what are the key differences? / So sánh App Router và Pages Router? 🟡 Mid
+```tsx
+import Link from 'next/link';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 
-**A:** App Router (Next.js 13+) uses Server Components by default, supports nested layouts, streaming with Suspense, and co-location of files. Pages Router uses Client Components by default with `getServerSideProps`/`getStaticProps` for data fetching and flat routing. App Router is recommended for all new projects; Pages Router is still supported but considered legacy.
+// Declarative navigation — preferred
+<Link href="/about">About</Link>
+<Link href="/blog/post-1" prefetch={false}>Post 1</Link>  // disable prefetch for non-critical
+<Link href={`/user/${id}`} replace>Profile</Link>          // replace history entry
 
-Vietnamese: App Router là tương lai — Server Components mặc định giảm JS bundle đáng kể. Nested layouts giữ state khi navigate. Streaming cho phép hiển thị nội dung từng phần. Pages Router vẫn hoạt động tốt nhưng không có các tính năng mới. Khi phỏng vấn: nên chủ động đề cập trade-offs và migration path.
-
----
-
-### Q: How do environment variables work in Next.js? / Biến môi trường trong Next.js hoạt động như thế nào? 🟡 Mid
-
-**A:** Variables prefixed with `NEXT_PUBLIC_` are bundled into the client-side JavaScript and accessible in both Server and Client Components. Variables without this prefix are server-only and never exposed to the browser — safe for secrets like API keys and database credentials.
-
-Vietnamese: `NEXT_PUBLIC_*` → expose ra client (embed vào JS bundle lúc build). Không có prefix → chỉ accessible trên server (Server Components, Route Handlers, middleware). Quy tắc: **không bao giờ** đặt secret vào `NEXT_PUBLIC_*`. Dùng `.env.local` cho development, platform env vars cho production.
-
----
-
-### Q: Explain the Metadata API in Next.js / Metadata API trong Next.js hoạt động như thế nào? 🟡 Mid
-
-**A:** Export a `metadata` object (static) or `generateMetadata` function (dynamic) from any `page.tsx` or `layout.tsx`. Next.js automatically generates the correct `<head>` tags for SEO, including title templates, OpenGraph, and Twitter cards.
-
-Vietnamese: Metadata API thay thế cách dùng `<Head>` của Pages Router. Static metadata cho các trang không cần data, dynamic `generateMetadata` cho trang cần fetch data (ví dụ: blog post title từ DB). Hỗ trợ title template (`%s | My App`), OpenGraph image, robots, canonical URL — tất cả type-safe.
-
----
-
-### Q: What are Server Actions in Next.js 14+? / Server Actions trong Next.js 14+ là gì? 🟡 Mid
-
-**A:** Server Actions are async functions that run exclusively on the server and can be called directly from Client or Server Components — without writing a separate API route. Defined with the `'use server'` directive, they handle form submissions, mutations, and database writes securely. They are integrated with the Next.js cache and can call `revalidatePath` or `revalidateTag` to refresh stale data after a mutation.
-
-```typescript
-// app/actions.ts
-'use server';
-
-import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
-
-export async function createPost(formData: FormData) {
-    const title = formData.get('title') as string;
-    const content = formData.get('content') as string;
-
-    // Direct DB access — no API route needed
-    await db.post.create({ data: { title, content } });
-
-    revalidatePath('/blog'); // Invalidate cached blog list
-    redirect('/blog');       // Navigate after mutation
-}
-
-// app/new-post/page.tsx — Server Component using the action
-import { createPost } from '../actions';
-
-export default function NewPostPage() {
-    return (
-        <form action={createPost}>
-            <input name="title" placeholder="Title" />
-            <textarea name="content" placeholder="Content" />
-            <button type="submit">Create Post</button>
-        </form>
-    );
-}
-
-// Client Component usage with useActionState
+// Programmatic navigation — use when navigation is a side effect of an action
 'use client';
-import { useActionState } from 'react';
-import { createPost } from '../actions';
+function LoginButton() {
+  const router = useRouter();
 
-export function PostForm() {
-    const [state, formAction, isPending] = useActionState(createPost, null);
-    return (
-        <form action={formAction}>
-            <input name="title" />
-            <button type="submit" disabled={isPending}>
-                {isPending ? 'Creating...' : 'Create'}
-            </button>
-            {state?.error && <p>{state.error}</p>}
-        </form>
-    );
+  async function handleLogin() {
+    await login();
+    router.push('/dashboard');     // add to history
+    // router.replace('/dashboard'); // replace current entry (no back button)
+    // router.refresh();             // re-fetch server data for current route
+    // router.prefetch('/dashboard'); // manually prefetch
+  }
+
+  return <button onClick={handleLogin}>Login</button>;
 }
 ```
 
-Vietnamese: Server Actions là cơ chế mới cho phép gọi server-side logic trực tiếp từ component mà không cần tạo API route riêng. Ưu điểm: giảm boilerplate, tích hợp chặt với form HTML (progressive enhancement), tự động CSRF protection, và kết hợp trực tiếp với cache invalidation. Trade-off: business logic gắn với UI layer hơn — cần cân nhắc cho app lớn cần tách biệt rõ ràng.
+### Layer 3: Parallel Routes & Intercepting Routes
 
----
-
-### Q: ISR vs on-demand revalidation — when to use each? / ISR vs on-demand revalidation — khi nào dùng cái nào? 🔴 Senior
-
-**A:** **Incremental Static Regeneration (ISR)** regenerates a static page in the background after a time-based interval (`revalidate` seconds). The first request after the interval triggers a background rebuild; the stale page is served until the rebuild completes (stale-while-revalidate). **On-demand revalidation** purges the cache immediately when triggered explicitly — via `revalidatePath()` or `revalidateTag()` in a Server Action or Route Handler — rather than waiting for a timer.
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│           ISR vs ON-DEMAND REVALIDATION                      │
-├──────────────────────────┬──────────────────────────────────┤
-│  ISR (time-based)        │  On-demand revalidation          │
-├──────────────────────────┼──────────────────────────────────┤
-│  revalidate: 60 seconds  │  revalidatePath('/blog')         │
-│  Automatic, no trigger   │  Explicit trigger required       │
-│  Stale data for ≤60s     │  Near-instant freshness          │
-│  No external dependency  │  Needs webhook / Server Action   │
-│  Good for: news, catalog │  Good for: CMS, e-commerce       │
-└──────────────────────────┴──────────────────────────────────┘
-```
-
-```typescript
-// ISR — time-based, set at the fetch or segment level
-// app/blog/page.tsx
-export const revalidate = 60; // Regenerate at most every 60 seconds
-
-export default async function BlogPage() {
-    const posts = await fetch('https://api.example.com/posts', {
-        next: { revalidate: 60 }
-    }).then(r => r.json());
-    return <PostList posts={posts} />;
+**Parallel routes** — render multiple pages simultaneously in one layout:
+```tsx
+// app/layout.tsx receives @modal and children as separate slots
+export default function Layout({ children, modal }) {
+  return (
+    <div>
+      {children}
+      {modal}  {/* modal renders alongside main content, independent loading */}
+    </div>
+  );
 }
+// app/@modal/default.tsx — render nothing when no modal is active
+export default function Default() { return null; }
+// app/@modal/photo/[id]/page.tsx — renders in @modal slot when /photo/123 is visited
+```
 
-// On-demand — tag-based cache invalidation
-// app/blog/[slug]/page.tsx
-export default async function PostPage({ params }: { params: { slug: string } }) {
-    const post = await fetch(`https://api.example.com/posts/${params.slug}`, {
-        next: { tags: [`post-${params.slug}`, 'posts'] }
-    }).then(r => r.json());
-    return <Post post={post} />;
+**Intercepting routes** — show a route in a different context:
+```
+(.)    — same level     → /photo/[id] intercepts /photo/[id]
+(..)   — one level up   → (feed)/(..)photo/[id] intercepts /photo/[id]
+(...)  — from root      → any level
+```
+Instagram pattern: browsing feed → click photo → modal opens (intercepting), URL changes to `/photo/123` → share link opens full page (not intercepted).
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Using `useRouter` from `next/router` in App Router | `next/router` is Pages Router — throws error in App Router | Use `useRouter`, `usePathname`, `useSearchParams` from `next/navigation` |
+| Middleware that reads from database | Edge Runtime has no Node.js — DB clients won't work | Validate JWT token in middleware (CPU-only), then full auth check in Server Component/Action |
+| Forgetting `matcher` in middleware config | Middleware runs on EVERY request including static assets, images | Always configure `matcher` to exclude `_next/static`, `_next/image`, `favicon.ico` |
+
+**🎯 Interview Pattern:**
+- Khi thấy: "How would you implement auth protection in Next.js App Router?"
+- → Nhớ: Middleware (JWT validation at edge for redirects) + Server Component auth check (for data access) — two layers
+- → Mở đầu: "I'd use two layers: middleware for redirect-based auth guards at the edge — validates the JWT token and redirects to `/login` for protected routes — and a Server Component auth check for API/database access authorization."
+
+**🔑 Knowledge Chain:**
+- 📚 Cần biết: [Data Fetching — Server Actions and cache invalidation](./02-data-fetching.md)
+- ➡️ Để hiểu: [Web Security — auth patterns and JWT](../../shared/07-web-security/02-authentication.md)
+
+---
+
+## Interview Q&A / Câu Hỏi Phỏng Vấn
+
+### Q: What is Next.js and why use it? / Next.js là gì và tại sao nên dùng? 🟢 Junior
+
+**A:** Next.js is a React meta-framework that adds server-side rendering, static site generation, file-based routing, API routes, and React Server Components on top of React. App Router (Next.js 13+) is the modern version with Server Components as default.
+
+Vietnamese: Next.js là React framework phổ biến nhất, cung cấp SSR, SSG, routing dựa trên file-system, và API routes. App Router là version mới với Server Components mặc định — giảm JS bundle, cải thiện SEO và performance.
+
+**💡 Interview Signal:**
+- ✅ Strong: Mentions Server Components default as a key differentiator (not just "SSR framework"), names App Router vs Pages Router distinction
+- ❌ Weak: "It's a React framework with routing" (too vague — doesn't distinguish what Next.js adds vs plain React Router)
+
+---
+
+### Q: What is the difference between layout.tsx and page.tsx? 🟢 Junior
+
+**A:** `layout.tsx` defines shared UI that **persists** across navigations — its state is preserved when navigating between child routes (sidebar stays open, scroll position maintained). `page.tsx` defines the unique content for a specific route and re-renders on every navigation to that route.
+
+A route must have a `page.tsx` to be publicly accessible. `layout.tsx` is optional but the root `app/layout.tsx` is required by Next.js.
+
+Vietnamese: `layout.tsx` = shared UI, không bị re-render khi navigate giữa route con (state giữ nguyên). `page.tsx` = nội dung unique của từng route, render lại khi truy cập. Dùng layout cho Header/Sidebar/Footer. State preservation là điểm quan trọng nhất.
+
+**💡 Interview Signal:**
+- ✅ Strong: Mentions state preservation across navigations (not just "shared UI"), mentions root layout requirement
+- ❌ Weak: "layout.tsx wraps the page" (correct but misses the state persistence detail that makes layouts powerful)
+
+---
+
+### Q: What is Middleware in Next.js and when do you use it? 🟢 Junior
+
+**A:** Middleware runs before every matched request at the Edge Runtime — before any page renders. Placed at `middleware.ts` at the project root, it intercepts requests for: authentication checks, redirects, A/B testing, geolocation routing, and request/response header modification.
+
+Key constraint: runs on Edge Runtime (not Node.js) — no `fs`, no database clients, no Buffer. Only Web APIs and JWT validation (CPU-only crypto).
+
+```tsx
+export function middleware(request: NextRequest) {
+  const token = request.cookies.get('token');
+  if (!token) return NextResponse.redirect(new URL('/login', request.url));
+  return NextResponse.next();
 }
+export const config = { matcher: '/dashboard/:path*' };
+```
 
-// app/api/revalidate/route.ts — called by a CMS webhook
-import { revalidateTag } from 'next/cache';
-import { NextRequest, NextResponse } from 'next/server';
+Vietnamese: Middleware chạy trên Edge Runtime trước khi request đến page/API. Dùng cho: auth redirect, A/B testing, geo-based routing. Chú ý: Edge Runtime không có Node.js APIs — không query DB trong middleware.
 
-export async function POST(request: NextRequest) {
-    const { slug, secret } = await request.json();
+**💡 Interview Signal:**
+- ✅ Strong: Mentions Edge Runtime constraint (no Node.js), gives specific use cases, shows the `matcher` config
+- ❌ Weak: "Middleware checks auth before the page" (correct but doesn't mention Edge constraint which is the key architectural detail)
 
-    if (secret !== process.env.REVALIDATION_SECRET) {
-        return NextResponse.json({ error: 'Invalid secret' }, { status: 401 });
-    }
+---
 
-    revalidateTag(`post-${slug}`); // Purge only the changed post
-    // revalidatePath('/blog');    // Or purge the whole blog listing
+### Q: App Router vs Pages Router — what are the key differences? 🟡 Mid
 
-    return NextResponse.json({ revalidated: true });
+**A:**
+
+| | App Router | Pages Router |
+|-|-----------|-------------|
+| Default component type | Server Component | Client Component |
+| Layouts | Nested layouts, state preserved | `_app.js`, always re-renders |
+| Data fetching | `async/await` in Server Component | `getServerSideProps`, `getStaticProps` |
+| Loading states | `loading.tsx` automatic Suspense | Manual state management |
+| Streaming | Built-in with Suspense | Not supported |
+| Status | Future, new features | Legacy, still maintained |
+
+**Migration**: both can coexist in the same project. `app/` routes use App Router; `pages/` routes use Pages Router. Migrate incrementally.
+
+Vietnamese: App Router = Server Components default, nested layouts state-preserved, streaming via Suspense, data fetching với async/await. Pages Router = Client Components default, `getServerSideProps` pattern, flat layouts. App Router là future của Next.js.
+
+**💡 Interview Signal:**
+- ✅ Strong: Compares by default component type AND data fetching pattern AND layout persistence — all three matter for architecture decisions
+- ❌ Weak: "App Router has Server Components and Pages Router doesn't" (partially correct but misses the layout, data fetching, and streaming differences)
+
+---
+
+### Q: How do environment variables work in Next.js? 🟡 Mid
+
+**A:** Variables prefixed with `NEXT_PUBLIC_` are bundled into the client-side JavaScript — accessible in both Server and Client Components, visible in browser source code. Variables **without** this prefix are server-only — never exposed to the browser — safe for API keys, database credentials, JWT secrets.
+
+```
+NEXT_PUBLIC_API_URL=https://api.example.com   ← bundled into JS, public
+DATABASE_URL=postgres://...                    ← server only, private
+JWT_SECRET=super-secret                        ← server only, NEVER add NEXT_PUBLIC_
+```
+
+Vietnamese: `NEXT_PUBLIC_*` → embed vào JS bundle lúc build (public). Không có prefix → chỉ trên server (Server Components, Route Handlers, middleware). Quy tắc: **không bao giờ** đặt secret vào `NEXT_PUBLIC_*`. Dùng `.env.local` dev, platform env vars production.
+
+**💡 Interview Signal:**
+- ✅ Strong: Explains the build-time bundling mechanism for NEXT_PUBLIC_, gives example of what should NOT have the prefix (JWT_SECRET), mentions .env.local
+- ❌ Weak: "NEXT_PUBLIC_ is for client-side variables" (correct but doesn't explain the security risk of putting secrets there)
+
+---
+
+### Q: What is the Metadata API in Next.js? 🟡 Mid
+
+**A:** Export a `metadata` object (static) or `generateMetadata` async function (dynamic) from `page.tsx` or `layout.tsx`. Next.js generates the correct `<head>` tags — title, description, OpenGraph, Twitter cards, canonical URLs — deduplicating and merging across nested layouts.
+
+```tsx
+// Static
+export const metadata: Metadata = {
+  title: 'About | My Site',
+  description: 'Learn about us',
+};
+
+// Dynamic (async, receives route params)
+export async function generateMetadata({ params }): Promise<Metadata> {
+  const post = await fetchPost(params.slug);
+  return {
+    title: `${post.title} | Blog`,
+    openGraph: { images: [post.coverImage] },
+  };
 }
 ```
 
-Vietnamese: ISR phù hợp khi nội dung thay đổi theo lịch trình đều đặn và chấp nhận được dữ liệu cũ trong vài phút (catalog sản phẩm, bài báo). On-demand revalidation phù hợp khi cần freshness ngay lập tức sau khi content editor publish bài (CMS-driven sites, e-commerce price changes). Trong thực tế, nhiều app dùng **kết hợp cả hai**: ISR như fallback (`revalidate: 3600`) + on-demand webhook từ CMS để invalidate ngay khi có thay đổi. Senior trade-off cần nhắc: on-demand yêu cầu infrastructure (webhook, secret rotation), ISR đơn giản hơn nhưng chấp nhận stale window.
+Vietnamese: Metadata API thay thế `<Head>` của Pages Router. Static cho pages không cần data, dynamic `generateMetadata` cho pages cần fetch (blog post title từ DB). Hỗ trợ title template (`%s | Site Name`), OpenGraph, robots, canonical — tất cả type-safe.
+
+**💡 Interview Signal:**
+- ✅ Strong: Distinguishes static vs dynamic metadata, mentions the deduplication/merging behavior across nested layouts, notes type safety
+- ❌ Weak: "Export metadata from page.tsx" (correct but misses generateMetadata for dynamic cases and the layout cascade behavior)
 
 ---
 
-### Q: What are parallel routes and when do you use them? / Parallel routes là gì và khi nào dùng? 🔴 Senior
+### Q: What are Server Actions in Next.js 14+? 🟡 Mid
 
-**A:** Parallel routes render multiple independent pages simultaneously within the same layout using the `@folder` convention. Each slot has its own independent loading, error, and not-found states. Common use cases: modal overlays that maintain the background page URL, split-view dashboards, and tab-based navigation where each tab can stream independently.
+**A:** Server Actions are async functions marked `'use server'` that run exclusively on the server and can be called directly from Client or Server Components — without writing a separate API route. They handle mutations (form submissions, database writes) and are integrated with Next.js cache via `revalidatePath`/`revalidateTag`.
 
-Vietnamese: Parallel routes dùng `@folder` convention — layout nhận các slot như props. Mỗi slot có loading/error state riêng. Ví dụ điển hình: modal intercepting route (URL thay đổi nhưng background page vẫn hiển thị), analytics dashboard với 4 widget stream độc lập. Cần phân biệt với Intercepting Routes (`(.)folder`) — parallel routes render cùng lúc, intercepting routes thay thế route trong context cụ thể.
+Key advantages over API routes: no fetch boilerplate, automatic CSRF protection, progressive enhancement (work without JS for native forms), and built-in `useActionState` for pending/error state.
 
----
-
-### Q: How would you design the route structure for a SaaS application? / Thiết kế cấu trúc route cho SaaS app như thế nào? 🔴 Senior
-
-**A:** Use route groups to separate concerns with different layouts, protect authenticated routes at the layout level, and use parallel routes for modals and overlays.
-
-```
-app/
-├── (marketing)/        → Public pages, simple layout
-├── (auth)/             → Login/register, minimal layout
-├── (app)/              → Authenticated app
-│   ├── layout.tsx      → With sidebar + auth check
-│   ├── @modal/         → Parallel route for modals
-│   ├── dashboard/
-│   └── [workspace]/    → Dynamic workspace
+```tsx
+'use server';
+export async function createPost(formData: FormData) {
+  await db.post.create({ data: { title: formData.get('title') } });
+  revalidatePath('/blog');
+  redirect('/blog');
+}
 ```
 
-Vietnamese: Route groups `()` cho phép áp dụng layout khác nhau cho các phần của app mà không ảnh hưởng URL. Auth check trong `(app)/layout.tsx` bảo vệ toàn bộ authenticated section. `@modal` slot dùng parallel routes + intercepting routes cho UX như Instagram (click ảnh → modal, nhưng URL thay đổi, share link vẫn mở full page). Đây là câu hỏi architecture — interviewer muốn thấy bạn nghĩ đến: auth flow, code splitting, layout sharing, và URL design.
+Vietnamese: Server Actions = async functions chạy trên server, gọi được từ component không cần API route riêng. Ưu điểm: ít boilerplate, CSRF protection tự động, progressive enhancement. Trade-off: business logic gắn với UI layer hơn — với app lớn cần tách biệt rõ ràng thì vẫn cần cân nhắc.
+
+**💡 Interview Signal:**
+- ✅ Strong: Mentions CSRF protection, progressive enhancement, cache integration with revalidatePath, and the trade-off for large apps
+- ❌ Weak: "Server Actions run on the server without an API route" (correct but misses the security/cache/UX benefits that justify using them)
 
 ---
 
-### Q: Common Next.js interview pitfalls to avoid / Những lỗi phổ biến khi phỏng vấn về Next.js? 🔴 Senior
+### Q: ISR vs on-demand revalidation — when to use each? 🔴 Senior
 
-**A:** The most common mistakes: confusing Pages Router and App Router syntax in the same answer, not knowing when to use `'use client'` vs default Server Component, failing to differentiate cache strategies (`force-cache`, `no-store`, `revalidate`), and not mentioning trade-offs when choosing a rendering strategy.
+**A:** **ISR** (`revalidate: N`) — background regeneration after a time interval. First request after interval triggers rebuild; stale page served until complete (stale-while-revalidate). **On-demand** (`revalidatePath`/`revalidateTag`) — immediate cache purge triggered explicitly by a Server Action or Route Handler.
 
-Vietnamese: Lỗi hay gặp nhất khi phỏng vấn: trộn lẫn `getServerSideProps` (Pages Router) với `async/await` trong Server Component (App Router). Không giải thích được tại sao cần `'use client'` (hooks, event handlers, browser APIs). Không nhắc trade-offs: SSG nhanh nhưng stale, SSR fresh nhưng TTFB cao hơn, ISR là middle ground. Senior interviewer expect bạn tự đưa ra trade-offs mà không cần được hỏi.
+```
+ISR: revalidate: 60      On-demand: revalidateTag('post-123')
+├── Automatic             ├── Requires webhook/trigger
+├── Stale ≤60s            ├── Near-instant freshness
+├── No infra needed       ├── Needs webhook + secret rotation
+└── Good for: news,       └── Good for: CMS, e-commerce
+    product catalog           price changes
+```
 
----
+Best practice: **combine both** — ISR as fallback (`revalidate: 3600`) + on-demand webhook for immediate invalidation when content changes.
 
-## 📋 Active Recall Questions
+Vietnamese: ISR = time-based stale-while-revalidate, đơn giản nhưng chấp nhận stale window. On-demand = invalidate ngay lập tức, cần webhook infrastructure. Thực tế: dùng kết hợp — ISR là safety net, on-demand từ CMS webhook.
 
-1. [ ] Project structure của App Router
-2. [ ] Special files: layout, page, loading, error, template
-3. [ ] Dynamic routes: [slug], [...slug], [[...slug]]
-4. [ ] Link vs useRouter
-5. [ ] Route handlers vs API routes
-6. [ ] Middleware use cases và config
-7. [ ] Environment variables: NEXT_PUBLIC_ prefix rules
-8. [ ] Metadata API: static vs dynamic
-9. [ ] Server Actions: 'use server', form integration, cache invalidation
-10. [ ] ISR vs on-demand revalidation: trade-offs và khi nào dùng cái nào
-
----
-
-## 📊 Interview Q&A Summary
-
-| Question | Level | Key Point |
-|----------|-------|-----------|
-| Next.js là gì? | 🟢 Junior | React meta-framework: SSR, SSG, file-based routing, Server Components |
-| layout.tsx vs page.tsx | 🟢 Junior | layout persists (state preserved), page re-renders on navigation |
-| Middleware | 🟢 Junior | Runs on Edge before request; used for auth, redirects, logging |
-| App Router vs Pages Router | 🟡 Mid | Server Components default, nested layouts, streaming vs legacy getServerSideProps |
-| Environment variables | 🟡 Mid | `NEXT_PUBLIC_*` = client-exposed; no prefix = server-only secrets |
-| Metadata API | 🟡 Mid | Export `metadata` or `generateMetadata`; auto `<head>` tags for SEO |
-| Server Actions | 🟡 Mid | `'use server'` async functions; no API route needed; integrate with cache invalidation |
-| ISR vs on-demand revalidation | 🔴 Senior | ISR = time-based stale-while-revalidate; on-demand = immediate purge via webhook |
-| Parallel routes | 🔴 Senior | `@folder` slots; independent loading/error states; modals + split views |
-| SaaS route architecture | 🔴 Senior | Route groups `()` for layouts; auth check in layout; `@modal` parallel route |
-| Interview pitfalls | 🔴 Senior | Don't mix router syntax; always mention trade-offs; explain 'use client' rationale |
+**💡 Interview Signal:**
+- ✅ Strong: Explains the stale-while-revalidate behavior, names the infrastructure requirement for on-demand, suggests combining both
+- ❌ Weak: "ISR is time-based, on-demand is immediate" (correct but doesn't explain the stale-while-revalidate semantics or the infra trade-off)
 
 ---
 
-## 🔗 Cross-References
+### Q: What are parallel routes and when do you use them? 🔴 Senior
 
-- [Server Components](./01-app-router-server-components.md) - RSC Deep Dive
-- [Rendering Strategies](./03-nextjs-architecture.md) - SSR, SSG, ISR
-- [Data Fetching](./02-data-fetching.md) - Server & Client Patterns
-- [Routing & Layouts](./01-app-router-server-components.md) - App Router Patterns
-- [Optimization](./03-nextjs-architecture.md) - Performance Best Practices
-- [Existing: Fundamentals](./00-nextjs-fundamentals.md) - Q&A Reference
-- [Existing: Architecture](./03-nextjs-architecture.md) - Architecture Patterns
+**A:** Parallel routes render multiple independent pages simultaneously within the same layout using the `@folder` convention. Each slot (`@modal`, `@sidebar`) has its own independent loading, error, and not-found states.
+
+**Use cases**: modal overlays that maintain background URL, analytics dashboards with independent-loading widgets, split-view layouts where each panel streams separately.
+
+**With intercepting routes** (`(.)`, `(..)`): Instagram pattern — browsing `/feed`, click photo → URL changes to `/photo/123`, but background stays visible (intercepted). Sharing `/photo/123` opens the full photo page (no interception).
+
+Vietnamese: Parallel routes dùng `@folder` — layout nhận các slot như props. Mỗi slot độc lập về loading/error. Kết hợp với intercepting routes (`(.)folder`) cho UX modal kiểu Instagram: URL thay đổi, background vẫn hiển thị, share link mở full page.
+
+**💡 Interview Signal:**
+- ✅ Strong: Explains independent loading states, gives the Instagram intercepting+parallel route pattern as a concrete example
+- ❌ Weak: "Parallel routes render multiple things in one layout" (correct but doesn't explain the independent state or the intercepting route combination)
 
 ---
 
-> **Tiếp theo:** [05-server-components.md](./01-app-router-server-components.md) - React Server Components
+### Q: What are the common Next.js interview pitfalls to avoid? 🔴 Senior
+
+**A:** Three major ones:
+
+1. **Mixing router APIs**: `useRouter` from `next/router` (Pages) vs `next/navigation` (App) — they have different methods. `useRouter().push` in App Router → use `next/navigation`.
+
+2. **`'use client'` scope confusion**: `'use client'` marks a module boundary, not just one component. All modules imported from it become client-side. Putting `'use client'` too high up in the tree defeats Server Components.
+
+3. **Not mentioning trade-offs unprompted**: when asked "which rendering strategy", the answer without trade-offs signals shallow understanding. Always add: "SSG is fastest but stale; SSR is always fresh but higher TTFB; ISR is the middle ground."
+
+Vietnamese: Ba lỗi hay gặp: (1) trộn API Pages Router / App Router. (2) không hiểu `'use client'` là module boundary, không phải chỉ annotation. (3) trả lời câu hỏi architecture mà không tự nêu trade-offs — interviewer senior expect điều này.
+
+**💡 Interview Signal:**
+- ✅ Strong: Specifically names `next/router` vs `next/navigation` API confusion, explains `'use client'` as module boundary (not annotation), emphasizes spontaneous trade-off discussion
+- ❌ Weak: "Know your APIs" (too generic — doesn't identify the specific pitfalls)
 
 ---
 
-## Self-Check / Tự Kiểm Tra
+## ⚡ Cold Call Simulation / Mô Phỏng Phỏng Vấn
 
-- [ ] Can I explain what `"use client"` does and when a component MUST be a Client Component?
-- [ ] Can I describe the App Router file conventions (page, layout, loading, error, route)?
-- [ ] Can I explain the difference between fetch caching in App Router vs Pages Router?
-- [ ] Can I draw the Server Component + Client Component composition tree (donut pattern)?
-- [ ] Can I compare Pages Router `getServerSideProps` with App Router Server Component async function?
-- 💬 **Feynman Prompt:** Giải thích Server Components cho một React dev đã biết Class Components — component này "chạy ở đâu", tại sao không có useState, và điều gì thay đổi trong cách bạn fetch data?
+> 🎯 Interviewer asks cold: **"A colleague adds 'use client' to app/layout.tsx to use a theme Context. What's wrong with this and how would you fix it?"**
 
-## Connections / Liên Kết
+**30 giây đầu — mở đầu lý tưởng:**
+1. "The problem: `'use client'` on `layout.tsx` turns the root layout and everything it imports into Client Components — every page in the entire app becomes a Client Component, losing all Server Component benefits."
+2. "The fix is the Provider extraction pattern: create a `ThemeProvider.tsx` Client Component that only wraps the Context Provider, then import it in the Server Component layout."
+3. "The layout stays a Server Component — it renders the static shell. Only `ThemeProvider` is a Client Component island."
+4. "This way, all page-level components default to Server Components, keeping the JS bundle small, while the theme context is available throughout the tree."
 
-- ⬅️ **Built on**: [Next.js Architecture](./03-nextjs-architecture.md) — rendering strategies
-- ⬅️ **Built on**: [React 19](../03-react/02-react-19-features.md) — Server Actions, use() API
-- 🔗 **Applied in**: [System Design](../../shared/02-system-design/system-design-theory.md) — SSR/SSG architecture decisions
+---
+
+## Self-Check / Tự Kiểm Tra ⚡ (Đóng tài liệu lại trước khi làm)
+
+- [ ] **Retrieval**: Viết ra 6 special files App Router (`PLER + T + R`) và mục đích của mỗi file — không nhìn lại.
+- [ ] **Visual**: Sketch cấu trúc folder cho SaaS app với: (marketing) pages, (app) authenticated pages, @modal parallel route — và cho biết URL của mỗi route.
+- [ ] **Application**: Component cần dùng `framer-motion` cho animation. Nó phải là Server hay Client Component? Làm thế nào để giữ parent là Server Component?
+- [ ] **Debug**: `useRouter` từ `next/router` bị lỗi trong App Router page. Fix thế nào? Sự khác biệt giữa `useRouter()` trong hai router là gì?
+- [ ] **Teach**: Giải thích sự khác biệt giữa `layout.tsx` và `template.tsx` cho developer mới — tại sao cần hai cái? Khi nào dùng `template.tsx`?
+
+💬 **Feynman Prompt:** "Giải thích tại sao `'use client'` trên `layout.tsx` là vấn đề — dùng ví dụ 'một đèn đỏ trên đường cao tốc' mà không dùng thuật ngữ kỹ thuật."
+
+🔁 **Spaced Repetition reminder:** Ôn lại file này sau **3 ngày**, **7 ngày**, và **14 ngày**.
+
+[← Back to Architecture](./03-nextjs-architecture.md) | [Back to Table of Contents](../../00-table-of-contents.md)
