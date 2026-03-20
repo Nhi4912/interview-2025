@@ -71,244 +71,213 @@ JavaScript có **7 kiểu dữ liệu primitive** (number, string, boolean, null
 
 ---
 
-## Core Concepts
+## Core Concepts / Khái Niệm Cốt Lõi
 
-### 1. var, let, const Comparison
+### 1. var / let / const Declaration
 
-#### Overview / Tổng Quan
-Use let/const in modern JavaScript. var is function-scoped and hoisted with undefined initialization.
+> 🧠 **Memory Hook**: "VLETC — Var Leaks, Let/const Enclose To Contain" — `var` rò rỉ ra ngoài block, `let`/`const` bị giam trong `{}`
 
-#### Explanation / Giải thích
-var dễ gây bug do scope theo function và cho phép redeclare. let/const có block scope, dễ reasoning hơn khi đọc code và debug.
+**Tại sao tồn tại? / Why does this exist?**
+`var` (ES1, 1995) là cách khai báo duy nhất ban đầu — function-scoped vì lúc đó chưa có block scope.
+→ **Why?** Vì điều này gây ra vô số bug (loop variable leak, redeclaration accidents, hoisting surprises).
+→ **Why?** ES6 (2015) thêm `let`/`const` để fix: block-scoped, TDZ, không redeclare — predictable hơn.
 
-#### Example / Ví dụ
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+`var` giống biển hiệu treo ngoài tòa nhà — ai đi ngang qua (bất kỳ code nào trong function) cũng thấy. `let`/`const` giống giấy tờ trong ngăn kéo — chỉ người trong phòng đó (block `{}`) mới biết.
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
+```
+Scope comparison:
+┌─────────────────────────────────────────────────────┐
+│ function fn() {                                      │
+│   if (true) {                                        │
+│     var a = 1;  ← scoped to FUNCTION (leaks out)    │
+│     let b = 2;  ← scoped to BLOCK {} only           │
+│     const c = 3;← scoped to BLOCK {} only, no re-assign│
+│   }                                                  │
+│   console.log(a); // 1 ✓ (leaked)                   │
+│   console.log(b); // ReferenceError ✗                │
+│ }                                                    │
+└─────────────────────────────────────────────────────┘
+
+Hoisting behavior:
+var    → hoisted + initialized as undefined
+let    → hoisted but TDZ (inaccessible) until declaration
+const  → hoisted but TDZ + must initialize immediately
+fn()   → fully hoisted (callable before declaration line)
+```
+
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
 ```javascript
-function demo() {
-  if (true) {
-    var a = 1;
-    let b = 2;
-    const c = 3;
-  }
-  console.log(a); // 1
-  // console.log(b); // ReferenceError
+// Classic var loop bug:
+for (var i = 0; i < 3; i++) {
+  setTimeout(() => console.log(i), 0); // 3, 3, 3 — var i is shared!
 }
-
-demo();
-```
-
-### 2. Hoisting and Initialization
-
-#### Overview / Tổng Quan
-Declarations are hoisted, but initialization behavior differs by keyword.
-
-#### Explanation / Giải thích
-function declaration được hoist đầy đủ, var hoist với giá trị undefined, còn let/const nằm trong TDZ cho đến khi dòng khai báo chạy.
-
-#### Example / Ví dụ
-```javascript
-console.log(foo); // undefined
-var foo = 'var';
-
-// console.log(bar); // ReferenceError
-let bar = 'let';
-```
-
-### 3. Temporal Dead Zone (TDZ)
-
-#### Overview / Tổng Quan
-TDZ is the time between block start and let/const initialization where access throws ReferenceError.
-
-#### Explanation / Giải thích
-TDZ giúp phát hiện dùng biến trước khi sẵn sàng, giảm class bug đọc giá trị chưa khởi tạo.
-
-#### Example / Ví dụ
-```javascript
-{
-  // console.log(score); // ReferenceError
-  let score = 100;
-  console.log(score);
+// Fix: let creates new binding per iteration
+for (let j = 0; j < 3; j++) {
+  setTimeout(() => console.log(j), 0); // 0, 1, 2
 }
 ```
 
-### 4. String and Number Deep Dive
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-#### Overview / Tổng Quan
-Numbers are IEEE-754 doubles; strings are immutable UTF-16 sequences.
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| "const = immutable object" | `const` chỉ khóa binding, không khóa nội dung | `const arr = []` vẫn cho phép `arr.push(1)` |
+| Dùng `var` trong code mới | Function scope + hoist gây bug khó trace | Dùng `const` mặc định, `let` khi cần reassign |
+| Nghĩ `let`/`const` không bị hoist | Chúng bị hoist nhưng vào TDZ | TDZ = tồn tại nhưng không thể access |
 
-#### Explanation / Giải thích
-Với Number, cần lưu ý sai số dấu chấm động. Với String, mỗi thao tác biến đổi tạo chuỗi mới.
+**🎯 Interview Pattern:**
+- Khi thấy câu hỏi về: "var vs let vs const", "hoisting", "TDZ", "closure loop bug"
+- → Nhớ đến: **scope type** (function vs block) + **hoisting behavior** + **loop gotcha**
+- → Mở đầu trả lời: *"Ba từ khóa khác nhau về scope và hoisting: `var` là function-scoped và hoisted với `undefined`; `let`/`const` là block-scoped và trong TDZ cho đến khi khai báo — điều này ngăn class bug đọc biến trước khi khởi tạo."*
 
-#### Example / Ví dụ
-```javascript
-console.log(0.1 + 0.2); // 0.30000000000000004
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+- 📚 Cần biết trước: Không cần prerequisite — đây là điểm bắt đầu
+- ➡️ Để hiểu tiếp: [Scope & Hoisting](./02-scope-hoisting.md) — chi tiết cơ chế hoisting; [Closures](./03-closures.md) — tại sao loop closure bug xảy ra
 
-const text = 'hello';
-const upper = text.toUpperCase();
-console.log(text, upper);
+---
+
+### 2. Primitive vs Reference Types / Kiểu Nguyên Thủy vs Kiểu Tham Chiếu
+
+> 🧠 **Memory Hook**: "Primitives live on the **S**tack, Objects live on the **H**eap" — SH memory model
+
+**Tại sao tồn tại? / Why does this exist?**
+JS cần phân biệt "dữ liệu nhỏ, copy rẻ" với "dữ liệu lớn, copy đắt".
+→ **Why?** Copy một number hay boolean vào function là O(1) — rẻ. Copy một object với 1000 properties là O(n) — đắt.
+→ **Why?** Giải pháp: primitive được copy by value; object được truyền by reference (chỉ copy địa chỉ bộ nhớ). Tiết kiệm RAM và CPU.
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+Primitive như tờ tiền mặt — copy thì mỗi người có tờ riêng. Object như tài khoản ngân hàng — bạn chỉ truyền **số tài khoản** (reference), không copy toàn bộ số dư.
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
+```
+7 Primitive types (copy by VALUE):
+number | string | boolean | null | undefined | symbol | bigint
+
+Reference types (copy by ADDRESS):
+object | array | function
+
+Memory model:
+┌──────────────┐  ┌─────────────────────────┐
+│   STACK      │  │        HEAP             │
+│              │  │                         │
+│ x = 5        │  │ { name: 'Alice' }  ◄──┐ │
+│ y = 5 (copy) │  │                       │ │
+│ a = ref ─────┼──┼──────────────────────►┘ │
+│ b = a = ref ─┼──┼──────────────────────►  │ ← same object!
+└──────────────┘  └─────────────────────────┘
 ```
 
-### 5. BigInt and Numeric Safety
-
-#### Overview / Tổng Quan
-BigInt handles integers beyond Number.MAX_SAFE_INTEGER.
-
-#### Explanation / Giải thích
-Khi xử lý ID lớn, blockchain, hoặc số nguyên 64-bit, BigInt tránh mất chính xác. Không trộn trực tiếp BigInt với Number.
-
-#### Example / Ví dụ
 ```javascript
-const maxSafe = Number.MAX_SAFE_INTEGER;
-const bigger = 9007199254740993n;
+// Primitive: copy by value
+let x = 5;
+let y = x;
+y = 10;
+console.log(x); // 5 — unchanged, y has its own copy
 
-console.log(maxSafe + 1 === maxSafe + 2); // true (unsafe)
-console.log(bigger + 2n);
+// Reference: copy by address
+const a = { name: 'Alice' };
+const b = a; // b points to SAME object
+b.name = 'Bob';
+console.log(a.name); // 'Bob' — a and b share the same object
 ```
 
-### 6. Boolean, null, undefined
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
 
-#### Overview / Tổng Quan
-undefined means not assigned; null is intentional empty value.
-
-#### Explanation / Giải thích
-Interviewer hay hỏi vì sao `typeof null` là "object" (legacy bug). Bạn chỉ cần nêu đó là historical quirk.
-
-#### Example / Ví dụ
 ```javascript
-let x;
-const y = null;
-
-console.log(typeof x); // undefined
-console.log(typeof y); // object (quirk)
+// typeof null is the famous bug:
+console.log(typeof null);       // "object" — historic bug, null IS a primitive
+console.log(typeof undefined);  // "undefined" — correct
+console.log(typeof function(){}); // "function" — special case for functions
+// (functions are objects but typeof gives 'function' for readability)
 ```
 
-### 7. Symbol for Unique Keys
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-#### Overview / Tổng Quan
-Symbol creates unique identifiers useful for hidden object keys and protocol customization.
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `typeof null === 'object'` → null là object | `null` là primitive — đây là bug lịch sử từ 1995 | Check null bằng `value === null`, không dùng typeof |
+| `{} === {}` → true | Objects so sánh bằng reference, không content | Hai object tạo riêng luôn là `false` — khác địa chỉ heap |
+| Tưởng string là mutable | String primitive là immutable | `str[0] = 'X'` im lặng thất bại — dùng `replace()`/`slice()` |
 
-#### Explanation / Giải thích
-Symbol giúp tránh đụng key trong object lớn hoặc thư viện. Nó cũng dùng cho các well-known symbols như Symbol.iterator.
+**🎯 Interview Pattern:**
+- Khi thấy câu hỏi về: "why `{} === {}` is false", "pass by value vs reference", "React state mutation bug"
+- → Nhớ đến: **stack vs heap** model — primitive copied, object address shared
+- → Mở đầu trả lời: *"JS truyền primitive by value và object by reference. Hai object literal `{}` và `{}` luôn không bằng nhau vì `===` so sánh địa chỉ bộ nhớ, không so sánh nội dung."*
 
-#### Example / Ví dụ
-```javascript
-const ID = Symbol('id');
-const user = { name: 'An', [ID]: 101 };
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+- 📚 Cần biết trước: var/let/const (mục 1)
+- ➡️ Để hiểu tiếp: [Prototypes & Inheritance](./04-prototypes-inheritance.md) — object delegation, [this keyword](./05-this-keyword.md) — `this` là object reference
 
-console.log(user[ID]);
-console.log(Object.keys(user)); // ['name']
+---
+
+### 3. Type Coercion / Ép Kiểu Ngầm
+
+> 🧠 **Memory Hook**: "`+` is greedy for strings — if either side can be string, both become string. `-` is greedy for numbers — always converts to number."
+
+**Tại sao tồn tại? / Why does this exist?**
+Brendan Eich thiết kế JS trong 10 ngày để web developer không phải lo lắng về kiểu dữ liệu.
+→ **Why?** Coercion tự động giúp `"5" * 2 = 10` hoạt động mà không cần ép kiểu thủ công.
+→ **Why?** Nhưng điều này tạo ra hành vi ngạc nhiên như `"5" + 2 = "52"` — là nguồn gốc của vô số bug.
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+Coercion giống phục vụ bàn cố đoán ý bạn khi order không rõ ràng. Đôi khi đúng, đôi khi sai hoàn toàn. `===` là order rõ ràng — không coerce, không đoán.
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
+```
+Operator coercion rules:
+┌─────────────────────────────────────────────────────┐
+│  "+" operator:                                       │
+│    If EITHER operand is string → string concat       │
+│    Otherwise → numeric addition                      │
+│                                                      │
+│  "-", "*", "/", "%" operators:                       │
+│    ALWAYS convert to number first                    │
+│                                                      │
+│  Comparison ==  → Abstract Equality (coerces)        │
+│  Comparison === → Strict Equality (NO coercion)      │
+└─────────────────────────────────────────────────────┘
+
+Falsy values (coerce to false in boolean context):
+false | 0 | -0 | 0n | "" | null | undefined | NaN
+Everything else → truthy (including "0", "false", {}, [])
 ```
 
-### 8. Reference Types and Identity
-
-#### Overview / Tổng Quan
-Objects, arrays, and functions compare by reference identity, not deep value.
-
-#### Explanation / Giải thích
-Hai object cùng shape vẫn khác nhau nếu không cùng tham chiếu. Đây là lý do cần deep comparison trong vài trường hợp.
-
-#### Example / Ví dụ
 ```javascript
-const a = { x: 1 };
-const b = { x: 1 };
-const c = a;
-
-console.log(a === b); // false
-console.log(a === c); // true
+"5" + 1    // "51" — string wins with +
+"5" - 1    // 4    — minus forces number
+"5" * "2"  // 10   — both → number
+[] + []    // ""   — [].toString() + [].toString()
+[] + {}    // "[object Object]"
+true + true // 2   — true → 1
+null == undefined // true — special case
+null == 0   // false — null only equals null/undefined loosely
+NaN === NaN // false — NaN is never equal to anything, even itself
 ```
 
-### 9. typeof and instanceof
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
 
-#### Overview / Tổng Quan
-typeof is good for primitives; instanceof checks prototype chain for objects.
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-#### Explanation / Giải thích
-`instanceof` có thể sai khác giữa realm (iframe). Với array, ưu tiên Array.isArray để ổn định hơn.
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Dùng `==` thay `===` | `==` coerce type → `"1" == 1` là true, dễ bug | Luôn dùng `===` trừ khi cố ý check null/undefined bằng `== null` |
+| `if (value)` thay vì check cụ thể | `""`, `0`, `NaN` đều falsy — reject giá trị hợp lệ | Dùng `value !== null && value !== undefined` hoặc `?? ` |
+| `typeof NaN === 'number'` gây nhầm | NaN là giá trị number nhưng biểu thị "Not a Number" | Dùng `Number.isNaN(v)` để check — không dùng `v === NaN` |
 
-#### Example / Ví dụ
-```javascript
-const arr = [1, 2, 3];
-console.log(typeof arr); // object
-console.log(arr instanceof Array); // true
-console.log(Array.isArray(arr)); // true
-```
+**🎯 Interview Pattern:**
+- Khi thấy câu hỏi về: "== vs ===", "what does `+` do with strings", "falsy values", type coercion gotchas
+- → Nhớ đến: `+` ưu tiên string concatenation; `-`/`*`/`/` ép số; `===` không coerce
+- → Mở đầu trả lời: *"JS có hai loại coercion: implicit (tự động qua toán tử như `+`) và explicit (thủ công qua `Number()`, `String()`). Dùng `===` luôn để tránh coercion ngầm, trừ khi cố ý dùng `value == null` để check cả null lẫn undefined một lúc."*
 
-### 10. Explicit Type Conversion
-
-#### Overview / Tổng Quan
-Prefer Number(), String(), Boolean() for readability and predictable behavior.
-
-#### Explanation / Giải thích
-Ép kiểu tường minh giúp giảm bug trong dữ liệu API hoặc form input, đặc biệt khi giá trị rỗng hoặc null.
-
-#### Example / Ví dụ
-```javascript
-const raw = '123';
-const asNumber = Number(raw);
-const asString = String(asNumber);
-const asBool = Boolean(asString);
-
-console.log(asNumber, asString, asBool);
-```
-
-### 11. WeakRef Basics
-
-#### Overview / Tổng Quan
-WeakRef holds a weak reference that does not prevent garbage collection.
-
-#### Explanation / Giải thích
-WeakRef là chủ đề nâng cao; nên dùng rất hạn chế. Nó phù hợp cache tối ưu bộ nhớ, nhưng hành vi thu gom rác là không deterministic.
-
-#### Example / Ví dụ
-```javascript
-let obj = { payload: 'large object' };
-const ref = new WeakRef(obj);
-
-console.log(ref.deref()?.payload);
-obj = null; // eligible for GC at some point
-```
-
-### 12. Practical Validation for Unknown Data
-
-#### Overview / Tổng Quan
-Runtime validation prevents unsafe assumptions from dynamic input.
-
-#### Explanation / Giải thích
-TypeScript không bảo vệ dữ liệu runtime từ network. Bạn vẫn cần guard/check trước khi dùng.
-
-#### Example / Ví dụ
-```javascript
-function parseAge(value) {
-  const age = Number(value);
-  if (!Number.isFinite(age) || age < 0) {
-    throw new Error('Invalid age');
-  }
-  return age;
-}
-
-console.log(parseAge('20'));
-```
-
-### 13. Interview Answer Pattern for Data Types
-
-#### Overview / Tổng Quan
-Define, distinguish, and demonstrate with one edge case.
-
-#### Explanation / Giải thích
-Mẫu trả lời tốt: nêu sự khác nhau, đưa ví dụ code, rồi nêu 1 edge case (NaN, null, TDZ, object identity).
-
-#### Example / Ví dụ
-```javascript
-function compareTypes(a, b) {
-  return {
-    strictEqual: a === b,
-    looseEqual: a == b,
-    typeA: typeof a,
-    typeB: typeof b
-  };
-}
-
-console.log(compareTypes('1', 1));
-```
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+- 📚 Cần biết trước: Primitive types (mục 2)
+- ➡️ Để hiểu tiếp: [TypeScript basics](../02-typescript/01-typescript-basics.md) — TypeScript ngăn coercion bug ở compile time
 
 ---
 
@@ -333,7 +302,9 @@ for (let j = 0; j < 3; j++) {
 }
 ```
 
-**Interview Tip:** Explain the function-scope vs block-scope distinction first, then name the closure-in-loop gotcha — interviewers love to see you know the real-world consequence, not just the definition.
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Liệt kê được cả 3 khác biệt (scope/hoist/TDZ), đưa ra closure-in-loop gotcha, giải thích tại sao `var` nguy hiểm với async code
+- ❌ Weak: "var là cũ, let/const mới hơn" — không giải thích được cơ chế hay hậu quả
 
 ### 🟡 [Mid] Q2. How do let and const improve maintainability?
 
@@ -356,7 +327,9 @@ config.timeout = 10000; // OK — mutating property, not reassigning binding
 // config = {};          // TypeError: Assignment to constant variable
 ```
 
-**Interview Tip:** Go beyond "const is immutable" — clarify that `const` prevents re-binding but not mutation. Interviewers at senior levels probe this distinction immediately.
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Phân biệt rõ "const prevents re-binding, not mutation", biết Object.freeze, giải thích relevance với React immutable state pattern
+- ❌ Weak: "const không thể thay đổi" — đúng về binding nhưng sẽ bị probe ngay về mutation
 
 ### 🔴 [Senior] Q3. Explain hoisting in one minute.
 
@@ -380,7 +353,9 @@ sayHi();             // TypeError: sayHi is not a function
 var sayHi = function() { console.log('Hi'); };
 ```
 
-**Interview Tip:** The trap interviewers set is the `var` function expression case — walk through what `var sayHi` holds at the point of the call (`undefined`) to show you understand compilation vs execution phases.
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Giải thích được compilation vs execution phase, cover var function expression gotcha, biết TDZ là "hoisted but uninitialized"
+- ❌ Weak: "hoisting nghĩa là JS đưa code lên đầu" — không phân biệt được declaration vs initialization
 
 ### 🟢 [Junior] Q4. Why does TDZ exist?
 
@@ -405,7 +380,9 @@ let b = 5;
 }
 ```
 
-**Interview Tip:** The `typeof` in TDZ edge case is a favourite trick question — most candidates assume `typeof` is always safe, but it fails inside TDZ.
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Biết TDZ là design decision để bắt bug sớm, biết `typeof` không an toàn trong TDZ (ngược với undeclared variable)
+- ❌ Weak: "TDZ là lỗi khi dùng let trước khai báo" — đúng nhưng không giải thích được lý do tồn tại
 
 ### 🟡 [Mid] Q5. Difference between declaration and initialization?
 
@@ -1228,7 +1205,9 @@ const role = userConfig?.role ?? null;  // null instead of undefined
 createUser('Eve', role);          // receives null, not default
 ```
 
-**Interview Tip:** "I never rely on accidental `undefined` to trigger defaults — I always pass a defined value or null. If I want the default, I omit the argument explicitly. This makes intent clear and avoids surprise when values come from optional chains."
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Biết `null` không trigger default (chỉ `undefined`), explain optional chain → undefined → unintended default chain
+- ❌ Weak: "default parameter là giá trị mặc định khi không truyền arg" — đúng nhưng thiếu null vs undefined distinction
 
 ### 🟢 [Junior] Q34. How do you explain data types to non-JS engineers?
 
@@ -1438,3 +1417,67 @@ for (let j = 0; j < 3; j++) {
 ```
 
 **Interview Tip:** "I use the 3-part structure: rule → example → gotcha. For scope: I always mention the `var` loop closure bug unprompted — it shows I know the practical consequence, not just the textbook definition."
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Dùng 3-part structure (rule + example + gotcha), mention var loop closure unprompted, explain tại sao `let` fix được bug đó
+- ❌ Weak: Chỉ định nghĩa scope mà không có ví dụ hay edge case
+
+---
+
+## Interview Q&A Summary / Tổng Kết Phỏng Vấn
+
+| Question | Level | Key Point |
+|----------|-------|-----------|
+| var vs let/const scope? | 🟢 | var = function-scoped + loop leaks; let/const = block-scoped |
+| How do let/const improve maintainability? | 🟡 | const = intent signal (no re-binding); let = explicit mutability |
+| Explain hoisting | 🔴 | function → fully hoisted; var → undefined; let/const → TDZ |
+| Why does TDZ exist? | 🟢 | Catches use-before-init bugs; typeof fails in TDZ |
+| Declaration vs initialization? | 🟡 | const must do both together; let/var can separate |
+| const objects remain mutable? | 🔴 | const = binding lock, not content lock; use Object.freeze |
+| 7 primitive types? | 🟡 | number, string, boolean, null, undefined, symbol, bigint |
+| Symbol vs string keys? | 🔴 | Symbol = unique, hidden from Object.keys/JSON; Symbol.for = global registry |
+| typeof null quirk? | 🔴 | Historical 1995 bug — 32-bit type tag; null IS a primitive |
+| Object.is vs ===? | 🟢 | Object.is: NaN===NaN, +0≠-0; React hooks use Object.is |
+| Array.isArray vs instanceof? | 🟡 | Array.isArray: cross-realm safe; instanceof fails across iframes |
+| structuredClone vs JSON? | 🔴 | structuredClone: Date/Map/Set/circular; JSON: drops fn/undefined/Symbol |
+| NaN/Infinity in business logic? | 🟡 | Use Number.isFinite() guard; NaN propagates silently |
+| null vs undefined normalization? | 🔴 | Use `??` not `||`; normalize to one form at API boundary |
+
+---
+
+## ⚡ Cold Call Simulation / Mô Phỏng Phỏng Vấn
+
+> 🎯 Interviewer asks cold: **"What is the difference between `null` and `undefined` in JavaScript, and when would you use each?"**
+
+**30 giây đầu — mở đầu lý tưởng / Ideal 30-second opening:**
+1. "Both represent 'no value', but they signal different intent: `undefined` means a variable was declared but never assigned — JavaScript sets it automatically; `null` means you *explicitly* chose to represent 'nothing here'."
+2. "The practical rule: `undefined` comes from the engine (uninitialized variables, missing function arguments, non-existent object properties); `null` comes from you as a developer signaling intentional absence."
+3. "In API design, I use `null` for 'this field exists but has no value' and `undefined` for 'this field was not included in the response at all' — that's an important schema distinction."
+4. "The gotcha: `typeof null` returns `'object'` due to a 1995 implementation bug — the only reliable null check is strict equality `value === null`, or `value == null` to catch both null and undefined at once."
+
+*Sau đó mở rộng theo hướng interviewer dẫn dắt: loose equality, nullish coalescing `??`, optional chaining, schema design.*
+
+---
+
+## Self-Check / Tự Kiểm Tra ⚡
+> **Đóng tài liệu lại trước khi làm — Close the doc before attempting.**
+
+- [ ] **Retrieval**: Viết ra từ trí nhớ 7 primitive types của JavaScript. Sau đó kiểm tra — bạn có nhớ `Symbol` và `BigInt` không?
+- [ ] **Visual**: Vẽ sơ đồ stack/heap: `let x = 5; let obj = {a: 1}; let y = x; let ref = obj;` — variable nào trên stack, object nào trên heap, arrow nào chia sẻ?
+- [ ] **Application**: `const config = { timeout: 5000 }; config.timeout = 10000;` — có lỗi không? Tại sao? Làm sao để làm config thực sự immutable?
+- [ ] **Debug**: Code trả về `"NaN VND"` trên UI. Trace nguyên nhân: input đến từ đâu, bị coerce sai ở bước nào, fix như thế nào?
+- [ ] **Teach**: Giải thích cho người không biết code: tại sao `"5" + 1 = "51"` nhưng `"5" - 1 = 4`? Dùng liên tưởng đời thực.
+
+💬 **Feynman Prompt:** Giải thích tại sao trong JavaScript, hai object `{}` và `{}` không bằng nhau — dùng liên tưởng "địa chỉ nhà" không dùng từ "reference", "heap", hay "memory address".
+
+🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày → 7 ngày → 14 ngày** để chuyển vào long-term memory.
+
+---
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on:** [JavaScript Basics](./00-javascript-basics.md) — data types là ngôn ngữ cơ bản trước khi học mechanics
+- ➡️ **Enables:** [Scope & Hoisting](./02-scope-hoisting.md) — var/let/const behavior phụ thuộc scope rules; [Closures](./03-closures.md) — closures capture variable bindings
+- 🔗 **Applied in:** TypeScript type system (prevents coercion bugs), React state management (immutability + reference equality), Zod/validation libraries (runtime type checking)
+
+[← Previous](./00-javascript-basics.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next →](./02-scope-hoisting.md)
