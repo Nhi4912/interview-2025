@@ -65,280 +65,207 @@ Bạn đang ở đây → [JavaScript Basics] ★
 
 ---
 
-## Core Concepts
+## Core Concepts / Khái Niệm Cốt Lõi
 
-### 1. JavaScript History and ECMAScript Evolution
+### 1. JavaScript Runtime Model / Mô Hình Thực Thi
 
-#### Overview / Tổng Quan
-JavaScript started in 1995 and is standardized as ECMAScript. Interviewers expect you to know key milestones such as ES5 strict mode, ES6 modules/classes, and modern async features.
+> 🧠 **Memory Hook**: "JS là đầu bếp một mình — làm xong món này mới làm món kia, nhưng có đơn hàng đặt trước (Event Loop) nên không cần đứng chờ"
 
-#### Explanation / Giải thích
-JavaScript ban đầu được tạo rất nhanh cho trình duyệt, sau đó chuẩn hóa thành ECMAScript để các engine triển khai nhất quán. Khi đi phỏng vấn, bạn nên nêu mốc ES5 (strict mode), ES6 (let/const, class, module), ES2017 (async/await), ES2020+ (BigInt, optional chaining).
+**Tại sao tồn tại? / Why does this exist?**
+Brendan Eich thiết kế JS để chạy trên browser — nơi DOM cần được access và modify.
+→ **Why?** Nếu JS có nhiều thread, hai thread cùng modify DOM đồng thời sẽ gây race condition và corrupt UI.
+→ **Why?** Giải pháp đơn giản nhất: single thread cho JS, nhưng delegate I/O (network, timer) sang Web APIs — không blocking, không race condition.
 
-#### Example / Ví dụ
-```javascript
-const milestones = {
-  ES5: ['strict mode', 'JSON'],
-  ES6: ['let/const', 'arrow function', 'Promise'],
-  ES2017: ['async/await'],
-  ES2020: ['BigInt', 'optional chaining']
-};
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+JS như bartender một mình: chỉ pha một ly một lúc (single-threaded). Khi khách đặt cocktail phức tạp (async), anh ta đưa cho prep team (Web APIs), tiếp tục phục vụ khách khác. Khi prep team xong, họ để ly trên quầy (callback queue) và anh ta lấy lúc rảnh (Event Loop).
 
-console.log(Object.keys(milestones));
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
+```
+JavaScript Runtime Architecture:
+┌───────────────────────────────────────────────────────┐
+│  JS Engine (V8)          │  Web APIs (browser)        │
+│  ┌─────────────────┐     │  ┌───────────────────────┐ │
+│  │  Call Stack      │     │  │ setTimeout            │ │
+│  │  main()         │────►│  │ fetch / XHR           │ │
+│  │  greet()        │     │  │ DOM events            │ │
+│  └─────────────────┘     │  └──────────┬────────────┘ │
+│                          │             │ done          │
+│  ┌─────────────────────────────────────▼────────────┐ │
+│  │           Callback / Task Queue                   │ │
+│  │   [setTimeout cb] [fetch cb] [click handler]     │ │
+│  └─────────────────────────────────────────────────┘  │
+│              ▲  Event Loop: when stack is empty        │
+│              └── picks next task from queue            │
+└───────────────────────────────────────────────────────┘
 ```
 
-### 2. Strict Mode Basics
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
 
-#### Overview / Tổng Quan
-Strict mode prevents silent errors and disallows dangerous patterns. It can be enabled per-file or per-function.
+```javascript
+// Single-threaded means: blocking code freezes EVERYTHING
+console.log('start');
+while (Date.now() < Date.now() + 2000) {} // freeze 2 seconds — UI freezes too!
+console.log('end'); // nothing renders during the while loop
 
-#### Explanation / Giải thích
-"use strict" giúp phát hiện lỗi sớm: ví dụ gán biến chưa khai báo sẽ ném lỗi thay vì tạo biến global ngầm. Trong module ES, strict mode mặc định luôn bật.
+// Non-blocking: yields control via async
+console.log('start');
+setTimeout(() => console.log('async'), 0);
+console.log('end');
+// Output: start → end → async (setTimeout always deferred, even with 0ms)
+```
 
-#### Example / Ví dụ
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| "setTimeout(fn, 0) chạy ngay lập tức" | Callback vẫn vào queue, chờ stack rỗng | Ít nhất 1 task cycle sau; output order: sync → setTimeout |
+| "JS là multi-threaded vì async" | Async không phải multi-threading | Chỉ có 1 JS thread; Web APIs chạy ngoài engine |
+| "Event Loop là một phần của JS engine" | Event Loop là browser/Node feature, không phải V8 | V8 chỉ có Call Stack; Event Loop là runtime layer |
+
+**🎯 Interview Pattern:**
+- Khi thấy câu hỏi về: "why single-threaded?", "how does async work?", "why does blocking code freeze UI?"
+- → Nhớ đến: **bartender analogy** — single thread + Web APIs delegation + Event Loop scheduling
+- → Mở đầu trả lời: *"JS là single-threaded — có một call stack, một tác vụ tại một thời điểm. Async hoạt động bằng cách delegate I/O sang Web APIs (browser), callback được trả về khi stack rỗng thông qua Event Loop."*
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+- 📚 Cần biết trước: Không cần prerequisite — đây là mental model nền tảng
+- ➡️ Để hiểu tiếp: [Event Loop & Async](./06-event-loop-async.md) — chi tiết microtask vs macrotask queue, Promise scheduling
+
+---
+
+### 2. Strict Mode / Chế Độ Nghiêm Ngặt
+
+> 🧠 **Memory Hook**: "'use strict' = bật đèn cảnh báo — JS im lặng throw lỗi, giúp bạn tìm bug trước khi user tìm thấy"
+
+**Tại sao tồn tại? / Why does this exist?**
+JavaScript ES3 có nhiều "silent failures" — lỗi xảy ra nhưng không throw, code tiếp tục chạy sai.
+→ **Why?** Vì web backward compatibility: không thể break sites cũ bằng cách throw lỗi mới.
+→ **Why?** ES5 (2009) giải pháp: opt-in strict mode. Các site cũ không thêm `'use strict'` → không bị break. Site mới opt-in → nhận strict behavior tốt hơn.
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+Strict mode như bật chế độ "strict checking" ở airport security — trước đây họ cho qua cả những thứ đáng ngờ (silent failures). Bật strict mode = mọi vi phạm nhỏ đều bị báo ngay (throw error) thay vì âm thầm lọt qua.
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
+```
+What strict mode catches (turns silent bugs → thrown errors):
+┌──────────────────────────────────────────────────────────┐
+│ SLOPPY MODE          │  STRICT MODE                     │
+├──────────────────────┼──────────────────────────────────┤
+│ x = 5 (no let/const) │  ReferenceError: x is not defined│
+│ duplicate params fn(a,a) │ SyntaxError                  │
+│ delete obj.prop     │  TypeError (non-configurable)     │
+│ this in fn() = window│  this = undefined               │
+│ with statement      │  SyntaxError                     │
+└──────────────────────┴──────────────────────────────────┘
+
+Auto-enabled in:
+- ES modules (import/export)
+- TypeScript files
+- Class bodies
+- <script type="module">
+```
+
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
 ```javascript
 'use strict';
 
-function demo() {
-  // x = 10; // ReferenceError in strict mode
-  let x = 10;
-  return x;
+// The this-in-function difference:
+function showThis() { return this; }
+showThis(); // undefined in strict; window in sloppy
+
+// This matters for method extraction:
+const obj = { greet() { return this; } };
+const greet = obj.greet;
+greet(); // undefined in strict → TypeError if you access this.name
+```
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| "Strict mode không cần vì dùng TypeScript" | TS strict là type-checking; JS strict mode là runtime behavior | Cả hai đều cần — TS strict ≠ `'use strict'` |
+| "Strict mode ảnh hưởng toàn file khi đặt trong function" | `'use strict'` trong function chỉ áp dụng cho function đó | Đặt ở đầu file để áp dụng toàn bộ |
+| Quên strict mode tự động bật trong class | Class body luôn strict — `this` trong class method không phải window | Nhất quán với class usage |
+
+**🎯 Interview Pattern:**
+- Khi thấy câu hỏi về: "what does `'use strict'` do?", "`this` undefined in function?", "accidental global variable"
+- → Nhớ đến: strict mode **turns silent failures into thrown errors** — 4 categories: globals, delete, params, this
+- → Mở đầu trả lời: *"Strict mode biến 'silent failures' của JavaScript thành thrown errors — cụ thể: gán biến chưa khai báo throw ReferenceError, `this` trong standalone function là undefined thay vì window, và duplicate parameter names là SyntaxError."*
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+- 📚 Cần biết trước: [Variables & Data Types](./01-variables-data-types.md) — var/let/const scope
+- ➡️ Để hiểu tiếp: [this keyword](./05-this-keyword.md) — strict mode thay đổi `this` binding trong standalone functions
+
+---
+
+### 3. Truthy/Falsy & Short-circuit Operators / Giá Trị Truthy/Falsy & Toán Tử Ngắn Mạch
+
+> 🧠 **Memory Hook**: "Only 8 things are falsy in JS — memorize them: `false 0 -0 0n "" null undefined NaN`. Everything else: truthy."
+
+**Tại sao tồn tại? / Why does this exist?**
+JS cần cho phép non-boolean values trong `if` condition để code ngắn hơn.
+→ **Why?** Thay vì `if (arr.length > 0)`, bạn có thể viết `if (arr.length)` — ngắn gọn hơn.
+→ **Why?** Nhưng điều này tạo ra gotcha: `if (value)` reject cả `0`, `""`, `false` — những giá trị hợp lệ trong nhiều trường hợp.
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+Truthy/falsy như luật "ai được vào club": chỉ 8 người bị từ chối (falsy), tất cả người khác được vào (truthy). Ngạc nhiên là `"0"`, `[]`, `{}` đều được vào — chỉ string/array/object rỗng theo nghĩa khác mới bị chặn.
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
+```
+8 Falsy values (all others = truthy):
+false | 0 | -0 | 0n | "" | null | undefined | NaN
+
+Short-circuit operators:
+┌────────────────────────────────────────────────────────┐
+│ a && b  → if a is falsy: return a; else return b       │
+│ a || b  → if a is truthy: return a; else return b      │
+│ a ?? b  → if a is null/undefined: return b; else return a│
+└────────────────────────────────────────────────────────┘
+
+Gotcha table:
+Value    │ !! (boolean) │ || 'default' │ ?? 'default'
+---------|--------------|--------------|-------------
+0        │ false        │ 'default'    │ 0  ← !! difference
+""       │ false        │ 'default'    │ "" ← !! difference
+null     │ false        │ 'default'    │ 'default'
+"0"      │ TRUE         │ "0"          │ "0"
+[]       │ TRUE         │ []           │ []
+```
+
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
+```javascript
+// The || vs ?? gotcha in React props / API responses:
+function Quantity({ qty }) {
+  return <div>{qty || 'N/A'}</div>; // BUG: renders 'N/A' when qty=0!
+  return <div>{qty ?? 'N/A'}</div>; // CORRECT: renders 0
 }
 
-console.log(demo());
+// Short-circuit for conditional execution:
+user.isLoggedIn && sendAnalytics(); // runs only if logged in
+const name = user?.profile?.name ?? 'Anonymous'; // safe deep access + fallback
 ```
 
-### 3. Primitive vs Reference Types
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-#### Overview / Tổng Quan
-Primitives are copied by value, while objects are copied by reference identity.
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Dùng `||` cho default value với số/string | `0` và `""` là valid values nhưng `||` treats them as "missing" | Dùng `??` (nullish coalescing) cho defaults |
+| `"0"` là falsy | String "0" là NON-EMPTY string → truthy | Chỉ empty string `""` là falsy |
+| `[]` và `{}` là falsy | Empty array/object là truthy! | `Boolean([]) === true`, `Boolean({}) === true` |
 
-#### Explanation / Giải thích
-Khi gán primitive, bạn tạo bản sao giá trị. Khi gán object/array/function, bạn sao chép tham chiếu đến cùng vùng nhớ, nên sửa một nơi ảnh hưởng nơi khác.
+**🎯 Interview Pattern:**
+- Khi thấy câu hỏi về: "falsy values in JS", "`||` vs `??`", "optional chaining"
+- → Nhớ đến: 8 falsy values list + `??` vs `||` distinction
+- → Mở đầu trả lời: *"JavaScript có đúng 8 falsy values: false, 0, -0, 0n, empty string, null, undefined, NaN. Tất cả còn lại truthy — kể cả `[]` và `{}`. Khi cần default value, dùng `??` thay `||` để không accidentally treat `0` hay `""` là 'missing'."*
 
-#### Example / Ví dụ
-```javascript
-let a = 5;
-let b = a;
-b = 7;
-
-const user1 = { name: 'A' };
-const user2 = user1;
-user2.name = 'B';
-
-console.log(a, b); // 5 7
-console.log(user1.name); // B
-```
-
-### 4. Type Coercion Fundamentals
-
-#### Overview / Tổng Quan
-JavaScript may convert types implicitly when operators are used with mixed operands.
-
-#### Explanation / Giải thích
-Ép kiểu ngầm (implicit coercion) là nguồn bug phổ biến. Phỏng vấn thường hỏi bạn vì sao "5" + 1 thành "51" nhưng "5" - 1 thành 4.
-
-#### Example / Ví dụ
-```javascript
-console.log('5' + 1); // '51'
-console.log('5' - 1); // 4
-console.log(Number('5') + 1); // 6
-console.log(String(5) + 1); // '51'
-```
-
-### 5. Truthy and Falsy Values
-
-#### Overview / Tổng Quan
-In conditionals, non-boolean values are converted to boolean. There are only a few falsy values.
-
-#### Explanation / Giải thích
-Các giá trị falsy gồm: false, 0, -0, 0n, "", null, undefined, NaN. Còn lại là truthy. Cần cẩn thận khi kiểm tra dữ liệu đầu vào.
-
-#### Example / Ví dụ
-```javascript
-const values = [false, 0, '', null, undefined, NaN, '0', [], {}];
-
-for (const v of values) {
-  if (v) {
-    console.log(v, '=> truthy');
-  } else {
-    console.log(v, '=> falsy');
-  }
-}
-```
-
-### 6. Equality Operators (== vs ===)
-
-#### Overview / Tổng Quan
-Loose equality performs coercion, strict equality compares type and value directly.
-
-#### Explanation / Giải thích
-Quy tắc an toàn là ưu tiên === và !== để tránh ép kiểu bất ngờ. Chỉ dùng == khi bạn thực sự kiểm soát được bảng coercion.
-
-#### Example / Ví dụ
-```javascript
-console.log(0 == false); // true
-console.log(0 === false); // false
-console.log(null == undefined); // true
-console.log(null === undefined); // false
-```
-
-### 7. Arithmetic and Logical Operators
-
-#### Overview / Tổng Quan
-Operators include arithmetic, comparison, logical, nullish coalescing, and optional chaining.
-
-#### Explanation / Giải thích
-Trong code production, toán tử ?? thường tốt hơn || khi bạn chỉ muốn fallback cho null/undefined (không phải cho 0 hoặc chuỗi rỗng).
-
-#### Example / Ví dụ
-```javascript
-const qty = 0;
-console.log(qty || 10); // 10 (unexpected sometimes)
-console.log(qty ?? 10); // 0
-
-const profile = null;
-console.log(profile?.name ?? 'Anonymous');
-```
-
-### 8. Control Flow: if/switch/loops
-
-#### Overview / Tổng Quan
-Control flow determines execution paths and repeated logic.
-
-#### Explanation / Giải thích
-Phỏng vấn cơ bản thường yêu cầu bạn chọn cấu trúc phù hợp: if cho điều kiện phức tạp, switch cho nhánh rời rạc, loop khi xử lý danh sách.
-
-#### Example / Ví dụ
-```javascript
-const role = 'admin';
-
-switch (role) {
-  case 'admin':
-    console.log('Full access');
-    break;
-  case 'editor':
-    console.log('Edit access');
-    break;
-  default:
-    console.log('Read only');
-}
-```
-
-### 9. Error Handling Basics
-
-#### Overview / Tổng Quan
-Use try/catch/finally to capture runtime exceptions and keep the app resilient.
-
-#### Explanation / Giải thích
-Không nên nuốt lỗi im lặng. Hãy log có ngữ cảnh hoặc chuyển đổi sang lỗi domain-specific để dễ debug và quan sát production.
-
-#### Example / Ví dụ
-```javascript
-function parseUser(jsonText) {
-  try {
-    return JSON.parse(jsonText);
-  } catch (error) {
-    throw new Error(`Invalid user payload: ${error.message}`);
-  }
-}
-
-console.log(parseUser('{"name":"Lan"}'));
-```
-
-### 10. Functions as Building Blocks
-
-#### Overview / Tổng Quan
-Functions support reuse, abstraction, and testability.
-
-#### Explanation / Giải thích
-Nên viết hàm nhỏ, rõ input/output để dễ test. Đây cũng là cách trả lời tốt khi được hỏi về clean code trong JavaScript.
-
-#### Example / Ví dụ
-```javascript
-function formatFullName(firstName, lastName) {
-  return `${firstName} ${lastName}`.trim();
-}
-
-console.log(formatFullName('Gia', 'Buu'));
-```
-
-### 11. Objects and Arrays Essentials
-
-#### Overview / Tổng Quan
-Objects store keyed data; arrays store ordered lists. Both are reference types.
-
-#### Explanation / Giải thích
-Bạn cần nắm thao tác không mutate để tránh side effects, đặc biệt trong React state updates.
-
-#### Example / Ví dụ
-```javascript
-const user = { id: 1, name: 'Mai' };
-const updatedUser = { ...user, name: 'Minh' };
-
-const nums = [1, 2, 3];
-const nextNums = [...nums, 4];
-
-console.log(updatedUser, nextNums);
-```
-
-### 12. Short-Circuit Evaluation
-
-#### Overview / Tổng Quan
-Logical operators can return operands, not just booleans, enabling concise defaults and guards.
-
-#### Explanation / Giải thích
-Cần hiểu behavior trả về giá trị gốc để tránh bug. Ví dụ `a && b` trả về a nếu a falsy, ngược lại trả về b.
-
-#### Example / Ví dụ
-```javascript
-const token = '';
-const header = token && `Bearer ${token}`;
-const safeHeader = token ? `Bearer ${token}` : null;
-
-console.log(header, safeHeader);
-```
-
-### 13. Basic Debugging Mindset
-
-#### Overview / Tổng Quan
-Interviewers value systematic debugging: reproduce, isolate, observe, and verify fix.
-
-#### Explanation / Giải thích
-Đừng chỉ đoán. Hãy trình bày quy trình: tái hiện lỗi, thu hẹp phạm vi, thêm log/ breakpoint, kiểm tra giả thuyết, rồi mới sửa.
-
-#### Example / Ví dụ
-```javascript
-function safeDivide(a, b) {
-  if (b === 0) {
-    throw new Error('Division by zero');
-  }
-  return a / b;
-}
-
-console.log(safeDivide(10, 2));
-```
-
-### 14. Interview Strategy for Basics
-
-#### Overview / Tổng Quan
-Strong basics answers combine definition, practical example, and caveat.
-
-#### Explanation / Giải thích
-Công thức trả lời hiệu quả: Định nghĩa ngắn → Ví dụ code nhỏ → Cảnh báo bug thường gặp → Best practice.
-
-#### Example / Ví dụ
-```javascript
-function answerTemplate(topic) {
-  return {
-    definition: `What is ${topic}?`,
-    example: 'Show 3-5 lines of code',
-    caveat: 'Mention a common pitfall'
-  };
-}
-
-console.log(answerTemplate('strict mode'));
-```
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+- 📚 Cần biết trước: [Variables & Data Types](./01-variables-data-types.md) — primitive types và coercion
+- ➡️ Để hiểu tiếp: [Closures](./03-closures.md) — short-circuit là pattern phổ biến trong closure-based guards
 
 ---
 
@@ -364,7 +291,9 @@ console.log('end');
 // Output: start → end → async
 ```
 
-**Interview Tip:** Follow up with "The Event Loop handles async without true multi-threading — macrotask queue, microtask queue, and the call stack." This shows depth beyond the basic answer.
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Giải thích Web APIs delegation + Event Loop scheduling, biết tại sao DOM access cần single-thread
+- ❌ Weak: "JS là single-threaded" — đúng nhưng không giải thích được tại sao, và async hoạt động thế nào
 
 ### 🟡 [Mid] Q2. Differentiate ECMAScript and JavaScript.
 
@@ -384,7 +313,9 @@ const city = user?.address?.city ?? 'Unknown';
 // Shows which ECMAScript edition introduced it
 ```
 
-**Interview Tip:** Mention TC39 and the Stage 0–4 proposal process. Stage 4 = ships in next ES edition. It shows you understand how new syntax reaches browsers.
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Phân biệt spec vs implementation, biết TC39 + Stage 0-4 process, explain tại sao Babel vẫn cần
+- ❌ Weak: "ECMAScript là tên gọi khác của JavaScript" — không hiểu spec vs implementation
 
 ### 🔴 [Senior] Q3. Name major ES milestones interviewers ask about.
 
@@ -436,7 +367,9 @@ function calculateTotal() {
 // <script type="module"> or import/export syntax → strict by default
 ```
 
-**Interview Tip:** "In modern codebases using ES modules or TypeScript, you get strict mode automatically. I mention this to show I understand *why* we use these tools, not just *how*."
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Biết strict mode auto-bật trong ES modules/TypeScript, list được ít nhất 4 behaviors thay đổi
+- ❌ Weak: "Strict mode ngăn một số lỗi" — quá chung, không nêu được cụ thể
 
 ### 🟡 [Mid] Q5. What changes in strict mode for accidental globals?
 
@@ -1152,3 +1085,63 @@ const data = await fetch('/api/user')  // correct
 ```
 
 **Interview Tip:** These 5 mistakes appear in nearly every junior interview. Being able to spot and explain each one signals real experience beyond tutorial code.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: List được đủ 5 mistakes với ví dụ code, giải thích được tại sao mỗi cái là bug (not just "it's wrong")
+- ❌ Weak: "Dùng var thay vì let/const" — chỉ liệt kê mà không giải thích consequence
+
+---
+
+## Interview Q&A Summary / Tổng Kết Phỏng Vấn
+
+| Question | Level | Key Point |
+|----------|-------|-----------|
+| What is JS and why single-threaded? | 🟢 | One thread + Web APIs delegation + Event Loop |
+| ECMAScript vs JavaScript? | 🟡 | Spec vs implementation; TC39 Stage 0-4 |
+| Major ES milestones? | 🔴 | ES5 (strict/JSON), ES6 (let/class/module), ES2017 (await), ES2020 (?.) |
+| When to enable strict mode? | 🟢 | Always; auto in ES modules/TypeScript/classes |
+| Strict mode accidental globals? | 🟡 | `x = 5` → ReferenceError; `this` in fn → undefined |
+| How does V8 optimize? | 🔴 | JIT: hidden classes, inline caching, code gen |
+| Truthy vs falsy values? | 🟢 | 8 falsy values; `[]` and `{}` are truthy |
+| `||` vs `??` operator? | 🟡 | `||` rejects all falsy; `??` only null/undefined |
+| How does Event Loop work? | 🟡 | Stack → Web APIs → Queue → Stack (when empty) |
+| Top 5 beginner mistakes? | 🟢 | var loop, forgot await, mutation, ==, typeof null |
+
+---
+
+## ⚡ Cold Call Simulation / Mô Phỏng Phỏng Vấn
+
+> 🎯 Interviewer asks cold: **"Why is JavaScript single-threaded, and how does it handle async operations?"**
+
+**30 giây đầu — mở đầu lý tưởng / Ideal 30-second opening:**
+1. "JavaScript is single-threaded by design — it shares a thread with browser rendering, so having multiple JS threads would require mutex locks on the DOM, making it far more complex."
+2. "Async is handled by offloading I/O work to Web APIs (the browser's C++ layer) — `fetch`, `setTimeout`, event listeners all run outside the JS engine."
+3. "When those operations complete, their callbacks land in the task queue; the Event Loop picks them up and pushes them onto the call stack only when it's empty."
+4. "The gotcha: even `setTimeout(fn, 0)` is deferred — it will never run before the current synchronous code finishes, which surprises developers who expect '0ms' to mean 'immediately'."
+
+*Sau đó mở rộng: microtask vs macrotask queue, Promise vs setTimeout ordering, Web Workers for true parallelism.*
+
+---
+
+## Self-Check / Tự Kiểm Tra ⚡
+> **Đóng tài liệu lại trước khi làm — Close the doc before attempting.**
+
+- [ ] **Retrieval**: Viết ra từ trí nhớ đúng 8 falsy values trong JavaScript. Không được nhìn lại — sau đó kiểm tra bạn có nhớ `-0` và `0n` không?
+- [ ] **Visual**: Vẽ sơ đồ JavaScript Runtime Architecture từ trí nhớ: Call Stack, Web APIs, Callback Queue, Event Loop — và mũi tên nối chúng.
+- [ ] **Application**: `const qty = 0; const display = qty || 'N/A';` — `display` là gì? Tại sao? Sửa code để `0` hiển thị đúng.
+- [ ] **Debug**: Code `const user = fetch('/api/user'); console.log(user.name);` in ra `undefined`. Nguyên nhân? Fix?
+- [ ] **Teach**: Giải thích "tại sao `setTimeout(fn, 0)` không chạy ngay" cho người không biết lập trình — dùng liên tưởng bartender.
+
+💬 **Feynman Prompt:** Giải thích Event Loop cho bạn không biết code, dùng liên tưởng nhà bếp nhà hàng. Không dùng từ "thread", "stack", "queue", hay "callback".
+
+🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày → 7 ngày → 14 ngày** để chuyển vào long-term memory.
+
+---
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on:** Không có prerequisite — đây là điểm khởi đầu của JS track
+- ➡️ **Enables:** [Variables & Data Types](./01-variables-data-types.md) — kiểu dữ liệu và var/let/const; [Event Loop & Async](./06-event-loop-async.md) — chi tiết về Event Loop
+- 🔗 **Applied in:** Mọi JS code — understanding the runtime model giải thích tại sao async patterns tồn tại
+
+[← Previous](../../00-table-of-contents.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next →](./01-variables-data-types.md)
