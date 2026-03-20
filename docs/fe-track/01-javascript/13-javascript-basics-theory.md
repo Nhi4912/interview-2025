@@ -9,32 +9,217 @@
 
 ---
 
-## Overview / Tổng Quan
+## Real-World Scenario / Tình Huống Thực Tế
 
-**English:** This chapter explains JavaScript basics from the ECMAScript specification perspective: execution context, variable environment, scope chain, hoisting, type internals, and coercion abstract operations.
+**Debug challenge:** Senior engineer nhận ticket: "Tại sao `price == false` là `true` khi `price = 0`?" — Junior fix bằng cách thêm `|| price === 0` nhưng vẫn không hiểu tại sao. Engineer giải thích bằng Abstract Equality Algorithm: `false` → ToNumber → `0`, `0 == 0` → `true`. Sau đó fix đúng: `price != null` (only null/undefined are treated as equal by `!=`). Ticket đóng trong 5 phút.
 
-**Tiếng Việt:** Chương này giải thích nền tảng JavaScript theo góc nhìn đặc tả ECMAScript: execution context, variable environment, scope chain, hoisting, nội bộ kiểu dữ liệu, và các thao tác chuyển đổi kiểu trừu tượng.
+**Bài học:** Biết spec-level behavior (ToPrimitive, ToNumber, Abstract Equality steps) không phải "overthinking" — đây là công cụ debug xác định. Khi gặp coercion bug trong production, engineer biết spec sẽ fix trong phút, engineer chỉ biết syntax sẽ trial-and-error trong giờ.
 
-**English:** Goal: build interview-ready mental models, not only syntax memorization.
+## What & Why / Cái Gì & Tại Sao
 
-**Tiếng Việt:** Mục tiêu: xây dựng mô hình tư duy sẵn sàng cho phỏng vấn, không chỉ ghi nhớ cú pháp.
+**Analogy:** ECMAScript spec giống legal contract — mọi behavior của JavaScript đều được định nghĩa ở đó. Khi JavaScript làm điều "bất ngờ", nó chỉ đang tuân thủ spec chính xác. Biết spec = đọc được contract = không bị bất ngờ.
+
+**Scope của doc này:** Spec-level explanations của Execution Context (Creation/Execution phases), Abstract Operations (ToPrimitive/ToNumber/ToString/ToBoolean), và Equality Algorithms. Syntax basics → xem [00-javascript-basics.md](./00-javascript-basics.md). Scope/Hoisting → xem [02-scope-hoisting-comprehensive.md](./02-scope-hoisting-comprehensive.md).
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+[ECMAScript Spec-Level Concepts]
+        │
+        ├── Execution Context
+        │       ├── Creation Phase: allocate bindings (var=undefined, let/const=TDZ, fn=hoisted)
+        │       ├── Execution Phase: run statements line by line
+        │       └── Call Stack: LIFO stack of execution contexts
+        │
+        ├── Lexical/Variable Environments
+        │       ├── Environment Record: binding → { mutable, initialized, value }
+        │       ├── Outer reference: forms the Scope Chain
+        │       └── TDZ: let/const are bound but uninitialized until declaration line
+        │
+        ├── Type System Internals
+        │       ├── 8 language types: undefined, null, boolean, number, bigint, string, symbol, object
+        │       └── typeof null = "object" (historical bug)
+        │
+        └── Abstract Operations (how coercion works)
+                ├── ToPrimitive(input, hint) → valueOf or toString
+                ├── ToNumber: undefined→NaN, null→0, false→0, true→1, ""→0, "42"→42, []→0, {}→NaN
+                ├── ToString: undefined→"undefined", null→"null", []→"", {}→"[object Object]"
+                ├── ToBoolean: false for (false, 0, -0, 0n, "", null, undefined, NaN) — all else true
+                └── Abstract Equality (==): apply ToNumber/ToString rules before comparing
+```
 
 ---
 
-## Table of Contents / Mục Lục
-1. [Specification Types vs Language Types / Kiểu Đặc Tả vs Kiểu Ngôn Ngữ](#1-specification-types-vs-language-types--kiểu-đặc-tả-vs-kiểu-ngôn-ngữ)
-2. [Execution Context Theory / Lý Thuyết Execution Context](#2-execution-context-theory--lý-thuyết-execution-context)
-3. [Variable Environment and Lexical Environment / Môi Trường Biến và Môi Trường Từ Vựng](#3-variable-environment-and-lexical-environment--môi-trường-biến-và-môi-trường-từ-vựng)
-4. [Scope Chain Theory / Lý Thuyết Scope Chain](#4-scope-chain-theory--lý-thuyết-scope-chain)
-5. [Hoisting Mechanism / Cơ Chế Hoisting](#5-hoisting-mechanism--cơ-chế-hoisting)
-6. [Type System Internals / Nội Bộ Hệ Thống Kiểu](#6-type-system-internals--nội-bộ-hệ-thống-kiểu)
-7. [Coercion Rules and Abstract Operations / Quy Tắc Coercion và Thao Tác Trừu Tượng](#7-coercion-rules-and-abstract-operations--quy-tắc-coercion-và-thao-tác-trừu-tượng)
-8. [Equality Algorithms / Thuật Toán So Sánh Bằng](#8-equality-algorithms--thuật-toán-so-sánh-bằng)
-9. [Interview Traps and Best Practices / Bẫy Phỏng Vấn và Thực Hành Tốt](#9-interview-traps-and-best-practices--bẫy-phỏng-vấn-và-thực-hành-tốt)
-10. [Câu Hỏi Phỏng Vấn / Interview Q&A](#câu-hỏi-phỏng-vấn--interview-qa)
-11. [Appendix: Quick Reference / Phụ Lục: Tóm Tắt Nhanh](#appendix-quick-reference--phụ-lục-tóm-tắt-nhanh)
+## Core Concepts / Khái Niệm Cốt Lõi
 
 ---
+
+### 1. Execution Context — The Two-Phase Model
+
+**🧠 Memory Hook:** "**Creation Phase = scan and reserve; Execution Phase = run line by line**. Hoisting IS the Creation Phase."
+
+**Why does this exist? / Tại sao tồn tại?**
+
+- Why does JavaScript need a "Creation Phase"? Because functions and `var` declarations are available before their line — the engine must scan and prepare bindings before execution starts
+- Why do `let`/`const` behave differently from `var` in the Creation Phase? By spec design: `var` is initialized to `undefined` during Creation, but `let`/`const` are bound but marked uninitialized — accessing them before their line = ReferenceError (TDZ)
+- Why does this matter for debugging? When you see `undefined` vs `ReferenceError` for the same pattern, the difference is exactly which phase behavior you triggered
+
+**Visual — Creation Phase binding states:**
+
+```
+function example() {
+  console.log(a)    // undefined (var initialized in Creation)
+  console.log(b)    // ReferenceError (let in TDZ during Creation)
+  console.log(fn)   // ƒ fn() { } (function hoisted fully in Creation)
+
+  var a = 1
+  let b = 2
+  function fn() { return 42 }
+}
+
+CREATION PHASE (before line 1 runs):
+  a   → binding { mutable: true, initialized: true, value: undefined }
+  b   → binding { mutable: true, initialized: false, value: ??? }  ← TDZ
+  fn  → binding { mutable: true, initialized: true, value: [Function fn] }
+
+EXECUTION PHASE (line by line):
+  Line 2: a = 1  → a.value = 1
+  Line 3: b = 2  → b.initialized = true, b.value = 2
+```
+
+**Common Mistakes:**
+
+| ❌ Wrong | ✅ Correct |
+|---|---|
+| "Hoisting moves code to the top" | Hoisting = Creation Phase processes declarations before execution — code doesn't move |
+| "`let` is not hoisted" | `let` IS bound during Creation (hoisted) — just not initialized (TDZ) |
+| "`var` in a block leaks to function scope" | `var` has function scope, not block scope — this IS the behavior, not a bug |
+| "Function expressions are hoisted like declarations" | `const fn = () => {}` — the `const` binding is TDZ; only `function fn()` gets fully hoisted |
+
+**🎯 Interview Pattern:**
+- **Trigger**: "hoisting" / "TDZ" / "why undefined vs ReferenceError"
+- **Concept**: Creation Phase sets up bindings; which kind (var/let/fn) determines initial state
+- **Opening**: "Hoisting is really the Creation Phase of Execution Context. All bindings are set up before code runs. `var` gets initialized to `undefined`, function declarations get the full function, but `let`/`const` are bound yet uninitialized — accessing them in that window is the TDZ ReferenceError..."
+
+**🔑 Knowledge Chain:**
+- **Prereq**: Variables and scoping basics
+- **Enables**: Debugging hoisting bugs, understanding closures (closure captures the environment record), explaining `this` binding (determined during Creation Phase)
+
+---
+
+### 2. Abstract Operations — How Coercion Actually Works
+
+**🧠 Memory Hook:** "**ToPrimitive → hint? → valueOf or toString. '+' prefers strings. '-' forces numbers.**"
+
+**Why does this exist? / Tại sao tồn tại?**
+
+- Why does JavaScript allow `"5" - true`? Because the engine applies ToNumber to both operands for arithmetic — it's spec'd behavior, not an accident
+- Why does `+` behave differently from `-`? Because `+` is ambiguous (concatenation or addition) — the spec says if either operand is a string, do string concatenation; `-` has no string meaning, so it always applies ToNumber
+- Why does `[] == false` evaluate to `true`? Because the Abstract Equality Algorithm converts both sides: `false` → `0`, `[]` → ToPrimitive → `""` → `0`, then `0 === 0` → `true`
+
+**Visual — Abstract Operations chain:**
+
+```
+ToPrimitive(obj, hint):
+  1. Check Symbol.toPrimitive method → call with hint
+  2. If hint is "number": try valueOf() → if not primitive, try toString()
+  3. If hint is "string": try toString() → if not primitive, try valueOf()
+  4. Default hint: "number" (except Date which uses "string")
+
+ToNumber conversion table:
+  undefined  → NaN
+  null       → 0
+  false      → 0, true → 1
+  ""         → 0, "42" → 42, "abc" → NaN
+  []         → ToPrimitive("") → "" → 0
+  {}         → ToPrimitive("[object Object]") → NaN
+  [1]        → ToPrimitive("1") → 1
+
+"5" - true:
+  ToNumber("5") → 5
+  ToNumber(true) → 1
+  5 - 1 = 4  ✓
+
+"5" + true:
+  "5" is string → string concatenation hint
+  ToString(true) → "true"
+  "5" + "true" = "5true"  ← different operator!
+```
+
+**Common Mistakes:**
+
+| ❌ Wrong | ✅ Correct |
+|---|---|
+| "`+` always does math" | `+` does concatenation if either side is a string or object coercing to string |
+| "ToBoolean follows ToNumber" | ToBoolean is independent — `""` is falsy but `ToNumber("") = 0`, not NaN |
+| "`[]` is falsy" | `[]` is TRUTHY (ToBoolean of object = true) — but `[] == false` is true via different coercion path |
+| "null == 0 is true" | `null == undefined` is true (spec special case) but `null == 0` is false (null only equals null/undefined in `==`) |
+
+**🎯 Interview Pattern:**
+- **Trigger**: "explain this coercion result" / "== vs ===" / "why is this bug happening"
+- **Concept**: ToPrimitive → hint → valueOf/toString; operator determines hint
+- **Opening**: "This is the ToPrimitive/ToNumber chain. When JavaScript coerces `[]`, it calls ToPrimitive with 'number' hint, which calls `[].valueOf()` (returns `[]`, not primitive), then `[].toString()` which returns `''`, then ToNumber('') which is `0`. So `[] == 0` is `true`..."
+
+**🔑 Knowledge Chain:**
+- **Prereq**: Primitive vs reference types, string/number operators
+- **Enables**: Debugging `==` bugs, understanding why `Boolean({}) === true` but `{} == false` coerces strangely, TypeScript type narrowing
+
+---
+
+### 3. Abstract Equality Algorithm — `==` Step by Step
+
+**🧠 Memory Hook:** "**null/undefined are only equal to each other. `==` converts to numbers. `===` never converts.**"
+
+**Why does this exist? / Tại sao tồn tại?**
+
+- Why does `==` do type coercion at all? Language design decision from 1995 — "helpful" for comparing `"42" == 42` in early web forms. In hindsight, considered a mistake (most style guides ban `==`)
+- Why is `null == undefined` special? Spec explicitly defines it as `true` as a special case — `null` and `undefined` only equal each other and nothing else via `==`
+- Why does `Object.is` exist separately? `===` has two edge cases: `NaN !== NaN` and `+0 === -0`. `Object.is` fixes both — used internally by React's state comparison
+
+**Definition — `==` Abstract Equality Algorithm steps:**
+
+```
+x == y:
+1. Same type? → use === semantics (numbers: NaN≠NaN, -0=+0)
+2. null == undefined? → true (special case)
+3. undefined == null? → true (special case)
+4. Number == String? → ToNumber(String), recurse
+5. Boolean == anything? → ToNumber(Boolean), recurse
+6. Object == Number/String/Symbol? → ToPrimitive(Object), recurse
+
+=== Strict Equality (never coerces):
+  Different types → false (always)
+  NaN === NaN → false (always)
+
+Object.is (SameValue):
+  NaN, NaN → true ← fixes ===
+  +0, -0 → false ← fixes ===
+  Everything else same as ===
+```
+
+**Common Mistakes:**
+
+| ❌ Wrong | ✅ Correct |
+|---|---|
+| "Use `==` with explicit conversion" | Just use `===` everywhere; add explicit cast if needed |
+| "NaN == NaN is true" | `NaN !== NaN` by spec — use `Number.isNaN()` or `Object.is(x, NaN)` |
+| "`null == 0` is true" | `null` only `== undefined` in the spec — `null == 0` is `false` |
+| "React uses `===` for state comparison" | React (and Zustand/Jotai) use `Object.is` — that's why setting state to `NaN` twice still triggers re-render on first, not second |
+
+**🎯 Interview Pattern:**
+- **Trigger**: "explain `==` vs `===`" / "when is NaN equal to NaN" / "React state comparison"
+- **Concept**: Abstract Equality Algorithm steps; Object.is for NaN and -0
+- **Opening**: "The Abstract Equality Algorithm has specific steps: first check same type (use ===), then handle null/undefined special case, then convert booleans to numbers, then convert strings to numbers, then ToPrimitive for objects. That's why `null == undefined` is true but `null == 0` is false..."
+
+**🔑 Knowledge Chain:**
+- **Prereq**: Primitive types, ToNumber abstract operation
+- **Enables**: React `Object.is` state comparison, `Number.isNaN` vs global `isNaN`, TypeScript strict null checks design
+
+---
+
+## Reference Theory / Lý Thuyết Tham Khảo
+
+
 
 ## 1. Specification Types vs Language Types / Kiểu Đặc Tả vs Kiểu Ngôn Ngữ
 
@@ -483,133 +668,93 @@ Object.is(+0, -0); // false
 
 ---
 
-## Câu Hỏi Phỏng Vấn / Interview Q&A
+## Interview Q&A / Câu Hỏi Phỏng Vấn
 
-### 🟢 [Junior] Q1: What is execution context? / Execution context là gì?
+### Q: Explain hoisting precisely — what is actually happening under the hood? 🟡 Mid
 
-**English Answer:**
-Execution context is the runtime environment for executing code, including scope bindings and `this`.
+**A:** Hoisting is the Creation Phase of the Execution Context. Before any code runs, the engine scans the scope and creates bindings for all declarations: `var` → bound + initialized to `undefined`; function declarations → bound + initialized to the full function object; `let`/`const` → bound but *uninitialized* (TDZ). Code doesn't "move" — it's the Creation Phase that runs before the Execution Phase.
 
-**Trả Lời Tiếng Việt:**
-Execution context là môi trường runtime để thực thi code, gồm binding phạm vi và `this`.
+Hoisting là Creation Phase của Execution Context. Engine scan scope trước khi chạy code, tạo bindings: `var` được khởi tạo `undefined`, function declaration được khởi tạo với function object, `let`/`const` được bind nhưng chưa khởi tạo (TDZ). Code không di chuyển lên trên — đó là Creation Phase chạy trước Execution Phase.
 
-### 🟢 [Junior] Q2: Difference between `var`, `let`, `const`? / Khác biệt giữa `var`, `let`, `const`?
-
-**English Answer:**
-`var` is function-scoped and initialized as undefined; `let/const` are block-scoped and subject to TDZ.
-
-**Trả Lời Tiếng Việt:**
-`var` có phạm vi hàm và khởi tạo undefined; `let/const` có phạm vi khối và chịu TDZ.
-
-### 🟢 [Junior] Q3: What is scope chain? / Scope chain là gì?
-
-**English Answer:**
-A lookup chain from current lexical environment to outer environments until global scope.
-
-**Trả Lời Tiếng Việt:**
-Là chuỗi tra cứu từ môi trường từ vựng hiện tại ra môi trường cha đến global.
-
-### 🟢 [Junior] Q4: Why does `typeof null` return `"object"`? / Vì sao `typeof null` trả về `"object"`?
-
-**English Answer:**
-Historical bug retained for web compatibility.
-
-**Trả Lời Tiếng Việt:**
-Lỗi lịch sử được giữ lại để tương thích ngược trên web.
-
-### 🟡 [Mid] Q5: Explain hoisting precisely. / Giải thích hoisting chính xác.
-
-**English Answer:**
-Declarations are processed during creation phase; `var` gets `undefined`, function declarations get function objects, `let/const` remain uninitialized until execution reaches declaration.
-
-**Trả Lời Tiếng Việt:**
-Khai báo được xử lý ở pha tạo; `var` nhận `undefined`, function declaration nhận function object, `let/const` chưa khởi tạo cho đến khi chạy đến dòng khai báo.
-
-### 🟡 [Mid] Q6: Why is `[] == false` true? / Vì sao `[] == false` là true?
-
-**English Answer:**
-`false` becomes 0, `[]` becomes "" then 0; finally 0 == 0.
-
-**Trả Lời Tiếng Việt:**
-`false` thành 0, `[]` thành "" rồi thành 0; cuối cùng so sánh 0 == 0.
-
-### 🟡 [Mid] Q7: Compare `==`, `===`, `Object.is`. / So sánh `==`, `===`, `Object.is`.
-
-**English Answer:**
-`==` uses coercion, `===` compares type+value without coercion, `Object.is` differs for NaN and signed zero.
-
-**Trả Lời Tiếng Việt:**
-`==` có coercion, `===` so sánh kiểu+giá trị không coercion, `Object.is` khác ở NaN và signed zero.
-
-### 🟡 [Mid] Q8: What is TDZ and why useful? / TDZ là gì và vì sao hữu ích?
-
-**English Answer:**
-TDZ catches early access bugs before initialization, making code safer and clearer.
-
-**Trả Lời Tiếng Việt:**
-TDZ bắt lỗi truy cập sớm trước khởi tạo, giúp code an toàn và rõ ràng hơn.
-
-### 🟡 [Mid] Q9: Explain ToPrimitive algorithm. / Giải thích thuật toán ToPrimitive.
-
-**English Answer:**
-Check `Symbol.toPrimitive`; otherwise use `valueOf/toString` order based on preferred hint.
-
-**Trả Lời Tiếng Việt:**
-Kiểm tra `Symbol.toPrimitive`; nếu không có thì dùng thứ tự `valueOf/toString` theo hint.
-
-### 🟡 [Mid] Q10: Why prefer explicit conversion? / Vì sao nên chuyển đổi kiểu tường minh?
-
-**English Answer:**
-It prevents hidden bugs and makes intent reviewable in PRs and interviews.
-
-**Trả Lời Tiếng Việt:**
-Giúp tránh lỗi ẩn và thể hiện rõ ý đồ khi review PR hoặc phỏng vấn.
-
-### 🔴 [Senior] Q11: How do closures affect memory? / Closure ảnh hưởng bộ nhớ thế nào?
-
-**English Answer:**
-Closures can retain outer environments; unnecessary captured references may increase memory retention.
-
-**Trả Lời Tiếng Việt:**
-Closure giữ lại môi trường bên ngoài; tham chiếu bắt giữ không cần thiết có thể giữ bộ nhớ lâu hơn.
-
-### 🔴 [Senior] Q12: How to design APIs around null/undefined? / Thiết kế API quanh null/undefined ra sao?
-
-**English Answer:**
-Use clear contracts: missing field as undefined, explicit empty value as null, and validate at boundaries.
-
-**Trả Lời Tiếng Việt:**
-Dùng contract rõ ràng: thiếu trường dùng undefined, giá trị rỗng có chủ đích dùng null, và validate ở ranh giới hệ thống.
-
-### 🔴 [Senior] Q13: Why does static analysis help with coercion? / Vì sao static analysis giúp xử lý coercion?
-
-**English Answer:**
-It flags suspicious implicit conversions and enforces stricter typing assumptions earlier.
-
-**Trả Lời Tiếng Việt:**
-Nó cảnh báo chuyển đổi ngầm đáng ngờ và cưỡng bức giả định kiểu chặt chẽ sớm hơn.
-
-### 🔴 [Senior] Q14: Explain one production bug from coercion. / Nêu một lỗi production do coercion.
-
-**English Answer:**
-Example: `if (price)` rejected valid `0` prices; fix with `price != null` and numeric validation.
-
-**Trả Lời Tiếng Việt:**
-Ví dụ: `if (price)` loại nhầm giá `0`; sửa bằng `price != null` và validate số.
-
-### 🔴 [Senior] Q15: How does this theory improve debugging speed? / Lý thuyết này giúp debug nhanh hơn thế nào?
-
-**English Answer:**
-You can reason from spec-level phases (creation/execution) and conversion operations to locate root causes deterministically.
-
-**Trả Lời Tiếng Việt:**
-Bạn có thể suy luận theo pha đặc tả (tạo/thực thi) và thao tác chuyển đổi để tìm nguyên nhân gốc một cách xác định.
+**💡 Interview Signal:**
+- ✅ Strong: Uses "Creation Phase" terminology, distinguishes var/fn/let behavior, explains TDZ as "bound but uninitialized"
+- ❌ Weak: "Variables move to the top of the file" — code never moves; this mental model leads to bugs
 
 ---
 
-## Appendix: Quick Reference / Phụ Lục: Tóm Tắt Nhanh
+### Q: Why is `[] == false` true but `Boolean([]) === true`? / Vì sao `[] == false` là true nhưng `Boolean([]) === true`? 🟡 Mid
 
-### A. Conversion Table / Bảng Chuyển Đổi
+**A:** Because `==` and `Boolean()` use different algorithms. `Boolean([])` calls ToBoolean — all objects are truthy, so `true`. `[] == false` uses Abstract Equality Algorithm: first convert `false` via ToNumber → `0`; then convert `[]` via ToPrimitive → `""` → ToNumber → `0`; finally `0 == 0` → `true`. Two different specs paths for the same value.
+
+`Boolean([])` dùng ToBoolean — tất cả objects đều truthy → `true`. `[] == false` dùng Abstract Equality: `false` → ToNumber → `0`; `[]` → ToPrimitive → `""` → `0`; so sánh `0 == 0` → `true`. Hai algorithm khác nhau cho cùng một value.
+
+**💡 Interview Signal:**
+- ✅ Strong: Names both algorithms (ToBoolean vs Abstract Equality), traces the conversion steps for `[]`, shows why results differ
+- ❌ Weak: "Arrays are truthy" — correct but doesn't explain the `[] == false` result
+
+---
+
+### Q: What's the difference between `==`, `===`, and `Object.is`? 🟡 Mid
+
+**A:** `==` (Abstract Equality) applies type coercion before comparison. `===` (Strict Equality) compares type and value without coercion — different types always return `false`. `Object.is` is same as `===` except: `Object.is(NaN, NaN)` → `true` (fixing `NaN !== NaN`), and `Object.is(+0, -0)` → `false` (fixing `+0 === -0`). React uses `Object.is` for state comparison — that's why setting state to `NaN` twice triggers one re-render, not two.
+
+`==` có coercion. `===` không coercion. `Object.is` giống `===` ngoại trừ: `NaN` bằng chính nó, `+0` không bằng `-0`. React dùng `Object.is` cho state comparison — hiểu điều này giúp debug tại sao `useState(NaN)` chỉ trigger re-render lần đầu.
+
+**💡 Interview Signal:**
+- ✅ Strong: Names the two `===` edge cases, explains React's use of `Object.is`, shows practical implication
+- ❌ Weak: "`===` is always safer" — misses the NaN case where `Object.is` is the right tool
+
+---
+
+### Q: What is TDZ and why is it useful — not just what it is? 🟢 Junior
+
+**A:** TDZ (Temporal Dead Zone) = the period between a `let`/`const` binding being created (Creation Phase) and its declaration line being executed. Accessing a variable in its TDZ throws `ReferenceError`. It's useful because it catches a class of bugs: with `var`, accessing before declaration silently returns `undefined` — a bug that's hard to track. TDZ turns that into an immediate, obvious error.
+
+TDZ là khoảng thời gian giữa lúc binding được tạo ra (Creation Phase) và lúc declaration được thực thi. Access trong TDZ → `ReferenceError`. Lý do hữu ích: `var` trả về `undefined` silently khi access trước declaration — bug âm thầm khó trace. TDZ biến nó thành error ngay lập tức.
+
+**💡 Interview Signal:**
+- ✅ Strong: Explains WHY TDZ is useful (catches silent `var` undefined bug), frames it as intentional design choice
+- ❌ Weak: "TDZ means you can't use let before declaration" — only describes behavior, not the design reasoning
+
+---
+
+### Q: You have a production bug: `if (count)` skips processing when count is 0. Fix it and explain the spec-level reason. 🔴 Senior
+
+**A:** `if (count)` applies ToBoolean — `0` is in the falsy set (`false, 0, -0, 0n, "", null, undefined, NaN`). Fix: `if (count != null)` — checks only for null/undefined (Abstract Equality's special case), treating `0` as valid. Or explicitly: `if (count !== undefined && count !== null)`. Spec-level diagnosis: the bug is ToBoolean treating `0` as falsy, when the intent is "was a count provided?" (null/undefined check), not "is the count nonzero?" (truthiness check).
+
+`if (count)` dùng ToBoolean — `0` là falsy. Fix: `if (count != null)` — chỉ check null/undefined. Spec diagnosis: bug là nhầm ToBoolean với null check. Khi giải thích cho team, framing bằng spec terms giúp PR review nhanh hơn.
+
+**💡 Interview Signal:**
+- ✅ Strong: Names `ToBoolean`, lists the falsy set, gives correct fix (`!= null`), explains null/undefined special case in `==`
+- ❌ Weak: "Use strict equality" — `count !== undefined` alone doesn't handle `null`; shows incomplete understanding of null vs undefined semantics
+
+---
+
+## Q&A Summary / Tóm Tắt Q&A
+
+| # | Topic | Level | One-liner |
+|---|-------|-------|-----------|
+| 1 | Hoisting = Creation Phase | 🟡 | var→undefined, fn→full object, let/const→TDZ (bound but uninitialized) |
+| 2 | `[] == false` vs `Boolean([])` | 🟡 | Different algorithms: ToBoolean(object)=true; `==` uses Abstract Equality (converts to numbers) |
+| 3 | `==` vs `===` vs `Object.is` | 🟡 | `==` coerces; `===` no coerce; `Object.is` fixes NaN and +0/-0 edge cases |
+| 4 | TDZ purpose | 🟢 | Turns silent `var undefined` bug into explicit ReferenceError — intentional safety |
+| 5 | `if (count)` bug | 🔴 | ToBoolean treats 0 as falsy; fix with `count != null` (null/undefined special case) |
+
+---
+
+## ⚡ Cold Call Simulation
+
+**Q: "Walk me through exactly what happens when JavaScript runs `[] == false`."**
+
+**30-second answer:**
+
+"The `==` operator uses the Abstract Equality Algorithm, not ToBoolean. Step one: `false` is a Boolean, so apply ToNumber — `false` becomes `0`. Now we have `[] == 0`. Step two: `[]` is an Object and `0` is a Number, so apply ToPrimitive to `[]` — it calls `[].valueOf()` which returns `[]` (not primitive), then calls `[].toString()` which returns the empty string `''`. Now we have `'' == 0`. Step three: `''` is a String and `0` is a Number, so apply ToNumber to `''` — empty string becomes `0`. Now we have `0 == 0`. Same type, same value — `true`. Meanwhile, `Boolean([])` uses ToBoolean, which says all objects are truthy. Same value, two different spec algorithms, opposite results."
+
+---
+
+## Quick Reference / Tóm Tắt Nhanh
+
+### Coercion Conversion Table
 
 | Value | ToNumber | ToString | ToBoolean |
 |---|---:|---|---|
@@ -622,449 +767,39 @@ Bạn có thể suy luận theo pha đặc tả (tạo/thực thi) và thao tác
 | `[]` | `0` | `""` | `true` |
 | `{}` | `NaN` | `"[object Object]"` | `true` |
 
-### B. Mini Drills / Bài Tập Nhanh
-
-#### 🟢 [Junior] Drill 1
-
-**English Prompt:** Predict output for coercion case #1.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #1; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log("5" - true);
-```
-
-#### 🟢 [Junior] Drill 2
-
-**English Prompt:** Predict output for coercion case #2.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #2; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log([] == 0);
-```
-
-#### 🟢 [Junior] Drill 3
-
-**English Prompt:** Predict output for coercion case #3.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #3; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log(null == undefined);
-```
-
-#### 🟢 [Junior] Drill 4
-
-**English Prompt:** Predict output for coercion case #4.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #4; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log(Boolean({}));
-```
-
-#### 🟢 [Junior] Drill 5
-
-**English Prompt:** Predict output for coercion case #5.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #5; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log("5" - true);
-```
-
-#### 🟢 [Junior] Drill 6
-
-**English Prompt:** Predict output for coercion case #6.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #6; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log([] == 0);
-```
-
-#### 🟢 [Junior] Drill 7
-
-**English Prompt:** Predict output for coercion case #7.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #7; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log(null == undefined);
-```
-
-#### 🟢 [Junior] Drill 8
-
-**English Prompt:** Predict output for coercion case #8.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #8; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log(Boolean({}));
-```
-
-#### 🟢 [Junior] Drill 9
-
-**English Prompt:** Predict output for coercion case #9.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #9; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log("5" - true);
-```
-
-#### 🟢 [Junior] Drill 10
-
-**English Prompt:** Predict output for coercion case #10.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #10; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log([] == 0);
-```
-
-#### 🟢 [Junior] Drill 11
-
-**English Prompt:** Predict output for coercion case #11.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #11; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log(null == undefined);
-```
-
-#### 🟢 [Junior] Drill 12
-
-**English Prompt:** Predict output for coercion case #12.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #12; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log(Boolean({}));
-```
-
-#### 🟢 [Junior] Drill 13
-
-**English Prompt:** Predict output for coercion case #13.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #13; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log("5" - true);
-```
-
-#### 🟢 [Junior] Drill 14
-
-**English Prompt:** Predict output for coercion case #14.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #14; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log([] == 0);
-```
-
-#### 🟢 [Junior] Drill 15
-
-**English Prompt:** Predict output for coercion case #15.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #15; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log(null == undefined);
-```
-
-#### 🟢 [Junior] Drill 16
-
-**English Prompt:** Predict output for coercion case #16.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #16; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log(Boolean({}));
-```
-
-#### 🟢 [Junior] Drill 17
-
-**English Prompt:** Predict output for coercion case #17.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #17; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log("5" - true);
-```
-
-#### 🟢 [Junior] Drill 18
-
-**English Prompt:** Predict output for coercion case #18.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #18; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log([] == 0);
-```
-
-#### 🟢 [Junior] Drill 19
-
-**English Prompt:** Predict output for coercion case #19.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #19; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log(null == undefined);
-```
-
-#### 🟢 [Junior] Drill 20
-
-**English Prompt:** Predict output for coercion case #20.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #20; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log(Boolean({}));
-```
-
-#### 🟢 [Junior] Drill 21
-
-**English Prompt:** Predict output for coercion case #21.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #21; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log("5" - true);
-```
-
-#### 🟢 [Junior] Drill 22
-
-**English Prompt:** Predict output for coercion case #22.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #22; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log([] == 0);
-```
-
-#### 🟢 [Junior] Drill 23
-
-**English Prompt:** Predict output for coercion case #23.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #23; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log(null == undefined);
-```
-
-#### 🟢 [Junior] Drill 24
-
-**English Prompt:** Predict output for coercion case #24.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #24; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log(Boolean({}));
-```
-
-#### 🟢 [Junior] Drill 25
-
-**English Prompt:** Predict output for coercion case #25.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #25; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log("5" - true);
-```
-
-#### 🟢 [Junior] Drill 26
-
-**English Prompt:** Predict output for coercion case #26.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #26; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log([] == 0);
-```
-
-#### 🟢 [Junior] Drill 27
-
-**English Prompt:** Predict output for coercion case #27.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #27; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log(null == undefined);
-```
-
-#### 🟢 [Junior] Drill 28
-
-**English Prompt:** Predict output for coercion case #28.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #28; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log(Boolean({}));
-```
-
-#### 🟢 [Junior] Drill 29
-
-**English Prompt:** Predict output for coercion case #29.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #29; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log("5" - true);
-```
-
-#### 🟢 [Junior] Drill 30
-
-**English Prompt:** Predict output for coercion case #30.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #30; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log([] == 0);
-```
-
-#### 🟢 [Junior] Drill 31
-
-**English Prompt:** Predict output for coercion case #31.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #31; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log(null == undefined);
-```
-
-#### 🟢 [Junior] Drill 32
-
-**English Prompt:** Predict output for coercion case #32.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #32; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log(Boolean({}));
-```
-
-#### 🟢 [Junior] Drill 33
-
-**English Prompt:** Predict output for coercion case #33.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #33; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log("5" - true);
-```
-
-#### 🟢 [Junior] Drill 34
-
-**English Prompt:** Predict output for coercion case #34.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #34; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log([] == 0);
-```
-
-#### 🟢 [Junior] Drill 35
-
-**English Prompt:** Predict output for coercion case #35.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #35; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log(null == undefined);
-```
-
-#### 🟢 [Junior] Drill 36
-
-**English Prompt:** Predict output for coercion case #36.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #36; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log(Boolean({}));
-```
-
-#### 🟢 [Junior] Drill 37
-
-**English Prompt:** Predict output for coercion case #37.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #37; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log("5" - true);
-```
-
-#### 🟢 [Junior] Drill 38
-
-**English Prompt:** Predict output for coercion case #38.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #38; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log([] == 0);
-```
-
-#### 🟢 [Junior] Drill 39
-
-**English Prompt:** Predict output for coercion case #39.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #39; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log(null == undefined);
-```
-
-#### 🟢 [Junior] Drill 40
-
-**English Prompt:** Predict output for coercion case #40.
-
-**Gợi Ý Tiếng Việt:** Dự đoán kết quả coercion tình huống #40; sau đó giải thích bằng ToPrimitive/ToNumber/ToString/ToBoolean.
-
-```javascript
-console.log(Boolean({}));
-```
-
-### C. Glossary / Thuật Ngữ
-
-- **Execution Context**: Môi trường thực thi hiện tại của code.
-- **Lexical Environment**: Môi trường từ vựng chứa binding và liên kết outer.
-- **Environment Record**: Bản ghi binding định danh.
-- **Hoisting**: Cách xử lý khai báo trước khi chạy code.
-- **TDZ**: Vùng trước khi binding let/const được khởi tạo.
-- **Reference Type (spec)**: Bản ghi nội bộ đại diện truy cập biến/thuộc tính.
-- **ToPrimitive**: Thuật toán chuyển object sang primitive.
-- **ToNumber**: Thuật toán chuẩn hóa sang số.
-- **ToString**: Thuật toán chuẩn hóa sang chuỗi.
-- **ToBoolean**: Thuật toán chuẩn hóa sang boolean.
-- **Abstract Equality**: Thuật toán `==` có coercion.
-- **Strict Equality**: Thuật toán `===` không coercion.
-- **SameValue**: Ngữ nghĩa `Object.is`.
-- **Scope Chain**: Chuỗi tra cứu binding theo lexical scope.
-- **Closure**: Hàm giữ tham chiếu tới môi trường bao ngoài.
-- **Shadowing**: Biến cục bộ che biến bên ngoài cùng tên.
-- **Global Object**: Đối tượng toàn cục của runtime.
-- **Primitive**: Giá trị bất biến không có danh tính object.
-- **Object Identity**: So sánh object theo tham chiếu.
-- **Wrapper Object**: Đối tượng bao primitive tạm thời.
-- **Internal Slot**: Thuộc tính nội bộ chỉ đặc tả dùng.
-- **Call Stack**: Ngăn xếp context khi gọi hàm.
-- **Creation Phase**: Pha thiết lập binding/context.
-- **Execution Phase**: Pha thực thi từng câu lệnh.
-- **Nullish**: Chỉ gồm null và undefined.
-- **Falsy**: Giá trị chuyển thành false trong ToBoolean.
-- **Truthy**: Giá trị chuyển thành true trong ToBoolean.
-- **Spec Algorithm**: Thuật toán chính thức trong ECMAScript.
-- **Deterministic Debugging**: Debug dựa trên mô hình đặc tả rõ ràng.
-- **Boundary Validation**: Kiểm tra dữ liệu tại biên hệ thống.
-
 ---
 
-## Summary / Tóm Tắt
+## Self-Check / Tự Kiểm Tra
 
-**English:** JavaScript basics become interview strength when explained from execution contexts, environments, scope resolution, and abstract conversion algorithms.
+> **Close this doc. Then answer from memory.**
 
-**Tiếng Việt:** Nền tảng JavaScript trở thành lợi thế phỏng vấn khi bạn giải thích được bằng execution context, environment, scope resolution, và các thuật toán chuyển đổi trừu tượng.
+- **Retrieval**: Name the 3 binding states for `var`, `function`, and `let/const` after the Creation Phase
+- **Visual**: Trace `[] == false` step-by-step through the Abstract Equality Algorithm — which spec operations are called?
+- **Application**: Your code has `if (user.age)` but `age = 0` is a valid value. Fix it and explain which abstract operation was causing the bug.
+- **Debug**: `NaN === NaN` returns `false` — your code uses this to check for invalid number. What should you use instead and why?
+- **Teach**: Explain to a junior why `typeof null === "object"` — and why it hasn't been fixed despite being a 30-year-old bug.
 
----
+🔁 **Spaced repetition**: Review in 3 days → 7 days → 14 days
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on**: [JavaScript Basics](./00-javascript-basics.md) — syntax-level basics before spec-level theory
+- ⬅️ **Built on**: [Scope & Hoisting](./02-scope-hoisting-comprehensive.md) — scope chain and TDZ in practice
+- ⬅️ **Built on**: [Variables & Data Types](./01-variables-data-types.md) — var/let/const practical usage
+- 🔗 **Applied in**: [TypeScript Type System](../02-typescript/01-type-system-basics.md) — TypeScript's strict null checks design is motivated by null/undefined semantics here
+- 🔗 **Applied in**: [React Performance](../03-react/09-performance-optimization.md) — React's `Object.is` state comparison is the Abstract Equality/Object.is distinction in practice
+
+### Glossary / Thuật Ngữ
+
+- **Execution Context**: Môi trường thực thi hiện tại của code (Creation + Execution phases)
+- **TDZ (Temporal Dead Zone)**: Vùng binding let/const tồn tại nhưng chưa initialized
+- **ToPrimitive**: Thuật toán chuyển object → primitive (valueOf → toString, or Symbol.toPrimitive)
+- **ToNumber**: Thuật toán chuẩn hóa sang số (`undefined`→NaN, `null`→0, `[]`→0, `{}`→NaN)
+- **ToBoolean**: Thuật toán boolean — only 8 falsy values; all objects are truthy
+- **Abstract Equality**: Thuật toán `==` — converts types before comparing
+- **Strict Equality**: Thuật toán `===` — no coercion; different types = false
+- **Object.is**: SameValue algorithm — fixes NaN and +0/-0 edge cases in `===`
+- **Scope Chain**: Chuỗi tra cứu binding từ current environment đến outer environments
 
 [← Back to Functional Programming](./12-functional-programming.md) | [Next: JavaScript Type System Theory →](./14-javascript-type-system-theory.md)
+
