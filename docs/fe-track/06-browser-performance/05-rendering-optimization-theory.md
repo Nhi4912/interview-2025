@@ -39,476 +39,263 @@
 
 ---
 
-## Understanding Browser Rendering Performance
+## Core Concepts / Khái Niệm Cốt Lõi
 
-**English:** Rendering optimization focuses on minimizing the work browsers must do to display and update web pages, ensuring smooth 60 FPS performance and responsive user interfaces.
+---
 
-**Tiếng Việt:** Tối ưu hóa rendering tập trung vào việc giảm thiểu công việc mà trình duyệt phải làm để hiển thị và cập nhật trang web, đảm bảo hiệu suất 60 FPS mượt mà và giao diện người dùng phản hồi nhanh.
+### 1. The Pixel Pipeline
 
-## Rendering Pipeline Theory
+**🧠 Memory Hook:** "**JS → S → L → P → C** — *Just Some Lazy Programmers Composite*"
 
-### Pixel Pipeline
+**Why does this exist? / Tại sao tồn tại?**
 
-**Five Stages:**
+- Why does the browser need a pipeline at all? Because pixels don't magically appear — each frame is computed from scratch from your HTML/CSS/JS
+- Why 5 stages specifically? Each stage answers a different question: *what changed?* (JS) → *which rules apply?* (Style) → *where does it go?* (Layout) → *how does it look?* (Paint) → *stack layers* (Composite)
+- Why does it matter for performance? Every stage you *skip* is time saved. Triggering Layout is the slowest path; Composite-only is the fastest
 
-1. **JavaScript:** Trigger visual changes
-2. **Style:** Calculate styles
-3. **Layout:** Calculate geometry
-4. **Paint:** Fill in pixels
-5. **Composite:** Draw layers to screen
+**Definition:** The ordered sequence of operations the browser executes to render every frame. Which stages run depends on which CSS properties change.
 
-**Stage Costs:**
+**Visual — Pipeline Stages & CSS Triggers:**
 
-**JavaScript:** Variable (depends on code)
-**Style:** ~0.5ms per 1000 elements
-**Layout:** ~1-2ms per 1000 elements
-**Paint:** ~2-3ms per 1000 elements
-**Composite:** ~0.5-1ms
-
-**Total Budget:** 16.67ms for 60 FPS
-
-### Layout (Reflow) Theory
-
-**Definition:** Layout calculates the position and size of elements on the page.
-
-**When Layout Occurs:**
-
-**Geometric Changes:**
-- width, height, padding, margin, border
-- position, top, left, right, bottom
-- display, float, clear
-- font-size, line-height
-- text-align, vertical-align
-
-**Layout Scope:**
-
-**Global Layout:** Affects entire document
-**Incremental Layout:** Affects subtree only
-**Dirty Bit System:** Marks changed elements
-
-**Layout Thrashing:**
-
-**Theory:** Interleaving reads and writes forces multiple synchronous layouts.
-
-**Problem Pattern:**
 ```
-Read layout property → Forces layout
-Write style → Invalidates layout
-Read layout property → Forces layout again
-Write style → Invalidates layout again
+SLOWEST PATH — triggers all 5 stages (Layout):
+JS → Style → Layout → Paint → Composite
+e.g. width, height, margin, padding, top, left, font-size
+Cost: ~10ms+ per frame
+
+MEDIUM PATH — skips Layout (Paint):
+JS → Style → ~~Layout~~ → Paint → Composite
+e.g. color, background-color, border-radius, box-shadow
+Cost: ~4-6ms per frame
+
+FASTEST PATH — Composite only:
+JS → ~~Style~~ → ~~Layout~~ → ~~Paint~~ → Composite
+e.g. transform, opacity ← ONLY these two!
+Cost: ~0.5ms, runs on GPU thread
+
+Budget: 16.67ms per frame (60 FPS)
+JS: ≤10ms | Rendering: ≤6ms
 ```
 
-**Cost:** Each forced layout is expensive (1-2ms)
+**Common Mistakes:**
 
-**Solution:** Batch reads together, then batch writes
+| ❌ Wrong mental model | ✅ Correct model |
+|---|---|
+| "All CSS is equal — just pick what looks right" | `transform` = GPU-only; `left` = full layout recalc |
+| "`opacity` animation is heavy like `visibility`" | `opacity` only triggers Composite — it's essentially free |
+| "Use `top/left` for smooth movement" | Use `transform: translateX/Y` — same visual result, 10× faster |
+| "`will-change` speeds up everything" | Each `will-change` allocates GPU texture memory — overuse crashes performance |
 
-**Layout Boundaries:**
+**🎯 Interview Pattern:**
+- **Trigger**: "60 FPS animation" / "smooth scroll" / "jank" / "animation performance"
+- **Concept**: Pixel pipeline stages + composite-only properties
+- **Opening**: "The browser renders in 5 stages — the key insight is only `transform` and `opacity` skip Layout and Paint entirely, giving GPU-composited 60 FPS animations at ~0.5ms per frame..."
+
+**🔑 Knowledge Chain:**
+- **Prereq**: CSS box model (Layout stage depends on geometry understanding)
+- **Enables**: Layout thrashing diagnosis, `will-change` usage, React `transform`-based animation patterns
+
+---
+
+### 2. Layout Thrashing
+
+**🧠 Memory Hook:** "**Read first, write second — NEVER interleave**"
+
+**Why does this exist? / Tại sao tồn tại?**
+
+- Why does the browser batch layout calculations? Because recalculating geometry for every individual DOM change would be prohibitively slow — batching lets it do one pass per frame
+- Why does reading a layout property break this batching? Because `offsetHeight` must return an accurate value right now — the browser is forced to flush all pending writes and recalculate immediately
+- Why is this called "thrashing"? Because each read-write-read-write cycle hammers the browser with a forced synchronous layout recalculation — potentially dozens per frame
+
+**Definition:** Layout thrashing occurs when JavaScript alternates reads (layout-triggering properties like `offsetHeight`, `getBoundingClientRect`) with writes (style changes), forcing multiple synchronous layout recalculations per frame instead of one batched recalc.
+
+**Visual — Thrashing vs Batched:**
+
+```
+❌ THRASHING — 4 forced layout recalcs in one frame:
+el.style.width = '100px'        // write → layout invalidated
+const h = el.offsetHeight       // read  → FORCED LAYOUT #1 (flush!)
+el.style.height = h + 'px'      // write → layout invalidated again
+const w = el2.offsetWidth       // read  → FORCED LAYOUT #2 (flush!)
+el2.style.top = w + 'px'        // write → layout invalidated again
+...                             // FORCED LAYOUT #3, #4...
 
-Certain properties create layout boundaries:
-- overflow: hidden/scroll/auto
-- position: absolute/fixed
-- transform (creates layer)
-- contain: layout
+✅ BATCHED — 1 layout recalc total:
+// Phase 1: All reads (no writes — browser stays "clean")
+const h = el.offsetHeight
+const w = el2.offsetWidth
 
-**Benefits:**
-- Limit layout scope
-- Improve performance
-- Enable parallel work
+// Phase 2: All writes (browser batches into 1 layout recalc)
+el.style.height = h + 'px'
+el2.style.top = w + 'px'
+// Browser: single layout pass at end of frame ✓
+```
 
-### Paint Theory
+**Common Mistakes:**
 
-**Definition:** Paint fills in pixels for visual properties.
+| ❌ Wrong | ✅ Correct |
+|---|---|
+| Read → write → read → write inside a loop | Collect all reads first, then apply all writes |
+| `getBoundingClientRect()` on every animation frame | Cache measurements outside loop; read once |
+| jQuery `.css()` calls interleaved with `.offset()` reads | Use FastDOM library or manual batch pattern |
+| "It's fast in dev, only slow in prod" | Thrashing scales with DOM complexity — more elements = worse |
 
-**Paint Triggers:**
+**🎯 Interview Pattern:**
+- **Trigger**: "performance bottleneck" / "frame drops" / "slow animation" / "reflow"
+- **Concept**: Forced synchronous layout via read/write interleaving
+- **Opening**: "Layout thrashing is when you alternate DOM reads and writes — each read forces the browser to flush pending layouts. The fix is simple: batch all reads first, then all writes. FastDOM enforces this pattern automatically..."
 
-**Visual Properties:**
-- color, background-color
-- border-color, border-radius
-- box-shadow, text-shadow
-- visibility, opacity
-- background-image
+**🔑 Knowledge Chain:**
+- **Prereq**: Pixel Pipeline (Layout is the stage being repeatedly triggered)
+- **Enables**: FastDOM library understanding, `requestAnimationFrame` batching, React's batched state updates via `unstable_batchedUpdates`
 
-**Paint Complexity:**
+---
 
-**Simple Properties:** Fast
-- Solid colors
-- Simple borders
+### 3. CSS Containment & `content-visibility`
 
-**Complex Properties:** Slow
-- Gradients
-- Shadows
-- Filters
-- Blend modes
+**🧠 Memory Hook:** "`contain: layout` = **what happens in this box, STAYS in this box**"
 
-**Paint Area:**
+**Why does this exist? / Tại sao tồn tại?**
 
-Larger paint areas cost more:
-- Full-screen repaints expensive
-- Minimize paint regions
-- Use layer promotion strategically
+- Why does layout affect the whole page by default? Because the browser assumes any element's geometry change might cascade to affect any other element's position
+- Why is this inefficient for component-based UIs? Because rendering a sidebar widget recalculates geometry for the entire document — a React dashboard with 50 widgets is especially wasteful
+- Why does `contain` fix this? It creates an explicit contract: "this subtree is geometrically independent — skip checking its impact on the rest of the page"
 
-**Paint Layers:**
+**Definition:** The CSS `contain` property restricts the scope of layout, paint, and style calculations to a specific subtree. `content-visibility: auto` extends this by skipping rendering entirely for off-screen content until it approaches the viewport.
 
-**Theory:** Browser divides page into layers for efficient painting.
+**Visual — Containment & content-visibility:**
 
-**Layer Creation Triggers:**
-- 3D transforms (translateZ, rotate3d)
-- will-change property
-- video, canvas, iframe elements
-- CSS filters
-- Opacity animations
-- Position: fixed
+```
+Without contain:
+[Sidebar widget changes width]
+        ↓
+Browser recalculates layout for ENTIRE document
+        ↓
+Everything re-painted, composited ← slow, unpredictable
 
-**Layer Benefits:**
-- Isolated repainting
-- GPU acceleration
-- Smooth animations
-- Parallel processing
+With contain: layout:
+[Sidebar widget changes width]
+        ↓
+Browser recalculates ONLY inside sidebar widget subtree
+        ↓
+Rest of document untouched ← fast, isolated
 
-**Layer Costs:**
-- Memory overhead (texture storage)
-- Layer management overhead
-- Compositing cost
-- Too many layers harmful
+content-visibility: auto (for long pages):
+[Section A — in viewport]  → rendered normally
+[Section B — off-screen]   → SKIPPED (layout + paint + composite)
+[Section C — off-screen]   → SKIPPED
+        ↓
+As user scrolls near Section B: render triggered
+contain-intrinsic-size: 0 500px  ← reserve placeholder space → prevents CLS
+```
 
-### Composite Theory
+**Common Mistakes:**
 
-**Definition:** Compositing combines painted layers into final image.
+| ❌ Wrong | ✅ Correct |
+|---|---|
+| Apply `contain: strict` everywhere without thinking | `strict` = layout + paint + size + style; requires explicit dimensions or content overflows |
+| `content-visibility: auto` without `contain-intrinsic-size` | Layout shifts when content renders in — always pair them |
+| Leave `will-change` on elements permanently | Add before animation, remove after — GPU texture memory accumulates |
+| Assume `content-visibility` is experimental | ~93% global browser support (2025) — safe to use |
 
-**Compositor Thread:**
+**🎯 Interview Pattern:**
+- **Trigger**: "render 1000 items" / "long page performance" / "CSS optimization" / "dashboard slowness"
+- **Concept**: CSS Containment limits layout scope; `content-visibility` skips off-screen rendering
+- **Opening**: "CSS Containment tells the browser a subtree is isolated — changes inside don't affect outside layout. Combined with `content-visibility: auto`, off-screen sections are skipped entirely until the user scrolls near them..."
 
-**Theory:** Separate thread handles compositing, independent of main thread.
+**🔑 Knowledge Chain:**
+- **Prereq**: Pixel Pipeline (Layout and Paint are the stages being contained/skipped)
+- **Enables**: Component isolation patterns, dashboard optimization, virtual scrolling complement, CLS reduction
 
-**Benefits:**
-- Animations don't block JavaScript
-- Smooth scrolling
-- Parallel processing
-- GPU acceleration
+---
 
-**Composite-Only Properties:**
+## Interview Q&A / Câu Hỏi Phỏng Vấn
 
-Only two properties can be composited without layout/paint:
-- **transform:** All transform functions
-- **opacity:** Transparency changes
+### Q: Which CSS properties are safe for 60 FPS animations? / CSS properties nào an toàn cho animation 60 FPS? 🟢 Junior
 
-**Why These Properties:**
-- Don't affect document flow
-- Don't change element geometry
-- Can be handled by GPU
-- Compositor thread only
+**A:** Only `transform` and `opacity`. These skip Layout and Paint entirely — handled by the Compositor thread on the GPU. All other properties (`width`, `left`, `color`, etc.) trigger at least Paint, most trigger Layout.
 
-**Animation Performance:**
+Chỉ `transform` và `opacity` đi thẳng xuống Composite layer mà không cần Layout hay Paint. Muốn animate vị trí? Dùng `transform: translateX()` thay vì `left`. Muốn fade? Dùng `opacity` thay vì `visibility`.
 
-**60 FPS Requirement:**
-- 16.67ms per frame
-- ~10ms for JavaScript
-- ~6ms for rendering
+**💡 Interview Signal:**
+- ✅ Strong: Names exactly `transform` and `opacity`, explains why (Composite-only, GPU thread), gives concrete swap example (`left` → `translateX`)
+- ❌ Weak: "Avoid expensive animations" — vague, shows no pipeline knowledge
 
-**Achieving 60 FPS:**
-- Use transform/opacity only
-- Avoid layout/paint during animation
-- Promote to layer with will-change
-- Use requestAnimationFrame
+---
 
-## Optimization Strategies
-
-### CSS Containment
+### Q: What is layout thrashing and how do you fix it? / Layout thrashing là gì và cách fix? 🟡 Mid
 
-**Theory:** Limit scope of browser's layout, style, and paint work.
+**A:** Layout thrashing = interleaving DOM reads (e.g., `offsetHeight`, `getBoundingClientRect`) with DOM writes (style changes). Each read forces the browser to flush pending layouts for an accurate value. Fix: batch all reads first, then all writes. Libraries like FastDOM enforce this pattern.
 
-**Contain Property:**
+Layout thrashing xảy ra khi đọc và ghi DOM xen kẽ nhau trong một frame. Browser phải flush layout sau mỗi lần đọc để trả về giá trị chính xác. Giải pháp: gom tất cả reads lại trước, rồi mới apply writes sau.
 
-**contain: layout**
-- Element's internal layout isolated
-- Changes don't affect outside
-- Enables parallel layout
+**💡 Interview Signal:**
+- ✅ Strong: Explains the forced synchronous layout mechanism, gives batching solution, mentions FastDOM or `requestAnimationFrame`
+- ❌ Weak: "Minimize DOM manipulation" — misses the read/write interleaving root cause
 
-**contain: paint**
-- Element's descendants don't paint outside
-- Enables paint optimization
-- Clips overflow
+---
 
-**contain: size**
-- Element's size independent of children
-- Enables size optimization
-- Requires explicit dimensions
+### Q: When and how should you use `will-change`? / Khi nào và cách dùng `will-change`? 🟡 Mid
 
-**contain: style**
-- Style changes don't escape
-- Counters and quotes scoped
+**A:** Use `will-change` to hint the browser to prepare GPU layers *before* an animation starts. Apply it just before the animation (e.g., on `mouseenter`), remove it immediately after (e.g., on `animationend`). Never apply permanently or to many elements — each `will-change` allocates GPU texture memory, and overuse exhausts GPU resources.
 
-**contain: strict**
-- Equivalent to: layout paint size style
-- Maximum optimization
-- Strictest containment
+`will-change` nên được add ngay trước khi animation bắt đầu và remove ngay sau. Không dùng trên nhiều elements cùng lúc — mỗi element tốn GPU memory. Đây là công cụ cuối cùng, không phải giải pháp mặc định.
 
-**contain: content**
-- Equivalent to: layout paint style
-- Common use case
-- Balances optimization and flexibility
+**💡 Interview Signal:**
+- ✅ Strong: Add-before → remove-after lifecycle, GPU memory cost, "last resort not default" framing
+- ❌ Weak: "Add will-change to elements you want to animate" — misses the memory cost and remove-after requirement
 
-**Benefits:**
-- Faster rendering
-- Predictable performance
-- Better for dynamic content
-- Enables browser optimizations
+---
 
-### Content-Visibility
+### Q: How does `content-visibility: auto` improve page performance? / `content-visibility: auto` cải thiện performance thế nào? 🟡 Mid
 
-**Theory:** Control whether element's contents are rendered.
+**A:** `content-visibility: auto` instructs the browser to skip rendering (layout + paint + composite) for elements not near the viewport. Off-screen sections are essentially free to have in the DOM. Always pair with `contain-intrinsic-size` to reserve layout space and prevent CLS (Cumulative Layout Shift) when content renders in.
 
-**Values:**
+`content-visibility: auto` bỏ qua hoàn toàn việc render layout + paint cho content ngoài viewport. Trang có 20 sections chỉ render ~3 sections visible — tốc độ tải ban đầu tăng vọt. Nhớ thêm `contain-intrinsic-size` để giữ chỗ, tránh layout shift.
 
-**visible:** Normal rendering (default)
-**hidden:** Skip rendering, maintain layout space
-**auto:** Browser decides based on visibility
+**💡 Interview Signal:**
+- ✅ Strong: Explains skipped rendering stages, mentions `contain-intrinsic-size` + CLS prevention
+- ❌ Weak: "It's like lazy loading for CSS" — imprecise, shows no understanding of rendering pipeline
 
-**content-visibility: auto:**
+---
 
-**Behavior:**
-- Skip rendering for off-screen content
-- Render when near viewport
-- Massive performance improvement
-- Automatic optimization
+### Q: Design a system to maintain 60 FPS across 50+ animated React widgets on a dashboard. / Thiết kế hệ thống duy trì 60 FPS cho 50+ React widgets. 🔴 Senior
 
-**Use Cases:**
-- Long lists
-- Infinite scroll
-- Large documents
-- Complex layouts
+**A:** Three-tier approach:
 
-**Considerations:**
-- Layout shifts possible
-- Use contain-intrinsic-size
-- Affects accessibility
-- Browser support
+1. **Composite tier**: All animations use `transform`/`opacity` only — CSS keyframes preferred over JS-driven style values to keep animation off the main thread
+2. **Batching tier**: State updates via `useTransition` (mark as non-urgent) + `requestAnimationFrame` for measurement reads — prevents layout thrashing across widget updates
+3. **Virtualization tier**: `content-visibility: auto` on off-screen widgets + `contain: layout paint` on each widget to isolate layout scope; React virtualization (react-window) for any list-type widgets
 
-### Will-Change Property
+Monitoring: Chrome DevTools Performance panel → flag any frame >16ms; Lighthouse CI gate on CLS < 0.1.
 
-**Theory:** Hint to browser about upcoming changes.
+Ba tầng: (1) Tất cả CSS animations dùng `transform`/`opacity`; (2) State updates bất đồng bộ qua `useTransition`, batch reads với `requestAnimationFrame`; (3) `content-visibility: auto` cho off-screen widgets + `contain: layout` để isolate từng widget. Monitor với Chrome DevTools Performance tab và Lighthouse CI.
 
-**Purpose:**
-- Prepare optimizations in advance
-- Create layers proactively
-- Improve animation performance
+**💡 Interview Signal:**
+- ✅ Strong: All 3 tiers named, mentions `useTransition`, `contain`, `content-visibility`, monitoring strategy
+- ❌ Weak: "Use React.memo and virtualization" — memo prevents re-renders but doesn't address CSS pipeline costs
 
-**Values:**
-- auto: No hint
-- scroll-position: Scrolling expected
-- contents: Content will change
-- Specific properties: transform, opacity, etc.
+---
 
-**Best Practices:**
+## Q&A Summary / Tóm Tắt Q&A
 
-**Do:**
-- Use sparingly
-- Apply before animation
-- Remove after animation
-- Target specific properties
+| # | Topic | Level | One-liner |
+|---|-------|-------|-----------|
+| 1 | Safe animation properties | 🟢 | Only `transform` + `opacity` → Composite-only, GPU thread |
+| 2 | Layout thrashing | 🟡 | Read/write interleaving → batch reads first, writes second |
+| 3 | `will-change` | 🟡 | Add before animation, remove after — GPU memory cost |
+| 4 | `content-visibility: auto` | 🟡 | Skip off-screen rendering + `contain-intrinsic-size` for CLS |
+| 5 | 60 FPS dashboard design | 🔴 | 3-tier: Composite → Batching → Virtualization |
 
-**Don't:**
-- Apply to many elements
-- Leave on permanently
-- Use as premature optimization
-- Apply to root elements
+---
 
-**Memory Impact:**
+## ⚡ Cold Call Simulation
 
-Each will-change creates layer:
-- Texture memory allocated
-- GPU resources used
-- Can exhaust memory
-- Monitor usage
+**Q: "Walk me through why a CSS animation using `left: 100px` is slower than `transform: translateX(100px)`."**
 
-## Virtual Scrolling Theory
+**30-second answer:**
 
-### Concept
-
-**Definition:** Render only visible items in large lists, recycling DOM elements.
-
-**Theoretical Foundation:**
-
-**Problem:** Rendering 10,000 items creates 10,000 DOM nodes
-**Solution:** Render only ~20 visible items, reuse nodes
-
-**Benefits:**
-- Constant DOM size
-- O(1) rendering time
-- Smooth scrolling
-- Lower memory usage
-
-**Challenges:**
-- Complex implementation
-- Variable item heights
-- Scroll position calculation
-- Accessibility concerns
-
-### Implementation Theory
-
-**Core Algorithm:**
-
-1. **Calculate Visible Range:**
-   - Scroll position
-   - Viewport height
-   - Item height
-   - Determine visible indices
-
-2. **Render Visible Items:**
-   - Create/reuse DOM nodes
-   - Position absolutely
-   - Update content
-
-3. **Handle Scrolling:**
-   - Update visible range
-   - Recycle nodes
-   - Maintain scroll position
-
-**Windowing:**
-
-**Fixed Height:**
-- Simple calculation
-- Fast performance
-- Limited flexibility
-
-**Variable Height:**
-- Measure each item
-- Cache measurements
-- More complex
-- Better UX
-
-**Overscan:**
-
-Render extra items above/below viewport:
-- Prevents blank areas during fast scroll
-- Trade-off: performance vs UX
-- Typical: 2-5 extra items
-
-## React Rendering Optimization
-
-### Reconciliation Theory
-
-**Definition:** Process of comparing virtual DOM trees to determine minimal changes.
-
-**Algorithm:**
-
-**Diffing Heuristics:**
-
-1. **Different Types:** Replace entire subtree
-2. **Same Type:** Update props only
-3. **Keys:** Identify elements across renders
-
-**Complexity:**
-
-- Naive algorithm: O(n³)
-- React's algorithm: O(n)
-- Heuristics enable linear time
-
-**Key Importance:**
-
-**Theory:** Keys help React identify which items changed.
-
-**Without Keys:**
-- React compares by position
-- May reuse wrong elements
-- Causes bugs and performance issues
-
-**With Keys:**
-- React tracks elements by key
-- Correct element reuse
-- Minimal DOM operations
-
-**Key Requirements:**
-- Stable across renders
-- Unique among siblings
-- Not array index (for dynamic lists)
-
-### React Fiber Architecture
-
-**Theory:** Reimplementation of React's core algorithm enabling incremental rendering.
-
-**Goals:**
-
-1. **Pause Work:** Split work into chunks
-2. **Prioritize:** Assign priority to updates
-3. **Reuse Work:** Cache completed work
-4. **Abort Work:** Discard obsolete work
-
-**Fiber Structure:**
-
-Each fiber represents:
-- Component instance
-- Work to be done
-- Relationships (parent, child, sibling)
-- State and props
-
-**Phases:**
-
-**Render Phase:** (Interruptible)
-- Build fiber tree
-- Calculate changes
-- Can be paused/resumed
-
-**Commit Phase:** (Synchronous)
-- Apply changes to DOM
-- Run effects
-- Cannot be interrupted
-
-**Priority Levels:**
-
-1. Immediate: User input
-2. User-blocking: Hover, scroll
-3. Normal: Data fetching
-4. Low: Analytics
-5. Idle: Background work
-
-### Concurrent Rendering
-
-**Theory:** Render multiple versions of UI simultaneously.
-
-**Concepts:**
-
-**Time Slicing:**
-- Break rendering into chunks
-- Yield to browser between chunks
-- Maintain responsiveness
-
-**Suspense:**
-- Declarative loading states
-- Coordinate async operations
-- Prevent waterfalls
-
-**Transitions:**
-- Mark updates as non-urgent
-- Keep UI responsive
-- Show previous state during update
-
-**Benefits:**
-- Better perceived performance
-- Smoother interactions
-- Prioritized updates
-- Improved UX
-
-## Interview Questions
-
-**Q: What causes layout thrashing?**
-
-A: Interleaving layout reads and style writes forces multiple synchronous layouts. Each read forces layout calculation, write invalidates it. Solution: batch all reads, then all writes.
-
-**Q: Which CSS properties trigger layout/paint/composite?**
-
-A: Layout: width, height, margin, padding, position. Paint: color, background, border-radius, shadow. Composite only: transform, opacity. Use transform/opacity for animations.
-
-**Q: Explain virtual scrolling.**
-
-A: Technique rendering only visible items in large lists by recycling DOM elements. Maintains constant DOM size regardless of list length. Provides O(1) rendering time and smooth scrolling.
-
-**Q: What is React Fiber?**
-
-A: Reimplementation of React's reconciliation algorithm enabling incremental rendering. Allows pausing work, prioritizing updates, reusing work, and aborting obsolete work. Foundation for concurrent features.
-
-**Q: How does content-visibility improve performance?**
-
-A: content-visibility: auto skips rendering off-screen content. Browser only renders when element near viewport. Massive performance improvement for long pages with minimal code changes.
+"The browser renders in 5 stages: JavaScript, Style, Layout, Paint, Composite. `left` changes element geometry, so it triggers the Layout stage — the browser recalculates positions for the entire document, then repaints, then composites. That's all 5 stages, potentially 10ms+. `transform: translateX` doesn't change document geometry at all — it's handled directly by the Compositor thread on the GPU, skipping Layout and Paint entirely. Same visual result, but `transform` only hits the Composite stage — around 0.5ms. That's why `transform` and `opacity` are the only two CSS properties safe for consistent 60 FPS animations."
 
 ---
 
@@ -518,15 +305,18 @@ A: content-visibility: auto skips rendering off-screen content. Browser only ren
 
 ## Self-Check / Tự Kiểm Tra
 
-- [ ] Can I name the 5 stages of the pixel pipeline and which CSS properties trigger each?
-- [ ] Can I explain layout thrashing and the FastDOM pattern to fix it?
-- [ ] Can I explain why `transform` and `opacity` are the only properties safe for 60 FPS animations?
-- [ ] Can I use Chrome DevTools Performance → Layers panel to identify composited layers?
-- [ ] Can I explain `will-change: transform` — what it does and when to remove it?
-- 💬 **Feynman Prompt:** Giải thích tại sao `position: fixed` trên một element làm chậm scroll — và tại sao dùng `transform: translateZ(0)` "fix" được điều đó (hint: composite layer)?
+> **Close this doc. Then answer from memory.**
+
+- **Retrieval**: Name the 5 pixel pipeline stages and give one CSS property that triggers each level (Layout, Paint, Composite-only)
+- **Visual**: Draw the "thrashing vs batched" pattern — show the read/write sequence and where forced layouts occur
+- **Application**: Your scroll handler calls `el.offsetHeight` inside a `forEach` that also sets `el.style.height`. How do you fix it?
+- **Debug**: Chrome DevTools shows "Forced reflow" warnings in the Performance panel. What caused it and what's your fix?
+- **Teach**: Explain to a junior dev why `transform: translateX(100px)` is faster than `left: 100px` for animation — in 3 sentences
+
+🔁 **Spaced repetition**: Review in 3 days → 7 days → 14 days
 
 ## Connections / Liên Kết
 
-- ⬅️ **Built on**: [Core Web Vitals](./01-core-web-vitals.md) — CLS and INP are directly affected by rendering performance
-- ⬅️ **Built on**: [React Performance](./02-react-performance.md) — React's virtual DOM avoids unnecessary browser layout
-- 🔗 **Applied in**: [CSS Fundamentals](../05-html-css/00-css-fundamentals.md) — CSS property choices affect rendering pipeline
+- ⬅️ **Built on**: [Core Web Vitals](./01-core-web-vitals.md) — CLS and INP are directly affected by rendering pipeline choices
+- ⬅️ **Built on**: [React Performance](./02-react-performance.md) — React's virtual DOM avoids unnecessary browser layout recalcs
+- 🔗 **Applied in**: [CSS Fundamentals](../05-html-css/00-css-fundamentals.md) — CSS property choices determine which pipeline stages run
