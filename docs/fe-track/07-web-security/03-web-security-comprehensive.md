@@ -183,6 +183,48 @@ Web Security
 
 ---
 
+### Phase 2 — Security Fundamentals Deep Dive
+
+**🧠 Memory Hook:**
+**CIA = "Can I Access?"** — three questions every attack either breaks or every defense tries to preserve.
+
+**Tại sao tồn tại? / Why does this exist?**
+The web allows anyone on the planet to talk to your server.
+→ **Why?** Because browsers execute arbitrary code from arbitrary servers, any resource you load can try to read your data, impersonate you, or take you offline.
+→ **Why?** Because HTTP was designed for document sharing, not adversarial multi-party applications — security was bolted on after the fact, which is why it's complex and layered.
+
+**Visual — CIA Triad vs. Attack Mapping:**
+```
+CIA Goal          Threatened by             Defended by
+─────────────────────────────────────────────────────────
+Confidentiality   XSS (steals data),        Encryption, HTTPOnly
+                  Eavesdropping             cookies, HTTPS
+─────────────────────────────────────────────────────────
+Integrity         CSRF (forged actions),    CSRF tokens, HMAC,
+                  Data tampering            digital signatures
+─────────────────────────────────────────────────────────
+Availability      DDoS, Resource exhaustion Rate limiting,
+                                            CDN, redundancy
+```
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| "Defense in Depth = nhiều firewall" | Depth có nghĩa là các LOẠI lớp khác nhau, không phải nhiều cùng loại | Physical + Network + App + Data + People — each different |
+| "Fail Securely = hiển thị thông báo lỗi chi tiết" | Stack trace tiết lộ cấu trúc hệ thống cho attacker | Log chi tiết server-side, hiển thị generic message cho user |
+| "Least Privilege chỉ áp dụng cho users" | Process và service cũng cần minimal permissions | Database service không nên có quyền DROP TABLE |
+
+**🎯 Interview Pattern:**
+- Khi thấy câu hỏi về: "Làm sao thiết kế hệ thống bảo mật?"
+- → Nhớ đến: CIA Triad + Defense in Depth
+- → Mở đầu trả lời: *"I'd start from the CIA triad to map what needs protecting, then layer defenses so no single failure is catastrophic."*
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+- 📚 Cần biết trước: HTTP protocol, how browsers load resources
+- ➡️ Để hiểu tiếp: Same-Origin Policy (the browser's first line of defense)
+
+---
+
 ## Same-Origin Policy
 
 ### Same-Origin Policy Theory
@@ -319,6 +361,55 @@ Access-Control-Allow-Credentials: true
 - Allows cookies/auth headers
 - Requires specific origin (not *)
 - Higher security risk
+
+---
+
+### Phase 2 — Same-Origin Policy & CORS Deep Dive
+
+**🧠 Memory Hook:**
+**SOP = "Your browser is your bodyguard."** It refuses to let any other website read what your bank says back to you, even if your bank's server sends the response.
+
+**Tại sao tồn tại? / Why does this exist?**
+Without SOP, a malicious tab open in your browser could silently read your Gmail, Slack messages, and banking balance — all in one page load.
+→ **Why?** Because cookies (including session tokens) are sent automatically with every matching request, so any tab can impersonate you to any site.
+→ **Why?** Because the browser is a shared execution environment — tabs share the same network stack and credential store, so isolation must be enforced by the browser itself, not by servers.
+
+**Visual — SOP vs. CORS Flow:**
+```
+                    ┌─────────────────────────────┐
+                    │         BROWSER              │
+  evil.com tab ─────┤                              │
+  requests data     │  SOP CHECK:                  │
+  from bank.com     │  evil.com ≠ bank.com         │
+                    │  → BLOCK (reads) ❌           │
+                    │  → ALLOW (writes/forms) ✓    │
+                    └─────────────────────────────┘
+
+                    ┌─────────────────────────────┐
+                    │    CORS relaxes SOP           │
+  app.com ──────────┤                              ├──→ api.app.com
+  (OPTIONS) ─────── │  Preflight:                  │    returns
+                    │  "Can app.com read me?"      │    Access-Control-Allow-Origin:
+                    │  → YES → actual request ✓    │    https://app.com
+                    └─────────────────────────────┘
+```
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `Access-Control-Allow-Origin: *` với credentials | Wildcard + credentials bị browsers từ chối | Phải specify exact origin khi dùng `Allow-Credentials: true` |
+| "SOP chặn mọi cross-origin request" | SOP chặn READING response, không chặn SENDING | CSRF exploit này — browser gửi request nhưng không đọc response |
+| "CORS là server-side security" | CORS chỉ là browser-enforced policy, server nói "ai được phép đọc" | Attacker tự viết HTTP client bỏ qua CORS hoàn toàn |
+| Tin tưởng Referer header để validate origin | Referer có thể bị strip bởi privacy tools hoặc HTTPS→HTTP redirect | Dùng CSRF token là primary defense |
+
+**🎯 Interview Pattern:**
+- Khi thấy câu hỏi về: "Tại sao CORS preflight gây chậm?" hoặc "CORS là gì?"
+- → Nhớ đến: SOP là root cause, CORS là controlled exception
+- → Mở đầu trả lời: *"CORS exists because browsers enforce Same-Origin Policy — the preflight is the browser asking permission before breaking SOP on your behalf."*
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+- 📚 Cần biết trước: How HTTP cookies work, how browsers enforce policies
+- ➡️ Để hiểu tiếp: CSRF (exploits the "writes are allowed" loophole in SOP)
 
 ---
 
@@ -488,6 +579,52 @@ X-XSS-Protection: 1; mode=block
 
 ---
 
+### Phase 2 — XSS Deep Dive
+
+**🧠 Memory Hook:**
+**XSS = "Attacker rents a room in your browser."** Your browser trusts the page — if the page contains attacker code, the attacker has all the same trust your page has.
+
+**Tại sao tồn tại? / Why does this exist?**
+Browsers must run code from pages they display — that's what makes the web dynamic.
+→ **Why?** When user-supplied content (comments, search terms, usernames) is placed in a page without encoding, it becomes part of the executable page, not just display text.
+→ **Why?** Because HTML and JavaScript share the same text stream — `<` is simultaneously a safe character in a paragraph and a dangerous tag opener, and the browser can't know developer intent without explicit encoding.
+
+**Visual — Three XSS Types at a Glance:**
+```
+STORED XSS (most dangerous)
+Attacker ──POST malicious content──→ DB
+                                      ↓
+Victim ──GET page──→ Server reads DB ──→ Script in HTML ──→ Executes ❌
+
+REFLECTED XSS
+Attacker crafts URL: /search?q=<script>...
+Victim clicks link ──→ Server echoes q in page ──→ Executes ❌
+
+DOM-BASED XSS (bypasses server)
+Attacker crafts URL: /page#<script>...
+Page loads ──→ JS reads location.hash ──→ innerHTML = hash ──→ Executes ❌
+              ^^^^ never hits server, server-side filtering useless
+```
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Chỉ escape HTML entities là đủ | Context matters: JS context, CSS context, URL context cần encoding khác | Apply context-specific encoding (HTML/JS/URL/CSS) |
+| `innerHTML = userInput` là OK nếu đã sanitize | Sanitization logic có thể bị bypass | Dùng `textContent` cho text, DOMParser cho trusted HTML |
+| Server-side escaping bảo vệ khỏi DOM XSS | DOM XSS payload không bao giờ qua server | Review JS code cho `location.hash`, `document.URL`, `postMessage` sinks |
+| CSP với `unsafe-inline` vẫn "có CSP" | `unsafe-inline` vô hiệu hóa XSS protection của CSP | Dùng nonces hoặc hashes thay vì unsafe-inline |
+
+**🎯 Interview Pattern:**
+- Khi thấy câu hỏi về: "React có bảo vệ khỏi XSS không?"
+- → Nhớ đến: JSX auto-escapes, nhưng `dangerouslySetInnerHTML` và `href={userInput}` là sink
+- → Mở đầu trả lời: *"React escapes by default via JSX, but there are four sinks that bypass this: dangerouslySetInnerHTML, href with javascript:, style injection, and ref.innerHTML."*
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+- 📚 Cần biết trước: How browsers parse HTML, DOM API, cookie security flags
+- ➡️ Để hiểu tiếp: Content Security Policy (the runtime mitigation layer for XSS)
+
+---
+
 ## Cross-Site Request Forgery (CSRF)
 
 ### CSRF Theory
@@ -625,6 +762,54 @@ fetch('/api/data', {
 
 ---
 
+### Phase 2 — CSRF Deep Dive
+
+**🧠 Memory Hook:**
+**CSRF = "Attacker borrows your hand."** The server sees your authenticated cookie; it has no idea someone else triggered the action.
+
+**Tại sao tồn tại? / Why does this exist?**
+Browsers automatically attach cookies to every request to a domain — you don't have to do anything.
+→ **Why?** Because HTTP is stateless and cookies are the session mechanism — the browser attaches them so legitimate pages don't have to manage them manually.
+→ **Why?** Because the web was designed before adversarial cross-origin requests were a concern: form submissions to any domain were allowed to enable payment redirects, partner integrations, etc. CSRF is the security cost of that openness.
+
+**Visual — CSRF Attack vs. Legitimate Request:**
+```
+LEGITIMATE:
+User on bank.com ──fills form──→ POST /transfer (cookie attached) ──→ Bank processes ✓
+
+CSRF ATTACK:
+User visits evil.com (logged in to bank.com in another tab)
+evil.com auto-submits:
+  <form action="https://bank.com/transfer" method="POST">
+    <input name="to" value="attacker">
+  </form>
+Browser attaches bank.com session cookie automatically ──→ Bank processes ❌
+
+CSRF TOKEN DEFENSE:
+Server embeds secret token in form
+evil.com cannot read it (SOP prevents reading bank.com DOM)
+Server rejects requests without matching token ✓
+```
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| "GET requests không cần CSRF protection" | Nếu GET có side-effects (xóa, update), vẫn cần protect | GET nên idempotent; nếu không, add CSRF token |
+| SameSite=Strict giải quyết mọi CSRF | Strict breaks OAuth flows, social login, cross-site links | SameSite=Lax cho phép top-level navigation, kết hợp với CSRF token |
+| CORS header bảo vệ khỏi CSRF | CORS chặn attacker đọc response, không chặn browser gửi request | CSRF và CORS protect khác thứ hoàn toàn |
+| Double Submit Cookie không cần HTTPS | Attacker trên network có thể set cookie nếu không có HTTPS | Double Submit chỉ an toàn trên HTTPS |
+
+**🎯 Interview Pattern:**
+- Khi thấy câu hỏi về: "Tại sao API cần CSRF token?" hoặc "SPA có bị CSRF không?"
+- → Nhớ đến: CSRF exploits cookie auto-attach; SPA dùng Authorization header thì an toàn hơn
+- → Mở đầu trả lời: *"SPAs using Authorization: Bearer headers in localStorage are naturally CSRF-resistant because JavaScript can't be triggered cross-origin — but cookie-based auth still needs SameSite + CSRF tokens."*
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+- 📚 Cần biết trước: HTTP cookies, SameSite attribute, SOP (why CSRF tokens work)
+- ➡️ Để hiểu tiếp: Security Headers (additional layers like X-Frame-Options, HSTS)
+
+---
+
 ## Content Security Policy
 
 ### CSP Theory
@@ -740,6 +925,51 @@ Content-Security-Policy: default-src 'self'; report-uri /csp-report
 
 ---
 
+### Phase 2 — CSP Deep Dive
+
+**🧠 Memory Hook:**
+**CSP = "Whitelist the neighborhood your browser is allowed to trust."** Every script, image, and font must have an invitation or it gets blocked at the door.
+
+**Tại sao tồn tại? / Why does this exist?**
+Even with perfect input sanitization, a single missed encoding means attacker code runs with full page trust.
+→ **Why?** Output encoding is developer-enforced and error-prone at scale — one template, one library update, one edge case can open an XSS hole.
+→ **Why?** Browsers need a runtime backstop that restricts script execution by origin/nonce, independent of whether the server correctly sanitized every byte of output. CSP provides that second line of defense.
+
+**Visual — CSP as Defense Layers:**
+```
+Request for page
+       ↓
+Server sanitizes output ──── Layer 1 (input/output encoding)
+       ↓
+CSP header delivered ─────── Layer 2 (browser runtime policy)
+       ↓
+Browser enforces:
+  script-src 'nonce-abc' ──→ Only scripts with nonce=abc run
+  connect-src 'self' ──────→ Ajax only to same origin
+  img-src https: ──────────→ Images only over HTTPS
+       ↓
+Even if XSS payload injected → no matching nonce → BLOCKED ✓
+```
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `script-src *` để tiện | Cho phép mọi external script, loại bỏ XSS protection | Use explicit domains + nonces |
+| CSP chỉ cần `default-src 'self'` | Không cover: `object-src`, `base-uri`, `form-action` — có thể bị bypass | Thêm `object-src 'none'` và `base-uri 'self'` tối thiểu |
+| Nonce là tĩnh | Attacker có thể đoán hoặc replay nonce cũ | Nonce phải cryptographically random và unique per response |
+| CSP report-uri là cổng bảo mật | Report-uri endpoint có thể bị DDoS với fake violations | Rate limit và validate report endpoint |
+
+**🎯 Interview Pattern:**
+- Khi thấy câu hỏi về: "Làm sao harden React app khỏi XSS?"
+- → Nhớ đến: CSP + nonces + no unsafe-inline là bộ ba quan trọng nhất
+- → Mở đầu trả lời: *"React handles XSS by default in JSX, but I'd add a CSP with nonces to block any injected scripts at the browser level, plus set HTTPOnly on session cookies so even a successful XSS can't steal the token."*
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+- 📚 Cần biết trước: XSS attack types, how browsers execute scripts, HTTP headers
+- ➡️ Để hiểu tiếp: Security Headers (HSTS, X-Frame-Options, Permissions-Policy)
+
+---
+
 ## Summary
 
 ### Key Security Concepts
@@ -793,6 +1023,180 @@ Content-Security-Policy: default-src 'self'; report-uri /csp-report
 - Hardcode secrets
 - Disable security features
 - Assume security by obscurity
+
+---
+
+## Interview Questions / Câu Hỏi Phỏng Vấn
+
+### Q: What is the difference between XSS and CSRF? / XSS và CSRF khác nhau thế nào? 🟡 Mid
+
+**A:** XSS injects attacker code into the victim's browser session on a trusted site. CSRF forces the victim's browser to make an authenticated request to a trusted site from a malicious origin.
+
+XSS là attacker chèn code vào session của nạn nhân trên site mà browser tin tưởng — attacker mượn quyền của site với nạn nhân. CSRF là attacker khiến browser nạn nhân gửi authenticated request đến site tin cậy từ site độc hại — attacker mượn cookie của nạn nhân với site.
+
+**Mnemonic:** XSS = site bị nhiễm code của attacker. CSRF = browser nạn nhân bị dùng như công cụ.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Explains that XSS injects code while CSRF abuses authentication state; notes that SameSite cookies fix CSRF but not XSS; notes that CSP/HTTPOnly fix XSS impact but not CSRF
+- ❌ Weak: "XSS is client-side, CSRF is server-side" — imprecise and misses the mechanism entirely
+
+---
+
+### Q: How does Same-Origin Policy actually protect users? What are its limits? 🟡 Mid
+
+**A:** SOP prevents scripts from one origin from reading data from another origin. It blocks DOM access, Cookie reads, and AJAX response bodies across origins. Limits: it allows writes (form POST, image load), it doesn't protect against CSRF, and it doesn't apply to server-to-server requests.
+
+SOP ngăn script của origin A đọc dữ liệu từ origin B. Điều này bảo vệ session token, DOM content, cookie. Giới hạn: SOP cho phép *gửi* request cross-origin (chỉ chặn đọc response), không chặn CSRF, và không ảnh hưởng đến server-side code.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Distinguishes "blocking reads" from "blocking sends" — this is the key nuance that explains why CSRF still works despite SOP
+- ❌ Weak: "SOP blocks all cross-origin requests" — this is wrong; it only blocks reading the response
+
+---
+
+### Q: Explain CORS preflight. Why does the browser send OPTIONS first? 🟡 Mid
+
+**A:** Preflight is the browser asking the server "I'm about to send a non-simple request from origin X — do you allow this?" before the actual request. It protects servers that don't expect cross-origin requests with custom methods or headers from receiving them unexpectedly.
+
+Preflight là browser hỏi server trước khi gửi non-simple request: "Origin X có được phép gửi DELETE với Authorization header không?" Server có thể trả lời allow hoặc deny mà không cần process request thực. Mục đích: bảo vệ server legacy không biết CORS khỏi bị exploit bởi cross-origin request.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Notes that simple requests (GET, POST with simple headers) don't trigger preflight — explains WHY the threshold exists (legacy server compatibility)
+- ❌ Weak: "Preflight checks security" — without explaining what it checks and why the threshold is where it is
+
+---
+
+### Q: What is Stored vs. Reflected vs. DOM-based XSS? Which is most dangerous and why? 🟡 Mid
+
+**A:** Stored: payload persists in DB, executes for every visitor. Reflected: payload echoed in single response, requires tricking one user. DOM-based: never hits the server, JavaScript processes URL/hash directly. Stored is most dangerous (mass scale), DOM-based is hardest to detect (server-side filters useless).
+
+Stored XSS nguy hiểm nhất vì một lần chèn, tất cả người dùng sau đó đều bị ảnh hưởng. DOM-based khó phát hiện nhất vì WAF và server-side sanitization hoàn toàn mù — code chạy ở client-side từ JS đọc URL fragment.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Specifically names DOM sinks (`location.hash`, `document.URL`, `postMessage`) and why server-side defenses can't catch DOM XSS
+- ❌ Weak: Only explains the attack flow without discussing detectability and defense differences
+
+---
+
+### Q: How do CSRF tokens work? Why can't an attacker just read the token? 🟡 Mid
+
+**A:** The server embeds a random token in the page/form. When the form is submitted, the token must match. An attacker on evil.com cannot read the token because SOP prevents evil.com from reading bank.com's DOM or AJAX responses. The token's security depends entirely on SOP being enforced.
+
+CSRF token hoạt động vì SOP: attacker trên evil.com không thể đọc DOM của bank.com nên không lấy được token. Server so sánh token trong form/header với token trong session — nếu không match, từ chối request. Toàn bộ scheme collapse nếu có XSS vulnerability (attacker có thể đọc DOM từ trong site).
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Notes that CSRF tokens and XSS are linked — XSS breaks CSRF token protection because attacker can now read the DOM from within the trusted origin
+- ❌ Weak: "CSRF token is a secret key" — without explaining why the attacker can't just read it
+
+---
+
+### Q: What CSP directive most directly prevents XSS? How do nonces work? 🔴 Senior
+
+**A:** `script-src` with nonces. The server generates a cryptographically random nonce per response, puts it in the CSP header, and adds `nonce="abc"` to legitimate script tags. Only scripts with matching nonces execute — attacker-injected scripts have no nonce.
+
+`script-src 'nonce-{random}'` là directive trực tiếp ngăn XSS. Server tạo random nonce mỗi response (không thể đoán), đặt trong CSP header, và thêm `nonce=` attribute vào `<script>` tags hợp lệ. Attacker có thể inject `<script>` nhưng không biết nonce — browser block. Key: nonce phải unique per request, không thể tái sử dụng.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Explains that `unsafe-inline` defeats the purpose of script-src; explains `strict-dynamic` for dynamically loaded scripts; notes that nonces must be per-response not per-deploy
+- ❌ Weak: "Use CSP to block inline scripts" without explaining the nonce mechanism or why unsafe-inline is dangerous
+
+---
+
+### Q: What's the difference between SameSite=Strict and SameSite=Lax? When would each break your app? 🔴 Senior
+
+**A:** Strict: cookie never sent with any cross-site request, including top-level navigation (clicking a link from another site). Lax: cookie sent with top-level GET navigation but not with cross-site POST/fetch. Strict breaks OAuth flows and "return to app" patterns. Lax is the secure default that preserves usability.
+
+Strict phù hợp cho session cookie của banking app — không cần OAuth. Lax là default tốt cho hầu hết apps nhưng vẫn block CSRF POST attack. Lax có thể bị bypass bởi GET-based CSRF (nếu server dùng GET cho state-changing operations — anti-pattern). None + Secure cần thiết cho third-party cookie flows (embed widgets, payment SDKs).
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Notes the OAuth redirect breakage with Strict; explains that Lax still blocks POST CSRF which covers most attacks; mentions SameSite=None requires Secure flag
+- ❌ Weak: "Strict is always better" — misses that it breaks real use cases like social login
+
+---
+
+### Q: An attacker has achieved XSS on your app. What damage can they do, and what mitigations limit the blast radius? 🔴 Senior
+
+**A:** Without mitigations: steal session cookies, read all page data, make authenticated API calls, keylog, redirect to phishing. With mitigations: HTTPOnly cookies stop cookie theft; CSP restricts what scripts can do; connect-src blocks data exfiltration to attacker's server; Subresource Integrity (SRI) prevents supply-chain injection.
+
+Với HTTPOnly cookie: attacker không thể đánh cắp session token qua `document.cookie`. Với CSP `connect-src 'self'`: attacker không thể gửi stolen data về server của họ. Với CSP `script-src nonce`: injected script không chạy được. Defense in depth là lý do: bạn không thể 100% ngăn XSS, nhưng có thể limit damage khi nó xảy ra.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Explicitly links HTTPOnly to cookie theft prevention; connects connect-src to data exfiltration blocking; shows understanding that XSS mitigation is layered not binary
+- ❌ Weak: "Just use input validation" — misses that defense-in-depth matters because no sanitization is perfect
+
+---
+
+## Study Cases / Tình Huống Thực Tế Sâu
+
+### Case 1: British Airways Magecart Attack — 2018
+**Tình huống**: Attackers injected 22 lines of JavaScript into British Airways' payment page that forwarded customer credit card details to attacker-controlled server `baways.com`. Ran undetected for 15 days, affecting ~500,000 customers.
+
+**Quyết định**: The attack succeeded because BA had no Content Security Policy. The injected script could freely make fetch requests to a third-party domain.
+
+**Kết quả**: £183 million GDPR fine (later reduced to £20 million). Massive reputational damage.
+
+**Bài học**: CSP with `connect-src 'self'` would have blocked data exfiltration to `baways.com` — even after code injection, the exfiltration step would have been blocked by the browser. This is the canonical "defense in depth prevents breach escalation" case.
+
+---
+
+### Case 2: Samy Worm on MySpace — 2005
+**Tình huống**: Samy Kamkar exploited a Stored XSS vulnerability in MySpace profiles. His worm spread by: when a user viewed a profile with the payload, their own profile was updated with the payload AND they added Samy as a friend. Over 1 million MySpace accounts affected in under 24 hours.
+
+**Quyết định**: MySpace's HTML sanitizer blocked `<script>` tags but not CSS `style` attributes with JavaScript expressions (Internet Explorer `expression()` CSS hack). The worm also used `XMLHttpRequest` to read CSRF tokens and forge requests.
+
+**Kết quả**: MySpace went offline to clean the worm. First large-scale XSS worm demonstration.
+
+**Bài học**: (1) Sanitization via blocklist fails — new attack vectors emerge. Allowlist-based sanitization required. (2) XSS + CSRF combined: attacker used XSS to steal CSRF tokens, enabling authenticated actions. Shows the link between the two vulnerability classes.
+
+---
+
+### Case 3: GitHub CSRF — 2012
+**Tình huống**: A researcher found GitHub's "Follow user" and repository "fork" actions lacked CSRF protection. A malicious page could force a logged-in GitHub user to follow any user or fork any repo by visiting the page.
+
+**Quyết định**: GitHub added CSRF tokens to all state-changing forms. They also adopted SameSite cookie policies as an additional layer when browsers supported it.
+
+**Kết quả**: No exploited users reported, but the vulnerability was publicly disclosed and fixed.
+
+**Bài học**: CSRF doesn't require stealing money to be harmful — reputation manipulation (mass fake follows, forced actions) is a real threat. Also demonstrates that GET requests that cause side effects are a CSRF risk: GitHub had GET endpoints for some actions, violating HTTP idempotency principles.
+
+---
+
+### Case 4: Twitter XSS Worm — 2010
+**Tình huống**: A zero-day XSS in Twitter's tweet display allowed a worm that auto-retweeted and redirected users to adult sites when they hovered over a tweet. Spread to ~5 million tweets in hours. Notable accounts including Sarah Palin and the UK Home Office were affected.
+
+**Quyết định**: Twitter's server-side HTML sanitizer stripped `<script>` tags but failed to strip event handler attributes like `onmouseover`. This was a sanitizer design failure — the blocklist approach missed an entire class of injection vector. Twitter patched within hours but the spread showed real-time escalation.
+
+**Kết quả**: No credentials stolen, but demonstrated mass-scale impact of even a "low impact" XSS.
+
+**Bài học**: Event handler injection (`onmouseover=`, `onerror=`) is a separate XSS surface from `<script>` tags. Sanitizers that block `<script>` but not event attributes remain vulnerable. This is why CSP's `unsafe-inline` restriction covers both script elements AND inline event handlers.
+
+---
+
+## ⚡ Cold Call Simulation / Mô Phỏng Phỏng Vấn
+
+> 🎯 Interviewer asks cold: **"Your React SPA uses cookie-based auth. Walk me through every security measure you'd apply and why."**
+
+**30 giây đầu — mở đầu lý tưởng / Ideal 30-second opening:**
+1. **Scope + define**: Cookie-based auth in SPA means CSRF is the primary risk since cookies are auto-attached cross-site, and XSS is secondary since injected JS can make authenticated calls.
+2. **Core mechanism**: I'd set `SameSite=Lax; HttpOnly; Secure` on the session cookie — Lax blocks CSRF POST attacks, HttpOnly blocks JS cookie theft, Secure enforces HTTPS.
+3. **Concrete example**: For state-changing API calls I'd add a CSRF token in an `X-CSRF-Token` header since custom headers require CORS preflight, which evil.com can't pass. For the CSP, `script-src 'nonce-{random}'; connect-src 'self'` limits XSS blast radius.
+4. **Trade-off**: SameSite=Lax breaks if you need third-party embeds or OAuth redirects — in that case you use Strict where possible and add double-submit cookies for the None flows.
+
+---
+
+## Self-Check / Tự Kiểm Tra ⚡
+
+> **Đóng tài liệu lại trước khi làm — Close the doc before attempting.**
+
+- [ ] **Retrieval**: Từ trí nhớ, giải thích 3 loại XSS và cách phòng chống từng loại.
+- [ ] **Visual**: Vẽ flow của CSRF attack và flow của CSRF token defense từ trí nhớ.
+- [ ] **Application**: Your team wants to add user-provided "bio" text to profile pages rendered via `innerHTML`. What do you do?
+- [ ] **Debug**: CSP header is set to `script-src 'self' 'unsafe-inline'` but you're still getting XSS reports. Why is `unsafe-inline` not saving you and what should you use instead?
+- [ ] **Teach**: Giải thích XSS cho người không biết lập trình — dùng ví dụ không liên quan đến code.
+
+💬 **Feynman Prompt:** XSS is like a restaurant that lets customers write the menu board — other diners read the board and follow its instructions, including "call this phone number" planted by a previous customer. The restaurant (server) trusted the writing without checking who wrote it. How does CSP change this analogy?
+
+🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày → 7 ngày → 14 ngày**.
 
 ---
 

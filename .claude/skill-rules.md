@@ -105,6 +105,26 @@
     REQUIRED: "Write the definition of X from memory, then check." Include at least 1 close-the-doc
     instruction. Add spaced repetition reminder: review in 3 days → 7 days → 14 days.
 
+18. **3-Block Learning Flow / Luồng Học 3 Bước** — Every content file MUST follow this
+    top-level structure within Core Concepts:
+
+    **Block A — Theory Foundation / Nền Tảng Lý Thuyết**
+    (What it is, why it exists, how it works — Feynman + Spiral layers 1-2-3.
+    Học viên xây dựng mental model trước khi gặp câu hỏi phỏng vấn.)
+
+    **Block B — Interview Q&A / Câu Hỏi Phỏng Vấn**
+    (🟢→🟡→🔴 progression with Interview Signals per Q&A.
+    Chỉ bắt đầu Q&A sau khi lý thuyết đã được giải thích đầy đủ.)
+
+    **Block C — Study Cases / Tình Huống Thực Tế Sâu**
+    (1-2 real production scenarios applying the concept — named company,
+    what went wrong, what decision was made, what trade-off was accepted.
+    Khác với Real-World Scenario đầu file: Block C đi sâu vào kết quả và bài học.)
+
+    Reader builds mental model (A) → tests it verbally (B) → sees it in context (C).
+    BANNED: jumping to Q&A before theory is established.
+    BANNED: generic "example:" without a named company/system/incident.
+
 ---
 
 ## Gap Tracking

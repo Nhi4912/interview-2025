@@ -304,6 +304,7 @@ gaps_identified:     ["List of specific sub-topics missing"]
 18. Code examples only when they clarify — not to pad content
 19. **No generic overviews** — Overview must be specific to the file's topic
 20. **No duplicate Q&A answers** — every answer must be unique within the file
+21. **3-Block Learning Flow** — Core Concepts section MUST follow: Block A (Theory Foundation) → Block B (Interview Q&A) → Block C (Study Cases). Never start Q&A before theory layers are complete. Study Cases must name a real company/system/incident.
 
 ---
 
@@ -346,6 +347,8 @@ Before marking a spec as done, verify:
 - [ ] Self-Check has Retrieval + Visual + Application + Debug + Teach items
 - [ ] 🔁 Spaced repetition reminder (3 → 7 → 14 days)
 - [ ] No duplicate Q&A answers within the same file
+- [ ] Core Concepts follow 3-Block order: Theory Foundation → Interview Q&A → Study Cases (Rule 21)
+- [ ] Study Cases name a real company/system/incident (not generic "example:")
 
 ### Bilingual
 - [ ] Every Q has both EN and VI phrasing
