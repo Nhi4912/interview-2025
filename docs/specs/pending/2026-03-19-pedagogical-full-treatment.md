@@ -117,22 +117,22 @@
 | `01-core-web-vitals.md` | ✅ | ✅ | Done session 3 |
 | `02-react-performance.md` | ✅ | ✅ | Done session 5 |
 | `03-bundle-optimization.md` | ❌ | ❌ | |
-| `04-web-performance-comprehensive.md` | ❌ | ❌ | |
+| `04-web-performance-comprehensive.md` | ✅ | ✅ | Done session 11 |
 | `05-rendering-optimization-theory.md` | ✅ | ✅ | Done session 8 |
 
 ### Tier 7: Web Security + FE System Design
 
 | File | Phase 1 | Phase 2 | Notes |
 |------|---------|---------|-------|
-| `07-web-security/01-common-vulnerabilities.md` | ❌ | ❌ | |
-| `07-web-security/02-authentication.md` | ❌ | ❌ | |
+| `07-web-security/01-common-vulnerabilities.md` | ✅ | ✅ | Done session 11 |
+| `07-web-security/02-authentication.md` | ✅ | ✅ | Done session 11 |
 | `07-web-security/03-web-security-comprehensive.md` | ✅ | ✅ | Done session 11 |
 | `08-fe-system-design/01-architecture-patterns.md` | ✅ | ✅ | Done session 8 |
-| `08-fe-system-design/02-scalability.md` | ❌ | ❌ | |
+| `08-fe-system-design/02-scalability.md` | ✅ | ✅ | Done session 11 |
 | `08-fe-system-design/03-caching.md` | ❌ | ❌ | |
 | `08-fe-system-design/04-microservices.md` | ❌ | ❌ | |
 | `08-fe-system-design/05-database-design.md` | ❌ | ❌ | |
-| `08-fe-system-design/06-microservices-patterns.md` | ❌ | ❌ | |
+| `08-fe-system-design/06-microservices-patterns.md` | ✅ | ✅ | Done session 11 |
 
 ---
 

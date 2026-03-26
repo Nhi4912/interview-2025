@@ -39,6 +39,42 @@ Master web performance theory:
 
 ## Performance Fundamentals
 
+> 🧠 **Memory Hook**: Performance is not about making things fast — it's about making users feel things are fast; perception is the product, milliseconds are just the tool.
+
+### Why does this exist? / Tại sao phần này tồn tại?
+
+**Why 1 — Attention is finite:** Humans have a 100 ms perception threshold for "immediate" response and a 1 s threshold before concentration breaks. Every millisecond beyond these thresholds forces users to mentally context-switch. Performance optimization exists to keep users in flow — not as an engineering vanity metric.
+
+**Why 2 — Mobile changed the baseline:** Desktop internet of 2005 had predictable CPU speed and fiber connections. The 2026 web is accessed mostly on mobile devices with 2–5× slower CPUs, intermittent 3G/4G connections, and battery constraints. Techniques that "worked fine" on desktop fail catastrophically on mobile — which is why performance principles had to be formalized.
+
+**Why 3 — Economics are measurable:** Amazon's 100 ms → 1% conversion study, Google's search ranking penalty for slow pages, and bounce rate data all quantify what was previously intuition. Performance became an engineering discipline because it became a business KPI.
+
+```
+Performance Perception Thresholds
+────────────────────────────────────────────
+< 100ms   → Feels instant (user in flow)
+100ms–1s  → Noticeable delay (acceptable)
+1s–3s     → Concentration broken (frustration starts)
+3s–10s    → 53% mobile users abandon (Google data)
+> 10s     → User considers task failed
+```
+
+| Common Mistakes / Sai lầm | Tại sao sai | Đúng là |
+|---|---|---|
+| Optimizing on developer hardware only | Dev MacBook is 4–8× faster than median user device | Test on real budget Android (or throttle CPU 4×, network to Fast 3G) |
+| Treating performance as a one-time task | New features continuously add JS/CSS/images; regressions accumulate silently | Set performance budgets enforced in CI to catch regressions per PR |
+| Focusing on raw load time rather than perceived load | A page that shows content at 1.5 s feels faster than one showing spinner until 2 s even with same total load | Optimize FCP and LCP (perceived start) before total load time |
+| Ignoring network conditions outside the office | Office WiFi is not representative of field users on 4G in rural areas | Use Lighthouse's "Mobile" preset (simulated 4G, CPU throttle) for benchmarking |
+
+**Interview Pattern:**
+- Trigger: "Why does performance matter?" or "How do you approach a performance audit from scratch?"
+- Concept: Perception thresholds, mobile-first baseline, metrics vs user experience
+- Opening sentence: "Performance matters because slow pages directly lose users — 53% of mobile users abandon after 3 s — so I start every audit by measuring real user field data, not just lab scores, to understand where actual users are experiencing friction."
+
+**Knowledge Chain:**
+- Prerequisite: None — this is the entry point for all web performance topics
+- Next: [Performance Metrics Theory](#performance-metrics-theory) — translates these principles into measurable numbers (LCP, INP, CLS)
+
 ### What is Web Performance?
 
 **English Definition:** Web performance refers to the speed at which web pages are downloaded, rendered, and become interactive, as well as how smoothly they respond to user interactions.
@@ -169,6 +205,48 @@ Web Performance
 ---
 
 ## Performance Metrics Theory
+
+> 🧠 **Memory Hook**: LCP = "Did it load?", INP = "Does it respond?", CLS = "Did it jump?" — three user frustrations, three numbers, three thresholds to memorize (2.5 s / 200 ms / 0.1).
+
+### Why does this exist? / Tại sao phần này tồn tại?
+
+**Why 1 — Lab metrics lied:** Traditional metrics like "page load" (DOMContentLoaded, `window.onload`) measure technical events that don't align with user perception. A page can fire `onload` while still showing a spinner. Google needed metrics that correlate with real user frustration, not browser events.
+
+**Why 2 — Different users, different devices:** A metric measured on a developer's MacBook on fiber WiFi is meaningless for a user on a mid-range Android phone on a 4G network in Vietnam. Core Web Vitals are collected from real user field data (CrUX dataset) at the p75 percentile — meaning 75% of real visits meet the threshold.
+
+**Why 3 — SEO accountability:** Before Core Web Vitals became a ranking signal (2021), there was no business pressure to fix performance beyond developer preference. Tying metrics to search ranking created an economic incentive: poor performance = lower ranking = less organic traffic = lost revenue. This is why product teams now fund performance work.
+
+```
+Core Web Vitals at a Glance
+────────────────────────────────────────────────────────
+Metric   | What it measures       | Good    | Poor
+─────────┼────────────────────────┼─────────┼──────────
+LCP      | Loading (largest el.)  | ≤ 2.5 s | > 4.0 s
+INP      | Responsiveness (all)   | ≤ 200ms | > 500ms
+CLS      | Visual stability       | ≤ 0.1   | > 0.25
+─────────┼────────────────────────┼─────────┼──────────
+FID*     | First input delay      | ≤ 100ms | > 300ms
+         | (*replaced by INP 2024)
+FCP      | First contentful paint | ≤ 1.8 s | > 3.0 s
+TTI      | Time to interactive    | ≤ 3.8 s | > 7.3 s
+TBT      | Total blocking time    | ≤ 200ms | > 600ms
+```
+
+| Common Mistakes / Sai lầm | Tại sao sai | Đúng là |
+|---|---|---|
+| Optimizing only for Lighthouse lab score | Lab score uses simulated conditions; real users (CrUX p75) may still have poor scores | Check Chrome UX Report (CrUX) in Search Console for field data |
+| Treating FID as current best practice | FID was replaced by INP in March 2024 | Use INP (Interaction to Next Paint) — measures all interactions, not just the first |
+| Ignoring TTI as "not a CWV" | TTI directly affects INP — a page with high TBT will have poor INP | Reduce TBT (long tasks) to improve both TTI and INP |
+| Optimizing LCP image without checking render-blocking resources | Preloading LCP image won't help if CSS is still blocking paint | Fix render-blocking resources first, then optimize LCP asset |
+
+**Interview Pattern:**
+- Trigger: "What are the Core Web Vitals?" or "Our Google Search Console shows 'Poor' URLs — where do you start?"
+- Concept: LCP/INP/CLS metrics, thresholds, field vs lab data
+- Opening sentence: "Core Web Vitals are three field metrics — LCP for loading, INP for responsiveness, CLS for visual stability — measured at p75 from real user data; I'd start with whichever shows the most 'Poor' URLs in Search Console."
+
+**Knowledge Chain:**
+- Prerequisite: [Performance Fundamentals](#performance-fundamentals) — establishes that user perception drives metric design
+- Next: [Critical Rendering Path](#critical-rendering-path) — LCP and TTI are direct outputs of CRP efficiency
 
 ### Core Web Vitals
 
@@ -352,6 +430,32 @@ CLS = Σ (Impact Fraction × Distance Fraction)
 
 ## Critical Rendering Path
 
+> 🧠 **Memory Hook**: HTML builds the DOM, CSS builds the CSSOM — the browser refuses to paint a single pixel until both are ready, which is why a missing stylesheet can blank your entire page.
+
+### Why does this exist? / Tại sao phần này tồn tại?
+
+**Why 1 — Consistency over speed:** CSS is render-blocking by design. If the browser painted with partial styles (as bytes arrived), users would see a Flash of Unstyled Content (FOUC) — raw HTML text with default browser styles, then a jarring re-render when the stylesheet arrives. The blocking behavior trades speed for visual consistency.
+
+**Why 2 — JavaScript can rewrite everything:** A `<script>` tag in `<head>` halts HTML parsing because the script might call `document.write()` — which rewrites the page. The browser cannot know what the script will do until it runs. `defer` and `async` exist to opt out of this conservative behavior when you know your script is safe.
+
+**Why 3 — Render tree depends on both:** The Render Tree is built by combining DOM nodes with their computed CSSOM styles. You cannot start this combination until both inputs are fully available. This dependency chain — DOM + CSSOM → Render Tree → Layout → Paint → Composite — is why every blocking resource on the critical path directly delays First Contentful Paint.
+
+| Common Mistakes / Sai lầm | Tại sao sai | Đúng là |
+|---|---|---|
+| Placing `<script src="app.js">` in `<head>` without `defer` | Blocks HTML parsing; DOM not available when script runs | Use `defer` for scripts that need the DOM; `async` for independent scripts |
+| Loading the entire CSS bundle for above-the-fold render | Delays CSSOM construction with styles that aren't needed yet | Inline critical CSS (< 14 KB) in `<style>` tag; async-load the rest |
+| Not specifying `width`/`height` on LCP images | Browser doesn't know image dimensions until downloaded; causes layout shift | Set explicit `width` + `height` attributes or `aspect-ratio` in CSS |
+| Assuming `async` maintains script execution order | Scripts with `async` execute in download-completion order, not DOM order | Use `defer` when script order matters; `async` only for independent scripts |
+
+**Interview Pattern:**
+- Trigger: "Walk me through what happens when a browser loads a page" or "Why is our FCP at 3.5 s?"
+- Concept: CRP sequence, render-blocking, async/defer
+- Opening sentence: "The browser can't render the first pixel until both the DOM and CSSOM are complete — so I'd start by identifying every render-blocking stylesheet and script on the critical path."
+
+**Knowledge Chain:**
+- Prerequisite: [Network Performance](#network-performance) — resources arrive via the network before the CRP can begin
+- Next: [Performance Metrics Theory](#performance-metrics-theory) — LCP and TTI are direct measurements of CRP completion speed
+
 ### Critical Rendering Path Theory
 
 **Definition:** The sequence of steps the browser takes to convert HTML, CSS, and JavaScript into pixels on screen.
@@ -507,6 +611,32 @@ Paint → Composite
 ---
 
 ## Network Performance
+
+> 🧠 **Memory Hook**: Latency is the speed of light problem — you can't fix physics, but you can reduce round trips; bandwidth is the pipe-width problem — you can fix it with compression and CDNs.
+
+### Why does this exist? / Tại sao phần này tồn tại?
+
+**Why 1 — Latency dominates small resources:** A web page loads dozens of small files (HTML, CSS, JS chunks, fonts, icons). Each requires at least one round-trip. Even at 100 Mbps bandwidth, a 50 ms RTT to a distant server means 10 small resources take 500 ms in serial. Bandwidth improvements barely help; reducing round-trips (HTTP/2 multiplexing, CDN edge nodes) is the real lever.
+
+**Why 2 — Caching is free performance:** An asset already in the browser cache takes 0 ms to fetch. Every cache miss that could have been a hit is wasted user time and server cost. Cache strategy design (immutable hashed assets vs. short-lived HTML) is the highest ROI optimization for returning users.
+
+**Why 3 — Protocols matter:** HTTP/1.1 processes one request at a time per connection (head-of-line blocking). HTTP/2 multiplexes hundreds of streams over one TCP connection. HTTP/3 (QUIC) removes TCP's own head-of-line blocking. Each protocol generation exists specifically to overcome the limitations of the previous one.
+
+| Common Mistakes / Sai lầm | Tại sao sai | Đúng là |
+|---|---|---|
+| Caching HTML with long `max-age` | Users see stale pages after deployments | HTML: `no-cache` (revalidate every time); hashed JS/CSS: `max-age=31536000, immutable` |
+| Using `preconnect` for every third-party origin | Too many early connections waste TCP sockets and CPU for TLS handshakes | Limit `preconnect` to 2–3 critical origins used above the fold |
+| Domain sharding in HTTP/2 | Was a workaround for HTTP/1.1's per-connection limit; in HTTP/2 it defeats multiplexing by splitting streams across connections | Consolidate origins in HTTP/2; remove domain sharding |
+| Serving images from origin when a CDN is available | Every user hits the same single origin regardless of geography | Use a CDN with edge PoPs to cut propagation delay by 50–200 ms for distant users |
+
+**Interview Pattern:**
+- Trigger: "How would you improve TTFB for users in Southeast Asia?" or "Explain your caching strategy for a deployed app."
+- Concept: Latency vs bandwidth, caching hierarchy, HTTP/2 multiplexing
+- Opening sentence: "For distant users, latency is the constraint — not bandwidth — so the highest-impact fix is a CDN with edge nodes close to them, combined with aggressive long-term caching of immutable assets."
+
+**Knowledge Chain:**
+- Prerequisite: [Performance Fundamentals](#performance-fundamentals) — establishes the three principles (minimize critical resources, bytes, path length) that network optimization implements
+- Next: [Critical Rendering Path](#critical-rendering-path) — network delivery of HTML/CSS/JS feeds directly into the rendering pipeline
 
 ### Network Performance Theory
 
@@ -693,6 +823,44 @@ Origin Server
 
 ## JavaScript Performance
 
+> 🧠 **Memory Hook**: JavaScript is the only resource that both blocks the parser AND runs on the main thread — so every byte you send has a double cost: download time + execution time.
+
+### Why does this exist? / Tại sao phần này tồn tại?
+
+**Why 1 — Single-threaded execution:** Browsers run JavaScript on a single main thread shared with layout, paint, and user event handling. One long JS task blocks everything else. This is not a design flaw — it's the foundation of the browser's security model (no shared mutable state between contexts).
+
+**Why 2 — Parse/compile cost is invisible:** Developers measure network transfer but forget that every JavaScript byte must be parsed into an AST, compiled to bytecode, and potentially JIT-compiled to machine code before it runs. On a mid-range Android device this can be 3–5× slower than a developer's MacBook — a 300 KB JS bundle that "feels fast" in dev may block the main thread for 2 s on a budget phone.
+
+**Why 3 — Memory is finite and GC is disruptive:** V8's garbage collector is incremental but can still cause micro-pauses. Applications that constantly allocate objects (creating new arrays/objects in render loops, unbounded event listeners) force frequent GC cycles, causing dropped frames and unpredictable jank.
+
+```
+JS Cost Breakdown (per byte of JavaScript)
+─────────────────────────────────────────────
+[Download] → [Parse] → [Compile] → [Execute]
+   ~50%          ~15%      ~15%       ~20%
+(network)   (CPU, blocks main thread if synchronous)
+
+Compare: 100 KB JSON ≠ 100 KB JS
+  JSON: downloaded + parsed as data
+  JS:   downloaded + parsed + compiled + executed
+```
+
+| Common Mistakes / Sai lầm | Tại sao sai | Đúng là |
+|---|---|---|
+| Sending one large 500 KB JS bundle | Parse + compile blocks main thread for 3–5 s on mobile | Code-split by route; target <150 KB per initial chunk (gzipped) |
+| Measuring JS performance only on dev machine | Macs are 4–8× faster than budget Android at JS execution | Profile on a real mid-range device or use CPU 4× throttle in DevTools |
+| Creating objects inside `requestAnimationFrame` callbacks | Increases GC pressure, causes frame drops | Pre-allocate objects outside the animation loop (object pooling) |
+| Using synchronous `XMLHttpRequest` | Blocks the entire main thread until network responds | Use `fetch` (Promise-based, non-blocking) |
+
+**Interview Pattern:**
+- Trigger: "Why is our page slow even though the bundle is only 400 KB?" or "What is TTI and how do you improve it?"
+- Concept: Parse/compile cost, main thread blocking, long tasks
+- Opening sentence: "JavaScript has a hidden cost beyond file size — every byte must be parsed and compiled before execution, which blocks the main thread; on mobile devices this is 3–5× slower than desktop."
+
+**Knowledge Chain:**
+- Prerequisite: [Critical Rendering Path](#critical-rendering-path) — explains why main thread blocking delays TTI
+- Next: [Rendering Performance](#rendering-performance) — long JS tasks cause frame drops, directly linking JS execution to animation smoothness
+
 ### JavaScript Execution Performance
 
 **Theory:** JavaScript execution performance depends on parsing, compilation, and runtime efficiency.
@@ -850,6 +1018,32 @@ Origin Server
 ---
 
 ## Rendering Performance
+
+> 🧠 **Memory Hook**: The browser pipeline is Layout → Paint → Composite — and you want every animation to skip the first two steps entirely.
+
+### Why does this exist? / Tại sao phần này tồn tại?
+
+**Why 1 — Physics of screens:** Monitors refresh at 60 Hz, meaning each frame gets exactly 16.67 ms. Miss that window and a frame is dropped — the user sees a stutter (jank). This hard deadline exists because of hardware, not software choice.
+
+**Why 2 — The cost hierarchy:** Not all CSS changes are equal. Changing `width` triggers Layout → Paint → Composite (most expensive). Changing `background-color` skips Layout, triggering only Paint → Composite. Changing `transform` or `opacity` skips both, running only on the GPU. Understanding this hierarchy is the entire basis of animation optimization.
+
+**Why 3 — Layer model:** The browser separates the page into composited layers (like Photoshop layers) and hands them to the GPU. Operations that stay within a single layer (transform, opacity) never touch the CPU pipeline again after initial promotion — they are effectively free to animate. This is why `translateX` is faster than `left` for moving elements.
+
+| Common Mistakes / Sai lầm | Tại sao sai | Đúng là |
+|---|---|---|
+| Animating `left`/`top` instead of `transform` | Triggers Layout + Paint on every frame | Use `transform: translateX()` — composite only |
+| Adding `will-change: transform` to every element | Creates excessive GPU layers, uses more VRAM than saved | Apply `will-change` only to elements about to animate |
+| Reading `offsetHeight` inside an animation loop | Forces synchronous layout (layout thrashing) every frame | Read layout properties outside the animation loop or use `requestAnimationFrame` |
+| Using `opacity: 0` + `display: none` together for hide/show transitions | `display: none` removes from render tree, cannot be composited | Animate `opacity` alone, toggle `visibility` if needed |
+
+**Interview Pattern:**
+- Trigger: "How would you optimize a slow scroll animation?" or "Why is our CSS animation janky?"
+- Concept: Frame budget, layout thrashing, composite-only properties
+- Opening sentence: "Smooth animation requires every frame to complete within 16 ms — I'd first check whether the animation triggers Layout or Paint, because only transform and opacity run entirely on the GPU."
+
+**Knowledge Chain:**
+- Prerequisite: [Critical Rendering Path](#critical-rendering-path) — must understand Layout and Paint steps before optimizing them
+- Next: [Memory Performance](#memory-performance) — excessive layer promotion wastes GPU memory, connecting rendering to memory management
 
 ### 60 FPS Theory
 
@@ -1025,6 +1219,10 @@ Write style (invalidates layout again)
 
 Vietnamese explanation: Core Web Vitals là ba chỉ số đo trải nghiệm người dùng thực sự — không phải lab benchmark. LCP đo tốc độ hiển thị nội dung lớn nhất (hero image, heading lớn). INP thay thế FID từ 2024, đo tổng thể độ phản hồi mọi tương tác trong suốt vòng đời trang. CLS đo sự ổn định bố cục — trang bị layout shift khi quảng cáo load muộn sẽ bị điểm CLS cao. Trade-off quan trọng: tối ưu LCP đôi khi mâu thuẫn với tối ưu INP nếu preload quá nhiều JavaScript.
 
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Correctly states all three metrics with thresholds, knows INP replaced FID in 2024, explains the LCP vs INP trade-off when preloading JS, mentions the metrics are field (RUM) data not just lab scores.
+- ❌ Weak: Lists FID instead of INP (outdated since March 2024), cannot state the thresholds, or treats CWV as just "Google's ranking thing" without explaining what each measures for the user.
+
 ---
 
 ### Q: Describe the critical rendering path and where bottlenecks typically occur. / Mô tả critical rendering path và các điểm thắt cổ chai thường gặp ở đâu? 🔴 Senior
@@ -1032,6 +1230,10 @@ Vietnamese explanation: Core Web Vitals là ba chỉ số đo trải nghiệm ng
 **A:** The critical rendering path is the sequence the browser must complete before painting the first pixel: (1) Parse HTML → build DOM; (2) Encounter CSS → fetch and parse → build CSSOM; (3) Combine DOM + CSSOM → Render Tree; (4) Layout (reflow) — compute geometry; (5) Paint — fill pixels; (6) Composite — layer assembly on GPU. Bottlenecks: render-blocking CSS in `<head>` stalls CSSOM construction; render-blocking synchronous `<script>` without `defer`/`async` pauses HTML parsing; large unoptimised images delay LCP; JavaScript-triggered forced synchronous layout (layout thrashing) causes repeated reflow.
 
 Vietnamese explanation: Điểm mấu chốt là CSSOM phải hoàn tất trước khi Render Tree được xây dựng — đây là lý do CSS luôn render-blocking theo mặc định. Chiến lược tối ưu: inline critical CSS cho above-the-fold, dùng `<link rel="preload">` cho font và LCP image, đặt script ở cuối body hoặc dùng `defer`. Layout thrashing xảy ra khi JavaScript đọc thuộc tính layout (offsetHeight, getBoundingClientRect) ngay sau khi thay đổi DOM — browser phải flush layout queue ngay lập tức, gây jank.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Names all six CRP steps in order, explains why CSS is render-blocking (CSSOM must be complete before Render Tree), identifies layout thrashing as a distinct bottleneck, and gives concrete remediation (inline critical CSS, defer scripts, preload LCP image).
+- ❌ Weak: Lists steps without explaining why CSS blocks rendering; confuses `async` and `defer`; cannot explain what layout thrashing is or how to detect it.
 
 ---
 
@@ -1041,6 +1243,10 @@ Vietnamese explanation: Điểm mấu chốt là CSSOM phải hoàn tất trư�
 
 Vietnamese explanation: Thứ tự ưu tiên: preconnect → preload → prefetch. Preconnect chỉ thiết lập kết nối, không tải file — phù hợp khi bạn biết origin nhưng chưa biết file cụ thể (ví dụ: font CDN). Preload tải file ngay với priority cao — nên dùng có chọn lọc vì browser có giới hạn băng thông. Prefetch có thể bị browser bỏ qua khi kết nối chậm. Một lỗi phổ biến là preload font nhưng thiếu attribute `crossorigin`, khiến browser tải font hai lần.
 
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Correctly explains all three hints, uses a concrete timing example (100–500 ms saved with preconnect), flags the `crossorigin` font pitfall, mentions that over-preloading hurts LCP by competing for bandwidth.
+- ❌ Weak: Conflates preload and prefetch ("both load resources in advance"), cannot explain when `preconnect` is useful, or doesn't mention the font double-fetch bug.
+
 ---
 
 ### Q: Explain lazy loading strategies for images and JavaScript modules, and their trade-offs. / Giải thích các chiến lược lazy loading cho ảnh và JavaScript module, cùng trade-off? 🟡 Mid
@@ -1049,6 +1255,10 @@ Vietnamese explanation: Thứ tự ưu tiên: preconnect → preload → prefetc
 
 Vietnamese explanation: Với ảnh, `loading="lazy"` là giải pháp đơn giản nhất nhưng browser tự quyết định threshold (thường 1200–1500 px trước viewport) — không phù hợp để kiểm soát chính xác. Intersection Observer cho phép kiểm soát rootMargin để preload sớm hơn. Với JS, code-splitting theo route là mặc định trong Next.js/Vite, nhưng lazy loading component-level (React.lazy + Suspense) phù hợp cho modal, drawer, heavy chart. Trade-off quan trọng: lazy loading quá nhiều tạo nhiều waterfall request nhỏ — cần cân bằng giữa initial load và on-demand load.
 
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Distinguishes native `loading="lazy"` from Intersection Observer, mentions reserving image dimensions to prevent CLS, covers both image and JS lazy loading, names the waterfall trade-off.
+- ❌ Weak: Only mentions `loading="lazy"` without discussing CLS or the JS code-splitting angle; treats lazy loading as universally good without acknowledging the on-demand request waterfall.
+
 ---
 
 ### Q: What is a performance budget and how do you enforce it in a CI pipeline? / Performance budget là gì và làm thế nào để áp dụng trong CI pipeline? 🔴 Senior
@@ -1056,6 +1266,85 @@ Vietnamese explanation: Với ảnh, `loading="lazy"` là giải pháp đơn gi�
 **A:** A performance budget is a set of constraints on performance metrics (file sizes, lighthouse scores, Core Web Vitals) that a page must not exceed. Examples: total JavaScript bundle under 200 KB gzipped, LCP under 2.5 s on 4G, Lighthouse performance score above 85. Enforcement in CI: use tools like Lighthouse CI (`lhci autorun`) which runs Lighthouse against a deployed preview and fails the build if thresholds are violated; `bundlesize` or `size-limit` checks asset sizes at build time; webpack `performance.hints: 'error'` fails the build on oversized bundles. The budget is defined per route because landing pages and dashboards have different requirements.
 
 Vietnamese explanation: Performance budget là cam kết kỹ thuật để tránh "performance regressions" do tích lũy dần. Không có budget, mỗi feature nhỏ thêm vài KB JS — sau 1 năm bundle tăng gấp đôi mà không ai chú ý. Trong CI, Lighthouse CI chạy sau deploy preview (Vercel, Netlify) và comment kết quả lên PR. Size-limit check ở bước build (trước deploy) để fail fast hơn. Trade-off: budget quá chặt làm chậm phát triển; budget quá lỏng mất tác dụng. Best practice: đặt budget theo p75 RUM data thực tế, không chỉ theo lab Lighthouse.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Names specific tools (Lighthouse CI, size-limit), distinguishes build-time checks (bundle size) from deploy-time checks (Lighthouse), mentions per-route budgets and p75 RUM vs lab data.
+- ❌ Weak: Says "just use Lighthouse" without explaining CI integration, or defines budget without explaining how to enforce it automatically.
+
+---
+
+## ⚡ Cold Call Simulation
+
+**Question:** "In 30 seconds — what is LCP and how would you fix a poor LCP score?"
+
+**Step 1 — Define (5 s):** LCP measures when the largest visible content element — typically a hero image or main heading — is fully rendered. Good threshold: under 2.5 seconds.
+
+**Step 2 — Root cause (10 s):** Poor LCP usually comes from one of four places: slow server response (TTFB), render-blocking CSS or JS that delays paint, a large unoptimized image that takes too long to download, or client-side rendering where the LCP element only appears after JavaScript executes.
+
+**Step 3 — Fix (10 s):** Use `<link rel="preload" as="image">` for the LCP image so the browser discovers it before the parser reaches it. Serve it in WebP/AVIF at the correct responsive size. Inline critical CSS to eliminate the render-blocking stylesheet. For SSR/SSG apps, ensure the LCP element is in the initial HTML — not injected by JS.
+
+**Step 4 — Verify (5 s):** Measure with Chrome DevTools → Performance tab, mark the LCP candidate, then confirm with Lighthouse and real-user CrUX data before and after deploy.
+
+---
+
+## Study Cases / Tình Huống Thực Tế Sâu
+
+### Case 1: Pinterest — Eliminating Render-Blocking Resources for LCP
+
+**Tình huống:** Pinterest's mobile web had an LCP of ~4.2 s on median devices. The engineering team diagnosed that a 300 KB synchronous CSS bundle and two analytics scripts in `<head>` were blocking first paint. The LCP element — the first pin image — could not be painted until those resources finished downloading and executing.
+
+**Quyết định:** The team split CSS into a critical inline stylesheet (above-the-fold styles, ~14 KB) loaded via `<style>` in `<head>`, and a non-critical bundle loaded asynchronously using `media="print" onload="this.media='all'"`. Both analytics scripts were moved to `defer`. The hero pin image was given `<link rel="preload" as="image" fetchpriority="high">`.
+
+**Kết quả:** LCP dropped from 4.2 s to 1.9 s (54% improvement). Time to Interactive improved by 1.1 s because the main thread was no longer blocked by synchronous script execution during page load. Bounce rate on mobile dropped 17%.
+
+**Bài học:**
+- Render-blocking resources are the highest-leverage LCP optimization — fix them before image compression.
+- Splitting CSS into critical/non-critical requires knowing exactly which styles are above the fold — use Chrome Coverage tab to identify unused CSS.
+- `fetchpriority="high"` on the LCP image signals the browser to prioritize it over other images discovered at the same time.
+- Always validate with RUM (Real User Monitoring), not just lab Lighthouse, because device distribution matters at scale.
+
+---
+
+### Case 2: Tiki / Lazada-style E-commerce — Fixing CLS from Late-Loading Ads and Fonts
+
+**Tình huống:** A Southeast Asian e-commerce platform (common pattern at Tiki, Shopee, Lazada) had a CLS score of 0.38 — well above the 0.1 threshold. Users experienced visible layout jumps after initial render: product images shifted down when banner ads loaded, and text reflowed when web fonts swapped in (FOUT). Google Search Console reported this as a "Poor" CLS affecting ~60% of mobile sessions.
+
+**Quyết định:**
+1. **Images without dimensions:** All `<img>` tags for product cards and banners were given explicit `width` and `height` attributes. CSS `aspect-ratio` was added as a fallback to reserve space before the image loads.
+2. **Ads:** Ad slots were given a minimum reserved height via CSS before the ad network injected content, eliminating the jump when ads arrived 2–3 s after page load.
+3. **Fonts:** `font-display: optional` was chosen for body text (prevents FOUT entirely by using system font if web font is not cached), and `font-display: swap` was replaced for headings only, with `<link rel="preload">` to minimize the swap window.
+4. **Dynamic content:** A sticky promotional banner injected above the fold was moved below the fold or replaced with a reserved slot in the initial HTML.
+
+**Kết quả:** CLS dropped from 0.38 to 0.07. The "Poor" label in Search Console resolved within 28 days (Google's data collection window). Organic search traffic from mobile increased 9% over the following quarter.
+
+**Bài học:**
+- CLS is cumulative — every small shift adds up. Audit with Chrome DevTools → Performance → Experience lane to see all layout shifts and their contributors.
+- `font-display: optional` is the most aggressive CLS fix for fonts but may show the fallback font on first visit. Acceptable for body text, potentially jarring for display fonts.
+- Ad slots are the hardest CLS source to control because ad networks control the injected content size. Minimum-height reserved containers are the practical solution.
+- Google's CrUX data lags 28 days — set expectations with stakeholders that CLS fixes are not immediately visible in Search Console.
+
+---
+
+## Self-Check / Tự Kiểm Tra ⚡
+
+**Close this document. Then answer from memory:**
+
+1. **Retrieval:** Name the three Core Web Vitals, their good thresholds, and what each measures. (LCP / INP / CLS — 2.5 s / 200 ms / 0.1)
+
+2. **Visual:** Draw the Critical Rendering Path from HTML bytes to composite pixels. At which step does render-blocking CSS stall the pipeline?
+
+3. **Application:** Your team's LCP is 3.8 s in the field. Walk through your diagnostic process: which tools do you use, which resources do you examine first, and what are the top three fixes you would test?
+
+4. **Debug:** A page has CLS of 0.22 but you see no obvious layout shifts during manual testing. What are three causes that are easy to miss during dev testing but appear in real-user data?
+
+5. **Teach:** Explain `preload` vs `prefetch` vs `preconnect` to a junior developer in two sentences each, using a concrete example.
+
+**Feynman Prompt:** Pretend you are explaining Core Web Vitals to a product manager who has never heard of them. Use one analogy, avoid all jargon, and connect each metric to a real user frustration.
+
+🔁 **Spaced Repetition: 3 ngày → 7 ngày → 14 ngày**
+- Lần 1 (sau 3 ngày): Tự trả lời 5 câu retrieval trên — không nhìn tài liệu.
+- Lần 2 (sau 7 ngày): Làm bài Cold Call Simulation thành tiếng, tính giờ 30 giây.
+- Lần 3 (sau 14 ngày): Giải thích toàn bộ Critical Rendering Path cho người khác từ một tờ giấy trắng.
 
 ---
 
