@@ -5,7 +5,7 @@
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 
 > **Phạm vi**: Interface semantics, internal representation (iface/eface), design principles, generics (Go 1.18+), reflection.
-> Tập trung lý thuyết sâu (~75%), code minh hoạ ngắn gọn (~25%) — phù hợp ôn phỏng vấn Golang Backend.
+> Tập trung lý thuyết sâu (~80%), code minh hoạ ngắn gọn (~20%) — phù hợp ôn phỏng vấn Golang Backend.
 
 ---
 
@@ -46,6 +46,42 @@ Bạn đang xây dựng **payment service** tại Grab. Ban đầu chỉ hỗ tr
 
 ---
 
+# Core Concept 1: Interfaces / Giao Diện
+
+> 🧠 **Memory Hook:** "Go interface = a contract you satisfy automatically — just have the right methods, and you're in. No 'implements' keyword. No permission needed."
+
+**Tại sao tồn tại? / Why does this exist?**
+Go needs a way to write functions that work with many different concrete types — without coupling to any specific one.
+→ **Why?** Because coupling to concrete types makes code rigid: every new type requires changing the caller's code.
+→ **Why?** Because large systems require replacing parts without touching the rest — a database, a payment provider, a logger. This is only possible if dependencies are expressed as behavior contracts, not concrete names.
+→ **Why?** At the deepest level: **information hiding**. The caller should know only *what* something does, not *how* it is built.
+
+### Layer 1: Simple Analogy / Tầng 1 — Phép Ẩn Dụ Đơn Giản
+
+Imagine a universal remote control. It doesn't care if the TV is Samsung or LG — as long as the TV responds to the same button signals (volume up, channel change, power). The remote defines a "contract" of signals. Any TV that speaks that language works.
+
+Hãy tưởng tượng remote điều khiển vạn năng. Nó không quan tâm TV là Samsung hay LG — miễn là TV hiểu cùng tín hiệu (tăng âm lượng, đổi kênh, bật/tắt). Remote định nghĩa "hợp đồng" tín hiệu. TV nào hiểu hợp đồng đó là dùng được — không cần đăng ký, không cần xin phép.
+
+Đó chính xác là Go interface: một hợp đồng về hành vi. Struct nào có đủ method là tự động "hiểu" ngôn ngữ của interface đó.
+
+### Layer 2: How It Works / Tầng 2 — Cơ Chế Kỹ Thuật
+
+The technical Q&A below covers the mechanism in full detail. Key points:
+
+- Structural typing at compile time: the compiler verifies method sets
+- Runtime: interface values are 2-word structs (type pointer + data pointer)
+- Method dispatch: 1 indirect call through an `itab` function pointer table
+- Cost: ~3–5 ns overhead per call vs direct call — negligible except in tight loops
+
+### Layer 3: Edge Cases & Trade-offs / Tầng 3 — Góc Khuất & Đánh Đổi
+
+- **Nil interface trap**: interface `!= nil` even when the concrete value is nil if type info is set
+- **Pointer vs value receivers**: method set differs — `*T` satisfies interface with pointer receivers; `T` does not
+- **Interface overhead**: prevents compiler inlining → hot paths should use concrete types or generics
+- **Retroactive cost**: you gain flexibility but lose the explicit documentation that `implements` provides
+
+---
+
 ## 1. Interface Basics
 
 ### Q1: Interface trong Go hoạt động theo cơ chế nào? Tại sao gọi là "implicit satisfaction"? 🟢
@@ -79,6 +115,10 @@ var s Speaker = Dog{Name: "Rex"} // compiles fine
 
 > **Lưu ý phỏng vấn**: "Implicit satisfaction" là nền tảng để hiểu tại sao Go khuyến khích **small interfaces** — vì càng ít method, càng nhiều type tự nhiên satisfy mà không cần sửa đổi.
 
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Nhắc đến "retroactive implementation" và giải thích nó không thể làm trong Java mà không sửa type gốc.
+- ❌ Weak: Chỉ nói "Go không cần `implements`" mà không giải thích hệ quả thiết kế.
+
 ---
 
 ### Q2: Empty interface (`interface{}` / `any`) là gì? Khi nào nên dùng? 🟢
@@ -94,6 +134,10 @@ var s Speaker = Dog{Name: "Rex"} // compiles fine
 **Chi phí**: Mất type safety tại compile time, cần type assertion khi lấy giá trị ra, compiler không thể optimize.
 
 > **Quy tắc**: `any` là escape hatch — dùng càng ít càng tốt. Trong Go 1.18+, hãy tự hỏi "generics có giải quyết được không?".
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Đề cập Go 1.18+ — `any` = `interface{}`, và khi nào nên chuyển sang generics thay vì tiếp tục dùng `any`.
+- ❌ Weak: Chỉ nói "dùng khi không biết type" mà không đề cập cost của type assertion và mất type safety.
 
 ---
 
@@ -125,6 +169,10 @@ var w Writer = &MyWriter{}  // ✅ *MyWriter có Write
 
 **Lý do**: value `MyWriter` có thể là bản copy, không lấy được address ổn định → Go không cho phép gọi pointer receiver method trên value.
 
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Giải thích tại sao value không thể gọi pointer receiver — vì value có thể là copy tạm thời, lấy address của nó không an toàn.
+- ❌ Weak: Chỉ nói "dùng pointer" mà không giải thích lý do kỹ thuật đằng sau quy tắc này.
+
 ---
 
 ## 2. Interface Internals
@@ -155,6 +203,10 @@ Go runtime sử dụng **2 struct khác nhau** tuỳ loại interface:
 
 **Hệ quả quan trọng**: bất kỳ giá trị nào gán vào interface đều trở thành **2-word struct** (16 bytes trên 64-bit). Đây là lý do interface value **không bao giờ nil** nếu concrete type đã được gán — ngay cả khi data pointer là nil.
 
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Vẽ được sơ đồ 2-word struct và giải thích tại sao "interface holding nil" khác "nil interface" — đây là hệ quả trực tiếp của cấu trúc này.
+- ❌ Weak: Chỉ nói "interface là 2 pointers" mà không kết nối với nil interface gotcha.
+
 ---
 
 ### Q5: itab (interface table) hoạt động ra sao? Method dispatch qua interface tốn bao nhiêu? 🔴
@@ -181,6 +233,10 @@ Go runtime sử dụng **2 struct khác nhau** tuỳ loại interface:
 Compiler không biết concrete type tại compile time → không biết gọi hàm nào → không thể inline. Đây là trade-off cơ bản: **flexibility (polymorphism) vs performance (inlining)**.
 
 > **Phỏng vấn nâng cao**: Nếu hot path gọi interface method triệu lần/giây với cùng 1 concrete type, hãy xem xét dùng concrete type trực tiếp hoặc generics để compiler inline được.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Giải thích tại sao interface call không thể inline (compiler không biết concrete type tại compile time), và nêu khi nào overhead này thực sự quan trọng.
+- ❌ Weak: Nói "interface chậm hơn" mà không giải thích ngưỡng nào thực sự cần lo lắng (hot loop triệu lần/giây).
 
 ---
 
@@ -217,6 +273,10 @@ func getError() error {
 
 > **Quy tắc**: Luôn return `nil` trực tiếp thay vì return một typed nil variable khi hàm return interface.
 
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Giải thích bằng cấu trúc iface — `tab` field vẫn được set dù `data` là nil, vì vậy `== nil` check fail.
+- ❌ Weak: Chỉ nói "return nil trực tiếp" mà không giải thích tại sao bug xảy ra.
+
 ---
 
 ## 3. Interface Design Principles
@@ -242,6 +302,10 @@ func NewServer(logger *ZapLogger, store *PostgresStore) ServerInterface { ... }
 
 **Ngoại lệ** khi return interface: factory pattern (nhiều implementations), standard library interfaces (`error`, `io.Reader`), hide unexported struct.
 
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Giải thích tại sao return interface là anti-pattern — thêm method vào interface sẽ break tất cả implementations (trong toàn bộ codebase lẫn downstream packages).
+- ❌ Weak: Chỉ nhắc lại nguyên tắc mà không giải thích hệ quả khi vi phạm nó.
+
 ---
 
 ### Q8: Rob Pike nói "The bigger the interface, the weaker the abstraction" — giải thích? 🟡
@@ -266,6 +330,10 @@ func NewServer(logger *ZapLogger, store *PostgresStore) ServerInterface { ... }
 
 > **Interface Segregation Principle (SOLID)** hoàn toàn tương đồng: "Clients should not be forced to depend on interfaces they do not use."
 
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Đưa ra ví dụ số học cụ thể (N methods → số type satisfy giảm) và liên hệ với Interface Segregation Principle trong SOLID.
+- ❌ Weak: Chỉ lặp lại quote mà không giải thích cơ học tại sao điều này đúng.
+
 ---
 
 ## 4. Common Standard Library Interfaces
@@ -288,6 +356,10 @@ func NewServer(logger *ZapLogger, store *PostgresStore) ServerInterface { ... }
 **Tại sao `io.Reader` là interface quan trọng nhất?** Chỉ 1 method nhưng implement bởi: `*os.File`, `*bytes.Buffer`, `*strings.Reader`, `net.Conn`, `*http.Response.Body`, `*gzip.Reader`, `*bufio.Reader`... Bất kỳ hàm nhận `io.Reader` đều hoạt động với TẤT CẢ nguồn data trên.
 
 **`error` interface đặc biệt:** Là builtin interface duy nhất. Mọi type có `Error() string` đều là error → custom error types, error wrapping (`%w`), error inspection (`errors.Is`, `errors.As`).
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Liệt kê cụ thể 5+ types implement `io.Reader` để chứng minh sức mạnh của 1-method interface — đây là ví dụ sống động nhất về "small interface, strong abstraction."
+- ❌ Weak: Chỉ nhắc tên các interface mà không giải thích tại sao `io.Reader` là đỉnh cao của thiết kế interface.
 
 ---
 
@@ -313,6 +385,10 @@ type ReadWriteSeeker interface { Reader; Writer; Seeker }
 ```
 
 **Pattern này tuân theo mô hình tổ hợp (combinatorial)**: từ 4 interface cơ bản, tạo được nhiều biến thể mà không duplicate method signatures. Đây là minh hoạ hoàn hảo cho "compose small interfaces".
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Chỉ ra rằng `io.ReadWriteCloser` không khai báo method nào — nó chỉ embed 3 interface nhỏ. Caller vẫn cần implement cả 3 method, nhưng code specification rõ ràng và không duplicate.
+- ❌ Weak: Nhắc đến embedding mà không giải thích lợi ích so với khai báo 3 method trực tiếp trong 1 interface lớn.
 
 ---
 
@@ -345,6 +421,10 @@ Go giải quyết diamond problem cho interface bằng cách **de-duplicate**: n
 3. Đặt tên rõ ràng: `ReadWriter` (không phải `ReaderAndWriter`)
 4. Consumer package nên định nghĩa interface nó cần (không phải provider package)
 
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Giải thích "define interfaces at the point of use" — consumer package nên định nghĩa interface nhỏ nó cần, không phải provider package định nghĩa interface lớn rồi bắt consumer dùng.
+- ❌ Weak: Chỉ mô tả cú pháp embed mà không đề cập nguyên tắc ai nên định nghĩa interface.
+
 ---
 
 ## 6. Type Assertion and Type Switch
@@ -364,6 +444,10 @@ if rw, ok := r.(io.ReadWriter); ok { }  // Assert sang interface khác
 **Quy tắc**: Dùng dạng panic khi chắc chắn 100%. Dùng comma-ok khi không chắc chắn (pattern phổ biến hơn).
 
 **Assert sang interface khác** là cách `io.Copy` optimize: kiểm tra `Reader` có implement `WriterTo` hay `Writer` có implement `ReaderFrom` không.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Nhắc đến `io.Copy` optimization — đây là ví dụ production thực tế về type assertion sang interface khác để cải thiện performance.
+- ❌ Weak: Chỉ mô tả syntax mà không giải thích khi nào dùng panic form vs comma-ok form.
 
 ---
 
@@ -400,6 +484,10 @@ default:
 - **Protocol handling** — khác nhau theo message type
 
 **Anti-pattern**: Type switch > 5 cases → code smell. Xem xét thêm method vào interface, strategy pattern với map, hoặc redesign để tận dụng polymorphism.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Nhắc đến "type switch > 5 cases là code smell" và đề xuất giải pháp thay thế (thêm method vào interface để tận dụng polymorphism).
+- ❌ Weak: Chỉ mô tả cú pháp type switch mà không đề cập khi nào type switch là anti-pattern.
 
 ---
 
@@ -467,6 +555,82 @@ func (m mockStore) GetUser(id int) (*User, error) { return m.user, nil }
 
 > **Nguyên tắc**: Đừng tạo interface "phòng khi cần". Tạo khi thực sự có 2+ implementations hoặc khi cần test isolation. Go community gọi đây là **"define interfaces at the point of use"**.
 
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Đề cập "premature interfacing" anti-pattern — tạo interface ngay từ đầu cho 1 implementation duy nhất là Go anti-idiom. Interface nên emerge từ nhu cầu thực tế.
+- ❌ Weak: Nói "dùng interface để test" mà không giải thích cụ thể tại sao interface nhỏ ở consumer tốt hơn interface lớn ở provider.
+
+---
+
+## 📚 Study Cases — Interfaces in Production
+
+**Case 1: Docker & io.Reader/io.Writer — Pluggable I/O Architecture**
+
+Docker's image layer system uses `io.Reader` and `io.Writer` for layer streaming. When Docker pulls an image layer, it chains: `http.Response.Body` (network) → `gzip.Reader` (decompression) → `tar.Reader` (unpacking) → `*os.File` (writing to disk). Every step accepts and returns `io.Reader` — no type changes, no adapters needed. This architecture allowed Docker to add compressed layer support without changing the pull logic at all. **Lesson**: Small interfaces (`io.Reader` has 1 method) enable deep composition chains that would require massive refactoring under concrete-type coupling.
+
+**Case 2: Kubernetes Controllers — Interface-Driven Extension**
+
+Kubernetes defines a `controller.Reconciler` interface with a single method: `Reconcile(ctx, Request) (Result, error)`. Every Kubernetes controller (Deployment, StatefulSet, custom operators) implements this interface. The controller manager doesn't know or care about the concrete type — it just calls `Reconcile`. This means the entire ecosystem of custom operators (thousands of them) plugs into the same orchestration machinery without touching Kubernetes core code. **Lesson**: Retroactive implementation — operators written after Kubernetes core was built automatically satisfy its interface. This is impossible in Java/C# without modifying the original interface file.
+
+**Case 3: Grab — Payment Provider Abstraction**
+
+Grab's payment service (mentioned in the opening scenario) is a real architectural pattern. The key insight: by defining `PaymentProvider` with a single `Charge(amount float64, currency string) (*Receipt, error)` method, the team added VNPay, MoMo, and ZaloPay over 3 months without touching the core payment processing logic. Each new provider took <1 day to integrate. Compare this to a hypothetical concrete-type implementation: each new provider would require changes in 5-10 places. **Lesson**: Interface design at system boundaries multiplies developer velocity linearly with the number of integrations.
+
+---
+
+**❌ Sai lầm thường gặp / Common Mistakes — Interfaces:**
+
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Tạo interface cho mọi struct ngay từ đầu | Go proverb: "define interfaces at point of use" — interface sớm = coupling sớm | Tạo interface khi có 2+ implementations hoặc cần test isolation |
+| Return interface thay vì struct | Break forward compat — thêm method vào interface break mọi caller | Return concrete struct; accept interface |
+| Interface lớn (10+ methods) | Ít type satisfy → abstraction yếu; khó mock trong tests | Tách thành nhiều interface nhỏ, compose khi cần |
+| Return typed nil qua interface | Interface value != nil vì `tab` field còn có type info | Return `nil` untyped trực tiếp |
+| Pointer receiver nhưng gán value vào interface | `T` không satisfy interface yêu cầu pointer receiver method | Dùng `&T` hoặc chuyển sang value receiver |
+
+---
+
+**🎯 Interview Pattern — Interfaces:**
+- Khi thấy câu hỏi về: "Go polymorphism", "dependency injection", "testability", "mock", "implicit satisfaction", "nil interface"
+- → Nhớ đến: structural typing + iface internals + "accept interfaces, return structs"
+- → Mở đầu trả lời: *"Go's interface model is structurally typed — any type that has the right methods automatically satisfies the interface, no declaration needed. This enables retroactive design and is the foundation of Go's approach to dependency injection and testability."*
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức — Interfaces:**
+- 📚 Cần biết trước: [Go Language Fundamentals](./01-language-fundamentals.md) — struct methods, type system, pointer semantics
+- ➡️ Để hiểu tiếp: [Go Concurrency](./03-concurrency.md) — channel và sync primitives cũng dùng interface pattern
+- ➡️ Để hiểu tiếp: [Go Testing](./05-testing-profiling.md) — mock = struct satisfying interface, zero framework needed
+- 🔗 Applied in: [API Design](../02-backend-knowledge/01-api-design.md) — handler interface cho middleware chain
+
+---
+
+# Core Concept 2: Generics / Kiểu Tổng Quát
+
+> 🧠 **Memory Hook:** "Generics = write once, use with any type — but the compiler checks types at compile time, not at runtime. No boxing. No type assertions. No surprises."
+
+**Tại sao tồn tại? / Why does this exist?**
+Go needs a way to write algorithms and data structures that work across many types without sacrificing type safety.
+→ **Why?** Because before Go 1.18, the only options were: `interface{}` (lose type safety), code generation (fragile, verbose), or copy-paste (violates DRY and creates maintenance burden).
+→ **Why?** Because the Go standard library itself suffered — `sort.Ints`, `sort.Float64s`, `sort.Strings` are three copies of the same algorithm. `sync.Map` uses `any`. `container/heap` requires a custom interface with 5 methods.
+→ **Why?** At the deepest level: **abstraction without runtime cost**. Compile-time type parameters let the compiler generate specialized code — type safety AND performance.
+
+### Layer 1: Simple Analogy / Tầng 1 — Phép Ẩn Dụ Đơn Giản
+
+Imagine a cookie cutter. You have one mold (the generic function), but you can use it with chocolate dough, vanilla dough, or matcha dough — and each batch of cookies is perfectly the right flavor. You don't need three different molds.
+
+Before generics, Go required three different "molds": `MinInt`, `MinFloat64`, `MinString`. Each identical in logic, differing only in the type of ingredient. Generics give you one mold, and the compiler stamps out the right version for each flour type at build time.
+
+Trước generics, Go cần 3 "khuôn" khác nhau: `SortInts`, `SortFloat64s`, `SortStrings` — logic giống nhau, chỉ khác type. Generics cho phép 1 khuôn duy nhất, compiler tự tạo phiên bản đúng cho từng type tại compile time.
+
+### Layer 2: How It Works / Tầng 2 — Cơ Chế Kỹ Thuật
+
+Go generics use **GC Shape Stenciling** — not full monomorphization (Rust/C++) and not type erasure (Java). All pointer types share one code copy, value types get their own. The compiler generates code parameterized by type, with type safety checked at compile time. Constraints are expressed as interfaces (with extended type set syntax).
+
+### Layer 3: Edge Cases & Trade-offs / Tầng 3 — Góc Khuất & Đánh Đổi
+
+- **`comparable` runtime panic**: interface types satisfy `comparable` at compile time, but can panic at runtime if the dynamic type is a slice or map
+- **Pointer type performance**: pointer generics use a hidden dictionary → slightly slower than full monomorphization (no inlining for pointer-based generic functions)
+- **Cannot use operators in method constraints**: `interface{ + }` is invalid — union type constraints handle this
+- **Readability cost**: generic code is harder to read than concrete code; don't generify unless you have ≥2 real use cases
+
 ---
 
 ## 8. Generics (Go 1.18+)
@@ -497,6 +661,10 @@ Go chọn approach **constrained parametric polymorphism**, khác biệt với:
 | Java | Type erasure | Simple nhưng mất type info at runtime |
 | Rust | Traits (monomorphization) | Type-safe + fast nhưng binary size lớn |
 | **Go** | **Type parameters + interface constraints** | Balance giữa simplicity và expressiveness |
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Nhắc đến lý do thực tế khiến generics cuối cùng được thêm — standard library duplication (`sort.Ints`, `sort.Strings`, `sort.Float64s`) và cost của `any` workarounds vượt quá complexity cost.
+- ❌ Weak: Chỉ nói "Go cuối cùng đã thêm generics vào 1.18" mà không giải thích trade-off đằng sau quyết định 12 năm chờ đợi.
 
 ---
 
@@ -554,6 +722,10 @@ type OnlyInt interface { int }    // MyInt ❌ — chỉ nhận int
 type AlsoMyInt interface { ~int } // MyInt ✅ — nhận mọi type based on int
 ```
 
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Giải thích toán tử `~` và lý do nó quan trọng — nếu không có `~`, custom types như `type UserID int` sẽ không satisfy `int` constraint dù underlying type là int.
+- ❌ Weak: Chỉ show cú pháp type parameter mà không giải thích tại sao `~` là bước quan trọng trong thiết kế constraint.
+
 ---
 
 ### Q17: `comparable` constraint đặc biệt ở điểm nào? 🟡
@@ -578,6 +750,10 @@ func Contains[T comparable](s []T, target T) bool {
 ```
 
 **Subtlety quan trọng** (Go 1.20 thay đổi): interface types satisfy `comparable` tại compile time, nhưng có thể panic tại runtime nếu dynamic type không comparable. Ví dụ: `any` satisfies `comparable`, nhưng `any` holding `[]int` sẽ panic khi `==`.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Nhắc đến runtime panic edge case — `any` satisfies `comparable` tại compile time nhưng có thể panic khi dynamic value là slice/map. Đây là điểm phân biệt candidate hiểu sâu.
+- ❌ Weak: Chỉ nói "`comparable` dùng cho map key" mà không biết về runtime panic risk.
 
 ---
 
@@ -624,6 +800,10 @@ type Result[T any] struct { Value T; Err error }
 
 > **Lưu ý**: Go community khuyến cáo **không lạm dụng generics** chỉ vì có thể. Nếu `any` đủ dùng, hoặc concrete type rõ ràng hơn — đừng dùng generics. "A little copying is better than a little dependency" — Go Proverb.
 
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Nhắc đến cả 4 patterns và biết khi nào KHÔNG dùng generics — quá generics hóa làm code khó đọc hơn không generics hóa.
+- ❌ Weak: Chỉ show generic data structure pattern mà không biết Go community có tiêu chí gì để quyết định khi nào nên dùng.
+
 ---
 
 ## 10. Generics vs Interfaces
@@ -667,9 +847,60 @@ Go generics sử dụng **GC Shape Stenciling** (hybrid approach), KHÔNG phải
 
 > **Guidelines**: Dùng generics khi cần type safety + performance (data structures, utility functions). Dùng interfaces khi cần runtime polymorphism (plugin systems, dependency injection, handler patterns).
 
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Giải thích được GC Shape Stenciling và tại sao pointer generics không nhanh bằng value generics — hidden dictionary overhead. Đây là điểm phân biệt deep understanding.
+- ❌ Weak: Chỉ nói "generics nhanh hơn interface" mà không biết rằng pointer generics có overhead riêng và không phải lúc nào cũng nhanh hơn đáng kể.
+
+---
+
+## 📚 Study Cases — Generics in Production
+
+**Case 1: Google — Go 1.21 slices/maps packages**
+
+Go 1.21 shipped `slices.Sort`, `slices.Contains`, `maps.Keys` — all generic. Before generics, the standard library had `sort.Ints`, `sort.Float64s`, `sort.Strings` as separate functions with identical logic. The `slices` package replaced all three with one `slices.Sort[S ~[]E, E cmp.Ordered](x S)` — 1 implementation, full type safety, zero runtime cost difference for value types. This is the official internal case Google made for generics in Go. **Lesson**: The standard library itself had to use copy-paste because generics didn't exist — when the authors of Go acknowledge the duplication problem, it confirms the use case is real.
+
+**Case 2: CloudFlare — Generic Cache Implementation**
+
+CloudFlare's Go services needed type-safe in-memory caches for different data types: IP reputation scores (`float64`), GeoIP data (`struct`), certificate metadata (`struct`). Before Go 1.18, they maintained 3 near-identical cache implementations differentiated only by value type. After Go 1.18, they unified into `Cache[K comparable, V any]` with `Get(key K) (V, bool)` and `Set(key K, value V)`. The result: one implementation, 3 concrete usages, same performance (value types use monomorphized path). **Lesson**: Generic data structures eliminate an entire class of maintenance burden — when you fix a bug in the generic `Cache`, it's fixed for all types simultaneously.
+
+**Case 3: Grab — Generic Repository Pattern**
+
+Grab's data platform team had `UserRepository`, `OrderRepository`, `ProductRepository` — all implementing identical CRUD logic with different types. After Go 1.18, they introduced `Repository[T any, ID comparable]` with generic methods. The key trade-off they discovered: **generic repositories are better for data structures, but interface-based repositories are still better for testing** — because a `[]Animal` holding both `Dog` and `Cat` still requires interfaces, not generics. **Lesson**: Generics and interfaces solve different halves of the abstraction problem — use both in the same codebase.
+
+---
+
+**❌ Sai lầm thường gặp / Common Mistakes — Generics:**
+
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Dùng generics cho mọi thứ | Generic code khó đọc hơn concrete code — chỉ dùng khi có 2+ real use cases | Concrete type khi chỉ có 1 use case |
+| Quên `~` trong union constraint | `~int` nhận `type MyInt int`; `int` thì không | Dùng `~` trừ khi muốn chính xác type literal |
+| Dùng generics cho runtime polymorphism | `[]Animal[T]` không thể chứa cả Dog và Cat | Dùng interface cho heterogeneous collection |
+| Giả sử pointer generics nhanh như value generics | Pointer types share code qua hidden dictionary → dictionary overhead | Profile trước khi optimize |
+| Bỏ `comparable` khi cần `==` | Compiler báo lỗi; operators không phải methods | Thêm `comparable` constraint cho type parameters cần equality |
+
+---
+
+**🎯 Interview Pattern — Generics:**
+- Khi thấy câu hỏi về: "type-safe containers", "avoid code duplication", "Go 1.18", "generics vs interface", "GC Shape Stenciling"
+- → Nhớ đến: compile-time type parameters + constraints + GC Shape Stenciling trade-off
+- → Mở đầu trả lời: *"Go generics use constrained parametric polymorphism — type parameters with interface constraints. The key insight is they solve a different problem than interfaces: generics give you compile-time type safety for algorithms and containers, while interfaces give you runtime polymorphism for behavior abstraction."*
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức — Generics:**
+- 📚 Cần biết trước: Core Concept 1 (Interfaces) — constraints are interfaces; understanding iface internals explains why generics exist
+- ➡️ Để hiểu tiếp: [Go Standard Library Patterns](./04-standard-library.md) — `slices`, `maps` packages are generic
+- 🔗 Applied in: [API Design](../02-backend-knowledge/01-api-design.md) — generic result types, generic middleware
+
 ---
 
 ## 11. Reflection
+
+> 🧠 **Memory Hook:** "Reflection = read the type label at runtime. Powerful, but 50-500x slower than direct access. Last resort, not first instinct."
+
+**Tại sao tồn tại? / Why does this exist?**
+Go needs a mechanism to inspect type metadata at runtime when the type cannot be known at compile time.
+→ **Why?** Because some problems are fundamentally runtime problems: reading struct field names as strings (JSON keys), mapping database columns to struct fields (ORM), validating fields by tag annotations.
+→ **Why?** Generics and interfaces cannot express these — generics work at compile time, interfaces require knowing the method signatures upfront. Struct field names are not methods.
 
 ### Q20: reflect package hoạt động thế nào? TypeOf vs ValueOf? 🟡
 
@@ -703,6 +934,10 @@ for i := 0; i < t.NumField(); i++ {
         field.Tag.Get("validate"))
 }
 ```
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Giải thích `reflect.TypeOf` đọc `_type` pointer từ iface — liên kết với interface internals. Candidate nào biết cả reflection lẫn iface internals chứng tỏ hiểu Go runtime ở mức sâu.
+- ❌ Weak: Chỉ mô tả API mà không giải thích reflection xây dựng trên gì.
 
 ---
 
@@ -741,6 +976,42 @@ v.SetFloat(2.71)                 // ✅ works — x is now 2.71
 ```
 
 > **Quy tắc vàng**: "Clear is better than clever" — Go Proverb. Reflection là công cụ mạnh nhưng tạo ra code khó đọc, khó debug, và chậm. Chỉ dùng khi KHÔNG CÓ cách nào khác.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Nêu được Law #3 với ví dụ cụ thể về panic — "using unaddressable value" là một trong những runtime panic phổ biến nhất khi dùng reflection, và candidate biết cách fix bằng `&x).Elem()`.
+- ❌ Weak: Nói "reflection chậm, dùng ít thôi" mà không biết cost cụ thể là 50-500x hay lý do tại sao.
+
+---
+
+## 📚 Study Case — Reflection in Production
+
+**Case: encoding/json — Reflection at Library Boundary**
+
+Go's standard library `encoding/json` uses reflection internally to marshal/unmarshal arbitrary structs. When you call `json.Marshal(v)`, the package calls `reflect.TypeOf(v)` to read field names and struct tags (`json:"name"`), then `reflect.ValueOf(v)` to read actual values. This happens once per request — the library caches `reflect.Type` lookups in a `sync.Map` to avoid paying the 50-100x overhead on every field access. **Lesson**: Reflection is justified at library boundaries where the type is genuinely unknown at compile time. The key mitigation for performance is caching `reflect.Type` — compute it once, reuse it. Application code calling `json.Marshal` pays roughly 2-5x vs hand-coded marshaling, which is acceptable for I/O-bound HTTP handlers but too expensive for CPU-bound serialization in hot loops (where code generation tools like `easyjson` or `protobuf` replace reflection entirely).
+
+---
+
+**❌ Sai lầm thường gặp / Common Mistakes — Reflection:**
+
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `reflect.ValueOf(x).SetFloat(...)` trực tiếp | x là copy không addressable → panic "using unaddressable value" | `reflect.ValueOf(&x).Elem().SetFloat(...)` |
+| Dùng reflection khi biết type tại compile time | 50-500x overhead không cần thiết | Type assertion hoặc type switch |
+| Không cache `reflect.Type` trong hot path | `reflect.TypeOf` allocation mỗi lần gọi | Cache trong `sync.Map` hoặc package-level `var` |
+| Dùng reflection khi generics đủ | Generics compile-time safe, không có runtime cost | Generics cho type-safe utilities |
+| Gọi `reflect.Value.Call` trên unexported method | Panic: "reflect: call of unexported method" | Kiểm tra `Method.IsExported()` trước khi gọi |
+
+---
+
+**🎯 Interview Pattern — Reflection:**
+- Khi thấy câu hỏi về: "JSON marshaling", "ORM mapping", "struct tags", "runtime type info", "reflect package"
+- → Nhớ đến: reflection = read `_type` from iface + 50-500x cost + only when compile-time info insufficient
+- → Mở đầu trả lời: *"Reflection in Go lets you inspect type metadata and values at runtime — it's built on the same iface/eface structures that interfaces use. The key trade-off is 50-500x slower than direct access, so it's justified only when the type genuinely cannot be known at compile time, like in serialization libraries reading struct tags."*
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức — Reflection:**
+- 📚 Cần biết trước: Core Concept 1 (Interfaces) — reflection reads `_type` from iface/eface; understanding iface internals makes reflection mechanics clear
+- 📚 Cần biết trước: Core Concept 2 (Generics) — know when generics are a better alternative before reaching for reflection
+- ➡️ Để hiểu tiếp: [Go Testing](./05-testing-profiling.md) — `testify/assert.Equal` uses reflection; understanding cost helps decide when to use testify vs manual assertions
 
 ---
 
@@ -789,6 +1060,10 @@ type UserRepository interface {
 
 **Pattern 5 — Plugin/Registry:** Dynamic registration via interface, `map[string]Plugin` lookup.
 
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Giải thích Decorator pattern (LoggingReader wrapping io.Reader) và kết nối với Open/Closed Principle — thêm behavior mà không sửa existing code.
+- ❌ Weak: Liệt kê tên patterns mà không giải thích tại sao Go interfaces đặc biệt phù hợp cho từng pattern so với Java/C#.
+
 ---
 
 ## 13. Interview Questions — Tổng hợp
@@ -799,43 +1074,55 @@ type UserRepository interface {
 
 1. **Q**: Interface trong Go khác interface trong Java/C# ở điểm nào?
    **A**: Implicit satisfaction — không cần khai báo `implements`. Điều này cho phép retroactive implementation và khuyến khích small interfaces.
+   **💡 Signal:** ✅ Nhắc đến retroactive implementation (tạo interface sau cho type đã tồn tại). ❌ Chỉ nói "không cần implements."
 
 2. **Q**: Empty interface `any` tương đương khái niệm gì trong Java?
    **A**: Tương tự `Object` trong Java — là supertype của mọi type. Nhưng `any` an toàn hơn vì Go không cho phép gọi method trực tiếp trên `any` (phải type assert trước).
+   **💡 Signal:** ✅ Giải thích khác biệt so với Java `Object` — Go yêu cầu type assert trước khi dùng. ❌ Chỉ nói "giống Object trong Java."
 
 3. **Q**: Tại sao Go khuyến khích interface nhỏ (1-3 methods)?
    **A**: Implicit satisfaction → interface nhỏ = nhiều type tự nhiên satisfy → abstraction mạnh hơn. "The bigger the interface, the weaker the abstraction" — Rob Pike.
+   **💡 Signal:** ✅ Giải thích cơ học: N methods → ít type satisfy hơn → abstraction yếu hơn. ❌ Chỉ quote Rob Pike.
 
 **🟡 Trung bình:**
 
 4. **Q**: Giải thích "nil interface" bug. Viết code gây ra bug này.
    **A**: Interface chỉ nil khi cả `type` và `value` đều nil. Return typed nil qua interface → interface không nil dù value = nil. Fix: return `nil` trực tiếp.
+   **💡 Signal:** ✅ Giải thích bằng iface struct — `tab` field được set dù `data` nil. ❌ Chỉ nói "return nil trực tiếp" không giải thích tại sao.
 
 5. **Q**: "Accept interfaces, return structs" — có ngoại lệ không?
    **A**: Có — khi factory function cần return nhiều implementation khác nhau, khi trả về standard library interfaces (`error`, `io.Reader`), hoặc khi cần hide unexported struct.
+   **💡 Signal:** ✅ Liệt kê ít nhất 2 ngoại lệ có tên cụ thể. ❌ Nói "không có ngoại lệ" hoặc chỉ biết nguyên tắc mà không biết khi nào vi phạm hợp lý.
 
 6. **Q**: Generics vs Interface — khi nào dùng cái nào?
    **A**: Interface cho runtime polymorphism (plugin, handler, DI). Generics cho type-safe operations cần operators hoặc type-safe containers. Interface khi cần heterogeneous collection (slice chứa nhiều types khác nhau).
+   **💡 Signal:** ✅ Nhắc đến heterogeneous collection là lý do generics không thể thay interface hoàn toàn. ❌ Nói "generics tốt hơn interface" một chiều.
 
 7. **Q**: `comparable` constraint có thể panic runtime không?
    **A**: Có — nếu interface type satisfies `comparable` nhưng dynamic value không comparable (ví dụ `any` holding `[]int`).
+   **💡 Signal:** ✅ Cho ví dụ cụ thể: `any` holding `[]int` panic khi `==`. ❌ Chỉ nói "có thể panic" mà không biết trường hợp cụ thể.
 
 **🔴 Nâng cao:**
 
 8. **Q**: Giải thích sự khác biệt giữa iface và eface trong runtime. Tại sao cần 2 struct?
    **A**: `eface` cho empty interface (chỉ cần `_type` + `data`). `iface` cho interface có method (cần thêm `itab` chứa method dispatch table). Tách 2 struct vì empty interface rất phổ biến và không cần method table overhead.
+   **💡 Signal:** ✅ Giải thích tại sao tách 2 struct — eface không cần method table, tách ra tối ưu memory và lookup. ❌ Chỉ mô tả cấu trúc mà không giải thích lý do tách.
 
 9. **Q**: Go generics dùng strategy gì? Khác monomorphization của Rust ở đâu?
    **A**: GC Shape Stenciling — tạo code riêng cho mỗi GC shape, pointer types share 1 bản với hidden dictionary. Rust full monomorphization → nhanh hơn nhưng binary lớn hơn. Go chọn balance giữa speed và binary size.
+   **💡 Signal:** ✅ Giải thích được hidden dictionary overhead cho pointer types. ❌ Nói "Go dùng monomorphization giống Rust."
 
 10. **Q**: Khi nào reflection là lựa chọn DUY NHẤT? Cho ví dụ không thể thay thế bằng generics.
     **A**: Khi cần đọc **struct tags** (`json:"name"`), dùng **struct field name as string** (ORM mapping), hoặc **build type tại runtime** (`reflect.StructOf`). Generics hoạt động tại compile time, không thể đọc tag hay tạo type dynamically.
+    **💡 Signal:** ✅ Nhắc đến struct tags đọc lúc runtime — đây là thứ generics không thể làm. ❌ Chỉ nói "khi không biết type."
 
 11. **Q**: Interface dispatch cost ảnh hưởng thế nào ở production scale? Khi nào cần optimize?
     **A**: ~2-5ns overhead per call thường negligible. Chỉ quan trọng khi: (1) tight loop triệu lần/giây (serialization, encoding), (2) latency-critical path (trading systems). Profile trước, optimize sau. Cách optimize: dùng concrete type hoặc generics ở hot path, giữ interface ở boundary.
+    **💡 Signal:** ✅ Nêu số cụ thể (2-5ns) và threshold khi nào cần lo (triệu lần/giây). ❌ Nói "interface chậm hơn" mà không biết ngưỡng.
 
 12. **Q**: Thiết kế interface cho một hệ thống notification gửi qua Email, SMS, Push. Áp dụng interface segregation.
     **A**: Không tạo 1 `Notifier` interface lớn. Tách thành `Sender` (1 method: `Send`), `TemplateRenderer` (1 method: `Render`), `DeliveryTracker` (1 method: `Track`). Mỗi implementation chỉ implement interface nó cần. Compose khi cần: `TrackedSender` embeds `Sender` + `DeliveryTracker`.
+    **💡 Signal:** ✅ Tách thành 3 interface 1-method và giải thích cách compose — không phải 1 interface 3-method. ❌ Tạo `Notifier interface { SendEmail(); SendSMS(); SendPush() }` — vi phạm ISP.
 
 ---
 
@@ -871,6 +1158,10 @@ Cần abstraction?
 
 Vietnamese explanation: Go không yêu cầu khai báo `implements` như Java. Compiler tự kiểm tra xem type có đủ method không. Điểm quan trọng cần nhớ: method với **pointer receiver** chỉ satisfy interface khi dùng pointer (`*T`), còn **value receiver** thì cả `T` và `*T` đều satisfy. Lỗi phổ biến là truyền value type khi interface cần pointer receiver — compiler sẽ báo lỗi ngay.
 
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Giải thích rõ pointer receiver vs value receiver rule, và lý do kỹ thuật (value có thể là copy tạm thời).
+- ❌ Weak: Chỉ nói "không cần implements" mà không nhắc đến receiver rule.
+
 ---
 
 ### Q: What is the difference between `interface{}` and `any`? When should you use the empty interface? / `interface{}` và `any` khác nhau thế nào? Khi nào nên dùng? 🟢 Junior
@@ -878,6 +1169,10 @@ Vietnamese explanation: Go không yêu cầu khai báo `implements` như Java. C
 **A:** `any` is an alias for `interface{}` introduced in Go 1.18 — they are identical at runtime. The empty interface has no methods, so every type satisfies it. Use cases: generic containers before Go 1.18, encoding/decoding unknown JSON, logging, and fmt functions. The downside is loss of type safety — the caller must type-assert back to the concrete type, which can panic if wrong. Prefer generics or typed interfaces when the set of types is known.
 
 Vietnamese explanation: `any` chỉ là alias đẹp hơn của `interface{}`, không có sự khác biệt về runtime. Dùng empty interface khi thực sự không biết trước kiểu dữ liệu (ví dụ: JSON unmarshal vào `map[string]any`). Tuy nhiên, mỗi lần truy cập giá trị phải type-assert, và nếu assert sai sẽ **panic**. Go 1.18+ với generics cho phép viết code type-safe hơn cho nhiều trường hợp trước đây phải dùng `interface{}`.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Biết rằng `any` và `interface{}` giống nhau hoàn toàn ở runtime, và proactively nhắc đến khi nào nên chuyển sang generics thay thế.
+- ❌ Weak: Nhầm rằng `any` có behavior khác `interface{}`, hoặc không biết khi nào nên tránh dùng cả hai.
 
 ---
 
@@ -887,6 +1182,10 @@ Vietnamese explanation: `any` chỉ là alias đẹp hơn của `interface{}`, k
 
 Vietnamese explanation: Type assertion một giá trị có thể panic nếu interface đang giữ type khác — luôn dùng dạng two-value `v, ok` trong production code. Type switch là cách idiomatic khi cần xử lý nhiều concrete types, ví dụ trong error handling hoặc JSON parsing. Một pattern thường gặp trong phỏng vấn: implement `Stringer` check — `if s, ok := v.(fmt.Stringer); ok { return s.String() }`.
 
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Giải thích tại sao dùng two-value form trong production — và biết rằng type switch > 5 cases là code smell cần redesign.
+- ❌ Weak: Không biết rằng single-value form panics, hoặc không biết khi nào type switch trở thành anti-pattern.
+
 ---
 
 ### Q: When should you use generics instead of interfaces in Go 1.18+? / Khi nào nên dùng generics thay vì interface? 🟡 Mid
@@ -894,6 +1193,10 @@ Vietnamese explanation: Type assertion một giá trị có thể panic nếu in
 **A:** Use **generics** when: (1) you need type-safe containers (e.g., `Stack[T]`, `Set[T]`); (2) you want to avoid boxing/unboxing overhead with `interface{}`; (3) the operation is the same for all types (e.g., `Map`, `Filter`, `Reduce` on slices); (4) you need type constraints that express capability (`~int | ~float64`). Use **interfaces** when: you need runtime polymorphism where the concrete type is determined at runtime, or when you're designing APIs that external packages implement.
 
 Vietnamese explanation: Rule of thumb — **interfaces cho runtime polymorphism, generics cho compile-time type safety**. Generics không thể thay thế interface hoàn toàn: bạn không thể có `[]Animal[T]` chứa cả Dog và Cat. Generics tốt nhất cho utility functions và containers. Trade-off: generics làm tăng binary size (monomorphization), nhưng thường nhanh hơn interface do tránh allocation và vtable lookup. Tránh over-generics — nếu chỉ có 2-3 types cụ thể, interface thường rõ ràng hơn.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Nêu được trường hợp cụ thể mà generics KHÔNG thể thay interface — heterogeneous collection (`[]Animal` với cả Dog và Cat).
+- ❌ Weak: Nói "generics tốt hơn interface" mà không biết limitation của generics với runtime polymorphism.
 
 ---
 
@@ -903,20 +1206,76 @@ Vietnamese explanation: Rule of thumb — **interfaces cho runtime polymorphism,
 
 Vietnamese explanation: Constraint trong generics là interface dùng ở vị trí type parameter. `comparable` là built-in, dùng cho map keys và `==` operations. Khi cần arithmetic operators (`+`, `-`, `*`), bạn phải dùng union constraint vì operators không thể express qua methods. Tilde `~` rất quan trọng — không có tilde, `type Celsius float64` sẽ không satisfy `float64` constraint dù underlying type là float64. Đây là câu hỏi phân biệt candidate hiểu sâu về generics.
 
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+- ✅ Strong: Giải thích toán tử `~` với ví dụ cụ thể (`type Celsius float64` và tại sao nó fail mà không có `~`), và biết `comparable` là predeclared không thể express bằng method interface.
+- ❌ Weak: Biết cú pháp constraint nhưng không giải thích được tại sao `~` tồn tại và khi nào cần.
+
 ---
 
-## Self-Check / Tự Kiểm Tra
+## ⚡ Cold Call Simulation / Mô Phỏng Phỏng Vấn
 
-- [ ] Can I explain why Go uses implicit interface satisfaction instead of explicit `implements`?
-- [ ] Can I draw the `iface` struct (type pointer + data pointer) from memory?
-- [ ] Can I name 3 real use cases where interfaces enable better testability?
-- [ ] Can I write a generic function with a custom type constraint?
-- [ ] Can I explain when to use interfaces vs generics vs `any`?
-- 💬 **Feynman Prompt:** Giải thích Go interfaces cho một Java developer — tại sao bạn không cần viết `implements`, và điều đó thay đổi cách thiết kế code như thế nào?
+> 🎯 Interviewer asks cold: **"Explain Go's interface internals — specifically why a nil pointer wrapped in an interface is not nil."**
+
+**30 giây đầu — mở đầu lý tưởng / Ideal 30-second opening:**
+1. "Go interface values are 2-word structs in the runtime — one word for type information, one word for the data pointer."
+2. "When you wrap a concrete type in an interface, the runtime fills in the type word — even if the data pointer is nil."
+3. "So `== nil` on an interface checks BOTH words — if either word is non-nil, the interface is not nil."
+4. "The fix: always return the bare untyped `nil` from functions that return interfaces, never return a typed nil variable."
+
+**Follow-up hoàn hảo:** "This is why `encoding/json` and other serialization libraries return `error` as untyped nil — returning a `*SomeError(nil)` would silently break all nil checks upstream."
+
+---
+
+## Interview Q&A Summary / Tổng Kết Phỏng Vấn
+
+| Question | Level | Key Point |
+|----------|-------|-----------|
+| Q1: Implicit satisfaction cơ chế? | 🟢 | Structural typing; retroactive implementation; no `implements` |
+| Q2: Empty interface / `any`? | 🟢 | Every type satisfies; escape hatch; prefer generics in 1.18+ |
+| Q9: Standard library interfaces? | 🟢 | `io.Reader` (1 method, ~100+ impl); `error` (builtin) |
+| Q10: io.ReadWriter composition? | 🟢 | Interface embedding; combinatorial from 4 small interfaces |
+| Q3: Method signature mismatch? | 🟡 | Pointer vs value receiver rule; 100% exact match required |
+| Q6: Nil interface vs interface holding nil? | 🟡 | `tab` field set even when `data` nil; always return bare `nil` |
+| Q7: Accept interfaces, return structs? | 🟡 | Adding method to interface breaks all implementors |
+| Q8: Bigger interface = weaker abstraction? | 🟡 | More methods = fewer satisfying types; Rob Pike proverb |
+| Q11: Interface vs struct embedding? | 🟡 | Interface: merge method sets; diamond OK if same signature |
+| Q12: Type assertion internals? | 🟡 | Checks itab/_type; comma-ok form never panics |
+| Q13: Type switch vs if-else? | 🟡 | O(1) via hash; >5 cases = code smell |
+| Q14: Interface vs concrete type? | 🟡 | Interface: DI, testing, runtime poly; concrete: performance, 1 impl |
+| Q15: Go generics 12-year wait? | 🟡 | Complexity + compile time + readability; stdlib duplication tipped scale |
+| Q16: Type parameters, constraints, type sets? | 🟡 | `~` operator for underlying type; union constraints for operators |
+| Q17: `comparable` constraint? | 🟡 | Not expressible as method; compile-time OK, runtime panic possible |
+| Q18: Generic patterns? | 🟡 | Data structures, Map/Filter, constrained ops, Result[T] |
+| Q20: reflect.TypeOf vs ValueOf? | 🟡 | TypeOf = `_type` from iface; ValueOf = `data` pointer |
+| Q22: Design patterns with interfaces? | 🟡 | Strategy, Decorator, Functional Options, Repository, Plugin |
+| Q4: iface vs eface internals? | 🔴 | eface = `_type + data`; iface = `itab + data`; both 16 bytes |
+| Q5: itab và method dispatch cost? | 🔴 | itab cached; indirect call ~3-5ns; cannot inline |
+| Q19: Generics vs interfaces performance? | 🔴 | GC Shape Stenciling; pointer types slower than value types |
+| Q21: Reflection use cases and cost? | 🔴 | 50-500x slower; only when compile-time info insufficient |
+
+---
+
+## Self-Check / Tự Kiểm Tra ⚡
+
+> **Đóng tài liệu lại trước khi làm — Close the doc before attempting.**
+
+- [ ] **Retrieval**: Từ memory, vẽ cấu trúc iface vs eface — 2 fields mỗi loại, và khi nào runtime dùng cái nào.
+- [ ] **Retrieval**: Giải thích "accept interfaces, return structs" và 2 ngoại lệ hợp lệ — không nhìn tài liệu.
+- [ ] **Visual**: Vẽ diagram cho GC Shape Stenciling — pointer types share 1 copy, value types separate, hidden dictionary.
+- [ ] **Application**: Bạn có một function `ProcessData` cần gọi với File, Network socket, và in-memory buffer. Nên dùng interface hay generics? Tại sao?
+- [ ] **Application**: Team muốn viết generic `Cache[K, V]`. K cần constraint gì? Tại sao? Có runtime risk gì?
+- [ ] **Debug**: Function return `*MyError` nil wrapped in `error` interface — caller check `err != nil` luôn true. Fix thế nào và tại sao?
+- [ ] **Teach**: Giải thích Go interface cho Java developer — tại sao không cần `implements`, và điều đó thay đổi cách thiết kế code như thế nào.
+
+💬 **Feynman Prompt:** Bạn là Go runtime. Khi một `*MyStruct` được gán vào `io.Reader` interface, hãy mô tả từng bước bạn làm: tạo cấu trúc gì, điền thông tin gì, và sau đó khi `Read()` được gọi, bạn dispatch nó như thế nào?
+
+🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày → 7 ngày → 14 ngày**
+
+---
 
 ## Connections / Liên Kết
 
-- ⬅️ **Built on**: [Go Language Fundamentals](./01-language-fundamentals.md) — struct methods, type system
+- ⬅️ **Built on**: [Go Language Fundamentals](./01-language-fundamentals.md) — struct methods, type system, pointer semantics
 - ➡️ **Enables**: [Go Concurrency](./03-concurrency.md) — channels are interface-driven (`io.Reader`/`io.Writer`)
 - ➡️ **Enables**: [Go Testing](./05-testing-profiling.md) — mock = new struct satisfying interface, no frameworks needed
 - 🔗 **Applied in**: [API Design](../02-backend-knowledge/01-api-design.md) — handler interfaces for middleware chains
