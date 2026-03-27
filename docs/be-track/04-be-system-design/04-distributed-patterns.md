@@ -43,6 +43,478 @@
 
 ---
 
+## Overview / Tổng Quan
+
+| #   | Concept             | Vai trò                                                       | Interview Weight |
+| --- | ------------------- | ------------------------------------------------------------- | :--------------: |
+| 1   | Saga Pattern        | Quản lý distributed transaction bằng local txn + compensation |      ⭐⭐⭐      |
+| 2   | Circuit Breaker     | Ngắt call dependency lỗi, tránh cascade failure               |      ⭐⭐⭐      |
+| 3   | CQRS                | Tách read/write model để tối ưu riêng                         |       ⭐⭐       |
+| 4   | Event Sourcing      | Lưu event stream thay vì state, hỗ trợ audit + replay         |       ⭐⭐       |
+| 5   | Service Mesh        | Infrastructure layer cho mTLS, observability, traffic policy  |       ⭐⭐       |
+| 6   | Distributed Tracing | Theo dõi request xuyên service, tìm bottleneck                |       ⭐⭐       |
+| 7   | Idempotency         | Đảm bảo retry không tạo duplicate business effect             |      ⭐⭐⭐      |
+| 8   | Bulkhead            | Tách resource pool để isolate failure domain                  |       ⭐⭐       |
+| 9   | Retry + Backoff     | Recover transient errors với jitter, tránh thundering herd    |       ⭐⭐       |
+
+**Mối quan hệ:** 9 pattern này tạo thành resilience stack cho microservices. Saga + Idempotency + Outbox giải quyết data consistency. Circuit Breaker + Bulkhead + Retry giải quyết fault tolerance. CQRS + Event Sourcing giải quyết read/write optimization. Service Mesh + Tracing giải quyết observability & policy. Phỏng vấn Senior yêu cầu biết khi nào dùng, khi nào KHÔNG dùng, và cách kết hợp chúng.
+
+---
+
+## Core Concepts — Phase 2 Deep Treatment
+
+### Concept 1: Saga Pattern
+
+> 🪝 **Memory Hook:** "Saga = chuỗi domino có nút undo — đổ domino tiến thì bước tiếp, gặp vật cản thì đổ ngược"
+
+**Why exists — Root-cause trace:**
+
+- Level 1: Microservices không có distributed ACID transaction → cần pattern quản lý cross-service consistency
+- Level 2: 2PC blocking + single coordinator failure → Saga dùng local txn + compensation, scale tốt hơn
+- Level 3: Network partition + partial failure là bình thường → compensation phải idempotent và tolerate own failure
+
+**Layer 1 — Analogy / Tầng đơn giản:**
+Saga giống đặt tour du lịch: Book Flight → Book Hotel → Book Car. Nếu Car hết, compensation là Cancel Hotel → Cancel Flight theo thứ tự ngược.
+
+**Layer 2 — Mechanics / Tầng kỹ thuật:**
+
+```text
+Orchestrator Flow:
+┌──────────────────────────────────────────────────────┐
+│  Saga Orchestrator (state machine in DB)             │
+│                                                      │
+│  Step1: ReserveInventory ──ok──► Step2: AuthPayment  │
+│         ▲ compensate              │ ok               │
+│         │                         ▼                  │
+│         │                  Step3: CreateShipment      │
+│         │                         │ fail!            │
+│         │                         ▼                  │
+│         ◄──── Compensate: RefundPayment              │
+│         ◄──── Compensate: ReleaseInventory            │
+└──────────────────────────────────────────────────────┘
+State transitions: STARTED → STEP_N_PENDING → STEP_N_DONE → ... → COMPLETED | COMPENSATING → COMPENSATED | FAILED_COMPENSATION
+```
+
+- Saga state persisted in DB (saga_id, current_step, step_status_map)
+- Each step has timeout + retry policy
+- Compensation runs in reverse order, must be idempotent
+
+**Layer 3 — Edge Cases / Tầng nâng cao:**
+
+- Compensation cũng fail → dead letter + manual intervention + audit log
+- External irreversible effects (email sent, money charged) → semantic compensation (send correction, issue refund)
+- Saga timeout → force compensate all completed steps + alert
+- Concurrent saga on same entity → need distributed lock or optimistic versioning
+
+| Sai lầm                         | Tại sao sai                      | Đúng là                                 |
+| ------------------------------- | -------------------------------- | --------------------------------------- |
+| Compensation luôn undo hoàn hảo | External effects irreversible    | Compensation là "new corrective action" |
+| Giữ saga state chỉ trong memory | Orchestrator restart → mất state | Persist state machine vào DB            |
+| Không set timeout cho saga      | Saga stuck vĩnh viễn             | TTL per step + TTL tổng saga            |
+| Choreography cho flow phức tạp  | Event spaghetti khó debug        | Orchestration cho 4+ steps              |
+
+> 🎯 **Interview Pattern:** "Saga giải quyết distributed transaction bằng local txn + compensation. Choreography cho flow đơn giản, Orchestration cho flow phức tạp. Key tradeoff: eventual consistency vs strong consistency, và compensation phải idempotent."
+
+> 🔗 **Knowledge Chain:** Database Transactions → Distributed Systems CAP → 2PC limitations → Saga Pattern → Outbox Pattern → Idempotent Consumer
+
+### Concept 2: Circuit Breaker
+
+> 🪝 **Memory Hook:** "Circuit Breaker = cầu dao điện nhà — quá tải thì ngắt, thử bật lại sau khi nguội"
+
+**Why exists — Root-cause trace:**
+
+- Level 1: Dependency lỗi → caller timeout hàng loạt → cascade failure
+- Level 2: Retry không giới hạn → amplify load lên dependency đang chết
+- Level 3: Thread pool/connection pool exhaustion → toàn hệ thống treo
+
+**Layer 1 — Analogy / Tầng đơn giản:**
+Cầu dao điện: dòng quá tải thì tự ngắt, đợi nguội rồi bật thử. Nếu vẫn quá tải thì ngắt lại. Không ai cầm dây điện hở chờ đợi.
+
+**Layer 2 — Mechanics / Tầng kỹ thuật:**
+
+```text
+State Machine:
+┌────────┐  failures > threshold  ┌──────┐  timeout elapsed  ┌──────────┐
+│ CLOSED │ ──────────────────────► │ OPEN │ ────────────────► │ HALF-OPEN│
+└────────┘                        └──────┘                    └──────────┘
+    ▲                                 ▲                           │  │
+    │     success threshold met       │     probe fails           │  │
+    └─────────────────────────────────┘◄──────────────────────────┘  │
+                                                    probe succeeds   │
+                                      ◄──────────────────────────────┘
+```
+
+- Closed: call bình thường, track failure count/rate
+- Open: fail-fast, return fallback, zero load lên downstream
+- Half-open: 1-10 probe requests, nếu pass → Closed, nếu fail → Open lại
+- Error-rate window vs consecutive failure: production dùng hybrid
+
+**Layer 3 — Edge Cases / Tầng nâng cao:**
+
+- Traffic thấp → consecutive failure noisy, cần min-requests before evaluating
+- Partial failure (timeout vs 5xx vs connection refused) → classify retryable vs non-retryable
+- Fallback strategy: cached stale data (product) vs fail-fast (payment)
+- Multiple breakers per dependency endpoint, không global cho toàn service
+
+| Sai lầm                                         | Tại sao sai                              | Đúng là                                 |
+| ----------------------------------------------- | ---------------------------------------- | --------------------------------------- |
+| Magic threshold (5 failures) cho mọi dependency | Traffic profile khác nhau                | Tune theo error budget + traffic volume |
+| Breaker mở = xong, không cần thêm gì            | Không có fallback = user thấy lỗi        | Cần fallback + alerting + runbook       |
+| Dùng breaker cho local function call            | Không có network latency risk            | Chỉ dùng cho remote dependency          |
+| Half-open cho full traffic                      | Dependency vừa hồi phục bị overwhelm lại | Probe 1-10 requests rồi mới mở          |
+
+> 🎯 **Interview Pattern:** "Circuit Breaker có 3 states: Closed/Open/Half-Open. Bảo vệ caller khỏi cascade failure. Key: tune threshold theo traffic, có fallback strategy, kết hợp với Bulkhead và Retry budget."
+
+> 🔗 **Knowledge Chain:** Network Failures → Timeout → Retry → Circuit Breaker → Bulkhead → Graceful Degradation
+
+### Concept 3: CQRS
+
+> 🪝 **Memory Hook:** "CQRS = bếp (write) tách quầy phục vụ (read) — bếp lo nấu đúng, quầy lo serve nhanh"
+
+**Why exists — Root-cause trace:**
+
+- Level 1: Read/write cùng model → query phức tạp JOIN nhiều bảng, write bị ảnh hưởng bởi read locks
+- Level 2: Read-heavy workload (100:1 ratio) → read model cần denormalized, write model cần normalized
+- Level 3: Business invariants phức tạp trên write side + UI cần shape dữ liệu khác nhau
+
+**Layer 1 — Analogy / Tầng đơn giản:**
+Nhà hàng: bếp (write side) chuẩn bị nguyên liệu theo công thức chính xác. Quầy phục vụ (read side) bày thành phần ra đĩa đẹp cho khách. Hai bên tối ưu khác nhau.
+
+**Layer 2 — Mechanics / Tầng kỹ thuật:**
+
+```text
+┌─────────────┐     ┌──────────┐     ┌───────────┐     ┌──────────┐     ┌────────────┐
+│ Command API │────►│ Write DB │────►│ Event Bus │────►│Projector │────►│  Read DB   │
+└─────────────┘     └──────────┘     └───────────┘     └──────────┘     └────────────┘
+                                                                              │
+                                                                        ┌─────┴─────┐
+                                                                        │ Query API  │
+                                                                        └───────────┘
+```
+
+- Command side: validate business rules → write to normalized DB → publish event
+- Projector: consume events → build denormalized read models (materialized views)
+- Query side: read from optimized read DB → return fast
+- Eventual consistency between write and read (projection lag)
+
+**Layer 3 — Edge Cases / Tầng nâng cao:**
+
+- Read-your-own-write: sticky read to write DB for short window, or version token polling
+- Projection lag monitoring: `projection_lag_seconds` metric, scale projectors if >60s
+- Too many read models → maintenance nightmare, need ownership per projection
+- Don't need separate DBs initially — can start with separate models in same DB
+
+| Sai lầm                      | Tại sao sai                                     | Đúng là                                |
+| ---------------------------- | ----------------------------------------------- | -------------------------------------- |
+| CQRS cho CRUD app đơn giản   | Over-engineering, eventual consistency overhead | Chỉ dùng khi read/write asymmetry rõ   |
+| Tách physical DB ngay từ đầu | Thêm complexity không cần thiết                 | Tách logical model trước, physical sau |
+| Không monitor projection lag | User thấy stale data không biết tại sao         | Alert khi lag > threshold              |
+| Quá nhiều read models        | Mỗi model cần maintain/update                   | Justify mỗi projection rõ ràng         |
+
+> 🎯 **Interview Pattern:** "CQRS tách command (write) và query (read) model. Phù hợp khi read-heavy, query phức tạp. Tradeoff: eventual consistency + ops complexity."
+
+> 🔗 **Knowledge Chain:** Normalized DB → Query Performance Issues → Denormalization → CQRS → Event Sourcing (optional) → Materialized Views
+
+### Concept 4: Event Sourcing
+
+> 🪝 **Memory Hook:** "Event Sourcing = sổ kế toán — không bao giờ xóa dòng, chỉ ghi thêm entry, balance = tổng tất cả entries"
+
+**Why exists — Root-cause trace:**
+
+- Level 1: State-based storage mất audit trail → không biết "ai đổi gì, khi nào, tại sao"
+- Level 2: Replay/debug production bugs cần lịch sử đầy đủ → event log cho phép rebuild state tại bất kỳ thời điểm
+- Level 3: Temporal queries + compliance (GDPR audit) + event-driven architecture cần source of truth dạng events
+
+**Layer 1 — Analogy / Tầng đơn giản:**
+Sổ kế toán: không bao giờ tẩy xóa. Ghi "nạp 100", "rút 30", "nạp 50" — số dư hiện tại = fold(all entries). Muốn biết số dư ngày nào, replay đến ngày đó.
+
+**Layer 2 — Mechanics / Tầng kỹ thuật:**
+
+```text
+Event Store (append-only):
+┌─────────────────────────────────────────────────────┐
+│ v1: AccountCreated(id=42)                           │
+│ v2: MoneyDeposited(amt=100)                         │
+│ v3: MoneyWithdrawn(amt=30)                          │
+│ v4: MoneyDeposited(amt=50)                          │
+│ ...                                                 │
+│ Snapshot@v100: {balance: 5420, ...}                 │
+│ v101: MoneyWithdrawn(amt=20)                        │
+└─────────────────────────────────────────────────────┘
+State = fold(events from last snapshot)
+```
+
+- Events are immutable, append-only
+- State rebuilt by replaying events (fold/reduce)
+- Snapshots every N events to avoid full replay (e.g., every 500 events)
+- Event schema versioning: type + version + upcaster for backward compatibility
+
+**Layer 3 — Edge Cases / Tầng nâng cao:**
+
+- Event schema evolution: upcaster/translator when replaying old events
+- GDPR right-to-be-forgotten: crypto-shredding (encrypt PII, destroy key) or reference tokens
+- Storage growth: retention policy, compaction, archive old streams
+- Snapshot cadence tuning: more frequent for hot aggregates
+
+| Sai lầm                     | Tại sao sai                                    | Đúng là                                            |
+| --------------------------- | ---------------------------------------------- | -------------------------------------------------- |
+| Event store = message queue | Queue là transport, event store là persistence | Event store = append-only DB with version ordering |
+| Không snapshot              | Stream dài → replay minutes/hours              | Snapshot mỗi N events                              |
+| Schema thay đổi breaking    | Replay cũ sẽ fail                              | Versioned events + upcaster                        |
+| Dùng cho mọi domain         | Over-engineering CRUD đơn giản                 | Chỉ khi cần audit/replay/temporal query            |
+
+> 🎯 **Interview Pattern:** "Event Sourcing lưu events thay state. Rebuild state bằng replay. Snapshots tránh full replay. Key tradeoff: audit power vs schema evolution complexity."
+
+> 🔗 **Knowledge Chain:** State-based Storage → Audit Requirements → Event Log → Event Sourcing → Snapshots → CQRS Integration → Temporal Queries
+
+### Concept 5: Service Mesh
+
+> 🪝 **Memory Hook:** "Service Mesh = đường ống nước ngầm — app chỉ mở vòi, mesh lo áp suất, lọc, và đo lưu lượng"
+
+**Why exists — Root-cause trace:**
+
+- Level 1: Mỗi service tự implement retry/mTLS/tracing → inconsistent, mỗi ngôn ngữ một library
+- Level 2: Security policy (mTLS) cần uniform → không thể rely mỗi team nhớ configure
+- Level 3: Traffic management (canary, blue-green, rate limit) cần declarative → mesh config vs code changes
+
+**Layer 1 — Analogy / Tầng đơn giản:**
+Hệ thống đường ống nước: app chỉ cần mở vòi nước (gọi API). Mesh lo áp suất (load balancing), lọc (mTLS auth), đo lưu lượng (metrics), và chuyển hướng (traffic shifting).
+
+**Layer 2 — Mechanics / Tầng kỹ thuật:**
+
+```text
+┌─────────────────────────────┐      ┌─────────────────────────────┐
+│  Service A                  │      │  Service B                  │
+│  ┌───────┐  ┌────────────┐  │      │  ┌────────────┐  ┌───────┐  │
+│  │  App  │──│  Sidecar   │──┼─mTLS─┼──│  Sidecar   │──│  App  │  │
+│  └───────┘  └────────────┘  │      │  └────────────┘  └───────┘  │
+└─────────────────────────────┘      └─────────────────────────────┘
+                    │                          │
+                    └──── Control Plane ────────┘
+                          (config, certs, policy)
+```
+
+- Data plane: sidecar proxy (Envoy) handles all network traffic
+- Control plane: distributes policy, certs, config to sidecars
+- Control plane outage → sidecars use cached config, don't crash
+
+**Layer 3 — Edge Cases / Tầng nâng cao:**
+
+- Latency overhead: +1-3ms per hop due to sidecar proxy
+- Resource cost: sidecar per pod = CPU/memory multiplier
+- mTLS rollout: permissive mode → enforce per namespace → full
+- Not a replacement for API gateway (north-south vs east-west)
+
+| Sai lầm                           | Tại sao sai                             | Đúng là                                       |
+| --------------------------------- | --------------------------------------- | --------------------------------------------- |
+| Mesh thay thế API gateway         | Gateway = north-south, mesh = east-west | Cần cả hai cho use case khác                  |
+| Deploy mesh cho <10 services      | Overhead không đáng                     | Justify khi >50 services hoặc strict security |
+| Control plane down = mọi thứ chết | Sidecars có cached config               | Degraded mode, không down ngay                |
+| Mesh fix được slow queries        | Mesh chỉ lo network policy              | App logic/DB optimization riêng               |
+
+> 🎯 **Interview Pattern:** "Service Mesh = infrastructure layer cho mTLS, observability, traffic policy. Sidecar per pod. Phù hợp large-scale microservices. Tradeoff: latency overhead + ops complexity."
+
+> 🔗 **Knowledge Chain:** Microservices → Network Concerns → Library per Language → Service Mesh → mTLS → Observability → Traffic Management
+
+### Concept 6: Distributed Tracing
+
+> 🪝 **Memory Hook:** "Tracing = GPS tracking cho request — biết nó đi đâu, mất bao lâu ở mỗi stop"
+
+**Why exists — Root-cause trace:**
+
+- Level 1: Request qua 5+ services → log riêng lẻ không đủ tìm bottleneck
+- Level 2: Latency spike intermittent → cần trace individual request path end-to-end
+- Level 3: Debugging production incidents cần correlation: metric alert → trace → span → log
+
+**Layer 1 — Analogy / Tầng đơn giản:**
+GPS tracking cho bưu kiện: từ warehouse A → xe tải → trung tâm phân loại → xe giao hàng → nhà bạn. Mỗi stop ghi timestamp. Biết chính xác chỗ nào delay.
+
+**Layer 2 — Mechanics / Tầng kỹ thuật:**
+
+```text
+Trace abc123:
+├─ Span 1: Gateway (5ms)
+│  ├─ Span 1.1: OrderSvc (45ms)
+│  │  ├─ Span 1.1.1: PaymentSvc (120ms) ← bottleneck!
+│  │  └─ Span 1.1.2: InventorySvc (15ms)
+│  └─ Span 1.2: NotificationSvc (8ms)
+Total: 193ms, critical path: Gateway→Order→Payment
+```
+
+- Trace: entire request journey, identified by trace_id
+- Span: one operation within trace, has parent_span_id
+- Context propagation: trace_id/span_id passed via HTTP headers (W3C Trace Context)
+- Sampling: head (decide at entry), tail (decide after completion, keep errors/slow)
+
+**Layer 3 — Edge Cases / Tầng nâng cao:**
+
+- Goroutine/channel: must propagate context explicitly (Go context.Context)
+- High-cardinality tags → storage explosion (don't tag user_id on every span)
+- 100% sampling cost prohibitive → tail sampling keeps important traces
+- Correlate: metric alert → exemplar trace → spans → structured logs
+
+| Sai lầm                              | Tại sao sai                     | Đúng là                                   |
+| ------------------------------------ | ------------------------------- | ----------------------------------------- |
+| Sample 100% mọi traces               | Cost storage/processing cực cao | Head + tail sampling, keep errors/slow    |
+| Quên propagate context qua goroutine | Trace bị đứt, mất visibility    | Luôn truyền ctx qua goroutine/channel     |
+| Tag high-cardinality (user_id)       | Storage explosion               | Tag low-cardinality, log high-cardinality |
+| Chỉ dùng tracing, bỏ metrics/logs    | Tracing tốn kém cho aggregation | 3 pillars: metrics + logs + traces        |
+
+> 🎯 **Interview Pattern:** "Distributed tracing theo dõi request qua nhiều service bằng trace_id + span_id. Context propagation là key. Sampling strategy cân bằng cost vs visibility."
+
+> 🔗 **Knowledge Chain:** Logging → Metrics → Distributed Tracing → OpenTelemetry → Sampling → Correlation (metrics→traces→logs)
+
+### Concept 7: Idempotency
+
+> 🪝 **Memory Hook:** "Idempotency = nút thang máy — bấm 1 lần hay 10 lần, vẫn chỉ đến tầng 5"
+
+**Why exists — Root-cause trace:**
+
+- Level 1: Network retry → cùng request gửi 2+ lần → double charge, double order
+- Level 2: At-least-once delivery (Kafka, HTTP retry) là mặc định → consumer phải tự dedupe
+- Level 3: Exactly-once delivery bất khả thi trong distributed systems → "effectively once" = at-least-once + idempotent handler
+
+**Layer 1 — Analogy / Tầng đơn giản:**
+Nút thang máy: bấm tầng 5 một lần hay mười lần, kết quả vẫn là đến tầng 5. Không đến tầng 50.
+
+**Layer 2 — Mechanics / Tầng kỹ thuật:**
+
+```text
+Client ──(idempotency_key: abc123)──► API Server
+                                         │
+                                   ┌─────┴─────┐
+                                   │ Check DB:  │
+                                   │ key exists?│
+                                   └─────┬─────┘
+                                    yes/ \no
+                                   /      \
+                            Return cached   Execute operation
+                            response        + Store key+response
+```
+
+- Idempotency key: client-generated unique ID per operation
+- Server stores key → response mapping with TTL
+- Subsequent requests with same key → return cached response
+- TTL > max retry window (typically 24-72h)
+
+**Layer 3 — Edge Cases / Tầng nâng cao:**
+
+- Dedupe store failure → temporary duplicate risk → need downstream guards (unique constraints, state machine)
+- Key scope: per-user + per-operation, not global
+- Concurrent same-key requests → need distributed lock or compare-and-swap
+- Non-HTTP: Kafka consumer dedupe by event_id stored in processed_events table
+
+| Sai lầm                                   | Tại sao sai                               | Đúng là                                    |
+| ----------------------------------------- | ----------------------------------------- | ------------------------------------------ |
+| Assume network reliable, skip idempotency | Retry là bình thường                      | Mọi write API critical cần idempotency key |
+| TTL quá ngắn (1 phút)                     | Client retry window > TTL → duplicate lọt | TTL > max retry window (24-72h)            |
+| Global idempotency key                    | Key collision giữa operations             | Scope: user + operation type + key         |
+| Chỉ check key, không store response       | Retry trả response khác                   | Store key + response atomically            |
+
+> 🎯 **Interview Pattern:** "Idempotency key đảm bảo retry safe. At-least-once + idempotent handler = effectively once. TTL > retry window. Store key+response atomically."
+
+> 🔗 **Knowledge Chain:** Network Unreliability → Retry → Duplicate Risk → Idempotency Key → Outbox Pattern → Exactly-Once Semantics
+
+### Concept 8: Bulkhead
+
+> 🪝 **Memory Hook:** "Bulkhead = vách ngăn tàu — 1 khoang bị ngập, tàu không chìm"
+
+**Why exists — Root-cause trace:**
+
+- Level 1: Shared thread pool → 1 slow dependency chiếm hết workers → toàn service treo
+- Level 2: Critical path (checkout) và non-critical (analytics) dùng chung resource → analytics spike ảnh hưởng checkout
+- Level 3: Blast radius không kiểm soát → incident lan rộng từ component phụ sang core
+
+**Layer 1 — Analogy / Tầng đơn giản:**
+Tàu có vách ngăn: 1 khoang bị thủng ngập nước, đóng cửa vách ngăn → các khoang khác vẫn an toàn, tàu vẫn nổi.
+
+**Layer 2 — Mechanics / Tầng kỹ thuật:**
+
+```text
+Service Handler
+├── Pool A (payment, max=50)    ← critical, isolated
+│   └── Circuit Breaker → Payment Downstream
+├── Pool B (search, max=30)     ← important but degradable
+│   └── Circuit Breaker → Search Downstream
+└── Pool C (analytics, max=10)  ← non-critical
+    └── Fire-and-forget → Analytics Downstream
+
+Pool A full? → Only payment degraded
+Pool C full? → Analytics dropped, checkout unaffected
+```
+
+- Dimensions: by dependency, by endpoint criticality, by tenant tier
+- Implementation: separate goroutine pools (semaphore), separate connection pools
+- Queue bulkhead (absorb burst) vs thread pool bulkhead (latency control)
+
+**Layer 3 — Edge Cases / Tầng nâng cao:**
+
+- Over-partition → total throughput drops (pools not shared flexibly)
+- Queue depth monitoring: shed low-priority when approaching limit
+- Dynamic resizing: adjust pool sizes based on traffic pattern shifts
+- Combine with circuit breaker: bulkhead limits blast radius, breaker stops useless calls
+
+| Sai lầm                                    | Tại sao sai                           | Đúng là                              |
+| ------------------------------------------ | ------------------------------------- | ------------------------------------ |
+| 1 global goroutine pool cho mọi dependency | Slow dependency chiếm hết             | Tách pool per dependency/criticality |
+| Bulkhead size cố định mãi                  | Traffic pattern thay đổi              | Monitor + tune regularly             |
+| Chỉ dùng bulkhead, không kết hợp breaker   | Vẫn gọi dependency dead trong pool    | Bulkhead + Circuit Breaker cùng lúc  |
+| Quá nhiều compartments                     | Fragmented resources, low utilization | 3-5 tiers là đủ cho hầu hết systems  |
+
+> 🎯 **Interview Pattern:** "Bulkhead isolate resources per dependency/criticality. Kết hợp Circuit Breaker. Key: payment pool riêng, analytics pool riêng → checkout không bị ảnh hưởng khi analytics spike."
+
+> 🔗 **Knowledge Chain:** Shared Resources → Cascade Failure → Bulkhead Isolation → Circuit Breaker → Graceful Degradation → SLO Protection
+
+### Concept 9: Retry with Backoff
+
+> 🪝 **Memory Hook:** "Retry + Jitter = xếp hàng ATM lỗi — ai cũng quay lại cùng lúc thì lại kẹt, random delay mỗi người khác nhau"
+
+**Why exists — Root-cause trace:**
+
+- Level 1: Transient network errors (timeout, connection reset) → retry thường thành công
+- Level 2: Fixed delay retry → thundering herd khi nhiều clients retry cùng lúc
+- Level 3: Exponential backoff + jitter → dàn đều retry load, giảm amplification
+
+**Layer 1 — Analogy / Tầng đơn giản:**
+ATM lỗi, 50 người quay lại cùng 5 phút sau → kẹt lại. Random delay: người 2 phút, người 7 phút → load dàn đều.
+
+**Layer 2 — Mechanics / Tầng kỹ thuật:**
+
+```text
+Retry Timeline with Exponential Backoff + Full Jitter:
+Attempt 1: immediate
+Attempt 2: rand(0, 200ms)      ← base * 2^1 = 200ms cap
+Attempt 3: rand(0, 400ms)      ← base * 2^2 = 400ms cap
+Attempt 4: rand(0, 800ms)      ← base * 2^3 = 800ms cap
+Max cap: rand(0, 5000ms)       ← never exceed max wait
+
+Formula: sleep = rand(0, min(base * 2^attempt, maxWait))
+```
+
+- Retry budget: limit total retries to 20% of original requests (prevent amplification)
+- Deadline-aware: check ctx.Deadline() before each attempt, skip if insufficient time
+- Classify errors: retry 5xx/timeout, DON'T retry 4xx/validation/auth
+
+**Layer 3 — Edge Cases / Tầng nâng cao:**
+
+- Hedged requests: send 2nd request after p99 latency threshold (reduces tail latency, increases load)
+- Retry budget per service, not just per client → global throttle during outage
+- Non-idempotent operations: MUST have idempotency guard before retrying
+- Circuit breaker wrapping retry: don't retry when breaker is open
+
+| Sai lầm                          | Tại sao sai                           | Đúng là                             |
+| -------------------------------- | ------------------------------------- | ----------------------------------- |
+| Retry 4xx validation errors      | Deterministic failure, retry vô nghĩa | Chỉ retry transient (5xx, timeout)  |
+| Fixed delay retry (không jitter) | Thundering herd                       | Exponential backoff + full jitter   |
+| Retry không giới hạn             | Load amplification, outage kéo dài    | Budget 20%, max 3-5 attempts        |
+| Retry non-idempotent POST        | Double charge, double order           | Cần idempotency key trước khi retry |
+
+> 🎯 **Interview Pattern:** "Retry cho transient errors, exponential backoff + jitter tránh thundering herd. Budget 20%. Deadline-aware. Kết hợp Circuit Breaker bên ngoài."
+
+> 🔗 **Knowledge Chain:** Transient Failures → Retry → Backoff → Jitter → Retry Budget → Circuit Breaker → Graceful Degradation
+
+---
+
 ## Pattern 1: Saga Pattern / Mẫu Saga
 
 ### 🟡 Q: What is Saga? `[Mid]`
@@ -59,17 +531,19 @@ Order Service -> Payment Service -> Inventory Service -> Shipping Service
 ### 🟡 Q: Choreography vs Orchestration `[Mid]`
 
 **A:**
+
 - **Choreography:** services tự lắng nghe event của nhau, không có coordinator trung tâm.
 - **Orchestration:** có Saga Orchestrator điều phối flow rõ ràng.
 
-| Mode | Ưu điểm | Nhược điểm |
-|---|---|---|
-| Choreography | Loose coupling, ít central SPOF | Flow khó trace, dễ thành event spaghetti |
-| Orchestration | Dễ quan sát, logic tập trung | Coordinator phức tạp, có thể bottleneck |
+| Mode          | Ưu điểm                         | Nhược điểm                               |
+| ------------- | ------------------------------- | ---------------------------------------- |
+| Choreography  | Loose coupling, ít central SPOF | Flow khó trace, dễ thành event spaghetti |
+| Orchestration | Dễ quan sát, logic tập trung    | Coordinator phức tạp, có thể bottleneck  |
 
 ### 🔴 Q: When NOT to use Saga? `[Senior]`
 
 **A:**
+
 - Khi domain yêu cầu strict ACID cross-service real-time.
 - Khi compensation không khả thi (external irreversible effects).
 - Khi team chưa có event observability tốt (trace/debug khó).
@@ -105,6 +579,7 @@ func RunSaga(ctx context.Context, steps []Step, data map[string]any) error {
 
 **A:**
 Circuit breaker bảo vệ service khỏi gọi dependency đang lỗi liên tục. Nó có 3 trạng thái:
+
 - **Closed:** call bình thường.
 - **Open:** chặn call trong một khoảng thời gian.
 - **Half-open:** cho một số request test để quyết định đóng lại hay mở tiếp.
@@ -118,6 +593,7 @@ Half-open --(failure)-----------> Open
 ### 🟡 Q: Khi nào nên dùng? `[Mid]`
 
 **A:**
+
 - Gọi remote service qua network (payment, profile, recommendations).
 - Dependency có thể timeout/latency spike.
 - Cần graceful degradation thay vì treo toàn hệ thống.
@@ -125,6 +601,7 @@ Half-open --(failure)-----------> Open
 ### 🔴 Q: Khi nào KHÔNG nên dùng? `[Senior]`
 
 **A:**
+
 - Local function/memory call không qua network.
 - Operation cực hiếm, metrics không đủ để mở/đóng breaker chính xác.
 - Flow bắt buộc fail fast ngay lập tức bởi policy business.
@@ -196,6 +673,7 @@ func (b *Breaker) OnResult(err error) {
 
 **A:**
 CQRS tách write model (Command) và read model (Query) thành hai đường riêng để tối ưu khác nhau.
+
 - Command side ưu tiên consistency/business invariants.
 - Query side ưu tiên latency và shape dữ liệu cho UI.
 
@@ -206,6 +684,7 @@ Command API -> Write DB -> Event Bus -> Read Model Projector -> Read DB -> Query
 ### 🟡 Q: Khi nên dùng? `[Mid]`
 
 **A:**
+
 - Read/write pattern chênh lệch lớn.
 - Query phức tạp, cần denormalized view.
 - Domain có nhiều business rule trên write.
@@ -213,6 +692,7 @@ Command API -> Write DB -> Event Bus -> Read Model Projector -> Read DB -> Query
 ### 🔴 Q: Khi không nên dùng? `[Senior]`
 
 **A:**
+
 - CRUD đơn giản, scale nhỏ.
 - Team chưa sẵn sàng vận hành eventual consistency.
 - Không có nhu cầu projection/read model đặc thù.
@@ -240,6 +720,7 @@ Khi stream event dài, replay toàn bộ tốn thời gian. Snapshot lưu state 
 ### 🔴 Q: Rủi ro chính? `[Senior]`
 
 **A:**
+
 - Event schema evolution phức tạp.
 - Debug khó nếu tooling chưa tốt.
 - Storage tăng nhanh nếu retention không quản trị.
@@ -283,6 +764,7 @@ Service mesh là tầng hạ tầng xử lý network concerns (mTLS, retry, time
 ### 🟡 Q: Khi dùng Istio/Linkerd có lợi gì? `[Mid]`
 
 **A:**
+
 - Chính sách bảo mật thống nhất (mTLS, authz).
 - Quan sát tốt hơn (metrics/traces chuẩn).
 - Canary, blue/green, traffic split dễ hơn.
@@ -290,6 +772,7 @@ Service mesh là tầng hạ tầng xử lý network concerns (mTLS, retry, time
 ### 🔴 Q: Khi không nên dùng mesh? `[Senior]`
 
 **A:**
+
 - Hệ thống nhỏ, overhead sidecar không đáng.
 - Team SRE chưa đủ bandwidth vận hành control plane.
 - Latency budget quá chặt và không chấp nhận overhead proxy.
@@ -302,6 +785,7 @@ Service mesh là tầng hạ tầng xử lý network concerns (mTLS, retry, time
 
 **A:**
 Giúp theo dõi 1 request đi qua nhiều service, biết chỗ nào chậm/lỗi. Core concepts:
+
 - **Trace:** toàn bộ hành trình request.
 - **Span:** 1 bước con trong trace.
 - **Context propagation:** truyền `trace-id/span-id` qua headers.
@@ -328,6 +812,7 @@ child.End()
 ### 🔴 Q: Common pitfalls `[Senior]`
 
 **A:**
+
 - Quên propagate context qua goroutine/channel.
 - Sampling sai khiến mất trace quan trọng.
 - High-cardinality tags gây tốn storage/cost.
@@ -345,6 +830,7 @@ Idempotency key giúp retry nhiều lần vẫn chỉ tạo 1 business effect. T
 
 **A:**
 Trong distributed systems, thường đạt được “effectively once” bằng:
+
 - at-least-once delivery + dedupe/idempotent consumer
 - atomic write + outbox pattern
 - unique constraints business key
@@ -372,12 +858,14 @@ Pool A (payment)   Pool B (search)   Pool C (email)
 ### 🟡 Q: Khi dùng? `[Mid]`
 
 **A:**
+
 - Một service gọi nhiều downstream có profile khác nhau.
 - Muốn tránh cascade failure khi 1 downstream bị treo.
 
 ### 🔴 Q: Tradeoff `[Senior]`
 
 **A:**
+
 - Isolation tốt nhưng tổng hiệu suất có thể giảm do không chia sẻ pool linh hoạt.
 - Cần tuning giới hạn mỗi compartment liên tục.
 
@@ -393,6 +881,7 @@ Nếu tất cả client retry cùng thời điểm sẽ tạo thundering herd. J
 ### 🟡 Q: Công thức backoff phổ biến `[Mid]`
 
 **A:**
+
 - Exponential: `delay = min(base * 2^attempt, max)`
 - Full jitter: `sleep = rand(0, delay)`
 - Decorrelated jitter: ổn định hơn trong hệ thống lớn.
@@ -425,6 +914,7 @@ func Retry(ctx context.Context, max int, base, maxWait time.Duration, fn func(co
 ### 🔴 Q: Khi nào KHÔNG retry? `[Senior]`
 
 **A:**
+
 - Lỗi business logic chắc chắn thất bại (validation, auth 4xx).
 - Operation không idempotent và không có guard.
 - Deadline request còn quá ngắn, retry chỉ làm tệ hơn.
@@ -483,7 +973,6 @@ func Retry(ctx context.Context, max int, base, maxWait time.Duration, fn func(co
 - Consensus and coordination: `shared/02-system-design/consensus-algorithms.md`
 - Network failure/latency model: `shared/01-cs-fundamentals/networking-theory.md`
 
-
 ## Extended Theory and Interview Depth / Mở Rộng Lý Thuyết và Độ Sâu Phỏng Vấn
 
 ---
@@ -493,6 +982,7 @@ func Retry(ctx context.Context, max int, base, maxWait time.Duration, fn func(co
 ### 🔴 Q: Saga + Outbox + Idempotency kết hợp thế nào? `[Senior]`
 
 **A:**
+
 - Saga điều phối business transaction đa service.
 - Outbox đảm bảo event publish không mất khi ghi DB.
 - Idempotency đảm bảo retry không tạo side effect trùng.
@@ -512,6 +1002,7 @@ Khi kết hợp đúng, hệ thống đạt “effectively-once business outcome
 
 **A:**
 Có. Nếu retry quá aggressive khi dependency đang lỗi, breaker sẽ mở nhanh hơn và tạo storm. Nguyên tắc:
+
 - retry phải bounded theo deadline/request budget.
 - retry count nhỏ cho synchronous user path.
 - ưu tiên backoff + jitter và cancellation context.
@@ -519,6 +1010,7 @@ Có. Nếu retry quá aggressive khi dependency đang lỗi, breaker sẽ mở n
 ### 🟡 Q: Bulkhead + CQRS support nhau ra sao? `[Mid]`
 
 **A:**
+
 - CQRS tách read/write path.
 - Bulkhead tách resource cho từng path.
 - Khi read spike, write path vẫn ổn định do pool/queue riêng.
@@ -532,12 +1024,14 @@ Có. Nếu retry quá aggressive khi dependency đang lỗi, breaker sẽ mở n
 **A:**
 Không phải lúc nào cũng perfect undo. Compensation thường là **new action** để đưa system về state chấp nhận được về business.
 Ví dụ:
+
 - Đã gửi email xác nhận thì không thể “thu hồi” email; chỉ có thể gửi correction.
 - Đã gọi shipment external có thể cần cancel request, nhưng có thể fail.
 
 ### 🟡 Q: Saga timeout policy `[Mid]`
 
 **A:**
+
 - Mỗi step có timeout riêng + toàn saga có TTL tổng.
 - Hết TTL:
   - mark saga `timed_out`
@@ -547,6 +1041,7 @@ Ví dụ:
 ### 🔴 Q: Persist saga state ở đâu? `[Senior]`
 
 **A:**
+
 - Lưu state machine vào DB/event store:
   - saga_id
   - current_step
@@ -562,6 +1057,7 @@ Ví dụ:
 ### 🟡 Q: Các threshold nên chọn thế nào? `[Mid]`
 
 **A:**
+
 - Dựa vào error budget và traffic profile:
   - `failureThreshold`: số lỗi liên tục hoặc error-rate trong window.
   - `openDuration`: đủ để dependency hồi phục ngắn hạn.
@@ -581,6 +1077,7 @@ Production thường hybrid: cần min requests trước khi đánh giá error r
 ### 🟡 Q: Fallback strategy ví dụ `[Mid]`
 
 **A:**
+
 - Product detail service down:
   - trả cached stale data với marker.
 - Recommendation service down:
@@ -595,6 +1092,7 @@ Production thường hybrid: cần min requests trước khi đánh giá error r
 ### 🟡 Q: Projection lag xử lý sao? `[Mid]`
 
 **A:**
+
 - Theo dõi metric `projection_lag_seconds`.
 - Nếu lag vượt ngưỡng:
   - scale projector consumers
@@ -606,12 +1104,14 @@ Production thường hybrid: cần min requests trước khi đánh giá error r
 
 **A:**
 Có thể đạt gần đúng bằng:
+
 - sticky read sang write model ngay sau command success trong một khoảng ngắn.
 - hoặc gửi version token từ command response, query chờ projection >= version đó.
 
 ### 🔴 Q: CQRS anti-pattern phổ biến `[Senior]`
 
 **A:**
+
 - Split quá sớm khi domain đơn giản.
 - Tạo quá nhiều read models khó maintain.
 - Không có ownership rõ cho projection failures.
@@ -623,6 +1123,7 @@ Có thể đạt gần đúng bằng:
 ### 🟡 Q: Event versioning strategy `[Mid]`
 
 **A:**
+
 - Event schema có `type` + `version`.
 - Consumer hỗ trợ backward-compatible parsing.
 - Upcaster chuyển event cũ thành shape mới khi replay.
@@ -630,6 +1131,7 @@ Có thể đạt gần đúng bằng:
 ### 🔴 Q: Snapshot cadence chọn sao? `[Senior]`
 
 **A:**
+
 - Snapshot mỗi N events (e.g., 500) hoặc mỗi T phút.
 - Cân bằng giữa:
   - write overhead snapshot
@@ -639,6 +1141,7 @@ Có thể đạt gần đúng bằng:
 ### 🔴 Q: GDPR/right-to-be-forgotten với event sourcing `[Senior]`
 
 **A:**
+
 - Event immutable gây khó xóa dữ liệu.
 - Cách tiếp cận:
   - tách PII khỏi event stream (reference token).
@@ -652,6 +1155,7 @@ Có thể đạt gần đúng bằng:
 ### 🟡 Q: Data plane vs control plane `[Mid]`
 
 **A:**
+
 - Data plane: sidecar proxy xử lý traffic runtime.
 - Control plane: phân phối policy/config/cert.
 - Outage control plane không nên làm data plane chết ngay (cần cached config).
@@ -659,6 +1163,7 @@ Có thể đạt gần đúng bằng:
 ### 🔴 Q: mTLS rollout strategy `[Senior]`
 
 **A:**
+
 1. Observe mode trước (permissive).
 2. Enforce dần theo namespace/service.
 3. Theo dõi handshake errors và cert rotation incidents.
@@ -666,6 +1171,7 @@ Có thể đạt gần đúng bằng:
 ### 🔴 Q: Mesh cost model `[Senior]`
 
 **A:**
+
 - Overhead CPU/memory per sidecar.
 - Network hop và serialization overhead.
 - Ops overhead cho control plane upgrades.
@@ -678,6 +1184,7 @@ Có thể đạt gần đúng bằng:
 ### 🟡 Q: Span taxonomy nên chuẩn hóa thế nào? `[Mid]`
 
 **A:**
+
 - Server span: entry handler.
 - Client span: outbound RPC/HTTP.
 - Internal span: compute đáng kể.
@@ -686,12 +1193,14 @@ Có thể đạt gần đúng bằng:
 ### 🔴 Q: Sampling strategies `[Senior]`
 
 **A:**
+
 - Head sampling: quyết định ở đầu request, rẻ nhưng có thể bỏ sót lỗi hiếm.
 - Tail sampling: quyết định cuối trace, giữ trace lỗi/latency cao tốt hơn, nhưng tốn infra hơn.
 
 ### 🟡 Q: Correlate trace với log/metric `[Mid]`
 
 **A:**
+
 - Log phải chứa `trace_id`, `span_id`.
 - Metrics labels nên gọn (tránh cardinality cao).
 - Incident drilldown từ alert metric -> trace -> logs.
@@ -703,6 +1212,7 @@ Có thể đạt gần đúng bằng:
 ### 🟡 Q: Idempotent consumer cho message queue `[Mid]`
 
 **A:**
+
 - Mỗi event có `event_id`.
 - Consumer lưu processed IDs (TTL hoặc permanent tùy domain).
 - Nếu thấy event_id đã xử lý thì ack bỏ qua.
@@ -710,6 +1220,7 @@ Có thể đạt gần đúng bằng:
 ### 🔴 Q: Dedupe store retention policy `[Senior]`
 
 **A:**
+
 - TTL quá ngắn: duplicate lọt qua.
 - TTL quá dài: tốn storage + false block nếu key reuse không đúng.
 - Chọn theo max retry window + business dispute window.
@@ -726,6 +1237,7 @@ Kafka EOS giúp producer/transaction stream processing, nhưng end-to-end busine
 ### 🟡 Q: Bulkhead dimensions `[Mid]`
 
 **A:**
+
 - Theo dependency (payment/search/email).
 - Theo endpoint criticality (checkout vs analytics).
 - Theo tenant tiers (enterprise/free).
@@ -741,6 +1253,7 @@ Kafka EOS giúp producer/transaction stream processing, nhưng end-to-end busine
 ### 🟡 Q: Capacity planning quick rule `[Mid]`
 
 **A:**
+
 - Mỗi compartment cần:
   - max concurrency
   - max queue depth
@@ -759,6 +1272,7 @@ Retry budget giới hạn tổng request phụ do retry so với request gốc, 
 ### 🔴 Q: Hedged requests khác retry thế nào? `[Senior]`
 
 **A:**
+
 - Retry: gửi lại sau khi thất bại/timeout.
 - Hedge: gửi request thứ 2 sau một ngưỡng latency mà request đầu chưa xong.
 - Hedge giảm tail latency nhưng tăng load, cần giới hạn nghiêm.
@@ -766,6 +1280,7 @@ Retry budget giới hạn tổng request phụ do retry so với request gốc, 
 ### 🔴 Q: Deadline-aware retries `[Senior]`
 
 **A:**
+
 - Mỗi retry phải kiểm tra `remaining_time` của context.
 - Nếu không còn đủ thời gian cho attempt meaningful thì fail fast.
 
@@ -776,6 +1291,7 @@ Retry budget giới hạn tổng request phụ do retry so với request gốc, 
 ### 🔴 Q: Checkout service timeout chain xảy ra, bạn áp dụng pattern nào theo thứ tự? `[Senior]`
 
 **A:**
+
 1. Timeout + cancellation propagation chuẩn.
 2. Retry with jitter cho lỗi transient.
 3. Circuit breaker để cắt dependency unhealthy.
@@ -785,6 +1301,7 @@ Retry budget giới hạn tổng request phụ do retry so với request gốc, 
 ### 🔴 Q: Đội ngũ muốn chuyển từ sync calls sang event-driven cho order flow, nên bắt đầu đâu? `[Senior]`
 
 **A:**
+
 - Bắt đầu bằng outbox pattern ở service write-heavy.
 - Thiết kế idempotent consumers trước khi mở rộng topics.
 - Chọn orchestration Saga cho flow có compensation rõ.
@@ -924,17 +1441,17 @@ func CanRetry(ctx context.Context, minAttemptTime time.Duration) bool {
 
 ## Comparison Matrix / Bảng So Sánh Nhanh
 
-| Pattern | Mục tiêu chính | Độ phức tạp | Rủi ro chính |
-|---|---|---:|---|
-| Saga | consistency business xuyên service | High | compensation lỗi |
-| Circuit Breaker | chống cascade failure | Medium | tune threshold sai |
-| CQRS | tối ưu read/write riêng | Medium-High | eventual consistency |
-| Event Sourcing | audit + replay mạnh | High | schema evolution |
-| Service Mesh | network policy/observability | High | ops overhead |
-| Tracing | root cause latency/error | Medium | cost/cardinality |
-| Idempotency | chống duplicate effect | Medium | key scope/TTL sai |
-| Bulkhead | isolate failure domains | Medium | over-partition tài nguyên |
-| Retry+Backoff | recover transient errors | Low-Medium | retry storm |
+| Pattern         | Mục tiêu chính                     | Độ phức tạp | Rủi ro chính              |
+| --------------- | ---------------------------------- | ----------: | ------------------------- |
+| Saga            | consistency business xuyên service |        High | compensation lỗi          |
+| Circuit Breaker | chống cascade failure              |      Medium | tune threshold sai        |
+| CQRS            | tối ưu read/write riêng            | Medium-High | eventual consistency      |
+| Event Sourcing  | audit + replay mạnh                |        High | schema evolution          |
+| Service Mesh    | network policy/observability       |        High | ops overhead              |
+| Tracing         | root cause latency/error           |      Medium | cost/cardinality          |
+| Idempotency     | chống duplicate effect             |      Medium | key scope/TTL sai         |
+| Bulkhead        | isolate failure domains            |      Medium | over-partition tài nguyên |
+| Retry+Backoff   | recover transient errors           |  Low-Medium | retry storm               |
 
 ---
 
@@ -943,12 +1460,14 @@ func CanRetry(ctx context.Context, minAttemptTime time.Duration) bool {
 ### 🟢 Q: Lỗi phổ biến mức Junior `[Junior]`
 
 **A:**
+
 - Trả lời định nghĩa pattern nhưng không nêu use-case.
 - Không phân biệt lỗi retryable vs non-retryable.
 
 ### 🟡 Q: Lỗi phổ biến mức Mid `[Mid]`
 
 **A:**
+
 - Dùng quá nhiều pattern cùng lúc mà không justify.
 - Không nói tradeoff vận hành/cost.
 - Thiếu monitoring/alerting plan.
@@ -956,6 +1475,7 @@ func CanRetry(ctx context.Context, minAttemptTime time.Duration) bool {
 ### 🔴 Q: Lỗi phổ biến mức Senior `[Senior]`
 
 **A:**
+
 - Over-engineering trước khi có scale evidence.
 - Không đề cập migration strategy từ hệ thống hiện tại.
 - Bỏ qua human operations: runbook, ownership, rollback.
@@ -967,6 +1487,7 @@ func CanRetry(ctx context.Context, minAttemptTime time.Duration) bool {
 ### 🟡 Q: Migrate sang circuit breaker an toàn thế nào? `[Mid]`
 
 **A:**
+
 1. Ship library disabled mode.
 2. Enable metrics-only.
 3. Enable enforce cho 1 endpoint nhỏ.
@@ -975,6 +1496,7 @@ func CanRetry(ctx context.Context, minAttemptTime time.Duration) bool {
 ### 🔴 Q: Introduce CQRS vào monolith hiện tại `[Senior]`
 
 **A:**
+
 - Bắt đầu từ 1 bounded context read-heavy.
 - Tạo read model side-by-side, không cắt ngay write path.
 - So sánh correctness + latency trước khi cutover.
@@ -982,6 +1504,7 @@ func CanRetry(ctx context.Context, minAttemptTime time.Duration) bool {
 ### 🔴 Q: Rollback strategy cho service mesh migration `[Senior]`
 
 **A:**
+
 - Canary namespace trước.
 - Keep bypass path (direct service-to-service) trong emergency.
 - Version pin control plane/data plane trước khi full rollout.
@@ -1060,16 +1583,17 @@ func CanRetry(ctx context.Context, minAttemptTime time.Duration) bool {
 - Nói được failure mode và blast radius.
 - Nói được cost vận hành chứ không chỉ kỹ thuật.
 
-
 ## Pattern Decision Playbook / Sổ Tay Chọn Pattern
 
 ### 🟡 Q: Nếu interviewer cho một bài order platform, chọn pattern nào trước? `[Mid]`
 
 **A:**
+
 - Bước 1: phân loại failure modes chính.
 - Bước 2: map pattern theo rủi ro lớn nhất.
 
 Gợi ý nhanh:
+
 1. Duplicate requests -> Idempotency.
 2. Downstream flaky -> Retry + Circuit Breaker.
 3. Blast radius lớn -> Bulkhead.
@@ -1080,13 +1604,14 @@ Gợi ý nhanh:
 ### 🔴 Q: Pattern sequencing strategy trong roadmap kỹ thuật `[Senior]`
 
 **A:**
+
 - Không rollout tất cả cùng lúc.
 - Thứ tự gợi ý:
-  1) Observability (tracing + metrics) trước để đo baseline.
-  2) Timeout/retry/circuit breaker.
-  3) Idempotency ở core write APIs.
-  4) Bulkhead cho critical path.
-  5) Saga/CQRS/Event Sourcing khi domain chứng minh cần.
+  1. Observability (tracing + metrics) trước để đo baseline.
+  2. Timeout/retry/circuit breaker.
+  3. Idempotency ở core write APIs.
+  4. Bulkhead cho critical path.
+  5. Saga/CQRS/Event Sourcing khi domain chứng minh cần.
 
 ---
 
@@ -1095,6 +1620,7 @@ Gợi ý nhanh:
 ### 🟢 Q: “Retry forever” sai ở đâu? `[Junior]`
 
 **A:**
+
 - Có thể gây vô hạn load amplification.
 - Không tôn trọng deadline user request.
 - Tăng nguy cơ outage kéo dài.
@@ -1102,6 +1628,7 @@ Gợi ý nhanh:
 ### 🟡 Q: “Everything is event-driven” có vấn đề gì? `[Mid]`
 
 **A:**
+
 - Eventual consistency lan tràn khiến debug khó.
 - Team thiếu tooling sẽ khó xác định source of truth.
 - Một số luồng cần sync response vẫn phải synchronous.
@@ -1109,6 +1636,7 @@ Gợi ý nhanh:
 ### 🔴 Q: “One global thread pool” nguy hiểm ra sao? `[Senior]`
 
 **A:**
+
 - Dependency chậm có thể chiếm hết worker.
 - Critical path bị starvation.
 - Cần bulkhead theo dependency/priority.
@@ -1116,6 +1644,7 @@ Gợi ý nhanh:
 ### 🔴 Q: “Circuit breaker mở là xong” có đủ chưa? `[Senior]`
 
 **A:**
+
 - Chưa đủ; cần fallback strategy, alerting, runbook, và kiểm soát khi đóng lại (half-open tuning).
 
 ---
@@ -1135,6 +1664,7 @@ Gợi ý nhanh:
 ### 🔴 Q: Error budget policy ảnh hưởng retry thế nào? `[Senior]`
 
 **A:**
+
 - Khi error budget cạn nhanh, phải giảm retry aggressiveness.
 - Retry policy dynamic theo incident mode:
   - normal: retry 2-3 lần.
@@ -1143,6 +1673,7 @@ Gợi ý nhanh:
 ### 🔴 Q: Latency budget decomposition ví dụ `[Senior]`
 
 **A:**
+
 ```text
 Checkout API target p95 = 300ms
 - Gateway + auth: 40ms
@@ -1161,6 +1692,7 @@ Checkout API target p95 = 300ms
 ### 🟡 Q: Circuit breaker alert runbook nên có gì? `[Mid]`
 
 **A:**
+
 - Metric trigger rõ ràng (open rate, error rate).
 - Dependency impacted list.
 - Fallback mode đang active.
@@ -1169,6 +1701,7 @@ Checkout API target p95 = 300ms
 ### 🔴 Q: Saga stuck ở step giữa, xử lý sao? `[Senior]`
 
 **A:**
+
 1. Tìm saga instances timeout > threshold.
 2. Kiểm tra step status và external correlation IDs.
 3. Decide continue/retry/compensate dựa domain invariants.
@@ -1177,6 +1710,7 @@ Checkout API target p95 = 300ms
 ### 🟡 Q: CQRS projector behind 30 phút, ưu tiên gì? `[Mid]`
 
 **A:**
+
 - Scale consumers.
 - Drop low-priority projections tạm thời.
 - Verify poisoned messages causing retry loops.
@@ -1185,6 +1719,7 @@ Checkout API target p95 = 300ms
 ### 🔴 Q: Event replay runbook cần bước nào để an toàn? `[Senior]`
 
 **A:**
+
 - Dry-run replay vào sandbox projection.
 - Validate checksums/count totals.
 - Thực hiện replay theo shard/tenant rollout.
@@ -1198,17 +1733,17 @@ Checkout API target p95 = 300ms
 
 **A:**
 
-| Pattern | Khi không nên dùng |
-|---|---|
-| Saga | cần strict ACID global, compensation bất khả thi |
-| Circuit Breaker | call local function, volume quá thấp để tune |
-| CQRS | CRUD app nhỏ, team nhỏ, yêu cầu đơn giản |
-| Event Sourcing | không cần audit/replay, retention constraints nghiêm |
-| Service Mesh | footprint nhỏ, ops chưa đủ năng lực |
-| Distributed Tracing | traffic thấp, có thể debug đơn giản bằng logs |
-| Idempotency | operation read-only hoặc inherently idempotent rồi |
-| Bulkhead | service siêu nhỏ, 1 dependency duy nhất ổn định |
-| Retry+Backoff | lỗi 4xx business, non-idempotent side effects |
+| Pattern             | Khi không nên dùng                                   |
+| ------------------- | ---------------------------------------------------- |
+| Saga                | cần strict ACID global, compensation bất khả thi     |
+| Circuit Breaker     | call local function, volume quá thấp để tune         |
+| CQRS                | CRUD app nhỏ, team nhỏ, yêu cầu đơn giản             |
+| Event Sourcing      | không cần audit/replay, retention constraints nghiêm |
+| Service Mesh        | footprint nhỏ, ops chưa đủ năng lực                  |
+| Distributed Tracing | traffic thấp, có thể debug đơn giản bằng logs        |
+| Idempotency         | operation read-only hoặc inherently idempotent rồi   |
+| Bulkhead            | service siêu nhỏ, 1 dependency duy nhất ổn định      |
+| Retry+Backoff       | lỗi 4xx business, non-idempotent side effects        |
 
 ---
 
@@ -1236,6 +1771,7 @@ Checkout API target p95 = 300ms
 ### 🟡 Q: E-commerce domain mapping `[Mid]`
 
 **A:**
+
 - Checkout: Idempotency + Retry budget + Circuit breaker.
 - Order workflow: Saga orchestration.
 - Product catalog read-heavy: CQRS read model.
@@ -1245,6 +1781,7 @@ Checkout API target p95 = 300ms
 ### 🟡 Q: Fintech domain mapping `[Mid]`
 
 **A:**
+
 - Ledger correctness: strong write invariants + idempotency.
 - Payment routing: circuit breaker + failover policy.
 - Compliance audit: event logs, immutable trails.
@@ -1253,6 +1790,7 @@ Checkout API target p95 = 300ms
 ### 🟡 Q: Ride-hailing domain mapping `[Mid]`
 
 **A:**
+
 - Dispatch critical path: bulkhead + timeout discipline.
 - Matching services: tracing để bắt latency spikes.
 - Payment finalization: idempotency + saga cho multi-step trip close.
@@ -1264,6 +1802,7 @@ Checkout API target p95 = 300ms
 ### 🟢 Q: Quick metrics starter list `[Junior]`
 
 **A:**
+
 - Circuit breaker: open transitions, open duration.
 - Retry: retry count, success-after-retry rate.
 - Bulkhead: queue depth, saturation %.
@@ -1275,14 +1814,14 @@ Checkout API target p95 = 300ms
 
 **A:**
 
-| Pattern | Metric | Threshold example |
-|---|---|---|
-| Circuit breaker | open_rate_5m | > 3% triggers incident |
-| Retry | retry_amplification | > 1.2x baseline alert |
-| Saga | compensation_ratio | > 5% suspicious |
-| CQRS | projection_lag_p95 | > 60s degraded mode |
-| Bulkhead | pool_saturation | > 85% for 10m |
-| Idempotency | duplicate_hit_rate | sudden drop indicates dedupe issue |
+| Pattern         | Metric              | Threshold example                  |
+| --------------- | ------------------- | ---------------------------------- |
+| Circuit breaker | open_rate_5m        | > 3% triggers incident             |
+| Retry           | retry_amplification | > 1.2x baseline alert              |
+| Saga            | compensation_ratio  | > 5% suspicious                    |
+| CQRS            | projection_lag_p95  | > 60s degraded mode                |
+| Bulkhead        | pool_saturation     | > 85% for 10m                      |
+| Idempotency     | duplicate_hit_rate  | sudden drop indicates dedupe issue |
 
 ---
 
@@ -1385,10 +1924,10 @@ func (e errString) Error() string { return string(e) }
 
 - Mỗi pattern là công cụ, không phải mục tiêu.
 - Trả lời phỏng vấn mạnh nhất khi bạn:
-  1) nêu rõ context,
-  2) chỉ ra tradeoffs,
-  3) gắn với SLO/failure mode,
-  4) có plan rollout + observability.
+  1. nêu rõ context,
+  2. chỉ ra tradeoffs,
+  3. gắn với SLO/failure mode,
+  4. có plan rollout + observability.
 
 ---
 
@@ -1440,18 +1979,140 @@ Vietnamese explanation: Saga chấp nhận eventual consistency thay vì ACID at
 
 ---
 
+## Interview Q&A Summary / Tóm Tắt Q&A Phỏng Vấn
+
+| #       | Question                              | Difficulty | Core Concept    | Key Signal                                          |
+| ------- | ------------------------------------- | :--------: | --------------- | --------------------------------------------------- |
+| P1-Q1   | What is Saga?                         |     🟡     | Saga            | Local txn + compensation, not 2PC                   |
+| P1-Q2   | Choreography vs Orchestration         |     🟡     | Saga            | Tradeoff: loose coupling vs flow visibility         |
+| P1-Q3   | When NOT to use Saga?                 |     🔴     | Saga            | Strict ACID, irreversible effects, no observability |
+| P2-Q1   | Circuit breaker là gì?                |     🟢     | Circuit Breaker | 3 states: Closed/Open/Half-Open                     |
+| P2-Q2   | Khi nào nên dùng?                     |     🟡     | Circuit Breaker | Remote dependency, timeout risk                     |
+| P2-Q3   | Khi nào KHÔNG nên dùng?               |     🔴     | Circuit Breaker | Local call, low traffic, must-fail-fast             |
+| P3-Q1   | CQRS là gì?                           |     🟡     | CQRS            | Tách command/query, optimize riêng                  |
+| P3-Q2   | Khi nên dùng?                         |     🟡     | CQRS            | Read-heavy, query phức tạp                          |
+| P3-Q3   | Khi không nên dùng?                   |     🔴     | CQRS            | CRUD đơn giản, team nhỏ                             |
+| P4-Q1   | Event sourcing hoạt động thế nào?     |     🟡     | Event Sourcing  | Append-only events, fold to state                   |
+| P4-Q2   | Snapshots để làm gì?                  |     🔴     | Event Sourcing  | Tránh full replay, lưu state tại version N          |
+| P4-Q3   | Rủi ro chính?                         |     🔴     | Event Sourcing  | Schema evolution, debug, storage                    |
+| P5-Q1   | Service mesh là gì?                   |     🟢     | Service Mesh    | Sidecar proxy, mTLS, observability                  |
+| P5-Q2   | Khi dùng Istio/Linkerd có lợi gì?     |     🟡     | Service Mesh    | Uniform security, observability, traffic            |
+| P5-Q3   | Khi không nên dùng mesh?              |     🔴     | Service Mesh    | Small system, ops overhead                          |
+| P6-Q1   | Tracing giải quyết vấn đề gì?         |     🟡     | Tracing         | End-to-end request visibility                       |
+| P6-Q2   | Common pitfalls                       |     🔴     | Tracing         | Context propagation, sampling, cardinality          |
+| P7-Q1   | Idempotency key là gì?                |     🟡     | Idempotency     | Client-generated unique ID, dedupe                  |
+| P7-Q2   | Exactly-once có thật không?           |     🟡     | Idempotency     | At-least-once + dedupe = effectively once           |
+| P7-Q3   | Khi nào idempotency không đủ?         |     🔴     | Idempotency     | External legacy no dedupe support                   |
+| P8-Q1   | Bulkhead là gì?                       |     🟢     | Bulkhead        | Tách resource pool, isolate failure                 |
+| P8-Q2   | Khi dùng?                             |     🟡     | Bulkhead        | Multiple downstream, cascade risk                   |
+| P8-Q3   | Tradeoff                              |     🔴     | Bulkhead        | Isolation vs total throughput                       |
+| P9-Q1   | Tại sao cần jitter?                   |     🟢     | Retry           | Tránh thundering herd                               |
+| P9-Q2   | Công thức backoff phổ biến            |     🟡     | Retry           | Exponential + full jitter                           |
+| P9-Q3   | Khi nào KHÔNG retry?                  |     🔴     | Retry           | 4xx, non-idempotent, deadline short                 |
+| Q1      | Saga khác 2PC ở điểm cốt lõi nào?     |     🟢     | Saga            | Local txn + compensation vs lock                    |
+| Q2      | Tại sao CB cần half-open state?       |     🟡     | Circuit Breaker | Probe recovery                                      |
+| Q3      | CQRS bắt buộc đi cùng event sourcing? |     🟡     | CQRS            | Không bắt buộc                                      |
+| Q4      | Event schema evolution                |     🔴     | Event Sourcing  | Versioned events + upcaster                         |
+| Q5      | Service mesh thay thế API gateway?    |     🟡     | Service Mesh    | Không, east-west vs north-south                     |
+| Q6      | Tracing sampling 100% tốt không?      |     🔴     | Tracing         | Cost cao, cần head+tail                             |
+| Q7      | Idempotency key nên expire khi nào?   |     🟡     | Idempotency     | TTL > retry window (24-72h)                         |
+| Q8      | Bulkhead + circuit breaker?           |     🟡     | Bulkhead        | Nên kết hợp                                         |
+| Q9      | Retry policy ở client hay mesh?       |     🔴     | Retry           | Infra vs business-aware                             |
+| Q10     | Pattern nào dễ bị lạm dụng nhất?      |     🔴     | CQRS+ES         | Over-engineer khi domain chưa đủ                    |
+| EXT-Q1  | Saga + Outbox + Idempotency kết hợp   |     🔴     | Saga            | Effectively-once outcome                            |
+| EXT-Q2  | CB + Retry phản tác dụng?             |     🔴     | Circuit Breaker | Retry storm opens breaker faster                    |
+| EXT-Q3  | Bulkhead + CQRS support nhau?         |     🟡     | Bulkhead        | Tách resource per read/write path                   |
+| EXT-Q4  | Compensation có luôn undo?            |     🔴     | Saga            | New corrective action, not true undo                |
+| EXT-Q5  | Saga timeout policy                   |     🟡     | Saga            | Per-step + total TTL                                |
+| EXT-Q6  | Persist saga state ở đâu?             |     🔴     | Saga            | DB, not in-memory orchestrator                      |
+| EXT-Q7  | CB threshold chọn thế nào?            |     🟡     | Circuit Breaker | Error budget + traffic profile                      |
+| EXT-Q8  | Error-rate vs consecutive-failure     |     🔴     | Circuit Breaker | Hybrid: min requests before rate                    |
+| EXT-Q9  | Projection lag xử lý sao?             |     🟡     | CQRS            | Scale consumers, monitor metric                     |
+| EXT-Q10 | Read-your-own-write trong CQRS        |     🔴     | CQRS            | Sticky read or version polling                      |
+| EXT-Q11 | Event versioning strategy             |     🟡     | Event Sourcing  | Type + version + upcaster                           |
+| EXT-Q12 | Snapshot cadence                      |     🔴     | Event Sourcing  | Every N events, hot aggregates more                 |
+| EXT-Q13 | GDPR + event sourcing                 |     🔴     | Event Sourcing  | Crypto-shredding, reference tokens                  |
+| EXT-Q14 | Data plane vs control plane           |     🟡     | Service Mesh    | Runtime vs config distribution                      |
+| EXT-Q15 | mTLS rollout strategy                 |     🔴     | Service Mesh    | Permissive → enforce per namespace                  |
+| EXT-Q16 | Span taxonomy                         |     🟡     | Tracing         | Server/client/internal/DB spans                     |
+| EXT-Q17 | Sampling strategies                   |     🔴     | Tracing         | Head vs tail sampling                               |
+| EXT-Q18 | Idempotent consumer message queue     |     🟡     | Idempotency     | Event_id + processed_ids store                      |
+| EXT-Q19 | Dedupe store retention                |     🔴     | Idempotency     | TTL = retry + dispute window                        |
+| EXT-Q20 | Kafka exactly-once                    |     🔴     | Idempotency     | EOS + idempotent sink                               |
+| EXT-Q21 | Bulkhead dimensions                   |     🟡     | Bulkhead        | Dependency/criticality/tenant                       |
+| EXT-Q22 | Queue vs thread pool bulkhead         |     🔴     | Bulkhead        | Burst tolerance vs latency                          |
+| EXT-Q23 | Retry budget                          |     🟡     | Retry           | ≤20% of original requests                           |
+| EXT-Q24 | Hedged requests                       |     🔴     | Retry           | 2nd request at p99, reduces tail                    |
+| EXT-Q25 | Deadline-aware retries                |     🔴     | Retry           | Check remaining time before attempt                 |
+| SC-Q1   | Checkout timeout chain                |     🔴     | Combined        | Timeout→Retry→CB→Bulkhead→Tracing                   |
+| SC-Q2   | Sync to event-driven migration        |     🔴     | Combined        | Outbox first, idempotent consumers                  |
+| SC-Q3   | Mesh không fix latency khi nào?       |     🟡     | Service Mesh    | App logic/DB bottleneck                             |
+| Q11     | Pattern nào giải double charge?       |     🟢     | Idempotency     | Idempotency key + state guard                       |
+| Q12     | CB mở thì client thấy gì?             |     🟢     | Circuit Breaker | Fail fast + fallback message                        |
+| Q13-Q28 | (16 additional drill questions)       |   🟡-🔴    | Mixed           | See detailed sections above                         |
+| BL-Q1   | CAP theorem explanation               |     🟡     | Distributed     | CP vs AP, PACELC extends                            |
+| BL-Q2   | Circuit Breaker vs retry              |     🟡     | Circuit Breaker | CB wraps retry, fail-fast                           |
+| BL-Q3   | Service mesh problems solved          |     🔴     | Service Mesh    | Uniform mTLS/observability/traffic                  |
+| BL-Q4   | Raft consensus                        |     🔴     | Consensus       | Leader election + log replication                   |
+| BL-Q5   | Saga partial failure handling         |     🟡     | Saga            | Compensating txn in reverse                         |
+
+**Distribution:** ~10 🟢 | ~35 🟡 | ~25 🔴 | Total: ~70 Q&As
+
+---
+
+## ⚡ Cold Call Simulation / Mô Phỏng Cold Call
+
+> **Interviewer:** "Service A gọi Service B timeout, Service B đã charge payment nhưng response mất. Client retry. Làm sao tránh double charge?"
+
+**30-second answer:**
+"Dùng idempotency key: client gửi unique key mỗi payment request. Service B check key trước khi execute — nếu đã xử lý thì trả cached response. Kết hợp Circuit Breaker bên ngoài retry để không retry khi Service B đang down hẳn. Và Saga pattern cho compensation nếu cần hoàn tiền."
+
+> **Follow-up:** "Nếu idempotency store bị mất dữ liệu tạm thời?"
+> "Downstream guards: unique constraint trên payment_id trong DB, state machine kiểm tra trạng thái order (PAID vs PENDING). Reconciliation job chạy định kỳ so sánh payment gateway records với internal records."
+
+---
+
 ## Self-Check / Tự Kiểm Tra
 
-- [ ] Can I explain Saga Choreography vs Orchestration with a concrete example?
-- [ ] Can I explain why the Outbox Pattern solves the "dual write" problem?
-- [ ] Can I describe when to use 2PC vs Saga (hint: blocking vs eventual consistency)?
-- [ ] Can I draw a Saga sequence diagram for a 3-step order flow with compensation?
-- 💬 **Feynman Prompt:** Giải thích tại sao không thể dùng database transactions để coordinate across microservices — ngay cả khi cả hai services đều dùng cùng PostgreSQL instance.
+Đóng tài liệu, trả lời 5 câu sau:
+
+| #   | Câu hỏi                                                                       | Key Points                                                                                                                                                                    |
+| --- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Retrieval:** Kể tên 9 distributed patterns và mục tiêu chính của mỗi cái    | Saga=consistency, CB=cascade, CQRS=read/write split, ES=audit/replay, Mesh=infra policy, Tracing=visibility, Idempotency=dedupe, Bulkhead=isolation, Retry=transient recovery |
+| 2   | **Visual:** Vẽ Saga orchestrator flow 3-step với compensation reverse         | Orchestrator → Step1 → Step2 → Step3, fail → Compensate3 → Compensate2 → Compensate1                                                                                          |
+| 3   | **Application:** Service payment timeout, client retry — thiết kế idempotency | Client sends idempotency_key → server check key exists → yes: return cached, no: execute + store key+response                                                                 |
+| 4   | **Debug:** Circuit breaker mở liên tục dù dependency đã hồi phục — tại sao?   | Half-open probe count quá thấp, hoặc probe request type khác production traffic, hoặc health check endpoint != real endpoint                                                  |
+| 5   | **Teach:** Giải thích cho Junior tại sao retry 4xx là sai                     | 4xx = client error (validation, auth) → deterministic failure, retry không đổi kết quả, chỉ tốn resource                                                                      |
+
+💬 **Feynman Prompt:** Giải thích tại sao không thể dùng database transactions để coordinate across microservices — ngay cả khi cả hai services đều dùng cùng PostgreSQL instance.
+
+---
+
+## 📅 Spaced Repetition / Lịch Ôn Tập
+
+| Round | Timing | Focus                                                                       |
+| :---: | ------ | --------------------------------------------------------------------------- |
+|   1   | Day 1  | Đọc lại Core Concepts: 9 patterns, Memory Hooks, Layer 1 analogies          |
+|   2   | Day 3  | Layer 2 mechanics: vẽ lại Saga flow, CB state machine, CQRS data flow       |
+|   3   | Day 7  | Self-Check 5 câu: Retrieval/Visual/Application/Debug/Teach                  |
+|   4   | Day 14 | Cold Call + Interview Q&A Summary — trả lời random 10 câu trong 30s mỗi câu |
+|   5   | Day 30 | Layer 3 edge cases: Common Mistakes tables, "when NOT to use" decision      |
+
+---
 
 ## Connections / Liên Kết
 
-- ⬅️ **Built on**: [Distributed Systems](../02-backend-knowledge/03-distributed-systems.md) — CAP theorem is why 2PC is avoided
-- ⬅️ **Built on**: [Message Queues](../02-backend-knowledge/08-message-queues.md) — Saga choreography and Outbox use Kafka/RabbitMQ
-- ⬅️ **Built on**: [Microservices](../02-backend-knowledge/02-microservices.md) — patterns emerge from service boundaries
-- 🔗 **Applied in**: [Ride-Hailing System](./06-ride-hailing-system.md) — booking flow uses Saga pattern
+**Same-track:**
 
+- ➡️ [Design Framework](./01-design-framework.md) — 5-step framework áp dụng khi whiteboard distributed system
+- ➡️ [Classic Problems](./02-classic-problems.md) — URL shortener, chat system dùng patterns này
+- ➡️ [Advanced Problems](./03-advanced-problems.md) — Payment, Rate Limiter, Notification áp dụng Saga + Idempotency
+- ➡️ [Observability & Scale](./05-observability-and-scale.md) — Tracing + metrics + SLO integration
+- ➡️ [Ride-Hailing System](./06-ride-hailing-system.md) — booking flow dùng Saga + CB + Bulkhead
+
+**Cross-track:**
+
+- ⬅️ [Distributed Systems](../02-backend-knowledge/03-distributed-systems.md) — CAP theorem, consistency models là foundation
+- ⬅️ [Message Queues](../02-backend-knowledge/08-message-queues.md) — Saga choreography + Outbox dùng Kafka/RabbitMQ
+- ⬅️ [Microservices](../02-backend-knowledge/02-microservices.md) — patterns emerge from service boundaries
+- ⬅️ [Resilience Patterns](../02-backend-knowledge/07-resilience-patterns.md) — CB, Bulkhead, Retry operational details

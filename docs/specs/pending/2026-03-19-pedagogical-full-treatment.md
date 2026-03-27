@@ -1,28 +1,95 @@
 # Pedagogical Full Treatment — Progress Tracker (All Tracks)
 
 > **Purpose**: Track which fe-track, be-track, and shared files have Phase 1 (intro) and Phase 2 (deep content) pedagogical treatment.
-> **Updated**: 2026-03-27 (session 13 — be-track Tier 9 Phase 2 complete)
+> **Updated**: 2026-03-27 (session 16 — Tier 11 complete, be-track 27/29 Phase 2 done)
 >
 > **Legend**:
 >
 > - ❌ Not started — no pedagogical sections
 > - 🔄 Intro only — has Real-World Scenario + What & Why, but no Phase 2 deep content
-> - ✅ Full treatment — has all Phase 2: Memory Hook, Common Mistakes, Interview Pattern, Cold Call, Retrieval Self-Check
+> - ⚠️ Partial Phase 2 — has some Phase 2 elements but missing Layers 1-2-3 / table format / Self-Check format
+> - ✅ Full treatment — passes ALL Phase 2 checklist items below
 
 ---
 
-## Phase 2 New Elements (what "Full Treatment" requires per Core Concept)
+## Phase 2 Implementation Checklist
 
-1. 🧠 **Memory Hook** — killer sentence / mnemonic / visual sketch
-2. **"Why does this exist?"** — 2+ levels of why before definition
-3. **Visual** — ASCII diagram / table / memory sketch (Dual Coding)
-4. **Common Mistakes table** — ❌ wrong model → ✅ correct
-5. **🎯 Interview Pattern** — trigger → concept → opening sentence
-6. **🔑 Knowledge Chain** — prereq + enables
-7. **💡 Interview Signal** per Q&A — ✅ strong vs ❌ weak
-8. **⚡ Cold Call Simulation** — 4-sentence 30-second answer
-9. **Retrieval Self-Check** — close-doc + Retrieval/Visual/App/Debug/Teach
-10. **🔁 Spaced repetition reminder** — 3 → 7 → 14 days
+> **Source**: `docs/specs/knowledge-generation-process.md` Phase 4 template + `.claude/skill-rules.md` rules 1-18
+> Every item below MUST be verified before marking a file ✅.
+
+### A. Per Core Concept (repeat for EACH concept in the file)
+
+| #   | Element                  | Spec Rule   | Description                                                           |
+| --- | ------------------------ | ----------- | --------------------------------------------------------------------- |
+| A1  | 🧠 Memory Hook           | Rule 11     | Killer sentence OR mnemonic OR visual sketch — memorable alone        |
+| A2  | ❓ Why exists            | Rule 9      | "What problem was being solved?" — 2+ levels of why before definition |
+| A3  | Layer 1: Simple Analogy  | Rule 3      | Explain to curious 12-year-old, no jargon, one paragraph max          |
+| A4  | Layer 2: How It Works    | Rules 3, 10 | Technical internals + **MANDATORY visual** (ASCII/table/diagram)      |
+| A5  | Layer 3: Edge Cases      | Rule 3      | When it breaks, performance limits, gotchas                           |
+| A6  | ❌ Common Mistakes TABLE | Rule 12     | Table format: `Sai lầm \| Tại sao sai \| Đúng là`                     |
+| A7  | 🎯 Interview Pattern     | Rule 14     | Trigger keywords → concept → opening 1-2 sentences                    |
+| A8  | 🔑 Knowledge Chain       | Rule 16     | 📚 prereq + ➡️ enables (with links)                                   |
+
+### B. Per Q&A Item
+
+| #   | Element              | Spec Rule         | Description                                    |
+| --- | -------------------- | ----------------- | ---------------------------------------------- |
+| B1  | 💡 Interview Signal  | Rule 12           | ✅ Strong answer + ❌ Weak answer markers      |
+| B2  | Bilingual            | Rule 17 (content) | EN explanation + VI reinforcement              |
+| B3  | Kumon ordering       | Rule 4            | Strictly 🟢→🟡→🔴, each builds on previous     |
+| B4  | Bloom's L4-L6 for 🔴 | Rule 13           | Senior Qs require Analysis/Evaluation/Creation |
+
+### C. End-of-File Sections
+
+| #   | Element                 | Spec Rule | Description                                                                       |
+| --- | ----------------------- | --------- | --------------------------------------------------------------------------------- |
+| C1  | Overview / Tổng Quan    | Rule 7    | Topic-specific summary (not generic), bilingual                                   |
+| C2  | Interview Q&A Summary   | Template  | Full table: `# \| Question \| Difficulty \| Core Concept \| Key Signal`           |
+| C3  | ⚡ Cold Call Simulation | Rule 15   | 4-sentence 30-second answer + follow-up                                           |
+| C4  | Self-Check (Retrieval)  | Rule 17   | Close-doc instruction + 5 items: Retrieval / Visual / Application / Debug / Teach |
+| C5  | 💬 Feynman Prompt       | Rule 17   | "Explain [concept] to non-coder using [analogy]"                                  |
+| C6  | 🔁 Spaced Repetition    | Rule 17   | Review schedule: 3 → 7 → 14 days                                                  |
+| C7  | Connections / Liên Kết  | Template  | Same-track links + cross-track links                                              |
+
+### D. Structural Rules
+
+| #   | Element          | Spec Rule | Description                                              |
+| --- | ---------------- | --------- | -------------------------------------------------------- |
+| D1  | 3-Block Flow     | Rule 18   | Block A (Theory) → Block B (Q&A) → Block C (Study Cases) |
+| D2  | Study Cases real | Rule 18   | Named company/system/incident — not generic "example:"   |
+| D3  | No duplicates    | Rule 8    | Every Q&A answer unique within file                      |
+| D4  | No placeholders  | Rule 16   | No "TODO", "Tactic N", stub bullets                      |
+
+---
+
+## Compliance Audit — Tier 8-10 (sessions 12-14)
+
+> These files have partial Phase 2 treatment. Elements present vs missing:
+
+| Element                         | Tier 8 (golang)  | Tier 9 (backend) | Tier 10 (database) |
+| ------------------------------- | ---------------- | ---------------- | ------------------ |
+| A1 Memory Hook                  | ✅               | ✅               | ✅                 |
+| A2 Why exists (2+ levels)       | ✅               | ✅               | ✅                 |
+| A3 Layer 1 Analogy              | ✅ (in original) | ❌ missing       | ❌ missing         |
+| A4 Layer 2 Mechanics + visual   | ✅ (in original) | ❌ missing       | ❌ missing         |
+| A5 Layer 3 Edge Cases           | ✅ (in original) | ❌ missing       | ❌ missing         |
+| A6 Common Mistakes TABLE format | ⚠️ numbered list | ⚠️ numbered list | ⚠️ numbered list   |
+| A7 Interview Pattern            | ✅               | ✅               | ✅                 |
+| A8 Knowledge Chain              | ✅               | ✅               | ✅                 |
+| C1 Overview                     | ✅               | ✅               | ✅                 |
+| C2 Interview Q&A Summary        | ✅               | ✅               | ✅                 |
+| C3 Cold Call                    | ✅               | ✅               | ✅                 |
+| C4 Self-Check (5-item format)   | ⚠️ 7-Q table     | ⚠️ 7-Q table     | ⚠️ 7-Q table       |
+| C5 Feynman Prompt               | ❌               | ❌               | ❌                 |
+| C6 Spaced Repetition            | ✅               | ✅               | ✅                 |
+| C7 Connections                  | ✅               | ✅               | ✅                 |
+
+**Fix needed for Tier 8-10 (future session):**
+
+- Add Layers 1-2-3 per concept in Tier 9 + 10 files (Tier 8 already has them in original content)
+- Convert Common Mistakes from numbered list → table format (all tiers)
+- Convert Self-Check from 7-Q table → 5-item Retrieval/Visual/Application/Debug/Teach format
+- Add Feynman Prompt to Self-Check section
 
 ---
 
@@ -141,57 +208,57 @@
 
 ## be-track Files
 
-> **Audit note (2026-03-25)**: All 31 be-track files have Phase 1 (Real-World Scenario + What & Why).
-> Phase 2 audit of representative samples confirms: Memory Hook, Interview Pattern, Cold Call, and
-> Spaced Repetition are **absent in all files**. Some files have partial ❌ Mistakes tables.
-> All be-track files are marked 🔄 pending Phase 2 full treatment.
+> **Audit note (2026-03-27)**: All 31 be-track files have Phase 1 (Real-World Scenario + What & Why).
+> Tier 8-10 have partial Phase 2 (sessions 12-14): Memory Hook, Why exists, Interview Pattern, Cold Call,
+> Spaced Repetition present. **Missing: Layers 1-2-3 (Tier 9-10), table-format Mistakes, proper Self-Check format.**
+> See "Compliance Audit" section above for details. Tier 11 will use full checklist.
 
 ### Tier 8: Go Language (`be-track/01-golang/`)
 
-| File                          | Phase 1 | Phase 2 | Notes           |
-| ----------------------------- | ------- | ------- | --------------- |
-| `01-language-fundamentals.md` | ✅      | ✅      | Done session 12 |
-| `02-interfaces-generics.md`   | ✅      | ✅      | Done session 12 |
-| `03-concurrency.md`           | ✅      | ✅      | Done session 12 |
-| `04-memory-gc.md`             | ✅      | ✅      | Done session 12 |
-| `05-testing-profiling.md`     | ✅      | ✅      | Done session 12 |
-| `06-data-structures-go.md`    | ✅      | ✅      | Done session 12 |
-| `07-algorithms-go.md`         | ✅      | ✅      | Done session 12 |
-| `08-advanced-patterns.md`     | ✅      | ✅      | Done session 12 |
+| File                          | Phase 1 | Phase 2 | Notes                                               |
+| ----------------------------- | ------- | ------- | --------------------------------------------------- |
+| `01-language-fundamentals.md` | ✅      | ⚠️      | Session 12 — fix: Mistakes table, Self-Check format |
+| `02-interfaces-generics.md`   | ✅      | ⚠️      | Session 12 — fix: Mistakes table, Self-Check format |
+| `03-concurrency.md`           | ✅      | ⚠️      | Session 12 — fix: Mistakes table, Self-Check format |
+| `04-memory-gc.md`             | ✅      | ⚠️      | Session 12 — fix: Mistakes table, Self-Check format |
+| `05-testing-profiling.md`     | ✅      | ⚠️      | Session 12 — fix: Mistakes table, Self-Check format |
+| `06-data-structures-go.md`    | ✅      | ⚠️      | Session 12 — fix: Mistakes table, Self-Check format |
+| `07-algorithms-go.md`         | ✅      | ⚠️      | Session 12 — fix: Mistakes table, Self-Check format |
+| `08-advanced-patterns.md`     | ✅      | ⚠️      | Session 12 — fix: Mistakes table, Self-Check format |
 
 ### Tier 9: Backend Knowledge (`be-track/02-backend-knowledge/`)
 
-| File                        | Phase 1 | Phase 2 | Notes           |
-| --------------------------- | ------- | ------- | --------------- |
-| `01-api-design.md`          | ✅      | ✅      | Done session 13 |
-| `02-microservices.md`       | ✅      | ✅      | Done session 13 |
-| `03-distributed-systems.md` | ✅      | ✅      | Done session 13 |
-| `04-auth-security.md`       | ✅      | ✅      | Done session 13 |
-| `05-os-go.md`               | ✅      | ✅      | Done session 13 |
-| `06-networking-go.md`       | ✅      | ✅      | Done session 13 |
-| `07-resilience-patterns.md` | ✅      | ✅      | Done session 13 |
-| `08-message-queues.md`      | ✅      | ✅      | Done session 13 |
-| `09-grpc-protobuf.md`       | ✅      | ✅      | Done session 13 |
+| File                        | Phase 1 | Phase 2 | Notes                                                             |
+| --------------------------- | ------- | ------- | ----------------------------------------------------------------- |
+| `01-api-design.md`          | ✅      | ⚠️      | Session 13 — fix: Layers 1-2-3, Mistakes table, Self-Check format |
+| `02-microservices.md`       | ✅      | ⚠️      | Session 13 — fix: Layers 1-2-3, Mistakes table, Self-Check format |
+| `03-distributed-systems.md` | ✅      | ⚠️      | Session 13 — fix: Layers 1-2-3, Mistakes table, Self-Check format |
+| `04-auth-security.md`       | ✅      | ⚠️      | Session 13 — fix: Layers 1-2-3, Mistakes table, Self-Check format |
+| `05-os-go.md`               | ✅      | ⚠️      | Session 13 — fix: Layers 1-2-3, Mistakes table, Self-Check format |
+| `06-networking-go.md`       | ✅      | ⚠️      | Session 13 — fix: Layers 1-2-3, Mistakes table, Self-Check format |
+| `07-resilience-patterns.md` | ✅      | ⚠️      | Session 13 — fix: Layers 1-2-3, Mistakes table, Self-Check format |
+| `08-message-queues.md`      | ✅      | ⚠️      | Session 13 — fix: Layers 1-2-3, Mistakes table, Self-Check format |
+| `09-grpc-protobuf.md`       | ✅      | ⚠️      | Session 13 — fix: Layers 1-2-3, Mistakes table, Self-Check format |
 
 ### Tier 10: Database Advanced (`be-track/03-database-advanced/`)
 
-| File                          | Phase 1 | Phase 2 | Notes                                             |
-| ----------------------------- | ------- | ------- | ------------------------------------------------- |
-| `01-sql-fundamentals.md`      | ✅      | ❌      | Phase 1 only                                      |
-| `02-indexing-optimization.md` | ✅      | ❌      | Has partial ❌ Mistakes, no Hook/Pattern/ColdCall |
-| `03-nosql-redis-mongo.md`     | ✅      | ❌      | Phase 1 only                                      |
-| `04-caching-patterns.md`      | ✅      | ❌      | Phase 1 only                                      |
+| File                          | Phase 1 | Phase 2 | Notes                                                             |
+| ----------------------------- | ------- | ------- | ----------------------------------------------------------------- |
+| `01-sql-fundamentals.md`      | ✅      | ⚠️      | Session 14 — fix: Layers 1-2-3, Mistakes table, Self-Check format |
+| `02-indexing-optimization.md` | ✅      | ⚠️      | Session 14 — fix: Layers 1-2-3, Mistakes table, Self-Check format |
+| `03-nosql-redis-mongo.md`     | ✅      | ⚠️      | Session 14 — fix: Layers 1-2-3, Mistakes table, Self-Check format |
+| `04-caching-patterns.md`      | ✅      | ⚠️      | Session 14 — fix: Layers 1-2-3, Mistakes table, Self-Check format |
 
 ### Tier 11: BE System Design (`be-track/04-be-system-design/`)
 
-| File                            | Phase 1 | Phase 2 | Notes                                                 |
-| ------------------------------- | ------- | ------- | ----------------------------------------------------- |
-| `01-design-framework.md`        | ✅      | ❌      | Has partial ❌ Mistakes + Self-Check, no Hook/Pattern |
-| `02-classic-problems.md`        | ✅      | ❌      | Phase 1 only                                          |
-| `03-advanced-problems.md`       | ✅      | ❌      | Phase 1 only                                          |
-| `04-distributed-patterns.md`    | ✅      | ❌      | Phase 1 only                                          |
-| `05-observability-and-scale.md` | ✅      | ❌      | Phase 1 only                                          |
-| `06-ride-hailing-system.md`     | ✅      | ❌      | Phase 1 only                                          |
+| File                            | Phase 1 | Phase 2 | Notes                             |
+| ------------------------------- | ------- | ------- | --------------------------------- |
+| `01-design-framework.md`        | ✅      | ✅      | Done session 16 — full compliance |
+| `02-classic-problems.md`        | ✅      | ✅      | Done session 16 — full compliance |
+| `03-advanced-problems.md`       | ✅      | ✅      | Done session 16 — full compliance |
+| `04-distributed-patterns.md`    | ✅      | ✅      | Done session 16 — full compliance |
+| `05-observability-and-scale.md` | ✅      | ✅      | Done session 16 — full compliance |
+| `06-ride-hailing-system.md`     | ✅      | ✅      | Done session 16 — full compliance |
 
 ### Tier 12: BE Misc
 
@@ -293,22 +360,36 @@
 
 ## Execution Order
 
-**FE-track remaining (priority — continue current sessions):**
-Start with files marked ❌ in Tier 5-7 (FE). For each file:
+**Implementation workflow per file (follow checklist above):**
 
-1. Add Phase 1 if missing (Real-World Scenario + What & Why)
-2. Add Phase 2 to each Core Concept section (follow all 18 rules in skill-rules.md)
-3. Upgrade Q&A with Interview Signal
-4. Add Cold Call Simulation after Q&A Summary
-5. Replace old Self-Check with Retrieval Self-Check
-6. Add Study Cases block (Rule 18 — Block C)
-7. Update this tracker
+1. Read file, count Core Concepts, count Q&As
+2. **Per Core Concept** — verify/add all A1-A8:
+   - A1: 🧠 Memory Hook (killer sentence / mnemonic)
+   - A2: ❓ Why exists (2+ levels of why)
+   - A3: Layer 1 — Simple Analogy (12-year-old, no jargon)
+   - A4: Layer 2 — How It Works + **MANDATORY visual** (ASCII/table)
+   - A5: Layer 3 — Edge Cases & Trade-offs
+   - A6: ❌ Common Mistakes **TABLE** (`Sai lầm | Tại sao sai | Đúng là`)
+   - A7: 🎯 Interview Pattern (trigger → concept → opening)
+   - A8: 🔑 Knowledge Chain (📚 prereq + ➡️ enables)
+3. **Per Q&A** — verify B1-B4 (Interview Signal, bilingual, Kumon, Bloom's)
+4. **End-of-file sections** — verify/add all C1-C7:
+   - C1: Overview / Tổng Quan (topic-specific, bilingual)
+   - C2: Interview Q&A Summary (full table with Key Signal column)
+   - C3: ⚡ Cold Call Simulation (4-sentence 30-second + follow-up)
+   - C4: Self-Check → **5 items: Retrieval / Visual / Application / Debug / Teach** + close-doc instruction
+   - C5: 💬 Feynman Prompt
+   - C6: 🔁 Spaced Repetition (Day 3 → 7 → 14)
+   - C7: Connections (same-track + cross-track links)
+5. **Structural** — verify D1-D4 (3-Block Flow, real Study Cases, no duplicates, no placeholders)
+6. Update this tracker
 
-**BE-track (start after FE complete, Tier 8 first):**
-Priority order: Tier 8 (Go Lang) → Tier 9 (Backend Knowledge) → Tier 10 (Database) → Tier 11 (BE System Design)
+**Priority order:**
 
-**Shared (start after BE Tiers 8-9 done):**
-Priority order: Tier 13 (CS Fundamentals) → Tier 14 (System Design) → Tier 15 (Database) → Tier 16 (Security) → Tier 17 (SE) → Tier 18 (AI)
+- **Tier 11** (BE System Design, 6 files) ← current, use full checklist
+- **Tier 8-10 compliance fix** (21 files) — add missing Layers 1-2-3, table Mistakes, Self-Check format, Feynman Prompt
+- **Tier 12** (BE Misc, 1 file)
+- **Tier 13-18** (Shared, 38 files)
 
 ---
 
@@ -323,8 +404,9 @@ Priority order: Tier 13 (CS Fundamentals) → Tier 14 (System Design) → Tier 1
 ### be-track
 
 - Total be-track theory files tracked: **29** (excl. 2 roadmap/guide files)
-- Phase 2 done (✅): **17** (8 golang session 12 + 9 backend-knowledge session 13)
-- Remaining for Phase 2: **12**
+- Phase 2 full ✅: **6** (Tier 11: 6 system-design — session 16, full spec compliance)
+- Phase 2 partial ⚠️: **21** (8 golang + 9 backend-knowledge + 4 database — sessions 12-14, need Layers 1-2-3 / table format / Self-Check format fix)
+- Phase 2 not started ❌: **2** (1 devops-infrastructure + 1 company-guide-like N/A)
 
 ### shared
 
@@ -335,5 +417,6 @@ Priority order: Tier 13 (CS Fundamentals) → Tier 14 (System Design) → Tier 1
 ### Overall
 
 - **Total files needing Phase 2**: ~142
-- **Phase 2 complete**: 75 (~53%)
-- **Remaining**: ~67 across all tracks
+- **Phase 2 full ✅**: 64 (58 fe-track + 6 be-track Tier 11)
+- **Phase 2 partial ⚠️**: 21 (be-track Tier 8-10)
+- **Not started ❌**: ~57 across all tracks
