@@ -13,6 +13,7 @@
 ## Real-World Scenario / Tình Huống Thực Tế
 
 Grab cần xử lý hàng triệu ride requests đồng thời với latency thấp. Python gặp khó khăn với CPU-bound concurrency. Java có JVM startup overhead. **Go được chọn vì:**
+
 - Goroutines (2KB/goroutine vs 1MB/OS thread) → hàng triệu concurrent connections
 - Compile to native binary — không có JVM cold start, deploy Docker image nhỏ hơn
 - Simple syntax giảm onboarding time cho team lớn
@@ -27,11 +28,11 @@ Go là ngôn ngữ chính tại Grab, Google, CloudFlare, Docker, Kubernetes —
 
 **Những gì Go cố tình KHÔNG có (và tại sao):**
 
-| Bị bỏ | Lý do |
-|-------|-------|
-| Class inheritance | Composition > Inheritance — dùng embedding |
-| Exceptions (try/catch) | Explicit `if err != nil` → không bỏ qua lỗi |
-| Implicit type conversion | Forces clarity, prevents bugs |
+| Bị bỏ                    | Lý do                                              |
+| ------------------------ | -------------------------------------------------- |
+| Class inheritance        | Composition > Inheritance — dùng embedding         |
+| Exceptions (try/catch)   | Explicit `if err != nil` → không bỏ qua lỗi        |
+| Implicit type conversion | Forces clarity, prevents bugs                      |
 | Generics (trước Go 1.18) | Simplicity first — added later when clearly needed |
 
 **Go's killer features:** Goroutines + Channels + Interfaces (implicit) + Fast compile
@@ -62,6 +63,14 @@ Go là ngôn ngữ chính tại Grab, Google, CloudFlare, Docker, Kubernetes —
 
 ---
 
+## Overview / Tổng Quan
+
+Go's fundamentals cover 7 interconnected concepts: the philosophy driving every design decision, a strict but ergonomic type system, value-vs-reference semantics that eliminate hidden mutation, structs as the composition primitive, pointers governed by escape analysis, slices with their shared-backing-array gotchas, and maps with bucket-based hash internals.
+
+Go fundamentals xoay quanh 7 khái niệm liên kết: triết lý thiết kế định hình mọi quyết định, hệ thống type nghiêm ngặt nhưng tiện dụng, value/reference semantics loại bỏ mutation ẩn, struct là building block cho composition, pointer được quản lý bởi escape analysis, slice với gotcha backing array, và map với cơ chế hash bucket nội bộ. Mỗi khái niệm connect trực tiếp — hiểu sai value semantics sẽ gặp bug slice; hiểu sai type system sẽ confuse interface satisfaction.
+
+---
+
 ## 1. Go Philosophy
 
 > 🧠 **Memory Hook:** "Go là ngôn ngữ nói 'không' nhiều nhất — không inheritance, không exceptions, không generics ban đầu. Mỗi lần từ chối là một lần giữ cho codebase đơn giản."
@@ -79,6 +88,7 @@ Tưởng tượng bạn thiết kế một chiếc dao bếp. Bạn có thể th
 **Layer 2 — How It Works / Cơ Chế Hoạt Động:**
 
 Go's design decisions flow từ 3 nguyên tắc:
+
 1. **Compilation speed**: Dependency graph tuyến tính (no circular imports) + simple syntax → compiler không cần phân tích phức tạp
 2. **Readability at scale**: 25 keywords (Python 35, Java 51, C++ 92) → ít cách viết code → mọi người đọc code giống nhau
 3. **Explicit over implicit**: Error handling, type conversion, interface implementation đều phải nói rõ — không có magic
@@ -86,6 +96,7 @@ Go's design decisions flow từ 3 nguyên tắc:
 **Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
 
 Go's simplicity-first approach có cost thực sự:
+
 - Trước Go 1.18: không có generics → rất nhiều code duplication hoặc `interface{}` unsafe casts
 - Không có function overloading → cần nhiều function names (`ReadString`, `ReadBytes`, `ReadRune`)
 - Verbose error handling → một function có 5 operations có thể có 5 `if err != nil` blocks
@@ -94,17 +105,18 @@ Go's simplicity-first approach có cost thực sự:
 
 **A:** Go được tạo ra bởi Robert Griesemer, Rob Pike, và Ken Thompson tại Google vào năm 2007 (public 2009) để giải quyết các vấn đề thực tế:
 
-| Problem | Go's Solution |
-|---------|---------------|
-| C++ compilation quá chậm (hàng giờ ở Google) | Compiler cực nhanh, dependency analysis đơn giản |
-| Concurrency phức tạp (threads, locks) | Goroutines + channels là first-class citizens |
-| Code phức tạp, khó đọc (C++ templates, Java generics lúc đó) | Syntax tối giản, chỉ 25 keywords |
-| Dependency management hỗn loạn | Built-in module system |
-| Deploy phức tạp (JVM, runtime dependencies) | Static binary, zero dependencies |
+| Problem                                                      | Go's Solution                                    |
+| ------------------------------------------------------------ | ------------------------------------------------ |
+| C++ compilation quá chậm (hàng giờ ở Google)                 | Compiler cực nhanh, dependency analysis đơn giản |
+| Concurrency phức tạp (threads, locks)                        | Goroutines + channels là first-class citizens    |
+| Code phức tạp, khó đọc (C++ templates, Java generics lúc đó) | Syntax tối giản, chỉ 25 keywords                 |
+| Dependency management hỗn loạn                               | Built-in module system                           |
+| Deploy phức tạp (JVM, runtime dependencies)                  | Static binary, zero dependencies                 |
 
 **Triết lý cốt lõi:** Go chọn **simplicity over cleverness**. Ngôn ngữ cố tình KHÔNG có nhiều feature (ban đầu không generics, không exceptions, không inheritance) để buộc developer viết code đơn giản, dễ đọc.
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Kể được ít nhất 2 concrete problems ở Google (compile time, concurrency) và giải thích tại sao simplicity là design goal, không phải limitation
 - ❌ Weak: Nói "Go nhanh và dễ học" mà không giải thích context tại sao các ngôn ngữ trước không đủ tốt
 
@@ -121,6 +133,7 @@ Go's simplicity-first approach có cost thực sự:
 - **"Errors are values"** — Error không phải exception, xử lý chúng như data bình thường
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Không chỉ đọc thuộc mà giải thích được trade-off đằng sau ít nhất 2 proverbs — ví dụ "bigger interface, weaker abstraction" liên kết đến Liskov và dependency inversion
 - ❌ Weak: Chỉ list proverbs mà không giải thích tại sao chúng tồn tại
 
@@ -132,6 +145,7 @@ Go's simplicity-first approach có cost thực sự:
 - **Composition (Go):** "Dog HAS-A ability to walk, bark" — loose coupling, flexible
 
 Lý do Go chọn composition:
+
 1. **Tránh diamond problem** — không cần giải quyết multiple inheritance conflicts
 2. **Explicit hơn implicit** — bạn thấy rõ struct chứa gì
 3. **Dễ thay đổi** — thêm/bớt behavior không break hierarchy
@@ -150,23 +164,26 @@ type Dog struct {
 ```
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Giải thích promoted methods là delegation (receiver vẫn là `Walker`, không phải `Dog`) và phân biệt với inheritance thực sự
 - ❌ Weak: Nói "Go dùng embedding thay inheritance" mà không giải thích tại sao và sự khác biệt kỹ thuật
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-|---------|------------|---------|
+| Sai lầm                                | Tại sao sai                                                                                    | Đúng là                                                                                     |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
 | "Go's struct embedding là inheritance" | Embedded method receiver vẫn là embedded type, không phải outer struct — không có polymorphism | Embedding là delegation/composition — promoted methods là convenience, không phải subtyping |
-| "Go không thể làm OOP" | Go có encapsulation, polymorphism qua interface, và composition | Go làm OOP theo cách khác — không có class hierarchy |
-| "Proverbs là best practices tùy chọn" | Proverbs phản ánh design constraints của runtime và compiler | Proverbs là architectural decisions với technical reasons đằng sau |
+| "Go không thể làm OOP"                 | Go có encapsulation, polymorphism qua interface, và composition                                | Go làm OOP theo cách khác — không có class hierarchy                                        |
+| "Proverbs là best practices tùy chọn"  | Proverbs phản ánh design constraints của runtime và compiler                                   | Proverbs là architectural decisions với technical reasons đằng sau                          |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy câu hỏi về: "Why Go?", "Go vs Java/Python", "Go design philosophy", "composition vs inheritance"
 - → Nhớ đến: Go giải quyết problems cụ thể tại Google-scale, mỗi design decision có concrete reason
-- → Mở đầu trả lời: *"Go được tạo ra để giải quyết vấn đề scale của Google — compile time hàng giờ, concurrency phức tạp, và team size hàng ngàn người. Mỗi feature bị bỏ ra đều có lý do kỹ thuật rõ ràng, không phải thiếu sót."*
+- → Mở đầu trả lời: _"Go được tạo ra để giải quyết vấn đề scale của Google — compile time hàng giờ, concurrency phức tạp, và team size hàng ngàn người. Mỗi feature bị bỏ ra đều có lý do kỹ thuật rõ ràng, không phải thiếu sót."_
 
 **🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
 - 📚 Cần biết trước: [OS Theory](../../shared/01-cs-fundamentals/os-theory.md) — threads, processes, memory model
 - ➡️ Để hiểu tiếp: [Go Concurrency](./03-concurrency.md) — goroutines implement triết lý "share memory by communicating"
 
@@ -195,6 +212,7 @@ Hãy nghĩ type như nhãn dán trên hộp. `int` nghĩa là hộp này chỉ c
 **Layer 2 — How It Works / Cơ Chế Hoạt Động:**
 
 Go's type system có 3 tầng:
+
 1. **Basic types**: primitives (int, float64, bool, string, rune, byte) — đây là các hộp cơ bản
 2. **Composite types**: array, slice, map, struct, channel — các hộp chứa nhiều hộp khác
 3. **Interface types**: tập hợp method signatures — không phải hộp mà là "hợp đồng hành vi"
@@ -213,17 +231,18 @@ Type inference (`:=`) cho phép compiler đoán type từ right-hand side tại 
 
 **Basic types:**
 
-| Category | Types | Notes |
-|----------|-------|-------|
-| Boolean | `bool` | `true` / `false` |
-| Integer (signed) | `int8, int16, int32, int64, int` | `int` = platform-dependent (32 hoặc 64 bit) |
-| Integer (unsigned) | `uint8, uint16, uint32, uint64, uint, uintptr` | `byte` = alias cho `uint8` |
-| Float | `float32, float64` | Không có `float`, phải chọn rõ |
-| Complex | `complex64, complex128` | Ít dùng, cho scientific computing |
-| String | `string` | Immutable sequence of bytes |
-| Rune | `rune` | Alias cho `int32`, đại diện Unicode code point |
+| Category           | Types                                          | Notes                                          |
+| ------------------ | ---------------------------------------------- | ---------------------------------------------- |
+| Boolean            | `bool`                                         | `true` / `false`                               |
+| Integer (signed)   | `int8, int16, int32, int64, int`               | `int` = platform-dependent (32 hoặc 64 bit)    |
+| Integer (unsigned) | `uint8, uint16, uint32, uint64, uint, uintptr` | `byte` = alias cho `uint8`                     |
+| Float              | `float32, float64`                             | Không có `float`, phải chọn rõ                 |
+| Complex            | `complex64, complex128`                        | Ít dùng, cho scientific computing              |
+| String             | `string`                                       | Immutable sequence of bytes                    |
+| Rune               | `rune`                                         | Alias cho `int32`, đại diện Unicode code point |
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Giải thích được tại sao `int` không phải `int64` luôn (platform-dependent), và khi nào dùng `byte` vs `uint8` (semantics: `byte` = raw data, `uint8` = small number)
 - ❌ Weak: Chỉ list types mà không giải thích khi nào dùng cái nào
 
@@ -231,23 +250,24 @@ Type inference (`:=`) cho phép compiler đoán type từ right-hand side tại 
 
 **A:** Mọi variable trong Go nếu không khởi tạo sẽ nhận **zero value**. Đây là thiết kế có chủ đích — "make the zero value useful":
 
-| Type | Zero Value | Example |
-|------|-----------|---------|
-| `bool` | `false` | `var b bool` → `false` |
-| All integers | `0` | `var i int` → `0` |
-| All floats | `0.0` | `var f float64` → `0.0` |
-| `string` | `""` (empty string) | `var s string` → `""` |
-| Pointer | `nil` | `var p *int` → `nil` |
-| Slice | `nil` | `var s []int` → `nil` (len=0, cap=0) |
-| Map | `nil` | `var m map[string]int` → `nil` |
-| Channel | `nil` | `var ch chan int` → `nil` |
-| Interface | `nil` | `var i interface{}` → `nil` |
-| Function | `nil` | `var f func()` → `nil` |
-| Struct | Each field = its zero value | `var u User` → `User{Name:"", Age:0}` |
+| Type         | Zero Value                  | Example                               |
+| ------------ | --------------------------- | ------------------------------------- |
+| `bool`       | `false`                     | `var b bool` → `false`                |
+| All integers | `0`                         | `var i int` → `0`                     |
+| All floats   | `0.0`                       | `var f float64` → `0.0`               |
+| `string`     | `""` (empty string)         | `var s string` → `""`                 |
+| Pointer      | `nil`                       | `var p *int` → `nil`                  |
+| Slice        | `nil`                       | `var s []int` → `nil` (len=0, cap=0)  |
+| Map          | `nil`                       | `var m map[string]int` → `nil`        |
+| Channel      | `nil`                       | `var ch chan int` → `nil`             |
+| Interface    | `nil`                       | `var i interface{}` → `nil`           |
+| Function     | `nil`                       | `var f func()` → `nil`                |
+| Struct       | Each field = its zero value | `var u User` → `User{Name:"", Age:0}` |
 
 **Lưu ý quan trọng:** `nil` slice vẫn dùng được với `append()`, nhưng `nil` map sẽ **panic** nếu ghi vào.
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Phân biệt `nil` slice (functional với append) vs `nil` map (panic on write) — đây là gotcha phổ biến nhất
 - ❌ Weak: Chỉ nói "zero value là 0 hoặc nil" mà không giải thích practical implications
 
@@ -260,16 +280,17 @@ type MyInt int      // Type DEFINITION — tạo type hoàn toàn mới
 type YourInt = int  // Type ALIAS — chỉ là tên khác cho cùng type
 ```
 
-| Aspect | Type Definition (`type X int`) | Type Alias (`type X = int`) |
-|--------|-------------------------------|----------------------------|
-| Tạo type mới? | Có — `X` ≠ `int` | Không — `X` == `int` |
-| Cần convert? | `int(x)` để chuyển | Không cần, interchangeable |
-| Gắn method? | Được | Không (phải gắn vào original type) |
-| Dùng khi nào? | Tạo domain type, thêm method | Gradual refactoring, backward compat |
+| Aspect        | Type Definition (`type X int`) | Type Alias (`type X = int`)          |
+| ------------- | ------------------------------ | ------------------------------------ |
+| Tạo type mới? | Có — `X` ≠ `int`               | Không — `X` == `int`                 |
+| Cần convert?  | `int(x)` để chuyển             | Không cần, interchangeable           |
+| Gắn method?   | Được                           | Không (phải gắn vào original type)   |
+| Dùng khi nào? | Tạo domain type, thêm method   | Gradual refactoring, backward compat |
 
 **Type definition** tạo type mới hoàn toàn, compiler sẽ báo lỗi nếu assign sai type — đây là cách tạo **domain types** an toàn (vd: `type UserID int64` để tránh nhầm với `OrderID int64`).
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Đưa ví dụ `UserID` vs `OrderID` — type definition prevents passing wrong ID at compile time, giải thích type alias là transitional tool khi refactor lớn
 - ❌ Weak: Nói "type alias chỉ là tên khác" mà không giải thích use case refactoring hay domain type safety
 
@@ -288,23 +309,26 @@ p := &x          // *int
 Compiler xác định type tại **compile time**, không phải runtime. Sau khi infer, type cố định — không thể gán giá trị khác type.
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Giải thích đây là static type inference (compile time) — khác với dynamic typing của Python. Và `42` mặc định là `int`, không phải `int64` — cần explicit `var x int64 = 42` nếu muốn
 - ❌ Weak: Nhầm lẫn type inference với dynamic typing
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-|---------|------------|---------|
+| Sai lầm                                        | Tại sao sai                                     | Đúng là                                           |
+| ---------------------------------------------- | ----------------------------------------------- | ------------------------------------------------- |
 | Dùng `int` cho network/serialization data size | `int` platform-dependent: 32-bit trên 32-bit OS | Dùng `int64` hoặc `int32` explicit cho exact size |
-| Ghi vào `nil` map | `nil` map panic on write | Luôn `make(map[K]V)` trước khi ghi |
-| Nhầm `nil` slice với empty slice trong JSON | `nil` slice → `null`, empty slice → `[]` | Dùng `make([]T, 0)` nếu cần `[]` trong JSON |
+| Ghi vào `nil` map                              | `nil` map panic on write                        | Luôn `make(map[K]V)` trước khi ghi                |
+| Nhầm `nil` slice với empty slice trong JSON    | `nil` slice → `null`, empty slice → `[]`        | Dùng `make([]T, 0)` nếu cần `[]` trong JSON       |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy câu hỏi về: zero values, type safety, nil panics, domain modeling
 - → Nhớ đến: Go's zero values là thiết kế có chủ đích — "make the zero value useful" là proverb có reason
-- → Mở đầu trả lời: *"Go đảm bảo mọi variable luôn có giá trị hợp lệ qua zero values — đây không phải default, mà là thiết kế để `sync.Mutex{}` sẵn dùng, `nil` slice có thể append. Nhưng `nil` map là exception quan trọng cần nhớ."*
+- → Mở đầu trả lời: _"Go đảm bảo mọi variable luôn có giá trị hợp lệ qua zero values — đây không phải default, mà là thiết kế để `sync.Mutex{}` sẵn dùng, `nil` slice có thể append. Nhưng `nil` map là exception quan trọng cần nhớ."_
 
 **🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
 - 📚 Cần biết trước: [Go Philosophy](#1-go-philosophy) — "make the zero value useful" proverb
 - ➡️ Để hiểu tiếp: [Structs](#4-structs) — struct zero values và embedding; [Go Interfaces](./02-interfaces-generics.md) — interface nil gotcha
 
@@ -332,16 +356,16 @@ Khi bạn share "địa chỉ nhà" với bạn bè — bạn copy tờ giấy c
 
 **Layer 2 — How It Works / Cơ Chế Hoạt Động:**
 
-| Type | Passed as | Contains pointer? | Mutation visible? |
-|------|-----------|-------------------|-------------------|
-| `int, float, bool, string` | Copy of value | No | No |
-| `struct` | Copy of entire struct | No (trừ khi field là pointer) | No |
-| `array` | Copy of entire array | No | No |
-| `slice` | Copy of **slice header** | Yes (pointer to backing array) | Yes (modify elements), No (append may not) |
-| `map` | Copy of **map pointer** | Yes (internal hash table pointer) | Yes |
-| `channel` | Copy of **channel pointer** | Yes (internal queue pointer) | Yes |
-| `pointer` | Copy of **pointer value** | Yes (it IS a pointer) | Yes |
-| `interface` | Copy of **interface value** (type + data pointers) | Yes | Depends |
+| Type                       | Passed as                                          | Contains pointer?                 | Mutation visible?                          |
+| -------------------------- | -------------------------------------------------- | --------------------------------- | ------------------------------------------ |
+| `int, float, bool, string` | Copy of value                                      | No                                | No                                         |
+| `struct`                   | Copy of entire struct                              | No (trừ khi field là pointer)     | No                                         |
+| `array`                    | Copy of entire array                               | No                                | No                                         |
+| `slice`                    | Copy of **slice header**                           | Yes (pointer to backing array)    | Yes (modify elements), No (append may not) |
+| `map`                      | Copy of **map pointer**                            | Yes (internal hash table pointer) | Yes                                        |
+| `channel`                  | Copy of **channel pointer**                        | Yes (internal queue pointer)      | Yes                                        |
+| `pointer`                  | Copy of **pointer value**                          | Yes (it IS a pointer)             | Yes                                        |
+| `interface`                | Copy of **interface value** (type + data pointers) | Yes                               | Depends                                    |
 
 **Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
 
@@ -364,6 +388,7 @@ func modify(s []int) {
 ```
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Phân biệt "copy của pointer" vs "pass by reference" — reassign map variable inside function KHÔNG ảnh hưởng caller. Giải thích slice header gồm 3 fields
 - ❌ Weak: Nói "slice và map là reference types" — Go spec không dùng từ này, và nó technically không chính xác
 
@@ -378,23 +403,26 @@ func modify(s []int) {
 Nói "map là reference type" là **không chính xác**. Map là **pointer được pass by value**. Sự khác biệt: trong C++ reference type, bạn có thể reassign và caller thấy. Trong Go, reassign map variable trong function KHÔNG ảnh hưởng caller.
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Biết `runtime.hmap` và `runtime.hchan` là concrete types, giải thích được tại sao reassign map inside function không ảnh hưởng caller — cần `*map[K]V` nếu muốn thật sự reference
 - ❌ Weak: Dùng "reference type" như định nghĩa chính xác mà không giải thích nuance
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-|---------|------------|---------|
-| "Slice và map là reference types" | Go spec không định nghĩa reference types — map là pointer passed by value | Map là `*runtime.hmap` passed by value; slice là struct `{ptr,len,cap}` |
-| "Modify slice trong function luôn visible ở ngoài" | Chỉ đúng khi modify existing elements, không đúng với append vượt cap | Pass `*[]int` nếu cần function extend slice và caller thấy |
-| "Copy struct là deep copy" | Struct field là pointer → copy struct chỉ copy pointer, không copy pointed-to data | Deep copy cần implement manually hoặc dùng `encoding/json` round-trip |
+| Sai lầm                                            | Tại sao sai                                                                        | Đúng là                                                                 |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| "Slice và map là reference types"                  | Go spec không định nghĩa reference types — map là pointer passed by value          | Map là `*runtime.hmap` passed by value; slice là struct `{ptr,len,cap}` |
+| "Modify slice trong function luôn visible ở ngoài" | Chỉ đúng khi modify existing elements, không đúng với append vượt cap              | Pass `*[]int` nếu cần function extend slice và caller thấy              |
+| "Copy struct là deep copy"                         | Struct field là pointer → copy struct chỉ copy pointer, không copy pointed-to data | Deep copy cần implement manually hoặc dùng `encoding/json` round-trip   |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy câu hỏi về: pass by value/reference, slice mutation, function side effects, concurrent data access
 - → Nhớ đến: Go always copies — sự khác biệt là "copy của gì" (value vs pointer to shared data)
-- → Mở đầu trả lời: *"Go luôn pass by value — không có exception. Nhưng 'value' của slice là struct header gồm pointer+len+cap, của map là pointer đến runtime hash table. Copy pointer không copy data — nên mutations qua pointer vẫn visible, nhưng reassign variable thì không."*
+- → Mở đầu trả lời: _"Go luôn pass by value — không có exception. Nhưng 'value' của slice là struct header gồm pointer+len+cap, của map là pointer đến runtime hash table. Copy pointer không copy data — nên mutations qua pointer vẫn visible, nhưng reassign variable thì không."_
 
 **🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
 - 📚 Cần biết trước: [Go Type System](#2-type-system) — value types vs pointer types
 - ➡️ Để hiểu tiếp: [Pointers](#5-pointers) — khi nào dùng `*T`; [Slice Internals](#6-slice-internals) — backing array mechanics
 
@@ -423,6 +451,7 @@ Struct là như form khai báo hải quan: tên, quốc tịch, số hộ chiế
 **Layer 2 — How It Works / Cơ Chế Hoạt Động:**
 
 Struct trong Go:
+
 - **Value type** — assign hoặc pass tạo complete copy (trừ pointer fields)
 - **Memory layout** = fields packed theo order, với alignment padding
 - **Embedding** = anonymous field với tên là type name — fields và methods promoted lên outer struct
@@ -458,11 +487,13 @@ u.Base.ID     // vẫn truy cập explicit được
 ```
 
 **Embedding KHÔNG phải inheritance vì:**
+
 1. Không có polymorphism tự động — `User` không phải subtype của `Base`
 2. Method của `Base` khi gọi qua `User`, receiver vẫn là `Base`, không phải `User`
 3. Nếu `User` define method cùng tên, nó **shadow** (không override) method của `Base`
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Giải thích "promoted method receiver vẫn là embedded type" — nếu `Base.Identify()` gọi method khác của `Base`, nó không thể thấy `User`-specific fields
 - ❌ Weak: Mô tả embedding như inheritance và bỏ qua sự khác biệt receiver semantics
 
@@ -479,17 +510,18 @@ type User struct {
 }
 ```
 
-| Tag | Library | Purpose |
-|-----|---------|---------|
-| `json:"name"` | `encoding/json` | JSON field mapping |
-| `db:"col_name"` | `sqlx`, `gorm` | Database column mapping |
-| `validate:"required"` | `go-playground/validator` | Validation rules |
-| `yaml:"key"` | `gopkg.in/yaml.v3` | YAML mapping |
-| `mapstructure:"key"` | `mapstructure` | Config mapping |
+| Tag                   | Library                   | Purpose                 |
+| --------------------- | ------------------------- | ----------------------- |
+| `json:"name"`         | `encoding/json`           | JSON field mapping      |
+| `db:"col_name"`       | `sqlx`, `gorm`            | Database column mapping |
+| `validate:"required"` | `go-playground/validator` | Validation rules        |
+| `yaml:"key"`          | `gopkg.in/yaml.v3`        | YAML mapping            |
+| `mapstructure:"key"`  | `mapstructure`            | Config mapping          |
 
 **Internally:** Tags được lưu trong binary dưới dạng raw string. `reflect.StructField.Tag` parse string này theo convention `key:"value"` pairs. Compiler KHÔNG validate tag syntax — sai format chỉ bị bỏ qua lặng lẽ (dùng `go vet` để check).
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Giải thích tags là runtime reflection data — có performance cost khi parse. Biết `json:"-"` để skip field, `omitempty` cho zero values, và tại sao compiler không validate tag syntax
 - ❌ Weak: Chỉ biết `json:"fieldname"` mà không hiểu reflection mechanism đằng sau
 
@@ -497,10 +529,10 @@ type User struct {
 
 **A:** Method set quyết định type nào satisfy interface nào:
 
-| Receiver type | Method set includes |
-|--------------|-------------------|
-| Value `T` | Chỉ methods với receiver `T` |
-| Pointer `*T` | Methods với receiver `T` VÀ `*T` |
+| Receiver type | Method set includes              |
+| ------------- | -------------------------------- |
+| Value `T`     | Chỉ methods với receiver `T`     |
+| Pointer `*T`  | Methods với receiver `T` VÀ `*T` |
 
 ```go
 type Sizer interface { Size() int }
@@ -519,23 +551,26 @@ var _ Resizer = &b // OK — *Box has both Size() and Resize()
 **Tại sao quy tắc này tồn tại?** Vì nếu bạn có interface value chứa non-pointer, Go không thể lấy address đáng tin cậy của nó (giá trị có thể nằm trong register, hoặc là temporary). Gọi pointer receiver method yêu cầu address — nên compiler cấm.
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Giải thích tại sao quy tắc này tồn tại (addressability — interface value không có stable address), không chỉ đọc thuộc rule. Biết `var _ Interface = (*Type)(nil)` là compile-time check
 - ❌ Weak: Chỉ nói "pointer receiver có thể gọi value receiver methods nhưng không ngược lại" mà không giải thích tại sao
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-|---------|------------|---------|
-| Mix value và pointer receivers trên cùng type | Gây confusing — method set của `T` và `*T` không nhất quán | Nếu bất kỳ method nào dùng pointer receiver, tất cả nên dùng |
-| Struct tag typo bị bỏ qua | `json:"nme"` thay vì `json:"name"` không báo lỗi — field bị ignore | Dùng `go vet ./...` để catch tag errors |
-| Nhầm embedding với inheritance | Embedded method receiver không thể truy cập outer struct's fields | Embedding chỉ là syntax convenience — không phải subtyping |
+| Sai lầm                                       | Tại sao sai                                                        | Đúng là                                                      |
+| --------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------ |
+| Mix value và pointer receivers trên cùng type | Gây confusing — method set của `T` và `*T` không nhất quán         | Nếu bất kỳ method nào dùng pointer receiver, tất cả nên dùng |
+| Struct tag typo bị bỏ qua                     | `json:"nme"` thay vì `json:"name"` không báo lỗi — field bị ignore | Dùng `go vet ./...` để catch tag errors                      |
+| Nhầm embedding với inheritance                | Embedded method receiver không thể truy cập outer struct's fields  | Embedding chỉ là syntax convenience — không phải subtyping   |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy câu hỏi về: struct design, interface satisfaction, method receivers, composition
 - → Nhớ đến: Method sets rule là về addressability — pointer receiver cần stable address để mutate
-- → Mở đầu trả lời: *"Struct trong Go là value type — assignment tạo copy. Nhưng method set của `T` chỉ có value receiver methods, còn `*T` có cả hai. Quy tắc này tồn tại vì pointer receiver cần stable memory address để mutate — non-addressable values (interface contents, map values, function returns) không thể có pointer receiver called on them."*
+- → Mở đầu trả lời: *"Struct trong Go là value type — assignment tạo copy. Nhưng method set của `T` chỉ có value receiver methods, còn `*T` có cả hai. Quy tắc này tồn tại vì pointer receiver cần stable memory address để mutate — non-addressable values (interface contents, map values, function returns) không thể có pointer receiver called on them."\*
 
 **🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
 - 📚 Cần biết trước: [Value Types vs Reference Types](#3-value-types-vs-reference-types) — value semantics
 - ➡️ Để hiểu tiếp: [Go Interfaces](./02-interfaces-generics.md) — interface satisfaction và method sets; [Pointers](#5-pointers) — pointer receiver implications
 
@@ -579,6 +614,7 @@ Pointer như chìa khóa nhà. Bạn có thể copy chìa khóa và đưa cho nh
 **A:** Quy tắc thực tế:
 
 **Dùng pointer (`*T`) khi:**
+
 1. **Cần mutate** — function cần thay đổi giá trị gốc
 2. **Struct lớn** — copy struct >64 bytes tốn kém (heuristic, không phải hard rule)
 3. **Interface satisfaction** — khi method dùng pointer receiver
@@ -586,6 +622,7 @@ Pointer như chìa khóa nhà. Bạn có thể copy chìa khóa và đưa cho nh
 5. **Shared state** — nhiều goroutine cần truy cập cùng data
 
 **Dùng value (`T`) khi:**
+
 1. **Small immutable data** — `time.Time`, small structs, primitives
 2. **Thread safety** — value copy inherently safe, không cần lock
 3. **Predictability** — function không thể mutate input bất ngờ
@@ -593,6 +630,7 @@ Pointer như chìa khóa nhà. Bạn có thể copy chìa khóa và đưa cho nh
 **Consistency rule:** Nếu một method dùng pointer receiver, TẤT CẢ methods của type đó nên dùng pointer receiver. Tránh mix — gây confusing.
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Nhắc đến consistency rule (mix pointer/value receivers gây confusing method set), và semantic của nil pointer (optional/absent) vs zero value struct
 - ❌ Weak: Chỉ nói "dùng pointer khi cần modify" mà không giải thích size heuristic, interface satisfaction, hoặc nil semantics
 
@@ -606,6 +644,7 @@ Pointer như chìa khóa nhà. Bạn có thể copy chìa khóa và đưa cho nh
 **Compiler rule**: Nếu compiler chứng minh được variable KHÔNG "escape" ra ngoài function scope → stack. Ngược lại → heap.
 
 **Các trường hợp escape phổ biến:**
+
 1. Return pointer đến local variable → escape
 2. Gửi vào channel → escape
 3. Gán vào variable có scope rộng hơn → escape
@@ -621,6 +660,7 @@ go build -gcflags="-m" ./...
 **Ý nghĩa thực tế:** Không cần lo lắng quá — Go compiler rất thông minh. Chỉ optimize khi profiling cho thấy GC pressure cao. Premature optimization is the root of all evil.
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Giải thích tại sao interface boxing causes escape (compiler không biết concrete type size at compile time — phải heap alloc), và cách dùng `go build -gcflags="-m"` để verify
 - ❌ Weak: Nói "pointer thì heap, value thì stack" — đây là oversimplification sai. Compiler có thể stack-allocate ngay cả khi có pointer nếu không escape
 
@@ -653,23 +693,26 @@ l.Len()       // OK! Returns 0 — method handles nil receiver
 ```
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Biết nil receiver method là valid pattern (giống `http.Handler` nil check), và phân biệt compile-time vs runtime — compiler không thể luôn detect nil pointer statically
 - ❌ Weak: Nói "nil pointer luôn crash" mà không biết nil receiver method pattern
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-|---------|------------|---------|
-| "Pointer thì heap, value thì stack" | Compiler escape analysis quyết định — không phải pointer/value | Compiler stack-allocates pointers nếu không escape; heap-allocates values nếu escape |
-| Dùng `*interface{}` | Interface đã là pointer-like (type+data pointers) — thêm pointer nữa là indirection vô ích | Dùng `interface{}` hoặc concrete type |
-| Không check nil trước deref | Nil dereference = runtime panic, không recover được clean | Luôn guard `if ptr != nil` trước `*ptr` |
+| Sai lầm                             | Tại sao sai                                                                                | Đúng là                                                                              |
+| ----------------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| "Pointer thì heap, value thì stack" | Compiler escape analysis quyết định — không phải pointer/value                             | Compiler stack-allocates pointers nếu không escape; heap-allocates values nếu escape |
+| Dùng `*interface{}`                 | Interface đã là pointer-like (type+data pointers) — thêm pointer nữa là indirection vô ích | Dùng `interface{}` hoặc concrete type                                                |
+| Không check nil trước deref         | Nil dereference = runtime panic, không recover được clean                                  | Luôn guard `if ptr != nil` trước `*ptr`                                              |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy câu hỏi về: stack vs heap, GC pressure, performance optimization, nil panics
 - → Nhớ đến: Escape analysis — compiler, không phải developer, quyết định stack/heap. Nil pointer panic là runtime, không compile time
-- → Mở đầu trả lời: *"Go không có garbage collection pressure do pointer hay value — compiler's escape analysis quyết định location dựa trên lifetime. Return pointer đến local variable không phải bug — compiler auto-promotes to heap. Nil dereference là runtime panic, không compile error, vì compiler không luôn track nil statically."*
+- → Mở đầu trả lời: _"Go không có garbage collection pressure do pointer hay value — compiler's escape analysis quyết định location dựa trên lifetime. Return pointer đến local variable không phải bug — compiler auto-promotes to heap. Nil dereference là runtime panic, không compile error, vì compiler không luôn track nil statically."_
 
 **🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
 - 📚 Cần biết trước: [Value Types vs Reference Types](#3-value-types-vs-reference-types) — copy semantics
 - ➡️ Để hiểu tiếp: [Go Concurrency](./03-concurrency.md) — shared pointers cần synchronization; [Go Testing](./05-testing-profiling.md) — profiling heap allocations
 
@@ -730,6 +773,7 @@ Growth strategy thay đổi ở Go 1.18 để tránh jump đột ngột tại ca
 - **cap**: số element tối đa trước khi cần allocate array mới
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Có thể vẽ diagram slice header + backing array, giải thích tại sao `len(s)` và `cap(s)` có thể khác nhau, và ý nghĩa của sub-slice chia sẻ backing array
 - ❌ Weak: Nói "slice là dynamic array" mà không giải thích internal structure
 
@@ -738,17 +782,20 @@ Growth strategy thay đổi ở Go 1.18 để tránh jump đột ngột tại ca
 **A:** Khi `append()` vượt capacity, Go allocate backing array mới và copy data:
 
 **Growth strategy (Go 1.18+):**
+
 - `cap < 256`: double capacity (`newCap = oldCap * 2`)
 - `cap >= 256`: tăng ~25% + padding (`newCap = oldCap + oldCap/4 + 192`)
 - Sau đó round up theo memory allocator size classes
 
 **Trước Go 1.18:**
+
 - `cap < 1024`: double
 - `cap >= 1024`: tăng 25%
 
 Chiến lược mới smooth hơn — tránh jump đột ngột khi cap đạt 1024.
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Giải thích tại sao growth strategy quan trọng — pre-allocate với `make([]T, 0, estimatedSize)` để tránh N reallocations trong hot path. Biết threshold thay đổi ở Go 1.18
 - ❌ Weak: Chỉ nói "append double capacity" mà không biết threshold và pre-allocation pattern
 
@@ -757,6 +804,7 @@ Chiến lược mới smooth hơn — tránh jump đột ngột khi cap đạt 1
 **A:**
 
 **Gotcha 1: Shared backing array**
+
 ```go
 a := []int{1, 2, 3, 4, 5}
 b := a[1:3]    // b = [2, 3], shares backing array with a
@@ -764,6 +812,7 @@ b[0] = 999     // a is now [1, 999, 3, 4, 5] — SURPRISE!
 ```
 
 **Gotcha 2: Append may or may not share**
+
 ```go
 a := []int{1, 2, 3, 4, 5}
 b := a[1:3]         // b = [2,3], len=2, cap=4
@@ -772,6 +821,7 @@ b = append(b, 999)  // cap enough → writes into a's backing array!
 ```
 
 **Gotcha 3: Memory leak khi slice từ large array**
+
 ```go
 // large là []byte 10MB
 func getHeader(large []byte) []byte {
@@ -786,6 +836,7 @@ func getHeader(large []byte) []byte {
 ```
 
 **Full slice expression** `a[low:high:max]` — giới hạn capacity để tránh shared array issues:
+
 ```go
 a := []int{1, 2, 3, 4, 5}
 b := a[1:3:3]       // len=2, cap=2 (max-low = 3-1 = 2)
@@ -793,23 +844,26 @@ b = append(b, 999)  // cap exceeded → NEW backing array, safe!
 ```
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Biết và giải thích cả 3 gotchas, đặc biệt memory leak pattern và full slice expression `a[low:high:max]` như fix
 - ❌ Weak: Chỉ biết gotcha 1 (shared backing array) mà không biết gotcha 2 (append with cap) và gotcha 3 (memory leak)
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-|---------|------------|---------|
-| Giả định append không ảnh hưởng caller | Nếu cap đủ, append ghi vào shared backing array | Pass `s[0:len(s):len(s)]` để force new backing array khi append |
-| Return sub-slice của large response body | Sub-slice giữ toàn bộ large backing array trong memory | `copy` ra slice mới trước khi return |
-| Không pre-allocate khi biết size | N appends trong loop → log(N) reallocations | `make([]T, 0, expectedSize)` trước loop |
+| Sai lầm                                  | Tại sao sai                                            | Đúng là                                                         |
+| ---------------------------------------- | ------------------------------------------------------ | --------------------------------------------------------------- |
+| Giả định append không ảnh hưởng caller   | Nếu cap đủ, append ghi vào shared backing array        | Pass `s[0:len(s):len(s)]` để force new backing array khi append |
+| Return sub-slice của large response body | Sub-slice giữ toàn bộ large backing array trong memory | `copy` ra slice mới trước khi return                            |
+| Không pre-allocate khi biết size         | N appends trong loop → log(N) reallocations            | `make([]T, 0, expectedSize)` trước loop                         |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy câu hỏi về: memory leaks, GC pressure, shared state bugs, performance optimization
 - → Nhớ đến: Slice backing array sharing — sub-slice ghim toàn bộ backing array; append với còn cap viết đè
-- → Mở đầu trả lời: *"Slice trong Go là 3-field struct header — pointer, len, cap — trỏ đến backing array. Sub-slicing chia sẻ backing array nên sửa element visible cả hai phía. Nguy hiểm hơn: append với đủ cap ghi đè vào backing array của original slice, và return sub-slice của large array ghim toàn bộ array trong memory dù chỉ dùng vài bytes."*
+- → Mở đầu trả lời: _"Slice trong Go là 3-field struct header — pointer, len, cap — trỏ đến backing array. Sub-slicing chia sẻ backing array nên sửa element visible cả hai phía. Nguy hiểm hơn: append với đủ cap ghi đè vào backing array của original slice, và return sub-slice của large array ghim toàn bộ array trong memory dù chỉ dùng vài bytes."_
 
 **🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
 - 📚 Cần biết trước: [Value Types vs Reference Types](#3-value-types-vs-reference-types) — slice header là value với internal pointer
 - ➡️ Để hiểu tiếp: [Go Concurrency](./03-concurrency.md) — slice concurrent access cần sync; [Go Testing](./05-testing-profiling.md) — benchmark slice pre-allocation
 
@@ -866,6 +920,7 @@ hmap struct:
 **A:** Go map là **hash table** implementation trong `runtime/map.go`:
 
 **Cơ chế hoạt động:**
+
 1. **Hash key** → lấy hash value (dùng hash function tùy key type)
 2. **Low B bits** của hash → chọn bucket (bucket index)
 3. **High 8 bits** (tophash) → so sánh nhanh trong bucket (tránh full key comparison)
@@ -874,6 +929,7 @@ hmap struct:
 **Load factor = 6.5**: Khi `count / 2^B > 6.5`, map sẽ **grow** — double số buckets và **incremental evacuate** (không copy tất cả cùng lúc, mỗi insert/delete di chuyển 1-2 buckets cũ).
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Giải thích tại sao tophash optimization quan trọng (so sánh uint8 trước khi compare full key — huge speedup với large key types), và tại sao incremental evacuation (thay vì stop-the-world copy) ảnh hưởng latency
 - ❌ Weak: Nói "map là hash table" mà không giải thích bucket structure hay incremental rehash
 
@@ -886,14 +942,17 @@ fatal error: concurrent map read and map write
 ```
 
 Go cố tình KHÔNG làm map thread-safe vì:
+
 1. **Performance** — mutex cho mọi operation quá tốn kém cho single-goroutine use case (phổ biến nhất)
 2. **Explicit is better** — developer phải chọn sync strategy phù hợp
 
 **Solutions:**
+
 - `sync.Mutex` hoặc `sync.RWMutex` wrapper — đơn giản, general purpose
 - `sync.Map` — optimized cho 2 patterns: (1) write-once-read-many, (2) key-disjoint goroutines. KHÔNG phải "thread-safe map" general purpose
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Biết đây là **fatal error** (không recover được), không phải panic. Giải thích khi nào `sync.Map` appropriate vs `sync.RWMutex` wrapper (write-once-read-many vs general concurrent access)
 - ❌ Weak: Nói "dùng sync.Map cho thread-safe map" mà không biết sync.Map có specific use cases — dùng sai pattern thì chậm hơn mutex
 
@@ -908,23 +967,26 @@ Go cố tình KHÔNG làm map thread-safe vì:
 Runtime thêm random offset vào starting bucket khi iterate — nên cùng map, mỗi `range` cho thứ tự khác.
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Giải thích security angle (hash DoS — kẻ tấn công có thể craft input gây worst-case O(n) lookup nếu biết hash function + seed), và engineering angle (prevent accidental order dependency trong tests)
 - ❌ Weak: Chỉ nói "hash table không có order" mà không giải thích tại sao Go **cố tình** randomize (extra step, không phải natural behavior)
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-|---------|------------|---------|
-| `&m[key]` để lấy pointer đến map value | Compiler error — map rehash di chuyển elements | Copy value ra variable rồi lấy `&variable` |
-| Concurrent map read+write với goroutines | Fatal error — program crash, không recover | Dùng `sync.RWMutex` wrapper hoặc channel-based access |
+| Sai lầm                                    | Tại sao sai                                     | Đúng là                                                 |
+| ------------------------------------------ | ----------------------------------------------- | ------------------------------------------------------- |
+| `&m[key]` để lấy pointer đến map value     | Compiler error — map rehash di chuyển elements  | Copy value ra variable rồi lấy `&variable`              |
+| Concurrent map read+write với goroutines   | Fatal error — program crash, không recover      | Dùng `sync.RWMutex` wrapper hoặc channel-based access   |
 | Dùng `sync.Map` cho general concurrent map | `sync.Map` chỉ optimal cho write-once-read-many | `sync.RWMutex` + regular map cho general concurrent use |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy câu hỏi về: concurrent data access, hash collision, performance của map operations, memory layout
 - → Nhớ đến: Map = hash table với 8-slot buckets, incremental rehash, fatal error on concurrent write (không recover)
-- → Mở đầu trả lời: *"Go map là hash table với 8 key-value slots per bucket. Hash key xác định bucket, tophash (8-bit prefix) cho quick comparison trước khi full key compare. Map không thread-safe vì Go cố tình — concurrent read+write là fatal error không recover được, không phải panic. Developer chọn sync strategy: RWMutex cho general use, sync.Map cho write-once-read-many."*
+- → Mở đầu trả lời: _"Go map là hash table với 8 key-value slots per bucket. Hash key xác định bucket, tophash (8-bit prefix) cho quick comparison trước khi full key compare. Map không thread-safe vì Go cố tình — concurrent read+write là fatal error không recover được, không phải panic. Developer chọn sync strategy: RWMutex cho general use, sync.Map cho write-once-read-many."_
 
 **🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
 - 📚 Cần biết trước: [Value Types vs Reference Types](#3-value-types-vs-reference-types) — map là pointer passed by value
 - ➡️ Để hiểu tiếp: [Go Concurrency](./03-concurrency.md) — sync.Map, RWMutex, goroutine-safe patterns
 
@@ -935,3 +997,103 @@ Runtime thêm random offset vào starting bucket khi iterate — nên cùng map,
 Grab's driver matching service (2019) gặp intermittent crash chỉ xảy ra dưới peak load (New Year's Eve, major events). Stack trace: `fatal error: concurrent map read and map write`. Root cause: một global map cache driver locations được đọc và ghi từ nhiều goroutines xử lý incoming location updates. Vì crash chỉ ở peak load, không bao giờ reproduce trong testing (ít goroutines). Fix: replace global map với `sync.RWMutex`-protected struct, sau đó migrate sang sharded map (16 shards với separate mutex) vì single RWMutex vẫn có contention. Latency giảm 15% so với single mutex. Bài học: fatal error không phải panic — không có recover, toàn bộ service crash. Race detector (`go test -race`) là mandatory trong CI.
 
 ---
+
+## Interview Q&A Summary / Tổng Hợp Q&A Phỏng Vấn
+
+| #   | Question                                           | Difficulty | Core Concept       | Key Signal                                                                              |
+| --- | -------------------------------------------------- | ---------- | ------------------ | --------------------------------------------------------------------------------------- |
+| 1   | Why was Go created? What problems does it solve?   | 🟢         | Go Philosophy      | Kể 2+ concrete Google problems (compile time, concurrency), simplicity là design goal   |
+| 2   | What are the important Go Proverbs?                | 🟡         | Go Philosophy      | Giải thích trade-off đằng sau 2+ proverbs, không chỉ đọc thuộc                          |
+| 3   | How does Go handle composition over inheritance?   | 🟢         | Go Philosophy      | Promoted methods là delegation (receiver vẫn là embedded type)                          |
+| 4   | Explain Go's type system and all basic types       | 🟢         | Type System        | `int` platform-dependent, `byte` vs `uint8` semantics                                   |
+| 5   | What are the zero values for all types in Go?      | 🟢         | Type System        | `nil` slice functional với append, `nil` map panic on write                             |
+| 6   | Type alias vs type definition — difference?        | 🟡         | Type System        | `UserID`/`OrderID` domain safety, alias là refactoring tool                             |
+| 7   | How does type inference work in Go?                | 🟢         | Type System        | Static inference (compile time), không phải dynamic typing                              |
+| 8   | Is Go pass-by-value or pass-by-reference?          | 🟡         | Value vs Reference | LUÔN pass-by-value, "copy của gì" là key (slice header, map pointer)                    |
+| 9   | Why does Go not have "reference types" officially? | 🔴         | Value vs Reference | `runtime.hmap`/`runtime.hchan`, reassign map inside function không ảnh hưởng caller     |
+| 10  | Explain struct value semantics and embedding       | 🟡         | Structs            | Promoted method receiver vẫn là embedded type, shadow ≠ override                        |
+| 11  | What are struct tags and how do they work?         | 🟡         | Structs            | Runtime reflection data, `go vet` để catch tag errors                                   |
+| 12  | Explain method sets and their rules                | 🔴         | Structs            | Addressability — interface value không có stable address cho pointer receiver           |
+| 13  | When should you use pointers vs values?            | 🟡         | Pointers           | Consistency rule, nil pointer semantics (optional/absent), 64-byte heuristic            |
+| 14  | What is escape analysis?                           | 🔴         | Pointers           | Interface boxing causes escape, `go build -gcflags="-m"` verify                         |
+| 15  | What happens with nil pointer dereference?         | 🟢         | Pointers           | Nil receiver method valid pattern, compile-time vs runtime                              |
+| 16  | How does a slice work internally?                  | 🟡         | Slice Internals    | Vẽ diagram header (ptr+len+cap) + backing array                                         |
+| 17  | How does slice growth work?                        | 🟡         | Slice Internals    | Go 1.18 threshold change, `make([]T, 0, size)` pre-allocate                             |
+| 18  | What are common slice gotchas?                     | 🔴         | Slice Internals    | 3 gotchas: shared array, append-with-cap overwrite, memory leak + full slice `a[l:h:m]` |
+| 19  | How does Go's map work internally?                 | 🔴         | Map Internals      | 8-slot buckets, tophash optimization, incremental evacuation                            |
+| 20  | Why is map NOT thread-safe?                        | 🟡         | Map Internals      | Fatal error (không recover), `sync.Map` chỉ 2 specific patterns                         |
+| 21  | Why is map iteration order random?                 | 🟡         | Map Internals      | Security (hash DoS), prevent accidental order dependency                                |
+
+**Distribution:** 🟢 Junior × 6 | 🟡 Mid × 10 | 🔴 Senior × 5
+
+---
+
+## ⚡ Cold Call Simulation / Mô Phỏng Hỏi Bất Chợt
+
+> **Scenario:** Senior engineer hỏi bất chợt trong phỏng vấn: "Is Go pass-by-value or pass-by-reference?"
+
+**30-second answer:**
+
+"Go luôn pass-by-value — không có exception. Nhưng 'value' của một số type chứa pointer: slice header là struct gồm pointer+len+cap, map là pointer đến `runtime.hmap`. Khi copy slice header, cả bản gốc và bản copy cùng trỏ đến backing array — nên modify element visible cả hai phía. Nhưng reassign map variable hoặc append vượt cap thì chỉ ảnh hưởng bản copy, vì chúng ta copy pointer chứ không phải reference."
+
+**Nếu hỏi thêm:** "So is a map a reference type?"
+
+"Go spec không dùng khái niệm 'reference type'. Map là pointer `*runtime.hmap` được pass by value. Nếu bạn reassign map variable inside function, caller không thấy — đó là sự khác biệt cốt lõi so với true pass-by-reference trong C++."
+
+---
+
+## 🔄 Self-Check / Tự Kiểm Tra
+
+> **Hướng dẫn:** Đóng tài liệu lại. Trả lời từng câu hỏi bằng cách viết ra giấy hoặc nói thành tiếng. Sau đó mở lại kiểm tra.
+
+### Retrieval Practice
+
+1. **Go Philosophy:** Kể 3 thứ Go cố tình KHÔNG có và lý do kỹ thuật cho mỗi thứ.
+2. **Type System:** `nil` slice vs `nil` map — cái nào panic khi dùng? Tại sao?
+3. **Value Semantics:** Vẽ diagram slice header khi pass vào function và function gọi `append()` vượt capacity. Chuyện gì xảy ra?
+4. **Structs:** Embedding và inheritance khác nhau ở điểm nào quan trọng nhất? (Hint: receiver)
+5. **Pointers:** `var p *int; fmt.Println(*p)` — chuyện gì xảy ra? Tại sao compiler không bắt lỗi này?
+6. **Slice Gotcha:** Viết code minh họa shared backing array bug và full slice expression fix.
+7. **Map Internals:** Tại sao `&m["key"]` không compile? Concurrent map read+write là panic hay fatal error?
+
+### Đáp án nhanh (self-grade)
+
+| #   | Key Point cần nhớ                                                                                                            |
+| --- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 1   | No inheritance (composition > inheritance), no exceptions (explicit `if err != nil`), no generics ban đầu (simplicity first) |
+| 2   | `nil` slice: `append()` works. `nil` map: write → panic. Cả hai `len()` → 0                                                  |
+| 3   | Function thấy new backing array, caller vẫn thấy old header (old ptr, old len, old cap)                                      |
+| 4   | Promoted method receiver vẫn là embedded type, không phải outer struct — không có polymorphism                               |
+| 5   | Runtime panic: invalid memory address. Compiler không luôn track nil statically                                              |
+| 6   | `b := a[1:3:3]` — cap=2 → append tạo new array                                                                               |
+| 7   | Map rehash di chuyển elements → address không ổn định. Fatal error (không recover, không phải panic)                         |
+
+### 📅 Spaced Repetition / Lặp Lại Cách Quãng
+
+- **Ngày 1 (hôm nay):** Đọc toàn bộ + làm Self-Check
+- **Ngày 3:** Chỉ làm Self-Check (không mở tài liệu)
+- **Ngày 7:** Chỉ làm Cold Call + 3 câu Self-Check khó nhất
+- **Ngày 14:** Review Interview Q&A Summary — đánh giá câu nào còn yếu
+- **Ngày 30:** Mock interview với partner — dùng bảng Summary làm question bank
+
+---
+
+## 🔗 Connections / Liên Kết Kiến Thức
+
+### Trong cùng track (BE → Go)
+
+| Topic                    | Connection                                                                                                                  | File                                                     |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| Go Interfaces & Generics | Method sets rule từ Section 4 quyết định interface satisfaction; implicit interface là triết lý Go Philosophy               | [02-interfaces-generics.md](./02-interfaces-generics.md) |
+| Go Concurrency           | Goroutines implement "share memory by communicating" (Proverb); map concurrent access → fatal error; slice sharing cần sync | [03-concurrency.md](./03-concurrency.md)                 |
+| Go Memory & GC           | Escape analysis (Section 5) quyết định stack/heap; slice growth (Section 6) tạo GC pressure                                 | [04-memory-gc.md](./04-memory-gc.md)                     |
+| Go Testing & Profiling   | `go test -race` detect concurrent map bug; `pprof` để verify escape analysis optimization                                   | [05-testing-profiling.md](./05-testing-profiling.md)     |
+| Go Data Structures       | Slice/map internals là foundation cho custom data structures implementation                                                 | [06-data-structures-go.md](./06-data-structures-go.md)   |
+
+### Cross-track connections
+
+| Topic         | Connection                                                                               | File                                                              |
+| ------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| OS Theory     | Thread model (goroutine vs OS thread), memory layout (stack vs heap), process scheduling | [OS Theory](../../shared/01-cs-fundamentals/os-theory.md)         |
+| API Design    | Go's error handling philosophy ảnh hưởng API error response design                       | [API Design](../02-backend-knowledge/01-api-design.md)            |
+| System Design | Go's concurrency model là foundation cho backend service design patterns                 | [Design Framework](../04-be-system-design/01-design-framework.md) |

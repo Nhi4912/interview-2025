@@ -40,6 +40,168 @@
 
 ---
 
+## Overview / Tổng Quan
+
+Authentication & Security là foundation cho mọi backend system — từ internal microservices đến public APIs. File này cover 7 nhóm khái niệm:
+
+| #   | Concept Group                    | Vai trò                                           | Interview Weight |
+| --- | -------------------------------- | ------------------------------------------------- | ---------------- |
+| 1   | Authentication vs Authorization  | Foundation — "who" vs "what can do"               | ⭐⭐⭐⭐⭐       |
+| 2   | Session vs JWT                   | Stateful vs stateless auth — core tradeoff        | ⭐⭐⭐⭐⭐       |
+| 3   | OAuth 2.0 & OIDC                 | Delegated authorization, third-party login        | ⭐⭐⭐⭐         |
+| 4   | mTLS & API Keys                  | Service-to-service auth, external partner access  | ⭐⭐⭐           |
+| 5   | Access Control (RBAC/ABAC)       | Permission models — who accesses what resources   | ⭐⭐⭐⭐         |
+| 6   | Password Security & OWASP        | Hashing, common vulnerabilities, defense patterns | ⭐⭐⭐⭐         |
+| 7   | CORS, Secrets & Network Security | Browser security, secret rotation, TLS/firewall   | ⭐⭐⭐           |
+
+**Mối quan hệ:** AuthN/AuthZ (1) là foundation → Session/JWT (2) là implementation → OAuth/OIDC (3) extends for 3rd party → mTLS/API Keys (4) cho service-to-service → RBAC/ABAC (5) controls access → OWASP (6) protects against attacks → CORS/Secrets/Network (7) secures infrastructure.
+
+---
+
+## Core Concepts — Phase 2 Deep Content
+
+### Concept 1: Authentication vs Authorization
+
+**🧠 Memory Hook:** "**AuthN = passport (identity). AuthZ = visa (permissions).** You can have a passport but not be allowed into every country."
+
+**Tại sao tồn tại / Why exists:**
+
+- Level 1: Systems must know WHO is making a request before deciding WHAT they can do
+- Level 2: Separating AuthN and AuthZ allows independent scaling — identity provider (Keycloak, Auth0) handles AuthN, application handles AuthZ
+- Level 3: Zero Trust Architecture requires continuous verification of both — "never trust, always verify" even within internal network
+
+**❌ Common Mistakes:**
+
+- Mixing AuthN and AuthZ in same middleware → Hard to change independently
+- "Internal service doesn't need auth" → Grab 2021 incident proves otherwise
+- Using API key for user authentication → API keys identify applications, not users
+
+**🎯 Interview Pattern:** "How do you secure a microservice API?" → Separate AuthN (JWT/mTLS) from AuthZ (RBAC/ABAC) → Defense in depth layers
+
+**🔗 Knowledge Chain:** AuthN vs AuthZ → JWT/Session → OAuth 2.0 → RBAC/ABAC → Zero Trust
+
+### Concept 2: Session vs JWT
+
+**🧠 Memory Hook:** "**Session = hotel key card (front desk verifies). JWT = QR code badge (self-verifiable, hard to revoke).**"
+
+**Tại sao tồn tại / Why exists:**
+
+- Level 1: Need to maintain user state across HTTP requests (HTTP is stateless)
+- Level 2: Session = centralized store (Redis) → easy revoke, hard to scale. JWT = self-contained → easy to scale, hard to revoke
+- Level 3: Hybrid approach (short-lived JWT + refresh token with revocation list) gives best of both worlds
+
+**❌ Common Mistakes:**
+
+- Storing sensitive data in JWT payload → JWT is base64-encoded (readable), not encrypted
+- Long-lived JWT without refresh mechanism → 24h JWT = 24h window after theft
+- "JWT is more secure than sessions" → Neither is inherently more secure — different tradeoffs
+
+**🎯 Interview Pattern:** "JWT vs Session — when to use which?" → Explain stateless vs stateful tradeoffs → Mention hybrid approach → Discuss revocation strategies
+
+**🔗 Knowledge Chain:** Session → JWT → Refresh Tokens → Token Blacklist → Sliding Window Expiry
+
+### Concept 3: OAuth 2.0 & OIDC
+
+**🧠 Memory Hook:** "**OAuth 2.0 = valet key (limited access to your car). OIDC = OAuth + ID card (adds identity layer on top).**"
+
+**Tại sao tồn tại / Why exists:**
+
+- Level 1: Users want to grant third-party apps limited access without sharing passwords
+- Level 2: OAuth 2.0 separates authorization (access_token) from authentication — OIDC adds id_token for identity
+- Level 3: Multiple grant types for different scenarios: Authorization Code (web), Client Credentials (M2M), PKCE (mobile/SPA)
+
+**❌ Common Mistakes:**
+
+- Using Implicit flow in 2024 → Deprecated, use Authorization Code + PKCE instead
+- Not validating redirect_uri → Open redirect vulnerability → token theft
+- Confusing OAuth 2.0 with authentication → OAuth is authorization, OIDC adds authentication
+
+**🎯 Interview Pattern:** "Implement 'Login with Google'" → OIDC Authorization Code flow → id_token for identity, access_token for API calls → PKCE for public clients
+
+**🔗 Knowledge Chain:** OAuth 2.0 Flows → OIDC → PKCE → Token Exchange → Federated Identity
+
+### Concept 4: mTLS & API Keys
+
+**🧠 Memory Hook:** "**mTLS = both show IDs (mutual). API Key = membership card (identifies app, not person).**"
+
+**Tại sao tồn tại / Why exists:**
+
+- Level 1: Service-to-service communication needs authentication without user context
+- Level 2: mTLS provides strong identity (X.509 certs) + encryption — standard in service mesh (Istio, Linkerd)
+- Level 3: API keys are simpler but weaker — no encryption, easy to leak, used for rate limiting + billing (Stripe, OpenAI)
+
+**❌ Common Mistakes:**
+
+- Using API keys as sole authentication → Easily leaked in logs, source code
+- Not rotating mTLS certificates → Expired certs = service outage
+- mTLS without certificate pinning → Vulnerable to CA compromise
+
+**🎯 Interview Pattern:** "How do microservices authenticate each other?" → mTLS for internal, API keys for external partners → Service mesh automates cert rotation
+
+**🔗 Knowledge Chain:** TLS → mTLS → Service Mesh → Certificate Rotation → SPIFFE/SPIRE
+
+### Concept 5: Access Control (RBAC/ABAC)
+
+**🧠 Memory Hook:** "**RBAC = job title determines access. ABAC = context determines access (who + what + when + where).**"
+
+**Tại sao tồn tại / Why exists:**
+
+- Level 1: Must control WHO can do WHAT to WHICH resources
+- Level 2: RBAC (role-based) is simple but coarse — ABAC (attribute-based) handles complex policies (time, location, resource owner)
+- Level 3: Policy engines (OPA/Rego, Casbin) externalize authorization logic — decouple from application code
+
+**❌ Common Mistakes:**
+
+- Role explosion in RBAC → 100+ roles become unmanageable → Consider ABAC or hybrid
+- Hard-coding permissions in application → Use policy engine for flexibility
+- Not implementing least privilege → Admin role for everything = blast radius on compromise
+
+**🎯 Interview Pattern:** "Design permission system for multi-tenant SaaS" → RBAC for basic roles → ABAC for tenant isolation → OPA for policy engine
+
+**🔗 Knowledge Chain:** RBAC → ABAC → Policy Engines (OPA) → Multi-tenancy → Least Privilege
+
+### Concept 6: Password Security & OWASP
+
+**🧠 Memory Hook:** "**bcrypt/argon2 = slow by design (10+ rounds). OWASP Top 10 = security exam syllabus.**"
+
+**Tại sao tồn tại / Why exists:**
+
+- Level 1: Passwords stored in plaintext or weak hash (MD5/SHA1) = data breach catastrophe
+- Level 2: bcrypt adds salt + cost factor (intentionally slow) → Makes brute force impractical. Argon2 adds memory-hardness → Resists GPU/ASIC attacks
+- Level 3: OWASP Top 10 codifies most common web vulnerabilities — Injection, Broken Auth, XSS, SSRF — interviewed at every company
+
+**❌ Common Mistakes:**
+
+- Using SHA256 for passwords → Fast hash = fast brute force, need slow hash (bcrypt/argon2)
+- Not salting passwords → Rainbow table attack
+- "We don't need OWASP, we use a framework" → Frameworks mitigate but don't eliminate all OWASP risks
+
+**🎯 Interview Pattern:** "How do you store passwords securely?" → bcrypt/argon2 + salt → Cost factor tuning → Defense against rainbow/brute force
+
+**🔗 Knowledge Chain:** Password Hashing → Salt → Cost Factor → OWASP → Input Validation → Parameterized Queries
+
+### Concept 7: CORS, Secrets & Network Security
+
+**🧠 Memory Hook:** "**CORS = browser's bouncer (checks origin). Secrets = rotate like passwords (never hardcode).**"
+
+**Tại sao tồn tại / Why exists:**
+
+- Level 1: Browsers enforce same-origin policy — CORS allows controlled cross-origin access
+- Level 2: Secrets (API keys, DB passwords) leaked in code = immediate breach — Vault/KMS provides centralized management + rotation
+- Level 3: Network security layers (TLS, VPN, firewall, WAF) create defense-in-depth — no single layer sufficient
+
+**❌ Common Mistakes:**
+
+- `Access-Control-Allow-Origin: *` in production → Allows any origin to make requests
+- Storing secrets in environment variables without encryption → Process dump exposes them
+- "HTTPS is enough" → HTTPS encrypts transport, doesn't protect against SSRF, injection, or stolen tokens
+
+**🎯 Interview Pattern:** "How do you manage secrets in production?" → HashiCorp Vault/AWS KMS → Automatic rotation → Audit logging → Never in source code
+
+**🔗 Knowledge Chain:** CORS → CSP → HTTPS → Certificate Management → Secret Rotation → Vault/KMS
+
+---
+
 ## Kiến thức Auth & Security cho Go Backend Developer (Middle/Senior)
 
 > **Target**: Zalo (VNG), Grab, Axon, Employment Hero, Microsoft, Google
@@ -69,8 +231,8 @@
 
 ## 1. Authentication vs Authorization
 
-
 ## Câu Hỏi Phỏng Vấn / Interview Q&A
+
 ### Q: Phân biệt Authentication và Authorization? 🟢 🟢 [Junior]
 
 **A:** Đây là hai khái niệm hoàn toàn khác nhau nhưng thường bị nhầm lẫn:
@@ -206,6 +368,7 @@ Attacker                    Victim                     Server
 ```
 
 **Phòng chống:**
+
 1. **Regenerate session ID** sau mỗi lần đăng nhập thành công (quan trọng nhất)
 2. **Bind session với IP/User-Agent** - thay đổi → invalidate
 3. **Set session timeout** ngắn hợp lý
@@ -214,11 +377,13 @@ Attacker                    Victim                     Server
 ### Q: Ưu nhược điểm của session-based auth? 🟢 🟢 [Junior]
 
 **Ưu điểm:**
+
 - **Dễ revoke**: Xóa session khỏi store → user bị logout ngay lập tức
 - **Server kiểm soát hoàn toàn**: Có thể track active sessions, force logout
 - **Không lộ sensitive data** ở client (chỉ có session ID)
 
 **Nhược điểm:**
+
 - **Stateful**: Server phải lưu trữ session → tốn memory
 - **Khó scale horizontally**: Cần shared session store (Redis) hoặc sticky sessions
 - **CSRF vulnerability**: Browser tự gửi cookie → attacker có thể lợi dụng
@@ -294,6 +459,7 @@ Khi nào dùng:
 **A:**
 
 **Lý do cần 2 token:**
+
 - Access token ngắn hạn (15 phút) → nếu bị steal, thiệt hại giới hạn
 - Refresh token dài hạn (7-30 ngày) → dùng để lấy access token mới khi hết hạn
 - Refresh token chỉ gửi đến auth server, không gửi đến resource server → giảm bề mặt tấn công
@@ -352,6 +518,7 @@ Client                   Auth Server              Resource Server
 **A:**
 
 **Nhược điểm:**
+
 1. **Không thể revoke dễ dàng**: JWT stateless, server không track → sau khi sign, token valid cho đến khi hết hạn
 2. **Payload size lớn**: JWT thường 800-2000 bytes vs session ID 32 bytes → overhead cho mỗi request
 3. **Token theft**: Nếu access token bị steal, attacker dùng được cho đến khi hết hạn
@@ -414,6 +581,7 @@ Client                   Auth Server              Resource Server
 **Vấn đề giải quyết:** Trước OAuth, nếu app Trello muốn truy cập Google Calendar của bạn, bạn phải đưa Google password cho Trello → cực kỳ nguy hiểm. OAuth cho phép Trello request quyền giới hạn (scope) mà bạn cho phép, mà không cần chia sẻ password.
 
 **4 vai trò (roles):**
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        OAuth 2.0 Roles                          │
@@ -484,6 +652,7 @@ Client                   Auth Server              Resource Server
 ```
 
 **Điểm quan trọng:**
+
 - **Bước 7**: Token exchange xảy ra server-to-server → client_secret không bao giờ lộ ở browser
 - **state parameter**: Chống CSRF - server tạo random value, verify khi callback
 - **Authorization code** chỉ dùng 1 lần, thời hạn rất ngắn (~10 phút)
@@ -542,6 +711,7 @@ Với PKCE:
 ```
 
 **Device Code Flow** (hay gặp trong phỏng vấn):
+
 ```
 Device (TV)             Auth Server            User's Phone/PC
     │                       │                       │
@@ -606,6 +776,7 @@ Nói đơn giản:
 ```
 
 **ID Token** là một JWT chứa thông tin định danh user:
+
 ```json
 {
   "iss": "https://accounts.google.com",
@@ -646,6 +817,7 @@ Client                                      Server
 ```
 
 **Nơi đặt API key** (theo thứ tự ưu tiên):
+
 1. **Custom header** (`X-API-Key`): An toàn nhất, không log bởi proxy
 2. **Authorization header** (`Authorization: ApiKey xxx`): Chuẩn hơn
 3. **Query parameter** (`?api_key=xxx`): TRÁNH - bị log trong URL, browser history, server logs
@@ -683,16 +855,16 @@ Khi nào KHÔNG dùng:
 ```
 TLS thông thường (one-way):
   Client verify Server → "Server có phải google.com thật không?"
-  
+
   Client                          Server
     │   ← Server Certificate ───────│   Server chứng minh danh tính
     │   (Client verify)             │   Client KHÔNG cần chứng minh
     │   ✓ Encrypted channel         │
-    
+
 
 mTLS (two-way / mutual):
   Client verify Server VÀ Server verify Client
-  
+
   Client                          Server
     │   ← Server Certificate ───────│   Server chứng minh danh tính
     │   (Client verify)             │
@@ -703,12 +875,14 @@ mTLS (two-way / mutual):
 ```
 
 **Use cases:**
+
 - **Service-to-service** trong microservices: Service A gọi Service B, cả hai verify lẫn nhau
 - **Zero-trust network**: Không tin tưởng bất kỳ ai trong network, kể cả internal
 - **Financial/Healthcare APIs**: Yêu cầu bảo mật cao
 - **Service Mesh (Istio, Linkerd)**: Automatic mTLS giữa tất cả services
 
 **Certificate management challenges:**
+
 ```
 Thách thức chính:
 1. Certificate rotation    → Cert hết hạn, phải rotate không downtime
@@ -893,10 +1067,11 @@ Tại sao bcrypt/argon2id an toàn:
 ```
 
 **Salt là gì:**
+
 ```
 Không có salt:
   hash("password") → abc123   (luôn giống nhau)
-  
+
 Có salt:
   salt1 = random()  → "x9k2m"
   salt2 = random()  → "p3j7q"
@@ -907,6 +1082,7 @@ Có salt:
 ```
 
 **Bcrypt vs Argon2id:**
+
 ```
 ┌──────────────┬──────────────────────┬──────────────────────┐
 │ Tiêu chí      │ bcrypt                │ argon2id              │
@@ -950,6 +1126,7 @@ MFA = kết hợp ≥ 2 factors KHÁC LOẠI
 ```
 
 **TOTP (Time-based OTP):**
+
 ```
 Setup:
   Server tạo secret key → QR code → User scan bằng Google Authenticator
@@ -961,6 +1138,7 @@ Verify:
 ```
 
 **WebAuthn/FIDO2** (passwordless, strongest):
+
 ```
   Dùng public-key cryptography
   Private key lưu trên device (hardware key, phone biometric)
@@ -980,7 +1158,7 @@ Verify:
 ```
 Vulnerable code (string concatenation):
   query = "SELECT * FROM users WHERE id = " + userInput
-  
+
   userInput = "1; DROP TABLE users;--"
   → "SELECT * FROM users WHERE id = 1; DROP TABLE users;--"
   → Database thực thi CẢ lệnh DROP!
@@ -988,7 +1166,7 @@ Vulnerable code (string concatenation):
 Parameterized query (safe):
   query = "SELECT * FROM users WHERE id = $1"
   db.Query(query, userInput)
-  
+
   → Database nhận: parameter $1 = "1; DROP TABLE users;--"
   → Xử lý như một STRING VALUE, không phải SQL code
   → Tìm user có id = "1; DROP TABLE users;--" → không tìm thấy → safe
@@ -1001,6 +1179,7 @@ Parameterized query (safe):
 **A:**
 
 **XSS (Cross-Site Scripting):**
+
 ```
 Attacker inject mã JavaScript vào trang web → chạy trên browser của victim
 
@@ -1020,6 +1199,7 @@ Phòng chống: Output encoding, CSP header, sanitize input
 ```
 
 **CSRF (Cross-Site Request Forgery):**
+
 ```
 Attacker trick victim's browser gửi request đến site victim đã login
 
@@ -1041,12 +1221,13 @@ Phòng chống:
 ```
 
 **SSRF (Server-Side Request Forgery):**
+
 ```
 Attacker trick SERVER gửi request đến internal resources
 
   User input:  url = "http://169.254.169.254/latest/meta-data/"
   Server code: resp = http.Get(url)  // Fetch user-provided URL
-  
+
   → Server fetch AWS metadata → lộ IAM credentials!
 
 Hoặc: url = "http://internal-db:6379/FLUSHALL"
@@ -1064,6 +1245,7 @@ Phòng chống:
 **A:**
 
 **IDOR (Insecure Direct Object Reference):**
+
 ```
 GET /api/invoices/123    ← User A xem invoice của mình
 GET /api/invoices/124    ← User A đổi ID → xem invoice của User B!
@@ -1077,6 +1259,7 @@ Phòng chống:
 ```
 
 **Mass Assignment:**
+
 ```
 Request body:  {"name": "John", "email": "john@x.com", "role": "admin"}
 Server code:   db.Model(&user).Updates(request.Body)
@@ -1086,7 +1269,7 @@ Server code:   db.Model(&user).Updates(request.Body)
 Phòng chống:
   1. Whitelist fields: Chỉ cho phép update các field cụ thể
   2. Dùng separate DTOs/structs cho input binding
-  3. Go example: dùng separate CreateUserInput struct, 
+  3. Go example: dùng separate CreateUserInput struct,
      KHÔNG bind trực tiếp vào User model
 ```
 
@@ -1156,7 +1339,7 @@ CORS = cơ chế cho phép server "opt-in" cho cross-origin requests
 Simple requests (KHÔNG cần preflight):
   • Method: GET, HEAD, POST
   • Headers: chỉ Accept, Accept-Language, Content-Language,
-    Content-Type (chỉ application/x-www-form-urlencoded, 
+    Content-Type (chỉ application/x-www-form-urlencoded,
     multipart/form-data, text/plain)
 
 Preflighted requests (CẦN preflight):
@@ -1197,6 +1380,7 @@ Preflight flow:
 ```
 
 **Common CORS mistakes:**
+
 ```
 1. Access-Control-Allow-Origin: *  VỚI  credentials: true
    → Browser sẽ BLOCK (spec không cho phép * với credentials)
@@ -1285,6 +1469,7 @@ Kubernetes Secrets (cẩn thận):
 ```
 
 **Secret rotation strategy:**
+
 ```
 1. Dual-secret pattern:
    → Tạo secret mới (V2) → deploy apps dùng V2 → xóa V1
@@ -1322,7 +1507,7 @@ Internet
        ▼
 ┌──────────────┐
 │ Load Balancer│  TLS termination, rate limiting
-│              │  
+│              │
 └──────┬───────┘
        ▼
 ┌──────────────┐
@@ -1342,6 +1527,7 @@ Internet
 ```
 
 **Encryption:**
+
 ```
 In Transit:
   • TLS 1.3 everywhere (external + internal)
@@ -1353,7 +1539,7 @@ At Rest:
   • Disk encryption (LUKS, AWS EBS encryption)
   • Application-level encryption for sensitive fields
   • Key management: AWS KMS, GCP Cloud KMS, HashiCorp Vault
-  
+
   Key hierarchy:
     Master Key (HSM) → Data Encryption Key (DEK) → Encrypted Data
     (never leaves HSM)  (encrypted by master key)
@@ -1534,14 +1720,89 @@ Quick reference:
 
 ## Self-Check / Tự Kiểm Tra
 
-- [ ] Can I explain why JWT is hard to revoke and what solutions exist (blacklist, short TTL)?
-- [ ] Can I compare OAuth 2.0 Authorization Code flow vs Client Credentials flow?
-- [ ] Can I explain the difference between symmetric (HS256) and asymmetric (RS256) JWT signing?
-- [ ] Can I name 3 common auth anti-patterns and why they're dangerous?
-- 💬 **Feynman Prompt:** Giải thích cho PM tại sao "logout" không thực sự work với JWT — và tại sao đây là tradeoff có chủ ý, không phải bug.
+### Retrieval Practice — Tự trả lời KHÔNG nhìn notes
+
+| #   | Question                                 | Key Points                                                            |
+| --- | ---------------------------------------- | --------------------------------------------------------------------- |
+| 1   | AuthN vs AuthZ — khác biệt cốt lõi?      | AuthN=identity, AuthZ=permissions, separate middleware                |
+| 2   | JWT vs Session — khi nào dùng cái nào?   | JWT=stateless scale, Session=easy revoke, Hybrid=best                 |
+| 3   | OAuth 2.0 Authorization Code flow?       | Code→token exchange, PKCE for public clients, redirect_uri validation |
+| 4   | mTLS hoạt động thế nào?                  | Both sides present certs, X.509 validation, service mesh automates    |
+| 5   | RBAC vs ABAC — tradeoffs?                | RBAC=simple/coarse, ABAC=flexible/complex, OPA for policy engine      |
+| 6   | bcrypt vs SHA256 cho passwords?          | bcrypt=slow (intentional), salt+cost factor, argon2=memory-hard       |
+| 7   | CORS purpose và common misconfiguration? | Browser same-origin enforcement, never `*` in production              |
+
+### 📅 Spaced Repetition Schedule
+
+| Round | When          | Focus                                                      |
+| ----- | ------------- | ---------------------------------------------------------- |
+| 1     | Day 1 (today) | Read all Memory Hooks, answer Self-Check from memory       |
+| 2     | Day 3         | Redo 🟢 Q&As, review JWT anatomy and OAuth flows           |
+| 3     | Day 7         | Redo 🟡 Q&As, whiteboard OAuth 2.0 Authorization Code flow |
+| 4     | Day 14        | Full Cold Call simulation, tackle 🔴 Q&As                  |
+| 5     | Day 30        | Mock interview: design auth system for multi-tenant SaaS   |
+
+## Interview Q&A Summary / Tổng Hợp Q&A Phỏng Vấn
+
+| #   | Question                              | Difficulty | Core Concept   | Key Signal                                           |
+| --- | ------------------------------------- | ---------- | -------------- | ---------------------------------------------------- |
+| 1   | AuthN vs AuthZ?                       | 🟢         | Foundation     | Identity vs permissions, separate concerns           |
+| 2   | Session-based auth hoạt động thế nào? | 🟢         | Session        | Server-side store, session ID in cookie              |
+| 3   | Session security vulnerabilities?     | 🟡         | Session        | Fixation, hijacking, CSRF, HttpOnly+Secure           |
+| 4   | Distributed session management?       | 🟡         | Session        | Redis/Memcached, sticky sessions tradeoff            |
+| 5   | JWT structure và cách hoạt động?      | 🟢         | JWT            | Header.Payload.Signature, base64, stateless          |
+| 6   | JWT vs Session tradeoffs?             | 🟡         | JWT            | Stateless/scale vs revocation/size                   |
+| 7   | JWT security best practices?          | 🟡         | JWT            | Short TTL, refresh token, RS256 for microservices    |
+| 8   | HS256 vs RS256?                       | 🟡         | JWT            | Symmetric=shared secret, Asymmetric=public/private   |
+| 9   | JWT revocation strategies?            | 🔴         | JWT            | Blacklist, short TTL, token versioning               |
+| 10  | OAuth 2.0 grant types?                | 🟢         | OAuth          | Auth Code, Client Credentials, PKCE                  |
+| 11  | Authorization Code flow?              | 🟡         | OAuth          | Code→token exchange, redirect_uri, state param       |
+| 12  | OAuth security threats?               | 🔴         | OAuth          | CSRF, open redirect, token leakage                   |
+| 13  | OIDC vs OAuth 2.0?                    | 🟡         | OIDC           | OIDC adds id_token, userinfo endpoint                |
+| 14  | OIDC flows?                           | 🟡         | OIDC           | Same as OAuth + id_token, nonce validation           |
+| 15  | API Key design?                       | 🟢         | API Keys       | Identify app not user, rate limiting, hashed storage |
+| 16  | API Key security?                     | 🟡         | API Keys       | Rotation, scoping, never in URLs                     |
+| 17  | mTLS hoạt động thế nào?               | 🟡         | mTLS           | Mutual cert validation, X.509, service mesh          |
+| 18  | mTLS implementation?                  | 🔴         | mTLS           | Cert generation, CA, rotation, SPIFFE                |
+| 19  | RBAC implementation?                  | 🟢         | Access Control | Role→permissions mapping, middleware check           |
+| 20  | RBAC vs ABAC vs ReBAC?                | 🟡         | Access Control | Role=simple, Attribute=flexible, Relation=graph      |
+| 21  | Policy engine (OPA)?                  | 🔴         | Access Control | Rego language, sidecar pattern, decision logs        |
+| 22  | Password hashing?                     | 🟢         | Password       | bcrypt/argon2, salt, cost factor                     |
+| 23  | Password security patterns?           | 🟡         | Password       | Rate limiting, breached password check, MFA          |
+| 24  | OWASP Top 10?                         | 🟢         | OWASP          | Injection, broken auth, XSS, SSRF                    |
+| 25  | SQL injection prevention?             | 🟢         | OWASP          | Parameterized queries, ORM, input validation         |
+| 26  | XSS prevention?                       | 🟡         | OWASP          | Output encoding, CSP, HttpOnly cookies               |
+| 27  | SSRF prevention?                      | 🟡         | OWASP          | URL allowlist, no internal access, metadata block    |
+| 28  | CORS mechanism?                       | 🟢         | CORS           | Preflight OPTIONS, origin validation, credentials    |
+| 29  | CORS misconfiguration?                | 🟡         | CORS           | Wildcard origin, credentials exposure                |
+| 30  | Secrets management?                   | 🟢         | Secrets        | Vault/KMS, rotation, never in code                   |
+| 31  | Network security layers?              | 🟡         | Network        | TLS, VPN, firewall, WAF, defense-in-depth            |
+| 32  | Zero Trust architecture?              | 🔴         | Network        | Never trust, always verify, micro-segmentation       |
+
+**Distribution:** 🟢 12 | 🟡 15 | 🔴 5
+
+## ⚡ Cold Call Simulation / Mô Phỏng Hỏi Nhanh
+
+> **Interviewer:** "A user reports they were logged out unexpectedly. How do you debug this?"
+
+**30-Second Answer:**
+"I'd check three things: (1) Token expiry — if using JWT, the access token may have expired and the refresh token flow failed. Check refresh token validity and any blacklist. (2) Session invalidation — if session-based, check if Redis evicted the session (memory pressure) or if a deployment cleared the session store. (3) Security event — check audit logs for suspicious activity that triggered forced logout (IP change, concurrent sessions limit). I'd also check if the load balancer is sending requests to different instances without shared session store."
+
+**Follow-up:** "How would you design a system to prevent this while maintaining security?"
+→ "Short-lived JWT (15min) + long-lived refresh token (7 days) stored in HttpOnly cookie. Refresh token rotation on use — each refresh issues new pair. Redis blacklist for revoked refresh tokens. This gives stateless verification for most requests while maintaining revocation capability."
 
 ## Connections / Liên Kết
 
-- ⬅️ **Built on**: [Distributed Systems](./03-distributed-systems.md) — stateless auth (JWT) is required for horizontal scaling
-- ➡️ **Applied in**: [API Design](./01-api-design.md) — auth headers, rate limiting, API key patterns
-- 🔗 **Theory**: [Security Fundamentals](../../shared/04-security/01-security-fundamentals.md) — CIA Triad, OWASP Top 10
+**Same track (be-track):**
+
+- ↔️ [API Design](./01-api-design.md) — Auth headers, rate limiting, API key patterns
+- ↔️ [Microservices](./02-microservices.md) — Service-to-service auth, service mesh mTLS
+- ↔️ [Distributed Systems](./03-distributed-systems.md) — Stateless auth (JWT) for horizontal scaling
+- ↔️ [Networking](./06-networking-go.md) — TLS, HTTPS, certificate management
+- ↔️ [Resilience Patterns](./07-resilience-patterns.md) — Rate limiting, circuit breaker for auth services
+
+**Cross-track:**
+
+- 🔗 [Go Concurrency](../01-golang/03-concurrency.md) — Context propagation for auth tokens in goroutines
+- 🔗 [Database Advanced](../03-database-advanced/01-sql-fundamentals.md) — Parameterized queries prevent SQL injection
+- 🔗 [System Design](../04-be-system-design/01-design-framework.md) — Auth as cross-cutting concern in system design

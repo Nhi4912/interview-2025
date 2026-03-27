@@ -62,6 +62,174 @@
 
 ---
 
+## Overview / Tổng Quan
+
+Go memory management là chủ đề **phân biệt mid vs senior** trong phỏng vấn. File này bao gồm 7 nhóm khái niệm:
+
+| #   | Core Concept                 | Role / Vai Trò                                                    | Interview Weight |
+| --- | ---------------------------- | ----------------------------------------------------------------- | ---------------- |
+| 1   | **Go Memory Model**          | Happens-before rules cho concurrent memory access                 | ⭐⭐             |
+| 2   | **Stack vs Heap**            | Escape analysis quyết định allocation — nền tảng optimization     | ⭐⭐⭐           |
+| 3   | **Memory Allocator**         | TCMalloc-inspired 3-tier: mcache → mcentral → mheap               | ⭐⭐             |
+| 4   | **Garbage Collector**        | Tri-color mark & sweep — concurrent, low-latency                  | ⭐⭐⭐           |
+| 5   | **GC Tuning**                | GOGC + GOMEMLIMIT — production knobs cho latency/memory trade-off | ⭐⭐⭐           |
+| 6   | **Memory Profiling**         | pprof — debug production memory issues                            | ⭐⭐⭐           |
+| 7   | **Memory Leaks & sync.Pool** | Common leak patterns + object reuse for GC pressure               | ⭐⭐             |
+
+**Relationship / Mối Quan Hệ**: Escape analysis (2) decides where allocator (3) puts data. GC (4) reclaims heap. Tuning (5) controls GC behavior. Profiling (6) finds problems. Understanding leaks (7) prevents them.
+
+---
+
+## Core Concepts — Phase 2 Deep Elements / Khái Niệm Cốt Lõi
+
+### Concept 1: Go Memory Model
+
+> 🧠 **Memory Hook**: "**Happens-before** = promise that goroutine A's write is visible to goroutine B's read."
+
+**Why This Exists / Tại Sao Tồn Tại:**
+
+- **Level 1**: Without ordering guarantees, compiler/CPU reorder instructions → goroutines see stale data.
+- **Level 2**: Channel operations and sync primitives create happens-before edges — this is why "communicate by sharing channels" works safely.
+
+**Common Mistakes / Lỗi Thường Gặp:**
+
+- ❌ Assuming goroutines see writes immediately without synchronization
+- ❌ Using `init()` ordering assumptions between packages
+
+**🎯 Interview Pattern**: Define happens-before → Channel/mutex examples → Why ordering matters for concurrent code
+
+**🔗 Knowledge Chain**: `CPU cache coherence` → `memory ordering` → `Go memory model` → `sync primitives` → `channel semantics`
+
+---
+
+### Concept 2: Stack vs Heap (Escape Analysis)
+
+> 🧠 **Memory Hook**: "**Stack = tự dọn** (free khi function return), **Heap = GC dọn** (expensive). Escape analysis = compiler quyết định ai dọn."
+
+**Why This Exists / Tại Sao Tồn Tại:**
+
+- **Level 1**: Stack allocation is ~100x faster than heap (just pointer bump, no GC scan).
+- **Level 2**: Compiler performs escape analysis to keep variables on stack when possible — avoiding unnecessary GC pressure.
+- **Level 3**: `go build -gcflags="-m"` reveals escape decisions — key optimization skill.
+
+**Common Mistakes / Lỗi Thường Gặp:**
+
+- ❌ Returning pointer to local variable forces heap escape (intentional in Go, but adds GC pressure)
+- ❌ Interface boxing (`var i interface{} = v`) causes escape — often invisible
+- ❌ Large stack-allocated arrays (>8KB typical) force heap allocation
+
+**🎯 Interview Pattern**: Stack vs heap trade-offs → Escape analysis triggers → `gcflags="-m"` demo → Optimization implications
+
+**🔗 Knowledge Chain**: `stack (per-goroutine)` → `heap (shared)` → `escape analysis` → `GC pressure` → `pprof alloc profiling`
+
+---
+
+### Concept 3: Memory Allocator (TCMalloc-inspired)
+
+> 🧠 **Memory Hook**: "**3 tầng like cửa hàng**: mcache = quầy cashier (per-P, no lock) → mcentral = kho trung tâm (per-size, mutex) → mheap = nhà kho (global mutex)."
+
+**Why This Exists / Tại Sao Tồn Tại:**
+
+- **Level 1**: Global allocator with single mutex → bottleneck under concurrency.
+- **Level 2**: Per-P mcache eliminates lock contention for common allocations; tiny allocator handles <16B objects.
+
+**Common Mistakes / Lỗi Thường Gặp:**
+
+- ❌ Thinking allocation is free because Go has GC — allocation still costs CPU
+- ❌ Not understanding size classes — objects round up to next size class, wasting memory
+
+**🎯 Interview Pattern**: 3-tier architecture diagram → Request flow → Size classes → Tiny allocator for small objects
+
+**🔗 Knowledge Chain**: `TCMalloc (Google)` → `Go allocator (mcache/mcentral/mheap)` → `mspan (8KB pages)` → `size classes (67)` → `tiny allocator (<16B)`
+
+---
+
+### Concept 4: Garbage Collector (Tri-color Mark & Sweep)
+
+> 🧠 **Memory Hook**: "**White** = trash, **Grey** = checking, **Black** = keep. GC turns everything white, then paints survivors grey→black."
+
+**Why This Exists / Tại Sao Tồn Tại:**
+
+- **Level 1**: Manual memory management (C/C++) causes use-after-free and double-free bugs.
+- **Level 2**: Concurrent GC (runs alongside goroutines) reduces STW to <100μs — critical for low-latency services.
+- **Level 3**: Write barrier prevents "lost object" bug when mutator and GC run concurrently.
+
+**Common Mistakes / Lỗi Thường Gặp:**
+
+- ❌ Thinking GC is "stop the world" — only Mark Setup and Mark Termination are STW (~10-30μs each)
+- ❌ Confusing write barrier with memory barrier — write barrier is GC mechanism, memory barrier is CPU ordering
+- ❌ Not knowing hybrid write barrier (Dijkstra + Yuasa) since Go 1.8
+
+**🎯 Interview Pattern**: Tri-color algorithm → Why concurrent is hard → Write barrier solution → STW phases → Evolution across Go versions
+
+**🔗 Knowledge Chain**: `reference counting (simple)` → `mark-sweep (batch)` → `tri-color (concurrent)` → `write barrier (safety)` → `GOGC/GOMEMLIMIT (tuning)`
+
+---
+
+### Concept 5: GC Tuning (GOGC & GOMEMLIMIT)
+
+> 🧠 **Memory Hook**: "**GOGC = percentage trigger** (100 = double heap before GC). **GOMEMLIMIT = hard ceiling** (OOM protection)."
+
+**Why This Exists / Tại Sao Tồn Tại:**
+
+- **Level 1**: Default GOGC=100 works for most cases, but latency-sensitive services need different trade-offs.
+- **Level 2**: GOMEMLIMIT (Go 1.19+) prevents OOM kills in containers by making GC aggressive near memory limit.
+
+**Common Mistakes / Lỗi Thường Gặp:**
+
+- ❌ Setting GOGC=off without GOMEMLIMIT → OOM under traffic spikes
+- ❌ Setting GOMEMLIMIT equal to container limit → no room for OS overhead
+- ❌ Tuning GOGC without profiling first — premature optimization
+
+**🎯 Interview Pattern**: GOGC math → GOMEMLIMIT for containers → Latency vs memory trade-off → When to tune (profile first!)
+
+**🔗 Knowledge Chain**: `GC frequency` → `GOGC (percentage)` → `GOMEMLIMIT (absolute)` → `GC pacing` → `container memory management`
+
+---
+
+### Concept 6: Memory Profiling (pprof)
+
+> 🧠 **Memory Hook**: "**pprof = X-ray cho memory** — alloc_space shows total radiation, inuse_space shows current tumors."
+
+**Why This Exists / Tại Sao Tồn Tại:**
+
+- **Level 1**: Can't optimize what you can't measure — pprof quantifies allocation costs.
+- **Level 2**: Diff-based profiling (`-base`) finds memory growth over time — key for leak detection.
+
+**Common Mistakes / Lỗi Thường Gặp:**
+
+- ❌ Looking at alloc_space when hunting leaks (use inuse_space — currently live allocations)
+- ❌ Not capturing baseline profile before the problem starts
+- ❌ Forgetting goroutine profile alongside heap — goroutine leaks cause memory leaks
+
+**🎯 Interview Pattern**: 4-step workflow (identify → capture → analyze → verify) → Key pprof views → Diff profiling → Flamegraph reading
+
+**🔗 Knowledge Chain**: `runtime.MemStats` → `pprof (heap/goroutine/mutex)` → `flamegraph` → `benchmem` → `trace`
+
+---
+
+### Concept 7: Memory Leaks & sync.Pool
+
+> 🧠 **Memory Hook**: "Go leaks aren't lost memory — they're **stuck goroutines** and **forgotten references** the GC can't free."
+
+**Why This Exists / Tại Sao Tồn Tại:**
+
+- **Level 1**: GC only frees unreachable objects — if code holds references, memory grows forever.
+- **Level 2**: sync.Pool reduces GC pressure by reusing objects — but pool is cleared every GC cycle (not a cache!).
+
+**Common Mistakes / Lỗi Thường Gặp:**
+
+- ❌ Goroutine blocked on unbuffered channel → goroutine leak → memory leak
+- ❌ Sub-slice retaining large backing array — `s2 := s1[5:10]` keeps entire s1 alive
+- ❌ Using sync.Pool as cache — objects are cleared every GC cycle
+- ❌ Forgetting to reset Pool objects before Put() → data leaking between requests (security bug!)
+
+**🎯 Interview Pattern**: List 5 leak types → Detection workflow (pprof) → sync.Pool mechanics → Pool pitfalls
+
+**🔗 Knowledge Chain**: `goroutine leak` → `reference leak (map/slice)` → `timer leak` → `sync.Pool (reuse)` → `pprof detection`
+
+---
+
 ## 1. Go Memory Model
 
 ### 🟡 Q: Go Memory Model là gì? Giải thích happens-before relationship.
@@ -74,16 +242,16 @@ Go Memory Model định nghĩa **các điều kiện** mà một goroutine khi �
 
 **Các happens-before guarantees trong Go:**
 
-| Operation | Guarantee |
-|-----------|-----------|
-| **Package init** | `init()` của package import xong happens-before `init()` của package importing |
-| **Goroutine creation** | `go f()` statement happens-before `f()` bắt đầu chạy |
-| **Channel send** | Send trên channel happens-before receive tương ứng hoàn thành |
-| **Channel close** | Close happens-before receive nhận zero value (từ closed channel) |
-| **Unbuffered channel** | Receive hoàn thành happens-before send hoàn thành |
-| **Mutex** | `mu.Unlock()` call n happens-before `mu.Lock()` call n+1 returns |
-| **sync.Once** | `once.Do(f)` — `f()` hoàn thành happens-before mọi `once.Do` khác return |
-| **sync.WaitGroup** | `wg.Done()` happens-before `wg.Wait()` returns |
+| Operation              | Guarantee                                                                      |
+| ---------------------- | ------------------------------------------------------------------------------ |
+| **Package init**       | `init()` của package import xong happens-before `init()` của package importing |
+| **Goroutine creation** | `go f()` statement happens-before `f()` bắt đầu chạy                           |
+| **Channel send**       | Send trên channel happens-before receive tương ứng hoàn thành                  |
+| **Channel close**      | Close happens-before receive nhận zero value (từ closed channel)               |
+| **Unbuffered channel** | Receive hoàn thành happens-before send hoàn thành                              |
+| **Mutex**              | `mu.Unlock()` call n happens-before `mu.Lock()` call n+1 returns               |
+| **sync.Once**          | `once.Do(f)` — `f()` hoàn thành happens-before mọi `once.Do` khác return       |
+| **sync.WaitGroup**     | `wg.Done()` happens-before `wg.Wait()` returns                                 |
 
 ### 🔴 Q: Tại sao cần synchronization? Điều gì xảy ra nếu không sync?
 
@@ -142,15 +310,15 @@ go build -gcflags="-m -m" ./...
 
 **Các trường hợp phổ biến gây escape:**
 
-| Trường hợp | Ví dụ | Lý do |
-|------------|-------|-------|
-| **Return pointer** | `return &x` | Caller cần truy cập sau khi function return |
-| **Interface conversion** | `fmt.Println(x)` | Compiler không biết size tại compile time |
-| **Closure capture by reference** | `go func() { use(x) }()` | Goroutine có thể outlive stack frame |
-| **Slice/map quá lớn** | `make([]byte, 1<<20)` | Quá lớn cho stack (thường >64KB) |
-| **Dynamic size** | `make([]byte, n)` | Size chưa biết tại compile time |
-| **Assign to interface field** | `var i interface{} = x` | Boxing value vào interface |
-| **Send pointer to channel** | `ch <- &x` | Receiver ở goroutine khác |
+| Trường hợp                       | Ví dụ                    | Lý do                                       |
+| -------------------------------- | ------------------------ | ------------------------------------------- |
+| **Return pointer**               | `return &x`              | Caller cần truy cập sau khi function return |
+| **Interface conversion**         | `fmt.Println(x)`         | Compiler không biết size tại compile time   |
+| **Closure capture by reference** | `go func() { use(x) }()` | Goroutine có thể outlive stack frame        |
+| **Slice/map quá lớn**            | `make([]byte, 1<<20)`    | Quá lớn cho stack (thường >64KB)            |
+| **Dynamic size**                 | `make([]byte, n)`        | Size chưa biết tại compile time             |
+| **Assign to interface field**    | `var i interface{} = x`  | Boxing value vào interface                  |
+| **Send pointer to channel**      | `ch <- &x`               | Receiver ở goroutine khác                   |
 
 ```go
 // Return pointer → escapes
@@ -219,12 +387,12 @@ Go memory allocator lấy cảm hứng từ **TCMalloc** (Thread-Caching Malloc)
 
 **Phân tầng chi tiết:**
 
-| Layer | Mô tả | Lock |
-|-------|--------|------|
-| **mcache** | Mỗi P (logical processor) có 1 mcache riêng. Chứa free list cho mỗi size class. Allocation KHÔNG cần lock | None |
-| **mcentral** | Shared cache cho từng size class. Khi mcache hết, lấy span từ mcentral | Mutex (per size class) |
-| **mheap** | Quản lý toàn bộ heap memory. Khi mcentral hết, lấy page từ mheap | Global mutex |
-| **OS** | mheap request memory từ OS bằng `mmap` syscall, theo chunks 64MB (arena) | N/A |
+| Layer        | Mô tả                                                                                                     | Lock                   |
+| ------------ | --------------------------------------------------------------------------------------------------------- | ---------------------- |
+| **mcache**   | Mỗi P (logical processor) có 1 mcache riêng. Chứa free list cho mỗi size class. Allocation KHÔNG cần lock | None                   |
+| **mcentral** | Shared cache cho từng size class. Khi mcache hết, lấy span từ mcentral                                    | Mutex (per size class) |
+| **mheap**    | Quản lý toàn bộ heap memory. Khi mcentral hết, lấy page từ mheap                                          | Global mutex           |
+| **OS**       | mheap request memory từ OS bằng `mmap` syscall, theo chunks 64MB (arena)                                  | N/A                    |
 
 ### 🔴 Q: Size classes và tiny allocator là gì?
 
@@ -253,11 +421,11 @@ Allocation flow:
 
 Go dùng **concurrent, tri-color, mark-and-sweep** garbage collector. Ba màu phân loại objects:
 
-| Màu | Ý nghĩa |
-|------|---------|
+| Màu       | Ý nghĩa                                                                          |
+| --------- | -------------------------------------------------------------------------------- |
 | **White** | Chưa được visit — potentially unreachable (sẽ bị sweep nếu vẫn white cuối phase) |
-| **Grey** | Đã được mark reachable, nhưng children chưa scan |
-| **Black** | Đã mark reachable VÀ tất cả children đã scan xong |
+| **Grey**  | Đã được mark reachable, nhưng children chưa scan                                 |
+| **Black** | Đã mark reachable VÀ tất cả children đã scan xong                                |
 
 **Thuật toán:**
 
@@ -349,6 +517,7 @@ Go 1.18+ STW pauses: typical **10-50 microseconds** (sub-millisecond). Target < 
 **Nguyên nhân STW kéo dài:** Nhiều goroutines cần stop; goroutine trong tight loop (fixed Go 1.14+ async preemption); nhiều finalizers.
 
 **Cách minimize:**
+
 1. Giảm allocations → ít GC cycles
 2. Dùng `sync.Pool` cho hot-path allocations
 3. Pre-allocate slices/maps
@@ -402,6 +571,7 @@ GOGC=100 GOMEMLIMIT=3500MiB ./myapp  # ~500MB cho non-Go memory
 **A:**
 
 **GC pacing:** Runtime tự tính thời điểm trigger GC tiếp theo dựa trên:
+
 - Live heap size sau GC trước
 - GOGC ratio
 - GOMEMLIMIT
@@ -480,12 +650,12 @@ go tool pprof http://localhost:6060/debug/pprof/allocs
 
 **A:**
 
-| Profile Type | Ý nghĩa | Use Case |
-|-------------|---------|----------|
-| **inuse_space** | Bytes đang được sử dụng (live) | Tìm code đang giữ nhiều memory nhất |
-| **inuse_objects** | Số objects đang live | Tìm code tạo nhiều small objects |
-| **alloc_space** | Tổng bytes đã allocate (cumulative) | Tìm code allocate nhiều nhất (dù đã free) |
-| **alloc_objects** | Tổng objects đã allocate | Tìm hot allocation sites |
+| Profile Type      | Ý nghĩa                             | Use Case                                  |
+| ----------------- | ----------------------------------- | ----------------------------------------- |
+| **inuse_space**   | Bytes đang được sử dụng (live)      | Tìm code đang giữ nhiều memory nhất       |
+| **inuse_objects** | Số objects đang live                | Tìm code tạo nhiều small objects          |
+| **alloc_space**   | Tổng bytes đã allocate (cumulative) | Tìm code allocate nhiều nhất (dù đã free) |
+| **alloc_objects** | Tổng objects đã allocate            | Tìm hot allocation sites                  |
 
 ```bash
 # Interactive mode
@@ -502,13 +672,13 @@ go tool pprof -http=:8080 mem.prof
 
 ### 🟡 Q: Các profile types khác ngoài heap?
 
-| Profile | Mô tả | Endpoint |
-|---------|--------|----------|
-| **CPU** | CPU time distribution | `/debug/pprof/profile?seconds=30` |
-| **Heap** | Memory (inuse/alloc) | `/debug/pprof/heap` |
-| **Goroutine** | All goroutine stacks | `/debug/pprof/goroutine` |
-| **Block** | Goroutine blocking time | `/debug/pprof/block` |
-| **Mutex** | Mutex contention | `/debug/pprof/mutex` |
+| Profile       | Mô tả                   | Endpoint                          |
+| ------------- | ----------------------- | --------------------------------- |
+| **CPU**       | CPU time distribution   | `/debug/pprof/profile?seconds=30` |
+| **Heap**      | Memory (inuse/alloc)    | `/debug/pprof/heap`               |
+| **Goroutine** | All goroutine stacks    | `/debug/pprof/goroutine`          |
+| **Block**     | Goroutine blocking time | `/debug/pprof/block`              |
+| **Mutex**     | Mutex contention        | `/debug/pprof/mutex`              |
 
 **Benchmark memory:**
 
@@ -545,7 +715,7 @@ func processRequest(ctx context.Context) {
         data := fetchFromDB()  // Nếu DB slow hoặc down...
         ch <- data             // Blocked forever nếu không ai receive
     }()
-    
+
     select {
     case r := <-ch:
         handle(r)
@@ -713,10 +883,12 @@ func TestNoLeak(t *testing.T) {
 ```
 
 **Get/Put flow:**
+
 1. `Get()`: private slot → local shared list → steal from other P's shared → call `New()`
 2. `Put()`: store in private slot (nếu trống) → push to local shared list
 
 **Đặc tính quan trọng:**
+
 - **GC sẽ xóa sạch** pool mỗi GC cycle — KHÔNG dùng làm long-term cache
 - **No size limit** — pool có thể grow unbounded giữa các GC cycles
 - **Thread-safe** — designed cho concurrent access
@@ -740,7 +912,7 @@ func processData(data []byte) string {
         buf.Reset() // QUAN TRỌNG: reset trước khi put lại
         bufPool.Put(buf)
     }()
-    
+
     buf.WriteString("prefix:")
     buf.Write(data)
     buf.WriteString(":suffix")
@@ -998,14 +1170,87 @@ Vietnamese explanation: `sync.Pool` giải quyết vấn đề GC pressure trong
 
 ---
 
+## Interview Q&A Summary / Tóm Tắt Q&A Phỏng Vấn
+
+| #   | Question                                 | Difficulty | Core Concept  | Key Signal                                                     |
+| --- | ---------------------------------------- | ---------- | ------------- | -------------------------------------------------------------- |
+| 1   | Go Memory Model & happens-before         | 🟡         | Memory Model  | Ordering guarantees, channel/mutex create edges                |
+| 2   | Tại sao cần synchronization?             | 🔴         | Memory Model  | CPU/compiler reordering, stale data without sync               |
+| 3   | Stack vs heap allocation decision        | 🟡         | Stack vs Heap | Escape analysis, `gcflags="-m"`, pointer escape                |
+| 4   | Escape to heap triggers                  | 🟡         | Stack vs Heap | Return pointer, interface boxing, large alloc, dynamic size    |
+| 5   | Goroutine stack mechanics                | 🟡         | Stack vs Heap | 2KB start, growable, copy-on-grow, shrink by GC                |
+| 6   | Memory allocator architecture            | 🔴         | Allocator     | 3-tier: mcache → mcentral → mheap, lock-free per-P             |
+| 7   | Size classes & tiny allocator            | 🔴         | Allocator     | 67 size classes, tiny <16B, large >32KB direct mheap           |
+| 8   | Tri-color mark-and-sweep                 | 🟡         | GC            | White→Grey→Black, concurrent with goroutines                   |
+| 9   | Write barrier mechanism                  | 🔴         | GC            | Prevents lost object, hybrid Dijkstra+Yuasa                    |
+| 10  | GC cycle phases                          | 🔴         | GC            | Mark Setup (STW) → Concurrent Mark → Mark Term (STW) → Sweep   |
+| 11  | STW pause duration & minimization        | 🔴         | GC            | <100μs on Go 1.18+, reduce live heap, fewer pointers           |
+| 12  | GOGC tuning                              | 🟡         | GC Tuning     | Percentage trigger, CPU vs memory trade-off                    |
+| 13  | GOMEMLIMIT (Go 1.19+)                    | 🔴         | GC Tuning     | Absolute ceiling, replaces ballast, container-aware            |
+| 14  | GC pacing & trace output                 | 🔴         | GC Tuning     | GODEBUG=gctrace=1, pacer adjusts GC frequency                  |
+| 15  | pprof memory profiling workflow          | 🟡         | Profiling     | Capture → analyze → diff (-base) → verify                      |
+| 16  | Heap profile types (inuse vs alloc)      | 🟡         | Profiling     | inuse_space for leaks, alloc_space for GC pressure             |
+| 17  | Other pprof profile types                | 🟡         | Profiling     | goroutine, mutex, block, threadcreate, trace                   |
+| 18  | Memory leak types in Go                  | 🟡         | Leaks         | goroutine, timer, slice backing, global map, unclosed resource |
+| 19  | Detect memory leaks                      | 🟡         | Leaks         | pprof diff, goleak, runtime.NumGoroutine monitoring            |
+| 20  | sync.Pool mechanics                      | 🟡         | sync.Pool     | Per-P cache, cleared every GC, not for persistent state        |
+| 21  | sync.Pool practical example              | 🟡         | sync.Pool     | bytes.Buffer reuse, JSON encoder pooling                       |
+| 22  | Struct field ordering & padding          | 🟡         | Optimization  | Large→small ordering reduces padding waste                     |
+| 23  | Common optimization techniques           | 🟡         | Optimization  | Pre-allocate, strings.Builder, avoid interface boxing          |
+| 24  | Arena allocator concept                  | 🔴         | Optimization  | Batch alloc/free, experimental in Go                           |
+| C1  | Stack vs heap basics                     | 🟢         | Stack vs Heap | Stack=auto-free, Heap=GC-managed                               |
+| C2  | `gcflags="-m"` usage                     | 🟢         | Stack vs Heap | Shows escape analysis output                                   |
+| C3  | HTTP client memory leak                  | 🟢         | Leaks         | `defer resp.Body.Close()`, drain body                          |
+| A1  | Stack vs heap allocation (bilingual)     | 🟡         | Stack vs Heap | Escape analysis triggers, `gcflags` demo                       |
+| A2  | Tri-color GC + write barrier (bilingual) | 🔴         | GC            | Concurrent GC, lost object problem, hybrid barrier             |
+| A3  | GOGC & GOMEMLIMIT tuning (bilingual)     | 🔴         | GC Tuning     | Container-aware, latency vs memory trade-off                   |
+| A4  | pprof leak detection (bilingual)         | 🟡         | Profiling     | 2-profile diff, inuse_space, flamegraph                        |
+| A5  | sync.Pool vs heap (bilingual)            | 🔴         | sync.Pool     | Cleared every GC, reset before Put(), not cache                |
+
+**Distribution**: 🟢 Junior: 3 | 🟡 Mid: 16 | 🔴 Senior: 12 | **Total: 31 Q&As**
+
+---
+
+## Cold Call Simulation / Mô Phỏng Hỏi Nhanh
+
+> **⚡ Interviewer**: "Your Go service is getting OOM killed in Kubernetes. Walk me through your debugging approach."
+
+**30-second answer / Trả lời 30 giây:**
+
+"First, I'd set GOMEMLIMIT to ~90% of the pod memory limit to give GC room to act before OOM. Then I'd capture two heap profiles using pprof — a baseline and one after the memory grows — and diff them with `-base` to find what's allocating and not being freed. I'd check `inuse_space` for leak candidates and the goroutine profile for goroutine leaks. Common culprits: goroutines blocked on channels, global maps growing unboundedly, sub-slices retaining large backing arrays, or unclosed HTTP response bodies. Once identified, I'd verify the fix by re-profiling under the same load."
+
+> **Follow-up**: "How does GOMEMLIMIT differ from GOGC?"
+> → "GOGC is percentage-based — it triggers GC when heap grows by X% over live heap. GOMEMLIMIT is an absolute ceiling — when approaching it, GC becomes more aggressive regardless of GOGC. In containers, GOMEMLIMIT is essential because GOGC alone can't prevent OOM — if live heap is large and traffic spikes, GOGC allows unbounded growth."
+
+---
+
 ## Self-Check / Tự Kiểm Tra
 
-- [ ] Can I explain the difference between stack and heap allocation in Go, and what escape analysis does?
-- [ ] Can I describe Go's tri-color mark-and-sweep GC in 3 sentences?
-- [ ] Can I name 3 common memory leak patterns in Go (goroutine leak, timer leak, map growth)?
-- [ ] Can I write a benchmark with `-bench` and use `pprof` to identify the hot allocation?
-- [ ] Can I explain when and why to use `sync.Pool`?
-- 💬 **Feynman Prompt:** Giải thích GC pause cho một backend dev mới — tại sao GC pause ảnh hưởng đến latency, và Go làm gì để giảm thiểu nó?
+> Che cột "Key Points", tự trả lời, rồi kiểm tra. Nếu đúng ≥ 5/7 → ready for interviews.
+
+| #   | Question (tự hỏi)                                              | Key Points (che lại)                                                                                                    |
+| --- | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| 1   | Escape analysis quyết định gì? 5 triggers gây escape?          | Stack vs heap allocation. Triggers: return pointer, interface boxing, large size, dynamic size, stored in heap struct   |
+| 2   | Tri-color GC: 3 màu là gì? Write barrier giải quyết vấn đề gì? | White=garbage, Grey=scanning, Black=keep. Write barrier prevents lost object when mutator writes during concurrent mark |
+| 3   | GOGC=100 nghĩa là gì? GOMEMLIMIT khác GOGC thế nào?            | GC triggers when heap doubles. GOMEMLIMIT is absolute ceiling (bytes), GOGC is relative (percentage)                    |
+| 4   | 5 loại memory leak phổ biến trong Go?                          | Goroutine leak, timer/ticker leak, slice backing array, global map growth, unclosed resources                           |
+| 5   | pprof: dùng metric nào để tìm leak? Workflow 4 bước?           | inuse_space (not alloc_space). Identify → Capture → Analyze (diff -base) → Verify                                       |
+| 6   | Memory allocator 3 tầng: tên và đặc điểm mỗi tầng?             | mcache (per-P, no lock) → mcentral (per-size, mutex) → mheap (global, mutex)                                            |
+| 7   | sync.Pool: khi nào dùng, khi nào KHÔNG dùng?                   | Dùng: hot-path temporary objects (buffers). KHÔNG: persistent state (cleared every GC). Always reset before Put()       |
+
+💬 **Feynman Prompt:** Giải thích GC pause cho một backend dev mới — tại sao GC pause ảnh hưởng đến latency, và Go làm gì để giảm thiểu nó?
+
+### Spaced Repetition / Lặp Lại Ngắt Quãng
+
+| Round | Khi nào          | Làm gì                                                                     |
+| ----- | ---------------- | -------------------------------------------------------------------------- |
+| 1     | Ngay sau khi đọc | Trả lời 7 câu Self-Check ở trên                                            |
+| 2     | Sau 3 ngày       | Cold Call: debug OOM trong K8s (30 giây)                                   |
+| 3     | Sau 7 ngày       | Vẽ tri-color GC diagram từ đầu + giải thích write barrier                  |
+| 4     | Sau 14 ngày      | Mock: giải thích pprof workflow + GOGC/GOMEMLIMIT tuning strategy          |
+| 5     | Sau 30 ngày      | Production exercise: profile một Go service, tìm top 3 allocation hotspots |
+
+---
 
 ## Connections / Liên Kết
 

@@ -37,6 +37,7 @@ Thread-safe counter?           → sync/atomic or sync.Mutex + map
 ```
 
 ### Slice as Stack / Dùng Slice như Stack
+
 ```
 stack := []int{}
 
@@ -53,6 +54,7 @@ top = stack[len(stack)-1]  // top = 5 (don't modify)
 ```
 
 ### Slice as Queue / Dùng Slice như Queue
+
 ```
 queue := []int{}
 
@@ -68,6 +70,7 @@ queue = queue[1:]          // [2]
 ```
 
 ### Binary Tree Structure / Cấu Trúc Cây Nhị Phân
+
 ```
 BST with [5, 3, 7, 1, 4, 6, 8]:
 
@@ -91,6 +94,7 @@ type TreeNode struct {
 ```
 
 ### Heap Structure / Cấu Trúc Heap
+
 ```
 Go container/heap (min-heap):
 
@@ -114,10 +118,123 @@ heap[0]:   peek minimum           O(1)
 
 ---
 
+## Overview / Tổng Quan
+
+Data Structures trong Go bao gồm **10 topic areas** nhưng cluster thành **7 core concepts** cho interview:
+
+| #   | Concept                  | Vai trò                                                | Interview Weight |
+| --- | ------------------------ | ------------------------------------------------------ | ---------------- |
+| 1   | Slice Internals & Tricks | Foundation: backing array, growth, shared memory traps | ⭐⭐⭐⭐⭐       |
+| 2   | String & Rune            | UTF-8 encoding, Builder pattern, bytes vs runes        | ⭐⭐⭐           |
+| 3   | Hash Map (Go map)        | Internal buckets, thread safety, sync.Map              | ⭐⭐⭐⭐⭐       |
+| 4   | Linked List              | Classic interview: reverse, cycle detection, merge     | ⭐⭐⭐⭐         |
+| 5   | Stack & Queue            | Slice-based, MinStack, channel-based bounded queue     | ⭐⭐⭐           |
+| 6   | Tree & Heap              | BST, B+Tree, container/heap, Top-K pattern             | ⭐⭐⭐⭐         |
+| 7   | Graph & Advanced         | BFS/DFS, Dijkstra, Trie, Bloom Filter, Skip List       | ⭐⭐⭐⭐         |
+
+**Mối quan hệ:** Slice → Stack/Queue (slice-based) → Tree/Heap (container/heap dùng slice) → Graph (adjacency list dùng map+slice). Map → Trie/Bloom Filter (key lookup alternatives). Mọi structure đều liên quan đến Memory & GC qua allocation patterns.
+
+---
+
+## Core Concepts — Phase 2 Deep Content
+
+### Concept 1: Slice Internals & Tricks
+
+- 🧠 **Memory Hook:** "Slice = 3 fields (pointer, len, cap). Append có thể copy toàn bộ array — khi cap hết, Go allocate array mới gấp đôi."
+- ❓ **Why exists (Level 1):** Vì array trong Go fixed-size, cần dynamic container nhưng vẫn contiguous memory cho cache performance.
+  - **(Level 2):** Growth policy từ Go 1.18+: <256 → double, ≥256 → grow 25% + 192. Trade-off: quá ít growth = quá nhiều copy, quá nhiều growth = wasted memory.
+  - **(Level 3):** Full slice expression `a[low:high:max]` giới hạn cap → ngăn append vô tình overwrite data của slice cha. Đây là defense mechanism cho shared backing array.
+- ⚠️ **Common Mistakes:**
+  - Sub-slice giữ reference tới entire backing array → memory leak (100MB array, slice 10 elements vẫn hold 100MB)
+  - Append trong loop mà không pre-allocate cap → O(n) reallocations
+  - Truyền slice vào goroutine rồi append → race condition trên header
+- 🎯 **Interview Pattern:** "Explain slice internals?" → Header struct (ptr, len, cap), growth on append, shared backing array trap, full slice expression. Follow-up: "Memory leak?" → Sub-slice holds entire backing array
+- 🔗 **Knowledge Chain:** Array → Slice header → Append growth → Shared backing array → Memory leak → sync.Pool
+
+### Concept 2: String & Rune
+
+- 🧠 **Memory Hook:** "String = immutable []byte. Rune = int32 = 1 Unicode code point. `range` over string yields runes, index yields bytes."
+- ❓ **Why exists (Level 1):** Vì Go string là UTF-8 encoded — 1 character có thể chiếm 1-4 bytes.
+  - **(Level 2):** `strings.Builder` dùng `[]byte` internally, WriteString không copy (unsafe trick). `+` concat trong loop = O(n²) vì mỗi `+` allocate new string.
+  - **(Level 3):** `[]byte(string)` thường copy toàn bộ data. Compiler optimize: `[]byte(s)` trong `range` hoặc `map[string(b)]` không copy (temporary backing).
+- ⚠️ **Common Mistakes:**
+  - `len(s)` trả byte count, không phải character count. `len("Việt")` ≠ 4
+  - String concat trong loop thay vì `strings.Builder` → O(n²)
+  - Iterate string bằng index `s[i]` → get byte, dùng `range` → get rune
+- 🎯 **Interview Pattern:** "String vs []byte vs []rune?" → String immutable UTF-8, byte for raw, rune for Unicode processing
+- 🔗 **Knowledge Chain:** UTF-8 encoding → string immutability → Builder pattern → Performance optimization
+
+### Concept 3: Hash Map (Go map)
+
+- 🧠 **Memory Hook:** "Go map = hash table với buckets chứa 8 key-value pairs. Grow = dời dần (incremental evacuation), không pause tất cả."
+- ❓ **Why exists (Level 1):** Vì O(1) average lookup là critical cho mọi backend service (caching, routing, indexing).
+  - **(Level 2):** Concurrent read OK, concurrent write PANIC (runtime detect). sync.RWMutex cho read-heavy workload, sync.Map cho key-stable workload (cache, config).
+  - **(Level 3):** `sync.Map` dùng 2 internal maps (read/dirty) + atomic operations. Read hits read-map (lock-free), misses promote dirty→read. Better than mutex khi keys ít thay đổi, worse khi keys churn.
+- ⚠️ **Common Mistakes:**
+  - Concurrent map write mà không lock → runtime panic (không phải data race, mà explicit crash)
+  - Dùng `sync.Map` cho mọi concurrent case → slower khi key churn cao
+  - Map iteration order non-deterministic → đừng depend vào order
+- 🎯 **Interview Pattern:** "Why is Go map not thread-safe?" → Design choice for performance (no lock overhead). "Fix?" → sync.RWMutex cho general, sync.Map cho key-stable, sharded map cho high-throughput
+- 🔗 **Knowledge Chain:** Hash function → Bucket structure → Load factor → Growth → Thread safety → sync.Map vs sharding
+
+### Concept 4: Linked List
+
+- 🧠 **Memory Hook:** "Linked list = mỗi node biết node tiếp theo. Reverse = đổi hướng mũi tên. Cycle = Floyd's tortoise and hare (slow 1x, fast 2x)."
+- ❓ **Why exists (Level 1):** Vì insert/delete O(1) khi có pointer — slice phải shift elements O(n).
+  - **(Level 2):** Go dùng `container/list` (doubly linked) nhưng interview thường yêu cầu implement từ đầu. Key: pointer manipulation, edge cases (empty, single node, cycle).
+  - **(Level 3):** LRU cache = HashMap + Doubly Linked List. Hash O(1) lookup, list O(1) move-to-front. Đây là combination pattern phổ biến nhất trong system design interview.
+- ⚠️ **Common Mistakes:**
+  - Quên handle edge case: head nil, single node
+  - Reverse iterative mà quên save `next` trước khi re-point → lost reference
+  - Cycle detection: quên check `fast != nil && fast.Next != nil` → nil pointer
+- 🎯 **Interview Pattern:** "Reverse linked list?" → 3 pointers (prev, curr, next). "Detect cycle?" → Floyd's slow/fast. "Find cycle start?" → Reset slow to head, both move 1 step
+- 🔗 **Knowledge Chain:** Pointer → Linked List → Doubly Linked → LRU Cache → container/list
+
+### Concept 5: Stack & Queue
+
+- 🧠 **Memory Hook:** "Stack = LIFO (đĩa chồng). Queue = FIFO (xếp hàng). Go không có built-in — dùng slice append/pop cho stack, channel cho queue."
+- ❓ **Why exists (Level 1):** Vì là building blocks cho algorithms: DFS dùng stack, BFS dùng queue.
+  - **(Level 2):** MinStack trick: maintain 2 stacks song song — main stack + min stack tracking current minimum. O(1) getMin.
+  - **(Level 3):** Channel-based bounded queue: `make(chan T, N)` = thread-safe FIFO với back-pressure built-in. No mutex needed.
+- ⚠️ **Common Mistakes:**
+  - Pop empty stack mà không check → index out of range panic
+  - Queue dùng slice `s[1:]` mà không copy → memory leak (backing array giữ old elements)
+  - MinStack push mà quên push lên min stack khi equal → wrong min after pop
+- 🎯 **Interview Pattern:** "Implement stack in Go?" → slice + append/pop. "MinStack?" → dual stack. "Thread-safe queue?" → buffered channel
+- 🔗 **Knowledge Chain:** Slice → Stack/Queue → DFS/BFS → Monotonic Stack → Expression evaluation
+
+### Concept 6: Tree & Heap
+
+- 🧠 **Memory Hook:** "Tree = recursive structure. BST = left < root < right. Heap = complete binary tree dùng array (parent i, children 2i+1, 2i+2)."
+- ❓ **Why exists (Level 1):** Vì cần ordered data với O(log n) insert/search — balance giữa sorted array (search O(log n), insert O(n)) và linked list (insert O(1), search O(n)).
+  - **(Level 2):** `container/heap` là interface (Len, Less, Swap, Push, Pop) — Go dùng slice backing. Top-K pattern: maintain min-heap size K, push then pop → O(n log K).
+  - **(Level 3):** B+Tree cho database: leaf nodes linked → range scan O(k), all data at leaf → internal nodes fit in cache → fewer disk reads. Đây là lý do PostgreSQL/MySQL dùng B+Tree cho indexes.
+- ⚠️ **Common Mistakes:**
+  - BST validate: chỉ check node.Left < node → sai. Phải truyền min/max bounds recursive
+  - Heap: push rồi quên heapify → invariant broken
+  - Tree traversal: confuse inorder (sorted BST) vs preorder (serialize) vs postorder (delete)
+- 🎯 **Interview Pattern:** "B-Tree vs B+Tree?" → B+Tree: data only at leaf, leaf linked, better range scan, better cache (internal nodes smaller). "Top-K?" → Min-heap size K
+- 🔗 **Knowledge Chain:** BST → AVL/Red-Black → B-Tree → B+Tree → Database Index → container/heap → Priority Queue
+
+### Concept 7: Graph & Advanced Structures
+
+- 🧠 **Memory Hook:** "Graph = nodes + edges. Adjacency list = `map[int][]int`. BFS = queue (level-order), DFS = stack (explore deep)."
+- ❓ **Why exists (Level 1):** Vì real-world problems are graph problems: social networks, routing, dependency resolution, microservice topology.
+  - **(Level 2):** Dijkstra = BFS + priority queue. Topological sort = detect cycle + ordering cho DAG (build systems, course prerequisites).
+  - **(Level 3):** Advanced structures: Trie (prefix search, autocomplete), Bloom Filter (probabilistic set membership, no false negative), Skip List (probabilistic BST, Redis sorted sets — O(log n) avg).
+- ⚠️ **Common Mistakes:**
+  - BFS quên visited set → infinite loop với cycles
+  - Dijkstra với negative weights → wrong result (dùng Bellman-Ford)
+  - Bloom Filter: "element exists" có thể false positive, "not exists" luôn đúng
+- 🎯 **Interview Pattern:** "Shortest path?" → Dijkstra (positive weights) vs Bellman-Ford (negative). "Why Redis uses skip list?" → Simpler than balanced BST, similar O(log n), range scan efficient
+- 🔗 **Knowledge Chain:** BFS/DFS → Dijkstra → Topological Sort → Trie → Bloom Filter → System Design (cache, routing)
+
+---
+
 ## 1. Array & Slice
 
-
 ## Câu Hỏi Phỏng Vấn / Interview Q&A
+
 ### Q1: Array vs Slice - what is the fundamental difference? 🟢 🟢 [Junior]
 
 **A:** Array có kích thước cố định, là value type (copy toàn bộ khi gán/truyền vào function). Slice là reference type — bản chất là một struct header trỏ tới underlying array.
@@ -192,6 +309,7 @@ func main() {
 **A:** Khi `append` vượt capacity, Go allocate underlying array mới với size lớn hơn, copy data sang, rồi trả về slice header mới.
 
 **Growth strategy (Go 1.18+):**
+
 - `cap < 256`: **double** capacity (nhân đôi)
 - `cap >= 256`: tăng thêm `cap + cap/4 + 192` (~25% + padding)
 
@@ -458,12 +576,12 @@ func main() {
 
 **So sánh nhanh:**
 
-| Feature | `string` | `[]byte` | `[]rune` |
-|---------|----------|----------|----------|
-| Mutable | No | Yes | Yes |
-| Encoding | UTF-8 | Raw bytes | Unicode code points |
-| `len()` | Bytes | Bytes | Runes |
-| Index | Byte | Byte | Rune |
+| Feature  | `string`   | `[]byte`    | `[]rune`             |
+| -------- | ---------- | ----------- | -------------------- |
+| Mutable  | No         | Yes         | Yes                  |
+| Encoding | UTF-8      | Raw bytes   | Unicode code points  |
+| `len()`  | Bytes      | Bytes       | Runes                |
+| Index    | Byte       | Byte        | Rune                 |
 | Use case | Text, keys | I/O, binary | Unicode manipulation |
 
 ---
@@ -772,15 +890,15 @@ func main() {
 
 **So sánh:**
 
-| Criteria | `map + RWMutex` | `sync.Map` |
-|----------|-----------------|------------|
-| Type-safe | Yes (generics) | No (any → cần cast) |
-| Read-heavy, stable keys | OK | **Tối ưu** (lock-free reads) |
-| Frequent writes | **Tốt hơn** | Chậm hơn |
-| Disjoint key sets (per goroutine) | OK | **Tối ưu** |
-| Enumerate all keys | Easy (range) | `.Range()` callback |
-| Memory overhead | Lower | Higher (double storage) |
-| General recommendation | **Dùng mặc định** | Chỉ khi profile chứng minh cần |
+| Criteria                          | `map + RWMutex`   | `sync.Map`                     |
+| --------------------------------- | ----------------- | ------------------------------ |
+| Type-safe                         | Yes (generics)    | No (any → cần cast)            |
+| Read-heavy, stable keys           | OK                | **Tối ưu** (lock-free reads)   |
+| Frequent writes                   | **Tốt hơn**       | Chậm hơn                       |
+| Disjoint key sets (per goroutine) | OK                | **Tối ưu**                     |
+| Enumerate all keys                | Easy (range)      | `.Range()` callback            |
+| Memory overhead                   | Lower             | Higher (double storage)        |
+| General recommendation            | **Dùng mặc định** | Chỉ khi profile chứng minh cần |
 
 **Interview tip:** Mặc định dùng `map + RWMutex`. Chỉ dùng `sync.Map` khi: (1) read-heavy với key set ổn định, hoặc (2) nhiều goroutines truy cập disjoint key sets.
 
@@ -2202,6 +2320,7 @@ func main() {
 ```
 
 **Use cases thực tế:**
+
 - **Autocomplete:** Search bar suggestions (Google, Zalo search)
 - **Spell checker:** Suggest corrections by finding closest prefix matches
 - **IP routing:** Longest prefix match cho routing table
@@ -2216,6 +2335,7 @@ func main() {
 **A:** Bloom Filter là probabilistic data structure: trả lời "definitely NOT in set" hoặc "PROBABLY in set". Không bao giờ false negative, nhưng có thể false positive.
 
 **Use cases:**
+
 - **LSM-Tree** (LevelDB, RocksDB, CockroachDB): check key có trong SSTable không trước khi đọc disk
 - **Cache check:** tránh query database cho keys chắc chắn không tồn tại
 - **Spam filter:** check email/URL có trong blacklist không
@@ -2409,6 +2529,7 @@ func main() {
 ```
 
 **Use cases:**
+
 - **Logging:** giữ N log entries gần nhất, overwrite cũ nhất
 - **Network:** TCP receive buffer, rate limiter sliding window
 - **Audio/Video:** streaming buffer
@@ -2548,38 +2669,38 @@ func main() {
 
 **Tại sao Redis chọn Skip List thay vì Red-Black Tree cho ZSET:**
 
-| Criteria | Skip List | Red-Black Tree |
-|----------|-----------|----------------|
-| Range queries | **Dễ** — follow next pointers | Phức tạp — cần in-order traversal |
-| Implementation | **Đơn giản hơn** (~150 LOC) | Phức tạp (rotations, recoloring) |
-| Concurrency | **Lock-free possible** | Khó implement lock-free |
-| Memory locality | Tương đương | Tương đương |
-| Avg complexity | O(log n) | O(log n) |
-| ZRANGEBYSCORE | **O(log n + k)** — rất nhanh | O(log n + k) nhưng phức tạp hơn |
+| Criteria        | Skip List                     | Red-Black Tree                    |
+| --------------- | ----------------------------- | --------------------------------- |
+| Range queries   | **Dễ** — follow next pointers | Phức tạp — cần in-order traversal |
+| Implementation  | **Đơn giản hơn** (~150 LOC)   | Phức tạp (rotations, recoloring)  |
+| Concurrency     | **Lock-free possible**        | Khó implement lock-free           |
+| Memory locality | Tương đương                   | Tương đương                       |
+| Avg complexity  | O(log n)                      | O(log n)                          |
+| ZRANGEBYSCORE   | **O(log n + k)** — rất nhanh  | O(log n + k) nhưng phức tạp hơn   |
 
-> *"Skip lists are simpler to implement, debug, and maintain. They also allow a very efficient implementation of ZRANGEBYSCORE."* — Salvatore Sanfilippo (Redis creator)
+> _"Skip lists are simpler to implement, debug, and maintain. They also allow a very efficient implementation of ZRANGEBYSCORE."_ — Salvatore Sanfilippo (Redis creator)
 
 ---
 
 ## Complexity Cheat Sheet
 
-| Data Structure | Access | Search | Insert | Delete | Space | Notes |
-|----------------|--------|--------|--------|--------|-------|-------|
-| **Array** | O(1) | O(n) | O(n) | O(n) | O(n) | Fixed size |
-| **Slice** | O(1) | O(n) | O(n)* | O(n) | O(n) | *Amortized O(1) append |
-| **String** | O(1) byte | O(n) | - | - | O(n) | Immutable |
-| **Map** | - | O(1) avg | O(1) avg | O(1) avg | O(n) | O(n) worst case |
-| **Linked List** | O(n) | O(n) | O(1)** | O(1)** | O(n) | **With pointer to node |
-| **Stack** | O(1) top | O(n) | O(1) push | O(1) pop | O(n) | LIFO |
-| **Queue** | O(1) front | O(n) | O(1) enq | O(1) deq | O(n) | FIFO |
-| **BST** | - | O(h) | O(h) | O(h) | O(n) | h = log n if balanced |
-| **AVL Tree** | - | O(log n) | O(log n) | O(log n) | O(n) | Strictly balanced |
-| **B+ Tree** | - | O(log n) | O(log n) | O(log n) | O(n) | High fan-out, disk-optimized |
-| **Heap** | O(1) min/max | O(n) | O(log n) | O(log n) | O(n) | O(1) peek |
-| **Trie** | - | O(m) | O(m) | O(m) | O(ALPHABET * m * n) | m = key length |
-| **Bloom Filter** | - | O(k) | O(k) | - | O(m) | Probabilistic, no delete |
-| **Skip List** | - | O(log n) | O(log n) | O(log n) | O(n log n) | Probabilistic |
-| **Ring Buffer** | O(1) | - | O(1) | O(1) | O(n) | Fixed capacity |
+| Data Structure   | Access       | Search   | Insert    | Delete   | Space               | Notes                        |
+| ---------------- | ------------ | -------- | --------- | -------- | ------------------- | ---------------------------- |
+| **Array**        | O(1)         | O(n)     | O(n)      | O(n)     | O(n)                | Fixed size                   |
+| **Slice**        | O(1)         | O(n)     | O(n)\*    | O(n)     | O(n)                | \*Amortized O(1) append      |
+| **String**       | O(1) byte    | O(n)     | -         | -        | O(n)                | Immutable                    |
+| **Map**          | -            | O(1) avg | O(1) avg  | O(1) avg | O(n)                | O(n) worst case              |
+| **Linked List**  | O(n)         | O(n)     | O(1)\*\*  | O(1)\*\* | O(n)                | \*\*With pointer to node     |
+| **Stack**        | O(1) top     | O(n)     | O(1) push | O(1) pop | O(n)                | LIFO                         |
+| **Queue**        | O(1) front   | O(n)     | O(1) enq  | O(1) deq | O(n)                | FIFO                         |
+| **BST**          | -            | O(h)     | O(h)      | O(h)     | O(n)                | h = log n if balanced        |
+| **AVL Tree**     | -            | O(log n) | O(log n)  | O(log n) | O(n)                | Strictly balanced            |
+| **B+ Tree**      | -            | O(log n) | O(log n)  | O(log n) | O(n)                | High fan-out, disk-optimized |
+| **Heap**         | O(1) min/max | O(n)     | O(log n)  | O(log n) | O(n)                | O(1) peek                    |
+| **Trie**         | -            | O(m)     | O(m)      | O(m)     | O(ALPHABET _ m _ n) | m = key length               |
+| **Bloom Filter** | -            | O(k)     | O(k)      | -        | O(m)                | Probabilistic, no delete     |
+| **Skip List**    | -            | O(log n) | O(log n)  | O(log n) | O(n log n)          | Probabilistic                |
+| **Ring Buffer**  | O(1)         | -        | O(1)      | O(1)     | O(n)                | Fixed capacity               |
 
 ---
 
@@ -2594,14 +2715,14 @@ func main() {
 
 ### Per-Company Patterns
 
-| Company | Focus Areas | Tips |
-|---------|-------------|------|
-| **Google** | Tree, Graph, DP, System Design | Ưa chuộng optimal solution. Code phải clean. Hỏi follow-up nhiều |
-| **Grab** | Graph (geospatial), Heap (K closest), Concurrency | Liên hệ bài toán với ride-hailing domain (tìm driver gần nhất, shortest route) |
-| **Microsoft** | Linked List, Tree, Array | Coi trọng edge case handling và code quality |
-| **Zalo** | Map, Concurrency, String processing | Focus messaging domain: string ops, concurrent data structures |
-| **Axon** | Data pipeline, concurrent structures | Focus throughput, ring buffer, producer-consumer patterns |
-| **Employment Hero** | Practical Go patterns, clean code | Coi trọng code readability, error handling, testing |
+| Company             | Focus Areas                                       | Tips                                                                           |
+| ------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------ |
+| **Google**          | Tree, Graph, DP, System Design                    | Ưa chuộng optimal solution. Code phải clean. Hỏi follow-up nhiều               |
+| **Grab**            | Graph (geospatial), Heap (K closest), Concurrency | Liên hệ bài toán với ride-hailing domain (tìm driver gần nhất, shortest route) |
+| **Microsoft**       | Linked List, Tree, Array                          | Coi trọng edge case handling và code quality                                   |
+| **Zalo**            | Map, Concurrency, String processing               | Focus messaging domain: string ops, concurrent data structures                 |
+| **Axon**            | Data pipeline, concurrent structures              | Focus throughput, ring buffer, producer-consumer patterns                      |
+| **Employment Hero** | Practical Go patterns, clean code                 | Coi trọng code readability, error handling, testing                            |
 
 ### Red Flags to Avoid
 
@@ -2629,7 +2750,49 @@ func main() {
 
 ---
 
-## Interview Q&A Summary / Tổng hợp câu hỏi phỏng vấn
+## Interview Q&A Summary / Tổng Hợp Q&A Phỏng Vấn
+
+| #   | Question                                        | Difficulty | Core Concept  | Key Signal                                                  |
+| --- | ----------------------------------------------- | ---------- | ------------- | ----------------------------------------------------------- |
+| Q1  | Array vs Slice fundamental difference?          | 🟢         | Slice         | Fixed vs dynamic, slice header (ptr,len,cap)                |
+| Q2  | Slice header struct in detail?                  | 🟡         | Slice         | 3 fields, shared backing array, sub-slice                   |
+| Q3  | Slice append and growth (Go 1.18+)?             | 🟡         | Slice         | <256 double, ≥256 +25%, amortized O(1)                      |
+| Q4  | Slice tricks: remove, insert, reverse, filter?  | 🟡         | Slice         | Append tricks, order-preserving vs swap                     |
+| Q5  | Shared underlying arrays and memory leaks?      | 🔴         | Slice         | Sub-slice holds entire backing array, copy to fix           |
+| Q6  | Full slice expression `a[low:high:max]`?        | 🔴         | Slice         | Cap limiting, prevent append overwrite                      |
+| Q7  | String vs []byte vs []rune?                     | 🟢         | String        | Immutable UTF-8, byte for raw, rune for Unicode             |
+| Q8  | strings.Builder — why and how?                  | 🟡         | String        | O(n) vs O(n²) concat, internal []byte                       |
+| Q9  | Range over string — bytes vs runes?             | 🟢         | String        | Index=byte, range=rune, len=bytes                           |
+| Q10 | Go map internals?                               | 🔴         | Hash Map      | Buckets of 8, incremental growth, hash → bucket             |
+| Q11 | Why map not thread-safe?                        | 🔴         | Hash Map      | Runtime panic on concurrent write, sync.RWMutex             |
+| Q12 | sync.Map vs map+RWMutex?                        | 🔴         | Hash Map      | Read/dirty maps, key-stable → sync.Map, churn → mutex       |
+| Q13 | Implement singly linked list?                   | 🟢         | Linked List   | Node struct, pointer manipulation, edge cases               |
+| Q14 | Reverse linked list?                            | 🟡         | Linked List   | 3 pointers (prev, curr, next), iterative + recursive        |
+| Q15 | Floyd's cycle detection?                        | 🟡         | Linked List   | Slow 1x, fast 2x, meet → cycle exists                       |
+| Q16 | Find middle + merge sorted lists?               | 🟡         | Linked List   | Slow/fast for middle, dummy head for merge                  |
+| Q17 | Stack and Queue using slices?                   | 🟢         | Stack & Queue | Append/pop for stack, channel for queue                     |
+| Q18 | MinStack — getMin O(1)?                         | 🟡         | Stack & Queue | Dual stack, track minimum parallel                          |
+| Q19 | Thread-safe bounded queue?                      | 🟡         | Stack & Queue | Buffered channel, back-pressure built-in                    |
+| Q20 | Binary tree traversals?                         | 🟢         | Tree          | Inorder/preorder/postorder/level-order, recursive+iterative |
+| Q21 | BST operations — search, insert, validate, LCA? | 🟡         | Tree          | Min/max bounds validation, O(h) operations                  |
+| Q22 | B-Tree vs B+Tree — why databases use B+Tree?    | 🔴         | Tree          | Data at leaf, leaf linked, range scan, cache friendly       |
+| Q23 | Priority queue with container/heap?             | 🟡         | Heap          | Interface (Len,Less,Swap,Push,Pop), slice-backed            |
+| Q24 | Top K elements pattern?                         | 🟡         | Heap          | Min-heap size K, push+pop → O(n log K)                      |
+| Q25 | K closest points (Grab geospatial)?             | 🟡         | Heap          | Max-heap size K, distance comparison                        |
+| Q26 | Graph adjacency list in Go?                     | 🟢         | Graph         | map[int][]int, visited set                                  |
+| Q27 | BFS and DFS — iterative and recursive?          | 🟡         | Graph         | BFS=queue, DFS=stack/recursion, visited                     |
+| Q28 | Dijkstra's shortest path?                       | 🔴         | Graph         | Priority queue, relaxation, no negative weights             |
+| Q29 | Topological Sort — Kahn's BFS?                  | 🔴         | Graph         | In-degree, queue zero-degree, cycle detection               |
+| Q30 | Trie with Insert, Search, StartsWith?           | 🟡         | Trie          | Children map/array, isEnd flag, autocomplete DFS            |
+| Q31 | Bloom Filter concept + Go implementation?       | 🔴         | Advanced      | k hash functions, bit array, false positive but no FN       |
+| Q32 | Ring Buffer (Circular Buffer)?                  | 🔴         | Advanced      | head/tail modulo, bounded memory, producer-consumer         |
+| Q33 | Skip List — why Redis uses it?                  | 🔴         | Advanced      | Probabilistic levels, O(log n) avg, simpler than BST        |
+
+**Distribution:** 🟢 7 | 🟡 15 | 🔴 11 — tổng 33 câu
+
+---
+
+### Bilingual Interview Q&A / Câu Hỏi Song Ngữ
 
 ### Q: How do slices work in Go under the hood? / Slice trong Go hoạt động như thế nào? 🟡 Mid
 
@@ -2664,6 +2827,7 @@ copy(c, b)   // independent copy
 ```
 
 **Memory efficiency patterns:**
+
 ```go
 // Preallocate when size is known:
 result := make([]int, 0, len(input)) // avoids reallocations
@@ -2736,6 +2900,7 @@ sm.Range(func(k, v interface{}) bool { /* iterate */ return true })
 ```
 
 **Performance notes:**
+
 ```
 Map vs slice for small N:
 ├── Map: O(1) average lookup, but hash overhead + cache unfriendly
@@ -2783,6 +2948,7 @@ GC trigger: when heap grows to 2× live set (GOGC=100 default)
 ```
 
 **Reducing GC pressure:**
+
 ```go
 // 1. sync.Pool — reuse allocations
 var bufPool = sync.Pool{
@@ -2815,17 +2981,59 @@ go build -gcflags="-m" ./...  // see what escapes to heap
 
 ---
 
-## Self-Check / Tự Kiểm Tra
+---
 
-- [ ] Can I explain Go slice internals (len, cap, backing array) and when append copies?
-- [ ] Can I describe 3 ways to implement a stack/queue using Go built-ins?
-- [ ] Can I explain why map is not safe for concurrent use and how to fix it?
-- [ ] Can I implement a min-heap using `container/heap` from scratch?
-- 💬 **Feynman Prompt:** Giải thích tại sao `sync.Pool` không phải là "cache" — và tại sao objects trong Pool có thể bị GC xóa bất kỳ lúc nào (hint: design intent của Pool).
+## ⚡ Cold Call Simulation / Mô Phỏng Phỏng Vấn Bất Chợt
+
+**Interviewer:** "Design an LRU cache in Go. What data structures would you use and why?"
+
+**30-second answer:**
+
+> "LRU cache needs O(1) get and O(1) put. I'd use a hash map for O(1) key lookup combined with a doubly linked list for O(1) eviction ordering. On Get: move node to front of list. On Put: add to front; if capacity exceeded, evict from tail. In Go, I can use `container/list` for the doubly linked list and a `map[string]*list.Element` for the hash map. For concurrency, wrap with `sync.RWMutex` — RLock for reads, Lock for writes."
+
+**Follow-up:** "What if this needs to handle 100K QPS?"
+
+> "At that scale, single mutex becomes bottleneck. I'd shard the cache — partition keys across N LRU instances using hash(key) % N. Each shard has its own mutex, reducing contention by N×. This is how groupcache and bigcache work internally."
+
+---
+
+## Self-Check / Tự Kiểm Tra (Retrieval Practice)
+
+**Không xem lại notes — tự trả lời:**
+
+| #   | Question                                          | Key Points to Recall                                                                    |
+| --- | ------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| 1   | Slice header có mấy fields? Append grow thế nào?  | 3 fields (ptr, len, cap). <256 double, ≥256 +25%. Allocate new array khi cap hết        |
+| 2   | Tại sao sub-slice gây memory leak? Fix?           | Sub-slice giữ ref tới toàn bộ backing array. Fix: copy() vào slice mới                  |
+| 3   | Go map concurrent write → gì xảy ra? 3 cách fix?  | Runtime panic. Fix: sync.RWMutex, sync.Map, sharded map                                 |
+| 4   | Floyd's cycle detection hoạt động thế nào?        | Slow 1 step, fast 2 steps. If meet → cycle. Find start: reset slow to head, both 1 step |
+| 5   | B-Tree vs B+Tree — 3 khác biệt chính?             | Data at leaf only, leaf nodes linked, internal nodes smaller (cache friendly)           |
+| 6   | Top-K pattern dùng structure gì? Complexity?      | Min-heap size K. Push+pop. O(n log K) overall                                           |
+| 7   | Bloom Filter — false positive hay false negative? | FP có (hash collision). FN không bao giờ. "Not in set" = chắc chắn                      |
+
+### Spaced Repetition Schedule / Lịch Ôn Tập
+
+| Round | Timing        | Focus                                                                       |
+| ----- | ------------- | --------------------------------------------------------------------------- |
+| 1     | Day 1 (today) | Read all concepts, answer Self-Check from memory                            |
+| 2     | Day 3         | Re-answer Self-Check, practice 3 coding problems (slice, linked list, heap) |
+| 3     | Day 7         | Focus on 🔴 questions (Q5-6, Q10-12, Q22, Q28-29, Q31-33)                   |
+| 4     | Day 14        | Full practice: implement LRU cache, Dijkstra, Trie from scratch             |
+| 5     | Day 30        | Final review, timed coding round (45 min, 2 problems)                       |
+
+---
 
 ## Connections / Liên Kết
 
+**Same Track (Go Lang):**
+
 - ⬅️ **Built on**: [Language Fundamentals](./01-language-fundamentals.md) — slice/map/struct basics
-- ⬅️ **Built on**: [Memory & GC](./04-memory-gc.md) — allocation patterns affect GC
-- ➡️ **Applied in**: [Algorithms Go](./07-algorithms-go.md) — data structures are the building blocks
+- ⬅️ **Built on**: [Memory & GC](./04-memory-gc.md) — allocation patterns affect GC, sync.Pool
+- ⬅️ **Built on**: [Concurrency](./03-concurrency.md) — sync.Map, channel-based queue, mutex patterns
+- ➡️ **Leads to**: [Algorithms Go](./07-algorithms-go.md) — data structures are the building blocks
+
+**Cross-Track:**
+
 - 🔗 **Theory**: [CS Data Structures](../../shared/01-cs-fundamentals/data-structures-theory.md) — language-agnostic theory
+- 🔗 **Applied in**: [Database Advanced](../03-database-advanced/01-sql-fundamentals.md) — B+Tree indexing, hash indexes
+- 🔗 **Applied in**: [System Design](../04-be-system-design/01-design-framework.md) — LRU cache, consistent hashing, bloom filters

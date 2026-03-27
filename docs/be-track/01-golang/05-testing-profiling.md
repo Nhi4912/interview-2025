@@ -45,6 +45,119 @@
 
 ---
 
+## Overview / Tổng Quan
+
+Testing & Profiling trong Go bao gồm **7 core concepts** liên kết chặt chẽ:
+
+| #   | Concept                          | Vai trò                                             | Interview Weight |
+| --- | -------------------------------- | --------------------------------------------------- | ---------------- |
+| 1   | Testing Philosophy & Conventions | Nền tảng tư duy: minimalist, convention-over-config | ⭐⭐⭐           |
+| 2   | Unit Testing Mechanics           | `testing.T` API, table-driven, parallel, cleanup    | ⭐⭐⭐⭐         |
+| 3   | Mocking Strategies               | Interface-based mocking, no framework needed        | ⭐⭐⭐⭐         |
+| 4   | Benchmarking                     | `b.N` loop, `benchstat`, memory stats               | ⭐⭐⭐           |
+| 5   | Race Detection & Fuzz Testing    | `-race` flag, ThreadSanitizer, Go 1.18+ fuzzing     | ⭐⭐⭐⭐         |
+| 6   | Integration & HTTP Testing       | `httptest`, testcontainers, build tags, `TestMain`  | ⭐⭐⭐           |
+| 7   | Profiling & Performance          | pprof, flame graphs, production profiling           | ⭐⭐⭐⭐⭐       |
+
+**Mối quan hệ:** Unit Testing dùng Interface (Mocking) → Benchmark đo performance → Race Detector bắt concurrency bug → Profiling tìm bottleneck production. Testing pyramid (Unit 70% → Integration 20% → E2E 10%) là framework tổ chức tất cả.
+
+---
+
+## Core Concepts — Phase 2 Deep Content
+
+### Concept 1: Testing Philosophy & Conventions
+
+- 🧠 **Memory Hook:** "Go test = phòng thí nghiệm built-in: `_test.go` tự tách khỏi binary production, `Test*` prefix tự discover — zero config."
+- ❓ **Why exists (Level 1):** Vì external testing frameworks tạo dependency hell và version incompatibility.
+  - **(Level 2):** Go team quan sát Java ecosystem: JUnit 3→4→5 breaking changes, TestNG vs JUnit wars, mỗi project config khác nhau. Built-in testing = zero migration cost.
+  - **(Level 3):** Assertion library bị reject vì Rob Pike tin `assertEqual` khuyến khích lazy testing — dev không nghĩ về error message context. `t.Errorf` forces self-documenting output.
+- ⚠️ **Common Mistakes:**
+  - Dùng `assert` library rồi quên viết error message mô tả — khi fail không biết context
+  - Không dùng `t.Run()` cho subtests — output không phân biệt được test case nào fail
+  - Test file đặt sai tên (thiếu `_test.go` suffix) → code bị compile vào production
+- 🎯 **Interview Pattern:** "Go test philosophy?" → Convention-over-configuration, no assertion library by design, `_test.go` excluded from production binary, table-driven as idiom
+- 🔗 **Knowledge Chain:** Go Philosophy (simplicity) → Testing Convention → Table-Driven Pattern → Benchmark → Profiling
+
+### Concept 2: Unit Testing Mechanics
+
+- 🧠 **Memory Hook:** "4 methods sống chết: `t.Error` (continue), `t.Fatal` (stop), `t.Helper` (fix stack trace), `t.Parallel` (speed up)."
+- ❓ **Why exists (Level 1):** Vì test cần kiểm soát flow: khi nào tiếp tục, khi nào dừng, khi nào chạy song song.
+  - **(Level 2):** `t.Error` vs `t.Fatal` = soft fail vs hard fail. Soft fail report nhiều lỗi cùng lúc (UI validation test). Hard fail ngăn cascade panic (nil pointer sau setup fail).
+  - **(Level 3):** `t.Parallel()` giải phóng OS thread — test tiếp theo chạy ngay thay vì đợi. Nhưng cần closure capture trap: `tt := tt` trong Go <1.22 vì loop variable sharing.
+- ⚠️ **Common Mistakes:**
+  - Dùng `t.Fatal` trong goroutine → panic (chỉ main goroutine được gọi `t.Fatal`)
+  - Quên `t.Helper()` trong helper function → stack trace trỏ sai dòng
+  - `t.Parallel()` mà share mutable state → data race
+- 🎯 **Interview Pattern:** "t.Error vs t.Fatal?" → Error continues (multiple failures), Fatal stops (prevents cascade). Follow-up: "Fatal in goroutine?" → Panic, use t.Error + channel instead
+- 🔗 **Knowledge Chain:** testing.T API → Table-Driven → t.Parallel → Race Detector → Benchmark
+
+### Concept 3: Mocking Strategies
+
+- 🧠 **Memory Hook:** "Go mock = interface + struct. Không framework, không magic reflection, không code generation bắt buộc."
+- ❓ **Why exists (Level 1):** Vì test cần isolate dependencies (DB, API, file system) mà không cần real infrastructure.
+  - **(Level 2):** Go chọn interface-based mocking thay vì proxy/bytecode manipulation (Java Mockito) vì Go compile to native — không có runtime class loading. Interface satisfaction là implicit → mock chỉ cần implement methods.
+  - **(Level 3):** Generated mocks (mockery/gomock) trade-off: auto-generate giảm boilerplate nhưng thêm toolchain dependency. Manual mocks đơn giản hơn cho interface nhỏ (<5 methods). Rule of thumb: interface ≤3 methods → manual, >3 → generate.
+- ⚠️ **Common Mistakes:**
+  - Mock concrete type thay vì interface → test brittle, coupled to implementation
+  - Mock quá nhiều layers → test chỉ verify mock behavior, không verify logic
+  - Không verify mock được call đúng arguments → false positive
+- 🎯 **Interview Pattern:** "How to mock DB in Go?" → Define interface (UserRepository), implement FakeRepo in \_test.go. Follow-up: "gomock vs manual?" → Manual cho small interface, gomock cho large/evolving ones
+- 🔗 **Knowledge Chain:** Interface concept → DI pattern → Mock → Integration Test → HTTP Test
+
+### Concept 4: Benchmarking
+
+- 🧠 **Memory Hook:** "b.N = Go tự điều chỉnh iterations cho đến khi đo đủ chính xác. Bạn chỉ viết loop, Go lo phần thống kê."
+- ❓ **Why exists (Level 1):** Vì manual timing (`time.Now()` diff) không đáng tin — OS scheduling, GC pauses, cache effects.
+  - **(Level 2):** `b.N` tăng dần (1, 100, 10000...) cho đến khi benchmark chạy đủ lâu (mặc định 1 giây). `-benchmem` report `B/op` và `allocs/op` — 2 metric quan trọng nhất cho GC pressure.
+  - **(Level 3):** `benchstat` so sánh 2 runs với statistical significance (p-value). Cần `count=5+` để có đủ samples. "5% faster" không có nghĩa nếu p > 0.05.
+- ⚠️ **Common Mistakes:**
+  - Quên `b.ResetTimer()` sau setup → setup time tính vào benchmark
+  - Compiler optimize away result → benchmark đo nothing. Fix: assign to package-level `var result`
+  - So sánh 1 lần chạy → noise. Phải dùng `benchstat` với ≥5 runs
+- 🎯 **Interview Pattern:** "Function A 5% faster than B, switch?" → benchstat significant? p < 0.05? Hot path? Readable? Maintainable? Premature optimization?
+- 🔗 **Knowledge Chain:** Benchmark → pprof → Profiling → Memory/GC optimization → sync.Pool
+
+### Concept 5: Race Detection & Fuzz Testing
+
+- 🧠 **Memory Hook:** "Race detector = ThreadSanitizer trong Go. Không false positive nhưng có false negative — chỉ bắt race thực sự xảy ra."
+- ❓ **Why exists (Level 1):** Vì data race là bug nguy hiểm nhất: non-deterministic, hầu như không reproduce được bằng manual testing.
+  - **(Level 2):** `-race` instrument mọi memory access với happens-before analysis. Overhead 5-10x CPU, 5-10x memory. Nên chạy CI nhưng không chạy production.
+  - **(Level 3):** Fuzz testing (Go 1.18+) complement race detection: fuzzer tìm input gây crash/panic mà human không nghĩ ra. `f.Add()` seed corpus + mutation engine. Đặc biệt hiệu quả cho parsers, serializers, validators.
+- ⚠️ **Common Mistakes:**
+  - Chỉ chạy `go test` không `-race` → miss data races
+  - Enable `-race` in production → 10x overhead, service chết
+  - Fuzz test không `f.Add()` seed → fuzzer start from zero, chậm hơn rất nhiều
+- 🎯 **Interview Pattern:** "Race detector — false positive hay false negative?" → Không FP (chỉ report observed), có FN (code path không chạy = race không detect). Follow-up: "CI strategy?" → `-race` required, blocking gate
+- 🔗 **Knowledge Chain:** Goroutine → Data Race → Race Detector → Mutex/Channel → Context cancellation
+
+### Concept 6: Integration & HTTP Testing
+
+- 🧠 **Memory Hook:** "`httptest.NewServer` = mini production server trong RAM. `testcontainers` = real DB trong Docker. Cả hai cleanup tự động."
+- ❓ **Why exists (Level 1):** Vì unit test với mock không bắt được integration bugs: serialization mismatch, DB query syntax, HTTP header handling.
+  - **(Level 2):** `TestMain(m *testing.M)` chạy setup/teardown một lần cho toàn bộ package — shared DB, shared server. Build tags (`//go:build integration`) tách integration khỏi unit test trong CI.
+  - **(Level 3):** Testcontainers-go spin up real PostgreSQL/Redis/Kafka trong Docker per-test. Chậm hơn mock nhưng catch real bugs. Pattern: `TestMain` start container → run tests → container auto-destroyed.
+- ⚠️ **Common Mistakes:**
+  - Integration test không build tag → chạy cùng unit test, CI chậm
+  - Shared DB state giữa tests → flaky. Fix: transaction rollback hoặc fresh DB per test
+  - `httptest.NewServer` không `defer server.Close()` → goroutine leak
+- 🎯 **Interview Pattern:** "How to test service with external deps?" → 3 levels: Unit (mock), Integration (testcontainers), Contract (schema verification). Testing pyramid explains ratio
+- 🔗 **Knowledge Chain:** Mock → Integration Test → HTTP Test → Testcontainers → CI Pipeline
+
+### Concept 7: Profiling & Performance
+
+- 🧠 **Memory Hook:** "pprof = X-ray cho Go process. CPU profile xem time, heap profile xem memory, goroutine profile xem leak."
+- ❓ **Why exists (Level 1):** Vì guessing bottleneck = wasting time. "Premature optimization is the root of all evil" — profiler cho data, data cho direction.
+  - **(Level 2):** 6 profile types: CPU (sampling every 10ms), Heap (current allocations), Alloc (all allocations ever), Goroutine (stack traces), Block (channel/mutex wait), Mutex (contention). `inuse_space` tăng liên tục = memory leak.
+  - **(Level 3):** Production profiling: `import _ "net/http/pprof"` expose `/debug/pprof/`. MUST be internal-only (leaks source paths). CPU profile 5% overhead (30s max). Continuous profiling (Pyroscope/Parca) = always-on with minimal overhead.
+- ⚠️ **Common Mistakes:**
+  - Expose pprof endpoint publicly → security risk (source code paths, goroutine stacks)
+  - Profile benchmark thay vì production → different allocation patterns
+  - Optimize mà không profile trước → wrong bottleneck
+- 🎯 **Interview Pattern:** "Memory leak diagnosis?" → RSS trend → pprof heap → diff 2 timepoints → inuse_space growing → identify top allocator → fix. Common: goroutine leak, slice header holding large backing array
+- 🔗 **Knowledge Chain:** Benchmark → pprof → Flame Graph → Memory Model → GC Tuning → sync.Pool
+
+---
+
 ## 1. Testing Philosophy in Go
 
 ### Q1: Triết lý thiết kế testing trong Go khác gì so với các ngôn ngữ khác? 🟡
@@ -53,20 +166,22 @@
 
 Go có cách tiếp cận **minimalist** và **convention-over-configuration** cho testing:
 
-| Đặc điểm | Go | Java/C#/Python |
-|-----------|-----|----------------|
-| Framework | Built-in `testing` package | JUnit, NUnit, pytest (third-party) |
-| Assertion library | Không có sẵn — dùng `if` + `t.Error` | `assertEquals`, `assert.Equal` |
-| Test runner | `go test` (built-in toolchain) | Cần cấu hình riêng |
-| Test discovery | Convention: `*_test.go` + `Test*` prefix | Annotations, decorators |
-| Mocking framework | Không có sẵn — dùng interface | Built-in hoặc third-party |
+| Đặc điểm          | Go                                       | Java/C#/Python                     |
+| ----------------- | ---------------------------------------- | ---------------------------------- |
+| Framework         | Built-in `testing` package               | JUnit, NUnit, pytest (third-party) |
+| Assertion library | Không có sẵn — dùng `if` + `t.Error`     | `assertEquals`, `assert.Equal`     |
+| Test runner       | `go test` (built-in toolchain)           | Cần cấu hình riêng                 |
+| Test discovery    | Convention: `*_test.go` + `Test*` prefix | Annotations, decorators            |
+| Mocking framework | Không có sẵn — dùng interface            | Built-in hoặc third-party          |
 
 **Lý do Go không có assertion library:**
+
 - Rob Pike và team tin rằng assertion khuyến khích **lazy testing** — dev viết `assertEqual` rồi không suy nghĩ về error message
 - Go khuyến khích viết **error message mô tả rõ context**: `t.Errorf("Add(2,3) = %d, want 5", got)`
 - Điều này tạo ra test output **self-documenting** — khi fail, bạn biết ngay cái gì sai
 
 **Test file convention:**
+
 - File `foo.go` → test trong `foo_test.go` (cùng directory)
 - File `_test.go` **không được compile** vào binary production — Go compiler tự loại bỏ
 
@@ -114,12 +229,12 @@ func TestAdd(t *testing.T) {
 
 **A:**
 
-| Loại | Pattern | Ví dụ |
-|------|---------|-------|
-| Unit test | `TestXxx(t *testing.T)` | `TestAdd`, `TestUser_Validate` |
-| Benchmark | `BenchmarkXxx(b *testing.B)` | `BenchmarkSort` |
-| Fuzz test | `FuzzXxx(f *testing.F)` | `FuzzParseJSON` |
-| Example | `ExampleXxx()` | `ExampleAdd` |
+| Loại      | Pattern                      | Ví dụ                          |
+| --------- | ---------------------------- | ------------------------------ |
+| Unit test | `TestXxx(t *testing.T)`      | `TestAdd`, `TestUser_Validate` |
+| Benchmark | `BenchmarkXxx(b *testing.B)` | `BenchmarkSort`                |
+| Fuzz test | `FuzzXxx(f *testing.F)`      | `FuzzParseJSON`                |
+| Example   | `ExampleXxx()`               | `ExampleAdd`                   |
 
 **Subtest**: `t.Run("name", ...)` tạo `TestParent/name`. Tên nên mô tả **scenario** (`"empty input"`) không phải implementation (`"len is zero"`).
 
@@ -140,15 +255,15 @@ package/
 
 **A:**
 
-| Method | Hành vi | Dùng khi |
-|--------|---------|----------|
-| `t.Error/Errorf` | Log + **tiếp tục chạy** | Report nhiều failures trong 1 test |
-| `t.Fatal/Fatalf` | Log + **dừng test ngay** | Failure làm assertion sau vô nghĩa |
-| `t.Skip` | Bỏ qua test | Điều kiện không thỏa (CI, OS...) |
-| `t.Helper()` | Đánh dấu function là helper | Error report ở caller, không ở helper |
-| `t.Cleanup(func())` | Đăng ký cleanup | Teardown resource sau test |
-| `t.Parallel()` | Chạy song song | Test không share mutable state |
-| `t.TempDir()` | Tạo temp dir, tự cleanup | Cần viết file tạm |
+| Method              | Hành vi                     | Dùng khi                              |
+| ------------------- | --------------------------- | ------------------------------------- |
+| `t.Error/Errorf`    | Log + **tiếp tục chạy**     | Report nhiều failures trong 1 test    |
+| `t.Fatal/Fatalf`    | Log + **dừng test ngay**    | Failure làm assertion sau vô nghĩa    |
+| `t.Skip`            | Bỏ qua test                 | Điều kiện không thỏa (CI, OS...)      |
+| `t.Helper()`        | Đánh dấu function là helper | Error report ở caller, không ở helper |
+| `t.Cleanup(func())` | Đăng ký cleanup             | Teardown resource sau test            |
+| `t.Parallel()`      | Chạy song song              | Test không share mutable state        |
+| `t.TempDir()`       | Tạo temp dir, tự cleanup    | Cần viết file tạm                     |
 
 **`t.Error` vs `t.Fatal`**: Dùng `Fatal` khi failure sẽ khiến assertion tiếp theo **panic hoặc vô nghĩa** (VD: `err != nil` → result là nil → dereference panic).
 
@@ -178,6 +293,7 @@ func assertEqual(t *testing.T, got, want int) {
 **A:**
 
 **Cơ chế:**
+
 1. Khi gặp `t.Parallel()`, test **pause** vào parallel queue
 2. Parent test chạy hết subtests → parallel subtests chạy đồng thời
 3. Mặc định `GOMAXPROCS` goroutines song song, override: `go test -parallel N`
@@ -204,9 +320,9 @@ for _, tt := range tests {
 
 **A:**
 
-| | `defer` | `t.Cleanup()` |
-|--|---------|---------------|
-| Scope | Function hiện tại | Test hiện tại (kể cả subtests) |
+|                   | `defer`                             | `t.Cleanup()`                            |
+| ----------------- | ----------------------------------- | ---------------------------------------- |
+| Scope             | Function hiện tại                   | Test hiện tại (kể cả subtests)           |
 | Dùng trong helper | Cleanup khi helper return (**SAI**) | Cleanup khi **test** kết thúc (**ĐÚNG**) |
 
 ```go
@@ -261,6 +377,7 @@ tests := []struct {
 **A:**
 
 `b.N` là số lần lặp do **Go tự động quyết định**:
+
 1. Go chạy với `b.N = 1`, nếu quá nhanh (< 1s), tăng lên (2, 5, 10, 100...)
 2. Lặp cho đến tổng thời gian >= 1 giây (hoặc `-benchtime`)
 3. Tính trung bình: `total_time / b.N`
@@ -287,12 +404,12 @@ BenchmarkFib-8    5000000    234 ns/op    16 B/op    2 allocs/op
 
 **Các method quan trọng:**
 
-| Method | Dùng khi |
-|--------|----------|
-| `b.ResetTimer()` | Sau expensive setup (không tính setup time) |
-| `b.StopTimer()` / `b.StartTimer()` | Per-iteration setup |
-| `b.ReportAllocs()` | Luôn luôn (hoặc dùng `-benchmem`) |
-| `b.SetBytes(n)` | I/O benchmarks (report MB/s) |
+| Method                             | Dùng khi                                    |
+| ---------------------------------- | ------------------------------------------- |
+| `b.ResetTimer()`                   | Sau expensive setup (không tính setup time) |
+| `b.StopTimer()` / `b.StartTimer()` | Per-iteration setup                         |
+| `b.ReportAllocs()`                 | Luôn luôn (hoặc dùng `-benchmem`)           |
+| `b.SetBytes(n)`                    | I/O benchmarks (report MB/s)                |
 
 ---
 
@@ -395,14 +512,15 @@ func (m *mockUserRepo) FindByID(ctx context.Context, id string) (*User, error) {
 
 **A:**
 
-| Approach | Pros | Cons | Dùng khi |
-|----------|------|------|----------|
-| **Hand-written mock** | Simple, explicit, no deps | Boilerplate nhiều | Interface nhỏ (1-3 methods) |
-| **gomock + mockgen** | Auto-generate, verify call order | Learning curve | Interface lớn, cần verify behavior |
-| **testify/mock** | Fluent API, popular | Runtime panics, reflection | Team đã quen testify |
-| **Real implementation** | Most realistic | Slow, setup phức tạp | Integration test |
+| Approach                | Pros                             | Cons                       | Dùng khi                           |
+| ----------------------- | -------------------------------- | -------------------------- | ---------------------------------- |
+| **Hand-written mock**   | Simple, explicit, no deps        | Boilerplate nhiều          | Interface nhỏ (1-3 methods)        |
+| **gomock + mockgen**    | Auto-generate, verify call order | Learning curve             | Interface lớn, cần verify behavior |
+| **testify/mock**        | Fluent API, popular              | Runtime panics, reflection | Team đã quen testify               |
+| **Real implementation** | Most realistic                   | Slow, setup phức tạp       | Integration test                   |
 
 **Khi nào KHÔNG mock:**
+
 - Không mock types bạn không sở hữu (mock ở interface level)
 - Không mock value objects (struct nhỏ, không side effects)
 - Không mock everything — over-mocking làm test fragile
@@ -477,12 +595,12 @@ func setupPostgres(t *testing.T) *sql.DB {
 
 **A:**
 
-| | `httptest.NewRecorder()` | `httptest.NewServer()` |
-|--|--------------------------|------------------------|
-| Network | Không | Có (localhost) |
-| Tốc độ | Rất nhanh | Nhanh |
-| Test scope | Handler logic only | Full HTTP stack |
-| Dùng cho | Unit test handlers | Test HTTP clients, middleware chain |
+|            | `httptest.NewRecorder()` | `httptest.NewServer()`              |
+| ---------- | ------------------------ | ----------------------------------- |
+| Network    | Không                    | Có (localhost)                      |
+| Tốc độ     | Rất nhanh                | Nhanh                               |
+| Test scope | Handler logic only       | Full HTTP stack                     |
+| Dùng cho   | Unit test handlers       | Test HTTP clients, middleware chain |
 
 ```go
 // NewRecorder — test handler trực tiếp
@@ -514,6 +632,7 @@ client := NewAPIClient(server.URL)  // Test client với fake server
 Dựa trên **ThreadSanitizer (TSan)** của Google, ported sang Go runtime.
 
 **Nguyên lý:**
+
 1. Compiler **instrument** mọi memory access khi build với `-race`
 2. Runtime duy trì **shadow memory** — metadata cho mỗi memory location
 3. Ghi lại: **goroutine nào**, **thời điểm nào**, **read hay write**
@@ -529,6 +648,7 @@ go build -race -o app     # Build binary với race detector
 **Performance overhead**: CPU 2-20x, Memory 5-10x — chấp nhận được cho testing.
 
 **Quan trọng:**
+
 - **Không false positives** — report race = chắc chắn có race
 - **Có false negatives** — race tồn tại nhưng code path chưa trigger
 - Luôn chạy `-race` trong CI. Nhiều team coi race failure là **blocking**.
@@ -551,12 +671,12 @@ go tool cover -func=c.out                  # Per-function
 
 **Cover modes**: `set` (boolean, default), `count` (số lần), `atomic` (thread-safe, dùng với `-race`).
 
-| Coverage | Đánh giá |
-|----------|----------|
-| < 40% | Thiếu nghiêm trọng |
-| 60-80% | Tốt — hầu hết logic quan trọng |
-| > 80% | Diminishing returns |
-| 100% | Gần như không cần thiết |
+| Coverage | Đánh giá                       |
+| -------- | ------------------------------ |
+| < 40%    | Thiếu nghiêm trọng             |
+| 60-80%   | Tốt — hầu hết logic quan trọng |
+| > 80%    | Diminishing returns            |
+| 100%     | Gần như không cần thiết        |
 
 **Vanity vs Meaningful coverage**: 90% coverage nhưng chỉ test happy path = vanity. 70% nhưng cover critical paths + error handling = meaningful.
 
@@ -570,11 +690,11 @@ go tool cover -func=c.out                  # Per-function
 
 **A:**
 
-| | `package foo` (white-box) | `package foo_test` (black-box) |
-|--|---------------------------|-------------------------------|
-| Access | Exported + unexported | Chỉ exported API |
-| Test gì | Internal implementation | Public API contract |
-| Khi nào | Test private logic | Test public interface, prevent import cycles |
+|         | `package foo` (white-box) | `package foo_test` (black-box)               |
+| ------- | ------------------------- | -------------------------------------------- |
+| Access  | Exported + unexported     | Chỉ exported API                             |
+| Test gì | Internal implementation   | Public API contract                          |
+| Khi nào | Test private logic        | Test public interface, prevent import cycles |
 
 Cả 2 package có thể ở **cùng file** `foo_test.go`!
 
@@ -608,14 +728,14 @@ Standard library dùng pattern này rất nhiều (`strings/export_test.go`).
 
 **A:**
 
-| Profile | Đo gì | Dùng khi |
-|---------|-------|----------|
-| **CPU** | Thời gian CPU/function | App chậm, CPU cao |
-| **Heap** | Memory đang giữ | Memory leak, OOM |
-| **Allocs** | Tổng allocations | Giảm GC pressure |
-| **Goroutine** | Stack traces | Goroutine leak |
-| **Block** | Block trên sync primitives | Contention |
-| **Mutex** | Thời gian giữ mutex | Lock contention |
+| Profile       | Đo gì                      | Dùng khi          |
+| ------------- | -------------------------- | ----------------- |
+| **CPU**       | Thời gian CPU/function     | App chậm, CPU cao |
+| **Heap**      | Memory đang giữ            | Memory leak, OOM  |
+| **Allocs**    | Tổng allocations           | Giảm GC pressure  |
+| **Goroutine** | Stack traces               | Goroutine leak    |
+| **Block**     | Block trên sync primitives | Contention        |
+| **Mutex**     | Thời gian giữ mutex        | Lock contention   |
 
 **Setup production:**
 
@@ -633,6 +753,7 @@ go tool pprof http://localhost:6060/debug/pprof/heap                # Memory
 **Continuous profiling**: Pyroscope (open-source, Grafana Cloud), Parca (eBPF-based), Google Cloud Profiler, Datadog.
 
 **Production-safe principles:**
+
 - CPU profiling ~5% overhead — OK cho short bursts
 - Heap profiling: sampling-based, gần zero overhead — safe bật luôn
 - Block/Mutex: overhead cao (10-30%) — KHÔNG bật mặc định
@@ -648,22 +769,22 @@ go tool pprof http://localhost:6060/debug/pprof/heap                # Memory
 
 Static analysis **built-in**, chạy nhanh, gần zero false positives:
 
-| Check | Phát hiện | Ví dụ |
-|-------|-----------|-------|
-| `printf` | Format string mismatch | `Printf("%d", "string")` |
-| `structtag` | Malformed struct tags | `` `json:"name" xml:name` `` |
-| `unusedresult` | Ignored return values | `fmt.Sprintf("hi")` không assign |
-| `copylock` | Copy mutex/lock | `var mu2 = mu1` |
-| `loopclosure` | Closure capture loop var | `go func() { use(v) }()` |
+| Check          | Phát hiện                | Ví dụ                            |
+| -------------- | ------------------------ | -------------------------------- |
+| `printf`       | Format string mismatch   | `Printf("%d", "string")`         |
+| `structtag`    | Malformed struct tags    | `` `json:"name" xml:name` ``     |
+| `unusedresult` | Ignored return values    | `fmt.Sprintf("hi")` không assign |
+| `copylock`     | Copy mutex/lock          | `var mu2 = mu1`                  |
+| `loopclosure`  | Closure capture loop var | `go func() { use(v) }()`         |
 
 ### Q24: `golangci-lint` — khi nào và cách dùng? 🟡
 
 **A:**
 
-| Tool | Dùng khi |
-|------|----------|
-| `go vet` | Luôn luôn (minimum, built-in) |
-| `staticcheck` | Cần deep analysis, low false positive |
+| Tool            | Dùng khi                               |
+| --------------- | -------------------------------------- |
+| `go vet`        | Luôn luôn (minimum, built-in)          |
+| `staticcheck`   | Cần deep analysis, low false positive  |
 | `golangci-lint` | **Meta-linter** ~100+ linters, team CI |
 
 **Common linter rules**: `errcheck` (unchecked errors), `gosec` (security), `ineffassign` (dead assignment), `goconst` (repeated strings), `prealloc` (slice preallocation).
@@ -678,6 +799,7 @@ golangci-lint run --new-from-rev=main      # Chỉ code mới (CI best practice)
 ## Testing Best Practices Checklist
 
 **Must Have (P0):**
+
 - [ ] `go test -race ./...` trong CI — **blocking**
 - [ ] `go vet ./...` trong CI — **blocking**
 - [ ] Table-driven tests cho functions có nhiều cases
@@ -685,6 +807,7 @@ golangci-lint run --new-from-rev=main      # Chỉ code mới (CI best practice)
 - [ ] `t.Parallel()` cho tests không share mutable state
 
 **Should Have (P1):**
+
 - [ ] `golangci-lint` trong CI
 - [ ] Coverage tracking (target 60-80%)
 - [ ] Integration tests với build tags tách biệt
@@ -692,6 +815,7 @@ golangci-lint run --new-from-rev=main      # Chỉ code mới (CI best practice)
 - [ ] Mock qua interfaces, không mock concrete types
 
 **Nice to Have (P2):**
+
 - [ ] Fuzz testing cho parsers/serializers
 - [ ] Golden file tests cho complex output
 - [ ] Continuous profiling production (Pyroscope/Parca)
@@ -726,6 +850,7 @@ go test -v -count=1 ./pkg/math         # Verbose, disable cache
 **Q28: Test service có external dependencies?**
 
 **A:** 3 levels:
+
 1. **Unit test**: Mock dependencies qua interfaces → nhanh, isolated
 2. **Integration test**: testcontainers-go + real DB → build tags + CI
 3. **Contract test**: Verify giao tiếp đúng protocol
@@ -745,6 +870,7 @@ go test -v -count=1 ./pkg/math         # Verbose, disable cache
 **Q31: Production service bị memory leak. Diagnose?**
 
 **A:**
+
 1. **Confirm**: RSS tăng liên tục, không giảm sau GC
 2. **Heap profile**: `pprof heap` xem top allocations
 3. **Goroutine profile**: goroutine leak là nguyên nhân phổ biến nhất
@@ -756,6 +882,7 @@ go test -v -count=1 ./pkg/math         # Verbose, disable cache
 **Q32: Thiết kế testing strategy cho microservice mới?**
 
 **A:** Testing pyramid:
+
 - **Unit tests (70%)**: Table-driven, mock external deps, `t.Parallel`, `-race`
 - **Integration tests (20%)**: Testcontainers, build tags, `TestMain` shared setup
 - **Contract tests (5%)**: API schema compatibility
@@ -796,7 +923,49 @@ golangci-lint run ./...                # Meta-linter
 
 ---
 
-## Interview Q&A Summary / Tổng hợp câu hỏi phỏng vấn
+## Interview Q&A Summary / Tổng Hợp Q&A Phỏng Vấn
+
+| #   | Question                                      | Difficulty | Core Concept        | Key Signal                                                  |
+| --- | --------------------------------------------- | ---------- | ------------------- | ----------------------------------------------------------- |
+| Q1  | Triết lý thiết kế testing trong Go?           | 🟡         | Testing Philosophy  | Convention-over-config, no assertion lib by design          |
+| Q2  | Table-driven tests là gì? Tại sao Go idiom?   | 🟢         | Unit Testing        | Slice of struct + t.Run, DRY, standard library pattern      |
+| Q3  | Test naming conventions và tổ chức test file? | 🟢         | Testing Philosophy  | `_test.go` suffix, `Test*` prefix, not compiled into binary |
+| Q4  | Các method quan trọng của `testing.T`?        | 🟡         | Unit Testing        | Error/Fatal/Helper/Parallel/Cleanup/Run                     |
+| Q5  | `t.Helper()` giải quyết vấn đề gì?            | 🟢         | Unit Testing        | Fix stack trace in test helpers                             |
+| Q6  | `t.Parallel()` hoạt động thế nào? Caveats?    | 🟡         | Unit Testing        | Closure capture trap, share mutable state                   |
+| Q7  | `t.Cleanup()` vs `defer`?                     | 🟢         | Unit Testing        | Cleanup runs reverse order, works in subtests               |
+| Q8  | Table-driven tests — advanced patterns?       | 🟡         | Unit Testing        | Struct with function fields, setup/teardown per case        |
+| Q9  | Go benchmark hoạt động thế nào? `b.N`?        | 🟡         | Benchmarking        | Auto-adjust iterations, `-benchmem` for allocs              |
+| Q10 | So sánh benchmark với `benchstat`?            | 🟡         | Benchmarking        | Statistical significance, p-value, count≥5                  |
+| Q11 | Fuzz testing Go 1.18+?                        | 🟡         | Race & Fuzz         | f.Add seeds, mutation engine, corpus                        |
+| Q12 | Go mocking approach?                          | 🟡         | Mocking             | Interface-based, no framework needed                        |
+| Q13 | So sánh mocking approaches?                   | 🟡         | Mocking             | Manual vs mockery vs gomock trade-offs                      |
+| Q14 | Tổ chức integration tests tách biệt?          | 🟡         | Integration Testing | Build tags, `//go:build integration`                        |
+| Q15 | `TestMain` dùng để làm gì?                    | 🟡         | Integration Testing | Package-level setup/teardown, shared resources              |
+| Q16 | Testcontainers-go?                            | 🟡         | Integration Testing | Real DB in Docker per-test, auto-cleanup                    |
+| Q17 | `httptest` package cung cấp gì?               | 🟡         | HTTP Testing        | NewServer, NewRequest, ResponseRecorder                     |
+| Q18 | Race detector hoạt động thế nào?              | 🔴         | Race Detection      | ThreadSanitizer, happens-before, no FP but has FN           |
+| Q19 | Coverage hoạt động thế nào? Ý nghĩa?          | 🟡         | Coverage            | -coverprofile, 60-80% target, quality > quantity            |
+| Q20 | `package foo` vs `package foo_test`?          | 🟡         | Test Organization   | Black-box vs white-box testing                              |
+| Q21 | Golden files pattern?                         | 🟢         | Test Organization   | Expected output in testdata/, `-update` flag                |
+| Q22 | Go profiling tools — khi nào dùng?            | 🔴         | Profiling           | 6 profile types, pprof, flame graph                         |
+| Q23 | `go vet` phát hiện gì?                        | 🟢         | Static Analysis     | Printf format, unreachable code, copy lock                  |
+| Q24 | `golangci-lint` — khi nào, cách dùng?         | 🟡         | Static Analysis     | Meta-linter, CI integration                                 |
+| Q25 | Viết table-driven test cho `Max(a,b)`?        | 🟢         | Unit Testing        | Code: anonymous struct, t.Run, got/want                     |
+| Q26 | `t.Error` vs `t.Fatal`?                       | 🟢         | Unit Testing        | Continue vs stop, cascade prevention                        |
+| Q27 | Chạy 1 test cụ thể?                           | 🟢         | Unit Testing        | `-run TestName/subtest`, `-count=1`                         |
+| Q28 | Test service có external deps?                | 🟡         | Integration Testing | 3 levels: unit/integration/contract                         |
+| Q29 | Benchmark A faster 5%, switch?                | 🟡         | Benchmarking        | benchstat, p-value, hot path, readability                   |
+| Q30 | Race detector — FP hay FN?                    | 🔴         | Race Detection      | No FP (observed), FN (unexecuted paths)                     |
+| Q31 | Production memory leak — diagnose?            | 🔴         | Profiling           | pprof heap → diff → inuse_space → goroutine leak            |
+| Q32 | Testing strategy cho microservice mới?        | 🔴         | Integration Testing | Testing pyramid: 70/20/5/5                                  |
+| Q33 | Production profiling — risks?                 | 🔴         | Profiling           | CPU 5% overhead, pprof internal-only, block 10-30%          |
+
+**Distribution:** 🟢 8 | 🟡 17 | 🔴 8 — tổng 33 câu
+
+---
+
+### Bilingual Interview Q&A / Câu Hỏi Song Ngữ
 
 ### Q: How do you write tests in Go? What makes a good Go test? / Viết test trong Go như thế nào? 🟢 Junior
 
@@ -842,6 +1011,7 @@ func TestAdd(t *testing.T) {
 ```
 
 **Test helpers and assertions:**
+
 ```go
 // No built-in assert — use testify (most popular)
 import "github.com/stretchr/testify/assert"
@@ -907,6 +1077,7 @@ func TestUserRegistration(t *testing.T) {
 ```
 
 **Testing HTTP handlers:**
+
 ```go
 import "net/http/httptest"
 
@@ -961,6 +1132,7 @@ func BenchmarkMyFunc(b *testing.B) {
 ```
 
 **Analyzing profiles:**
+
 ```bash
 # Interactive analysis
 go tool pprof cpu.prof
@@ -977,6 +1149,7 @@ go tool pprof http://localhost:6060/debug/pprof/heap
 ```
 
 **Profile types:**
+
 ```
 CPU profile:   where program spends CPU time
 Heap profile:  current memory allocations (who holds memory)
@@ -987,6 +1160,7 @@ Mutex:         mutex contention
 ```
 
 **Common findings and fixes:**
+
 ```
 High GC pressure: too many small allocations → use sync.Pool, reuse buffers
 String concat in loop: use strings.Builder (O(n) vs O(n²))
@@ -999,17 +1173,60 @@ Interface conversion: avoid in hot path — use concrete types
 
 ---
 
-## Self-Check / Tự Kiểm Tra
+---
 
-- [ ] Can I write a table-driven test with `t.Run` subtests from memory?
-- [ ] Can I explain why `go test -race` is essential for concurrent code?
-- [ ] Can I mock a database dependency using only Go interfaces (no mockery/gomock)?
-- [ ] Can I write a benchmark and read `ns/op`, `B/op`, `allocs/op` output?
-- [ ] Can I use `go tool pprof` to identify the top CPU-consuming function?
-- 💬 **Feynman Prompt:** Giải thích cách mock database trong Go cho một dev mới — tại sao dùng interface thay vì mock framework, và trade-off là gì?
+## ⚡ Cold Call Simulation / Mô Phỏng Phỏng Vấn Bất Chợt
+
+**Interviewer:** "Your production Go service has a memory leak. Walk me through how you'd diagnose it."
+
+**30-second answer:**
+
+> "First, confirm leak by checking RSS trend over time — memory should stabilize after GC. If it keeps growing, I'd use `go tool pprof` to capture heap profiles at two time points, then diff them with `-diff_base`. I look at `inuse_space` — if it grows, something's holding references. Most common cause in Go is goroutine leaks — blocked on channels without context cancellation. I'd check goroutine profile count. Once identified, fix is usually adding proper `context.WithTimeout` or closing channels."
+
+**Follow-up:** "How would you detect a goroutine leak specifically?"
+
+> "Run `pprof goroutine` profile — it shows all goroutine stacks. If you see thousands of goroutines blocked on the same channel receive or HTTP request, that's the leak. In CI, I'd add a test that checks `runtime.NumGoroutine()` before/after to prevent regression."
+
+---
+
+## Self-Check / Tự Kiểm Tra (Retrieval Practice)
+
+**Không xem lại notes — tự trả lời:**
+
+| #   | Question                                           | Key Points to Recall                                                                               |
+| --- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| 1   | Go testing philosophy khác gì so với Java/Python?  | Built-in, no assertion lib, `_test.go` excluded from binary, convention-over-config                |
+| 2   | 4 methods quan trọng nhất của `testing.T`?         | Error (continue), Fatal (stop), Helper (fix stack trace), Parallel (concurrency)                   |
+| 3   | Tại sao Go không cần mocking framework?            | Interface satisfaction implicit, mock = struct implementing interface, DI qua constructor          |
+| 4   | `b.N` trong benchmark hoạt động thế nào?           | Auto-adjusting iterations, tăng dần cho đến khi chạy đủ lâu (~1s), `-benchmem` cho alloc stats     |
+| 5   | Race detector — false positive hay false negative? | No FP (chỉ report observed), FN (code path chưa execute), ThreadSanitizer, 5-10x overhead          |
+| 6   | 3 levels testing external dependencies?            | Unit (mock interface), Integration (testcontainers), Contract (schema verify)                      |
+| 7   | Production memory leak — 5 bước diagnose?          | RSS trend → pprof heap → diff 2 timepoints → inuse_space → goroutine profile → fix context/channel |
+
+### Spaced Repetition Schedule / Lịch Ôn Tập
+
+| Round | Timing        | Focus                                                              |
+| ----- | ------------- | ------------------------------------------------------------------ |
+| 1     | Day 1 (today) | Read all concepts, answer Self-Check from memory                   |
+| 2     | Day 3         | Re-answer Self-Check, review Cold Call                             |
+| 3     | Day 7         | Focus on 🔴 questions (Q18, Q22, Q30-Q33)                          |
+| 4     | Day 14        | Full practice: pick 5 random questions, answer under time pressure |
+| 5     | Day 30        | Final review, focus on any remaining weak spots                    |
+
+---
 
 ## Connections / Liên Kết
 
+**Same Track (Go Lang):**
+
 - ⬅️ **Built on**: [Go Interfaces & Generics](./02-interfaces-generics.md) — mocking is just implementing an interface
 - ⬅️ **Built on**: [Go Memory & GC](./04-memory-gc.md) — pprof profiles memory and GC behavior
+- ⬅️ **Built on**: [Go Concurrency](./03-concurrency.md) — race detector, `t.Parallel()`, goroutine leak detection
+- ➡️ **Leads to**: [Data Structures in Go](./06-data-structures-go.md) — benchmark custom implementations
+- ➡️ **Leads to**: [Advanced Patterns](./08-advanced-patterns.md) — testing middleware, plugins, codegen
+
+**Cross-Track:**
+
 - 🔗 **Applied in**: [API Design](../02-backend-knowledge/01-api-design.md) — `httptest` for testing HTTP handlers
+- 🔗 **Applied in**: [Microservices](../02-backend-knowledge/02-microservices.md) — integration testing distributed services
+- 🔗 **Applied in**: [CI/CD](../02-backend-knowledge/07-cicd.md) — testing pipeline stages, race detection gates

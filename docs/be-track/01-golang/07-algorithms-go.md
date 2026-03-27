@@ -7,9 +7,9 @@
 
 ## Real-World Scenario / Tình Huống Thực Tế
 
-**Axon Active coding interview (ứng viên chia sẻ 2024):** Câu hỏi "Find all subarrays with sum equal to K" — ứng viên dùng O(n²) brute force. Interviewer hỏi: "Có thể làm O(n) không?" Ứng viên không recognize pattern "prefix sum + hash map" vì trong practice chỉ học algorithm riêng lẻ, không học *khi nào* áp dụng pattern nào. Kết quả: fail vòng technical.
+**Axon Active coding interview (ứng viên chia sẻ 2024):** Câu hỏi "Find all subarrays with sum equal to K" — ứng viên dùng O(n²) brute force. Interviewer hỏi: "Có thể làm O(n) không?" Ứng viên không recognize pattern "prefix sum + hash map" vì trong practice chỉ học algorithm riêng lẻ, không học _khi nào_ áp dụng pattern nào. Kết quả: fail vòng technical.
 
-**Bài học:** Coding interview không test việc *biết* algorithms — test việc *recognize pattern* từ problem description và implement sạch trong 20 phút.
+**Bài học:** Coding interview không test việc _biết_ algorithms — test việc _recognize pattern_ từ problem description và implement sạch trong 20 phút.
 
 ## What & Why / Cái Gì & Tại Sao
 
@@ -36,6 +36,7 @@ PROBLEM TYPE                    PATTERN              TIME      GO STRUCTURE
 ```
 
 ### Sorting Algorithm Comparison / So Sánh Thuật Toán Sắp Xếp
+
 ```
 Input: [5, 3, 8, 1, 9, 2, 4, 7, 6]
 
@@ -63,6 +64,7 @@ Go standard library:
 ```
 
 ### Two Pointers Pattern / Mẫu Hai Con Trỏ
+
 ```
 OPPOSITE ENDS (sorted array, find pair sum):
 arr = [1, 2, 3, 4, 5, 6]  target = 7
@@ -81,6 +83,7 @@ Result: arr[:3] = [1,2,3]
 ```
 
 ### Binary Search Template / Mẫu Tìm Kiếm Nhị Phân
+
 ```
 FIND EXACT VALUE:
   lo, hi = 0, len-1
@@ -109,6 +112,169 @@ BINARY SEARCH ON ANSWER:
 
 ---
 
+## Overview / Tổng Quan
+
+File này cover **7 nhóm thuật toán core** mà 80% coding interviews tại Grab, Shopee, VNG, Google sẽ hỏi. Mỗi nhóm = 1 pattern tư duy, không phải 1 bài riêng lẻ.
+
+| #   | Concept                           | Vai trò                                              | Interview Weight |
+| --- | --------------------------------- | ---------------------------------------------------- | ---------------- |
+| 1   | **Complexity Analysis**           | Ngôn ngữ đánh giá — mọi solution đều phải nói Big-O  | ⭐⭐⭐⭐⭐       |
+| 2   | **Sorting Algorithms**            | Nền tảng — Quick/Merge/Heap + Go's pdqsort           | ⭐⭐⭐⭐         |
+| 3   | **Searching & Binary Search**     | Pattern loại bỏ nửa — O(log n) trên sorted data      | ⭐⭐⭐⭐⭐       |
+| 4   | **Two Pointers & Sliding Window** | O(n) scan patterns — subarray/window problems        | ⭐⭐⭐⭐⭐       |
+| 5   | **Dynamic Programming & Greedy**  | Optimal substructure — dp[] array hoặc greedy choice | ⭐⭐⭐⭐⭐       |
+| 6   | **Graph Algorithms**              | BFS/DFS/Dijkstra/Topo Sort/Union-Find                | ⭐⭐⭐⭐         |
+| 7   | **Backtracking, String & Bit**    | Permutations, KMP, bit tricks                        | ⭐⭐⭐           |
+
+**Mối quan hệ:** Complexity Analysis là ngôn ngữ chung → Sorting/Searching là tools cơ bản → Two Pointers/Sliding Window/DP/Greedy là patterns giải bài → Graph/Backtracking/String/Bit là domains chuyên biệt. Interview test khả năng **recognize pattern** từ problem statement, không phải memorize implementation.
+
+---
+
+## Core Concepts — Deep Knowledge / Kiến Thức Chuyên Sâu
+
+### Concept 1: Complexity Analysis & Big-O
+
+**🧠 Memory Hook:** "Big-O là bảng giá nhà hàng — O(1) là buffet (ăn bao nhiêu cũng 1 giá), O(n) là tính theo món, O(n²) là mỗi người order cho mỗi người khác"
+
+**Why exists (2 levels):**
+
+- Level 1: Cần cách so sánh algorithms independent of hardware — 10ms trên MacBook Pro vs 10ms trên Raspberry Pi không nói gì
+- Level 2: Amortized analysis giải quyết misleading worst-case — Go slice append là O(1) amortized dù occasionally O(n) copy, vì doubling strategy phân bổ cost
+- Level 3: Trong interview, Big-O là ngôn ngữ bắt buộc — không nói được complexity = instant red flag
+
+**Common Mistakes:**
+
+- Nhầm O(log n) với O(n) — binary search loops look simple nhưng eliminates half each step
+- Quên space complexity — recursive DFS dùng O(h) stack space, BFS dùng O(w) queue
+- Nói "O(n log n) is always better than O(n²)" — với n < 50, O(n²) insertion sort nhanh hơn quicksort
+
+**Interview Pattern:** "Analyze the time and space complexity" → Phải trả lời cả hai, mention best/average/worst nếu khác nhau
+
+**Knowledge Chain:** Big-O → Sorting Comparison → Binary Search prerequisite → DP state analysis → Graph traversal cost
+
+### Concept 2: Sorting Algorithms
+
+**🧠 Memory Hook:** "Quick Sort = chia team theo captain (pivot), Merge Sort = chia đôi rồi ghép lại, Heap Sort = ai cao nhất ra trước — Go dùng cả 3 mix lại (pdqsort)"
+
+**Why exists (2 levels):**
+
+- Level 1: Many algorithms require sorted input — binary search, merge intervals, two pointers on sorted array
+- Level 2: Go 1.19+ dùng pdqsort (pattern-defeating quicksort) — detects pre-sorted runs, switches to heap sort khi partition fails, insertion sort cho small arrays. Hiểu vì sao = hiểu trade-offs
+- Level 3: Stability matters — `sort.SliceStable` preserves relative order, cần khi sort by multiple keys
+
+**Common Mistakes:**
+
+- Tự implement sort thay vì dùng `sort.Slice` — interviewer muốn thấy bạn biết standard library
+- Quên Quick Sort worst case O(n²) khi pivot xấu — mention "randomized pivot" hoặc "introsort fallback"
+- Không biết Go sort is not stable by default — `sort.Slice` dùng pdqsort (unstable)
+
+**Interview Pattern:** "Implement X sort" → Code clean + analyze complexity + explain when to use/not use
+
+**Knowledge Chain:** Sorting → Binary Search (requires sorted) → Merge Intervals → Meeting Rooms (sort + heap)
+
+### Concept 3: Searching & Binary Search
+
+**🧠 Memory Hook:** "Binary Search = mở từ điển ở giữa — nếu chữ cần tìm ở nửa trước thì bỏ nửa sau, repeat. Mỗi bước bỏ 50% = O(log n)"
+
+**Why exists (2 levels):**
+
+- Level 1: O(log n) vs O(n) — với 1 billion elements, binary search cần 30 steps vs 1 billion steps
+- Level 2: Binary Search on Answer (parametric search) — không chỉ search trong array, mà search trong solution space. VD: "minimum capacity to ship in D days" = binary search trên answer range
+- Level 3: `sort.Search` trong Go stdlib dùng binary search template — biết template = solve mọi variant
+
+**Common Mistakes:**
+
+- Off-by-one: `lo <= hi` vs `lo < hi` — nhầm boundary gây infinite loop hoặc miss element
+- Overflow: `(lo + hi) / 2` overflow int32 → dùng `lo + (hi-lo)/2`
+- Quên check edge: empty array, single element, all duplicates
+
+**Interview Pattern:** "Search in rotated sorted array" → Recognize binary search variant + handle rotation point
+
+**Knowledge Chain:** Binary Search → Search in Rotated → Binary Search on Answer → Median of Two Arrays
+
+### Concept 4: Two Pointers & Sliding Window
+
+**🧠 Memory Hook:** "Two Pointers = 2 ngón tay trên dây đàn — opposite ends (tìm cặp), same direction (fast/slow). Sliding Window = cửa sổ trượt trên tàu — fixed size (photo frame) hoặc variable (zoom lens)"
+
+**Why exists (2 levels):**
+
+- Level 1: Biến O(n²) brute force thành O(n) — thay vì check mọi pair, di chuyển 2 pointers thông minh
+- Level 2: Sliding Window là Two Pointers variant — `left` expand/shrink window, `right` scan forward. Key insight: khi window invalid, shrink left thay vì restart
+- Level 3: Pattern recognition: "contiguous subarray" = sliding window, "find pair in sorted" = two pointers, "cycle detection" = fast/slow
+
+**Common Mistakes:**
+
+- Dùng Two Pointers trên unsorted array khi cần sorted — sort first hoặc dùng hash map
+- Sliding Window: quên update state khi shrink (remove `left` element from map/count)
+- Nhầm fixed vs variable window — fixed: always `right-left+1 == k`, variable: shrink khi condition violated
+
+**Interview Pattern:** "Minimum window substring" → Variable sliding window + hash map for character count
+
+**Knowledge Chain:** Two Pointers (sorted pairs) → Sliding Window (subarray) → Prefix Sum (cumulative) → Deque (sliding max)
+
+### Concept 5: Dynamic Programming & Greedy
+
+**🧠 Memory Hook:** "DP = ghi chú bài đã giải để không giải lại (memoization). Greedy = luôn chọn món ngon nhất trước (local optimal → global optimal). DP chắc chắn đúng, Greedy nhanh hơn nhưng cần proof"
+
+**Why exists (2 levels):**
+
+- Level 1: Nhiều optimization problems có overlapping subproblems — Fibonacci, Coin Change, LCS. Không dùng DP = exponential time
+- Level 2: DP có 2 approaches: top-down (recursion + memo) vs bottom-up (iteration + dp[]). Bottom-up thường tốt hơn vì no stack overhead. Greedy cần proof: exchange argument hoặc matroid
+- Level 3: DP state design là phần khó nhất — dp[i] nghĩa gì? dp[i][j]? Sai state = sai solution. Interview focus vào state transition equation
+
+**Common Mistakes:**
+
+- Nhầm DP với Greedy — Coin Change greedy fails cho {1, 3, 4} target 6 (greedy: 4+1+1=3 coins, optimal: 3+3=2 coins)
+- DP: quên base case → wrong answer hoặc index out of bounds
+- Không optimize space — dp[i] chỉ depends dp[i-1]? Chỉ cần 2 variables, không cần array
+
+**Interview Pattern:** "Find minimum/maximum/count ways" → DP. "Find optimal with greedy property" → Greedy. Must explain state + transition
+
+**Knowledge Chain:** Recursion → Memoization → Bottom-up DP → Space Optimization → Greedy (khi provable)
+
+### Concept 6: Graph Algorithms
+
+**🧠 Memory Hook:** "BFS = sóng lan ra (shortest unweighted), DFS = đi sâu hết 1 nhánh rồi quay lại. Dijkstra = BFS nhưng có giá vé (weighted). Topo Sort = xếp lịch học (prerequisite trước)"
+
+**Why exists (2 levels):**
+
+- Level 1: Graph models quan hệ — social network, road map, dependency graph. BFS/DFS là tools cơ bản để traverse
+- Level 2: Dijkstra = BFS + priority queue cho weighted graphs. Topo Sort = order tasks with dependencies (Course Schedule). Union-Find = group connected components (Number of Islands variant)
+- Level 3: Trong Go, graph biểu diễn bằng `map[int][]int` (adjacency list) hoặc `[][]int` (matrix). Interview thường cho implicit graph (grid) → convert to BFS/DFS
+
+**Common Mistakes:**
+
+- BFS dùng stack (sai) → dùng queue. DFS dùng queue (sai) → dùng stack/recursion
+- Quên visited check → infinite loop trên cyclic graph
+- Dijkstra với negative weights → dùng Bellman-Ford thay vì
+- Topo Sort: không detect cycle → prerequisite circular = impossible
+
+**Interview Pattern:** "Shortest path" → BFS (unweighted) / Dijkstra (weighted). "Order with dependencies" → Topo Sort. "Connected components" → Union-Find / DFS
+
+**Knowledge Chain:** BFS/DFS → Shortest Path (Dijkstra) → Topological Sort → Union-Find → Minimum Spanning Tree
+
+### Concept 7: Backtracking, String & Bit Manipulation
+
+**🧠 Memory Hook:** "Backtracking = thử mọi cánh cửa, quay lại khi bế tắc (maze solving). KMP = khi mismatch, không quay lại từ đầu mà nhảy thông minh. Bit = on/off switch array nén vào 1 số"
+
+**Why exists (2 levels):**
+
+- Level 1: Backtracking cho permutations/combinations (exponential nhưng unavoidable). String matching cho text search. Bit manipulation cho space-efficient operations
+- Level 2: Backtracking template: choose → explore → unchoose. KMP prefix function tránh re-scan. XOR tricks: a^a=0, a^0=a → find single number
+- Level 3: Interview: Backtracking = N-Queens, Sudoku, Word Search. KMP hiếm khi implement nhưng phải explain. Bit: power of 2 check `n&(n-1)==0`
+
+**Common Mistakes:**
+
+- Backtracking: quên undo (unchoose) → state corrupted cho next branch
+- String: dùng `+` concatenation trong loop → O(n²), dùng `strings.Builder`
+- Bit: nhầm `&` (AND) với `&&` (logical) — Go compiler catches nhưng logic error subtle
+
+**Interview Pattern:** "Generate all X" → Backtracking. "Find single/missing number" → XOR. "Pattern matching" → KMP concept (implement rare)
+
+**Knowledge Chain:** Recursion → Backtracking → Pruning optimization → String matching → Bit tricks
+
+---
+
 ## Table of Contents
 
 1. [Complexity Analysis (Big-O)](#1-complexity-analysis-big-o)
@@ -129,23 +295,23 @@ BINARY SEARCH ON ANSWER:
 
 ## 1. Complexity Analysis (Big-O)
 
-
 ## Câu Hỏi Phỏng Vấn / Interview Q&A
+
 ### Q: Big-O là gì và tại sao quan trọng trong interview? 🟢 🟢 [Junior]
 
 **A:** Big-O notation mô tả **upper bound** của thời gian/bộ nhớ mà algorithm cần khi input tăng lên. Trong interview, interviewer đánh giá bạn qua khả năng phân tích complexity — đây là skill bắt buộc.
 
 **Các mức complexity phổ biến (từ nhanh → chậm):**
 
-| Big-O | Name | Ví dụ |
-|-------|------|-------|
-| O(1) | Constant | Hash map lookup, array index access |
-| O(log n) | Logarithmic | Binary search |
-| O(n) | Linear | Single loop qua array |
-| O(n log n) | Linearithmic | Merge sort, Quick sort (average) |
-| O(n²) | Quadratic | Nested loops, Bubble sort |
-| O(2^n) | Exponential | Recursive Fibonacci (naive), subsets |
-| O(n!) | Factorial | Permutations (brute force) |
+| Big-O      | Name         | Ví dụ                                |
+| ---------- | ------------ | ------------------------------------ |
+| O(1)       | Constant     | Hash map lookup, array index access  |
+| O(log n)   | Logarithmic  | Binary search                        |
+| O(n)       | Linear       | Single loop qua array                |
+| O(n log n) | Linearithmic | Merge sort, Quick sort (average)     |
+| O(n²)      | Quadratic    | Nested loops, Bubble sort            |
+| O(2^n)     | Exponential  | Recursive Fibonacci (naive), subsets |
+| O(n!)      | Factorial    | Permutations (brute force)           |
 
 ```go
 package main
@@ -279,6 +445,7 @@ func binarySearchRecursive(arr []int, target, lo, hi int) int {
 ```
 
 **Lưu ý quan trọng cho interview:**
+
 - Recursion luôn tốn stack space = O(depth)
 - Hash map tốn O(n) space
 - Khi interviewer hỏi "optimize", thường ý là giảm space complexity
@@ -480,14 +647,14 @@ func main() {
 }
 ```
 
-| Metric | Quick Sort |
-|--------|-----------|
-| Best | O(n log n) |
-| Average | O(n log n) |
-| Worst | O(n²) — khi pivot luôn là min/max |
-| Space | O(log n) — recursion stack |
-| Stable | No |
-| In-place | Yes |
+| Metric   | Quick Sort                        |
+| -------- | --------------------------------- |
+| Best     | O(n log n)                        |
+| Average  | O(n log n)                        |
+| Worst    | O(n²) — khi pivot luôn là min/max |
+| Space    | O(log n) — recursion stack        |
+| Stable   | No                                |
+| In-place | Yes                               |
 
 ---
 
@@ -583,14 +750,15 @@ func main() {
 }
 ```
 
-| Metric | Merge Sort |
-|--------|-----------|
-| Best/Avg/Worst | O(n log n) |
-| Space | O(n) |
-| Stable | Yes |
-| In-place | No (standard) |
+| Metric         | Merge Sort    |
+| -------------- | ------------- |
+| Best/Avg/Worst | O(n log n)    |
+| Space          | O(n)          |
+| Stable         | Yes           |
+| In-place       | No (standard) |
 
 **Khi nào dùng Merge Sort thay Quick Sort:**
+
 - Cần **stable sort** (giữ thứ tự equal elements)
 - Sort **linked list** (merge sort không cần random access)
 - Cần **guaranteed O(n log n)** worst case (Quick Sort worst = O(n²))
@@ -687,17 +855,18 @@ func main() {
 }
 ```
 
-| Metric | Heap Sort |
-|--------|----------|
-| Best/Avg/Worst | O(n log n) |
-| Space | O(1) — in-place |
-| Stable | No |
+| Metric         | Heap Sort       |
+| -------------- | --------------- |
+| Best/Avg/Worst | O(n log n)      |
+| Space          | O(1) — in-place |
+| Stable         | No              |
 
 ---
 
 ### Q: Go's sort package dùng algorithm gì? pdqsort là gì? 🔴 🔴 [Senior]
 
 **A:** Từ Go 1.19, `sort.Slice` dùng **pdqsort (Pattern-Defeating Quicksort)** — hybrid algorithm kết hợp:
+
 1. **Quicksort** cho average case
 2. **Heap sort** khi phát hiện worst case (quá nhiều recursion)
 3. **Insertion sort** cho small subarrays (< ~12 elements)
@@ -762,22 +931,23 @@ func main() {
 ```
 
 **pdqsort so với introsort (trước Go 1.19):**
+
 - pdqsort phát hiện patterns (đã sorted, reverse sorted, few unique) và optimize
 - Pivot chọn bằng **median-of-three** hoặc **ninther** (median of medians of three)
-- Khi recursion depth > 2*log(n) -> fallback sang heapsort
+- Khi recursion depth > 2\*log(n) -> fallback sang heapsort
 - Kết quả: nhanh hơn ~10-30% trên real-world data
 
 ---
 
 ### Q: So sánh tất cả sorting algorithms? 🟡 🟡 [Mid]
 
-| Algorithm | Best | Average | Worst | Space | Stable | Use Case |
-|-----------|------|---------|-------|-------|--------|----------|
-| Quick Sort | O(n log n) | O(n log n) | O(n²) | O(log n) | No | General purpose, in-memory |
-| Merge Sort | O(n log n) | O(n log n) | O(n log n) | O(n) | Yes | Linked lists, external sort, need stable |
-| Heap Sort | O(n log n) | O(n log n) | O(n log n) | O(1) | No | Memory constrained, priority queue |
-| Insertion Sort | O(n) | O(n²) | O(n²) | O(1) | Yes | Small arrays, nearly sorted |
-| Go pdqsort | O(n) | O(n log n) | O(n log n) | O(log n) | No | Go default, best hybrid |
+| Algorithm      | Best       | Average    | Worst      | Space    | Stable | Use Case                                 |
+| -------------- | ---------- | ---------- | ---------- | -------- | ------ | ---------------------------------------- |
+| Quick Sort     | O(n log n) | O(n log n) | O(n²)      | O(log n) | No     | General purpose, in-memory               |
+| Merge Sort     | O(n log n) | O(n log n) | O(n log n) | O(n)     | Yes    | Linked lists, external sort, need stable |
+| Heap Sort      | O(n log n) | O(n log n) | O(n log n) | O(1)     | No     | Memory constrained, priority queue       |
+| Insertion Sort | O(n)       | O(n²)      | O(n²)      | O(1)     | Yes    | Small arrays, nearly sorted              |
+| Go pdqsort     | O(n)       | O(n log n) | O(n log n) | O(log n) | No     | Go default, best hybrid                  |
 
 > **Interview Tip:** Biết khi nào dùng `sort.Slice` vs `sort.SliceStable`. Nếu cần stable -> dùng `SliceStable`. Google/Grab hay hỏi "sort phức tạp" (ví dụ: sort by multiple keys) — dùng `sort.SliceStable` rồi sort 2 lần (secondary key trước, primary key sau).
 
@@ -1107,7 +1277,7 @@ func main() {
 
 ### Q: Fixed vs Variable Sliding Window? Implement cả hai. 🟡 🟡 [Mid]
 
-**A:** Sliding Window là kỹ thuật maintain một "cửa sổ" trên array/string, di chuyển từ trái sang phải. Giảm O(n*k) xuống O(n).
+**A:** Sliding Window là kỹ thuật maintain một "cửa sổ" trên array/string, di chuyển từ trái sang phải. Giảm O(n\*k) xuống O(n).
 
 ```go
 package main
@@ -1254,6 +1424,7 @@ func main() {
 ```
 
 **Sliding Window template:**
+
 ```
 1. Expand: move right pointer, add element to window
 2. Shrink: while window is valid, try to shrink from left
@@ -1271,10 +1442,12 @@ func main() {
 **A:** Dynamic Programming giải bài toán bằng cách chia thành **subproblems** và lưu kết quả để tránh tính lại.
 
 **2 điều kiện để dùng DP:**
+
 1. **Overlapping Subproblems**: Cùng 1 subproblem được tính nhiều lần (ví dụ: fib(3) được gọi nhiều lần khi tính fib(5))
 2. **Optimal Substructure**: Lời giải tối ưu của bài toán được xây dựng từ lời giải tối ưu của subproblems
 
 **2 cách implement:**
+
 - **Top-down (Memoization)**: Recursive + cache. Viết tự nhiên hơn.
 - **Bottom-up (Tabulation)**: Iterative + build table. Thường tối ưu hơn (no recursion overhead).
 
@@ -1596,6 +1769,7 @@ func main() {
 ```
 
 > **Interview Tip:** DP là topic khó nhất. Approach khi gặp bài DP:
+>
 > 1. Xác định **state**: dp[i] hoặc dp[i][j] đại diện cho gì
 > 2. Xác định **transition**: dp[i] = f(dp[i-1], ...)
 > 3. Xác định **base case**
@@ -2371,6 +2545,7 @@ func main() {
 **A:** Backtracking = DFS + pruning. Explore tất cả possibilities, "backtrack" (quay lại) khi path hiện tại không thỏa mãn.
 
 **Template:**
+
 ```
 function backtrack(state, choices):
     if is_solution(state):
@@ -3017,22 +3192,22 @@ func main() {
 
 **A:** Đây là bảng pattern recognition — skill quan trọng nhất trong coding interview:
 
-| Dấu hiệu nhận biết | Pattern | Ví dụ bài |
-|---------------------|---------|-----------|
-| Sorted array, tìm pair | **Two Pointers** | Two Sum II, 3Sum, Container With Most Water |
-| Subarray/substring contiguous | **Sliding Window** | Max Sum Subarray, Min Window Substring |
-| Tìm min/max thỏa điều kiện | **Binary Search on Answer** | Koko Eating Bananas, Split Array Largest Sum |
-| Tối ưu hóa, đếm cách | **DP** | Coin Change, LCS, Knapsack |
-| Chọn/không chọn, decision tại mỗi step | **DP hoặc Backtracking** | 0/1 Knapsack, Subsets |
-| Liệt kê tất cả combinations | **Backtracking** | Permutations, N-Queens, Word Search |
-| Shortest path (unweighted) | **BFS** | Word Ladder, Rotten Oranges |
-| Shortest path (weighted) | **Dijkstra** | Network Delay Time |
-| Dependencies/ordering | **Topological Sort** | Course Schedule |
-| Connected components | **Union-Find hoặc DFS** | Number of Islands, Accounts Merge |
-| Intervals overlap | **Sort + Greedy** | Merge Intervals, Meeting Rooms |
-| Tree traversal | **DFS/BFS** | Max Depth, Level Order, Path Sum |
-| Find k-th element | **Heap/Quick Select** | Kth Largest, Top K Frequent |
-| Prefix sum, range query | **Prefix Sum** | Subarray Sum Equals K |
+| Dấu hiệu nhận biết                     | Pattern                     | Ví dụ bài                                    |
+| -------------------------------------- | --------------------------- | -------------------------------------------- |
+| Sorted array, tìm pair                 | **Two Pointers**            | Two Sum II, 3Sum, Container With Most Water  |
+| Subarray/substring contiguous          | **Sliding Window**          | Max Sum Subarray, Min Window Substring       |
+| Tìm min/max thỏa điều kiện             | **Binary Search on Answer** | Koko Eating Bananas, Split Array Largest Sum |
+| Tối ưu hóa, đếm cách                   | **DP**                      | Coin Change, LCS, Knapsack                   |
+| Chọn/không chọn, decision tại mỗi step | **DP hoặc Backtracking**    | 0/1 Knapsack, Subsets                        |
+| Liệt kê tất cả combinations            | **Backtracking**            | Permutations, N-Queens, Word Search          |
+| Shortest path (unweighted)             | **BFS**                     | Word Ladder, Rotten Oranges                  |
+| Shortest path (weighted)               | **Dijkstra**                | Network Delay Time                           |
+| Dependencies/ordering                  | **Topological Sort**        | Course Schedule                              |
+| Connected components                   | **Union-Find hoặc DFS**     | Number of Islands, Accounts Merge            |
+| Intervals overlap                      | **Sort + Greedy**           | Merge Intervals, Meeting Rooms               |
+| Tree traversal                         | **DFS/BFS**                 | Max Depth, Level Order, Path Sum             |
+| Find k-th element                      | **Heap/Quick Select**       | Kth Largest, Top K Frequent                  |
+| Prefix sum, range query                | **Prefix Sum**              | Subarray Sum Equals K                        |
 
 ### Common Go Idioms for Coding Interviews
 
@@ -3217,75 +3392,77 @@ func main() {
 
 #### Google (thường hỏi Hard, focus DP + Graph + Binary Search)
 
-| # | Problem | Pattern | Difficulty |
-|---|---------|---------|------------|
-| 4 | Median of Two Sorted Arrays | Binary Search | Hard |
-| 42 | Trapping Rain Water | Two Pointers / Stack | Hard |
-| 76 | Minimum Window Substring | Sliding Window | Hard |
-| 72 | Edit Distance | DP | Hard |
-| 200 | Number of Islands | DFS/BFS/Union-Find | Medium |
-| 239 | Sliding Window Maximum | Deque | Hard |
-| 297 | Serialize/Deserialize Binary Tree | BFS/DFS | Hard |
-| 322 | Coin Change | DP | Medium |
-| 410 | Split Array Largest Sum | Binary Search on Answer | Hard |
-| 843 | Guess the Word | Interactive | Hard |
+| #   | Problem                           | Pattern                 | Difficulty |
+| --- | --------------------------------- | ----------------------- | ---------- |
+| 4   | Median of Two Sorted Arrays       | Binary Search           | Hard       |
+| 42  | Trapping Rain Water               | Two Pointers / Stack    | Hard       |
+| 76  | Minimum Window Substring          | Sliding Window          | Hard       |
+| 72  | Edit Distance                     | DP                      | Hard       |
+| 200 | Number of Islands                 | DFS/BFS/Union-Find      | Medium     |
+| 239 | Sliding Window Maximum            | Deque                   | Hard       |
+| 297 | Serialize/Deserialize Binary Tree | BFS/DFS                 | Hard       |
+| 322 | Coin Change                       | DP                      | Medium     |
+| 410 | Split Array Largest Sum           | Binary Search on Answer | Hard       |
+| 843 | Guess the Word                    | Interactive             | Hard       |
 
 #### Grab (focus System Design + Medium coding)
 
-| # | Problem | Pattern | Difficulty |
-|---|---------|---------|------------|
-| 1 | Two Sum | Hash Map | Easy |
-| 15 | 3Sum | Two Pointers | Medium |
-| 20 | Valid Parentheses | Stack | Easy |
-| 33 | Search in Rotated Sorted Array | Binary Search | Medium |
-| 46 | Permutations | Backtracking | Medium |
-| 56 | Merge Intervals | Sort + Greedy | Medium |
-| 146 | LRU Cache | Hash Map + Linked List | Medium |
-| 200 | Number of Islands | BFS/DFS | Medium |
-| 207 | Course Schedule | Topological Sort | Medium |
-| 253 | Meeting Rooms II | Sort + Heap | Medium |
+| #   | Problem                        | Pattern                | Difficulty |
+| --- | ------------------------------ | ---------------------- | ---------- |
+| 1   | Two Sum                        | Hash Map               | Easy       |
+| 15  | 3Sum                           | Two Pointers           | Medium     |
+| 20  | Valid Parentheses              | Stack                  | Easy       |
+| 33  | Search in Rotated Sorted Array | Binary Search          | Medium     |
+| 46  | Permutations                   | Backtracking           | Medium     |
+| 56  | Merge Intervals                | Sort + Greedy          | Medium     |
+| 146 | LRU Cache                      | Hash Map + Linked List | Medium     |
+| 200 | Number of Islands              | BFS/DFS                | Medium     |
+| 207 | Course Schedule                | Topological Sort       | Medium     |
+| 253 | Meeting Rooms II               | Sort + Heap            | Medium     |
 
 #### Microsoft (balanced, LL/Tree + medium DP)
 
-| # | Problem | Pattern | Difficulty |
-|---|---------|---------|------------|
-| 2 | Add Two Numbers | Linked List | Medium |
-| 3 | Longest Substring Without Repeating | Sliding Window | Medium |
-| 21 | Merge Two Sorted Lists | Linked List | Easy |
-| 53 | Maximum Subarray | DP (Kadane's) | Medium |
-| 54 | Spiral Matrix | Matrix | Medium |
-| 138 | Copy List with Random Pointer | Hash Map + LL | Medium |
-| 146 | LRU Cache | Design | Medium |
-| 212 | Word Search II | Trie + Backtracking | Hard |
-| 236 | LCA of Binary Tree | Tree DFS | Medium |
-| 300 | Longest Increasing Subsequence | DP + Binary Search | Medium |
+| #   | Problem                             | Pattern             | Difficulty |
+| --- | ----------------------------------- | ------------------- | ---------- |
+| 2   | Add Two Numbers                     | Linked List         | Medium     |
+| 3   | Longest Substring Without Repeating | Sliding Window      | Medium     |
+| 21  | Merge Two Sorted Lists              | Linked List         | Easy       |
+| 53  | Maximum Subarray                    | DP (Kadane's)       | Medium     |
+| 54  | Spiral Matrix                       | Matrix              | Medium     |
+| 138 | Copy List with Random Pointer       | Hash Map + LL       | Medium     |
+| 146 | LRU Cache                           | Design              | Medium     |
+| 212 | Word Search II                      | Trie + Backtracking | Hard       |
+| 236 | LCA of Binary Tree                  | Tree DFS            | Medium     |
+| 300 | Longest Increasing Subsequence      | DP + Binary Search  | Medium     |
 
 #### Zalo / Axon / Employment Hero (Medium focus)
 
-| # | Problem | Pattern | Difficulty |
-|---|---------|---------|------------|
-| 1 | Two Sum | Hash Map | Easy |
-| 3 | Longest Substring Without Repeating | Sliding Window | Medium |
-| 5 | Longest Palindromic Substring | DP / Expand | Medium |
-| 15 | 3Sum | Two Pointers | Medium |
-| 56 | Merge Intervals | Sort | Medium |
-| 78 | Subsets | Backtracking | Medium |
-| 102 | Binary Tree Level Order | BFS | Medium |
-| 121 | Best Time to Buy and Sell Stock | DP | Easy |
-| 206 | Reverse Linked List | Linked List | Easy |
-| 347 | Top K Frequent Elements | Heap / Bucket Sort | Medium |
+| #   | Problem                             | Pattern            | Difficulty |
+| --- | ----------------------------------- | ------------------ | ---------- |
+| 1   | Two Sum                             | Hash Map           | Easy       |
+| 3   | Longest Substring Without Repeating | Sliding Window     | Medium     |
+| 5   | Longest Palindromic Substring       | DP / Expand        | Medium     |
+| 15  | 3Sum                                | Two Pointers       | Medium     |
+| 56  | Merge Intervals                     | Sort               | Medium     |
+| 78  | Subsets                             | Backtracking       | Medium     |
+| 102 | Binary Tree Level Order             | BFS                | Medium     |
+| 121 | Best Time to Buy and Sell Stock     | DP                 | Easy       |
+| 206 | Reverse Linked List                 | Linked List        | Easy       |
+| 347 | Top K Frequent Elements             | Heap / Bucket Sort | Medium     |
 
 ---
 
 ### Interview Tips for Coding Rounds
 
 **Truoc interview:**
+
 1. Luyen **50-100 bai** LeetCode theo pattern (khong random)
 2. Moi pattern luyen 5-10 bai, tu Easy -> Hard
 3. Viet code bang Go tren LeetCode (khong dung Python)
 4. Practice **time-boxed**: 20 phut cho Medium, 30-40 phut cho Hard
 
 **Trong interview:**
+
 1. **Clarify** (2-3 phut): hoi constraints, edge cases, input size
    - "What's the range of n?"
    - "Can there be duplicates?"
@@ -3310,6 +3487,7 @@ func main() {
    - "If the input were different (e.g., stream), we'd use Y..."
 
 **Common mistakes to avoid:**
+
 - Nhay vao code ngay khong noi approach
 - Code xong khong test
 - Khong handle edge cases (nil, empty, single element)
@@ -3318,6 +3496,7 @@ func main() {
 - Khong noi complexity khi duoc hoi
 
 **Go-specific tips:**
+
 - Biet dung `sort.Slice`, `sort.Search`, `container/heap`
 - Biet Go slice internals (append, capacity, copy)
 - Handle integer overflow: dung `lo + (hi-lo)/2` thay vi `(lo+hi)/2`
@@ -3330,17 +3509,91 @@ func main() {
 
 ---
 
+## Interview Q&A Summary / Tóm Tắt Q&A Phỏng Vấn
+
+| #   | Question                                 | Difficulty | Core Concept        | Key Signal                                             |
+| --- | ---------------------------------------- | ---------- | ------------------- | ------------------------------------------------------ |
+| Q1  | Big-O là gì và tại sao quan trọng?       | 🟢         | Complexity Analysis | Hiểu asymptotic notation, so sánh growth rates         |
+| Q2  | Phân tích Space Complexity?              | 🟡         | Complexity Analysis | Phân biệt auxiliary vs total, recursive stack space    |
+| Q3  | Amortized Analysis với Go slice?         | 🔴         | Complexity Analysis | Giải thích doubling strategy, aggregate method         |
+| Q4  | Nested loops và recursion complexity?    | 🟡         | Complexity Analysis | Master theorem, recurrence relations                   |
+| Q5  | Implement Quick Sort?                    | 🟡         | Sorting             | Partition logic, pivot selection, O(n²) worst case     |
+| Q6  | Implement Merge Sort? Khi nào dùng?      | 🟡         | Sorting             | Stable sort, O(n) space, external sort use case        |
+| Q7  | Implement Heap Sort dùng container/heap? | 🟡         | Sorting             | Heap interface, O(1) space, not stable                 |
+| Q8  | Go sort package dùng gì? pdqsort?        | 🔴         | Sorting             | Pattern-defeating quicksort, adaptive behavior         |
+| Q9  | So sánh tất cả sorting algorithms?       | 🟡         | Sorting             | Trade-offs: stability, space, best/worst case          |
+| Q10 | Binary Search — exact, first/last?       | 🟡         | Searching           | Off-by-one handling, lo<=hi vs lo<hi                   |
+| Q11 | Binary Search on Answer?                 | 🔴         | Searching           | Parametric search, monotonic predicate                 |
+| Q12 | Two Pointers với bài kinh điển?          | 🟡         | Two Pointers        | Opposite ends vs same direction, sorted prerequisite   |
+| Q13 | Fixed vs Variable Sliding Window?        | 🟡         | Sliding Window      | Window expansion/shrink, state management              |
+| Q14 | DP concepts: overlapping, optimal?       | 🟡         | Dynamic Programming | State design, transition equation, space optimization  |
+| Q15 | Khi nào dùng Greedy?                     | 🟡         | Greedy              | Greedy choice property, proof by exchange argument     |
+| Q16 | BFS và DFS implement trong Go?           | 🟡         | Graph               | Queue vs stack, visited map, adjacency list            |
+| Q17 | Dijkstra weighted shortest path?         | 🔴         | Graph               | Priority queue, relaxation, no negative weights        |
+| Q18 | Topological Sort — Kahn's và DFS?        | 🟡         | Graph               | In-degree tracking, cycle detection, Course Schedule   |
+| Q19 | Union-Find với path compression?         | 🔴         | Graph               | Amortized O(α(n)), union by rank, connected components |
+| Q20 | Backtracking template và bài kinh điển?  | 🟡         | Backtracking        | Choose-explore-unchoose, pruning, N-Queens             |
+| Q21 | KMP và Rabin-Karp string matching?       | 🔴         | String              | Prefix function, rolling hash, O(n+m) vs O(nm)         |
+| Q22 | Bit operation phổ biến trong Go?         | 🟡         | Bit Manipulation    | XOR tricks, power of 2, bit masking                    |
+| Q23 | Nhận diện pattern khi gặp bài mới?       | 🔴         | Pattern Recognition | Problem → pattern mapping, signal keywords             |
+
+**Distribution:** 🟢 1 | 🟡 15 | 🔴 7 — **Total: 23 Q&As**
+
+---
+
+## ⚡ Cold Call Simulation / Mô Phỏng Hỏi Bất Chợt
+
+> **Interviewer:** "Given an array of integers and a target sum, find two numbers that add up to the target. Then extend to 3Sum."
+
+**30-second answer:**
+"Two Sum: dùng hash map — iterate array, với mỗi element check nếu `target - element` đã có trong map. O(n) time, O(n) space. Return indices.
+
+3Sum: sort array trước O(n log n). Iterate i, dùng two pointers `lo = i+1`, `hi = n-1` cho remaining. Skip duplicates. Overall O(n²)."
+
+**Follow-up:** "What if the array is sorted for Two Sum?"
+→ "Two pointers from both ends. Lo + hi > target → hi--. Lo + hi < target → lo++. O(n) time, O(1) space — better than hash map approach."
+
+---
+
 ## Self-Check / Tự Kiểm Tra
 
-- [ ] Can I identify which pattern applies to a problem in under 2 minutes?
-- [ ] Can I implement binary search without off-by-one errors from memory?
-- [ ] Can I implement BFS and DFS for a graph using Go idioms (queue via slice, stack via slice)?
-- [ ] Can I explain time and space complexity for sliding window, two pointers, and DP?
-- 💬 **Feynman Prompt:** Giải thích tại sao "prefix sum" có thể giải quyết "subarray sum = K" trong O(n) — vẽ bảng ví dụ để chứng minh.
+> **Hướng dẫn:** Che cột phải, tự trả lời từng câu, sau đó check.
+
+| #   | Câu hỏi tự kiểm tra                                                        | Key Points                                                                                                                                                                                          |
+| --- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 7 core algorithm patterns là gì? Cho ví dụ problem mỗi pattern.            | Two Pointers (Two Sum sorted), Sliding Window (Max Subarray), Binary Search (Search Rotated), DP (Coin Change), BFS (Shortest Path Grid), Backtracking (Permutations), Greedy (Interval Scheduling) |
+| 2   | Binary Search: khi nào `lo <= hi` vs `lo < hi`? Off-by-one xảy ra khi nào? | `lo <= hi` khi search exact, `lo < hi` khi tìm boundary. Off-by-one: quên +1/-1 khi update lo/hi → infinite loop                                                                                    |
+| 3   | DP vs Greedy: coin change {1,3,4} target 6 — greedy fail như thế nào?      | Greedy: 4+1+1 = 3 coins. DP: 3+3 = 2 coins. Greedy chọn local optimal nhưng miss global                                                                                                             |
+| 4   | Go `sort.Slice` dùng algorithm gì internally? Tại sao?                     | pdqsort (pattern-defeating quicksort) — hybrid: quicksort + heapsort fallback + insertion sort for small n. Adaptive to input patterns                                                              |
+| 5   | BFS vs DFS: khi nào dùng cái nào? Space complexity khác nhau?              | BFS: shortest unweighted path, O(width) queue. DFS: exhaustive search, O(height) stack. Grid: BFS cho min steps, DFS cho all paths                                                                  |
+| 6   | Sliding Window: fixed vs variable — trigger shrink khi nào?                | Fixed: shrink khi window size > k. Variable: shrink khi constraint violated (sum > target, duplicate count > limit)                                                                                 |
+| 7   | Backtracking template 3 steps? Tại sao phải "unchoose"?                    | Choose → Explore → Unchoose. Unchoose restores state cho next branch — skip = corrupted state, wrong results for sibling branches                                                                   |
+
+### 📅 Spaced Repetition / Lặp Lại Ngắt Quãng
+
+| Round | Ngày   | Focus                                                                  | Phương pháp                        |
+| ----- | ------ | ---------------------------------------------------------------------- | ---------------------------------- |
+| 1     | Day 1  | Đọc toàn bộ, tập trung pattern recognition map                         | Đọc + vẽ lại pattern map từ memory |
+| 2     | Day 3  | Self-check 7 câu + implement binary search, two pointers từ memory     | Code trên giấy/whiteboard          |
+| 3     | Day 7  | Cold call + solve 3 LeetCode (1 each: sliding window, DP, graph)       | Timed 20-min per problem           |
+| 4     | Day 14 | Full mock: 2 Medium problems (45 min), explain approach trước khi code | Pair programming format            |
+| 5     | Day 30 | Review Interview Q&A Summary + solve 1 Hard (backtracking/DP)          | Competition mode — no hints        |
+
+---
 
 ## Connections / Liên Kết
 
+**Same Track:**
+
 - ⬅️ **Built on**: [Data Structures Go](./06-data-structures-go.md) — algorithms operate on data structures
-- ⬅️ **Theory**: [Algorithms Theory](../../shared/01-cs-fundamentals/algorithms-theory.md) — complexity analysis and algorithm design
+- ⬅️ **Prerequisite**: [Language Fundamentals](./01-language-fundamentals.md) — slice internals, map mechanics
+- ➡️ **Advanced**: [Advanced Patterns](./08-advanced-patterns.md) — design patterns using algorithm building blocks
+- 🔗 **Testing**: [Testing & Profiling](./05-testing-profiling.md) — benchmark algorithm implementations
+- 🔗 **Concurrency**: [Concurrency](./03-concurrency.md) — parallel algorithms, concurrent graph traversal
+
+**Cross-Track:**
+
+- ⬅️ **Theory**: [Algorithms Theory](../../shared/01-cs-fundamentals/algorithms-theory.md) — formal complexity analysis
+- 🔗 **Complexity**: [Complexity Analysis](../../shared/01-cs-fundamentals/complexity-analysis.md) — Big-O language
+- ➡️ **System Design**: [Design Framework](../04-be-system-design/01-design-framework.md) — algorithms inform capacity estimation
 - ➡️ **Practice**: [LeetCode](../../leetcode/) — apply patterns to real problems
-- 🔗 **Related**: [Complexity Analysis](../../shared/01-cs-fundamentals/complexity-analysis.md) — Big-O is the language of algorithm comparison
