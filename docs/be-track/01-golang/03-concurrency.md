@@ -101,10 +101,12 @@ Go concurrency là **chủ đề hỏi nhiều nhất** trong Go interviews (~40
 - **Level 1**: Shared memory + locks = complex bugs (data races, deadlocks). Message passing is simpler to reason about.
 - **Level 2**: CSP (Hoare 1978) proved that independent processes communicating via channels can be **formally verified** — Go adopted this for practical safety.
 
-**Common Mistakes / Lỗi Thường Gặp:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-- ❌ Thinking Go is pure CSP — Go has `sync.Mutex` too; CSP is **preferred**, not mandatory
-- ❌ Confusing concurrency (structure) with parallelism (execution) — 1 core can be concurrent but not parallel
+| Sai lầm                                                        | Tại sao sai                                                                   | Đúng là                                   |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------------- | ----------------------------------------- |
+| Thinking Go is pure CSP                                        | Go has `sync.Mutex` too                                                       | CSP is **preferred**, not mandatory       |
+| Confusing concurrency (structure) with parallelism (execution) | They are distinct concepts — concurrency = structure, parallelism = execution | 1 core can be concurrent but not parallel |
 
 **🎯 Interview Pattern**: Define CSP → Compare with shared memory → Go's implementation (goroutines + channels) → When to use mutex instead
 
@@ -122,11 +124,13 @@ Go concurrency là **chủ đề hỏi nhiều nhất** trong Go interviews (~40
 - **Level 2**: M:N threading model — Go runtime schedules M goroutines on N OS threads, amortizing kernel overhead.
 - **Level 3**: Growable stack (2KB → 1GB) eliminates fixed allocation waste; compiler inserts stack check prologues.
 
-**Common Mistakes / Lỗi Thường Gặp:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-- ❌ No exit strategy → **goroutine leak** (most common Go bug in production)
-- ❌ Expecting goroutine ID — Go deliberately omits it to prevent thread-local storage abuse
-- ❌ Ignoring error handling in spawned goroutines — panics crash the entire process
+| Sai lầm                                       | Tại sao sai                                                    | Đúng là                                                        |
+| --------------------------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------- |
+| No exit strategy for goroutines               | Causes **goroutine leak** — most common Go bug in production   | Always use context/channel to signal goroutine termination     |
+| Expecting goroutine ID                        | Go deliberately omits it to prevent thread-local storage abuse | No goroutine ID by design; use `context` for per-request data  |
+| Ignoring error handling in spawned goroutines | Panics in goroutines crash the entire process                  | Always handle errors and recover from panics inside goroutines |
 
 **🎯 Interview Pattern**: Compare with thread (table) → Stack growth mechanism → Lifecycle states → Leak detection (`goleak`, `pprof`)
 
@@ -144,11 +148,13 @@ Go concurrency là **chủ đề hỏi nhiều nhất** trong Go interviews (~40
 - **Level 2**: Work stealing balances load across Ps — idle P steals from busy P's queue.
 - **Level 3**: Syscall handling: when M blocks on syscall, P detaches and finds/creates new M — other goroutines don't stall.
 
-**Common Mistakes / Lỗi Thường Gặp:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-- ❌ Thinking P = CPU core — P is **logical processor** (defaults to `GOMAXPROCS`)
-- ❌ Confusing M with goroutine — M is OS thread, not goroutine
-- ❌ Not understanding preemption — before Go 1.14, tight loops couldn't be preempted (now SIGURG signal-based)
+| Sai lầm                      | Tại sao sai                                               | Đúng là                                                                             |
+| ---------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Thinking P = CPU core        | P is a logical construct, not a physical core             | P is **logical processor** (defaults to `GOMAXPROCS`) holding run queue + resources |
+| Confusing M with goroutine   | M and G are separate layers in the GMP model              | M is OS thread (worker); G is goroutine (task)                                      |
+| Not understanding preemption | Before Go 1.14, tight loops could not be preempted at all | Go 1.14+ uses SIGURG signal-based preemption at safe points                         |
 
 **🎯 Interview Pattern**: Draw GMP diagram → Normal scheduling flow → Syscall scenario → Work stealing → Preemption evolution
 
@@ -166,11 +172,13 @@ Go concurrency là **chủ đề hỏi nhiều nhất** trong Go interviews (~40
 - **Level 2**: Ownership transfer — once sent, sender doesn't touch data anymore.
 - **Level 3**: `hchan` struct internally uses ring buffer + wait queues; direct copy optimization avoids buffer for waiting receivers.
 
-**Common Mistakes / Lỗi Thường Gặp:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-- ❌ Sending to nil channel → blocks forever (not panic)
-- ❌ Forgetting to close producer channel → consumer goroutine leaks
-- ❌ Reading from closed channel returns zero value (not error) — use `v, ok := <-ch` pattern
+| Sai lầm                                          | Tại sao sai                                       | Đúng là                                                      |
+| ------------------------------------------------ | ------------------------------------------------- | ------------------------------------------------------------ |
+| Sending to nil channel → panic                   | It blocks forever, not panic                      | Nil channel send/receive blocks forever; `close(nil)` panics |
+| Forgetting to close producer channel             | Consumer goroutine waits forever → goroutine leak | Producer must `close(ch)` to signal completion to consumer   |
+| Expecting error when reading from closed channel | Returns zero value, not an error                  | Use `v, ok := <-ch` pattern to detect closed channel         |
 
 **🎯 Interview Pattern**: Channel axioms table → Internal structure (hchan) → Buffered vs unbuffered → `select` randomness → Patterns
 
@@ -187,11 +195,13 @@ Go concurrency là **chủ đề hỏi nhiều nhất** trong Go interviews (~40
 - **Level 1**: Not everything fits channel model — simple state protection is cleaner with mutex.
 - **Level 2**: `sync.Pool` reduces GC pressure by reusing objects; `sync.Once` guarantees one-time initialization.
 
-**Common Mistakes / Lỗi Thường Gặp:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-- ❌ Copying sync types (Mutex, WaitGroup) — `go vet` catches this
-- ❌ `RLock()` then `Lock()` without releasing → deadlock
-- ❌ Forgetting `defer mu.Unlock()` — any panic leaves mutex locked forever
+| Sai lầm                                         | Tại sao sai                                           | Đúng là                                                     |
+| ----------------------------------------------- | ----------------------------------------------------- | ----------------------------------------------------------- |
+| Copying sync types (Mutex, WaitGroup)           | Internal state corrupts when copied                   | Always pass by pointer; `go vet` catches this automatically |
+| `RLock()` then `Lock()` without releasing first | Creates deadlock — RWMutex cannot upgrade a read lock | Call `RUnlock()` before acquiring write lock                |
+| Forgetting `defer mu.Unlock()`                  | Any panic leaves mutex locked forever — deadlock      | Always pair `Lock()` with `defer mu.Unlock()`               |
 
 **🎯 Interview Pattern**: When mutex vs channel → Mutex vs RWMutex (read-heavy workloads) → WaitGroup for fan-out → Pool for GC
 
@@ -209,11 +219,13 @@ Go concurrency là **chủ đề hỏi nhiều nhất** trong Go interviews (~40
 - **Level 2**: Tree-structured cancellation — parent cancel cascades to all children via `Done()` channel.
 - **Level 3**: `context.Value` carries request-scoped data (trace ID, auth token) without parameter explosion.
 
-**Common Mistakes / Lỗi Thường Gặp:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-- ❌ Using `context.Value` as dependency injection (meant for request-scoped metadata only)
-- ❌ Forgetting `defer cancel()` → context leak (holds resources until parent dies)
-- ❌ Storing context in struct fields — context is per-request, pass as first parameter
+| Sai lầm                                       | Tại sao sai                                                                      | Đúng là                                                              |
+| --------------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Using `context.Value` as dependency injection | `context.Value` is meant for request-scoped metadata only (trace ID, auth token) | Pass dependencies as explicit function parameters                    |
+| Forgetting `defer cancel()`                   | Context leak — holds resources until parent context dies                         | Always `defer cancel()` immediately after `WithCancel`/`WithTimeout` |
+| Storing context in struct fields              | Context is per-request, not per-object                                           | Pass context as the first function parameter                         |
 
 **🎯 Interview Pattern**: Why context exists → WithCancel/WithTimeout → Cascading cancellation mechanism → Best practices (first param, defer cancel)
 
@@ -230,11 +242,13 @@ Go concurrency là **chủ đề hỏi nhiều nhất** trong Go interviews (~40
 - **Level 1**: Reusable solutions to recurring concurrent problems (like design patterns but for concurrency).
 - **Level 2**: Patterns compose — Pipeline + Worker Pool + Context = production-grade data processing.
 
-**Common Mistakes / Lỗi Thường Gặp:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-- ❌ Over-engineering — using Worker Pool when simple goroutine + WaitGroup suffices
-- ❌ Wrong pool size — CPU-bound: `GOMAXPROCS`, I/O-bound: higher (100-1000)
-- ❌ Missing cancellation in patterns — every pattern must respect `ctx.Done()`
+| Sai lầm                           | Tại sao sai                                        | Đúng là                                                     |
+| --------------------------------- | -------------------------------------------------- | ----------------------------------------------------------- |
+| Over-engineering with Worker Pool | Simple goroutine + WaitGroup often suffices        | Match pattern complexity to actual concurrency requirements |
+| Wrong pool size                   | CPU-bound and I/O-bound need very different sizes  | CPU-bound: `GOMAXPROCS`; I/O-bound: higher (100–1000)       |
+| Missing cancellation in patterns  | Goroutines run forever if context is not respected | Every pattern must check `ctx.Done()` in loops              |
 
 **🎯 Interview Pattern**: Name pattern → Draw data flow diagram → Code skeleton → Production considerations (error handling, cancellation, backpressure)
 
@@ -2057,17 +2071,25 @@ Vietnamese explanation: Context tạo thành **cây phân cấp**: cancel parent
 
 ## Self-Check / Tự Kiểm Tra
 
-> Che cột "Key Points", tự trả lời, rồi kiểm tra. Nếu đúng ≥ 5/7 → ready for interviews.
+> **Hướng dẫn:** Đóng tài liệu lại. Trả lời từng câu bằng cách viết ra giấy hoặc nói thành tiếng. Sau đó mở lại kiểm tra.
 
-| #   | Question (tự hỏi)                                                   | Key Points (che lại)                                                                                                 |
-| --- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| 1   | GMP model có 3 thành phần gì? Vai trò mỗi thành phần?               | G = goroutine (task), M = OS thread (worker), P = logical processor (run queue + resources)                          |
-| 2   | Goroutine khác OS thread ở những điểm nào? (≥ 4 điểm)               | Stack 2KB vs 1MB, user-space scheduling, 100K+ scale, no thread ID, growable stack                                   |
-| 3   | Channel axioms: gửi vào nil channel thì sao? Đọc từ closed channel? | Nil → block forever, Closed → returns zero value (use `v, ok := <-ch`)                                               |
-| 4   | Khi nào dùng Mutex, khi nào dùng Channel?                           | Mutex: protect internal state. Channel: coordinate between goroutines. Simple state → mutex, communication → channel |
-| 5   | Context tree cancellation hoạt động thế nào?                        | Parent cancel → all children cancel via Done() channel. Child cancel → parent unaffected. Always `defer cancel()`    |
-| 6   | Worker Pool pattern cần những gì?                                   | Jobs channel + N worker goroutines + WaitGroup + context for graceful shutdown                                       |
-| 7   | 3 cách phổ biến gây goroutine leak?                                 | Unbuffered channel no receiver, missing context cancellation, infinite loop without exit condition                   |
+| #   | Loại           | Câu hỏi                                                                                                          |
+| --- | -------------- | ---------------------------------------------------------------------------------------------------------------- |
+| 1   | 🔍 Retrieval   | GMP model: G, M, P là gì? Work stealing hoạt động thế nào?                                                       |
+| 2   | 🎨 Visual      | Vẽ diagram goroutine lifecycle: Grunnable → Grunning → Gwaiting → Gdead. Khi nào goroutine bị preempt?           |
+| 3   | 🛠️ Application | Viết Worker Pool pattern với context cancellation và graceful shutdown.                                          |
+| 4   | 🐛 Debug       | Goroutine count tăng liên tục trong production — 3 nguyên nhân phổ biến nhất và cách detect?                     |
+| 5   | 🎓 Teach       | Giải thích cho Java developer: tại sao Go dùng channels thay vì synchronized blocks? Khi nào vẫn nên dùng Mutex? |
+
+### Key Points (tự kiểm tra)
+
+| #   | Đáp án nhanh                                                                                                                                              |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | G=goroutine (task), M=OS thread (worker), P=logical processor (run queue). P idle → steal from other P's queue.                                           |
+| 2   | Runnable→Running khi P schedules. Running→Waiting khi I/O/channel/lock. Preempt: Go 1.14+ SIGURG tại safe points.                                         |
+| 3   | Jobs chan, N workers, WaitGroup, ctx.Done() check in worker loop, close(jobs) to signal done.                                                             |
+| 4   | (1) Unbuffered channel no receiver, (2) Missing context cancel, (3) Infinite loop without exit. Detect: pprof goroutine profile.                          |
+| 5   | CSP model: communicate → share. Channel = typed, directional, blocks = natural backpressure. Mutex for simple state protection, channel for coordination. |
 
 💬 **Feynman Prompt:** Giải thích Go concurrency model cho developer Java quen với threads. Tại sao "goroutines + channels" tốt hơn "threads + locks" trong hầu hết trường hợp?
 

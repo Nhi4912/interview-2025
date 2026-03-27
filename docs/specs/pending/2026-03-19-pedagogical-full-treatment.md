@@ -1,7 +1,7 @@
 # Pedagogical Full Treatment — Progress Tracker (All Tracks)
 
 > **Purpose**: Track which fe-track, be-track, and shared files have Phase 1 (intro) and Phase 2 (deep content) pedagogical treatment.
-> **Updated**: 2026-03-27 (session 18 — Tier 13+14 complete, shared 15/38 Phase 2 done)
+> **Updated**: 2026-03-27 (session 19 — Tier 8 compliance fix complete, Tier 13+14 complete, shared 15/38 Phase 2 done)
 >
 > **Legend**:
 >
@@ -215,16 +215,16 @@
 
 ### Tier 8: Go Language (`be-track/01-golang/`)
 
-| File                          | Phase 1 | Phase 2 | Notes                                               |
-| ----------------------------- | ------- | ------- | --------------------------------------------------- |
-| `01-language-fundamentals.md` | ✅      | ⚠️      | Session 12 — fix: Mistakes table, Self-Check format |
-| `02-interfaces-generics.md`   | ✅      | ⚠️      | Session 12 — fix: Mistakes table, Self-Check format |
-| `03-concurrency.md`           | ✅      | ⚠️      | Session 12 — fix: Mistakes table, Self-Check format |
-| `04-memory-gc.md`             | ✅      | ⚠️      | Session 12 — fix: Mistakes table, Self-Check format |
-| `05-testing-profiling.md`     | ✅      | ⚠️      | Session 12 — fix: Mistakes table, Self-Check format |
-| `06-data-structures-go.md`    | ✅      | ⚠️      | Session 12 — fix: Mistakes table, Self-Check format |
-| `07-algorithms-go.md`         | ✅      | ⚠️      | Session 12 — fix: Mistakes table, Self-Check format |
-| `08-advanced-patterns.md`     | ✅      | ⚠️      | Session 12 — fix: Mistakes table, Self-Check format |
+| File                          | Phase 1 | Phase 2 | Notes                           |
+| ----------------------------- | ------- | ------- | ------------------------------- |
+| `01-language-fundamentals.md` | ✅      | ✅      | Session 12+19 — full compliance |
+| `02-interfaces-generics.md`   | ✅      | ✅      | Session 12+19 — full compliance |
+| `03-concurrency.md`           | ✅      | ✅      | Session 12+19 — full compliance |
+| `04-memory-gc.md`             | ✅      | ✅      | Session 12+19 — full compliance |
+| `05-testing-profiling.md`     | ✅      | ✅      | Session 12+19 — full compliance |
+| `06-data-structures-go.md`    | ✅      | ✅      | Session 12+19 — full compliance |
+| `07-algorithms-go.md`         | ✅      | ✅      | Session 12+19 — full compliance |
+| `08-advanced-patterns.md`     | ✅      | ✅      | Session 12+19 — full compliance |
 
 ### Tier 9: Backend Knowledge (`be-track/02-backend-knowledge/`)
 

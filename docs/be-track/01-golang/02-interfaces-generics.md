@@ -1335,17 +1335,27 @@ Vietnamese explanation: Constraint trong generics là interface dùng ở vị t
 
 ---
 
-## Self-Check / Tự Kiểm Tra ⚡
+## 🔄 Self-Check / Tự Kiểm Tra
 
-> **Đóng tài liệu lại trước khi làm — Close the doc before attempting.**
+> **Hướng dẫn:** Đóng tài liệu lại. Trả lời từng câu bằng cách viết ra giấy hoặc nói thành tiếng. Sau đó mở lại kiểm tra.
 
-- [ ] **Retrieval**: Từ memory, vẽ cấu trúc iface vs eface — 2 fields mỗi loại, và khi nào runtime dùng cái nào.
-- [ ] **Retrieval**: Giải thích "accept interfaces, return structs" và 2 ngoại lệ hợp lệ — không nhìn tài liệu.
-- [ ] **Visual**: Vẽ diagram cho GC Shape Stenciling — pointer types share 1 copy, value types separate, hidden dictionary.
-- [ ] **Application**: Bạn có một function `ProcessData` cần gọi với File, Network socket, và in-memory buffer. Nên dùng interface hay generics? Tại sao?
-- [ ] **Application**: Team muốn viết generic `Cache[K, V]`. K cần constraint gì? Tại sao? Có runtime risk gì?
-- [ ] **Debug**: Function return `*MyError` nil wrapped in `error` interface — caller check `err != nil` luôn true. Fix thế nào và tại sao?
-- [ ] **Teach**: Giải thích Go interface cho Java developer — tại sao không cần `implements`, và điều đó thay đổi cách thiết kế code như thế nào.
+| #   | Loại           | Câu hỏi                                                                                                                                                |
+| --- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | 🔍 Retrieval   | Quy tắc implicit interface satisfaction trong Go — value receiver vs pointer receiver, khi nào type satisfies interface? Kể 2 quy tắc quan trọng nhất. |
+| 2   | 🎨 Visual      | Vẽ cấu trúc iface header: itab + data pointer. itab chứa gì bên trong? eface khác iface ở điểm nào?                                                    |
+| 3   | 🛠️ Application | Viết generic function `Min[T ...]` với proper constraint. Tại sao `any` không đủ? Khi nào cần custom constraint thay vì `constraints.Ordered`?         |
+| 4   | 🐛 Debug       | Function trả `*MyError` nil, caller check `err != nil` luôn true — tại sao? Vẽ interface header để minh họa. Fix thế nào?                              |
+| 5   | 🎓 Teach       | Giải thích cho Java developer sự khác biệt: type assertion `v.(T)` vs type switch `switch v.(type)` — khi nào dùng cái nào?                            |
+
+### Key Points (tự kiểm tra)
+
+| #   | Đáp án nhanh                                                                                                                                                    |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Value receiver: cả value và pointer satisfies. Pointer receiver: chỉ pointer satisfies. Interface check tại compile time, method dispatch qua itab tại runtime. |
+| 2   | iface = {_itab, data ptr}; itab = {inter, type, hash, methods[]}. eface = {_\_type, data ptr} — dùng cho `interface{}` / `any`.                                 |
+| 3   | `func Min[T constraints.Ordered](a, b T) T` — `any` không có `<` operator. Custom: `type Number interface { ~int \| ~float64 }`.                                |
+| 4   | Interface = {type=*MyError, value=nil} → type field non-nil → `err != nil` = true. Fix: return `nil` (untyped), không return `(*MyError)(nil)`.                 |
+| 5   | Type assertion: single type check, panic nếu sai (dùng `v, ok` form). Type switch: multiple types, exhaustive, no panic. Dùng type switch khi handle 3+ types.  |
 
 💬 **Feynman Prompt:** Bạn là Go runtime. Khi một `*MyStruct` được gán vào `io.Reader` interface, hãy mô tả từng bước bạn làm: tạo cấu trúc gì, điền thông tin gì, và sau đó khi `Read()` được gọi, bạn dispatch nó như thế nào?
 

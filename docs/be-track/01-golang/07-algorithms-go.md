@@ -142,11 +142,13 @@ File này cover **7 nhóm thuật toán core** mà 80% coding interviews tại G
 - Level 2: Amortized analysis giải quyết misleading worst-case — Go slice append là O(1) amortized dù occasionally O(n) copy, vì doubling strategy phân bổ cost
 - Level 3: Trong interview, Big-O là ngôn ngữ bắt buộc — không nói được complexity = instant red flag
 
-**Common Mistakes:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-- Nhầm O(log n) với O(n) — binary search loops look simple nhưng eliminates half each step
-- Quên space complexity — recursive DFS dùng O(h) stack space, BFS dùng O(w) queue
-- Nói "O(n log n) is always better than O(n²)" — với n < 50, O(n²) insertion sort nhanh hơn quicksort
+| Sai lầm                                  | Tại sao sai                                                                     | Đúng là                                                         |
+| ---------------------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Nhầm O(log n) với O(n)                   | Binary search loops look simple nhưng eliminates half each step                 | Nhớ: mỗi step binary search loại bỏ 50% — đó là log n           |
+| Quên space complexity                    | Recursive DFS dùng O(h) stack space, BFS dùng O(w) queue — hidden cost          | Luôn report cả time và space complexity                         |
+| "O(n log n) is always better than O(n²)" | Với n < 50, O(n²) insertion sort nhanh hơn quicksort vì constant factor nhỏ hơn | Big-O hides constants — compare với actual n trước khi kết luận |
 
 **Interview Pattern:** "Analyze the time and space complexity" → Phải trả lời cả hai, mention best/average/worst nếu khác nhau
 
@@ -162,11 +164,13 @@ File này cover **7 nhóm thuật toán core** mà 80% coding interviews tại G
 - Level 2: Go 1.19+ dùng pdqsort (pattern-defeating quicksort) — detects pre-sorted runs, switches to heap sort khi partition fails, insertion sort cho small arrays. Hiểu vì sao = hiểu trade-offs
 - Level 3: Stability matters — `sort.SliceStable` preserves relative order, cần khi sort by multiple keys
 
-**Common Mistakes:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-- Tự implement sort thay vì dùng `sort.Slice` — interviewer muốn thấy bạn biết standard library
-- Quên Quick Sort worst case O(n²) khi pivot xấu — mention "randomized pivot" hoặc "introsort fallback"
-- Không biết Go sort is not stable by default — `sort.Slice` dùng pdqsort (unstable)
+| Sai lầm                                        | Tại sao sai                                                             | Đúng là                                                                   |
+| ---------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Tự implement sort thay vì dùng `sort.Slice`    | Interviewer muốn thấy bạn biết standard library                         | Dùng `sort.Slice` / `sort.SliceStable`; tự implement chỉ khi được yêu cầu |
+| Quên Quick Sort worst case O(n²) khi pivot xấu | Sorted / reverse-sorted input gây degenerate partition → O(n²)          | Mention "randomized pivot" hoặc "introsort fallback" khi phân tích        |
+| Không biết Go sort is not stable by default    | `sort.Slice` dùng pdqsort (unstable) — equal elements có thể đổi thứ tự | Dùng `sort.SliceStable` khi cần stable sort (multi-key sort)              |
 
 **Interview Pattern:** "Implement X sort" → Code clean + analyze complexity + explain when to use/not use
 
@@ -182,11 +186,13 @@ File này cover **7 nhóm thuật toán core** mà 80% coding interviews tại G
 - Level 2: Binary Search on Answer (parametric search) — không chỉ search trong array, mà search trong solution space. VD: "minimum capacity to ship in D days" = binary search trên answer range
 - Level 3: `sort.Search` trong Go stdlib dùng binary search template — biết template = solve mọi variant
 
-**Common Mistakes:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-- Off-by-one: `lo <= hi` vs `lo < hi` — nhầm boundary gây infinite loop hoặc miss element
-- Overflow: `(lo + hi) / 2` overflow int32 → dùng `lo + (hi-lo)/2`
-- Quên check edge: empty array, single element, all duplicates
+| Sai lầm                                  | Tại sao sai                                                            | Đúng là                                                              |
+| ---------------------------------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Off-by-one: nhầm `lo <= hi` vs `lo < hi` | Nhầm boundary gây infinite loop hoặc miss element                      | `lo <= hi` cho exact match; `lo < hi` cho boundary / insertion point |
+| Dùng `(lo + hi) / 2`                     | Overflow int32 khi lo + hi > MaxInt                                    | Dùng `lo + (hi-lo)/2`                                                |
+| Quên check edge cases                    | Empty array, single element, all duplicates gây wrong index hoặc panic | Test binary search với empty, single element, all-duplicate inputs   |
 
 **Interview Pattern:** "Search in rotated sorted array" → Recognize binary search variant + handle rotation point
 
@@ -202,11 +208,13 @@ File này cover **7 nhóm thuật toán core** mà 80% coding interviews tại G
 - Level 2: Sliding Window là Two Pointers variant — `left` expand/shrink window, `right` scan forward. Key insight: khi window invalid, shrink left thay vì restart
 - Level 3: Pattern recognition: "contiguous subarray" = sliding window, "find pair in sorted" = two pointers, "cycle detection" = fast/slow
 
-**Common Mistakes:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-- Dùng Two Pointers trên unsorted array khi cần sorted — sort first hoặc dùng hash map
-- Sliding Window: quên update state khi shrink (remove `left` element from map/count)
-- Nhầm fixed vs variable window — fixed: always `right-left+1 == k`, variable: shrink khi condition violated
+| Sai lầm                                      | Tại sao sai                                                                             | Đúng là                                                                      |
+| -------------------------------------------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Dùng Two Pointers trên unsorted array        | Two Pointers (opposite-direction) yêu cầu sorted input để đảm bảo correctness           | Sort first hoặc dùng hash map nếu không thể sort                             |
+| Sliding Window: quên update state khi shrink | Khi `left` pointer di chuyển phải, phải remove `left` element khỏi map/count            | Always update window state (add right, remove left) symmetrically            |
+| Nhầm fixed vs variable window                | Fixed window size luôn là k; variable shrinks khi constraint violated — logic khác nhau | Fixed: shrink khi `right-left+1 > k`. Variable: shrink khi điều kiện invalid |
 
 **Interview Pattern:** "Minimum window substring" → Variable sliding window + hash map for character count
 
@@ -222,11 +230,13 @@ File này cover **7 nhóm thuật toán core** mà 80% coding interviews tại G
 - Level 2: DP có 2 approaches: top-down (recursion + memo) vs bottom-up (iteration + dp[]). Bottom-up thường tốt hơn vì no stack overhead. Greedy cần proof: exchange argument hoặc matroid
 - Level 3: DP state design là phần khó nhất — dp[i] nghĩa gì? dp[i][j]? Sai state = sai solution. Interview focus vào state transition equation
 
-**Common Mistakes:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-- Nhầm DP với Greedy — Coin Change greedy fails cho {1, 3, 4} target 6 (greedy: 4+1+1=3 coins, optimal: 3+3=2 coins)
-- DP: quên base case → wrong answer hoặc index out of bounds
-- Không optimize space — dp[i] chỉ depends dp[i-1]? Chỉ cần 2 variables, không cần array
+| Sai lầm                     | Tại sao sai                                                                                   | Đúng là                                                                    |
+| --------------------------- | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Nhầm DP với Greedy          | Coin Change greedy fails cho {1, 3, 4} target 6 — greedy: 4+1+1=3 coins, optimal: 3+3=2 coins | Greedy cần proof (exchange argument); dùng DP khi không có greedy property |
+| DP: quên base case          | Sai base case → wrong answer hoặc index out of bounds                                         | Xác định base cases trước khi viết state transition equation               |
+| Không optimize space cho DP | dp[i] chỉ depends dp[i-1] → dùng O(n) array thay vì O(1) là lãng phí                          | Nếu dp[i] chỉ cần dp[i-1], dùng 2 variables thay vì array                  |
 
 **Interview Pattern:** "Find minimum/maximum/count ways" → DP. "Find optimal with greedy property" → Greedy. Must explain state + transition
 
@@ -242,12 +252,14 @@ File này cover **7 nhóm thuật toán core** mà 80% coding interviews tại G
 - Level 2: Dijkstra = BFS + priority queue cho weighted graphs. Topo Sort = order tasks with dependencies (Course Schedule). Union-Find = group connected components (Number of Islands variant)
 - Level 3: Trong Go, graph biểu diễn bằng `map[int][]int` (adjacency list) hoặc `[][]int` (matrix). Interview thường cho implicit graph (grid) → convert to BFS/DFS
 
-**Common Mistakes:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-- BFS dùng stack (sai) → dùng queue. DFS dùng queue (sai) → dùng stack/recursion
-- Quên visited check → infinite loop trên cyclic graph
-- Dijkstra với negative weights → dùng Bellman-Ford thay vì
-- Topo Sort: không detect cycle → prerequisite circular = impossible
+| Sai lầm                            | Tại sao sai                                                               | Đúng là                                                      |
+| ---------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| BFS dùng stack thay vì queue       | Stack causes depth-first order, không phải level-by-level                 | BFS dùng queue; DFS dùng stack hoặc recursion                |
+| Quên visited check                 | Infinite loop trên cyclic graph                                           | Mark visited trước khi enqueue / push                        |
+| Dùng Dijkstra với negative weights | Dijkstra greedy assumption sai khi có negative edge — wrong shortest path | Dùng Bellman-Ford cho đồ thị có negative weights             |
+| Topo Sort không detect cycle       | Circular prerequisite = impossible to sort → wrong output silently        | Detect cycle trong Topo Sort; return error nếu cycle tồn tại |
 
 **Interview Pattern:** "Shortest path" → BFS (unweighted) / Dijkstra (weighted). "Order with dependencies" → Topo Sort. "Connected components" → Union-Find / DFS
 
@@ -263,11 +275,13 @@ File này cover **7 nhóm thuật toán core** mà 80% coding interviews tại G
 - Level 2: Backtracking template: choose → explore → unchoose. KMP prefix function tránh re-scan. XOR tricks: a^a=0, a^0=a → find single number
 - Level 3: Interview: Backtracking = N-Queens, Sudoku, Word Search. KMP hiếm khi implement nhưng phải explain. Bit: power of 2 check `n&(n-1)==0`
 
-**Common Mistakes:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-- Backtracking: quên undo (unchoose) → state corrupted cho next branch
-- String: dùng `+` concatenation trong loop → O(n²), dùng `strings.Builder`
-- Bit: nhầm `&` (AND) với `&&` (logical) — Go compiler catches nhưng logic error subtle
+| Sai lầm                                   | Tại sao sai                                                       | Đúng là                                                    |
+| ----------------------------------------- | ----------------------------------------------------------------- | ---------------------------------------------------------- |
+| Backtracking: quên undo (unchoose)        | State corrupted cho next branch → wrong results for sibling paths | Always undo sau explore: choose → explore → **unchoose**   |
+| String: dùng `+` concatenation trong loop | O(n²) vì mỗi `+` tạo new string allocation                        | Dùng `strings.Builder` để amortize allocations             |
+| Bit: nhầm `&` (AND) với `&&` (logical)    | Logic error subtle — behavior hoàn toàn khác nhau                 | `&` cho bitwise AND; `&&` cho boolean logic — phân biệt rõ |
 
 **Interview Pattern:** "Generate all X" → Backtracking. "Find single/missing number" → XOR. "Pattern matching" → KMP concept (implement rare)
 
@@ -3557,17 +3571,27 @@ func main() {
 
 ## Self-Check / Tự Kiểm Tra
 
-> **Hướng dẫn:** Che cột phải, tự trả lời từng câu, sau đó check.
+> **Hướng dẫn:** Đóng tài liệu lại. Trả lời từng câu bằng cách viết ra giấy hoặc nói thành tiếng. Sau đó mở lại kiểm tra.
 
-| #   | Câu hỏi tự kiểm tra                                                        | Key Points                                                                                                                                                                                          |
-| --- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | 7 core algorithm patterns là gì? Cho ví dụ problem mỗi pattern.            | Two Pointers (Two Sum sorted), Sliding Window (Max Subarray), Binary Search (Search Rotated), DP (Coin Change), BFS (Shortest Path Grid), Backtracking (Permutations), Greedy (Interval Scheduling) |
-| 2   | Binary Search: khi nào `lo <= hi` vs `lo < hi`? Off-by-one xảy ra khi nào? | `lo <= hi` khi search exact, `lo < hi` khi tìm boundary. Off-by-one: quên +1/-1 khi update lo/hi → infinite loop                                                                                    |
-| 3   | DP vs Greedy: coin change {1,3,4} target 6 — greedy fail như thế nào?      | Greedy: 4+1+1 = 3 coins. DP: 3+3 = 2 coins. Greedy chọn local optimal nhưng miss global                                                                                                             |
-| 4   | Go `sort.Slice` dùng algorithm gì internally? Tại sao?                     | pdqsort (pattern-defeating quicksort) — hybrid: quicksort + heapsort fallback + insertion sort for small n. Adaptive to input patterns                                                              |
-| 5   | BFS vs DFS: khi nào dùng cái nào? Space complexity khác nhau?              | BFS: shortest unweighted path, O(width) queue. DFS: exhaustive search, O(height) stack. Grid: BFS cho min steps, DFS cho all paths                                                                  |
-| 6   | Sliding Window: fixed vs variable — trigger shrink khi nào?                | Fixed: shrink khi window size > k. Variable: shrink khi constraint violated (sum > target, duplicate count > limit)                                                                                 |
-| 7   | Backtracking template 3 steps? Tại sao phải "unchoose"?                    | Choose → Explore → Unchoose. Unchoose restores state cho next branch — skip = corrupted state, wrong results for sibling branches                                                                   |
+| #   | Loại           | Câu hỏi                                                                                                                             |
+| --- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 🔍 Retrieval   | Binary search template: `lo <= hi` vs `lo < hi` — khi nào dùng cái nào? Two pointers có mấy biến thể chính?                         |
+| 2   | 🎨 Visual      | Vẽ recursion tree cho Fibonacci(5) — identify overlapping subproblems. Memoization cắt bao nhiêu nodes?                             |
+| 3   | 🛠️ Application | Implement merge sort in Go với goroutines cho parallel merge. Khi nào parallel sort thực sự nhanh hơn?                              |
+| 4   | 🐛 Debug       | DP solution cho Knapsack bị sai: `dp[i][w]` dùng wrong recurrence. 3 bước debug DP systematic?                                      |
+| 5   | 🎓 Teach       | Giải thích cho junior: tại sao Sliding Window tốt hơn brute force cho "longest substring without repeating"? Complexity difference? |
+
+### Key Points (tự kiểm tra)
+
+| #   | Đáp án nhanh                                                                                                               |
+| --- | -------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `lo <= hi`: exact match. `lo < hi`: boundary/insertion point. Two pointers: opposite-direction, same-direction, fast-slow. |
+| 2   | Fib(5) tree has 15 nodes. Memo cuts to 9 (eliminates overlapping). Bottom-up DP: O(n) space + time.                        |
+| 3   | Parallel sort wins when n > 10K+ and merge is CPU-bound. Small arrays: goroutine overhead > benefit.                       |
+| 4   | (1) Draw state transition manually, (2) Verify base cases, (3) Print DP table for small input and trace.                   |
+| 5   | Brute force: O(n³) check all substrings. Sliding window: O(n) with hashmap tracking last seen index.                       |
+
+💬 **Feynman Prompt:** Giải thích cho non-programmer: tại sao sorting một triệu số mất ~20 triệu phép so sánh (n log n) chứ không phải 1 triệu tỷ (n²)? Dùng ví dụ chia đống bài.
 
 ### 📅 Spaced Repetition / Lặp Lại Ngắt Quãng
 

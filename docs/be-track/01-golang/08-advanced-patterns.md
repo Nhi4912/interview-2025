@@ -78,11 +78,13 @@ File này cover **7 nhóm patterns nâng cao** mà Senior Go developer cần mas
 - Level 2: Context tree propagation — `WithTimeout` tạo child context, child cancel không ảnh hưởng parent nhưng parent cancel kills all children. Đây là hierarchical cancellation
 - Level 3: `context.Value` là metadata transport (tracing ID, auth token) — KHÔNG dùng cho config/dependency injection vì type-unsafe và implicit
 
-**Common Mistakes:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-- Lưu context vào struct — context phải pass explicitly qua function params, không store
-- Dùng `context.TODO()` rồi quên replace — production code chạy không timeout
-- `context.Value` cho business logic — hidden dependency, untestable
+| Sai lầm                                | Tại sao sai                                                                              | Đúng là                                                                           |
+| -------------------------------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Lưu context vào struct                 | Context phải pass explicitly — struct store tạo lifetime mismatch và implicit dependency | Pass context như first parameter của mọi function                                 |
+| Dùng `context.TODO()` rồi quên replace | Production code chạy không timeout → goroutine leak, hung requests                       | `context.TODO()` chỉ là placeholder — replace ngay với proper context có deadline |
+| `context.Value` cho business logic     | Hidden dependency, type-unsafe, untestable                                               | `context.Value` chỉ cho request-scoped metadata (trace ID, auth token)            |
 
 **Interview Pattern:** "How do you propagate timeout across microservices?" → Describe context chain: HTTP handler → service → DB/gRPC calls
 
@@ -98,11 +100,13 @@ File này cover **7 nhóm patterns nâng cao** mà Senior Go developer cần mas
 - Level 2: Error wrapping (%w) tạo chain — `errors.Is` traverse chain tìm sentinel, `errors.As` extract custom type. Không wrap đúng = chain đứt, caller không phân biệt được error type
 - Level 3: Error domain mapping — transport layer returns HTTP status, domain layer returns business errors, infra layer returns wrapped DB/network errors. Clean boundaries = testable
 
-**Common Mistakes:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-- `%v` thay vì `%w` — loses error chain, `errors.Is` fails
-- Over-wrapping — mỗi layer wrap thêm 1 lần tạo "matryoshka" unreadable
-- Panic for expected errors — panic chỉ cho truly unrecoverable (nil dereference, initialization failure)
+| Sai lầm                               | Tại sao sai                                                           | Đúng là                                                                     |
+| ------------------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Dùng `%v` thay vì `%w` khi wrap error | Loses error chain — `errors.Is` và `errors.As` fails                  | Dùng `%w`: `fmt.Errorf("op: %w", err)` để preserve chain                    |
+| Over-wrapping errors                  | Mỗi layer wrap thêm 1 lần tạo "matryoshka" error chain không đọc được | Wrap một lần ở layer boundary; không wrap lại trong internal calls          |
+| Panic for expected errors             | Panic unwinds stack và crash service — expected errors là normal flow | Panic chỉ cho truly unrecoverable (nil dereference, initialization failure) |
 
 **Interview Pattern:** "How do you map domain errors to HTTP status?" → Show custom error type with code/message + middleware maps to status
 
@@ -118,11 +122,13 @@ File này cover **7 nhóm patterns nâng cao** mà Senior Go developer cần mas
 - Level 2: Benchmark phải dùng `b.ResetTimer` (exclude setup), `b.ReportAllocs` (track allocations), và `var sink` pattern (prevent compiler optimization eliminating code)
 - Level 3: `t.Parallel` trong table-driven tests cần capture loop variable — Go 1.22 fixed this nhưng older versions: `tc := tc` pattern required
 
-**Common Mistakes:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-- Benchmark quên prevent compiler optimization → kết quả 0ns (code bị eliminated)
-- `t.Parallel` + shared fixture → race condition
-- Không dùng `t.Cleanup` → test leaves state for next test
+| Sai lầm                                      | Tại sao sai                                                               | Đúng là                                                          |
+| -------------------------------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Benchmark quên prevent compiler optimization | Compiler eliminates unused result → kết quả 0ns (hoàn toàn sai)           | Dùng `var sink` pattern để capture result và prevent elimination |
+| `t.Parallel` + shared fixture                | Multiple goroutines modify shared state → race condition, flaky tests     | Mỗi parallel test cần own copy của test data                     |
+| Không dùng `t.Cleanup`                       | Test leaves state (temp files, DB records) → next test fails mysteriously | Dùng `t.Cleanup(func() { /* cleanup */ })` cho mọi test resource |
 
 **Interview Pattern:** "Write a table-driven test for X" → Show struct slice with name/input/expected, t.Run loop, parallel-safe
 
@@ -138,11 +144,13 @@ File này cover **7 nhóm patterns nâng cao** mà Senior Go developer cần mas
 - Level 2: CPU profiling = sampling based (mỗi 10ms capture stack). Heap profile phân biệt allocs (tổng allocated) vs inuse (current live). Flame graph visualize hotspots
 - Level 3: Production exposure: `net/http/pprof` trên internal port, không public. Continuous profiling (Google Cloud Profiler, Pyroscope) cho always-on monitoring
 
-**Common Mistakes:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-- Expose pprof trên public port → security risk (heap dump chứa sensitive data)
-- Nhầm allocs vs inuse — allocs = tổng GC pressure, inuse = current memory footprint
-- Profile trên development machine → kết quả khác production (different workload, CPU, NUMA)
+| Sai lầm                          | Tại sao sai                                                                      | Đúng là                                                                 |
+| -------------------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Expose pprof trên public port    | Heap dump chứa sensitive data (tokens, passwords) → security risk                | Chỉ expose pprof trên internal/admin port, never public                 |
+| Nhầm allocs vs inuse             | allocs = tổng GC pressure (cumulative); inuse = current live objects — khác nhau | Debug leak: dùng inuse. Debug GC pressure: dùng allocs                  |
+| Profile trên development machine | Different workload, CPU architecture, NUMA topology → kết quả misleading         | Profile với production-like workload, ideally dùng continuous profiling |
 
 **Interview Pattern:** "How do you diagnose memory leak?" → pprof heap inuse profile, compare 2 snapshots, find growing objects
 
@@ -158,11 +166,13 @@ File này cover **7 nhóm patterns nâng cao** mà Senior Go developer cần mas
 - Level 2: Private modules need GOPRIVATE/GONOSUMDB config. Vendor directory for air-gapped CI. `replace` directive for local development of multi-module repos
 - Level 3: CGO_ENABLED=0 cho static binary (scratch Docker image). `-ldflags="-s -w"` strip debug info (~30% smaller). Build tags gate platform-specific or feature-gated code
 
-**Common Mistakes:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-- `go mod tidy` not run before commit → stale go.sum, CI fails
-- Major version without /v2 path → module resolution fails
-- `-ldflags="-s -w"` in production hinders incident debugging — keep debug symbols, strip in release only
+| Sai lầm                                     | Tại sao sai                                                            | Đúng là                                                                 |
+| ------------------------------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Quên chạy `go mod tidy` trước commit        | Stale go.sum → CI fails với checksum mismatch                          | Chạy `go mod tidy` như bước bắt buộc trước commit                       |
+| Major version bump mà không thêm `/v2` path | Go module resolution dựa trên path — thiếu `/v2` gây import conflict   | v2+ modules phải có `/v2` suffix trong module path                      |
+| `-ldflags="-s -w"` trong production build   | Strip debug symbols → không có full stack trace khi incident debugging | Giữ debug symbols trong production; strip chỉ trong release/ship builds |
 
 **Interview Pattern:** "How do you manage private dependencies?" → GOPRIVATE + GONOSUMDB + vendor for CI
 
@@ -178,11 +188,13 @@ File này cover **7 nhóm patterns nâng cao** mà Senior Go developer cần mas
 - Level 2: Options pattern: `type Option func(*config)` + `WithX` helpers. Middleware: `func(next http.Handler) http.Handler`. DI: constructor injection > framework (explicit > magic)
 - Level 3: google/wire (compile-time codegen) vs uber/fx (runtime reflection DI). wire safer nhưng less flexible. fx power nhưng runtime errors
 
-**Common Mistakes:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-- Middleware quên gọi `next.ServeHTTP` → request silently dropped
-- DI container (fx) cho simple app — overhead không đáng, manual constructor injection đủ
-- Options pattern mà không có sensible defaults → user phải set everything
+| Sai lầm                                    | Tại sao sai                                                                    | Đúng là                                                                          |
+| ------------------------------------------ | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| Middleware quên gọi `next.ServeHTTP`       | Request silently dropped — no response sent, client hangs                      | Always call `next.ServeHTTP(w, r)` trong middleware                              |
+| Dùng DI container (fx) cho simple app      | Overhead không đáng — fx dùng reflection, runtime errors, steep learning curve | Manual constructor injection đủ cho hầu hết apps; dùng fx khi complexity đòi hỏi |
+| Options pattern không có sensible defaults | User phải set every option — không có "zero value is useful" principle         | Options pattern phải work với zero options (defaults đủ dùng ngay)               |
 
 **Interview Pattern:** "Design an HTTP service with middleware" → Show Functional Options constructor + middleware chain + handler
 
@@ -198,11 +210,13 @@ File này cover **7 nhóm patterns nâng cao** mà Senior Go developer cần mas
 - Level 2: Worker Pool: buffered channel for backpressure, `context.Done()` for shutdown, `sync.WaitGroup` for drain. Pool size: `NumCPU()` for CPU-bound, 4-10x for I/O-bound
 - Level 3: Graceful Shutdown sequence: SIGTERM → stop accept → drain in-flight → cancel bg workers → flush metrics → exit. K8s: preStop hook sleep 5-10s for LB drain
 
-**Common Mistakes:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-- Worker Pool: channel không close → goroutine leak forever
-- Graceful Shutdown: no timeout → hung request blocks forever
-- Background goroutines ignore context → continue after main exits → resource leak in K8s pod
+| Sai lầm                              | Tại sao sai                                                                  | Đúng là                                                            |
+| ------------------------------------ | ---------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Worker Pool: không close channel     | Workers range over channel forever → goroutine leak, memory không freed      | Close job channel sau khi gửi hết jobs để workers exit cleanly     |
+| Graceful Shutdown không có timeout   | Một hung request (DB lock, slow client) block entire shutdown forever        | Luôn set timeout cho shutdown: `server.Shutdown(ctx)` với deadline |
+| Background goroutines ignore context | Continue after main exits → resource leak, unexpected behavior trong K8s pod | Mọi long-running goroutine phải respect `ctx.Done()` signal        |
 
 **Interview Pattern:** "Design a worker pool with graceful shutdown" → Show channel + workers + WaitGroup + context cancel + SIGTERM handler
 
@@ -1646,17 +1660,27 @@ Vietnamese explanation: Những điều thường sai: (1) **không set timeout*
 
 ## Self-Check / Tự Kiểm Tra
 
-> **Hướng dẫn:** Che cột phải, tự trả lời từng câu, sau đó check.
+> **Hướng dẫn:** Đóng tài liệu lại. Trả lời từng câu bằng cách viết ra giấy hoặc nói thành tiếng. Sau đó mở lại kiểm tra.
 
-| #   | Câu hỏi tự kiểm tra                                                                  | Key Points                                                                                                                               |
-| --- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Context propagation: 3 signals mà context carries? Tại sao không store trong struct? | Timeout (deadline), Cancellation (cancel func), Metadata (values). Struct store = lifetime mismatch, implicit dependency                 |
-| 2   | Error handling: %w vs %v, sentinel vs custom type? Khi nào panic?                    | %w preserves chain (errors.Is works), %v loses it. Sentinel = known constants. Custom = typed metadata. Panic = truly unrecoverable only |
-| 3   | Table-driven tests: canonical structure? t.Parallel gotcha?                          | Struct slice {name, input, expected} + t.Run loop. Parallel: capture loop var (Go <1.22), no shared mutable state                        |
-| 4   | Benchmark safety: prevent compiler optimization? Read output?                        | `var sink` pattern captures result. Output: ns/op, B/op (bytes), allocs/op                                                               |
-| 5   | pprof: 5 profile types? heap vs allocs? Production safety?                           | CPU, heap, allocs, goroutine, mutex. heap = current live (inuse), allocs = total GC pressure. Internal port only                         |
-| 6   | Design patterns: Functional Options signature? Middleware pitfall?                   | `type Option func(*config)`, `WithX` helpers. Middleware: must call `next.ServeHTTP`, order matters                                      |
-| 7   | Graceful shutdown 5 steps? Worker Pool sizing rule?                                  | SIGTERM → stop accept → drain in-flight → cancel bg → flush → exit. CPU-bound: NumCPU(). I/O-bound: 4-10x NumCPU()                       |
+| #   | Loại           | Câu hỏi                                                                                                    |
+| --- | -------------- | ---------------------------------------------------------------------------------------------------------- |
+| 1   | 🔍 Retrieval   | Functional Options pattern: 3 thành phần chính? So sánh với config struct approach.                        |
+| 2   | 🎨 Visual      | Vẽ middleware chain: Handler → Logger → Auth → RateLimit → Handler. Request flow và response flow.         |
+| 3   | 🛠️ Application | Implement graceful shutdown cho HTTP server: context signal, drain connections, timeout.                   |
+| 4   | 🐛 Debug       | Service restart mất 30s (connection drain timeout) — nhưng clients vẫn bị error. Root cause? Fix?          |
+| 5   | 🎓 Teach       | Giải thích cho team: tại sao Dependency Injection trong Go dùng interface thay vì DI framework như Spring? |
+
+### Key Points (tự kiểm tra)
+
+| #   | Đáp án nhanh                                                                                                                                   |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `type Option func(*Config)`, `func WithX(v T) Option`, `func New(opts ...Option)`. Config struct: less flexible, requires zero-value handling. |
+| 2   | Request: outer→inner. Response: inner→outer (like stack). Each middleware wraps next handler.                                                  |
+| 3   | `signal.NotifyContext(ctx, syscall.SIGTERM)` → `server.Shutdown(ctx)` → `wg.Wait()` for background tasks → `os.Exit(0)`.                       |
+| 4   | LB health check still routing traffic during drain. Fix: fail health check first → wait → then drain → shutdown.                               |
+| 5   | Go interfaces are implicit — no registration needed. Small interfaces (1-2 methods) → easy to mock. No reflection magic = explicit, testable.  |
+
+💬 **Feynman Prompt:** Giải thích cho product manager: tại sao "graceful shutdown" quan trọng cho user experience? Chuyện gì xảy ra nếu server tắt đột ngột khi user đang checkout?
 
 ### 📅 Spaced Repetition / Lặp Lại Ngắt Quãng
 
