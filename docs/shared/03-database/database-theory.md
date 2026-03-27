@@ -19,18 +19,19 @@ E-commerce app của bạn bắt đầu chậm. User phàn nàn checkout mất 8
 ## What & Why / Cái Gì & Tại Sao
 
 **Analogy / Liên Tưởng — Thư viện:**
+
 - **Table** = kệ sách (rows = sách, columns = thông tin mỗi cuốn)
 - **Index** = mục lục — không có mục lục phải đọc từng trang (full scan)
 - **Transaction** = quy trình mượn sách: chưa ký giấy xong thì chưa tính là đã mượn
 - **ACID** = đảm bảo thư viện không bao giờ mất sách (Durability), không đếm nhầm (Consistency)
 
-| Concept | "Chết vì không biết" example |
-|---------|------------------------------|
-| **Index** | Full table scan trên bảng 10M rows |
-| **N+1 query** | Load 100 posts + 100 queries riêng cho comments |
-| **Transaction** | Double charge user vì race condition |
-| **Normalization** | Duplicate data → inconsistency khi update |
-| **NoSQL trade-offs** | Chọn MongoDB vì "flexible" → schema chaos |
+| Concept              | "Chết vì không biết" example                    |
+| -------------------- | ----------------------------------------------- |
+| **Index**            | Full table scan trên bảng 10M rows              |
+| **N+1 query**        | Load 100 posts + 100 queries riêng cho comments |
+| **Transaction**      | Double charge user vì race condition            |
+| **Normalization**    | Duplicate data → inconsistency khi update       |
+| **NoSQL trade-offs** | Chọn MongoDB vì "flexible" → schema chaos       |
 
 ---
 
@@ -58,6 +59,325 @@ E-commerce app của bạn bắt đầu chậm. User phàn nàn checkout mất 8
 
 ---
 
+## Overview / Tổng Quan
+
+| #   | Concept                      | Role                                                                  | Interview Weight                    |
+| --- | ---------------------------- | --------------------------------------------------------------------- | ----------------------------------- |
+| 1   | Relational Model & SQL       | Tables, keys, joins, relational algebra — foundation of most DBs      | ⭐⭐⭐ (always asked)               |
+| 2   | Normalization (1NF→BCNF)     | Eliminate redundancy, ensure data integrity                           | ⭐⭐ (2NF vs 3NF classic)           |
+| 3   | ACID & Transactions          | Atomicity, Consistency, Isolation, Durability — correctness guarantee | ⭐⭐⭐ (bank transfer example)      |
+| 4   | Indexing (B-Tree, Hash)      | Speed up queries from O(n) to O(log n) — most impactful optimization  | ⭐⭐⭐ (clustered vs non-clustered) |
+| 5   | Query Processing & Optimizer | How DB executes queries — EXPLAIN plan reading                        | ⭐⭐ (slow query debugging)         |
+| 6   | Concurrency Control          | Isolation levels, locking, MVCC — prevent race conditions             | ⭐⭐⭐ (phantom reads, deadlocks)   |
+| 7   | Distributed DB & NoSQL       | CAP theorem, replication, sharding, SQL vs NoSQL tradeoffs            | ⭐⭐⭐ (system design interviews)   |
+
+**Relationship:** Relational Model provides the **data structure** (tables, keys). Normalization ensures **data quality**. Transactions guarantee **correctness under concurrency**. Indexing delivers **performance**. Query processing **executes** queries efficiently. Concurrency control **prevents conflicts**. Distributed DB **scales** beyond single machine.
+
+---
+
+## Core Concepts Phase 2 / Khái Niệm Cốt Lõi — Chuyên Sâu
+
+### Concept 1: Relational Model & SQL
+
+🪝 **Memory Hook:** Bảng = spreadsheet có rules — mỗi row unique (PK), columns có types, relationships qua Foreign Keys
+
+**Why exists / Tại sao tồn tại:**
+
+- Level 1: Need structured way to store and query interconnected data
+- Level 2: Mathematical foundation (relational algebra) enables query optimization
+- Level 3: Decades of battle-tested reliability — banks, hospitals, governments all use relational DBs
+
+**Layer 1 (Simple Analogy):** Library card catalog — each card (row) has fixed fields (title, author, ISBN). You can cross-reference cards (JOIN) to find "all books by author X in section Y."
+
+**Layer 2 (Technical Mechanics):**
+
+```
+Relational Algebra Operations → SQL Mapping:
+σ (Selection)  → WHERE clause
+π (Projection) → SELECT columns
+⋈ (Join)       → JOIN ON condition
+∪ (Union)      → UNION
+─ (Difference) → EXCEPT
+
+Key Types:
+Primary Key: uniquely identifies row (NOT NULL + UNIQUE)
+Foreign Key: references PK of another table (referential integrity)
+Composite Key: multiple columns together form PK
+```
+
+**Layer 3 (Edge Cases):** NULL semantics — NULL ≠ NULL (three-valued logic), NULL in WHERE: use IS NULL not = NULL. Composite key ordering matters for index usage.
+
+| Sai lầm                    | Tại sao sai                             | Đúng là                       |
+| -------------------------- | --------------------------------------- | ----------------------------- |
+| SELECT \* in production    | Fetches unnecessary columns → slow      | SELECT only needed columns    |
+| No foreign key constraints | Data integrity violations go undetected | FK + application-level checks |
+| WHERE column = NULL        | NULL ≠ NULL in SQL (three-valued logic) | WHERE column IS NULL          |
+
+🎯 **Interview Pattern:** "Explain relational model" → Tables with rows/columns, PKs for identity, FKs for relationships, relational algebra enables optimization
+
+🔗 **Knowledge Chain:** Set theory → Relational algebra → SQL → Query optimizer → Execution plan
+
+### Concept 2: Normalization (1NF→BCNF)
+
+🪝 **Memory Hook:** Normalization = dọn dẹp phòng — mỗi thứ đúng chỗ, không duplicate, thay đổi một chỗ đủ
+
+**Why exists / Tại sao tồn tại:**
+
+- Level 1: Duplicate data → update anomalies (change in one place, miss in another)
+- Level 2: Mathematical decomposition ensures lossless join and dependency preservation
+
+**Layer 1:** Filing cabinet — 1NF: one item per drawer. 2NF: group by full label (not partial). 3NF: no indirect references (A→B→C means C should be with B, not A).
+
+**Layer 2:**
+
+```
+Normal Forms progression:
+1NF: Atomic values (no arrays/nested), unique rows
+     ❌ {phones: "123,456"} → ✅ separate rows
+
+2NF: 1NF + no partial dependencies (non-key depends on ALL of composite PK)
+     PK=(student_id, course_id), student_name depends only on student_id → violation
+
+3NF: 2NF + no transitive dependencies (non-key → non-key)
+     employee → department → department_location → violation (location depends on dept, not employee)
+
+BCNF: Every determinant is a candidate key
+     Stricter than 3NF — handles edge cases with overlapping candidate keys
+```
+
+**Layer 3:** Denormalization is intentional 3NF violation for read performance — common in OLAP/data warehouses. Star schema = deliberate denormalization.
+
+| Sai lầm                      | Tại sao sai                                       | Đúng là                                         |
+| ---------------------------- | ------------------------------------------------- | ----------------------------------------------- |
+| Normalize everything to BCNF | Over-normalization → too many JOINs → slow reads  | 3NF for OLTP, denormalize for OLAP              |
+| Skip normalization entirely  | Update anomalies, data inconsistency              | Start normalized, denormalize with evidence     |
+| Confuse 2NF and 3NF          | 2NF=partial dependency, 3NF=transitive dependency | 2NF: part of composite PK. 3NF: non-key→non-key |
+
+🎯 **Interview Pattern:** "2NF vs 3NF?" → 2NF eliminates partial dependencies (on part of composite PK), 3NF eliminates transitive dependencies (non-key→non-key)
+
+🔗 **Knowledge Chain:** Functional dependencies → Normal forms → Decomposition → Lossless join → Performance tradeoffs
+
+### Concept 3: ACID & Transactions
+
+🪝 **Memory Hook:** ACID = bốn lời hứa của database — "tất cả hoặc không" (A), "luôn hợp lệ" (C), "không ai thấy giữa chừng" (I), "đã xong là xong" (D)
+
+**Why exists / Tại sao tồn tại:**
+
+- Level 1: Without transactions, concurrent operations corrupt data (double charge, lost updates)
+- Level 2: WAL (Write-Ahead Log) enables durability — write log before data, replay on crash
+- Level 3: Isolation levels trade correctness for performance — choose per use case
+
+**Layer 1:** ATM withdrawal — you see balance (Isolation), withdraw $100: both debit account AND dispense cash happen, or neither (Atomicity). Balance never negative (Consistency). Once receipt printed, money is yours even if ATM crashes (Durability).
+
+**Layer 2:**
+
+```
+Transaction lifecycle:
+BEGIN → [operations] → COMMIT / ROLLBACK
+
+WAL (Write-Ahead Log):
+1. Write changes to WAL (sequential, fast)
+2. Acknowledge COMMIT to client
+3. Later: flush dirty pages to data files (checkpoint)
+4. On crash: replay WAL from last checkpoint
+
+Isolation Levels (anomalies prevented):
+Level              │ Dirty Read │ Non-Repeatable │ Phantom │
+Read Uncommitted   │    ❌      │      ❌        │   ❌    │
+Read Committed     │    ✅      │      ❌        │   ❌    │
+Repeatable Read    │    ✅      │      ✅        │   ❌*   │
+Serializable       │    ✅      │      ✅        │   ✅    │
+*MySQL InnoDB: gap locks prevent phantoms at RR level
+```
+
+**Layer 3:** MVCC (Multi-Version Concurrency Control) — readers don't block writers by reading old versions. PostgreSQL keeps old row versions in heap, MySQL InnoDB uses undo log.
+
+| Sai lầm                         | Tại sao sai                                                   | Đúng là                                                      |
+| ------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------ |
+| Use Serializable for everything | Massive performance hit, frequent deadlocks                   | Read Committed default, Serializable only for critical paths |
+| Long-running transactions       | Hold locks → block others → deadlock risk                     | Keep transactions short, retry on conflict                   |
+| Ignore isolation level defaults | PG=Read Committed, MySQL=Repeatable Read → different behavior | Know your DB's default and test accordingly                  |
+
+🎯 **Interview Pattern:** "Explain ACID" → Bank transfer example: debit+credit atomic, balance valid, concurrent transfers isolated, committed = permanent
+
+🔗 **Knowledge Chain:** ACID → WAL → Isolation levels → MVCC → Deadlock detection → Distributed transactions (2PC)
+
+### Concept 4: Indexing (B-Tree, Hash)
+
+🪝 **Memory Hook:** Index = mục lục sách — không có → đọc từng trang (O(n)), có → nhảy thẳng trang cần (O(log n))
+
+**Why exists / Tại sao tồn tại:**
+
+- Level 1: Full table scan on millions of rows is unacceptably slow
+- Level 2: B-Tree maintains sorted order → range queries efficient. Hash → O(1) point lookups
+- Level 3: Index selection is the #1 performance optimization in production
+
+**Layer 1:** Phone book — sorted by last name (clustered index). Separate index by phone number (non-clustered) points back to the main entry.
+
+**Layer 2:**
+
+```
+B-Tree Index (most common):
+        [M]
+       /   \
+    [D,H]  [P,T]
+   / | \   / | \
+  [A-C][E-G][I-L] [N-O][Q-S][U-Z]
+
+Clustered vs Non-Clustered:
+Clustered: data rows physically sorted by index key (1 per table)
+Non-Clustered: separate structure with pointers to data rows (many per table)
+
+Composite Index: CREATE INDEX idx ON orders(customer_id, created_at)
+  ✅ WHERE customer_id = 1 (leftmost prefix)
+  ✅ WHERE customer_id = 1 AND created_at > '2024-01-01'
+  ❌ WHERE created_at > '2024-01-01' (skips leftmost)
+```
+
+**Layer 3:** Covering index — includes all columns needed by query → no table lookup. Index-only scan = fastest possible query.
+
+| Sai lầm                     | Tại sao sai                                               | Đúng là                                                      |
+| --------------------------- | --------------------------------------------------------- | ------------------------------------------------------------ |
+| Index every column          | Each index slows writes (INSERT/UPDATE/DELETE)            | Index columns in WHERE/JOIN/ORDER BY based on query patterns |
+| Function on indexed column  | WHERE LOWER(email) = ? can't use index on email           | Create functional index or store normalized values           |
+| Wrong composite index order | (created_at, customer_id) can't serve WHERE customer_id=? | Leftmost prefix rule — put equality columns first            |
+
+🎯 **Interview Pattern:** "Clustered vs non-clustered?" → Clustered = data sorted by index (1/table), non-clustered = separate pointer structure (many/table)
+
+🔗 **Knowledge Chain:** B-Tree structure → Clustered/non-clustered → Composite index → Covering index → EXPLAIN plan → Query optimization
+
+### Concept 5: Query Processing & Optimizer
+
+🪝 **Memory Hook:** Query optimizer = GPS — nhiều đường đến đích, optimizer chọn đường nhanh nhất (cost-based)
+
+**Why exists / Tại sao tồn tại:**
+
+- Level 1: Same result can be computed many ways — optimizer finds cheapest execution plan
+- Level 2: Cost-based optimizer estimates row counts, I/O costs, CPU costs for each plan
+
+**Layer 1:** Travel planner — fly direct ($500, 3h) vs drive + fly ($300, 8h) vs all-drive ($100, 20h). Optimizer picks based on "cost" (time, money tradeoffs).
+
+**Layer 2:**
+
+```
+Query Processing Pipeline:
+SQL → Parse → Validate → Optimize → Execute
+                          │
+                   Cost-Based Optimizer:
+                   1. Generate candidate plans (join orders, index choices)
+                   2. Estimate cost of each (statistics: row counts, selectivity)
+                   3. Pick cheapest plan
+
+EXPLAIN output (PostgreSQL):
+Seq Scan on orders  (cost=0.00..1543.00 rows=100000 width=48)
+  → Full table scan, expensive
+
+Index Scan using idx_customer on orders  (cost=0.42..8.44 rows=1 width=48)
+  → Index lookup, cheap
+```
+
+**Layer 3:** Stale statistics → optimizer chooses wrong plan. Run ANALYZE regularly. Query hints override optimizer (last resort).
+
+| Sai lầm                     | Tại sao sai                                   | Đúng là                                 |
+| --------------------------- | --------------------------------------------- | --------------------------------------- |
+| Never read EXPLAIN output   | Blind to slow queries until production crisis | EXPLAIN ANALYZE on every new query      |
+| Trust ORM-generated queries | ORMs can generate N+1, missing indexes        | Review generated SQL, add eager loading |
+| Ignore statistics           | Stale stats → wrong plan → slow queries       | Schedule ANALYZE, monitor auto-vacuum   |
+
+🎯 **Interview Pattern:** "How debug slow query?" → EXPLAIN ANALYZE → check Seq Scan vs Index Scan, row estimates vs actual, join order
+
+🔗 **Knowledge Chain:** SQL parsing → Logical plan → Physical plan → Cost estimation → Execution → EXPLAIN output
+
+### Concept 6: Concurrency Control
+
+🪝 **Memory Hook:** Concurrency control = đèn giao thông — không có → tai nạn (race condition), quá strict → kẹt xe (deadlock)
+
+**Why exists / Tại sao tồn tại:**
+
+- Level 1: Multiple transactions reading/writing same data simultaneously → conflicts
+- Level 2: MVCC allows reads without blocking writes — key to PostgreSQL/InnoDB performance
+- Level 3: Deadlock detection + prevention strategies essential for production
+
+**Layer 1:** Hotel booking — two people try to book last room simultaneously. Without concurrency control, both succeed → overbooking. With it: one succeeds, other gets "room unavailable."
+
+**Layer 2:**
+
+```
+Concurrency strategies:
+1. Pessimistic Locking: SELECT ... FOR UPDATE (lock rows before modifying)
+   → Simple, blocks concurrent access, risk of deadlock
+
+2. Optimistic Locking: UPDATE ... WHERE version = N, check affected rows
+   → No locks, retry on conflict, good for low-contention
+
+3. MVCC: Each transaction sees snapshot of data at start time
+   → Readers never block writers (read old version)
+   PostgreSQL: heap stores multiple row versions
+   MySQL InnoDB: undo log stores old versions
+
+Deadlock: T1 locks A, waits B. T2 locks B, waits A. → cycle → DB kills one.
+Prevention: always lock in same order, keep transactions short
+```
+
+**Layer 3:** Gap locks (MySQL RR) prevent phantom inserts in range. Advisory locks for application-level coordination. SELECT FOR UPDATE SKIP LOCKED for queue patterns.
+
+| Sai lầm                            | Tại sao sai                                    | Đúng là                                               |
+| ---------------------------------- | ---------------------------------------------- | ----------------------------------------------------- |
+| Use pessimistic locking everywhere | Blocks all concurrent access → poor throughput | Optimistic for reads, pessimistic for critical writes |
+| Ignore deadlock handling           | Application crashes on deadlock error          | Catch deadlock exception, retry transaction           |
+| Lock large ranges                  | Blocks many transactions unnecessarily         | Lock specific rows (WHERE id = ?), not ranges         |
+
+🎯 **Interview Pattern:** "Optimistic vs pessimistic locking?" → Pessimistic: lock before read (FOR UPDATE). Optimistic: read freely, check version on write, retry on conflict.
+
+🔗 **Knowledge Chain:** Isolation levels → Locking strategies → MVCC → Deadlock → Distributed locking (Redis/etcd)
+
+### Concept 7: Distributed DB & NoSQL
+
+🪝 **Memory Hook:** CAP theorem = tam giác bất khả thi — partition xảy ra chắc chắn → chọn C (correct) hoặc A (available)
+
+**Why exists / Tại sao tồn tại:**
+
+- Level 1: Single server can't handle all traffic → distribute data across machines
+- Level 2: CAP theorem: network partitions happen, so choose CP or AP per use case
+- Level 3: NoSQL trades ACID guarantees for specific performance/scaling advantages
+
+**Layer 1:** Chain restaurant — one kitchen (single DB) vs many branches (distributed). Branches can serve more customers but keeping menus synchronized is hard (consistency vs availability).
+
+**Layer 2:**
+
+```
+CAP Theorem:
+Consistency: all nodes see same data at same time
+Availability: every request gets a response
+Partition Tolerance: system works despite network splits
+
+In practice: P is guaranteed (networks fail) → choose:
+CP: Consistent + Partition tolerant (e.g., etcd, ZooKeeper)
+    → Returns error if can't guarantee consistency
+AP: Available + Partition tolerant (e.g., Cassandra, DynamoDB)
+    → Returns stale data rather than error
+
+NoSQL Categories:
+Document (MongoDB): flexible JSON, nested objects
+Key-Value (Redis): fastest for simple lookups
+Column-Family (Cassandra): high write throughput, wide rows
+Graph (Neo4j): relationship-heavy queries
+```
+
+**Layer 3:** PACELC extends CAP: even without Partition, trade Latency for Consistency. Most real systems are "tunable" — per-query consistency level (Cassandra: ONE, QUORUM, ALL).
+
+| Sai lầm                     | Tại sao sai                                                 | Đúng là                                                       |
+| --------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------- |
+| "NoSQL is always faster"    | Depends on access pattern — SQL with proper indexes is fast | Choose based on data model and query patterns                 |
+| Ignore CAP when choosing DB | Wrong DB for wrong use case                                 | Financial = CP (correctness), social feed = AP (availability) |
+| "MongoDB for everything"    | Lack of JOINs, no ACID (until 4.0), schema chaos            | SQL default, NoSQL when specific advantage justified          |
+
+🎯 **Interview Pattern:** "SQL vs NoSQL?" → SQL: ACID, complex queries, relationships. NoSQL: flexible schema, horizontal scaling, specific access patterns. Start with SQL, add NoSQL for specific needs.
+
+🔗 **Knowledge Chain:** Single DB limits → Replication → Sharding → CAP → NoSQL categories → Polyglot persistence
+
+---
+
 ## Foundations of Data Management / Nền Tảng Quản Lý Dữ Liệu
 
 **English:** Database theory encompasses the mathematical and logical foundations of database systems, including data models, query languages, transaction processing, and storage mechanisms.
@@ -65,6 +385,7 @@ E-commerce app của bạn bắt đầu chậm. User phàn nàn checkout mất 8
 **Tiếng Việt:** Lý thuyết cơ sở dữ liệu bao gồm các nền tảng toán học và logic của hệ thống cơ sở dữ liệu, bao gồm mô hình dữ liệu, ngôn ngữ truy vấn, xử lý giao dịch và cơ chế lưu trữ.
 
 ## Table of Contents
+
 1. [Database Fundamentals](#database-fundamentals)
 2. [Relational Model Theory](#relational-model-theory)
 3. [Normalization Theory](#normalization-theory)
@@ -83,6 +404,7 @@ E-commerce app của bạn bắt đầu chậm. User phàn nàn checkout mất 8
 **Definition:** A database is an organized collection of structured information stored electronically and managed by a Database Management System (DBMS).
 
 **Key Components:**
+
 - **Data:** Raw facts and figures
 - **Database:** Organized collection of data
 - **DBMS:** Software to manage database
@@ -91,6 +413,7 @@ E-commerce app của bạn bắt đầu chậm. User phàn nàn checkout mất 8
 ### Database Models Evolution
 
 **Hierarchical Model (1960s):**
+
 ```
 Company
 ├── Department A
@@ -102,12 +425,14 @@ Company
 ```
 
 **Characteristics:**
+
 - Tree-like structure
 - Parent-child relationships
 - One-to-many only
 - Fast navigation but inflexible
 
 **Network Model (1970s):**
+
 ```
 Employee ←→ Project
     ↓         ↓
@@ -115,12 +440,14 @@ Department ←→ Location
 ```
 
 **Characteristics:**
+
 - Graph structure
 - Many-to-many relationships
 - More flexible but complex
 - CODASYL standard
 
 **Relational Model (1970s-present):**
+
 ```sql
 Employees Table:
 | EmployeeID | Name  | DeptID |
@@ -136,6 +463,7 @@ Departments Table:
 ```
 
 **Characteristics:**
+
 - Data in tables (relations)
 - Mathematical foundation
 - SQL as standard language
@@ -148,6 +476,7 @@ Departments Table:
 **Set Theory Basis:**
 
 A relation R is a subset of the Cartesian product of domains:
+
 ```
 R ⊆ D₁ × D₂ × ... × Dₙ
 
@@ -158,6 +487,7 @@ Where:
 ```
 
 **Example:**
+
 ```
 Domain D₁ = {1, 2, 3} (EmployeeID)
 Domain D₂ = {John, Jane, Bob} (Name)
@@ -174,6 +504,7 @@ Relation R (actual data):
 ### Relational Algebra
 
 **Selection (σ):**
+
 ```
 σ_condition(R)
 
@@ -182,11 +513,13 @@ Result: All employees where age > 25
 ```
 
 **SQL Equivalent:**
+
 ```sql
 SELECT * FROM Employee WHERE age > 25;
 ```
 
 **Projection (π):**
+
 ```
 π_attributes(R)
 
@@ -195,11 +528,13 @@ Result: Only name and salary columns
 ```
 
 **SQL Equivalent:**
+
 ```sql
 SELECT name, salary FROM Employee;
 ```
 
 **Union (∪):**
+
 ```
 R ∪ S
 
@@ -210,6 +545,7 @@ Requirements:
 ```
 
 **SQL Equivalent:**
+
 ```sql
 SELECT * FROM R
 UNION
@@ -217,6 +553,7 @@ SELECT * FROM S;
 ```
 
 **Intersection (∩):**
+
 ```
 R ∩ S
 
@@ -224,6 +561,7 @@ Result: Tuples present in both relations
 ```
 
 **SQL Equivalent:**
+
 ```sql
 SELECT * FROM R
 INTERSECT
@@ -231,6 +569,7 @@ SELECT * FROM S;
 ```
 
 **Difference (−):**
+
 ```
 R − S
 
@@ -238,6 +577,7 @@ Result: Tuples in R but not in S
 ```
 
 **SQL Equivalent:**
+
 ```sql
 SELECT * FROM R
 EXCEPT
@@ -245,6 +585,7 @@ SELECT * FROM S;
 ```
 
 **Cartesian Product (×):**
+
 ```
 R × S
 
@@ -252,6 +593,7 @@ Result: All possible combinations
 ```
 
 **SQL Equivalent:**
+
 ```sql
 SELECT * FROM R CROSS JOIN S;
 ```
@@ -259,6 +601,7 @@ SELECT * FROM R CROSS JOIN S;
 **Join (⋈):**
 
 **Natural Join:**
+
 ```
 R ⋈ S
 
@@ -266,6 +609,7 @@ Joins on common attributes
 ```
 
 **Theta Join:**
+
 ```
 R ⋈_condition S
 
@@ -273,6 +617,7 @@ Joins with specific condition
 ```
 
 **SQL Examples:**
+
 ```sql
 -- Natural Join
 SELECT * FROM Employee NATURAL JOIN Department;
@@ -297,10 +642,12 @@ FULL OUTER JOIN Department d ON e.dept_id = d.id;
 ### Keys and Constraints
 
 **Superkey:**
+
 - Set of attributes that uniquely identifies tuples
 - May contain redundant attributes
 
 **Example:**
+
 ```
 Employee(ID, SSN, Name, Email)
 
@@ -314,10 +661,12 @@ Superkeys:
 ```
 
 **Candidate Key:**
+
 - Minimal superkey
 - No proper subset is a superkey
 
 **Example:**
+
 ```
 Candidate Keys:
 - {ID}
@@ -326,15 +675,18 @@ Candidate Keys:
 ```
 
 **Primary Key:**
+
 - Chosen candidate key
 - Cannot be null
 - Uniquely identifies each tuple
 
 **Foreign Key:**
+
 - References primary key of another relation
 - Maintains referential integrity
 
 **Example:**
+
 ```sql
 CREATE TABLE Department (
     dept_id INT PRIMARY KEY,
@@ -352,6 +704,7 @@ CREATE TABLE Employee (
 ### Integrity Constraints
 
 **Entity Integrity:**
+
 ```sql
 -- Primary key cannot be null
 CREATE TABLE Employee (
@@ -361,6 +714,7 @@ CREATE TABLE Employee (
 ```
 
 **Referential Integrity:**
+
 ```sql
 -- Foreign key must reference existing primary key
 CREATE TABLE Employee (
@@ -373,6 +727,7 @@ CREATE TABLE Employee (
 ```
 
 **Domain Integrity:**
+
 ```sql
 -- Attribute values must be from specified domain
 CREATE TABLE Employee (
@@ -384,6 +739,7 @@ CREATE TABLE Employee (
 ```
 
 **User-Defined Integrity:**
+
 ```sql
 -- Business rules
 CREATE TABLE Employee (
@@ -391,7 +747,7 @@ CREATE TABLE Employee (
     salary DECIMAL(10,2),
     manager_id INT,
     CONSTRAINT salary_check CHECK (
-        salary > 0 AND 
+        salary > 0 AND
         (manager_id IS NULL OR salary < (
             SELECT salary FROM Employee WHERE emp_id = manager_id
         ))
@@ -404,6 +760,7 @@ CREATE TABLE Employee (
 ### Purpose and Goals
 
 **Objectives:**
+
 1. Eliminate redundancy
 2. Prevent update anomalies
 3. Ensure data integrity
@@ -413,6 +770,7 @@ CREATE TABLE Employee (
 ### Anomalies
 
 **Insertion Anomaly:**
+
 ```
 StudentCourse Table:
 | StudentID | StudentName | CourseID | CourseName |
@@ -424,6 +782,7 @@ Cannot add a student without a course
 ```
 
 **Update Anomaly:**
+
 ```
 | StudentID | StudentName | CourseID | CourseName |
 |-----------|-------------|----------|------------|
@@ -435,6 +794,7 @@ Risk of inconsistency if some rows not updated
 ```
 
 **Deletion Anomaly:**
+
 ```
 | StudentID | StudentName | CourseID | CourseName |
 |-----------|-------------|----------|------------|
@@ -449,6 +809,7 @@ If it's the last student in CS101
 **Definition:** X → Y means if two tuples have the same X value, they must have the same Y value.
 
 **Example:**
+
 ```
 Employee(ID, SSN, Name, DeptID, DeptName)
 
@@ -461,6 +822,7 @@ Functional Dependencies:
 **Armstrong's Axioms:**
 
 **Reflexivity:**
+
 ```
 If Y ⊆ X, then X → Y
 
@@ -468,6 +830,7 @@ Example: {ID, Name} → {ID}
 ```
 
 **Augmentation:**
+
 ```
 If X → Y, then XZ → YZ
 
@@ -476,6 +839,7 @@ Then {ID, DeptID} → {Name, DeptID}
 ```
 
 **Transitivity:**
+
 ```
 If X → Y and Y → Z, then X → Z
 
@@ -488,11 +852,13 @@ Then ID → DeptName
 **First Normal Form (1NF):**
 
 **Requirements:**
+
 - Atomic values only
 - No repeating groups
 - Each cell contains single value
 
 **Violation Example:**
+
 ```
 | StudentID | Name | Courses              |
 |-----------|------|----------------------|
@@ -501,6 +867,7 @@ Then ID → DeptName
 ```
 
 **1NF Solution:**
+
 ```
 | StudentID | Name | Course    |
 |-----------|------|-----------|
@@ -514,11 +881,13 @@ Then ID → DeptName
 **Second Normal Form (2NF):**
 
 **Requirements:**
+
 - Must be in 1NF
 - No partial dependencies
 - Non-key attributes fully dependent on entire primary key
 
 **Violation Example:**
+
 ```
 Enrollment(StudentID, CourseID, StudentName, CourseName, Grade)
 Primary Key: {StudentID, CourseID}
@@ -529,6 +898,7 @@ Partial Dependencies:
 ```
 
 **2NF Solution:**
+
 ```sql
 -- Students table
 CREATE TABLE Students (
@@ -556,11 +926,13 @@ CREATE TABLE Enrollments (
 **Third Normal Form (3NF):**
 
 **Requirements:**
+
 - Must be in 2NF
 - No transitive dependencies
 - Non-key attributes depend only on primary key
 
 **Violation Example:**
+
 ```
 Employee(EmpID, Name, DeptID, DeptName, DeptLocation)
 Primary Key: EmpID
@@ -570,6 +942,7 @@ EmpID → DeptID → DeptName, DeptLocation
 ```
 
 **3NF Solution:**
+
 ```sql
 -- Employees table
 CREATE TABLE Employees (
@@ -590,10 +963,12 @@ CREATE TABLE Departments (
 **Boyce-Codd Normal Form (BCNF):**
 
 **Requirements:**
+
 - Must be in 3NF
 - For every functional dependency X → Y, X must be a superkey
 
 **Violation Example:**
+
 ```
 CourseInstructor(StudentID, Course, Instructor)
 Assumptions:
@@ -607,6 +982,7 @@ Functional Dependencies:
 ```
 
 **BCNF Solution:**
+
 ```sql
 -- Student Courses
 CREATE TABLE StudentCourses (
@@ -625,10 +1001,12 @@ CREATE TABLE InstructorCourses (
 **Fourth Normal Form (4NF):**
 
 **Requirements:**
+
 - Must be in BCNF
 - No multi-valued dependencies
 
 **Violation Example:**
+
 ```
 Employee(EmpID, Skill, Language)
 - One employee can have multiple skills
@@ -641,6 +1019,7 @@ Multi-valued Dependencies:
 ```
 
 **4NF Solution:**
+
 ```sql
 CREATE TABLE EmployeeSkills (
     emp_id INT,
@@ -660,6 +1039,7 @@ CREATE TABLE EmployeeLanguages (
 ### ACID Properties
 
 **Atomicity:**
+
 ```sql
 BEGIN TRANSACTION;
     UPDATE Account SET balance = balance - 100 WHERE id = 1;
@@ -668,6 +1048,7 @@ COMMIT; -- Both succeed or both fail
 ```
 
 **Consistency:**
+
 ```sql
 -- Constraint: balance >= 0
 BEGIN TRANSACTION;
@@ -677,6 +1058,7 @@ COMMIT;
 ```
 
 **Isolation:**
+
 ```sql
 -- Transaction 1
 BEGIN TRANSACTION;
@@ -687,6 +1069,7 @@ COMMIT;
 ```
 
 **Durability:**
+
 ```sql
 BEGIN TRANSACTION;
     INSERT INTO Orders VALUES (1, 'Product', 100);
@@ -696,6 +1079,7 @@ COMMIT; -- Data persists even if system crashes
 ### Concurrency Problems
 
 **Lost Update:**
+
 ```
 Time | Transaction 1        | Transaction 2
 -----|---------------------|---------------------
@@ -708,6 +1092,7 @@ T6   |                     | WRITE X (130) ← Lost T1's update
 ```
 
 **Dirty Read:**
+
 ```
 Time | Transaction 1        | Transaction 2
 -----|---------------------|---------------------
@@ -720,6 +1105,7 @@ T6   |                     | Uses wrong value
 ```
 
 **Non-Repeatable Read:**
+
 ```
 Time | Transaction 1        | Transaction 2
 -----|---------------------|---------------------
@@ -732,6 +1118,7 @@ T6   | READ X (150)        | ← Different value
 ```
 
 **Phantom Read:**
+
 ```
 Time | Transaction 1                    | Transaction 2
 -----|----------------------------------|------------------
@@ -746,6 +1133,7 @@ T6   | Result: 6 ← Phantom record       |
 ### Isolation Levels
 
 **Read Uncommitted:**
+
 ```sql
 SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
 BEGIN TRANSACTION;
@@ -757,6 +1145,7 @@ COMMIT;
 **Problems:** Dirty reads, non-repeatable reads, phantom reads
 
 **Read Committed:**
+
 ```sql
 SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
 BEGIN TRANSACTION;
@@ -768,6 +1157,7 @@ COMMIT;
 **Problems:** Non-repeatable reads, phantom reads
 
 **Repeatable Read:**
+
 ```sql
 SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 BEGIN TRANSACTION;
@@ -781,6 +1171,7 @@ COMMIT;
 **Problems:** Phantom reads
 
 **Serializable:**
+
 ```sql
 SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 BEGIN TRANSACTION;
@@ -794,6 +1185,7 @@ COMMIT;
 ### Locking Mechanisms
 
 **Shared Lock (S-Lock):**
+
 ```sql
 -- Multiple transactions can hold shared locks
 BEGIN TRANSACTION;
@@ -803,6 +1195,7 @@ COMMIT;
 ```
 
 **Exclusive Lock (X-Lock):**
+
 ```sql
 -- Only one transaction can hold exclusive lock
 BEGIN TRANSACTION;
@@ -813,6 +1206,7 @@ COMMIT;
 ```
 
 **Lock Compatibility Matrix:**
+
 ```
         | S-Lock | X-Lock
 --------|--------|--------
@@ -823,10 +1217,12 @@ X-Lock  |   ✗    |   ✗
 **Two-Phase Locking (2PL):**
 
 **Growing Phase:**
+
 - Transaction acquires locks
 - Cannot release any locks
 
 **Shrinking Phase:**
+
 - Transaction releases locks
 - Cannot acquire new locks
 
@@ -835,15 +1231,16 @@ BEGIN TRANSACTION;
     -- Growing Phase
     LOCK TABLE Account IN SHARE MODE;
     SELECT * FROM Account WHERE id = 1;
-    
+
     LOCK TABLE Account IN EXCLUSIVE MODE;
     UPDATE Account SET balance = 1000 WHERE id = 1;
-    
+
     -- Shrinking Phase
     COMMIT; -- Releases all locks
 ```
 
 **Deadlock:**
+
 ```
 Time | Transaction 1        | Transaction 2
 -----|---------------------|---------------------
@@ -854,6 +1251,7 @@ T4   |                     | Wait for A ← Deadlock
 ```
 
 **Deadlock Detection:**
+
 ```sql
 -- MySQL shows deadlocks
 SHOW ENGINE INNODB STATUS;
@@ -863,6 +1261,7 @@ SELECT * FROM pg_locks WHERE NOT granted;
 ```
 
 **Deadlock Prevention:**
+
 ```sql
 -- Timeout approach
 SET innodb_lock_wait_timeout = 50;
@@ -879,12 +1278,14 @@ COMMIT;
 ### Query Execution Pipeline
 
 **Steps:**
+
 1. **Parsing:** Convert SQL to parse tree
 2. **Optimization:** Generate execution plan
 3. **Execution:** Execute plan
 4. **Result:** Return data
 
 **Example:**
+
 ```sql
 SELECT e.name, d.dept_name
 FROM Employee e
@@ -893,6 +1294,7 @@ WHERE e.salary > 50000;
 ```
 
 **Parse Tree:**
+
 ```
         SELECT
        /      \
@@ -912,12 +1314,14 @@ WHERE e.salary > 50000;
 **Cost-Based Optimization:**
 
 **Cost Factors:**
+
 - I/O cost (disk reads/writes)
 - CPU cost (processing)
 - Memory cost (buffer usage)
 - Network cost (distributed queries)
 
 **Example:**
+
 ```sql
 -- Query
 SELECT * FROM Employee WHERE dept_id = 10;
@@ -936,6 +1340,7 @@ Cost = (Index levels) × (I/O cost) + (Result pages) × (I/O cost)
 **Join Algorithms:**
 
 **Nested Loop Join:**
+
 ```
 for each row r in R:
     for each row s in S:
@@ -946,6 +1351,7 @@ Cost: O(|R| × |S|)
 ```
 
 **Hash Join:**
+
 ```
 1. Build hash table on smaller relation
 2. Probe with larger relation
@@ -954,6 +1360,7 @@ Cost: O(|R| + |S|)
 ```
 
 **Sort-Merge Join:**
+
 ```
 1. Sort both relations on join key
 2. Merge sorted relations
@@ -964,6 +1371,7 @@ Cost: O(|R| log |R| + |S| log |S|)
 ### Execution Plans
 
 **EXPLAIN Command:**
+
 ```sql
 EXPLAIN SELECT e.name, d.dept_name
 FROM Employee e
@@ -972,6 +1380,7 @@ WHERE e.salary > 50000;
 ```
 
 **Output:**
+
 ```
 +----+-------------+-------+------+---------------+------+---------+------+------+-------------+
 | id | select_type | table | type | possible_keys | key  | key_len | ref  | rows | Extra       |
@@ -986,6 +1395,7 @@ WHERE e.salary > 50000;
 ### Index Types
 
 **B-Tree Index:**
+
 ```
                 [50]
                /    \
@@ -995,12 +1405,14 @@ WHERE e.salary > 50000;
 ```
 
 **Characteristics:**
+
 - Balanced tree structure
 - O(log n) search time
 - Good for range queries
 - Default in most databases
 
 **Hash Index:**
+
 ```
 Hash Function: h(key) = key % 10
 
@@ -1010,12 +1422,14 @@ Key 35 → Bucket 5 (collision)
 ```
 
 **Characteristics:**
+
 - O(1) average search time
 - Only equality searches
 - No range queries
 - Collision handling needed
 
 **Bitmap Index:**
+
 ```
 Gender Index:
 Male:   [1, 0, 1, 0, 1, 0]
@@ -1027,6 +1441,7 @@ Inactive: [0, 0, 1, 0, 1, 0]
 ```
 
 **Characteristics:**
+
 - Efficient for low cardinality
 - Fast bitwise operations
 - Good for data warehouses
@@ -1034,6 +1449,7 @@ Inactive: [0, 0, 1, 0, 1, 0]
 ### Index Design
 
 **Single-Column Index:**
+
 ```sql
 CREATE INDEX idx_employee_name ON Employee(name);
 
@@ -1042,6 +1458,7 @@ SELECT * FROM Employee WHERE name = 'John';
 ```
 
 **Composite Index:**
+
 ```sql
 CREATE INDEX idx_emp_dept_salary ON Employee(dept_id, salary);
 
@@ -1054,6 +1471,7 @@ SELECT * FROM Employee WHERE salary > 50000; -- Doesn't use index
 ```
 
 **Covering Index:**
+
 ```sql
 CREATE INDEX idx_covering ON Employee(dept_id, name, salary);
 
@@ -1062,6 +1480,7 @@ SELECT name, salary FROM Employee WHERE dept_id = 10;
 ```
 
 **Partial Index:**
+
 ```sql
 CREATE INDEX idx_active_employees ON Employee(name)
 WHERE status = 'active';
@@ -1072,6 +1491,7 @@ WHERE status = 'active';
 ### Index Maintenance
 
 **Index Fragmentation:**
+
 ```sql
 -- Check fragmentation
 SELECT index_name, avg_fragmentation_in_percent
@@ -1095,6 +1515,7 @@ ALTER INDEX idx_employee_name ON Employee REORGANIZE;
 **Partition Tolerance:** System continues despite network partitions
 
 **Trade-offs:**
+
 - **CP Systems:** Consistency + Partition Tolerance (MongoDB, HBase)
 - **AP Systems:** Availability + Partition Tolerance (Cassandra, DynamoDB)
 - **CA Systems:** Consistency + Availability (Traditional RDBMS, not partition tolerant)
@@ -1102,6 +1523,7 @@ ALTER INDEX idx_employee_name ON Employee REORGANIZE;
 ### Replication Strategies
 
 **Master-Slave Replication:**
+
 ```
     Master (Write)
     /    |    \
@@ -1109,6 +1531,7 @@ Slave  Slave  Slave (Read)
 ```
 
 **Master-Master Replication:**
+
 ```
 Master 1 ←→ Master 2
    ↓           ↓
@@ -1116,6 +1539,7 @@ Slave 1    Slave 2
 ```
 
 **Quorum-Based Replication:**
+
 ```
 W + R > N
 
@@ -1128,6 +1552,7 @@ Where:
 ### Sharding
 
 **Horizontal Sharding:**
+
 ```
 Users Table:
 Shard 1: user_id 1-1000
@@ -1136,6 +1561,7 @@ Shard 3: user_id 2001-3000
 ```
 
 **Vertical Sharding:**
+
 ```
 Shard 1: user_id, name, email
 Shard 2: user_id, address, phone
@@ -1145,6 +1571,7 @@ Shard 3: user_id, preferences, settings
 **Sharding Strategies:**
 
 **Range-Based:**
+
 ```sql
 -- Shard by user_id range
 IF user_id <= 1000 THEN shard_1
@@ -1153,12 +1580,14 @@ ELSE shard_3
 ```
 
 **Hash-Based:**
+
 ```sql
 -- Shard by hash of user_id
 shard = hash(user_id) % num_shards
 ```
 
 **Directory-Based:**
+
 ```sql
 -- Lookup table maps keys to shards
 SELECT shard_id FROM shard_directory WHERE key = user_id;
@@ -1169,6 +1598,7 @@ SELECT shard_id FROM shard_directory WHERE key = user_id;
 ### Document Stores
 
 **Example: MongoDB**
+
 ```javascript
 {
   "_id": ObjectId("507f1f77bcf86cd799439011"),
@@ -1187,6 +1617,7 @@ SELECT shard_id FROM shard_directory WHERE key = user_id;
 ```
 
 **Characteristics:**
+
 - Flexible schema
 - Nested documents
 - Horizontal scaling
@@ -1195,6 +1626,7 @@ SELECT shard_id FROM shard_directory WHERE key = user_id;
 ### Key-Value Stores
 
 **Example: Redis**
+
 ```
 SET user:1000:name "John Doe"
 SET user:1000:email "john@example.com"
@@ -1202,6 +1634,7 @@ HSET user:1000 name "John Doe" email "john@example.com"
 ```
 
 **Characteristics:**
+
 - Simple data model
 - Very fast reads/writes
 - In-memory storage
@@ -1210,6 +1643,7 @@ HSET user:1000 name "John Doe" email "john@example.com"
 ### Column-Family Stores
 
 **Example: Cassandra**
+
 ```
 CREATE TABLE users (
     user_id uuid PRIMARY KEY,
@@ -1220,6 +1654,7 @@ CREATE TABLE users (
 ```
 
 **Characteristics:**
+
 - Wide-column storage
 - Distributed architecture
 - High write throughput
@@ -1228,6 +1663,7 @@ CREATE TABLE users (
 ### Graph Databases
 
 **Example: Neo4j**
+
 ```cypher
 CREATE (john:Person {name: 'John', age: 30})
 CREATE (jane:Person {name: 'Jane', age: 28})
@@ -1239,6 +1675,7 @@ RETURN friend.name
 ```
 
 **Characteristics:**
+
 - Nodes and relationships
 - Graph traversal
 - Relationship-focused
@@ -1249,6 +1686,7 @@ RETURN friend.name
 **Q: Explain ACID properties with examples. 🟢 [Junior]**
 
 A: ACID ensures reliable transactions:
+
 - **Atomicity:** All operations succeed or all fail (bank transfer: debit and credit both happen or neither)
 - **Consistency:** Database remains in valid state (account balance never negative)
 - **Isolation:** Concurrent transactions don't interfere (two transfers don't see each other's intermediate states)
@@ -1261,6 +1699,7 @@ A: 2NF eliminates partial dependencies (non-key attributes must depend on entire
 **Q: How do you choose between SQL and NoSQL? 🟡 [Mid]**
 
 A: Consider:
+
 - **SQL:** Complex queries, ACID requirements, structured data, relationships
 - **NoSQL:** Horizontal scaling, flexible schema, high throughput, eventual consistency acceptable
 
@@ -1331,29 +1770,72 @@ Vietnamese explanation: "Use SQL" là safe default. NoSQL khi: (1) Schema highly
 
 ---
 
-## Interview Q&A Summary / Tổng Kết
+## Interview Q&A Summary / Tổng Kết Câu Hỏi Phỏng Vấn
 
-| Question | Level | Key Point |
-|----------|-------|-----------|
-| ACID properties | 🟢 | Atomicity+Consistency+Isolation+Durability; bank transfer example |
-| SQL vs NoSQL | 🟡 | SQL=ACID+joins; NoSQL=flexible+scale; use SQL by default |
+| #   | Question                          | Difficulty | Core Concept           | Key Signal                                                                |
+| --- | --------------------------------- | ---------- | ---------------------- | ------------------------------------------------------------------------- |
+| 1   | Explain ACID properties           | 🟢         | ACID & Transactions    | Bank transfer: atomic debit+credit, WAL for durability                    |
+| 2   | 2NF vs 3NF?                       | 🟡         | Normalization          | 2NF=partial dependency on composite PK, 3NF=transitive non-key→non-key    |
+| 3   | SQL vs NoSQL?                     | 🟡         | Distributed DB & NoSQL | SQL=ACID+joins default, NoSQL=specific access patterns+scale              |
+| 4   | CAP theorem?                      | 🟡         | Distributed DB & NoSQL | P guaranteed → choose CP (correctness) or AP (availability)               |
+| 5   | Clustered vs non-clustered index? | 🟡         | Indexing               | Clustered=data sorted by index (1/table), non-clustered=pointer structure |
+| 6   | ACID properties bilingual         | 🟢         | ACID & Transactions    | WAL log, isolation levels, PG=Read Committed default                      |
+| 7   | SQL vs NoSQL bilingual            | 🟡         | Distributed DB & NoSQL | Polyglot: PG + Redis + ES common production pattern                       |
+
+**Distribution:** 🟢 Junior (2) | 🟡 Mid (5) | 🔴 Senior (0)
+
+---
+
+## ⚡ Cold Call Simulation / Mô Phỏng Hỏi Nhanh
+
+> **"E-commerce checkout takes 8 seconds. DBA says the query does a full table scan on 10M rows. How do you fix it?"**
+
+**30-second answer / Trả lời 30 giây:**
+Run EXPLAIN ANALYZE to confirm Seq Scan. Identify the WHERE/JOIN columns — likely missing index. Add composite B-Tree index on the high-selectivity columns (e.g., `customer_id, created_at`). Follow leftmost prefix rule. For the JOIN columns, ensure foreign keys are indexed. After adding index, verify with EXPLAIN that it switches to Index Scan. Monitor write performance since each index slows INSERT/UPDATE.
+
+**Follow-up / Hỏi thêm:** "The query uses `WHERE LOWER(email) = ?` and there's already an index on email. Why is it still slow?" → Function on indexed column prevents index usage. Create functional index: `CREATE INDEX idx_email_lower ON users(LOWER(email))`.
 
 ---
 
 ## Self-Check / Tự Kiểm Tra
 
-- [ ] Tôi có thể giải thích ACID và cho ví dụ khi nào mỗi property quan trọng không?
-- [ ] Tôi có thể giải thích B-Tree index hoạt động như thế nào và tại sao `WHERE email = ?` nhanh hơn `WHERE LOWER(email) = ?` không?
-- [ ] Tôi có thể giải thích N+1 query problem và cách dùng JOIN hoặc eager loading để fix không?
-- [ ] Tôi có thể giải thích khi nào nên dùng SQL vs NoSQL không?
-- [ ] Tôi có thể giải thích transaction isolation levels (Read Committed vs Repeatable Read vs Serializable) không?
+> Đóng tài liệu lại và trả lời:
+
+| #   | Type           | Question                                                                | Key Points                                                                       |
+| --- | -------------- | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| 1   | 🔍 Retrieval   | Liệt kê 4 ACID properties và ví dụ cho mỗi cái                          | A=all-or-nothing, C=valid state, I=no intermediate visibility, D=survives crash  |
+| 2   | 🎨 Visual      | Vẽ B-Tree index lookup flow cho WHERE customer_id = 42                  | Root → internal nodes → leaf node → pointer to data row (O(log n))               |
+| 3   | 🛠️ Application | Design schema cho e-commerce: users, orders, products, order_items      | Normalize to 3NF, PKs, FKs, composite index on (customer_id, created_at)         |
+| 4   | 🐛 Debug       | Query dùng index nhưng vẫn chậm — 3 nguyên nhân có thể                  | Stale stats, low selectivity (index scan + many lookups), covering index missing |
+| 5   | 🎓 Teach       | Giải thích cho junior tại sao không nên dùng SELECT \* trong production | Fetches unnecessary data, prevents covering index, wastes I/O and network        |
 
 💬 **Feynman Prompt:** Giải thích database index cho manager không biết kỹ thuật. Tại sao thêm index làm SELECT nhanh hơn nhưng INSERT/UPDATE chậm hơn?
 
 ---
 
+## 📅 Spaced Repetition / Lặp Lại Ngắt Quãng
+
+| Round | When   | Focus                                                     |
+| ----- | ------ | --------------------------------------------------------- |
+| 1     | Day 1  | ACID properties, relational model basics, B-Tree concept  |
+| 2     | Day 3  | Normalization (1NF→3NF), isolation levels, index types    |
+| 3     | Day 7  | MVCC, optimistic vs pessimistic locking, EXPLAIN reading  |
+| 4     | Day 14 | CAP theorem, SQL vs NoSQL decision, composite index rules |
+| 5     | Day 30 | Full cold call: debug slow query end-to-end               |
+
+---
+
 ## Connections / Liên Kết
 
-- ⬅️ **Built on:** [Data Structures](../01-cs-fundamentals/data-structures-theory.md) — B-Tree, Hash Table là cấu trúc bên trong database engines
-- ➡️ **Enables:** [Indexing & Optimization](./02-indexing-and-optimization.md) | [Sharding & Transactions](./04-sharding-and-transactions.md)
-- 🔗 **Applied in:** Every backend system | ORM (GORM, Sequelize) generates SQL — you still need to understand it
+**Same track (Shared — Database):**
+
+- ➡️ [Indexing & Optimization](./02-indexing-and-optimization.md) — deep dive into index types and query optimization
+- ➡️ [NoSQL & NewSQL](./03-nosql-and-newsql.md) — detailed NoSQL categories and NewSQL alternatives
+- ➡️ [Sharding & Transactions](./04-sharding-and-transactions.md) — distributed transactions, 2PC, sharding strategies
+- ⬅️ [Data Structures](../01-cs-fundamentals/data-structures-theory.md) — B-Tree, Hash Table foundations
+
+**Cross-track:**
+
+- 🔗 [SQL Fundamentals (BE)](../../be-track/03-database-advanced/01-sql-fundamentals.md) — Go-specific SQL patterns
+- 🔗 [Caching Patterns](../02-system-design/caching-patterns.md) — cache-aside, write-through complement DB
+- 🔗 [System Design Theory](../02-system-design/system-design-theory.md) — DB as building block in system design

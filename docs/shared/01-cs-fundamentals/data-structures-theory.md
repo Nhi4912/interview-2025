@@ -22,6 +22,7 @@
 ## How to Read This Guide / Cách Đọc Tài Liệu Này
 
 Mỗi cấu trúc dữ liệu được trình bày theo format:
+
 1. **Analogy** — liên tưởng thực tế dễ nhớ
 2. **Visual diagram** — sơ đồ ASCII trực quan
 3. **Complexity table** — bảng độ phức tạp
@@ -29,6 +30,7 @@ Mỗi cấu trúc dữ liệu được trình bày theo format:
 5. **Interview tip** — tip phỏng vấn cụ thể
 
 **Nguyên tắc chọn data structure:**
+
 ```
 Cần access by index nhanh?          → Array
 Cần insert/delete ở đầu/giữa nhiều? → Linked List
@@ -43,12 +45,393 @@ Cần graph traversal?                → Adjacency List/Matrix
 
 ---
 
+---
+
+## Overview / Tổng Quan
+
+| #   | Concept               | Role                                                               | Interview Weight |
+| --- | --------------------- | ------------------------------------------------------------------ | ---------------- |
+| 1   | Array & Dynamic Array | Sequential access O(1), cache-friendly, foundation of mọi DS       | ⭐⭐⭐⭐⭐       |
+| 2   | Linked List           | O(1) insert/delete at known position, basis of Stack/Queue/LRU     | ⭐⭐⭐⭐         |
+| 3   | Hash Table            | O(1) avg lookup — Two Sum, frequency count, dedup                  | ⭐⭐⭐⭐⭐       |
+| 4   | BST / Balanced Tree   | Sorted operations O(log n), range queries, DB indexes              | ⭐⭐⭐⭐         |
+| 5   | Heap / Priority Queue | O(1) min/max, O(log n) insert — top-K, scheduling, merge K lists   | ⭐⭐⭐⭐⭐       |
+| 6   | Trie                  | Prefix search O(L), autocomplete, spell check                      | ⭐⭐⭐           |
+| 7   | Graph Representations | Model relationships — BFS/DFS foundation, social networks, routing | ⭐⭐⭐⭐         |
+
+**Quan hệ:** Array (1) → Linked List (2) = linear structures. Hash Table (3) = O(1) lookup built on array. BST (4) + Heap (5) = tree structures. Trie (6) = specialized tree. Graph (7) = general structure combining all.
+
+---
+
+## Core Concepts — Phase 2 Deep Dive
+
+### Concept 1: Array & Dynamic Array
+
+🪝 **Memory Hook:** Array = **dãy tủ đồ có đánh số** — biết số = mở tủ O(1). Dynamic array = tủ tự mở rộng (ArrayList/Go slice) — đầy thì dọn sang tủ gấp đôi.
+
+**Why exists / Tại sao tồn tại:**
+
+- Level 1: Cần truy cập phần tử bất kỳ bằng index O(1) — base case cho mọi data structure
+- Level 2: CPU cache line loads contiguous memory → array access sequential = cache-friendly = thực tế nhanh hơn linked list dù cùng O(n)
+- Level 3: Dynamic array (Go slice, Java ArrayList) amortized O(1) append giải quyết "fixed size" limitation
+
+**Layer 1 — Simple Analogy / Lớp 1:**
+Array giống **dãy ghế trong rạp phim** đánh số 0→n-1. Muốn ghế #42 = đi thẳng đến. Muốn thêm ghế giữa = phải dời tất cả ghế phía sau.
+
+**Layer 2 — Mechanics / Lớp 2:**
+
+```
+Memory layout: [elem0|elem1|elem2|elem3|...|elem_n-1]
+                ↑ base address
+Index access: base + index × sizeof(elem) = O(1)
+
+Operation     │ Static Array │ Dynamic Array (amortized)
+──────────────┼──────────────┼─────────────────────────
+Access [i]    │ O(1)         │ O(1)
+Append        │ N/A          │ O(1) amortized
+Insert at i   │ O(n) shift   │ O(n) shift
+Delete at i   │ O(n) shift   │ O(n) shift
+Search        │ O(n)         │ O(n)
+```
+
+**Layer 3 — Edge Cases / Lớp 3:**
+
+- Go slice: append beyond capacity → allocate new backing array, copy → old array eligible for GC
+- 2D array: row-major vs column-major → iterate row-by-row for cache locality
+- Sparse array: 10⁶ elements but 99% empty → use HashMap instead
+
+| Sai lầm                         | Tại sao sai                                | Đúng là                                                      |
+| ------------------------------- | ------------------------------------------ | ------------------------------------------------------------ |
+| "Array insert = O(1)"           | Insert at i requires shifting n-i elements | O(n) worst case. Only append to end = O(1) amortized         |
+| "Slice is reference type in Go" | Slice header is value (ptr, len, cap)      | Passing slice copies header; append may change backing array |
+
+🎯 **Interview Pattern:** "Use array when need random access + cache locality. Switch to hash map when need O(1) search."
+
+🔗 **Knowledge Chain:** Array → Dynamic Array → Hash Table (array of buckets) → Matrix (2D array)
+
+---
+
+### Concept 2: Linked List
+
+🪝 **Memory Hook:** Linked List = **chuỗi hạt xâu bằng dây** — thêm/bớt hạt giữa chỉ cần cắt dây + nối lại. Nhưng tìm hạt thứ 42 phải đếm từ đầu.
+
+**Why exists / Tại sao tồn tại:**
+
+- Level 1: O(1) insert/delete at known position — array phải shift O(n) elements
+- Level 2: LRU Cache = doubly linked list + hash map → O(1) evict + O(1) lookup. Used by every caching system
+- Level 3: Lock-free concurrent data structures (lock-free linked list) — CAS on node pointers
+
+**Layer 1 — Simple Analogy / Lớp 1:**
+Danh sách liên kết giống **đoàn tàu**: mỗi toa (node) chứa hàng (data) + móc nối (pointer) sang toa kế. Thêm toa giữa = unhook + rehook. Tìm toa #42 = đi từ đầu tàu đếm qua.
+
+**Layer 2 — Mechanics / Lớp 2:**
+
+```
+Singly: [data|next] → [data|next] → [data|null]
+Doubly: null ← [prev|data|next] ⇄ [prev|data|next] ⇄ [prev|data|next] → null
+
+Operation      │ Singly  │ Doubly  │ Array
+───────────────┼─────────┼─────────┼────────
+Access [i]     │ O(n)    │ O(n)    │ O(1)
+Insert at head │ O(1)    │ O(1)    │ O(n)
+Insert at known│ O(1)    │ O(1)    │ O(n)
+Delete known   │ O(n)*   │ O(1)    │ O(n)
+Search         │ O(n)    │ O(n)    │ O(n)
+
+*Singly delete = O(n) to find prev; O(1) if prev already known
+```
+
+**Layer 3 — Edge Cases / Lớp 3:**
+
+- Cycle detection: Floyd's tortoise-and-hare O(n) time O(1) space — common interview question
+- Dummy head node simplifies edge cases (empty list, insert at head)
+- Memory fragmentation: each node separate allocation → poor cache locality vs array
+
+| Sai lầm                                           | Tại sao sai                                     | Đúng là                                           |
+| ------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------- |
+| "Linked list always faster than array for insert" | Only at known position; finding position = O(n) | Array with binary search + shift sometimes better |
+| "Singly linked list delete = O(1)"                | Need prev pointer, singly doesn't have it       | O(n) unless prev already tracked                  |
+
+🎯 **Interview Pattern:** "Reverse linked list", "Detect cycle", "Merge two sorted lists", "LRU Cache" — top interview patterns.
+
+🔗 **Knowledge Chain:** Linked List → LRU Cache → Stack/Queue implementation → Skip List
+
+---
+
+### Concept 3: Hash Table
+
+🪝 **Memory Hook:** Hash table = **tủ có nhãn tên** — đưa tên (key) → hash function nói "ngăn #7" → mở ngăn lấy đồ O(1). Collision = 2 tên cùng ngăn → chain hoặc probe.
+
+**Why exists / Tại sao tồn tại:**
+
+- Level 1: O(1) average lookup/insert/delete — fastest general-purpose search
+- Level 2: Two Sum = hash map. Frequency count = hash map. Dedup = hash set. 60%+ LeetCode problems dùng hash map
+- Level 3: Load factor + resize strategy quyết định performance. Go map: bucket = 8 slots, load factor 6.5 → trigger growth
+
+**Layer 1 — Simple Analogy / Lớp 1:**
+Hash table giống **từ điển có index chữ cái**: muốn tìm "Algorithm" → mở tab chữ "A" → scan vài từ → found. Nếu tất cả từ bắt đầu bằng "A" (collision) → chậm như linear search.
+
+**Layer 2 — Mechanics / Lớp 2:**
+
+```
+hash("key") = bucket_index
+
+Bucket array: [0] → [k1:v1] → [k2:v2]    ← chaining
+              [1] → [k3:v3]
+              [2] → null
+              [3] → [k4:v4] → [k5:v5] → [k6:v6]
+              ...
+
+Collision resolution:
+├── Chaining: linked list per bucket (Go, Java 7)
+├── Open addressing: probe next slot (Python dict, Robin Hood)
+└── Java 8+: chain > 8 → convert to Red-Black Tree
+
+Load factor = n/capacity → threshold triggers resize (typically 0.75)
+Resize = rehash all keys into 2× capacity array → O(n) but amortized O(1)
+```
+
+**Layer 3 — Edge Cases / Lớp 3:**
+
+- Hash collision attack: adversary crafts keys all mapping to same bucket → O(n) per lookup. Mitigation: randomized hash seed
+- Go map: iteration order randomized by design — never depend on map order
+- Thread safety: Go map concurrent read OK, concurrent write = panic. Use sync.Map or mutex
+
+| Sai lầm                         | Tại sao sai                                   | Đúng là                                                                           |
+| ------------------------------- | --------------------------------------------- | --------------------------------------------------------------------------------- |
+| "Hash map always O(1)"          | Worst case O(n) — all collisions              | O(1) average, O(n) worst. Good hash + load factor keeps average                   |
+| "Map preserves insertion order" | Most implementations don't (Go, Java HashMap) | Python 3.7+ dict preserves order. Go/Java: use LinkedHashMap or ordered structure |
+
+🎯 **Interview Pattern:** "Two Sum" → hash map. "Group Anagrams" → hash map. "First non-repeating char" → hash map. 60% of LeetCode.
+
+🔗 **Knowledge Chain:** Hash Table → Frequency Count → Two Sum Pattern → Caching (Redis) → Distributed Hash Table
+
+---
+
+### Concept 4: BST / Balanced Tree
+
+🪝 **Memory Hook:** BST = **cây gia phả** — left child nhỏ hơn, right child lớn hơn. Balanced = cây cân đối, không bị nghiêng một bên → O(log n) guaranteed. Unbalanced = linked list O(n).
+
+**Why exists / Tại sao tồn tại:**
+
+- Level 1: Sorted data + O(log n) search/insert/delete — hash table can't do range queries or sorted traversal
+- Level 2: Database indexes (B-Tree/B+ Tree), in-memory sorted containers (TreeMap/TreeSet)
+- Level 3: Self-balancing variants: AVL (strict balance, read-heavy), Red-Black (relaxed, write-heavy, used in Linux CFS, Java TreeMap)
+
+**Layer 1 — Simple Analogy / Lớp 1:**
+BST giống **cây quyết định yes/no**: "Số này > 50?" → Yes → đi phải. "Số này > 75?" → No → đi trái. Mỗi bước loại bỏ nửa → O(log n). Nhưng nếu insert sorted data → cây thành đường thẳng = O(n).
+
+**Layer 2 — Mechanics / Lớp 2:**
+
+```
+Balanced BST:          Degenerate BST:
+       50                  10
+      /  \                   \
+    25    75                  20
+   / \   / \                   \
+  10 30 60 90                   30
+                                 \
+                                  40
+
+Operation    │ Balanced │ Degenerate │ Notes
+─────────────┼──────────┼────────────┼──────────────
+Search       │ O(log n) │ O(n)       │ Binary search property
+Insert       │ O(log n) │ O(n)       │ + rebalance for AVL/RB
+Delete       │ O(log n) │ O(n)       │ Find successor/predecessor
+In-order     │ O(n)     │ O(n)       │ Gives sorted output
+Range query  │ O(log n+k)│ O(n)      │ k = results in range
+
+AVL vs Red-Black:
+├── AVL: height ≤ 1.44·log(n), strict → more rotations on insert
+├── Red-Black: height ≤ 2·log(n), relaxed → fewer rotations
+└── Practice: RB tree preferred (Java TreeMap, Linux scheduler)
+```
+
+**Layer 3 — Edge Cases / Lớp 3:**
+
+- B-Tree for disk: high branching factor → fewer disk reads → database indexes
+- Skip List: probabilistic alternative to balanced BST → Redis Sorted Set → simpler implementation
+- AVL vs RB: AVL better for read-heavy (shorter height), RB better for write-heavy (fewer rotations)
+
+| Sai lầm                         | Tại sao sai                  | Đúng là                                                          |
+| ------------------------------- | ---------------------------- | ---------------------------------------------------------------- |
+| "BST always O(log n)"           | Only if balanced             | Unbalanced BST = O(n). Always specify "balanced BST"             |
+| "Use BST for everything sorted" | Hash map + sort often faster | BST for dynamic sorted data + range queries. Static = sort array |
+
+🎯 **Interview Pattern:** "Validate BST", "Kth smallest in BST", "LCA of BST" — use in-order property.
+
+🔗 **Knowledge Chain:** BST → Balanced Trees → B-Tree (DB indexes) → Skip List (Redis) → Range Queries
+
+---
+
+### Concept 5: Heap / Priority Queue
+
+🪝 **Memory Hook:** Heap = **tháp VIP** — người quan trọng nhất luôn ở đỉnh (min/max). Thêm người mới = đặt cuối rồi "nổi lên" đúng vị trí. Lấy VIP = bốc đỉnh, cuối lên thay rồi "chìm xuống".
+
+**Why exists / Tại sao tồn tại:**
+
+- Level 1: O(1) get min/max + O(log n) insert/delete — sorted array insert = O(n), BST = overhead
+- Level 2: Top-K problems (top K frequent, K closest points), merge K sorted lists, task scheduling, Dijkstra
+- Level 3: Binary heap stored as array (no pointers!) → cache-friendly. Parent(i) = (i-1)/2, children = 2i+1, 2i+2
+
+**Layer 1 — Simple Analogy / Lớp 1:**
+Heap giống **hàng đợi cấp cứu bệnh viện**: bệnh nhân nặng nhất luôn được khám trước, bất kể ai đến trước. Thêm bệnh nhân = xếp vào cuối rồi "nổi lên" nếu nặng hơn.
+
+**Layer 2 — Mechanics / Lớp 2:**
+
+```
+Min-Heap (array representation):
+Index:  [0] [1] [2] [3] [4] [5]
+Values: [1] [3] [2] [7] [4] [5]
+
+Tree view:        1
+                /   \
+               3     2
+              / \   /
+             7   4 5
+
+Parent(i) = (i-1)/2    Children(i) = 2i+1, 2i+2
+
+Operations:
+├── Peek min/max: O(1) — return root
+├── Insert: O(log n) — add at end, bubble up
+├── Delete min/max: O(log n) — swap root with last, sift down
+├── Heapify array: O(n) — bottom-up sift down (NOT O(n log n))
+└── Heap sort: O(n log n) — heapify + extract n times
+```
+
+**Layer 3 — Edge Cases / Lớp 3:**
+
+- Heapify is O(n), NOT O(n log n) — bottom-up build. Most nodes are leaves (n/2) requiring 0 sifts
+- K-way merge: min-heap of K elements → O(n log K) total — LeetCode "Merge K Sorted Lists"
+- Go: `container/heap` interface — implement Len, Less, Swap, Push, Pop
+
+| Sai lầm                           | Tại sao sai                         | Đúng là                                                                        |
+| --------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------ |
+| "Heap sort in-place = O(1) space" | Technically O(1) auxiliary nhưng... | Correct — heap sort IS O(1) extra space, O(n log n) time. But not stable       |
+| "Build heap = O(n log n)"         | Bottom-up heapify = O(n)            | Math proof: Σ(n/2^(h+1)) × O(h) = O(n). Textbook often confuses with n inserts |
+
+🎯 **Interview Pattern:** "Find top K" → min-heap size K. "Merge K sorted" → min-heap. "Running median" → max-heap + min-heap.
+
+🔗 **Knowledge Chain:** Heap → Priority Queue → Dijkstra → Task Scheduling → Top-K Pattern
+
+---
+
+### Concept 6: Trie
+
+🪝 **Memory Hook:** Trie = **cây từ điển** — mỗi nhánh = 1 ký tự, đi theo nhánh spell ra từ. "app" và "apple" share nhánh "a→p→p". Autocomplete = "gõ 'ap' → tìm tất cả nhánh con".
+
+**Why exists / Tại sao tồn tại:**
+
+- Level 1: Prefix search O(L) where L = word length — hash map can't do prefix efficiently
+- Level 2: Autocomplete (Google search), spell checker, IP routing (longest prefix match), word games
+- Level 3: Space optimization: compressed trie (radix tree), memory-efficient for shared prefixes
+
+**Layer 1 — Simple Analogy / Lớp 1:**
+Trie giống **menu điện thoại IVR**: "Nhấn 1 cho tiếng Việt → Nhấn 2 cho hỗ trợ → Nhấn 3 cho khiếu nại" — mỗi bước lọc xuống. Gõ "app" = 3 bước lọc → tìm tất cả từ bắt đầu "app".
+
+**Layer 2 — Mechanics / Lớp 2:**
+
+```
+Words: ["app", "apple", "api", "bat"]
+
+Trie structure:
+         root
+        /    \
+       a      b
+       |      |
+       p      a
+      / \     |
+     p   i*   t*
+     |
+     l
+     |
+     e*
+   (* = end of word)
+
+Operation         │ Time   │ Notes
+──────────────────┼────────┼──────────────
+Insert word       │ O(L)   │ L = word length
+Search word       │ O(L)   │ Exact match
+Prefix search     │ O(L+K) │ K = words with prefix
+Delete word       │ O(L)   │ Remove if no children
+Autocomplete top-K│ O(L+K) │ DFS from prefix node
+```
+
+**Layer 3 — Edge Cases / Lớp 3:**
+
+- Memory: naive trie with 26 children per node = wasteful for sparse data → use HashMap children
+- Compressed trie (radix tree): merge single-child nodes → "apple" stored as "a→pp→le" → less memory
+- Concurrency: read-heavy → immutable trie (persistent data structure) → safe for concurrent reads
+
+| Sai lầm                          | Tại sao sai                   | Đúng là                                                       |
+| -------------------------------- | ----------------------------- | ------------------------------------------------------------- |
+| "Hash map can do prefix search"  | Hash map only exact key match | Trie = prefix O(L). Hash map = scan all keys O(n) for prefix  |
+| "Trie always better for strings" | Memory overhead per node      | Hash map better for exact match. Trie for prefix/autocomplete |
+
+🎯 **Interview Pattern:** "Implement Trie", "Word Search II", "Autocomplete system" — build trie + DFS.
+
+🔗 **Knowledge Chain:** Trie → Autocomplete → IP Routing → Compressed Trie → Suffix Tree
+
+---
+
+### Concept 7: Graph Representations
+
+🪝 **Memory Hook:** Graph = **bản đồ thành phố** — nodes = ngã tư, edges = đường. Adjacency list = "danh sách hàng xóm mỗi nhà". Adjacency matrix = "bảng khoảng cách mọi cặp nhà" — 1M nhà × 1M nhà = 10¹² ô → KHÔNG dùng matrix cho sparse graph.
+
+**Why exists / Tại sao tồn tại:**
+
+- Level 1: Model relationships: social networks, maps, dependencies, state machines
+- Level 2: BFS (shortest path unweighted), DFS (cycle detection, topological sort), Dijkstra (shortest weighted)
+- Level 3: Sparse vs dense determines representation: sparse (E << V²) → adjacency list O(V+E), dense → matrix O(V²)
+
+**Layer 1 — Simple Analogy / Lớp 1:**
+Graph giống **mạng lưới bạn bè Facebook**: mỗi người = node, kết bạn = edge (undirected). Twitter follow = directed edge. "Ai là bạn chung?" = graph traversal.
+
+**Layer 2 — Mechanics / Lớp 2:**
+
+```
+Adjacency List (sparse):    Adjacency Matrix (dense):
+A: [B, C]                     A  B  C
+B: [C]                    A [ 0  1  1 ]
+C: []                     B [ 0  0  1 ]
+                          C [ 0  0  0 ]
+
+Space:  List=O(V+E)  Matrix=O(V²)
+Edge?:  List=O(deg)  Matrix=O(1)
+Add edge: List=O(1)  Matrix=O(1)
+
+Traversal algorithms:
+├── BFS: O(V+E) — shortest path (unweighted), level-order
+├── DFS: O(V+E) — cycle detection, topological sort, connected components
+├── Dijkstra: O((V+E) log V) — shortest path (weighted, no negative)
+└── Bellman-Ford: O(V×E) — shortest path (handles negative weights)
+```
+
+**Layer 3 — Edge Cases / Lớp 3:**
+
+- Social graph: ~1B users, ~500 friends avg → sparse → adjacency list mandatory
+- Complete graph (V=1000): only 10⁶ edges → matrix OK. V=10⁶ → matrix = 10¹² = impossible
+- Directed vs undirected: undirected = 2 directed edges. Cycle in directed = DFS gray/black coloring
+
+| Sai lầm                          | Tại sao sai                                          | Đúng là                                                          |
+| -------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------------- |
+| "Always use adjacency list"      | Dense graph (complete) → matrix more cache-efficient | List for sparse (most real-world), matrix for small dense graphs |
+| "BFS always finds shortest path" | Only for unweighted graphs                           | Weighted → Dijkstra. Negative weights → Bellman-Ford             |
+
+🎯 **Interview Pattern:** "Number of islands" (BFS/DFS grid), "Course schedule" (topological sort), "Shortest path" (BFS/Dijkstra).
+
+🔗 **Knowledge Chain:** Graph → BFS/DFS → Shortest Path → Network Flow → Social Networks → Recommendation Systems
+
+---
+
 ## 1. Array / Mảng
 
 ### Analogy / Liên Tưởng
+
 Think of a row of numbered lockers in a school hallway. Each locker has a number (index). To get locker #42 — you walk directly to it. No searching needed.
 
-*Giống như dãy tủ có số thứ tự ở trường học. Muốn tủ số 42 → đi thẳng đến, không cần tìm.*
+_Giống như dãy tủ có số thứ tự ở trường học. Muốn tủ số 42 → đi thẳng đến, không cần tìm._
 
 ### Visual / Sơ Đồ
 
@@ -68,21 +451,23 @@ After:  [10, 20, 99, 30, 40, 50]
 
 ### Complexity
 
-| Operation | Time | Why |
-|-----------|------|-----|
-| Access `arr[i]` | O(1) | Direct address calculation |
-| Search (unsorted) | O(n) | Must check every element |
-| Search (sorted, binary) | O(log n) | Eliminate half each step |
-| Insert/delete at end | Amortized O(1) | Dynamic arrays double capacity |
-| Insert/delete at middle | O(n) | Must shift elements |
-| Space | O(n) | n elements stored |
+| Operation               | Time           | Why                            |
+| ----------------------- | -------------- | ------------------------------ |
+| Access `arr[i]`         | O(1)           | Direct address calculation     |
+| Search (unsorted)       | O(n)           | Must check every element       |
+| Search (sorted, binary) | O(log n)       | Eliminate half each step       |
+| Insert/delete at end    | Amortized O(1) | Dynamic arrays double capacity |
+| Insert/delete at middle | O(n)           | Must shift elements            |
+| Space                   | O(n)           | n elements stored              |
 
 ### Real Use Cases / Dùng Ở Đâu
+
 - **React Virtual DOM diffing**: Arrays of children nodes, index-based comparison
 - **Database buffer pool**: Fixed-size array of page frames
 - **Sliding window problems**: LeetCode classics — Two Pointers, Subarray Sum
 
 ### Interview Tip / Tip Phỏng Vấn
+
 > "Khi nào nên tránh Array?" — Khi cần insert/delete ở giữa nhiều lần (O(n) mỗi lần). Nếu dataset dynamic và cần thêm/xóa ở đầu → dùng Linked List hoặc Deque.
 
 ---
@@ -90,9 +475,10 @@ After:  [10, 20, 99, 30, 40, 50]
 ## 2. Linked List / Danh Sách Liên Kết
 
 ### Analogy / Liên Tưởng
+
 Think of a treasure hunt where each clue tells you where the next clue is. You can't skip to clue #5 without following the chain from the start.
 
-*Giống như trò tìm kho báu — mỗi mảnh giấy chỉ chỗ mảnh tiếp theo. Không thể nhảy thẳng đến mảnh số 5.*
+_Giống như trò tìm kho báu — mỗi mảnh giấy chỉ chỗ mảnh tiếp theo. Không thể nhảy thẳng đến mảnh số 5._
 
 ### Visual / Sơ Đồ
 
@@ -118,21 +504,23 @@ X.next = new_node
 
 ### Complexity
 
-| Operation | Singly | Doubly | Why |
-|-----------|--------|--------|-----|
-| Access by index | O(n) | O(n) | Must traverse from head |
-| Insert at head | O(1) | O(1) | Just change head pointer |
-| Insert at tail | O(n) / O(1)* | O(1)* | *if tail pointer maintained |
-| Delete known node | O(n)** | O(1) | **need predecessor; doubly has prev |
-| Search | O(n) | O(n) | Sequential scan |
-| Space | O(n) | O(n) | + pointer overhead vs array |
+| Operation         | Singly        | Doubly | Why                                   |
+| ----------------- | ------------- | ------ | ------------------------------------- |
+| Access by index   | O(n)          | O(n)   | Must traverse from head               |
+| Insert at head    | O(1)          | O(1)   | Just change head pointer              |
+| Insert at tail    | O(n) / O(1)\* | O(1)\* | \*if tail pointer maintained          |
+| Delete known node | O(n)\*\*      | O(1)   | \*\*need predecessor; doubly has prev |
+| Search            | O(n)          | O(n)   | Sequential scan                       |
+| Space             | O(n)          | O(n)   | + pointer overhead vs array           |
 
 ### Real Use Cases / Dùng Ở Đâu
+
 - **LRU Cache** (most common interview Q): Doubly linked list + HashMap for O(1) eviction
 - **Browser history**: Next/back navigation (doubly linked)
 - **Undo queue in editors**: LinkedList of states
 
 ### Interview Tip / Tip Phỏng Vấn
+
 > LRU Cache là câu hỏi kinh điển kết hợp HashMap + Doubly Linked List. HashMap để O(1) lookup, LinkedList để O(1) move-to-front khi accessed.
 
 ```
@@ -150,9 +538,10 @@ List: [Head]←→[B]←→[C]←→[A]←→[Tail]
 ## 3. Stack / Ngăn Xếp
 
 ### Analogy / Liên Tưởng
+
 A stack of plates. You can only add/remove from the top. **LIFO** — Last In, First Out.
 
-*Chồng đĩa. Chỉ có thể lấy hoặc để từ trên xuống. Cái nào để vào sau, lấy ra trước.*
+_Chồng đĩa. Chỉ có thể lấy hoặc để từ trên xuống. Cái nào để vào sau, lấy ra trước._
 
 ### Visual / Sơ Đồ
 
@@ -187,15 +576,16 @@ bar() returns → stack pops → foo() resumes
 
 ### Complexity
 
-| Operation | Time | Space |
-|-----------|------|-------|
-| Push | O(1) | O(1) |
-| Pop | O(1) | O(1) |
-| Peek (top) | O(1) | O(1) |
-| isEmpty | O(1) | O(1) |
+| Operation   | Time                | Space |
+| ----------- | ------------------- | ----- |
+| Push        | O(1)                | O(1)  |
+| Pop         | O(1)                | O(1)  |
+| Peek (top)  | O(1)                | O(1)  |
+| isEmpty     | O(1)                | O(1)  |
 | Space total | O(n) for n elements |
 
 ### Real Use Cases / Dùng Ở Đâu
+
 - **JavaScript Call Stack**: Every function call pushed, return pops
 - **Undo/Redo** in editors: past actions on stack, redo on another stack
 - **Browser back button**: Pages on a stack
@@ -203,6 +593,7 @@ bar() returns → stack pops → foo() resumes
 - **DFS traversal**: Explicit stack instead of recursion
 
 ### Interview Tip / Tip Phỏng Vấn
+
 > Classic interview problems: Valid Parentheses, Min Stack, Decode String, Daily Temperatures.
 > Pattern: whenever you need to "remember the previous state" → think Stack.
 
@@ -211,9 +602,10 @@ bar() returns → stack pops → foo() resumes
 ## 4. Queue / Hàng Đợi
 
 ### Analogy / Liên Tưởng
+
 A line at a coffee shop. First person in line gets served first. **FIFO** — First In, First Out.
 
-*Hàng chờ ở quán cà phê. Người đến trước phục vụ trước.*
+_Hàng chờ ở quán cà phê. Người đến trước phục vụ trước._
 
 ### Visual / Sơ Đồ
 
@@ -241,20 +633,22 @@ Wrap around when pointer hits end
 
 ### Special Queue Types
 
-| Type | Description | Use case |
-|------|-------------|----------|
-| Regular Queue | FIFO | BFS, task scheduling |
-| Deque | Insert/remove from both ends | Sliding window max (LeetCode 239) |
-| Priority Queue | Dequeue highest priority first | Dijkstra, job scheduling, Top-K |
-| Circular Queue | Fixed size, no realloc | Ring buffer, OS kernel |
+| Type           | Description                    | Use case                          |
+| -------------- | ------------------------------ | --------------------------------- |
+| Regular Queue  | FIFO                           | BFS, task scheduling              |
+| Deque          | Insert/remove from both ends   | Sliding window max (LeetCode 239) |
+| Priority Queue | Dequeue highest priority first | Dijkstra, job scheduling, Top-K   |
+| Circular Queue | Fixed size, no realloc         | Ring buffer, OS kernel            |
 
 ### Real Use Cases / Dùng Ở Đâu
+
 - **BFS** (Breadth-First Search): Queue of nodes to visit
 - **Message queues** (Kafka, RabbitMQ): Producer enqueues, consumer dequeues
 - **Rate limiter** (sliding window): Queue of timestamps
 - **OS task scheduler**: CPU job queue
 
 ### Interview Tip / Tip Phỏng Vấn
+
 > Priority Queue / Heap is used for: Top-K elements, Merge K sorted lists, Dijkstra's shortest path.
 > In Python: `heapq` is a min-heap. To get max-heap: push negatives.
 
@@ -263,9 +657,10 @@ Wrap around when pointer hits end
 ## 5. Hash Table / Bảng Băm
 
 ### Analogy / Liên Tưởng
+
 A massive library where instead of searching every shelf, you get a formula: `shelf = f(book_title)`. The formula maps any title to a specific shelf number. Find any book in O(1) regardless of library size.
 
-*Thư viện khổng lồ với công thức: `giá sách = f(tên sách)`. Tìm sách trong O(1) bất kể thư viện bao nhiêu cuốn.*
+_Thư viện khổng lồ với công thức: `giá sách = f(tên sách)`. Tìm sách trong O(1) bất kể thư viện bao nhiêu cuốn._
 
 ### Visual / Sơ Đồ
 
@@ -295,24 +690,27 @@ Open Addressing (linear probing):
 
 ### Complexity
 
-| Operation | Average | Worst Case | Why worst |
-|-----------|---------|------------|-----------|
-| Get(key) | O(1) | O(n) | All keys hash to same bucket |
-| Put(key, val) | O(1) | O(n) | Same — hash collision |
-| Delete(key) | O(1) | O(n) | Same |
-| Space | O(n) | O(n) | |
+| Operation     | Average | Worst Case | Why worst                    |
+| ------------- | ------- | ---------- | ---------------------------- |
+| Get(key)      | O(1)    | O(n)       | All keys hash to same bucket |
+| Put(key, val) | O(1)    | O(n)       | Same — hash collision        |
+| Delete(key)   | O(1)    | O(n)       | Same                         |
+| Space         | O(n)    | O(n)       |                              |
 
 **Collision resolution:**
+
 - **Separate chaining**: Each slot is a linked list — Python dict, Java HashMap
 - **Open addressing**: Find next open slot — Python `set`, Go `map`
 
 ### Real Use Cases / Dùng Ở Đâu
+
 - **Database indexes** (hash index): Exact match queries — O(1) lookup
 - **Caching** (Redis, Memcached): Key → value store
 - **Deduplication**: Seen set for unique visitors, unique URLs
 - **Two Sum** (LeetCode): Store complement in hash map — O(n) solution
 
 ### Interview Tip / Tip Phỏng Vấn
+
 > When you see "O(1) lookup" requirement → HashMap. Pattern: store `{value: index}` as you scan.
 > Common trick: use HashMap as frequency counter: `{char: count}` for anagram problems.
 
@@ -321,9 +719,10 @@ Open Addressing (linear probing):
 ## 6. Binary Search Tree (BST) / Cây Tìm Kiếm Nhị Phân
 
 ### Analogy / Liên Tưởng
+
 A sorted phone book where each page tells you "if the name you want comes before mine, go left; if after, go right." Each step eliminates half the remaining search space.
 
-*Danh bạ điện thoại được tổ chức: "tên cần tìm nhỏ hơn → rẽ trái, lớn hơn → rẽ phải." Mỗi bước loại bỏ nửa không gian tìm kiếm.*
+_Danh bạ điện thoại được tổ chức: "tên cần tìm nhỏ hơn → rẽ trái, lớn hơn → rẽ phải." Mỗi bước loại bỏ nửa không gian tìm kiếm._
 
 ### Visual / Sơ Đồ
 
@@ -358,23 +757,26 @@ Unbalanced BST (worst case — like a linked list):
 
 ### Complexity (Balanced BST)
 
-| Operation | Balanced | Unbalanced |
-|-----------|----------|------------|
-| Search | O(log n) | O(n) |
-| Insert | O(log n) | O(n) |
-| Delete | O(log n) | O(n) |
-| Min/Max | O(log n) | O(n) |
-| In-order traversal | O(n) | O(n) |
+| Operation          | Balanced | Unbalanced |
+| ------------------ | -------- | ---------- |
+| Search             | O(log n) | O(n)       |
+| Insert             | O(log n) | O(n)       |
+| Delete             | O(log n) | O(n)       |
+| Min/Max            | O(log n) | O(n)       |
+| In-order traversal | O(n)     | O(n)       |
 
 **Self-balancing variants:** AVL Tree, Red-Black Tree (Java TreeMap), B+Tree (DB indexes)
 
 ### Real Use Cases / Dùng Ở Đâu
+
 - **Database B+Tree index**: Range queries `WHERE age BETWEEN 20 AND 30`
 - **Linux kernel**: CFS scheduler uses Red-Black Tree for process priority
 - **TreeMap/TreeSet** in Java: Sorted map with O(log n) operations
 
 ### Interview Tip / Tip Phỏng Vấn
+
 > BST interview patterns:
+>
 > - Validate BST: In-order traversal should be sorted
 > - LCA (Lowest Common Ancestor): Compare values to find split point
 > - Kth smallest: In-order traversal with counter
@@ -384,9 +786,10 @@ Unbalanced BST (worst case — like a linked list):
 ## 7. Heap / Đống (Priority Queue)
 
 ### Analogy / Liên Tưởng
+
 A hospital emergency room. Patients are prioritized by severity — most critical always seen first, regardless of when they arrived.
 
-*Phòng cấp cứu: bệnh nhân nặng nhất luôn được gặp bác sĩ trước, không kể ai đến trước.*
+_Phòng cấp cứu: bệnh nhân nặng nhất luôn được gặp bác sĩ trước, không kể ai đến trước._
 
 ### Visual / Sơ Đồ
 
@@ -425,15 +828,16 @@ Insert 85 (O(log n)):
 
 ### Complexity
 
-| Operation | Time | Why |
-|-----------|------|-----|
-| Insert | O(log n) | Sift up — at most height steps |
-| Extract min/max | O(log n) | Sift down after removing root |
-| Peek min/max | O(1) | Root is always min/max |
-| Build heap | O(n) | Heapify — not O(n log n)! |
-| Heap sort | O(n log n) | Build + n extractions |
+| Operation       | Time       | Why                            |
+| --------------- | ---------- | ------------------------------ |
+| Insert          | O(log n)   | Sift up — at most height steps |
+| Extract min/max | O(log n)   | Sift down after removing root  |
+| Peek min/max    | O(1)       | Root is always min/max         |
+| Build heap      | O(n)       | Heapify — not O(n log n)!      |
+| Heap sort       | O(n log n) | Build + n extractions          |
 
 ### Real Use Cases / Dùng Ở Đâu
+
 - **Dijkstra's shortest path**: Min-heap of (distance, node)
 - **Top-K elements**: Max-heap of size K (LeetCode 215, 347)
 - **Merge K sorted lists**: Min-heap with one element from each list
@@ -441,6 +845,7 @@ Insert 85 (O(log n)):
 - **Median of data stream**: Two heaps (max-heap for lower half, min-heap for upper)
 
 ### Interview Tip / Tip Phỏng Vấn
+
 > "Top K" → Heap of size K.
 > "K closest points" (LeetCode 973) → max-heap of size K, keep K smallest.
 > "Median stream" (LeetCode 295) → two heaps trick.
@@ -450,9 +855,10 @@ Insert 85 (O(log n)):
 ## 8. Graph / Đồ Thị
 
 ### Analogy / Liên Tưởng
+
 A city map. Nodes = intersections, edges = roads. Directed graph = one-way streets. Weighted graph = roads with distances.
 
-*Bản đồ thành phố. Node = giao lộ, edge = con đường. Đồ thị có hướng = đường một chiều.*
+_Bản đồ thành phố. Node = giao lộ, edge = con đường. Đồ thị có hướng = đường một chiều._
 
 ### Visual / Sơ Đồ
 
@@ -494,22 +900,24 @@ BFS (level by level):          DFS (go deep first):
 
 ### Algorithms & Complexity
 
-| Algorithm | Time | Use case |
-|-----------|------|----------|
-| BFS | O(V+E) | Shortest path (unweighted), level traversal |
-| DFS | O(V+E) | Detect cycles, topological sort, connected components |
-| Dijkstra | O((V+E) log V) | Shortest path (non-negative weights) |
-| Bellman-Ford | O(VE) | Shortest path with negative weights |
-| Topological Sort | O(V+E) | Dependency ordering (build systems, courses) |
-| Union-Find | O(α(n)) ≈ O(1) | Connected components, cycle detection |
+| Algorithm        | Time           | Use case                                              |
+| ---------------- | -------------- | ----------------------------------------------------- |
+| BFS              | O(V+E)         | Shortest path (unweighted), level traversal           |
+| DFS              | O(V+E)         | Detect cycles, topological sort, connected components |
+| Dijkstra         | O((V+E) log V) | Shortest path (non-negative weights)                  |
+| Bellman-Ford     | O(VE)          | Shortest path with negative weights                   |
+| Topological Sort | O(V+E)         | Dependency ordering (build systems, courses)          |
+| Union-Find       | O(α(n)) ≈ O(1) | Connected components, cycle detection                 |
 
 ### Real Use Cases / Dùng Ở Đâu
-- **Google Maps / Waze**: Dijkstra/A* for routing
+
+- **Google Maps / Waze**: Dijkstra/A\* for routing
 - **Social networks**: BFS for friend-of-friend (LinkedIn "2nd connections")
 - **Build systems** (npm, gradle): Topological sort for dependency order
 - **Fraud detection**: Graph clustering to find suspicious patterns
 
 ### Interview Tip / Tip Phỏng Vấn
+
 > Graph problem signals: "network", "dependencies", "connections", "path between"
 > Default to adjacency list. Use BFS for shortest path (unweighted), Dijkstra for weighted.
 > Union-Find for "number of connected components" problems.
@@ -519,9 +927,10 @@ BFS (level by level):          DFS (go deep first):
 ## 9. Trie / Cây Tiền Tố
 
 ### Analogy / Liên Tưởng
+
 An autocomplete system. Type "ca" → shows "cat", "car", "card", "catalog". All words sharing a prefix share a path in the trie.
 
-*Hệ thống autocomplete. Gõ "ca" → hiện "cat", "car", "card". Các từ cùng prefix dùng chung đường đi.*
+_Hệ thống autocomplete. Gõ "ca" → hiện "cat", "car", "card". Các từ cùng prefix dùng chung đường đi._
 
 ### Visual / Sơ Đồ
 
@@ -552,20 +961,22 @@ Prefix search "car": root→c→a→r → all words below:
 
 ### Complexity
 
-| Operation | Time | Space |
-|-----------|------|-------|
-| Insert word | O(m) | O(m) | m = word length |
-| Search word | O(m) | O(1) |
-| Starts with prefix | O(m) | O(1) |
-| Space total | O(ALPHABET × n × m) | — |
+| Operation          | Time                | Space |
+| ------------------ | ------------------- | ----- | --------------- |
+| Insert word        | O(m)                | O(m)  | m = word length |
+| Search word        | O(m)                | O(1)  |
+| Starts with prefix | O(m)                | O(1)  |
+| Space total        | O(ALPHABET × n × m) | —     |
 
 ### Real Use Cases / Dùng Ở Đâu
+
 - **Search autocomplete** (Google Search suggestions)
 - **Spell checker**: Check if word exists + suggest corrections
 - **IP routing tables**: Longest prefix match
 - **Word games**: Valid word check in Boggle, Scrabble
 
 ### Interview Tip / Tip Phỏng Vấn
+
 > Trie problems: Word Search II (LeetCode 212), Design Search Autocomplete, Add and Search Words.
 > Trie node in code: `{children: Map<char, TrieNode>, isEnd: boolean}`
 
@@ -599,18 +1010,18 @@ Prefix search "car": root→c→a→r → all words below:
 
 ### Complexity Cheatsheet / Bảng Tổng Kết
 
-| Structure | Access | Search | Insert | Delete | Space |
-|-----------|--------|--------|--------|--------|-------|
-| Array | O(1) | O(n) | O(n) | O(n) | O(n) |
-| Linked List | O(n) | O(n) | O(1)* | O(1)* | O(n) |
-| Stack | O(n) | O(n) | O(1) | O(1) | O(n) |
-| Queue | O(n) | O(n) | O(1) | O(1) | O(n) |
-| Hash Table | O(1) | O(1) | O(1) | O(1) | O(n) |
-| BST (balanced) | O(log n) | O(log n) | O(log n) | O(log n) | O(n) |
-| Heap | O(1) top | O(n) | O(log n) | O(log n) | O(n) |
-| Trie | O(m) | O(m) | O(m) | O(m) | O(n×m) |
+| Structure      | Access   | Search   | Insert   | Delete   | Space  |
+| -------------- | -------- | -------- | -------- | -------- | ------ |
+| Array          | O(1)     | O(n)     | O(n)     | O(n)     | O(n)   |
+| Linked List    | O(n)     | O(n)     | O(1)\*   | O(1)\*   | O(n)   |
+| Stack          | O(n)     | O(n)     | O(1)     | O(1)     | O(n)   |
+| Queue          | O(n)     | O(n)     | O(1)     | O(1)     | O(n)   |
+| Hash Table     | O(1)     | O(1)     | O(1)     | O(1)     | O(n)   |
+| BST (balanced) | O(log n) | O(log n) | O(log n) | O(log n) | O(n)   |
+| Heap           | O(1) top | O(n)     | O(log n) | O(log n) | O(n)   |
+| Trie           | O(m)     | O(m)     | O(m)     | O(m)     | O(n×m) |
 
-*with pointer to node
+\*with pointer to node
 
 ---
 
@@ -704,6 +1115,7 @@ Vietnamese explanation: Database B+ Tree (multi-way, disk-optimized): node giữ
 ### Q: What is the difference between adjacency matrix and adjacency list? / Ma trận kề vs danh sách kề khác nhau thế nào? 🟡 Mid
 
 **A:** Two graph representations with different trade-offs:
+
 - **Adjacency matrix**: V×V grid. O(1) edge existence check. O(V²) space — good for dense graphs.
 - **Adjacency list**: list of neighbors per vertex. O(V+E) space — good for sparse graphs. Most real-world graphs are sparse.
 
@@ -741,30 +1153,77 @@ Vietnamese explanation: Call stack: mỗi function call push frame (local vars +
 
 ---
 
-## Interview Q&A Summary / Tổng Kết
+## Interview Q&A Summary / Tổng Hợp Q&A Phỏng Vấn
 
-| Question | Level | Key Point |
-|----------|-------|-----------|
-| Array vs linked list | 🟢 | Array=cache-friendly O(1) access; linked list=O(1) insert at known node |
-| Hash table O(1) & failure modes | 🟡 | Hash→bucket; collision+load factor degrade performance |
-| Heap usage | 🟡 | Complete binary tree; O(1) min/max peek; top-K, priority queue patterns |
-| BST balance: AVL vs Red-Black | 🟡 | Plain BST degenerates; RB tree fewer rotations preferred in practice |
-| Graph: matrix vs adjacency list | 🟡 | Dense→matrix O(V²); sparse→list O(V+E); real graphs = sparse |
-| Stack vs queue | 🟢 | Stack=LIFO (call stack); Queue=FIFO (BFS, tasks) |
+| #   | Question                                 | Difficulty | Core Concept       | Key Signal                                                                |
+| --- | ---------------------------------------- | ---------- | ------------------ | ------------------------------------------------------------------------- |
+| 1   | Array vs linked list — when to use?      | 🟢 Junior  | Array, Linked List | Cache locality vs O(1) insert. Mention amortized append                   |
+| 2   | Hash table O(1) — how and failure modes? | 🟡 Mid     | Hash Table         | Hash→bucket, collision chains, load factor, resize. Hash collision attack |
+| 3   | Heap — what and when?                    | 🟡 Mid     | Heap               | Complete binary tree in array. Top-K, scheduling, merge K. Heapify = O(n) |
+| 4   | BST balance — AVL vs Red-Black?          | 🟡 Mid     | BST                | Degenerate = O(n). AVL stricter (read), RB relaxed (write). Practice = RB |
+| 5   | Adjacency matrix vs adjacency list?      | 🟡 Mid     | Graph              | Dense→matrix, sparse→list. Real graphs sparse. BFS/DFS = O(V+E)           |
+| 6   | Stack vs queue — uses?                   | 🟢 Junior  | Linked List        | Stack=LIFO (call stack, undo). Queue=FIFO (BFS, tasks). Both O(1) ops     |
+
+**Distribution:** 🟢 2 | 🟡 4
+
+---
+
+## Cold Call Simulation / Mô Phỏng Cold Call
+
+> **⚡ "Design a leaderboard for 1M players — chọn data structure nào và tại sao?"**
+
+**30-second answer:**
+"I'd use a balanced BST or skip list — specifically Redis Sorted Set which uses a skip list internally. It gives O(log n) for score updates and O(log n + k) for range queries like 'top 100 players'. A hash map gives O(1) lookup but can't do sorted range queries. An array would need O(n) for insert/update to maintain order."
+
+**Follow-up: "Nếu cần top-K real-time với 1M concurrent updates thì sao?"**
+"A min-heap of size K handles streaming top-K in O(log K) per update. For distributed systems, each shard maintains local top-K, then merge at query time — similar to merge K sorted lists pattern using a min-heap."
 
 ---
 
 ## Self-Check / Tự Kiểm Tra
 
-- [ ] Can I give the time complexity for all major operations of: array, linked list, hash table, heap, and BST?
-- [ ] Can I explain when a hash collision degrades O(1) to O(n) and how to prevent it?
-- [ ] Can I name 3 real production use cases where a heap is the right data structure?
-- [ ] Can I draw the internal structure of a hash table (buckets + chaining)?
-- 💬 **Feynman Prompt:** Giải thích tại sao Redis Sorted Set (backed by skip list) được chọn cho leaderboard thay vì B-Tree — trade-off cụ thể là gì?
+> Đóng tài liệu lại và trả lời 5 câu sau:
+
+| #   | Type           | Question                                                                                                                                          |
+| --- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 🔄 Retrieval   | Liệt kê time complexity cho: array access, linked list insert at head, hash map lookup (avg/worst), heap insert, BST search (balanced/degenerate) |
+| 2   | 🎨 Visual      | Vẽ internal structure của hash table với 3 buckets, 2 collisions ở bucket #1 (chaining)                                                           |
+| 3   | 🛠️ Application | LRU Cache cần O(1) get + O(1) put — cần combine data structures nào? Tại sao?                                                                     |
+| 4   | 🐛 Debug       | Code dùng Go map trong 2 goroutines không có mutex — lỗi gì xảy ra?                                                                               |
+| 5   | 🎓 Teach       | Giải thích cho junior tại sao "build heap = O(n)" chứ không phải O(n log n)                                                                       |
+
+| #   | Key Points                                                                                          |
+| --- | --------------------------------------------------------------------------------------------------- |
+| 1   | Array O(1), LL O(1), Hash avg O(1)/worst O(n), Heap O(log n), BST balanced O(log n)/degenerate O(n) |
+| 2   | Array of buckets, bucket #1 → node(k1:v1) → node(k2:v2) chain                                       |
+| 3   | Doubly linked list (O(1) move-to-front + remove) + HashMap (O(1) key→node lookup)                   |
+| 4   | fatal: concurrent map writes — Go panics. Use sync.RWMutex or sync.Map                              |
+| 5   | Bottom-up: n/2 leaves do 0 work, n/4 nodes do 1 swap, ... → geometric series = O(n)                 |
+
+💬 **Feynman Prompt:** Giải thích tại sao Redis Sorted Set (skip list) được chọn cho leaderboard thay vì B-Tree — trade-off cụ thể là gì?
+
+📅 **Spaced Repetition / Lịch Ôn Tập:**
+
+- Day 1: Đọc toàn bộ, làm Self-Check
+- Day 3: Cold Call + Interview Q&A Summary (che answer)
+- Day 7: Core Concepts Memory Hooks + Common Mistakes tables
+- Day 14: Full Self-Check + giải thích Feynman cho bạn
+- Day 30: Mock interview — implement LRU Cache + analyze complexity
+
+---
 
 ## Connections / Liên Kết
 
-- ➡️ **Applied in**: [Algorithms Theory](./algorithms-theory.md) — algorithms need the right data structure
-- ➡️ **Applied in**: [Data Structures Go](../../be-track/01-golang/06-data-structures-go.md) — Go implementation of these structures
-- 🔗 **Practice**: [LeetCode](../../leetcode/) — interview problems test data structure selection
-- 🔗 **Related**: [Complexity Analysis](./complexity-analysis.md) — Big-O is how we compare data structures
+**Same track:**
+
+- ➡️ [Algorithms Theory](./algorithms-theory.md) — algorithms cần DS phù hợp
+- ➡️ [Complexity Analysis](./complexity-analysis.md) — Big O so sánh DS operations
+- 🔗 [Concurrency](./07-concurrency-and-parallelism.md) — concurrent data structures (lock-free list, concurrent map)
+- 🔗 [OS Theory](./os-theory.md) — memory layout, cache hierarchy ảnh hưởng DS choice
+- 🔗 [Information Theory](./information-theory.md) — entropy bounds on search/sort
+
+**Cross track:**
+
+- 🔗 [Go Data Structures](../../be-track/01-golang/06-data-structures-go.md) — Go-specific implementations (slice, map, container/)
+- 🔗 [SQL Indexing](../../be-track/03-database-advanced/02-indexing-optimization.md) — B+ Tree index = balanced tree for DB
+- 🔗 [Caching Patterns](../../be-track/03-database-advanced/04-caching-patterns.md) — LRU/LFU cache implementations

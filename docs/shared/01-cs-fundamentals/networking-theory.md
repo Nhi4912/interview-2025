@@ -9,6 +9,7 @@
 ## Real-World Scenario / Tình Huống Thực Tế
 
 User ở Hà Nội gõ `https://google.com` và nhấn Enter. Trong vòng 200ms:
+
 1. DNS lookup → IP address `142.250.x.x`
 2. TCP 3-way handshake → connection established
 3. TLS 1.3 handshake → encrypted channel (1 RTT)
@@ -22,6 +23,7 @@ Hiểu networking = hiểu tại sao app chậm (DNS lookup? TCP latency? TLS ov
 ## What & Why / Cái Gì & Tại Sao
 
 **Analogy / Liên Tưởng — Gửi thư quốc tế:**
+
 - **IP** = địa chỉ nhà — xác định nơi đến
 - **TCP** = dịch vụ bưu chính có xác nhận — đảm bảo thư đến đủ, đúng thứ tự
 - **UDP** = thả thư vào thùng — nhanh hơn, không đảm bảo
@@ -29,13 +31,13 @@ Hiểu networking = hiểu tại sao app chậm (DNS lookup? TCP latency? TLS ov
 - **DNS** = danh bạ điện thoại — chuyển tên miền thành IP
 - **HTTPS/TLS** = phong bì bịt kín — chỉ người nhận đọc được
 
-| Concept | Frontend Impact |
-|---------|----------------|
+| Concept            | Frontend Impact                       |
+| ------------------ | ------------------------------------- |
 | HTTP/1.1 vs HTTP/2 | Bundle strategies, request waterfalls |
-| DNS lookup | Preconnect hints, DNS prefetch |
-| TLS handshake | HSTS, certificate pinning |
-| CORS | Every API call từ browser |
-| WebSocket | Real-time (chat, notifications) |
+| DNS lookup         | Preconnect hints, DNS prefetch        |
+| TLS handshake      | HSTS, certificate pinning             |
+| CORS               | Every API call từ browser             |
+| WebSocket          | Real-time (chat, notifications)       |
 
 ---
 
@@ -60,6 +62,410 @@ Hiểu networking = hiểu tại sao app chậm (DNS lookup? TCP latency? TLS ov
   [Applied: Security]
   HTTPS | Certificate chain | HSTS | TLS 1.3
 ```
+
+---
+
+## Overview / Tổng Quan
+
+| #   | Concept                        | Vai trò                                                 | Interview Weight |
+| --- | ------------------------------ | ------------------------------------------------------- | ---------------- |
+| 1   | OSI & TCP/IP Models            | Framework phân tầng — hiểu mỗi layer xử lý gì           | ⭐⭐⭐           |
+| 2   | TCP vs UDP                     | Transport layer tradeoff — reliability vs speed         | ⭐⭐⭐⭐         |
+| 3   | HTTP Evolution (1.1→2→3)       | Application protocol — multiplexing, QUIC, HOL blocking | ⭐⭐⭐⭐⭐       |
+| 4   | TLS/HTTPS                      | Security layer — handshake, certificates, encryption    | ⭐⭐⭐⭐         |
+| 5   | DNS System                     | Name resolution — hierarchy, caching, TTL               | ⭐⭐⭐⭐         |
+| 6   | IP Addressing & Routing        | Network layer — subnetting, CIDR, BGP                   | ⭐⭐⭐           |
+| 7   | Network Performance & Security | Latency, QoS, firewalls, attacks                        | ⭐⭐⭐           |
+
+**Mối quan hệ:** OSI model là khung lý thuyết → TCP/UDP là transport thực tế → HTTP chạy trên TCP (hoặc QUIC/UDP) → TLS mã hóa channel → DNS resolve tên trước khi bắt đầu → IP routing vận chuyển packets → Performance/Security xuyên suốt mọi layer.
+
+---
+
+## Core Concepts — Phase 2 Deep Dive / Khái Niệm Cốt Lõi — Đào Sâu
+
+### Concept 1: OSI & TCP/IP Models
+
+🧠 **Memory Hook:** "**Please Do Not Throw Sausage Pizza Away**" = Physical → Data Link → Network → Transport → Session → Presentation → Application. Nhưng thực tế chỉ cần nhớ TCP/IP 4 layers.
+
+❓ **Why exists (Tại sao tồn tại):**
+
+- Level 1: Để chia nhỏ networking thành layers độc lập — mỗi layer lo một việc, thay đổi layer này không ảnh hưởng layer khác.
+- Level 2: Interoperability — mọi vendor implement cùng spec cho mỗi layer → devices từ Cisco, Juniper, Linux đều communicate được vì tuân theo cùng protocol stack.
+- Level 3: Abstraction cho phát triển — application developer không cần biết TCP retransmit, network engineer không cần biết HTTP headers.
+
+🔵 **Layer 1 — Analogy / Liên tưởng:**
+OSI như hệ thống bưu điện quốc tế. Physical = đường vận chuyển (xe, máy bay). Data Link = nhãn trên kiện hàng (MAC). Network = địa chỉ nhà (IP). Transport = dịch vụ bảo đảm hoặc thường (TCP/UDP). Session-Presentation-Application = nội dung và ngôn ngữ trong thư.
+
+🟡 **Layer 2 — Mechanics / Cơ chế:**
+
+```
+TCP/IP thực tế (4 layers) vs OSI (7 layers):
+
+Application (L7) ─┐
+Presentation (L6) ─┤─── Application Layer (TCP/IP)
+Session (L5)      ─┘
+Transport (L4)    ─────  Transport Layer
+Network (L3)      ─────  Internet Layer
+Data Link (L2)    ─┐
+Physical (L1)     ─┘───  Network Access Layer
+
+Encapsulation process:
+[Data] → [TCP Header + Data] → [IP Header + Segment] → [Frame Header + Packet + Frame Trailer] → Bits
+```
+
+Mỗi layer thêm header riêng khi gửi (encapsulation) và bóc header khi nhận (decapsulation). MTU (Maximum Transmission Unit) = 1500 bytes cho Ethernet — nếu packet lớn hơn thì phải fragment.
+
+🔴 **Layer 3 — Edge Cases / Cạnh:**
+
+- OSI model là **lý thuyết**, TCP/IP mới là thực tế — Session và Presentation layer gần như không tồn tại riêng biệt trong implementation.
+- **MTU mismatch**: nếu path có link với MTU nhỏ hơn → fragmentation → performance drop. Path MTU Discovery (PMTUD) giải quyết nhưng bị block bởi firewalls chặn ICMP.
+- **Layer violation**: NAT (Network Address Translation) sửa cả L3 (IP) và L4 (port) headers → phá vỡ end-to-end principle, gây khó cho IPSec, FTP active mode.
+
+| Sai lầm                                | Tại sao sai                               | Đúng là                                                       |
+| -------------------------------------- | ----------------------------------------- | ------------------------------------------------------------- |
+| Học thuộc 7 layer OSI chi tiết         | Thực tế chỉ dùng TCP/IP 4 layers          | Focus TCP/IP model, dùng OSI cho reference                    |
+| Nghĩ mỗi packet đi qua tất cả 7 layers | Switch chỉ xử lý L2, router chỉ xử lý L3  | Mỗi device xử lý đến layer tương ứng                          |
+| Quên encapsulation overhead            | Mỗi layer thêm header → giảm payload thực | IP header 20B + TCP header 20B = 40B overhead trên mỗi packet |
+
+🎯 **Interview Pattern:** "Explain the OSI model" → Nói ngắn 7 layers, sau đó PIVOT sang TCP/IP 4 layers thực tế + encapsulation process + ví dụ concrete: "Khi browser gửi HTTP request, data đi qua Application → TCP segment → IP packet → Ethernet frame → bits."
+
+🔗 **Knowledge Chain:** OSI layers → [TCP/UDP transport] → [IP routing] → [HTTP application] → [TLS security]
+
+---
+
+### Concept 2: TCP vs UDP
+
+🧠 **Memory Hook:** "**TCP = Registered Mail**" (xác nhận, đảm bảo, chậm hơn). "**UDP = Postcard**" (gửi và quên, nhanh, không guarantee).
+
+❓ **Why exists (Tại sao tồn tại):**
+
+- Level 1: Hai nhu cầu khác nhau — reliable delivery (web, file, email) vs low-latency delivery (video, gaming, DNS).
+- Level 2: TCP overhead (handshake, ACK, retransmit, flow control) tốn ~40-100ms extra latency. Với video call, 100ms delay tệ hơn mất 1 frame → UDP phù hợp hơn.
+- Level 3: Modern protocols blur the line — QUIC (HTTP/3) chạy trên UDP nhưng implement reliability per-stream, lấy best of both worlds.
+
+🔵 **Layer 1 — Analogy:**
+TCP như gọi điện thoại: phải dial → đợi answer → nói chuyện → hang up. Biết chắc đối phương nghe được. UDP như hét qua cửa sổ: nhanh, không cần setup, nhưng không biết họ có nghe không.
+
+🟡 **Layer 2 — Mechanics:**
+
+```
+TCP Connection Lifecycle:
+┌──────────────────────────────────────┐
+│ CLOSED → SYN_SENT → ESTABLISHED     │  ← 3-way handshake
+│                  ↓                   │
+│ ESTABLISHED → FIN_WAIT_1 → FIN_WAIT_2│  ← Active close
+│            → TIME_WAIT → CLOSED      │  ← Wait 2×MSL (120s)
+└──────────────────────────────────────┘
+
+TCP Features:
+- Seq/Ack numbers → ordered delivery
+- Window size → flow control (receiver controls rate)
+- Congestion window → congestion control (slow start, AIMD)
+- Checksum → error detection
+- Retransmission → reliability (timeout + fast retransmit)
+
+UDP Header (8 bytes only):
+┌─────────────┬─────────────┐
+│ Src Port    │ Dst Port    │  4 bytes
+├─────────────┼─────────────┤
+│ Length      │ Checksum    │  4 bytes
+└─────────────┴─────────────┘
+No seq numbers, no ACK, no flow control.
+```
+
+🔴 **Layer 3 — Edge Cases:**
+
+- **TCP TIME_WAIT exhaustion**: Server handling 10K short connections/sec → 10K×120s = 1.2M sockets in TIME_WAIT → port exhaustion. Fix: `SO_REUSEADDR`, connection pooling, HTTP keep-alive.
+- **TCP head-of-line blocking**: Single lost packet blocks entire byte stream → all HTTP/2 streams stall. Motivation for QUIC.
+- **UDP reliability layer**: Games implement their own ACK on top of UDP for critical messages (player position) while dropping non-critical (old frames).
+
+| Sai lầm                        | Tại sao sai                                                           | Đúng là                                                               |
+| ------------------------------ | --------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| "UDP không bao giờ reliable"   | QUIC chạy trên UDP nhưng có reliability per-stream                    | UDP là transport — reliability có thể implement ở application layer   |
+| "TCP luôn tốt hơn cho mọi thứ" | TCP overhead (3-way handshake + HOL blocking) không phù hợp real-time | Chọn theo use case: TCP cho data integrity, UDP cho latency-sensitive |
+| "TIME_WAIT là bug cần disable" | TIME_WAIT bảo vệ khỏi stale packet collision                          | Dùng connection pooling, SO_REUSEADDR thay vì tắt TIME_WAIT           |
+
+🎯 **Interview Pattern:** "TCP vs UDP" → Bắt đầu bằng tradeoff cốt lõi (reliability vs latency), cho ví dụ cụ thể mỗi bên, rồi nâng level: "Modern protocols like QUIC blur this boundary — QUIC uses UDP as transport but implements per-stream reliability."
+
+🔗 **Knowledge Chain:** TCP 3-way handshake → [TIME_WAIT] → [Connection pooling] → [HTTP keep-alive] → [HTTP/2 multiplexing] → [QUIC/HTTP/3]
+
+---
+
+### Concept 3: HTTP Evolution (1.1 → 2 → 3)
+
+🧠 **Memory Hook:** "**1.1 = One Lane Road**" (one request at a time per connection). "**2 = Highway**" (multiple lanes, one bridge = TCP). "**3 = Teleportation**" (QUIC, no bridge bottleneck).
+
+❓ **Why exists (Tại sao tồn tại):**
+
+- Level 1: Web pages ngày càng phức tạp (100+ resources) → HTTP/1.1 quá chậm với sequential requests.
+- Level 2: HTTP/2 fix application-level HOL nhưng TCP vẫn bị transport-level HOL → cần protocol mới không dùng TCP.
+- Level 3: Mobile users (WiFi→LTE switching, high packet loss) cần connection migration + 0-RTT → QUIC designed for mobile-first world.
+
+🔵 **Layer 1 — Analogy:**
+HTTP/1.1 như quầy thanh toán 1 cashier — phải xếp hàng chờ. HTTP/2 như quầy có nhiều khe song song nhưng chung 1 cửa ra (TCP) — nếu cửa kẹt thì tất cả bị chặn. HTTP/3 như mỗi khách có cửa riêng (QUIC stream) — 1 cửa kẹt không ảnh hưởng cửa khác.
+
+🟡 **Layer 2 — Mechanics:**
+
+```
+HTTP/1.1 → HTTP/2 → HTTP/3 Evolution:
+
+HTTP/1.1 (1997):        HTTP/2 (2015):           HTTP/3 (2022):
+┌─────────┐             ┌─────────┐               ┌─────────┐
+│ Request │             │ Stream 1│               │ Stream 1│ (QUIC)
+│    ↓    │             │ Stream 2│ Multiplexed   │ Stream 2│ Independent
+│ Response│             │ Stream 3│ over 1 TCP    │ Stream 3│ over UDP
+│    ↓    │ Sequential  └────┬────┘               └────┬────┘
+│ Request │             ┌────┴────┐               ┌────┴────┐
+│    ↓    │             │  TCP    │ ← HOL here    │  QUIC   │ ← No HOL
+│ Response│             └─────────┘               │ (UDP)   │
+└─────────┘                                       └─────────┘
+
+Key differences:
+            HTTP/1.1    HTTP/2       HTTP/3
+Protocol:   Text        Binary       Binary
+Mux:        No          Yes          Yes
+HOL:        App+TCP     TCP only     None
+Handshake:  TCP+TLS     TCP+TLS      0-1 RTT
+Header:     Full repeat HPACK        QPACK
+```
+
+🔴 **Layer 3 — Edge Cases:**
+
+- **HTTP/2 server push** được thiết kế để proactively gửi resources nhưng thực tế ít dùng vì khó predict client cache state → Chrome đã bỏ support.
+- **HTTP/3 middlebox issue**: Corporate firewalls/proxies chặn UDP → fallback to HTTP/2 over TCP. Happy Eyeballs algorithm: thử HTTP/3 song song HTTP/2, dùng cái nào connect trước.
+- **0-RTT replay attack**: HTTP/3 0-RTT data có thể bị replay bởi attacker → chỉ dùng cho idempotent requests (GET), không cho POST/PUT.
+
+| Sai lầm                              | Tại sao sai                                                                       | Đúng là                                                                    |
+| ------------------------------------ | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| "HTTP/2 fix HOL blocking hoàn toàn"  | HTTP/2 fix app-level HOL nhưng TCP-level HOL vẫn còn                              | TCP packet loss stalls tất cả streams — chỉ HTTP/3 fix transport-level HOL |
+| "HTTP/3 nhanh hơn mọi lúc"           | Network có UDP blocking hoặc low packet loss → HTTP/2 có thể ngang hoặc nhanh hơn | HTTP/3 shine nhất trên mobile/lossy networks                               |
+| "Chỉ cần upgrade lên HTTP/3 là xong" | Server, CDN, middlebox, client đều phải support                                   | Deploy cần fallback strategy (HTTP/2 backup)                               |
+
+🎯 **Interview Pattern:** "Explain HTTP/2 vs HTTP/3" → Frame bằng HOL blocking problem, show understanding ở 3 levels (app, TCP, QUIC), rồi discuss tradeoff thực tế (middlebox, 0-RTT replay, deployment complexity).
+
+🔗 **Knowledge Chain:** HTTP/1.1 HOL → [HTTP/2 multiplexing] → [TCP HOL remains] → [QUIC/UDP] → [HTTP/3] → [0-RTT + connection migration]
+
+---
+
+### Concept 4: TLS/HTTPS
+
+🧠 **Memory Hook:** "**TLS = Secret Handshake Club**" — hai bên thỏa thuận mật mã (asymmetric), rồi nói chuyện bằng mật mã nhanh hơn (symmetric). Certificate = thẻ thành viên do CA cấp.
+
+❓ **Why exists (Tại sao tồn tại):**
+
+- Level 1: HTTP plaintext → ai trên cùng network đọc được password, cookie, data. HTTPS mã hóa toàn bộ.
+- Level 2: Ba thuộc tính bảo mật: **Confidentiality** (mã hóa), **Integrity** (tamper detection), **Authentication** (certificate chứng minh server đúng).
+- Level 3: Forward secrecy (ECDHE) — ngay cả khi private key bị lộ, past sessions vẫn an toàn vì mỗi session dùng ephemeral key riêng.
+
+🔵 **Layer 1 — Analogy:**
+HTTPS như gửi thư trong hộp khóa. Lần đầu, hai bên trao đổi khóa công khai (asymmetric) — ai cũng thấy nhưng chỉ người có private key mở được. Sau đó tạo khóa chung (symmetric) nhanh hơn nhiều để mã hóa thư tiếp theo.
+
+🟡 **Layer 2 — Mechanics:**
+
+```
+TLS 1.3 Handshake (1-RTT):
+Client                          Server
+  │── ClientHello ──────────────→│  cipher suites + key_share
+  │                               │
+  │←── ServerHello + Certificate ─│  chosen cipher + cert + key_share
+  │←── Finished ──────────────────│  (encrypted with handshake keys)
+  │                               │
+  │── Finished ──────────────────→│  (both derive session keys)
+  │                               │
+  │←──── Application Data ────→  │  AES-256-GCM encrypted
+
+Key Exchange: ECDHE (Elliptic Curve Diffie-Hellman Ephemeral)
+- Both sides contribute random → derive shared secret
+- Ephemeral = new key pair each session → forward secrecy
+
+Certificate Chain:
+Server Cert ← signed by → Intermediate CA ← signed by → Root CA
+Browser trusts Root CAs (pre-installed) → chain of trust
+```
+
+🔴 **Layer 3 — Edge Cases:**
+
+- **Certificate pinning** bypass: Nếu CA bị compromise (DigiNotrust 2011) → fake cert được issue. HPKP (HTTP Public Key Pinning) giải quyết nhưng rủi ro bricking nếu pin sai → deprecated, thay bằng Certificate Transparency logs.
+- **TLS termination at load balancer**: HTTPS đến LB, plaintext từ LB đến backend → attacker trên internal network đọc được. Fix: mTLS (mutual TLS) giữa LB và backends.
+- **SNI (Server Name Indication)** leak: Hostname gửi plaintext trong ClientHello → ISP thấy bạn truy cập domain nào dù content encrypted. Fix: Encrypted Client Hello (ECH) trong TLS 1.3.
+
+| Sai lầm                        | Tại sao sai                                                               | Đúng là                                     |
+| ------------------------------ | ------------------------------------------------------------------------- | ------------------------------------------- |
+| "HTTPS = chậm"                 | TLS 1.3 chỉ tốn 1 RTT, 0-RTT cho reconnection                             | Performance overhead minimal với modern TLS |
+| "Có HTTPS = an toàn hoàn toàn" | HTTPS chỉ bảo vệ transport — server code vẫn có thể bị SQL injection, XSS | HTTPS là necessary nhưng not sufficient     |
+| "Self-signed cert cũng được"   | Browser không trust → users click through warning → train bad habit       | Dùng Let's Encrypt (free) cho valid cert    |
+
+🎯 **Interview Pattern:** "Explain TLS handshake" → Bắt đầu bằng WHY (3 properties: CIA), rồi HOW (asymmetric for key exchange → symmetric for data), cuối cùng detail TLS 1.3 improvements (1-RTT, forward secrecy, 0-RTT).
+
+🔗 **Knowledge Chain:** PKI + Certificate chain → [TLS handshake] → [HTTPS] → [mTLS for service-to-service] → [Certificate Transparency]
+
+---
+
+### Concept 5: DNS System
+
+🧠 **Memory Hook:** "**DNS = Phone Book of the Internet**" — bạn nhớ tên (google.com), DNS trả về số điện thoại (IP). Hierarchical: Root → TLD → Authoritative = Country code → Area code → Number.
+
+❓ **Why exists (Tại sao tồn tại):**
+
+- Level 1: Humans nhớ tên (google.com), computers cần số (142.250.x.x). DNS bridge the gap.
+- Level 2: Distributed + hierarchical để scale — nếu centralized thì single point of failure cho toàn bộ internet. 13 root servers, anycast routing.
+- Level 3: DNS không chỉ resolve tên → còn là infrastructure tool: load balancing (multiple A records), failover (health-checked records), email routing (MX), service discovery (SRV records).
+
+🔵 **Layer 1 — Analogy:**
+DNS như hệ thống bưu điện. Bạn gửi thư đến "Google, Mountain View" → Bưu điện local không biết → hỏi bưu điện quốc gia → hỏi bưu điện vùng → tìm được địa chỉ chính xác. Kết quả được cache lại để lần sau không cần hỏi lại.
+
+🟡 **Layer 2 — Mechanics:**
+
+```
+DNS Resolution Flow:
+Browser Cache → OS Cache → Resolver Cache → Authoritative
+
+┌──────────┐    ┌──────────┐    ┌────────────┐
+│ Browser  │───→│ Resolver │───→│ Root (.  ) │
+│ Cache    │    │ (8.8.8.8)│    └────────────┘
+└──────────┘    │          │           │
+     miss       │          │←── ".com NS: a.gtld-servers.net"
+                │          │    ┌────────────┐
+                │          │───→│ TLD (.com) │
+                │          │    └────────────┘
+                │          │           │
+                │          │←── "google.com NS: ns1.google.com"
+                │          │    ┌────────────────┐
+                │          │───→│ Authoritative  │
+                │          │    │ (ns1.google.com)│
+                │          │    └────────────────┘
+                │          │←── "A: 142.250.190.14, TTL: 300"
+                └──────────┘
+
+Record Types: A (IPv4), AAAA (IPv6), CNAME (alias),
+MX (mail), NS (nameserver), TXT (verification), SOA (authority)
+```
+
+🔴 **Layer 3 — Edge Cases:**
+
+- **DNS propagation delay**: Thay đổi DNS record → phải đợi TTL expire trên tất cả resolvers. Production: giảm TTL xuống 60s vài giờ trước migration, migrate, rồi tăng TTL lại.
+- **DNS cache poisoning**: Attacker inject fake record vào resolver cache → redirect users đến malicious server. DNSSEC adds digital signatures nhưng adoption chỉ ~30%.
+- **DNS over HTTPS (DoH)** vs DNS over TLS (DoT): DoH giấu DNS queries trong HTTPS traffic (port 443) → ISP không thể filter/log. Controversy: bypass corporate DNS policies, giảm visibility cho network admins.
+
+| Sai lầm                        | Tại sao sai                                                              | Đúng là                                                |
+| ------------------------------ | ------------------------------------------------------------------------ | ------------------------------------------------------ |
+| "DNS instant sau khi thay đổi" | TTL cache ở mọi level → propagation takes TTL duration                   | Giảm TTL trước, thay đổi, đợi old TTL expire           |
+| "DNS chỉ để resolve tên → IP"  | DNS còn dùng cho email (MX), service discovery (SRV), verification (TXT) | DNS là distributed key-value store cho nhiều use cases |
+| "CNAME và A record giống nhau" | CNAME là alias trỏ đến tên khác, A trỏ trực tiếp đến IP                  | CNAME cần thêm 1 lookup, không dùng được ở zone apex   |
+
+🎯 **Interview Pattern:** "How does DNS work?" → Walk through hierarchy (Root → TLD → Authoritative), nhấn mạnh caching ở mỗi level + TTL, rồi show operational knowledge: "Khi migrate, tôi giảm TTL trước để failover nhanh hơn."
+
+🔗 **Knowledge Chain:** DNS hierarchy → [TTL + caching] → [DNSSEC] → [DNS-based load balancing] → [CDN routing]
+
+---
+
+### Concept 6: IP Addressing & Routing
+
+🧠 **Memory Hook:** "**IP = Street Address**" (xác định vị trí), "**Subnet = Neighborhood**" (nhóm địa chỉ cùng network), "**Router = Post Office**" (quyết định gửi packet đi đâu).
+
+❓ **Why exists (Tại sao tồn tại):**
+
+- Level 1: Mỗi device cần unique identifier trên network — IP address. Routing quyết định path từ source đến destination.
+- Level 2: Subnetting chia network lớn thành nhỏ → giảm broadcast domain, tăng security, quản lý dễ hơn. CIDR thay thế classful addressing → sử dụng IP hiệu quả hơn.
+- Level 3: BGP (Border Gateway Protocol) là "glue" của internet — autonomous systems exchange routing info. BGP misconfiguration/hijacking có thể redirect traffic toàn internet (Pakistan YouTube incident 2008).
+
+🔵 **Layer 1 — Analogy:**
+IPv4 subnetting như chia khu dân cư. Thành phố (network 192.168.0.0/16) chia thành quận (/24), mỗi quận có 254 nhà (hosts). Subnet mask = ranh giới quận. Router = ngã tư giao thông, quyết định packet đi quận nào.
+
+🟡 **Layer 2 — Mechanics:**
+
+```
+Subnetting Example:
+192.168.1.0/24 → cần 4 subnets → borrow 2 bits → /26
+
+Network: 192.168.1.0   /26 = 255.255.255.192
+Subnet 1: 192.168.1.0   - 192.168.1.63   (62 hosts)
+Subnet 2: 192.168.1.64  - 192.168.1.127  (62 hosts)
+Subnet 3: 192.168.1.128 - 192.168.1.191  (62 hosts)
+Subnet 4: 192.168.1.192 - 192.168.1.255  (62 hosts)
+
+Routing Decision:
+Packet arrives → Router checks destination IP
+→ Longest prefix match in routing table
+→ Forward to next hop or direct delivery
+
+BGP: Path vector protocol giữa Autonomous Systems
+ISP A ←→ BGP ←→ ISP B ←→ BGP ←→ ISP C
+       routing tables share reachable prefixes
+```
+
+🔴 **Layer 3 — Edge Cases:**
+
+- **IPv4 exhaustion**: 4.3 billion addresses đã hết → NAT + private IP workaround, IPv6 (340 undecillion) là long-term solution nhưng adoption chậm.
+- **BGP hijacking**: AS announce prefix không thuộc sở hữu → traffic bị redirect. Cloudflare incident 2019 — BGP leak từ small ISP affected major sites. RPKI (Resource Public Key Infrastructure) là countermeasure.
+- **NAT breaks end-to-end**: NAT rewrite IP/port → P2P applications cần NAT traversal (STUN, TURN, ICE). WebRTC heavily depends on this.
+
+| Sai lầm                              | Tại sao sai                                           | Đúng là                                                   |
+| ------------------------------------ | ----------------------------------------------------- | --------------------------------------------------------- |
+| "IPv4 classful addressing vẫn dùng"  | CIDR thay thế từ 1993 — classful waste IP             | Luôn dùng CIDR notation (/24, /26)                        |
+| "NAT = security feature"             | NAT không phải firewall — chỉ hide internal IPs       | NAT là workaround cho IPv4 exhaustion, cần firewall riêng |
+| "Longest prefix match = exact match" | Router chọn route cụ thể nhất, không nhất thiết exact | /28 match ưu tiên hơn /24 match cho cùng destination      |
+
+🎯 **Interview Pattern:** "Explain subnetting" → Cho ví dụ cụ thể (192.168.1.0/24 → 4 subnets), tính nhanh host count (2^n - 2), rồi explain WHY subnet (broadcast domain reduction, security isolation).
+
+🔗 **Knowledge Chain:** IP addressing → [Subnetting/CIDR] → [Routing tables] → [BGP between AS] → [NAT/IPv6 transition]
+
+---
+
+### Concept 7: Network Performance & Security
+
+🧠 **Memory Hook:** "**Latency = Distance to Restaurant**" (không thể giảm dưới speed of light). "**Bandwidth = Width of Door**" (bao nhiêu người vào cùng lúc). "**Firewall = Bouncer**" (kiểm tra ai được vào).
+
+❓ **Why exists (Tại sao tồn tại):**
+
+- Level 1: Performance quyết định UX — 100ms delay = 1% revenue loss (Amazon). Security bảo vệ data và service.
+- Level 2: Bốn loại delay cộng dồn: propagation (distance), transmission (bandwidth), processing (router), queuing (congestion). Mỗi loại có cách tối ưu khác nhau.
+- Level 3: CDN giảm propagation delay, QoS prioritize traffic, DDoS mitigation ở edge — defense-in-depth approach.
+
+🔵 **Layer 1 — Analogy:**
+Network performance như giao thông. Latency = khoảng cách (Hà Nội → HCM). Bandwidth = số làn đường. Congestion = kẹt xe giờ cao điểm. CDN = mở thêm cửa hàng ở mỗi thành phố thay vì ship từ 1 nơi.
+
+🟡 **Layer 2 — Mechanics:**
+
+```
+Latency Breakdown:
+Total = Propagation + Transmission + Processing + Queuing
+
+Propagation: distance / speed_of_light_in_medium
+  HN → SG: ~1700km / (2×10⁸ m/s) ≈ 8.5ms one-way
+Transmission: packet_size / bandwidth
+  1500B / 1Gbps ≈ 0.012ms (negligible)
+Processing: router lookup + firewall check
+  ~1-5ms per hop
+Queuing: depends on congestion
+  0ms (no congestion) → 100ms+ (heavy congestion)
+
+DDoS Attack Types:
+┌──────────────┬────────────────┬──────────────────┐
+│ Volume-based │ Protocol       │ Application      │
+│ (L3/L4)      │ (L3/L4)       │ (L7)             │
+├──────────────┼────────────────┼──────────────────┤
+│ UDP flood    │ SYN flood      │ HTTP flood       │
+│ ICMP flood   │ Ping of Death  │ Slowloris        │
+│ Amplification│ Smurf attack   │ DNS query flood  │
+└──────────────┴────────────────┴──────────────────┘
+```
+
+🔴 **Layer 3 — Edge Cases:**
+
+- **Bufferbloat**: Oversized router buffers → queuing delay tăng lên hundreds of ms nhưng không trigger congestion control vì không có packet loss. Fix: Active Queue Management (CoDel, fq_codel).
+- **DDoS amplification**: DNS/NTP/Memcached amplification — attacker gửi small request với spoofed source IP → server phản hồi lớn gấp 50-100x đến victim. Fix: BCP38 (ingress filtering), rate limiting, response rate limiting.
+- **Stateful firewall bypass**: Attacker craft packets matching existing connection state → bypass stateful inspection. Deep Packet Inspection (DPI) giúp nhưng tốn CPU và gây latency.
+
+| Sai lầm                        | Tại sao sai                                                                        | Đúng là                                                       |
+| ------------------------------ | ---------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| "Bandwidth cao = latency thấp" | Bandwidth và latency independent — fiber 10Gbps HN-US vẫn ~150ms RTT               | Latency phụ thuộc distance, bandwidth phụ thuộc link capacity |
+| "Firewall = đủ security"       | Firewall chặn ở network level — không bảo vệ application-level attacks (XSS, SQLi) | Defense-in-depth: firewall + WAF + application security       |
+| "CDN chỉ cho static content"   | Modern CDN cache dynamic content, run edge functions, terminate TLS                | CDN giảm latency cho cả static và dynamic content             |
+
+🎯 **Interview Pattern:** "How would you reduce latency?" → Systematic: CDN (propagation), compression (transmission), connection pooling (handshake overhead), caching (eliminate round-trip entirely), HTTP/2-3 (multiplexing).
+
+🔗 **Knowledge Chain:** Latency components → [CDN] → [QoS] → [DDoS mitigation] → [Firewall + WAF] → [Defense-in-depth]
 
 ---
 
@@ -1368,13 +1774,15 @@ Vietnamese: Đây là câu hỏi kinh điển để test hiểu biết toàn sta
 **HTTP/1.1** (1997): Text-based protocol. One request per TCP connection at a time (head-of-line blocking). Workaround: browser opens 6–8 parallel TCP connections per domain. No header compression — headers resent in full on every request. Keep-Alive allows connection reuse but still sequential.
 
 **HTTP/2** (2015): Binary framing layer. Key improvements:
+
 - **Multiplexing**: multiple streams over a single TCP connection, eliminating application-layer HOL blocking.
 - **Header compression (HPACK)**: compresses repetitive headers using a shared table.
 - **Server push**: server can proactively send resources the client will need.
 - **Stream prioritization**: client signals which resources are more important.
-Still suffers from **TCP-level head-of-line blocking** — a single lost TCP packet stalls all streams.
+  Still suffers from **TCP-level head-of-line blocking** — a single lost TCP packet stalls all streams.
 
 **HTTP/3** (2022): Runs over **QUIC** instead of TCP. QUIC is built on UDP and implements reliability, congestion control, and TLS 1.3 natively. Key improvements:
+
 - **Eliminates HOL blocking at transport layer**: each QUIC stream is independent — a lost packet only stalls its own stream.
 - **0-RTT connection establishment**: reconnecting clients can send data immediately.
 - **Connection migration**: connections survive IP changes (useful on mobile switching from WiFi to LTE).
@@ -1422,6 +1830,7 @@ Vietnamese: Chuỗi phân cấp Root → TLD → Authoritative chỉ xảy ra kh
 ### Q: What is TCP's 3-way handshake and why does TIME_WAIT state exist? / 3-way handshake của TCP là gì và tại sao có trạng thái TIME_WAIT? 🔴 Senior
 
 **A:** **3-way handshake** establishes a TCP connection:
+
 1. **SYN** — Client sends SYN with its Initial Sequence Number (ISN), enters SYN_SENT state.
 2. **SYN-ACK** — Server acknowledges client ISN and sends its own ISN, enters SYN_RECEIVED state.
 3. **ACK** — Client acknowledges server ISN, both enter ESTABLISHED state.
@@ -1429,6 +1838,7 @@ Vietnamese: Chuỗi phân cấp Root → TLD → Authoritative chỉ xảy ra kh
 **Connection termination** (4-way): FIN → ACK → FIN → ACK. The side initiating close enters TIME_WAIT after sending the final ACK.
 
 **TIME_WAIT** lasts **2×MSL** (Maximum Segment Lifetime, typically 60s, so TIME_WAIT = 120s). Two reasons:
+
 1. **Prevent stale packet collision**: ensures any delayed packets from the old connection expire before a new connection with the same 4-tuple (src IP, src port, dst IP, dst port) is established. Without TIME_WAIT, a delayed packet could corrupt a new connection.
 2. **Reliable connection termination**: if the final ACK is lost, the remote side retransmits its FIN — TIME_WAIT allows the client to re-send the ACK.
 
@@ -1456,35 +1866,76 @@ Vietnamese: HOL blocking là vấn đề cơ bản của queue — một item đ
 
 ---
 
-## Interview Q&A Summary / Tổng Kết
+## Interview Q&A Summary / Tổng Kết Câu Hỏi Phỏng Vấn
 
-| Question | Level | Key Point |
-|----------|-------|-----------|
-| TCP vs UDP | 🟢 | Reliable vs fast — choose by tolerance for data loss |
-| URL to page lifecycle | 🟢 | DNS → TCP → TLS → HTTP → render |
-| HTTP/1.1 vs 2 vs 3 | 🟡 | Multiplexing → QUIC eliminates transport-level HOL |
-| TLS handshake | 🟡 | Asymmetric for key exchange, symmetric for data |
-| DNS resolution | 🟡 | Hierarchical + caching at every layer with TTL |
-| TCP 3-way handshake & TIME_WAIT | 🔴 | TIME_WAIT = 2×MSL prevents stale packet collision |
-| Head-of-line blocking | 🔴 | HTTP/2 fixes app-level HOL; HTTP/3 fixes transport-level HOL |
-[← Back to Operating Systems](./os-theory.md) | [Next: Software Engineering →](./08-computation-theory.md)
+| #   | Question                        | Difficulty | Core Concept   | Key Signal                                                         |
+| --- | ------------------------------- | ---------- | -------------- | ------------------------------------------------------------------ |
+| 1   | TCP vs UDP differences          | 🟢         | TCP vs UDP     | Nêu tradeoff reliability/latency + ví dụ use case cụ thể           |
+| 2   | What happens when you type URL  | 🟢         | Full stack     | Walk through DNS→TCP→TLS→HTTP→render theo thứ tự đúng              |
+| 3   | OSI model layers                | 🟢         | OSI/TCP-IP     | Focus TCP/IP 4 layers thực tế, không chỉ thuộc lòng 7 layers       |
+| 4   | HTTP/1.1 vs 2 vs 3              | 🟡         | HTTP Evolution | Explain HOL blocking ở 3 levels (app, TCP, QUIC)                   |
+| 5   | TLS handshake                   | 🟡         | TLS/HTTPS      | Asymmetric for key exchange → symmetric for data + forward secrecy |
+| 6   | DNS resolution step by step     | 🟡         | DNS            | Hierarchy + caching ở mỗi level + TTL operational knowledge        |
+| 7   | Subnetting                      | 🟡         | IP/Routing     | Tính nhanh host count + explain broadcast domain reduction         |
+| 8   | TCP 3-way handshake + TIME_WAIT | 🔴         | TCP Deep       | TIME_WAIT = 2×MSL, port exhaustion, SYN cookies                    |
+| 9   | Head-of-line blocking           | 🔴         | HTTP/2 vs 3    | TCP-level HOL = HTTP/2's fundamental limit → QUIC solves           |
+
+**Distribution:** 🟢 3 | 🟡 4 | 🔴 2
+
+---
+
+## Cold Call Simulation / Mô Phỏng Hỏi Nhanh
+
+> **⚡ "Our API response times increased from 50ms to 500ms after deploying to a new region. What's your debugging approach?"**
+
+**30-second answer:**
+"First, I'd check **latency breakdown**: DNS resolution time (new region may hit different resolvers), TCP handshake RTT (distance to client increased?), TLS handshake overhead, and actual server processing time. Tools: `curl -w` with timing breakdown, traceroute to measure hop count. Most likely causes: no CDN/edge cache in new region (propagation delay), cold DNS caches (resolver lookup hitting authoritative servers), or missing connection pooling (each request pays TCP+TLS handshake cost)."
+
+**Follow-up: "We found it's the TLS handshake adding 200ms. How do you optimize?"**
+"TLS 1.3 reduces to 1-RTT (vs 2-RTT in TLS 1.2). Enable 0-RTT resumption for repeat connections. Deploy TLS termination at edge/CDN close to users. Use OCSP stapling to avoid certificate validation round-trip. If internal service-to-service, consider mTLS with session tickets."
 
 ---
 
 ## Self-Check / Tự Kiểm Tra
 
-- [ ] Tôi có thể giải thích TCP 3-way handshake và tại sao nó tốn thời gian không?
-- [ ] Tôi có thể giải thích HTTPS/TLS và tại sao HTTP plain-text không an toàn không?
-- [ ] Tôi có thể giải thích tại sao HTTP/2 nhanh hơn HTTP/1.1 (multiplexing, header compression) không?
-- [ ] Tôi có thể giải thích CORS và cách server cần cấu hình để allow cross-origin requests không?
-- [ ] Tôi có thể giải thích khi nào dùng WebSocket thay vì REST API không?
+Đóng tài liệu và trả lời:
+
+| #   | Câu hỏi                                                                         | Key Points                                                                                                       |
+| --- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| 1   | **Retrieval:** Vẽ TCP 3-way handshake và giải thích mỗi bước                    | SYN (ISN) → SYN-ACK (server ISN + ACK) → ACK → ESTABLISHED                                                       |
+| 2   | **Visual:** Vẽ DNS resolution flow từ browser → authoritative server            | Browser cache → OS cache → Resolver → Root → TLD → Authoritative → cache + return                                |
+| 3   | **Application:** API endpoint bị 500ms latency — phân tích từng component delay | DNS + TCP handshake + TLS + server processing + response size + network path                                     |
+| 4   | **Debug:** HTTP/2 site có latency spike khi packet loss 2% — giải thích tại sao | TCP-level HOL blocking — single lost packet stalls all multiplexed streams                                       |
+| 5   | **Teach:** Giải thích cho junior tại sao HTTPS quan trọng dù "chỉ là blog"      | Confidentiality (ISP tracking), integrity (middlebox injection), authentication (phishing), SEO penalty for HTTP |
 
 💬 **Feynman Prompt:** Giải thích HTTPS cho người dùng thông thường đang hỏi "tại sao browser hiện ổ khóa xanh?" Dữ liệu được bảo vệ như thế nào trong khi truyền?
 
 ---
 
+## Spaced Repetition / Lặp Lại Ngắt Quãng
+
+| Round | Thời điểm | Focus                                                          |
+| ----- | --------- | -------------------------------------------------------------- |
+| 1     | Day 1     | Đọc full bài, vẽ Concept Map từ trí nhớ                        |
+| 2     | Day 3     | Cold Call + Self-Check (đóng tài liệu)                         |
+| 3     | Day 7     | Giải thích TCP vs UDP, HTTP evolution, TLS cho bạn/rubber duck |
+| 4     | Day 14    | Mock interview: URL lifecycle + DNS + HOL blocking             |
+| 5     | Day 30    | Chỉ review Common Mistakes tables + diagram từ trí nhớ         |
+
+---
+
 ## Connections / Liên Kết
 
-- ⬅️ **Built on:** [OS Theory](./os-theory.md) — sockets là OS-level concept; networking builds on OS I/O model
-- ➡️ **Enables:** [Security Fundamentals](../04-security/01-security-fundamentals.md) | [HTTP Fundamentals](../../fe-track/10-networking/01-http-fundamentals.md)
-- 🔗 **Applied in:** Every API call | CDN configuration | WebSocket/SSE for real-time | Browser Network DevTools
+**Same-track (Shared CS Fundamentals):**
+
+- ⬅️ [OS Theory](./os-theory.md) — Sockets, I/O models, process/thread = foundation cho network programming
+- ↔️ [Concurrency & Parallelism](./07-concurrency-and-parallelism.md) — Async I/O, event loop = network server architecture
+- ↔️ [Data Structures Theory](./data-structures-theory.md) — Hash tables (routing), trees (DNS hierarchy), graphs (network topology)
+- ↔️ [Algorithms Theory](./algorithms-theory.md) — Graph algorithms (routing), hashing (load balancing)
+- ↔️ [Information Theory](./information-theory.md) — Encoding, compression, error detection codes
+
+**Cross-track:**
+
+- 🔗 [Security Fundamentals](../04-security/01-security-fundamentals.md) — TLS, HTTPS, certificate chains, network security
+- 🔗 [BE Networking](../../be-track/02-backend-knowledge/06-networking-go.md) — Go-specific TCP/HTTP implementation, net package
+- 🔗 [System Design Theory](../02-system-design/system-design-theory.md) — CDN, load balancing, DNS-based routing in distributed systems

@@ -1,7 +1,7 @@
 # Pedagogical Full Treatment — Progress Tracker (All Tracks)
 
 > **Purpose**: Track which fe-track, be-track, and shared files have Phase 1 (intro) and Phase 2 (deep content) pedagogical treatment.
-> **Updated**: 2026-03-27 (session 16 — Tier 11 complete, be-track 27/29 Phase 2 done)
+> **Updated**: 2026-03-27 (session 18 — Tier 13+14 complete, shared 15/38 Phase 2 done)
 >
 > **Legend**:
 >
@@ -279,28 +279,28 @@
 
 ### Tier 13: CS Fundamentals (`shared/01-cs-fundamentals/`)
 
-| File                                | Phase 1 | Phase 2 | Notes                                         |
-| ----------------------------------- | ------- | ------- | --------------------------------------------- |
-| `07-concurrency-and-parallelism.md` | ✅      | ❌      | Phase 1 only                                  |
-| `08-computation-theory.md`          | ✅      | ❌      | Phase 1 only                                  |
-| `algorithms-theory.md`              | ✅      | ❌      | Phase 1 only                                  |
-| `complexity-analysis.md`            | ✅      | ❌      | Phase 1 only                                  |
-| `data-structures-theory.md`         | ✅      | ❌      | Has Self-Check, missing Hook/Pattern/ColdCall |
-| `information-theory.md`             | ✅      | ❌      | Phase 1 only                                  |
-| `networking-theory.md`              | ✅      | ❌      | Phase 1 only                                  |
-| `os-theory.md`                      | ✅      | ❌      | Phase 1 only                                  |
+| File                                | Phase 1 | Phase 2 | Notes                             |
+| ----------------------------------- | ------- | ------- | --------------------------------- |
+| `07-concurrency-and-parallelism.md` | ✅      | ✅      | Done session 18 — full compliance |
+| `08-computation-theory.md`          | ✅      | ✅      | Done session 18 — full compliance |
+| `algorithms-theory.md`              | ✅      | ✅      | Done session 17 — full compliance |
+| `complexity-analysis.md`            | ✅      | ✅      | Done session 17 — full compliance |
+| `data-structures-theory.md`         | ✅      | ✅      | Done session 17 — full compliance |
+| `information-theory.md`             | ✅      | ✅      | Done session 18 — full compliance |
+| `networking-theory.md`              | ✅      | ✅      | Done session 18 — full compliance |
+| `os-theory.md`                      | ✅      | ✅      | Done session 17 — full compliance |
 
 ### Tier 14: System Design (`shared/02-system-design/`)
 
-| File                          | Phase 1 | Phase 2 | Notes                                                      |
-| ----------------------------- | ------- | ------- | ---------------------------------------------------------- |
-| `05-message-queues.md`        | ✅      | ❌      | Phase 1 only                                               |
-| `06-load-balancing.md`        | ✅      | ❌      | Phase 1 only                                               |
-| `07-event-sourcing-cqrs.md`   | ✅      | ❌      | Phase 1 only                                               |
-| `caching-patterns.md`         | ✅      | ❌      | Phase 1 only                                               |
-| `consensus-algorithms.md`     | ✅      | ❌      | Phase 1 only                                               |
-| `replication-partitioning.md` | ✅      | ❌      | Phase 1 only                                               |
-| `system-design-theory.md`     | ✅      | ❌      | Has partial 🎯 Pattern + Self-Check, missing Hook/ColdCall |
+| File                          | Phase 1 | Phase 2 | Notes                             |
+| ----------------------------- | ------- | ------- | --------------------------------- |
+| `05-message-queues.md`        | ✅      | ✅      | Done session 18 — full compliance |
+| `06-load-balancing.md`        | ✅      | ✅      | Done session 18 — full compliance |
+| `07-event-sourcing-cqrs.md`   | ✅      | ✅      | Done session 18 — full compliance |
+| `caching-patterns.md`         | ✅      | ✅      | Done session 18 — full compliance |
+| `consensus-algorithms.md`     | ✅      | ✅      | Done session 18 — full compliance |
+| `replication-partitioning.md` | ✅      | ✅      | Done session 18 — full compliance |
+| `system-design-theory.md`     | ✅      | ✅      | Done session 18 — full compliance |
 
 ### Tier 15: Database (`shared/03-database/`)
 
