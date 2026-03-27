@@ -76,21 +76,23 @@
                                                          - Compliance use cases
 ```
 
-**Common Mistakes:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| "MFE is always better at scale" | MFE adds operational cost — only justified with 5+ independent teams |
-| "MFE = microservices for frontend, same benefits" | Same decomposition principles, different constraints: shared DOM, CSS leakage, single React instance |
-| "iframes are the safe MFE choice" | iframes have poor UX (scroll, routing, shared auth) — only for strict compliance isolation |
-| "Module Federation replaces npm packages" | MFE is for app-level code; npm is still correct for library dependencies |
+| Sai lầm                                           | Tại sao sai                                                                                                         | Đúng là                                                                                  |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| "MFE is always better at scale"                   | MFE thêm operational cost thực sự (CI/CD, dep management, routing) — chỉ justify với 5+ independent teams           | MFE chỉ khi cần truly independent deploys; Modular Monolith tốt hơn cho <5 teams         |
+| "MFE = microservices for frontend, same benefits" | Frontend có unique constraints: shared DOM, CSS leakage, single React instance requirement — khác backend hoàn toàn | MFE có constraints riêng — phải manage shared DOM, CSS isolation, React singleton        |
+| "iframes are the safe MFE choice"                 | iframes có poor UX: scroll trapping, routing breaks, shared auth phức tạp — không scalable                          | iframes chỉ cho strict compliance isolation; dùng Module Federation cho MFE thông thường |
+| "Module Federation replaces npm packages"         | MFE cho app-level deployment boundaries; npm vẫn đúng cho shared library dependencies                               | Module Federation cho app-level code; npm packages cho library dependencies              |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "scale the frontend" / "multiple teams" / "independent deployment" / "frontend system design"
 - **Concept**: Architecture spectrum driven by team count and deployment independence
 - **Opening**: "Frontend architecture decisions are driven by team boundaries, not technology preference. For 1-4 teams, a modular monolith with enforced ESLint boundaries is usually right. Beyond 5 teams needing independent deploys, Module Federation gives MFE benefits without iframe UX drawbacks..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: Component-based thinking (React), webpack bundling basics
 - **Enables**: Module Federation config, shell app routing, shared state design across MFEs
 
@@ -129,21 +131,23 @@ const ProductList = lazy(() => import('teamA/ProductList'))
 // → Team A deploys → users get new code without shell redeploy
 ```
 
-**Common Mistakes:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| Forgetting `singleton: true` for React | Two React instances = hook rules violated, Context breaks silently |
-| Exposing everything (too many modules) | Expose only stable, slow-changing modules (design system, auth utils) |
-| No version pinning on shared deps | Version mismatch = silent runtime crash in production |
-| Remote breaking changes without backward compat | Shell loads whatever remote is deployed — remotes must maintain backward compat |
+| Sai lầm                                          | Tại sao sai                                                                                           | Đúng là                                                                             |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Quên `singleton: true` cho React                 | Hai React instances = hook rules bị vi phạm, Context breaks silently — không có error message rõ ràng | Luôn set `shared: { react: { singleton: true }, 'react-dom': { singleton: true } }` |
+| Expose quá nhiều modules                         | Nhiều exposed modules tăng coupling giữa teams — slow-changing stable APIs dễ maintain hơn            | Chỉ expose stable, slow-changing modules như design system và auth utilities        |
+| Không version pin shared deps                    | Version mismatch giữa host và remote = silent runtime crash trong production                          | Pin versions trong `shared` config với `requiredVersion: '^x.y.z'`                  |
+| Remote breaking changes không có backward compat | Shell load bất kỳ version nào remote deploy — breaking changes phá shell ngay lập tức                 | Remotes phải maintain backward compat; version theo semver; deprecate dần           |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "micro-frontends implementation" / "runtime dependency sharing" / "independent team deployment"
 - **Concept**: Webpack Module Federation — expose/consume/shared config
 - **Opening**: "Module Federation lets each team deploy independently. The key is three config options: `remotes` defines what to consume and from where, `exposes` defines what your bundle shares, and `shared: { react: { singleton: true } }` ensures one React instance across all remotes..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: Webpack code splitting, dynamic `import()`, CDN hosting
 - **Enables**: Shell app orchestration, independent team CI/CD pipelines, shared design system distribution
 
@@ -194,21 +198,23 @@ const ProductList = lazy(() => import('teamA/ProductList'))
 Testing: mock the layer below → test layer above in isolation
 ```
 
-**Common Mistakes:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| Components calling `fetch()` directly | Components call service; service calls repository; repository calls HTTP client |
-| Business logic in React components (validation, formatting) | Extract to service layer — components are for rendering, not rules |
-| Repositories returning raw API shapes | Repositories map API response to domain models — insulates UI from API changes |
-| Layering for small apps | Layering adds indirection cost — only justified at 50k+ LOC or team handoffs |
+| Sai lầm                                                        | Tại sao sai                                                                   | Đúng là                                                                          |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Components gọi `fetch()` trực tiếp                             | API thay đổi → phải update mọi component — không có single point of change    | Components gọi service; service gọi repository; repository gọi HTTP client       |
+| Business logic trong React components (validation, formatting) | Components trở nên fat và khó test; logic không thể reuse ở nơi khác          | Extract validation/transformation vào service layer — components chỉ render UI   |
+| Repositories trả về raw API shapes                             | UI bị coupled với API contract — mọi API shape change break toàn bộ UI layer  | Repositories map API response sang domain models — insulates UI from API changes |
+| Layering cho small apps                                        | Indirection cost không đáng khi app nhỏ — là over-engineering không cần thiết | Chỉ dùng layered architecture khi app > 50k LOC hoặc cần team handoffs           |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "how do you structure large FE app" / "testability" / "separation of concerns" / "frontend architecture"
 - **Concept**: Layered architecture with one-way dependency flow
 - **Opening**: "In large frontends, I separate into 4 layers: Presentation (components), Business Logic (services with validation/transformation), Data Access (repositories that abstract API shape), and Infrastructure (HTTP client). Each layer only talks to the layer below — this makes every layer independently testable and swappable..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: SOLID principles, dependency injection concepts
 - **Enables**: TDD for frontend services, swapping REST → GraphQL without touching components, team boundary enforcement
 
@@ -252,7 +258,7 @@ class TodoModel {
       id: Date.now().toString(),
       text,
       completed: false,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
     this.todos.push(todo);
     return todo;
@@ -263,14 +269,14 @@ class TodoModel {
   }
 
   toggleTodo(id: string): void {
-    const todo = this.todos.find(t => t.id === id);
+    const todo = this.todos.find((t) => t.id === id);
     if (todo) {
       todo.completed = !todo.completed;
     }
   }
 
   deleteTodo(id: string): void {
-    this.todos = this.todos.filter(t => t.id !== id);
+    this.todos = this.todos.filter((t) => t.id !== id);
   }
 }
 
@@ -289,47 +295,51 @@ class TodoView {
         <input type="text" id="todo-input" placeholder="Add todo / Thêm công việc" />
         <button id="add-btn">Add / Thêm</button>
         <ul id="todo-list">
-          ${todos.map(todo => `
-            <li class="${todo.completed ? 'completed' : ''}">
+          ${todos
+            .map(
+              (todo) => `
+            <li class="${todo.completed ? "completed" : ""}">
               <input type="checkbox" 
                      data-id="${todo.id}" 
-                     ${todo.completed ? 'checked' : ''} />
+                     ${todo.completed ? "checked" : ""} />
               <span>${todo.text}</span>
               <button data-id="${todo.id}" class="delete-btn">
                 Delete / Xóa
               </button>
             </li>
-          `).join('')}
+          `,
+            )
+            .join("")}
         </ul>
       </div>
     `;
   }
 
   bindAddTodo(handler: (text: string) => void): void {
-    const input = document.getElementById('todo-input') as HTMLInputElement;
-    const button = document.getElementById('add-btn');
+    const input = document.getElementById("todo-input") as HTMLInputElement;
+    const button = document.getElementById("add-btn");
 
-    button?.addEventListener('click', () => {
+    button?.addEventListener("click", () => {
       if (input.value.trim()) {
         handler(input.value);
-        input.value = '';
+        input.value = "";
       }
     });
   }
 
   bindToggleTodo(handler: (id: string) => void): void {
-    this.app.addEventListener('change', (e) => {
+    this.app.addEventListener("change", (e) => {
       const target = e.target as HTMLInputElement;
-      if (target.type === 'checkbox') {
+      if (target.type === "checkbox") {
         handler(target.dataset.id!);
       }
     });
   }
 
   bindDeleteTodo(handler: (id: string) => void): void {
-    this.app.addEventListener('click', (e) => {
+    this.app.addEventListener("click", (e) => {
       const target = e.target as HTMLElement;
-      if (target.classList.contains('delete-btn')) {
+      if (target.classList.contains("delete-btn")) {
         handler(target.dataset.id!);
       }
     });
@@ -377,10 +387,7 @@ class TodoController {
 }
 
 // Usage / Sử dụng
-const app = new TodoController(
-  new TodoModel(),
-  new TodoView('app')
-);
+const app = new TodoController(new TodoModel(), new TodoView("app"));
 ```
 
 ---
@@ -429,7 +436,7 @@ App / Ứng Dụng
 // Atoms - Smallest components / Atoms - Component nhỏ nhất
 function Button({ children, onClick, variant = 'primary' }: ButtonProps) {
   return (
-    <button 
+    <button
       className={`btn btn-${variant}`}
       onClick={onClick}
     >
@@ -500,11 +507,11 @@ function ProductList({ products }: ProductListProps) {
 }
 
 // Templates - Page layouts / Templates - Bố cục trang
-function ShopTemplate({ 
-  header, 
-  sidebar, 
-  content, 
-  footer 
+function ShopTemplate({
+  header,
+  sidebar,
+  content,
+  footer
 }: ShopTemplateProps) {
   return (
     <div className="shop-template">
@@ -638,7 +645,7 @@ class UserService {
 
   async getUserProfile(userId: string): Promise<UserProfile> {
     const user = await this.userRepository.getById(userId);
-    
+
     // Business logic / Logic nghiệp vụ
     return {
       ...user,
@@ -649,15 +656,15 @@ class UserService {
   }
 
   async updateUserProfile(
-    userId: string, 
+    userId: string,
     updates: UpdateUserDTO
   ): Promise<UserProfile> {
     // Validation / Xác thực
     this.validateUserUpdates(updates);
-    
+
     // Update / Cập nhật
     const updatedUser = await this.userRepository.update(userId, updates);
-    
+
     return this.getUserProfile(updatedUser.id);
   }
 
@@ -746,7 +753,7 @@ class ApiClient {
   private baseURL: string;
 
   private constructor() {
-    this.baseURL = process.env.REACT_APP_API_URL || '';
+    this.baseURL = process.env.REACT_APP_API_URL || "";
   }
 
   public static getInstance(): ApiClient {
@@ -785,7 +792,7 @@ class Subject<T> {
 
   subscribe(observer: Observer<T>): () => void {
     this.observers.push(observer);
-    
+
     // Return unsubscribe function / Trả về hàm hủy đăng ký
     return () => {
       const index = this.observers.indexOf(observer);
@@ -796,7 +803,7 @@ class Subject<T> {
   }
 
   notify(data: T): void {
-    this.observers.forEach(observer => observer.update(data));
+    this.observers.forEach((observer) => observer.update(data));
   }
 }
 
@@ -812,7 +819,7 @@ class UserStore extends Subject<User> {
 
 class UserProfileComponent implements Observer<User> {
   update(user: User): void {
-    console.log('User updated / Người dùng đã cập nhật:', user);
+    console.log("User updated / Người dùng đã cập nhật:", user);
     // Update UI / Cập nhật giao diện
   }
 }
@@ -821,7 +828,7 @@ const userStore = new UserStore();
 const profileComponent = new UserProfileComponent();
 
 const unsubscribe = userStore.subscribe(profileComponent);
-userStore.setUser({ id: '1', name: 'John' });
+userStore.setUser({ id: "1", name: "John" });
 ```
 
 ---
@@ -835,6 +842,7 @@ userStore.setUser({ id: '1', name: 'John' });
 Chọn Micro-frontends khi các teams cần deploy độc lập thực sự — release cadence khác nhau hoặc tech stack khác nhau. Với <5 teams, Modular Monolith (repo chung + ESLint module boundaries) luôn tốt hơn: CI/CD đơn giản, shared state dễ, không có runtime dependency conflicts.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Frames decision around team count and deployment independence, mentions operational cost of MFE, knows Modular Monolith as the middle ground
 - ❌ Weak: "MFE is better for large apps" — size isn't the driver, team independence is
 
@@ -847,6 +855,7 @@ Chọn Micro-frontends khi các teams cần deploy độc lập thực sự — 
 Cấu hình `shared: { react: { singleton: true } }` trong tất cả remotes và host. Webpack kiểm tra shared scope trước khi load — nếu React đã tồn tại, dùng lại. Nếu không có `singleton: true`, mỗi remote load React riêng → hooks fail vì hook registry là per-instance.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Explains singleton checking mechanism, hook registry failure mode, where to configure
 - ❌ Weak: "Just use the same version everywhere" — version matching is necessary but not sufficient without `singleton: true`
 
@@ -859,6 +868,7 @@ Cấu hình `shared: { react: { singleton: true } }` trong tất cả remotes v�
 Ba cách: (1) Shell giữ state, truyền xuống qua events/URL; (2) Module Federation expose shared store (Zustand singleton); (3) Không có frontend shared state — mỗi MFE đọc từ API/cookie, backend là source of truth. Option 3 scale tốt nhất nhưng thêm latency.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Gives 3 options with tradeoffs, mentions custom events / Module Federation singleton / backend-as-truth
 - ❌ Weak: "Use Redux" — doesn't address how to share a Redux store across independently-deployed bundles
 
@@ -871,6 +881,7 @@ Ba cách: (1) Shell giữ state, truyền xuống qua events/URL; (2) Module Fed
 Atomic Design phân cấp theo độ phức tạp: Atoms → Molecules → Organisms → Templates → Pages. Ưu: ranh giới reusability rõ ràng. Nhược: ranh giới Atom/Molecule chủ quan gây tranh cãi team; hierarchy sâu làm chậm onboarding; organisms dễ bị bloat.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Knows the 5 levels, names at least 2 trade-offs, shows pragmatic awareness that strict adherence causes problems
 - ❌ Weak: "Atomic Design means make small reusable components" — misses the hierarchy and its real-world friction
 
@@ -891,6 +902,7 @@ Compliance note: some insurance modules may need iframe isolation for regulatory
 Shell điều phối routing + Module Federation expose. Auth qua httpOnly cookie (backend). Custom events cho cross-MFE notifications. Design system là shared singleton. CSS isolation qua Shadow DOM hoặc CSS Modules prefix. Error Boundaries bọc từng remote — failure isolated.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Covers routing strategy, shared state approach, dependency singleton config, CSS isolation, resilience via Error Boundaries
 - ❌ Weak: "Each team builds their own React app and we combine them" — doesn't address shared deps, routing ownership, or failure isolation
 
@@ -898,13 +910,25 @@ Shell điều phối routing + Module Federation expose. Auth qua httpOnly cooki
 
 ## Q&A Summary / Tóm Tắt Q&A
 
-| # | Topic | Level | One-liner |
-|---|-------|-------|-----------|
-| 1 | MFE vs Modular Monolith | 🟡 | Team count + deploy independence → MFE; complexity cost is real |
-| 2 | Module Federation singleton | 🟡 | `shared: { react: { singleton: true } }` — one hook registry |
-| 3 | Shared state across MFEs | 🟡 | Shell events → shared remote store → backend-as-truth (ascending scale) |
-| 4 | Atomic Design tradeoffs | 🟢 | Clear boundaries but subjective hierarchy causes team friction |
-| 5 | Fintech super-app MFE design | 🔴 | Shell routing + cookie auth + singleton deps + CSS isolation + Error Boundaries |
+| #   | Topic                        | Level | One-liner                                                                       |
+| --- | ---------------------------- | ----- | ------------------------------------------------------------------------------- |
+| 1   | MFE vs Modular Monolith      | 🟡    | Team count + deploy independence → MFE; complexity cost is real                 |
+| 2   | Module Federation singleton  | 🟡    | `shared: { react: { singleton: true } }` — one hook registry                    |
+| 3   | Shared state across MFEs     | 🟡    | Shell events → shared remote store → backend-as-truth (ascending scale)         |
+| 4   | Atomic Design tradeoffs      | 🟢    | Clear boundaries but subjective hierarchy causes team friction                  |
+| 5   | Fintech super-app MFE design | 🔴    | Shell routing + cookie auth + singleton deps + CSS isolation + Error Boundaries |
+
+---
+
+## 📋 Interview Q&A Summary / Tóm Tắt Q&A Phỏng Vấn
+
+| #   | Câu hỏi                                                            | Difficulty | Core Concept                       | Key Signal                                                                                    |
+| --- | ------------------------------------------------------------------ | ---------- | ---------------------------------- | --------------------------------------------------------------------------------------------- |
+| 1   | Khi nào chọn Micro-frontends thay vì Modular Monolith?             | 🟡 Mid     | MFE vs Modular Monolith decision   | Frame around team count + deploy independence; operational complexity overhead                |
+| 2   | Module Federation ngăn "two React instances" thế nào?              | 🟡 Mid     | Module Federation singleton config | `singleton: true` + `requiredVersion` in shared config; hook registry failure mode            |
+| 3   | Shared state (auth, cart) hoạt động thế nào trong micro-frontends? | 🟡 Mid     | Cross-MFE shared state             | 3 options with tradeoffs: custom events, Module Federation singletons, BFF session            |
+| 4   | Atomic Design (Atoms/Molecules/Organisms) có trade-offs gì?        | 🟢 Junior  | Atomic Design methodology          | Know all 5 levels; ≥2 trade-offs; pragmatic awareness that strict adherence can over-engineer |
+| 5   | Thiết kế MFE architecture cho fintech super-app với 8 teams        | 🔴 Senior  | MFE architecture design            | Routing strategy + shared state + singleton dependency config + shared auth mechanism         |
 
 ---
 
@@ -922,15 +946,29 @@ Shell điều phối routing + Module Federation expose. Auth qua httpOnly cooki
 
 ---
 
-## Self-Check / Tự Kiểm Tra
+## 🔄 Self-Check / Tự Kiểm Tra
 
-> **Close this doc. Then answer from memory.**
+> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
 
-- **Retrieval**: Name the 3 architecture options on the monolith→MFE spectrum and the team size trigger for each
-- **Visual**: Sketch the Module Federation config — what goes in `remotes`, `exposes`, and `shared`? Why `singleton: true` for React?
-- **Application**: You join a 6-team company with one repo. Merge conflicts block releases every week. Walk through your first 3 decisions.
-- **Debug**: Teams report that React hooks throw "Invalid hook call" errors after the new MFE remote was deployed. What went wrong and how do you fix it?
-- **Teach**: Explain Module Federation to a backend engineer who knows microservices — what's the equivalent of "service registry", what's the equivalent of "service mesh"?
+| #   | Loại           | Câu hỏi                                                                                                                                     |
+| --- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 🔍 Retrieval   | Kể tên 3 options kiến trúc trên spectrum monolith→MFE và team size trigger cho mỗi option.                                                  |
+| 2   | 🎨 Visual      | Vẽ Module Federation config — `remotes`, `exposes`, và `shared` chứa gì? Tại sao React cần `singleton: true`?                               |
+| 3   | 🛠️ Application | Bạn join công ty 6 teams với 1 repo, merge conflicts block releases mỗi tuần. Trình bày 3 quyết định đầu tiên của bạn.                      |
+| 4   | 🐛 Debug       | Các teams báo React hooks throw "Invalid hook call" sau khi deploy MFE remote mới. Nguyên nhân gì? Fix thế nào?                             |
+| 5   | 🎓 Teach       | Giải thích Module Federation cho backend engineer biết microservices — equivalent của "service registry" và "service mesh" trong MFE là gì? |
+
+### Key Points (tự kiểm tra)
+
+| #   | Key Point                                                                                                                                                                                                                                                   |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Monolith SPA (1-3 teams, deploy coupling chấp nhận được) → Module Monorepo (4-8 teams, shared libs nhưng deploy chung) → **Micro-Frontend/Module Federation** (8+ teams, cần independent deploy, team autonomy).                                            |
+| 2   | `remotes`: địa chỉ của remote apps để consume; `exposes`: components app này chia sẻ ra ngoài; `shared`: packages dùng chung. React cần `singleton: true` vì React hooks require **1 React instance duy nhất** per app — 2 instances = "Invalid hook call". |
+| 3   | (1) Identify bounded contexts — team nào own domain nào; (2) Setup monorepo với CI/CD per package; (3) Dùng Module Federation để enable independent deploy — bắt đầu từ 1-2 domains ít coupled nhất.                                                        |
+| 4   | Mỗi MFE bundle React riêng → 2 React instances trong cùng page → hook rules bị vi phạm. Fix: `shared: { react: { singleton: true, requiredVersion: '^18.0.0' }, 'react-dom': { singleton: true } }` trong cả host và remote.                                |
+| 5   | `exposes` = microservice endpoints (API contracts); `remotes` = service discovery/registry (biết địa chỉ của service); `shared` singletons = service mesh (đảm bảo compatible versions giữa services).                                                      |
+
+> 🎯 **Feynman Prompt:** Giải thích Micro-Frontend cho product manager — tại sao "nhiều team, một website" lại phức tạp đến vậy, và tại sao đây là vấn đề con người chứ không phải vấn đề kỹ thuật đơn thuần?
 
 🔁 **Spaced repetition**: Review in 3 days → 7 days → 14 days
 

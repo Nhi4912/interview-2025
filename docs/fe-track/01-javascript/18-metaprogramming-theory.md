@@ -105,19 +105,21 @@ function validateObject(obj: any) {
 
 **Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| `return true` inside Proxy `set` trap without setting value | Use `Reflect.set(target, key, value, receiver)` to actually set AND return true |
-| Forgetting `receiver` in `Reflect.get/set` in Proxy | `receiver` is needed for proper prototype chain `get`/`set` — omitting breaks accessors |
-| Using `Reflect.metadata` without `reflect-metadata` polyfill | TC39 spec doesn't include metadata — need `import 'reflect-metadata'` first |
-| Calling `Reflect.apply(fn, null, args)` on arrow functions with `this` | Arrow functions don't have own `this` — `receiver` is ignored but no error |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `return true` inside Proxy `set` trap without setting value | Returns success to the caller but never actually writes the value — silent data loss | Use `Reflect.set(target, key, value, receiver)` to actually set AND return true |
+| Forgetting `receiver` in `Reflect.get/set` in Proxy | Omitting `receiver` breaks getter/setter accessors that rely on the prototype chain | `receiver` is needed for proper prototype chain `get`/`set` — omitting breaks accessors |
+| Using `Reflect.metadata` without `reflect-metadata` polyfill | TC39 Reflect spec does not include metadata — it's a separate proposal not in browsers natively | Import `'reflect-metadata'` polyfill first |
+| Calling `Reflect.apply(fn, null, args)` on arrow functions expecting `this` to work | Arrow functions ignore `this` binding — `Reflect.apply` won't error but `this` is silently ignored | Arrow functions don't have own `this` — use regular `function` if `this` binding matters |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "Proxy + Reflect" / "how NestJS DI works" / "Reflect.metadata"
 - **Concept**: Reflect mirrors Proxy trap API; Reflect.metadata for runtime type information
 - **Opening**: "Reflect provides functional versions of JavaScript's built-in operations — the same operations that Proxy can intercept. Inside a Proxy trap, I always use `Reflect.get/set` with the receiver to invoke default behavior correctly. For framework features like class-validator, `Reflect.defineMetadata` attaches rules at decoration time and `Reflect.getMetadata` reads them at runtime..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: Proxy traps (see 11-es6-features-deep.md), decorators (17-advanced-patterns-theory.md)
 - **Enables**: NestJS DI, TypeORM entity validation, class-validator, Angular DI container
 
@@ -125,13 +127,13 @@ function validateObject(obj: any) {
 
 ### 2. Tagged Template Literals — DSL at the Language Level
 
-**🧠 Memory Hook:** "**`tag\`template ${expr}\`` calls `tag(strings, ...values)`. The tag function receives strings as array and expressions as args. It decides what to return.**"
+**🧠 Memory Hook:** "**`tag\`template ${expr}\``calls`tag(strings, ...values)`. The tag function receives strings as array and expressions as args. It decides what to return.**"
 
 **Why does this exist? / Tại sao tồn tại?**
 
 - Why are template literals not enough? Regular `` `Hello ${name}` `` is just string interpolation. You can't process the expressions — they're already evaluated to strings
 - Why do tagged templates receive strings and expressions separately? Because the tag function needs to process each expression (escape SQL injection, apply CSS minification, wrap GraphQL types) before combining with the string parts
-- Why is this considered "metaprogramming"? Because you're using JavaScript's own syntax to build a mini-language. `sql\`SELECT * FROM users WHERE id = ${userId}\`` looks like SQL but is JavaScript — the tag function handles the escaping and parameterization
+- Why is this considered "metaprogramming"? Because you're using JavaScript's own syntax to build a mini-language. `sql\`SELECT \* FROM users WHERE id = ${userId}\`` looks like SQL but is JavaScript — the tag function handles the escaping and parameterization
 
 **Visual — Tagged Template Mechanics:**
 
@@ -139,56 +141,57 @@ function validateObject(obj: any) {
 // Tag function signature: (strings: TemplateStringsArray, ...values: any[]) => any
 function highlight(strings, ...values) {
   return strings.reduce((result, str, i) => {
-    const val = values[i - 1]
-    return result + (val !== undefined ? `<mark>${val}</mark>` : '') + str
-  })
+    const val = values[i - 1];
+    return result + (val !== undefined ? `<mark>${val}</mark>` : "") + str;
+  });
 }
 
-const name = 'World'
-const result = highlight`Hello ${name}! Today is ${new Date()}.`
+const name = "World";
+const result = highlight`Hello ${name}! Today is ${new Date()}.`;
 // → 'Hello <mark>World</mark>! Today is <mark>Fri Mar...</mark>.'
 
 // Real-world: SQL safe parameterization
 function sql(strings, ...values) {
-  const params = []
+  const params = [];
   const query = strings.reduce((sql, str, i) => {
     if (i > 0) {
-      params.push(values[i - 1])  // escape: use $1, $2 placeholders
-      return sql + `$${i}`        // NOT string interpolation — parameterized
+      params.push(values[i - 1]); // escape: use $1, $2 placeholders
+      return sql + `$${i}`; // NOT string interpolation — parameterized
     }
-    return sql + str
-  })
-  return { query, params }  // { query: "SELECT... WHERE id = $1", params: [42] }
+    return sql + str;
+  });
+  return { query, params }; // { query: "SELECT... WHERE id = $1", params: [42] }
 }
 
-const userId = 42
-const { query, params } = sql`SELECT * FROM users WHERE id = ${userId}`
+const userId = 42;
+const { query, params } = sql`SELECT * FROM users WHERE id = ${userId}`;
 // Prevents SQL injection: userId is a parameter, not inline string
 
 // Real-world: styled-components (simplified)
-const css = (strings, ...values) => strings.reduce((a, s, i) =>
-  a + (values[i - 1] ?? '') + s)
+const css = (strings, ...values) => strings.reduce((a, s, i) => a + (values[i - 1] ?? "") + s);
 const Button = styled.button`
-  background: ${props => props.primary ? 'blue' : 'white'};
-  color: ${props => props.primary ? 'white' : 'blue'};
-`
+  background: ${(props) => (props.primary ? "blue" : "white")};
+  color: ${(props) => (props.primary ? "white" : "blue")};
+`;
 ```
 
 **Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| Using template literals for SQL instead of tagged templates | `` `SELECT ... WHERE id = ${userId}` `` — SQL injection risk; use tagged `sql\`\`` |
-| Forgetting `strings` array has one more element than `values` | `strings.length === values.length + 1` — always |
-| Returning non-string from tagged template | Tag can return anything: DOM element, styled component, Query object |
-| Using `eval()` for "template-like" dynamic code generation | Tagged templates are safe (no code execution) vs `eval` (executes arbitrary code) |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Using template literals for SQL instead of tagged templates | Plain `\`SELECT ... WHERE id = ${userId}\`` interpolates directly — SQL injection risk | Use tagged `sql\`...\`` template to put expressions in parameterized position |
+| Forgetting `strings` array has one more element than `values` | Off-by-one error when zipping strings and values in the tag function | `strings.length === values.length + 1` — always |
+| Assuming tagged templates must return a string | This misconception limits the power of tags — they can return any type | Tag can return anything: DOM element, styled component, Query object |
+| Using `eval()` for "template-like" dynamic code generation | `eval` executes arbitrary code — security vulnerability and prevents engine optimization | Tagged templates are safe (no code execution) vs `eval` (executes arbitrary code) |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "SQL injection prevention" / "styled-components internals" / "template literal tag"
 - **Concept**: Tag function receives strings + expressions separately — can process before combining
-- **Opening**: "Tagged template literals pass the string parts and expression parts separately to a tag function. `sql\`WHERE id = ${userId}\`` — the sql function can put `userId` in parameterized position instead of inline. That's how SQL injection is prevented. styled-components uses the same mechanism — the tag function processes prop functions embedded in the template..."
+- **Opening**: "Tagged template literals pass the string parts and expression parts separately to a tag function. `sql\`WHERE id = ${userId}\``— the sql function can put`userId` in parameterized position instead of inline. That's how SQL injection is prevented. styled-components uses the same mechanism — the tag function processes prop functions embedded in the template..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: Template literals, higher-order functions
 - **Enables**: styled-components, graphql-tag (`gql\`\``), secure SQL queries, i18n libraries
 
@@ -208,73 +211,72 @@ const Button = styled.button`
 
 ```javascript
 class QueryBuilder {
-  #table = null
-  #conditions = []
-  #limit = null
-  #fields = ['*']
+  #table = null;
+  #conditions = [];
+  #limit = null;
+  #fields = ["*"];
 
   select(...fields) {
-    this.#fields = fields
-    return this  // ← key: return this for chaining
+    this.#fields = fields;
+    return this; // ← key: return this for chaining
   }
 
   from(table) {
-    this.#table = table
-    return this
+    this.#table = table;
+    return this;
   }
 
   where(condition) {
-    this.#conditions.push(condition)
-    return this
+    this.#conditions.push(condition);
+    return this;
   }
 
   limit(n) {
-    this.#limit = n
-    return this
+    this.#limit = n;
+    return this;
   }
 
-  build() {  // ← terminal operation: no return this
-    const where = this.#conditions.length
-      ? `WHERE ${this.#conditions.join(' AND ')}`
-      : ''
-    const limit = this.#limit ? `LIMIT ${this.#limit}` : ''
-    return `SELECT ${this.#fields.join(', ')} FROM ${this.#table} ${where} ${limit}`.trim()
+  build() {
+    // ← terminal operation: no return this
+    const where = this.#conditions.length ? `WHERE ${this.#conditions.join(" AND ")}` : "";
+    const limit = this.#limit ? `LIMIT ${this.#limit}` : "";
+    return `SELECT ${this.#fields.join(", ")} FROM ${this.#table} ${where} ${limit}`.trim();
   }
 }
 
 const query = new QueryBuilder()
-  .select('name', 'email')
-  .from('users')
-  .where('age > 18')
-  .where('active = true')
+  .select("name", "email")
+  .from("users")
+  .where("age > 18")
+  .where("active = true")
   .limit(10)
-  .build()
+  .build();
 // → 'SELECT name, email FROM users WHERE age > 18 AND active = true LIMIT 10'
 ```
 
 **Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| Terminal method returns `this` | Terminal method (`.build()`, `.execute()`) returns the result, not `this` |
-| Mutating original object on each chain call | For immutable API: return `new QueryBuilder({...state, newProp: value})` |
-| No validation in terminal method | Validate completeness (e.g., `this.#table === null → throw Error`) at execute time |
-| Deeply nested chain with 20+ calls | Break into named intermediate variables for readability |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Terminal method returns `this` | Returning `this` from the terminal method prevents the caller from getting the final result | Terminal methods (`.build()`, `.execute()`) must return the result, not `this` |
+| Mutating original object on each chain call | Mutation makes the builder stateful and non-reusable; breaks composability | For immutable API: return `new QueryBuilder({...state, newProp: value})` |
+| No validation in terminal method | Incomplete config is only discovered at runtime when the query/operation fails | Validate required fields (e.g., `this.#table === null → throw Error`) at terminal/execute time |
+| Deeply nested chain with 20+ calls | Long chains are hard to debug, read, and set breakpoints on | Break into named intermediate variables for readability |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "fluent API" / "query builder" / "jQuery-like chaining" / "builder pattern"
 - **Concept**: Each method returns `this`; terminal method executes; builder accumulates config
 - **Opening**: "Method chaining creates a fluent interface — every method returns `this` except the terminal method which executes the accumulated config. This is how query builders, test frameworks (Jest's `expect(x).toBe(y)`), and stream APIs work. The key design decision is separating the builder from the executor..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: `this` binding, object methods
 - **Enables**: Custom query builders, test assertion libraries, animation timelines, pipeline APIs
 
 ---
 
 ## Reference Theory / Tài Liệu Tham Khảo
-
-
 
 ## Metaprogramming Fundamentals / Cơ Bản Metaprogramming
 
@@ -306,49 +308,52 @@ class Introspection {
       constructor: obj.constructor.name,
       prototype: Object.getPrototypeOf(obj),
       properties: Object.getOwnPropertyNames(obj),
-      methods: Object.getOwnPropertyNames(Object.getPrototypeOf(obj))
-        .filter(name => typeof obj[name] === 'function'),
+      methods: Object.getOwnPropertyNames(Object.getPrototypeOf(obj)).filter(
+        (name) => typeof obj[name] === "function",
+      ),
       descriptors: Object.getOwnPropertyDescriptors(obj),
       isExtensible: Object.isExtensible(obj),
       isSealed: Object.isSealed(obj),
-      isFrozen: Object.isFrozen(obj)
+      isFrozen: Object.isFrozen(obj),
     };
   }
-  
+
   static getMethodSignature(obj: any, methodName: string): MethodSignature {
     const method = obj[methodName];
-    if (typeof method !== 'function') {
+    if (typeof method !== "function") {
       throw new Error(`${methodName} is not a method`);
     }
-    
+
     const funcStr = method.toString();
-    const params = funcStr.match(/\(([^)]*)\)/)?.[1]
-      .split(',')
-      .map(p => p.trim())
-      .filter(p => p.length > 0) || [];
-    
+    const params =
+      funcStr
+        .match(/\(([^)]*)\)/)?.[1]
+        .split(",")
+        .map((p) => p.trim())
+        .filter((p) => p.length > 0) || [];
+
     return {
       name: methodName,
       parameters: params,
       body: funcStr,
-      isAsync: funcStr.startsWith('async'),
-      isGenerator: funcStr.includes('function*')
+      isAsync: funcStr.startsWith("async"),
+      isGenerator: funcStr.includes("function*"),
     };
   }
-  
+
   static getPropertyDescriptor(obj: any, prop: string): PropertyDescriptor | undefined {
     return Object.getOwnPropertyDescriptor(obj, prop);
   }
-  
+
   static getPrototypeChain(obj: any): any[] {
     const chain: any[] = [];
     let current = obj;
-    
+
     while (current !== null) {
       chain.push(current);
       current = Object.getPrototypeOf(current);
     }
-    
+
     return chain;
   }
 }
@@ -380,12 +385,12 @@ class Intercession {
   // Sửa đổi hành vi method
   static wrapMethod(obj: any, methodName: string, wrapper: Function) {
     const original = obj[methodName];
-    
-    obj[methodName] = function(...args: any[]) {
+
+    obj[methodName] = function (...args: any[]) {
       return wrapper.call(this, original, args);
     };
   }
-  
+
   // Add method dynamically
   // Thêm method động
   static addMethod(obj: any, methodName: string, method: Function) {
@@ -393,78 +398,83 @@ class Intercession {
       value: method,
       writable: true,
       enumerable: false,
-      configurable: true
+      configurable: true,
     });
   }
-  
+
   // Remove method
   // Xóa method
   static removeMethod(obj: any, methodName: string) {
     delete obj[methodName];
   }
-  
+
   // Modify property
   // Sửa đổi property
   static makeReadonly(obj: any, prop: string) {
     Object.defineProperty(obj, prop, {
       writable: false,
-      configurable: false
+      configurable: false,
     });
   }
-  
+
   // Add getter/setter
   // Thêm getter/setter
   static addComputedProperty(
     obj: any,
     prop: string,
     getter: () => any,
-    setter?: (value: any) => void
+    setter?: (value: any) => void,
   ) {
     Object.defineProperty(obj, prop, {
       get: getter,
       set: setter,
       enumerable: true,
-      configurable: true
+      configurable: true,
     });
   }
 }
 
 // Example usage
 class Person {
-  constructor(public firstName: string, public lastName: string) {}
-  
+  constructor(
+    public firstName: string,
+    public lastName: string,
+  ) {}
+
   greet() {
     return `Hello, I'm ${this.firstName}`;
   }
 }
 
-const person = new Person('John', 'Doe');
+const person = new Person("John", "Doe");
 
 // Introspection
 const info = Introspection.examineObject(person);
 console.log(info);
 
 // Intercession
-Intercession.wrapMethod(person, 'greet', function(original, args) {
-  console.log('Before greet');
+Intercession.wrapMethod(person, "greet", function (original, args) {
+  console.log("Before greet");
   const result = original.apply(this, args);
-  console.log('After greet');
+  console.log("After greet");
   return result;
 });
 
 Intercession.addComputedProperty(
   person,
-  'fullName',
-  function() { return `${this.firstName} ${this.lastName}`; },
-  function(value) {
-    const [first, last] = value.split(' ');
+  "fullName",
+  function () {
+    return `${this.firstName} ${this.lastName}`;
+  },
+  function (value) {
+    const [first, last] = value.split(" ");
     this.firstName = first;
     this.lastName = last;
-  }
+  },
 );
 
 console.log(person.fullName); // 'John Doe'
-person.fullName = 'Jane Smith';
+person.fullName = "Jane Smith";
 console.log(person.firstName); // 'Jane'
 ```
 
@@ -486,16 +496,16 @@ class ReflectionUtilities {
   // Deep clone using reflection
   // Clone sâu sử dụng reflection
   static deepClone<T>(obj: T): T {
-    if (obj === null || typeof obj !== 'object') {
+    if (obj === null || typeof obj !== "object") {
       return obj;
     }
-    
+
     if (Array.isArray(obj)) {
-      return obj.map(item => this.deepClone(item)) as any;
+      return obj.map((item) => this.deepClone(item)) as any;
     }
-    
+
     const clone = Object.create(Object.getPrototypeOf(obj));
-    
+
     for (const key of Reflect.ownKeys(obj)) {
       const descriptor = Reflect.getOwnPropertyDescriptor(obj, key);
       if (descriptor) {
@@ -505,10 +515,10 @@ class ReflectionUtilities {
         Reflect.defineProperty(clone, key, descriptor);
       }
     }
-    
+
     return clone;
   }
-  
+
   // Merge objects deeply
   // Merge objects sâu
   static deepMerge<T extends object>(target: T, ...sources: Partial<T>[]): T {
@@ -516,72 +526,70 @@ class ReflectionUtilities {
       for (const key of Reflect.ownKeys(source) as (keyof T)[]) {
         const targetValue = target[key];
         const sourceValue = source[key];
-        
+
         if (this.isObject(targetValue) && this.isObject(sourceValue)) {
           target[key] = this.deepMerge(
             Object.create(Object.getPrototypeOf(targetValue)),
             targetValue,
-            sourceValue
+            sourceValue,
           );
         } else {
           Reflect.set(target, key, sourceValue);
         }
       }
     }
-    
+
     return target;
   }
-  
+
   private static isObject(value: any): boolean {
-    return value !== null && typeof value === 'object';
+    return value !== null && typeof value === "object";
   }
-  
+
   // Get all properties (including inherited)
   // Lấy tất cả properties (bao gồm kế thừa)
   static getAllProperties(obj: any): string[] {
     const props = new Set<string>();
     let current = obj;
-    
+
     while (current !== null) {
       for (const prop of Object.getOwnPropertyNames(current)) {
         props.add(prop);
       }
       current = Object.getPrototypeOf(current);
     }
-    
+
     return Array.from(props);
   }
-  
+
   // Get all methods
   // Lấy tất cả methods
   static getAllMethods(obj: any): string[] {
-    return this.getAllProperties(obj).filter(
-      prop => typeof obj[prop] === 'function'
-    );
+    return this.getAllProperties(obj).filter((prop) => typeof obj[prop] === "function");
   }
-  
+
   // Check if object has method
   // Kiểm tra object có method không
   static hasMethod(obj: any, methodName: string): boolean {
-    return typeof obj[methodName] === 'function';
+    return typeof obj[methodName] === "function";
   }
-  
+
   // Invoke method by name
   // Gọi method theo tên
   static invokeMethod(obj: any, methodName: string, ...args: any[]): any {
     if (!this.hasMethod(obj, methodName)) {
       throw new Error(`Method ${methodName} not found`);
     }
-    
+
     return Reflect.apply(obj[methodName], obj, args);
   }
-  
+
   // Create instance dynamically
   // Tạo instance động
   static createInstance<T>(constructor: new (...args: any[]) => T, ...args: any[]): T {
     return Reflect.construct(constructor, args);
   }
-  
+
   // Check if constructor
   // Kiểm tra có phải constructor không
   static isConstructor(func: any): boolean {
@@ -598,111 +606,94 @@ class ReflectionUtilities {
 // Reflection metadata
 class MetadataReflection {
   private static metadata = new WeakMap<object, Map<string | symbol, any>>();
-  
+
   // Define metadata
   // Định nghĩa metadata
   static defineMetadata(
     target: object,
     key: string | symbol,
     metadataKey: string,
-    metadataValue: any
+    metadataValue: any,
   ): void {
     if (!this.metadata.has(target)) {
       this.metadata.set(target, new Map());
     }
-    
+
     const targetMetadata = this.metadata.get(target)!;
     const propertyKey = `${String(key)}:${metadataKey}`;
     targetMetadata.set(propertyKey, metadataValue);
   }
-  
+
   // Get metadata
   // Lấy metadata
-  static getMetadata(
-    target: object,
-    key: string | symbol,
-    metadataKey: string
-  ): any {
+  static getMetadata(target: object, key: string | symbol, metadataKey: string): any {
     const targetMetadata = this.metadata.get(target);
     if (!targetMetadata) return undefined;
-    
+
     const propertyKey = `${String(key)}:${metadataKey}`;
     return targetMetadata.get(propertyKey);
   }
-  
+
   // Has metadata
   // Có metadata không
-  static hasMetadata(
-    target: object,
-    key: string | symbol,
-    metadataKey: string
-  ): boolean {
+  static hasMetadata(target: object, key: string | symbol, metadataKey: string): boolean {
     return this.getMetadata(target, key, metadataKey) !== undefined;
   }
-  
+
   // Get all metadata keys
   // Lấy tất cả metadata keys
   static getMetadataKeys(target: object, key: string | symbol): string[] {
     const targetMetadata = this.metadata.get(target);
     if (!targetMetadata) return [];
-    
+
     const prefix = `${String(key)}:`;
     return Array.from(targetMetadata.keys())
-      .filter(k => String(k).startsWith(prefix))
-      .map(k => String(k).substring(prefix.length));
+      .filter((k) => String(k).startsWith(prefix))
+      .map((k) => String(k).substring(prefix.length));
   }
 }
 
 // Example: Validation using metadata
 function validate(validationRules: any) {
-  return function(target: any, propertyKey: string) {
-    MetadataReflection.defineMetadata(
-      target,
-      propertyKey,
-      'validation',
-      validationRules
-    );
+  return function (target: any, propertyKey: string) {
+    MetadataReflection.defineMetadata(target, propertyKey, "validation", validationRules);
   };
 }
 
 class User {
   @validate({ required: true, minLength: 3 })
   username!: string;
-  
+
   @validate({ required: true, pattern: /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/ })
   email!: string;
 }
 
 function validateObject(obj: any): boolean {
   const properties = Object.keys(obj);
-  
+
   for (const prop of properties) {
-    const rules = MetadataReflection.getMetadata(
-      Object.getPrototypeOf(obj),
-      prop,
-      'validation'
-    );
-    
+    const rules = MetadataReflection.getMetadata(Object.getPrototypeOf(obj), prop, "validation");
+
     if (rules) {
       const value = obj[prop];
-      
+
       if (rules.required && !value) {
         console.log(`${prop} is required`);
         return false;
       }
-      
+
       if (rules.minLength && value.length < rules.minLength) {
         console.log(`${prop} must be at least ${rules.minLength} characters`);
         return false;
       }
-      
+
       if (rules.pattern && !rules.pattern.test(value)) {
         console.log(`${prop} has invalid format`);
         return false;
       }
     }
   }
-  
+
   return true;
 }
 ```
@@ -726,40 +717,44 @@ class CodeGenerator {
   // Tạo hàm từ template
   static generateFunction(name: string, params: string[], body: string): Function {
     const funcStr = `
-      return function ${name}(${params.join(', ')}) {
+      return function ${name}(${params.join(", ")}) {
         ${body}
       }
     `;
-    
+
     return new Function(funcStr)();
   }
-  
+
   // Generate class dynamically
   // Tạo class động
   static generateClass(
     className: string,
     properties: PropertyDefinition[],
-    methods: MethodDefinition[]
+    methods: MethodDefinition[],
   ): any {
     const classCode = `
       class ${className} {
-        constructor(${properties.map(p => p.name).join(', ')}) {
-          ${properties.map(p => `this.${p.name} = ${p.name};`).join('\n          ')}
+        constructor(${properties.map((p) => p.name).join(", ")}) {
+          ${properties.map((p) => `this.${p.name} = ${p.name};`).join("\n          ")}
         }
         
-        ${methods.map(m => `
-          ${m.name}(${m.params.join(', ')}) {
+        ${methods
+          .map(
+            (m) => `
+          ${m.name}(${m.params.join(", ")}) {
             ${m.body}
           }
-        `).join('\n        ')}
+        `,
+          )
+          .join("\n        ")}
       }
       
       return ${className};
     `;
-    
+
     return new Function(classCode)();
   }
-  
+
   // Generate getter/setter
   // Tạo getter/setter
   static generateAccessors(obj: any, prop: string, storage: string = `_${prop}`) {
@@ -773,28 +768,23 @@ class CodeGenerator {
         this[storage] = value;
       },
       enumerable: true,
-      configurable: true
+      configurable: true,
     });
   }
-  
+
   // Generate method wrapper
   // Tạo wrapper method
-  static generateMethodWrapper(
-    obj: any,
-    methodName: string,
-    before?: Function,
-    after?: Function
-  ) {
+  static generateMethodWrapper(obj: any, methodName: string, before?: Function, after?: Function) {
     const original = obj[methodName];
-    
-    obj[methodName] = function(...args: any[]) {
+
+    obj[methodName] = function (...args: any[]) {
       if (before) before.call(this, args);
       const result = original.apply(this, args);
       if (after) after.call(this, result);
       return result;
     };
   }
-  
+
   // Template-based code generation
   // Tạo code dựa trên template
   static generateFromTemplate(template: string, data: Record<string, any>): string {
@@ -802,12 +792,12 @@ class CodeGenerator {
       return data[key] !== undefined ? String(data[key]) : match;
     });
   }
-  
+
   // Generate CRUD operations
   // Tạo thao tác CRUD
   static generateCRUD(entityName: string): any {
     const storage = new Map<string, any>();
-    
+
     return {
       create(id: string, data: any) {
         if (storage.has(id)) {
@@ -816,14 +806,14 @@ class CodeGenerator {
         storage.set(id, data);
         return data;
       },
-      
+
       read(id: string) {
         if (!storage.has(id)) {
           throw new Error(`${entityName} with id ${id} not found`);
         }
         return storage.get(id);
       },
-      
+
       update(id: string, data: any) {
         if (!storage.has(id)) {
           throw new Error(`${entityName} with id ${id} not found`);
@@ -833,17 +823,17 @@ class CodeGenerator {
         storage.set(id, updated);
         return updated;
       },
-      
+
       delete(id: string) {
         if (!storage.has(id)) {
           throw new Error(`${entityName} with id ${id} not found`);
         }
         storage.delete(id);
       },
-      
+
       list() {
         return Array.from(storage.values());
-      }
+      },
     };
   }
 }
@@ -861,31 +851,31 @@ interface MethodDefinition {
 }
 
 // Example usage
-const add = CodeGenerator.generateFunction('add', ['a', 'b'], 'return a + b;');
+const add = CodeGenerator.generateFunction("add", ["a", "b"], "return a + b;");
 console.log(add(2, 3)); // 5
 
 const Person2 = CodeGenerator.generateClass(
-  'Person',
+  "Person",
   [
-    { name: 'name', type: 'string' },
-    { name: 'age', type: 'number' }
+    { name: "name", type: "string" },
+    { name: "age", type: "number" },
   ],
   [
     {
-      name: 'greet',
+      name: "greet",
       params: [],
-      body: 'return `Hello, I am ${this.name}`;'
-    }
-  ]
+      body: "return `Hello, I am ${this.name}`;",
+    },
+  ],
 );
 
-const person2 = new Person2('John', 30);
+const person2 = new Person2("John", 30);
 console.log(person2.greet());
 
 // Generate CRUD for User entity
-const UserCRUD = CodeGenerator.generateCRUD('User');
-UserCRUD.create('1', { name: 'John', email: 'john@example.com' });
-console.log(UserCRUD.read('1'));
+const UserCRUD = CodeGenerator.generateCRUD("User");
+UserCRUD.create("1", { name: "John", email: "john@example.com" });
+console.log(UserCRUD.read("1"));
 ```
 
 ---
@@ -905,123 +895,134 @@ console.log(UserCRUD.read('1'));
 class QueryBuilder<T> {
   private conditions: Condition[] = [];
   private sortField?: keyof T;
-  private sortOrder: 'asc' | 'desc' = 'asc';
+  private sortOrder: "asc" | "desc" = "asc";
   private limitValue?: number;
   private offsetValue?: number;
-  
+
   where(field: keyof T, operator: Operator, value: any): this {
     this.conditions.push({ field: field as string, operator, value });
     return this;
   }
-  
+
   and(field: keyof T, operator: Operator, value: any): this {
     return this.where(field, operator, value);
   }
-  
+
   or(field: keyof T, operator: Operator, value: any): this {
-    this.conditions.push({ field: field as string, operator, value, combinator: 'OR' });
+    this.conditions.push({ field: field as string, operator, value, combinator: "OR" });
     return this;
   }
-  
-  orderBy(field: keyof T, order: 'asc' | 'desc' = 'asc'): this {
+
+  orderBy(field: keyof T, order: "asc" | "desc" = "asc"): this {
     this.sortField = field;
     this.sortOrder = order;
     return this;
   }
-  
+
   limit(value: number): this {
     this.limitValue = value;
     return this;
   }
-  
+
   offset(value: number): this {
     this.offsetValue = value;
     return this;
   }
-  
+
   build(): Query {
     return {
       conditions: this.conditions,
-      sort: this.sortField ? {
-        field: this.sortField as string,
-        order: this.sortOrder
-      } : undefined,
+      sort: this.sortField
+        ? {
+            field: this.sortField as string,
+            order: this.sortOrder,
+          }
+        : undefined,
       limit: this.limitValue,
-      offset: this.offsetValue
+      offset: this.offsetValue,
     };
   }
-  
+
   execute(data: T[]): T[] {
-    let result = data.filter(item => this.matchesConditions(item));
-    
+    let result = data.filter((item) => this.matchesConditions(item));
+
     if (this.sortField) {
       result.sort((a, b) => {
         const aVal = a[this.sortField!];
         const bVal = b[this.sortField!];
         const comparison = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
-        return this.sortOrder === 'asc' ? comparison : -comparison;
+        return this.sortOrder === "asc" ? comparison : -comparison;
       });
     }
-    
+
     if (this.offsetValue !== undefined) {
       result = result.slice(this.offsetValue);
     }
-    
+
     if (this.limitValue !== undefined) {
       result = result.slice(0, this.limitValue);
     }
-    
+
     return result;
   }
-  
+
   private matchesConditions(item: T): boolean {
     let result = true;
-    let combinator: 'AND' | 'OR' = 'AND';
-    
+    let combinator: "AND" | "OR" = "AND";
+
     for (const condition of this.conditions) {
       const matches = this.matchesCondition(item, condition);
-      
-      if (combinator === 'AND') {
+
+      if (combinator === "AND") {
         result = result && matches;
       } else {
         result = result || matches;
       }
-      
-      combinator = condition.combinator || 'AND';
+
+      combinator = condition.combinator || "AND";
     }
-    
+
     return result;
   }
-  
+
   private matchesCondition(item: T, condition: Condition): boolean {
     const value = (item as any)[condition.field];
-    
+
     switch (condition.operator) {
-      case '=': return value === condition.value;
-      case '!=': return value !== condition.value;
-      case '>': return value > condition.value;
-      case '>=': return value >= condition.value;
-      case '<': return value < condition.value;
-      case '<=': return value <= condition.value;
-      case 'in': return condition.value.includes(value);
-      case 'like': return String(value).includes(condition.value);
-      default: return false;
+      case "=":
+        return value === condition.value;
+      case "!=":
+        return value !== condition.value;
+      case ">":
+        return value > condition.value;
+      case ">=":
+        return value >= condition.value;
+      case "<":
+        return value < condition.value;
+      case "<=":
+        return value <= condition.value;
+      case "in":
+        return condition.value.includes(value);
+      case "like":
+        return String(value).includes(condition.value);
+      default:
+        return false;
     }
   }
 }
 
-type Operator = '=' | '!=' | '>' | '>=' | '<' | '<=' | 'in' | 'like';
+type Operator = "=" | "!=" | ">" | ">=" | "<" | "<=" | "in" | "like";
 
 interface Condition {
   field: string;
   operator: Operator;
   value: any;
-  combinator?: 'AND' | 'OR';
+  combinator?: "AND" | "OR";
 }
 
 interface Query {
   conditions: Condition[];
-  sort?: { field: string; order: 'asc' | 'desc' };
+  sort?: { field: string; order: "asc" | "desc" };
   limit?: number;
   offset?: number;
 }
@@ -1035,15 +1036,15 @@ interface User {
 }
 
 const users: User[] = [
-  { id: 1, name: 'John', age: 30, email: 'john@example.com' },
-  { id: 2, name: 'Jane', age: 25, email: 'jane@example.com' },
-  { id: 3, name: 'Bob', age: 35, email: 'bob@example.com' }
+  { id: 1, name: "John", age: 30, email: "john@example.com" },
+  { id: 2, name: "Jane", age: 25, email: "jane@example.com" },
+  { id: 3, name: "Bob", age: 35, email: "bob@example.com" },
 ];
 
 const query = new QueryBuilder<User>()
-  .where('age', '>=', 25)
-  .and('age', '<=', 35)
-  .orderBy('name', 'asc')
+  .where("age", ">=", 25)
+  .and("age", "<=", 35)
+  .orderBy("name", "asc")
   .limit(10);
 
 const results = query.execute(users);
@@ -1053,42 +1054,42 @@ console.log(results);
 // DSL để tạo HTML
 class HTMLBuilder {
   private elements: HTMLElement[] = [];
-  
+
   tag(name: string, content?: string): HTMLElement {
     const element: HTMLElement = {
       tag: name,
       attributes: {},
       children: [],
-      content
+      content,
     };
     this.elements.push(element);
     return element;
   }
-  
+
   attr(element: HTMLElement, name: string, value: string): this {
     element.attributes[name] = value;
     return this;
   }
-  
+
   child(parent: HTMLElement, child: HTMLElement): this {
     parent.children.push(child);
     return this;
   }
-  
+
   build(): string {
-    return this.elements.map(el => this.renderElement(el)).join('\n');
+    return this.elements.map((el) => this.renderElement(el)).join("\n");
   }
-  
+
   private renderElement(element: HTMLElement): string {
     const attrs = Object.entries(element.attributes)
       .map(([key, value]) => `${key}="${value}"`)
-      .join(' ');
-    
-    const opening = `<${element.tag}${attrs ? ' ' + attrs : ''}>`;
-    const content = element.content || '';
-    const children = element.children.map(child => this.renderElement(child)).join('');
+      .join(" ");
+
+    const opening = `<${element.tag}${attrs ? " " + attrs : ""}>`;
+    const content = element.content || "";
+    const children = element.children.map((child) => this.renderElement(child)).join("");
     const closing = `</${element.tag}>`;
-    
+
     return `${opening}${content}${children}${closing}`;
   }
 }
@@ -1102,13 +1103,13 @@ interface HTMLElement {
 
 // Fluent API example
 const html = new HTMLBuilder();
-const div = html.tag('div');
-html.attr(div, 'class', 'container');
+const div = html.tag("div");
+html.attr(div, "class", "container");
 
-const h1 = html.tag('h1', 'Hello World');
+const h1 = html.tag("h1", "Hello World");
 html.child(div, h1);
 
-const p = html.tag('p', 'This is a paragraph');
+const p = html.tag("p", "This is a paragraph");
 html.child(div, p);
 
 console.log(html.build());
@@ -1125,6 +1126,7 @@ console.log(html.build());
 `return true` trong Proxy `set` trap báo hiệu thành công nhưng không thực sự set value — data lost silently. `Reflect.set(target, key, value, receiver)` thực hiện assignment đúng, kể cả accessor properties qua prototype chain (cần `receiver`).
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Explains silent data loss bug, explains `receiver` parameter's role in prototype accessor calls
 - ❌ Weak: "Use Reflect.set to be correct" — no explanation of WHY it's needed
 
@@ -1137,6 +1139,7 @@ console.log(html.build());
 Tagged templates: tag function receives `(strings, ...values)` — strings array and evaluated expressions separately. SQL security: `sql\`WHERE id = ${userId}\`` → puts userId in parameterized slot, not inline string. Prevents SQL injection.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Explains `strings` array + `...values` signature, gives SQL injection prevention as concrete security use case
 - ❌ Weak: "Tagged templates are used in styled-components" — correct but no mechanism explanation
 
@@ -1149,6 +1152,7 @@ Tagged templates: tag function receives `(strings, ...values)` — strings array
 `Reflect.defineMetadata` attaches rules to properties at decoration time. At runtime, validator calls `Reflect.getMetadata` to retrieve rules per property. Requires `reflect-metadata` polyfill. NestJS/class-validator pattern.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Explains decoration-time vs runtime split, mentions reflect-metadata requirement, NestJS usage
 - ❌ Weak: "Decorators add metadata" — no mechanism on how metadata is stored or retrieved
 
@@ -1156,11 +1160,11 @@ Tagged templates: tag function receives `(strings, ...values)` — strings array
 
 ## Q&A Summary / Tóm Tắt Q&A
 
-| # | Topic | Level | One-liner |
-|---|-------|-------|-----------|
-| 1 | Reflect.set in Proxy trap | 🔴 | `return true` discards write; `Reflect.set(..., receiver)` sets correctly via prototype chain |
-| 2 | Tagged template security | 🟡 | `sql\`WHERE id = ${x}\`` puts `x` in parameter slot — prevents SQL injection |
-| 3 | Reflect.metadata pattern | 🔴 | `defineMetadata` at decoration, `getMetadata` at runtime — powers NestJS/class-validator |
+| #   | Topic                     | Level | One-liner                                                                                     |
+| --- | ------------------------- | ----- | --------------------------------------------------------------------------------------------- |
+| 1   | Reflect.set in Proxy trap | 🔴    | `return true` discards write; `Reflect.set(..., receiver)` sets correctly via prototype chain |
+| 2   | Tagged template security  | 🟡    | `sql\`WHERE id = ${x}\``puts`x` in parameter slot — prevents SQL injection                    |
+| 3   | Reflect.metadata pattern  | 🔴    | `defineMetadata` at decoration, `getMetadata` at runtime — powers NestJS/class-validator      |
 
 ---
 
@@ -1170,7 +1174,7 @@ Tagged templates: tag function receives `(strings, ...values)` — strings array
 
 **30-second answer:**
 
-"Tagged templates receive the string parts and expression parts separately. I'd write a `sql` tag function that takes `strings` (the literal SQL parts) and `...values` (the user-supplied values). Instead of concatenating them directly — which would put raw user input into the query string — the function builds the SQL template with numbered placeholders like `$1`, `$2` where each expression was, and returns the query string plus a `params` array with the actual values. The database driver then executes the parameterized query, handling escaping properly. So `sql\`SELECT * FROM users WHERE id = ${userId}\`` returns `{ query: 'SELECT * FROM users WHERE id = $1', params: [userId] }`. The key insight is that the tag function has access to the expression values before they're interpolated, which is exactly where the injection would happen if you used regular template strings."
+"Tagged templates receive the string parts and expression parts separately. I'd write a `sql` tag function that takes `strings` (the literal SQL parts) and `...values` (the user-supplied values). Instead of concatenating them directly — which would put raw user input into the query string — the function builds the SQL template with numbered placeholders like `$1`, `$2` where each expression was, and returns the query string plus a `params` array with the actual values. The database driver then executes the parameterized query, handling escaping properly. So `sql\`SELECT _ FROM users WHERE id = ${userId}\``returns`{ query: 'SELECT _ FROM users WHERE id = $1', params: [userId] }`. The key insight is that the tag function has access to the expression values before they're interpolated, which is exactly where the injection would happen if you used regular template strings."
 
 ---
 
@@ -1179,10 +1183,12 @@ Tagged templates: tag function receives `(strings, ...values)` — strings array
 > **Close this doc. Then answer from memory.**
 
 - **Retrieval**: What does `Reflect.set(target, key, value, receiver)` do that `return true` inside a Proxy trap doesn't?
-- **Visual**: Sketch the tagged template call `sql\`WHERE id = ${userId} AND active = ${isActive}\`` — what arguments does the `sql` function receive?
+- **Visual**: Sketch the tagged template call `sql\`WHERE id = ${userId} AND active = ${isActive}\``— what arguments does the`sql` function receive?
 - **Application**: You want to add `@Required` and `@MinLength(5)` decorators that work with a `validate(obj)` function. How do you implement the metadata storage?
 - **Debug**: Your Proxy `set` trap uses `Reflect.set(target, key, value)` (no receiver). A property inherited from the prototype has a setter. What breaks and why?
 - **Teach**: Explain tagged template literals to a junior using the "form with labeled fields" analogy.
+
+> 🎯 **Feynman Prompt:** Giải thích cho designer: metaprogramming là gì — tại sao TypeScript decorator có thể "tự động" thêm validation vào class mà không cần sửa code bên trong, và Proxy traps giúp Vue 3 "nhìn thấy" khi bạn thay đổi dữ liệu như thế nào?
 
 🔁 **Spaced repetition**: Review in 3 days → 7 days → 14 days
 

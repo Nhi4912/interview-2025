@@ -63,46 +63,48 @@
 
 ```javascript
 // main.js — main thread
-const worker = new Worker('./worker.js')
+const worker = new Worker("./worker.js");
 
 // Send data to worker (structured clone — deep copy):
-worker.postMessage({ type: 'PROCESS', data: largeArray })
+worker.postMessage({ type: "PROCESS", data: largeArray });
 
 // Receive results:
 worker.onmessage = (event) => {
-  const { result } = event.data
-  renderResults(result)  // ← back on main thread, can touch DOM
-}
+  const { result } = event.data;
+  renderResults(result); // ← back on main thread, can touch DOM
+};
 
 // worker.js — worker thread (no window, no document, no DOM)
 self.onmessage = (event) => {
-  if (event.data.type === 'PROCESS') {
-    const result = heavyComputation(event.data.data)  // ← runs in parallel
-    self.postMessage({ result })
+  if (event.data.type === "PROCESS") {
+    const result = heavyComputation(event.data.data); // ← runs in parallel
+    self.postMessage({ result });
   }
-}
+};
 
 // Optimization: Transferable Objects (zero-copy transfer)
-const buffer = new ArrayBuffer(1024 * 1024)  // 1MB
-worker.postMessage({ buffer }, [buffer])  // transfer ownership — O(1) instead of O(n)
+const buffer = new ArrayBuffer(1024 * 1024); // 1MB
+worker.postMessage({ buffer }, [buffer]); // transfer ownership — O(1) instead of O(n)
 // ⚠️ After transfer: buffer is detached in main thread — can't use it
 ```
 
 **Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| Accessing DOM from worker | Workers have no DOM access — return computed data, update DOM in main thread |
-| Sending large objects via postMessage | Use Transferable Objects (ArrayBuffer, MessagePort) for zero-copy transfer |
-| Creating worker inline for simple tasks | Workers have startup cost (~5ms) — only worth it for tasks >10ms computation |
-| Forgetting error handling | `worker.onerror = (e) => { }` — uncaught worker errors don't propagate automatically |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Accessing DOM from worker | Workers run in a separate global scope with no DOM API — throws `ReferenceError` | Workers have no DOM access — return computed data, update DOM in main thread |
+| Sending large objects via `postMessage` | Structured clone serializes and copies the entire object — expensive for large data | Use Transferable Objects (`ArrayBuffer`, `MessagePort`) for zero-copy transfer |
+| Creating a worker for simple/fast tasks | Workers have ~5ms startup overhead — overhead exceeds benefit for fast tasks | Workers have startup cost (~5ms) — only worth it for tasks >10ms of computation |
+| Forgetting error handling on worker | Uncaught worker errors don't propagate to the main thread automatically | Set `worker.onerror = (e) => { }` — errors won't propagate without a handler |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "UI freeze" / "heavy computation" / "main thread blocking" / "parallelism in JS"
 - **Concept**: Web Worker = separate thread, postMessage for communication, no DOM access
 - **Opening**: "When computation would block the main thread for more than ~16ms, I'd move it to a Web Worker. Workers run on a separate OS thread, so the main thread stays responsive. Communication is via `postMessage` — structured clone serializes data, or you can use Transferable Objects for zero-copy transfer of ArrayBuffers..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: Event Loop basics, ArrayBuffer
 - **Enables**: Parallel image/video processing, client-side search, crypto in browser, Offscreen Canvas
 
@@ -122,26 +124,26 @@ worker.postMessage({ buffer }, [buffer])  // transfer ownership — O(1) instead
 
 ```javascript
 // main.js:
-const sharedBuffer = new SharedArrayBuffer(4)  // 4 bytes = 1 Int32
-const shared = new Int32Array(sharedBuffer)
+const sharedBuffer = new SharedArrayBuffer(4); // 4 bytes = 1 Int32
+const shared = new Int32Array(sharedBuffer);
 
-const worker = new Worker('./worker.js')
-worker.postMessage({ sharedBuffer })  // pass reference (not copy!)
+const worker = new Worker("./worker.js");
+worker.postMessage({ sharedBuffer }); // pass reference (not copy!)
 
 // Wait for worker to be done (blocking in main thread — avoid in production!):
-Atomics.wait(shared, 0, 0)  // wait until shared[0] !== 0
+Atomics.wait(shared, 0, 0); // wait until shared[0] !== 0
 
 // worker.js:
 self.onmessage = (event) => {
-  const shared = new Int32Array(event.data.sharedBuffer)
+  const shared = new Int32Array(event.data.sharedBuffer);
   // Both main thread and worker share the SAME memory
 
   // Atomic increment (thread-safe):
-  Atomics.add(shared, 0, 1)  // atomic: read-add-write as one operation
+  Atomics.add(shared, 0, 1); // atomic: read-add-write as one operation
 
   // Wake up main thread:
-  Atomics.notify(shared, 0, 1)
-}
+  Atomics.notify(shared, 0, 1);
+};
 
 // Cross-Origin Isolation required — server headers:
 // Cross-Origin-Opener-Policy: same-origin
@@ -150,19 +152,21 @@ self.onmessage = (event) => {
 
 **Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| Non-atomic read-modify-write: `shared[0]++` in worker | Use `Atomics.add(shared, 0, 1)` for thread-safe increment |
-| Forgetting COOP/COEP headers | SharedArrayBuffer returns `undefined` without cross-origin isolation |
-| Using SharedArrayBuffer for general JS object sharing | Only raw binary data — use shared array of typed integers/floats, not objects |
-| `Atomics.wait` on main browser thread | `Atomics.wait` is blocking — not allowed on main thread (would freeze UI). Use `Atomics.waitAsync` |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Non-atomic `shared[0]++` in worker | `++` is a read-modify-write — another thread can interleave between read and write (race condition) | Use `Atomics.add(shared, 0, 1)` for thread-safe increment |
+| Forgetting COOP/COEP headers | Browser disables `SharedArrayBuffer` without cross-origin isolation — silently returns `undefined` | Set `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: require-corp` |
+| Using `SharedArrayBuffer` for general JS object sharing | Only raw binary data can be shared — JS objects, functions, and references cannot cross thread boundaries | Only share raw typed integer/float data; pass complex structures via `postMessage` |
+| `Atomics.wait` on main browser thread | `Atomics.wait` blocks the calling thread — forbidden on main thread (would freeze UI) | Use `Atomics.waitAsync` on main thread; `Atomics.wait` only in workers |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "cross-worker communication" / "high-performance shared state" / "WASM + workers"
 - **Concept**: SharedArrayBuffer = zero-copy shared memory; Atomics = thread-safe operations; COOP/COEP required
 - **Opening**: "For passing large datasets between workers efficiently, SharedArrayBuffer shares a single backing memory — no serialization. Both threads view the same bytes. Atomics provides the synchronization: `compareExchange` for lock-free algorithms, `wait`/`notify` for sleeping/waking. There's a security requirement: Cross-Origin Isolation headers (COOP + COEP) must be set or SharedArrayBuffer is disabled..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: Web Workers (postMessage), ArrayBuffer/TypedArrays
 - **Enables**: WebAssembly multi-threading, high-performance client-side computation, lock-free data structures
 
@@ -184,70 +188,70 @@ self.onmessage = (event) => {
 // The protocol:
 const asyncIterable = {
   [Symbol.asyncIterator]() {
-    let page = 1
+    let page = 1;
     return {
       async next() {
-        const data = await fetch(`/api/items?page=${page++}`)
-        const items = await data.json()
-        if (items.length === 0) return { done: true, value: undefined }
-        return { done: false, value: items }
-      }
-    }
-  }
-}
+        const data = await fetch(`/api/items?page=${page++}`);
+        const items = await data.json();
+        if (items.length === 0) return { done: true, value: undefined };
+        return { done: false, value: items };
+      },
+    };
+  },
+};
 
 // Consumer:
 for await (const page of asyncIterable) {
-  console.log('Got page:', page)
+  console.log("Got page:", page);
   // Awaits each fetch before requesting next page — natural backpressure
 }
 
 // Async generator (simplest way to create async iterable):
 async function* paginate(url) {
-  let page = 1
+  let page = 1;
   while (true) {
-    const res = await fetch(`${url}?page=${page++}`)
-    const items = await res.json()
-    if (items.length === 0) return
-    yield items  // ← pauses here, resumes when consumer awaits .next()
+    const res = await fetch(`${url}?page=${page++}`);
+    const items = await res.json();
+    if (items.length === 0) return;
+    yield items; // ← pauses here, resumes when consumer awaits .next()
   }
 }
 
-for await (const items of paginate('/api/products')) {
-  processItems(items)
+for await (const items of paginate("/api/products")) {
+  processItems(items);
 }
 
 // Node.js streams as async iterators:
-const fs = require('fs')
-const stream = fs.createReadStream('large-file.csv')
+const fs = require("fs");
+const stream = fs.createReadStream("large-file.csv");
 for await (const chunk of stream) {
-  processChunk(chunk)  // backpressure handled automatically
+  processChunk(chunk); // backpressure handled automatically
 }
 ```
 
 **Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| `for...of` on async iterable (not for await) | `for await...of` — without `await`, you get Promise objects, not resolved values |
-| Forgetting to handle early termination | `for await` calls `.return()` on iterator when broken — clean up resources in `finally` in generator |
-| `await` inside `for...of` (not `for await`) | `await` in `for...of` runs sequentially but doesn't use iterator protocol — use `for await` |
-| Creating async iterables manually (verbose) | Use `async function*` generator — cleanest syntax |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `for...of` on async iterable (not `for await`) | Without `await`, each iteration yields a `Promise` object — not the resolved value | Use `for await...of` — awaits each `.next()` call before proceeding |
+| Forgetting to handle early termination in `for await` | Breaking from `for await` calls `.return()` on the iterator — resources may not be cleaned up | Handle cleanup in `finally` block inside the async generator |
+| `await` inside regular `for...of` (not `for await...of`) | Awaits each iteration sequentially but doesn't properly use the async iterator protocol | Use `for await...of` to correctly consume async iterables |
+| Creating async iterables manually (verbose) | Manual `[Symbol.asyncIterator]` implementation is error-prone and verbose | Use `async function*` generator — cleanest syntax |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "paginated API" / "streaming data" / "consume async data source" / "Node.js streams"
 - **Concept**: Async iterator protocol; `for await...of`; async generators
 - **Opening**: "Async iterators extend the iterator protocol to async data sources. `for await...of` awaits each `.next()` call before pulling the next item — pull-based with natural backpressure. The easiest way to create them is `async function*` generators. Node.js streams implement `[Symbol.asyncIterator]`, so you can `for await...of` them directly..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: Regular iterators (`Symbol.iterator`), async/await, generators
 - **Enables**: Paginated API consumers, stream processing, real-time data feeds, reactive programming patterns
 
 ---
 
 ## Reference Theory / Tài Liệu Tham Khảo
-
-
 
 ## Event Loop / Vòng Lặp Sự Kiện
 
@@ -273,7 +277,7 @@ for await (const chunk of stream) {
 interface Task {
   id: number;
   callback: () => void;
-  type: 'macro' | 'micro' | 'render';
+  type: "macro" | "micro" | "render";
   priority: number;
 }
 
@@ -284,50 +288,50 @@ class EventLoopSimulator {
   private renderQueue: Task[] = [];
   private taskIdCounter = 0;
   private isRunning = false;
-  
+
   // Schedule macrotask (setTimeout, setInterval)
   // Lập lịch macrotask
   scheduleMacrotask(callback: () => void, delay: number = 0): number {
     const taskId = this.taskIdCounter++;
-    
+
     setTimeout(() => {
       this.macrotaskQueue.push({
         id: taskId,
         callback,
-        type: 'macro',
-        priority: 0
+        type: "macro",
+        priority: 0,
       });
     }, delay);
-    
+
     return taskId;
   }
-  
+
   // Schedule microtask (Promise, queueMicrotask)
   // Lập lịch microtask
   scheduleMicrotask(callback: () => void): void {
     this.microtaskQueue.push({
       id: this.taskIdCounter++,
       callback,
-      type: 'micro',
-      priority: 1
+      type: "micro",
+      priority: 1,
     });
   }
-  
+
   // Schedule render task (requestAnimationFrame)
   // Lập lịch render task
   scheduleRenderTask(callback: () => void): number {
     const taskId = this.taskIdCounter++;
-    
+
     this.renderQueue.push({
       id: taskId,
       callback,
-      type: 'render',
-      priority: 2
+      type: "render",
+      priority: 2,
     });
-    
+
     return taskId;
   }
-  
+
   // Execute one iteration of event loop
   // Thực thi một vòng lặp của event loop
   tick(): void {
@@ -336,30 +340,30 @@ class EventLoopSimulator {
       const task = this.microtaskQueue.shift()!;
       this.executeTask(task);
     }
-    
+
     // 2. Execute one macrotask
     if (this.macrotaskQueue.length > 0) {
       const task = this.macrotaskQueue.shift()!;
       this.executeTask(task);
-      
+
       // Execute microtasks after macrotask
       while (this.microtaskQueue.length > 0) {
         const microTask = this.microtaskQueue.shift()!;
         this.executeTask(microTask);
       }
     }
-    
+
     // 3. Execute render tasks (if time permits)
     if (this.renderQueue.length > 0) {
       const task = this.renderQueue.shift()!;
       this.executeTask(task);
     }
   }
-  
+
   private executeTask(task: Task): void {
     console.log(`Executing ${task.type}task ${task.id}`);
     this.callStack.push(task.callback);
-    
+
     try {
       task.callback();
     } catch (error) {
@@ -368,30 +372,30 @@ class EventLoopSimulator {
       this.callStack.pop();
     }
   }
-  
+
   // Run event loop
   // Chạy event loop
   run(): void {
     this.isRunning = true;
-    
+
     const loop = () => {
       if (!this.isRunning) return;
-      
+
       this.tick();
-      
+
       // Continue if there are pending tasks
       if (this.hasPendingTasks()) {
         setImmediate(loop);
       }
     };
-    
+
     loop();
   }
-  
+
   stop(): void {
     this.isRunning = false;
   }
-  
+
   private hasPendingTasks(): boolean {
     return (
       this.macrotaskQueue.length > 0 ||
@@ -399,13 +403,13 @@ class EventLoopSimulator {
       this.renderQueue.length > 0
     );
   }
-  
+
   getStats(): EventLoopStats {
     return {
       callStackSize: this.callStack.length,
       macrotasks: this.macrotaskQueue.length,
       microtasks: this.microtaskQueue.length,
-      renderTasks: this.renderQueue.length
+      renderTasks: this.renderQueue.length,
     };
   }
 }
@@ -420,22 +424,22 @@ interface EventLoopStats {
 // Example: Task execution order
 // Ví dụ: Thứ tự thực thi task
 function demonstrateEventLoop() {
-  console.log('1: Synchronous');
-  
+  console.log("1: Synchronous");
+
   setTimeout(() => {
-    console.log('2: Macrotask (setTimeout)');
+    console.log("2: Macrotask (setTimeout)");
   }, 0);
-  
+
   Promise.resolve().then(() => {
-    console.log('3: Microtask (Promise)');
+    console.log("3: Microtask (Promise)");
   });
-  
+
   queueMicrotask(() => {
-    console.log('4: Microtask (queueMicrotask)');
+    console.log("4: Microtask (queueMicrotask)");
   });
-  
-  console.log('5: Synchronous');
-  
+
+  console.log("5: Synchronous");
+
   // Output order:
   // 1: Synchronous
   // 5: Synchronous
@@ -464,38 +468,36 @@ function demonstrateEventLoop() {
 class PromisePool {
   private queue: (() => Promise<any>)[] = [];
   private running = 0;
-  
+
   constructor(private concurrency: number) {}
-  
+
   async add<T>(task: () => Promise<T>): Promise<T> {
     while (this.running >= this.concurrency) {
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
     }
-    
+
     this.running++;
-    
+
     try {
       return await task();
     } finally {
       this.running--;
     }
   }
-  
+
   async addAll<T>(tasks: (() => Promise<T>)[]): Promise<T[]> {
-    return Promise.all(tasks.map(task => this.add(task)));
+    return Promise.all(tasks.map((task) => this.add(task)));
   }
 }
 
 // Usage
 async function fetchWithPool() {
   const pool = new PromisePool(3); // Max 3 concurrent requests
-  
+
   const urls = Array.from({ length: 10 }, (_, i) => `https://api.example.com/item/${i}`);
-  
-  const results = await pool.addAll(
-    urls.map(url => () => fetch(url).then(r => r.json()))
-  );
-  
+
+  const results = await pool.addAll(urls.map((url) => () => fetch(url).then((r) => r.json())));
+
   return results;
 }
 
@@ -504,24 +506,24 @@ async function fetchWithPool() {
 async function retryWithBackoff<T>(
   fn: () => Promise<T>,
   maxRetries: number = 3,
-  baseDelay: number = 1000
+  baseDelay: number = 1000,
 ): Promise<T> {
   let lastError: Error;
-  
+
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       return await fn();
     } catch (error) {
       lastError = error as Error;
-      
+
       if (attempt < maxRetries - 1) {
         const delay = baseDelay * Math.pow(2, attempt);
         const jitter = Math.random() * 1000;
-        await new Promise(resolve => setTimeout(resolve, delay + jitter));
+        await new Promise((resolve) => setTimeout(resolve, delay + jitter));
       }
     }
   }
-  
+
   throw lastError!;
 }
 
@@ -530,26 +532,21 @@ async function retryWithBackoff<T>(
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return Promise.race([
     promise,
-    new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error('Timeout')), ms)
-    )
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error("Timeout")), ms)),
   ]);
 }
 
 // 4. Debounce async
 // 4. Debounce bất đồng bộ
-function debounceAsync<T extends (...args: any[]) => Promise<any>>(
-  fn: T,
-  delay: number
-): T {
+function debounceAsync<T extends (...args: any[]) => Promise<any>>(fn: T, delay: number): T {
   let timeoutId: NodeJS.Timeout | null = null;
   let pendingPromise: Promise<any> | null = null;
-  
+
   return ((...args: any[]) => {
     if (timeoutId) {
       clearTimeout(timeoutId);
     }
-    
+
     if (!pendingPromise) {
       pendingPromise = new Promise((resolve, reject) => {
         timeoutId = setTimeout(async () => {
@@ -565,102 +562,92 @@ function debounceAsync<T extends (...args: any[]) => Promise<any>>(
         }, delay);
       });
     }
-    
+
     return pendingPromise;
   }) as T;
 }
 
 // 5. Throttle async
 // 5. Throttle bất đồng bộ
-function throttleAsync<T extends (...args: any[]) => Promise<any>>(
-  fn: T,
-  limit: number
-): T {
+function throttleAsync<T extends (...args: any[]) => Promise<any>>(fn: T, limit: number): T {
   let lastRun = 0;
   let pendingPromise: Promise<any> | null = null;
-  
+
   return ((...args: any[]) => {
     const now = Date.now();
-    
+
     if (now - lastRun >= limit) {
       lastRun = now;
       return fn(...args);
     }
-    
+
     if (!pendingPromise) {
       pendingPromise = new Promise((resolve, reject) => {
-        setTimeout(async () => {
-          lastRun = Date.now();
-          try {
-            const result = await fn(...args);
-            resolve(result);
-          } catch (error) {
-            reject(error);
-          } finally {
-            pendingPromise = null;
-          }
-        }, limit - (now - lastRun));
+        setTimeout(
+          async () => {
+            lastRun = Date.now();
+            try {
+              const result = await fn(...args);
+              resolve(result);
+            } catch (error) {
+              reject(error);
+            } finally {
+              pendingPromise = null;
+            }
+          },
+          limit - (now - lastRun),
+        );
       });
     }
-    
+
     return pendingPromise;
   }) as T;
 }
 
 // 6. Sequential execution
 // 6. Thực thi tuần tự
-async function sequential<T>(
-  tasks: (() => Promise<T>)[]
-): Promise<T[]> {
+async function sequential<T>(tasks: (() => Promise<T>)[]): Promise<T[]> {
   const results: T[] = [];
-  
+
   for (const task of tasks) {
     results.push(await task());
   }
-  
+
   return results;
 }
 
 // 7. Parallel execution with limit
 // 7. Thực thi song song với giới hạn
-async function parallelLimit<T>(
-  tasks: (() => Promise<T>)[],
-  limit: number
-): Promise<T[]> {
+async function parallelLimit<T>(tasks: (() => Promise<T>)[], limit: number): Promise<T[]> {
   const results: T[] = [];
   const executing: Promise<void>[] = [];
-  
+
   for (const [index, task] of tasks.entries()) {
-    const promise = task().then(result => {
+    const promise = task().then((result) => {
       results[index] = result;
     });
-    
+
     executing.push(promise);
-    
+
     if (executing.length >= limit) {
       await Promise.race(executing);
       executing.splice(
-        executing.findIndex(p => p === promise),
-        1
+        executing.findIndex((p) => p === promise),
+        1,
       );
     }
   }
-  
+
   await Promise.all(executing);
   return results;
 }
 
 // 8. Race with timeout
 // 8. Race với timeout
-async function raceWithTimeout<T>(
-  promises: Promise<T>[],
-  timeout: number
-): Promise<T> {
+async function raceWithTimeout<T>(promises: Promise<T>[], timeout: number): Promise<T> {
   return Promise.race([
     ...promises,
-    new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error('Timeout')), timeout)
-    )
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error("Timeout")), timeout)),
   ]);
 }
 
@@ -669,7 +656,7 @@ async function raceWithTimeout<T>(
 class AsyncQueue<T> {
   private queue: T[] = [];
   private waiting: ((value: T) => void)[] = [];
-  
+
   enqueue(item: T): void {
     if (this.waiting.length > 0) {
       const resolve = this.waiting.shift()!;
@@ -678,17 +665,17 @@ class AsyncQueue<T> {
       this.queue.push(item);
     }
   }
-  
+
   async dequeue(): Promise<T> {
     if (this.queue.length > 0) {
       return this.queue.shift()!;
     }
-    
-    return new Promise(resolve => {
+
+    return new Promise((resolve) => {
       this.waiting.push(resolve);
     });
   }
-  
+
   size(): number {
     return this.queue.length;
   }
@@ -699,22 +686,22 @@ class AsyncQueue<T> {
 class AsyncSemaphore {
   private permits: number;
   private waiting: (() => void)[] = [];
-  
+
   constructor(permits: number) {
     this.permits = permits;
   }
-  
+
   async acquire(): Promise<void> {
     if (this.permits > 0) {
       this.permits--;
       return;
     }
-    
-    return new Promise(resolve => {
+
+    return new Promise((resolve) => {
       this.waiting.push(resolve);
     });
   }
-  
+
   release(): void {
     if (this.waiting.length > 0) {
       const resolve = this.waiting.shift()!;
@@ -723,7 +710,7 @@ class AsyncSemaphore {
       this.permits++;
     }
   }
-  
+
   async runExclusive<T>(fn: () => Promise<T>): Promise<T> {
     await this.acquire();
     try {
@@ -755,38 +742,38 @@ class WorkerPool {
   private workers: Worker[] = [];
   private taskQueue: WorkerTask[] = [];
   private availableWorkers: Set<number> = new Set();
-  
+
   constructor(
     private workerScript: string,
-    private poolSize: number
+    private poolSize: number,
   ) {
     this.initializeWorkers();
   }
-  
+
   private initializeWorkers(): void {
     for (let i = 0; i < this.poolSize; i++) {
       const worker = new Worker(this.workerScript);
       this.workers.push(worker);
       this.availableWorkers.add(i);
-      
+
       worker.onmessage = (event) => {
         this.handleWorkerMessage(i, event.data);
       };
-      
+
       worker.onerror = (error) => {
         console.error(`Worker ${i} error:`, error);
       };
     }
   }
-  
+
   async execute<T>(data: any): Promise<T> {
     return new Promise((resolve, reject) => {
       const task: WorkerTask = {
         data,
         resolve,
-        reject
+        reject,
       };
-      
+
       if (this.availableWorkers.size > 0) {
         this.assignTask(task);
       } else {
@@ -794,44 +781,44 @@ class WorkerPool {
       }
     });
   }
-  
+
   private assignTask(task: WorkerTask): void {
     const workerId = Array.from(this.availableWorkers)[0];
     this.availableWorkers.delete(workerId);
-    
+
     const worker = this.workers[workerId];
     worker.postMessage(task.data);
-    
+
     // Store task for this worker
     (worker as any).__currentTask = task;
   }
-  
+
   private handleWorkerMessage(workerId: number, result: any): void {
     const worker = this.workers[workerId];
     const task = (worker as any).__currentTask as WorkerTask;
-    
+
     if (task) {
       if (result.error) {
         task.reject(new Error(result.error));
       } else {
         task.resolve(result.data);
       }
-      
+
       delete (worker as any).__currentTask;
     }
-    
+
     // Mark worker as available
     this.availableWorkers.add(workerId);
-    
+
     // Assign next task if available
     if (this.taskQueue.length > 0) {
       const nextTask = this.taskQueue.shift()!;
       this.assignTask(nextTask);
     }
   }
-  
+
   terminate(): void {
-    this.workers.forEach(worker => worker.terminate());
+    this.workers.forEach((worker) => worker.terminate());
     this.workers = [];
     this.availableWorkers.clear();
     this.taskQueue = [];
@@ -868,16 +855,14 @@ function performComputation(data) {
 
 // Usage example
 async function useWorkerPool() {
-  const pool = new WorkerPool('worker.js', 4);
-  
+  const pool = new WorkerPool("worker.js", 4);
+
   const tasks = Array.from({ length: 100 }, (_, i) => i);
-  
-  const results = await Promise.all(
-    tasks.map(task => pool.execute(task))
-  );
-  
-  console.log('All tasks completed:', results);
-  
+
+  const results = await Promise.all(tasks.map((task) => pool.execute(task)));
+
+  console.log("All tasks completed:", results);
+
   pool.terminate();
 }
 
@@ -886,23 +871,23 @@ async function useWorkerPool() {
 class SharedWorkerManager {
   private worker: SharedWorker;
   private port: MessagePort;
-  
+
   constructor(scriptURL: string) {
     this.worker = new SharedWorker(scriptURL);
     this.port = this.worker.port;
     this.port.start();
   }
-  
+
   send(message: any): void {
     this.port.postMessage(message);
   }
-  
+
   onMessage(callback: (data: any) => void): void {
     this.port.onmessage = (event) => {
       callback(event.data);
     };
   }
-  
+
   close(): void {
     this.port.close();
   }
@@ -926,50 +911,50 @@ class SharedWorkerManager {
 class SharedMemoryManager {
   private buffer: SharedArrayBuffer;
   private view: Int32Array;
-  
+
   constructor(size: number) {
     this.buffer = new SharedArrayBuffer(size * Int32Array.BYTES_PER_ELEMENT);
     this.view = new Int32Array(this.buffer);
   }
-  
+
   // Atomic operations
   // Thao tác atomic
-  
+
   atomicAdd(index: number, value: number): number {
     return Atomics.add(this.view, index, value);
   }
-  
+
   atomicSub(index: number, value: number): number {
     return Atomics.sub(this.view, index, value);
   }
-  
+
   atomicLoad(index: number): number {
     return Atomics.load(this.view, index);
   }
-  
+
   atomicStore(index: number, value: number): number {
     return Atomics.store(this.view, index, value);
   }
-  
+
   atomicExchange(index: number, value: number): number {
     return Atomics.exchange(this.view, index, value);
   }
-  
+
   atomicCompareExchange(index: number, expected: number, replacement: number): number {
     return Atomics.compareExchange(this.view, index, expected, replacement);
   }
-  
+
   // Wait/notify for synchronization
   // Wait/notify cho đồng bộ hóa
-  
-  wait(index: number, value: number, timeout?: number): 'ok' | 'not-equal' | 'timed-out' {
+
+  wait(index: number, value: number, timeout?: number): "ok" | "not-equal" | "timed-out" {
     return Atomics.wait(this.view, index, value, timeout);
   }
-  
+
   notify(index: number, count: number = 1): number {
     return Atomics.notify(this.view, index, count);
   }
-  
+
   getBuffer(): SharedArrayBuffer {
     return this.buffer;
   }
@@ -980,38 +965,38 @@ class SharedMemoryManager {
 class SharedLock {
   private static UNLOCKED = 0;
   private static LOCKED = 1;
-  
+
   constructor(
     private buffer: SharedArrayBuffer,
-    private index: number
+    private index: number,
   ) {}
-  
+
   lock(): void {
     const view = new Int32Array(this.buffer);
-    
+
     while (true) {
       const oldValue = Atomics.compareExchange(
         view,
         this.index,
         SharedLock.UNLOCKED,
-        SharedLock.LOCKED
+        SharedLock.LOCKED,
       );
-      
+
       if (oldValue === SharedLock.UNLOCKED) {
         return; // Lock acquired
       }
-      
+
       // Wait for unlock
       Atomics.wait(view, this.index, SharedLock.LOCKED);
     }
   }
-  
+
   unlock(): void {
     const view = new Int32Array(this.buffer);
     Atomics.store(view, this.index, SharedLock.UNLOCKED);
     Atomics.notify(view, this.index, 1);
   }
-  
+
   async withLock<T>(fn: () => Promise<T>): Promise<T> {
     this.lock();
     try {
@@ -1041,12 +1026,12 @@ class AsyncRange {
   constructor(
     private start: number,
     private end: number,
-    private delay: number = 100
+    private delay: number = 100,
   ) {}
-  
+
   async *[Symbol.asyncIterator]() {
     for (let i = this.start; i <= this.end; i++) {
-      await new Promise(resolve => setTimeout(resolve, this.delay));
+      await new Promise((resolve) => setTimeout(resolve, this.delay));
       yield i;
     }
   }
@@ -1055,7 +1040,7 @@ class AsyncRange {
 // Usage
 async function useAsyncRange() {
   const range = new AsyncRange(1, 5, 100);
-  
+
   for await (const num of range) {
     console.log(num); // 1, 2, 3, 4, 5 (with delays)
   }
@@ -1065,7 +1050,7 @@ async function useAsyncRange() {
 async function* asyncGenerator() {
   let i = 0;
   while (i < 5) {
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
     yield i++;
   }
 }
@@ -1074,16 +1059,16 @@ async function* asyncGenerator() {
 class AsyncIteratorHelpers {
   static async *map<T, U>(
     iterable: AsyncIterable<T>,
-    fn: (value: T) => U | Promise<U>
+    fn: (value: T) => U | Promise<U>,
   ): AsyncIterableIterator<U> {
     for await (const value of iterable) {
       yield await fn(value);
     }
   }
-  
+
   static async *filter<T>(
     iterable: AsyncIterable<T>,
-    predicate: (value: T) => boolean | Promise<boolean>
+    predicate: (value: T) => boolean | Promise<boolean>,
   ): AsyncIterableIterator<T> {
     for await (const value of iterable) {
       if (await predicate(value)) {
@@ -1091,18 +1076,15 @@ class AsyncIteratorHelpers {
       }
     }
   }
-  
-  static async *take<T>(
-    iterable: AsyncIterable<T>,
-    count: number
-  ): AsyncIterableIterator<T> {
+
+  static async *take<T>(iterable: AsyncIterable<T>, count: number): AsyncIterableIterator<T> {
     let i = 0;
     for await (const value of iterable) {
       if (i++ >= count) break;
       yield value;
     }
   }
-  
+
   static async toArray<T>(iterable: AsyncIterable<T>): Promise<T[]> {
     const result: T[] = [];
     for await (const value of iterable) {
@@ -1122,6 +1104,7 @@ class AsyncIteratorHelpers {
 **A:** Use a Web Worker when a computation would block the main thread for more than ~16ms (one frame at 60fps). Web Workers run on a separate OS thread — the main thread stays responsive for rendering and user events.
 
 **Constraints:**
+
 - No DOM access — workers can't read or write `document` / `window`. Return computed data, let the main thread update the UI.
 - Communication only via `postMessage` — data is serialized (structured clone). Use Transferable Objects (`ArrayBuffer`, `MessagePort`) for zero-copy O(1) transfer of large binary data.
 - Worker startup cost is ~5ms — not worth it for sub-millisecond tasks.
@@ -1130,6 +1113,7 @@ class AsyncIteratorHelpers {
 **Tiếng Việt:** Dùng Web Worker khi computation >16ms để tránh block main thread. Worker không có DOM access — chỉ truyền dữ liệu qua `postMessage`. Với binary data lớn, dùng Transferable Objects để transfer ownership O(1) thay vì copy O(n).
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Mentions the 16ms frame budget threshold; explains structured clone vs Transferable distinction; mentions worker startup cost trade-off
 - ❌ Weak: "Web Workers run code in background" — true but missing when/why to use them and the DOM/communication constraints
 
@@ -1142,6 +1126,7 @@ class AsyncIteratorHelpers {
 **Protocol:** An async iterable must implement `[Symbol.asyncIterator]()` returning an object with `async next()` → `Promise<{value, done}>`.
 
 `for await...of` sugar:
+
 1. Calls `[Symbol.asyncIterator]()` to get the iterator
 2. Calls `.next()`, **awaits** the returned Promise
 3. Extracts `{value, done}`, runs loop body with `value`
@@ -1152,22 +1137,23 @@ class AsyncIteratorHelpers {
 
 ```javascript
 async function* paginate(url) {
-  let page = 1
+  let page = 1;
   while (true) {
-    const items = await fetch(`${url}?page=${page++}`).then(r => r.json())
-    if (items.length === 0) return
-    yield items  // ← emits one page at a time; consumer controls pace
+    const items = await fetch(`${url}?page=${page++}`).then((r) => r.json());
+    if (items.length === 0) return;
+    yield items; // ← emits one page at a time; consumer controls pace
   }
 }
 
-for await (const page of paginate('/api/products')) {
-  renderPage(page)  // natural backpressure — next fetch waits until consumer is ready
+for await (const page of paginate("/api/products")) {
+  renderPage(page); // natural backpressure — next fetch waits until consumer is ready
 }
 ```
 
 **Tiếng Việt:** `for await...of` là `for...of` nhưng await mỗi `.next()`. Protocol: `[Symbol.asyncIterator]()` trả về object có `async next()`. Cách đơn giản nhất: `async function*` generator kết hợp `await` (chờ I/O) và `yield` (phát giá trị). Khi `break`, `.return()` được gọi — generator `finally` cleanup chạy đúng.
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Explains pull-based vs push-based; mentions backpressure; knows `.return()` is called on break for cleanup; compares to EventEmitter (push)
 - ❌ Weak: "for await is like for...of but for Promises" — misses the protocol, pull model, and backpressure
 
@@ -1180,6 +1166,7 @@ for await (const page of paginate('/api/products')) {
 But sharing memory creates **race conditions**: if two workers do `shared[0]++` (read-modify-write) concurrently, one increment is lost — they both read the same old value, compute +1, write back the same result.
 
 **Atomics** provides operations that are guaranteed indivisible:
+
 - `Atomics.add(view, i, 1)` — atomic increment, never races
 - `Atomics.compareExchange(view, i, expected, replacement)` — **CAS**: read the value, compare it to `expected`; if they match, write `replacement`; return the old value. The entire operation is atomic. Used to build mutexes, lock-free queues, spinlocks.
 
@@ -1188,8 +1175,9 @@ But sharing memory creates **race conditions**: if two workers do `shared[0]++` 
 **Tiếng Việt:** `postMessage` copy data — tốn kém cho dataset lớn. `SharedArrayBuffer` chia sẻ bộ nhớ gốc không copy. Nhưng cần Atomics để tránh race condition. `compareExchange` là CAS (compare-and-swap): đọc → so sánh expected → nếu khớp thì ghi replacement — toàn bộ là một thao tác nguyên tử. SharedArrayBuffer cần COOP/COEP headers (Spectre mitigation). `Atomics.wait` bị block trên main thread — dùng `Atomics.waitAsync`.
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Explains why postMessage is insufficient for large data (copy cost); describes the race condition without Atomics; explains CAS semantics of `compareExchange`; mentions Spectre and COOP/COEP requirement
-- ❌ Weak: "SharedArrayBuffer lets workers share memory, Atomics makes it thread-safe" — correct but surface level; interviewer will ask *how* and *why*
+- ❌ Weak: "SharedArrayBuffer lets workers share memory, Atomics makes it thread-safe" — correct but surface level; interviewer will ask _how_ and _why_
 
 ---
 
@@ -1202,45 +1190,46 @@ But sharing memory creates **race conditions**: if two workers do `shared[0]++` 
 ```javascript
 // main.js
 async function processImage(imageFile) {
-  const worker = new Worker('./image-worker.js')
+  const worker = new Worker("./image-worker.js");
 
   // Get raw pixels via OffscreenCanvas or ImageBitmap
-  const bitmap = await createImageBitmap(imageFile)
+  const bitmap = await createImageBitmap(imageFile);
   // Transfer ImageBitmap — zero-copy, ownership moves to worker
-  worker.postMessage({ type: 'PROCESS', bitmap }, [bitmap])
+  worker.postMessage({ type: "PROCESS", bitmap }, [bitmap]);
   // ⚠️ bitmap is now detached on main thread
 
   return new Promise((resolve) => {
     worker.onmessage = (e) => {
       // Worker returns processed ArrayBuffer — transfer back
-      const processedBuffer = e.data.buffer
-      resolve(processedBuffer)
-      worker.terminate()
-    }
-  })
+      const processedBuffer = e.data.buffer;
+      resolve(processedBuffer);
+      worker.terminate();
+    };
+  });
 }
 
 // image-worker.js
 self.onmessage = async (e) => {
-  const { bitmap } = e.data
-  const offscreen = new OffscreenCanvas(bitmap.width, bitmap.height)
-  const ctx = offscreen.getContext('2d')
-  ctx.drawImage(bitmap, 0, 0)
-  const imageData = ctx.getImageData(0, 0, bitmap.width, bitmap.height)
+  const { bitmap } = e.data;
+  const offscreen = new OffscreenCanvas(bitmap.width, bitmap.height);
+  const ctx = offscreen.getContext("2d");
+  ctx.drawImage(bitmap, 0, 0);
+  const imageData = ctx.getImageData(0, 0, bitmap.width, bitmap.height);
 
   // Heavy processing — e.g., grayscale
-  const pixels = imageData.data  // Uint8ClampedArray
+  const pixels = imageData.data; // Uint8ClampedArray
   for (let i = 0; i < pixels.length; i += 4) {
-    const avg = (pixels[i] + pixels[i+1] + pixels[i+2]) / 3
-    pixels[i] = pixels[i+1] = pixels[i+2] = avg
+    const avg = (pixels[i] + pixels[i + 1] + pixels[i + 2]) / 3;
+    pixels[i] = pixels[i + 1] = pixels[i + 2] = avg;
   }
 
-  const processed = imageData.data.buffer
-  self.postMessage({ buffer: processed }, [processed])  // transfer back
-}
+  const processed = imageData.data.buffer;
+  self.postMessage({ buffer: processed }, [processed]); // transfer back
+};
 ```
 
 **Key decisions:**
+
 - Transfer `ImageBitmap` (Transferable) → zero-copy from main to worker
 - Use `OffscreenCanvas` in worker for canvas API without main thread
 - Transfer result `ArrayBuffer` back — zero-copy again
@@ -1250,6 +1239,7 @@ self.onmessage = async (e) => {
 **Tiếng Việt:** Pipeline: `createImageBitmap` trên main thread → transfer (zero-copy) sang worker → xử lý pixel trên worker (CPU không block UI) → transfer ArrayBuffer kết quả về main thread. Dùng `OffscreenCanvas` trong worker để vẽ canvas. Worker pool để xử lý batch song song với N CPU cores.
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Uses Transferable Objects (not postMessage copy) for both directions; mentions OffscreenCanvas; discusses worker pooling for batch; connects to WASM for codec use cases
 - ❌ Weak: "Create a worker and postMessage the image data" — misses zero-copy transfer and the OffscreenCanvas pattern; will cause O(n) copy on large images
 
@@ -1257,12 +1247,12 @@ self.onmessage = async (e) => {
 
 ## Q&A Summary / Tóm Tắt Q&A
 
-| # | Topic | Key Insight |
-|---|-------|-------------|
-| Q1 | Web Workers — when/constraints | >16ms threshold; no DOM; postMessage serializes; Transferable = zero-copy |
-| Q2 | Async iterators — protocol | `[Symbol.asyncIterator]` + `async next()`; `for await` awaits each next(); pull-based backpressure |
-| Q3 | SharedArrayBuffer + Atomics | postMessage copies; SAB shares; CAS (`compareExchange`) for lock-free algorithms; COOP/COEP required |
-| Q4 | Image processing pipeline | ImageBitmap Transferable + OffscreenCanvas + worker pool = zero-copy parallel processing |
+| #   | Topic                          | Key Insight                                                                                          |
+| --- | ------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| Q1  | Web Workers — when/constraints | >16ms threshold; no DOM; postMessage serializes; Transferable = zero-copy                            |
+| Q2  | Async iterators — protocol     | `[Symbol.asyncIterator]` + `async next()`; `for await` awaits each next(); pull-based backpressure   |
+| Q3  | SharedArrayBuffer + Atomics    | postMessage copies; SAB shares; CAS (`compareExchange`) for lock-free algorithms; COOP/COEP required |
+| Q4  | Image processing pipeline      | ImageBitmap Transferable + OffscreenCanvas + worker pool = zero-copy parallel processing             |
 
 ---
 
@@ -1280,6 +1270,7 @@ self.onmessage = async (e) => {
 **Close this document. Answer from memory:**
 
 **Retrieval:**
+
 1. What are the 3 types of Web Workers and their use cases?
 2. Why does `postMessage` not use Transferable Objects by default?
 3. What is the async iterator protocol — what method/symbol does an object need?
@@ -1287,19 +1278,25 @@ self.onmessage = async (e) => {
 5. What does `Atomics.compareExchange(view, i, expected, replacement)` do atomically?
 
 **Visual:**
+
 - Draw the Web Worker communication model: main thread ↔ postMessage ↔ worker. Where does DOM live? Where does heavy computation go?
 - Draw the async iterator pull model: consumer calls `.next()` → awaits → gets value → calls `.next()` again. How is this different from EventEmitter?
 
 **Application:**
+
 - When would you use a SharedArrayBuffer instead of postMessage for worker communication?
 - Your app processes 1000 images. Design a solution that doesn't freeze the UI and uses CPU cores efficiently.
 
 **Debug:**
+
 - `SharedArrayBuffer` returns `undefined` in your code. What's the likely cause?
 - `Atomics.wait` throws an error on the main thread. Why? What's the fix?
 
 **Teach:**
+
 - Explain async iterators to a junior developer using the "room service" analogy: you call room service (`.next()`), wait for them to bring the food (await Promise), eat it, then call again — you control the pace.
+
+> 🎯 **Feynman Prompt:** Giải thích cho PM: tại sao trang web bị "đơ" khi xử lý file lớn — JavaScript single-thread hoạt động như thế nào, và Web Workers giải quyết vấn đề đó ra sao mà không cần "chia sẻ bộ nhớ" rủi ro?
 
 ---
 

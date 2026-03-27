@@ -654,14 +654,42 @@ Giải thích tiếng Việt: React 19 cho phép ref callback trả về cleanup
 
 ---
 
-## Self-Check / Tự Kiểm Tra ⚡ (Đóng tài liệu lại trước khi làm)
+## 🔄 Self-Check / Tự Kiểm Tra
 
-- [ ] **Retrieval**: Viết từ trí nhớ — React Compiler làm gì tại build time? Yêu cầu gì từ code? Hạn chế gì?
-- [ ] **Visual**: Vẽ diagram component tree cho form với `useActionState` (parent), `useFormStatus` (child button), `useOptimistic` (instant list).
-- [ ] **Application**: Form checkout cần: submit → pending state → error handling → optimistic update. Viết code dùng React 19 Actions pattern (không dùng useState isLoading).
-- [ ] **Debug**: `use(fetchUser(id))` gọi trong render gây infinite loop. Tại sao? Fix thế nào?
-- [ ] **Teach**: Giải thích tại sao `use()` có thể gọi trong `if/else` nhưng `useContext` không, bằng ví dụ "đăng ký nhận báo vs mua báo ở sạp".
+> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
 
-💬 **Feynman Prompt:** Giải thích React Actions pattern cho dev đã biết React 18 — tại sao `useActionState` thay thế pattern `isLoading + error + try/catch`?
+| # | Loại | Câu hỏi |
+|---|------|---------|
+| 1 | 🔍 Retrieval | React Compiler làm gì tại build time? Yêu cầu gì từ code? Hạn chế gì cần biết khi adopt? |
+| 2 | 🎨 Visual | Vẽ component tree cho form với `useActionState` (parent), `useFormStatus` (child button), `useOptimistic` (instant list update). |
+| 3 | 🛠️ Application | Viết form checkout: submit → pending state → error handling → optimistic update dùng React 19 Actions pattern (không dùng `useState isLoading`). |
+| 4 | 🐛 Debug | `use(fetchUser(id))` gọi trong render gây infinite loop. Tại sao? Fix thế nào mà vẫn dùng `use()`? |
+| 5 | 🎓 Teach | Giải thích tại sao `use()` có thể gọi trong `if/else` nhưng `useContext` không — dùng ví dụ "đăng ký nhận báo vs mua báo ở sạp". |
 
+### Key Points (tự kiểm tra)
+
+| # | Key Point |
+|---|-----------|
+| 1 | Compiler auto-memoize theo Rules of Hooks, không cần `useMemo`/`useCallback` thủ công. Yêu cầu: code phải tuân thủ Rules of Hooks. Hạn chế: chưa support toàn bộ patterns. |
+| 2 | `<Form>` dùng `useActionState(action, null)` → `formAction`. `<SubmitButton>` dùng `useFormStatus().pending`. `<List>` dùng `useOptimistic(items, (s,n) => [...s,n])`. |
+| 3 | `const [state, formAction] = useActionState(checkoutAction, null)`. `useOptimistic` cho instant feedback. `useFormStatus` trong child component cho `pending`. |
+| 4 | `fetchUser(id)` tạo new Promise mỗi render → Suspense boundary reset → re-render loop. Fix: cache promise bên ngoài render (useMemo, module-level, hay cache lib). |
+| 5 | `useContext` = "đăng ký nhận báo hàng ngày" (subscription, phải ổn định). `use()` = "ra sạp mua báo" (one-time read). Subscription cần Rules of Hooks; one-time read thì không. |
+
+> 🎯 **Feynman Prompt:** Giải thích React Actions pattern cho dev đã biết React 18 — tại sao `useActionState` thay thế pattern `isLoading + error + try/catch`?
 🔁 **Spaced Repetition reminder:** Review this file again on 2026-03-22, then 2026-03-26, then 2026-04-02.
+
+---
+
+## 🔗 Connections / Liên Kết
+
+### Cùng track (Same track)
+- [Modern React Features](./10-modern-react-features.md) — concurrent rendering and Server Components in depth
+- [Performance Optimization](./09-performance-optimization.md) — Compiler's memoization fits here
+- [React Fundamentals](./01-react-fundamentals.md) — baseline model that React 19 extends
+- [State Management](./05-state-management.md) — Actions pattern replaces manual loading state
+
+### Khác track (Cross-track)
+- [App Router & Server Components](../04-nextjs/01-app-router-server-components.md) — framework layer for React Server Components
+- [React Performance](../06-browser-performance/02-react-performance.md) — browser-level impact of React 19 improvements
+- [Architecture Styles](../../shared/05-software-engineering/02-architecture-styles.md) — RSC changes client/server architecture boundaries

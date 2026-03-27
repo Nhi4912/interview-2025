@@ -15,14 +15,14 @@ VNG's ZaloPay frontend team maintained 15 form types — each needing "create", 
 After a refactor sprint, the team reduced to 15 base types plus 3 generic transformers:
 
 ```typescript
-type CreateForm<T> = Omit<T, 'id' | 'createdAt'>;
-type UpdateForm<T> = Partial<CreateForm<T>> & Pick<T, 'id'>;
+type CreateForm<T> = Omit<T, "id" | "createdAt">;
+type UpdateForm<T> = Partial<CreateForm<T>> & Pick<T, "id">;
 type ReadonlyForm<T> = Readonly<T>;
 ```
 
 A senior engineer then added conditional types to auto-generate API response types from endpoint definitions — one source of truth for 60+ endpoints, zero drift between request/response shapes.
 
-**Key insight / Điểm mấu chốt:** Advanced types are not academic exercises. They are the difference between a type system that *describes* your code and one that *enforces* correctness at every layer.
+**Key insight / Điểm mấu chốt:** Advanced types are not academic exercises. They are the difference between a type system that _describes_ your code and one that _enforces_ correctness at every layer.
 
 ---
 
@@ -72,10 +72,10 @@ And the formula behind them all: `{ [K in keyof T]?: T[K] }` — iterate, transf
 You have a `User` interface. You need a version for create (no `id`), a version for update (all optional), a version for display (no `password`). Without utility types you copy-paste the interface three times. When `User` gains a `phoneNumber` field, you update one place and forget the other two. Production bug.
 
 **Level 2 — The deeper principle:**
-Duplicating types is the same mistake as duplicating code — it violates DRY at the *schema* level. Utility types are the type system's answer to functions: instead of writing logic twice, you write a *transformation* once and apply it everywhere.
+Duplicating types is the same mistake as duplicating code — it violates DRY at the _schema_ level. Utility types are the type system's answer to functions: instead of writing logic twice, you write a _transformation_ once and apply it everywhere.
 
 **Tiếng Việt:**
-Utility types giải quyết vấn đề "type drift" — khi các phiên bản copy của một interface bắt đầu diverge. Chúng là DRY cho type system: thay vì viết lại interface, bạn *biến đổi* nó.
+Utility types giải quyết vấn đề "type drift" — khi các phiên bản copy của một interface bắt đầu diverge. Chúng là DRY cho type system: thay vì viết lại interface, bạn _biến đổi_ nó.
 
 ---
 
@@ -111,7 +111,7 @@ MAPPED TYPE ANATOMY:
 
 ### What & Why / Cái Gì & Tại Sao (Feynman Layer)
 
-Imagine a photo editing app. You have one original photo (your base type `T`). Filters don't create new photos from scratch — they *transform* the original:
+Imagine a photo editing app. You have one original photo (your base type `T`). Filters don't create new photos from scratch — they _transform_ the original:
 
 - Grayscale filter = `Readonly<T>` — same image, no modifications allowed
 - Crop filter = `Pick<T, Keys>` — same image, only show selected area
@@ -119,9 +119,10 @@ Imagine a photo editing app. You have one original photo (your base type `T`). F
 - Fade-to-transparent = `Partial<T>` — same image, nothing required to be solid
 
 Mapped types are the engine under every utility type. `Partial<T>` is literally:
+
 ```typescript
 type Partial<T> = {
-  [K in keyof T]?: T[K];  // "for each key K in T, make it optional"
+  [K in keyof T]?: T[K]; // "for each key K in T, make it optional"
 };
 ```
 
@@ -139,7 +140,7 @@ type MyPartial<T> = {
 
 // ── Required: strip optionality with - modifier ────────────────────────
 type MyRequired<T> = {
-  [K in keyof T]-?: T[K];  // "-?" removes the optional modifier
+  [K in keyof T]-?: T[K]; // "-?" removes the optional modifier
 };
 
 // ── Readonly: add readonly modifier ───────────────────────────────────
@@ -171,10 +172,10 @@ interface PaymentForm {
   createdAt: Date;
 }
 
-type CreatePaymentForm = Omit<PaymentForm, 'id' | 'createdAt'>;
+type CreatePaymentForm = Omit<PaymentForm, "id" | "createdAt">;
 // { amount: number; recipient: string; note: string }
 
-type UpdatePaymentForm = Partial<CreatePaymentForm> & Pick<PaymentForm, 'id'>;
+type UpdatePaymentForm = Partial<CreatePaymentForm> & Pick<PaymentForm, "id">;
 // { id: string; amount?: number; recipient?: string; note?: string }
 
 type ReadonlyPaymentForm = Readonly<PaymentForm>;
@@ -208,8 +209,8 @@ interface Mixed {
   active: boolean;
 }
 
-type StringProps = FilterByType<Mixed, string>;   // { name: string }
-type NumberProps = FilterByType<Mixed, number>;   // { id: number; age: number }
+type StringProps = FilterByType<Mixed, string>; // { name: string }
+type NumberProps = FilterByType<Mixed, number>; // { id: number; age: number }
 
 // Remove readonly and optionality from mapped type
 type Mutable<T> = {
@@ -219,30 +220,15 @@ type Mutable<T> = {
 
 ---
 
-### Common Mistakes / Lỗi Thường Gặp
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-```
-❌ MISTAKE                                    ✅ CORRECT
-────────────────────────────────────────────────────────────────────────────
-Partial<NestedObject> makes deep props        Use DeepPartial<T> (recursive)
-  required — Partial is SHALLOW only          type DeepPartial<T> = T extends object
-                                               ? { [K in keyof T]?: DeepPartial<T[K]> }
-                                               : T
-
-Confusing Pick vs Omit for large types        Pick when you want FEW props from a
-  Pick<User, 'id'|'name'|'email'|…>            large type → use Omit instead
-  (listing 10 props to "keep 10 of 12")        Omit<User, 'password' | 'salt'>
-
-Record<string, User> accepts ANY string       Use a union key for exhaustive safety:
-  key — no exhaustiveness guarantee            Record<'admin' | 'user' | 'guest', User>
-
-Using `Omit<T, K>` where K is not in T       TypeScript won't error, but it's a sign
-  — silently does nothing                      the design is wrong; audit your types
-
-Forgetting mapped types are SHALLOW           Deep transformations require explicit
-  Readonly<{ a: { b: string } }> does          recursion — write DeepReadonly<T>
-  NOT make `b` readonly
-```
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `Partial<NestedObject>` for deep partial types | `Partial` only makes top-level props optional — nested objects remain fully required | Use `DeepPartial<T>` (recursive): `T extends object ? { [K in keyof T]?: DeepPartial<T[K]> } : T` |
+| `Pick<User, 'id'\|'name'\|...\|>` listing many props to keep | Listing 10 of 12 props to keep is tedious and fragile — better to state what you omit | Use `Omit<User, 'password' \| 'salt'>` when you want to remove few props from a large type |
+| `Record<string, User>` for exhaustive key mapping | Accepts ANY string key — no compile-time guarantee all required keys are covered | Use `Record<'admin' \| 'user' \| 'guest', User>` for exhaustive, type-safe key union |
+| `Omit<T, K>` where `K` is not in `T` | TypeScript silently does nothing — no error, design issue goes unnoticed | Audit your types; the key not existing is a sign of a design problem |
+| `Readonly<{ a: { b: string } }>` expecting deep readonly | Mapped types are SHALLOW — `Readonly` does not make nested object `b` readonly | Write `DeepReadonly<T>` with explicit recursion for deep immutability |
 
 ---
 
@@ -259,20 +245,20 @@ Forgetting mapped types are SHALLOW           Deep transformations require expli
 ### 🧠 Memory Hook
 
 > **"T extends U ? X : Y — same as ternary, but for types"**
-> And `infer R` is how you *capture* the thing you're checking for — "if T is a Promise, extract the value type *as R*."
+> And `infer R` is how you _capture_ the thing you're checking for — "if T is a Promise, extract the value type _as R_."
 
 ---
 
 ### Why Does This Exist? / Tại Sao Nó Tồn Tại?
 
 **Level 1 — Immediate pain:**
-You have a utility that wraps any value in a Promise. Now you need a type that *unwraps* it. Without conditional types, you'd have to manually write overloads for every possible input type — no way to say "if T is `Promise<X>`, return `X`".
+You have a utility that wraps any value in a Promise. Now you need a type that _unwraps_ it. Without conditional types, you'd have to manually write overloads for every possible input type — no way to say "if T is `Promise<X>`, return `X`".
 
 **Level 2 — The deeper principle:**
 Real type relationships are conditional. "The return type of this HOC depends on whether its argument is async" requires branching at the type level. Conditional types make the type system Turing-complete — they are the `if/else` that turns a passive annotation system into an active reasoning engine.
 
 **Tiếng Việt:**
-Conditional types là `if/else` ở cấp độ type. Chúng cần thiết khi kết quả type phụ thuộc vào đặc điểm của input — ví dụ: "nếu T là Promise, unwrap nó; nếu T là mảng, lấy element type". `infer` cho phép bạn *capture* phần bạn đang kiểm tra thay vì chỉ kiểm tra nó.
+Conditional types là `if/else` ở cấp độ type. Chúng cần thiết khi kết quả type phụ thuộc vào đặc điểm của input — ví dụ: "nếu T là Promise, unwrap nó; nếu T là mảng, lấy element type". `infer` cho phép bạn _capture_ phần bạn đang kiểm tra thay vì chỉ kiểm tra nó.
 
 ---
 
@@ -311,9 +297,9 @@ INFER PATTERN:
 
 ### What & Why / Cái Gì & Tại Sao (Feynman Layer)
 
-Think of a postal sorting machine. Packages roll down a conveyor. The machine checks shape: "Is this a box? Send it left. Is this an envelope? Send it right." Conditional types are that machine — at the *type* level. And `infer` is the machine's ability to read the *label* on the package while sorting it, not just the shape.
+Think of a postal sorting machine. Packages roll down a conveyor. The machine checks shape: "Is this a box? Send it left. Is this an envelope? Send it right." Conditional types are that machine — at the _type_ level. And `infer` is the machine's ability to read the _label_ on the package while sorting it, not just the shape.
 
-**Tiếng Việt:** Hãy nghĩ về conditional types như máy phân loại bưu kiện. Kiện hàng chạy qua dây chuyền, máy kiểm tra hình dạng rồi gửi sang trái hoặc phải. `infer` là khả năng đọc nhãn trên kiện hàng trong khi phân loại — bạn không chỉ kiểm tra mà còn *trích xuất* thông tin.
+**Tiếng Việt:** Hãy nghĩ về conditional types như máy phân loại bưu kiện. Kiện hàng chạy qua dây chuyền, máy kiểm tra hình dạng rồi gửi sang trái hoặc phải. `infer` là khả năng đọc nhãn trên kiện hàng trong khi phân loại — bạn không chỉ kiểm tra mà còn _trích xuất_ thông tin.
 
 ---
 
@@ -323,9 +309,9 @@ Think of a postal sorting machine. Packages roll down a conveyor. The machine ch
 // ── Basic conditional type ─────────────────────────────────────────────
 type IsString<T> = T extends string ? true : false;
 
-type A = IsString<string>;   // true
-type B = IsString<number>;   // false
-type C = IsString<'hello'>;  // true  (string literal extends string)
+type A = IsString<string>; // true
+type B = IsString<number>; // false
+type C = IsString<"hello">; // true  (string literal extends string)
 
 // ── Unwrap utilities using infer ───────────────────────────────────────
 // Extract the resolved type of a Promise
@@ -340,14 +326,14 @@ type NotAPromise = Unwrap<string>;
 // Extract array element type
 type ArrayElement<T> = T extends (infer E)[] ? E : never;
 
-type Nums = ArrayElement<number[]>;  // number
-type Strs = ArrayElement<string[]>;  // string
+type Nums = ArrayElement<number[]>; // number
+type Strs = ArrayElement<string[]>; // string
 
 // Implement ReturnType from scratch
 type MyReturnType<T> = T extends (...args: any[]) => infer R ? R : never;
 
 function getUser() {
-  return { id: 1, name: 'John' };
+  return { id: 1, name: "John" };
 }
 
 type User = MyReturnType<typeof getUser>;
@@ -395,9 +381,7 @@ type ServiceMethods = FunctionKeys<Service>;
 
 ```typescript
 // ── Recursive conditional types ────────────────────────────────────────
-type DeepPartial<T> = T extends object
-  ? { [P in keyof T]?: DeepPartial<T[P]> }
-  : T;
+type DeepPartial<T> = T extends object ? { [P in keyof T]?: DeepPartial<T[P]> } : T;
 
 interface NestedConfig {
   server: {
@@ -418,39 +402,23 @@ type PartialConfig = DeepPartial<NestedConfig>;
 // All nested properties optional — server?.host?, server?.tls?.enabled?, etc.
 
 // infer with constraint (TypeScript 4.7+)
-type FirstStringElement<T> =
-  T extends [infer First extends string, ...any[]] ? First : never;
+type FirstStringElement<T> = T extends [infer First extends string, ...any[]] ? First : never;
 
-type Result = FirstStringElement<['hello', 1, true]>;  // 'hello'
-type NoResult = FirstStringElement<[1, 'hello']>;      // never
+type Result = FirstStringElement<["hello", 1, true]>; // 'hello'
+type NoResult = FirstStringElement<[1, "hello"]>; // never
 ```
 
 ---
 
-### Common Mistakes / Lỗi Thường Gặp
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-```
-❌ MISTAKE                                    ✅ CORRECT
-────────────────────────────────────────────────────────────────────────────
-Not realizing conditional types distribute    Wrap in tuple [T] extends [U]
-  over unions — ToArray<string|number>         when you want to treat the union
-  gives string[]|number[], not (string|        as a single unit
-  number)[]
-
-Forgetting infer only works inside           type Unwrap<T> = T extends Promise<infer U>
-  `extends` condition                           ? U : T
-  — can't use infer outside the condition
-
-Using conditional types on non-generic       Non-generic types are evaluated eagerly
-  type aliases and expecting laziness          at definition time, not at usage time
-
-Nesting infer too deep without testing       Test each infer step in isolation
-  — hard to debug when wrong                   before composing them
-
-Confusing `T extends never` behavior         `never extends never` is true,
-  — it can cause unexpected results            but `T extends never` with a naked
-  in distributive contexts                     T distributes over nothing → never
-```
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Expecting `ToArray<string\|number>` to produce `(string\|number)[]` | Conditional types distribute over union members — each member is tested independently | Wrap in tuple `[T] extends [U]` to treat the union as a single unit |
+| Using `infer` outside an `extends` condition | `infer` is only valid inside conditional type patterns — it's a syntax error elsewhere | Use `type Unwrap<T> = T extends Promise<infer U> ? U : T` — `infer` inside `extends` only |
+| Using conditional types on non-generic type aliases and expecting lazy evaluation | Non-generic type aliases are evaluated eagerly at definition time, not deferred | Make the type alias generic so evaluation is deferred to each use site |
+| Nesting multiple `infer` clauses without testing each step | Deep nesting makes debugging impossible — a wrong inner `infer` silently returns `never` | Test each `infer` extraction in isolation before composing them |
+| `T extends never` behaving unexpectedly in distributive contexts | `never extends never` is `true`, but a naked `T extends never` distributes over nothing → `never` | Wrap in tuple `[T] extends [never]` for non-distributive check |
 
 ---
 
@@ -477,10 +445,10 @@ For template literals: **"String algebra — combine union types like multiplica
 ### Why Does This Exist? / Tại Sao Nó Tồn Tại?
 
 **Level 1 — Immediate pain:**
-UI state is inherently variant-based. A fetch call is either loading, errored, or successful. If you model this as one flat object with optional fields (`{ data?: T; error?: Error; isLoading?: boolean }`), you can have *illegal states* — `data` and `error` both set at the same time. Nothing in the type system prevents it.
+UI state is inherently variant-based. A fetch call is either loading, errored, or successful. If you model this as one flat object with optional fields (`{ data?: T; error?: Error; isLoading?: boolean }`), you can have _illegal states_ — `data` and `error` both set at the same time. Nothing in the type system prevents it.
 
 **Level 2 — The deeper principle:**
-Discriminated unions make *illegal states unrepresentable*. The compiler enforces that you can only be in *one* state at a time, and `switch (state.kind)` exhaustiveness checking means you *cannot forget to handle a case* without getting a compile error.
+Discriminated unions make _illegal states unrepresentable_. The compiler enforces that you can only be in _one_ state at a time, and `switch (state.kind)` exhaustiveness checking means you _cannot forget to handle a case_ without getting a compile error.
 
 Template literal types extend this to strings — instead of `type EventName = string` (accepts anything), you get `type EventName = 'onClick' | 'onFocus' | 'onBlur'` generated automatically from a union.
 
@@ -536,7 +504,7 @@ EXHAUSTIVENESS CHECK (the never trick):
 
 ### What & Why / Cái Gì & Tại Sao (Feynman Layer)
 
-A traffic light is always in exactly one state: red, yellow, or green. It is *never* in two states at once, and there is *no valid "in between" state*. Discriminated unions model your data the same way — the `kind` or `status` field is the color, and each color has its own set of rules (red = stop, green = go, no "red AND green").
+A traffic light is always in exactly one state: red, yellow, or green. It is _never_ in two states at once, and there is _no valid "in between" state_. Discriminated unions model your data the same way — the `kind` or `status` field is the color, and each color has its own set of rules (red = stop, green = go, no "red AND green").
 
 Template literal types are multiplication tables for strings. `'GET' | 'POST'` combined with `'/users' | '/posts'` generates all 4 possible endpoint strings automatically — no manual listing, no forgetting an entry.
 
@@ -549,12 +517,12 @@ Template literal types are multiplication tables for strings. `'GET' | 'POST'` c
 ```typescript
 // ── API response as discriminated union ────────────────────────────────
 interface SuccessResponse<T> {
-  status: 'success';
+  status: "success";
   data: T;
 }
 
 interface ErrorResponse {
-  status: 'error';
+  status: "error";
   error: {
     code: string;
     message: string;
@@ -562,23 +530,23 @@ interface ErrorResponse {
 }
 
 interface LoadingResponse {
-  status: 'loading';
+  status: "loading";
 }
 
 type ApiResponse<T> = SuccessResponse<T> | ErrorResponse | LoadingResponse;
 
 function handleResponse<T>(response: ApiResponse<T>): string {
   switch (response.status) {
-    case 'success':
+    case "success":
       return `Got data: ${JSON.stringify(response.data)}`;
-    case 'error':
+    case "error":
       return `Error ${response.error.code}: ${response.error.message}`;
-    case 'loading':
-      return 'Loading…';
+    case "loading":
+      return "Loading…";
     default:
       // Exhaustiveness check: if we forget a case, `response` is `never` here
       const _exhaustive: never = response;
-      throw new Error('Unhandled status: ' + _exhaustive);
+      throw new Error("Unhandled status: " + _exhaustive);
   }
 }
 ```
@@ -586,11 +554,11 @@ function handleResponse<T>(response: ApiResponse<T>): string {
 ```typescript
 // ── Form state machine ─────────────────────────────────────────────────
 type FormState<T> =
-  | { phase: 'idle' }
-  | { phase: 'validating' }
-  | { phase: 'submitting'; values: T }
-  | { phase: 'success'; result: { id: string } }
-  | { phase: 'error'; errors: Partial<Record<keyof T, string>> };
+  | { phase: "idle" }
+  | { phase: "validating" }
+  | { phase: "submitting"; values: T }
+  | { phase: "success"; result: { id: string } }
+  | { phase: "error"; errors: Partial<Record<keyof T, string>> };
 
 interface LoginValues {
   email: string;
@@ -601,14 +569,14 @@ type LoginFormState = FormState<LoginValues>;
 
 function renderForm(state: LoginFormState) {
   switch (state.phase) {
-    case 'idle':
-    case 'validating':
-      return 'Show form';
-    case 'submitting':
+    case "idle":
+    case "validating":
+      return "Show form";
+    case "submitting":
       return `Submitting: ${state.values.email}`;
-    case 'success':
+    case "success":
       return `Success! ID: ${state.result.id}`;
-    case 'error':
+    case "error":
       return `Errors: ${JSON.stringify(state.errors)}`;
   }
 }
@@ -617,15 +585,15 @@ function renderForm(state: LoginFormState) {
 ```typescript
 // ── Template literal types ─────────────────────────────────────────────
 // String combination via union cross-product
-type Color = 'red' | 'green' | 'blue';
-type Shade = 'light' | 'dark';
+type Color = "red" | "green" | "blue";
+type Shade = "light" | "dark";
 
 type ColorVariant = `${Shade}-${Color}`;
 // 'light-red' | 'light-green' | 'light-blue' |
 // 'dark-red'  | 'dark-green'  | 'dark-blue'
 
 // Auto-generate event handler names
-type EventName = 'click' | 'focus' | 'blur' | 'change';
+type EventName = "click" | "focus" | "blur" | "change";
 type HandlerName = `on${Capitalize<EventName>}`;
 // 'onClick' | 'onFocus' | 'onBlur' | 'onChange'
 
@@ -634,51 +602,34 @@ type EventHandlers<Events extends string> = {
   [E in Events as `on${Capitalize<E>}`]?: (event: Event) => void;
 };
 
-type ButtonHandlers = EventHandlers<'click' | 'focus' | 'blur'>;
+type ButtonHandlers = EventHandlers<"click" | "focus" | "blur">;
 // { onClick?: (event: Event) => void; onFocus?: …; onBlur?: … }
 
 // Extract URL parameters at the type level
-type ExtractParams<T extends string> =
-  T extends `${infer _Start}:${infer Param}/${infer Rest}`
-    ? { [K in Param | keyof ExtractParams<`/${Rest}`>]: string }
-    : T extends `${infer _Start}:${infer Param}`
+type ExtractParams<T extends string> = T extends `${infer _Start}:${infer Param}/${infer Rest}`
+  ? { [K in Param | keyof ExtractParams<`/${Rest}`>]: string }
+  : T extends `${infer _Start}:${infer Param}`
     ? { [K in Param]: string }
     : {};
 
-type UserParams = ExtractParams<'/users/:id'>;
+type UserParams = ExtractParams<"/users/:id">;
 // { id: string }
 
-type CommentParams = ExtractParams<'/posts/:postId/comments/:commentId'>;
+type CommentParams = ExtractParams<"/posts/:postId/comments/:commentId">;
 // { postId: string; commentId: string }
 ```
 
 ---
 
-### Common Mistakes / Lỗi Thường Gặp
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-```
-❌ MISTAKE                                    ✅ CORRECT
-────────────────────────────────────────────────────────────────────────────
-Using a non-literal discriminant              The discriminant MUST be a string/
-  kind: string  ← TypeScript can't narrow      number/boolean LITERAL type
-  on this, no narrowing happens                kind: 'circle' | 'rectangle'
-
-Forgetting the `default: never` trick         Always add exhaustiveness check in
-  — adding a new union member silently          switch default:
-  breaks the switch with no compile error       const _: never = x; throw new Error(…)
-
-Overlapping discriminant values               Each variant must have a UNIQUE
-  { kind: 'user'; isAdmin: boolean }            discriminant value — never reuse
-  vs { kind: 'user'; role: string }            the same literal in two variants
-
-Template literals with non-string keys        Use `string & K` to ensure K is treated
-  type T = { [K in keyof Obj as `get${K}` }   as string: `get${string & K}`
-  — error if K could be symbol or number
-
-Confusing Exclude (union subtraction) with    Exclude<'a'|'b'|'c', 'a'> → 'b'|'c'
-  Omit (object key removal)                    Omit<{a,b,c}, 'a'>       → {b,c}
-  They operate on different things
-```
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `kind: string` as discriminant field | TypeScript cannot narrow on a wide `string` type — it needs a specific literal to identify the variant | Use a literal type: `kind: 'circle' \| 'rectangle'` |
+| Missing `default: never` in exhaustive switch | Adding a new union member silently falls through with no compile error | Always add `default: const _: never = x; throw new Error(...)` for exhaustiveness |
+| Two variants sharing the same discriminant value: `{ kind: 'user'; isAdmin: boolean }` and `{ kind: 'user'; role: string }` | TypeScript cannot distinguish between the variants — narrowing is ambiguous | Each variant MUST have a UNIQUE literal discriminant value |
+| Template literal key remapping without `string & K`: `` `get${K}` `` | `keyof T` includes `number` and `symbol` — template literals require string keys | Use `` `get${string & K}` `` to ensure K is treated as string |
+| Using `Exclude` (union subtraction) when you need `Omit` (object key removal) | They operate on different things — `Exclude` works on union members, `Omit` on object keys | `Exclude<'a'\|'b'\|'c', 'a'>` → `'b'\|'c'`; `Omit<{a,b,c}, 'a'>` → `{b,c}` |
 
 ---
 
@@ -697,38 +648,47 @@ Type guards are the runtime complement to discriminated unions — they narrow t
 ```typescript
 // ── Built-in type guards ───────────────────────────────────────────────
 function processValue(value: string | number | null) {
-  if (typeof value === 'string') {
-    return value.toUpperCase();     // narrowed to string
-  } else if (typeof value === 'number') {
-    return value.toFixed(2);        // narrowed to number
+  if (typeof value === "string") {
+    return value.toUpperCase(); // narrowed to string
+  } else if (typeof value === "number") {
+    return value.toFixed(2); // narrowed to number
   }
-  return '';                        // narrowed to null
+  return ""; // narrowed to null
 }
 
 // ── instanceof guard ──────────────────────────────────────────────────
 class ApiError extends Error {
-  constructor(public code: number, message: string) {
+  constructor(
+    public code: number,
+    message: string,
+  ) {
     super(message);
   }
 }
 
 function handleError(err: Error | ApiError) {
   if (err instanceof ApiError) {
-    console.error(`API ${err.code}: ${err.message}`);  // err is ApiError
+    console.error(`API ${err.code}: ${err.message}`); // err is ApiError
   } else {
-    console.error(err.message);                         // err is Error
+    console.error(err.message); // err is Error
   }
 }
 
 // ── in operator guard ─────────────────────────────────────────────────
-interface Car { drive: () => void; fuelType: 'petrol' | 'electric' }
-interface Boat { sail: () => void; hullType: string }
+interface Car {
+  drive: () => void;
+  fuelType: "petrol" | "electric";
+}
+interface Boat {
+  sail: () => void;
+  hullType: string;
+}
 
 function move(vehicle: Car | Boat) {
-  if ('drive' in vehicle) {
-    vehicle.drive();   // narrowed to Car
+  if ("drive" in vehicle) {
+    vehicle.drive(); // narrowed to Car
   } else {
-    vehicle.sail();    // narrowed to Boat
+    vehicle.sail(); // narrowed to Boat
   }
 }
 
@@ -741,17 +701,20 @@ interface User {
 
 function isUser(obj: unknown): obj is User {
   return (
-    typeof obj === 'object' &&
+    typeof obj === "object" &&
     obj !== null &&
-    'id' in obj && typeof (obj as any).id === 'number' &&
-    'name' in obj && typeof (obj as any).name === 'string' &&
-    'email' in obj && typeof (obj as any).email === 'string'
+    "id" in obj &&
+    typeof (obj as any).id === "number" &&
+    "name" in obj &&
+    typeof (obj as any).name === "string" &&
+    "email" in obj &&
+    typeof (obj as any).email === "string"
   );
 }
 
 function processApiPayload(data: unknown) {
   if (isUser(data)) {
-    console.log(data.name);   // TypeScript knows data is User
+    console.log(data.name); // TypeScript knows data is User
   }
 }
 
@@ -777,30 +740,24 @@ interface StringMap {
 
 // With known keys + index signature
 interface FlexibleConfig {
-  required: string;          // known key — must match index signature value type
-  [key: string]: string;     // all other keys must also be string values
+  required: string; // known key — must match index signature value type
+  [key: string]: string; // all other keys must also be string values
 }
 
 // Dictionary pattern — prefer Record<string, T> for simpler cases
 type Dictionary<T> = { [key: string]: T };
 
 const cache: Dictionary<User> = {};
-cache['user-1'] = { id: 1, name: 'John', email: 'j@example.com' };
+cache["user-1"] = { id: 1, name: "John", email: "j@example.com" };
 
 // ── Recursive types ───────────────────────────────────────────────────
 // JSON-compatible value type
-type JSONValue =
-  | string
-  | number
-  | boolean
-  | null
-  | JSONValue[]
-  | { [key: string]: JSONValue };
+type JSONValue = string | number | boolean | null | JSONValue[] | { [key: string]: JSONValue };
 
 const data: JSONValue = {
-  name: 'John',
+  name: "John",
   scores: [1, 2, 3],
-  meta: { active: true, tags: ['a', 'b'] }
+  meta: { active: true, tags: ["a", "b"] },
 };
 
 // Tree data structure
@@ -810,11 +767,11 @@ interface TreeNode<T> {
 }
 
 const tree: TreeNode<string> = {
-  value: 'root',
+  value: "root",
   children: [
-    { value: 'child1', children: [] },
-    { value: 'child2', children: [{ value: 'grandchild', children: [] }] }
-  ]
+    { value: "child1", children: [] },
+    { value: "child2", children: [{ value: "grandchild", children: [] }] },
+  ],
 };
 ```
 
@@ -830,9 +787,9 @@ const tree: TreeNode<string> = {
 
 **The mental model — subtractive vs additive selection:**
 
-`Pick<T, Keys>` is additive: "I want *exactly these* keys." Use it when you need a small, specific subset from a large type.
+`Pick<T, Keys>` is additive: "I want _exactly these_ keys." Use it when you need a small, specific subset from a large type.
 
-`Omit<T, Keys>` is subtractive: "I want *everything except these* keys." Use it when you want most of a type and only need to remove a few fields.
+`Omit<T, Keys>` is subtractive: "I want _everything except these_ keys." Use it when you want most of a type and only need to remove a few fields.
 
 **Rule of thumb:** Count what you're selecting vs. excluding. If you're listing fewer keys, use the matching operation. Listing 10 keys to keep when you could list 2 keys to remove is noisy and error-prone.
 
@@ -849,36 +806,43 @@ interface FullUser {
 }
 
 // BAD: Pick with many keys to exclude 2 sensitive fields
-type BadPublicUser = Pick<FullUser, 'id' | 'name' | 'email' | 'createdAt' | 'updatedAt' | 'deletedAt'>;
+type BadPublicUser = Pick<
+  FullUser,
+  "id" | "name" | "email" | "createdAt" | "updatedAt" | "deletedAt"
+>;
 
 // GOOD: Omit the 2 sensitive fields — intent is clear
-type PublicUser = Omit<FullUser, 'passwordHash' | 'salt'>;
+type PublicUser = Omit<FullUser, "passwordHash" | "salt">;
 
 // GOOD: Pick when you want a small targeted subset
-type UserPreview = Pick<FullUser, 'id' | 'name'>;
+type UserPreview = Pick<FullUser, "id" | "name">;
 ```
 
 **Practical patterns from real codebases:**
 
 ```typescript
 // API layer: Omit server-assigned fields for create requests
-type CreateUserDTO = Omit<FullUser, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>;
+type CreateUserDTO = Omit<FullUser, "id" | "createdAt" | "updatedAt" | "deletedAt">;
 
 // Component props: Pick only display-relevant fields
-type UserCardProps = Pick<FullUser, 'id' | 'name' | 'email'>;
+type UserCardProps = Pick<FullUser, "id" | "name" | "email">;
 
 // Form data: Omit computed/auto-populated fields
-type UserFormData = Omit<FullUser, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt' | 'passwordHash' | 'salt'>;
+type UserFormData = Omit<
+  FullUser,
+  "id" | "createdAt" | "updatedAt" | "deletedAt" | "passwordHash" | "salt"
+>;
 ```
 
-**One subtlety:** `Omit` is implemented as `Pick<T, Exclude<keyof T, K>>`. This means `Omit` with non-existent keys silently does nothing — TypeScript won't error. `Pick` with a non-existent key *does* error, making it safer for strict correctness.
+**One subtlety:** `Omit` is implemented as `Pick<T, Exclude<keyof T, K>>`. This means `Omit` with non-existent keys silently does nothing — TypeScript won't error. `Pick` with a non-existent key _does_ error, making it safer for strict correctness.
 
 **Tiếng Việt:**
 `Pick` là chọn thêm vào ("tôi muốn đúng những key này"). `Omit` là loại trừ ("tôi muốn tất cả trừ những key này"). Quy tắc thực tế: nếu bạn liệt kê ít key hơn, dùng operation tương ứng. `Omit` cho phép bỏ field nhạy cảm (passwordHash, salt) mà không phải liệt kê lại tất cả field còn lại.
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Explains the additive vs. subtractive mental model, gives the "count keys" rule of thumb, mentions the implementation difference
-- ❌ Weak: "Pick selects, Omit removes" — stops at the definition without practical guidance on *when* to choose each
+- ❌ Weak: "Pick selects, Omit removes" — stops at the definition without practical guidance on _when_ to choose each
 
 ---
 
@@ -904,12 +868,12 @@ type UserFormData = Omit<FullUser, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt
 ```typescript
 // Step 1: Iterate all keys
 type Step1<T> = {
-  [K in keyof T]: T[K];   // same as T — just demonstrating iteration
+  [K in keyof T]: T[K]; // same as T — just demonstrating iteration
 };
 
 // Step 2: Add optional modifier
 type MyPartial<T> = {
-  [K in keyof T]?: T[K];  // ? on the key side makes it optional
+  [K in keyof T]?: T[K]; // ? on the key side makes it optional
 };
 
 // Step 3: Verify it works
@@ -924,13 +888,13 @@ type PartialUser = MyPartial<User>;
 
 // Usage
 function updateUser(id: number, updates: MyPartial<User>): User {
-  const existing = findUser(id);   // imagine this exists
+  const existing = findUser(id); // imagine this exists
   return { ...existing, ...updates };
 }
 
-updateUser(1, { name: 'Jane' });           // ✅
-updateUser(1, { email: 'j@example.com' }); // ✅
-updateUser(1, {});                          // ✅ nothing required
+updateUser(1, { name: "Jane" }); // ✅
+updateUser(1, { email: "j@example.com" }); // ✅
+updateUser(1, {}); // ✅ nothing required
 ```
 
 **Now implement the modifier variants:**
@@ -938,7 +902,7 @@ updateUser(1, {});                          // ✅ nothing required
 ```typescript
 // Required: remove optional with -? modifier
 type MyRequired<T> = {
-  [K in keyof T]-?: T[K];  // -? strips the ? even from originally optional props
+  [K in keyof T]-?: T[K]; // -? strips the ? even from originally optional props
 };
 
 // Readonly: add readonly modifier
@@ -957,9 +921,9 @@ type Mutable<T> = {
 ```typescript
 interface Nested {
   user: {
-    name: string;     // NOT made optional by Partial<Nested>
+    name: string; // NOT made optional by Partial<Nested>
     address: {
-      city: string;   // NOT made optional by Partial<Nested>
+      city: string; // NOT made optional by Partial<Nested>
     };
   };
 }
@@ -969,15 +933,14 @@ type ShallowPartial = Partial<Nested>;
 // Only top-level `user` is optional — inner fields are still required
 
 // For deep optionality, write recursive:
-type DeepPartial<T> = T extends object
-  ? { [P in keyof T]?: DeepPartial<T[P]> }
-  : T;
+type DeepPartial<T> = T extends object ? { [P in keyof T]?: DeepPartial<T[P]> } : T;
 ```
 
 **Tiếng Việt:**
 `Partial<T>` được xây dựng bằng mapped type: `{ [K in keyof T]?: T[K] }`. Ba phần: `[K in keyof T]` = lặp qua tất cả key của T, `?` = modifier làm optional, `T[K]` = giữ nguyên value type. Lưu ý quan trọng: `Partial` chỉ shallow — các nested object không bị ảnh hưởng.
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Explains the three parts of mapped type syntax, implements all modifier variants (-?, -readonly), raises the shallow vs. deep distinction unprompted
 - ❌ Weak: Only writes `{ [K in keyof T]?: T[K] }` and stops — misses the "why" and the nuances
 
@@ -999,9 +962,9 @@ interface FetchState {
 
 // This is legally valid TypeScript — but makes no sense at runtime:
 const broken: FetchState = {
-  data: { id: 1, name: 'John', email: 'j@example.com' },
-  error: new Error('Network failure'),
-  isLoading: true
+  data: { id: 1, name: "John", email: "j@example.com" },
+  error: new Error("Network failure"),
+  isLoading: true,
 };
 // data AND error AND loading — simultaneously? Illegal state, but TypeScript allows it.
 ```
@@ -1011,10 +974,10 @@ const broken: FetchState = {
 ```typescript
 // CORRECT: discriminated union
 type FetchState<T> =
-  | { status: 'idle' }
-  | { status: 'loading' }
-  | { status: 'success'; data: T }
-  | { status: 'error'; error: Error };
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "success"; data: T }
+  | { status: "error"; error: Error };
 
 // Now illegal state is UNREPRESENTABLE:
 // const broken: FetchState<User> = { status: 'success', error: new Error() };
@@ -1031,16 +994,21 @@ type FetchState<T> =
 
 ```typescript
 function assertNever(x: never): never {
-  throw new Error('Unhandled case: ' + JSON.stringify(x));
+  throw new Error("Unhandled case: " + JSON.stringify(x));
 }
 
 function renderFetchState<T>(state: FetchState<T>, render: (data: T) => string): string {
   switch (state.status) {
-    case 'idle':    return 'Not started';
-    case 'loading': return 'Loading…';
-    case 'success': return render(state.data);   // state.data guaranteed
-    case 'error':   return `Error: ${state.error.message}`;
-    default:        return assertNever(state);   // compile error if case added later
+    case "idle":
+      return "Not started";
+    case "loading":
+      return "Loading…";
+    case "success":
+      return render(state.data); // state.data guaranteed
+    case "error":
+      return `Error: ${state.error.message}`;
+    default:
+      return assertNever(state); // compile error if case added later
   }
 }
 ```
@@ -1048,19 +1016,27 @@ function renderFetchState<T>(state: FetchState<T>, render: (data: T) => string):
 **Real state management example — Redux actions:**
 
 ```typescript
-interface FetchUsersStart { type: 'FETCH_USERS/START' }
-interface FetchUsersSuccess { type: 'FETCH_USERS/SUCCESS'; users: User[] }
-interface FetchUsersFailure { type: 'FETCH_USERS/FAILURE'; error: string }
+interface FetchUsersStart {
+  type: "FETCH_USERS/START";
+}
+interface FetchUsersSuccess {
+  type: "FETCH_USERS/SUCCESS";
+  users: User[];
+}
+interface FetchUsersFailure {
+  type: "FETCH_USERS/FAILURE";
+  error: string;
+}
 
 type UsersAction = FetchUsersStart | FetchUsersSuccess | FetchUsersFailure;
 
 function usersReducer(state: UsersState, action: UsersAction): UsersState {
   switch (action.type) {
-    case 'FETCH_USERS/START':
+    case "FETCH_USERS/START":
       return { ...state, loading: true, error: null };
-    case 'FETCH_USERS/SUCCESS':
+    case "FETCH_USERS/SUCCESS":
       return { loading: false, error: null, users: action.users };
-    case 'FETCH_USERS/FAILURE':
+    case "FETCH_USERS/FAILURE":
       return { ...state, loading: false, error: action.error };
   }
 }
@@ -1068,6 +1044,7 @@ function usersReducer(state: UsersState, action: UsersAction): UsersState {
 ```
 
 **When to use discriminated unions:**
+
 - Fetch/async state (idle/loading/success/error)
 - Form lifecycle (idle/validating/submitting/success/error)
 - Redux/Zustand actions
@@ -1078,6 +1055,7 @@ function usersReducer(state: UsersState, action: UsersAction): UsersState {
 Discriminated union có một trường phân biệt (`status`, `type`, `kind`) với giá trị literal duy nhất cho mỗi variant. Compiler dùng trường này để thu hẹp type trong switch/if. Lợi ích chính: "illegal states unrepresentable" — bạn không thể vô tình có `data` và `error` cùng lúc. Thêm `assertNever` vào default case để đảm bảo exhaustive checking.
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Shows the "illegal state" problem first, explains the three conditions, demonstrates exhaustiveness checking with `assertNever`, ties to real state management
 - ❌ Weak: "It's a union where all members share a common field" — correct definition but no motivation or practical application
 
@@ -1092,9 +1070,7 @@ Discriminated union có một trường phân biệt (`status`, `type`, `kind`) 
 ```typescript
 // Naive: doesn't handle arrays or functions
 type NaiveDeepReadonly<T> = {
-  readonly [K in keyof T]: T[K] extends object
-    ? NaiveDeepReadonly<T[K]>
-    : T[K];
+  readonly [K in keyof T]: T[K] extends object ? NaiveDeepReadonly<T[K]> : T[K];
 };
 
 // Problem: arrays *are* objects, so array elements would become readonly too
@@ -1109,14 +1085,14 @@ type DeepReadonly<T> =
   // Functions: leave unchanged — don't recurse into them
   T extends (...args: any[]) => any
     ? T
-  // Arrays: readonly array of deeply readonly elements
-  : T extends Array<infer U>
-    ? ReadonlyArray<DeepReadonly<U>>
-  // Plain objects: recursively apply to all properties
-  : T extends object
-    ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
-  // Primitives (string, number, boolean, null, undefined): unchanged
-  : T;
+    : // Arrays: readonly array of deeply readonly elements
+      T extends Array<infer U>
+      ? ReadonlyArray<DeepReadonly<U>>
+      : // Plain objects: recursively apply to all properties
+        T extends object
+        ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
+        : // Primitives (string, number, boolean, null, undefined): unchanged
+          T;
 ```
 
 **Test it exhaustively:**
@@ -1128,7 +1104,7 @@ interface AppState {
     selectedId: string | null;
   };
   settings: {
-    theme: 'light' | 'dark';
+    theme: "light" | "dark";
     notifications: {
       email: boolean;
       push: boolean;
@@ -1136,7 +1112,7 @@ interface AppState {
   };
   actions: {
     fetchUsers: () => Promise<void>;
-    updateSettings: (s: Partial<AppState['settings']>) => void;
+    updateSettings: (s: Partial<AppState["settings"]>) => void;
   };
 }
 
@@ -1155,7 +1131,7 @@ state.settings.notifications.email;
 
 // ✅ Functions preserved — still callable
 state.actions.fetchUsers();
-state.actions.updateSettings({ theme: 'dark' });
+state.actions.updateSettings({ theme: "dark" });
 
 // ❌ But function refs can't be replaced
 // state.actions.fetchUsers = async () => {};  // Error: readonly
@@ -1174,6 +1150,7 @@ The `extends` chain is evaluated top-to-bottom on first match:
 `DeepReadonly<T>` cần kiểm tra theo thứ tự: functions trước (để không mất call signature), rồi arrays (để không biến array thành object), rồi objects (áp dụng recursive), cuối cùng là primitives. Thứ tự trong conditional type chain rất quan trọng vì functions và arrays đều `extends object`.
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Immediately identifies the naive implementation's failure modes (arrays as objects, functions as objects), implements ordered conditional checks with correct reasoning for the order, tests all three cases
 - ❌ Weak: Only writes `T extends object ? { readonly [K in keyof T]: DeepReadonly<T[K]> } : T` — fails on arrays and functions
 
@@ -1189,13 +1166,13 @@ The `extends` chain is evaluated top-to-bottom on first match:
 
 ```typescript
 type FormState<T> =
-  | { phase: 'idle' }
-  | { phase: 'dirty'; values: T; touched: Partial<Record<keyof T, boolean>> }
-  | { phase: 'validating'; values: T }
-  | { phase: 'invalid'; values: T; errors: FormErrors<T> }
-  | { phase: 'submitting'; values: T }
-  | { phase: 'success'; result: { id: string } }
-  | { phase: 'error'; values: T; serverError: string };
+  | { phase: "idle" }
+  | { phase: "dirty"; values: T; touched: Partial<Record<keyof T, boolean>> }
+  | { phase: "validating"; values: T }
+  | { phase: "invalid"; values: T; errors: FormErrors<T> }
+  | { phase: "submitting"; values: T }
+  | { phase: "success"; result: { id: string } }
+  | { phase: "error"; values: T; serverError: string };
 ```
 
 **Step 2: Derive the error type from the form shape**
@@ -1204,8 +1181,8 @@ type FormState<T> =
 // FormErrors: every field can have a validation error string or be undefined
 type FormErrors<T> = {
   [K in keyof T]?: T[K] extends object
-    ? FormErrors<T[K]>   // nested form groups
-    : string;            // leaf fields get a string error message
+    ? FormErrors<T[K]> // nested form groups
+    : string; // leaf fields get a string error message
 };
 
 // Example
@@ -1222,30 +1199,25 @@ type LoginErrors = FormErrors<LoginForm>;
 
 ```typescript
 // Each field validator takes the field value and full form values, returns error or null
-type FieldValidator<TValue, TForm> = (
-  value: TValue,
-  allValues: TForm
-) => string | null;
+type FieldValidator<TValue, TForm> = (value: TValue, allValues: TForm) => string | null;
 
 // ValidationSchema: a validator for every field (optional — not all fields need validation)
 type ValidationSchema<T> = {
-  [K in keyof T]?: T[K] extends object
-    ? ValidationSchema<T[K]>
-    : FieldValidator<T[K], T>;
+  [K in keyof T]?: T[K] extends object ? ValidationSchema<T[K]> : FieldValidator<T[K], T>;
 };
 
 // Example schema
 const loginSchema: ValidationSchema<LoginForm> = {
   email: (value) => {
-    if (!value) return 'Email is required';
-    if (!value.includes('@')) return 'Invalid email format';
+    if (!value) return "Email is required";
+    if (!value.includes("@")) return "Invalid email format";
     return null;
   },
   password: (value) => {
-    if (!value) return 'Password is required';
-    if (value.length < 8) return 'Password must be at least 8 characters';
+    if (!value) return "Password is required";
+    if (value.length < 8) return "Password must be at least 8 characters";
     return null;
-  }
+  },
 };
 ```
 
@@ -1280,10 +1252,7 @@ type UseFormReturn<T> = {
 };
 
 // Full validation runner — type-safe, exhaustive over schema keys
-function validateForm<T extends object>(
-  values: T,
-  schema: ValidationSchema<T>
-): FormErrors<T> {
+function validateForm<T extends object>(values: T, schema: ValidationSchema<T>): FormErrors<T> {
   const errors: FormErrors<T> = {};
   for (const key in schema) {
     const validator = schema[key] as FieldValidator<T[typeof key], T> | undefined;
@@ -1300,16 +1269,17 @@ function validateForm<T extends object>(
 // Usage — fully typed
 function useLoginForm(): UseFormReturn<LoginForm> {
   // implementation using React state, with types fully inferred from LoginForm
-  throw new Error('implementation left as exercise');
+  throw new Error("implementation left as exercise");
 }
 
 const form = useLoginForm();
-form.handlers.onEmailChange('user@example.com');   // ✅ typed
-form.handlers.onPasswordChange('secret123');        // ✅ typed
+form.handlers.onEmailChange("user@example.com"); // ✅ typed
+form.handlers.onPasswordChange("secret123"); // ✅ typed
 // form.handlers.onMissingChange('x');              // ❌ compile error — field doesn't exist
 ```
 
 **The advanced types used and why each one:**
+
 - `Discriminated union` (`FormState<T>`) — makes illegal states unrepresentable (can't be both submitting and idle)
 - `Mapped types` (`FormErrors<T>`, `ValidationSchema<T>`) — derive schemas from base type, no duplication
 - `Recursive conditional types` — handle nested form groups
@@ -1320,8 +1290,21 @@ form.handlers.onPasswordChange('secret123');        // ✅ typed
 Hệ thống validation type-safe kết hợp: discriminated union cho form state (illegal states unrepresentable), mapped types để derive FormErrors và ValidationSchema từ base form type (DRY), recursive conditional types cho nested form groups, và template literal + mapped type để auto-generate handler names. Kết quả: đổi `LoginForm` là tất cả types tự update — zero manual synchronization.
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Designs bottom-up (state → errors → validators → handlers → composition), justifies each type choice, shows the "zero duplication" end state, handles the nested case
-- ❌ Weak: Writes validation logic without using advanced types for the *schema* — just uses plain interfaces, missing the whole point
+- ❌ Weak: Writes validation logic without using advanced types for the _schema_ — just uses plain interfaces, missing the whole point
+
+---
+
+## 📋 Interview Q&A Summary / Tóm Tắt Q&A Phỏng Vấn
+
+| #   | Câu hỏi                                              | Difficulty | Core Concept      | Key Signal                                            |
+| --- | ---------------------------------------------------- | ---------- | ----------------- | ----------------------------------------------------- |
+| 1   | Khi nào dùng `Pick` vs `Omit`?                       | 🟢 Junior  | Utility types     | Biết use case của từng utility type                   |
+| 2   | Tự implement `Partial<T>` bằng mapped types          | 🟡 Mid     | Mapped types      | Dùng `?` modifier trong mapped type                   |
+| 3   | Discriminated union là gì, khi nào nên dùng?         | 🟡 Mid     | Pattern design    | Exhaustive checking với `never` + `assertNever`       |
+| 4   | Tự implement `DeepReadonly<T>` xử lý object/array/fn | 🔴 Senior  | Recursive types   | Conditional + recursive mapped types                  |
+| 5   | Thiết kế type-safe form validation system            | 🔴 Senior  | Type architecture | Full system từ types đến validators, zero duplication |
 
 ---
 
@@ -1331,35 +1314,33 @@ Hệ thống validation type-safe kết hợp: discriminated union cho form stat
 
 **30-second answer:**
 
-> Mapped types are a TypeScript feature that lets you iterate over all keys of an existing type and apply a transformation to each property. The syntax is `{ [K in keyof T]: Transform<T[K]> }` — you loop over keys, optionally add modifiers like `?` for optional or `readonly`, and set the new value type. Utility types like `Partial`, `Required`, `Readonly`, `Pick`, and `Omit` are all built *on top of* mapped types — `Partial<T>` is literally `{ [K in keyof T]?: T[K] }`, just shipped with TypeScript so you don't write it yourself. So mapped types are the primitive; utility types are the named, reusable instances of common transformations.
+> Mapped types are a TypeScript feature that lets you iterate over all keys of an existing type and apply a transformation to each property. The syntax is `{ [K in keyof T]: Transform<T[K]> }` — you loop over keys, optionally add modifiers like `?` for optional or `readonly`, and set the new value type. Utility types like `Partial`, `Required`, `Readonly`, `Pick`, and `Omit` are all built _on top of_ mapped types — `Partial<T>` is literally `{ [K in keyof T]?: T[K] }`, just shipped with TypeScript so you don't write it yourself. So mapped types are the primitive; utility types are the named, reusable instances of common transformations.
 
 ---
 
-## Retrieval Self-Check / Tự Kiểm Tra Trí Nhớ
+## 🔄 Self-Check / Tự Kiểm Tra
 
-Close this document, then answer from memory:
+> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
 
-**Retrieval (conceptual recall):**
-1. What is the syntax for a mapped type? Name the three modifiers and what each does.
-2. What is the difference between distributive and non-distributive conditional types? How do you force non-distributive behavior?
-3. Name the three conditions required for a union to be a "discriminated union."
-4. What is the `infer` keyword, and where can it be used?
+| #   | Loại           | Câu hỏi                                                                                                                                     |
+| --- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 🔍 Retrieval   | Viết cú pháp mapped type cơ bản. Liệt kê 3 modifier và ý nghĩa của từng cái (`?`, `-?`, `readonly`, `-readonly`). `infer` dùng ở đâu?       |
+| 2   | 🎨 Visual      | Vẽ sơ đồ 4 states của fetch operation dưới dạng discriminated union — mỗi state có fields gì? Vẽ transitions giữa chúng.                    |
+| 3   | 🛠️ Application | Viết `DeepPartial<T>` từ đầu: xử lý primitive vs object, và cách phân biệt array khỏi plain object.                                         |
+| 4   | 🐛 Debug       | `type Flatten<T> = T extends Array<infer U> ? U : T` với `T = string \| number[]` cho kết quả gì? Có phải expected behavior không? Tại sao? |
+| 5   | 🎓 Teach       | Giải thích `infer` cho junior developer bằng analogy đời thường — không dùng thuật ngữ TypeScript.                                          |
 
-**Visual (reconstruct from memory):**
-5. Draw the state transition diagram for a fetch operation as a discriminated union — what are the 4 states and which fields does each expose?
-6. Sketch the utility type cheatsheet — input/output for Partial, Required, Readonly, Pick, Omit, Record, Exclude, Extract.
+### Key Points (tự kiểm tra)
 
-**Application (write from scratch):**
-7. Write `DeepPartial<T>` — handle the object vs. primitive distinction.
-8. Write a mapped type that converts all method names in an object to `on${Capitalize<MethodName>}Change` event handlers.
+| #   | Key Point                                                                                                                                                                 |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `{ [K in keyof T]: ... }`. Modifiers: `?` (optional), `-?` (required), `readonly` (readonly), `-readonly` (mutable). `infer` dùng trong `extends` clause để capture type. |
+| 2   | `idle: {}` → `loading: {}` → `success: { data: T }` / `error: { error: Error }`. Discriminant field: `status: 'idle' \| 'loading' \| 'success' \| 'error'`.               |
+| 3   | `type DeepPartial<T> = T extends object ? { [K in keyof T]?: DeepPartial<T[K]> } : T` — primitives trả về as-is, objects recurse.                                         |
+| 4   | `T = string \| number[]` → distributive: `string \| (number[] extends Array<infer U> ? U : never)` = `string \| number`. Đúng behavior, nhưng có thể gây surprise.        |
+| 5   | `infer` như "hãy đoán xem cái gì nằm trong hộp". Nếu pattern khớp → TypeScript điền tên biến bạn đặt. Như tháo rời máy: "Cái gì nằm trong array này?"                     |
 
-**Debug (spot the bug):**
-9. `type Flatten<T> = T extends Array<infer U> ? U : T` — what happens when called with `string | number[]`? Is that the expected behavior?
-10. `type SafeUser = Omit<User, 'pasword'>` — this compiles cleanly. What is the bug and why doesn't TypeScript catch it?
-
-**Teach:**
-11. Explain `infer` to a junior developer using only a real-world analogy — no TypeScript jargon.
-12. Why does the order of cases in a `DeepReadonly<T>` conditional type matter? What breaks if you check `T extends object` before `T extends Array<infer U>`?
+> 🎯 **Feynman Prompt:** Giải thích mapped types cho người biết JavaScript — "Nếu bạn có thể dùng `Object.keys()` để lặp qua object lúc runtime, mapped types là phiên bản compile-time: lặp qua các keys của type."
 
 ---
 
@@ -1372,6 +1353,7 @@ Close this document, then answer from memory:
 - **Day 30:** Take Q5 (form validation system) and extend it to handle async validators
 
 **The three concepts to own before any senior TypeScript interview:**
+
 1. Mapped types (`[K in keyof T]`) + modifier system (`?`, `-?`, `readonly`, `-readonly`, `as`)
 2. Conditional types with `infer` — distributive behavior and when to suppress it
 3. Discriminated unions — illegal state elimination + exhaustiveness checking with `never`
@@ -1379,3 +1361,18 @@ Close this document, then answer from memory:
 ---
 
 [← Previous: TypeScript Basics](./01-typescript-basics.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next: Generics Deep Dive →](./03-generics-deep-dive.md)
+
+---
+
+## 🔗 Connections / Liên Kết
+
+### Cùng track (Same track)
+- [TypeScript Basics](./01-typescript-basics.md) — foundational type system knowledge required here
+- [Generics Deep Dive](./03-generics-deep-dive.md) — generics power all conditional and mapped types
+- [React TypeScript](./05-react-typescript.md) — discriminated unions and utility types applied in React
+- [TypeScript Comprehensive](./04-typescript-comprehensive.md) — full reference with more type patterns
+
+### Khác track (Cross-track)
+- [JS ES6 Features](../01-javascript/07-es6-features.md) — ES6 destructuring patterns mirror TypeScript type patterns
+- [React Advanced Patterns](../03-react/04-advanced-patterns.md) — advanced types enable type-safe React patterns
+- [CS Fundamentals: Computation Theory](../../shared/01-cs-fundamentals/08-computation-theory.md) — formal type theory behind conditional types

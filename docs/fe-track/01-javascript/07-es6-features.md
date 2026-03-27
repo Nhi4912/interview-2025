@@ -20,14 +20,14 @@ ES6 (2015) là bước ngoặt: từ "ngôn ngữ đồ chơi" thành language p
 **Analogy — Nâng cấp công cụ:**
 Trước ES6 = dùng búa cũ để đóng đinh: được, nhưng tốn sức. ES6 = súng bắn đinh: cùng kết quả, nhanh hơn, ít lỗi hơn.
 
-| ES5 (cũ) | ES6+ (mới) | Vì sao tốt hơn |
-|----------|------------|----------------|
-| `var x` | `let`/`const` | Block scope, no hoisting surprise |
-| `function(a,b){}` | `(a,b) => {}` | Shorter + lexical `this` |
-| `'Hi ' + name` | `` `Hi ${name}` `` | Readable, multi-line |
-| `{x: x, y: y}` | `{x, y}` | Shorthand properties |
-| `fn.then(fn).then(fn)` | `async/await` | Reads like synchronous |
-| `arguments` object | `...rest` | Explicit, flexible |
+| ES5 (cũ)               | ES6+ (mới)         | Vì sao tốt hơn                    |
+| ---------------------- | ------------------ | --------------------------------- |
+| `var x`                | `let`/`const`      | Block scope, no hoisting surprise |
+| `function(a,b){}`      | `(a,b) => {}`      | Shorter + lexical `this`          |
+| `'Hi ' + name`         | `` `Hi ${name}` `` | Readable, multi-line              |
+| `{x: x, y: y}`         | `{x, y}`           | Shorthand properties              |
+| `fn.then(fn).then(fn)` | `async/await`      | Reads like synchronous            |
+| `arguments` object     | `...rest`          | Explicit, flexible                |
 
 ---
 
@@ -73,9 +73,9 @@ TDZ                  Classes             Template literals
 // 1. SCOPE
 function test() {
   if (true) {
-    var x = 1;    // function-scoped — visible outside if block
-    let y = 2;    // block-scoped — not visible outside
-    const z = 3;  // block-scoped — not visible outside
+    var x = 1; // function-scoped — visible outside if block
+    let y = 2; // block-scoped — not visible outside
+    const z = 3; // block-scoped — not visible outside
   }
   console.log(x); // 1 ✅
   console.log(y); // ❌ ReferenceError
@@ -86,12 +86,12 @@ console.log(a); // undefined (hoisted, initialized to undefined)
 var a = 1;
 
 console.log(b); // ❌ ReferenceError: Cannot access 'b' before initialization
-let b = 2;      // Temporal Dead Zone: declared but not initialized
+let b = 2; // Temporal Dead Zone: declared but not initialized
 
 // 3. RE-ASSIGNMENT
 const arr = [1, 2, 3];
-arr.push(4);     // ✅ OK — mutating object contents is allowed
-arr = [5, 6];    // ❌ TypeError: Assignment to constant variable
+arr.push(4); // ✅ OK — mutating object contents is allowed
+arr = [5, 6]; // ❌ TypeError: Assignment to constant variable
 // const = immutable BINDING, not immutable VALUE
 ```
 
@@ -120,27 +120,29 @@ for (var i = 0; i < 3; i++) {
 
 ```javascript
 const config = { debug: false, port: 3000 };
-config.debug = true;  // ✅ Mutation OK — binding unchanged
-config = {};          // ❌ TypeError — reassignment not allowed
+config.debug = true; // ✅ Mutation OK — binding unchanged
+config = {}; // ❌ TypeError — reassignment not allowed
 
 // Use Object.freeze() for truly immutable objects
 const IMMUTABLE = Object.freeze({ x: 1, y: 2 });
-IMMUTABLE.x = 99;     // silently fails (or throws in strict mode)
+IMMUTABLE.x = 99; // silently fails (or throws in strict mode)
 ```
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-|---------|------------|---------|
-| `const` = immutable | `const` chỉ immutable binding, không immutable value | Dùng `Object.freeze()` cho truly immutable |
-| `for (var i)` trong setTimeout | var function-scoped → all callbacks share same `i` | `let` hoặc `const` trong loops |
-| Đọc `let` trước declaration | TDZ: ReferenceError (không phải `undefined`) | Declare before use |
+| Sai lầm                        | Tại sao sai                                          | Đúng là                                    |
+| ------------------------------ | ---------------------------------------------------- | ------------------------------------------ |
+| `const` = immutable            | `const` chỉ immutable binding, không immutable value | Dùng `Object.freeze()` cho truly immutable |
+| `for (var i)` trong setTimeout | var function-scoped → all callbacks share same `i`   | `let` hoặc `const` trong loops             |
+| Đọc `let` trước declaration    | TDZ: ReferenceError (không phải `undefined`)         | Declare before use                         |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy: `for (var i = 0; i < 3; i++) setTimeout(() => console.log(i))`
 - → Output: `3, 3, 3` + giải thích var function scope + fix với `let`
 
 **🔑 Knowledge Chain:**
+
 - 📚 Cần biết: [Scope & Hoisting](./02-scope-hoisting-comprehensive.md) — `var` hoisting, block scope
 - ➡️ Để hiểu: Closures trong loops, React's useState (const pattern)
 
@@ -157,18 +159,24 @@ Extracting values from arrays/objects verbosely (`obj.name`, `arr[0]`) is tediou
 
 ```javascript
 // Object destructuring
-const { name, age, country = 'VN' } = user; // with default
-const { name: fullName } = user;             // rename
+const { name, age, country = "VN" } = user; // with default
+const { name: fullName } = user; // rename
 
 // Array destructuring
-const [first, , third] = [1, 2, 3];         // skip with comma
-const [head, ...tail] = [1, 2, 3, 4];       // rest in array
+const [first, , third] = [1, 2, 3]; // skip with comma
+const [head, ...tail] = [1, 2, 3, 4]; // rest in array
 
 // Function parameters (most common in React)
-function UserCard({ name, avatar, onClick }) { /* ... */ }
+function UserCard({ name, avatar, onClick }) {
+  /* ... */
+}
 
 // Nested — don't over-nest (becomes hard to read)
-const { profile: { address: { city } } } = user;
+const {
+  profile: {
+    address: { city },
+  },
+} = user;
 ```
 
 #### Layer 2: Spread and Rest
@@ -176,21 +184,22 @@ const { profile: { address: { city } } } = user;
 ```javascript
 // SPREAD — expand
 const arr1 = [1, 2, 3];
-const arr2 = [...arr1, 4, 5];           // [1,2,3,4,5]
+const arr2 = [...arr1, 4, 5]; // [1,2,3,4,5]
 const merged = { ...defaults, ...overrides }; // merge objects (right wins)
 
 // Shallow copy
-const copy = [...arr1];                 // new array, same elements
-const objCopy = { ...obj };            // shallow — nested refs shared
+const copy = [...arr1]; // new array, same elements
+const objCopy = { ...obj }; // shallow — nested refs shared
 
 // REST — collect
-function sum(first, ...rest) {         // rest = array of remaining args
+function sum(first, ...rest) {
+  // rest = array of remaining args
   return first + rest.reduce((a, b) => a + b, 0);
 }
 
 // Shallow vs Deep copy
-const shallow = { ...obj };            // nested objects still shared
-const deep = structuredClone(obj);     // ES2022: full deep copy
+const shallow = { ...obj }; // nested objects still shared
+const deep = structuredClone(obj); // ES2022: full deep copy
 ```
 
 #### Layer 3: Common Patterns in React
@@ -198,26 +207,32 @@ const deep = structuredClone(obj);     // ES2022: full deep copy
 ```javascript
 // Pass-through props (HOC pattern)
 function withLogging({ onAction, ...restProps }) {
-  return <Component {...restProps} onAction={(...args) => {
-    log(args);
-    onAction(...args);
-  }} />;
+  return (
+    <Component
+      {...restProps}
+      onAction={(...args) => {
+        log(args);
+        onAction(...args);
+      }}
+    />
+  );
 }
 
 // Immutable state update
 const newState = { ...state, count: state.count + 1 }; // ✅ new reference
-state.count++;                                           // ❌ mutates — no re-render
+state.count++; // ❌ mutates — no re-render
 ```
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-|---------|------------|---------|
-| Spread = deep clone | Spread chỉ copy one level — nested objects shared | `structuredClone()` hoặc libraries |
-| `{...a, ...b}` last key wins | Nếu `a` và `b` có cùng key, `b` wins | Explicit về override thứ tự |
-| Spread Array vào non-array context | `fn({...arr})` → object với numeric keys | `fn([...arr])` để giữ array |
+| Sai lầm                            | Tại sao sai                                       | Đúng là                            |
+| ---------------------------------- | ------------------------------------------------- | ---------------------------------- |
+| Spread = deep clone                | Spread chỉ copy one level — nested objects shared | `structuredClone()` hoặc libraries |
+| `{...a, ...b}` last key wins       | Nếu `a` và `b` có cùng key, `b` wins              | Explicit về override thứ tự        |
+| Spread Array vào non-array context | `fn({...arr})` → object với numeric keys          | `fn([...arr])` để giữ array        |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy: "Shallow copy vs deep copy?"
 - → Mở đầu: "Spread/Object.assign là shallow — nested objects vẫn share references. `structuredClone()` là deep copy native (ES2022)..."
 
@@ -232,36 +247,44 @@ Arrow functions solve the `this` context loss problem in callbacks — and provi
 
 ```javascript
 // Syntax variations
-const fn1 = x => x * 2;             // single param, implicit return
-const fn2 = (x, y) => x + y;        // multiple params
-const fn3 = () => ({ name: 'obj' }); // return object literal (wrap in parens)
-const fn4 = (x) => {                 // block body
+const fn1 = (x) => x * 2; // single param, implicit return
+const fn2 = (x, y) => x + y; // multiple params
+const fn3 = () => ({ name: "obj" }); // return object literal (wrap in parens)
+const fn4 = (x) => {
+  // block body
   const y = x * 2;
   return y;
 };
 
 // When to use
 // ✅ Callbacks, array methods
-const doubled = [1, 2, 3].map(n => n * 2);
-const even = [1, 2, 3, 4].filter(n => n % 2 === 0);
+const doubled = [1, 2, 3].map((n) => n * 2);
+const even = [1, 2, 3, 4].filter((n) => n % 2 === 0);
 
 // ✅ useEffect callbacks (lexical this)
-useEffect(() => { fetchData(); }, []);
+useEffect(() => {
+  fetchData();
+}, []);
 
 // ❌ Object methods (no own this)
 const counter = {
   count: 0,
-  increment: () => { this.count++; } // this = global, NOT counter
+  increment: () => {
+    this.count++;
+  }, // this = global, NOT counter
 };
 
 // ✅ Object methods should be regular functions
 const counter = {
   count: 0,
-  increment() { this.count++; } // method shorthand — has own this
+  increment() {
+    this.count++;
+  }, // method shorthand — has own this
 };
 ```
 
 **🎯 Interview Pattern:**
+
 - Khi thấy: "Arrow function vs regular function — khi nào dùng cái nào?"
 - → Mở đầu: "Arrow function có 3 'không': không có `this` riêng, không có `arguments`, không dùng với `new`. Dùng cho callbacks, array methods. Không dùng cho object methods hoặc constructors..."
 
@@ -274,30 +297,30 @@ const counter = {
 ```javascript
 // Optional chaining — avoid "Cannot read property of undefined"
 const city = user?.profile?.address?.city; // undefined if any step is null/undefined
-const firstItem = arr?.[0];                // for arrays
-const result = obj?.method?.();            // for methods
+const firstItem = arr?.[0]; // for arrays
+const result = obj?.method?.(); // for methods
 
 // Nullish coalescing — default only for null/undefined
-const count = input ?? 0;  // 0 if input is null/undefined, NOT if it's 0
-const name  = input ?? ''; // empty string if null/undefined
+const count = input ?? 0; // 0 if input is null/undefined, NOT if it's 0
+const name = input ?? ""; // empty string if null/undefined
 
 // ❌ || falls back for ALL falsy: 0, '', false, null, undefined
-const count = input || 0;  // BUG: if input is 0, still returns 0? No — it returns 0!
-                           // Wait: 0 || 0 = 0 (both falsy, picks right)
+const count = input || 0; // BUG: if input is 0, still returns 0? No — it returns 0!
+// Wait: 0 || 0 = 0 (both falsy, picks right)
 // Real bug: if input is 0 (valid value), || gives wrong impression:
 const value = userInput || defaultValue; // if userInput = 0 → uses default! Bug!
 
 // Use case comparison
-const price = product?.price ?? 0;    // 0 if product missing OR price is null
-const price = product?.price || 0;    // 0 if price is null/undefined/0/'' — too broad
+const price = product?.price ?? 0; // 0 if product missing OR price is null
+const price = product?.price || 0; // 0 if price is null/undefined/0/'' — too broad
 ```
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-|---------|------------|---------|
-| `a || b` khi `a` có thể là `0` hoặc `''` | Falsy check quá rộng — `0` và `''` là valid values | `a ?? b` — chỉ fallback cho `null`/`undefined` |
-| `a?.b.c` — chain ngắn không đúng | Nếu `a?.b` là undefined, `.c` vẫn throws | `a?.b?.c` — chain đầy đủ |
+| Sai lầm                          | Tại sao sai                              | Đúng là                      |
+| -------------------------------- | ---------------------------------------- | ---------------------------- | -------------------------------------------------- | ---------------------------------------------- |
+| `a                               |                                          | b`khi`a`có thể là`0`hoặc`''` | Falsy check quá rộng — `0` và `''` là valid values | `a ?? b` — chỉ fallback cho `null`/`undefined` |
+| `a?.b.c` — chain ngắn không đúng | Nếu `a?.b` là undefined, `.c` vẫn throws | `a?.b?.c` — chain đầy đủ     |
 
 ---
 
@@ -321,6 +344,7 @@ for (let j = 0; j < 3; j++) {
 `var i` function-scoped — 3 callbacks share một `i`. Khi chạy, `i = 3`. `let j` block-scoped — mỗi iteration tạo binding `j` riêng, closure capture đúng value.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Giải thích function scope vs block scope, explain closure mechanism, biết fix với IIFE (ES5 pattern) hoặc `let`
 - ❌ Weak: Chỉ nói output mà không giải thích tại sao
 
@@ -332,17 +356,18 @@ for (let j = 0; j < 3; j++) {
 
 ```javascript
 const arr = [1, 2, 3];
-arr.push(4);     // ✅ OK — mutating the object
-arr = [5, 6];    // ❌ TypeError — reassigning the binding
+arr.push(4); // ✅ OK — mutating the object
+arr = [5, 6]; // ❌ TypeError — reassigning the binding
 
 // Truly immutable: Object.freeze()
 const FROZEN = Object.freeze({ x: 1 });
-FROZEN.x = 2;   // silently fails (throws in strict mode)
+FROZEN.x = 2; // silently fails (throws in strict mode)
 ```
 
 `const` tạo immutable binding (không thể reassign), không phải immutable value. Object/array vẫn có thể bị mutate. Dùng `Object.freeze()` để thực sự immutable.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Phân biệt rõ "binding immutable vs value immutable", biết `Object.freeze()` và limitation của nó (chỉ shallow), mention `deepFreeze` pattern
 - ❌ Weak: "const không thể thay đổi" — oversimplification
 
@@ -351,6 +376,7 @@ FROZEN.x = 2;   // silently fails (throws in strict mode)
 ### Q3: Spread operator vs Object.assign — khác nhau gì? 🟡 Mid
 
 **A:** Both create shallow copies, but differ in:
+
 1. `Object.assign(target, source)` mutates `target` and returns it. Spread creates a new object
 2. Spread can be used in any expression context; `Object.assign` is a function call
 3. `Object.assign` triggers setter methods on target; spread doesn't
@@ -359,6 +385,7 @@ FROZEN.x = 2;   // silently fails (throws in strict mode)
 Cả hai shallow copy, nhưng: spread tạo object mới (không mutate), Object.assign mutate target. Spread syntax clean hơn. Object.assign trigger setters — spread không.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Biết setter difference (quan trọng với class instances), biết cả hai shallow, đề cập `structuredClone` cho deep copy
 - ❌ Weak: "Cả hai giống nhau" — không biết setter difference
 
@@ -379,6 +406,7 @@ const itemCount = userCount ?? 5; // only if userCount is null/undefined → use
 ```
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Ví dụ cụ thể với `0` là valid value (count, price, index), biết `&&` chain: `a && a.b && a.b.c` vs `a?.b?.c`
 - ❌ Weak: "?? cho null/undefined, || cho falsy" — đúng nhưng cần ví dụ để show hiểu real use case
 
@@ -391,7 +419,7 @@ const itemCount = userCount ?? 5; // only if userCount is null/undefined → use
 ```javascript
 // Generic promisify function
 function promisify(fn) {
-  return function(...args) {
+  return function (...args) {
     return new Promise((resolve, reject) => {
       fn(...args, (error, result) => {
         if (error) reject(error);
@@ -403,11 +431,11 @@ function promisify(fn) {
 
 // Example: Node.js-style callback to Promise
 const readFileAsync = promisify(fs.readFile);
-const content = await readFileAsync('./data.json', 'utf8');
+const content = await readFileAsync("./data.json", "utf8");
 
 // Multiple results (Node sometimes passes multiple args to callback)
 function promisifyMulti(fn) {
-  return function(...args) {
+  return function (...args) {
     return new Promise((resolve, reject) => {
       fn(...args, (error, ...results) => {
         if (error) reject(error);
@@ -430,17 +458,30 @@ function waitForEvent(emitter, event) {
     }
     function cleanup() {
       emitter.off(event, onEvent);
-      emitter.off('error', onError);
+      emitter.off("error", onError);
     }
     emitter.once(event, onEvent);
-    emitter.once('error', onError);
+    emitter.once("error", onError);
   });
 }
 ```
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Handle error-first callback convention, multiple results, cleanup event listeners (memory leak prevention), TypeScript generic signature
 - ❌ Weak: Basic `new Promise` wrapper without error handling or cleanup
+
+---
+
+## Q&A Summary / Tóm Tắt Q&A
+
+| #   | Topic                     | Level | One-liner                                                                                    |
+| --- | ------------------------- | ----- | -------------------------------------------------------------------------------------------- |
+| 1   | `var` vs `let` in loop    | 🟢    | `var` shares one binding across iterations (all = 3); `let` creates a new binding per iter   |
+| 2   | `const` ≠ immutable       | 🟢    | `const` = immutable binding, not value; objects/arrays are still mutable                     |
+| 3   | Spread vs `Object.assign` | 🟡    | Both shallow; spread = new object; `assign` = mutates target and triggers setters            |
+| 4   | `??` vs `\|\|`            | 🟡    | `\|\|` = any falsy; `??` = null/undefined only; use `??` when 0 or empty string are valid    |
+| 5   | Callback → Promise        | 🔴    | `promisify` wraps error-first callback; handle multi-result + cleanup EventEmitter listeners |
 
 ---
 
@@ -449,6 +490,7 @@ function waitForEvent(emitter, event) {
 > 🎯 Interviewer hỏi cold: **"Tại sao `for (var i = 0; i < 3; i++) setTimeout(() => console.log(i))` in ra `3, 3, 3` thay vì `0, 1, 2`?"**
 
 **30 giây đầu — mở đầu lý tưởng:**
+
 1. "`var` có function scope — không phải block scope. Tất cả 3 iterations share CÙNG một biến `i`."
 2. "3 setTimeout callbacks đều là closures capture reference đến `i` — không phải giá trị của `i` lúc tạo."
 3. "Khi callbacks thực thi (sau 100ms), loop đã chạy xong — `i` đã là `3`. Tất cả 3 callbacks đọc `i = 3`."
@@ -456,16 +498,42 @@ function waitForEvent(emitter, event) {
 
 ---
 
-## Self-Check / Tự Kiểm Tra ⚡
+## 🔄 Self-Check / Tự Kiểm Tra
 
-> **Đóng tài liệu lại trước khi làm — không nhìn lại!**
+> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
 
-- [ ] **Retrieval**: Liệt kê 3 khác biệt giữa `var`, `let`, `const` (scope, hoisting, TDZ).
-- [ ] **Visual**: Vẽ scope chain cho: `var` trong `if` block vs `let` trong `if` block.
-- [ ] **Application**: `const config = { debug: false }`. Làm sao để tạo new config với `debug: true` mà không mutate gốc?
-- [ ] **Debug**: Viết hàm `promisify` từ đầu mà không nhìn lại — handle error-first callback convention.
-- [ ] **Teach**: Giải thích `??` vs `||` cho junior developer dùng ví dụ `price = userInput ?? 0` vs `price = userInput || 0` khi `userInput = 0`.
+| #   | Loại           | Câu hỏi                                                                                                 |
+| --- | -------------- | ------------------------------------------------------------------------------------------------------- | --- | ---------------------------------------------------------------------------- | --- | --------------------- |
+| 1   | 🔍 Retrieval   | Liệt kê **3 khác biệt** giữa `var`, `let`, `const` (scope, hoisting, TDZ).                              |
+| 2   | 🎨 Visual      | Vẽ scope chain cho: `var` trong `if` block vs `let` trong `if` block.                                   |
+| 3   | 🛠️ Application | `const config = { debug: false }`. Làm sao để tạo new config với `debug: true` mà **không mutate** gốc? |
+| 4   | 🐛 Debug       | Viết hàm `promisify` từ đầu mà không nhìn lại — handle **error-first callback** convention.             |
+| 5   | 🎓 Teach       | Giải thích `??` vs `                                                                                    |     | `cho junior developer dùng ví dụ`price = userInput ?? 0`vs`price = userInput |     | 0`khi`userInput = 0`. |
 
-💬 **Feynman Prompt:** Giải thích tại sao `const arr = [1,2,3]; arr.push(4)` không throw TypeError — mặc dù dùng `const`.
+### Key Points (tự kiểm tra)
 
-🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày** → **7 ngày** → **14 ngày**.
+| #   | Key Point                                                                                                                                                     |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- | ----------------------------------------------------------------------------------------------------------------- | --- | ------------------------------- |
+| 1   | `var`: function-scoped, hoisted+init `undefined`. `let`/`const`: block-scoped, **TDZ** (ReferenceError nếu access trước khai báo). `const`: thêm no-reassign. |
+| 2   | `var` trong if block: thoát ra ngoài if block, accessible trong toàn function. `let` trong if block: **chỉ tồn tại trong** `{}` block.                        |
+| 3   | `const newConfig = { ...config, debug: true }` — spread copy tất cả properties, override `debug`. Original `config` không bị thay đổi.                        |
+| 4   | `function promisify(fn) { return (...args) => new Promise((res, rej) => fn(...args, (err, val) => err ? rej(err) : res(val))); }`                             |
+| 5   | `                                                                                                                                                             |     | `fallback khi **falsy** (0, '', false đều trigger).`??`fallback chỉ khi`null`/`undefined`. Với `userInput = 0`: ` |     | `→ 0 bị thay,`??` → 0 được giữ. |
+
+> 🎯 **Feynman Prompt:** Giải thích tại sao `const arr = [1,2,3]; arr.push(4)` không throw TypeError — mặc dù dùng `const`.
+> 🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày** → **7 ngày** → **14 ngày**.
+
+---
+
+## 🔗 Connections / Liên Kết
+
+### Cùng track (Same track)
+- [Scope & Hoisting](./02-scope-hoisting.md) — `let`/`const` block scope vs `var` hoisting
+- [Closures](./03-closures.md) — closures and block-scoped `let` in loops
+- [This Keyword](./05-this-keyword.md) — arrow functions and lexical `this`
+- [Module Systems Theory](./20-module-systems-theory.md) — ES modules (import/export) introduced in ES6
+
+### Khác track (Cross-track)
+- [TypeScript Basics](../02-typescript/01-typescript-basics.md) — TypeScript is a superset of ES6+
+- [React Fundamentals](../03-react/01-react-fundamentals.md) — React uses destructuring, spread, and arrow functions throughout
+- [CS Fundamentals: Networking Theory](../../shared/01-cs-fundamentals/networking-theory.md) — module loading over the network

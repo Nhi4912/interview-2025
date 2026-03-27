@@ -703,14 +703,42 @@ Giải thích tiếng Việt: Chia component theo interactivity: read-only conte
 
 ---
 
-## Self-Check / Tự Kiểm Tra ⚡ (Đóng tài liệu lại trước khi làm)
+## 🔄 Self-Check / Tự Kiểm Tra
 
-- [ ] **Retrieval**: Viết 3 composition rules của Server/Client Components từ trí nhớ (Server→Client, donut pattern, Client→Server limitation).
-- [ ] **Visual**: Vẽ file tree cho dashboard app có: shared sidebar, per-tab loading, settings có error boundary riêng. Ghi rõ mỗi file là gì.
-- [ ] **Application**: Product page có description (markdown), image gallery (swipeable), reviews (fetched from DB). Chia components: cái nào Server, cái nào Client? Tại sao?
-- [ ] **Debug**: Server Action gọi `redirect('/success')` trong try/catch nhưng redirect không hoạt động. Tại sao? Fix?
-- [ ] **Teach**: Giải thích sự khác biệt giữa RSC và SSR cho dev chỉ biết Pages Router, bằng ví dụ "nhà hàng với bếp riêng vs bếp tại bàn".
+> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
 
-💬 **Feynman Prompt:** Giải thích `'use client'` boundary cho developer mới, bằng ví dụ "bảng hiệu trên cửa phòng — ai vào phòng này phải theo quy tắc này."
+| # | Loại | Câu hỏi |
+|---|------|---------|
+| 1 | 🔍 Retrieval | Viết 3 composition rules của Server/Client Components từ trí nhớ: Server→Client OK, donut pattern, và tại sao Client→Server bị giới hạn? |
+| 2 | 🎨 Visual | Vẽ file tree cho dashboard app có: shared sidebar, per-tab loading skeleton, settings có error boundary riêng. Ghi rõ mỗi file là gì (layout/page/loading/error). |
+| 3 | 🛠️ Application | Product page có description (markdown), image gallery (swipeable), reviews (fetched từ DB). Phân loại: component nào Server, component nào Client? Tại sao? |
+| 4 | 🐛 Debug | Server Action gọi `redirect('/success')` bên trong `try/catch` nhưng redirect không hoạt động. Tại sao? Cách fix? |
+| 5 | 🎓 Teach | Giải thích sự khác biệt giữa RSC và SSR cho dev chỉ biết Pages Router — dùng ví dụ "nhà hàng với bếp riêng vs bếp tại bàn". |
 
+### Key Points (tự kiểm tra)
+
+| # | Key Point |
+|---|-----------|
+| 1 | Server→Client: OK (pass serializable props). Donut: Client wraps Server via `children` (composition). Client→Server import: không được (Client bundles sent to browser, cannot import Server-only). |
+| 2 | `app/dashboard/layout.tsx` (Server, shared sidebar), `app/dashboard/[tab]/page.tsx` (Server), `app/dashboard/[tab]/loading.tsx` (Suspense skeleton), `app/settings/error.tsx` (Client error boundary). |
+| 3 | Server: description (no interactivity), reviews (DB fetch). Client: image gallery (swipe interactions, useState). Nguyên tắc: Client chỉ khi cần hooks, browser APIs, hay event handlers. |
+| 4 | `redirect()` throw error đặc biệt. `try/catch` bắt error đó và nuốt nó → redirect không xảy ra. Fix: gọi `redirect()` NGOÀI try block, hoặc chỉ catch non-redirect errors. |
+| 5 | SSR (Pages): server nấu HTML mỗi request, gửi xuống client, client "hydrate". RSC: chỉ Server Components ở lại server mãi mãi — không gửi JS xuống, không hydrate. Nhẹ hơn. |
+
+> 🎯 **Feynman Prompt:** Giải thích `'use client'` boundary cho developer mới — "Bảng hiệu trên cửa phòng: ai vào phòng này phải theo quy tắc này."
 🔁 **Spaced Repetition reminder:** Review this file again on 2026-03-22, then 2026-03-26, then 2026-04-02.
+
+---
+
+## 🔗 Connections / Liên Kết
+
+### Cùng track (Same track)
+- [Data Fetching](./02-data-fetching.md) — fetch strategies that power Server Components
+- [Next.js Architecture](./03-nextjs-architecture.md) — rendering strategies (SSG/ISR/SSR) using RSC
+- [App Router Fundamentals](./04-nextjs-fundamentals-appRouter.md) — special files & routing conventions that host RSC
+- [Next.js Fundamentals](./00-nextjs-fundamentals.md) — foundational concepts before diving into RSC
+
+### Khác track (Cross-track)
+- [React Fundamentals](../03-react/01-react-fundamentals.md) — React rendering model RSC builds upon
+- [React 19 Features](../03-react/02-react-19-features.md) — concurrent features and Actions that complement RSC
+- [React Performance](../06-browser-performance/02-react-performance.md) — how RSC reduces client bundle and re-renders

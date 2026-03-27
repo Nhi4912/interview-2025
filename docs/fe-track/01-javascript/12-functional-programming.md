@@ -682,14 +682,42 @@ Giải thích tiếng Việt: `flatMap` = `map` + `flat(1)` trong một bước 
 
 ---
 
-## Self-Check / Tự Kiểm Tra ⚡ (Đóng tài liệu lại trước khi làm)
+## 🔄 Self-Check / Tự Kiểm Tra
 
-- [ ] **Retrieval**: Viết 3 nguyên tắc cốt lõi của FP từ trí nhớ — giải thích mỗi cái bằng 1 câu.
-- [ ] **Visual**: Vẽ diagram `compose(f, g, h)(x)` vs `pipe(f, g, h)(x)` — chỉ rõ hướng data flow.
-- [ ] **Application**: Redux reducer nhận `state = { items: [1,2,3] }` và action `ADD_ITEM(4)`. Viết reducer đúng (immutable) và sai (mutate). Giải thích tại sao sai gây bug UI.
-- [ ] **Debug**: `[3,1,2].sort()` trả về `[1,2,3]` — nhưng mảng gốc bây giờ là gì? Tại sao? Fix thế nào?
-- [ ] **Teach**: Giải thích `reduce` cho người chỉ biết vòng `for` — dùng ví dụ tính tổng mảng.
+> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
 
-💬 **Feynman Prompt:** Giải thích tại sao React yêu cầu immutable state updates, dùng ví dụ "ảnh và bản sao ảnh". Không dùng thuật ngữ kỹ thuật.
+| # | Loại | Câu hỏi |
+|---|------|---------|
+| 1 | 🔍 Retrieval | Viết **3 nguyên tắc cốt lõi của FP** từ trí nhớ — giải thích mỗi cái bằng 1 câu. |
+| 2 | 🎨 Visual | Vẽ diagram `compose(f, g, h)(x)` vs `pipe(f, g, h)(x)` — chỉ rõ **hướng data flow**. |
+| 3 | 🛠️ Application | Redux reducer nhận `state = { items: [1,2,3] }` và action `ADD_ITEM(4)`. Viết reducer **đúng** (immutable) và **sai** (mutate). Giải thích tại sao sai gây bug UI. |
+| 4 | 🐛 Debug | `[3,1,2].sort()` trả về `[1,2,3]` — nhưng **mảng gốc** bây giờ là gì? Tại sao? Fix thế nào? |
+| 5 | 🎓 Teach | Giải thích `reduce` cho người chỉ biết vòng `for` — dùng ví dụ tính tổng mảng. |
 
+### Key Points (tự kiểm tra)
+
+| # | Key Point |
+|---|-----------|
+| 1 | (1) **Pure functions**: same input → same output, no side effects. (2) **Immutability**: không modify data gốc, tạo bản copy mới. (3) **First-class functions**: function như data, truyền vào/trả về. |
+| 2 | `compose(f,g,h)(x)`: x → h(x) → g(h(x)) → f(g(h(x))) (**right-to-left**, math style). `pipe(f,g,h)(x)`: x → f(x) → g(f(x)) → h(g(f(x))) (**left-to-right**, readable). |
+| 3 | Đúng: `return { ...state, items: [...state.items, 4] }`. Sai: `state.items.push(4); return state`. Sai gây bug vì React dùng **reference equality** (`===`) để detect changes. |
+| 4 | `Array.sort()` **mutates in-place** — mảng gốc `[3,1,2]` bị sắp xếp thành `[1,2,3]`. Fix: `[...arr].sort()` hoặc `arr.toSorted()` (ES2023, returns new array). |
+| 5 | `reduce` như accumulator trong for-loop: `let sum = 0; for (let n of arr) sum += n;` === `arr.reduce((sum, n) => sum + n, 0)`. Giá trị đầu tiên = initial value. |
+
+> 🎯 **Feynman Prompt:** Giải thích tại sao React yêu cầu immutable state updates, dùng ví dụ "ảnh và bản sao ảnh". Không dùng thuật ngữ kỹ thuật.
 🔁 **Spaced Repetition reminder:** Review this file again on 2026-03-22, then 2026-03-26, then 2026-04-02.
+
+---
+
+## 🔗 Connections / Liên Kết
+
+### Cùng track (Same track)
+- [Closures](./03-closures.md) — closures are the foundation of higher-order functions
+- [ES6 Features](./07-es6-features.md) — arrow functions, spread, and destructuring for FP style
+- [Advanced Concepts](./08-advanced-concepts.md) — currying, composition, and memoization patterns
+- [Event Loop & Async](./06-event-loop-async.md) — async functional patterns (Promise chains, async iterators)
+
+### Khác track (Cross-track)
+- [React Hooks Deep Dive](../03-react/03-hooks-deep-dive.md) — hooks are built on FP principles (pure functions, closures)
+- [React State Management](../03-react/05-state-management.md) — Redux reducers are pure functions; FP in state management
+- [CS Fundamentals: Algorithms](../../shared/01-cs-fundamentals/algorithms-theory.md) — functional approaches to common algorithms

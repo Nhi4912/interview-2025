@@ -20,9 +20,21 @@ Without generics, engineers duplicated this wrapper 200+ times — one per endpo
 
 ```ts
 // Before generics: copy-paste hell
-interface RideResponse   { data: Ride;    error: ApiError; meta: PaginationMeta }
-interface DriverResponse { data: Driver;  error: ApiError; meta: PaginationMeta }
-interface FareResponse   { data: Fare;    error: ApiError; meta: PaginationMeta }
+interface RideResponse {
+  data: Ride;
+  error: ApiError;
+  meta: PaginationMeta;
+}
+interface DriverResponse {
+  data: Driver;
+  error: ApiError;
+  meta: PaginationMeta;
+}
+interface FareResponse {
+  data: Fare;
+  error: ApiError;
+  meta: PaginationMeta;
+}
 // ... 197 more
 ```
 
@@ -35,9 +47,9 @@ interface ApiResponse<T, E = ApiError, M = PaginationMeta> {
   meta: M;
 }
 
-type RideResponse   = ApiResponse<Ride>;
+type RideResponse = ApiResponse<Ride>;
 type DriverResponse = ApiResponse<Driver>;
-type FareResponse   = ApiResponse<Fare>;
+type FareResponse = ApiResponse<Fare>;
 ```
 
 But junior devs kept writing `ApiResponse<any>` — defeating type safety entirely. The team needed constraints, defaults, and inference rules to make the generic API both flexible AND safe. This file covers exactly those three layers.
@@ -58,7 +70,7 @@ Like a shipping box with a label: same box, any contents — but the label tells
 
 **Level 2 — Preserve type connections:** `any` eliminates duplication too, but breaks the relationship between input and output. If you call `identity("hello")` the compiler should know you get back a `string`, not `any`. Generics thread that connection through.
 
-**Level 3 — Inference sites:** TypeScript infers type parameters from specific positions in function signatures called *inference sites*. Understanding when inference works vs. when you must annotate explicitly is what separates mid from senior engineers.
+**Level 3 — Inference sites:** TypeScript infers type parameters from specific positions in function signatures called _inference sites_. Understanding when inference works vs. when you must annotate explicitly is what separates mid from senior engineers.
 
 ### Visual / Sơ Đồ
 
@@ -94,22 +106,18 @@ function transform<T, U>(items: T[], fn: (item: T) => U): U[] {
 }
 
 // Usage: inference works from both args
-const lengths = transform(["a", "bb", "ccc"], s => s.length);
+const lengths = transform(["a", "bb", "ccc"], (s) => s.length);
 //    ^--- U = number, inferred from return of fn
 
 // 3. Pipe — chained generics
-function pipe<A, B, C>(
-  value: A,
-  first: (a: A) => B,
-  second: (b: B) => C
-): C {
+function pipe<A, B, C>(value: A, first: (a: A) => B, second: (b: B) => C): C {
   return second(first(value));
 }
 
 const result = pipe(
   "  hello world  ",
-  s => s.trim(),          // A=string, B=string
-  s => s.toUpperCase()    // B=string, C=string
+  (s) => s.trim(), // A=string, B=string
+  (s) => s.toUpperCase(), // B=string, C=string
 );
 // result: string — fully inferred, no annotations needed
 
@@ -138,15 +146,15 @@ type UserListResponse = ApiResponse<User[]>;
 type StreamResponse = ApiResponse<ReadableStream, NetworkError>;
 ```
 
-### Common Mistakes / Lỗi Thường Gặp
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Mistake | Problem | Fix |
-|---|---|---|
-| `function wrap<T>(x: any): T` | Breaks type connection — T floats free | `function wrap<T>(x: T): T` |
-| `function f<A, B, C, D, E>(...)` | Too many params = impossible inference | Refactor: use a config object type param |
-| `ApiResponse<any>` | Defeats the whole point of the generic | Add constraint `T extends object` and enforce at use site |
-| Calling `identity<string>("hello")` always | Over-annotating — inference already works | Only annotate when inference fails |
-| `function first<T>(arr: T[]) { return arr[0] }` | Return type is `T | undefined` but typed as `T` | Explicitly type return as `T | undefined` |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `function wrap<T>(x: any): T`                   | Breaks type connection — T floats free    | `function wrap<T>(x: T): T`                               |
+| `function f<A, B, C, D, E>(...)`                | Too many params = impossible inference    | Refactor: use a config object type param                  |
+| `ApiResponse<any>`                              | Defeats the whole point of the generic    | Add constraint `T extends object` and enforce at use site |
+| Calling `identity<string>("hello")` always      | Over-annotating — inference already works | Only annotate when inference fails                        |
+| `function first<T>(arr: T[]) { return arr[0] }` | Return type is `T                         | undefined`but typed as`T`                                 | Explicitly type return as `T | undefined` |
 
 ### 🎯 Interview Pattern
 
@@ -154,7 +162,7 @@ type StreamResponse = ApiResponse<ReadableStream, NetworkError>;
 
 **Core concept:** Generic functions parameterize types the same way functions parameterize values. TypeScript infers those type params from argument positions (inference sites).
 
-**Opening sentence:** "The key insight is that generics create a *type-level connection* between inputs and outputs — something `any` can never do."
+**Opening sentence:** "The key insight is that generics create a _type-level connection_ between inputs and outputs — something `any` can never do."
 
 ### 🔑 Knowledge Chain
 
@@ -176,7 +184,7 @@ Without constraints, an unconstrained `T` is as useless as `any` — you can't a
 
 **Level 1 — Access member safely:** You can't write `function getLength<T>(x: T) { return x.length }` because TypeScript can't prove `T` has `.length`. The constraint `T extends { length: number }` grants that access.
 
-**Level 2 — Conditional types = type-level if/else:** Real APIs often need *different return types* based on the shape of the input. `infer` lets you *extract* a sub-type from within a type pattern — like regex groups but for types.
+**Level 2 — Conditional types = type-level if/else:** Real APIs often need _different return types_ based on the shape of the input. `infer` lets you _extract_ a sub-type from within a type pattern — like regex groups but for types.
 
 **Level 3 — Distributive behavior:** When a naked type parameter (not wrapped in a tuple/object) appears in a conditional type, TypeScript distributes over union members. This is the mechanism behind `Exclude`, `Extract`, and `NonNullable`.
 
@@ -221,7 +229,7 @@ Distributive behavior:
 ```ts
 // 1. Basic constraint — access .id safely
 function getById<T extends { id: string }>(items: T[], id: string): T | undefined {
-  return items.find(item => item.id === id);
+  return items.find((item) => item.id === id);
 }
 
 // T must have .id — but can have more fields
@@ -229,27 +237,28 @@ const user = getById([{ id: "u1", name: "Alice" }], "u1");
 //    user: { id: string; name: string } | undefined  ← T preserved, not narrowed to constraint
 
 // 2. Unwrap Promise with infer
-type Awaited_<T> = T extends Promise<infer U>
-  ? Awaited_<U>  // recursive for Promise<Promise<T>>
-  : T;
+type Awaited_<T> =
+  T extends Promise<infer U>
+    ? Awaited_<U> // recursive for Promise<Promise<T>>
+    : T;
 
-type A = Awaited_<Promise<string>>;                  // string
-type B = Awaited_<Promise<Promise<number>>>;         // number
-type C = Awaited_<string>;                           // string (not a promise, returns T)
+type A = Awaited_<Promise<string>>; // string
+type B = Awaited_<Promise<Promise<number>>>; // number
+type C = Awaited_<string>; // string (not a promise, returns T)
 
 // 3. Extract function return type
 type ReturnType_<T> = T extends (...args: any[]) => infer R ? R : never;
 
-type R1 = ReturnType_<() => string>;            // string
-type R2 = ReturnType_<(x: number) => boolean>;  // boolean
-type R3 = ReturnType_<string>;                  // never (not a function)
+type R1 = ReturnType_<() => string>; // string
+type R2 = ReturnType_<(x: number) => boolean>; // boolean
+type R3 = ReturnType_<string>; // never (not a function)
 
 // 4. Flatten array — one level
 type Flatten<T> = T extends Array<infer Item> ? Item : T;
 
-type F1 = Flatten<string[]>;   // string
+type F1 = Flatten<string[]>; // string
 type F2 = Flatten<number[][]>; // number[]  (only one level)
-type F3 = Flatten<string>;     // string (not an array)
+type F3 = Flatten<string>; // string (not an array)
 
 // 5. Distributive Exclude (how the built-in works)
 type Exclude_<T, U> = T extends U ? never : T;
@@ -261,10 +270,9 @@ type E1 = Exclude_<"a" | "b" | "c", "a">;
 
 // 6. Path keys for nested object access
 type PathKeys<T, Prefix extends string = ""> = {
-  [K in keyof T & string]:
-    T[K] extends object
-      ? PathKeys<T[K], `${Prefix}${K}.`> | `${Prefix}${K}`
-      : `${Prefix}${K}`
+  [K in keyof T & string]: T[K] extends object
+    ? PathKeys<T[K], `${Prefix}${K}.`> | `${Prefix}${K}`
+    : `${Prefix}${K}`;
 }[keyof T & string];
 
 interface Config {
@@ -276,15 +284,15 @@ type ConfigPaths = PathKeys<Config>;
 // "db" | "db.host" | "db.port" | "app" | "app.name"
 ```
 
-### Common Mistakes / Lỗi Thường Gặp
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Mistake | Problem | Fix |
-|---|---|---|
-| `T extends string` when `T extends string \| number` works | Over-constraining loses generality | Use the *widest* constraint that still grants the members you need |
-| Forgetting distributive behavior | `ToArray<string \| number>` gives `(string \| number)[]` when you wanted `string[] \| number[]` | Use naked type param for distribution; wrap in `[T]` to prevent it |
-| `infer` in non-`extends` position | Syntax error — `infer` only works inside conditional type patterns | Move extraction logic into conditional type |
-| Chaining `infer` without base case | Recursive type causes compile error or slow compilation | Always add a base case that does not recurse |
-| `T extends object` blocks primitives unexpectedly | `"hello" extends object` is false — strings won't match | Use `T extends Record<string, unknown>` or `T extends NonNullable<unknown>` for broader match |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `T extends string` when `T extends string \| number` works | Over-constraining loses generality                                                              | Use the _widest_ constraint that still grants the members you need                            |
+| Forgetting distributive behavior                           | `ToArray<string \| number>` gives `(string \| number)[]` when you wanted `string[] \| number[]` | Use naked type param for distribution; wrap in `[T]` to prevent it                            |
+| `infer` in non-`extends` position                          | Syntax error — `infer` only works inside conditional type patterns                              | Move extraction logic into conditional type                                                   |
+| Chaining `infer` without base case                         | Recursive type causes compile error or slow compilation                                         | Always add a base case that does not recurse                                                  |
+| `T extends object` blocks primitives unexpectedly          | `"hello" extends object` is false — strings won't match                                         | Use `T extends Record<string, unknown>` or `T extends NonNullable<unknown>` for broader match |
 
 ### 🎯 Interview Pattern
 
@@ -348,9 +356,7 @@ Recursive type — depth matters:
 
 ```ts
 // 1. DeepPartial — recursive mapped type
-type DeepPartial<T> = T extends object
-  ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : T;
+type DeepPartial<T> = T extends object ? { [K in keyof T]?: DeepPartial<T[K]> } : T;
 
 interface AppState {
   user: { name: string; age: number };
@@ -365,10 +371,7 @@ type PartialState = DeepPartial<AppState>;
 
 // 2. Event handlers from interface — template literal + mapped
 type EventHandlers<T> = {
-  [K in keyof T as `on${Capitalize<string & K>}Change`]: (
-    newValue: T[K],
-    oldValue: T[K]
-  ) => void;
+  [K in keyof T as `on${Capitalize<string & K>}Change`]: (newValue: T[K], oldValue: T[K]) => void;
 };
 
 interface FormFields {
@@ -385,12 +388,11 @@ type FormHandlers = EventHandlers<FormFields>;
 // }
 
 // 3. Paths for nested access — recursive template literal
-type Paths<T, K extends keyof T = keyof T> =
-  K extends string | number
-    ? T[K] extends Record<string, unknown>
-      ? `${K}` | `${K}.${Paths<T[K]>}`
-      : `${K}`
-    : never;
+type Paths<T, K extends keyof T = keyof T> = K extends string | number
+  ? T[K] extends Record<string, unknown>
+    ? `${K}` | `${K}.${Paths<T[K]>}`
+    : `${K}`
+  : never;
 
 interface User {
   id: string;
@@ -414,7 +416,7 @@ function getPath<T, P extends Paths<T>>(obj: T, path: P): unknown {
 type QueryBuilder<
   TTable,
   TSelected extends keyof TTable = keyof TTable,
-  TWhere extends Partial<TTable> = object
+  TWhere extends Partial<TTable> = object,
 > = {
   select<K extends keyof TTable>(...keys: K[]): QueryBuilder<TTable, K, TWhere>;
   where(condition: Partial<TTable>): QueryBuilder<TTable, TSelected, Partial<TTable>>;
@@ -429,7 +431,7 @@ function createQuery<T>(_table: string): QueryBuilder<T> {
   const builder: QueryBuilder<T> = {
     select(...keys) {
       selected.push(...keys);
-      return builder as QueryBuilder<T, typeof keys[number]>;
+      return builder as QueryBuilder<T, (typeof keys)[number]>;
     },
     where(condition) {
       Object.assign(conditions, condition);
@@ -446,12 +448,12 @@ function createQuery<T>(_table: string): QueryBuilder<T> {
 // 5. Readonly-preserving + optional-stripping mapped type
 // Remove optionality while keeping readonly
 type Required_<T> = {
-  [K in keyof T]-?: T[K];  // -? strips the optional modifier
+  [K in keyof T]-?: T[K]; // -? strips the optional modifier
 };
 
 // Add optional while keeping readonly
 type Partial_<T> = {
-  [K in keyof T]?: T[K];   // ? adds optional modifier
+  [K in keyof T]?: T[K]; // ? adds optional modifier
 };
 
 // Make everything readonly (no mutation)
@@ -460,15 +462,15 @@ type Immutable<T> = {
 };
 ```
 
-### Common Mistakes / Lỗi Thường Gặp
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Mistake | Problem | Fix |
-|---|---|---|
-| Recursive type without base case | TypeScript reports "Type alias circularly references itself" | Always add `T extends primitive ? T : { ... }` base case |
-| Forgetting `+?`/`-?` modifiers in mapped types | Mapped type silently preserves or drops optional/readonly — surprising behavior | Always think: should this transformation preserve, add, or remove modifiers? |
-| Template literal over `keyof T` without `& string` | `keyof T` includes `number` and `symbol` — template literals need string keys | Use `K extends string & keyof T` or `string & K` |
-| Deep recursion on large types | TypeScript hits depth limit (~1000) and gives unhelpful error | Add a `Depth` counter type param, or use `interface` self-reference (interfaces are lazily evaluated) |
-| Mapped type on union | `{[K in "a" \| "b"]: ...}` maps over union members, not object keys | If you want to map object keys use `keyof T`, not a union literal |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Recursive type without base case                   | TypeScript reports "Type alias circularly references itself"                    | Always add `T extends primitive ? T : { ... }` base case                                              |
+| Forgetting `+?`/`-?` modifiers in mapped types     | Mapped type silently preserves or drops optional/readonly — surprising behavior | Always think: should this transformation preserve, add, or remove modifiers?                          |
+| Template literal over `keyof T` without `& string` | `keyof T` includes `number` and `symbol` — template literals need string keys   | Use `K extends string & keyof T` or `string & K`                                                      |
+| Deep recursion on large types                      | TypeScript hits depth limit (~1000) and gives unhelpful error                   | Add a `Depth` counter type param, or use `interface` self-reference (interfaces are lazily evaluated) |
+| Mapped type on union                               | `{[K in "a" \| "b"]: ...}` maps over union members, not object keys             | If you want to map object keys use `keyof T`, not a union literal                                     |
 
 ### 🎯 Interview Pattern
 
@@ -494,15 +496,16 @@ type Immutable<T> = {
 
 **A:**
 
-`any` tells TypeScript "stop checking this." Generics tell TypeScript "be flexible, but *remember* what type this is and enforce it throughout."
+`any` tells TypeScript "stop checking this." Generics tell TypeScript "be flexible, but _remember_ what type this is and enforce it throughout."
 
 **English answer:**
 
 The core problem is the DRY-vs-safety tension. Without generics, you either:
+
 1. Duplicate code for each type (safe but verbose), or
 2. Use `any` (DRY but completely type-unsafe)
 
-Generics give you both: one implementation, full type safety. The type parameter `T` acts as a *placeholder* that gets filled in at the call site, and TypeScript tracks that substitution through the entire function signature.
+Generics give you both: one implementation, full type safety. The type parameter `T` acts as a _placeholder_ that gets filled in at the call site, and TypeScript tracks that substitution through the entire function signature.
 
 ```ts
 // any version — compiles but loses type information
@@ -515,8 +518,8 @@ const x = firstAny([1, 2, 3]); // x: any — useless, no autocomplete, no checks
 function first<T>(arr: T[]): T | undefined {
   return arr[0];
 }
-const y = first([1, 2, 3]);   // y: number | undefined — fully typed!
-const z = first(["a", "b"]);  // z: string | undefined — correctly inferred
+const y = first([1, 2, 3]); // y: number | undefined — fully typed!
+const z = first(["a", "b"]); // z: string | undefined — correctly inferred
 ```
 
 **Giải thích bằng tiếng Việt:**
@@ -526,13 +529,14 @@ const z = first(["a", "b"]);  // z: string | undefined — correctly inferred
 Generics giống như biến trong hàm, nhưng cho kiểu: `T` là "placeholder" được TypeScript điền vào dựa trên cách bạn gọi hàm. TypeScript nhớ giá trị đó và bắt buộc nó nhất quán xuyên suốt signature.
 
 Ba lợi ích thực tế:
+
 1. **Type connections:** `first<T>(arr: T[]): T` nói rằng "nếu bạn cho vào `string[]`, bạn nhận ra `string`" — compiler kiểm tra điều này
 2. **Inference:** TypeScript tự suy ra `T` từ argument, bạn không cần annotate
 3. **Refactor safety:** Đổi kiểu ở một chỗ, compiler báo lỗi tất cả chỗ không nhất quán
 
 **💡 Interview Signal:**
 
-✅ Strong answer: Giải thích *connection* giữa input và output type, đề cập đến inference, cho ví dụ cụ thể với `any` vs generic
+✅ Strong answer: Giải thích _connection_ giữa input và output type, đề cập đến inference, cho ví dụ cụ thể với `any` vs generic
 
 ❌ Weak answer: "Generics cho phép tái sử dụng code" — đúng nhưng không đủ, không giải thích tại sao không dùng `any`
 
@@ -542,35 +546,35 @@ Ba lợi ích thực tế:
 
 **A:**
 
-`infer` is TypeScript's type-level pattern matching. It lets you *extract* a sub-type from within a type structure, naming it for use in the true-branch of a conditional type.
+`infer` is TypeScript's type-level pattern matching. It lets you _extract_ a sub-type from within a type structure, naming it for use in the true-branch of a conditional type.
 
 **English answer:**
 
 Think of `infer` as regex capture groups for types. With regex you write `/(hello) world/` and `$1` captures "hello". With `infer` you write `T extends Promise<infer U>` and `U` captures whatever `T` wraps.
 
-`infer` can only appear on the right side of `extends` in a conditional type. It creates a *new type variable* that's only in scope in the true branch.
+`infer` can only appear on the right side of `extends` in a conditional type. It creates a _new type variable_ that's only in scope in the true branch.
 
 ```ts
 // 1. Implement ReturnType from scratch
 type MyReturnType<T> = T extends (...args: any[]) => infer R ? R : never;
 
-type R1 = MyReturnType<() => string>;                   // string
-type R2 = MyReturnType<(x: number) => boolean>;         // boolean
-type R3 = MyReturnType<typeof JSON.parse>;              // any (JSON.parse returns any)
-type R4 = MyReturnType<string>;                         // never (not a function)
+type R1 = MyReturnType<() => string>; // string
+type R2 = MyReturnType<(x: number) => boolean>; // boolean
+type R3 = MyReturnType<typeof JSON.parse>; // any (JSON.parse returns any)
+type R4 = MyReturnType<string>; // never (not a function)
 
 // 2. Implement Parameters from scratch
 type MyParameters<T> = T extends (...args: infer P) => any ? P : never;
 
 type P1 = MyParameters<(x: string, y: number) => void>; // [x: string, y: number]
-type P2 = MyParameters<() => void>;                      // []
+type P2 = MyParameters<() => void>; // []
 
 // 3. Nested infer — unwrap Promise deeply
 type DeepAwaited<T> = T extends Promise<infer U> ? DeepAwaited<U> : T;
 
-type D1 = DeepAwaited<Promise<Promise<string>>>;  // string
-type D2 = DeepAwaited<Promise<number>>;           // number
-type D3 = DeepAwaited<boolean>;                   // boolean
+type D1 = DeepAwaited<Promise<Promise<string>>>; // string
+type D2 = DeepAwaited<Promise<number>>; // number
+type D3 = DeepAwaited<boolean>; // boolean
 
 // 4. Infer from tuple position
 type Head<T extends unknown[]> = T extends [infer H, ...unknown[]] ? H : never;
@@ -583,7 +587,7 @@ type T = Tail<[string, number, boolean]>; // [number, boolean]
 type EventPayload<T> = T extends (event: infer E) => void ? E : never;
 
 type ClickPayload = EventPayload<(event: MouseEvent) => void>; // MouseEvent
-type CustomPayload = EventPayload<(event: CustomEvent<{userId: string}>) => void>;
+type CustomPayload = EventPayload<(event: CustomEvent<{ userId: string }>) => void>;
 // CustomEvent<{userId: string}>
 ```
 
@@ -592,11 +596,13 @@ type CustomPayload = EventPayload<(event: CustomEvent<{userId: string}>) => void
 `infer` là "bắt nhóm" ở cấp độ kiểu — giống regex capture group nhưng cho TypeScript.
 
 Cú pháp: `T extends SomePattern<infer X> ? UseX : Fallback`
+
 - TypeScript thử khớp `T` với pattern `SomePattern<infer X>`
 - Nếu khớp, `X` là phần bị bắt — có thể dùng trong nhánh true
 - Nếu không khớp, trả về nhánh false
 
 Ứng dụng thực tế trong dự án:
+
 - Lấy kiểu response của một async function để tự động type state trong Redux
 - Extract payload từ event handler để tránh import kiểu thừa
 - Unwrap nested generics trong thư viện (React Query, Axios) để lấy kiểu data thực sự
@@ -613,7 +619,7 @@ Cú pháp: `T extends SomePattern<infer X> ? UseX : Fallback`
 
 **A:**
 
-When a *naked* type parameter appears in a conditional type, TypeScript automatically distributes the condition over each union member. This is the mechanism that makes `Exclude`, `Extract`, and `NonNullable` work.
+When a _naked_ type parameter appears in a conditional type, TypeScript automatically distributes the condition over each union member. This is the mechanism that makes `Exclude`, `Extract`, and `NonNullable` work.
 
 **English answer:**
 
@@ -623,9 +629,9 @@ When a *naked* type parameter appears in a conditional type, TypeScript automati
 // Distributive — T is naked
 type IsString<T> = T extends string ? "yes" : "no";
 
-type R1 = IsString<string>;           // "yes"
-type R2 = IsString<number>;           // "no"
-type R3 = IsString<string | number>;  // "yes" | "no"  ← distributed!
+type R1 = IsString<string>; // "yes"
+type R2 = IsString<number>; // "no"
+type R3 = IsString<string | number>; // "yes" | "no"  ← distributed!
 
 // HOW Exclude works (built-in implementation):
 type Exclude_<T, U> = T extends U ? never : T;
@@ -646,7 +652,7 @@ type Ex = Extract_<"a" | "b" | "c" | 1 | 2, string>;
 // DISABLE distribution by wrapping in tuple
 type IsStringNonDist<T> = [T] extends [string] ? "yes" : "no";
 
-type R4 = IsStringNonDist<string | number>;  // "no" — treated as a single union, not distributed
+type R4 = IsStringNonDist<string | number>; // "no" — treated as a single union, not distributed
 // [string | number] extends [string] → false → "no"
 
 // Practical use: filter properties by value type
@@ -670,14 +676,15 @@ type NumericProps = FilterByValueType<Mixed, number | boolean>;
 
 **Giải thích bằng tiếng Việt:**
 
-"Distributive" nghĩa là TypeScript *chia nhỏ* union type và áp dụng conditional type cho *từng thành viên*, rồi *gộp* kết quả lại.
+"Distributive" nghĩa là TypeScript _chia nhỏ_ union type và áp dụng conditional type cho _từng thành viên_, rồi _gộp_ kết quả lại.
 
-Chìa khóa: chỉ xảy ra khi type param là *naked* (đứng một mình, không bọc trong `[]`, `{}`, hoặc generic khác).
+Chìa khóa: chỉ xảy ra khi type param là _naked_ (đứng một mình, không bọc trong `[]`, `{}`, hoặc generic khác).
 
 Tại sao điều này quan trọng trong phỏng vấn:
+
 - Đây là cách mà các built-in utility types (`Exclude`, `Extract`, `NonNullable`) hoạt động
 - Nếu bạn implement một custom utility type và quên tính chất distributive, kết quả sẽ sai với union inputs
-- Khi bạn *không* muốn distribute (ví dụ: check xem toàn bộ union có extends một type không), dùng tuple trick `[T] extends [U]`
+- Khi bạn _không_ muốn distribute (ví dụ: check xem toàn bộ union có extends một type không), dùng tuple trick `[T] extends [U]`
 
 **💡 Interview Signal:**
 
@@ -700,10 +707,10 @@ The design challenge: when you call `emitter.on("userLogin", handler)`, the comp
 ```ts
 // Step 1: Define the event map interface
 interface AppEvents {
-  userLogin:  { userId: string; timestamp: number };
+  userLogin: { userId: string; timestamp: number };
   userLogout: { userId: string };
-  pageView:   { path: string; referrer: string | null };
-  error:      { message: string; code: number };
+  pageView: { path: string; referrer: string | null };
+  error: { message: string; code: number };
 }
 
 // Step 2: Generic EventEmitter class
@@ -712,10 +719,8 @@ class TypedEventEmitter<EventMap extends Record<string, unknown>> {
     [K in keyof EventMap]?: Array<(payload: EventMap[K]) => void>;
   } = {};
 
-  on<K extends keyof EventMap>(
-    event: K,
-    handler: (payload: EventMap[K]) => void
-  ): () => void {  // returns unsubscribe function
+  on<K extends keyof EventMap>(event: K, handler: (payload: EventMap[K]) => void): () => void {
+    // returns unsubscribe function
     if (!this.handlers[event]) {
       this.handlers[event] = [];
     }
@@ -725,24 +730,18 @@ class TypedEventEmitter<EventMap extends Record<string, unknown>> {
     return () => this.off(event, handler);
   }
 
-  off<K extends keyof EventMap>(
-    event: K,
-    handler: (payload: EventMap[K]) => void
-  ): void {
+  off<K extends keyof EventMap>(event: K, handler: (payload: EventMap[K]) => void): void {
     const list = this.handlers[event];
     if (list) {
-      this.handlers[event] = list.filter(h => h !== handler) as typeof list;
+      this.handlers[event] = list.filter((h) => h !== handler) as typeof list;
     }
   }
 
   emit<K extends keyof EventMap>(event: K, payload: EventMap[K]): void {
-    this.handlers[event]?.forEach(handler => handler(payload));
+    this.handlers[event]?.forEach((handler) => handler(payload));
   }
 
-  once<K extends keyof EventMap>(
-    event: K,
-    handler: (payload: EventMap[K]) => void
-  ): void {
+  once<K extends keyof EventMap>(event: K, handler: (payload: EventMap[K]) => void): void {
     const wrapper = (payload: EventMap[K]) => {
       handler(payload);
       this.off(event, wrapper);
@@ -770,11 +769,11 @@ emitter.emit("userLogin", { userId: "u123", timestamp: Date.now() });
 // Step 4: Typed wildcard listener (advanced)
 type AnyEventPayload<EventMap> = EventMap[keyof EventMap];
 
-class ExtendedEmitter<EventMap extends Record<string, unknown>>
-  extends TypedEventEmitter<EventMap> {
-
+class ExtendedEmitter<
+  EventMap extends Record<string, unknown>,
+> extends TypedEventEmitter<EventMap> {
   onAny(handler: (event: keyof EventMap, payload: AnyEventPayload<EventMap>) => void): void {
-    (Object.keys(this) as Array<keyof EventMap>).forEach(event => {
+    (Object.keys(this) as Array<keyof EventMap>).forEach((event) => {
       this.on(event, (payload) => handler(event, payload as AnyEventPayload<EventMap>));
     });
   }
@@ -786,11 +785,13 @@ class ExtendedEmitter<EventMap extends Record<string, unknown>>
 Đây là bài toán "link string key đến type" — pattern xuất hiện nhiều trong thực tế (event systems, Redux action creators, API route handlers).
 
 Thiết kế cốt lõi:
+
 - `EventMap` = một interface/record mapping event name → payload type
 - `K extends keyof EventMap` trong mỗi method = TypeScript biết cả hai: tên event hợp lệ VÀ kiểu payload tương ứng
 - Compiler kiểm tra cả `on()` lẫn `emit()` đều dùng cùng payload type cho cùng event name
 
 Tại sao cần `handlers: { [K in keyof EventMap]?: Array<...> }` thay vì `Record<string, Function[]>`:
+
 - Mapped type trên `EventMap` đảm bảo mỗi key trong internal storage có đúng kiểu handler
 - Ngăn việc accidentally mix handlers giữa các events
 
@@ -808,11 +809,11 @@ Kỹ thuật quan trọng: return unsubscribe function từ `on()` — pattern n
 
 **A:**
 
-A type-safe query builder chains generic methods where each call *narrows* or *extends* the type parameters. The key insight is that `select()` changes the output type, `where()` constrains the filter type, and `build()` returns a result typed to exactly what was selected.
+A type-safe query builder chains generic methods where each call _narrows_ or _extends_ the type parameters. The key insight is that `select()` changes the output type, `where()` constrains the filter type, and `build()` returns a result typed to exactly what was selected.
 
 **English answer:**
 
-This is the hardest generic pattern: types that *evolve* as methods are chained. Each method call on the builder returns a *new* builder type with updated type parameters. TypeScript must track the accumulated state through each `.select()`, `.where()`, and `.orderBy()` call.
+This is the hardest generic pattern: types that _evolve_ as methods are chained. Each method call on the builder returns a _new_ builder type with updated type parameters. TypeScript must track the accumulated state through each `.select()`, `.where()`, and `.orderBy()` call.
 
 ```ts
 // Domain types
@@ -862,7 +863,7 @@ class QueryBuilder<TTable, TSelected extends keyof TTable = keyof TTable> {
 
   // where() constrains to valid TTable keys with correct value types
   where(conditions: {
-    [K in keyof TTable]?: TTable[K] | { $gt?: TTable[K]; $lt?: TTable[K]; $in?: TTable[K][] }
+    [K in keyof TTable]?: TTable[K] | { $gt?: TTable[K]; $lt?: TTable[K]; $in?: TTable[K][] };
   }): QueryBuilder<TTable, TSelected> {
     const next = new QueryBuilder<TTable, TSelected>(this._table);
     next._selected = this._selected;
@@ -900,9 +901,7 @@ class QueryBuilder<TTable, TSelected extends keyof TTable = keyof TTable> {
   }
 
   toSQL(): string {
-    const cols = this._selected.length > 0
-      ? this._selected.join(", ")
-      : "*";
+    const cols = this._selected.length > 0 ? this._selected.join(", ") : "*";
     let sql = `SELECT ${cols} FROM ${this._table}`;
 
     const whereClauses = Object.entries(this._where)
@@ -949,7 +948,7 @@ async function example() {
 
 **Giải thích bằng tiếng Việt:**
 
-Đây là pattern "accumulating type state" — mỗi method call trả về builder với type params *được cập nhật*. TypeScript track trạng thái query xuyên suốt chain.
+Đây là pattern "accumulating type state" — mỗi method call trả về builder với type params _được cập nhật_. TypeScript track trạng thái query xuyên suốt chain.
 
 Điểm kỹ thuật quan trọng:
 
@@ -960,15 +959,28 @@ async function example() {
 3. **`orderBy(key: TSelected)`:** Chỉ cho phép sort theo field đã được select — tránh runtime error khi project out một field rồi sort theo nó
 
 Trade-offs cần discuss trong phỏng vấn:
+
 - Mỗi method tạo một builder instance mới → immutable chaining, safe nhưng tốn memory hơn mutable approach
 - Type complexity tăng với mỗi feature thêm vào (joins, subqueries) — có thể cần simplify
 - Compile time tăng khi chain dài với nhiều type params
 
 **💡 Interview Signal:**
 
-✅ Strong answer: Giải thích tại sao `select()` phải return type mới (không phải `this`), discuss immutable vs mutable builder, mention compiler performance implications, biết khi nào pattern này là *overkill*
+✅ Strong answer: Giải thích tại sao `select()` phải return type mới (không phải `this`), discuss immutable vs mutable builder, mention compiler performance implications, biết khi nào pattern này là _overkill_
 
 ❌ Weak answer: Viết builder nhưng dùng `any` hoặc cast ở mọi chỗ — defeats the purpose
+
+---
+
+## 📋 Interview Q&A Summary / Tóm Tắt Q&A Phỏng Vấn
+
+| #   | Câu hỏi                                                | Difficulty | Core Concept      | Key Signal                                    |
+|---------|------------|---------|
+| 1   | Generics giải quyết vấn đề gì mà `any` không làm được? | 🟢 Junior  | Type safety       | Type flows through, không bị xóa như `any`    |
+| 2   | Giải thích từ khóa `infer` với ví dụ thực tế           | 🟡 Mid     | Conditional types | Extract type từ trong complex type            |
+| 3   | Distributive conditional types là gì?                  | 🟡 Mid     | Type distribution | Giải thích union distribution behavior        |
+| 4   | Implement type-safe event emitter bằng generics        | 🔴 Senior  | Generic design    | Event map + `keyof` + callback type inference |
+| 5   | Thiết kế type-safe ORM query builder                   | 🔴 Senior  | Type architecture | Fluent API với compile-time guarantees        |
 
 ---
 
@@ -978,33 +990,33 @@ Trade-offs cần discuss trong phỏng vấn:
 
 **Answer:**
 
-"Generic constraints use `extends` to define a minimum required shape for a type parameter — for example, `T extends { id: string }` means TypeScript will accept any type that has at least an `id` string field, while still preserving T's full type. Inference works by TypeScript analyzing *argument positions* in the function call — it matches the call-site argument's type to the parameter type and solves for T. Inference fails when the type parameter only appears in the return position with no argument to match against, when TypeScript encounters ambiguous multiple constraints, or when you use conditional types that depend on as-yet-unresolved type variables. In those cases, you must provide an explicit type argument like `fn<string>(arg)` rather than letting TypeScript guess."
+"Generic constraints use `extends` to define a minimum required shape for a type parameter — for example, `T extends { id: string }` means TypeScript will accept any type that has at least an `id` string field, while still preserving T's full type. Inference works by TypeScript analyzing _argument positions_ in the function call — it matches the call-site argument's type to the parameter type and solves for T. Inference fails when the type parameter only appears in the return position with no argument to match against, when TypeScript encounters ambiguous multiple constraints, or when you use conditional types that depend on as-yet-unresolved type variables. In those cases, you must provide an explicit type argument like `fn<string>(arg)` rather than letting TypeScript guess."
 
 ---
 
-## Retrieval Self-Check / Tự Kiểm Tra (Close-Doc Format)
+## 🔄 Self-Check / Tự Kiểm Tra
 
-Answer these without looking at the file. Open it only to verify.
+> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
 
-**Retrieval:**
-1. What is the difference between `T extends string` and `[T] extends [string]` in conditional types?
-2. What does "naked type parameter" mean and why does it matter?
-3. Name three positions where `infer` can appear in a conditional type.
+| #   | Loại           | Câu hỏi                                                                                                                                                               |
+|---------|------------|---------|
+| 1   | 🔍 Retrieval   | Sự khác biệt giữa `T extends string` và `[T] extends [string]` trong conditional types là gì? "Naked type parameter" nghĩa là gì và tại sao quan trọng?               |
+| 2   | 🎨 Visual      | Vẽ từng bước đánh giá của `Exclude<"a" \| "b" \| "c", "a">` — distributive evaluation diễn ra như thế nào step by step?                                               |
+| 3   | 🛠️ Application | Viết `DeepReadonly<T>` dùng mapped types và recursion. Viết `UnionToIntersection<U>` biến `A \| B \| C` thành `A & B & C`.                                            |
+| 4   | 🐛 Debug       | `type ToArray<T> = T extends any ? T[] : never` cho `string \| number[]` vs `type ToArray<T> = [T] extends [any] ? T[] : never` — kết quả khác nhau thế nào? Tại sao? |
+| 5   | 🎓 Teach       | Giải thích `infer` cho junior developer trong 2 câu dùng analogy, không dùng code hay thuật ngữ TypeScript.                                                           |
 
-**Visual:**
-4. Draw the distributed evaluation of `Exclude<"a" | "b" | "c", "a">` step by step.
-5. Sketch the type-level flow of `select("name", "email")` changing `TSelected` in the query builder.
+### Key Points (tự kiểm tra)
 
-**Application:**
-6. Write `DeepReadonly<T>` using only mapped types and recursion.
-7. Write `UnionToIntersection<U>` — it should turn `A | B | C` into `A & B & C`.
+| #   | Key Point                                                                                                                                                                |
+|---------|------------|---------|
+| 1   | `T extends string` distributes qua union (mỗi member được check riêng). `[T] extends [string]` wrap trong tuple → không distribute, check toàn bộ union.                 |
+| 2   | `Exclude<"a"\|"b"\|"c", "a">` → step 1: `"a" extends "a" ? never : "a"` = `never`; step 2: `"b" extends "a" ? never : "b"` = `"b"`; step 3: `"c"` = `"c"` → `"b" \| "c"` |
+| 3   | `DeepReadonly<T> = T extends object ? { readonly [K in keyof T]: DeepReadonly<T[K]> } : T`. `UnionToIntersection` dùng contravariant position trong conditional type.    |
+| 4   | Naked `T` → distributive → `string[] \| number[][]`. Wrapped `[T]` → non-distributive → `(string \| number[])[]`. Distributive behavior là key.                          |
+| 5   | `infer` như "điền vào chỗ trống". Bạn hỏi TypeScript: "Nếu type này có dạng X, thì phần tôi đánh dấu là gì?" TypeScript điền câu trả lời vào tên biến.                   |
 
-**Debug:**
-8. Why does `type ToArray<T> = T extends any ? T[] : never` give `string[] | number[]` for `T = string | number` but `type ToArray<T> = [T] extends [any] ? T[] : never` gives `(string | number)[]`?
-9. A recursive `DeepPartial<T>` hits "Type instantiation is excessively deep" — what are two ways to fix it?
-
-**Teach:**
-10. Explain `infer` to a junior developer in two sentences using only an analogy, no code.
+> 🎯 **Feynman Prompt:** Giải thích generic constraints (`T extends SomeType`) cho người mới biết TypeScript — "Tại sao không để T là bất cứ gì?" Dùng ví dụ hàm `getLength(x)` nhận string, array, hay object có `.length`.
 
 ---
 
@@ -1019,3 +1031,18 @@ Answer these without looking at the file. Open it only to verify.
 ---
 
 [← Previous: Advanced Types](./02-advanced-types.md) | [Next: TypeScript Comprehensive](./04-typescript-comprehensive.md)
+
+---
+
+## 🔗 Connections / Liên Kết
+
+### Cùng track (Same track)
+- [Advanced Types](./02-advanced-types.md) — conditional types are built on generic constraints
+- [TypeScript Basics](./01-typescript-basics.md) — type system foundation needed before generics
+- [React TypeScript](./05-react-typescript.md) — generic React components and typed custom hooks
+- [TypeScript Comprehensive](./04-typescript-comprehensive.md) — all generic patterns in one reference
+
+### Khác track (Cross-track)
+- [JS ES6 Features](../01-javascript/07-es6-features.md) — ES6 class syntax and iterators underlie generic patterns
+- [React Hooks Deep Dive](../03-react/03-hooks-deep-dive.md) — custom hooks use generics for type-safe APIs
+- [CS Fundamentals: Computation Theory](../../shared/01-cs-fundamentals/08-computation-theory.md) — parametric polymorphism theory behind generics

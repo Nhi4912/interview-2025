@@ -60,41 +60,45 @@
 ```javascript
 // === CommonJS: value copy ===
 // counter.js
-let count = 0
-module.exports = { count, increment: () => count++ }
+let count = 0;
+module.exports = { count, increment: () => count++ };
 
 // main.js
-const { count } = require('./counter')
-counter.increment()
-console.log(count)           // ← 0! count was copied at require time
-console.log(counter.count)   // ← 1 (reading from module.exports object)
+const { count } = require("./counter");
+counter.increment();
+console.log(count); // ← 0! count was copied at require time
+console.log(counter.count); // ← 1 (reading from module.exports object)
 
 // === ES Modules: live binding ===
 // counter.mjs
-export let count = 0
-export function increment() { count++ }
+export let count = 0;
+export function increment() {
+  count++;
+}
 
 // main.mjs
-import { count, increment } from './counter.mjs'
-increment()
-console.log(count)  // ← 1! count is a live reference to counter.mjs's count
+import { count, increment } from "./counter.mjs";
+increment();
+console.log(count); // ← 1! count is a live reference to counter.mjs's count
 ```
 
 **Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| `const { count } = require('./counter')` then expect live updates | CJS destructure is a value copy — use `const m = require('./counter')`, read `m.count` |
-| Dynamic `import(path)` where `path` is a variable, expecting tree-shaking | Dynamic import is not tree-shakeable — only static `import { fn } from './module'` can be shaken |
-| Mixing CJS `require` in `.mjs` files | ESM files can't use `require` — use `import`, or use `createRequire` interop shim |
-| `export default` for utility libraries | Default exports are harder to tree-shake; prefer named exports |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `const { count } = require('./counter')` then expect live updates | CJS `require` destructure creates a value copy at require-time — not a live binding | Use `const m = require('./counter')` and read `m.count` to get current value |
+| Dynamic `import(path)` where `path` is a variable, expecting tree-shaking | Dynamic import is a runtime call — bundler can't statically analyze the import graph | Tree-shaking only works with static `import { fn } from './module'` declarations |
+| Mixing CJS `require` in `.mjs` files | `.mjs` files are strictly ESM — `require` is not defined in the module scope | Use `import`, or use `createRequire` interop shim |
+| `export default` for utility libraries | Default exports are harder to tree-shake and cause renaming inconsistency across consumers | Prefer named exports for utility libraries |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "tree shaking" / "bundle size" / "ESM vs CommonJS" / "lodash optimization"
 - **Concept**: Static ESM imports enable build-time analysis; CJS dynamic require prevents it
 - **Opening**: "The fundamental difference is static vs dynamic. ESM's `import` is a declaration the bundler can analyze at parse time — it knows exactly which names are imported and can eliminate unused exports. CommonJS `require()` is a runtime function call that can be dynamic — bundlers can't safely shake it..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: How bundlers work (Webpack/Rollup/Vite), `package.json` `"type"` field
 - **Enables**: Tree shaking, code splitting, Module Federation (runtime ESM composition)
 
@@ -135,19 +139,21 @@ import { add } from './math.js'  // only add is used
 
 **Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| Library uses `module.exports = { add, subtract }` (CJS) | Use ESM `export function add()` for tree-shakeable libraries |
-| Missing `sideEffects: false` in library's `package.json` | Add `"sideEffects": false` so consumers can shake the entire unused module |
-| `import * as utils from './utils'` then access `utils.fn()` | Use named imports `import { fn }` — object spread defeats static analysis |
-| Using `babel` to compile ESM → CJS before bundling | Configure Babel to preserve ESM syntax (`modules: false`) so bundler can tree-shake |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Library uses `module.exports = { add, subtract }` (CJS) | CJS is dynamic — bundlers can't safely eliminate unused exports from CJS modules | Use ESM `export function add()` for tree-shakeable libraries |
+| Missing `sideEffects: false` in library's `package.json` | Bundler assumes every module may have side effects — won't eliminate entire unused modules | Add `"sideEffects": false` so consumers can shake entire unused modules |
+| `import * as utils from './utils'` then access `utils.fn()` | Namespace import forces bundler to include the entire module; defeats static analysis | Use named imports `import { fn }` — enables per-export elimination |
+| Using Babel to compile ESM → CJS before bundling | CJS output loses the static structure that tree-shaking requires | Configure Babel with `modules: false` to preserve ESM syntax for the bundler |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "optimize bundle size" / "large dependency" / "unused code"
 - **Concept**: Static ESM + `sideEffects: false` + named exports = full tree shaking
 - **Opening**: "Tree shaking requires three things: the library must use ESM `export` syntax (not CommonJS), the library's `package.json` must have `sideEffects: false`, and you should use named imports not namespace imports. Then the bundler marks the import graph and eliminates everything not reachable from the entry point..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: ESM static imports, bundler concepts (Webpack/Rollup/Vite)
 - **Enables**: Sub-100KB JavaScript bundles, fast FCP, Core Web Vitals improvements
 
@@ -168,45 +174,51 @@ import { add } from './math.js'  // only add is used
 ```javascript
 // === CJS circular: gets partial object ===
 // a.js
-const { fnB } = require('./b')  // b.js starts loading...
-exports.fnA = () => 'A'         // ...b.js requires a.js → gets {} (empty at this point)
+const { fnB } = require("./b"); // b.js starts loading...
+exports.fnA = () => "A"; // ...b.js requires a.js → gets {} (empty at this point)
 
 // b.js
-const { fnA } = require('./a')  // fnA is undefined! ← CJS partial snapshot
-exports.fnB = () => fnA()       // ← ReferenceError at runtime
+const { fnA } = require("./a"); // fnA is undefined! ← CJS partial snapshot
+exports.fnB = () => fnA(); // ← ReferenceError at runtime
 
 // Fix: use function scope to delay access
 exports.fnB = () => {
-  const { fnA } = require('./a')  // lazy require inside function — always fresh
-  return fnA()
-}
+  const { fnA } = require("./a"); // lazy require inside function — always fresh
+  return fnA();
+};
 
 // === ESM circular: live bindings resolve lazily ===
 // a.mjs
-import { fnB } from './b.mjs'
-export function fnA() { return 'A' }  // binding slot created
+import { fnB } from "./b.mjs";
+export function fnA() {
+  return "A";
+} // binding slot created
 
 // b.mjs
-import { fnA } from './a.mjs'
-export function fnB() { return fnA() }  // fnA binding resolves when called (not at import)
+import { fnA } from "./a.mjs";
+export function fnB() {
+  return fnA();
+} // fnA binding resolves when called (not at import)
 // ✅ safe as long as fnB is not called before a.mjs finishes initializing
 ```
 
 **Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| Circular CJS with top-level destructure: `const { fn } = require('./a')` in circular graph | Lazy require inside function body: `const { fn } = require('./a')` inside the function |
-| Circular ESM where exported value is accessed at top-level initialization time | Access circular imports only inside function bodies — defer until runtime |
-| Assuming ESM circular "just works" without understanding timing | Understand that ESM live bindings resolve lazily — safe for functions, dangerous for values accessed at init time |
-| "Circular dependencies are always bad" — avoiding all cycles with complex workarounds | Sometimes cycles are natural; ES Modules handle them well if you access via functions, not top-level values |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Circular CJS with top-level destructure: `const { fn } = require('./a')` at module level | At cycle resolution time the module may be partially initialized — `fn` is `undefined` | Lazy require inside function body: `const { fn } = require('./a')` inside the function call |
+| Circular ESM where exported value is accessed at top-level initialization time | ESM live bindings are resolved lazily — value may still be uninitialized when first accessed | Access circular imports only inside function bodies — defer until runtime |
+| Assuming ESM circular "just works" without understanding timing | ESM handles cycles but order matters — a value exported before it's assigned is `undefined` | ESM live bindings resolve lazily — safe for functions, dangerous for top-level values |
+| "Circular dependencies are always bad" — adding complex workarounds to avoid all cycles | Forced restructuring to eliminate cycles can make code more complex than the cycle itself | Sometimes cycles are natural; handle them by accessing via functions, not top-level values |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "circular dependency error" / "undefined import" / "module initialization"
 - **Concept**: CJS returns partial snapshot at cycle time; ESM live bindings resolve lazily
 - **Opening**: "In CommonJS, a circular dependency gives you a partial snapshot — you get whatever was exported before the circular require resolved. Classic symptom: a destructured import is `undefined` at module top level. In ESM, imports are live bindings that resolve lazily — they're only evaluated when accessed. If you access a circular import inside a function body rather than at the top level, it works correctly in ESM..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: Module loading phases, `module.exports` object reference
 - **Enables**: Understanding "Cannot access X before initialization" errors; debugging circular import crashes
 
@@ -225,6 +237,7 @@ export function fnB() { return fnA() }  // fnA binding resolves when called (not
 #### Timeline of Module Systems / Dòng Thời Gian Hệ Thống Module
 
 **1. Script Tags Era (Pre-2009)**
+
 - Global namespace pollution
 - Manual dependency management
 - Load order matters
@@ -232,6 +245,7 @@ export function fnB() { return fnA() }  // fnA binding resolves when called (not
 - IIFE pattern for isolation
 
 **2. CommonJS (2009)**
+
 - Synchronous loading
 - Server-side focus (Node.js)
 - `require()` and `module.exports`
@@ -239,6 +253,7 @@ export function fnB() { return fnA() }  // fnA binding resolves when called (not
 - Runtime resolution
 
 **3. AMD - Asynchronous Module Definition (2010)**
+
 - Browser-focused
 - Asynchronous loading
 - `define()` and `require()`
@@ -246,12 +261,14 @@ export function fnB() { return fnA() }  // fnA binding resolves when called (not
 - Complex syntax
 
 **4. UMD - Universal Module Definition (2011)**
+
 - Compatibility layer
 - Works with CommonJS, AMD, and globals
 - Boilerplate-heavy
 - Bridge solution
 
 **5. ES6 Modules (2015)**
+
 - Native JavaScript modules
 - Static structure
 - Import/export syntax
@@ -273,6 +290,7 @@ export function fnB() { return fnA() }  // fnA binding resolves when called (not
 **1. Module Wrapper Function**
 
 Every CommonJS module is wrapped in a function:
+
 ```
 (function(exports, require, module, __filename, __dirname) {
   // Module code here
@@ -280,14 +298,16 @@ Every CommonJS module is wrapped in a function:
 ```
 
 This provides:
+
 - **Scope isolation**: Variables don't leak to global
 - **Module metadata**: Access to module object
-- **File information**: __filename and __dirname
+- **File information**: **filename and **dirname
 - **Dependency injection**: require function
 
 **2. Module Object Structure**
 
 Each module has a module object:
+
 - `module.id`: Unique identifier (usually file path)
 - `module.exports`: What the module exports
 - `module.parent`: Module that required this one
@@ -299,6 +319,7 @@ Each module has a module object:
 **3. Exports vs Module.Exports**
 
 Two ways to export:
+
 - `exports.foo = bar` - Adds property to exports object
 - `module.exports = foo` - Replaces entire exports object
 
@@ -307,6 +328,7 @@ Two ways to export:
 **4. Caching Mechanism**
 
 CommonJS caches modules:
+
 - First `require()` loads and executes module
 - Subsequent `require()` returns cached result
 - Cache key is resolved absolute path
@@ -316,6 +338,7 @@ CommonJS caches modules:
 **5. Synchronous Loading**
 
 CommonJS loads synchronously:
+
 - Blocks execution until module loaded
 - Suitable for server (fast file system)
 - Problematic for browsers (network latency)
@@ -338,6 +361,7 @@ CommonJS loads synchronously:
 4. **Global Modules**: Check global installation paths
 
 **Resolution Priority:**
+
 1. File with exact name
 2. File with .js extension
 3. File with .json extension
@@ -362,6 +386,7 @@ CommonJS loads synchronously:
 **1. Static Structure**
 
 ES Modules have static structure:
+
 - Import/export statements must be at top level
 - Cannot be conditional or dynamic (without dynamic import)
 - Module dependencies known before execution
@@ -369,6 +394,7 @@ ES Modules have static structure:
 - Supports tree-shaking
 
 **Benefits:**
+
 - Dead code elimination
 - Faster module loading
 - Better tooling support
@@ -378,12 +404,14 @@ ES Modules have static structure:
 **2. Live Bindings**
 
 ES Modules use live bindings:
+
 - Imported values are references, not copies
 - Changes in exporting module reflect in importing module
 - Read-only in importing module
 - Different from CommonJS (which copies values)
 
 **Example Behavior:**
+
 ```
 // counter.js
 export let count = 0;
@@ -399,6 +427,7 @@ console.log(count); // 1 (live binding!)
 **3. Asynchronous Loading**
 
 ES Modules load asynchronously:
+
 - Non-blocking by default
 - Suitable for browsers
 - Parallel loading of dependencies
@@ -408,6 +437,7 @@ ES Modules load asynchronously:
 **4. Strict Mode**
 
 ES Modules always run in strict mode:
+
 - No need for 'use strict'
 - Prevents common mistakes
 - Better performance
@@ -416,6 +446,7 @@ ES Modules always run in strict mode:
 **5. Module Scope**
 
 Each module has its own scope:
+
 - Top-level variables are module-scoped
 - Not added to global object
 - `this` is undefined at top level
@@ -424,24 +455,28 @@ Each module has its own scope:
 #### Import/Export Variations / Biến Thể Import/Export
 
 **Named Exports:**
+
 - Export multiple values
 - Import by name
 - Can rename with `as`
 - Explicit and clear
 
 **Default Exports:**
+
 - One default per module
 - Import with any name
 - Convenient for single export
 - Can combine with named exports
 
 **Re-exports:**
+
 - Export from another module
 - Aggregation pattern
 - Barrel exports
 - Namespace management
 
 **Dynamic Imports:**
+
 - `import()` function
 - Returns Promise
 - Code splitting
@@ -463,6 +498,7 @@ Each module has its own scope:
 **1. Specifier Types**
 
 Three types of module specifiers:
+
 - **Relative**: `./module.js`, `../utils.js`
 - **Absolute**: `/root/module.js` (rare)
 - **Bare**: `lodash`, `react` (package names)
@@ -470,6 +506,7 @@ Three types of module specifiers:
 **2. File Extension Requirements**
 
 Browsers require explicit extensions:
+
 - Must include .js, .mjs
 - No automatic extension resolution
 - Node.js can be configured for this
@@ -477,6 +514,7 @@ Browsers require explicit extensions:
 **3. Package.json Fields**
 
 Modern package.json supports:
+
 - `"type": "module"` - Treat .js as ES modules
 - `"type": "commonjs"` - Treat .js as CommonJS (default)
 - `"exports"` - Define package entry points
@@ -486,6 +524,7 @@ Modern package.json supports:
 **4. Conditional Exports**
 
 Package.json exports can be conditional:
+
 ```json
 {
   "exports": {
@@ -499,6 +538,7 @@ Package.json exports can be conditional:
 ```
 
 Conditions:
+
 - `import` - ES module import
 - `require` - CommonJS require
 - `node` - Node.js environment
@@ -520,6 +560,7 @@ Conditions:
 #### How Systems Handle Cycles / Cách Hệ Thống Xử Lý Chu Trình
 
 **CommonJS Approach:**
+
 1. Starts loading Module A
 2. A requires Module B
 3. Starts loading Module B
@@ -531,6 +572,7 @@ Conditions:
 **Result**: Works but can cause issues with undefined values if not careful.
 
 **ES Modules Approach:**
+
 1. Parse all modules first (static analysis)
 2. Detect circular dependencies
 3. Create module instances
@@ -542,16 +584,19 @@ Conditions:
 #### Problems with Circular Dependencies / Vấn Đề với Phụ Thuộc Vòng Tròn
 
 **1. Initialization Order Issues**
+
 - Unclear which module initializes first
 - Partial initialization can cause bugs
 - Temporal dead zones
 
 **2. Maintenance Complexity**
+
 - Hard to understand code flow
 - Difficult to refactor
 - Testing becomes complex
 
 **3. Performance Impact**
+
 - Module loading overhead
 - Potential memory leaks
 - Harder to optimize
@@ -559,26 +604,31 @@ Conditions:
 #### Solutions / Giải Pháp
 
 **1. Dependency Injection**
+
 - Pass dependencies as parameters
 - Inversion of control
 - Breaks circular dependency
 
 **2. Event Emitters**
+
 - Decouple modules
 - Publish-subscribe pattern
 - Loose coupling
 
 **3. Lazy Loading**
+
 - Delay import until needed
 - Dynamic imports
 - Break initialization cycle
 
 **4. Refactoring**
+
 - Extract shared code to third module
 - Reorganize module structure
 - Better separation of concerns
 
 **5. Interface Segregation**
+
 - Define interfaces
 - Depend on abstractions
 - Reduce coupling
@@ -596,18 +646,21 @@ Conditions:
 #### How Tree Shaking Works / Cách Tree Shaking Hoạt Động
 
 **1. Static Analysis Phase**
+
 - Parse all modules
 - Build dependency graph
 - Identify all imports and exports
 - Mark used exports
 
 **2. Marking Phase**
+
 - Start from entry points
 - Mark all reachable code
 - Follow import chains
 - Mark transitively used code
 
 **3. Sweeping Phase**
+
 - Remove unmarked code
 - Eliminate unused exports
 - Remove unused imports
@@ -616,21 +669,25 @@ Conditions:
 #### Requirements for Effective Tree Shaking / Yêu Cầu cho Tree Shaking Hiệu Quả
 
 **1. ES Module Syntax**
+
 - Must use import/export
 - No CommonJS require
 - Static structure required
 
 **2. Side-Effect Free Code**
+
 - Pure functions preferred
 - No global state mutations
 - Predictable behavior
 
 **3. Package Configuration**
+
 - `"sideEffects": false` in package.json
 - Or array of files with side effects
 - Helps bundlers optimize
 
 **4. Named Exports**
+
 - Better than default exports
 - More granular elimination
 - Clearer dependencies
@@ -638,21 +695,25 @@ Conditions:
 #### Limitations / Giới Hạn
 
 **1. Dynamic Imports**
+
 - Cannot analyze statically
 - Entire module included
 - Runtime dependencies
 
 **2. Side Effects**
+
 - Must be conservative
 - May include unnecessary code
 - Requires manual configuration
 
 **3. CommonJS Interop**
+
 - Cannot tree-shake CommonJS
 - Entire module included
 - Conversion needed
 
 **4. Property Access**
+
 - `import * as utils` harder to shake
 - Object property access dynamic
 - Named imports better
@@ -665,30 +726,31 @@ Conditions:
 
 **A:** Both are module systems, but with fundamentally different models:
 
-| | CommonJS (CJS) | ES Modules (ESM) |
-|---|---|---|
-| Syntax | `require()` / `module.exports` | `import` / `export` |
-| Loading | Synchronous (file-by-file) | Asynchronous (parallel) |
-| Analysis | Runtime — can't know until code runs | Static — analyzed at parse time |
-| Bindings | Value copy on require | Live bindings (read-only references) |
-| Tree shaking | ❌ Not possible | ✅ Possible |
-| Default in Node | Yes (`.js` files) | `.mjs` or `"type": "module"` |
+|                 | CommonJS (CJS)                       | ES Modules (ESM)                     |
+| --------------- | ------------------------------------ | ------------------------------------ |
+| Syntax          | `require()` / `module.exports`       | `import` / `export`                  |
+| Loading         | Synchronous (file-by-file)           | Asynchronous (parallel)              |
+| Analysis        | Runtime — can't know until code runs | Static — analyzed at parse time      |
+| Bindings        | Value copy on require                | Live bindings (read-only references) |
+| Tree shaking    | ❌ Not possible                      | ✅ Possible                          |
+| Default in Node | Yes (`.js` files)                    | `.mjs` or `"type": "module"`         |
 
 ```javascript
 // CJS — value copy
-const { count } = require('./counter')  // count is a copy
-counter.increment()
-console.log(count)   // ← 0 (stale copy)
+const { count } = require("./counter"); // count is a copy
+counter.increment();
+console.log(count); // ← 0 (stale copy)
 
 // ESM — live binding
-import { count, increment } from './counter.js'
-increment()
-console.log(count)   // ← 1 (live reference)
+import { count, increment } from "./counter.js";
+increment();
+console.log(count); // ← 1 (live reference)
 ```
 
 **Tiếng Việt:** CJS dùng `require()` — đồng bộ, runtime, giá trị được copy khi require. ESM dùng `import` — bất đồng bộ, static analysis, live binding (reference read-only). ESM cho phép tree shaking, CJS thì không.
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Explains the static/dynamic distinction; mentions live bindings vs value copy with a concrete example; says tree shaking requires ESM
 - ❌ Weak: "ESM uses import/export syntax, CJS uses require" — syntax only, misses the architectural difference
 
@@ -699,17 +761,20 @@ console.log(count)   // ← 1 (live reference)
 **A:** Tree shaking = bundler eliminates exports that are never imported anywhere. It requires **static analysis** — the bundler must trace the full import graph at build time, before running any code.
 
 **ESM enables this because:**
+
 - `import` must be at the top level (not inside `if`/loops)
 - The module specifier must be a string literal (not a variable)
 - All exports are declared statically
 
 **CommonJS breaks this because `require()` is a runtime function** that can be dynamic:
+
 ```javascript
-const utils = require(process.env.LIB)  // bundler can't know which file
-if (debug) require('./devtools')        // bundler can't statically determine
+const utils = require(process.env.LIB); // bundler can't know which file
+if (debug) require("./devtools"); // bundler can't statically determine
 ```
 
 **All 3 conditions needed for tree shaking:**
+
 1. **ESM `import`/`export`** — static structure
 2. **`"sideEffects": false`** in library's `package.json` — signals "safe to remove unused modules entirely"
 3. **Named exports** > default exports — `import { debounce }` is more traceable than `import lib` then `lib.debounce`
@@ -717,8 +782,9 @@ if (debug) require('./devtools')        // bundler can't statically determine
 **Tiếng Việt:** Tree shaking cần static analysis tại build time. ESM cho phép vì `import` ở top-level với string literal. CommonJS `require()` là runtime function call — không thể phân tích tĩnh. Ngoài ra cần: `"sideEffects": false` trong package.json của library và dùng named exports.
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Explains why static structure is required (ESM constraints); mentions `sideEffects: false` purpose; mentions default vs named exports trade-off
-- ❌ Weak: "Tree shaking removes unused code" — correct but doesn't explain *why* ESM is required or the `sideEffects` mechanism
+- ❌ Weak: "Tree shaking removes unused code" — correct but doesn't explain _why_ ESM is required or the `sideEffects` mechanism
 
 ---
 
@@ -727,6 +793,7 @@ if (debug) require('./devtools')        // bundler can't statically determine
 **A:** This is a **circular dependency initialization timing problem** — classic in ESM too.
 
 **Diagnosis steps:**
+
 1. Check if the circular: does `a.js` import from `b.js` and vice versa?
 2. Check if the `undefined` occurs at **module top level** vs inside a function body
 
@@ -734,35 +801,40 @@ if (debug) require('./devtools')        // bundler can't statically determine
 
 ```javascript
 // a.js
-import { fnB } from './b.js'
-export const fnA = () => 'A'
-console.log(fnB())  // ← PROBLEM: top-level access of fnB during init cycle
-                    // b.js is still loading → fnB binding is undefined
+import { fnB } from "./b.js";
+export const fnA = () => "A";
+console.log(fnB()); // ← PROBLEM: top-level access of fnB during init cycle
+// b.js is still loading → fnB binding is undefined
 
 // b.js
-import { fnA } from './a.js'
-export const fnB = () => fnA()  // fnA is a live binding — will resolve when a.js finishes
+import { fnA } from "./a.js";
+export const fnB = () => fnA(); // fnA is a live binding — will resolve when a.js finishes
 ```
 
 **Fix:** Move cross-circular-import access inside function bodies — not at top level:
+
 ```javascript
 // a.js
-import { fnB } from './b.js'
-export function fnA() { return 'A' }
+import { fnB } from "./b.js";
+export function fnA() {
+  return "A";
+}
 // ✅ No top-level call — fnB is accessed only when fnA is invoked, after both modules initialize
 ```
 
 **For CommonJS circular:** The fix is lazy require inside functions:
+
 ```javascript
-exports.fnA = function() {
-  const { fnB } = require('./b')  // lazy — runs after full initialization
-  return fnB()
-}
+exports.fnA = function () {
+  const { fnB } = require("./b"); // lazy — runs after full initialization
+  return fnB();
+};
 ```
 
 **Tiếng Việt:** Circular import trả về `undefined` do initialization timing. ESM live bindings tồn tại nhưng chưa được resolve khi top-level code chạy trong cycle. Fix: chỉ access circular import bên trong function body — không phải top-level. CJS fix: lazy `require()` bên trong function.
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Identifies the initialization timing issue (not just "circular deps are bad"); distinguishes top-level access vs function body access; gives concrete fix for both ESM and CJS
 - ❌ Weak: "Refactor to remove the circular dependency" — valid advice but misses the diagnostic and immediate fix that doesn't require full refactoring
 
@@ -773,6 +845,7 @@ exports.fnA = function() {
 **A:** Classic lodash bundle bloat. Full diagnosis + fix:
 
 **Step 1 — Identify the problem:**
+
 ```bash
 # Bundle analyzer
 npx webpack-bundle-analyzer dist/stats.json
@@ -781,19 +854,20 @@ npx webpack-bundle-analyzer dist/stats.json
 ```
 
 **Step 2 — Check the import:**
+
 ```javascript
-import _ from 'lodash'        // ❌ imports entire lodash (72KB)
-import { debounce } from 'lodash'  // ❌ STILL 72KB — lodash is CJS, can't tree-shake
+import _ from "lodash"; // ❌ imports entire lodash (72KB)
+import { debounce } from "lodash"; // ❌ STILL 72KB — lodash is CJS, can't tree-shake
 ```
 
 **Step 3 — Fix options (in order of preference):**
 
 ```javascript
 // Option A: Use lodash-es (ESM version) — enables full tree shaking
-import { debounce } from 'lodash-es'  // ✅ ~1KB — only debounce included
+import { debounce } from "lodash-es"; // ✅ ~1KB — only debounce included
 
 // Option B: Import specific method directly
-import debounce from 'lodash/debounce'  // ✅ only one file loaded
+import debounce from "lodash/debounce"; // ✅ only one file loaded
 
 // Option C: Use native Web APIs (best for simple cases)
 // lodash.debounce → just write it (10 lines)
@@ -806,6 +880,7 @@ import debounce from 'lodash/debounce'  // ✅ only one file loaded
 **Tiếng Việt:** Nguyên nhân: `lodash` dùng CJS — không tree-shakeable. Chuyển sang `lodash-es` (ESM version) cho phép tree shaking — bundle giảm từ 72KB xuống ~1KB chỉ với debounce. Thay thế bằng native APIs (`structuredClone`, `Array.prototype.flat`, optional chaining) khi có thể.
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Explains WHY default lodash can't be shaken (CJS); knows lodash-es exists as ESM alternative; mentions native API replacements (structuredClone, etc.); mentions bundle analyzer tooling
 - ❌ Weak: "Import only what you need with `import { debounce } from 'lodash'`" — this still bundles all of lodash because lodash is CJS; interviewer will push back
 
@@ -813,12 +888,12 @@ import debounce from 'lodash/debounce'  // ✅ only one file loaded
 
 ## Q&A Summary / Tóm Tắt Q&A
 
-| # | Topic | Key Insight |
-|---|-------|-------------|
-| Q1 | CJS vs ESM | Static analysis (ESM) vs runtime function call (CJS); live bindings vs value copy |
-| Q2 | Tree shaking | Requires: ESM static imports + `sideEffects: false` + named exports |
-| Q3 | Circular imports undefined | Initialization timing — access circular imports inside function bodies, not top-level |
-| Q4 | Lodash bundle bloat | `lodash` is CJS → can't shake; switch to `lodash-es` or native APIs |
+| #   | Topic                      | Key Insight                                                                           |
+| --- | -------------------------- | ------------------------------------------------------------------------------------- |
+| Q1  | CJS vs ESM                 | Static analysis (ESM) vs runtime function call (CJS); live bindings vs value copy     |
+| Q2  | Tree shaking               | Requires: ESM static imports + `sideEffects: false` + named exports                   |
+| Q3  | Circular imports undefined | Initialization timing — access circular imports inside function bodies, not top-level |
+| Q4  | Lodash bundle bloat        | `lodash` is CJS → can't shake; switch to `lodash-es` or native APIs                   |
 
 ---
 
@@ -836,6 +911,7 @@ import debounce from 'lodash/debounce'  // ✅ only one file loaded
 **Close this document. Answer from memory:**
 
 **Retrieval:**
+
 1. What is a "live binding" in ESM? How is it different from CJS value copy?
 2. What 3 conditions are required for tree shaking to work?
 3. What does `"sideEffects": false` in `package.json` tell the bundler?
@@ -843,18 +919,24 @@ import debounce from 'lodash/debounce'  // ✅ only one file loaded
 5. What is the difference between `import { debounce } from 'lodash'` vs `import { debounce } from 'lodash-es'`?
 
 **Visual:**
+
 - Draw CJS module loading: when A requires B which requires A → what does B get?
 - Draw ESM live binding: when A imports `count` from B and B increments it → what does A see?
 
 **Application:**
+
 - A library you wrote is being tree-shaken poorly. What changes do you make to `package.json` and your source code?
 - How would you debug a "X is undefined" error in a circular ESM import?
 
 **Debug:**
+
 - `import { theme } from './config'` returns `undefined` at the top of a module. The file clearly exports `theme`. What's happening?
 
 **Teach:**
+
 - Explain tree shaking to a junior: "The bundler is like a librarian. ESM = every book has a precise title (export name). CJS = books are bundled in unlabeled boxes. The librarian can find and remove specific ESM books; the CJS boxes must be kept whole."
+
+> 🎯 **Feynman Prompt:** Giải thích cho designer: tại sao website cần "chia nhỏ" code thành các module — CommonJS và ESM khác nhau như thế nào, và tại sao ESM giúp bundle nhỏ hơn nhờ tree shaking mà CommonJS không làm được?
 
 ---
 

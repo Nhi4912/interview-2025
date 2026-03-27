@@ -9,6 +9,7 @@
 ## Real-World Scenario / Tình Huống Thực Tế
 
 Bạn build e-commerce bằng React (Create React App). Sau khi launch:
+
 - Google không index sản phẩm — SEO score 0 vì trang render hoàn toàn ở client
 - Lần đầu tải trang mất 4.5 giây trên 3G (tải hết 800KB JS bundle rồi mới render)
 - Mỗi lần user vào trang sản phẩm, phải fetch API từ đầu dù data không thay đổi
@@ -21,19 +22,21 @@ Bạn build e-commerce bằng React (Create React App). Sau khi launch:
 
 **Analogy / Liên Tưởng — Nhà hàng vs Siêu thị:**
 
-| Cách render | Analogy | Next.js strategy |
-|------------|---------|-----------------|
-| **CSR** (React thuần) | Đặt đồ ăn tại bàn — chef nấu ngay khi order | Client-Side Rendering |
-| **SSG** | Siêu thị bán đồ đóng hộp sẵn — nhanh, không cần nấu | Static Site Generation |
-| **SSR** | Nhà hàng nấu fresh cho từng khách — tươi mới, chậm hơn | Server-Side Rendering |
-| **ISR** | Siêu thị đổi hàng mỗi 1 giờ — fresh + fast | Incremental Static Regeneration |
+| Cách render           | Analogy                                                | Next.js strategy                |
+| --------------------- | ------------------------------------------------------ | ------------------------------- |
+| **CSR** (React thuần) | Đặt đồ ăn tại bàn — chef nấu ngay khi order            | Client-Side Rendering           |
+| **SSG**               | Siêu thị bán đồ đóng hộp sẵn — nhanh, không cần nấu    | Static Site Generation          |
+| **SSR**               | Nhà hàng nấu fresh cho từng khách — tươi mới, chậm hơn | Server-Side Rendering           |
+| **ISR**               | Siêu thị đổi hàng mỗi 1 giờ — fresh + fast             | Incremental Static Regeneration |
 
 **Tại sao Next.js thống trị production React apps?**
+
 - 75% top React apps dùng Next.js (theo State of JS 2023)
 - Được Vercel maintain, tích hợp sâu với React Server Components (tương lai của React)
 - Built-in: routing, code splitting, image optimization, TypeScript, ESLint — không cần cấu hình
 
 **Khi nào dùng gì:**
+
 ```
 Blog/Docs (data ít thay đổi) → SSG (getStaticProps)
 E-commerce product page       → ISR (revalidate: 3600)
@@ -88,7 +91,13 @@ Dashboard / Real-time   SSR or CSR        Per-request or per-user data
 Private SaaS features   CSR               Auth-gated, SEO irrelevant
 ```
 
-**Common Mistake**: Using SSR for content that changes once/day — pay server cost for every request when ISR would serve from CDN. Use `revalidate: 86400` instead.
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                                                 | Tại sao sai                                                                                           | Đúng là                                                                                 |
+| ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Dùng SSR cho content thay đổi 1 lần/ngày (blog, product description)    | Mỗi request tạo mới HTML trên server — tốn CPU/TTFB cao, trong khi ISR serve từ CDN hoàn toàn được    | Dùng `revalidate: 86400` (ISR) để cache trên CDN, rebuild tự động sau 24h               |
+| Dùng SSG cho trang cần data cá nhân hoá (dashboard, cart, user profile) | SSG build sẵn HTML cho tất cả, không có per-user data — trang hiển thị data sai hoặc rỗng             | Dùng SSR (`cache: 'no-store'`) hoặc CSR (`useEffect`) cho trang cần data theo từng user |
+| Không khai báo `generateStaticParams` cho dynamic SSG routes            | Next.js không biết các path nào cần pre-render — mọi request đầu tiên đều miss cache và fallback chậm | Dùng `generateStaticParams()` để khai báo rõ các params cần pre-build tại build time    |
 
 **🎯 Pattern**: When asked "which strategy for [page]?" → Ask: "How often does the data change AND is it personalized?" → Map to strategy.
 
@@ -98,7 +107,13 @@ Private SaaS features   CSR               Auth-gated, SEO irrelevant
 
 > **Memory Hook**: "Three free wins: `next/image` (WebP + lazy + CLS prevention), `next/font` (zero-FOUT self-hosted), `next/script` (controlled third-party loading)."
 
-**Common Mistake**: Using regular `<img>` for LCP images → no preload, no WebP, no responsive srcset. Always `<Image priority>` for above-fold images.
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                                                      | Tại sao sai                                                                                     | Đúng là                                                                                                    |
+| ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Dùng `<img>` thay vì `<Image>` cho ảnh LCP (ảnh lớn nhất on fold)            | Không có preload, không tự convert WebP, không responsive srcset → LCP score kém trên PageSpeed | Dùng `<Image priority>` cho LCP image: tự preload, WebP, sinh đúng `srcset` theo `sizes`                   |
+| Import font qua `<link rel="stylesheet">` trong `<head>` thay vì `next/font` | Tạo request đến CDN ngoài → DNS lookup thêm + CLS khi font load xong (text nhảy/reflow)         | Import qua `next/font/google` — tự host lúc build, zero CLS qua CSS `size-adjust`, không request bên ngoài |
+| Load third-party scripts bằng `<script>` thông thường trong layout           | Block render chính → tăng TBT (Total Blocking Time), page không interactive sớm được            | Dùng `<Script strategy="afterInteractive">` hoặc `"lazyOnload"` để kiểm soát thời điểm load                |
 
 **🎯 Pattern**: "How would you optimize a Next.js page's LCP?" → `<Image priority>` + correct `sizes` + ISR/SSG for fast TTFB.
 
@@ -114,7 +129,13 @@ Security boundary:       NO prefix → server only | NEXT_PUBLIC_ → bundled in
 Edge constraint:         Middleware = no Node.js APIs, no DB queries
 ```
 
-**Common Mistake**: `'use client'` on `app/layout.tsx` — turns the entire app into Client Components. Only mark leaf interactive components.
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                                                      | Tại sao sai                                                                                                                                 | Đúng là                                                                                                                |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Đặt `'use client'` trên `app/layout.tsx` hoặc root provider                  | Nhiễm toàn bộ import subtree → tất cả component trong layout thành Client Components, mất hết Server Component benefits, JS bundle phình to | Chỉ đặt `'use client'` trên component lá (leaf) thực sự cần hook / event handler / browser API                         |
+| Dùng `useState` hoặc `useEffect` trong Server Component                      | Server Components chạy một lần trên server, không có React lifecycle — hooks sẽ báo lỗi tại compile/runtime                                 | Tách logic cần hooks ra file riêng với `'use client'`; trong Server Component dùng async/await và `fetch()` trực tiếp  |
+| Đặt secret keys trong biến `NEXT_PUBLIC_*` (ví dụ `NEXT_PUBLIC_DB_PASSWORD`) | Prefix `NEXT_PUBLIC_` inline giá trị vào JS bundle gửi xuống browser lúc build — bất kỳ ai cũng đọc được trong DevTools                     | Chỉ dùng `NEXT_PUBLIC_` cho giá trị công khai (public API URL, analytics ID); secrets để không có prefix (server-only) |
 
 **🎯 Pattern**: "Why does my Server Component need `'use client'`?" → Check for hooks/events/browser APIs in the component or its imports.
 
@@ -137,6 +158,7 @@ export default function HomePage() {
 ```
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Mentions Server Components as default (zero JS to client), names all four rendering strategies, mentions file-based routing
 - ❌ Weak: "Next.js is a React framework with SSR" (misses the Server Components shift and App Router specifics)
 
@@ -163,11 +185,16 @@ app/
 // app/blog/[slug]/page.tsx
 export default async function BlogPost({ params }: { params: { slug: string } }) {
   const post = await getPost(params.slug);
-  return <article><h1>{post.title}</h1></article>;
+  return (
+    <article>
+      <h1>{post.title}</h1>
+    </article>
+  );
 }
 ```
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Explains `[param]` vs `[...slug]` vs `[[...slug]]` distinctions, mentions that `page.tsx` is what makes a route public
 - ❌ Weak: "Files in `app/` become routes" (correct but doesn't distinguish optional catch-all or explain the `page.tsx` requirement)
 
@@ -183,6 +210,7 @@ export default async function BlogPost({ params }: { params: { slug: string } })
 - **CSR (Client-Side Rendering)**: Rendered entirely in the browser via JavaScript. Best for private dashboards and non-SEO pages. Worst initial load but most interactive.
 
 Vietnamese: Đây là 4 chiến lược render — mỗi cái có trade-off riêng:
+
 - **SSG**: Build sẵn HTML lúc deploy. Nhanh nhất vì serve static file từ CDN. Dùng cho trang ít thay đổi (blog, docs, landing page).
 - **SSR**: Mỗi request tạo HTML mới trên server. Dữ liệu luôn fresh nhưng TTFB chậm hơn. Dùng cho trang cá nhân hóa, real-time data.
 - **ISR**: Kết hợp SSG + auto revalidate. Trang static nhưng tự cập nhật sau N giây. Dùng cho e-commerce, news site.
@@ -191,30 +219,31 @@ Vietnamese: Đây là 4 chiến lược render — mỗi cái có trade-off riê
 ```tsx
 // SSG (default in App Router) — built at build time
 export default async function BlogPage() {
-  const posts = await fetch('https://api.example.com/posts', {
-    cache: 'force-cache' // default — cached forever until redeploy
+  const posts = await fetch("https://api.example.com/posts", {
+    cache: "force-cache", // default — cached forever until redeploy
   });
   return <PostList posts={await posts.json()} />;
 }
 
 // SSR — fetched on every request
 export default async function DashboardPage() {
-  const data = await fetch('https://api.example.com/me', {
-    cache: 'no-store' // no caching, always fresh
+  const data = await fetch("https://api.example.com/me", {
+    cache: "no-store", // no caching, always fresh
   });
   return <Dashboard data={await data.json()} />;
 }
 
 // ISR — static but revalidates every 60 seconds
 export default async function ProductPage() {
-  const product = await fetch('https://api.example.com/product/1', {
-    next: { revalidate: 60 }
+  const product = await fetch("https://api.example.com/product/1", {
+    next: { revalidate: 60 },
   });
   return <Product data={await product.json()} />;
 }
 ```
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Uses data freshness as the decision criterion for each strategy, spontaneously mentions trade-offs (SSR = higher TTFB/server cost, SSG = stale)
 - ❌ Weak: "SSG is fast, SSR is slow" (oversimplified — misses ISR and doesn't explain when to choose each)
 
@@ -229,11 +258,11 @@ Vietnamese: Trong App Router, component mặc định là Server Component nên 
 ```tsx
 // app/users/page.tsx — fetch directly in Server Component
 export default async function UsersPage() {
-  const res = await fetch('https://api.example.com/users', {
-    next: { revalidate: 3600 } // revalidate every hour
+  const res = await fetch("https://api.example.com/users", {
+    next: { revalidate: 3600 }, // revalidate every hour
   });
 
-  if (!res.ok) throw new Error('Failed to fetch users');
+  if (!res.ok) throw new Error("Failed to fetch users");
 
   const users = await res.json();
   return (
@@ -247,6 +276,7 @@ export default async function UsersPage() {
 ```
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Mentions request deduplication, explains all three cache options (`force-cache`/`no-store`/`revalidate`), notes data is fetched at component level (not page level)
 - ❌ Weak: "Use fetch in Server Components" (correct but doesn't mention the cache options or deduplication)
 
@@ -260,7 +290,7 @@ Vietnamese: Route Handlers cho phép tạo API endpoint ngay trong project Next.
 
 ```tsx
 // app/api/users/route.ts
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET() {
   const users = await db.user.findMany();
@@ -274,17 +304,15 @@ export async function POST(request: NextRequest) {
 }
 
 // app/api/users/[id]/route.ts — dynamic route handler
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const user = await db.user.findUnique({ where: { id: params.id } });
-  if (!user) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  if (!user) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(user);
 }
 ```
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Compares Route Handlers vs Server Actions (no HTTP overhead for mutations), mentions Web API standard vs Node.js req/res
 - ❌ Weak: "Route Handlers create API endpoints" (correct but doesn't distinguish from Server Actions or explain Web API standard)
 
@@ -295,6 +323,7 @@ export async function GET(
 **A:** The `next/image` component provides automatic image optimization: on-demand resizing and format conversion (WebP/AVIF), lazy loading by default, blur placeholder support, responsive `srcSet` generation, and preventing Cumulative Layout Shift (CLS) by requiring width/height or using `fill`. Images are optimized at request time and cached on the edge, not at build time — so adding thousands of images doesn't slow deployment.
 
 Vietnamese: `next/image` tối ưu ảnh tự động theo nhiều cách:
+
 - **Resize theo demand**: Server tạo ảnh đúng kích thước device cần, không gửi ảnh 4K cho mobile.
 - **Format tự động**: Convert sang WebP/AVIF nếu browser hỗ trợ, giảm 30-50% kích thước.
 - **Lazy loading mặc định**: Ảnh ngoài viewport không load cho đến khi scroll gần đến.
@@ -303,10 +332,10 @@ Vietnamese: `next/image` tối ưu ảnh tự động theo nhiều cách:
 - **Priority loading**: Ảnh LCP (ảnh lớn nhất trên viewport đầu) nên set `priority` để preload.
 
 ```tsx
-import Image from 'next/image';
+import Image from "next/image";
 
 // Static import — automatically provides width, height, blurDataURL
-import heroImg from '@/public/hero.jpg';
+import heroImg from "@/public/hero.jpg";
 
 export default function Hero() {
   return (
@@ -324,8 +353,8 @@ export default function Hero() {
       />
 
       {/* Fill mode — image fills parent container */}
-      <div style={{ position: 'relative', width: '100%', height: 400 }}>
-        <Image src="/banner.jpg" alt="Banner" fill style={{ objectFit: 'cover' }} />
+      <div style={{ position: "relative", width: "100%", height: 400 }}>
+        <Image src="/banner.jpg" alt="Banner" fill style={{ objectFit: "cover" }} />
       </div>
     </div>
   );
@@ -333,6 +362,7 @@ export default function Hero() {
 ```
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Mentions `priority` for LCP, explains `sizes` for responsive images, notes request-time optimization vs build-time, names CLS prevention
 - ❌ Weak: "next/image converts to WebP and lazy loads" (correct but misses CLS prevention, `priority` flag, and responsive srcset)
 
@@ -343,6 +373,7 @@ export default function Hero() {
 **A:** `next/font` automatically self-hosts Google Fonts (or custom fonts) at build time — no requests to Google servers at runtime. It uses CSS `size-adjust` to eliminate layout shift (CLS) during font loading. Fonts are downloaded at build time, included in the deployment, and served from the same domain as your app.
 
 Vietnamese: `next/font` tải font lúc build và tự host, không gọi đến Google CDN lúc runtime. Điều này giúp:
+
 - **Privacy**: Không gửi request đến Google khi user truy cập.
 - **Performance**: Font serve từ cùng domain, không cần DNS lookup thêm.
 - **Không CLS**: Dùng CSS `size-adjust` để fallback font có cùng kích thước, không bị nhảy layout khi font load xong.
@@ -350,17 +381,17 @@ Vietnamese: `next/font` tải font lúc build và tự host, không gọi đến
 
 ```tsx
 // app/layout.tsx
-import { Inter, Roboto_Mono } from 'next/font/google';
+import { Inter, Roboto_Mono } from "next/font/google";
 
 const inter = Inter({
-  subsets: ['latin'],
-  display: 'swap',    // show fallback immediately, swap when loaded
-  variable: '--font-inter',
+  subsets: ["latin"],
+  display: "swap", // show fallback immediately, swap when loaded
+  variable: "--font-inter",
 });
 
 const robotoMono = Roboto_Mono({
-  subsets: ['latin'],
-  variable: '--font-roboto-mono',
+  subsets: ["latin"],
+  variable: "--font-roboto-mono",
 });
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -373,6 +404,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 ```
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Mentions all three benefits: privacy (no Google request), performance (same domain, no DNS), CLS prevention (CSS size-adjust fallback)
 - ❌ Weak: "next/font self-hosts Google Fonts" (correct but misses the CLS mechanism which is the most important performance detail)
 
@@ -383,28 +415,29 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 **A:** Next.js provides two ways to define metadata for SEO: a static `metadata` object or a dynamic `generateMetadata` function exported from `page.tsx` or `layout.tsx`. Metadata is merged and deduplicated — child pages override parent layouts. It generates `<head>` tags including title, description, Open Graph, Twitter cards, canonical URL, and more.
 
 Vietnamese: Metadata API thay thế việc dùng `<Head>` component thủ công. Có 2 cách:
+
 - **Static**: Export `metadata` object — dùng khi metadata cố định.
 - **Dynamic**: Export `generateMetadata` function — dùng khi metadata phụ thuộc params (ví dụ tên bài blog).
-Metadata merge từ layout cha xuống page con, page con override layout cha. Next.js tự deduplicate tags. Hỗ trợ title template (ví dụ "Page Name | My Site"), Open Graph images, robots meta, và sitemap.
+  Metadata merge từ layout cha xuống page con, page con override layout cha. Next.js tự deduplicate tags. Hỗ trợ title template (ví dụ "Page Name | My Site"), Open Graph images, robots meta, và sitemap.
 
 ```tsx
 // app/layout.tsx — Static metadata with template
-import type { Metadata } from 'next';
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: {
-    template: '%s | My Site',    // %s replaced by child page title
-    default: 'My Site',
+    template: "%s | My Site", // %s replaced by child page title
+    default: "My Site",
   },
-  description: 'My awesome site',
-  openGraph: { siteName: 'My Site', locale: 'en_US' },
+  description: "My awesome site",
+  openGraph: { siteName: "My Site", locale: "en_US" },
 };
 
 // app/blog/[slug]/page.tsx — Dynamic metadata
 export async function generateMetadata({ params }: { params: { slug: string } }) {
   const post = await getPost(params.slug);
   return {
-    title: post.title,             // becomes "Post Title | My Site"
+    title: post.title, // becomes "Post Title | My Site"
     description: post.excerpt,
     openGraph: {
       title: post.title,
@@ -415,6 +448,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 ```
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Distinguishes static `metadata` vs dynamic `generateMetadata`, explains merge/override behavior from layout→page, mentions title templates and Open Graph support
 - ❌ Weak: "You export a metadata object from the page" (misses layout inheritance, title templates, and when to use dynamic generation)
 
@@ -425,11 +459,13 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 **A:** Next.js supports `.env`, `.env.local`, `.env.development`, `.env.production` files. By default, env vars are only available on the server (Server Components, Route Handlers, middleware). To expose a variable to the browser, you must prefix it with `NEXT_PUBLIC_`. This is a critical security boundary — without the prefix, secrets like API keys, database URLs, and tokens stay server-side only.
 
 Vietnamese: Biến môi trường trong Next.js có phân tầng rõ ràng:
+
 - `.env` → base, tất cả environment
 - `.env.local` → override local, **không** commit vào git
 - `.env.development` / `.env.production` → theo environment
 
 Quy tắc bảo mật quan trọng:
+
 - **Không có prefix `NEXT_PUBLIC_`**: Chỉ truy cập được ở server (Server Components, Route Handlers, middleware). Dùng cho database URL, API secrets, JWT secret.
 - **Có prefix `NEXT_PUBLIC_`**: Được inline vào JS bundle gửi xuống browser. Dùng cho public API URL, analytics ID, feature flags public. **Tuyệt đối KHÔNG đặt secret với prefix này.**
 
@@ -450,7 +486,7 @@ async function ServerPage() {
 }
 
 // Client Component — only NEXT_PUBLIC_ vars
-'use client';
+("use client");
 function ClientComponent() {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL; // works (inlined at build)
   const dbUrl = process.env.DATABASE_URL; // undefined — not exposed
@@ -459,8 +495,9 @@ function ClientComponent() {
 ```
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Explains the `NEXT_PUBLIC_` prefix as a security boundary (not just "for browser access"), mentions that prefixed vars are inlined at build time into the JS bundle (so secrets can be extracted from bundle if accidentally prefixed)
-- ❌ Weak: "Use NEXT_PUBLIC_ to access env vars in the browser" (correct but missing the security implication — senior question is about the leak risk)
+- ❌ Weak: "Use NEXT*PUBLIC* to access env vars in the browser" (correct but missing the security implication — senior question is about the leak risk)
 
 ---
 
@@ -469,6 +506,7 @@ function ClientComponent() {
 **A:** Middleware is a function that runs before a request is completed, defined in a single `middleware.ts` file at the project root. It runs on the Edge Runtime (not Node.js), making it fast but limited — no Node.js APIs, no filesystem access. Common uses: authentication checks, redirects, A/B testing, geolocation-based routing, request/response header modification.
 
 Vietnamese: Middleware chạy **trước** khi request đến bất kỳ route nào. Đặt file `middleware.ts` ở root project (cùng cấp `app/`). Chạy trên Edge Runtime — rất nhanh (< 1ms latency) nhưng giới hạn:
+
 - Không dùng được Node.js API (fs, path, crypto full...).
 - Chỉ dùng Web API chuẩn.
 - Phù hợp cho: check auth token, redirect theo locale, set header, A/B testing.
@@ -477,25 +515,25 @@ Dùng `matcher` để chỉ định route nào middleware áp dụng. Không set
 
 ```tsx
 // middleware.ts (project root)
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get('session')?.value;
+  const token = request.cookies.get("session")?.value;
 
   // Redirect unauthenticated users
-  if (!token && request.nextUrl.pathname.startsWith('/dashboard')) {
-    return NextResponse.redirect(new URL('/login', request.url));
+  if (!token && request.nextUrl.pathname.startsWith("/dashboard")) {
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   // Add custom headers
   const response = NextResponse.next();
-  response.headers.set('x-request-id', crypto.randomUUID());
+  response.headers.set("x-request-id", crypto.randomUUID());
 
   // Geolocation-based redirect
   const country = request.geo?.country;
-  if (country === 'VN' && !request.nextUrl.pathname.startsWith('/vi')) {
-    return NextResponse.redirect(new URL('/vi' + request.nextUrl.pathname, request.url));
+  if (country === "VN" && !request.nextUrl.pathname.startsWith("/vi")) {
+    return NextResponse.redirect(new URL("/vi" + request.nextUrl.pathname, request.url));
   }
 
   return response;
@@ -503,12 +541,13 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico).*)', // all except static
+    "/((?!api|_next/static|_next/image|favicon.ico).*)", // all except static
   ],
 };
 ```
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Leads with Edge Runtime constraint (no Node.js APIs), explains `matcher` config to avoid running on static assets, gives concrete use case (auth check + redirect)
 - ❌ Weak: "Middleware runs before the request and can redirect" (misses why it's fast — Edge Runtime — and the limitation that makes it unsuitable for DB queries)
 
@@ -524,6 +563,7 @@ export const config = {
 4. **Static export**: `output: 'export'` in `next.config.js` generates pure static HTML. No server features (no SSR, no API routes, no middleware). Deployable to any static host (S3, Nginx, GitHub Pages).
 
 Vietnamese: Có nhiều cách deploy Next.js, tuỳ vào nhu cầu:
+
 - **Vercel**: Đơn giản nhất, zero config, hỗ trợ đầy đủ tính năng. Nhưng bị vendor lock-in và giá cao khi scale.
 - **Self-host Node.js**: Tự chạy server, cần quản lý infra nhưng linh hoạt hoàn toàn. Cần chú ý caching layer (Redis/CDN).
 - **Docker**: Đóng gói thành container, dùng multi-stage build để giảm image size. Phù hợp K8s.
@@ -552,11 +592,12 @@ CMD ["node", "server.js"]
 ```js
 // next.config.js — for standalone output (smaller Docker image)
 module.exports = {
-  output: 'standalone',
+  output: "standalone",
 };
 ```
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Knows the feature matrix (what static export loses: SSR, API routes, middleware, image optimization), explains `output: 'standalone'` for smaller Docker images, mentions ISR requires a running server (not static)
 - ❌ Weak: "Deploy to Vercel or self-host with Docker" (surface-level — doesn't show understanding of what each target supports/loses)
 
@@ -574,6 +615,7 @@ module.exports = {
 6. **Forgetting streaming**: Not mentioning React Suspense + streaming SSR as a strategy to improve TTFB while still having dynamic content.
 
 Vietnamese: Những lỗi ứng viên hay mắc:
+
 1. **Nhầm Pages Router vs App Router**: Nói `getServerSideProps` khi đang thảo luận App Router. Cần biết rõ mình đang nói version nào.
 2. **Hiểu sai `'use client'`**: `'use client'` không chỉ ảnh hưởng component đó mà cả subtree import bên dưới. Server Component vẫn có thể pass JSX xuống Client Component qua `children`.
 3. **Không hiểu caching**: Trong App Router, `fetch()` mặc định cache (`force-cache`). Nhiều người debug mãi không hiểu sao data không update — vì chưa set `no-store` hoặc `revalidate`.
@@ -582,6 +624,7 @@ Vietnamese: Những lỗi ứng viên hay mắc:
 6. **Quên streaming**: Streaming SSR với Suspense giúp gửi shell HTML ngay, data chậm stream sau — cải thiện TTFB đáng kể.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Spots the `'use client'` subtree infection issue AND the App Router caching-by-default gotcha — these are the two that most commonly trip up experienced React developers new to Next.js
 - ❌ Weak: "Don't mix up Pages and App Router" (too generic — interviewer wants specific technical pitfalls like fetch caching semantics or Suspense boundaries)
 
@@ -589,19 +632,38 @@ Vietnamese: Những lỗi ứng viên hay mắc:
 
 ## Quick Recap
 
-| Topic | Key Point | Điểm then chốt |
-|-------|-----------|-----------------|
-| Next.js | React framework with SSR/SSG/ISR + routing | Framework React với đa chiến lược render |
-| Routing | File-based in `app/` directory | Cấu trúc file = URL path |
-| Rendering | SSG (build) / SSR (request) / ISR (timed) / CSR (browser) | Chọn đúng strategy cho use case |
-| Data Fetching | `fetch()` in Server Components with cache options | Fetch trực tiếp trong Server Component |
-| API Routes | `route.ts` with HTTP method exports | Endpoint backend trong cùng project |
-| Image | `next/image` auto-optimizes size, format, loading | Tối ưu tự động, chống CLS |
-| Font | `next/font` self-hosts at build time | Tự host, không CLS, không request Google |
-| Metadata | Static `metadata` or dynamic `generateMetadata` | SEO tự động, merge cha-con |
-| Env Vars | `NEXT_PUBLIC_` = browser, otherwise server only | Prefix quyết định bảo mật |
-| Middleware | Edge Runtime, runs before every matched request | Nhanh, dùng cho auth/redirect |
-| Deployment | Vercel / Node.js / Docker / Static export | Tuỳ nhu cầu, Vercel đơn giản nhất |
+| Topic         | Key Point                                                 | Điểm then chốt                           |
+| ------------- | --------------------------------------------------------- | ---------------------------------------- |
+| Next.js       | React framework with SSR/SSG/ISR + routing                | Framework React với đa chiến lược render |
+| Routing       | File-based in `app/` directory                            | Cấu trúc file = URL path                 |
+| Rendering     | SSG (build) / SSR (request) / ISR (timed) / CSR (browser) | Chọn đúng strategy cho use case          |
+| Data Fetching | `fetch()` in Server Components with cache options         | Fetch trực tiếp trong Server Component   |
+| API Routes    | `route.ts` with HTTP method exports                       | Endpoint backend trong cùng project      |
+| Image         | `next/image` auto-optimizes size, format, loading         | Tối ưu tự động, chống CLS                |
+| Font          | `next/font` self-hosts at build time                      | Tự host, không CLS, không request Google |
+| Metadata      | Static `metadata` or dynamic `generateMetadata`           | SEO tự động, merge cha-con               |
+| Env Vars      | `NEXT_PUBLIC_` = browser, otherwise server only           | Prefix quyết định bảo mật                |
+| Middleware    | Edge Runtime, runs before every matched request           | Nhanh, dùng cho auth/redirect            |
+| Deployment    | Vercel / Node.js / Docker / Static export                 | Tuỳ nhu cầu, Vercel đơn giản nhất        |
+
+---
+
+## 📋 Interview Q&A Summary / Tóm Tắt Q&A Phỏng Vấn
+
+| #   | Câu hỏi                                                | Difficulty | Core Concept         | Key Signal                                                                      |
+| --- | ------------------------------------------------------ | ---------- | -------------------- | ------------------------------------------------------------------------------- |
+| 1   | Next.js là gì và tại sao dùng thay cho React thuần?    | 🟢         | Next.js overview     | Names Server Components default, all 4 rendering strategies, file-based routing |
+| 2   | File-based routing trong App Router hoạt động thế nào? | 🟡         | Routing              | [param] vs [...slug] vs [[...slug]], page.tsx makes route public                |
+| 3   | SSG, SSR, ISR, CSR là gì? Khi nào dùng?                | 🔴         | Rendering strategies | Data freshness as decision criterion, trade-offs for each                       |
+| 4   | Data fetching hoạt động thế nào trong App Router?      | 🟢         | Data fetching        | Request deduplication, 3 cache options, component-level fetch                   |
+| 5   | API Routes (Route Handlers) là gì trong Next.js?       | 🟡         | Route Handlers       | Compares vs Server Actions, Web API standard vs Node.js req/res                 |
+| 6   | next/image tối ưu ảnh như thế nào?                     | 🔴         | Image optimization   | priority for LCP, sizes attribute, request-time optimization, CLS prevention    |
+| 7   | next/font hoạt động thế nào và tại sao quan trọng?     | 🟢         | Font optimization    | Privacy, same-domain performance, CLS via CSS size-adjust                       |
+| 8   | Metadata API trong Next.js hoạt động thế nào?          | 🟡         | SEO / Metadata       | Static vs dynamic generateMetadata, layout→page merge behavior                  |
+| 9   | Biến môi trường hoạt động thế nào trong Next.js?       | 🔴         | Env variables        | NEXT*PUBLIC* as security boundary, inlined at build into JS bundle              |
+| 10  | Middleware trong Next.js là gì?                        | 🟡         | Middleware           | Edge Runtime constraint (no Node.js), matcher config, auth/redirect use case    |
+| 11  | Cách deploy ứng dụng Next.js?                          | 🟡         | Deployment           | Feature matrix per target, output: 'standalone' for smaller Docker images       |
+| 12  | Những lỗi phỏng vấn phổ biến về Next.js?               | 🔴         | Interview pitfalls   | 'use client' subtree infection, App Router fetch caching by default             |
 
 ---
 
@@ -610,6 +672,7 @@ Vietnamese: Những lỗi ứng viên hay mắc:
 > 🎯 Interviewer asks cold: **"You have a Next.js e-commerce site with 50,000 product pages. Product data changes about once per hour. What rendering strategy do you use and why?"**
 
 **30 giây đầu — mở đầu lý tưởng:**
+
 1. "ISR — Incremental Static Regeneration — is the right choice: pages are statically generated at build time and re-generated in the background every hour via `revalidate`."
 2. "This means the CDN serves pre-built HTML instantly (same TTFB as SSG), but product data stays fresh within a 1-hour window — matching the update cadence."
 3. "Concretely: `fetch(url, { next: { revalidate: 3600 } })` in the Server Component, and `generateStaticParams()` to pre-render the top 1,000 products at build time with `fallback: 'blocking'` for the rest."
@@ -617,17 +680,30 @@ Vietnamese: Những lỗi ứng viên hay mắc:
 
 ---
 
-## Self-Check / Tự Kiểm Tra ⚡ (Đóng tài liệu lại trước khi làm)
+## 🔄 Self-Check / Tự Kiểm Tra
 
-- [ ] **Retrieval**: Viết từ trí nhớ 4 rendering strategies và 1 use case cụ thể cho mỗi cái — không nhìn lại tài liệu.
-- [ ] **Visual**: Vẽ sơ đồ request lifecycle cho ISR: build time → CDN cache → first request after revalidate window → background regeneration.
-- [ ] **Application**: Shopee flash sale page cần real-time inventory. SSG, SSR, ISR hay CSR? Tại sao? (Hint: answer không phải SSG)
-- [ ] **Debug**: App Router fetch không trả data mới dù đã sửa DB. Nguyên nhân có thể là gì? Cách fix?
-- [ ] **Teach**: Giải thích cho người không biết lập trình tại sao một số trang web load ngay lập tức còn một số thì chậm — dùng khái niệm SSG vs SSR.
+> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
 
-💬 **Feynman Prompt:** Giải thích ISR cho một product manager bằng ngôn ngữ kinh doanh: tại sao không phải rebuild toàn bộ site mỗi khi có thay đổi nhỏ?
+| #   | Loại           | Câu hỏi                                                                                                                     |
+| --- | -------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 🔍 Retrieval   | Viết 4 rendering strategies của Next.js (SSG, ISR, SSR, CSR) và 1 use case thực tế cụ thể cho mỗi cái từ trí nhớ.           |
+| 2   | 🎨 Visual      | Vẽ request lifecycle của ISR: build time → CDN cache hit → request sau khi revalidate window hết → background regeneration. |
+| 3   | 🛠️ Application | Shopee flash sale page cần real-time inventory update mỗi giây. Nên dùng SSG, SSR, ISR hay CSR? Giải thích lý do chi tiết.  |
+| 4   | 🐛 Debug       | App Router fetch không trả data mới dù đã update DB. Liệt kê 3 nguyên nhân có thể và cách kiểm tra/fix từng cái.            |
+| 5   | 🎓 Teach       | Giải thích SSG vs SSR cho người không biết lập trình — tại sao một số trang load ngay lập tức còn một số thì chậm?          |
 
-🔁 **Spaced Repetition reminder:** Review file này lại sau 3 ngày, sau đó 7 ngày, sau đó 14 ngày.
+### Key Points (tự kiểm tra)
+
+| #   | Key Point                                                                                                                                                                                   |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | SSG: blog/docs (static, build-time). ISR: product catalog (mostly static, revalidate theo chu kỳ). SSR: dashboard user (dynamic per request). CSR: admin tool (interactive, không cần SEO). |
+| 2   | Build: generate HTML + cache vào CDN. CDN hit: serve immediately. Sau revalidate: serve stale → trigger background regen. Next request: serve newly generated page.                         |
+| 3   | CSR (hoặc SSR + polling): inventory thay đổi real-time, không thể cache. ISR với 1s revalidate gần đúng nhưng không đủ. Flash sale cần WebSocket hoặc polling từ client.                    |
+| 4   | (1) `force-cache` default → `{ cache: 'no-store' }`. (2) Full Route Cache chưa revalidate → `revalidateTag()` hoặc `revalidatePath()`. (3) Build cache cũ → redeploy.                       |
+| 5   | SSG: bếp nấu sẵn trước (HTML ready), khách đến lấy ngay. SSR: bếp nấu theo order từng người (chậm hơn nhưng fresh). CSR: khách tự nấu tại bàn (nhà hàng chỉ giao nguyên liệu).              |
+
+> 🎯 **Feynman Prompt:** Giải thích ISR cho một product manager bằng ngôn ngữ kinh doanh: tại sao không phải rebuild toàn bộ site mỗi khi có thay đổi nhỏ?
+> 🔁 **Spaced Repetition reminder:** Review file này lại sau 3 ngày, sau đó 7 ngày, sau đó 14 ngày.
 
 ---
 

@@ -89,19 +89,21 @@ EXECUTION PHASE (line by line):
 
 **Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| "Hoisting moves code to the top" | Hoisting = Creation Phase processes declarations before execution — code doesn't move |
-| "`let` is not hoisted" | `let` IS bound during Creation (hoisted) — just not initialized (TDZ) |
-| "`var` in a block leaks to function scope" | `var` has function scope, not block scope — this IS the behavior, not a bug |
-| "Function expressions are hoisted like declarations" | `const fn = () => {}` — the `const` binding is TDZ; only `function fn()` gets fully hoisted |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| "Hoisting moves code to the top" | Code position is unchanged — the Creation Phase processes declarations before line-by-line execution | Hoisting = Creation Phase processes declarations before execution — code doesn't move |
+| "`let` is not hoisted" | `let` bindings ARE created during Creation Phase — they're just not initialized (Temporal Dead Zone) | `let` IS bound during Creation (hoisted) — just not initialized (TDZ) |
+| "`var` in a block leaks to function scope" | This is the intended behavior by spec, not a bug — `var` has always been function-scoped | `var` has function scope, not block scope — this IS the behavior, not a bug |
+| "Function expressions are hoisted like declarations" | `const fn = () => {}` — the `const` binding is in TDZ; only `function fn(){}` gets fully hoisted with its value | `const fn = () => {}` — the `const` binding is TDZ; only `function fn()` gets fully hoisted |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "hoisting" / "TDZ" / "why undefined vs ReferenceError"
 - **Concept**: Creation Phase sets up bindings; which kind (var/let/fn) determines initial state
 - **Opening**: "Hoisting is really the Creation Phase of Execution Context. All bindings are set up before code runs. `var` gets initialized to `undefined`, function declarations get the full function, but `let`/`const` are bound yet uninitialized — accessing them in that window is the TDZ ReferenceError..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: Variables and scoping basics
 - **Enables**: Debugging hoisting bugs, understanding closures (closure captures the environment record), explaining `this` binding (determined during Creation Phase)
 
@@ -148,19 +150,21 @@ ToNumber conversion table:
 
 **Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| "`+` always does math" | `+` does concatenation if either side is a string or object coercing to string |
-| "ToBoolean follows ToNumber" | ToBoolean is independent — `""` is falsy but `ToNumber("") = 0`, not NaN |
-| "`[]` is falsy" | `[]` is TRUTHY (ToBoolean of object = true) — but `[] == false` is true via different coercion path |
-| "null == 0 is true" | `null == undefined` is true (spec special case) but `null == 0` is false (null only equals null/undefined in `==`) |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| "`+` always does math" | `+` is overloaded — if either operand is a string or coerces to string, it concatenates instead | `+` does concatenation if either side is a string or object coercing to string |
+| "ToBoolean follows ToNumber" | They are independent operations — `""` is falsy (ToBoolean) but `ToNumber("") = 0`, not NaN | ToBoolean is independent — `""` is falsy but `ToNumber("") = 0`, not NaN |
+| "`[]` is falsy" | `[]` is an object — all objects are truthy in ToBoolean; `[] == false` uses a different coercion path | `[]` is TRUTHY (ToBoolean of object = true) — but `[] == false` is true via different coercion path |
+| "null == 0 is true" | `null` has a special-case rule in the spec: it only equals `undefined` via `==` — nothing else | `null == undefined` is true (spec special case) but `null == 0` is false |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "explain this coercion result" / "== vs ===" / "why is this bug happening"
 - **Concept**: ToPrimitive → hint → valueOf/toString; operator determines hint
 - **Opening**: "This is the ToPrimitive/ToNumber chain. When JavaScript coerces `[]`, it calls ToPrimitive with 'number' hint, which calls `[].valueOf()` (returns `[]`, not primitive), then `[].toString()` which returns `''`, then ToNumber('') which is `0`. So `[] == 0` is `true`..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: Primitive vs reference types, string/number operators
 - **Enables**: Debugging `==` bugs, understanding why `Boolean({}) === true` but `{} == false` coerces strangely, TypeScript type narrowing
 
@@ -199,27 +203,27 @@ Object.is (SameValue):
 
 **Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| "Use `==` with explicit conversion" | Just use `===` everywhere; add explicit cast if needed |
-| "NaN == NaN is true" | `NaN !== NaN` by spec — use `Number.isNaN()` or `Object.is(x, NaN)` |
-| "`null == 0` is true" | `null` only `== undefined` in the spec — `null == 0` is `false` |
-| "React uses `===` for state comparison" | React (and Zustand/Jotai) use `Object.is` — that's why setting state to `NaN` twice still triggers re-render on first, not second |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| "Use `==` with explicit conversion" | Still confusing and bug-prone — implicit coercion behavior is hard to predict | Just use `===` everywhere; add explicit cast if needed |
+| "NaN == NaN is true" | `NaN !== NaN` by spec — NaN is the only value not equal to itself | Use `Number.isNaN()` or `Object.is(x, NaN)` to check for NaN |
+| "`null == 0` is true" | `null` has a spec special case: only equals `undefined` in `==`; all other comparisons return false | `null` only `== undefined` in the spec — `null == 0` is `false` |
+| "React uses `===` for state comparison" | React uses `Object.is` which differs from `===` on `NaN` (equal) and `+0`/`-0` (not equal) | React (and Zustand/Jotai) use `Object.is` — that's why setting state to `NaN` twice still triggers re-render on first, not second |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "explain `==` vs `===`" / "when is NaN equal to NaN" / "React state comparison"
 - **Concept**: Abstract Equality Algorithm steps; Object.is for NaN and -0
 - **Opening**: "The Abstract Equality Algorithm has specific steps: first check same type (use ===), then handle null/undefined special case, then convert booleans to numbers, then convert strings to numbers, then ToPrimitive for objects. That's why `null == undefined` is true but `null == 0` is false..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: Primitive types, ToNumber abstract operation
 - **Enables**: React `Object.is` state comparison, `Number.isNaN` vs global `isNaN`, TypeScript strict null checks design
 
 ---
 
 ## Reference Theory / Lý Thuyết Tham Khảo
-
-
 
 ## 1. Specification Types vs Language Types / Kiểu Đặc Tả vs Kiểu Ngôn Ngữ
 
@@ -244,8 +248,8 @@ const v2 = null;
 const v3 = true;
 const v4 = 42;
 const v5 = 42n;
-const v6 = 'hello';
-const v7 = Symbol('id');
+const v6 = "hello";
+const v7 = Symbol("id");
 const v8 = { key: "value" };
 ```
 
@@ -285,6 +289,7 @@ const v8 = { key: "value" };
 **Tiếng Việt:** Execution context là môi trường nơi code JavaScript được đánh giá và thực thi.
 
 Three main types / Ba loại chính:
+
 - Global Execution Context
 - Function Execution Context
 - Eval Execution Context (rare / hiếm gặp)
@@ -304,7 +309,7 @@ var a = 10;
 
 foo(); // works (function declaration hoisted)
 function foo() {
-  console.log('foo');
+  console.log("foo");
 }
 ```
 
@@ -346,6 +351,7 @@ console.log(recurse(5)); // 5
 **Tiếng Việt:** Environment record ánh xạ định danh tới binding (`mutable`, `initialized`, `value`).
 
 Pseudo model / Mô hình giả lập:
+
 ```text
 Binding {
   name: string,
@@ -399,6 +405,7 @@ outer();
 **Tiếng Việt:** Quá trình tra cứu tìm môi trường hiện tại trước, sau đó lên môi trường cha cho đến global hoặc thất bại.
 
 Search order / Thứ tự tìm:
+
 1. Local bindings
 2. Enclosing function bindings
 3. Global bindings
@@ -450,7 +457,7 @@ var v = 10;
 ```javascript
 sayHi(); // works
 function sayHi() {
-  console.log('hi');
+  console.log("hi");
 }
 ```
 
@@ -459,12 +466,12 @@ function sayHi() {
 ```javascript
 // hello(); // TypeError or ReferenceError depending declaration
 var hello = function () {
-  console.log('hello');
+  console.log("hello");
 };
 
 // greet(); // ReferenceError (TDZ)
 const greet = () => {
-  console.log('greet');
+  console.log("greet");
 };
 ```
 
@@ -523,6 +530,7 @@ obj.a = 2; // mutable
 ### 🟢 [Junior] ToBoolean / Chuyển sang Boolean
 
 Falsy values / Giá trị falsy:
+
 - `false`
 - `0`
 - `-0`
@@ -567,8 +575,12 @@ String(123); // "123"
 
 ```javascript
 const item = {
-  valueOf() { return 100; },
-  toString() { return "item"; }
+  valueOf() {
+    return 100;
+  },
+  toString() {
+    return "item";
+  },
 };
 
 console.log(item + 1); // 101 (number hint path)
@@ -672,11 +684,12 @@ Object.is(+0, -0); // false
 
 ### Q: Explain hoisting precisely — what is actually happening under the hood? 🟡 Mid
 
-**A:** Hoisting is the Creation Phase of the Execution Context. Before any code runs, the engine scans the scope and creates bindings for all declarations: `var` → bound + initialized to `undefined`; function declarations → bound + initialized to the full function object; `let`/`const` → bound but *uninitialized* (TDZ). Code doesn't "move" — it's the Creation Phase that runs before the Execution Phase.
+**A:** Hoisting is the Creation Phase of the Execution Context. Before any code runs, the engine scans the scope and creates bindings for all declarations: `var` → bound + initialized to `undefined`; function declarations → bound + initialized to the full function object; `let`/`const` → bound but _uninitialized_ (TDZ). Code doesn't "move" — it's the Creation Phase that runs before the Execution Phase.
 
 Hoisting là Creation Phase của Execution Context. Engine scan scope trước khi chạy code, tạo bindings: `var` được khởi tạo `undefined`, function declaration được khởi tạo với function object, `let`/`const` được bind nhưng chưa khởi tạo (TDZ). Code không di chuyển lên trên — đó là Creation Phase chạy trước Execution Phase.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Uses "Creation Phase" terminology, distinguishes var/fn/let behavior, explains TDZ as "bound but uninitialized"
 - ❌ Weak: "Variables move to the top of the file" — code never moves; this mental model leads to bugs
 
@@ -689,6 +702,7 @@ Hoisting là Creation Phase của Execution Context. Engine scan scope trước 
 `Boolean([])` dùng ToBoolean — tất cả objects đều truthy → `true`. `[] == false` dùng Abstract Equality: `false` → ToNumber → `0`; `[]` → ToPrimitive → `""` → `0`; so sánh `0 == 0` → `true`. Hai algorithm khác nhau cho cùng một value.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Names both algorithms (ToBoolean vs Abstract Equality), traces the conversion steps for `[]`, shows why results differ
 - ❌ Weak: "Arrays are truthy" — correct but doesn't explain the `[] == false` result
 
@@ -701,6 +715,7 @@ Hoisting là Creation Phase của Execution Context. Engine scan scope trước 
 `==` có coercion. `===` không coercion. `Object.is` giống `===` ngoại trừ: `NaN` bằng chính nó, `+0` không bằng `-0`. React dùng `Object.is` cho state comparison — hiểu điều này giúp debug tại sao `useState(NaN)` chỉ trigger re-render lần đầu.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Names the two `===` edge cases, explains React's use of `Object.is`, shows practical implication
 - ❌ Weak: "`===` is always safer" — misses the NaN case where `Object.is` is the right tool
 
@@ -713,6 +728,7 @@ Hoisting là Creation Phase của Execution Context. Engine scan scope trước 
 TDZ là khoảng thời gian giữa lúc binding được tạo ra (Creation Phase) và lúc declaration được thực thi. Access trong TDZ → `ReferenceError`. Lý do hữu ích: `var` trả về `undefined` silently khi access trước declaration — bug âm thầm khó trace. TDZ biến nó thành error ngay lập tức.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Explains WHY TDZ is useful (catches silent `var` undefined bug), frames it as intentional design choice
 - ❌ Weak: "TDZ means you can't use let before declaration" — only describes behavior, not the design reasoning
 
@@ -725,6 +741,7 @@ TDZ là khoảng thời gian giữa lúc binding được tạo ra (Creation Pha
 `if (count)` dùng ToBoolean — `0` là falsy. Fix: `if (count != null)` — chỉ check null/undefined. Spec diagnosis: bug là nhầm ToBoolean với null check. Khi giải thích cho team, framing bằng spec terms giúp PR review nhanh hơn.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Names `ToBoolean`, lists the falsy set, gives correct fix (`!= null`), explains null/undefined special case in `==`
 - ❌ Weak: "Use strict equality" — `count !== undefined` alone doesn't handle `null`; shows incomplete understanding of null vs undefined semantics
 
@@ -732,13 +749,13 @@ TDZ là khoảng thời gian giữa lúc binding được tạo ra (Creation Pha
 
 ## Q&A Summary / Tóm Tắt Q&A
 
-| # | Topic | Level | One-liner |
-|---|-------|-------|-----------|
-| 1 | Hoisting = Creation Phase | 🟡 | var→undefined, fn→full object, let/const→TDZ (bound but uninitialized) |
-| 2 | `[] == false` vs `Boolean([])` | 🟡 | Different algorithms: ToBoolean(object)=true; `==` uses Abstract Equality (converts to numbers) |
-| 3 | `==` vs `===` vs `Object.is` | 🟡 | `==` coerces; `===` no coerce; `Object.is` fixes NaN and +0/-0 edge cases |
-| 4 | TDZ purpose | 🟢 | Turns silent `var undefined` bug into explicit ReferenceError — intentional safety |
-| 5 | `if (count)` bug | 🔴 | ToBoolean treats 0 as falsy; fix with `count != null` (null/undefined special case) |
+| #   | Topic                          | Level | One-liner                                                                                       |
+| --- | ------------------------------ | ----- | ----------------------------------------------------------------------------------------------- |
+| 1   | Hoisting = Creation Phase      | 🟡    | var→undefined, fn→full object, let/const→TDZ (bound but uninitialized)                          |
+| 2   | `[] == false` vs `Boolean([])` | 🟡    | Different algorithms: ToBoolean(object)=true; `==` uses Abstract Equality (converts to numbers) |
+| 3   | `==` vs `===` vs `Object.is`   | 🟡    | `==` coerces; `===` no coerce; `Object.is` fixes NaN and +0/-0 edge cases                       |
+| 4   | TDZ purpose                    | 🟢    | Turns silent `var undefined` bug into explicit ReferenceError — intentional safety              |
+| 5   | `if (count)` bug               | 🔴    | ToBoolean treats 0 as falsy; fix with `count != null` (null/undefined special case)             |
 
 ---
 
@@ -756,16 +773,16 @@ TDZ là khoảng thời gian giữa lúc binding được tạo ra (Creation Pha
 
 ### Coercion Conversion Table
 
-| Value | ToNumber | ToString | ToBoolean |
-|---|---:|---|---|
-| `undefined` | `NaN` | `"undefined"` | `false` |
-| `null` | `0` | `"null"` | `false` |
-| `true` | `1` | `"true"` | `true` |
-| `false` | `0` | `"false"` | `false` |
-| `""` | `0` | `""` | `false` |
-| `"42"` | `42` | `"42"` | `true` |
-| `[]` | `0` | `""` | `true` |
-| `{}` | `NaN` | `"[object Object]"` | `true` |
+| Value       | ToNumber | ToString            | ToBoolean |
+| ----------- | -------: | ------------------- | --------- |
+| `undefined` |    `NaN` | `"undefined"`       | `false`   |
+| `null`      |      `0` | `"null"`            | `false`   |
+| `true`      |      `1` | `"true"`            | `true`    |
+| `false`     |      `0` | `"false"`           | `false`   |
+| `""`        |      `0` | `""`                | `false`   |
+| `"42"`      |     `42` | `"42"`              | `true`    |
+| `[]`        |      `0` | `""`                | `true`    |
+| `{}`        |    `NaN` | `"[object Object]"` | `true`    |
 
 ---
 
@@ -778,6 +795,8 @@ TDZ là khoảng thời gian giữa lúc binding được tạo ra (Creation Pha
 - **Application**: Your code has `if (user.age)` but `age = 0` is a valid value. Fix it and explain which abstract operation was causing the bug.
 - **Debug**: `NaN === NaN` returns `false` — your code uses this to check for invalid number. What should you use instead and why?
 - **Teach**: Explain to a junior why `typeof null === "object"` — and why it hasn't been fixed despite being a 30-year-old bug.
+
+> 🎯 **Feynman Prompt:** Giải thích cho người không biết lập trình: tại sao JavaScript lại "tự động" chuyển đổi kiểu dữ liệu — tại sao `[] == false` lại là `true` và hoisting khiến code hoạt động khác với thứ tự bạn viết như thế nào?
 
 🔁 **Spaced repetition**: Review in 3 days → 7 days → 14 days
 
@@ -802,4 +821,3 @@ TDZ là khoảng thời gian giữa lúc binding được tạo ra (Creation Pha
 - **Scope Chain**: Chuỗi tra cứu binding từ current environment đến outer environments
 
 [← Back to Functional Programming](./12-functional-programming.md) | [Next: JavaScript Type System Theory →](./14-javascript-type-system-theory.md)
-

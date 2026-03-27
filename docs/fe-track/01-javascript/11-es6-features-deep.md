@@ -94,12 +94,12 @@ fetchUser({ id: 42 })  // caller sees what's needed
 
 **Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| `const { address: { city } } = user` crashes if `user.address` is undefined | `const { address: { city } = {} } = user` — provide default for intermediate |
-| Deeply nested destructuring (3+ levels) | Use optional chaining instead: `user?.address?.city ?? ''` |
-| Forgetting that rename and default can combine | `const { name: firstName = 'Anonymous' } = user` is valid |
-| `const [a, b] = obj` (destructuring object as array) | Array destructuring on objects only works if object is iterable (`Symbol.iterator`) |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `const { address: { city } } = user` crashes if `user.address` is undefined | No default for intermediate object — throws `TypeError` when intermediate is `undefined` | `const { address: { city } = {} } = user` — provide default for intermediate |
+| Deeply nested destructuring (3+ levels) | Requires chaining defaults at every level; hard to read and maintain | Use optional chaining instead: `user?.address?.city ?? ''` |
+| Forgetting that rename and default can combine | Leads to verbose workarounds — renaming then assigning fallback separately | `const { name: firstName = 'Anonymous' } = user` is valid |
+| `const [a, b] = obj` (destructuring plain object as array) | Plain objects are not iterable — throws `TypeError: obj is not iterable` | Array destructuring only works if object implements `Symbol.iterator` |
 
 **🎯 Interview Pattern:**
 - **Trigger**: "clean up this data extraction" / "function parameters" / "API response parsing"
@@ -145,13 +145,13 @@ Symbol.for('key')  ← global registry — same key → same Symbol across modul
 
 **Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| Using `{}` with numeric keys | Use `Map` — object coerces numeric keys to strings (`obj[1]` → `obj['1']`) |
-| `Array.from(new Set(arr))` is all you know about Set | Set is O(1) for `has()` — use it for fast membership tests, not just dedup |
-| Using WeakMap when you need to iterate | WeakMap has no `.keys()`, `.values()`, `.forEach()` — use Map if you need iteration |
-| Creating Symbol without using it as a key | Symbol as string description is useless — its value is being a unique key `obj[mySymbol] = value` |
-| `Symbol.for('id') === Symbol.for('id')` is false | `Symbol.for()` returns the SAME symbol from global registry — it IS true ✓ |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Using `{}` with numeric keys | Object coerces numeric keys to strings — `obj[1]` becomes `obj['1']`; silent key collision | Use `Map` — preserves key type and insertion order |
+| `Array.from(new Set(arr))` is all you know about Set | Misses the main benefit: `Set.has()` is O(1) vs `Array.includes()` O(n) | Use `Set` for fast O(1) membership tests, not just deduplication |
+| Using WeakMap when you need to iterate | WeakMap has no `.keys()`, `.values()`, or `.forEach()` — not iterable by design (GC safety) | Use `Map` when iteration is needed; `WeakMap` only for GC-safe metadata |
+| Creating Symbol without using it as a key | The description string is just for debugging — not a unique identifier on its own | Use Symbol as property key: `obj[mySymbol] = value` |
+| `Symbol.for('id') === Symbol.for('id')` is false | Confusing `Symbol()` (unique each call) with `Symbol.for()` (global registry lookup) | `Symbol.for()` returns the SAME symbol from global registry — it IS `true` ✓ |
 
 **🎯 Interview Pattern:**
 - **Trigger**: "deduplication" / "private properties" / "cache that doesn't cause memory leaks" / "non-string keys"
@@ -203,12 +203,12 @@ product.price = 200  // OK — sets via Reflect.set
 
 **Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| Calling `target[key]` inside a `get` trap instead of `Reflect.get(target, key, receiver)` | `Reflect.get` preserves the correct `receiver` for prototype chain lookups |
-| Forgetting that Proxy intercepts prototype chain operations too | `'key' in proxied` calls `has` trap — if no `has` trap, falls through to target |
-| Using Proxy for simple validation on one property | `Object.defineProperty` with a setter is simpler for one property; Proxy is for cross-cutting |
-| Thinking Proxy can wrap primitive values | Proxy only works with objects and functions — primitives are values, not references |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Calling `target[key]` inside a `get` trap instead of `Reflect.get(target, key, receiver)` | `target[key]` bypasses `receiver` — breaks prototype chain accessor properties | `Reflect.get` preserves the correct `receiver` for prototype chain lookups |
+| Forgetting that Proxy intercepts prototype chain operations too | `'key' in proxied` calls the `has` trap — unexpected if only `get`/`set` traps are implemented | `'key' in proxied` calls `has` trap — if no `has` trap, falls through to target |
+| Using Proxy for simple validation on one property | Proxy adds overhead; designed for cross-cutting concerns across all properties | `Object.defineProperty` with a setter is simpler for one property; Proxy is for cross-cutting |
+| Thinking Proxy can wrap primitive values | Primitives are immutable values with no object identity — nothing to intercept | Proxy only works with objects and functions — primitives are values, not references |
 
 **🎯 Interview Pattern:**
 - **Trigger**: "validation on every property" / "Vue reactivity system" / "mock/spy on objects" / "computed properties"
@@ -405,17 +405,29 @@ Proxy validation tốt cho reactive forms (validate real-time mỗi keystroke). 
 
 ---
 
-## Self-Check / Tự Kiểm Tra
+## 🔄 Self-Check / Tự Kiểm Tra
 
-> **Close this doc. Then answer from memory.**
+> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
 
-- **Retrieval**: What's the difference between `??` and `||`? Name two cases where they give different results.
-- **Visual**: Draw the Map vs Set vs WeakMap decision tree — when does each win?
-- **Application**: You're building a form with 10 fields that need real-time validation. Should you use Proxy or Zod? Why?
-- **Debug**: A Vue 3 component shows `count` never updates even though you call `count++`. What's the most likely cause?
-- **Teach**: Explain to a junior dev why `Symbol('id') !== Symbol('id')` — and when that uniqueness property is actually useful in production code.
+| # | Loại | Câu hỏi |
+|---|------|---------|
+| 1 | 🔍 Retrieval | **`??` vs `||`**: khác gì nhau? Cho **2 trường hợp** cho kết quả khác nhau. |
+| 2 | 🎨 Visual | Vẽ **decision tree**: Map vs Set vs WeakMap — khi nào dùng cái nào? |
+| 3 | 🛠️ Application | Bạn build form 10 fields cần **real-time validation**. Dùng Proxy hay Zod? Tại sao? (hoặc cả hai?) |
+| 4 | 🐛 Debug | Vue 3 component: `count` không update dù bạn gọi `count++`. Nguyên nhân **phổ biến nhất**? |
+| 5 | 🎓 Teach | Giải thích cho junior dev tại sao `Symbol('id') !== Symbol('id')` — và khi nào tính **unique** đó thực sự hữu ích trong production? |
 
-🔁 **Spaced repetition**: Review in 3 days → 7 days → 14 days
+### Key Points (tự kiểm tra)
+
+| # | Key Point |
+|---|-----------|
+| 1 | `||` falsy check: `0`, `''`, `false` đều trigger fallback. `??` nullish only: chỉ `null`/`undefined` trigger. Khác: `0 || 'default'` → `'default'`; `0 ?? 'default'` → `0`. |
+| 2 | Map: key-value với **bất kỳ key type**, ordered, iterable. Set: **unique values**, no keys. WeakMap: keys là objects, **no iteration**, GC-friendly cho private/metadata. |
+| 3 | Zod cho **schema validation** (parse input, type safety). Proxy cho **reactive validation** (intercept mutations, Vue 3 style). Production: Zod ở API boundary + Proxy cho reactive UI. |
+| 4 | Destructure từ `reactive()`: `const { count } = reactive({count: 0})` — lấy **primitive value**, mất connection với Proxy. Fix: dùng `toRef()` hoặc access qua reactive object. |
+| 5 | `Symbol()` tạo **unique token** mỗi lần gọi — không bao giờ bằng nhau dù description giống nhau. Dùng cho: private object keys, well-known symbols (`Symbol.iterator`), unique enum-like constants. |
+
+> 🎯 **Feynman Prompt:** Giải thích tại sao Vue 3 dùng Proxy thay vì `Object.defineProperty` như Vue 2 — dùng ví dụ 'bảo vệ tòa nhà' không dùng thuật ngữ kỹ thuật.
 
 ## Connections / Liên Kết
 

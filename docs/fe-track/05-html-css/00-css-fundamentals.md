@@ -9,6 +9,7 @@
 ## Real-World Scenario / Tình Huống Thực Tế
 
 Designer giao cho bạn một button với style cụ thể. Bạn viết CSS, trông đúng trên Chrome. Nhưng:
+
 - Button bị đè bởi style khác ở chỗ khác trong codebase
 - Thay đổi padding làm vỡ layout của component bên cạnh
 - Trên mobile, text bị tràn ra ngoài
@@ -20,11 +21,13 @@ Designer giao cho bạn một button với style cụ thể. Bạn viết CSS, t
 ## What & Why / Cái Gì & Tại Sao
 
 **Analogy / Liên Tưởng — Bộ quần áo:**
+
 - **HTML** = cơ thể người (cấu trúc, nội dung)
 - **CSS** = quần áo (màu sắc, kích thước, vị trí)
 - **JavaScript** = chuyển động (hover, animation, tương tác)
 
 CSS không chỉ là "làm cho đẹp" — nó là hệ thống quy tắc với logic nghiêm ngặt:
+
 - **Cascade**: khi nhiều rule cùng nhắm vào 1 element, rule nào thắng?
 - **Specificity**: ID selector mạnh hơn class selector — có quy tắc tính điểm rõ ràng
 - **Box Model**: mọi element đều là hình chữ nhật — content + padding + border + margin
@@ -83,11 +86,13 @@ Origin       border       [attr]
 | Forgetting source order matters when specificity ties | Last declaration wins, not first | Put more specific overrides after defaults |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy: "Why isn't my CSS working / my style is being overridden?"
 - → Think: Cascade — check origin, specificity, then source order
 - → Answer opens with: "I'd check three things in cascade order: is there an `!important` or inline style overriding it, which selector has higher specificity, and which declaration comes last in source order."
 
 **🔑 Knowledge Chain:**
+
 - 📚 Cần biết: Basic HTML elements and how browsers apply default stylesheets
 - ➡️ Để hiểu: CSS architecture patterns (BEM, `@layer`) which are solutions to specificity problems
 
@@ -149,19 +154,28 @@ Vietnamese: Cascade là thuật toán quyết định rule CSS nào thắng khi 
 
 ```css
 /* Specificity: 0-0-1 (one type selector) */
-p { color: blue; }
+p {
+  color: blue;
+}
 
 /* Specificity: 0-1-0 (one class selector) - WINS over type */
-.text { color: green; }
+.text {
+  color: green;
+}
 
 /* Specificity: 1-0-0 (one ID selector) - WINS over class */
-#intro { color: red; }
+#intro {
+  color: red;
+}
 
 /* !important overrides everything (avoid in production) */
-p { color: purple !important; }
+p {
+  color: purple !important;
+}
 ```
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Explains all three cascade layers in order (origin → specificity → source), mentions `@layer` as the modern tool for managing cascade origin, knows `!important` affects origin not specificity
 - ❌ Weak: "The more specific selector wins" (incomplete — misses origin and source order which matter in real codebases)
 
@@ -170,6 +184,7 @@ p { color: purple !important; }
 ### Q: How is CSS specificity calculated? / Cách tính specificity trong CSS? 🟡 Mid
 
 **A:** Specificity is represented as a tuple `(A, B, C)` where:
+
 - **A** = number of ID selectors
 - **B** = number of class selectors, attribute selectors, and pseudo-classes
 - **C** = number of type selectors and pseudo-elements
@@ -196,6 +211,7 @@ p.card                     /* (0, 1, 1) */
 ```
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Gives the (A,B,C) tuple, explains that `!important` is about cascade origin not specificity, knows `:where()` has zero specificity (useful for library defaults) and `:is()` inherits max specificity of its arguments
 - ❌ Weak: "ID selectors are more specific than classes" (true but surface-level — misses the tuple system, inline style placement, and modern pseudo-class nuances)
 
@@ -213,7 +229,9 @@ Vietnamese: Box model có 4 lớp: content, padding, border, margin. Mặc đị
 
 ```css
 /* Universal best practice -- apply to all elements */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -246,6 +264,7 @@ Vietnamese: Box model có 4 lớp: content, padding, border, margin. Mặc đị
 ```
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Explains `content-box` vs `border-box` with actual math (200px + 20px padding×2 + 1px border×2 = 242px), recommends `*, *::before, *::after { box-sizing: border-box }` as universal reset
 - ❌ Weak: "border-box includes padding and border in the width" (correct but needs to mention WHY it matters — prevents layout surprises when adding padding to sized elements)
 
@@ -256,6 +275,7 @@ Vietnamese: Box model có 4 lớp: content, padding, border, margin. Mặc đị
 **A:** The `display` property defines how an element participates in layout. It has two aspects: **outer display type** (how the element participates in its parent's layout -- `block` or `inline`) and **inner display type** (how children are laid out -- `flow`, `flex`, `grid`, `table`).
 
 Key values:
+
 - `block` -- takes full width, starts on new line (`<div>`, `<p>`, `<h1>`)
 - `inline` -- flows within text, width/height have no effect, vertical margin/padding do not push other elements (`<span>`, `<a>`, `<strong>`)
 - `inline-block` -- inline flow but respects width/height and all margin/padding
@@ -268,6 +288,7 @@ Key values:
 Vietnamese: `display` quyết định cách element tham gia layout. `block`: chiếm full width, xuống dòng mới. `inline`: chảy theo text, không set được width/height. `inline-block`: chảy theo text nhưng set được kích thước. `flex`/`grid`: tạo flex/grid container. `none`: xóa khỏi layout hoàn toàn (cả visual lẫn accessibility). `contents`: bỏ box của element, children được promote lên parent.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Knows `display: none` is inaccessible (screen readers skip it too) vs `visibility: hidden` (hidden visually, still in accessibility tree), and explains `inline` vs `inline-block` difference (width/height and vertical spacing)
 - ❌ Weak: "block takes full width, inline flows with text" (misses the outer/inner display type model and accessibility implications of `none`)
 
@@ -314,8 +335,9 @@ Vietnamese: `static`: vị trí mặc định trong flow. `relative`: vẫn tron
 ```
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Knows the `fixed` position gotcha (transform/filter on ancestor breaks viewport positioning), explains `sticky` requires parent with enough scroll height, mentions `z-index` only works on non-static elements
-- ❌ Weak: "absolute positions relative to the parent" (common mistake — it's relative to the nearest *positioned* ancestor, not just any parent)
+- ❌ Weak: "absolute positions relative to the parent" (common mistake — it's relative to the nearest _positioned_ ancestor, not just any parent)
 
 ---
 
@@ -332,8 +354,8 @@ Vietnamese: Typography quan trọng cho cả UX lẫn performance. Font loading 
 ```css
 /* Font face with performance optimization */
 @font-face {
-  font-family: 'Inter';
-  src: url('/fonts/inter-var.woff2') format('woff2');
+  font-family: "Inter";
+  src: url("/fonts/inter-var.woff2") format("woff2");
   font-weight: 100 900;
   font-display: swap;
   unicode-range: U+0000-00FF, U+0131, U+0152-0153; /* Latin subset */
@@ -341,8 +363,8 @@ Vietnamese: Typography quan trọng cho cả UX lẫn performance. Font loading 
 
 /* Fallback font metrics matching to prevent CLS */
 @font-face {
-  font-family: 'Inter Fallback';
-  src: local('Arial');
+  font-family: "Inter Fallback";
+  src: local("Arial");
   size-adjust: 107%;
   ascent-override: 90%;
   descent-override: 22%;
@@ -350,9 +372,14 @@ Vietnamese: Typography quan trọng cho cả UX lẫn performance. Font loading 
 }
 
 body {
-  font-family: 'Inter', 'Inter Fallback', system-ui, -apple-system, sans-serif;
-  font-size: 1rem;        /* 16px base */
-  line-height: 1.5;       /* 24px -- good for readability */
+  font-family:
+    "Inter",
+    "Inter Fallback",
+    system-ui,
+    -apple-system,
+    sans-serif;
+  font-size: 1rem; /* 16px base */
+  line-height: 1.5; /* 24px -- good for readability */
   letter-spacing: -0.01em; /* slight tightening for Inter */
 }
 
@@ -364,6 +391,7 @@ h1 {
 ```
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Explains `font-display` trade-offs (`swap` vs `optional`), knows how `size-adjust`/`ascent-override` prevent CLS by matching fallback font metrics, mentions variable fonts (`font-weight: 100 900` range)
 - ❌ Weak: "Use woff2 and preload fonts" (performance basics, but misses the CLS prevention mechanism which is the most impactful detail)
 
@@ -404,6 +432,7 @@ Vietnamese: CSS có nhiều format màu: hex (#ff0000) phổ biến nhất, HSL 
 ```
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Recommends HSL for design tokens (easy to create tint/shade variants by adjusting L), mentions oklch for perceptually uniform gradients and P3 wide gamut, explains `currentColor` for SVG icon theming
 - ❌ Weak: "Use hex or RGB for colors" (doesn't show awareness of why HSL is better for systematic design tokens or modern color spaces)
 
@@ -416,6 +445,7 @@ Vietnamese: CSS có nhiều format màu: hex (#ff0000) phổ biến nhất, HSL 
 **Absolute**: `px` (1/96th of an inch on screen). Predictable but does not scale with user preferences.
 
 **Relative**:
+
 - `em` -- relative to the element's own font-size (or parent's font-size for the `font-size` property itself). Compounds when nested.
 - `rem` -- relative to the root (`<html>`) font-size. Predictable, no compounding. Best for font sizes and spacing.
 - `%` -- relative to parent's corresponding property (width for width, font-size for font-size).
@@ -427,15 +457,27 @@ Vietnamese: CSS có nhiều format màu: hex (#ff0000) phổ biến nhất, HSL 
 Vietnamese: `px` tuyệt đối, không scale theo user preference. `rem` tương đối root font-size, không compound -- tốt nhất cho font-size và spacing. `em` tương đối element's own font-size, bị compound khi nested. `vw/vh` tương đối viewport. `vh` có vấn đề trên mobile (address bar), dùng `dvh` thay thế. Best practice: `rem` cho font-size (tôn trọng browser settings), `px` cho border/shadow.
 
 ```css
-html { font-size: 16px; } /* 1rem = 16px */
+html {
+  font-size: 16px;
+} /* 1rem = 16px */
 
-body { font-size: 1rem; }     /* 16px */
-h1   { font-size: 2rem; }     /* 32px -- always relative to root */
-.small { font-size: 0.875rem; } /* 14px */
+body {
+  font-size: 1rem;
+} /* 16px */
+h1 {
+  font-size: 2rem;
+} /* 32px -- always relative to root */
+.small {
+  font-size: 0.875rem;
+} /* 14px */
 
 /* em compounding problem */
-.parent { font-size: 1.2em; }   /* 19.2px (16 * 1.2) */
-.parent .child { font-size: 1.2em; } /* 23.04px (19.2 * 1.2) -- compounds! */
+.parent {
+  font-size: 1.2em;
+} /* 19.2px (16 * 1.2) */
+.parent .child {
+  font-size: 1.2em;
+} /* 23.04px (19.2 * 1.2) -- compounds! */
 
 /* Responsive layout without media queries */
 .container {
@@ -445,10 +487,13 @@ h1   { font-size: 2rem; }     /* 32px -- always relative to root */
 }
 
 /* Optimal reading width */
-.prose { max-width: 65ch; }
+.prose {
+  max-width: 65ch;
+}
 ```
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Explains `rem` respects user browser font-size preferences (accessibility), knows `vh` doesn't account for mobile browser chrome (use `dvh`), uses `clamp()` for fluid sizing without media queries
 - ❌ Weak: "rem is like em but relative to root" (correct but doesn't explain why it's better — the key point is no compounding and accessibility compliance)
 
@@ -470,20 +515,32 @@ Vietnamese: Selectors browser match từ phải sang trái -- rightmost selector
 
 ```css
 /* Type: low specificity, good for resets */
-p { margin-bottom: 1em; }
+p {
+  margin-bottom: 1em;
+}
 
 /* Class: preferred for components */
-.card { border: 1px solid #ddd; }
+.card {
+  border: 1px solid #ddd;
+}
 
 /* Combinator: child selector (direct children only) */
-.nav > li { display: inline-block; }
+.nav > li {
+  display: inline-block;
+}
 
 /* Structural pseudo-class */
-tr:nth-child(even) { background: #f5f5f5; }
+tr:nth-child(even) {
+  background: #f5f5f5;
+}
 
 /* Functional pseudo-class */
-:is(h1, h2, h3) { font-weight: 700; }
-:where(.reset, .base) p { margin: 0; } /* zero specificity */
+:is(h1, h2, h3) {
+  font-weight: 700;
+}
+:where(.reset, .base) p {
+  margin: 0;
+} /* zero specificity */
 
 /* Parent selector (modern, use with care) */
 .form-group:has(:invalid) {
@@ -492,6 +549,7 @@ tr:nth-child(even) { background: #f5f5f5; }
 ```
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Knows browsers match right-to-left (so `.nav ul li a` triggers on every `<a>`), explains `:has()` as the long-awaited "parent selector" with upward-traversal cost, and knows `:where()` has zero specificity for library defaults
 - ❌ Weak: "Keep selectors short for performance" (correct but vague — specifics like right-to-left matching and `:has()` cost signal real experience)
 
@@ -507,19 +565,27 @@ Vietnamese: Pseudo-class (`:`) chọn element theo trạng thái (hover, focus, 
 
 ```css
 /* Pseudo-classes: element state */
-a:hover { color: blue; }
-a:focus-visible { outline: 2px solid blue; } /* keyboard focus only */
-input:checked + label { font-weight: bold; }
-li:first-child { margin-top: 0; }
+a:hover {
+  color: blue;
+}
+a:focus-visible {
+  outline: 2px solid blue;
+} /* keyboard focus only */
+input:checked + label {
+  font-weight: bold;
+}
+li:first-child {
+  margin-top: 0;
+}
 
 /* Pseudo-elements: virtual elements */
 .required::after {
-  content: ' *';
+  content: " *";
   color: red;
 }
 
 blockquote::before {
-  content: '\201C'; /* opening curly quote */
+  content: "\201C"; /* opening curly quote */
   font-size: 3em;
   color: #ccc;
 }
@@ -537,6 +603,7 @@ li::marker {
 ```
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Distinguishes pseudo-class (element state, no new DOM node) vs pseudo-element (creates virtual DOM node), knows `::before/::after` don't work on void elements like `<img>/<input>`, and prefers `:focus-visible` over `:focus` for accessible keyboard indicators
 - ❌ Weak: "Pseudo-class uses one colon, pseudo-element uses two" (syntactic rule only — doesn't show understanding of the semantic difference)
 
@@ -556,9 +623,9 @@ Vietnamese: Inheritance là cơ chế child nhận giá trị computed từ pare
 
 ```css
 body {
-  color: #333;            /* inherits to all text elements */
+  color: #333; /* inherits to all text elements */
   font-family: Inter, sans-serif; /* inherits to all elements */
-  line-height: 1.5;       /* inherits */
+  line-height: 1.5; /* inherits */
 }
 
 /* Children automatically get body's color, font, line-height */
@@ -575,8 +642,27 @@ body {
 ```
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Knows which categories inherit (text/font-related) vs don't (box/layout), explains `unset` as "smart reset" (inherits if the property normally inherits, reverts to initial otherwise), and uses `all: unset` for complete component isolation
 - ❌ Weak: "Some properties inherit, like color and font-size" (correct but junior-level — senior answer includes the pattern of WHY certain properties inherit and the `inherit`/`initial`/`unset`/`revert` reset keywords)
+
+---
+
+## 📋 Interview Q&A Summary / Tóm Tắt Q&A Phỏng Vấn
+
+| #   | Câu hỏi                                          | Difficulty | Core Concept     | Key Signal                                                                          |
+| --- | ------------------------------------------------ | ---------- | ---------------- | ----------------------------------------------------------------------------------- |
+| 1   | CSS cascade hoạt động như thế nào?               | 🟢         | Cascade          | All 3 layers (origin → specificity → source), @layer as cascade origin control      |
+| 2   | Cách tính specificity trong CSS?                 | 🟡         | Specificity      | (A,B,C) tuple, !important affects origin not specificity, :where() zero specificity |
+| 3   | Giải thích box model và box-sizing?              | 🟢         | Box model        | content-box math (200px+20px×2+1px×2=242px), universal border-box reset             |
+| 4   | Giải thích property display?                     | 🟢         | Display          | display:none vs visibility:hidden (accessibility), inline vs inline-block           |
+| 5   | So sánh tất cả giá trị position?                 | 🟡         | Positioning      | fixed breaks inside transform/filter parent, sticky requires parent scroll height   |
+| 6   | Typography trong CSS và tối ưu font loading?     | 🔴         | Typography       | font-display swap vs optional trade-offs, size-adjust for CLS prevention            |
+| 7   | Các format màu trong CSS?                        | 🟢         | Color            | HSL for design tokens, oklch for perceptually uniform gradients, currentColor       |
+| 8   | So sánh đơn vị CSS: px, em, rem, %, vw/vh?       | 🟡         | Units            | rem respects browser settings (a11y), vh mobile bug → use dvh                       |
+| 9   | CSS selectors: loại, combinator, và performance? | 🔴         | Selectors        | Right-to-left matching, :has() upward-traversal cost, :where() zero specificity     |
+| 10  | Phân biệt pseudo-class và pseudo-element?        | 🟢         | Pseudo selectors | ::before/after don't work on void elements, :focus-visible for keyboard a11y        |
+| 11  | CSS inheritance hoạt động ra sao?                | 🟡         | Inheritance      | Text properties inherit vs box don't, unset as "smart reset", all: unset            |
 
 ---
 
@@ -585,6 +671,7 @@ body {
 > 🎯 Interviewer asks cold: **"Why isn't my CSS working? I wrote `.sidebar .card { color: red }` but the card text is blue."**
 
 **30 giây đầu — mở đầu lý tưởng:**
+
 1. "I'd debug the cascade in three steps: first check if there's an inline style or `!important` declaration — those win regardless of selector."
 2. "Then compare specificity: `.sidebar .card` is (0,2,0) — if another rule like `#main .card` (1,1,0) or `<p style='color:blue'>` exists, it wins."
 3. "Finally check source order: if two rules have equal specificity, the one that appears later in the stylesheet wins — so importing order matters."
@@ -592,27 +679,31 @@ body {
 
 ---
 
-## Self-Check / Tự Kiểm Tra ⚡ (Đóng tài liệu lại trước khi làm)
+## 🔄 Self-Check / Tự Kiểm Tra
 
-- [ ] **Retrieval**: Viết từ trí nhớ 3 bước cascade resolution (origin → specificity → order) và công thức tính specificity (A,B,C) — không nhìn lại.
-- [ ] **Visual**: Vẽ Box Model ra giấy: 4 lớp từ trong ra ngoài, chỉ rõ phần nào được tính trong `width` với `content-box` và `border-box`.
-- [ ] **Application**: Button có style `.btn { color: blue }` và `#submit.btn { color: red }`. Màu cuối cùng là gì? Specificity của mỗi rule?
-- [ ] **Debug**: `position: fixed` modal không nằm cố định trên viewport mà lại scroll theo trang. Nguyên nhân có thể là gì?
-- [ ] **Teach**: Giải thích `rem` vs `em` cho junior developer bằng một câu tương tự cụ thể — tại sao `rem` an toàn hơn?
+> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
 
-💬 **Feynman Prompt:** Giải thích CSS Cascade cho một designer không biết code. Tại sao đôi khi thay đổi CSS không có tác dụng dù bạn chắc chắn đã viết đúng?
+| #   | Loại           | Câu hỏi                                                                                                                          |
+| --- | -------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 🔍 Retrieval   | Viết từ trí nhớ 3 bước cascade resolution (origin → specificity → order) và công thức tính specificity (A,B,C) — không nhìn lại. |
+| 2   | 🎨 Visual      | Vẽ Box Model ra giấy: 4 lớp từ trong ra ngoài, chỉ rõ phần nào được tính trong `width` với `content-box` và `border-box`.        |
+| 3   | 🛠️ Application | Button có style `.btn { color: blue }` và `#submit.btn { color: red }`. Màu cuối cùng là gì? Specificity của mỗi rule?           |
+| 4   | 🐛 Debug       | `position: fixed` modal không nằm cố định trên viewport mà lại scroll theo trang. Nguyên nhân có thể là gì?                      |
+| 5   | 🎓 Teach       | Giải thích `rem` vs `em` cho junior developer bằng một câu liên tưởng cụ thể — tại sao `rem` an toàn hơn?                        |
+
+### Key Points (tự kiểm tra)
+
+| #   | Key Point                                                                                                                                                                                           |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Cascade: (1) Origin (user-agent → author → user → !important); (2) Specificity: A=ID, B=class/attr/pseudo-class, C=element/pseudo-element; (3) Source order — rule cuối thắng khi cùng specificity. |
+| 2   | 4 lớp từ trong ra: content → padding → border → margin; `content-box`: width = content only; `border-box`: width = content + padding + border — không bao gồm margin.                               |
+| 3   | `.btn` = (0,1,0); `#submit.btn` = (1,1,0) — ID selector thắng → màu đỏ.                                                                                                                             |
+| 4   | Nếu element tổ tiên có `transform`, `filter`, hoặc `perspective` ≠ none → tạo stacking context mới → `position: fixed` bị trapped trong đó thay vì viewport.                                        |
+| 5   | `em` = relative to parent font-size (cascade, có thể bị nhân chồng); `rem` = relative to root `<html>` font-size — như km từ gốc thành phố, không phụ thuộc bạn đang ở quận nào.                    |
+
+> 🎯 **Feynman Prompt:** Giải thích CSS Cascade cho một designer không biết code. Tại sao đôi khi thay đổi CSS không có tác dụng dù bạn chắc chắn đã viết đúng?
 
 🔁 **Spaced Repetition reminder:** Review file này lại sau 3 ngày, sau đó 7 ngày, sau đó 14 ngày.
-
----
-
-- [ ] Tôi có thể giải thích Specificity scoring (0-0-0) và tại sao ID > class > type không?
-- [ ] Tôi có thể vẽ Box Model và giải thích `box-sizing: border-box` làm gì không?
-- [ ] Tôi có thể giải thích tại sao `margin: auto` căn giữa horizontal nhưng không căn giữa vertical không?
-- [ ] Tôi có thể debug một layout bị "vỡ" bằng browser DevTools không?
-- [ ] Tôi có thể chọn giữa Flexbox và Grid cho một layout cụ thể không?
-
-💬 **Feynman Prompt:** Giải thích CSS Cascade cho một designer không biết code. Tại sao đôi khi thay đổi CSS không có tác dụng dù bạn chắc chắn đã viết đúng?
 
 ---
 

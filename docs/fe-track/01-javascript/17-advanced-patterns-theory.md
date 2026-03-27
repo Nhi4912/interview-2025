@@ -7,7 +7,7 @@
 
 **NestJS API server:** 50 API endpoints đều cần: authentication check, rate limiting, logging, error handling. Option A: add these 4 concerns manually in every handler → 200 lines of duplicate code, easily forgotten. Option B: Decorators: `@Auth @RateLimit @Log @HandleErrors`. One decorator applied once — cross-cutting concerns separated from business logic. TypeScript decorators are used everywhere in Angular, NestJS, and MobX exactly for this pattern.
 
-**Bài học:** Advanced patterns solve *structural* problems — not "how to write logic" but "how to organize code at scale". Decorators, Mixins, and Proxy are the JavaScript equivalent of AOP (Aspect-Oriented Programming) and flexible composition patterns.
+**Bài học:** Advanced patterns solve _structural_ problems — not "how to write logic" but "how to organize code at scale". Decorators, Mixins, and Proxy are the JavaScript equivalent of AOP (Aspect-Oriented Programming) and flexible composition patterns.
 
 ## What & Why / Cái Gì & Tại Sao
 
@@ -104,19 +104,21 @@ class UserController {
 
 **Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| `@memoize` on async functions without cache key design | Async return is a Promise — serialize args to cache key; handle concurrent same-key calls |
-| Decorators mutating the original class/method | Decorators should return new wrapped version — preserve original via `Reflect.apply` |
-| Forgetting `this` context in decorator implementation | Use `fn.apply(this, args)` or arrow wrapper to preserve receiver |
-| TypeScript decorators = TC39 decorators | TypeScript had legacy decorator syntax (experimentalDecorators) before TC39 Stage 3 — different API |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `@memoize` on async functions without cache key design | Async return is a Promise — concurrent same-key calls may each trigger execution instead of sharing | Serialize args to cache key; return the same in-flight Promise for concurrent same-key calls |
+| Decorators mutating the original class/method | Mutating the descriptor changes behavior for all consumers and breaks composability | Return a new wrapped version — preserve original via `Reflect.apply` |
+| Forgetting `this` context in decorator implementation | `this` is lost when the wrapped function is detached from its original call site | Use `fn.apply(this, args)` or arrow wrapper to preserve receiver |
+| TypeScript decorators = TC39 decorators | TypeScript had a legacy `experimentalDecorators` syntax before TC39 Stage 3 — incompatible APIs | They are different APIs — TC39 Stage 3 uses `accessor` keyword and a different descriptor shape |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "cross-cutting concerns" / "how NestJS/Angular decorators work" / "memoization"
 - **Concept**: Higher-order function that wraps behavior; stacked decorators execute bottom-up
 - **Opening**: "A decorator is a higher-order function — it takes a function (or class method) and returns a new function that adds behavior. The classic example is memoization: the decorator wraps the original with a cache lookup. In TypeScript frameworks like NestJS, stacked decorators like `@Auth @RateLimit @Log` each wrap the handler from bottom to top..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: Higher-order functions, closures, `apply`/`this` binding
 - **Enables**: NestJS/Angular decorator usage, implementing memoization/retry/timing utilities, AOP patterns
 
@@ -139,52 +141,69 @@ class UserController {
 // class Widget extends EventEmitter, Serializable { }  // ← INVALID
 
 // Mixin solution:
-const Serializable = (Base) => class extends Base {
-  serialize() { return JSON.stringify(this) }
-  static deserialize(data) { return Object.assign(new this(), JSON.parse(data)) }
-}
+const Serializable = (Base) =>
+  class extends Base {
+    serialize() {
+      return JSON.stringify(this);
+    }
+    static deserialize(data) {
+      return Object.assign(new this(), JSON.parse(data));
+    }
+  };
 
-const Loggable = (Base) => class extends Base {
-  log(msg) { console.log(`[${this.constructor.name}] ${msg}`) }
-}
+const Loggable = (Base) =>
+  class extends Base {
+    log(msg) {
+      console.log(`[${this.constructor.name}] ${msg}`);
+    }
+  };
 
-const EventEmittable = (Base) => class extends Base {
-  on(event, handler) { /* ... */ }
-  emit(event, data) { /* ... */ }
-}
+const EventEmittable = (Base) =>
+  class extends Base {
+    on(event, handler) {
+      /* ... */
+    }
+    emit(event, data) {
+      /* ... */
+    }
+  };
 
 // Compose capabilities:
 class Widget extends Serializable(Loggable(EventEmittable(HTMLElement))) {
   constructor(props) {
-    super(props)
-    this.log('Widget created')
+    super(props);
+    this.log("Widget created");
   }
 }
 
 // Alternative: functional mixin (Object.assign approach)
 const TimestampMixin = {
   createdAt: null,
-  init() { this.createdAt = Date.now() }
-}
+  init() {
+    this.createdAt = Date.now();
+  },
+};
 
-Object.assign(Widget.prototype, TimestampMixin)
+Object.assign(Widget.prototype, TimestampMixin);
 ```
 
 **Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| Method name collision between mixins (silent overwrite) | Check for conflicts; document which mixin owns which methods |
-| Using `Object.assign` for class-based mixins (copies, not inherits) | Functional mixins (`(Base) => class extends Base`) for proper prototype chain |
-| Deep class hierarchies trying to avoid mixins | Prefer composition (mixins) over deep hierarchies; 3+ levels is a code smell |
-| Mixing concerns (one mixin does logging + auth + caching) | One mixin, one concern — same SRP as modules/classes |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Method name collision between mixins (silent overwrite) | Later mixin silently overwrites earlier mixin's method — no runtime error; hidden bug | Check for conflicts before applying; document which mixin owns which methods |
+| Using `Object.assign` for class-based mixins (copies, not inherits) | `Object.assign` copies methods as own properties — no prototype chain, no proper `instanceof` | Use functional mixins: `(Base) => class extends Base` for proper prototype chain |
+| Deep class hierarchies trying to avoid mixins | Tight coupling, fragile base class problem — changing root breaks everything downstream | Prefer composition (mixins) over deep hierarchies; 3+ levels is a code smell |
+| Mixing concerns (one mixin does logging + auth + caching) | Violates Single Responsibility — hard to test, impossible to apply concerns selectively | One mixin, one concern — same SRP as modules and classes |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "multiple inheritance" / "composition vs inheritance" / "share behavior across unrelated classes"
 - **Concept**: Functional mixin factory pattern; composition vs inheritance
 - **Opening**: "JavaScript doesn't have multiple inheritance, but mixins solve the same problem through composition. A mixin is a function that takes a base class and returns a new class extending it with additional capabilities. You compose them: `class Foo extends A(B(C(Base)))`. Each adds one concern — no diamond problem, explicit composition..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: JavaScript classes, prototype chain, higher-order functions
 - **Enables**: React Higher-Order Components (same principle), Vue 2 mixins, TypeScript interfaces + mixin composition
 
@@ -204,29 +223,33 @@ Object.assign(Widget.prototype, TimestampMixin)
 
 ```javascript
 // All properties have these flags:
-Object.defineProperty(obj, 'version', {
-  value: '1.0.0',
-  writable: false,       // can't change the value
-  enumerable: false,     // hidden from for...in, Object.keys, JSON.stringify
-  configurable: false    // can't delete or redefine the property
-})
+Object.defineProperty(obj, "version", {
+  value: "1.0.0",
+  writable: false, // can't change the value
+  enumerable: false, // hidden from for...in, Object.keys, JSON.stringify
+  configurable: false, // can't delete or redefine the property
+});
 
 // Accessor descriptor (get/set):
-Object.defineProperty(obj, 'fullName', {
-  get() { return `${this.firstName} ${this.lastName}` },
-  set(name) { [this.firstName, this.lastName] = name.split(' ') },
+Object.defineProperty(obj, "fullName", {
+  get() {
+    return `${this.firstName} ${this.lastName}`;
+  },
+  set(name) {
+    [this.firstName, this.lastName] = name.split(" ");
+  },
   enumerable: true,
-  configurable: true
-})
+  configurable: true,
+});
 
 // Immutability levels:
-const obj = { a: 1, nested: { b: 2 } }
-Object.freeze(obj)
-obj.a = 999      // silently fails (strict: throws TypeError)
-obj.nested.b = 999  // WORKS — freeze is shallow!
+const obj = { a: 1, nested: { b: 2 } };
+Object.freeze(obj);
+obj.a = 999; // silently fails (strict: throws TypeError)
+obj.nested.b = 999; // WORKS — freeze is shallow!
 
 // Check descriptor:
-Object.getOwnPropertyDescriptor(obj, 'a')
+Object.getOwnPropertyDescriptor(obj, "a");
 // { value: 1, writable: false, enumerable: true, configurable: false }
 
 // Object.seal: no new props, no delete — but existing props still writable
@@ -235,27 +258,27 @@ Object.getOwnPropertyDescriptor(obj, 'a')
 
 **Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| `Object.freeze` thinking it deeply freezes nested objects | Freeze is shallow — need recursive deep freeze for nested immutability |
-| Forgetting `enumerable: true` when using `defineProperty` | Default is `false` — property won't appear in `Object.keys` or `JSON.stringify` |
-| `configurable: false` with `writable: true` — can you later make it non-writable? | Yes: `writable` can go `true → false` even when `configurable: false`, but not `false → true` |
-| Using `delete obj.prop` on a `configurable: false` property | Silently fails in sloppy mode, throws `TypeError` in strict mode |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `Object.freeze` thinking it deeply freezes nested objects | `freeze` only locks own properties — nested objects remain fully mutable | Freeze is shallow — need recursive deep freeze for nested immutability |
+| Forgetting `enumerable: true` when using `defineProperty` | Default `enumerable` for `defineProperty` is `false` — property won't appear in `Object.keys` or `JSON.stringify` | Explicitly set `enumerable: true` if the property should be visible in iteration/serialization |
+| `configurable: false` with `writable: true` — can you later make it non-writable? | Counter-intuitive: `configurable: false` blocks most changes, but `writable` can still be tightened | Yes: `writable` can go `true → false` even with `configurable: false`, but not `false → true` |
+| Using `delete obj.prop` on a `configurable: false` property | Silently fails in sloppy mode — the bug is invisible without strict mode | Silently fails in sloppy mode, throws `TypeError` in strict mode — always use strict mode |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "immutable object" / "getter/setter" / "hide a property from JSON" / "Object.freeze"
 - **Concept**: 4-flag property descriptor; freeze is shallow; accessor properties
 - **Opening**: "Every object property has a 4-flag descriptor: `writable`, `enumerable`, `configurable`, and either `value` for data properties or `get`/`set` for accessor properties. `Object.freeze` sets `writable: false, configurable: false` on all own properties — but it's shallow. Nested objects are still mutable. For true immutability you need a recursive deep freeze..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: Objects, prototype chain, property access
 - **Enables**: Vue 3 reactivity (`Object.defineProperty` for Vue 2 reactivity, Proxy for Vue 3), immutable state patterns, private-by-convention APIs
 
 ---
 
 ## Reference Theory / Tài Liệu Tham Khảo
-
-
 
 ## Decorators / Decorators
 
@@ -296,14 +319,14 @@ class SealedClass {
 // Decorator phương thức
 function log(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
   const originalMethod = descriptor.value;
-  
-  descriptor.value = function(...args: any[]) {
+
+  descriptor.value = function (...args: any[]) {
     console.log(`Calling ${propertyKey} with args:`, args);
     const result = originalMethod.apply(this, args);
     console.log(`Result:`, result);
     return result;
   };
-  
+
   return descriptor;
 }
 
@@ -319,7 +342,7 @@ class Calculator {
 function readonly(target: any, propertyKey: string) {
   Object.defineProperty(target, propertyKey, {
     writable: false,
-    configurable: false
+    configurable: false,
   });
 }
 
@@ -333,21 +356,21 @@ class Person {
 function memoize(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
   const originalMethod = descriptor.value;
   const cache = new Map<string, any>();
-  
-  descriptor.value = function(...args: any[]) {
+
+  descriptor.value = function (...args: any[]) {
     const key = JSON.stringify(args);
-    
+
     if (cache.has(key)) {
-      console.log('Cache hit');
+      console.log("Cache hit");
       return cache.get(key);
     }
-    
-    console.log('Cache miss');
+
+    console.log("Cache miss");
     const result = originalMethod.apply(this, args);
     cache.set(key, result);
     return result;
   };
-  
+
   return descriptor;
 }
 
@@ -363,28 +386,28 @@ class Fibonacci {
 // Kết hợp decorators
 function validate(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
   const originalMethod = descriptor.value;
-  
-  descriptor.value = function(...args: any[]) {
-    if (args.some(arg => typeof arg !== 'number')) {
-      throw new TypeError('All arguments must be numbers');
+
+  descriptor.value = function (...args: any[]) {
+    if (args.some((arg) => typeof arg !== "number")) {
+      throw new TypeError("All arguments must be numbers");
     }
     return originalMethod.apply(this, args);
   };
-  
+
   return descriptor;
 }
 
 function timing(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
   const originalMethod = descriptor.value;
-  
-  descriptor.value = function(...args: any[]) {
+
+  descriptor.value = function (...args: any[]) {
     const start = performance.now();
     const result = originalMethod.apply(this, args);
     const end = performance.now();
     console.log(`${propertyKey} took ${end - start}ms`);
     return result;
   };
-  
+
   return descriptor;
 }
 
@@ -405,28 +428,28 @@ class MathOperations {
 // Parameterized Decorators
 // Decorators có tham số
 function retry(maxAttempts: number, delay: number = 1000) {
-  return function(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
-    
-    descriptor.value = async function(...args: any[]) {
+
+    descriptor.value = async function (...args: any[]) {
       let lastError: Error;
-      
+
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
           return await originalMethod.apply(this, args);
         } catch (error) {
           lastError = error as Error;
           console.log(`Attempt ${attempt} failed, retrying...`);
-          
+
           if (attempt < maxAttempts) {
-            await new Promise(resolve => setTimeout(resolve, delay));
+            await new Promise((resolve) => setTimeout(resolve, delay));
           }
         }
       }
-      
+
       throw lastError!;
     };
-    
+
     return descriptor;
   };
 }
@@ -436,7 +459,7 @@ class ApiClient {
   async fetchData(url: string): Promise<any> {
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error('Request failed');
+      throw new Error("Request failed");
     }
     return response.json();
   }
@@ -444,10 +467,10 @@ class ApiClient {
 
 // Decorator Metadata
 // Metadata decorator
-const metadataKey = Symbol('metadata');
+const metadataKey = Symbol("metadata");
 
 function metadata(key: string, value: any) {
-  return function(target: any, propertyKey?: string) {
+  return function (target: any, propertyKey?: string) {
     if (propertyKey) {
       // Method decorator
       const existingMetadata = Reflect.getMetadata(metadataKey, target, propertyKey) || {};
@@ -455,24 +478,20 @@ function metadata(key: string, value: any) {
         metadataKey,
         { ...existingMetadata, [key]: value },
         target,
-        propertyKey
+        propertyKey,
       );
     } else {
       // Class decorator
       const existingMetadata = Reflect.getMetadata(metadataKey, target) || {};
-      Reflect.defineMetadata(
-        metadataKey,
-        { ...existingMetadata, [key]: value },
-        target
-      );
+      Reflect.defineMetadata(metadataKey, { ...existingMetadata, [key]: value }, target);
     }
   };
 }
 
-@metadata('version', '1.0.0')
-@metadata('author', 'John Doe')
+@metadata("version", "1.0.0")
+@metadata("author", "John Doe")
 class AnnotatedClass {
-  @metadata('description', 'Adds two numbers')
+  @metadata("description", "Adds two numbers")
   add(a: number, b: number): number {
     return a + b;
   }
@@ -500,7 +519,7 @@ type Constructor<T = {}> = new (...args: any[]) => T;
 function Timestamped<TBase extends Constructor>(Base: TBase) {
   return class extends Base {
     timestamp = Date.now();
-    
+
     getTimestamp() {
       return this.timestamp;
     }
@@ -510,11 +529,11 @@ function Timestamped<TBase extends Constructor>(Base: TBase) {
 function Activatable<TBase extends Constructor>(Base: TBase) {
   return class extends Base {
     isActive = false;
-    
+
     activate() {
       this.isActive = true;
     }
-    
+
     deactivate() {
       this.isActive = false;
     }
@@ -524,7 +543,7 @@ function Activatable<TBase extends Constructor>(Base: TBase) {
 // Apply mixins
 class User {
   name: string;
-  
+
   constructor(name: string) {
     this.name = name;
   }
@@ -533,7 +552,7 @@ class User {
 const TimestampedUser = Timestamped(User);
 const ActiveUser = Activatable(TimestampedUser);
 
-const user = new ActiveUser('John');
+const user = new ActiveUser("John");
 user.activate();
 console.log(user.getTimestamp());
 console.log(user.isActive);
@@ -543,19 +562,19 @@ console.log(user.isActive);
 const canEat = {
   eat(food: string) {
     console.log(`Eating ${food}`);
-  }
+  },
 };
 
 const canWalk = {
   walk() {
-    console.log('Walking');
-  }
+    console.log("Walking");
+  },
 };
 
 const canSwim = {
   swim() {
-    console.log('Swimming');
-  }
+    console.log("Swimming");
+  },
 };
 
 // Compose mixins
@@ -565,7 +584,7 @@ function mixin(target: any, ...sources: any[]) {
 
 class Animal {
   name: string;
-  
+
   constructor(name: string) {
     this.name = name;
   }
@@ -585,7 +604,7 @@ function Serializable<TBase extends Constructor>(Base: TBase) {
     serialize(): string {
       return JSON.stringify(this);
     }
-    
+
     static deserialize<T>(this: Constructor<T>, json: string): T {
       const obj = JSON.parse(json);
       return Object.assign(new this(), obj);
@@ -596,11 +615,11 @@ function Serializable<TBase extends Constructor>(Base: TBase) {
 function Validatable<TBase extends Constructor>(Base: TBase) {
   return class extends Base {
     private validators: Map<string, (value: any) => boolean> = new Map();
-    
+
     addValidator(field: string, validator: (value: any) => boolean) {
       this.validators.set(field, validator);
     }
-    
+
     validate(): boolean {
       for (const [field, validator] of this.validators) {
         const value = (this as any)[field];
@@ -617,7 +636,7 @@ function Validatable<TBase extends Constructor>(Base: TBase) {
 class Product {
   name: string;
   price: number;
-  
+
   constructor(name: string, price: number) {
     this.name = name;
     this.price = price;
@@ -626,8 +645,8 @@ class Product {
 
 const ValidatableProduct = Validatable(Serializable(Product));
 
-const product = new ValidatableProduct('Laptop', 999);
-product.addValidator('price', (price) => price > 0);
+const product = new ValidatableProduct("Laptop", 999);
+product.addValidator("price", (price) => price > 0);
 console.log(product.validate()); // true
 console.log(product.serialize()); // JSON string
 
@@ -642,42 +661,42 @@ interface EventEmitter {
 function EventEmitterMixin<TBase extends Constructor>(Base: TBase) {
   return class extends Base implements EventEmitter {
     private events: Map<string, Set<Function>> = new Map();
-    
+
     on(event: string, handler: Function): void {
       if (!this.events.has(event)) {
         this.events.set(event, new Set());
       }
       this.events.get(event)!.add(handler);
     }
-    
+
     off(event: string, handler: Function): void {
       this.events.get(event)?.delete(handler);
     }
-    
+
     emit(event: string, ...args: any[]): void {
-      this.events.get(event)?.forEach(handler => handler(...args));
+      this.events.get(event)?.forEach((handler) => handler(...args));
     }
   };
 }
 
 class Button {
   label: string;
-  
+
   constructor(label: string) {
     this.label = label;
   }
-  
+
   click() {
     console.log(`Button ${this.label} clicked`);
   }
 }
 
 const EventButton = EventEmitterMixin(Button);
-const button = new EventButton('Submit');
+const button = new EventButton("Submit");
 
-button.on('click', () => console.log('Click handler 1'));
-button.on('click', () => console.log('Click handler 2'));
-button.emit('click');
+button.on("click", () => console.log("Click handler 1"));
+button.on("click", () => console.log("Click handler 2"));
+button.emit("click");
 
 // Multiple Inheritance Simulation
 // Mô phỏng đa kế thừa
@@ -687,8 +706,7 @@ function applyMixins(derivedCtor: any, constructors: any[]) {
       Object.defineProperty(
         derivedCtor.prototype,
         name,
-        Object.getOwnPropertyDescriptor(baseCtor.prototype, name) ||
-          Object.create(null)
+        Object.getOwnPropertyDescriptor(baseCtor.prototype, name) || Object.create(null),
       );
     });
   });
@@ -696,7 +714,7 @@ function applyMixins(derivedCtor: any, constructors: any[]) {
 
 class Disposable {
   isDisposed: boolean = false;
-  
+
   dispose() {
     this.isDisposed = true;
   }
@@ -704,11 +722,11 @@ class Disposable {
 
 class Activatable2 {
   isActive: boolean = false;
-  
+
   activate() {
     this.isActive = true;
   }
-  
+
   deactivate() {
     this.isActive = false;
   }
@@ -718,16 +736,16 @@ class SmartObject implements Disposable, Activatable2 {
   // Disposable
   isDisposed: boolean = false;
   dispose!: () => void;
-  
+
   // Activatable
   isActive: boolean = false;
   activate!: () => void;
   deactivate!: () => void;
-  
+
   constructor() {
     // Initialize
   }
-  
+
   interact() {
     this.activate();
   }
@@ -759,8 +777,8 @@ console.log(obj.isDisposed); // true
 // Basic Proxy
 // Proxy cơ bản
 const target = {
-  name: 'John',
-  age: 30
+  name: "John",
+  age: 30,
 };
 
 const handler: ProxyHandler<typeof target> = {
@@ -768,11 +786,11 @@ const handler: ProxyHandler<typeof target> = {
     console.log(`Getting ${String(property)}`);
     return Reflect.get(target, property, receiver);
   },
-  
+
   set(target, property, value, receiver) {
     console.log(`Setting ${String(property)} to ${value}`);
     return Reflect.set(target, property, value, receiver);
-  }
+  },
 };
 
 const proxy = new Proxy(target, handler);
@@ -791,27 +809,27 @@ function createValidatedUser(user: User): User {
   return new Proxy(user, {
     set(target, property, value) {
       switch (property) {
-        case 'email':
-          if (!value.includes('@')) {
-            throw new Error('Invalid email');
+        case "email":
+          if (!value.includes("@")) {
+            throw new Error("Invalid email");
           }
           break;
-        case 'age':
-          if (typeof value !== 'number' || value < 0) {
-            throw new Error('Invalid age');
+        case "age":
+          if (typeof value !== "number" || value < 0) {
+            throw new Error("Invalid age");
           }
           break;
       }
-      
+
       return Reflect.set(target, property, value);
-    }
+    },
   });
 }
 
 const user2 = createValidatedUser({
-  name: 'John',
-  email: 'john@example.com',
-  age: 30
+  name: "John",
+  email: "john@example.com",
+  age: 30,
 });
 
 // user2.email = 'invalid'; // Throws error
@@ -819,25 +837,25 @@ user2.age = 31; // OK
 
 // Observable Pattern with Proxy
 // Pattern Observable với Proxy
-function observable<T extends object>(target: T, callback: (property: string, value: any) => void): T {
+function observable<T extends object>(
+  target: T,
+  callback: (property: string, value: any) => void,
+): T {
   return new Proxy(target, {
     set(target, property, value) {
       const result = Reflect.set(target, property, value);
       callback(String(property), value);
       return result;
-    }
+    },
   });
 }
 
-const state = observable(
-  { count: 0, name: 'Counter' },
-  (property, value) => {
-    console.log(`${property} changed to ${value}`);
-  }
-);
+const state = observable({ count: 0, name: "Counter" }, (property, value) => {
+  console.log(`${property} changed to ${value}`);
+});
 
 state.count = 1; // Logs: count changed to 1
-state.name = 'New Counter'; // Logs: name changed to New Counter
+state.name = "New Counter"; // Logs: name changed to New Counter
 
 // Negative Array Indices
 // Chỉ số mảng âm
@@ -845,13 +863,13 @@ function createNegativeArray<T>(arr: T[]): T[] {
   return new Proxy(arr, {
     get(target, property) {
       const index = Number(property);
-      
+
       if (Number.isInteger(index) && index < 0) {
         return target[target.length + index];
       }
-      
+
       return Reflect.get(target, property);
-    }
+    },
   });
 }
 
@@ -864,63 +882,61 @@ console.log(arr[-2]); // 4
 function createPrivateProps<T extends object>(target: T): T {
   return new Proxy(target, {
     get(target, property) {
-      if (String(property).startsWith('_')) {
+      if (String(property).startsWith("_")) {
         throw new Error(`Cannot access private property ${String(property)}`);
       }
       return Reflect.get(target, property);
     },
-    
+
     set(target, property, value) {
-      if (String(property).startsWith('_')) {
+      if (String(property).startsWith("_")) {
         throw new Error(`Cannot set private property ${String(property)}`);
       }
       return Reflect.set(target, property, value);
     },
-    
+
     has(target, property) {
-      if (String(property).startsWith('_')) {
+      if (String(property).startsWith("_")) {
         return false;
       }
       return Reflect.has(target, property);
     },
-    
+
     ownKeys(target) {
-      return Reflect.ownKeys(target).filter(
-        key => !String(key).startsWith('_')
-      );
-    }
+      return Reflect.ownKeys(target).filter((key) => !String(key).startsWith("_"));
+    },
   });
 }
 
 const obj2 = createPrivateProps({
-  publicProp: 'public',
-  _privateProp: 'private'
+  publicProp: "public",
+  _privateProp: "private",
 });
 
 console.log(obj2.publicProp); // 'public'
 // console.log(obj2._privateProp); // Throws error
-console.log('_privateProp' in obj2); // false
+console.log("_privateProp" in obj2); // false
 console.log(Object.keys(obj2)); // ['publicProp']
 
 // Function Proxy
 // Proxy hàm
 function createMemoizedFunction<T extends (...args: any[]) => any>(fn: T): T {
   const cache = new Map<string, any>();
-  
+
   return new Proxy(fn, {
     apply(target, thisArg, args) {
       const key = JSON.stringify(args);
-      
+
       if (cache.has(key)) {
-        console.log('Cache hit');
+        console.log("Cache hit");
         return cache.get(key);
       }
-      
-      console.log('Cache miss');
+
+      console.log("Cache miss");
       const result = Reflect.apply(target, thisArg, args);
       cache.set(key, result);
       return result;
-    }
+    },
   }) as T;
 }
 
@@ -939,13 +955,13 @@ function createRevocableObject<T extends object>(target: T) {
     get(target, property) {
       console.log(`Accessing ${String(property)}`);
       return Reflect.get(target, property);
-    }
+    },
   });
-  
+
   return { proxy, revoke };
 }
 
-const { proxy: revocableProxy, revoke } = createRevocableObject({ name: 'John' });
+const { proxy: revocableProxy, revoke } = createRevocableObject({ name: "John" });
 console.log(revocableProxy.name); // Works
 revoke();
 // console.log(revocableProxy.name); // Throws TypeError
@@ -956,77 +972,77 @@ class ReflectionExamples {
   // Reflect.get
   static getExample() {
     const obj = { x: 1, y: 2 };
-    console.log(Reflect.get(obj, 'x')); // 1
-    
+    console.log(Reflect.get(obj, "x")); // 1
+
     // With receiver
     const receiver = { x: 10 };
     const objWithGetter = {
       get value() {
         return this.x;
-      }
+      },
     };
-    console.log(Reflect.get(objWithGetter, 'value', receiver)); // 10
+    console.log(Reflect.get(objWithGetter, "value", receiver)); // 10
   }
-  
+
   // Reflect.set
   static setExample() {
     const obj = { x: 1 };
-    Reflect.set(obj, 'y', 2);
+    Reflect.set(obj, "y", 2);
     console.log(obj); // { x: 1, y: 2 }
   }
-  
+
   // Reflect.has
   static hasExample() {
     const obj = { x: 1 };
-    console.log(Reflect.has(obj, 'x')); // true
-    console.log(Reflect.has(obj, 'y')); // false
+    console.log(Reflect.has(obj, "x")); // true
+    console.log(Reflect.has(obj, "y")); // false
   }
-  
+
   // Reflect.deleteProperty
   static deleteExample() {
     const obj = { x: 1, y: 2 };
-    Reflect.deleteProperty(obj, 'x');
+    Reflect.deleteProperty(obj, "x");
     console.log(obj); // { y: 2 }
   }
-  
+
   // Reflect.construct
   static constructExample() {
     class Person {
       constructor(public name: string) {}
     }
-    
-    const person = Reflect.construct(Person, ['John']);
+
+    const person = Reflect.construct(Person, ["John"]);
     console.log(person.name); // 'John'
   }
-  
+
   // Reflect.apply
   static applyExample() {
     function sum(a: number, b: number) {
       return a + b;
     }
-    
+
     const result = Reflect.apply(sum, null, [1, 2]);
     console.log(result); // 3
   }
-  
+
   // Reflect.defineProperty
   static definePropertyExample() {
     const obj = {};
-    Reflect.defineProperty(obj, 'x', {
+    Reflect.defineProperty(obj, "x", {
       value: 1,
       writable: false,
       enumerable: true,
-      configurable: false
+      configurable: false,
     });
     console.log(obj); // { x: 1 }
   }
-  
+
   // Reflect.getPrototypeOf
   static getPrototypeExample() {
     const obj = {};
     console.log(Reflect.getPrototypeOf(obj) === Object.prototype); // true
   }
-  
+
   // Reflect.setPrototypeOf
   static setPrototypeExample() {
     const obj = {};
@@ -1053,17 +1069,17 @@ class ReflectionExamples {
 
 // Basic Symbols
 // Symbols cơ bản
-const sym1 = Symbol('description');
-const sym2 = Symbol('description');
+const sym1 = Symbol("description");
+const sym2 = Symbol("description");
 console.log(sym1 === sym2); // false - each symbol is unique
 
 // Symbol as property key
 // Symbol làm property key
-const SECRET_KEY = Symbol('secret');
+const SECRET_KEY = Symbol("secret");
 
 const obj3 = {
-  publicProp: 'public',
-  [SECRET_KEY]: 'secret value'
+  publicProp: "public",
+  [SECRET_KEY]: "secret value",
 };
 
 console.log(obj3.publicProp); // 'public'
@@ -1075,19 +1091,22 @@ console.log(Object.keys(obj3)); // ['publicProp'] - symbol not included
 
 // Symbol.iterator
 class Range {
-  constructor(private start: number, private end: number) {}
-  
+  constructor(
+    private start: number,
+    private end: number,
+  ) {}
+
   [Symbol.iterator]() {
     let current = this.start;
     const end = this.end;
-    
+
     return {
       next(): IteratorResult<number> {
         if (current <= end) {
           return { value: current++, done: false };
         }
         return { value: undefined, done: true };
-      }
+      },
     };
   }
 }
@@ -1100,7 +1119,7 @@ for (const num of range) {
 // Symbol.toStringTag
 class CustomClass {
   get [Symbol.toStringTag]() {
-    return 'CustomClass';
+    return "CustomClass";
   }
 }
 
@@ -1119,13 +1138,16 @@ console.log({} instanceof MyArray); // false
 
 // Symbol.toPrimitive
 class Money {
-  constructor(private amount: number, private currency: string) {}
-  
+  constructor(
+    private amount: number,
+    private currency: string,
+  ) {}
+
   [Symbol.toPrimitive](hint: string) {
     switch (hint) {
-      case 'number':
+      case "number":
         return this.amount;
-      case 'string':
+      case "string":
         return `${this.amount} ${this.currency}`;
       default:
         return this.amount;
@@ -1133,7 +1155,7 @@ class Money {
   }
 }
 
-const money = new Money(100, 'USD');
+const money = new Money(100, "USD");
 console.log(+money); // 100
 console.log(`${money}`); // '100 USD'
 console.log(money + 50); // 150
@@ -1146,14 +1168,14 @@ class MyArrayExtended extends Array {
 }
 
 const myArr = new MyArrayExtended(1, 2, 3);
-const mapped = myArr.map(x => x * 2);
+const mapped = myArr.map((x) => x * 2);
 console.log(mapped instanceof MyArrayExtended); // false
 console.log(mapped instanceof Array); // true
 
 // Global Symbol Registry
 // Registry symbol toàn cục
-const globalSym1 = Symbol.for('app.id');
-const globalSym2 = Symbol.for('app.id');
+const globalSym1 = Symbol.for("app.id");
+const globalSym2 = Symbol.for("app.id");
 console.log(globalSym1 === globalSym2); // true
 
 console.log(Symbol.keyFor(globalSym1)); // 'app.id'
@@ -1170,6 +1192,7 @@ console.log(Symbol.keyFor(globalSym1)); // 'app.id'
 Decorator = higher-order function bọc target với thêm behavior. Stack `@A @B @C`: applied bottom-up `A(B(C(fn)))`, called top-down (A → B → C → fn). Execution order: bottom-to-top at definition, top-to-bottom at call.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Explains HOF mechanism, bottom-up application order, top-down call order with concrete example
 - ❌ Weak: "Decorators add metadata to classes" — describes TypeScript emit behavior, not the runtime mechanism
 
@@ -1177,11 +1200,12 @@ Decorator = higher-order function bọc target với thêm behavior. Stack `@A @
 
 ### Q: When would you use mixins over class inheritance? 🔴 Senior
 
-**A:** Use mixins when: (1) you need to share behavior across *unrelated* classes — `Serializable` behavior should apply to both `User` and `Product`, which have no natural common ancestor; (2) you need multiple capabilities that don't fit a single hierarchy — a `Widget` that is both `EventEmittable` and `Serializable` and `Loggable`; (3) you want to avoid deep inheritance hierarchies (>3 levels) which become fragile. Functional mixin pattern: `const Mixin = (Base) => class extends Base { ... }`, composed as `class Foo extends A(B(C(Base)))`. Avoid when capabilities are naturally hierarchical (`Animal → Dog → Poodle`), or when prototype chain debugging becomes difficult with deep mixin stacks.
+**A:** Use mixins when: (1) you need to share behavior across _unrelated_ classes — `Serializable` behavior should apply to both `User` and `Product`, which have no natural common ancestor; (2) you need multiple capabilities that don't fit a single hierarchy — a `Widget` that is both `EventEmittable` and `Serializable` and `Loggable`; (3) you want to avoid deep inheritance hierarchies (>3 levels) which become fragile. Functional mixin pattern: `const Mixin = (Base) => class extends Base { ... }`, composed as `class Foo extends A(B(C(Base)))`. Avoid when capabilities are naturally hierarchical (`Animal → Dog → Poodle`), or when prototype chain debugging becomes difficult with deep mixin stacks.
 
 Dùng mixins khi cần share behavior qua unrelated classes hoặc cần multiple capabilities. Functional mixin pattern: `(Base) => class extends Base { }`. Tránh khi hierarchy là tự nhiên hoặc debug trở nên khó.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: "Unrelated classes" as key trigger, functional mixin pattern syntax, mentions trade-off (debugging difficulty)
 - ❌ Weak: "Mixins are better than inheritance" — no nuance on when each is appropriate
 
@@ -1194,6 +1218,7 @@ Dùng mixins khi cần share behavior qua unrelated classes hoặc cần multipl
 `Object.freeze` làm tất cả own properties non-writable/non-configurable. Không bảo vệ: nested objects (shallow!), prototype methods, variable reassignment. Deep immutability cần recursive freeze hoặc immer.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Names all 3 limitations (shallow, prototype, variable), gives deep freeze solution
 - ❌ Weak: "Object.freeze makes it immutable" — incomplete without mentioning shallow limitation
 
@@ -1206,6 +1231,7 @@ Dùng mixins khi cần share behavior qua unrelated classes hoặc cần multipl
 `defineProperty` tạo property với kiểm soát 4 flags: writable, enumerable, configurable, value (hoặc get/set). Vue 2 reactivity dùng `get`/`set` accessor để track watchers. Dùng cho: non-enumerable constants, computed properties, read-only APIs.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Names all 4 flags, gives Vue 2 reactivity use case with get/set mechanism, mentions non-enumerable use case
 - ❌ Weak: "You can define properties with more control" — no specific flags or use cases
 
@@ -1213,12 +1239,12 @@ Dùng mixins khi cần share behavior qua unrelated classes hoặc cần multipl
 
 ## Q&A Summary / Tóm Tắt Q&A
 
-| # | Topic | Level | One-liner |
-|---|-------|-------|-----------|
-| 1 | Decorator execution order | 🔴 | Applied bottom-up at definition; executed top-down at call |
-| 2 | Mixins vs inheritance | 🔴 | Mixins for unrelated classes + multiple capabilities; inheritance for natural IS-A hierarchies |
-| 3 | `Object.freeze` limitations | 🟡 | Shallow only; nested objects still mutable; prototype + variable unaffected |
-| 4 | `Object.defineProperty` | 🟡 | 4-flag control; Vue 2 reactivity was built on get/set accessors |
+| #   | Topic                       | Level | One-liner                                                                                      |
+| --- | --------------------------- | ----- | ---------------------------------------------------------------------------------------------- |
+| 1   | Decorator execution order   | 🔴    | Applied bottom-up at definition; executed top-down at call                                     |
+| 2   | Mixins vs inheritance       | 🔴    | Mixins for unrelated classes + multiple capabilities; inheritance for natural IS-A hierarchies |
+| 3   | `Object.freeze` limitations | 🟡    | Shallow only; nested objects still mutable; prototype + variable unaffected                    |
+| 4   | `Object.defineProperty`     | 🟡    | 4-flag control; Vue 2 reactivity was built on get/set accessors                                |
 
 ---
 
@@ -1241,6 +1267,8 @@ Dùng mixins khi cần share behavior qua unrelated classes hoặc cần multipl
 - **Application**: You have `const obj = { a: 1, nested: { b: 2 } }; Object.freeze(obj)`. Can you change `obj.a`? What about `obj.nested.b`?
 - **Debug**: Vue 2 had a known reactivity limitation: adding new properties to a reactive object didn't trigger updates. Explain why, given that Vue 2 used `Object.defineProperty`.
 - **Teach**: Explain decorators to a junior using the "wrapper" metaphor — what is being wrapped and what does the wrapper add?
+
+> 🎯 **Feynman Prompt:** Giải thích cho người không biết code: Proxy trong JavaScript giống "nhân viên bảo vệ tòa nhà" — có thể kiểm soát ai vào, ai ra, ai được làm gì; còn decorator giống "huy hiệu chức vụ" gắn thêm quyền hạn mà không sửa người đó.
 
 🔁 **Spaced repetition**: Review in 3 days → 7 days → 14 days
 

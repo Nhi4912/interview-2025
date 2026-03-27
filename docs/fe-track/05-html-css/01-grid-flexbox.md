@@ -8,6 +8,7 @@
 ## Real-World Scenario / Tình Huống Thực Tế
 
 Bạn được giao build layout này:
+
 - Header full width
 - Sidebar 250px cố định bên trái
 - Main content chiếm phần còn lại
@@ -21,19 +22,20 @@ Với CSS cũ (`float` + `clearfix`): hack không ngừng, browser bugs, vertica
 ## What & Why / Cái Gì & Tại Sao
 
 **Analogy / Liên Tưởng:**
+
 - **Flexbox** = dây thun: kéo dãn và sắp xếp items theo **một chiều** (ngang HOẶC dọc). Tốt cho navbar, button groups, căn giữa 1 item.
 - **Grid** = bàn cờ vua: đặt items vào ô trên **hai chiều** (ngang VÀ dọc). Tốt cho page layout, card grids, dashboard.
 
 **Khi nào dùng cái nào:**
 
-| Situation | Use | Why |
-|-----------|-----|-----|
-| Navbar với logo + links | Flexbox | 1D: horizontal row |
-| Vertical centering 1 item | Flexbox | `align-items: center` |
-| Card grid (wrap to rows) | Grid | 2D: auto-fill columns |
-| Page layout (header/sidebar/content) | Grid | 2D: named areas |
-| Responsive với `auto-fit` | Grid | `minmax()` magic |
-| Items với dynamic size | Flexbox | `flex-grow`/`flex-shrink` |
+| Situation                            | Use     | Why                       |
+| ------------------------------------ | ------- | ------------------------- |
+| Navbar với logo + links              | Flexbox | 1D: horizontal row        |
+| Vertical centering 1 item            | Flexbox | `align-items: center`     |
+| Card grid (wrap to rows)             | Grid    | 2D: auto-fill columns     |
+| Page layout (header/sidebar/content) | Grid    | 2D: named areas           |
+| Responsive với `auto-fit`            | Grid    | `minmax()` magic          |
+| Items với dynamic size               | Flexbox | `flex-grow`/`flex-shrink` |
 
 **Flexbox mental model:** parent là "flex container", children là "flex items". Container controls direction + alignment, items control their own growth/shrink.
 
@@ -139,6 +141,7 @@ All alignment properties work relative to these axes: `justify-content` aligns a
 Vietnamese: Flexbox có 2 trục: main axis (hướng items chảy) và cross axis (vuông góc). `flex-direction` set main axis: `row` (ngang), `column` (dọc). `justify-content` căn theo main axis, `align-items` căn theo cross axis. Key insight: khi đổi `flex-direction: column`, `justify-content` sẽ căn theo chiều dọc -- nhiều người bị nhầm điểm này.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Explains that `justify-content` and `align-items` swap meaning when `flex-direction: column` is set — this trips up most candidates, showing genuine axis understanding
 - ❌ Weak: "justify-content aligns horizontally, align-items aligns vertically" (only true for `row` direction — false for `column`)
 
@@ -148,7 +151,7 @@ Vietnamese: Flexbox có 2 trục: main axis (hướng items chảy) và cross ax
   display: flex;
   flex-direction: row;
   justify-content: space-between; /* horizontal spacing */
-  align-items: center;            /* vertical centering */
+  align-items: center; /* vertical centering */
 }
 
 /* Vertical layout */
@@ -156,7 +159,7 @@ Vietnamese: Flexbox có 2 trục: main axis (hướng items chảy) và cross ax
   display: flex;
   flex-direction: column;
   justify-content: space-between; /* NOW vertical spacing */
-  align-items: stretch;           /* NOW horizontal stretch */
+  align-items: stretch; /* NOW horizontal stretch */
 }
 
 /* Center anything: the simplest centering trick */
@@ -182,6 +185,7 @@ The shorthand `flex` is preferred: `flex: 1` means `flex: 1 1 0%` (grow equally,
 Vietnamese: `flex-basis` là kích thước ban đầu (trước khi grow/shrink). `flex-grow` quyết định item chiếm bao nhiêu không gian thừa (tỷ lệ). `flex-shrink` quyết định item co lại bao nhiêu khi thiếu không gian. Nên dùng shorthand `flex`: `flex: 1` = grow equally từ 0, `flex: auto` = grow equally từ content size. Sai lầm phổ biến: `flex: 1` khác `flex: auto` -- `flex: 1` chia đều không gian, `flex: auto` chia theo tỷ lệ nội dung.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Explains `flex: 1` = `1 1 0%` (equal width, starts from zero) vs `flex: auto` = `1 1 auto` (starts from content size, proportional growth), and the `min-width: 0` trick to allow flex items to shrink below content size
 - ❌ Weak: "flex-grow 1 makes items fill remaining space" (correct but misses the basis difference between `flex: 1` and `flex: auto` which is the most common interview trap)
 
@@ -215,21 +219,22 @@ Vietnamese: `flex-basis` là kích thước ban đầu (trước khi grow/shrink
 
 **A:** CSS Box Alignment properties work across both Flexbox and Grid, but the axis terminology differs:
 
-| Property | Flexbox | Grid |
-|---|---|---|
-| `justify-content` | Main axis (items as group) | Inline axis (columns) |
-| `align-content` | Cross axis (lines as group, needs wrap) | Block axis (rows) |
-| `justify-items` | N/A in Flexbox | Inline axis (each cell) |
-| `align-items` | Cross axis (items in line) | Block axis (each cell) |
-| `justify-self` | N/A in Flexbox | Inline axis (single cell) |
-| `align-self` | Cross axis (single item) | Block axis (single cell) |
-| `place-content` | Shorthand: align-content / justify-content |
-| `place-items` | Shorthand: align-items / justify-items |
-| `gap` | Gap between items | Gap between tracks |
+| Property          | Flexbox                                    | Grid                      |
+| ----------------- | ------------------------------------------ | ------------------------- |
+| `justify-content` | Main axis (items as group)                 | Inline axis (columns)     |
+| `align-content`   | Cross axis (lines as group, needs wrap)    | Block axis (rows)         |
+| `justify-items`   | N/A in Flexbox                             | Inline axis (each cell)   |
+| `align-items`     | Cross axis (items in line)                 | Block axis (each cell)    |
+| `justify-self`    | N/A in Flexbox                             | Inline axis (single cell) |
+| `align-self`      | Cross axis (single item)                   | Block axis (single cell)  |
+| `place-content`   | Shorthand: align-content / justify-content |
+| `place-items`     | Shorthand: align-items / justify-items     |
+| `gap`             | Gap between items                          | Gap between tracks        |
 
 Vietnamese: Alignment properties dùng chung cho cả Flexbox và Grid. `justify-*` căn theo inline/main axis. `align-*` căn theo block/cross axis. `*-content` căn group items/tracks trong container. `*-items` căn tất cả items/cells. `*-self` căn từng item riêng. `gap` thay thế margin giữa items -- ưu điểm: không cần trick loại bỏ margin ở item đầu/cuối.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Knows `place-items: center` shorthand for Grid centering, explains `align-content` only works in Flexbox when items wrap (otherwise there's only one line), and uses `gap` instead of margin hacks
 - ❌ Weak: "justify-content centers horizontally" (only true in default row direction — junior-level answer that doesn't generalize to Grid or column direction)
 
@@ -271,6 +276,7 @@ With wrapping, `align-content` controls spacing between wrapped lines (has no ef
 Vietnamese: Mặc định flex items nằm trên 1 dòng và co lại. `flex-wrap: wrap` cho phép items xuống dòng mới khi không đủ chỗ. `align-content` kiểm soát spacing giữa các dòng wrapped. Lưu ý: mỗi dòng wrap là independent -- items ở dòng khác nhau không align với nhau. Nếu cần alignment giữa rows, dùng Grid thay vì Flexbox wrap.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Knows wrapped flex lines are independent (no cross-line alignment), explains this limitation leads to Grid preference for card grids, and uses `flex: 1 1 300px` pattern for responsive wrapping without media queries
 - ❌ Weak: "flex-wrap allows items to go to next line" (correct but misses the key implication: wrapped items don't align across rows, which is WHY Grid is better for true 2D layouts)
 
@@ -317,6 +323,7 @@ Vietnamese: Mặc định flex items nằm trên 1 dòng và co lại. `flex-wra
 Vietnamese: Grid tracks là rows/columns. Sizing: `px`/`rem` (cố định), `fr` (tỷ lệ không gian còn lại), `auto` (theo content), `minmax()` (range min-max). `repeat(auto-fill, ...)` tạo nhiều track nhất có thể (kể cả empty). `repeat(auto-fit, ...)` collapse empty tracks -- items stretch ra. Dùng `auto-fit` cho responsive grid không cần media queries.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Explains `auto-fill` vs `auto-fit` difference (auto-fill keeps phantom tracks, auto-fit collapses them so items stretch), knows `repeat(auto-fit, minmax(250px, 1fr))` as the magic responsive no-media-query pattern, and uses `minmax(0, 1fr)` instead of `1fr` to prevent overflow
 - ❌ Weak: "`fr` divides remaining space" (correct but incomplete — the `auto-fill` vs `auto-fit` distinction is what separates junior from mid-level CSS knowledge)
 
@@ -325,7 +332,7 @@ Vietnamese: Grid tracks là rows/columns. Sizing: `px`/`rem` (cố định), `fr
 .dashboard {
   display: grid;
   grid-template-columns: 250px 1fr 300px; /* sidebar | main | aside */
-  grid-template-rows: auto 1fr auto;       /* header | content | footer */
+  grid-template-rows: auto 1fr auto; /* header | content | footer */
 }
 
 /* Responsive grid without media queries */
@@ -340,9 +347,9 @@ Vietnamese: Grid tracks là rows/columns. Sizing: `px`/`rem` (cố định), `fr
 .complex {
   display: grid;
   grid-template-columns:
-    minmax(200px, 300px)  /* sidebar: 200-300px */
-    1fr                    /* main: takes remaining */
-    fit-content(200px);    /* aside: up to 200px, based on content */
+    minmax(200px, 300px) /* sidebar: 200-300px */
+    1fr /* main: takes remaining */
+    fit-content(200px); /* aside: up to 200px, based on content */
 }
 ```
 
@@ -359,6 +366,7 @@ Vietnamese: Grid tracks là rows/columns. Sizing: `px`/`rem` (cố định), `fr
 Vietnamese: Auto-placement tự động đặt items vào grid cells theo thứ tự. `grid-auto-flow: row` (mặc định) điền từng hàng. `column` điền từng cột. `dense` cho phép lấp khoảng trống bằng cách dời items nhỏ lên -- nhưng gây mismatch giữa DOM order và visual order (vấn đề accessibility). `grid-auto-rows`/`grid-auto-columns` set kích thước cho tracks tự động tạo ra.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Raises the `dense` accessibility concern (visual order ≠ DOM/tab order → screen reader and keyboard users get confused), explains `grid-auto-rows` for implicit track sizing, and knows when auto-placement is preferable to explicit placement
 - ❌ Weak: "grid-auto-flow controls how items are placed" (correct but doesn't surface the `dense` accessibility trap that's the key senior-level concern)
 
@@ -371,8 +379,12 @@ Vietnamese: Auto-placement tự động đặt items vào grid cells theo thứ 
   grid-auto-flow: dense; /* fill gaps -- items may reorder visually */
   gap: 0.5rem;
 }
-.gallery .wide { grid-column: span 2; }
-.gallery .tall { grid-row: span 2; }
+.gallery .wide {
+  grid-column: span 2;
+}
+.gallery .tall {
+  grid-row: span 2;
+}
 
 /* Auto rows for unknown number of items */
 .list {
@@ -393,6 +405,7 @@ Rules: each row must have the same number of cells. Named areas must form rectan
 Vietnamese: `grid-template-areas` cho phép định nghĩa layout bằng tên trực quan -- mỗi chuỗi là một hàng, mỗi từ là một ô. Item dùng `grid-area` để chỉ vị trí. Ưu điểm lớn: đọc CSS là thấy ngay layout. Quy tắc: area phải là hình chữ nhật, mỗi hàng cùng số ô, dùng `.` cho ô trống.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Shows how changing `grid-template-areas` in a media query is all that's needed for responsive reflow (no need to touch individual elements), knows areas must be rectangular
 - ❌ Weak: "grid-template-areas lets you name regions" (feature description only — the killer use case is responsive layout by just rewriting the ASCII art in media queries)
 
@@ -408,11 +421,21 @@ Vietnamese: `grid-template-areas` cho phép định nghĩa layout bằng tên tr
   min-height: 100dvh;
 }
 
-.page > header  { grid-area: header; }
-.page > nav     { grid-area: nav; }
-.page > main    { grid-area: main; }
-.page > aside   { grid-area: aside; }
-.page > footer  { grid-area: footer; }
+.page > header {
+  grid-area: header;
+}
+.page > nav {
+  grid-area: nav;
+}
+.page > main {
+  grid-area: main;
+}
+.page > aside {
+  grid-area: aside;
+}
+.page > footer {
+  grid-area: footer;
+}
 
 /* Responsive: stack on mobile */
 @media (max-width: 768px) {
@@ -439,6 +462,7 @@ Use `grid-template-columns: subgrid` or `grid-template-rows: subgrid` on a grid 
 Vietnamese: Subgrid cho phép grid con thừa kế track sizing của grid cha. Ví dụ: danh sách card trong grid, mỗi card có title/content/footer -- không subgrid thì title ở các card khác nhau sẽ không align. Với subgrid, title row của tất cả cards align hoàn hảo vì dùng cùng track sizing.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Gives the canonical use case (card grid where title/body/footer must align across cards), explains the mechanism (nested grid item spans parent tracks, inherits sizing), and knows it's widely supported since 2023
 - ❌ Weak: "subgrid inherits parent's tracks" (mechanistically correct but needs the concrete use case to show you understand when and why)
 
@@ -457,9 +481,15 @@ Vietnamese: Subgrid cho phép grid con thừa kế track sizing của grid cha. 
   /* Now .title, .body, .footer align across all cards */
 }
 
-.card .title  { /* automatically placed in row 1 */ }
-.card .body   { /* automatically placed in row 2 */ }
-.card .footer { /* automatically placed in row 3 */ }
+.card .title {
+  /* automatically placed in row 1 */
+}
+.card .body {
+  /* automatically placed in row 2 */
+}
+.card .footer {
+  /* automatically placed in row 3 */
+}
 ```
 
 ---
@@ -476,6 +506,7 @@ They can be combined: a Grid page layout can contain Flexbox navigation within a
 Vietnamese: Flexbox = 1 chiều, content quyết định layout. Grid = 2 chiều, layout quyết định content. Dùng Flexbox cho: nav bar, toolbar, centering, tag list. Dùng Grid cho: page layout, dashboard, gallery, form layout. Thực tế hay kết hợp cả hai: Grid cho layout tổng thể, Flexbox cho component bên trong.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Uses the "content drives layout (Flex) vs layout drives content (Grid)" mental model, explains they're complementary not competing (Grid outer + Flex inner is common), and gives the responsive card grid use case where Grid's `auto-fit` beats Flexbox wrap
 - ❌ Weak: "Flexbox is for rows/columns, Grid is for 2D" (incomplete rule — both can make rows, the key distinction is whether layout precedes content or vice versa)
 
@@ -488,6 +519,7 @@ Vietnamese: Flexbox = 1 chiều, content quyết định layout. Grid = 2 chiề
 Vietnamese: Holy Grail layout gồm header, footer, content chính ở giữa, 2 sidebar hai bên. Grid giải quyết vấn đề này đơn giản hơn nhiều so với float/table ngày xưa, đồng thời giữ source order tốt cho SEO/accessibility.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Uses `grid-template` shorthand with areas (shows mastery), mentions that main content can appear first in DOM for SEO/a11y while Grid handles visual reordering via `grid-area`
 - ❌ Weak: "I'd use grid-template-areas for this" (correct choice but doesn't code it up or mention the source-order SEO consideration that's the historical motivation for "Holy Grail")
 
@@ -496,28 +528,38 @@ Vietnamese: Holy Grail layout gồm header, footer, content chính ở giữa, 2
   display: grid;
   grid-template:
     "header header  header" auto
-    "left   content right"  1fr
+    "left   content right" 1fr
     "footer footer  footer" auto
-    / 200px  1fr     200px;
+    / 200px 1fr 200px;
   min-height: 100dvh;
   gap: 1rem;
 }
 
-header  { grid-area: header; }
-.left   { grid-area: left; }
-.content{ grid-area: content; }
-.right  { grid-area: right; }
-footer  { grid-area: footer; }
+header {
+  grid-area: header;
+}
+.left {
+  grid-area: left;
+}
+.content {
+  grid-area: content;
+}
+.right {
+  grid-area: right;
+}
+footer {
+  grid-area: footer;
+}
 
 /* Responsive: stack vertically on mobile */
 @media (max-width: 768px) {
   .holy-grail {
     grid-template:
-      "header"  auto
+      "header" auto
       "content" 1fr
-      "left"    auto
-      "right"   auto
-      "footer"  auto
+      "left" auto
+      "right" auto
+      "footer" auto
       / 1fr;
   }
 }
@@ -532,6 +574,7 @@ footer  { grid-area: footer; }
 Vietnamese: Dashboard layout cần sidebar cố định, top bar, và vùng content với các widget cards responsive. Grid tạo layout tổng thể, `auto-fit` tạo responsive card grid bên trong. Sidebar có thể collapsible trên mobile dùng CSS chỉ thay đổi grid-template.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Shows Grid outer layout with `grid-template` shorthand + Flexbox or `auto-fit` Grid for inner widgets, uses `100dvh` for viewport height (not `100vh` which is buggy on mobile), handles sidebar collapse via `position: fixed` on mobile
 - ❌ Weak: "Use a grid with sidebar and content columns" (correct approach but doesn't address mobile sidebar handling, `dvh` vs `vh`, or the inner widget grid)
 
@@ -539,14 +582,19 @@ Vietnamese: Dashboard layout cần sidebar cố định, top bar, và vùng cont
 .dashboard {
   display: grid;
   grid-template:
-    "sidebar topbar"  60px
+    "sidebar topbar" 60px
     "sidebar content" 1fr
-    / 240px   1fr;
+    / 240px 1fr;
   height: 100dvh;
 }
 
-.sidebar { grid-area: sidebar; overflow-y: auto; }
-.topbar  { grid-area: topbar; }
+.sidebar {
+  grid-area: sidebar;
+  overflow-y: auto;
+}
+.topbar {
+  grid-area: topbar;
+}
 .content {
   grid-area: content;
   overflow-y: auto;
@@ -568,7 +616,7 @@ Vietnamese: Dashboard layout cần sidebar cố định, top bar, và vùng cont
 @media (max-width: 768px) {
   .dashboard {
     grid-template:
-      "topbar"  60px
+      "topbar" 60px
       "content" 1fr
       / 1fr;
   }
@@ -581,8 +629,12 @@ Vietnamese: Dashboard layout cần sidebar cố định, top bar, và vùng cont
     transition: transform 0.3s;
     z-index: 100;
   }
-  .sidebar.open { transform: translateX(0); }
-  .widget--wide { grid-column: span 1; }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  .widget--wide {
+    grid-column: span 1;
+  }
 }
 ```
 
@@ -607,6 +659,7 @@ Vietnamese: Dashboard layout cần sidebar cố định, top bar, và vùng cont
 Vietnamese: Debug Flex/Grid dùng DevTools: Chrome/Firefox có inspector riêng cho Grid overlay (hiện tracks, areas, gaps) và Flexbox inspector. Bugs phổ biến: item overflow → thêm `min-width: 0` (flex item mặc định `min-width: auto`). Text không truncate → `min-width: 0` + `overflow: hidden`. Grid 1fr không respect max-width → dùng `minmax(0, 1fr)`.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Knows the `min-width: auto` gotcha (default prevents flex items from shrinking below intrinsic content width), the `minmax(0, 1fr)` fix for grid overflow, and how to use DevTools Grid overlay to visualize track lines
 - ❌ Weak: "Use browser DevTools to inspect layout" (correct but too vague — the `min-width: 0` fix is the #1 real-world flex bug and knowing it by name signals experience)
 
@@ -637,11 +690,31 @@ Vietnamese: Debug Flex/Grid dùng DevTools: Chrome/Firefox có inspector riêng 
 
 ---
 
+## 📋 Interview Q&A Summary / Tóm Tắt Q&A Phỏng Vấn
+
+| #   | Câu hỏi                               | Difficulty | Core Concept   | Key Signal                                                   |
+| --- | ------------------------------------- | ---------- | -------------- | ------------------------------------------------------------ |
+| 1   | Trục Flexbox và flex-direction?       | 🟢         | Flexbox axes   | justify/align swap when column direction                     |
+| 2   | flex-grow, flex-shrink, flex-basis?   | 🟡         | Flex sizing    | flex:1=1 1 0% vs flex:auto=1 1 auto, min-width:0             |
+| 3   | Alignment properties Flexbox vs Grid? | 🟡         | Alignment      | place-items shorthand, align-content needs wrap              |
+| 4   | flex-wrap hoạt động thế nào?          | 🟢         | Flex wrap      | Wrapped lines independent — use Grid instead                 |
+| 5   | Grid tracks và cách size?             | 🟡         | Grid tracks    | auto-fill vs auto-fit, minmax(0,1fr)                         |
+| 6   | Grid auto-placement?                  | 🔴         | Auto-placement | dense accessibility concern (visual ≠ DOM order)             |
+| 7   | grid-template-areas?                  | 🟢         | Named areas    | Rewrite ASCII art in media query = full reflow               |
+| 8   | Subgrid là gì?                        | 🟡         | Subgrid        | Card grid use case — title/body/footer aligned across cards  |
+| 9   | Flexbox vs Grid?                      | 🟢         | Layout choice  | Content drives layout (Flex) vs layout drives content (Grid) |
+| 10  | Holy Grail layout với Grid?           | 🟡         | Grid layout    | grid-template shorthand, DOM source order for SEO/a11y       |
+| 11  | Dashboard layout responsive?          | 🟡         | Dashboard      | 100dvh not 100vh, sidebar collapse via position:fixed        |
+| 12  | Debug Flexbox/Grid?                   | 🔴         | Debugging      | min-width:auto gotcha, minmax(0,1fr) fix                     |
+
+---
+
 ## ⚡ Cold Call Simulation / Mô Phỏng Phỏng Vấn
 
 > 🎯 Interviewer asks cold: **"Build a responsive card grid that shows 3 columns on desktop, 2 on tablet, 1 on mobile — without media queries."**
 
 **30 giây đầu — mở đầu lý tưởng:**
+
 1. "I'd use CSS Grid with `auto-fit` and `minmax()` — this is the zero-media-query responsive pattern."
 2. "`grid-template-columns: repeat(auto-fit, minmax(250px, 1fr))` — each card is at least 250px, grid auto-calculates how many columns fit."
 3. "On a 1200px container: fits 4 cards per row. On 700px: 2 cards. On 300px: 1 card. The `1fr` ensures cards stretch to fill remaining space."
@@ -649,15 +722,29 @@ Vietnamese: Debug Flex/Grid dùng DevTools: Chrome/Firefox có inspector riêng 
 
 ---
 
-## Self-Check / Tự Kiểm Tra ⚡ (Đóng tài liệu lại trước khi làm)
+## 🔄 Self-Check / Tự Kiểm Tra
 
-- [ ] **Retrieval**: Viết từ trí nhớ CSS cho responsive card grid không cần media queries — `grid-template-columns` property đầy đủ.
-- [ ] **Visual**: Vẽ diagram cho Flexbox axes khi `flex-direction: row` và khi `flex-direction: column` — chỉ rõ chiều của `justify-content` và `align-items` trong mỗi trường hợp.
-- [ ] **Application**: `flex: 1` vs `flex: auto` — nếu 3 items có content sizes 100px, 200px, 300px với container 900px, mỗi item sẽ rộng bao nhiêu với `flex: 1`? Và với `flex: auto`?
-- [ ] **Debug**: Flex item có text dài không bị truncate dù đã set `text-overflow: ellipsis`. Nguyên nhân gì? Fix như thế nào?
-- [ ] **Teach**: Giải thích `auto-fill` vs `auto-fit` bằng một ví dụ có 2 items trong grid 6 cột — điều gì xảy ra khác nhau?
+> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
 
-💬 **Feynman Prompt:** Giải thích Flexbox vs Grid cho một designer không biết code. Dùng ví dụ về sắp xếp đồ đạc trong phòng — khi nào dùng "xếp thành hàng" và khi nào dùng "chia ô theo bàn cờ"?
+| #   | Loại           | Câu hỏi                                                                                                                                                           |
+| --- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 🔍 Retrieval   | Viết từ trí nhớ CSS cho responsive card grid không cần media queries — `grid-template-columns` property đầy đủ.                                                   |
+| 2   | 🎨 Visual      | Vẽ diagram cho Flexbox axes khi `flex-direction: row` và khi `flex-direction: column` — chỉ rõ chiều của `justify-content` và `align-items` trong mỗi trường hợp. |
+| 3   | 🛠️ Application | `flex: 1` vs `flex: auto` — nếu 3 items có content sizes 100px, 200px, 300px với container 900px, mỗi item sẽ rộng bao nhiêu với `flex: 1`? Và với `flex: auto`?  |
+| 4   | 🐛 Debug       | Flex item có text dài không bị truncate dù đã set `text-overflow: ellipsis`. Nguyên nhân gì? Fix như thế nào?                                                     |
+| 5   | 🎓 Teach       | Giải thích `auto-fill` vs `auto-fit` bằng một ví dụ có 2 items trong grid 6 cột — điều gì xảy ra khác nhau?                                                       |
+
+### Key Points (tự kiểm tra)
+
+| #   | Key Point                                                                                                                                                                                                                        |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `grid-template-columns: repeat(auto-fill, minmax(200px, 1fr))` — tự tạo số cột phù hợp, mỗi cột tối thiểu 200px, tối đa 1fr.                                                                                                     |
+| 2   | `row`: main axis = horizontal (→), cross axis = vertical (↓); `column`: main axis = vertical (↓), cross axis = horizontal (→). `justify-content` luôn theo main axis; `align-items` luôn theo cross axis.                        |
+| 3   | `flex: 1` = `flex: 1 1 0px` → bỏ qua content size, chia đều 300px mỗi item; `flex: auto` = `flex: 1 1 auto` → bắt đầu từ content size (100+200+300=600), chia 300px còn lại theo tỉ lệ → 150px/250px/350px.                      |
+| 4   | Flex item mặc định có `min-width: auto` → không cho phép shrink dưới content size → text bị overflow ra ngoài. Fix: thêm `min-width: 0` trên flex item, sau đó `overflow: hidden; text-overflow: ellipsis; white-space: nowrap`. |
+| 5   | `auto-fill`: tạo đủ column tracks dù có empty slots (2 items trong 6 cột → 4 slot trống vẫn tồn tại); `auto-fit`: collapse empty tracks → 2 items stretch ra chiếm hết container.                                                |
+
+> 🎯 **Feynman Prompt:** Giải thích Flexbox vs Grid cho một designer không biết code. Dùng ví dụ về sắp xếp đồ đạc trong phòng — khi nào dùng "xếp thành hàng" và khi nào dùng "chia ô theo bàn cờ"?
 
 🔁 **Spaced Repetition reminder:** Review file này lại sau 3 ngày, sau đó 7 ngày, sau đó 14 ngày.
 

@@ -44,6 +44,7 @@ TypeScript:  type string + number → Error ← compiler ngăn trước
 ```
 
 **TypeScript KHÔNG phải ngôn ngữ mới:**
+
 - TS = JS + type annotations + compiler
 - Browser vẫn chạy JavaScript (TS compile → JS)
 - Type annotations bị xóa hoàn toàn lúc runtime
@@ -51,12 +52,12 @@ TypeScript:  type string + number → Error ← compiler ngăn trước
 
 **Tại sao JS cần TS:**
 
-| Vấn đề JavaScript | TypeScript giải quyết |
-|-------------------|----------------------|
+| Vấn đề JavaScript                                    | TypeScript giải quyết                       |
+| ---------------------------------------------------- | ------------------------------------------- |
 | `undefined is not a function` — chỉ biết lúc runtime | Caught at compile time — biết lúc viết code |
-| Không biết object có property nào | IntelliSense + type checking |
-| Refactor sợ vỡ code | Compiler tìm hết chỗ cần sửa |
-| Code review không hiệu quả | Types = self-documenting, luôn up-to-date |
+| Không biết object có property nào                    | IntelliSense + type checking                |
+| Refactor sợ vỡ code                                  | Compiler tìm hết chỗ cần sửa                |
+| Code review không hiệu quả                           | Types = self-documenting, luôn up-to-date   |
 
 ---
 
@@ -107,14 +108,14 @@ Type annotation như **nhãn trên hộp**: khi bạn đánh nhãn hộp "Đĩa"
 
 ```typescript
 // Explicit annotation — bạn khai báo type
-let name: string = 'Alice';       // annotation
-let age: number = 25;             // annotation
-let active: boolean = true;       // annotation
+let name: string = "Alice"; // annotation
+let age: number = 25; // annotation
+let active: boolean = true; // annotation
 
 // Type inference — compiler tự suy ra (preferred when obvious)
-let city = 'Hanoi';              // inferred: string
-let score = 100;                 // inferred: number
-let items = [1, 2, 3];          // inferred: number[]
+let city = "Hanoi"; // inferred: string
+let score = 100; // inferred: number
+let items = [1, 2, 3]; // inferred: number[]
 
 // Function: annotate params + return type
 function greet(name: string): string {
@@ -127,7 +128,7 @@ function createUser(id: number, email: string): { id: number; email: string } {
 }
 
 // Array and tuple
-const tags: string[] = ['react', 'typescript'];
+const tags: string[] = ["react", "typescript"];
 const point: [number, number] = [10, 20]; // tuple: fixed length, fixed types
 ```
 
@@ -142,22 +143,24 @@ When to annotate vs infer:
 
 ```typescript
 // any — escapes type system (AVOID — defeats the purpose of TS)
-let data: any = fetch('/api');
+let data: any = fetch("/api");
 data.foo.bar.baz; // No error — but will fail at runtime
 
 // unknown — safe alternative: MUST check before use
-let rawData: unknown = fetch('/api');
+let rawData: unknown = fetch("/api");
 rawData.foo; // ❌ Error — must narrow first
-if (typeof rawData === 'object' && rawData !== null) {
+if (typeof rawData === "object" && rawData !== null) {
   // rawData narrowed to object here
 }
 
 // never — type that never has a value (exhaustiveness checking)
-type Shape = 'circle' | 'square';
+type Shape = "circle" | "square";
 function getArea(shape: Shape): number {
   switch (shape) {
-    case 'circle': return Math.PI;
-    case 'square': return 1;
+    case "circle":
+      return Math.PI;
+    case "square":
+      return 1;
     default:
       const _exhaustive: never = shape; // Error if new Shape added but not handled
       throw new Error(`Unknown: ${shape}`);
@@ -167,17 +170,19 @@ function getArea(shape: Shape): number {
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-|---------|------------|---------|
-| Dùng `any` khi không biết type | Defeats type safety — lỗi chỉ xuất hiện runtime | Dùng `unknown` + type guard để narrow |
-| Annotate tất cả — `const x: string = 'hello'` | Verbose, redundant — inference đã đủ | Annotate ở boundaries (params, return), infer internally |
-| `as any` để qua TypeScript error | Suppress error mà không fix root cause | Fix type đúng hoặc dùng type guard |
+| Sai lầm                                       | Tại sao sai                                     | Đúng là                                                  |
+| --------------------------------------------- | ----------------------------------------------- | -------------------------------------------------------- |
+| Dùng `any` khi không biết type                | Defeats type safety — lỗi chỉ xuất hiện runtime | Dùng `unknown` + type guard để narrow                    |
+| Annotate tất cả — `const x: string = 'hello'` | Verbose, redundant — inference đã đủ            | Annotate ở boundaries (params, return), infer internally |
+| `as any` để qua TypeScript error              | Suppress error mà không fix root cause          | Fix type đúng hoặc dùng type guard                       |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy: "Khác biệt `any` và `unknown`?"
 - → Mở đầu: "`any` opt out khỏi type system — dùng unknown thay thế. `unknown` buộc bạn check type trước khi sử dụng, `any` không check gì..."
 
 **🔑 Knowledge Chain:**
+
 - 📚 Cần biết: JavaScript dynamic typing
 - ➡️ Để hiểu: Type Guards & Narrowing (section 3 dưới)
 
@@ -189,6 +194,7 @@ function getArea(shape: Shape): number {
 
 **Tại sao tồn tại? / Why does this exist?**
 TypeScript cần 2 cách mô hình hóa type để cover các use cases khác nhau:
+
 - `interface`: tối ưu cho OOP patterns — extends, implements, declaration merging
 - `type`: tối ưu cho functional patterns — union types, mapped types, conditional types
 
@@ -207,7 +213,7 @@ interface User {
 }
 
 interface Admin extends User {
-  role: 'admin' | 'superadmin';
+  role: "admin" | "superadmin";
   permissions: string[];
 }
 
@@ -217,10 +223,10 @@ interface Window {
 }
 
 // type — for flexible aliases
-type UserId = User['id']; // Indexed access type
+type UserId = User["id"]; // Indexed access type
 type UserOrAdmin = User | Admin; // Union — interface can't do this directly
 type WithTimestamp<T> = T & { createdAt: Date }; // Intersection + generic
-type Status = 'idle' | 'loading' | 'success' | 'error'; // Literal union
+type Status = "idle" | "loading" | "success" | "error"; // Literal union
 
 // type for computed/complex patterns
 type ReadOnly<T> = { readonly [K in keyof T]: T[K] }; // Mapped type — only type
@@ -259,17 +265,19 @@ type Config = { serialize(): string }; // Can use, but classes implement interfa
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-|---------|------------|---------|
-| Dùng `type` cho everything | Miss declaration merging (cần để extend browser types) | `interface` cho object shapes, `type` cho aliases/unions |
-| Dùng `interface` cho union: `interface Status = 'a' | 'b'` | Syntax error — interface không thể là union | `type Status = 'a' | 'b'` |
-| Nghĩ interface và type hoàn toàn giống nhau | Declaration merging, `implements`, extends behavior khác nhau | Biết specific differences cho interview |
+| Sai lầm                                             | Tại sao sai                                                   | Đúng là                                                  |
+| --------------------------------------------------- | ------------------------------------------------------------- | -------------------------------------------------------- | ------------------ | ---- |
+| Dùng `type` cho everything                          | Miss declaration merging (cần để extend browser types)        | `interface` cho object shapes, `type` cho aliases/unions |
+| Dùng `interface` cho union: `interface Status = 'a' | 'b'`                                                          | Syntax error — interface không thể là union              | `type Status = 'a' | 'b'` |
+| Nghĩ interface và type hoàn toàn giống nhau         | Declaration merging, `implements`, extends behavior khác nhau | Biết specific differences cho interview                  |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy: "interface vs type, bạn dùng cái nào?"
 - → Mở đầu: "Tôi theo convention: `interface` cho object shapes (có thể extend, declare merge), `type` cho union và computed types. Quyết định chính: object contract hay type alias?"
 
 **🔑 Knowledge Chain:**
+
 - 📚 Cần biết: Type Annotations (section 1)
 - ➡️ Để hiểu: Generics ([03-generics-deep-dive.md](./03-generics-deep-dive.md)) — interface and type both used with generics
 
@@ -295,7 +303,7 @@ type StringOrNumber = string | number;
 
 function process(value: StringOrNumber) {
   // typeof — primitives
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     return value.toUpperCase(); // narrowed to string
   }
   return value.toFixed(2); // narrowed to number
@@ -304,9 +312,9 @@ function process(value: StringOrNumber) {
 // instanceof — class instances
 function handleError(err: Error | string) {
   if (err instanceof TypeError) {
-    console.log('Type error:', err.message);
-  } else if (typeof err === 'string') {
-    console.log('String error:', err);
+    console.log("Type error:", err.message);
+  } else if (typeof err === "string") {
+    console.log("String error:", err);
   }
 }
 
@@ -315,7 +323,7 @@ type Dog = { bark(): void };
 type Cat = { meow(): void };
 
 function makeSound(animal: Dog | Cat) {
-  if ('bark' in animal) {
+  if ("bark" in animal) {
     animal.bark(); // narrowed to Dog
   } else {
     animal.meow(); // narrowed to Cat
@@ -323,8 +331,14 @@ function makeSound(animal: Dog | Cat) {
 }
 
 // Custom type predicate — 'is' keyword
-interface ApiSuccess { ok: true; data: unknown }
-interface ApiError   { ok: false; error: string }
+interface ApiSuccess {
+  ok: true;
+  data: unknown;
+}
+interface ApiError {
+  ok: false;
+  error: string;
+}
 type ApiResult = ApiSuccess | ApiError;
 
 function isSuccess(result: ApiResult): result is ApiSuccess {
@@ -345,36 +359,41 @@ function handleResult(result: ApiResult) {
 ```typescript
 // Discriminated union — most powerful pattern
 type Shape =
-  | { kind: 'circle'; radius: number }
-  | { kind: 'square'; side: number }
-  | { kind: 'triangle'; base: number; height: number };
+  | { kind: "circle"; radius: number }
+  | { kind: "square"; side: number }
+  | { kind: "triangle"; base: number; height: number };
 
 function getArea(shape: Shape): number {
   switch (shape.kind) {
-    case 'circle':   return Math.PI * shape.radius ** 2;
-    case 'square':   return shape.side ** 2;
-    case 'triangle': return 0.5 * shape.base * shape.height;
+    case "circle":
+      return Math.PI * shape.radius ** 2;
+    case "square":
+      return shape.side ** 2;
+    case "triangle":
+      return 0.5 * shape.base * shape.height;
     default:
       // If you add 'rectangle' to Shape but forget to add case:
       const _check: never = shape; // ❌ Error — triangle not handled
-      throw new Error('Unhandled shape');
+      throw new Error("Unhandled shape");
   }
 }
 ```
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-|---------|------------|---------|
-| Dùng `as` để bypass union: `(value as string).toUpperCase()` | Không thực sự check type — crash nếu là number | Dùng `typeof` guard trước |
-| `typeof null === 'object'` — JS quirk | `null` có type `'object'` trong typeof — catch `null` explicitly | `if (val !== null && typeof val === 'object')` |
-| Quên `in` guard cho discriminated union | TypeScript không thể infer từ `if (animal.bark)` trên union | Dùng `'bark' in animal` — the `in` operator |
+| Sai lầm                                                      | Tại sao sai                                                      | Đúng là                                        |
+| ------------------------------------------------------------ | ---------------------------------------------------------------- | ---------------------------------------------- |
+| Dùng `as` để bypass union: `(value as string).toUpperCase()` | Không thực sự check type — crash nếu là number                   | Dùng `typeof` guard trước                      |
+| `typeof null === 'object'` — JS quirk                        | `null` có type `'object'` trong typeof — catch `null` explicitly | `if (val !== null && typeof val === 'object')` |
+| Quên `in` guard cho discriminated union                      | TypeScript không thể infer từ `if (animal.bark)` trên union      | Dùng `'bark' in animal` — the `in` operator    |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy: "Làm sao xử lý `string | number | null` type?"
 - → Mở đầu: "TypeScript có control-flow narrowing — dùng `typeof`, `instanceof`, `in`, hoặc custom type predicate. Tôi thường design discriminated union với `kind` field để có exhaustiveness checking..."
 
 **🔑 Knowledge Chain:**
+
 - 📚 Cần biết: Union types, interface vs type (section 2)
 - ➡️ Để hiểu: Conditional types (`T extends X ? Y : Z`) — advanced narrowing at type level
 
@@ -391,7 +410,7 @@ Cả hai chấp nhận mọi value, nhưng `unknown` an toàn hơn: bạn không
 ```typescript
 function process(input: unknown) {
   // Must narrow before use
-  if (typeof input === 'string') {
+  if (typeof input === "string") {
     return input.toUpperCase(); // OK — narrowed
   }
   // input.toUpperCase() here — ❌ Error
@@ -406,6 +425,7 @@ function processAny(input: any) {
 **Use `any`** only for: gradual migration from JS, very specific edge cases
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Giải thích "contagious" nature của `any`, biết `unknown` requires narrowing, mention `JSON.parse` returns `any` — should be wrapped as `unknown`
 - ❌ Weak: "unknown giống any nhưng strict hơn" — không đủ depth
 
@@ -420,7 +440,7 @@ function processAny(input: any) {
 interface ButtonProps {
   label: string;
   onClick: () => void;
-  variant?: 'primary' | 'secondary';
+  variant?: "primary" | "secondary";
 }
 
 interface IconButtonProps extends ButtonProps {
@@ -429,19 +449,20 @@ interface IconButtonProps extends ButtonProps {
 
 // type — state unions, discriminated unions
 type LoadingState =
-  | { status: 'idle' }
-  | { status: 'loading' }
-  | { status: 'success'; data: User[] }
-  | { status: 'error'; message: string };
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "success"; data: User[] }
+  | { status: "error"; message: string };
 
 // type — utility/computed
 type PartialUser = Partial<User>;
-type UserWithoutId = Omit<User, 'id'>;
+type UserWithoutId = Omit<User, "id">;
 ```
 
 **Key rule:** If you might extend it → `interface`. If it's a union or computed → `type`.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Giải thích declaration merging (cần để augment thư viện), biết convention, đưa ra ví dụ discriminated union
 - ❌ Weak: "Cả hai giống nhau, dùng cái nào cũng được" — bỏ qua declaration merging difference
 
@@ -472,7 +493,7 @@ async function fetchUser(id: number): Promise<ApiResponse<User>> {
   try {
     const res = await fetch(`/api/users/${id}`);
     if (!res.ok) {
-      return { ok: false, error: 'Fetch failed', statusCode: res.status as 400 };
+      return { ok: false, error: "Fetch failed", statusCode: res.status as 400 };
     }
     const data: User = await res.json();
     return { ok: true, data, statusCode: 200 };
@@ -486,11 +507,12 @@ const result = await fetchUser(1);
 if (result.ok) {
   console.log(result.data.name); // ✅ TypeScript knows: result is ApiSuccess<User>
 } else {
-  console.log(result.error);    // ✅ TypeScript knows: result is ApiError
+  console.log(result.error); // ✅ TypeScript knows: result is ApiError
 }
 ```
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Dùng discriminated union thay vì `try/catch` everywhere, generic `ApiResponse<T>`, narrowing tại call site
 - ❌ Weak: Dùng `any` cho response, không handle error type
 
@@ -503,8 +525,8 @@ if (result.ok) {
 ```json
 {
   "compilerOptions": {
-    "strict": true,                    // Enables all below
-    "noUncheckedIndexedAccess": true,  // arr[0] returns T | undefined (not just T)
+    "strict": true, // Enables all below
+    "noUncheckedIndexedAccess": true, // arr[0] returns T | undefined (not just T)
     "exactOptionalPropertyTypes": true // {x?: string} — undefined not assignable unless x?: string | undefined
   }
 }
@@ -512,26 +534,28 @@ if (result.ok) {
 
 **Most impactful strict sub-flags:**
 
-| Flag | What it catches |
-|------|----------------|
-| `strictNullChecks` | Null/undefined not assignable to other types — catches 30% of runtime errors |
-| `noImplicitAny` | Functions without explicit types error instead of being `any` |
-| `strictFunctionTypes` | Function parameter types checked correctly (contravariance) |
-| `strictPropertyInitialization` | Class properties must be initialized in constructor |
+| Flag                           | What it catches                                                              |
+| ------------------------------ | ---------------------------------------------------------------------------- |
+| `strictNullChecks`             | Null/undefined not assignable to other types — catches 30% of runtime errors |
+| `noImplicitAny`                | Functions without explicit types error instead of being `any`                |
+| `strictFunctionTypes`          | Function parameter types checked correctly (contravariance)                  |
+| `strictPropertyInitialization` | Class properties must be initialized in constructor                          |
 
 **Production pattern:**
+
 ```typescript
 // Without noUncheckedIndexedAccess: danger
 const arr: string[] = [];
-const first = arr[0];      // type: string (LIE — could be undefined!)
-first.toUpperCase();        // No TS error but crashes at runtime
+const first = arr[0]; // type: string (LIE — could be undefined!)
+first.toUpperCase(); // No TS error but crashes at runtime
 
 // With noUncheckedIndexedAccess: safe
-const first = arr[0];      // type: string | undefined
-first?.toUpperCase();       // ✅ Must handle undefined
+const first = arr[0]; // type: string | undefined
+first?.toUpperCase(); // ✅ Must handle undefined
 ```
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Biết `strictNullChecks` là flag quan trọng nhất, giải thích `noUncheckedIndexedAccess` với ví dụ, biết `tsc --noEmit` trong CI
 - ❌ Weak: "Bật `strict: true` là xong" — không biết giá trị của từng flag
 
@@ -544,48 +568,57 @@ first?.toUpperCase();       // ✅ Must handle undefined
 ```typescript
 // Event definitions — discriminated union
 type AppEvent =
-  | { type: 'USER_LOGIN';  payload: { userId: string; email: string } }
-  | { type: 'USER_LOGOUT'; payload: { userId: string } }
-  | { type: 'CART_UPDATE'; payload: { items: CartItem[]; total: number } }
-  | { type: 'ERROR';       payload: { code: string; message: string } };
+  | { type: "USER_LOGIN"; payload: { userId: string; email: string } }
+  | { type: "USER_LOGOUT"; payload: { userId: string } }
+  | { type: "CART_UPDATE"; payload: { items: CartItem[]; total: number } }
+  | { type: "ERROR"; payload: { code: string; message: string } };
 
 // Extract payload type by event type
-type EventPayload<T extends AppEvent['type']> =
-  Extract<AppEvent, { type: T }>['payload'];
+type EventPayload<T extends AppEvent["type"]> = Extract<AppEvent, { type: T }>["payload"];
 
 // Type-safe event bus
 class TypedEventBus {
   private listeners = new Map<string, Set<(payload: unknown) => void>>();
 
-  on<T extends AppEvent['type']>(
-    type: T,
-    handler: (payload: EventPayload<T>) => void
-  ): () => void {
+  on<T extends AppEvent["type"]>(type: T, handler: (payload: EventPayload<T>) => void): () => void {
     if (!this.listeners.has(type)) this.listeners.set(type, new Set());
     this.listeners.get(type)!.add(handler as (p: unknown) => void);
     return () => this.listeners.get(type)?.delete(handler as (p: unknown) => void);
   }
 
-  emit<T extends AppEvent['type']>(type: T, payload: EventPayload<T>): void {
-    this.listeners.get(type)?.forEach(h => h(payload));
+  emit<T extends AppEvent["type"]>(type: T, payload: EventPayload<T>): void {
+    this.listeners.get(type)?.forEach((h) => h(payload));
   }
 }
 
 // Usage — fully type-safe
 const bus = new TypedEventBus();
 
-bus.on('USER_LOGIN', ({ userId, email }) => {
+bus.on("USER_LOGIN", ({ userId, email }) => {
   // TypeScript knows: userId: string, email: string ✅
   console.log(`${email} logged in`);
 });
 
-bus.emit('USER_LOGIN', { userId: '1', email: 'a@b.com' }); // ✅
-bus.emit('USER_LOGIN', { userId: '1', wrong: 'field' });    // ❌ Error
+bus.emit("USER_LOGIN", { userId: "1", email: "a@b.com" }); // ✅
+bus.emit("USER_LOGIN", { userId: "1", wrong: "field" }); // ❌ Error
 ```
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Dùng `Extract<>` utility type, generic với constraint, biết trade-off (complexity vs safety), đề cập unsubscribe pattern
 - ❌ Weak: Dùng `Map<string, Function>` — no type safety ở payload level
+
+---
+
+## 📋 Interview Q&A Summary / Tóm Tắt Q&A Phỏng Vấn
+
+| #   | Câu hỏi                                                 | Difficulty | Core Concept      | Key Signal                                       |
+| --- | ------------------------------------------------------- | ---------- | ----------------- | ------------------------------------------------ |
+| 1   | `any` vs `unknown` — khi nào dùng cái nào?              | 🟢 Junior  | Type safety       | Hiểu rủi ro `any` và cách dùng `unknown` an toàn |
+| 2   | `interface` vs `type` trong React project?              | 🟡 Mid     | Type system       | Biết khi nào declaration merging quan trọng      |
+| 3   | Implement type-safe API handler với discriminated union | 🟡 Mid     | Type design       | Union + exhaustive handling + narrowing pattern  |
+| 4   | Strict mode — những flags quan trọng nhất?              | 🔴 Senior  | Compiler config   | Giải thích tác động thực tế từng flag            |
+| 5   | Thiết kế type-safe event system cho React app           | 🔴 Senior  | Type architecture | Generic event map với `keyof` constraints        |
 
 ---
 
@@ -594,6 +627,7 @@ bus.emit('USER_LOGIN', { userId: '1', wrong: 'field' });    // ❌ Error
 > 🎯 Interviewer hỏi cold: **"Tại sao bạn dùng TypeScript? Và `any` có gì không tốt?"**
 
 **30 giây đầu — mở đầu lý tưởng:**
+
 1. "TypeScript bắt lỗi tại compile time thay vì runtime — chi phí phát hiện bug giảm từ $1000 xuống $1 (production vs development)."
 2. "`any` opt out hoàn toàn khỏi type system — nó 'lây nhiễm' code xung quanh, vô hiệu hóa IntelliSense, và che giấu bugs đến runtime."
 3. "Thay thế `any` bằng `unknown` — bắt buộc narrow type trước khi dùng, safe nhưng vẫn flexible."
@@ -601,21 +635,42 @@ bus.emit('USER_LOGIN', { userId: '1', wrong: 'field' });    // ❌ Error
 
 ---
 
-## Self-Check / Tự Kiểm Tra ⚡
+## 🔄 Self-Check / Tự Kiểm Tra
 
-> **Đóng tài liệu lại trước khi làm — không nhìn lại!**
+> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
 
-- [ ] **Retrieval**: Viết 3 khác biệt chính giữa `interface` và `type` từ trí nhớ.
-- [ ] **Visual**: Vẽ decision tree: "Khi nào dùng interface, khi nào dùng type?"
-- [ ] **Application**: Bạn nhận JSON từ API không có TypeScript types. Cách tiếp cận type-safe nhất? (dùng gì thay vì `any`?)
-- [ ] **Debug**: Code này có bug gì?
-  ```typescript
-  function first<T>(arr: T[]): T { return arr[0]; }
-  const names: string[] = [];
-  first(names).toUpperCase(); // Error at runtime?
-  ```
-- [ ] **Teach**: Giải thích tại sao `unknown` tốt hơn `any` cho người mới học TS — dùng ví dụ hộp bưu kiện chưa biết nội dung.
+| #   | Loại           | Câu hỏi                                                                                                                                              |
+| --- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 🔍 Retrieval   | Viết 3 khác biệt chính giữa `interface` và `type` từ trí nhớ (declaration merging, union types, primitive aliases).                                  |
+| 2   | 🎨 Visual      | Vẽ decision tree: "Khi nào dùng `interface`, khi nào dùng `type`?" — bao gồm nhánh declaration merging, union/intersection, và mapped types.         |
+| 3   | 🛠️ Application | Bạn nhận `unknown` từ `JSON.parse()`. Viết type guard kiểm tra đây là `{ id: string; price: number }` trước khi dùng — không dùng `any`.             |
+| 4   | 🐛 Debug       | `function first<T>(arr: T[]): T { return arr[0]; }` với `first([]).toUpperCase()` — lỗi gì xảy ra tại runtime? TypeScript có báo không? Fix thế nào? |
+| 5   | 🎓 Teach       | Giải thích tại sao `unknown` tốt hơn `any` cho người mới học TS — dùng ví dụ hộp bưu kiện chưa biết nội dung.                                        |
 
-💬 **Feynman Prompt:** Giải thích discriminated union cho người chỉ biết JavaScript — tại sao `if (result.ok)` lại tự động thu hẹp type?
+### Key Points (tự kiểm tra)
 
-🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày** → **7 ngày** → **14 ngày**.
+| #   | Key Point                                                                                                                                         |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `interface` hỗ trợ declaration merging; `type` hỗ trợ union, intersection, primitive aliases, và computed types. Cả hai đều mô tả object shape.   |
+| 2   | Dùng `interface` cho public API/library (merging); dùng `type` cho union/intersection, primitives, hoặc khi cần computed/conditional types.       |
+| 3   | `function isProduct(x: unknown): x is { id: string; price: number } { return typeof x === 'object' && x !== null && 'id' in x && 'price' in x; }` |
+| 4   | `first([])` trả `undefined` tại runtime nhưng TypeScript nghĩ return type là `T`. Fix: `function first<T>(arr: T[]): T \| undefined`.             |
+| 5   | `any` = tắt type checking hoàn toàn. `unknown` = "chưa biết loại gì, phải kiểm tra trước". Như hộp bưu kiện: mở ra xem trước khi dùng.            |
+
+> 🎯 **Feynman Prompt:** Giải thích discriminated union cho người chỉ biết JavaScript — tại sao `if (result.ok)` lại tự động thu hẹp type?
+> 🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày** → **7 ngày** → **14 ngày**.
+
+---
+
+## 🔗 Connections / Liên Kết
+
+### Cùng track (Same track)
+- [Advanced Types](./02-advanced-types.md) — mapped types, conditional types, and utility types
+- [Generics Deep Dive](./03-generics-deep-dive.md) — generics build on the type system covered here
+- [React TypeScript](./05-react-typescript.md) — applying TypeScript basics in React components
+- [TypeScript Comprehensive](./04-typescript-comprehensive.md) — full reference covering all TS features
+
+### Khác track (Cross-track)
+- [JS ES6 Features](../01-javascript/07-es6-features.md) — JavaScript features TypeScript is built on
+- [JS Type System Theory](../01-javascript/14-javascript-type-system-theory.md) — JS dynamic types TS adds safety to
+- [CS Fundamentals: Computation Theory](../../shared/01-cs-fundamentals/08-computation-theory.md) — type theory and static analysis foundations

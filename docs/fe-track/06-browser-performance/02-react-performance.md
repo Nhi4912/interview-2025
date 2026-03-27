@@ -64,51 +64,67 @@ Rule: useCallback(fn, deps) === useMemo(() => fn, deps)
 ### Layer 2: When Each Tool Fires
 
 **React.memo — prevent re-render from parent:**
+
 ```tsx
 // Without memo: re-renders every time Parent renders, even if items is the same
 const ProductList = React.memo(({ items }: { items: Product[] }) => {
-  return <ul>{items.map(p => <li key={p.id}>{p.name}</li>)}</ul>;
+  return (
+    <ul>
+      {items.map((p) => (
+        <li key={p.id}>{p.name}</li>
+      ))}
+    </ul>
+  );
 });
 
 // Custom comparator: re-render only when product IDs change (ignore lastUpdated)
 const UserCard = React.memo(
   ({ user }: { user: User }) => <div>{user.name}</div>,
-  (prev, next) => prev.user.id === next.user.id && prev.user.name === next.user.name
+  (prev, next) => prev.user.id === next.user.id && prev.user.name === next.user.name,
 );
 ```
 
 **useMemo — cache expensive computation:**
+
 ```tsx
 function ProductList({ products, filter, sortBy }: Props) {
   // ✅ Only recomputes when products, filter, or sortBy change
-  const filteredAndSorted = useMemo(() =>
-    products
-      .filter(p => p.name.toLowerCase().includes(filter.toLowerCase()))
-      .sort((a, b) => sortBy === 'price' ? a.price - b.price : a.name.localeCompare(b.name)),
-    [products, filter, sortBy]
+  const filteredAndSorted = useMemo(
+    () =>
+      products
+        .filter((p) => p.name.toLowerCase().includes(filter.toLowerCase()))
+        .sort((a, b) => (sortBy === "price" ? a.price - b.price : a.name.localeCompare(b.name))),
+    [products, filter, sortBy],
   );
 
-  return <ul>{filteredAndSorted.map(p => <ProductRow key={p.id} product={p} />)}</ul>;
+  return (
+    <ul>
+      {filteredAndSorted.map((p) => (
+        <ProductRow key={p.id} product={p} />
+      ))}
+    </ul>
+  );
 }
 ```
 
 **useCallback — stable function reference for memoized children:**
+
 ```tsx
 function TodoList() {
   const [todos, setTodos] = useState<Todo[]>([]);
 
   // ✅ Empty deps because functional updater doesn't close over `todos`
   const handleToggle = useCallback((id: number) => {
-    setTodos(prev => prev.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
+    setTodos((prev) => prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)));
   }, []);
 
   const handleDelete = useCallback((id: number) => {
-    setTodos(prev => prev.filter(t => t.id !== id));
+    setTodos((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
   return (
     <>
-      {todos.map(todo => (
+      {todos.map((todo) => (
         <TodoItem key={todo.id} todo={todo} onToggle={handleToggle} onDelete={handleDelete} />
       ))}
     </>
@@ -128,34 +144,36 @@ const TodoItem = React.memo(({ todo, onToggle, onDelete }: TodoItemProps) => (
 
 ```tsx
 // ❌ This breaks React.memo on Child — new object reference every parent render
-<Child config={{ theme: 'dark', language: 'en' }} />
+<Child config={{ theme: "dark", language: "en" }} />;
 
 // ✅ Hoist constant outside component (if truly static)
-const CHART_CONFIG = { theme: 'dark', language: 'en' };
-<Child config={CHART_CONFIG} />
+const CHART_CONFIG = { theme: "dark", language: "en" };
+<Child config={CHART_CONFIG} />;
 
 // ✅ Or useMemo if derived from props/state
 const config = useMemo(() => ({ theme, language }), [theme, language]);
-<Child config={config} />
+<Child config={config} />;
 ```
 
 **The batching win (React 18):** React 18 batches all `setState` calls by default — even inside `setTimeout` and Promises. Multiple `setState` calls in one event handler = one re-render, not three. This reduces the need for `useReducer` to batch state updates.
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-|---------|------------|---------|
-| Wrapping every component in `React.memo` | Memoization adds comparison overhead; cheap components are faster without it | Profile first — only memo components that show unnecessary renders in Profiler |
-| `useCallback` without `React.memo` on child | Stable callback reference does nothing if child always re-renders anyway | `useCallback` only works together with `React.memo` on the receiving component |
-| `useMemo` for simple values (`const x = useMemo(() => a + b, [a, b])`) | Comparison cost > computation cost for trivial math | Only `useMemo` when computation is measurably slow (sort 1000+ items, regex on large string) |
-| Context `value={{ theme, setTheme }}` inline | New object every render → all consumers re-render even when value unchanged | `const value = useMemo(() => ({ theme, setTheme }), [theme, setTheme])` |
+| Sai lầm                                                                | Tại sao sai                                                                  | Đúng là                                                                                      |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Wrapping every component in `React.memo`                               | Memoization adds comparison overhead; cheap components are faster without it | Profile first — only memo components that show unnecessary renders in Profiler               |
+| `useCallback` without `React.memo` on child                            | Stable callback reference does nothing if child always re-renders anyway     | `useCallback` only works together with `React.memo` on the receiving component               |
+| `useMemo` for simple values (`const x = useMemo(() => a + b, [a, b])`) | Comparison cost > computation cost for trivial math                          | Only `useMemo` when computation is measurably slow (sort 1000+ items, regex on large string) |
+| Context `value={{ theme, setTheme }}` inline                           | New object every render → all consumers re-render even when value unchanged  | `const value = useMemo(() => ({ theme, setTheme }), [theme, setTheme])`                      |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy: "Why is React.memo not working / why does the memoized component still re-render?"
 - → Nhớ: Check if a prop is an inline object/function. Stable reference is the prerequisite.
 - → Mở đầu: "React.memo uses shallow comparison — if a prop is an object or function created inline in the parent's render, its reference changes every render and memo never skips."
 
 **🔑 Knowledge Chain:**
+
 - 📚 Cần biết: [React Hooks — useMemo/useCallback internals](../03-react/03-hooks-deep-dive.md)
 - ➡️ Để hiểu: [React Patterns — State Reducer for stable callbacks](../03-react/08-react-patterns-advanced.md)
 
@@ -177,11 +195,11 @@ The performance rule: **state should live as close as possible to the components
 ```tsx
 // ❌ Chat input state in App → Map re-renders on every keystroke
 function App() {
-  const [chatInput, setChatInput] = useState('');
+  const [chatInput, setChatInput] = useState("");
   const [orders, setOrders] = useState([]);
   return (
     <>
-      <Map />           {/* Re-renders on chatInput change! */}
+      <Map /> {/* Re-renders on chatInput change! */}
       <OrderList orders={orders} />
       <ChatBox value={chatInput} onChange={setChatInput} />
     </>
@@ -193,9 +211,9 @@ function App() {
   const [orders, setOrders] = useState([]);
   return (
     <>
-      <Map />           {/* Never re-renders from chat activity */}
+      <Map /> {/* Never re-renders from chat activity */}
       <OrderList orders={orders} />
-      <ChatBox />       {/* Manages its own chatInput state internally */}
+      <ChatBox /> {/* Manages its own chatInput state internally */}
     </>
   );
 }
@@ -214,11 +232,13 @@ Scroll: React swaps content in existing DOM nodes → smooth 60fps
 ```
 
 ```tsx
-import { FixedSizeList } from 'react-window';
+import { FixedSizeList } from "react-window";
 
 function VirtualizedProductList({ items }: { items: Product[] }) {
   const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => (
-    <div style={style}>  {/* style MUST be applied for positioning to work */}
+    <div style={style}>
+      {" "}
+      {/* style MUST be applied for positioning to work */}
       <ProductCard product={items[index]} />
     </div>
   );
@@ -237,12 +257,12 @@ function VirtualizedProductList({ items }: { items: Product[] }) {
 
 ```tsx
 // ❌ Static imports: everything in one bundle
-import Analytics from './pages/Analytics';
-import Settings from './pages/Settings';
+import Analytics from "./pages/Analytics";
+import Settings from "./pages/Settings";
 
 // ✅ Dynamic imports: each page is a separate chunk loaded on demand
-const Analytics = lazy(() => import('./pages/Analytics'));
-const Settings = lazy(() => import('./pages/Settings'));
+const Analytics = lazy(() => import("./pages/Analytics"));
+const Settings = lazy(() => import("./pages/Settings"));
 
 function App() {
   return (
@@ -257,6 +277,7 @@ function App() {
 ```
 
 **Lazy loading images** with IntersectionObserver:
+
 ```tsx
 function LazyImage({ src, alt }: { src: string; alt: string }) {
   const imgRef = useRef<HTMLImageElement>(null);
@@ -264,8 +285,10 @@ function LazyImage({ src, alt }: { src: string; alt: string }) {
 
   useEffect(() => {
     const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setLoaded(true); },
-      { threshold: 0.1 }
+      ([entry]) => {
+        if (entry.isIntersecting) setLoaded(true);
+      },
+      { threshold: 0.1 },
     );
     if (imgRef.current) observer.observe(imgRef.current);
     return () => observer.disconnect();
@@ -277,19 +300,21 @@ function LazyImage({ src, alt }: { src: string; alt: string }) {
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-|---------|------------|---------|
-| Lifting all state to root for "global access" | Creates maximum re-render surface area | Use Context or Zustand only for truly global state (auth, theme); colocate everything else |
-| Forgetting `style` prop in react-window row | Items render in wrong positions (all stacked at top) | The `style` prop from react-window must be applied to the row wrapper element |
-| `React.lazy` without `Suspense` boundary | Throws "A React component suspended but no fallback was provided" | Always wrap `lazy()` components with `<Suspense fallback={...}>` |
-| Code-splitting every tiny component | Creates network waterfall — many small chunks slower than one medium chunk | Only split at route level and genuinely heavy libraries (chart libs, PDF renderers) |
+| Sai lầm                                       | Tại sao sai                                                                | Đúng là                                                                                    |
+| --------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Lifting all state to root for "global access" | Creates maximum re-render surface area                                     | Use Context or Zustand only for truly global state (auth, theme); colocate everything else |
+| Forgetting `style` prop in react-window row   | Items render in wrong positions (all stacked at top)                       | The `style` prop from react-window must be applied to the row wrapper element              |
+| `React.lazy` without `Suspense` boundary      | Throws "A React component suspended but no fallback was provided"          | Always wrap `lazy()` components with `<Suspense fallback={...}>`                           |
+| Code-splitting every tiny component           | Creates network waterfall — many small chunks slower than one medium chunk | Only split at route level and genuinely heavy libraries (chart libs, PDF renderers)        |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy: "How would you handle a list of 50,000 search results?"
 - → Nhớ: Virtualization + consider pagination for very large datasets
 - → Mở đầu: "I'd use react-window's FixedSizeList — it renders only the ~20 items in the viewport at any time, keeping DOM nodes constant at ~20 regardless of total list size."
 
 **🔑 Knowledge Chain:**
+
 - 📚 Cần biết: [Core Web Vitals — LCP and INP](./01-core-web-vitals.md)
 - ➡️ Để hiểu: [Bundle Optimization — tree shaking and chunk strategy](./03-bundle-optimization.md)
 
@@ -319,6 +344,7 @@ Developers instinctively add `useMemo` and `useCallback` everywhere when a compo
 ```
 
 **What to look for in the Profiler:**
+
 ```
 Component: ProductList    renders: 47 times    total: 234ms
                           ↑ This renders 47x for one user interaction — investigate why
@@ -362,18 +388,19 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 function SearchComponent() {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const debouncedQuery = useDebounce(query, 300);
 
   useEffect(() => {
     if (debouncedQuery) searchAPI(debouncedQuery);
   }, [debouncedQuery]);
 
-  return <input value={query} onChange={e => setQuery(e.target.value)} />;
+  return <input value={query} onChange={(e) => setQuery(e.target.value)} />;
 }
 ```
 
 **Debounce vs Throttle:**
+
 ```
 Debounce: fires AFTER user stops for N ms      → search input, form validation
 Throttle: fires AT MOST every N ms             → scroll event, resize, mouse move
@@ -381,18 +408,20 @@ Throttle: fires AT MOST every N ms             → scroll event, resize, mouse m
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-|---------|------------|---------|
-| Optimizing without profiling first | You might optimize the wrong component | Profiler first, always — find the actual bottleneck |
+| Sai lầm                                               | Tại sao sai                                                   | Đúng là                                                                                 |
+| ----------------------------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Optimizing without profiling first                    | You might optimize the wrong component                        | Profiler first, always — find the actual bottleneck                                     |
 | `useCallback(debounce(...), [])` with lodash debounce | Creates one debounced function but still passes new reference | Use `useRef` to hold the debounce instance: `const fn = useRef(debounce(handler, 300))` |
-| Reading Profiler after one interaction | Anomalies from browser JIT warmup | Record 3-5 interactions, look at average, ignore first render |
+| Reading Profiler after one interaction                | Anomalies from browser JIT warmup                             | Record 3-5 interactions, look at average, ignore first render                           |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy: "How would you debug a React performance issue?"
 - → Nhớ: Profiler → identify component → identify cause → choose right tool
 - → Mở đầu: "I'd start with React DevTools Profiler — profile the slow interaction, find the component with the most unexpected renders, read the 'rendered because' tooltip, and then choose the right optimization tool."
 
 **🔑 Knowledge Chain:**
+
 - 📚 Cần biết: [React 19 Features — useTransition for deferred renders](../03-react/02-react-19-features.md)
 - ➡️ Để hiểu: [Rendering Optimization Theory — browser paint pipeline](./05-rendering-optimization-theory.md)
 
@@ -405,10 +434,12 @@ Throttle: fires AT MOST every N ms             → scroll event, resize, mouse m
 **A:** `useMemo` caches a **computed value**; `useCallback` caches a **function reference**. They are the same primitive: `useCallback(fn, deps)` is exactly `useMemo(() => fn, deps)`.
 
 **Decision:**
+
 - `useMemo` → when the computation is measurably slow (sorting/filtering 1000+ items, running regex on large text)
 - `useCallback` → when the function is passed as a prop to a `React.memo`-wrapped child, OR included in another hook's dependency array
 
 **When neither is needed:**
+
 - Cheap computations (adding numbers, simple string formatting)
 - Functions whose children don't use `React.memo`
 - Components that re-render infrequently anyway
@@ -416,6 +447,7 @@ Throttle: fires AT MOST every N ms             → scroll event, resize, mouse m
 Tiếng Việt: `useMemo` cache giá trị tính toán, `useCallback` cache function reference — về cơ bản chúng giống nhau. Chỉ dùng khi (1) computation thực sự nặng, hoặc (2) function truyền vào `React.memo` child. Không dùng theo phản xạ.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: States they're the same primitive, gives the "memo only when measured" rule, names when NOT to use them
 - ❌ Weak: "useMemo for values, useCallback for functions" (correct but misses the relationship and when-not-to-use)
 
@@ -435,6 +467,7 @@ Tiếng Việt: `useMemo` cache giá trị tính toán, `useCallback` cache func
 Tiếng Việt: React.memo so sánh nông (shallow) — lỗi thường gặp là object/function inline trong JSX. Dùng Profiler → hover vào component → tooltip "Rendered because: [prop] changed" để xác định prop vi phạm.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Lists inline object/function trap, Context trap, children trap — and mentions the Profiler tooltip to identify which prop
 - ❌ Weak: "Check your useCallback" (only one cause, doesn't mention Profiler)
 
@@ -453,6 +486,7 @@ Tiếng Việt: React.memo so sánh nông (shallow) — lỗi thường gặp l�
 Tiếng Việt: state colocation = để state gần nhất với component dùng nó. State ở root → cả tree re-render khi đổi. State ở leaf → chỉ subtree đó re-render. Nguyên tắc: đừng "lift state" cao hơn mức cần thiết.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Explains the re-render surface area, gives the Grab chat+map example, distinguishes from Context
 - ❌ Weak: "Put state where it's needed" (too vague, doesn't explain the re-render scope implication)
 
@@ -461,10 +495,12 @@ Tiếng Việt: state colocation = để state gần nhất với component dùn
 ### Q: Why does rendering 10,000 DOM nodes cause scroll lag? How does virtualization fix it? 🟡 Mid
 
 **A:** The browser's layout engine must calculate **position and dimensions for every DOM node** that exists in the document — even nodes scrolled out of view. With 10,000 `<li>` elements:
+
 - Initial render: layout engine computes 10,000 positions → 200-500ms delay
 - Each scroll event: browser re-checks which elements are now visible → expensive reflow
 
 **Virtualization** (react-window, TanStack Virtual) keeps the DOM node count constant:
+
 - Only ~20-30 rows exist in the DOM at any time (those in the viewport + buffer)
 - On scroll: React swaps the **content** of those ~20 nodes (no DOM add/remove)
 - Result: layout engine always computes 20-30 positions, not 10,000
@@ -474,6 +510,7 @@ Tiếng Việt: state colocation = để state gần nhất với component dùn
 Tiếng Việt: trình duyệt phải tính layout cho tất cả DOM node dù không hiển thị — 10,000 node × layout cost = lag. Virtualization giữ ~20 node trong DOM, thay nội dung thay vì thêm/xóa node. Đánh đổi: cần biết chiều cao item và không hỗ trợ Ctrl+F.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Explains layout engine cost (not just "too many nodes"), describes the DOM node recycling mechanism, mentions trade-offs
 - ❌ Weak: "react-window only renders visible items" (correct but doesn't explain the browser layout problem or the DOM recycling)
 
@@ -498,8 +535,21 @@ Option B — **`React.memo`** on Map: if state colocation isn't feasible (e.g., 
 Tiếng Việt: luôn bắt đầu bằng Profiler để xác nhận vấn đề. Hai cách fix: (1) state colocation — di chuyển state xuống `<ChatBox>` để giảm re-render surface; (2) `React.memo` trên `<Map>` nếu không thể colocate. Option 1 ưu tiên hơn vì xử lý gốc rễ.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Follows Profiler → root cause → two options → verification sequence; explains WHY colocation is preferred over memo
 - ❌ Weak: Immediately says "add React.memo to Map" without Profiler step or explaining root cause
+
+---
+
+## 📋 Interview Q&A Summary / Tóm Tắt Q&A Phỏng Vấn
+
+| #   | Câu hỏi                                                               | Difficulty | Core Concept                      | Key Signal                                                                               |
+| --- | --------------------------------------------------------------------- | ---------- | --------------------------------- | ---------------------------------------------------------------------------------------- |
+| 1   | When do you use `useMemo` vs `useCallback`?                           | 🟢 Junior  | Memoization primitives            | Same primitive; cite "memo only when measured" rule; they're mirror of each other        |
+| 2   | `React.memo` không hoạt động — debug thế nào?                         | 🟡 Mid     | Debugging unnecessary re-renders  | Inline object/function trap, Context trap, children trap; name all 3                     |
+| 3   | "State colocation" là gì và cải thiện perf thế nào?                   | 🟡 Mid     | State colocation pattern          | Re-render surface area reduction; Grab chat+map example; distinguish from lifting state  |
+| 4   | Tại sao 10,000 DOM nodes gây scroll lag? Virtualization fix?          | 🟡 Mid     | DOM virtualization / windowing    | Layout engine cost (not just "too many nodes"); DOM node recycle mechanism               |
+| 5   | Grab's driver map re-renders on every chat keystroke — diagnose & fix | 🔴 Senior  | Cross-concern re-render diagnosis | Profiler → root cause → two options → verification; knows `useRef` for stable references |
 
 ---
 
@@ -508,6 +558,7 @@ Tiếng Việt: luôn bắt đầu bằng Profiler để xác nhận vấn đề
 > 🎯 Interviewer asks cold: **"Your React app renders a list of 50,000 products and scrolls at 10fps. Walk me through how you'd fix it."**
 
 **30 giây đầu — mở đầu lý tưởng:**
+
 1. "First I'd profile with React DevTools to confirm the bottleneck is the list render, not something else — scroll handlers, context updates, or parent re-renders."
 2. "If confirmed, the root cause is browser layout cost for 50,000 DOM nodes — even offscreen nodes cost layout calculation time."
 3. "I'd implement virtualization using react-window's FixedSizeList — it keeps a constant ~20-30 DOM nodes in the viewport and swaps content on scroll instead of creating new nodes."
@@ -515,16 +566,45 @@ Tiếng Việt: luôn bắt đầu bằng Profiler để xác nhận vấn đề
 
 ---
 
-## Self-Check / Tự Kiểm Tra ⚡ (Đóng tài liệu lại trước khi làm)
+## 🔄 Self-Check / Tự Kiểm Tra
 
-- [ ] **Retrieval**: Vẽ lại decision tree "React performance bottleneck → which tool to use" từ trí nhớ (memo, useMemo, useCallback, virtualization, colocation, code splitting).
-- [ ] **Visual**: Sketch lại cách react-window hoạt động — bao nhiêu DOM nodes tồn tại khi có 10,000 items? Điều gì xảy ra khi user scroll?
-- [ ] **Application**: `<Chart>` bên trong `<Dashboard>` re-render mỗi khi `dashboardFilter` thay đổi, dù Chart không dùng filter. Bạn sẽ fix thế nào? (Hint: có 2 cách — chọn cái nào và tại sao?)
-- [ ] **Debug**: `const handleClick = useCallback(() => doSomething(userId), []);` — bug này là gì? (Hint: stale closure)
-- [ ] **Teach**: Giải thích cho senior developer Go chưa biết React: tại sao `<Map config={{ zoom: 10 }} />` khiến `React.memo` không hoạt động?
+> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
 
-💬 **Feynman Prompt:** "Giải thích virtualization cho một FE dev mới — dùng ví dụ tờ giấy cuộn có 10,000 dòng chứ không dùng thuật ngữ 'DOM nodes' hay 'layout engine'."
+| #   | Loại           | Câu hỏi                                                                                                                                                      |
+| --- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | 🔍 Retrieval   | Vẽ lại decision tree "React performance bottleneck → which tool to use" từ trí nhớ — memo, useMemo, useCallback, virtualization, colocation, code splitting. |
+| 2   | 🎨 Visual      | Sketch cách react-window hoạt động — bao nhiêu DOM nodes tồn tại khi có 10,000 items? Điều gì xảy ra khi user scroll?                                        |
+| 3   | 🛠️ Application | `<Chart>` bên trong `<Dashboard>` re-render mỗi khi `dashboardFilter` thay đổi, dù Chart không dùng filter. Có 2 cách fix — chọn cái nào và tại sao?         |
+| 4   | 🐛 Debug       | `const handleClick = useCallback(() => doSomething(userId), []);` — bug này là gì? Hậu quả là gì?                                                            |
+| 5   | 🎓 Teach       | Giải thích cho senior developer Go chưa biết React: tại sao `<Map config={{ zoom: 10 }} />` khiến `React.memo` không hoạt động?                              |
+
+### Key Points (tự kiểm tra)
+
+| #   | Key Point                                                                                                                                                                                                                                |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Re-render không cần thiết → `React.memo` / `useMemo`; Expensive computation → `useMemo`; Unstable function reference → `useCallback`; Danh sách 1000+ items → virtualization; State quá cao → colocation; Bundle lớn → code splitting.   |
+| 2   | react-window chỉ render ~10-20 items visible trong "window" cố định height. Tổng DOM nodes: ~20, không phải 10,000. Khi scroll → update `startIndex/endIndex` → unmount items ra ngoài, mount items mới vào — DOM luôn nhỏ.              |
+| 3   | Cách 1: `React.memo(Chart)` + ensure Chart props stable; Cách 2: Lift Chart ra ngoài Dashboard render scope (component composition). Cách 1 nếu Chart cần data từ Dashboard; Cách 2 (colocation) nếu Chart hoàn toàn độc lập — sạch hơn. |
+| 4   | **Stale closure bug**: `[]` deps rỗng → `handleClick` capture `userId` từ lúc mount → `userId` thay đổi nhưng handler vẫn dùng giá trị cũ. Fix: thêm `userId` vào deps: `useCallback(() => doSomething(userId), [userId])`.              |
+| 5   | `{ zoom: 10 }` là object literal → tạo **new reference** mỗi render → `React.memo` dùng `Object.is` để so sánh → thấy reference khác → re-render dù giá trị như nhau. Fix: `useMemo` hoặc định nghĩa object bên ngoài component.         |
+
+> 🎯 **Feynman Prompt:** Giải thích virtualization cho một FE dev mới — dùng ví dụ tờ giấy cuộn có 10,000 dòng chứ không dùng thuật ngữ "DOM nodes" hay "layout engine".
 
 🔁 **Spaced Repetition reminder:** Ôn lại file này sau **3 ngày**, **7 ngày**, và **14 ngày**.
 
 [← Previous: Core Web Vitals](./01-core-web-vitals.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next: Bundle Optimization →](./03-bundle-optimization.md)
+
+---
+
+## 🔗 Connections / Liên Kết
+
+### Cùng track (Same track)
+- [Core Web Vitals](./01-core-web-vitals.md) — INP and LCP metrics that React optimizations directly improve
+- [Bundle Optimization](./03-bundle-optimization.md) — code splitting and lazy loading as React performance levers
+- [Web Performance Comprehensive](./04-web-performance-comprehensive.md) — holistic performance view beyond React-specific tuning
+- [Rendering Optimization Theory](./05-rendering-optimization-theory.md) — browser rendering pipeline context for React optimizations
+
+### Khác track (Cross-track)
+- [React Performance Optimization](../03-react/09-performance-optimization.md) — deeper React profiling and optimization techniques
+- [React 19 Features](../03-react/02-react-19-features.md) — React 19 Compiler and concurrent features reducing manual memos
+- [Hooks Deep Dive](../03-react/03-hooks-deep-dive.md) — useMemo, useCallback, and useTransition internals for optimization

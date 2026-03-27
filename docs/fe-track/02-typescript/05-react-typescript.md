@@ -89,19 +89,21 @@ switch (state.status) {
 }
 ```
 
-**Common Mistakes:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| `const [data, setData] = useState(null)` — inferred as `null`, not `T \| null` | `useState<Product[] \| null>(null)` — explicit generic |
-| `state.data` without narrowing (TypeScript error) | Narrow first: `if (state.status === 'success') state.data` |
-| Adding a new status without updating switches | TypeScript exhaustive check will flag the unhandled case at compile time |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `const [data, setData] = useState(null)` | TypeScript infers type as `null`, making `data` unusable as any other type — `setData` only accepts `null` | Use `useState<Product[] \| null>(null)` — explicit generic tells TypeScript the intended type |
+| `state.data` without narrowing | `data` only exists on the `success` variant — accessing it without narrowing is a TypeScript error | Narrow first: `if (state.status === 'success') state.data` |
+| Adding a new status value without updating switch statements | Without exhaustive check, new status values silently fall through with no compile error | TypeScript's exhaustive `never` check will flag any unhandled case at compile time |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "managing async state" / "loading error state" / "race conditions in React"
 - **Opening**: "The discriminated union pattern eliminates impossible states. Instead of three independent booleans, a single `status` field acts as the discriminant. TypeScript narrows the type in each branch — so `state.data` is only accessible when `status === 'success'`. If you add a new status, TypeScript forces all switch statements to handle it..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: TypeScript union types, type narrowing
 - **Enables**: Type-safe reducers, React Query-like state shapes, XState integration
 
@@ -151,19 +153,21 @@ function withLoading<P>(Comp: React.ComponentType<P>) {
 }
 ```
 
-**Common Mistakes:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| Generic component without constraint: `<T>({ items }: { items: T[] })` | Add constraint if you access specific fields: `<T extends { id: string }>` |
-| HOC returns `JSX.Element` instead of `React.ReactElement \| null` | Use `React.ReactElement \| null` or `JSX.Element` consistently |
-| `{...props}` spreading `P & Extra` without assertion causes TS error | `{...(props as P)}` — assertion needed because spread loses the generic relationship |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Generic component without constraint: `<T>({ items }: { items: T[] })` | Without constraint, TypeScript cannot verify `T` has the specific fields you access, causing type errors | Add constraint: `<T extends { id: string }>` to grant access to required properties |
+| HOC returns `JSX.Element` instead of `React.ReactElement \| null` | `JSX.Element` cannot be `null` — conditional rendering (returning `null`) causes a type mismatch | Use `React.ReactElement \| null` to allow returning null for conditional rendering |
+| `{...props}` spreading `P & Extra` without assertion | TypeScript can't prove the spread is safe — the generic relationship is lost after intersection | Use `{...(props as P)}` — the assertion explicitly restores the generic connection |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "reusable table component" / "HOC in TypeScript" / "generic React component"
 - **Opening**: "Generic components use `<T extends Constraint>` in the function signature. The constraint ensures you can access the properties you need. For HOCs, the pattern is `<P>(Comp: React.ComponentType<P>)` returning a component that accepts `P & InjectedProps`..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: TypeScript generics, React component types
 - **Enables**: Design system components, render prop patterns, headless UI libraries
 
@@ -212,20 +216,22 @@ function Header() {
 }
 ```
 
-**Common Mistakes:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| `createContext<User>({} as User)` — fake default | `createContext<User \| null>(null)` + null guard hook |
-| `useContext(AuthCtx)` directly in components (returns `T \| null`) | Use the custom hook that narrows to `T` |
-| Exporting context object instead of custom hook | Export only the hook — hides context implementation, enforces null check |
-| Context with mutable value without `useMemo` | Wrap context value in `useMemo` — prevents unnecessary re-renders of all consumers |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `createContext<User>({} as User)` — fake default value | Empty object `{}` passes type check but is invalid at runtime — consumers outside Provider get a broken value silently | Use `createContext<User \| null>(null)` — `null` forces explicit null handling |
+| `useContext(AuthCtx)` directly in components (returns `T \| null`) | Every consumer must write their own null guard, scattering boilerplate throughout the codebase | Use a custom hook that does the null check once and returns narrowed type `T` |
+| Exporting the context object directly instead of a custom hook | Exposes implementation details and lets consumers bypass the null guard | Export only the hook — it hides the context and enforces the null check in one place |
+| Context value changes causing re-renders without `useMemo` | Every time the parent renders, a new object reference is created — all consumers re-render unnecessarily | Wrap context value in `useMemo` to stabilize the reference and prevent unnecessary re-renders |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "typed context" / "context outside provider" / "TypeScript context null error"
 - **Opening**: "The pattern is: `createContext<T | null>(null)`, then a custom hook that checks for null and throws if used outside the Provider. The hook's return type is `T` (not `T | null`) because the null check narrows it. Consumers call the hook and get clean types — no null guards scattered across components..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: React Context, TypeScript narrowing, custom hooks
 - **Enables**: Auth context, theme context, feature flags context — any app-wide typed state
 
@@ -238,10 +244,16 @@ function Header() {
 **Giải thích (VI):** Nên ưu tiên function component + props type rõ ràng; chỉ dùng React.FC khi thực sự cần.
 
 **Ví dụ (TypeScript):**
+
 ```tsx
 type CardProps = { title: string; children?: React.ReactNode };
 function Card({ title, children }: CardProps) {
-  return <section><h3>{title}</h3>{children}</section>;
+  return (
+    <section>
+      <h3>{title}</h3>
+      {children}
+    </section>
+  );
 }
 ```
 
@@ -250,8 +262,13 @@ function Card({ title, children }: CardProps) {
 **Giải thích (VI):** State phức tạp nên dùng discriminated union để reducer rõ ràng và exhaustive.
 
 **Ví dụ (TypeScript):**
+
 ```tsx
-type State = { status:'idle' } | { status:'loading' } | { status:'success'; data:string[] } | { status:'error'; message:string };
+type State =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "success"; data: string[] }
+  | { status: "error"; message: string };
 ```
 
 ## useRef and DOM Typing
@@ -259,6 +276,7 @@ type State = { status:'idle' } | { status:'loading' } | { status:'success'; data
 **Giải thích (VI):** Ref DOM thường null ở lần render đầu, luôn optional-chain hoặc guard.
 
 **Ví dụ (TypeScript):**
+
 ```tsx
 const inputRef = useRef<HTMLInputElement | null>(null);
 inputRef.current?.focus();
@@ -269,9 +287,14 @@ inputRef.current?.focus();
 **Giải thích (VI):** Custom hook giúp tránh null-check lặp lại ở mọi component con.
 
 **Ví dụ (TypeScript):**
+
 ```tsx
 const Ctx = createContext<string | null>(null);
-function useValue(){ const v = useContext(Ctx); if(!v) throw new Error('missing provider'); return v; }
+function useValue() {
+  const v = useContext(Ctx);
+  if (!v) throw new Error("missing provider");
+  return v;
+}
 ```
 
 ## Event Typing
@@ -279,6 +302,7 @@ function useValue(){ const v = useContext(Ctx); if(!v) throw new Error('missing 
 **Giải thích (VI):** Typing event chuẩn giúp truy cập target/currentTarget chính xác.
 
 **Ví dụ (TypeScript):**
+
 ```tsx
 const onChange = (e: React.ChangeEvent<HTMLInputElement>) => setValue(e.target.value);
 ```
@@ -288,6 +312,7 @@ const onChange = (e: React.ChangeEvent<HTMLInputElement>) => setValue(e.target.v
 **Giải thích (VI):** Generic component tái sử dụng cao nhưng cần constraints hợp lý.
 
 **Ví dụ (TypeScript):**
+
 ```tsx
 type TableProps<T extends { id: string }> = { rows: T[] };
 ```
@@ -297,8 +322,12 @@ type TableProps<T extends { id: string }> = { rows: T[] };
 **Giải thích (VI):** HOC dễ làm mất type props, cần giữ generic đúng.
 
 **Ví dụ (TypeScript):**
+
 ```tsx
-function withLoading<P>(Comp: React.ComponentType<P>){ return (props: P & {loading:boolean}) => props.loading ? <p>Loading</p> : <Comp {...props} />; }
+function withLoading<P>(Comp: React.ComponentType<P>) {
+  return (props: P & { loading: boolean }) =>
+    props.loading ? <p>Loading</p> : <Comp {...props} />;
+}
 ```
 
 ## Render Props Typing
@@ -306,8 +335,9 @@ function withLoading<P>(Comp: React.ComponentType<P>){ return (props: P & {loadi
 **Giải thích (VI):** Render props cần contract callback rõ input/output.
 
 **Ví dụ (TypeScript):**
+
 ```tsx
-type FetcherProps<T> = { children: (state: {data?:T; loading:boolean}) => React.ReactNode };
+type FetcherProps<T> = { children: (state: { data?: T; loading: boolean }) => React.ReactNode };
 ```
 
 ## Form Handling and Validation
@@ -315,6 +345,7 @@ type FetcherProps<T> = { children: (state: {data?:T; loading:boolean}) => React.
 **Giải thích (VI):** Form nên có shape type ổn định để map lỗi và submit.
 
 **Ví dụ (TypeScript):**
+
 ```tsx
 type LoginForm = { email: string; password: string };
 ```
@@ -324,6 +355,7 @@ type LoginForm = { email: string; password: string };
 **Giải thích (VI):** Union response giúp UI xử lý success/error an toàn.
 
 **Ví dụ (TypeScript):**
+
 ```tsx
 type Api<T> = { ok: true; data: T } | { ok: false; error: string };
 ```
@@ -343,11 +375,13 @@ type Api<T> = { ok: true; data: T } | { ok: false; error: string };
 **A:** Generally no — use plain function components with explicit props types.
 
 **Why `React.FC` is problematic:**
+
 - In React 17 and earlier: implicitly adds `children?: ReactNode` to every component — even components that don't accept children. This hides a category of bugs
 - Worse type inference for generics — React.FC doesn't play well with generic components
 - Adds `propTypes`, `defaultProps`, `displayName` to the type — rarely needed
 
 **Preferred pattern:**
+
 ```typescript
 // ✅ Plain function with explicit props
 type ButtonProps = {
@@ -370,6 +404,7 @@ type ContainerProps = {
 **Tiếng Việt:** Không dùng `React.FC` vì: (1) React 17 trở xuống tự thêm `children?: ReactNode` — ẩn bug, (2) generic inference kém, (3) không cần thiết. Dùng plain function + explicit props type. Muốn children thì thêm tường minh `children: React.ReactNode`.
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Explains the implicit `children` bug; mentions React 17 vs 18 difference; shows the explicit alternative
 - ❌ Weak: "React.FC is fine, it gives you type safety" — misses why it's discouraged and what the preferred alternative is
 
@@ -416,6 +451,7 @@ if (state.status === 'success') return <List items={state.data} />
 **Tiếng Việt:** `FetchState<T>` là discriminated union với `status` field. `status: 'success'` → TypeScript biết `data: T` tồn tại. `status: 'error'` → TypeScript biết `message: string` tồn tại. Loại bỏ impossible states như `loading + data` đồng thời.
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Uses generic `<T>`, shows the narrowing in usage, explains why separate flags create impossible states
 - ❌ Weak: `const [data, setData] = useState<T | null>(null)` — doesn't use discriminated union, allows impossible states
 
@@ -472,6 +508,7 @@ type Currency = 'VND' | 'USD' | 'EUR'
 **Tiếng Việt:** Generic Select dùng `<T>` với `value: T` và `onChange: (value: T) => void` — TypeScript đảm bảo cùng type T. Khi dùng `<Select<Currency>>`, TypeScript infer onChange phải nhận `Currency`, không thể nhầm type. Đây là pattern cơ bản của design system components.
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Shows `value` and `onChange` paired with same `T`; mentions the TypeScript constraint on usage; discusses key extraction for list rendering
 - ❌ Weak: `value: any; onChange: (v: any) => void` — defeats TypeScript's purpose in a reusable component
 
@@ -513,19 +550,20 @@ The fake default `{} as T` is a lie — it's typed as `T` but has no actual data
 **Tiếng Việt:** Pattern: `createContext<T | null>(null)` + custom hook throw khi null. Custom hook return type là `T` (không phải `T | null`) vì null check đã làm trong hook. Consumers dùng hook không cần null check. Dùng `{} as T` là fake default — TypeScript không warn nhưng runtime crash.
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Explains WHY null is better than fake default; shows the custom hook narrowing pattern; mentions the throw message for good DX
 - ❌ Weak: "`createContext<T>({} as T)` to avoid null" — technically wrong (silent runtime bug potential); or checking null in every consumer (repetitive, easy to forget)
 
 ---
 
-## Q&A Summary / Tóm Tắt Q&A
+## 📋 Interview Q&A Summary / Tóm Tắt Q&A Phỏng Vấn
 
-| # | Topic | Key Insight |
-|---|-------|-------------|
-| Q1 | React.FC | Avoid — implicit children, poor generic inference. Use plain function + explicit props |
-| Q2 | Discriminated union state | `status` discriminant eliminates impossible states; TypeScript narrows in each branch |
-| Q3 | Generic Select | `value: T` + `onChange: (T) => void` — paired generic ensures type safety |
-| Q4 | Context null guard | `createContext<T \| null>(null)` + custom hook with throw = clean consumer types |
+| #   | Câu hỏi                                                  | Difficulty | Core Concept       | Key Signal                                            |
+| --- | -------------------------------------------------------- | ---------- | ------------------ | ----------------------------------------------------- |
+| 1   | Có nên dùng `React.FC` không? Tại sao?                   | 🟢 Junior  | Component typing   | Biết vấn đề implicit children và generic inference    |
+| 2   | Type async fetch hook với discriminated unions           | 🟡 Mid     | State typing       | Eliminates impossible states với status discriminant  |
+| 3   | Type generic `<Select>` hoạt động với bất kỳ option type | 🔴 Senior  | Generic components | Paired generic — `value: T` + `onChange: (T) => void` |
+| 4   | Pattern để context consumers không cần null check        | 🔴 Senior  | Context typing     | Custom hook với throw = non-null guarantee            |
 
 ---
 
@@ -538,31 +576,29 @@ The fake default `{} as T` is a lie — it's typed as `T` but has no actual data
 
 ---
 
-## Retrieval Self-Check / Tự Kiểm Tra
+## 🔄 Self-Check / Tự Kiểm Tra
 
-**Close this document. Answer from memory:**
+> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
 
-**Retrieval:**
-1. Name 2 reasons to avoid `React.FC` for component typing.
-2. What does `createContext<T | null>(null)` solve that `createContext<T>({} as T)` doesn't?
-3. Write the discriminated union type for a fetch state with idle/loading/success/error.
-4. In a generic `<Table<T extends {id: string}>>`, why is the constraint needed?
-5. What TypeScript technique does the custom context hook use to narrow from `T | null` to `T`?
+| #   | Loại           | Câu hỏi                                                                                                                                                 |
+| --- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 🔍 Retrieval   | Nêu 2 lý do tránh dùng `React.FC`. `createContext<T \| null>(null)` giải quyết vấn đề gì mà `createContext<T>({} as T)` không làm được?                 |
+| 2   | 🎨 Visual      | Vẽ state machine của discriminated union cho fetch: `idle → loading → success \| error`. Mỗi state có fields gì? HOC type trông như thế nào?            |
+| 3   | 🛠️ Application | Viết `useLocalStorage<T>(key: string, initialValue: T): [T, (val: T) => void]` — fully type-safe, xử lý JSON parse error.                               |
+| 4   | 🐛 Debug       | `state.data` bị lỗi "Property 'data' does not exist on type..." — tại sao? State là discriminated union. Cần làm gì để TypeScript cho phép access?      |
+| 5   | 🎓 Teach       | Giải thích discriminated unions cho junior: thay vì hỏi 3 câu riêng (`isLoading? data? error?`), bạn hỏi 1 câu `status?` và TypeScript tự biết còn lại. |
 
-**Visual:**
-- Draw the discriminated union state machine: idle → loading → success OR error
-- Draw the HOC type: `ComponentType<P>` → wraps → `(P & Extra) => ReactElement`
+### Key Points (tự kiểm tra)
 
-**Application:**
-- Type a `useLocalStorage<T>` hook that reads/writes typed data to localStorage.
-- Design the TypeScript types for a shopping cart: add item, remove item, clear — all type-safe.
+| #   | Key Point                                                                                                                                                                    |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `React.FC`: implicit `children` prop (React 18+), không support generic components tốt. `T \| null` context + custom hook throw error → narrow về `T` thay vì `T \| null`.   |
+| 2   | `idle: { status: 'idle' }`, `loading: { status: 'loading' }`, `success: { status: 'success'; data: T }`, `error: { status: 'error'; error: Error }`. Discriminant: `status`. |
+| 3   | Dùng `useState<T>`, `JSON.parse` trong try/catch, fallback về `initialValue` khi parse fail. Return tuple `[value, setValue]` với explicit typing.                           |
+| 4   | `data` chỉ tồn tại khi `status === 'success'`. Cần narrow trước: `if (state.status === 'success') { state.data }`. TypeScript CFA mới cho phép access.                       |
+| 5   | Discriminated union = switch statement trong type system. Một question → TypeScript biết chính xác shape. Như biển hiệu phòng: nhìn biển → biết nội quy bên trong.           |
 
-**Debug:**
-- `state.data` shows TypeScript error "Property 'data' does not exist on type..." — why? How do you fix?
-- Context hook returns `T | null` instead of `T` — what's missing from the implementation?
-
-**Teach:**
-- Explain discriminated unions to a junior: "Instead of asking 'is loading true? is data null? is error null?' — three separate questions — you ask ONE question: 'what status are we in?' And TypeScript knows exactly what other fields exist for that status."
+> 🎯 **Feynman Prompt:** Giải thích tại sao generic component `<Table<T extends {id: string}>>` cần constraint — và điều gì xảy ra nếu bỏ constraint đó đi?
 
 ---
 
@@ -579,4 +615,3 @@ The fake default `{} as T` is a lie — it's typed as `T` but has no actual data
 ---
 
 [← Previous: TypeScript Comprehensive](./04-typescript-comprehensive.md) | [Next: Type Inference Theory →](./05-type-inference-theory.md) | [Back to Table of Contents](../../00-table-of-contents.md)
-

@@ -586,17 +586,29 @@ const location = await retryWithBackoff(
 
 ---
 
-## Self-Check / Tự Kiểm Tra ⚡
-> **Đóng tài liệu lại trước khi làm — Close this doc before attempting.**
+## 🔄 Self-Check / Tự Kiểm Tra
 
-- [ ] **Retrieval**: Viết ra 4 Promise combinators và khi nào dùng từng cái — không nhìn lại.
-- [ ] **Visual**: Vẽ event loop diagram với microtask queue và macrotask queue. Thêm Promise.then và setTimeout vào đúng queue.
-- [ ] **Application**: Có 5 URLs cần fetch. Bạn muốn (a) parallel tất cả, (b) sequential, (c) batches of 2. Viết code cho từng case.
-- [ ] **Debug**: `await arr.forEach(async fn)` — print empty array. Tại sao? Viết 2 cách fix từ trí nhớ.
-- [ ] **Teach**: Giải thích tại sao `Promise.all` nhanh hơn sequential `await` cho người không biết async programming, dùng analogy nhà hàng.
+> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
 
-💬 **Feynman Prompt:** Giải thích microtask vs macrotask cho người không biết lập trình, dùng analogy "người chạy việc vặt có 2 loại inbox: khẩn cấp và thường". Không dùng "microtask", "macrotask", "event loop".
+| # | Loại | Câu hỏi |
+|---|------|---------|
+| 1 | 🔍 Retrieval | Viết ra **4 Promise combinators** và khi nào dùng từng cái — không nhìn lại. |
+| 2 | 🎨 Visual | Vẽ event loop diagram với **microtask queue** và **macrotask queue**. Thêm `Promise.then` và `setTimeout` vào đúng queue. |
+| 3 | 🛠️ Application | Có 5 URLs cần fetch. Bạn muốn: (a) parallel tất cả, (b) sequential, (c) batches of 2. Viết code cho từng case. |
+| 4 | 🐛 Debug | `await arr.forEach(async fn)` — print empty array. Tại sao? Viết **2 cách fix** từ trí nhớ. |
+| 5 | 🎓 Teach | Giải thích tại sao `Promise.all` nhanh hơn sequential `await` cho người không biết async programming, dùng analogy **nhà hàng**. |
 
+### Key Points (tự kiểm tra)
+
+| # | Key Point |
+|---|-----------|
+| 1 | `Promise.all`: fail-fast khi 1 reject. `Promise.allSettled`: chờ tất cả, nhận kết quả dù fail. `Promise.race`: first settled (cả resolve/reject). `Promise.any`: first fulfilled. |
+| 2 | Microtask queue (Promise.then, queueMicrotask): chạy **hết sau mỗi task** trước khi lấy macrotask tiếp. Macrotask (setTimeout, setInterval, I/O): 1 callback mỗi turn. |
+| 3 | (a) `Promise.all(urls.map(u => fetch(u)))`. (b) `for (const u of urls) await fetch(u)`. (c) chunk urls thành pairs, `for (const batch of batches) await Promise.all(batch.map(fetch))`. |
+| 4 | `forEach` **không await** async callbacks — nó fire và quên. Fix 1: `for...of + await`. Fix 2: `await Promise.all(arr.map(async fn))`. |
+| 5 | Sequential await: 'gọi món 1, chờ xong mới gọi món 2'. `Promise.all`: 'gọi tất cả cùng lúc, bếp làm song song'. Thời gian = max(các món) thay vì sum(tất cả). |
+
+> 🎯 **Feynman Prompt:** Giải thích microtask vs macrotask cho người không biết lập trình, dùng analogy "người chạy việc vặt có 2 loại inbox: khẩn cấp và thường". Không dùng "microtask", "macrotask", "event loop".
 🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày → 7 ngày → 14 ngày** để chuyển vào long-term memory.
 
 ---

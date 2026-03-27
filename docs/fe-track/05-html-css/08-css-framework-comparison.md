@@ -57,14 +57,10 @@ Dự án lớn: hai dev cùng viết `.button { }` trong hai file khác nhau —
 ```
 
 ```tsx
-import styles from './Button.module.css'
+import styles from "./Button.module.css";
 
 function Button({ danger, children }) {
-  return (
-    <button className={`${styles.button} ${danger ? styles.danger : ''}`}>
-      {children}
-    </button>
-  )
+  return <button className={`${styles.button} ${danger ? styles.danger : ""}`}>{children}</button>;
 }
 
 // What gets rendered in DOM:
@@ -73,6 +69,7 @@ function Button({ danger, children }) {
 ```
 
 **Pros / Ưu điểm:**
+
 - Zero runtime overhead — compiled to plain CSS
 - Scoped by default — no class name collisions
 - Full CSS power (pseudo-classes, animations, media queries)
@@ -80,6 +77,7 @@ function Button({ danger, children }) {
 - TypeScript support with typed CSS modules
 
 **Cons / Nhược điểm:**
+
 - Verbose for conditional classes (`clsx` library helps)
 - No dynamic values based on props without CSS variables
 - Separate `.module.css` file per component
@@ -87,6 +85,7 @@ function Button({ danger, children }) {
 **Best for**: Next.js projects, teams wanting minimal abstraction, performance-critical apps
 
 **Luồng build / Build flow:**
+
 ```
 Source:          Button.module.css → .button { padding: 8px 16px; }
                          ↓ PostCSS / webpack
@@ -97,19 +96,21 @@ Browser:         class="Button_button__abc123"  ← no JS needed, no runtime
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-|---------|------------|---------|
-| Dùng `:global(.someClass)` bừa bãi | Phá vỡ scoping, gây collision y như global CSS | Chỉ dùng `:global` cho third-party styles không thể tránh |
-| Import module CSS vào nhiều components | Styles vẫn scoped — OK về collision, nhưng coupling ẩn | Mỗi component có module CSS riêng |
-| Cố dùng `styles['button--active']` với dấu gạch đôi | Tên với `-` cần bracket notation, dễ gây typo | Dùng camelCase: `styles.buttonActive` |
-| Quên `composes:` khi muốn extend style | Copy-paste CSS thay vì reuse | `composes: button from './base.module.css'` |
+| Sai lầm                                             | Tại sao sai                                            | Đúng là                                                   |
+| --------------------------------------------------- | ------------------------------------------------------ | --------------------------------------------------------- |
+| Dùng `:global(.someClass)` bừa bãi                  | Phá vỡ scoping, gây collision y như global CSS         | Chỉ dùng `:global` cho third-party styles không thể tránh |
+| Import module CSS vào nhiều components              | Styles vẫn scoped — OK về collision, nhưng coupling ẩn | Mỗi component có module CSS riêng                         |
+| Cố dùng `styles['button--active']` với dấu gạch đôi | Tên với `-` cần bracket notation, dễ gây typo          | Dùng camelCase: `styles.buttonActive`                     |
+| Quên `composes:` khi muốn extend style              | Copy-paste CSS thay vì reuse                           | `composes: button from './base.module.css'`               |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy câu hỏi về: CSS class name collisions, scoped styles, CSS-in-JS alternatives
 - → Nhớ đến: CSS Modules — build-time hashing, zero runtime
-- → Mở đầu trả lời: *"CSS Modules solves the global namespace problem by transforming class names to unique hashes at build time — no runtime cost, no collisions, works natively with SSR."*
+- → Mở đầu trả lời: _"CSS Modules solves the global namespace problem by transforming class names to unique hashes at build time — no runtime cost, no collisions, works natively with SSR."_
 
 **🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
 - 📚 Cần biết trước: [CSS Architecture & BEM](./02-css-architecture.md) — để hiểu vấn đề global CSS đang giải quyết
 - ➡️ Để hiểu tiếp: [Modern CSS Features](./06-modern-css-features.md) — CSS custom properties thay thế dynamic styling trong CSS Modules
 
@@ -129,30 +130,27 @@ Dev phải đặt tên class cho mọi thứ: `.wrapper`, `.inner-container`, `.
 
 ```tsx
 // No CSS file needed — compose from atomic classes
-function Button({ variant = 'primary', size = 'md', children }) {
-  const base = 'inline-flex items-center justify-center rounded-md font-medium transition-colors'
-  
-  const variants = {
-    primary:   'bg-blue-600 text-white hover:bg-blue-700',
-    secondary: 'border border-gray-300 text-gray-700 hover:bg-gray-50',
-    danger:    'bg-red-600 text-white hover:bg-red-700',
-  }
-  
-  const sizes = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-base',
-    lg: 'px-6 py-3 text-lg',
-  }
+function Button({ variant = "primary", size = "md", children }) {
+  const base = "inline-flex items-center justify-center rounded-md font-medium transition-colors";
 
-  return (
-    <button className={`${base} ${variants[variant]} ${sizes[size]}`}>
-      {children}
-    </button>
-  )
+  const variants = {
+    primary: "bg-blue-600 text-white hover:bg-blue-700",
+    secondary: "border border-gray-300 text-gray-700 hover:bg-gray-50",
+    danger: "bg-red-600 text-white hover:bg-red-700",
+  };
+
+  const sizes = {
+    sm: "px-3 py-1.5 text-sm",
+    md: "px-4 py-2 text-base",
+    lg: "px-6 py-3 text-lg",
+  };
+
+  return <button className={`${base} ${variants[variant]} ${sizes[size]}`}>{children}</button>;
 }
 ```
 
 **How Tailwind works under the hood:**
+
 ```
 Build time: scan all files for class names
   Found: "bg-blue-600", "text-white", "hover:bg-blue-700"
@@ -165,6 +163,7 @@ JIT (Just-In-Time) mode (default since v3):
 ```
 
 **Pros / Ưu điểm:**
+
 - Extremely fast to build UI (no context switching between files)
 - Zero unused CSS in production (PurgeCSS/JIT)
 - Consistent design system built-in (spacing, colors scale)
@@ -172,6 +171,7 @@ JIT (Just-In-Time) mode (default since v3):
 - Responsive and dark mode built-in: `md:text-lg dark:bg-gray-800`
 
 **Cons / Nhược điểm:**
+
 - "Classname soup" — components can have 20+ classes
 - Learning curve (must memorize class names)
 - Hard to read complex conditional styling
@@ -180,6 +180,7 @@ JIT (Just-In-Time) mode (default since v3):
 **Best for**: Rapid prototyping, design-system-less projects, full-stack developers who want speed
 
 **Luồng JIT / JIT scan flow:**
+
 ```
 Source files (JSX/TSX/HTML):
   "bg-blue-600 text-white hover:bg-blue-700 px-4 py-2"
@@ -195,19 +196,21 @@ Source files (JSX/TSX/HTML):
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-|---------|------------|---------|
-| Build dynamic class names bằng string concat: `'bg-' + color + '-600'` | JIT scanner không thể detect partial class names ở static scan | Dùng full class names trong object map: `{ blue: 'bg-blue-600', red: 'bg-red-600' }` |
-| Dùng `@apply` quá nhiều trong CSS file | Tạo lại vấn đề "naming fatigue" mà Tailwind giải quyết | Dùng `@apply` chỉ cho base element styles (headings, links) |
-| Không config `content` đúng path | Classes dùng trong file không được scan → bị purge khỏi prod | Config `content: ['./src/**/*.{js,ts,jsx,tsx}']` đầy đủ |
-| Nhầm lẫn `space-x-4` vs `gap-4` | `space-x-4` dùng margin trên children, `gap-4` dùng trên flex/grid container | Hiểu context: `gap-4` cho flex/grid, `space-x-4` cho non-flex lists |
+| Sai lầm                                                                | Tại sao sai                                                                  | Đúng là                                                                              |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Build dynamic class names bằng string concat: `'bg-' + color + '-600'` | JIT scanner không thể detect partial class names ở static scan               | Dùng full class names trong object map: `{ blue: 'bg-blue-600', red: 'bg-red-600' }` |
+| Dùng `@apply` quá nhiều trong CSS file                                 | Tạo lại vấn đề "naming fatigue" mà Tailwind giải quyết                       | Dùng `@apply` chỉ cho base element styles (headings, links)                          |
+| Không config `content` đúng path                                       | Classes dùng trong file không được scan → bị purge khỏi prod                 | Config `content: ['./src/**/*.{js,ts,jsx,tsx}']` đầy đủ                              |
+| Nhầm lẫn `space-x-4` vs `gap-4`                                        | `space-x-4` dùng margin trên children, `gap-4` dùng trên flex/grid container | Hiểu context: `gap-4` cho flex/grid, `space-x-4` cho non-flex lists                  |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy câu hỏi về: bundle size, CSS performance, utility-first vs semantic CSS
 - → Nhớ đến: Tailwind JIT — static scan, zero runtime, atomic output
-- → Mở đầu trả lời: *"Tailwind uses a static scanner at build time to extract only the classes you actually use, so production output is typically 5-30KB regardless of how many utilities exist in the full library."*
+- → Mở đầu trả lời: _"Tailwind uses a static scanner at build time to extract only the classes you actually use, so production output is typically 5-30KB regardless of how many utilities exist in the full library."_
 
 **🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
 - 📚 Cần biết trước: [CSS Architecture](./02-css-architecture.md) — hiểu tại sao naming conventions (BEM) là pain point Tailwind giải quyết
 - ➡️ Để hiểu tiếp: [Browser Performance](../06-performance/01-browser-rendering.md) — Tailwind's zero-runtime benefit maps directly to rendering performance
 
@@ -236,11 +239,11 @@ const Button = styled.button<{ danger?: boolean; size?: 'sm' | 'md' | 'lg' }>`
   border-radius: 4px;
   border: none;
   cursor: pointer;
-  
+
   &:hover {
     background: ${({ danger }) => danger ? '#dc2626' : '#2563eb'};
   }
-  
+
   @media (max-width: 768px) {
     width: 100%;
   }
@@ -251,6 +254,7 @@ const Button = styled.button<{ danger?: boolean; size?: 'sm' | 'md' | 'lg' }>`
 ```
 
 **How CSS-in-JS works:**
+
 ```
 Runtime (traditional styled-components):
 1. JavaScript generates class name (hash) at runtime
@@ -269,6 +273,7 @@ Zero-runtime CSS-in-JS (new trend):
 ```
 
 **Pros / Ưu điểm:**
+
 - Full CSS power + full JS power in one place
 - Dynamic styles based on any prop or state
 - Co-located with component (great for design systems)
@@ -276,6 +281,7 @@ Zero-runtime CSS-in-JS (new trend):
 - Theming with ThemeProvider
 
 **Cons / Nhược điểm:**
+
 - **Runtime overhead** — style injection at JS execution time
 - Larger bundle (styled-components = ~12KB gzipped)
 - SSR complexity
@@ -283,6 +289,7 @@ Zero-runtime CSS-in-JS (new trend):
 - **React Server Components incompatible** — RSC can't run client JS at render time
 
 **Luồng runtime injection / Runtime injection flow:**
+
 ```
 React renders <Button danger size="lg">
         ↓  styled-components executes template literal with props
@@ -299,19 +306,21 @@ React renders <Button danger size="lg">
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-|---------|------------|---------|
-| Dùng styled-components trong Next.js App Router mà không có `'use client'` | RSC không chạy JS ở client-time → styled-components không generate được class names | Mark component là `'use client'` hoặc chuyển sang CSS Modules |
-| Tạo styled component bên trong render function | Mỗi render tạo ra new component reference → React unmount/remount → perf hit | Khai báo styled components ở module scope, ngoài component function |
-| Quên `ServerStyleSheet` cho SSR | HTML gửi về browser chưa có styles → CLS / flash of unstyled content | Setup `ServerStyleSheet` trong `_document.tsx` (Pages Router) |
-| Dùng CSS-in-JS vì "dễ" mà không đánh giá bundle size | +12-30KB runtime, tăng TTI | Eval trade-off: nếu không cần runtime dynamic styles → CSS Modules đủ |
+| Sai lầm                                                                    | Tại sao sai                                                                         | Đúng là                                                               |
+| -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Dùng styled-components trong Next.js App Router mà không có `'use client'` | RSC không chạy JS ở client-time → styled-components không generate được class names | Mark component là `'use client'` hoặc chuyển sang CSS Modules         |
+| Tạo styled component bên trong render function                             | Mỗi render tạo ra new component reference → React unmount/remount → perf hit        | Khai báo styled components ở module scope, ngoài component function   |
+| Quên `ServerStyleSheet` cho SSR                                            | HTML gửi về browser chưa có styles → CLS / flash of unstyled content                | Setup `ServerStyleSheet` trong `_document.tsx` (Pages Router)         |
+| Dùng CSS-in-JS vì "dễ" mà không đánh giá bundle size                       | +12-30KB runtime, tăng TTI                                                          | Eval trade-off: nếu không cần runtime dynamic styles → CSS Modules đủ |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy câu hỏi về: RSC compatibility, runtime CSS, SSR styling issues
 - → Nhớ đến: CSS-in-JS runtime model — JS generates class names at execution time
-- → Mở đầu trả lời: *"CSS-in-JS like styled-components works by executing JavaScript at render time to generate class names and inject style tags — which is why it's incompatible with React Server Components that have no client JS runtime."*
+- → Mở đầu trả lời: _"CSS-in-JS like styled-components works by executing JavaScript at render time to generate class names and inject style tags — which is why it's incompatible with React Server Components that have no client JS runtime."_
 
 **🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
 - 📚 Cần biết trước: [React Server Components](../03-react/08-rsc-server-actions.md) — để hiểu tại sao RSC không chạy được runtime CSS-in-JS
 - ➡️ Để hiểu tiếp: [CSS Architecture](./02-css-architecture.md) — zero-runtime alternatives (Vanilla Extract, StyleX) là tương lai của CSS-in-JS
 
@@ -336,24 +345,24 @@ All produce the same DOM button. Trade-offs are DX and build tooling.
 
 ### Performance Comparison
 
-| | CSS Modules | Tailwind | CSS-in-JS |
-|--|------------|---------|-----------|
-| **Runtime cost** | 0 | 0 | Medium |
-| **Bundle size** | Small | Small (after purge) | +12-30KB |
-| **SSR** | Works natively | Works natively | Requires setup |
-| **RSC compatible** | Yes | Yes | **No** (runtime) |
-| **Dynamic styles** | Via CSS vars | Via arbitrary values | Native (props) |
-| **Build setup** | PostCSS | Tailwind CLI/PostCSS | Babel plugin |
+|                    | CSS Modules    | Tailwind             | CSS-in-JS        |
+| ------------------ | -------------- | -------------------- | ---------------- |
+| **Runtime cost**   | 0              | 0                    | Medium           |
+| **Bundle size**    | Small          | Small (after purge)  | +12-30KB         |
+| **SSR**            | Works natively | Works natively       | Requires setup   |
+| **RSC compatible** | Yes            | Yes                  | **No** (runtime) |
+| **Dynamic styles** | Via CSS vars   | Via arbitrary values | Native (props)   |
+| **Build setup**    | PostCSS        | Tailwind CLI/PostCSS | Babel plugin     |
 
 ### Developer Experience
 
-| | CSS Modules | Tailwind | CSS-in-JS |
-|--|------------|---------|-----------|
-| **Learning curve** | Low | Medium | Medium |
-| **Design iteration speed** | Medium | Fast | Slow-medium |
-| **Naming things** | Required | Not needed | Recommended |
-| **Colocation** | Separate file | Same file | Same file |
-| **Refactoring** | Easy | Easy | Easy |
+|                            | CSS Modules   | Tailwind   | CSS-in-JS   |
+| -------------------------- | ------------- | ---------- | ----------- |
+| **Learning curve**         | Low           | Medium     | Medium      |
+| **Design iteration speed** | Medium        | Fast       | Slow-medium |
+| **Naming things**          | Required      | Not needed | Recommended |
+| **Colocation**             | Separate file | Same file  | Same file   |
+| **Refactoring**            | Easy          | Easy       | Easy        |
 
 ---
 
@@ -386,13 +395,13 @@ Performance is critical?
 
 ### Recommendation Matrix
 
-| Project Type | Recommended | Why |
-|-------------|-------------|-----|
-| Next.js App Router | CSS Modules + Tailwind | RSC compatible, zero runtime |
-| Design System library | CSS Modules or Vanilla Extract | Publishable, no runtime dep |
-| Dashboard/SaaS with heavy theming | CSS-in-JS (emotion) | Runtime theming |
-| Startup / rapid prototype | Tailwind | Speed, no naming decisions |
-| Large team / Enterprise | CSS Modules | Predictable, scoped, familiar |
+| Project Type                      | Recommended                    | Why                           |
+| --------------------------------- | ------------------------------ | ----------------------------- |
+| Next.js App Router                | CSS Modules + Tailwind         | RSC compatible, zero runtime  |
+| Design System library             | CSS Modules or Vanilla Extract | Publishable, no runtime dep   |
+| Dashboard/SaaS with heavy theming | CSS-in-JS (emotion)            | Runtime theming               |
+| Startup / rapid prototype         | Tailwind                       | Speed, no naming decisions    |
+| Large team / Enterprise           | CSS Modules                    | Predictable, scoped, familiar |
 
 ---
 
@@ -403,6 +412,7 @@ Performance is critical?
 **A:** styled-components generates class names at JavaScript runtime by executing the styled template literals. RSC renders on the server WITHOUT sending JS to the client — there's no runtime, so no class name generation. The solution is CSS Modules or Tailwind (build-time CSS), or zero-runtime CSS-in-JS like Vanilla Extract.
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Explains the specific mechanism — "styled-components executes template literals at JS runtime to compute class names; RSC has no client JS runtime, so that execution never happens." Mentions zero-runtime alternatives like Vanilla Extract or StyleX.
 - ❌ Weak: "styled-components doesn't work with Server Components" — correct but gives no mechanism and no solution path.
 
@@ -411,6 +421,7 @@ Performance is critical?
 **A:** Tailwind scans all your source files (via `content` config) for class names, then generates ONLY the CSS for classes actually found. Production output is typically 5-30KB. Without this purging, the full Tailwind is ~3MB.
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Names the `content` config, mentions static scanning (not runtime), gives the size comparison (5-30KB vs ~3MB), and knows the gotcha — dynamic class name construction like `'bg-' + color + '-600'` defeats the scanner.
 - ❌ Weak: "Tailwind removes unused styles" — too vague; doesn't explain how the scanner works or that it's static.
 
@@ -419,6 +430,7 @@ Performance is critical?
 **A:** CSS Modules transforms class names to unique hashes at build time: `.button` → `.Button_button__abc123`. This makes styles locally scoped — impossible to accidentally override another component's styles. Global CSS has no such protection.
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Explains the build-time hash transformation with a concrete example (`.button` → `.Button_button__abc123`), mentions zero runtime overhead, and notes that TypeScript typed CSS modules are possible for autocomplete.
 - ❌ Weak: "CSS Modules are scoped" — missing the mechanism (hash at build time) and the trade-off context (vs BEM naming conventions as the manual alternative).
 
@@ -458,11 +470,22 @@ Performance is critical?
 
 ---
 
+## 📋 Interview Q&A Summary / Tóm Tắt Q&A Phỏng Vấn
+
+| #   | Câu hỏi                                       | Difficulty | Core Concept  | Key Signal                                                                      |
+| --- | --------------------------------------------- | ---------- | ------------- | ------------------------------------------------------------------------------- |
+| 1   | Tại sao không dùng styled-components với RSC? | 🟡         | CSS-in-JS/RSC | RSC has no client JS runtime → template literals never execute                  |
+| 2   | Tailwind tránh ship unused CSS thế nào?       | 🟢         | Tailwind JIT  | Static scanner, content config, 5-30KB vs ~3MB, dynamic class concat defeats it |
+| 3   | CSS Modules vs global CSS?                    | 🟢         | CSS Modules   | Build-time hash (.button → .Button_button\_\_abc123), zero runtime              |
+
+---
+
 ## ⚡ Cold Call Simulation / Mô Phỏng Phỏng Vấn
 
 > 🎯 Interviewer asks cold: **"We're starting a new Next.js 14 App Router project. Which CSS approach would you recommend and why?"**
 
 **30 giây đầu — mở đầu lý tưởng / Ideal 30-second opening:**
+
 1. **Scope + define**: "App Router uses React Server Components by default, which rules out runtime CSS-in-JS like styled-components — they require client-side JS that RSC doesn't have."
 2. **Core mechanism**: "I'd recommend CSS Modules as the primary approach, with Tailwind for utility classes — both are build-time solutions with zero runtime overhead, fully compatible with RSC."
 3. **Concrete example**: "CSS Modules handles component-scoped styles like `Button.module.css`, while Tailwind handles spacing, typography, and responsive layout directly in JSX — no context switching."
@@ -470,20 +493,47 @@ Performance is critical?
 
 ---
 
-## Self-Check / Tự Kiểm Tra ⚡
+## 🔄 Self-Check / Tự Kiểm Tra
 
-> **Đóng tài liệu lại trước khi làm — Close the doc before attempting.**
+> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
 
-- [ ] **Retrieval**: Viết ra 3 điểm khác biệt giữa CSS Modules, Tailwind, và CSS-in-JS từ trí nhớ — không nhìn lại.
-- [ ] **Visual**: Vẽ sơ đồ build-time flow của CSS Modules và Tailwind, so sánh với runtime injection của styled-components.
-- [ ] **Application**: Dự án Next.js App Router với custom dark mode theming — bạn chọn CSS approach nào? Tại sao? CSS Modules + CSS variables hay CSS-in-JS?
-- [ ] **Debug**: `className={`bg-${color}-600`}` — Tailwind không apply style trong production. Nguyên nhân? Fix?
-- [ ] **Teach**: Giải thích CSS Modules cho người không biết lập trình bằng 1 câu.
+| #   | Loại           | Câu hỏi                                                                                                                                |
+| --- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 🔍 Retrieval   | Viết ra 3 điểm khác biệt giữa CSS Modules, Tailwind, và CSS-in-JS từ trí nhớ — không nhìn lại.                                         |
+| 2   | 🎨 Visual      | Vẽ sơ đồ build-time flow của CSS Modules và Tailwind — so sánh với runtime injection của styled-components.                            |
+| 3   | 🛠️ Application | Dự án Next.js App Router với custom dark mode theming — bạn chọn CSS approach nào: CSS Modules + CSS variables hay CSS-in-JS? Tại sao? |
+| 4   | 🐛 Debug       | ``className={`bg-${color}-600`}`` — Tailwind không apply style trong production. Nguyên nhân? Fix?                                     |
+| 5   | 🎓 Teach       | Giải thích CSS Modules cho người không biết lập trình bằng 1 câu liên tưởng.                                                           |
 
-💬 **Feynman Prompt:** Explain the difference between CSS Modules and Tailwind to someone who only knows that "CSS makes websites look good." Use a cooking analogy.
+### Key Points (tự kiểm tra)
+
+| #   | Key Point                                                                                                                                                                                                                               |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | CSS Modules: scoped hash class names, zero runtime, build-time; Tailwind: utility-first, JIT purging, atomic CSS; CSS-in-JS (styled-components): runtime injection, co-location với JS, dynamic props qua template literals.            |
+| 2   | CSS Modules: `.css` → PostCSS → hash class names → JS object export; Tailwind: scan HTML/JS → generate only used utilities → purged CSS bundle; styled-components: runtime → inject `<style>` tags vào `<head>` khi component mount.    |
+| 3   | **CSS Modules + CSS variables** cho Next.js App Router — CSS-in-JS có vấn đề với React Server Components vì cần runtime JavaScript; CSS Modules hoạt động ở server side, CSS variables handle theming.                                  |
+| 4   | Tailwind dùng static analysis (scan file content) để purge unused classes — dynamic string `bg-${color}-600` không xuất hiện literal trong source → bị purge. Fix: dùng `safelist` trong tailwind.config.js hoặc dùng full class names. |
+| 5   | CSS Modules = mỗi file CSS là "phòng riêng" — tên class không bị xung đột với phòng khác dù trùng tên, vì khi build sẽ thêm hash unique vào mỗi tên.                                                                                    |
+
+> 🎯 **Feynman Prompt:** Giải thích sự khác biệt giữa CSS Modules và Tailwind cho người chỉ biết "CSS làm website đẹp". Dùng analogy nấu ăn — một cái là nấu theo công thức riêng, một cái là chọn nguyên liệu có sẵn.
 
 🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày → 7 ngày → 14 ngày** để chuyển vào long-term memory.
 
 ---
 
 **See also**: [CSS Architecture](./02-css-architecture.md) | [Modern CSS Features](./06-modern-css-features.md)
+
+---
+
+## 🔗 Connections / Liên Kết
+
+### Cùng track (Same track)
+- [CSS Architecture](./02-css-architecture.md) — design tokens and BEM that underpin all CSS approaches
+- [CSS Architecture Comprehensive](./04-css-architecture-comprehensive.md) — architectural trade-offs explored in depth
+- [Modern CSS Features](./06-modern-css-features.md) — native CSS features reducing the need for heavy frameworks
+- [Responsive Design](./03-responsive-design.md) — how each framework handles breakpoints and responsive layouts
+
+### Khác track (Cross-track)
+- [App Router & Server Components](../04-nextjs/01-app-router-server-components.md) — CSS-in-JS runtime limitations with React Server Components
+- [Advanced React Patterns](../03-react/04-advanced-patterns.md) — component API design influenced by CSS approach choice
+- [Bundle Optimization](../06-browser-performance/03-bundle-optimization.md) — Tailwind JIT vs CSS-in-JS runtime cost on bundle size

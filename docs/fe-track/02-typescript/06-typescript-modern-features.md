@@ -56,43 +56,47 @@
 
 ```typescript
 // Template literal type — string pattern types
-type EventName = 'click' | 'focus' | 'blur'
-type Handler = `on${Capitalize<EventName>}`  // 'onClick' | 'onFocus' | 'onBlur'
+type EventName = "click" | "focus" | "blur";
+type Handler = `on${Capitalize<EventName>}`; // 'onClick' | 'onFocus' | 'onBlur'
 
 // Key remapping — derive getter/setter from model
 type Getters<T> = {
-  [K in keyof T as `get${Capitalize<string & K>}`]: () => T[K]
-}
-type UserModel = { name: string; age: number }
-type UserGetters = Getters<UserModel>
+  [K in keyof T as `get${Capitalize<string & K>}`]: () => T[K];
+};
+type UserModel = { name: string; age: number };
+type UserGetters = Getters<UserModel>;
 // Result: { getName: () => string; getAge: () => number }
 
 // Filter keys with key remapping (conditional key → never removes it)
 type OnlyStrings<T> = {
-  [K in keyof T as T[K] extends string ? K : never]: T[K]
-}
-type Product = { id: number; name: string; sku: string; price: number }
-type StringFields = OnlyStrings<Product>  // { name: string; sku: string }
+  [K in keyof T as T[K] extends string ? K : never]: T[K];
+};
+type Product = { id: number; name: string; sku: string; price: number };
+type StringFields = OnlyStrings<Product>; // { name: string; sku: string }
 
 // Combined: derive typed event handler record
-type EventMap = { click: MouseEvent; focus: FocusEvent; keydown: KeyboardEvent }
-type Handlers = { [K in keyof EventMap as `on${Capitalize<string & K>}`]: (e: EventMap[K]) => void }
+type EventMap = { click: MouseEvent; focus: FocusEvent; keydown: KeyboardEvent };
+type Handlers = {
+  [K in keyof EventMap as `on${Capitalize<string & K>}`]: (e: EventMap[K]) => void;
+};
 // { onClick: (e: MouseEvent) => void; onFocus: ... }
 ```
 
-**Common Mistakes:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| Manually writing all handler names: `onClick`, `onFocus`... | Template literal: `` `on${Capitalize<EventName>}` `` |
-| Key remapping without `string &`: `` `get${Capitalize<K>}` `` errors | `string & K` cast needed because `K extends keyof T` is `string \| number \| symbol` |
-| Using template literal type for runtime string matching | Template literal types are compile-time only — for runtime, use regex or string methods |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Manually writing all handler names: `onClick`, `onFocus`... | Hard-coded names go stale when source types change — no compile-time connection to source type | Use template literal: `` `on${Capitalize<EventName>}` `` to auto-derive handler names from event types |
+| Key remapping without `string &`: `` `get${Capitalize<K>}` `` causes errors | `keyof T` includes `number` and `symbol` keys — template literals only accept `string` | Use `string & K` to ensure K is treated as string: `` `get${Capitalize<string & K>}` `` |
+| Using template literal type for runtime string matching | Template literal types are compile-time only — they generate no runtime code | For runtime string matching use regex or string methods; template literal types are type-level only |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "type-safe event handlers" / "derive getter types" / "filter properties by type"
 - **Opening**: "Template literal types let you create string types from patterns — `` `on${Capitalize<K>}` `` generates all handler names from event names. Key remapping adds `as` to mapped types to rename or filter keys. Together, you can derive complex typed APIs from source types without manually maintaining the derived types..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: Mapped types, conditional types, `keyof`, `Capitalize`
 - **Enables**: Type-safe CSS-in-JS, event system typing, builder pattern APIs
 
@@ -113,53 +117,57 @@ type Handlers = { [K in keyof EventMap as `on${Capitalize<string & K>}`]: (e: Ev
 // === TS 5.0 Decorators (Stage 3) ===
 // Class decorator
 function sealed(target: new (...args: any[]) => any) {
-  Object.seal(target)
-  Object.seal(target.prototype)
+  Object.seal(target);
+  Object.seal(target.prototype);
 }
 
 // Method decorator with context
 function log(target: Function, context: ClassMethodDecoratorContext) {
-  const methodName = String(context.name)
+  const methodName = String(context.name);
   return function (this: any, ...args: any[]) {
-    console.log(`Calling ${methodName}`)
-    return target.call(this, ...args)
-  }
+    console.log(`Calling ${methodName}`);
+    return target.call(this, ...args);
+  };
 }
 
 @sealed
 class ApiClient {
   @log
-  fetchUser(id: string) { return fetch(`/users/${id}`) }
+  fetchUser(id: string) {
+    return fetch(`/users/${id}`);
+  }
 }
 
 // === const type parameters (TS 5.0) ===
 // Without const — widens to string[]
 function tags<T extends string[]>(values: T): T {
-  return values
+  return values;
 }
-const t1 = tags(['a', 'b', 'c'])  // type: string[] (widened)
+const t1 = tags(["a", "b", "c"]); // type: string[] (widened)
 
 // With const — preserves literals
 function tagsConst<const T extends string[]>(values: T): T {
-  return values
+  return values;
 }
-const t2 = tagsConst(['a', 'b', 'c'])  // type: readonly ['a', 'b', 'c'] ✅
+const t2 = tagsConst(["a", "b", "c"]); // type: readonly ['a', 'b', 'c'] ✅
 // Caller doesn't need to add 'as const'!
 ```
 
-**Common Mistakes:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| Using old `experimentalDecorators` with TS 5.0+ | New TS 5.0 decorators use different semantics — disable experimental, use `--experimentalDecorators false` |
-| `<T>` when you want literal inference | `<const T>` — tells TypeScript to infer the most specific type |
-| Applying `const` type parameter when T is mutable | Only use when the function truly treats value as readonly/literal-typed |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Using old `experimentalDecorators` with TS 5.0+ | The two decorator implementations have incompatible semantics — mixing them causes runtime errors or type failures | Disable `experimentalDecorators`, use TS 5.0 standard decorators only |
+| `<T>` when you want literal type inference | Without `const`, TypeScript widens `['a', 'b']` to `string[]` — literal types are lost | Use `<const T>` — tells TypeScript to infer the most specific (narrowest) literal type at the call site |
+| Applying `const` type parameter to a generic function where `T` is mutable | Implies readonly/literal semantics that the caller may not intend — misleading API contract | Only use `<const T>` when the function genuinely treats the value as readonly/literal-typed |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "TypeScript decorators" / "preserve literal in generic" / "const type parameter"
 - **Opening**: "TypeScript 5.0 shipped two major features. Standard decorators — the finalized Stage 3 proposal — replacing the 10-year-old experimental decorators. And `const` type parameters: adding `const` before a generic parameter tells TypeScript to infer the narrowest literal type, so callers don't need to add `as const` themselves..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: Generics, literal types, decorators (Stage 3 proposal)
 - **Enables**: Type-safe class decorators, library APIs that preserve caller literals
 
@@ -179,63 +187,75 @@ const t2 = tagsConst(['a', 'b', 'c'])  // type: readonly ['a', 'b', 'c'] ✅
 ```typescript
 // === using declarations ===
 class DatabaseConnection {
-  constructor(private url: string) { /* connect */ }
-  query(sql: string) { /* ... */ }
+  constructor(private url: string) {
+    /* connect */
+  }
+  query(sql: string) {
+    /* ... */
+  }
   [Symbol.dispose]() {
-    console.log('Connection closed')  // called automatically
+    console.log("Connection closed"); // called automatically
   }
 }
 
 async function handleRequest() {
-  using db = new DatabaseConnection(process.env.DB_URL)
+  using db = new DatabaseConnection(process.env.DB_URL);
   // db.query works here
-  const users = await db.query('SELECT * FROM users')
-  return users
+  const users = await db.query("SELECT * FROM users");
+  return users;
   // ← db[Symbol.dispose]() called here, even if query throws ✅
 }
 
 // await using for async dispose:
 class AsyncResource {
-  async [Symbol.asyncDispose]() { await cleanup() }
+  async [Symbol.asyncDispose]() {
+    await cleanup();
+  }
 }
 async function work() {
-  await using res = new AsyncResource()
+  await using res = new AsyncResource();
   // res[Symbol.asyncDispose]() called on exit
 }
 
 // === Branded types ===
-type UserId = string & { readonly _brand: unique symbol }
-type PostId = string & { readonly _brand: unique symbol }
+type UserId = string & { readonly _brand: unique symbol };
+type PostId = string & { readonly _brand: unique symbol };
 
 // Brand constructor (type assertion for creation)
 function createUserId(id: string): UserId {
-  return id as UserId
+  return id as UserId;
 }
 
-function getUser(id: UserId): User { /* ... */ }
-function getPost(id: PostId): Post { /* ... */ }
+function getUser(id: UserId): User {
+  /* ... */
+}
+function getPost(id: PostId): Post {
+  /* ... */
+}
 
-const userId = createUserId('user-123')
-const postId = 'post-456' as PostId
+const userId = createUserId("user-123");
+const postId = "post-456" as PostId;
 
-getUser(userId)   // ✅
-getUser(postId)   // ❌ Argument of type 'PostId' is not assignable to parameter of type 'UserId'
-getUser('raw')    // ❌ 'string' is not assignable to 'UserId'
+getUser(userId); // ✅
+getUser(postId); // ❌ Argument of type 'PostId' is not assignable to parameter of type 'UserId'
+getUser("raw"); // ❌ 'string' is not assignable to 'UserId'
 ```
 
-**Common Mistakes:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| `await using` vs `using` — wrong for sync resources | `using` for sync (Symbol.dispose); `await using` for async (Symbol.asyncDispose) |
-| `type UserId = string` — same type as other string IDs | Brand with `unique symbol`: `string & { readonly _brand: unique symbol }` |
-| Branded type creation with direct `as UserId` everywhere | Create constructor function `createUserId(id: string): UserId` — single place to add validation |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Using `await using` for synchronous resources | `await using` calls `Symbol.asyncDispose` — a mismatch for sync resources that only implement `Symbol.dispose` | Use `using` for sync (`Symbol.dispose`); `await using` only for async (`Symbol.asyncDispose`) |
+| `type UserId = string` — no structural difference from other ID types | TypeScript's structural typing makes `UserId` and `PostId` identical — they're interchangeable, no safety | Brand with `unique symbol`: `string & { readonly _brand: unique symbol }` creates a distinct structural type |
+| Direct `as UserId` type assertions scattered throughout the codebase | Assertions bypass validation — every call site is a potential source of invalid branded values | Create a constructor `createUserId(id: string): UserId` — single place to add validation logic |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "resource management" / "database connection cleanup" / "type-safe IDs" / "branded types"
 - **Opening**: "For resource management, `using` declarations implement the TC39 Explicit Resource Management proposal. Any object with `[Symbol.dispose]()` will have it called automatically when the block exits — including on error. For type-safe IDs, branded types use a phantom `unique symbol` property to structurally distinguish IDs that are all `string` at runtime but shouldn't be interchangeable..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: TypeScript structural typing, Symbols, generics
 - **Enables**: Safe resource management patterns, type-safe API boundaries, domain-driven design with TypeScript
 
@@ -252,12 +272,14 @@ getUser('raw')    // ❌ 'string' is not assignable to 'UserId'
 **Tiếng Việt:** Phần tử spread trong kiểu tuple ở bất kỳ vị trí nào.
 
 **Before:**
+
 ```typescript
 // Limited to end only
 type Tuple = [string, ...number[]];
 ```
 
 **After:**
+
 ```typescript
 // Anywhere in tuple
 type Leading = [...string[], number];
@@ -268,24 +290,25 @@ type Multiple = [...string[], ...number[]];
 **Use Cases:**
 
 **Function Composition:**
+
 ```typescript
 function concat<T extends unknown[], U extends unknown[]>(
   arr1: [...T],
-  arr2: [...U]
+  arr2: [...U],
 ): [...T, ...U] {
   return [...arr1, ...arr2];
 }
 
-const result = concat([1, 2], ['a', 'b']);
+const result = concat([1, 2], ["a", "b"]);
 // Type: [number, number, string, string]
 ```
 
 **Curry Functions:**
+
 ```typescript
-type Curry<P extends unknown[], R> = 
-  P extends [infer First, ...infer Rest]
-    ? (arg: First) => Curry<Rest, R>
-    : R;
+type Curry<P extends unknown[], R> = P extends [infer First, ...infer Rest]
+  ? (arg: First) => Curry<Rest, R>
+  : R;
 
 type CurriedAdd = Curry<[number, number, number], number>;
 // (arg: number) => (arg: number) => (arg: number) => number
@@ -298,23 +321,26 @@ type CurriedAdd = Curry<[number, number, number], number>;
 **Tiếng Việt:** Tạo types từ chuỗi template literal.
 
 **Basic Usage:**
+
 ```typescript
 type World = "world";
-type Greeting = `hello ${World}`;  // "hello world"
+type Greeting = `hello ${World}`; // "hello world"
 ```
 
 **With Unions:**
+
 ```typescript
 type Color = "red" | "blue" | "green";
 type Quantity = "one" | "two";
 type ColoredQuantity = `${Quantity} ${Color}`;
-// "one red" | "one blue" | "one green" | 
+// "one red" | "one blue" | "one green" |
 // "two red" | "two blue" | "two green"
 ```
 
 **Practical Examples:**
 
 **Event Names:**
+
 ```typescript
 type EventName = "click" | "focus" | "blur";
 type EventHandler = `on${Capitalize<EventName>}`;
@@ -322,6 +348,7 @@ type EventHandler = `on${Capitalize<EventName>}`;
 ```
 
 **CSS Properties:**
+
 ```typescript
 type CSSProperty = "color" | "background" | "border";
 type CSSVar = `--${CSSProperty}`;
@@ -329,6 +356,7 @@ type CSSVar = `--${CSSProperty}`;
 ```
 
 **API Endpoints:**
+
 ```typescript
 type Resource = "user" | "post" | "comment";
 type Method = "GET" | "POST" | "PUT" | "DELETE";
@@ -342,18 +370,20 @@ type Endpoint = `/${Lowercase<Resource>}/${Method}`;
 **Tiếng Việt:** Chuyển đổi keys trong mapped types sử dụng mệnh đề as.
 
 **Syntax:**
+
 ```typescript
 type MappedType<T> = {
-  [K in keyof T as NewKeyType]: T[K]
+  [K in keyof T as NewKeyType]: T[K];
 };
 ```
 
 **Examples:**
 
 **Getters:**
+
 ```typescript
 type Getters<T> = {
-  [K in keyof T as `get${Capitalize<string & K>}`]: () => T[K]
+  [K in keyof T as `get${Capitalize<string & K>}`]: () => T[K];
 };
 
 type Person = { name: string; age: number };
@@ -365,9 +395,10 @@ type PersonGetters = Getters<Person>;
 ```
 
 **Filter Keys:**
+
 ```typescript
 type RemoveKindField<T> = {
-  [K in keyof T as Exclude<K, "kind">]: T[K]
+  [K in keyof T as Exclude<K, "kind">]: T[K];
 };
 
 type Circle = { kind: "circle"; radius: number };
@@ -376,14 +407,14 @@ type CircleWithoutKind = RemoveKindField<Circle>;
 ```
 
 **Transform Keys:**
+
 ```typescript
-type SnakeToCamel<S extends string> = 
-  S extends `${infer T}_${infer U}`
-    ? `${T}${Capitalize<SnakeToCamel<U>>}`
-    : S;
+type SnakeToCamel<S extends string> = S extends `${infer T}_${infer U}`
+  ? `${T}${Capitalize<SnakeToCamel<U>>}`
+  : S;
 
 type TransformKeys<T> = {
-  [K in keyof T as SnakeToCamel<string & K>]: T[K]
+  [K in keyof T as SnakeToCamel<string & K>]: T[K];
 };
 ```
 
@@ -394,10 +425,9 @@ type TransformKeys<T> = {
 **Tiếng Việt:** Kiểu điều kiện giờ có thể tham chiếu chính nó.
 
 **Deep Partial:**
+
 ```typescript
-type DeepPartial<T> = T extends object
-  ? { [P in keyof T]?: DeepPartial<T[P]> }
-  : T;
+type DeepPartial<T> = T extends object ? { [P in keyof T]?: DeepPartial<T[P]> } : T;
 
 type Nested = {
   a: {
@@ -418,20 +448,18 @@ type PartialNested = DeepPartial<Nested>;
 ```
 
 **Deep Readonly:**
+
 ```typescript
-type DeepReadonly<T> = T extends object
-  ? { readonly [P in keyof T]: DeepReadonly<T[P]> }
-  : T;
+type DeepReadonly<T> = T extends object ? { readonly [P in keyof T]: DeepReadonly<T[P]> } : T;
 ```
 
 **Flatten Array:**
+
 ```typescript
-type Flatten<T> = T extends Array<infer U>
-  ? Flatten<U>
-  : T;
+type Flatten<T> = T extends Array<infer U> ? Flatten<U> : T;
 
 type Nested = number[][][];
-type Flat = Flatten<Nested>;  // number
+type Flat = Flatten<Nested>; // number
 ```
 
 ### Abstract Construct Signatures (4.2) / Chữ Ký Khởi Tạo Trừu Tượng
@@ -441,6 +469,7 @@ type Flat = Flatten<Nested>;  // number
 **Tiếng Việt:** Gõ constructors lớp trừu tượng đúng cách.
 
 **Syntax:**
+
 ```typescript
 abstract class Shape {
   abstract getArea(): number;
@@ -461,16 +490,18 @@ function createShape(ctor: ShapeConstructor) {
 **Tiếng Việt:** Thu hẹp kiểu tốt hơn cho truy cập indexed.
 
 **Before:**
+
 ```typescript
 function get<T>(obj: T, key: keyof T) {
-  return obj[key];  // Type: T[keyof T]
+  return obj[key]; // Type: T[keyof T]
 }
 ```
 
 **After:**
+
 ```typescript
 function get<T, K extends keyof T>(obj: T, key: K) {
-  return obj[key];  // Type: T[K]
+  return obj[key]; // Type: T[K]
 }
 ```
 
@@ -485,10 +516,11 @@ function get<T, K extends keyof T>(obj: T, key: K) {
 **Tiếng Việt:** Hỗ trợ decorators ECMAScript (Stage 3).
 
 **Class Decorators:**
+
 ```typescript
-function sealed<T extends { new(...args: any[]): {} }>(
+function sealed<T extends { new (...args: any[]): {} }>(
   constructor: T,
-  context: ClassDecoratorContext
+  context: ClassDecoratorContext,
 ) {
   return class extends constructor {
     constructor(...args: any[]) {
@@ -505,12 +537,10 @@ class MyClass {
 ```
 
 **Method Decorators:**
+
 ```typescript
-function log<T extends (...args: any[]) => any>(
-  target: T,
-  context: ClassMethodDecoratorContext
-) {
-  return function(this: any, ...args: Parameters<T>) {
+function log<T extends (...args: any[]) => any>(target: T, context: ClassMethodDecoratorContext) {
+  return function (this: any, ...args: Parameters<T>) {
     console.log(`Calling ${String(context.name)}`);
     return target.apply(this, args);
   };
@@ -525,13 +555,11 @@ class Calculator {
 ```
 
 **Accessor Decorators:**
+
 ```typescript
-function bound<T extends (...args: any[]) => any>(
-  target: T,
-  context: ClassMethodDecoratorContext
-) {
+function bound<T extends (...args: any[]) => any>(target: T, context: ClassMethodDecoratorContext) {
   const methodName = context.name;
-  context.addInitializer(function() {
+  context.addInitializer(function () {
     (this as any)[methodName] = (this as any)[methodName].bind(this);
   });
 }
@@ -544,26 +572,29 @@ function bound<T extends (...args: any[]) => any>(
 **Tiếng Việt:** Suy luận kiểu cụ thể nhất cho tham số generic.
 
 **Before:**
+
 ```typescript
 function identity<T>(value: T) {
   return value;
 }
 
-const arr = identity([1, 2, 3]);  // Type: number[]
+const arr = identity([1, 2, 3]); // Type: number[]
 ```
 
 **After:**
+
 ```typescript
 function identity<const T>(value: T) {
   return value;
 }
 
-const arr = identity([1, 2, 3]);  // Type: readonly [1, 2, 3]
+const arr = identity([1, 2, 3]); // Type: readonly [1, 2, 3]
 ```
 
 **Use Cases:**
 
 **Tuple Inference:**
+
 ```typescript
 function tuple<const T extends readonly unknown[]>(...args: T) {
   return args;
@@ -574,6 +605,7 @@ const t = tuple(1, "hello", true);
 ```
 
 **Object Literals:**
+
 ```typescript
 function config<const T>(obj: T) {
   return obj;
@@ -590,6 +622,7 @@ const cfg = config({ mode: "production", port: 3000 });
 **Tiếng Việt:** Mở rộng từ nhiều file tsconfig.
 
 **Syntax:**
+
 ```json
 {
   "extends": ["./base.json", "./strict.json"],
@@ -600,6 +633,7 @@ const cfg = config({ mode: "production", port: 3000 });
 ```
 
 **Benefits:**
+
 - Compose configurations
 - Share settings
 - Environment-specific configs
@@ -612,11 +646,12 @@ const cfg = config({ mode: "production", port: 3000 });
 **Tiếng Việt:** Kiểm tra kiểu tốt hơn cho enums.
 
 **Union Enums:**
+
 ```typescript
 enum Status {
   Success = 200,
   NotFound = 404,
-  Error = 500
+  Error = 500,
 }
 
 // Now properly typed
@@ -643,13 +678,15 @@ function handleStatus(status: Status) {
 **Tiếng Việt:** Suy luận tốt hơn cho hàm với return ngầm.
 
 **Before:**
+
 ```typescript
 function createPerson(name: string, age: number) {
-  return { name, age };  // Type: { name: string; age: number; }
+  return { name, age }; // Type: { name: string; age: number; }
 }
 ```
 
 **After:**
+
 ```typescript
 // Better inference with control flow
 function createPerson(name: string, age: number) {
@@ -668,6 +705,7 @@ function createPerson(name: string, age: number) {
 **Tiếng Việt:** Kiểm tra kiểu tốt hơn cho phần tử JSX.
 
 **Namespace Support:**
+
 ```typescript
 declare namespace JSX {
   interface IntrinsicElements {
@@ -686,6 +724,7 @@ declare namespace JSX {
 **Tiếng Việt:** Quản lý tài nguyên rõ ràng (đề xuất Stage 3).
 
 **Syntax:**
+
 ```typescript
 {
   using file = await openFile("data.txt");
@@ -694,6 +733,7 @@ declare namespace JSX {
 ```
 
 **Symbol.dispose:**
+
 ```typescript
 class Resource {
   [Symbol.dispose]() {
@@ -715,14 +755,12 @@ class Resource {
 **Tiếng Việt:** Đính kèm metadata vào phần tử decorated.
 
 **Syntax:**
+
 ```typescript
-function logMetadata(
-  target: any,
-  context: ClassMethodDecoratorContext
-) {
+function logMetadata(target: any, context: ClassMethodDecoratorContext) {
   context.metadata[context.name] = {
     logged: true,
-    timestamp: Date.now()
+    timestamp: Date.now(),
   };
 }
 
@@ -743,12 +781,14 @@ class MyClass {
 **Tiếng Việt:** Chỉ định import assertions cho modules không phải JS.
 
 **Syntax:**
+
 ```typescript
 import data from "./data.json" with { type: "json" };
 import styles from "./styles.css" with { type: "css" };
 ```
 
 **Benefits:**
+
 - Type-safe imports
 - Module type specification
 - Better tooling support
@@ -760,6 +800,7 @@ import styles from "./styles.css" with { type: "css" };
 **Tiếng Việt:** Kiểm soát module resolution mỗi import.
 
 **Syntax:**
+
 ```typescript
 /// <reference types="node" resolution-mode="require" />
 /// <reference types="node" resolution-mode="import" />
@@ -774,13 +815,14 @@ import type { RequestHandler } from "express" with { "resolution-mode": "require
 **Tiếng Việt:** Thu hẹp kiểu tốt hơn trong câu lệnh switch(true).
 
 **Example:**
+
 ```typescript
 function process(value: string | number) {
   switch (true) {
     case typeof value === "string":
-      return value.toUpperCase();  // Type: string
+      return value.toUpperCase(); // Type: string
     case typeof value === "number":
-      return value.toFixed(2);     // Type: number
+      return value.toFixed(2); // Type: number
   }
 }
 ```
@@ -792,6 +834,7 @@ function process(value: string | number) {
 **Tiếng Việt:** Tạo files .d.ts mà không cần kiểm tra kiểu đầy đủ.
 
 **Benefits:**
+
 - Faster builds
 - Parallel compilation
 - Better performance
@@ -806,18 +849,21 @@ function process(value: string | number) {
 **Improvements:**
 
 **1. Faster Type Checking:**
+
 - 10-20% faster on average
 - Better caching
 - Optimized algorithms
 - Reduced memory usage
 
 **2. Faster Builds:**
+
 - Incremental builds improved
 - Better module resolution
 - Parallel processing
 - Smarter invalidation
 
 **3. Smaller Package:**
+
 - 26.4 MB → 20.4 MB
 - Faster installation
 - Less disk space
@@ -828,16 +874,19 @@ function process(value: string | number) {
 **Optimizations:**
 
 **1. Faster Union Reduction:**
+
 - Better algorithm
 - Reduced complexity
 - Faster type operations
 
 **2. Improved Inference:**
+
 - Smarter caching
 - Reduced work
 - Better heuristics
 
 **3. Module Resolution:**
+
 - Faster lookups
 - Better caching
 - Optimized paths
@@ -849,6 +898,7 @@ function process(value: string | number) {
 ### Modern TypeScript Patterns / Patterns TypeScript Hiện Đại
 
 **1. Use const Type Parameters:**
+
 ```typescript
 // Prefer
 function tuple<const T extends readonly unknown[]>(...args: T) {
@@ -862,6 +912,7 @@ function tuple<T extends readonly unknown[]>(...args: T): T {
 ```
 
 **2. Leverage Template Literals:**
+
 ```typescript
 // Type-safe event handlers
 type EventMap = {
@@ -869,21 +920,22 @@ type EventMap = {
   focus: FocusEvent;
 };
 
-type EventHandler<K extends keyof EventMap> = 
-  `on${Capitalize<K>}`;
+type EventHandler<K extends keyof EventMap> = `on${Capitalize<K>}`;
 ```
 
 **3. Use Satisfies Operator:**
+
 ```typescript
 const config = {
   url: "https://api.example.com",
-  timeout: 5000
+  timeout: 5000,
 } satisfies Config;
 
 // Keeps literal types while checking structure
 ```
 
 **4. Prefer Unknown Over Any:**
+
 ```typescript
 // Prefer
 function process(value: unknown) {
@@ -894,11 +946,12 @@ function process(value: unknown) {
 
 // Over
 function process(value: any) {
-  return value.toUpperCase();  // Unsafe
+  return value.toUpperCase(); // Unsafe
 }
 ```
 
 **5. Use Branded Types:**
+
 ```typescript
 type UserId = string & { readonly brand: unique symbol };
 type PostId = string & { readonly brand: unique symbol };
@@ -919,20 +972,21 @@ function getPost(id: PostId) {}
 
 ```typescript
 type Async<T> = {
-  [K in keyof T as T[K] extends (...args: any[]) => any ? K : never]:
-    T[K] extends (...args: infer A) => infer R
-      ? (...args: A) => Promise<R>
-      : never
-}
+  [K in keyof T as T[K] extends (...args: any[]) => any ? K : never]: T[K] extends (
+    ...args: infer A
+  ) => infer R
+    ? (...args: A) => Promise<R>
+    : never;
+};
 
 // Source type
 type UserService = {
-  getUser: (id: string) => User
-  deleteUser: (id: string) => void
-  userName: string  // not a function — filtered out
-}
+  getUser: (id: string) => User;
+  deleteUser: (id: string) => void;
+  userName: string; // not a function — filtered out
+};
 
-type AsyncUserService = Async<UserService>
+type AsyncUserService = Async<UserService>;
 // Result:
 // {
 //   getUser: (id: string) => Promise<User>
@@ -942,12 +996,14 @@ type AsyncUserService = Async<UserService>
 ```
 
 **Explanation:**
+
 - `as T[K] extends (...) ? K : never` — key remapping with conditional: keeps only function keys
 - `(...args: A) => Promise<R>` — wraps return type in Promise using `infer` to capture args and return type
 
 **Tiếng Việt:** Key remapping với conditional `as ... ? K : never` filter chỉ giữ lại method keys. Conditional type extract arg/return types bằng `infer`. Wrap return trong `Promise<R>`. Kết quả là typed async version của service.
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Uses both key remapping for filtering AND conditional + infer for return type transformation; explains each part
 - ❌ Weak: `type Async<T> = { [K in keyof T]: Promise<T[K]> }` — doesn't filter non-functions, doesn't extract function signature
 
@@ -958,31 +1014,35 @@ type AsyncUserService = Async<UserService>
 **A:** `const` type parameter (TS 5.0) makes a generic function infer the most specific (literal) type from the argument — without the caller needing `as const`.
 
 **Without `const` — values widen:**
+
 ```typescript
 function createRoutes<T extends readonly string[]>(routes: T): T {
-  return routes
+  return routes;
 }
 
-const r1 = createRoutes(['/', '/about', '/contact'])
+const r1 = createRoutes(["/", "/about", "/contact"]);
 // T inferred as: string[] (widened — not useful)
-r1[0]  // type: string
+r1[0]; // type: string
 ```
 
 **With `const` — literals preserved:**
+
 ```typescript
 function createRoutes<const T extends readonly string[]>(routes: T): T {
-  return routes
+  return routes;
 }
 
-const r2 = createRoutes(['/', '/about', '/contact'])
+const r2 = createRoutes(["/", "/about", "/contact"]);
 // T inferred as: readonly ['/', '/about', '/contact'] ← literal tuple
-r2[0]  // type: '/' ✅
+r2[0]; // type: '/' ✅
 
 // Useful for route validation:
-type Route = (typeof r2)[number]  // type: '/' | '/about' | '/contact'
-function navigate(route: Route) { window.location.href = route }
-navigate('/about')   // ✅
-navigate('/missing') // ❌ TypeScript error ← prevents invalid navigation
+type Route = (typeof r2)[number]; // type: '/' | '/about' | '/contact'
+function navigate(route: Route) {
+  window.location.href = route;
+}
+navigate("/about"); // ✅
+navigate("/missing"); // ❌ TypeScript error ← prevents invalid navigation
 ```
 
 **Why not just tell callers `as const`?** `const` type parameter is caller-ergonomic — library authors add it once; users don't need to remember `as const` on every call.
@@ -990,6 +1050,7 @@ navigate('/missing') // ❌ TypeScript error ← prevents invalid navigation
 **Tiếng Việt:** `const` type parameter = generic function tự infer literal type không cần caller thêm `as const`. Useful cho library authors — user gọi tự nhiên, vẫn nhận được precise literal types. Use case: route tables, event lists, config values.
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Shows the before/after; explains the library author vs caller ergonomics angle; derives union type from the result
 - ❌ Weak: "`const` type parameter makes generics readonly" — partially true but misses the literal inference story
 
@@ -1001,37 +1062,41 @@ navigate('/missing') // ❌ TypeScript error ← prevents invalid navigation
 
 ```typescript
 // Branded type pattern using unique symbol
-declare const __brand: unique symbol
-type Brand<T, B> = T & { readonly [__brand]: B }
+declare const __brand: unique symbol;
+type Brand<T, B> = T & { readonly [__brand]: B };
 
-type UserId = Brand<string, 'UserId'>
-type PostId = Brand<string, 'PostId'>
+type UserId = Brand<string, "UserId">;
+type PostId = Brand<string, "PostId">;
 
 // Constructor functions (single place to validate + brand)
 function createUserId(raw: string): UserId {
-  if (!raw.startsWith('user_')) throw new Error('Invalid UserId format')
-  return raw as UserId  // ← type assertion inside constructor only
+  if (!raw.startsWith("user_")) throw new Error("Invalid UserId format");
+  return raw as UserId; // ← type assertion inside constructor only
 }
 
 function createPostId(raw: string): PostId {
-  if (!raw.startsWith('post_')) throw new Error('Invalid PostId format')
-  return raw as PostId
+  if (!raw.startsWith("post_")) throw new Error("Invalid PostId format");
+  return raw as PostId;
 }
 
 // Functions with branded parameters
-function getUser(id: UserId): User { /* ... */ }
-function getPost(id: PostId): Post { /* ... */ }
+function getUser(id: UserId): User {
+  /* ... */
+}
+function getPost(id: PostId): Post {
+  /* ... */
+}
 
-const uid = createUserId('user_123')
-const pid = createPostId('post_456')
+const uid = createUserId("user_123");
+const pid = createPostId("post_456");
 
-getUser(uid)     // ✅
-getPost(pid)     // ✅
-getUser(pid)     // ❌ Type 'PostId' is not assignable to parameter of type 'UserId'
-getUser('raw')   // ❌ string is not branded — TypeScript error ✅
+getUser(uid); // ✅
+getPost(pid); // ✅
+getUser(pid); // ❌ Type 'PostId' is not assignable to parameter of type 'UserId'
+getUser("raw"); // ❌ string is not branded — TypeScript error ✅
 
 // At runtime: uid, pid are just strings — zero overhead
-console.log(typeof uid)  // 'string'
+console.log(typeof uid); // 'string'
 ```
 
 **Why `unique symbol`?** Each `declare const __brand: unique symbol` creates a completely unique phantom property name — no two branded types will accidentally have the same brand.
@@ -1039,6 +1104,7 @@ console.log(typeof uid)  // 'string'
 **Tiếng Việt:** TypeScript structural: `UserId = string` và `PostId = string` là cùng type — có thể nhầm. Branded type thêm phantom property để phân biệt structurally. `unique symbol` đảm bảo mỗi brand là unique. Constructor function đóng gói validation + assertion. Runtime: chỉ là string — zero overhead.
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Explains why structural typing creates the problem; uses `unique symbol` (not just `'UserId'` string literal for brand); wraps creation in constructor with validation
 - ❌ Weak: `type UserId = { id: string }` — creates a wrapper object (runtime overhead) instead of nominal brand
 
@@ -1051,44 +1117,45 @@ console.log(typeof uid)  // 'string'
 ```typescript
 // connection.ts
 class DatabaseConnection {
-  private client: PgClient
+  private client: PgClient;
 
   constructor() {
-    this.client = new PgClient(process.env.DATABASE_URL)
-    await this.client.connect()  // ← needs await using
+    this.client = new PgClient(process.env.DATABASE_URL);
+    await this.client.connect(); // ← needs await using
   }
 
   async query<T>(sql: string, params?: unknown[]): Promise<T[]> {
-    const result = await this.client.query(sql, params)
-    return result.rows
+    const result = await this.client.query(sql, params);
+    return result.rows;
   }
 
   async [Symbol.asyncDispose]() {
-    await this.client.end()
-    console.log('DB connection closed')
+    await this.client.end();
+    console.log("DB connection closed");
   }
 }
 
 // API route (Next.js App Router)
 export async function GET(request: Request) {
-  await using db = await DatabaseConnection.create()
+  await using db = await DatabaseConnection.create();
   // ← db[Symbol.asyncDispose]() called when this block exits
   //    even if query throws, even if response is sent
 
-  const users = await db.query<User>('SELECT * FROM users')
-  return Response.json(users)
+  const users = await db.query<User>("SELECT * FROM users");
+  return Response.json(users);
   // ← cleanup happens here automatically ✅
 }
 ```
 
 **Before `using` — fragile try/finally:**
+
 ```typescript
-const db = await DatabaseConnection.create()
+const db = await DatabaseConnection.create();
 try {
-  const users = await db.query<User>('SELECT * FROM users')
-  return Response.json(users)
+  const users = await db.query<User>("SELECT * FROM users");
+  return Response.json(users);
 } finally {
-  await db.close()  // ← easy to forget; must be in EVERY code path
+  await db.close(); // ← easy to forget; must be in EVERY code path
 }
 ```
 
@@ -1097,19 +1164,20 @@ try {
 **Tiếng Việt:** `await using db = ...` gọi `db[Symbol.asyncDispose]()` khi block exit — kể cả khi throw. Không cần try/finally. Implement `[Symbol.asyncDispose]()` trong connection class với `await client.end()`. Trước đây phải dùng try/finally — dễ quên hoặc miss cleanup path.
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Correctly uses `await using` (not `using`) for async dispose; explains the disposal guarantee on error paths; compares to the verbose try/finally alternative
 - ❌ Weak: "Use try/finally for cleanup" — correct but misses the modern ergonomic solution; or confusing `using` (sync) with `await using` (async)
 
 ---
 
-## Q&A Summary / Tóm Tắt Q&A
+## 📋 Interview Q&A Summary / Tóm Tắt Q&A Phỏng Vấn
 
-| # | Topic | Key Insight |
-|---|-------|-------------|
-| Q1 | Key remapping + filter | `as T[K] extends fn ? K : never` filters; `infer` extracts signature |
-| Q2 | `const` type parameter | Caller gets literal inference without `as const`; useful for library APIs |
-| Q3 | Branded types | `unique symbol` phantom property = structural distinction, zero runtime cost |
-| Q4 | `using` declarations | `await using` = async dispose guaranteed on exit/error; replaces try/finally |
+| #   | Câu hỏi                                                | Difficulty | Core Concept | Key Signal                                            |
+| --- | ------------------------------------------------------ | ---------- | ------------ | ----------------------------------------------------- |
+| 1   | Key remapping để derive type với async methods         | 🟡 Mid     | Mapped types | `as` clause + conditional key filtering + `infer`     |
+| 2   | `const` type parameter giải quyết vấn đề gì?           | 🟡 Mid     | Modern TS    | Literal inference trong generics không cần `as const` |
+| 3   | Tại sao cần branded types? Implement `UserId`/`PostId` | 🔴 Senior  | Type safety  | Nominal typing trong structural type system           |
+| 4   | Dùng `using` để cleanup database connection            | 🔴 Senior  | Modern TS    | `Symbol.dispose` + guaranteed cleanup kể cả khi throw |
 
 ---
 
@@ -1122,30 +1190,29 @@ try {
 
 ---
 
-## Retrieval Self-Check / Tự Kiểm Tra
+## 🔄 Self-Check / Tự Kiểm Tra
 
-**Close this document. Answer from memory:**
+> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
 
-**Retrieval:**
-1. What does `` `on${Capitalize<EventName>}` `` as a TypeScript type produce?
-2. How do you filter only function properties in a mapped type using key remapping?
-3. What does `<const T>` in a generic function signature do? What does the caller gain?
-4. Why use `unique symbol` for branded types instead of `string` literal brands?
-5. Difference between `using` and `await using` — when do you use each?
+| #   | Loại           | Câu hỏi                                                                                                                                                                             |
+| --- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 🔍 Retrieval   | `` `on${Capitalize<EventName>}` `` tạo ra type gì? Làm thế nào để filter chỉ function properties trong mapped type bằng key remapping? `<const T>` trong generic cho caller lợi gì? |
+| 2   | 🎨 Visual      | Vẽ branded type structure: `string & { readonly [brand]: 'UserId' }` — điều gì xảy ra tại runtime vs compile time? Vẽ Async utility type map.                                       |
+| 3   | 🛠️ Application | Có `const THEME = { primary: '#4A90E2', danger: '#E24A4A' }`. Type function `setColor(key: ThemeKey)` với `ThemeKey` derived từ object keys — fully type-safe.                      |
+| 4   | 🐛 Debug       | `function first<T>(arr: T[]): T` trả `string` thay vì `'hello'` cho `first(['hello'])`. Fix thế nào dùng TS 5.0+ features?                                                          |
+| 5   | 🎓 Teach       | Giải thích branded types cho Java developer: TypeScript dùng structural typing, branded types là workaround để tạo nominal typing.                                                  |
 
-**Visual:**
-- Write the Async utility type: maps all methods of T to return `Promise<ReturnType>`.
-- Draw the branded type structure: `string & { readonly [brand]: 'UserId' }` — what happens at runtime vs compile time?
+### Key Points (tự kiểm tra)
 
-**Application:**
-- You have `const THEME_COLORS = { primary: '#4A90E2', danger: '#E24A4A' }`. How do you type a function `setColor(key: ThemeKey)` where `ThemeKey` is derived from the object's keys?
-- Implement a `Connection` class that supports `await using` for automatic cleanup.
+| #   | Key Point                                                                                                                                                                                           |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Template literal biến `"click"\|"hover"` thành `"onClick"\|"onHover"`. Key remapping: `as K extends keyof T ? (T[K] extends Function ? K : never) : never`. `<const T>` = caller giữ literal types. |
+| 2   | Branded type tồn tại compile-time only, erased at runtime. `string & { [brand]: 'UserId' }` = structurally `string` + phantom tag. Async map: mỗi method return `Promise<ReturnType>`.              |
+| 3   | `type ThemeKey = keyof typeof THEME` → `'primary' \| 'danger'`. Function: `function setColor(key: ThemeKey): void`. Dùng `typeof THEME` để derive từ value.                                         |
+| 4   | Thêm `const` type parameter: `function first<const T extends unknown[]>(arr: T): T[0]`. Hoặc dùng `as const` tại call site. TS 5.0 `const` param preserve literal types.                            |
+| 5   | Java: `UserId` và `String` là khác nhau dù cùng store string (nominal). TS: mọi string compatible với nhau (structural). Branded types thêm phantom field → make incompatible.                      |
 
-**Debug:**
-- `function first<T>(arr: T[]): T` returns `string` instead of `'hello'` for `first(['hello'])`. How do you fix this using TS 5.0 features?
-
-**Teach:**
-- Explain branded types to a Java developer: "You know nominal typing in Java — `UserId` and `String` are different even if both store strings. TypeScript doesn't do that natively (it uses structural typing). Branded types are our workaround: we add a phantom property to make structurally identical types distinguishable. It's all erased at runtime — just a compile-time trick."
+> 🎯 **Feynman Prompt:** Giải thích `using` và `await using` (Resource Management) cho developer chỉ biết `try/finally` — "Tại sao đây là improvement và khi nào nên dùng?"
 
 ---
 

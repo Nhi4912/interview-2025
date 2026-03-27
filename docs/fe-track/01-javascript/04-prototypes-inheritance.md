@@ -706,17 +706,29 @@ if (process.env.NODE_ENV === 'development') {
 
 ---
 
-## Self-Check / Tự Kiểm Tra ⚡
-> **Đóng tài liệu lại trước khi làm — Close the doc before attempting.**
+## 🔄 Self-Check / Tự Kiểm Tra
 
-- [ ] **Retrieval**: Viết ra từ trí nhớ: 4 bước `new` thực hiện (không nhìn lại). So sánh với CLER pattern.
-- [ ] **Visual**: Vẽ prototype chain của `new Dog('Rex')` trên giấy: instance → Dog.prototype → Animal.prototype → Object.prototype → null. So sánh với ASCII diagram trên.
-- [ ] **Application**: Bạn có 10,000 User objects cần 5 shared methods. Dùng class, constructor+prototype, hay factory function? Giải thích memory trade-off.
-- [ ] **Debug**: Code trả về `undefined` khi gọi `user.greet()` dù `User.prototype.greet` đã được định nghĩa. 3 nguyên nhân khả năng nhất?
-- [ ] **Teach**: Giải thích "tại sao `arr.map` hoạt động dù bạn không define nó" cho người không biết code — dùng liên tưởng cụ thể.
+> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
 
-💬 **Feynman Prompt:** Giải thích prototype chain cho người không biết lập trình bằng liên tưởng "tòa chung cư với tiện ích chung". Không dùng từ "object", "prototype", "inherit".
+| # | Loại | Câu hỏi |
+|---|------|---------|
+| 1 | 🔍 Retrieval | Viết ra từ trí nhớ: **4 bước `new` thực hiện** (không nhìn lại). So sánh với CLER pattern. |
+| 2 | 🎨 Visual | Vẽ **prototype chain** của `new Dog('Rex')` trên giấy: instance → Dog.prototype → Animal.prototype → Object.prototype → null. So sánh với ASCII diagram trên. |
+| 3 | 🛠️ Application | Bạn có 10,000 User objects cần 5 shared methods. Dùng class, constructor+prototype, hay factory function? Giải thích **memory trade-off**. |
+| 4 | 🐛 Debug | Code trả về `undefined` khi gọi `user.greet()` dù `User.prototype.greet` đã được định nghĩa. 3 nguyên nhân khả năng nhất? |
+| 5 | 🎓 Teach | Giải thích "tại sao `arr.map` hoạt động dù bạn không define nó" cho người không biết code — dùng liên tưởng cụ thể. |
 
+### Key Points (tự kiểm tra)
+
+| # | Key Point |
+|---|-----------|
+| 1 | 4 bước `new`: (1) Tạo plain object, (2) Set `[[Prototype]] = Constructor.prototype`, (3) Bind `this` = new object, (4) Execute constructor body, (5) Return `this` (unless explicit return object). |
+| 2 | Rex → Dog.prototype (có methods của Dog) → Animal.prototype (có methods của Animal) → Object.prototype (có toString, etc.) → null. |
+| 3 | Class/constructor+prototype: methods ở **prototype** → 1 copy dùng chung 10,000 instances. Factory: mỗi instance có bản copy riêng → 10,000x memory. |
+| 4 | (1) Typo: `User.prototype.greet` vs `User.prototype.Greet`, (2) `user.__proto__` bị thay đổi sau khi tạo, (3) `user` có own property `greet` shadow prototype method. |
+| 5 | `arr.map` như 'căn tin chung' — array không có map riêng, nhưng khi gọi JS tìm lên 'tầng trên' (Array.prototype) nơi mọi array đều có thể chia sẻ. |
+
+> 🎯 **Feynman Prompt:** Giải thích prototype chain cho người không biết lập trình bằng liên tưởng "tòa chung cư với tiện ích chung". Không dùng từ "object", "prototype", "inherit".
 🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày → 7 ngày → 14 ngày** để chuyển vào long-term memory.
 
 ---

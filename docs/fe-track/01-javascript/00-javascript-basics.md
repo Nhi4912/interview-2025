@@ -1123,17 +1123,29 @@ const data = await fetch('/api/user')  // correct
 
 ---
 
-## Self-Check / Tự Kiểm Tra ⚡
-> **Đóng tài liệu lại trước khi làm — Close the doc before attempting.**
+## 🔄 Self-Check / Tự Kiểm Tra
 
-- [ ] **Retrieval**: Viết ra từ trí nhớ đúng 8 falsy values trong JavaScript. Không được nhìn lại — sau đó kiểm tra bạn có nhớ `-0` và `0n` không?
-- [ ] **Visual**: Vẽ sơ đồ JavaScript Runtime Architecture từ trí nhớ: Call Stack, Web APIs, Callback Queue, Event Loop — và mũi tên nối chúng.
-- [ ] **Application**: `const qty = 0; const display = qty || 'N/A';` — `display` là gì? Tại sao? Sửa code để `0` hiển thị đúng.
-- [ ] **Debug**: Code `const user = fetch('/api/user'); console.log(user.name);` in ra `undefined`. Nguyên nhân? Fix?
-- [ ] **Teach**: Giải thích "tại sao `setTimeout(fn, 0)` không chạy ngay" cho người không biết lập trình — dùng liên tưởng bartender.
+> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
 
-💬 **Feynman Prompt:** Giải thích Event Loop cho bạn không biết code, dùng liên tưởng nhà bếp nhà hàng. Không dùng từ "thread", "stack", "queue", hay "callback".
+| # | Loại | Câu hỏi |
+|---|------|---------|
+| 1 | 🔍 Retrieval | Viết ra từ trí nhớ đúng **8 falsy values** trong JavaScript. Không được nhìn lại — sau đó kiểm tra bạn có nhớ `-0` và `0n` không? |
+| 2 | 🎨 Visual | Vẽ sơ đồ **JavaScript Runtime Architecture** từ trí nhớ: Call Stack, Web APIs, Callback Queue, Event Loop — và mũi tên nối chúng. |
+| 3 | 🛠️ Application | `const qty = 0; const display = qty \|\| 'N/A';` — `display` là gì? Tại sao? Sửa code để `0` hiển thị đúng. |
+| 4 | 🐛 Debug | Code `const user = fetch('/api/user'); console.log(user.name);` in ra `undefined`. Nguyên nhân? Fix? |
+| 5 | 🎓 Teach | Giải thích "tại sao `setTimeout(fn, 0)` không chạy ngay" cho người không biết lập trình — dùng liên tưởng bartender. |
 
+### Key Points (tự kiểm tra)
+
+| # | Key Point |
+|---|-----------|
+| 1 | 8 falsy values: `false`, `0`, `-0`, `0n`, `""`, `null`, `undefined`, `NaN` — nhớ thêm `-0` và `0n` hay bị quên. |
+| 2 | Call Stack ←(Event Loop)← Callback Queue ←(done)← Web APIs ←(call)← Call Stack. Web APIs chạy song song ngoài JS engine. |
+| 3 | `display = 'N/A'` vì `0` là falsy nên `||` fallback. Fix: dùng `qty ?? 'N/A'` — nullish coalescing chỉ check `null`/`undefined`. |
+| 4 | `fetch()` trả về **Promise** (async), không phải data. Cần `const res = await fetch(...); const user = await res.json();` |
+| 5 | setTimeout callback vào Callback Queue, Event Loop chỉ đẩy vào Call Stack khi stack **trống** — '0ms' là minimum delay, không phải exact. |
+
+> 🎯 **Feynman Prompt:** Giải thích Event Loop cho bạn không biết code, dùng liên tưởng nhà bếp nhà hàng. Không dùng từ "thread", "stack", "queue", hay "callback".
 🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày → 7 ngày → 14 ngày** để chuyển vào long-term memory.
 
 ---

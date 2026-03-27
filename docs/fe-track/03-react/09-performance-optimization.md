@@ -628,14 +628,42 @@ Giải thích tiếng Việt: 7 bước có hệ thống: Đo → Bundle → Ren
 
 ---
 
-## Self-Check / Tự Kiểm Tra ⚡ (Đóng tài liệu lại trước khi làm)
+## 🔄 Self-Check / Tự Kiểm Tra
 
-- [ ] **Retrieval**: Viết 3 architectural patterns ngăn re-render từ trí nhớ — mỗi cái 1 câu + ví dụ.
-- [ ] **Visual**: Vẽ diagram component tree khi state colocation di chuyển state từ App xuống MouseTracker — components nào tránh được re-render?
-- [ ] **Application**: ProductList có 10,000 items, filter input lag 200ms. Profiler cho thấy filter function chậm, không phải children re-render. Bạn fix thế nào? Viết code.
-- [ ] **Debug**: `React.memo(Chart)` nhưng Chart vẫn re-render mỗi frame. Props là `{ data, onClick }`. Nguyên nhân? Fix?
-- [ ] **Teach**: Giải thích tại sao useTransition tốt hơn debounce cho search, bằng ví dụ "nhà hàng có bồi bàn thông minh vs bộ hẹn giờ cứng".
+> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
 
-💬 **Feynman Prompt:** Giải thích tại sao thêm React.memo vào mọi component không phải giải pháp tốt — khi nào memo làm performance tệ hơn?
+| # | Loại | Câu hỏi |
+|---|------|---------|
+| 1 | 🔍 Retrieval | Viết 3 architectural patterns ngăn re-render từ trí nhớ — mỗi cái 1 câu giải thích + ví dụ use case. |
+| 2 | 🎨 Visual | Vẽ component tree khi state colocation di chuyển state từ App xuống MouseTracker — components nào tránh được re-render? |
+| 3 | 🛠️ Application | ProductList có 10,000 items, filter input lag 200ms. Profiler cho thấy filter function chậm, không phải children re-render. Cách fix? Viết code. |
+| 4 | 🐛 Debug | `React.memo(Chart)` nhưng Chart vẫn re-render mỗi frame. Props là `{ data, onClick }`. Nguyên nhân và fix? |
+| 5 | 🎓 Teach | Giải thích tại sao `useTransition` tốt hơn debounce cho search — dùng ví dụ "nhà hàng với bồi bàn thông minh vs bộ hẹn giờ cứng". |
 
+### Key Points (tự kiểm tra)
+
+| # | Key Point |
+|---|-----------|
+| 1 | (1) State colocation: di chuyển state xuống component cần nó. (2) Children as props (composition): children không re-render khi parent state thay đổi. (3) Context splitting: tách read-heavy context. |
+| 2 | Trước: `App (re-renders) → Header → Sidebar → MouseTracker`. Sau: `App (stable) → Header → Sidebar → [MouseTracker với local state]`. App không re-render khi mouse move. |
+| 3 | Filter function chậm → `useMemo`: `const filtered = useMemo(() => items.filter(filterFn), [items, filterFn])`. Đảm bảo `filterFn` stable với `useCallback`. |
+| 4 | `onClick` là arrow function được tạo mới mỗi render → reference thay đổi → memo vô nghĩa. Fix: `useCallback(handleClick, [deps])` để stable reference. |
+| 5 | Debounce cứng (đợi 300ms dù có idle time). `useTransition`: React bắt đầu update ngay nhưng có thể interrupt nếu user type thêm — responsive, không block. |
+
+> 🎯 **Feynman Prompt:** Giải thích tại sao thêm `React.memo` vào mọi component không phải giải pháp tốt — khi nào memo làm performance tệ hơn?
 🔁 **Spaced Repetition reminder:** Review this file again on 2026-03-22, then 2026-03-26, then 2026-04-02.
+
+---
+
+## 🔗 Connections / Liên Kết
+
+### Cùng track (Same track)
+- [React 19 Features](./02-react-19-features.md) — Compiler eliminates manual memoization
+- [Modern React Features](./10-modern-react-features.md) — concurrent rendering and Suspense for perf
+- [Hooks Comprehensive](./07-hooks-comprehensive.md) — useTransition and useDeferredValue mechanics
+- [State Management](./05-state-management.md) — state colocation reduces re-render scope
+
+### Khác track (Cross-track)
+- [React Performance](../06-browser-performance/02-react-performance.md) — browser-side metrics for React apps
+- [Core Web Vitals](../06-browser-performance/01-core-web-vitals.md) — LCP/INP tied directly to React render cost
+- [Complexity Analysis](../../shared/01-cs-fundamentals/complexity-analysis.md) — O(n) reconciliation and memoization trade-offs

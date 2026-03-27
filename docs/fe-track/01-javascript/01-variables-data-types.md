@@ -1459,17 +1459,29 @@ for (let j = 0; j < 3; j++) {
 
 ---
 
-## Self-Check / Tự Kiểm Tra ⚡
-> **Đóng tài liệu lại trước khi làm — Close the doc before attempting.**
+## 🔄 Self-Check / Tự Kiểm Tra
 
-- [ ] **Retrieval**: Viết ra từ trí nhớ 7 primitive types của JavaScript. Sau đó kiểm tra — bạn có nhớ `Symbol` và `BigInt` không?
-- [ ] **Visual**: Vẽ sơ đồ stack/heap: `let x = 5; let obj = {a: 1}; let y = x; let ref = obj;` — variable nào trên stack, object nào trên heap, arrow nào chia sẻ?
-- [ ] **Application**: `const config = { timeout: 5000 }; config.timeout = 10000;` — có lỗi không? Tại sao? Làm sao để làm config thực sự immutable?
-- [ ] **Debug**: Code trả về `"NaN VND"` trên UI. Trace nguyên nhân: input đến từ đâu, bị coerce sai ở bước nào, fix như thế nào?
-- [ ] **Teach**: Giải thích cho người không biết code: tại sao `"5" + 1 = "51"` nhưng `"5" - 1 = 4`? Dùng liên tưởng đời thực.
+> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
 
-💬 **Feynman Prompt:** Giải thích tại sao trong JavaScript, hai object `{}` và `{}` không bằng nhau — dùng liên tưởng "địa chỉ nhà" không dùng từ "reference", "heap", hay "memory address".
+| # | Loại | Câu hỏi |
+|---|------|---------|
+| 1 | 🔍 Retrieval | Viết ra từ trí nhớ **7 primitive types** của JavaScript. Sau đó kiểm tra — bạn có nhớ `Symbol` và `BigInt` không? |
+| 2 | 🎨 Visual | Vẽ sơ đồ **stack/heap**: `let x = 5; let obj = {a: 1}; let y = x; let ref = obj;` — variable nào trên stack, object nào trên heap, arrow nào chia sẻ? |
+| 3 | 🛠️ Application | `const config = { timeout: 5000 }; config.timeout = 10000;` — có lỗi không? Tại sao? Làm sao để làm config **thực sự immutable**? |
+| 4 | 🐛 Debug | Code trả về `"NaN VND"` trên UI. Trace nguyên nhân: input đến từ đâu, bị coerce sai ở bước nào, fix như thế nào? |
+| 5 | 🎓 Teach | Giải thích cho người không biết code: tại sao `"5" + 1 = "51"` nhưng `"5" - 1 = 4`? Dùng liên tưởng đời thực. |
 
+### Key Points (tự kiểm tra)
+
+| # | Key Point |
+|---|-----------|
+| 1 | 7 primitives: `string`, `number`, `bigint`, `boolean`, `null`, `undefined`, `symbol` — hay quên `symbol` và `bigint`. |
+| 2 | Stack: `x=5`, `y=5` (primitive copy). Heap: `{a:1}` object. Cả `obj` và `ref` là pointers trên stack, cùng trỏ 1 object trên heap. |
+| 3 | Không lỗi — `const` chỉ lock **binding**, không lock **value**. Dùng `Object.freeze(config)` để prevent mutation thực sự. |
+| 4 | Input dạng string → cộng với `+` thành string concatenation → `NaN`. Fix: dùng `Number(input)` với guard `Number.isFinite()` trước khi tính. |
+| 5 | `+` với string → string concat (như 'nối câu'); `-` không có nghĩa với string nên JS **ép cả hai về số**. JS ưu tiên string với `+`, ưu tiên number với `-`. |
+
+> 🎯 **Feynman Prompt:** Giải thích tại sao trong JavaScript, hai object `{}` và `{}` không bằng nhau — dùng liên tưởng "địa chỉ nhà" không dùng từ "reference", "heap", hay "memory address".
 🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày → 7 ngày → 14 ngày** để chuyển vào long-term memory.
 
 ---

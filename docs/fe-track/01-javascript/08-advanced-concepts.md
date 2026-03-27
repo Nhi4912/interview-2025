@@ -828,14 +828,43 @@ Giải thích tiếng Việt: Debounce chờ user dừng scroll (tốt cho lưu 
 
 ---
 
-## Self-Check / Tự Kiểm Tra ⚡ (Đóng tài liệu lại trước khi làm)
+## 🔄 Self-Check / Tự Kiểm Tra
 
-- [ ] **Retrieval**: Viết implement `debounce` từ trí nhớ (với `cancel`). Giải thích leading vs trailing bằng 1 câu mỗi cái.
-- [ ] **Visual**: Vẽ timeline diagram cho debounce vs throttle khi user gõ 5 ký tự liên tục, delay 300ms.
-- [ ] **Application**: Component React mount/unmount liên tục. Map cache element metadata → memory leak. Fix bằng gì? Viết code.
-- [ ] **Debug**: `new Proxy(obj, { get(t,p) { return t[p] } })` — tại sao không nên dùng `t[p]` mà nên dùng `Reflect.get()`? Cho ví dụ bug cụ thể.
-- [ ] **Teach**: Giải thích WeakMap cho junior developer bằng ví dụ "thẻ từ ra vào văn phòng".
+> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
 
-💬 **Feynman Prompt:** Giải thích sự khác biệt giữa debounce và throttle bằng ví dụ cửa thang máy vs đèn giao thông. Không dùng thuật ngữ kỹ thuật.
+| # | Loại | Câu hỏi |
+|---|------|---------|
+| 1 | 🔍 Retrieval | Viết implement `debounce` từ trí nhớ (với `cancel`). Giải thích **leading vs trailing** bằng 1 câu mỗi cái. |
+| 2 | 🎨 Visual | Vẽ **timeline diagram** cho debounce vs throttle khi user gõ 5 ký tự liên tục, delay 300ms. |
+| 3 | 🛠️ Application | Component React mount/unmount liên tục. `Map` cache element metadata → **memory leak**. Fix bằng gì? Viết code. |
+| 4 | 🐛 Debug | `new Proxy(obj, { get(t,p) { return t[p] } })` — tại sao không nên dùng `t[p]` mà nên dùng `Reflect.get()`? Cho ví dụ bug cụ thể. |
+| 5 | 🎓 Teach | Giải thích **WeakMap** cho junior developer bằng ví dụ "thẻ từ ra vào văn phòng". |
 
+### Key Points (tự kiểm tra)
+
+| # | Key Point |
+|---|-----------|
+| 1 | `leading`: gọi ngay lần đầu, rồi im lặng đến hết delay. `trailing` (default): gọi sau khi user ngừng input đủ `delay` ms. `cancel()`: `clearTimeout(id); id = null;` |
+| 2 | Debounce: 1 execution duy nhất sau 300ms im lặng (5 ký tự → 1 call). Throttle: execution mỗi 300ms dù user vẫn gõ (5 ký tự trong 1s → ~3 calls). |
+| 3 | Dùng `WeakMap` thay `Map`: `const cache = new WeakMap(); el.addEventListener('mount', () => cache.set(el, meta)); // auto GC khi el bị remove` |
+| 4 | `t[p]` trigger getter của `t` trực tiếp, bỏ qua receiver. Nếu getter dùng `this`, `this` = `t` thay vì **proxy**. `Reflect.get(t, p, receiver)` giữ đúng `receiver`. |
+| 5 | WeakMap như thẻ từ văn phòng: thẻ gắn với **người** (object), không phải hệ thống. Người nghỉ việc (object bị GC) → thẻ tự hủy mà không cần admin xóa thủ công. |
+
+> 🎯 **Feynman Prompt:** Giải thích sự khác biệt giữa debounce và throttle bằng ví dụ cửa thang máy vs đèn giao thông. Không dùng thuật ngữ kỹ thuật.
 🔁 **Spaced Repetition reminder:** Review this file again on 2026-03-22, then 2026-03-26, then 2026-04-02.
+
+---
+
+## 🔗 Connections / Liên Kết
+
+### Cùng track (Same track)
+- [Closures](./03-closures.md) — closures power memoization and module patterns
+- [Prototypes & Inheritance](./04-prototypes-inheritance.md) — prototype chain underlies object patterns
+- [Memory Management Advanced](./15-memory-management-advanced.md) — WeakMap/WeakSet and GC deep dive
+- [Advanced Patterns Theory](./17-advanced-patterns-theory.md) — design patterns built on these concepts
+- [Metaprogramming Theory](./18-metaprogramming-theory.md) — Proxy and Reflect deep dive
+
+### Khác track (Cross-track)
+- [CS Fundamentals: Data Structures](../../shared/01-cs-fundamentals/data-structures-theory.md) — WeakMap/WeakSet as data structure choices
+- [React Advanced Patterns](../03-react/04-advanced-patterns.md) — debounce, memoization, and Proxy used in React
+- [CS Fundamentals: OS Theory](../../shared/01-cs-fundamentals/os-theory.md) — memory management at OS level

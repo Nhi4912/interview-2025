@@ -5,13 +5,13 @@
 
 ## Real-World Scenario / Tình Huống Thực Tế
 
-**React class component bug:** `this.handleClick` passed as prop to child button. Click → `TypeError: Cannot read properties of undefined (reading 'setState')`. Root cause: `this` binding is determined at *call site*, not *definition site*. When child calls `onClick()` without an object, `this` is `undefined` (strict mode) or `window` (sloppy). Fix: `this.handleClick = this.handleClick.bind(this)` in constructor, or use arrow function property.
+**React class component bug:** `this.handleClick` passed as prop to child button. Click → `TypeError: Cannot read properties of undefined (reading 'setState')`. Root cause: `this` binding is determined at _call site_, not _definition site_. When child calls `onClick()` without an object, `this` is `undefined` (strict mode) or `window` (sloppy). Fix: `this.handleClick = this.handleClick.bind(this)` in constructor, or use arrow function property.
 
 **Bài học:** `this` là tính năng JavaScript được hỏi nhiều nhất trong phỏng vấn Senior vì nó liên quan trực tiếp đến bugs phổ biến nhất trong React class components và event handlers. Biết 5 binding rules và priority order là yêu cầu tối thiểu.
 
 ## What & Why / Cái Gì & Tại Sao
 
-**Scope và this — hai khái niệm bị nhầm lẫn:** Scope được quyết định bởi *where code is written* (lexical). `this` được quyết định bởi *how function is called* (dynamic). Arrow functions break this pattern by capturing `this` lexically — they solve the "lost this" problem.
+**Scope và this — hai khái niệm bị nhầm lẫn:** Scope được quyết định bởi _where code is written_ (lexical). `this` được quyết định bởi _how function is called_ (dynamic). Arrow functions break this pattern by capturing `this` lexically — they solve the "lost this" problem.
 
 **Scope của doc này:** Deep dive vào `this` binding rules và Execution Context lifecycle. Scope/hoisting basics → xem [02-scope-hoisting-comprehensive.md](./02-scope-hoisting-comprehensive.md). Creation Phase → xem [13-javascript-basics-theory.md](./13-javascript-basics-theory.md).
 
@@ -49,7 +49,7 @@
 
 **Why does this exist? / Tại sao tồn tại?**
 
-- Why is `this` dynamic (determined at call time) instead of lexical? Because `this` models the *receiver* of a method call — `obj.method()` should let `method` refer to `obj`. The same function `fn` should work when called as `a.fn()` (this=a) and `b.fn()` (this=b) without modification
+- Why is `this` dynamic (determined at call time) instead of lexical? Because `this` models the _receiver_ of a method call — `obj.method()` should let `method` refer to `obj`. The same function `fn` should work when called as `a.fn()` (this=a) and `b.fn()` (this=b) without modification
 - Why did arrow functions change this? Because inner callbacks lost `this` binding — `function onSuccess() { this.setState(...) }` inside `fetch().then()` would lose `this`. Arrow functions capture `this` lexically from their enclosing context, solving this problem
 - Why does the `new` binding have highest priority? Because `new` explicitly creates a new object to be the receiver — overriding any implicit or explicit binding makes no sense when constructing
 
@@ -93,19 +93,21 @@ Priority: new > explicit (.bind wins over .call) > implicit > default
 
 **Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| `const fn = obj.method; fn()` expecting `this === obj` | Detaching loses binding — use `const fn = obj.method.bind(obj)` |
-| Using `function` in `forEach`/`map` callback and expecting outer `this` | Use arrow function: `array.forEach(item => this.process(item))` |
-| `fn.bind(ctx)` in render method creates new function every render | Bind in constructor or use arrow function property |
-| Arrow function as object method: `const obj = { fn: () => { this... } }` | Arrow captures `this` from module scope (globalThis/undefined), not from `obj` |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `const fn = obj.method; fn()` expecting `this === obj` | Detaching a method drops the implicit binding — called without an object context, `this` is `undefined`/global | Use `const fn = obj.method.bind(obj)` to preserve binding |
+| Using `function` in `forEach`/`map` callback and expecting outer `this` | Regular function creates its own `this` binding at call time — loses outer context | Use arrow function: `array.forEach(item => this.process(item))` |
+| `fn.bind(ctx)` in render method creates new function every render | New function reference each render breaks `React.memo` and `shouldComponentUpdate` equality checks | Bind in constructor or use arrow function property |
+| Arrow function as object method: `const obj = { fn: () => { this... } }` | Arrow captures `this` from the scope where it's defined — module scope (globalThis/undefined), not from `obj` | Use regular `function` for methods that need `this` to refer to the object |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "what is `this`" / "why is `this` undefined" / "React class component binding"
 - **Concept**: 5 binding rules, lost-this pitfall, arrow function solution
 - **Opening**: "There are 5 `this` binding rules in priority order: new > explicit (.bind/.call/.apply) > implicit (object method) > default (global/undefined). The most common bug is 'lost this' — detaching a method from its object drops the implicit binding. Arrow functions solve this by capturing `this` lexically..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: Functions as first-class values, objects, `new` keyword
 - **Enables**: React class components, event handlers, method chaining patterns, understanding `bind` overhead
 
@@ -124,56 +126,60 @@ Priority: new > explicit (.bind wins over .call) > implicit > default
 **Visual — Scope vs Context Interaction:**
 
 ```javascript
-const value = 'global'
+const value = "global";
 
 const obj = {
-  value: 'obj',
+  value: "obj",
   getValueByScope() {
     // Closure: captures 'value' variable from lexical scope
-    const inner = function() { return value }  // ← 'global' (scope lookup)
-    return inner()
+    const inner = function () {
+      return value;
+    }; // ← 'global' (scope lookup)
+    return inner();
   },
   getValueByContext() {
     // this: depends on how getValueByContext is called
-    return this.value  // ← 'obj' if called as obj.getValueByContext()
-  }
-}
+    return this.value; // ← 'obj' if called as obj.getValueByContext()
+  },
+};
 
 // Scope is fixed (lexical):
-const detached = obj.getValueByScope
-detached()  // still returns 'global' — scope doesn't change
+const detached = obj.getValueByScope;
+detached(); // still returns 'global' — scope doesn't change
 
 // Context changes:
-detached2 = obj.getValueByContext
-detached2()   // 'global' — this context changed!
-obj.getValueByContext()  // 'obj' — this context = obj
+detached2 = obj.getValueByContext;
+detached2(); // 'global' — this context changed!
+obj.getValueByContext(); // 'obj' — this context = obj
 
 // Arrow functions unify scope and this:
 const obj2 = {
-  value: 'obj2',
+  value: "obj2",
   outer() {
-    const inner = () => this.value  // ← 'obj2' (captures both scope AND this)
-    return inner()
-  }
-}
-obj2.outer()  // 'obj2'
+    const inner = () => this.value; // ← 'obj2' (captures both scope AND this)
+    return inner();
+  },
+};
+obj2.outer(); // 'obj2'
 ```
 
 **Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| "Closure captures `this`" | Closure captures scope variables, NOT `this` — use arrow function to capture `this` |
-| Arrow function as a class method to capture `this` | Arrow property methods work but can't be overridden via prototype |
-| `const { method } = obj; method()` expecting obj's `this` | Destructuring detaches from object — use `obj.method()` or bind |
-| "Scope and context are the same thing" | Scope = variable resolution (lexical). Context = `this` resolution (dynamic, except arrows) |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| "Closure captures `this`" | `this` is not a variable in scope — closures capture scope variables, not `this` | Use arrow function to capture `this` lexically (arrows close over `this` as a value) |
+| Arrow function as a class method to capture `this` | Arrow property methods exist on each instance, not on the prototype — can't be overridden | Works for React event handlers; be aware it's not on the prototype |
+| `const { method } = obj; method()` expecting obj's `this` | Destructuring detaches from object — implicit binding is lost at call time | Call as `obj.method()` or bind: `const method = obj.method.bind(obj)` |
+| "Scope and context are the same thing" | Scope = variable resolution (lexical, write-time); context = `this` (dynamic, call-time) — completely different mechanisms | Scope is lexical. Context is `this`. Arrow functions unify both by capturing `this` lexically. |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "closure and this" / "scope vs context" / "why does this arrow function work here"
 - **Concept**: Scope is lexical (write-time), context is dynamic (call-time), arrows unify both
 - **Opening**: "Scope and context are often confused. Scope is determined by where code is written — a closure captures the variables of its enclosing lexical environment. Context is `this` — determined by how the function is called at runtime. Arrow functions are unique: they don't have their own `this`, so they capture `this` lexically from the surrounding code, the same way closures capture variables..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: Closures, `this` binding rules
 - **Enables**: React hooks design rationale (hooks use closures, not `this`), event handler patterns
 
@@ -221,27 +227,27 @@ Stack overflow:
 
 **Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| "Local variables are destroyed immediately when function returns" | The EC is popped, but closures that captured the env can keep it alive |
-| "Stack overflow only happens with infinite recursion" | Large but finite recursion can also overflow — ~10,000 frames in V8 |
-| "`async` functions use a different stack" | `async` functions are still on the call stack; `await` pauses and resumes the same context |
-| "Eval context is the same as function context" | Eval EC can introduce variables into the enclosing scope in sloppy mode — that's why eval is dangerous |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| "Local variables are destroyed immediately when function returns" | The EC is popped, but closures that hold references to its Lexical Environment keep it alive | EC is popped; closures that captured the environment can keep it alive |
+| "Stack overflow only happens with infinite recursion" | V8's stack limit is ~10,000 frames — deep but finite recursion can also overflow | Large but finite recursion can also overflow — ~10,000 frames in V8 |
+| "`async` functions use a different stack" | `async` functions use the same call stack — `await` suspends execution and resumes at the same frame | `async` functions are still on the call stack; `await` pauses and resumes the same context |
+| "Eval context is the same as function context" | `eval` in sloppy mode can inject variables into the enclosing scope — dangerous and prevents optimization | Eval EC can leak variables into enclosing scope in sloppy mode — use strict mode or avoid eval |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "execution context" / "call stack" / "what happens when function is called"
 - **Concept**: EC lifecycle — creation, push to stack, execution, pop on return
 - **Opening**: "Every function call creates a new execution context with three components: Lexical Environment (block-scoped bindings), Variable Environment (var-scoped bindings, functionally the same in modern JS), and This Binding. It's pushed onto the call stack, code runs, then it's popped on return. Closures keep the Lexical Environment alive even after the context is popped..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: Variable environments (let/const/var), `this` binding rules
 - **Enables**: Debugging stack traces, understanding async/await suspension, closure memory model, TDZ explanation
 
 ---
 
 ## Reference Theory / Tài Liệu Tham Khảo
-
-
 
 ## Execution Context Fundamentals / Cơ Bản Ngữ Cảnh Thực Thi
 
@@ -257,15 +263,15 @@ Stack overflow:
 
 /**
  * Execution Context Components:
- * 
+ *
  * 1. Variable Environment
  *    - Environment Record
  *    - Outer Environment Reference
- * 
+ *
  * 2. Lexical Environment
  *    - Environment Record
  *    - Outer Environment Reference
- * 
+ *
  * 3. This Binding
  *    - Value of 'this'
  */
@@ -273,19 +279,19 @@ Stack overflow:
 interface ExecutionContext {
   // Variable Environment (for var declarations)
   variableEnvironment: LexicalEnvironment;
-  
+
   // Lexical Environment (for let/const declarations)
   lexicalEnvironment: LexicalEnvironment;
-  
+
   // This binding
   thisBinding: any;
-  
+
   // Type of context
-  type: 'global' | 'function' | 'eval' | 'module';
-  
+  type: "global" | "function" | "eval" | "module";
+
   // For function contexts
   functionObject?: Function;
-  
+
   // Realm (global object and intrinsics)
   realm: Realm;
 }
@@ -293,13 +299,13 @@ interface ExecutionContext {
 interface LexicalEnvironment {
   // Environment Record (stores bindings)
   environmentRecord: EnvironmentRecord;
-  
+
   // Reference to outer environment
   outer: LexicalEnvironment | null;
 }
 
 interface EnvironmentRecord {
-  type: 'declarative' | 'object' | 'global' | 'module';
+  type: "declarative" | "object" | "global" | "module";
   bindings: Map<string, Binding>;
 }
 
@@ -319,146 +325,138 @@ interface Realm {
 class ExecutionContextManager {
   private contextStack: ExecutionContext[] = [];
   private globalContext: ExecutionContext;
-  
+
   constructor() {
     // Create global execution context
     this.globalContext = this.createGlobalContext();
     this.contextStack.push(this.globalContext);
   }
-  
+
   private createGlobalContext(): ExecutionContext {
     const globalEnv: LexicalEnvironment = {
       environmentRecord: {
-        type: 'global',
-        bindings: new Map()
+        type: "global",
+        bindings: new Map(),
       },
-      outer: null
+      outer: null,
     };
-    
+
     return {
       variableEnvironment: globalEnv,
       lexicalEnvironment: globalEnv,
       thisBinding: globalThis,
-      type: 'global',
+      type: "global",
       realm: {
         globalObject: globalThis,
         globalEnv,
-        intrinsics: new Map()
-      }
+        intrinsics: new Map(),
+      },
     };
   }
-  
+
   // Create function execution context
   // Tạo ngữ cảnh thực thi hàm
-  createFunctionContext(
-    func: Function,
-    thisArg: any,
-    args: any[]
-  ): ExecutionContext {
+  createFunctionContext(func: Function, thisArg: any, args: any[]): ExecutionContext {
     // Create new lexical environment
     const localEnv: LexicalEnvironment = {
       environmentRecord: {
-        type: 'declarative',
-        bindings: new Map()
+        type: "declarative",
+        bindings: new Map(),
       },
-      outer: this.getFunctionOuterEnvironment(func)
+      outer: this.getFunctionOuterEnvironment(func),
     };
-    
+
     // Bind parameters
     this.bindParameters(localEnv, func, args);
-    
+
     // Determine this binding
     const thisBinding = this.determineThisBinding(func, thisArg);
-    
+
     return {
       variableEnvironment: localEnv,
       lexicalEnvironment: localEnv,
       thisBinding,
-      type: 'function',
+      type: "function",
       functionObject: func,
-      realm: this.getCurrentContext().realm
+      realm: this.getCurrentContext().realm,
     };
   }
-  
+
   private getFunctionOuterEnvironment(func: Function): LexicalEnvironment {
     // In real implementation, this would access [[Environment]] internal slot
     // For now, return current lexical environment
     return this.getCurrentContext().lexicalEnvironment;
   }
-  
-  private bindParameters(
-    env: LexicalEnvironment,
-    func: Function,
-    args: any[]
-  ): void {
+
+  private bindParameters(env: LexicalEnvironment, func: Function, args: any[]): void {
     // Bind function parameters
     const paramNames = this.getParameterNames(func);
-    
+
     for (let i = 0; i < paramNames.length; i++) {
       env.environmentRecord.bindings.set(paramNames[i], {
         value: args[i],
         mutable: true,
         deletable: false,
-        initialized: true
+        initialized: true,
       });
     }
-    
+
     // Bind 'arguments' object
-    env.environmentRecord.bindings.set('arguments', {
+    env.environmentRecord.bindings.set("arguments", {
       value: args,
       mutable: true,
       deletable: false,
-      initialized: true
+      initialized: true,
     });
   }
-  
+
   private getParameterNames(func: Function): string[] {
     // Extract parameter names from function
     const funcStr = func.toString();
     const match = funcStr.match(/\(([^)]*)\)/);
     if (!match) return [];
-    
+
     return match[1]
-      .split(',')
-      .map(param => param.trim())
-      .filter(param => param.length > 0);
+      .split(",")
+      .map((param) => param.trim())
+      .filter((param) => param.length > 0);
   }
-  
+
   private determineThisBinding(func: Function, thisArg: any): any {
     // Arrow functions use lexical this
     if (this.isArrowFunction(func)) {
       return this.getCurrentContext().thisBinding;
     }
-    
+
     // Strict mode
     if (this.isStrictMode(func)) {
       return thisArg;
     }
-    
+
     // Non-strict mode: convert to object
     if (thisArg === null || thisArg === undefined) {
       return globalThis;
     }
-    
+
     return Object(thisArg);
   }
-  
+
   private isArrowFunction(func: Function): boolean {
     // Check if function is arrow function
-    return !func.hasOwnProperty('prototype');
+    return !func.hasOwnProperty("prototype");
   }
-  
+
   private isStrictMode(func: Function): boolean {
     // Check if function is in strict mode
-    return func.toString().includes('use strict');
+    return func.toString().includes("use strict");
   }
-  
+
   // Push context onto stack
   // Đẩy context lên stack
   pushContext(context: ExecutionContext): void {
     this.contextStack.push(context);
   }
-  
+
   // Pop context from stack
   // Lấy context ra khỏi stack
   popContext(): ExecutionContext | undefined {
@@ -467,18 +465,18 @@ class ExecutionContextManager {
     }
     return undefined;
   }
-  
+
   // Get current context
   // Lấy context hiện tại
   getCurrentContext(): ExecutionContext {
     return this.contextStack[this.contextStack.length - 1];
   }
-  
+
   // Get variable value
   // Lấy giá trị biến
   getVariable(name: string): any {
     let env: LexicalEnvironment | null = this.getCurrentContext().lexicalEnvironment;
-    
+
     while (env !== null) {
       const binding = env.environmentRecord.bindings.get(name);
       if (binding) {
@@ -489,15 +487,15 @@ class ExecutionContextManager {
       }
       env = env.outer;
     }
-    
+
     throw new ReferenceError(`${name} is not defined`);
   }
-  
+
   // Set variable value
   // Đặt giá trị biến
   setVariable(name: string, value: any): void {
     let env: LexicalEnvironment | null = this.getCurrentContext().lexicalEnvironment;
-    
+
     while (env !== null) {
       const binding = env.environmentRecord.bindings.get(name);
       if (binding) {
@@ -509,46 +507,40 @@ class ExecutionContextManager {
       }
       env = env.outer;
     }
-    
+
     // Create global variable in non-strict mode
     if (!this.isStrictMode(this.getCurrentContext().functionObject!)) {
       this.globalContext.lexicalEnvironment.environmentRecord.bindings.set(name, {
         value,
         mutable: true,
         deletable: true,
-        initialized: true
+        initialized: true,
       });
     } else {
       throw new ReferenceError(`${name} is not defined`);
     }
   }
-  
+
   // Declare variable
   // Khai báo biến
-  declareVariable(
-    name: string,
-    value: any,
-    kind: 'var' | 'let' | 'const'
-  ): void {
+  declareVariable(name: string, value: any, kind: "var" | "let" | "const"): void {
     const context = this.getCurrentContext();
-    const env = kind === 'var' 
-      ? context.variableEnvironment 
-      : context.lexicalEnvironment;
-    
+    const env = kind === "var" ? context.variableEnvironment : context.lexicalEnvironment;
+
     // Check if already declared
     if (env.environmentRecord.bindings.has(name)) {
-      if (kind === 'let' || kind === 'const') {
+      if (kind === "let" || kind === "const") {
         throw new SyntaxError(`Identifier '${name}' has already been declared`);
       }
       // var allows redeclaration
       return;
     }
-    
+
     env.environmentRecord.bindings.set(name, {
       value,
-      mutable: kind !== 'const',
+      mutable: kind !== "const",
       deletable: false,
-      initialized: kind === 'var' // var is initialized with undefined
+      initialized: kind === "var", // var is initialized with undefined
     });
   }
 }
@@ -571,46 +563,46 @@ class ExecutionContextManager {
 class CallStack {
   private stack: StackFrame[] = [];
   private maxSize: number = 10000; // Stack size limit
-  
+
   // Push frame onto stack
   // Đẩy frame lên stack
   push(frame: StackFrame): void {
     if (this.stack.length >= this.maxSize) {
-      throw new RangeError('Maximum call stack size exceeded');
+      throw new RangeError("Maximum call stack size exceeded");
     }
-    
+
     this.stack.push(frame);
   }
-  
+
   // Pop frame from stack
   // Lấy frame ra khỏi stack
   pop(): StackFrame | undefined {
     return this.stack.pop();
   }
-  
+
   // Peek at top frame
   // Xem frame trên cùng
   peek(): StackFrame | undefined {
     return this.stack[this.stack.length - 1];
   }
-  
+
   // Get stack trace
   // Lấy stack trace
   getStackTrace(): string[] {
-    return this.stack.map(frame => {
-      const location = frame.location 
+    return this.stack.map((frame) => {
+      const location = frame.location
         ? ` (${frame.location.file}:${frame.location.line}:${frame.location.column})`
-        : '';
+        : "";
       return `at ${frame.functionName}${location}`;
     });
   }
-  
+
   // Get call stack size
   // Lấy kích thước call stack
   size(): number {
     return this.stack.length;
   }
-  
+
   // Check if stack is empty
   // Kiểm tra stack có rỗng không
   isEmpty(): boolean {
@@ -638,55 +630,55 @@ class CallStackExample {
   static demonstrate() {
     const callStack = new CallStack();
     const contextManager = new ExecutionContextManager();
-    
+
     // Simulate function calls
     // Mô phỏng gọi hàm
-    
+
     function first() {
       const context = contextManager.createFunctionContext(first, undefined, []);
       callStack.push({
-        functionName: 'first',
+        functionName: "first",
         context,
-        arguments: []
+        arguments: [],
       });
-      
+
       second();
-      
+
       callStack.pop();
     }
-    
+
     function second() {
       const context = contextManager.createFunctionContext(second, undefined, []);
       callStack.push({
-        functionName: 'second',
+        functionName: "second",
         context,
-        arguments: []
+        arguments: [],
       });
-      
+
       third();
-      
+
       callStack.pop();
     }
-    
+
     function third() {
       const context = contextManager.createFunctionContext(third, undefined, []);
       callStack.push({
-        functionName: 'third',
+        functionName: "third",
         context,
-        arguments: []
+        arguments: [],
       });
-      
+
       // Stack trace at this point:
       // at third
       // at second
       // at first
       // at global
-      
+
       console.log(callStack.getStackTrace());
-      
+
       callStack.pop();
     }
-    
+
     first();
   }
 }
@@ -711,34 +703,34 @@ class ScopeChainExample {
   // Ví dụ 1: Phạm vi lồng nhau
   static nestedScopes() {
     // Global scope
-    const global = 'global';
-    
+    const global = "global";
+
     function outer() {
       // Outer function scope
-      const outerVar = 'outer';
-      
+      const outerVar = "outer";
+
       function inner() {
         // Inner function scope
-        const innerVar = 'inner';
-        
+        const innerVar = "inner";
+
         // Can access all three scopes
-        console.log(global);    // 'global'
-        console.log(outerVar);  // 'outer'
-        console.log(innerVar);  // 'inner'
+        console.log(global); // 'global'
+        console.log(outerVar); // 'outer'
+        console.log(innerVar); // 'inner'
       }
-      
+
       inner();
     }
-    
+
     outer();
   }
-  
+
   // Example 2: Closure
   // Ví dụ 2: Closure
   static closureExample() {
     function createCounter() {
       let count = 0; // Captured in closure
-      
+
       return {
         increment() {
           return ++count;
@@ -748,40 +740,40 @@ class ScopeChainExample {
         },
         getCount() {
           return count;
-        }
+        },
       };
     }
-    
+
     const counter = createCounter();
     console.log(counter.increment()); // 1
     console.log(counter.increment()); // 2
-    console.log(counter.getCount());  // 2
+    console.log(counter.getCount()); // 2
   }
-  
+
   // Example 3: Block scope
   // Ví dụ 3: Phạm vi khối
   static blockScope() {
     // var: function-scoped
     if (true) {
-      var functionScoped = 'visible outside';
+      var functionScoped = "visible outside";
     }
     console.log(functionScoped); // 'visible outside'
-    
+
     // let/const: block-scoped
     if (true) {
-      let blockScoped = 'not visible outside';
-      const alsoBlockScoped = 'not visible outside';
+      let blockScoped = "not visible outside";
+      const alsoBlockScoped = "not visible outside";
     }
     // console.log(blockScoped); // ReferenceError
   }
-  
+
   // Example 4: Temporal Dead Zone
   // Ví dụ 4: Vùng Chết Tạm Thời
   static temporalDeadZone() {
     // console.log(x); // ReferenceError: Cannot access 'x' before initialization
     let x = 10;
     console.log(x); // 10
-    
+
     // var is hoisted and initialized with undefined
     console.log(y); // undefined
     var y = 20;
@@ -811,74 +803,74 @@ class ThisBindingExamples {
     function regularFunction() {
       console.log(this); // globalThis (non-strict) or undefined (strict)
     }
-    
+
     regularFunction();
   }
-  
+
   // Rule 2: Implicit binding
   // Quy tắc 2: Ràng buộc ngầm định
   static implicitBinding() {
     const obj = {
-      name: 'Object',
+      name: "Object",
       greet() {
         console.log(this.name); // 'Object'
-      }
+      },
     };
-    
+
     obj.greet(); // this = obj
-    
+
     // Lost implicit binding
     const greet = obj.greet;
     greet(); // this = globalThis or undefined
   }
-  
+
   // Rule 3: Explicit binding
   // Quy tắc 3: Ràng buộc rõ ràng
   static explicitBinding() {
     function greet() {
       console.log(this.name);
     }
-    
-    const obj1 = { name: 'Object 1' };
-    const obj2 = { name: 'Object 2' };
-    
-    greet.call(obj1);  // 'Object 1'
+
+    const obj1 = { name: "Object 1" };
+    const obj2 = { name: "Object 2" };
+
+    greet.call(obj1); // 'Object 1'
     greet.apply(obj2); // 'Object 2'
-    
+
     const boundGreet = greet.bind(obj1);
     boundGreet(); // 'Object 1'
   }
-  
+
   // Rule 4: New binding
   // Quy tắc 4: Ràng buộc new
   static newBinding() {
     function Person(name: string) {
       this.name = name;
     }
-    
-    const person = new Person('John');
+
+    const person = new Person("John");
     console.log(person.name); // 'John'
   }
-  
+
   // Rule 5: Arrow function (lexical this)
   // Quy tắc 5: Arrow function (this từ vựng)
   static arrowFunction() {
     const obj = {
-      name: 'Object',
+      name: "Object",
       regularMethod() {
         console.log(this.name); // 'Object'
-        
+
         const arrow = () => {
           console.log(this.name); // 'Object' (lexical this)
         };
-        
+
         arrow();
-      }
+      },
     };
-    
+
     obj.regularMethod();
   }
-  
+
   // Priority: new > explicit > implicit > default
   // Ưu tiên: new > rõ ràng > ngầm định > mặc định
 }
@@ -895,6 +887,7 @@ class ThisBindingExamples {
 5 rules theo thứ tự priority: New > Explicit (call/apply/bind) > Implicit (object method) > Default (bare call). Arrow function không có `this` riêng — capture từ enclosing context lexically.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: All 5 rules named, correct priority order, explains arrow function as "no own this"
 - ❌ Weak: "this depends on how function is called" — true but no specifics on the 5 rules
 
@@ -907,6 +900,7 @@ class ThisBindingExamples {
 Scope = visibility of variables, determined at write-time (lexical). Context = `this`, determined at call-time (dynamic). Arrow functions exception: họ capture `this` lexically như scope variables.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Names lexical (write-time) vs dynamic (call-time), gives arrow function as exception
 - ❌ Weak: "Context is this" — no lexical vs dynamic distinction
 
@@ -914,11 +908,12 @@ Scope = visibility of variables, determined at write-time (lexical). Context = `
 
 ### Q: Explain what happens step-by-step when a function is called. 🟡 Mid
 
-**A:** (1) A new Execution Context is created with 3 components: Lexical Environment (for `let`/`const`/function bindings), Variable Environment (for `var` bindings), and `this` binding (determined by the call pattern). (2) During the Creation Phase, bindings are set up: `var` → `undefined`, function declarations → full function objects, `let`/`const` → TDZ (uninitialized). `this` is also determined here. (3) The EC is pushed onto the Call Stack. (4) Execution Phase runs the function body line by line. (5) On return, EC is popped. Local bindings are GC-eligible *unless* a closure captures the Lexical Environment.
+**A:** (1) A new Execution Context is created with 3 components: Lexical Environment (for `let`/`const`/function bindings), Variable Environment (for `var` bindings), and `this` binding (determined by the call pattern). (2) During the Creation Phase, bindings are set up: `var` → `undefined`, function declarations → full function objects, `let`/`const` → TDZ (uninitialized). `this` is also determined here. (3) The EC is pushed onto the Call Stack. (4) Execution Phase runs the function body line by line. (5) On return, EC is popped. Local bindings are GC-eligible _unless_ a closure captures the Lexical Environment.
 
 Khi function được gọi: (1) Tạo EC với LexEnv + VarEnv + ThisBinding; (2) Creation Phase: set up bindings (var→undefined, fn→hoisted, let/const→TDZ), determine `this`; (3) Push to Call Stack; (4) Execute body; (5) Pop on return. Closure giữ LexEnv alive sau khi EC popped.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Names 3 EC components, Creation/Execution phases, mentions closure keeping LexEnv alive
 - ❌ Weak: "Function scope is created and destroyed" — no mention of EC structure or phases
 
@@ -931,6 +926,7 @@ Khi function được gọi: (1) Tạo EC với LexEnv + VarEnv + ThisBinding; (
 "Lost this": detach method → bare function call → default binding. Fixes: (1) `bind(obj)` ngay khi detach; (2) Arrow function property trong class; (3) Wrapper function.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Explains the default binding mechanism, gives 3 distinct solutions with trade-offs
 - ❌ Weak: "Use arrow functions" — one solution only; doesn't explain the root cause
 
@@ -938,12 +934,12 @@ Khi function được gọi: (1) Tạo EC với LexEnv + VarEnv + ThisBinding; (
 
 ## Q&A Summary / Tóm Tắt Q&A
 
-| # | Topic | Level | One-liner |
-|---|-------|-------|-----------|
-| 1 | 5 `this` binding rules | 🟡 | new > explicit > implicit > default; arrow = lexical capture |
-| 2 | Scope vs context | 🟢 | Scope: lexical (write-time). `this`: dynamic (call-time). Arrow: exception |
-| 3 | Function call lifecycle | 🟡 | Create EC → Creation Phase → Push to stack → Execute → Pop; closure keeps LexEnv |
-| 4 | Lost `this` + 3 fixes | 🟡 | Detach → bare call → default binding. Fix: bind / arrow property / wrapper |
+| #   | Topic                   | Level | One-liner                                                                        |
+| --- | ----------------------- | ----- | -------------------------------------------------------------------------------- |
+| 1   | 5 `this` binding rules  | 🟡    | new > explicit > implicit > default; arrow = lexical capture                     |
+| 2   | Scope vs context        | 🟢    | Scope: lexical (write-time). `this`: dynamic (call-time). Arrow: exception       |
+| 3   | Function call lifecycle | 🟡    | Create EC → Creation Phase → Push to stack → Execute → Pop; closure keeps LexEnv |
+| 4   | Lost `this` + 3 fixes   | 🟡    | Detach → bare call → default binding. Fix: bind / arrow property / wrapper       |
 
 ---
 
@@ -953,8 +949,12 @@ Khi function được gọi: (1) Tạo EC với LexEnv + VarEnv + ThisBinding; (
 
 ```javascript
 class Button extends React.Component {
-  handleClick() { this.setState({ clicked: true }) }
-  render() { return <button onClick={this.handleClick}>Click</button> }
+  handleClick() {
+    this.setState({ clicked: true });
+  }
+  render() {
+    return <button onClick={this.handleClick}>Click</button>;
+  }
 }
 ```
 
@@ -973,6 +973,8 @@ class Button extends React.Component {
 - **Application**: You have `const { method } = someObject; method()`. What is `this` inside `method`? How do you fix it to refer to `someObject`?
 - **Debug**: An arrow function as an object method doesn't have access to the object via `this`. Explain why.
 - **Teach**: Explain "lost this" to a junior using a restaurant analogy — the waiter knows the menu but doesn't know which table they're serving when called out of context.
+
+> 🎯 **Feynman Prompt:** Giải thích cho PM: tại sao cùng một hàm `getName()` nhưng cho kết quả khác nhau tùy vào cách gọi — `this` binding và execution context hoạt động như thế nào theo từng ngữ cảnh?
 
 🔁 **Spaced repetition**: Review in 3 days → 7 days → 14 days
 

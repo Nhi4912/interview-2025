@@ -33,6 +33,7 @@ function handleSubmit() {
 **Analogy — Quán phở single chef:**
 
 Một đầu bếp (JS thread) phục vụ khách:
+
 - Nhận order → nấu ngay (synchronous: tính toán, DOM read/write)
 - Đặt nồi nước sôi (async: fetch, setTimeout) → trong khi chờ, nhận order tiếp
 - Khi nước sôi xong → phục vụ theo **thứ tự ưu tiên**: khách VIP (microtasks) trước, khách thường (macrotasks) sau
@@ -97,9 +98,15 @@ Call Stack như **bookmark trong sách** — khi bạn đọc chương 5 rồi n
 #### Layer 2: How the Call Stack Works
 
 ```javascript
-function c() { console.log('C'); }
-function b() { c(); }
-function a() { b(); }
+function c() {
+  console.log("C");
+}
+function b() {
+  c();
+}
+function a() {
+  b();
+}
 a();
 
 // Stack progression:
@@ -117,7 +124,9 @@ a();
 
 ```javascript
 // Stack Overflow — infinite recursion
-function infinite() { return infinite(); }
+function infinite() {
+  return infinite();
+}
 infinite(); // RangeError: Maximum call stack size exceeded
 
 // Blocking the stack — UI freezes
@@ -131,17 +140,19 @@ heavySync(); // No clicks, no scroll, nothing responds for 3 seconds
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-|---------|------------|---------|
-| "setTimeout(fn, 0) chạy ngay lập tức" | Nó vào macrotask queue — chạy SAU khi stack empty và microtasks xong | setTimeout(fn, 0) có thể delay hàng chục ms nếu microtask queue dài |
-| Nghĩ blocking code chỉ ảnh hưởng performance | Blocking code FREEZES UI — không click, không scroll được | Break heavy work thành chunks, dùng Web Worker cho CPU-intensive tasks |
+| Sai lầm                                      | Tại sao sai                                                          | Đúng là                                                                |
+| -------------------------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| "setTimeout(fn, 0) chạy ngay lập tức"        | Nó vào macrotask queue — chạy SAU khi stack empty và microtasks xong | setTimeout(fn, 0) có thể delay hàng chục ms nếu microtask queue dài    |
+| Nghĩ blocking code chỉ ảnh hưởng performance | Blocking code FREEZES UI — không click, không scroll được            | Break heavy work thành chunks, dùng Web Worker cho CPU-intensive tasks |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy: output order puzzle với setTimeout + Promise
 - → Nhớ đến: Stack empty → microtasks → macrotask
 - → Mở đầu: "JavaScript single-threaded. Khi stack empty, Event Loop ưu tiên microtask queue hoàn toàn trước khi lấy macrotask tiếp theo..."
 
 **🔑 Knowledge Chain:**
+
 - 📚 Cần biết: Execution context (scope, hoisting)
 - ➡️ Để hiểu: Microtask vs Macrotask priority (section 2 dưới)
 
@@ -161,22 +172,22 @@ Hàng đợi ngân hàng có hai loại vé: **vé đỏ** (microtask: khách VI
 
 #### Layer 2: The Priority Queue in Detail
 
-| Queue | APIs | Priority | Drain policy |
-|-------|------|----------|-------------|
-| Microtask | `Promise.then/catch/finally`, `queueMicrotask()`, `async/await`, `MutationObserver` | **Cao** | Drain **ALL** before next macrotask |
-| Macrotask | `setTimeout`, `setInterval`, `setImmediate` (Node), I/O callbacks, UI events | Thấp | **1 task** per event loop iteration |
+| Queue     | APIs                                                                                | Priority | Drain policy                        |
+| --------- | ----------------------------------------------------------------------------------- | -------- | ----------------------------------- |
+| Microtask | `Promise.then/catch/finally`, `queueMicrotask()`, `async/await`, `MutationObserver` | **Cao**  | Drain **ALL** before next macrotask |
+| Macrotask | `setTimeout`, `setInterval`, `setImmediate` (Node), I/O callbacks, UI events        | Thấp     | **1 task** per event loop iteration |
 
 ```javascript
 // Classic interview puzzle — predict the output:
-console.log('1: sync start');
+console.log("1: sync start");
 
-setTimeout(() => console.log('2: timeout'), 0);
+setTimeout(() => console.log("2: timeout"), 0);
 
 Promise.resolve()
-  .then(() => console.log('3: microtask 1'))
-  .then(() => console.log('4: microtask 2'));
+  .then(() => console.log("3: microtask 1"))
+  .then(() => console.log("4: microtask 2"));
 
-console.log('5: sync end');
+console.log("5: sync end");
 
 // Output:
 // 1: sync start    ← sync, runs immediately
@@ -207,18 +218,20 @@ function safeLoop() {
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-|---------|------------|---------|
-| "Promise.then chạy async, setTimeout chạy sau" | Cả hai async nhưng microtask LUÔN trước macrotask | Trace queue type: Promise → microtask; setTimeout → macrotask |
-| "async/await là macrotask vì nó async" | `await` desugars thành `.then()` — là microtask | `await` = microtask, cùng priority với Promise.then |
-| Dùng `setTimeout(fn, 0)` để "đảm bảo sau DOM update" | DOM update không xảy ra giữa microtasks — cần requestAnimationFrame | Dùng rAF cho visual updates, không dùng setTimeout |
+| Sai lầm                                              | Tại sao sai                                                         | Đúng là                                                       |
+| ---------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------- |
+| "Promise.then chạy async, setTimeout chạy sau"       | Cả hai async nhưng microtask LUÔN trước macrotask                   | Trace queue type: Promise → microtask; setTimeout → macrotask |
+| "async/await là macrotask vì nó async"               | `await` desugars thành `.then()` — là microtask                     | `await` = microtask, cùng priority với Promise.then           |
+| Dùng `setTimeout(fn, 0)` để "đảm bảo sau DOM update" | DOM update không xảy ra giữa microtasks — cần requestAnimationFrame | Dùng rAF cho visual updates, không dùng setTimeout            |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy: câu đố output order với mix của sync, Promise, setTimeout
 - → Algorithm: (1) chạy hết sync, (2) drain microtasks, (3) 1 macrotask, (4) repeat
 - → Mở đầu: "Tôi sẽ trace qua Event Loop: sync code chạy trước, sau đó microtask queue drain hoàn toàn, rồi mới lấy macrotask đầu tiên..."
 
 **🔑 Knowledge Chain:**
+
 - 📚 Cần biết: Call Stack (section 1), Promises (xem [09-async-comprehensive.md](./09-async-comprehensive.md))
 - ➡️ Để hiểu: Browser rendering pipeline & requestAnimationFrame (section 3)
 
@@ -253,7 +266,7 @@ Event Loop iteration:
 let position = 0;
 function animate() {
   position += 2;
-  element.style.left = position + 'px';
+  element.style.left = position + "px";
 
   if (position < 300) {
     requestAnimationFrame(animate); // Request next frame
@@ -264,7 +277,7 @@ requestAnimationFrame(animate); // Start
 // vs setTimeout — jittery
 function animateWrong() {
   position += 2;
-  element.style.left = position + 'px';
+  element.style.left = position + "px";
   if (position < 300) setTimeout(animateWrong, 16); // ~60fps but not synced
 }
 ```
@@ -273,32 +286,34 @@ function animateWrong() {
 
 ```javascript
 // ❌ Layout Thrashing — forced synchronous layout (kills performance)
-elements.forEach(el => {
-  const width = el.offsetWidth;     // READ — forces layout calculation
-  el.style.width = width * 2 + 'px'; // WRITE — invalidates layout
+elements.forEach((el) => {
+  const width = el.offsetWidth; // READ — forces layout calculation
+  el.style.width = width * 2 + "px"; // WRITE — invalidates layout
   // Next READ in loop forces layout AGAIN — N forced layouts!
 });
 
 // ✅ Batch reads then writes
-const widths = elements.map(el => el.offsetWidth); // All READs
-elements.forEach((el, i) => el.style.width = widths[i] * 2 + 'px'); // All WRITEs
+const widths = elements.map((el) => el.offsetWidth); // All READs
+elements.forEach((el, i) => (el.style.width = widths[i] * 2 + "px")); // All WRITEs
 // 1 layout calculation instead of N
 ```
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-|---------|------------|---------|
-| Dùng `setInterval(fn, 16)` cho animation | Không synced với display, CPU waste khi tab hidden | `requestAnimationFrame` — tự pause khi hidden, synced với display |
-| Đọc và ghi DOM xen kẽ trong loop | Mỗi read sau write = forced layout recalculation | Batch tất cả reads trước, rồi tất cả writes sau |
-| Nghĩ rAF là macrotask | rAF là render task — chạy trong rendering step, không phải macrotask queue | rAF callback chạy SAU microtasks nhưng TRƯỚC hoặc TRONG render, không trong task queue |
+| Sai lầm                                  | Tại sao sai                                                                | Đúng là                                                                                |
+| ---------------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Dùng `setInterval(fn, 16)` cho animation | Không synced với display, CPU waste khi tab hidden                         | `requestAnimationFrame` — tự pause khi hidden, synced với display                      |
+| Đọc và ghi DOM xen kẽ trong loop         | Mỗi read sau write = forced layout recalculation                           | Batch tất cả reads trước, rồi tất cả writes sau                                        |
+| Nghĩ rAF là macrotask                    | rAF là render task — chạy trong rendering step, không phải macrotask queue | rAF callback chạy SAU microtasks nhưng TRƯỚC hoặc TRONG render, không trong task queue |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy: "Tại sao animation giật?" hoặc "Optimize DOM manipulation?"
 - → Nhớ đến: rAF cho animation sync, batch reads/writes để tránh layout thrashing
 - → Mở đầu: "Browser render ở 60fps, mỗi frame 16.7ms. setTimeout không sync với render cycle — requestAnimationFrame thì có..."
 
 **🔑 Knowledge Chain:**
+
 - 📚 Cần biết: Microtask queue (section 2)
 - ➡️ Để hiểu: Core Web Vitals, LCP/FID optimization ([06-browser-performance](../06-browser-performance/01-core-web-vitals.md))
 
@@ -309,15 +324,16 @@ elements.forEach((el, i) => el.style.width = widths[i] * 2 + 'px'); // All WRITE
 ### Q1: Predict the output — classic Event Loop puzzle 🟢 Junior
 
 ```javascript
-console.log('A');
-setTimeout(() => console.log('B'), 0);
-Promise.resolve().then(() => console.log('C'));
-console.log('D');
+console.log("A");
+setTimeout(() => console.log("B"), 0);
+Promise.resolve().then(() => console.log("C"));
+console.log("D");
 ```
 
 **A:** Output: `A → D → C → B`
 
 **Trace:**
+
 1. `console.log('A')` — sync, runs immediately: **A**
 2. `setTimeout` callback → macrotask queue: `[B]`
 3. `Promise.resolve().then(C)` → microtask queue: `[C]`
@@ -328,6 +344,7 @@ console.log('D');
 Thứ tự: **A D C B**
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Trace từng bước, phân biệt đúng queue type, giải thích tại sao microtask trước macrotask
 - ❌ Weak: Đoán `A D B C` (nhầm Promise là macrotask) hoặc `A B C D` (không hiểu async)
 
@@ -336,23 +353,24 @@ Thứ tự: **A D C B**
 ### Q2: Predict harder output — chained microtasks 🟡 Mid
 
 ```javascript
-console.log('1');
+console.log("1");
 setTimeout(() => {
-  console.log('2');
-  Promise.resolve().then(() => console.log('3'));
+  console.log("2");
+  Promise.resolve().then(() => console.log("3"));
 }, 0);
 Promise.resolve()
   .then(() => {
-    console.log('4');
-    setTimeout(() => console.log('5'), 0);
+    console.log("4");
+    setTimeout(() => console.log("5"), 0);
   })
-  .then(() => console.log('6'));
-console.log('7');
+  .then(() => console.log("6"));
+console.log("7");
 ```
 
 **A:** Output: `1 → 7 → 4 → 6 → 2 → 3 → 5`
 
 **Trace:**
+
 1. Sync: **1**, setTimeout(2,3)→macro[A], Promise chain enqueued, **7**
 2. Microtasks: `.then(4)` → print **4**, setTimeout(5)→macro[B], second `.then(6)` queued
 3. Microtasks continue: `.then(6)` → print **6**
@@ -361,6 +379,7 @@ console.log('7');
 6. Macrotask B: **5**
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Biết mỗi macrotask có thể tạo microtask mới (drain ngay sau macrotask đó), trace đúng macro[A] tạo microtask "3"
 - ❌ Weak: Nhầm "3" và "5" (không biết microtask trong macrotask drain ngay sau macrotask đó xong)
 
@@ -387,15 +406,16 @@ function processChunk(items, index = 0) {
 }
 
 // Strategy 2: Web Worker (separate thread for CPU-intensive work)
-const worker = new Worker('heavy-computation.js');
+const worker = new Worker("heavy-computation.js");
 worker.postMessage({ data: bigArray });
 worker.onmessage = (e) => updateUI(e.data); // UI thread not blocked
 
 // Strategy 3: scheduler.postTask (modern — respects priority)
-scheduler.postTask(() => processHeavy(), { priority: 'background' });
+scheduler.postTask(() => processHeavy(), { priority: "background" });
 ```
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Giải thích rendering xảy ra khi nào, biết 3 strategies với trade-offs (setTimeout simple nhưng overhead, Worker tốt hơn nhưng no DOM access)
 - ❌ Weak: "Dùng async/await" — async/await chỉ yield tại `await` point, không giúp ích nếu không có actual async operation
 
@@ -405,12 +425,12 @@ scheduler.postTask(() => processHeavy(), { priority: 'background' });
 
 **A:**
 
-| API | Queue type | Runs when | Use for |
-|-----|-----------|-----------|---------|
-| `queueMicrotask(fn)` | Microtask | Before next macrotask, before render | Deferring work but still "this tick" |
-| `setTimeout(fn, 0)` | Macrotask | After all microtasks, after render opportunity | Yielding to event loop (chunking heavy work) |
-| `requestAnimationFrame(fn)` | Render task | Before browser paints next frame | Animation, visual DOM updates |
-| `scheduler.postTask(fn)` | Variable | Configurable (user-visible / background / etc.) | Modern scheduling with priority |
+| API                         | Queue type  | Runs when                                       | Use for                                      |
+| --------------------------- | ----------- | ----------------------------------------------- | -------------------------------------------- |
+| `queueMicrotask(fn)`        | Microtask   | Before next macrotask, before render            | Deferring work but still "this tick"         |
+| `setTimeout(fn, 0)`         | Macrotask   | After all microtasks, after render opportunity  | Yielding to event loop (chunking heavy work) |
+| `requestAnimationFrame(fn)` | Render task | Before browser paints next frame                | Animation, visual DOM updates                |
+| `scheduler.postTask(fn)`    | Variable    | Configurable (user-visible / background / etc.) | Modern scheduling with priority              |
 
 ```javascript
 // queueMicrotask — use when you need to defer but stay in "same turn"
@@ -427,15 +447,16 @@ function batchUpdates(updates) {
 
 // rAF — visual work
 function highlight(el) {
-  el.classList.add('active');
+  el.classList.add("active");
   requestAnimationFrame(() => {
     // Browser has committed to rendering — safe to measure & update visual
-    el.style.height = el.scrollHeight + 'px';
+    el.style.height = el.scrollHeight + "px";
   });
 }
 ```
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Phân biệt được cả 4 APIs với use case cụ thể, biết `scheduler.postTask` là modern solution, hiểu rAF không phải macrotask
 - ❌ Weak: "setTimeout(0) và queueMicrotask giống nhau" — fundamental misunderstanding of queue types
 
@@ -494,8 +515,21 @@ useEffect(() => {
 **Key insight:** The race condition fix uses a monotonically increasing ID — if response comes back out-of-order, stale responses are simply ignored. This is the same pattern AbortController solves at the fetch level.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Implement race condition fix (request ID or AbortController), handle Promise reject for stale requests, mention React integration pattern
 - ❌ Weak: Implement debounce only — miss the race condition (older responses overwriting newer results)
+
+---
+
+## Q&A Summary / Tóm Tắt Q&A
+
+| #   | Topic                               | Level | One-liner                                                                                             |
+| --- | ----------------------------------- | ----- | ----------------------------------------------------------------------------------------------------- |
+| 1   | Classic Event Loop: A→D→C→B         | 🟢    | Sync → microtasks → macrotasks; `Promise.then` = microtask, `setTimeout` = macrotask                  |
+| 2   | Chained microtasks: 1→7→4→6→2→3→5   | 🟡    | Microtasks spawned inside a macrotask drain immediately after that macrotask completes                |
+| 3   | UI freeze fix                       | 🟡    | Long sync blocks render; fix: chunked `setTimeout` / Web Worker / `scheduler.postTask`                |
+| 4   | setTimeout vs queueMicrotask vs rAF | 🔴    | queueMicrotask = same tick; setTimeout = yield to loop; rAF = before paint; postTask = priority-aware |
+| 5   | Debounce + race condition           | 🔴    | Monotonic request ID — ignore stale responses; same pattern as `AbortController` at the network level |
 
 ---
 
@@ -504,6 +538,7 @@ useEffect(() => {
 > 🎯 Interviewer hỏi cold: **"Giải thích Event Loop và tại sao microtasks chạy trước macrotasks?"**
 
 **30 giây đầu — mở đầu lý tưởng:**
+
 1. "JavaScript single-threaded — một Call Stack thực thi đồng bộ. Async operations được offload cho Web APIs (browser/Node), kết quả được đưa vào queues."
 2. "Event Loop cycle: khi stack empty → drain ALL microtasks (Promise.then, queueMicrotask) → lấy 1 macrotask (setTimeout, I/O) → render opportunity → repeat."
 3. "Microtasks có priority cao hơn vì Promises cần đảm bảo `.then()` chạy ngay sau resolve — nếu setTimeout có thể chen vào, async code sẽ không deterministic."
@@ -511,21 +546,42 @@ useEffect(() => {
 
 ---
 
-## Self-Check / Tự Kiểm Tra ⚡
+## 🔄 Self-Check / Tự Kiểm Tra
 
-> **Đóng tài liệu lại trước khi làm — không nhìn lại!**
+> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
 
-- [ ] **Retrieval**: Vẽ Event Loop diagram từ trí nhớ: Call Stack, Web APIs, Microtask Queue, Macrotask Queue, và thứ tự xử lý.
-- [ ] **Visual**: Trace output của đoạn code này TRƯỚC KHI chạy:
-  ```javascript
-  setTimeout(() => console.log('X'), 0);
-  Promise.resolve().then(() => console.log('Y'));
-  console.log('Z');
-  ```
-- [ ] **Application**: Team muốn split một array 100,000 phần tử thành chunks để xử lý không block UI. Bạn dùng gì: setTimeout, queueMicrotask, hay Web Worker? Tại sao?
-- [ ] **Debug**: Animation dùng `setInterval(update, 16)` bị giật trên máy chậm. Nguyên nhân? Fix?
-- [ ] **Teach**: Giải thích tại sao `setTimeout(fn, 0)` không chạy "ngay lập tức" cho người mới — dùng ví dụ hàng đợi thực tế.
+| #   | Loại           | Câu hỏi                                                                                                                                                   |
+| --- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 🔍 Retrieval   | Vẽ **Event Loop diagram** từ trí nhớ: Call Stack, Web APIs, Microtask Queue, Macrotask Queue, và **thứ tự xử lý**.                                        |
+| 2   | 🎨 Visual      | Trace output của đoạn code này TRƯỚC KHI chạy: `setTimeout(() => console.log('X'), 0); Promise.resolve().then(() => console.log('Y')); console.log('Z');` |
+| 3   | 🛠️ Application | Team muốn split 1 array 100,000 phần tử thành chunks để xử lý **không block UI**. Bạn dùng gì: `setTimeout`, `queueMicrotask`, hay Web Worker? Tại sao?   |
+| 4   | 🐛 Debug       | Animation dùng `setInterval(update, 16)` bị **giật** trên máy chậm. Nguyên nhân? Fix?                                                                     |
+| 5   | 🎓 Teach       | Giải thích tại sao `setTimeout(fn, 0)` không chạy "ngay lập tức" cho người mới — dùng ví dụ **hàng đợi** thực tế.                                         |
 
-💬 **Feynman Prompt:** Giải thích tại sao microtask "chen hàng" trước macrotask bằng ví dụ quán phở — không dùng thuật ngữ kỹ thuật.
+### Key Points (tự kiểm tra)
 
-🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày** → **7 ngày** → **14 ngày**.
+| #   | Key Point                                                                                                                                                                    |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Sau mỗi macrotask: chạy hết **toàn bộ microtask queue** trước khi lấy macrotask tiếp theo. Microtask: Promise.then, queueMicrotask. Macrotask: setTimeout, setInterval, I/O. |
+| 2   | Output: `Z` (sync) → `Y` (microtask: Promise.then) → `X` (macrotask: setTimeout). Microtask luôn trước macrotask kế tiếp.                                                    |
+| 3   | `setTimeout` (chunks) cho CPU work không block main thread. Web Worker cho heavy computation thực sự parallel. Không dùng `queueMicrotask` vì nó vẫn block rendering.        |
+| 4   | `setInterval` không chờ callback xong — có thể **queue chồng nhau** khi callback chậm hơn 16ms. Fix: dùng `requestAnimationFrame` để đồng bộ với browser repaint.            |
+| 5   | setTimeout(fn, 0) như 'xếp hàng quán café' — bạn không chen được người đang ở quầy (call stack). Bạn phải chờ hàng (queue) dù '0 giây'.                                      |
+
+> 🎯 **Feynman Prompt:** Giải thích tại sao microtask "chen hàng" trước macrotask bằng ví dụ quán phở — không dùng thuật ngữ kỹ thuật.
+> 🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày** → **7 ngày** → **14 ngày**.
+
+---
+
+## 🔗 Connections / Liên Kết
+
+### Cùng track (Same track)
+- [Async Comprehensive](./09-async-comprehensive.md) — async/await and Promise patterns deep dive
+- [ES6 Features](./07-es6-features.md) — Promises and iterators introduced in ES6
+- [Advanced Concepts](./08-advanced-concepts.md) — Web APIs, debounce, throttle interact with event loop
+- [Concurrency Models Theory](./19-concurrency-models-theory.md) — theoretical model behind the event loop
+
+### Khác track (Cross-track)
+- [CS Fundamentals: Concurrency & Parallelism](../../shared/01-cs-fundamentals/07-concurrency-and-parallelism.md) — concurrency theory underpinning the event loop
+- [CS Fundamentals: OS Theory](../../shared/01-cs-fundamentals/os-theory.md) — OS-level event models and I/O
+- [React Performance Optimization](../03-react/09-performance-optimization.md) — avoiding event loop blocks in React rendering

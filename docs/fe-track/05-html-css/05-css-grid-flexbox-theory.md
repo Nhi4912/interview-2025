@@ -8,6 +8,7 @@
 ## Real-World Scenario / Tình Huống Thực Tế
 
 Bạn đang xây dashboard với sidebar, main content, và footer. Designer yêu cầu:
+
 - Sidebar: luôn bằng chiều rộng của nội dung dài nhất bên trong
 - Main content: chiếm hết phần còn lại
 - Cards trong main: 3 cột trên desktop, 2 trên tablet, 1 trên mobile — **không dùng media query**
@@ -68,18 +69,20 @@ Intrinsic Sizing (dùng trong cả Flexbox & Grid)
 Flow layout không có khái niệm "chia space thừa". Trước Flexbox, sidebar 200px + main "chiếm phần còn lại" phải dùng `calc(100% - 200px)` — dòn, cứng nhắc. `flex-grow: 1` cho phép main tự điền phần còn lại mà không cần biết sidebar rộng bao nhiêu.
 
 **Layer 1 — Cơ bản:**
+
 ```css
 .nav {
-  display: flex;           /* tạo flex container */
-  flex-direction: row;     /* main axis: ngang (default) */
-  align-items: center;     /* cross axis: căn giữa dọc */
-  gap: 1rem;               /* khoảng cách giữa items */
+  display: flex; /* tạo flex container */
+  flex-direction: row; /* main axis: ngang (default) */
+  align-items: center; /* cross axis: căn giữa dọc */
+  gap: 1rem; /* khoảng cách giữa items */
 }
 ```
 
 **Layer 2 — Thuật toán phân phối space:**
 
 Ba thuộc tính kiểm soát kích thước item:
+
 - `flex-basis`: kích thước "lý tưởng" (như width nhưng theo main axis)
 - `flex-grow`: tỷ lệ lấy **space thừa** nếu container lớn hơn tổng items
 - `flex-shrink`: tỷ lệ **nhường space** nếu container nhỏ hơn tổng items
@@ -100,26 +103,30 @@ Nếu container = 300px:
 ```
 
 **Layer 3 — Edge case nguy hiểm:**
+
 ```css
 /* Vấn đề: flex items có min-width: auto (= min-content) */
 /* Item sẽ không shrink nhỏ hơn content của nó */
 .flex-item {
-  flex: 1;          /* muốn chia đều */
+  flex: 1; /* muốn chia đều */
   /* nhưng nếu có text dài, item không co lại đúng */
 }
 
 /* Fix: */
 .flex-item {
   flex: 1;
-  min-width: 0;     /* cho phép shrink past min-content */
+  min-width: 0; /* cho phép shrink past min-content */
   overflow: hidden; /* ẩn overflow nếu cần */
 }
 ```
 
-**Common Mistakes:**
-- Dùng `width` thay `flex-basis` — `width` bị override bởi flex algorithm
-- Quên `min-width: 0` khi item cần shrink nhỏ hơn content
-- Dùng `flex-direction: column` nhưng quên set explicit height trên container
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                                                     | Tại sao sai                                                                                          | Đúng là                                                                        |
+| --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Dùng `width` thay `flex-basis`                                              | `width` bị override bởi flex algorithm khi tính grow/shrink — kết quả khó đoán                       | Dùng `flex-basis` để set kích thước lý tưởng theo main axis                    |
+| Quên `min-width: 0` khi item cần shrink nhỏ hơn content                     | Flex items có `min-width: auto` mặc định — không thể shrink nhỏ hơn nội dung                         | Set `min-width: 0` kết hợp `overflow: hidden` để cho phép shrink               |
+| Dùng `flex-direction: column` nhưng quên set explicit height trên container | Column direction cần container có chiều cao — không có `height` thì items không phân phối space được | Set `height` hoặc `min-height` trên flex container khi dùng `column` direction |
 
 **Interview Pattern:** Interviewer sẽ hỏi "tại sao item không shrink?" → chỉ thẳng `min-width: auto` và cách fix. Đây là câu 🔴 Senior hay gặp nhất.
 
@@ -135,16 +142,19 @@ Nếu container = 300px:
 Flexbox tốt cho 1D, nhưng không thể căn items theo cả rows VÀ columns đồng thời. Gallery muốn item hàng 2 thẳng cột với hàng 1? Flexbox không làm được — phải biết trước chiều rộng chính xác. Grid có track system rõ ràng.
 
 **Layer 1 — Cơ bản:**
+
 ```css
 .page {
   display: grid;
-  grid-template-columns: 250px 1fr;          /* sidebar + main */
-  grid-template-rows: auto 1fr auto;         /* header + content + footer */
+  grid-template-columns: 250px 1fr; /* sidebar + main */
+  grid-template-rows: auto 1fr auto; /* header + content + footer */
   min-height: 100vh;
 }
 
 /* Sticky footer pattern — Grid solution */
-.footer { grid-row: 3; }
+.footer {
+  grid-row: 3;
+}
 ```
 
 **Layer 2 — Track sizing algorithm (quan trọng nhất):**
@@ -161,20 +171,26 @@ Pass 5: Stretch auto tracks nếu align/justify-content = stretch
 ```
 
 **`fr` unit — hiểu đúng:**
+
 ```css
 /* 1fr = minmax(auto, 1fr) = minmax(min-content, 1fr) */
 /* → item KHÔNG nhỏ hơn min-content của content */
 
 /* Vấn đề thực tế: */
-.grid { grid-template-columns: 1fr 1fr; }
+.grid {
+  grid-template-columns: 1fr 1fr;
+}
 /* Nếu cột 1 có URL dài → cột 1 overflow, không shrink */
 
 /* Fix: */
-.grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.grid {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
 /* Bây giờ cột có thể shrink về 0, dùng overflow:hidden để ẩn */
 ```
 
 **Layer 3 — Responsive không cần media query:**
+
 ```css
 /* Magic line: tự động 1→N cột dựa trên min-width */
 .cards {
@@ -186,10 +202,13 @@ Pass 5: Stretch auto tracks nếu align/justify-content = stretch
 }
 ```
 
-**Common Mistakes:**
-- Dùng `1fr` khi muốn item có thể overflow-hidden — cần `minmax(0, 1fr)`
-- Nhầm `auto-fit` (collapse empty tracks) vs `auto-fill` (giữ empty tracks)
-- `grid-template-areas` không match số cột trong `grid-template-columns`
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                                                | Tại sao sai                                                                                 | Đúng là                                                                              |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Dùng `1fr` khi muốn item có thể overflow-hidden                        | `1fr` = `minmax(auto, 1fr)` — không shrink dưới `min-content`, gây overflow khi content dài | Dùng `minmax(0, 1fr)` để column có thể shrink về 0                                   |
+| Nhầm `auto-fit` và `auto-fill`                                         | `auto-fill` giữ empty tracks; `auto-fit` collapse chúng — layout khác nhau khi ít items     | `auto-fit` để collapse empty tracks; `auto-fill` khi muốn giữ grid structure cố định |
+| `grid-template-areas` không match số cột trong `grid-template-columns` | Số cells trong mỗi dòng phải bằng số cột đã khai báo — không match gây invalid layout       | Đảm bảo số cells trong `grid-template-areas` khớp chính xác với số cột               |
 
 **Interview Pattern:** "Tại sao grid overflow dù đã dùng 1fr?" → ngay vào `1fr = minmax(min-content, 1fr)`, fix bằng `minmax(0, 1fr)`.
 
@@ -206,14 +225,15 @@ Pass 5: Stretch auto tracks nếu align/justify-content = stretch
 
 **Layer 1 — Cơ bản:**
 
-| Keyword | Nghĩa | Ví dụ |
-|---|---|---|
-| `min-content` | Nhỏ nhất không overflow. Với text = chiều rộng từ dài nhất | Sidebar hugging content |
-| `max-content` | Lớn nhất nếu space vô hạn. Với text = tất cả trên 1 dòng | Tooltip, badge |
-| `fit-content(N)` | `min(max-content, max(min-content, N))` | Button giới hạn max |
-| `auto` | Depends on context — có thể = min-content, stretch, hoặc max-content | Default cho nhiều element |
+| Keyword          | Nghĩa                                                                | Ví dụ                     |
+| ---------------- | -------------------------------------------------------------------- | ------------------------- |
+| `min-content`    | Nhỏ nhất không overflow. Với text = chiều rộng từ dài nhất           | Sidebar hugging content   |
+| `max-content`    | Lớn nhất nếu space vô hạn. Với text = tất cả trên 1 dòng             | Tooltip, badge            |
+| `fit-content(N)` | `min(max-content, max(min-content, N))`                              | Button giới hạn max       |
+| `auto`           | Depends on context — có thể = min-content, stretch, hoặc max-content | Default cho nhiều element |
 
 **Layer 2 — Trong Grid tracks:**
+
 ```css
 /* Sidebar bằng chiều rộng nội dung dài nhất */
 .layout {
@@ -225,14 +245,18 @@ Pass 5: Stretch auto tracks nếu align/justify-content = stretch
 ```
 
 **Layer 3 — Tại sao `auto` phức tạp:**
+
 - Trong `flex-basis: auto`: dùng element's `width` → fallback `max-content`
 - Trong Grid min position (`minmax(auto, 1fr)`): = `min-content`
 - Trong Grid `align/justify-content: stretch`: = fill remaining space
 - `auto` có nghĩa khác nhau tùy context → hiểu explicit keywords tốt hơn
 
-**Common Mistakes:**
-- Dùng `min-content` cho container chứa text dài → text sẽ wrap mạnh, chỉ dùng cho labels/icons
-- Nhầm `auto` sẽ luôn = `max-content` — context quyết định
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                        | Tại sao sai                                                                                      | Đúng là                                                                                    |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| Dùng `min-content` cho container chứa text dài | `min-content` = chiều rộng từ dài nhất — text sẽ wrap cực mạnh, chỉ phù hợp labels/icons         | Chỉ dùng `min-content` cho labels, icons; dùng `max-content` hoặc `auto` cho paragraphs    |
+| Nhầm `auto` sẽ luôn = `max-content`            | `auto` có nghĩa khác tùy context — trong Grid min position = `min-content`; trong stretch = fill | Hiểu `auto` theo context; dùng explicit keywords (`min-content`, `max-content`) để rõ ràng |
 
 **Interview Pattern:** "Tại sao `1fr` gây overflow?" → explain `auto` trong `minmax(auto, 1fr)` = `min-content`. Cho thấy bạn hiểu sâu hơn chỉ "dùng fr".
 
@@ -297,7 +321,9 @@ Vietnamese: Intrinsic sizing = kích thước do nội dung quyết định. `mi
 
 ```css
 /* Sidebar shrinks to its content width */
-.sidebar { width: min-content; }
+.sidebar {
+  width: min-content;
+}
 
 /* Grid with content-aware columns */
 .layout {
@@ -357,8 +383,17 @@ Vietnamese: Flow không thể: căn giữa dọc, equal-height columns, reorder 
 6. **Document decisions**: Comments explaining why `minmax(0, 1fr)` instead of `1fr`.
 
 ```css
-.stack   { display: flex; flex-direction: column; gap: var(--space, 1rem); }
-.cluster { display: flex; flex-wrap: wrap; gap: var(--space, 1rem); align-items: center; }
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space, 1rem);
+}
+.cluster {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space, 1rem);
+  align-items: center;
+}
 .grid-auto {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(var(--min, 250px), 1fr));
@@ -428,6 +463,7 @@ Vietnamese: Track sizing algorithm chạy qua 5 bước: (1) fixed tracks, (2) i
 **A:** Flexbox axes are relative to `flex-direction`, not to physical directions. With `writing-mode: vertical-rl` (Japanese/Chinese), the block direction is horizontal and the inline direction is vertical, which changes how flex-direction behaves.
 
 Modern CSS uses **logical properties** (`inline-start`, `block-start`) instead of physical ones (`left`, `top`):
+
 - `flex-direction: row` always follows the **inline** axis of the current writing mode
 - `flex-direction: column` always follows the **block** axis
 
@@ -440,9 +476,9 @@ Modern CSS uses **logical properties** (`inline-start`, `block-start`) instead o
 
 /* Logical properties for i18n */
 .card {
-  margin-block-end: 1rem;          /* margin-bottom equivalent */
-  padding-inline: 1.5rem;          /* padding-left/right equivalent */
-  border-inline-start: 3px solid;  /* border-left equivalent */
+  margin-block-end: 1rem; /* margin-bottom equivalent */
+  padding-inline: 1.5rem; /* padding-left/right equivalent */
+  border-inline-start: 3px solid; /* border-left equivalent */
 }
 ```
 
@@ -479,6 +515,7 @@ Vietnamese: Auto-placement: (1) đặt explicit items trước, (2) items còn l
 **Recalculation scope**: When one item changes size, Flexbox may recalculate all items on the same line (they share proportional space). Grid has more predictable recalculation because explicit track boundaries are independent.
 
 **Real performance issues** (not Flex vs Grid):
+
 - **Layout thrashing**: reading layout properties (`.offsetWidth`, `.getBoundingClientRect()`) inside JS loops forces synchronous layout
 - **Excessive DOM depth**: each level adds traversal cost
 - Promoting animated items to compositor layers (`will-change: transform`) reduces repaint cost
@@ -502,15 +539,21 @@ Vietnamese: Flex vs Grid performance difference là không đáng kể — đừ
 
 ```css
 /* Gotcha 1: always on flex/grid items that may overflow */
-.flex-item { min-width: 0; }
+.flex-item {
+  min-width: 0;
+}
 
 /* Gotcha 4: push item to far end */
-.nav .logout { margin-inline-start: auto; }
+.nav .logout {
+  margin-inline-start: auto;
+}
 
 /* Gotcha 5: consistent image in flex card */
 .card img {
-  width: 100%; height: auto;
-  object-fit: cover; aspect-ratio: 16/9;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  aspect-ratio: 16/9;
 }
 ```
 
@@ -522,21 +565,21 @@ Vietnamese: Gotchas phổ biến: (1) `min-width: auto` — items không co lạ
 
 ## Interview Q&A Summary / Tổng Kết
 
-| Level | Question | Key Point |
-|---|---|---|
-| 🟢 | What is Flexbox? | 1D, space distribution, use case |
-| 🟢 | What is CSS Grid? | 2D, track system, 1D vs 2D rule |
-| 🟡 | Layout algorithms compared | Flow vs Flex vs Grid, margin collapse |
-| 🟡 | Intrinsic sizing | min/max-content, fit-content, auto |
-| 🟡 | Alignment system | justify vs align, content vs items |
-| 🟡 | Grid/Flex vs Flow | vertical centering, equal-height, sticky footer |
-| 🟡 | Maintainability | stack/cluster patterns, gap vs margin |
-| 🔴 | 1fr gotcha | `1fr = minmax(auto, 1fr)`, fix = `minmax(0, 1fr)` |
-| 🔴 | Track sizing algorithm | 5 passes: fixed → intrinsic → spanning → fr → stretch |
-| 🔴 | Writing modes & axes | logical vs physical, inline/block axes |
-| 🔴 | Auto-placement dense | backfill gaps, accessibility tab order problem |
-| 🔴 | Performance | layout thrashing > Flex vs Grid difference |
-| 🔴 | Edge cases | `min-width: 0`, sticky in flex, margin auto |
+| Level | Question                   | Key Point                                             |
+| ----- | -------------------------- | ----------------------------------------------------- |
+| 🟢    | What is Flexbox?           | 1D, space distribution, use case                      |
+| 🟢    | What is CSS Grid?          | 2D, track system, 1D vs 2D rule                       |
+| 🟡    | Layout algorithms compared | Flow vs Flex vs Grid, margin collapse                 |
+| 🟡    | Intrinsic sizing           | min/max-content, fit-content, auto                    |
+| 🟡    | Alignment system           | justify vs align, content vs items                    |
+| 🟡    | Grid/Flex vs Flow          | vertical centering, equal-height, sticky footer       |
+| 🟡    | Maintainability            | stack/cluster patterns, gap vs margin                 |
+| 🔴    | 1fr gotcha                 | `1fr = minmax(auto, 1fr)`, fix = `minmax(0, 1fr)`     |
+| 🔴    | Track sizing algorithm     | 5 passes: fixed → intrinsic → spanning → fr → stretch |
+| 🔴    | Writing modes & axes       | logical vs physical, inline/block axes                |
+| 🔴    | Auto-placement dense       | backfill gaps, accessibility tab order problem        |
+| 🔴    | Performance                | layout thrashing > Flex vs Grid difference            |
+| 🔴    | Edge cases                 | `min-width: 0`, sticky in flex, margin auto           |
 
 ---
 
@@ -560,13 +603,29 @@ Vietnamese: Gotchas phổ biến: (1) `min-width: auto` — items không co lạ
 
 ---
 
-## Self-Check / Tự Kiểm Tra
+## 🔄 Self-Check / Tự Kiểm Tra
 
-1. Không nhìn notes: giải thích tại sao `1fr` column có thể overflow và cách fix.
-2. `place-items: center` và `place-content: center` khác nhau thế nào?
-3. Khi nào dùng `grid-auto-flow: dense`? Trade-off là gì?
-4. Tại sao `margin: auto` trong Flexbox hoạt động khác trong Normal Flow?
-5. Liệt kê 3 layout patterns Flexbox không làm được mà Grid làm được.
+> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
+
+| #   | Loại           | Câu hỏi                                                                                                                                                   |
+| --- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 🔍 Retrieval   | Liệt kê 3 layout patterns mà Grid làm được nhưng Flexbox không thể — và khi nào nên dùng Flexbox thay Grid.                                               |
+| 2   | 🎨 Visual      | Vẽ sơ đồ Flexbox axes khi `flex-direction: row` và khi `flex-direction: column` — chỉ rõ chiều `justify-content` và `align-items` thay đổi như thế nào.   |
+| 3   | 🛠️ Application | `1fr` column trong grid-template-columns bị overflow content. Nguyên nhân kỹ thuật là gì? Viết cách fix chính xác.                                        |
+| 4   | 🐛 Debug       | Flex item có text dài không bị truncate dù đã set `overflow: hidden; text-overflow: ellipsis; white-space: nowrap`. Tại sao? Fix?                         |
+| 5   | 🎓 Teach       | Giải thích tại sao `margin: auto` trong Flexbox có thể căn giữa cả hai chiều nhưng trong Normal Flow chỉ căn giữa horizontal — dùng ví dụ cho junior dev. |
+
+### Key Points (tự kiểm tra)
+
+| #   | Key Point                                                                                                                                                                                                         |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Grid-only: (1) named template areas; (2) items align cả hai chiều (row + column simultaneously); (3) `subgrid` cho nested alignment. Dùng Flexbox khi layout 1 chiều (navbar, button group, centering 1 element). |
+| 2   | `row`: main=horizontal(→), cross=vertical(↓); `column`: main=vertical(↓), cross=horizontal(→). `justify-content` luôn theo main axis; `align-items` luôn theo cross axis — trục đổi khi direction đổi.            |
+| 3   | `1fr` = 1 phần của free space sau khi trừ minimum content size (mặc định `auto`). Nếu content rộng hơn calculated track width → overflow. Fix: `minmax(0, 1fr)` — bắt đầu từ 0 thay vì `auto`.                    |
+| 4   | Flex item mặc định có `min-width: auto` → không shrink dưới content size → text không thể bị truncate. Fix: thêm `min-width: 0` trên flex item trước, rồi `overflow: hidden` mới có hiệu lực.                     |
+| 5   | Normal Flow: không có vertical free space để `margin: auto` absorb (height = content height). Flexbox: container có explicit height → free space theo cả 2 chiều → `margin: auto` absorbs tất cả → centering.     |
+
+> 🎯 **Feynman Prompt:** Giải thích sự khác biệt giữa Grid và Flexbox cho designer không biết code — như "lưới kẻ ô sẵn" vs "xếp hàng linh hoạt". Khi nào bạn cần lưới, khi nào bạn chỉ cần hàng?
 
 ---
 

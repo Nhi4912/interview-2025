@@ -68,7 +68,7 @@ TypeScript uses **structural typing** (duck typing at the type level): compatibi
 
 Think of types like labels on boxes. The label says what's inside: "eggs" or "books" or "fragile glassware". The label doesn't change what's actually inside — but it stops you from putting shoes in the food box, and it stops the compiler from letting you call `.bake()` on a number.
 
-`unknown` = a box with a question mark. You know *something* is inside, but you must open and look before you can use it.
+`unknown` = a box with a question mark. You know _something_ is inside, but you must open and look before you can use it.
 `any` = a box with no label at all. You can put anything in, take anything out, crash and burn.
 `never` = a box that is physically impossible to fill. It represents code that cannot be reached.
 
@@ -97,19 +97,19 @@ Think of types like labels on boxes. The label says what's inside: "eggs" or "bo
                    exhaustive checks)
 ```
 
-Key insight: `never` is assignable *to* every type but nothing is assignable *to* `never`. That's what makes it perfect for exhaustive checks — if a `case` reaches `never`, TypeScript proves you missed a union branch.
+Key insight: `never` is assignable _to_ every type but nothing is assignable _to_ `never`. That's what makes it perfect for exhaustive checks — if a `case` reaches `never`, TypeScript proves you missed a union branch.
 
 ---
 
-### Common Mistakes / Lỗi Thường Gặp
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct | Why |
-|----------|-----------|-----|
-| `let data: any = fetchUser()` | `let data: unknown = fetchUser()` | `any` silences all errors; `unknown` forces you to prove the shape |
-| `(el as HTMLInputElement).value` without null check | `if (el instanceof HTMLInputElement) el.value` | `as` is compile-time only — if `el` is null at runtime, you crash |
-| `function f(x: any) { return x.foo }` | `function f(x: unknown) { if (typeof x === 'object' && x !== null && 'foo' in x) ... }` | `any` propagates the infection to the caller |
-| `const x: any = JSON.parse(raw)` | `const x: unknown = JSON.parse(raw)` + schema validation | `JSON.parse` returns `any` by design, but you should re-type it |
-| `type Void = void` as return type on arrow function that might return a value | Use `undefined` explicitly if you need the return | `void` means "caller should ignore return", not "returns undefined" |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `let data: any = fetchUser()` | `any` silences all errors; `unknown` forces you to prove the shape | `let data: unknown = fetchUser()` |
+| `(el as HTMLInputElement).value` without null check | `as` is compile-time only — if `el` is null at runtime, you crash | `if (el instanceof HTMLInputElement) el.value` |
+| `function f(x: any) { return x.foo }` | `any` propagates the infection to the caller | `function f(x: unknown) { if (typeof x === 'object' && x !== null && 'foo' in x) ... }` |
+| `const x: any = JSON.parse(raw)` | `JSON.parse` returns `any` by design, but you should re-type it | `const x: unknown = JSON.parse(raw)` + schema validation |
+| `type Void = void` as return type on arrow function that might return a value | `void` means "caller should ignore return", not "returns undefined" | Use `undefined` explicitly if you need the return |
 
 ---
 
@@ -127,8 +127,8 @@ Key insight: `never` is assignable *to* every type but nothing is assignable *to
 
 ```typescript
 // --- Explicit annotation vs inference ---
-let username: string = "john";   // annotation (redundant here)
-let age = 30;                    // inference: TypeScript sees number
+let username: string = "john"; // annotation (redundant here)
+let age = 30; // inference: TypeScript sees number
 
 // When to annotate:
 // 1. When type can't be inferred from the value
@@ -141,7 +141,7 @@ function greet(name: string, times: number = 1): string {
 
 // 3. Public API return types — annotate for documentation + safety
 function fetchUser(id: number): Promise<User | null> {
-  return fetch(`/users/${id}`).then(r => r.json());
+  return fetch(`/users/${id}`).then((r) => r.json());
 }
 
 // --- unknown vs any ---
@@ -151,7 +151,7 @@ function processInput(raw: unknown): string {
     return raw.toUpperCase(); // OK: narrowed to string
   }
   if (typeof raw === "number") {
-    return raw.toFixed(2);    // OK: narrowed to number
+    return raw.toFixed(2); // OK: narrowed to number
   }
   throw new TypeError("Expected string or number");
 }
@@ -169,7 +169,7 @@ const ROUTES = {
 // Without as const: ROUTES.home is string
 // With as const:    ROUTES.home is "/"  (literal type)
 
-type Route = typeof ROUTES[keyof typeof ROUTES]; // "/" | "/about" | "/checkout"
+type Route = (typeof ROUTES)[keyof typeof ROUTES]; // "/" | "/about" | "/checkout"
 
 // --- never: the bottom type ---
 function assertNever(x: never): never {
@@ -196,7 +196,7 @@ API responses aren't always `{ data: T }`. They're `{ data: T } | { error: strin
 Instead of building deep class hierarchies to combine behaviors, intersections let you compose types orthogonally: `type AdminUser = User & Admin`. No inheritance. No fragile base class. Just shape combination. Đây là cách TypeScript khuyến khích composition over inheritance ở level type.
 
 **Why 3 — Literal types enable state machines.**
-`type Status = "idle" | "loading" | "success" | "error"` is not just a string with four possible values — it's a *state machine enforced by the type system*. The compiler will reject `status = "retrying"`. This eliminates an entire class of bugs where UI renders wrong because a string value was misspelled.
+`type Status = "idle" | "loading" | "success" | "error"` is not just a string with four possible values — it's a _state machine enforced by the type system_. The compiler will reject `status = "retrying"`. This eliminates an entire class of bugs where UI renders wrong because a string value was misspelled.
 
 ### Visual: Union vs Intersection / Biểu Đồ Venn
 
@@ -248,15 +248,15 @@ Discriminated Union — state machine:
 
 ---
 
-### Common Mistakes / Lỗi Thường Gặp
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct | Why |
-|----------|-----------|-----|
-| `type Status = string` | `type Status = "idle" \| "loading" \| "success" \| "error"` | Literal union catches typos at compile time |
-| Using `enum` for string values in FE | String literal union | Enums generate runtime JS; literal unions are erased entirely |
-| `type A = { x: number } & { x: string }` | Never mix conflicting property types in intersection | `x` becomes `never` — the intersection is impossible |
-| `if (result.success) { ... }` without discriminant field | Use `kind` or `success` boolean as discriminant | TypeScript needs a *literal* discriminant to narrow correctly |
-| `type Maybe<T> = T \| null \| undefined` everywhere | Use `strictNullChecks` + `T \| null` only where needed | Double nullability (`null \| undefined`) is usually a mistake |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `type Status = string` | Literal union catches typos at compile time | `type Status = "idle" \| "loading" \| "success" \| "error"` |
+| Using `enum` for string values in FE | Enums generate runtime JS; literal unions are erased entirely | String literal union |
+| `type A = { x: number } & { x: string }` | `x` becomes `never` — the intersection is impossible | Never mix conflicting property types in intersection |
+| `if (result.success) { ... }` without discriminant field | TypeScript needs a _literal_ discriminant to narrow correctly | Use `kind` or `success` boolean as discriminant |
+| `type Maybe<T> = T \| null \| undefined` everywhere | Double nullability (`null \| undefined`) is usually a mistake | Use `strictNullChecks` + `T \| null` only where needed |
 
 ---
 
@@ -287,7 +287,7 @@ type Direction = "north" | "south" | "east" | "west";
 
 // --- as const to derive literal union from object ---
 const HTTP_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"] as const;
-type HttpMethod = typeof HTTP_METHODS[number]; // "GET" | "POST" | ...
+type HttpMethod = (typeof HTTP_METHODS)[number]; // "GET" | "POST" | ...
 
 // --- Discriminated union: API response ---
 type ApiSuccess<T> = { success: true; data: T; statusCode: number };
@@ -340,10 +340,10 @@ Bạn bắt đầu với "bị cáo là `string | number | null`". Sau `typeof x
 ### Why Does This Exist? / Tại Sao Tồn Tại?
 
 **Why 1 — `unknown` and unions are useless without narrowing.**
-You can receive `string | number | null` from a form input, but you can't call `.toUpperCase()` or `* 2` on `string | number | null`. Narrowing is the mechanism for *proving to the compiler* which branch you're in. Không có narrowing, union type chỉ là mô tả — không có ích gì cho code thực.
+You can receive `string | number | null` from a form input, but you can't call `.toUpperCase()` or `* 2` on `string | number | null`. Narrowing is the mechanism for _proving to the compiler_ which branch you're in. Không có narrowing, union type chỉ là mô tả — không có ích gì cho code thực.
 
 **Why 2 — TypeScript tracks control flow.**
-The compiler performs **Control Flow Analysis (CFA)**: it follows every `if`, `else`, `return`, `throw`, and `switch` branch and updates the type at each point. This is not just syntactic — TypeScript builds a full flow graph. The result is that after `if (x !== null) { ... }`, TypeScript knows `x` is non-null *inside that block* without any additional annotation. Đây là lý do `strictNullChecks` phát huy tác dụng — compiler theo dõi từng nhánh.
+The compiler performs **Control Flow Analysis (CFA)**: it follows every `if`, `else`, `return`, `throw`, and `switch` branch and updates the type at each point. This is not just syntactic — TypeScript builds a full flow graph. The result is that after `if (x !== null) { ... }`, TypeScript knows `x` is non-null _inside that block_ without any additional annotation. Đây là lý do `strictNullChecks` phát huy tác dụng — compiler theo dõi từng nhánh.
 
 **Why 3 — Exhaustiveness checking prevents missing cases.**
 Using `never` at the end of a discriminated union switch means the compiler will error if you add a new union member but forget to handle it. This is the type system enforcing completeness on your business logic. Khi thêm variant mới vào union, compiler tự động báo lỗi chỗ bạn chưa handle — không cần test để tìm ra.
@@ -382,15 +382,15 @@ Custom type guard narrows across function boundary:
 
 ---
 
-### Common Mistakes / Lỗi Thường Gặp
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct | Why |
-|----------|-----------|-----|
-| `if (x)` to check for null | `if (x !== null && x !== undefined)` | Truthiness narrowing also eliminates `""`, `0`, `false` — likely not what you want |
-| Custom guard that lies: `function isUser(x: any): x is User { return true; }` | Actually check the shape | The compiler trusts your predicate; a lying guard crashes at runtime |
-| `switch (shape.kind)` without `default: assertNever(shape)` | Always add exhaustive default | Without it, adding a new union branch silently falls through |
-| `as Type` instead of narrowing | Use `typeof`, `instanceof`, `in`, or a type guard | `as` is a lie to the compiler; narrowing is proof |
-| Using `in` on a nullable value: `"foo" in maybeNull` | Null-check first: `maybeNull !== null && "foo" in maybeNull` | `in` throws at runtime on null/undefined |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `if (x)` to check for null | Truthiness narrowing also eliminates `""`, `0`, `false` — likely not what you want | `if (x !== null && x !== undefined)` |
+| Custom guard that lies: `function isUser(x: any): x is User { return true; }` | The compiler trusts your predicate; a lying guard crashes at runtime | Actually check the shape |
+| `switch (shape.kind)` without `default: assertNever(shape)` | Without it, adding a new union branch silently falls through | Always add exhaustive default |
+| `as Type` instead of narrowing | `as` is a lie to the compiler; narrowing is proof | Use `typeof`, `instanceof`, `in`, or a type guard |
+| Using `in` on a nullable value: `"foo" in maybeNull` | `in` throws at runtime on null/undefined | Null-check first: `maybeNull !== null && "foo" in maybeNull` |
 
 ---
 
@@ -426,7 +426,8 @@ function printIfDefined(name: string | null | undefined): void {
 
 // More precise: check specifically for null/undefined
 function printIfPresent(name: string | null | undefined): void {
-  if (name != null) { // != null catches both null and undefined
+  if (name != null) {
+    // != null catches both null and undefined
     console.log(name.toUpperCase()); // name is string here
   }
 }
@@ -465,7 +466,7 @@ function renderState<T>(state: AsyncState<T>): string {
     case "success":
       return `Data: ${JSON.stringify(state.data)}`; // state.data is T here
     case "error":
-      return `Error: ${state.error.message}`;       // state.error is Error here
+      return `Error: ${state.error.message}`; // state.error is Error here
     default:
       // Exhaustiveness check: if you add a new union branch,
       // this line will produce a compile error
@@ -522,11 +523,11 @@ function processUser(userId: string | null): void {
 
 **A:**
 
-Both `any` and `unknown` accept values of any type. The critical difference is what you can *do* with them afterward.
+Both `any` and `unknown` accept values of any type. The critical difference is what you can _do_ with them afterward.
 
 `any` is a **type system escape hatch**: you can call any method, access any property, pass it anywhere — the compiler performs zero checks. The problem is that this escape is **contagious**: a function that returns `any` infects its callers, and the entire chain loses type safety. This is why enabling `noImplicitAny` in a codebase often reveals hundreds of silent type holes.
 
-`unknown` is the **safe top type**: it also accepts any value, but you *cannot* perform any operations on it until you've proven its type through narrowing. It's the correct type for "I don't know what this is yet." Use `unknown` for: `JSON.parse` results, `catch` block errors (`catch (e: unknown)`), dynamic data from external APIs.
+`unknown` is the **safe top type**: it also accepts any value, but you _cannot_ perform any operations on it until you've proven its type through narrowing. It's the correct type for "I don't know what this is yet." Use `unknown` for: `JSON.parse` results, `catch` block errors (`catch (e: unknown)`), dynamic data from external APIs.
 
 **Giải thích (VI):** `any` tắt hoàn toàn type checker — mọi thao tác đều được phép mà không cần kiểm tra. `unknown` buộc bạn phải chứng minh kiểu trước khi dùng. Khi migration JS sang TS, `unknown` là cách đúng để xử lý dữ liệu chưa biết kiểu; `any` chỉ trì hoãn lỗi sang runtime.
 
@@ -559,11 +560,12 @@ try {
 }
 ```
 
-**Migration tip**: Run `grep -r ": any" src/` and replace each `any` with `unknown`. The compile errors you get are *real bugs* that were previously silently ignored.
+**Migration tip**: Run `grep -r ": any" src/` and replace each `any` with `unknown`. The compile errors you get are _real bugs_ that were previously silently ignored.
 
 💡 **Interview Signal**
+
 - ✅ Strong: Explains that `any` is contagious (infects return types and callers), demonstrates `unknown` + narrowing, mentions `noImplicitAny` and `catch (e: unknown)`.
-- ❌ Weak: Says "both accept any value, but `unknown` is safer" without explaining *why* it's safer or showing narrowing code.
+- ❌ Weak: Says "both accept any value, but `unknown` is safer" without explaining _why_ it's safer or showing narrowing code.
 
 ---
 
@@ -574,10 +576,12 @@ try {
 Both `interface` and `type` can describe object shapes, and for most use cases they're interchangeable. The meaningful differences are:
 
 **Use `interface` when:**
-- You're describing the shape of a class, object, or component props that may need to be *extended* by other interfaces (`extends`) — interfaces have cleaner error messages in this pattern.
+
+- You're describing the shape of a class, object, or component props that may need to be _extended_ by other interfaces (`extends`) — interfaces have cleaner error messages in this pattern.
 - You need **declaration merging** — the ability for multiple `interface` declarations with the same name to merge. This is how you augment library types (e.g., extending `Express.Request` to add `user` property).
 
 **Use `type` when:**
+
 - You need to express a **union type** — `type ID = string | number` (interface cannot do this).
 - You're creating **utility type compositions** — `type ReadonlyUser = Readonly<User>`.
 - You need **mapped types** or **conditional types**.
@@ -621,7 +625,8 @@ type ClickHandler = EventHandler<MouseEvent>;
 ```
 
 💡 **Interview Signal**
-- ✅ Strong: Knows declaration merging, can explain why you *must* use `type` for unions, mentions team convention, demonstrates `extends` vs `&`.
+
+- ✅ Strong: Knows declaration merging, can explain why you _must_ use `type` for unions, mentions team convention, demonstrates `extends` vs `&`.
 - ❌ Weak: "They're basically the same, I always use `interface`." — misses declaration merging and union constraint entirely.
 
 ---
@@ -707,6 +712,7 @@ async function fetchUserProfile(id: string): Promise<UserProfile> {
 ```
 
 **Narrowing mechanisms summary**:
+
 - `typeof x === "string"` — primitives
 - `x instanceof Date` — class instances
 - `"property" in x` — object shape
@@ -715,6 +721,7 @@ async function fetchUserProfile(id: string): Promise<UserProfile> {
 - `function isT(x): x is T { ... }` — custom predicate (extends narrowing across function boundaries)
 
 💡 **Interview Signal**
+
 - ✅ Strong: Demonstrates discriminated unions with a real-world scenario (async state), mentions CFA by name, writes a correct custom type guard, and explains the exhaustiveness check pattern.
 - ❌ Weak: Only mentions `typeof` and `instanceof`, doesn't show a discriminated union example, can't explain what `value is T` syntax does.
 
@@ -727,6 +734,7 @@ async function fetchUserProfile(id: string): Promise<UserProfile> {
 Without `strictNullChecks`, `null` and `undefined` are **assignable to every type**. That means `string` secretly includes `null` and `undefined`, and you'll never get a compile error for `const len = user.name.length` — even when `user` could be null.
 
 With `strictNullChecks: true` (included in `"strict": true`):
+
 - `null` and `undefined` are only assignable to `unknown`, `any`, or explicitly typed as `T | null` / `T | undefined`.
 - Every variable is non-null by default.
 - The compiler forces you to handle the null/undefined case before using a value.
@@ -785,6 +793,7 @@ const form = document.getElementById("loginForm")!; // You assert it's not null
 **Migration strategy**: Enable `strict` in a new `tsconfig.strict.json` and run `tsc --project tsconfig.strict.json --noEmit`. Fix errors file by file. Don't try to fix everything at once.
 
 💡 **Interview Signal**
+
 - ✅ Strong: Can explain why `null` is dangerous without the flag (it's assignable to everything), demonstrates optional chaining vs non-null assertion vs explicit guard, mentions migration strategy.
 - ❌ Weak: "It prevents null errors" without explaining the mechanism, or doesn't know that `strict: true` is a bundle of multiple flags.
 
@@ -833,10 +842,7 @@ type ApiResult<T> =
 
 // ─── 2. Runtime validator ─────────────────────────────────────────────────────
 
-function isApiResult<T>(
-  raw: unknown,
-  validateData: (d: unknown) => d is T
-): raw is ApiResult<T> {
+function isApiResult<T>(raw: unknown, validateData: (d: unknown) => d is T): raw is ApiResult<T> {
   if (typeof raw !== "object" || raw === null) return false;
   const r = raw as Record<string, unknown>;
 
@@ -849,10 +855,7 @@ function isApiResult<T>(
   if (r.ok === false && typeof r.error === "object" && r.error !== null) {
     const e = r.error as Record<string, unknown>;
     return (
-      e.kind === "network" ||
-      e.kind === "validation" ||
-      e.kind === "auth" ||
-      e.kind === "server"
+      e.kind === "network" || e.kind === "validation" || e.kind === "auth" || e.kind === "server"
     );
   }
 
@@ -869,10 +872,7 @@ interface HandleOptions<T> {
   onServerError: (error: ServerError) => void;
 }
 
-function handleApiResult<T>(
-  result: ApiResult<T>,
-  options: HandleOptions<T>
-): void {
+function handleApiResult<T>(result: ApiResult<T>, options: HandleOptions<T>): void {
   if (result.ok) {
     options.onSuccess(result.data, result.statusCode);
     return;
@@ -909,7 +909,7 @@ function assertNever(value: never): never {
 
 async function apiFetch<T>(
   url: string,
-  validateData: (d: unknown) => d is T
+  validateData: (d: unknown) => d is T,
 ): Promise<ApiResult<T>> {
   try {
     const response = await fetch(url);
@@ -952,18 +952,11 @@ interface UserProfile {
 function isUserProfile(d: unknown): d is UserProfile {
   if (typeof d !== "object" || d === null) return false;
   const u = d as Record<string, unknown>;
-  return (
-    typeof u.id === "string" &&
-    typeof u.name === "string" &&
-    typeof u.email === "string"
-  );
+  return typeof u.id === "string" && typeof u.name === "string" && typeof u.email === "string";
 }
 
 async function loadUser(id: string): Promise<void> {
-  const result = await apiFetch<UserProfile>(
-    `/api/users/${id}`,
-    isUserProfile
-  );
+  const result = await apiFetch<UserProfile>(`/api/users/${id}`, isUserProfile);
 
   handleApiResult(result, {
     onSuccess: (user) => {
@@ -991,14 +984,28 @@ declare function reportToSentry(msg: string): void;
 ```
 
 **Why this design wins in interviews:**
+
 - Zero `as` casts in business logic — all safety comes from narrowing
 - Adding a new `ApiError` variant causes a compile error until handled
 - Runtime validation is separated from type logic — easy to swap in Zod/Yup
 - The pattern scales: same structure works for WebSocket messages, form state, Redux actions
 
 💡 **Interview Signal**
-- ✅ Strong: Designs the full discriminated union with multiple error variants, implements runtime validation separately from the type predicate, uses `assertNever` for exhaustive checking, explains *why* this beats `try/catch` with `as` casts. Discusses trade-off of bringing in Zod vs hand-written guards.
+
+- ✅ Strong: Designs the full discriminated union with multiple error variants, implements runtime validation separately from the type predicate, uses `assertNever` for exhaustive checking, explains _why_ this beats `try/catch` with `as` casts. Discusses trade-off of bringing in Zod vs hand-written guards.
 - ❌ Weak: Creates a simple `{ success: boolean; data?: T; error?: string }` union without discriminants or exhaustive handling, uses `as` to satisfy types, can't articulate why exhaustiveness matters.
+
+---
+
+## 📋 Interview Q&A Summary / Tóm Tắt Q&A Phỏng Vấn
+
+| #   | Câu hỏi                                                 | Difficulty | Core Concept          | Key Signal                                                |
+| --- | ------------------------------------------------------- | ---------- | --------------------- | --------------------------------------------------------- |
+| 1   | Sự khác biệt giữa `any` và `unknown`?                   | 🟢 Junior  | Type safety           | Biết `unknown` yêu cầu narrow trước khi dùng              |
+| 2   | Khi nào dùng `interface` vs `type`?                     | 🟢 Junior  | Type system           | Declaration merging vs union/intersection types           |
+| 3   | Giải thích type narrowing qua ví dụ thực tế             | 🟡 Mid     | Control flow analysis | Dùng nhiều kỹ thuật narrowing + exhaustiveness            |
+| 4   | `strictNullChecks` làm gì và tại sao cần bật?           | 🟡 Mid     | Null safety           | Hiểu null propagation và tác động thực tế                 |
+| 5   | Thiết kế type-safe API handler với discriminated unions | 🔴 Senior  | Type design           | Full union + `assertNever` + runtime validation tách biệt |
 
 ---
 
@@ -1012,33 +1019,29 @@ declare function reportToSentry(msg: string): void;
 
 ---
 
-## 🔁 Retrieval Self-Check / Kiểm Tra Ghi Nhớ
+## 🔄 Self-Check / Tự Kiểm Tra
 
-Close this document and answer the following. Then reopen and check.
+> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
 
-**Retrieval (Test pure recall):**
-1. What is the difference between `any` and `unknown`? Name two situations where you'd use `unknown`.
-2. What does the `as const` assertion do to an object? How is it different from `readonly`?
-3. List five narrowing mechanisms in TypeScript (not including `as`).
-4. What is declaration merging and which keyword supports it: `interface` or `type`?
-5. Why does `never` appear in exhaustive switch statements?
+| #   | Loại           | Câu hỏi                                                                                                                          |
+| --- | -------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 🔍 Retrieval   | Giải thích sự khác biệt giữa `any` và `unknown`. Liệt kê 5 cơ chế narrowing trong TypeScript (không kể `as`).                    |
+| 2   | 🎨 Visual      | Vẽ cây phân cấp type của TypeScript: `unknown` ở trên cùng, `never` ở dưới cùng. Primitives, `null`, `undefined` nằm ở đâu?      |
+| 3   | 🛠️ Application | Viết type guard validate `unknown` từ `JSON.parse()` thành `{ id: string; amount: number; currency: "USD" \| "VND" }`.           |
+| 4   | 🐛 Debug       | `function isUser(x: unknown): x is User { return x !== null; }` — type guard này nói dối compiler khi nào? Vấn đề thực sự là gì? |
+| 5   | 🎓 Teach       | Giải thích `strictNullChecks` cho JavaScript developer chưa dùng TypeScript — tại sao nó quan trọng?                             |
 
-**Visual (Reconstruct from memory):**
-6. Draw the TypeScript type hierarchy tree from `unknown` at the top to `never` at the bottom. Where do primitives fit?
-7. Draw a Venn diagram showing the difference between union (`A | B`) and intersection (`A & B`).
-8. Draw a state machine diagram for `AsyncData<T>` with four states: idle, loading, success, error.
+### Key Points (tự kiểm tra)
 
-**Application (Apply to new scenario):**
-9. You receive `unknown` from `JSON.parse()`. Write a type guard that validates it is a `{ id: string; amount: number; currency: "USD" | "VND" }` object.
-10. You have a discriminated union `type Notification = { kind: "email" } | { kind: "sms" } | { kind: "push" }`. Write a switch statement with exhaustive checking that would produce a compile error if a new `kind: "webhook"` variant is added without a handler.
+| #   | Key Point                                                                                                                                                      |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `any` tắt type-checking; `unknown` yêu cầu kiểm tra trước khi dùng. 5 cơ chế narrowing: `typeof`, `instanceof`, `in`, equality check, truthy check.            |
+| 2   | Top: `unknown` → `any` → `object/string/number/boolean/...` → literal types → `never` (bottom). `null` và `undefined` là leaves khi bật `strictNullChecks`.    |
+| 3   | Kiểm tra `typeof x === 'object'`, `x !== null`, `'id' in x`, rồi type-check từng field. Dùng `x is Type` làm return type của guard.                            |
+| 4   | `x !== null` không verify `x` là `User` shape — nó có thể là object bất kỳ. Type guard phải kiểm tra đủ fields: `'id' in x && typeof x.id === 'string' && ...` |
+| 5   | JS không phân biệt `null`/`undefined`/value → bugs khó tìm. `strictNullChecks` bắt lỗi "có thể null" tại compile time, buộc xử lý trước khi dùng.              |
 
-**Debug (Spot the error):**
-11. What is wrong with this type guard? `function isUser(x: unknown): x is User { return x !== null; }` — when would it lie to the compiler?
-12. What is wrong with `const el = document.getElementById("btn") as HTMLButtonElement; el.click();`?
-
-**Teach (Feynman test):**
-13. Explain `strictNullChecks` to a JavaScript developer who's never used TypeScript. Why should they care?
-14. Explain why a discriminated union is better than `{ success: boolean; data?: T; error?: string }` for modeling API responses.
+> 🎯 **Feynman Prompt:** Giải thích tại sao discriminated union tốt hơn `{ success: boolean; data?: T; error?: string }` cho API response — dùng ví dụ "hộp thư với đèn trạng thái" không dùng từ kỹ thuật.
 
 ---
 

@@ -83,19 +83,21 @@ Circular references (handled by mark-and-sweep):
 
 **Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| "Setting variable to null frees memory immediately" | Marks the object unreachable from that reference — GC runs at its own schedule |
-| "Circular references always cause memory leaks in JS" | Mark-and-sweep handles cycles — only old IE using ref counting had this problem |
-| "More GC = good, memory is always being freed" | Frequent GC = frequent pauses (STW) — excessive allocation is the real problem |
-| "V8 GC runs on the main thread" | Modern V8 (Orinoco): concurrent + incremental — most GC work runs off main thread |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| "Setting variable to null frees memory immediately" | Null removes one reference — GC runs on its own schedule, not synchronously | Marks the object unreachable from that reference — GC sweeps on its own schedule |
+| "Circular references always cause memory leaks in JS" | True for old reference-counting GCs (IE); mark-and-sweep correctly handles cycles | Mark-and-sweep handles cycles — only old IE using ref counting had this problem |
+| "More GC = good, memory is always being freed" | Frequent GC triggers frequent Stop-the-World pauses — excessive allocation rate is the real problem | Frequent GC = frequent STW pauses — reduce allocation rate in hot paths |
+| "V8 GC runs on the main thread" | Modern V8's Orinoco GC is concurrent and incremental — most work happens off main thread | Modern V8 (Orinoco): concurrent + incremental — most GC work runs off main thread |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "how does garbage collection work" / "memory management" / "prevent memory leaks"
 - **Concept**: Reachability-based GC, mark-and-sweep handles cycles, roots → mark → sweep
 - **Opening**: "JavaScript uses mark-and-sweep GC. Starting from GC roots — globals, active stack frames, closures — it traverses all reachable objects and marks them. Everything unmarked gets swept. This correctly handles cycles, which is why setting `x = null; y = null` on mutually-referencing objects frees both..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: JavaScript objects and references (heap vs stack model)
 - **Enables**: Understanding why WeakMap is necessary, diagnosing memory leaks, V8 performance optimization
 
@@ -138,19 +140,21 @@ setInterval leak:
 
 **Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| Adding event listeners in loop/component re-render without cleanup | Use `useEffect` return cleanup or `AbortController` |
-| `const cache = new Map(); cache.set(obj, data)` growing unbounded | WeakMap for object-keyed caches (auto GC) or LRU eviction for size-bounded Map |
-| Closure capturing `this` in React class component timer | `clearInterval` in `componentWillUnmount` or use hooks with cleanup |
-| Holding reference to `detachedNode` for reuse | Truly detach by setting variable to `null` or rebuilding from fresh DOM |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Adding event listeners in loop/component re-render without cleanup | Each listener is a reference from DOM to handler — accumulated listeners = memory leak | Use `useEffect` return cleanup or `AbortController` to remove all listeners |
+| `const cache = new Map(); cache.set(obj, data)` growing unbounded | `Map` holds strong references — old entries are never freed; memory grows indefinitely | Use `WeakMap` for object-keyed caches (auto GC) or LRU eviction for size-bounded `Map` |
+| Closure capturing `this` in React class component timer | Timer callback closes over `this` — component is kept alive until timer is cleared | `clearInterval` in `componentWillUnmount` or use hooks with cleanup function |
+| Holding reference to `detachedNode` for reuse | GC can't collect the node or its entire subtree while any JS reference exists | Set variable to `null` or rebuild from fresh DOM to allow GC |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "memory leak" / "app gets slow over time" / "heap snapshot"
 - **Concept**: TEC-DU pattern — 5 common leak sources; Chrome DevTools heap snapshot comparison
 - **Opening**: "Memory leaks in JavaScript come from 5 main patterns I call TEC-DU: Timers not cleared, Event listeners not removed, Closures over large data, Detached DOM nodes still referenced, Unbounded caches. I'd start with Chrome DevTools Memory tab, take heap snapshot comparison before/after a suspect flow, and filter by Retained Size to find the leak..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: GC reachability (previous concept), closures, event system
 - **Enables**: Production memory debugging, React `useEffect` cleanup discipline, WeakMap use cases
 
@@ -190,27 +194,27 @@ V8 Heap (simplified):
 
 **Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| "GC pauses are always short" | Major GC (Old Space) can be 50-100ms without incremental — V8's concurrent GC reduces this |
-| Allocating large objects frequently in hot paths | Large objects go to LOB and are never moved — fragmentation and less efficient GC |
-| "`delete obj.prop` frees memory" | `delete` removes the property but doesn't trigger GC — the object is still reachable |
-| Worrying about GC without profiling | 90% of memory issues are leaks (objects not freed), not GC algorithm choice — profile first |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| "GC pauses are always short" | Major GC on Old Space can be 50-100ms without incremental marking — problematic for large heaps | V8's concurrent incremental GC reduces pauses — but major GC still exists for large heaps |
+| Allocating large objects frequently in hot paths | Large objects go to Large Object Space and are never moved — causes fragmentation | Pool or reuse large objects; avoid allocating in tight loops |
+| "`delete obj.prop` frees memory" | `delete` removes the property but the object is still reachable — GC is not triggered | Set property to `null`; GC only frees when entire object becomes unreachable |
+| Worrying about GC without profiling | 90% of memory issues are leaks (objects not freed), not GC algorithm inefficiency | Profile first in Chrome DevTools Memory tab — identify leak source before tuning GC |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "V8 internals" / "GC performance" / "why does my app have long pauses" / "minor vs major GC"
 - **Concept**: Generational hypothesis → New Space Scavenge (fast, frequent) + Old Space Major GC (slow, rare)
 - **Opening**: "V8 uses generational GC based on the observation that most objects die young. New Space is ~32MB and collected with fast Scavenge — roughly 1ms. Objects surviving 2 collections promote to Old Space where Major GC runs less often but takes longer. V8's Orinoco GC runs most of this concurrently with the main thread to avoid long pauses..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: Mark-and-sweep GC basics (previous concept)
 - **Enables**: Understanding `--max-old-space-size` Node.js flag, diagnosing GC-related jank in DevTools, server-side memory budgeting
 
 ---
 
 ## Reference Theory / Tài Liệu Tham Khảo
-
-
 
 ## Memory Model / Mô Hình Bộ Nhớ
 
@@ -232,7 +236,7 @@ V8 Heap (simplified):
  * - Fast allocation/deallocation
  * - Limited size (typically 1MB)
  * - LIFO (Last In First Out)
- * 
+ *
  * Heap Memory:
  * - Stores objects and arrays
  * - Dynamic allocation
@@ -259,7 +263,7 @@ interface CallFrame {
 }
 
 interface StackValue {
-  type: 'primitive' | 'reference';
+  type: "primitive" | "reference";
   value: any;
   size: number;
 }
@@ -289,54 +293,54 @@ class MemoryManager {
   private stack: StackMemory;
   private heap: HeapMemory;
   private nextAddress: number = 0;
-  
+
   constructor() {
     this.stack = {
       frames: [],
       size: 0,
-      maxSize: 1024 * 1024 // 1MB
+      maxSize: 1024 * 1024, // 1MB
     };
-    
+
     this.heap = {
       objects: new Map(),
       freeList: [],
       totalSize: 100 * 1024 * 1024, // 100MB
-      usedSize: 0
+      usedSize: 0,
     };
   }
-  
+
   // Allocate primitive on stack
   // Phân bổ nguyên thủy trên stack
   allocatePrimitive(value: any): StackValue {
     const size = this.calculatePrimitiveSize(value);
-    
+
     if (this.stack.size + size > this.stack.maxSize) {
-      throw new Error('Stack overflow');
+      throw new Error("Stack overflow");
     }
-    
+
     this.stack.size += size;
-    
+
     return {
-      type: 'primitive',
+      type: "primitive",
       value,
-      size
+      size,
     };
   }
-  
+
   // Allocate object on heap
   // Phân bổ object trên heap
   allocateObject(type: string, data: any): number {
     const size = this.calculateObjectSize(data);
-    
+
     // Find free block
-    const blockIndex = this.heap.freeList.findIndex(block => block.size >= size);
-    
+    const blockIndex = this.heap.freeList.findIndex((block) => block.size >= size);
+
     let address: number;
     if (blockIndex !== -1) {
       // Reuse free block
       const block = this.heap.freeList[blockIndex];
       address = block.address;
-      
+
       // Update or remove free block
       if (block.size > size) {
         block.address += size;
@@ -349,7 +353,7 @@ class MemoryManager {
       address = this.nextAddress;
       this.nextAddress += size;
     }
-    
+
     // Create heap object
     const heapObject: HeapObject = {
       address,
@@ -357,44 +361,44 @@ class MemoryManager {
       size,
       data,
       marked: false,
-      generation: 0
+      generation: 0,
     };
-    
+
     this.heap.objects.set(address, heapObject);
     this.heap.usedSize += size;
-    
+
     return address;
   }
-  
+
   // Deallocate object
   // Giải phóng object
   deallocate(address: number): void {
     const object = this.heap.objects.get(address);
     if (!object) return;
-    
+
     // Add to free list
     this.heap.freeList.push({
       address: object.address,
-      size: object.size
+      size: object.size,
     });
-    
+
     // Remove from objects
     this.heap.objects.delete(address);
     this.heap.usedSize -= object.size;
-    
+
     // Coalesce adjacent free blocks
     this.coalesceFreeBlocks();
   }
-  
+
   private coalesceFreeBlocks(): void {
     // Sort by address
     this.heap.freeList.sort((a, b) => a.address - b.address);
-    
+
     // Merge adjacent blocks
     for (let i = 0; i < this.heap.freeList.length - 1; i++) {
       const current = this.heap.freeList[i];
       const next = this.heap.freeList[i + 1];
-      
+
       if (current.address + current.size === next.address) {
         current.size += next.size;
         this.heap.freeList.splice(i + 1, 1);
@@ -402,32 +406,39 @@ class MemoryManager {
       }
     }
   }
-  
+
   private calculatePrimitiveSize(value: any): number {
     switch (typeof value) {
-      case 'boolean': return 1;
-      case 'number': return 8;
-      case 'bigint': return 8;
-      case 'string': return value.length * 2; // UTF-16
-      case 'symbol': return 8;
-      case 'undefined': return 0;
-      default: return 8; // reference
+      case "boolean":
+        return 1;
+      case "number":
+        return 8;
+      case "bigint":
+        return 8;
+      case "string":
+        return value.length * 2; // UTF-16
+      case "symbol":
+        return 8;
+      case "undefined":
+        return 0;
+      default:
+        return 8; // reference
     }
   }
-  
+
   private calculateObjectSize(data: any): number {
     // Simplified calculation
     let size = 16; // Object header
-    
+
     if (Array.isArray(data)) {
       size += data.length * 8; // Array elements
-    } else if (typeof data === 'object') {
+    } else if (typeof data === "object") {
       size += Object.keys(data).length * 16; // Properties
     }
-    
+
     return size;
   }
-  
+
   // Get memory statistics
   // Lấy thống kê bộ nhớ
   getStats(): MemoryStats {
@@ -435,14 +446,14 @@ class MemoryManager {
       stack: {
         used: this.stack.size,
         max: this.stack.maxSize,
-        frames: this.stack.frames.length
+        frames: this.stack.frames.length,
       },
       heap: {
         used: this.heap.usedSize,
         total: this.heap.totalSize,
         objects: this.heap.objects.size,
-        freeBlocks: this.heap.freeList.length
-      }
+        freeBlocks: this.heap.freeList.length,
+      },
     };
   }
 }
@@ -479,62 +490,62 @@ interface MemoryStats {
 class GarbageCollector {
   private memoryManager: MemoryManager;
   private roots: Set<number>; // GC roots (global objects, stack references)
-  
+
   constructor(memoryManager: MemoryManager) {
     this.memoryManager = memoryManager;
     this.roots = new Set();
   }
-  
+
   // Mark-and-Sweep GC
   // Thu gom rác đánh dấu và quét
   collect(): GCStats {
     const startTime = performance.now();
     const initialMemory = this.memoryManager.getStats().heap.used;
-    
+
     // Phase 1: Mark
     this.markPhase();
-    
+
     // Phase 2: Sweep
     const collected = this.sweepPhase();
-    
+
     const endTime = performance.now();
     const finalMemory = this.memoryManager.getStats().heap.used;
-    
+
     return {
       duration: endTime - startTime,
       collected,
       before: initialMemory,
-      after: finalMemory
+      after: finalMemory,
     };
   }
-  
+
   private markPhase(): void {
     // Mark all reachable objects
     const worklist: number[] = Array.from(this.roots);
     const marked = new Set<number>();
-    
+
     while (worklist.length > 0) {
       const address = worklist.pop()!;
-      
+
       if (marked.has(address)) continue;
       marked.add(address);
-      
+
       // Mark object
-      const object = this.memoryManager['heap'].objects.get(address);
+      const object = this.memoryManager["heap"].objects.get(address);
       if (object) {
         object.marked = true;
-        
+
         // Add references to worklist
         const references = this.getReferences(object);
         worklist.push(...references);
       }
     }
   }
-  
+
   private sweepPhase(): number {
     let collected = 0;
-    const objects = this.memoryManager['heap'].objects;
-    
+    const objects = this.memoryManager["heap"].objects;
+
     // Sweep unmarked objects
     for (const [address, object] of objects.entries()) {
       if (!object.marked) {
@@ -545,35 +556,35 @@ class GarbageCollector {
         object.marked = false;
       }
     }
-    
+
     return collected;
   }
-  
+
   private getReferences(object: HeapObject): number[] {
     const references: number[] = [];
-    
+
     // Extract references from object data
-    if (typeof object.data === 'object' && object.data !== null) {
+    if (typeof object.data === "object" && object.data !== null) {
       for (const value of Object.values(object.data)) {
-        if (typeof value === 'number' && this.isValidAddress(value)) {
+        if (typeof value === "number" && this.isValidAddress(value)) {
           references.push(value);
         }
       }
     }
-    
+
     return references;
   }
-  
+
   private isValidAddress(address: number): boolean {
-    return this.memoryManager['heap'].objects.has(address);
+    return this.memoryManager["heap"].objects.has(address);
   }
-  
+
   // Add GC root
   // Thêm GC root
   addRoot(address: number): void {
     this.roots.add(address);
   }
-  
+
   // Remove GC root
   // Xóa GC root
   removeRoot(address: number): void {
@@ -587,61 +598,61 @@ class GenerationalGC extends GarbageCollector {
   private youngGeneration: Set<number>;
   private oldGeneration: Set<number>;
   private promotionThreshold: number = 2;
-  
+
   constructor(memoryManager: MemoryManager) {
     super(memoryManager);
     this.youngGeneration = new Set();
     this.oldGeneration = new Set();
   }
-  
+
   // Minor GC (young generation only)
   // GC nhỏ (chỉ thế hệ trẻ)
   minorCollect(): GCStats {
     const startTime = performance.now();
-    
+
     // Mark young generation
     this.markYoungGeneration();
-    
+
     // Sweep and promote
     const collected = this.sweepYoungGeneration();
-    
+
     const endTime = performance.now();
-    
+
     return {
       duration: endTime - startTime,
       collected,
       before: 0,
-      after: 0
+      after: 0,
     };
   }
-  
+
   // Major GC (all generations)
   // GC lớn (tất cả thế hệ)
   majorCollect(): GCStats {
     return this.collect();
   }
-  
+
   private markYoungGeneration(): void {
     // Mark objects in young generation
     for (const address of this.youngGeneration) {
-      const object = this.memoryManager['heap'].objects.get(address);
+      const object = this.memoryManager["heap"].objects.get(address);
       if (object) {
         object.marked = true;
       }
     }
   }
-  
+
   private sweepYoungGeneration(): number {
     let collected = 0;
-    
+
     for (const address of this.youngGeneration) {
-      const object = this.memoryManager['heap'].objects.get(address);
-      
+      const object = this.memoryManager["heap"].objects.get(address);
+
       if (!object) {
         this.youngGeneration.delete(address);
         continue;
       }
-      
+
       if (!object.marked) {
         // Collect
         this.memoryManager.deallocate(address);
@@ -657,10 +668,10 @@ class GenerationalGC extends GarbageCollector {
         object.marked = false;
       }
     }
-    
+
     return collected;
   }
-  
+
   // Allocate in young generation
   // Phân bổ trong thế hệ trẻ
   allocateYoung(type: string, data: any): number {
@@ -694,7 +705,7 @@ interface GCStats {
 
 class MemoryLeakDetector {
   private snapshots: MemorySnapshot[] = [];
-  
+
   // Take memory snapshot
   // Chụp snapshot bộ nhớ
   takeSnapshot(): MemorySnapshot {
@@ -702,121 +713,122 @@ class MemoryLeakDetector {
       timestamp: Date.now(),
       heapSize: 0,
       objects: new Map(),
-      retainedSize: new Map()
+      retainedSize: new Map(),
     };
-    
+
     // Collect object information
     // This would use actual heap profiling in real implementation
-    
+
     this.snapshots.push(snapshot);
     return snapshot;
   }
-  
+
   // Compare snapshots to find leaks
   // So sánh snapshots để tìm rò rỉ
   findLeaks(snapshot1: MemorySnapshot, snapshot2: MemorySnapshot): LeakReport {
     const leaks: LeakInfo[] = [];
-    
+
     // Find objects that grew significantly
     for (const [type, count2] of snapshot2.objects) {
       const count1 = snapshot1.objects.get(type) || 0;
       const growth = count2 - count1;
-      
-      if (growth > 100) { // Threshold
+
+      if (growth > 100) {
+        // Threshold
         leaks.push({
           type,
           count: growth,
-          retainedSize: snapshot2.retainedSize.get(type) || 0
+          retainedSize: snapshot2.retainedSize.get(type) || 0,
         });
       }
     }
-    
+
     return {
       leaks,
-      totalGrowth: snapshot2.heapSize - snapshot1.heapSize
+      totalGrowth: snapshot2.heapSize - snapshot1.heapSize,
     };
   }
-  
+
   // Common leak patterns
   // Patterns rò rỉ phổ biến
-  
+
   // 1. Forgotten timers
   // 1. Timers bị quên
   static leakPattern1_ForgottenTimer() {
     // ❌ Bad: Timer never cleared
     setInterval(() => {
-      console.log('Running...');
+      console.log("Running...");
     }, 1000);
-    
+
     // ✅ Good: Clear timer when done
     const timerId = setInterval(() => {
-      console.log('Running...');
+      console.log("Running...");
     }, 1000);
-    
+
     // Later...
     clearInterval(timerId);
   }
-  
+
   // 2. Event listeners not removed
   // 2. Event listeners không được xóa
   static leakPattern2_EventListeners() {
-    const element = document.getElementById('button');
-    
+    const element = document.getElementById("button");
+
     // ❌ Bad: Listener never removed
-    element?.addEventListener('click', function handler() {
-      console.log('Clicked');
+    element?.addEventListener("click", function handler() {
+      console.log("Clicked");
     });
-    
+
     // ✅ Good: Remove listener
-    const handler = () => console.log('Clicked');
-    element?.addEventListener('click', handler);
-    
+    const handler = () => console.log("Clicked");
+    element?.addEventListener("click", handler);
+
     // Later...
-    element?.removeEventListener('click', handler);
+    element?.removeEventListener("click", handler);
   }
-  
+
   // 3. Closures holding references
   // 3. Closures giữ references
   static leakPattern3_Closures() {
     // ❌ Bad: Closure holds large object
     function createClosure() {
-      const largeObject = new Array(1000000).fill('data');
-      
-      return function() {
+      const largeObject = new Array(1000000).fill("data");
+
+      return function () {
         // Even if we don't use largeObject,
         // it's kept in memory
-        console.log('Hello');
+        console.log("Hello");
       };
     }
-    
+
     // ✅ Good: Don't capture unnecessary variables
     function createClosure2() {
-      const largeObject = new Array(1000000).fill('data');
+      const largeObject = new Array(1000000).fill("data");
       const needed = largeObject[0];
-      
-      return function() {
+
+      return function () {
         console.log(needed);
       };
     }
   }
-  
+
   // 4. Detached DOM nodes
   // 4. DOM nodes bị tách rời
   static leakPattern4_DetachedDOM() {
     // ❌ Bad: Keeping reference to removed DOM
     const elements: HTMLElement[] = [];
-    
+
     function addElement() {
-      const div = document.createElement('div');
+      const div = document.createElement("div");
       document.body.appendChild(div);
       elements.push(div); // Reference kept
     }
-    
+
     function removeElement() {
       const div = elements.pop();
       div?.remove(); // Removed from DOM but still in array
     }
-    
+
     // ✅ Good: Clear references
     function removeElement2() {
       const div = elements.pop();
@@ -824,44 +836,44 @@ class MemoryLeakDetector {
       // div is now eligible for GC
     }
   }
-  
+
   // 5. Global variables
   // 5. Biến toàn cục
   static leakPattern5_Globals() {
     // ❌ Bad: Accidental global
     function createLeak() {
-      leak = 'This is a global!'; // Missing 'var/let/const'
+      leak = "This is a global!"; // Missing 'var/let/const'
     }
-    
+
     // ✅ Good: Use strict mode and proper declarations
     function noLeak() {
-      'use strict';
-      const notGlobal = 'This is local';
+      "use strict";
+      const notGlobal = "This is local";
     }
   }
-  
+
   // 6. Cache without limits
   // 6. Cache không giới hạn
   static leakPattern6_UnboundedCache() {
     // ❌ Bad: Cache grows indefinitely
     const cache = new Map();
-    
+
     function getData(key: string) {
       if (!cache.has(key)) {
         cache.set(key, expensiveOperation(key));
       }
       return cache.get(key);
     }
-    
+
     // ✅ Good: Use LRU cache with size limit
     class LRUCache<K, V> {
       private cache = new Map<K, V>();
       private maxSize: number;
-      
+
       constructor(maxSize: number) {
         this.maxSize = maxSize;
       }
-      
+
       get(key: K): V | undefined {
         const value = this.cache.get(key);
         if (value !== undefined) {
@@ -871,7 +883,7 @@ class MemoryLeakDetector {
         }
         return value;
       }
-      
+
       set(key: K, value: V): void {
         if (this.cache.has(key)) {
           this.cache.delete(key);
@@ -883,7 +895,7 @@ class MemoryLeakDetector {
         this.cache.set(key, value);
       }
     }
-    
+
     function expensiveOperation(key: string): any {
       return { data: key };
     }
@@ -928,75 +940,75 @@ class WeakReferenceExamples {
   // Trường hợp 1: Dữ liệu riêng tư
   static privateDataExample() {
     const privateData = new WeakMap<object, any>();
-    
+
     class User {
       constructor(name: string) {
-        privateData.set(this, { password: 'secret' });
+        privateData.set(this, { password: "secret" });
       }
-      
+
       getPassword() {
         return privateData.get(this)?.password;
       }
     }
-    
-    const user = new User('John');
+
+    const user = new User("John");
     console.log(user.getPassword()); // 'secret'
-    
+
     // When user is garbage collected, private data is too
   }
-  
+
   // Use case 2: Caching
   // Trường hợp 2: Caching
   static cachingExample() {
     const cache = new WeakMap<object, any>();
-    
+
     function processObject(obj: object) {
       if (cache.has(obj)) {
         return cache.get(obj);
       }
-      
+
       const result = expensiveComputation(obj);
       cache.set(obj, result);
       return result;
     }
-    
+
     function expensiveComputation(obj: object): any {
       return { processed: true };
     }
-    
+
     // Cache entries are automatically cleaned up
     // when objects are no longer referenced
   }
-  
+
   // Use case 3: DOM node metadata
   // Trường hợp 3: Metadata DOM node
   static domMetadataExample() {
     const metadata = new WeakMap<HTMLElement, any>();
-    
+
     function attachMetadata(element: HTMLElement, data: any) {
       metadata.set(element, data);
     }
-    
+
     function getMetadata(element: HTMLElement) {
       return metadata.get(element);
     }
-    
+
     // When DOM node is removed, metadata is automatically cleaned up
   }
-  
+
   // Use case 4: Tracking object usage
   // Trường hợp 4: Theo dõi sử dụng object
   static trackingExample() {
     const accessed = new WeakSet<object>();
-    
+
     function markAccessed(obj: object) {
       accessed.add(obj);
     }
-    
+
     function wasAccessed(obj: object): boolean {
       return accessed.has(obj);
     }
-    
+
     // Tracking data doesn't prevent GC
   }
 }
@@ -1013,6 +1025,7 @@ class WeakReferenceExamples {
 JavaScript dùng mark-and-sweep: trace từ roots → mark reachable → sweep unmarked. Circular references được xử lý đúng vì GC check reachability từ roots, không phải reference count. Đây là lý do IE6 có memory leak bug với closures (dùng ref counting cũ không xử lý được cycles).
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Names roots, explains mark/sweep phases, explicitly mentions cycle handling, mentions why ref-counting fails
 - ❌ Weak: "JavaScript automatically frees unused objects" — no mechanism, no cycle explanation
 
@@ -1021,6 +1034,7 @@ JavaScript dùng mark-and-sweep: trace từ roots → mark reachable → sweep u
 ### Q: Name the 5 most common memory leak patterns and how to fix each. 🟡 Mid
 
 **A:** The TEC-DU patterns:
+
 1. **Timers**: `setInterval`/`setTimeout` holding callback + closure → `clearInterval(id)` in cleanup
 2. **Event listeners**: `addEventListener` never `removeEventListener` → use AbortController signal in React effects
 3. **Closures**: Handler closing over large data structure unnecessarily → nullify captured refs when done
@@ -1032,6 +1046,7 @@ Detect: Chrome DevTools → Memory → Heap Snapshot comparison. Filter by "Reta
 TEC-DU: Timers, Event listeners, Closures, Detached DOM, Unbounded caches. Chrome DevTools Memory tab → Heap Snapshot comparison → filter "Retained Size Δ" để tìm leak.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Names 5 patterns with concrete fixes, mentions heap snapshot comparison workflow
 - ❌ Weak: "Use WeakMap" or "Remove event listeners" — partial list without detection strategy
 
@@ -1044,6 +1059,7 @@ TEC-DU: Timers, Event listeners, Closures, Detached DOM, Unbounded caches. Chrom
 Generational hypothesis: hầu hết objects chết trẻ. V8: New Space (~32MB) → Scavenge GC nhanh (<1ms). Objects sống sót 2 lần GC → promote sang Old Space → Major GC chậm nhưng hiếm. Hot path chỉ trigger fast Scavenge.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: States the hypothesis explicitly, names Scavenge vs Major GC, explains promotion threshold, gives performance implication
 - ❌ Weak: "V8 has young and old generation" — states the fact without the hypothesis behind it or the performance reasoning
 
@@ -1056,6 +1072,7 @@ Generational hypothesis: hầu hết objects chết trẻ. V8: New Space (~32MB)
 `Map` giữ strong reference → DOM node không bị GC dù đã remove. `WeakMap` giữ weak reference → khi không còn reference nào khác đến key, GC tự xóa cả key lẫn cache entry. Không cần manual eviction. Trade-off: không iterable vì GC timing không xác định.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Explains strong vs weak reference, mentions self-cleaning behavior, mentions non-iterability trade-off
 - ❌ Weak: "WeakMap doesn't prevent GC" — correct but misses why that matters for caching and the non-iterable trade-off
 
@@ -1063,12 +1080,12 @@ Generational hypothesis: hầu hết objects chết trẻ. V8: New Space (~32MB)
 
 ## Q&A Summary / Tóm Tắt Q&A
 
-| # | Topic | Level | One-liner |
-|---|-------|-------|-----------|
-| 1 | Mark-and-sweep + cycles | 🟡 | Roots → mark reachable → sweep rest; handles cycles (ref-counting can't) |
-| 2 | Memory leak patterns | 🟡 | TEC-DU: Timers, Events, Closures, Detached DOM, Unbounded caches |
-| 3 | Generational GC | 🔴 | Most objects die young → New Space Scavenge (fast) + Old Space Major GC (rare) |
-| 4 | WeakMap vs Map for caches | 🟢 | WeakMap = self-cleaning (weak keys), not iterable; Map = strong keys, need eviction |
+| #   | Topic                     | Level | One-liner                                                                           |
+| --- | ------------------------- | ----- | ----------------------------------------------------------------------------------- |
+| 1   | Mark-and-sweep + cycles   | 🟡    | Roots → mark reachable → sweep rest; handles cycles (ref-counting can't)            |
+| 2   | Memory leak patterns      | 🟡    | TEC-DU: Timers, Events, Closures, Detached DOM, Unbounded caches                    |
+| 3   | Generational GC           | 🔴    | Most objects die young → New Space Scavenge (fast) + Old Space Major GC (rare)      |
+| 4   | WeakMap vs Map for caches | 🟢    | WeakMap = self-cleaning (weak keys), not iterable; Map = strong keys, need eviction |
 
 ---
 
@@ -1091,6 +1108,8 @@ Generational hypothesis: hầu hết objects chết trẻ. V8: New Space (~32MB)
 - **Application**: You have `const cache = new Map()` in a module. Users report the app slows after 10 minutes. What's the likely issue and fix?
 - **Debug**: Chrome DevTools heap snapshot shows `HTMLElement` count growing by 500 after each navigation. What's the cause and how do you fix it?
 - **Teach**: Explain to a junior why `weakMap.set(element, data)` is better than `map.set(element, data)` for DOM-related caches — use the "hotel key" analogy.
+
+> 🎯 **Feynman Prompt:** Giải thích cho designer: tại sao ứng dụng web ngày càng chậm dần theo thời gian — memory leak xảy ra như thế nào và Garbage Collector "dọn rác" theo nguyên tắc gì?
 
 🔁 **Spaced repetition**: Review in 3 days → 7 days → 14 days
 

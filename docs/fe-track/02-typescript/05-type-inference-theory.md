@@ -61,41 +61,43 @@
 
 ```typescript
 // Widening with let
-let mode = 'dark'   // type: string (widened)
+let mode = "dark"; // type: string (widened)
 
 // Literal preserved with const
-const theme = 'dark'  // type: 'dark'
+const theme = "dark"; // type: 'dark'
 
 // Object properties WIDEN by default
-const obj = { mode: 'dark' }  // type: { mode: string } ← widened!
-obj.mode = 'light'  // allowed — mode is string
+const obj = { mode: "dark" }; // type: { mode: string } ← widened!
+obj.mode = "light"; // allowed — mode is string
 
 // Fix: as const
-const obj2 = { mode: 'dark' } as const  // { readonly mode: 'dark' }
+const obj2 = { mode: "dark" } as const; // { readonly mode: 'dark' }
 
 // Narrowing through conditions
 function process(value: string | number | null) {
-  if (value === null) return                    // value: null here
-  if (typeof value === 'string') {
-    return value.toUpperCase()                  // value: string here
+  if (value === null) return; // value: null here
+  if (typeof value === "string") {
+    return value.toUpperCase(); // value: string here
   }
-  return value.toFixed(2)                       // value: number here
+  return value.toFixed(2); // value: number here
 }
 ```
 
-**Common Mistakes:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| `let status = 'idle'` expecting literal type in union | `const status = 'idle'` or `let status: Status = 'idle'` |
-| `const obj = { env: 'prod' }` expecting `env` as literal | `as const` or explicit annotation with literal type |
-| Stored guard result: `const isStr = typeof x === 'string'; if (isStr) x.length` | Inline the guard — TypeScript doesn't track stored boolean guards |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `let status = 'idle'` expecting literal type in a union | `let` allows reassignment so TypeScript widens literals to the base type (e.g. `string`) | Use `const status = 'idle'` (preserves literal) or annotate `let status: Status = 'idle'` |
+| `const obj = { env: 'prod' }` expecting `env` to be the literal `'prod'` | Object properties are mutable even in `const` objects — TypeScript widens to base type | Use `as const` to freeze all properties to readonly literals, or annotate the property explicitly |
+| Storing a type guard result: `const isStr = typeof x === 'string'; if (isStr) x.length` | TypeScript's CFA only narrows through inline checks — stored boolean variables don't transfer narrowing | Inline the guard: `if (typeof x === 'string') x.length` |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "TypeScript infers string instead of literal" / "type lost after assignment"
 - **Opening**: "TypeScript widens `let` variable literals to the base type because they can be reassigned. `const` preserves literals. Object properties also widen — even in `const` objects — because properties are mutable. Use `as const` to freeze to readonly literal types..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: `let` vs `const`, TypeScript basic types
 - **Enables**: Understanding `as const`, `satisfies`, discriminant narrowing
 
@@ -114,40 +116,42 @@ function process(value: string | number | null) {
 **Visual — Three Approaches:**
 
 ```typescript
-type AppConfig = { env: 'development' | 'staging' | 'production'; debug: boolean }
+type AppConfig = { env: "development" | "staging" | "production"; debug: boolean };
 
 // 1. Type annotation — validates but widens
-const cfg1: AppConfig = { env: 'production', debug: false }
-cfg1.env  // type: 'development' | 'staging' | 'production' (narrowed by annotation, but wider than literal)
+const cfg1: AppConfig = { env: "production", debug: false };
+cfg1.env; // type: 'development' | 'staging' | 'production' (narrowed by annotation, but wider than literal)
 
 // 2. as const — preserves literals, no shape validation
-const cfg2 = { env: 'production', debug: false } as const
-cfg2.env  // type: 'production' ✅
+const cfg2 = { env: "production", debug: false } as const;
+cfg2.env; // type: 'production' ✅
 // { eenv: 'production' } as const → no error! ← typo not caught
 
 // 3. satisfies — validates AND preserves literal ✅ best of both
-const cfg3 = { env: 'production', debug: false } satisfies AppConfig
-cfg3.env  // type: 'production' (literal) ✅
+const cfg3 = { env: "production", debug: false } satisfies AppConfig;
+cfg3.env; // type: 'production' (literal) ✅
 // { eenv: 'production' } satisfies AppConfig → ERROR! ← typo caught ✅
 
 // Combined for maximum safety:
-const ROUTES = ['/', '/about', '/contact'] as const satisfies readonly string[]
-ROUTES[0]  // type: '/' ← literal preserved
+const ROUTES = ["/", "/about", "/contact"] as const satisfies readonly string[];
+ROUTES[0]; // type: '/' ← literal preserved
 ```
 
-**Common Mistakes:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| `const config: Config = {...}` for downstream literal use | `satisfies Config` — keeps literals |
-| `as const` expecting shape validation | Combine: `{...} as const satisfies ExpectedType` |
-| Using `as const` on object that will be mutated | `as const` makes everything readonly — use only for truly immutable configs |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `const config: Config = {...}` when downstream code needs literal types | Type annotation widens values to the declared union (e.g. `'production'` becomes `string`) — literals are lost | Use `satisfies Config` — validates shape AND preserves literal types for downstream inference |
+| `as const` expecting shape validation against a type | `as const` only freezes literals — it does NOT check if the object matches a specific type | Combine: `{...} as const satisfies ExpectedType` to get both literal preservation and shape validation |
+| Using `as const` on an object that will be mutated | `as const` makes all properties `readonly` — TypeScript errors on any mutation attempt | Only use `as const` for truly immutable configs; use explicit type annotation for mutable objects |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "config object loses literal type" / "`satisfies` vs type annotation" / "TypeScript 4.9"
 - **Opening**: "`satisfies` solves a specific problem: type annotations validate shape but widen values. `as const` keeps literals but doesn't validate shape. `satisfies` does both — validates the object matches the expected type, and the variable keeps its precise inferred literal types for downstream use..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: Literal types, widening, `as const`
 - **Enables**: Type-safe config, route tables, event maps, exhaustive enums
 
@@ -168,50 +172,59 @@ ROUTES[0]  // type: '/' ← literal preserved
 ```typescript
 // Automatic narrowing
 function handle(x: string | number | null) {
-  if (x === null) return                       // x: null
-  if (typeof x === 'string') x.toUpperCase()  // x: string
-  else x.toFixed(2)                            // x: number
+  if (x === null) return; // x: null
+  if (typeof x === "string")
+    x.toUpperCase(); // x: string
+  else x.toFixed(2); // x: number
 }
 
 // Custom type guard with type predicate
 function isApiUser(x: unknown): x is { id: string; name: string } {
-  return typeof x === 'object' && x !== null
-    && typeof (x as any).id === 'string'
-    && typeof (x as any).name === 'string'
+  return (
+    typeof x === "object" &&
+    x !== null &&
+    typeof (x as any).id === "string" &&
+    typeof (x as any).name === "string"
+  );
 }
 
-const response: unknown = await fetch('/api/me').then(r => r.json())
+const response: unknown = await fetch("/api/me").then((r) => r.json());
 if (isApiUser(response)) {
-  console.log(response.name)  // ✅ type: { id: string; name: string }
+  console.log(response.name); // ✅ type: { id: string; name: string }
 }
 
 // Exhaustive switch with never
-type Action = { type: 'INC' } | { type: 'DEC' } | { type: 'RESET' }
+type Action = { type: "INC" } | { type: "DEC" } | { type: "RESET" };
 function reduce(state: number, action: Action): number {
   switch (action.type) {
-    case 'INC':   return state + 1
-    case 'DEC':   return state - 1
-    case 'RESET': return 0
+    case "INC":
+      return state + 1;
+    case "DEC":
+      return state - 1;
+    case "RESET":
+      return 0;
     default:
-      const _exhaustive: never = action  // Error if new Action member added without handling!
-      return state
+      const _exhaustive: never = action; // Error if new Action member added without handling!
+      return state;
   }
 }
 ```
 
-**Common Mistakes:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| `function isUser(x: any): boolean` | `function isUser(x: unknown): x is User` — use `unknown`, add predicate |
-| `const isStr = typeof x === 'string'; if (isStr) x.length` | Inline: `if (typeof x === 'string') x.length` — stored booleans don't narrow |
-| No `default: never` in discriminated union switch | Add exhaustiveness check — future-proof against new union members |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `function isUser(x: any): boolean` as a type guard | Without a type predicate return type (`x is User`), TypeScript cannot narrow the type in the if branch | Use `function isUser(x: unknown): x is User` — `unknown` is safe and the predicate enables narrowing |
+| `const isStr = typeof x === 'string'; if (isStr) x.length` | TypeScript's CFA doesn't propagate narrowing through stored boolean variables | Inline: `if (typeof x === 'string') x.length` — narrowing only works with direct inline checks |
+| No `default: never` in a discriminated union switch | New union members silently fall through with no compile error — exhaustiveness breaks undetected | Add `default: const _: never = action` — TypeScript errors if any union variant is unhandled |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "custom type guard" / "exhaustive switch" / "TypeScript narrowing"
 - **Opening**: "TypeScript's CFA tracks types through every condition automatically. For complex validation logic that can't be inlined, use a type predicate: `(x: unknown): x is User`. TypeScript narrows the type inside the if block. For discriminated union switches, assign the default case to `never` — if you add a new union member, TypeScript forces you to handle it..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: Union types, discriminated unions
 - **Enables**: Type-safe API response validation, exhaustive reducers, runtime+compile-time consistency
 
@@ -226,6 +239,7 @@ function reduce(state: number, action: Action): number {
 **Giải thích (VI):** Trả lời theo cơ chế compiler và ví dụ phản-biện để thể hiện hiểu sâu.
 
 **Ví dụ (TypeScript):**
+
 ```ts
 const n = 1;
 const arr = [1, 2, 3];
@@ -238,9 +252,10 @@ const arr = [1, 2, 3];
 **Giải thích (VI):** Trả lời theo cơ chế compiler và ví dụ phản-biện để thể hiện hiểu sâu.
 
 **Ví dụ (TypeScript):**
+
 ```ts
-const xs = [1,2,3];
-xs.map(x => x.toFixed(2));
+const xs = [1, 2, 3];
+xs.map((x) => x.toFixed(2));
 ```
 
 ## Best Common Type
@@ -250,8 +265,9 @@ xs.map(x => x.toFixed(2));
 **Giải thích (VI):** Trả lời theo cơ chế compiler và ví dụ phản-biện để thể hiện hiểu sâu.
 
 **Ví dụ (TypeScript):**
+
 ```ts
-const mixed = [1, 'a']; // (string | number)[]
+const mixed = [1, "a"]; // (string | number)[]
 ```
 
 ## Control Flow Analysis
@@ -261,8 +277,12 @@ const mixed = [1, 'a']; // (string | number)[]
 **Giải thích (VI):** Trả lời theo cơ chế compiler và ví dụ phản-biện để thể hiện hiểu sâu.
 
 **Ví dụ (TypeScript):**
+
 ```ts
-function fn(v: string | number){ if(typeof v==='string') return v.length; return v.toFixed(2); }
+function fn(v: string | number) {
+  if (typeof v === "string") return v.length;
+  return v.toFixed(2);
+}
 ```
 
 ## Widening vs Narrowing
@@ -272,9 +292,10 @@ function fn(v: string | number){ if(typeof v==='string') return v.length; return
 **Giải thích (VI):** Trả lời theo cơ chế compiler và ví dụ phản-biện để thể hiện hiểu sâu.
 
 **Ví dụ (TypeScript):**
+
 ```ts
-let mode = 'dark'; // string
-const lock = 'dark'; // 'dark'
+let mode = "dark"; // string
+const lock = "dark"; // 'dark'
 ```
 
 ## Const Assertions
@@ -284,8 +305,9 @@ const lock = 'dark'; // 'dark'
 **Giải thích (VI):** Trả lời theo cơ chế compiler và ví dụ phản-biện để thể hiện hiểu sâu.
 
 **Ví dụ (TypeScript):**
+
 ```ts
-const cfg = { env: 'prod', retries: 3 } as const;
+const cfg = { env: "prod", retries: 3 } as const;
 ```
 
 ## satisfies Operator
@@ -295,8 +317,9 @@ const cfg = { env: 'prod', retries: 3 } as const;
 **Giải thích (VI):** Trả lời theo cơ chế compiler và ví dụ phản-biện để thể hiện hiểu sâu.
 
 **Ví dụ (TypeScript):**
+
 ```ts
-const routes = { home: '/', about: '/about' } satisfies Record<string, `/${string}`>;
+const routes = { home: "/", about: "/about" } satisfies Record<string, `/${string}`>;
 ```
 
 ## Variance Basics
@@ -306,6 +329,7 @@ const routes = { home: '/', about: '/about' } satisfies Record<string, `/${strin
 **Giải thích (VI):** Trả lời theo cơ chế compiler và ví dụ phản-biện để thể hiện hiểu sâu.
 
 **Ví dụ (TypeScript):**
+
 ```ts
 type F1 = (x: string | number) => string;
 type F2 = (x: string) => string;
@@ -326,22 +350,23 @@ type F2 = (x: string) => string;
 **A:** TypeScript's **widening** rule: `let` variables can be reassigned, so TypeScript infers the widest type that fits — `string`. `const` variables cannot be reassigned — the value will always be `'dark'`, so TypeScript safely infers the literal type `'dark'`.
 
 ```typescript
-let mode = 'dark'    // type: string (widened — could become 'light', 'auto', etc.)
-const theme = 'dark' // type: 'dark' (literal — will always be 'dark')
+let mode = "dark"; // type: string (widened — could become 'light', 'auto', etc.)
+const theme = "dark"; // type: 'dark' (literal — will always be 'dark')
 
 // This causes the classic bug:
-const config = { env: 'production' }
-config.env  // type: string ← NOT 'production'!
+const config = { env: "production" };
+config.env; // type: string ← NOT 'production'!
 // Object properties widen even in const (properties can be reassigned)
 
 // Fix: as const
-const config2 = { env: 'production' } as const
-config2.env  // type: 'production' ✅
+const config2 = { env: "production" } as const;
+config2.env; // type: 'production' ✅
 ```
 
 **Tiếng Việt:** `let` widen → TypeScript infer type rộng nhất vì biến có thể thay đổi. `const` giữ literal vì không thể reassign. Object properties cũng widen ngay cả trong `const` object — dùng `as const` để freeze.
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Explains the reasoning (can/cannot change); extends to object property widening; mentions `as const` fix
 - ❌ Weak: "TypeScript is just smarter with const" — correct outcome but wrong reasoning
 
@@ -352,22 +377,23 @@ config2.env  // type: 'production' ✅
 **A:** `satisfies` validates an expression against a type **without widening the inferred type**. A type annotation (`const x: T = {...}`) validates and **widens** values to the declared type. `satisfies` validates and **keeps** the inferred literal types.
 
 ```typescript
-type Config = { env: 'development' | 'staging' | 'production' }
+type Config = { env: "development" | "staging" | "production" };
 
 // Type annotation — validates, but env becomes the union type (widened)
-const c1: Config = { env: 'production' }
-c1.env  // type: 'development' | 'staging' | 'production'
+const c1: Config = { env: "production" };
+c1.env; // type: 'development' | 'staging' | 'production'
 
 // satisfies — validates AND keeps the literal
-const c2 = { env: 'production' } satisfies Config
-c2.env  // type: 'production' ← literal preserved ✅
+const c2 = { env: "production" } satisfies Config;
+c2.env; // type: 'production' ← literal preserved ✅
 
 // satisfies catches typos:
-const c3 = { eenv: 'production' } satisfies Config  // ❌ Error: 'eenv' not in Config
+const c3 = { eenv: "production" } satisfies Config; // ❌ Error: 'eenv' not in Config
 // as const wouldn't catch this!
 ```
 
 **When to use each:**
+
 - `satisfies`: config objects, route tables, event maps — where you need shape validation AND downstream literal access
 - Type annotation: function parameters, return types — where widening is fine or desired
 - `as const`: truly immutable data without shape constraint
@@ -375,6 +401,7 @@ const c3 = { eenv: 'production' } satisfies Config  // ❌ Error: 'eenv' not in 
 **Tiếng Việt:** `satisfies` validate shape như type annotation nhưng không widen giá trị. Type annotation validate + widen (env trở thành union). `satisfies` validate + giữ literal (`'production'`). Dùng khi cần vừa validate shape vừa giữ precise types cho downstream.
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Shows the widening difference with a concrete example; explains when to choose each; mentions typo detection advantage
 - ❌ Weak: "`satisfies` is like a type annotation but different" — vague; doesn't show the inference difference
 
@@ -385,37 +412,37 @@ const c3 = { eenv: 'production' } satisfies Config  // ❌ Error: 'eenv' not in 
 **A:**
 
 ```typescript
-type User = { id: string; name: string; email: string }
+type User = { id: string; name: string; email: string };
 
 // Type predicate: return type `x is User` tells TypeScript
 // "if this returns true, x is a User in the caller's scope"
 function isUser(x: unknown): x is User {
   return (
-    typeof x === 'object' &&
+    typeof x === "object" &&
     x !== null &&
-    typeof (x as any).id === 'string' &&
-    typeof (x as any).name === 'string' &&
-    typeof (x as any).email === 'string'
-  )
+    typeof (x as any).id === "string" &&
+    typeof (x as any).name === "string" &&
+    typeof (x as any).email === "string"
+  );
 }
 
 // Usage — TypeScript narrows based on the predicate:
 async function fetchUser(id: string): Promise<User | null> {
-  const response: unknown = await fetch(`/api/users/${id}`).then(r => r.json())
+  const response: unknown = await fetch(`/api/users/${id}`).then((r) => r.json());
 
   if (isUser(response)) {
-    return response  // ← type: User here (TypeScript trusts the predicate)
+    return response; // ← type: User here (TypeScript trusts the predicate)
   }
-  return null
+  return null;
 }
 
 // With Zod (modern alternative):
-import { z } from 'zod'
-const UserSchema = z.object({ id: z.string(), name: z.string(), email: z.string() })
-type User = z.infer<typeof UserSchema>
+import { z } from "zod";
+const UserSchema = z.object({ id: z.string(), name: z.string(), email: z.string() });
+type User = z.infer<typeof UserSchema>;
 
 function parseUser(x: unknown): User {
-  return UserSchema.parse(x)  // throws ZodError if invalid; returns User if valid
+  return UserSchema.parse(x); // throws ZodError if invalid; returns User if valid
 }
 ```
 
@@ -424,6 +451,7 @@ function parseUser(x: unknown): User {
 **Tiếng Việt:** Custom type guard dùng return type `x is User` — TypeScript tin tưởng khi function return `true`, x là `User`. Phải check từng field manually. Modern alternative: Zod schema với `z.infer<typeof Schema>` — vừa validate runtime vừa generate TypeScript type.
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Uses `unknown` (not `any`); explains the `x is User` predicate syntax; mentions Zod as modern alternative
 - ❌ Weak: `function isUser(x: any): boolean` — loses the narrowing effect; or `as User` assertion — bypasses runtime check
 
@@ -436,32 +464,32 @@ function parseUser(x: unknown): User {
 **Function parameter types are contravariant** (in strict mode): a function expecting a wider type (`Animal`) is assignable where a function expecting a narrower type (`Dog`) is expected — because the implementation handles more:
 
 ```typescript
-type Animal = { name: string }
-type Dog = Animal & { breed: string }
+type Animal = { name: string };
+type Dog = Animal & { breed: string };
 
-type DogHandler = (x: Dog) => void
+type DogHandler = (x: Dog) => void;
 
 // Can a function accepting Animal substitute for DogHandler?
-const handleAnimal: (x: Animal) => void = (a) => console.log(a.name)
+const handleAnimal: (x: Animal) => void = (a) => console.log(a.name);
 
 // ✅ Yes — handleAnimal handles any Animal, including Dogs
 // A DogHandler caller will pass a Dog, which IS an Animal → safe
-const ok: DogHandler = handleAnimal  // ✅
+const ok: DogHandler = handleAnimal; // ✅
 
 // Can a function accepting Dog substitute for AnimalHandler?
-const handleDog: (x: Dog) => void = (d) => console.log(d.breed)
-type AnimalHandler = (x: Animal) => void
+const handleDog: (x: Dog) => void = (d) => console.log(d.breed);
+type AnimalHandler = (x: Animal) => void;
 
 // ❌ No — AnimalHandler caller might pass a Cat (Animal but not Dog)
 // handleDog would try to access .breed on a Cat → runtime error
-const bad: AnimalHandler = handleDog  // ❌ TypeScript error
+const bad: AnimalHandler = handleDog; // ❌ TypeScript error
 ```
 
 **Return types are covariant**: more specific return type is assignable to wider return type.
 
 ```typescript
-const getAnimal: () => Dog = () => ({ name: 'Rex', breed: 'Lab' })
-const getter: () => Animal = getAnimal  // ✅ Dog is assignable to Animal
+const getAnimal: () => Dog = () => ({ name: "Rex", breed: "Lab" });
+const getter: () => Animal = getAnimal; // ✅ Dog is assignable to Animal
 ```
 
 **Why it matters for React:** `onClick?: (e: React.MouseEvent) => void` — you can pass `(e: Event) => void` (wider parameter, contravariant) but not `(e: React.MouseEvent<HTMLButtonElement>) => void` (narrower parameter, not contravariant).
@@ -469,19 +497,20 @@ const getter: () => Animal = getAnimal  // ✅ Dog is assignable to Animal
 **Tiếng Việt:** Function parameters là **contravariant**: function nhận type rộng hơn (Animal) có thể assign cho type nhận hẹp hơn (Dog). Ngược lại không an toàn. Return types là **covariant**: return type hẹp hơn (Dog) có thể assign cho nơi cần type rộng hơn (Animal). Hiểu điều này giúp thiết kế callback APIs đúng.
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Correctly names contravariant (parameters) and covariant (returns); explains the safety rationale with a concrete example; connects to React event handlers
 - ❌ Weak: "TypeScript is strict about function types" — doesn't explain the direction of assignability or the safety reason
 
 ---
 
-## Q&A Summary / Tóm Tắt Q&A
+## 📋 Interview Q&A Summary / Tóm Tắt Q&A Phỏng Vấn
 
-| # | Topic | Key Insight |
-|---|-------|-------------|
-| Q1 | let vs const widening | `let` widens (can change); `const` keeps literal; object properties widen even in `const` |
-| Q2 | `satisfies` vs annotation | Annotation widens; `satisfies` validates + keeps literals |
-| Q3 | Custom type guard | `(x: unknown): x is T` — type predicate narrows based on runtime check |
-| Q4 | Variance | Parameters: contravariant (wider is ok). Returns: covariant (narrower is ok) |
+| #   | Câu hỏi                                                | Difficulty | Core Concept   | Key Signal                                            |
+| --- | ------------------------------------------------------ | ---------- | -------------- | ----------------------------------------------------- |
+| 1   | Tại sao `let` và `const` cho types khác nhau?          | 🟢 Junior  | Type inference | `const` = literal type, `let` = widened type          |
+| 2   | `satisfies` khác type annotation như thế nào?          | 🟡 Mid     | Modern TS      | Validates + giữ literal type, không widen             |
+| 3   | Viết custom type guard để narrow `unknown` sang `User` | 🔴 Senior  | Type guards    | Runtime validation + compile-time narrowing           |
+| 4   | Variance trong TypeScript function types?              | 🔴 Senior  | Type theory    | Contravariance cho parameters, covariance cho returns |
 
 ---
 
@@ -494,29 +523,29 @@ const getter: () => Animal = getAnimal  // ✅ Dog is assignable to Animal
 
 ---
 
-## Retrieval Self-Check / Tự Kiểm Tra
+## 🔄 Self-Check / Tự Kiểm Tra
 
-**Close this document. Answer from memory:**
+> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
 
-**Retrieval:**
-1. `let x = 'a'` → what type? `const x = 'a'` → what type? Why different?
-2. `const obj = { env: 'prod' }` → what is `obj.env`'s type? How do you make it `'prod'` literal?
-3. What does `satisfies` do that a type annotation doesn't?
-4. Function `(x: Animal) => void` vs `(x: Dog) => void` — which is assignable to the other? Why?
-5. Write the return type signature for a custom type guard that checks if `x` is a `Product`.
+| #   | Loại           | Câu hỏi                                                                                                                                                            |
+| --- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | 🔍 Retrieval   | `let x = 'a'` → type gì? `const x = 'a'` → type gì? Tại sao khác? `const obj = { env: 'prod' }` → `obj.env` là type gì? Làm sao để thành literal `'prod'`?         |
+| 2   | 🎨 Visual      | Vẽ widening hierarchy: `'dark'` → `string` → `string \| number` → `unknown`. Vẽ contravariant parameters: hướng nào safe cho function parameter assignability?     |
+| 3   | 🛠️ Application | `const EVENTS = { click: 'btn:click', hover: 'btn:hover' }`. Làm thế nào để `EVENTS.click` là literal `'btn:click'` VÀ validate nó match `Record<string, string>`? |
+| 4   | 🐛 Debug       | TypeScript báo `Property 'breed' does not exist on type 'Animal'` bên trong `handleDog(dog: Dog)`. Liên quan đến variance — điều gì xảy ra?                        |
+| 5   | 🎓 Teach       | Giải thích widening cho junior developer — tại sao `let` vs `const` cho kết quả type khác nhau?                                                                    |
 
-**Visual:**
-- Draw the widening hierarchy: `'dark'` → `string` → `string | number` → `unknown`
-- Draw contravariant parameters: which direction is safe for function parameter assignability?
+### Key Points (tự kiểm tra)
 
-**Application:**
-- You have `const EVENTS = { click: 'btn:click', hover: 'btn:hover' }`. How do you ensure `EVENTS.click` is `'btn:click'` (literal) AND validate it matches `Record<string, string>`?
+| #   | Key Point                                                                                                                                                                                      |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `let x = 'a'` → `string` (widens). `const x = 'a'` → `'a'` (literal, không thể thay đổi). `obj.env` → `string` (mutable prop widens). Fix: `as const` hoặc `satisfies Record<string, string>`. |
+| 2   | Widening: literal → base type → broader type. Contravariant: `(Dog) => void` KHÔNG assignable to `(Animal) => void`; ngược lại thì được (parameter là contravariant).                          |
+| 3   | `const EVENTS = { click: 'btn:click', hover: 'btn:hover' } as const satisfies Record<string, string>` — `as const` giữ literal types, `satisfies` validate shape.                              |
+| 4   | Nếu `handleDog` nhận `(animal: Animal)` → covariant mismatch. CFA (control flow analysis) không chạy khi pass function as callback với broader type.                                           |
+| 5   | `const` = "tôi sẽ không thay đổi giá trị này" → TS tin và giữ literal. `let` = "tôi có thể thay đổi" → TS widen lên base type để an toàn.                                                      |
 
-**Debug:**
-- TypeScript says `Property 'breed' does not exist on type 'Animal'` inside `handleDog`. What happened with variance?
-
-**Teach:**
-- Explain widening to a junior: "TypeScript is like a librarian. `const` means you're permanently checking out one specific book — the librarian writes down the exact title. `let` means you might swap books — the librarian just writes `'a book'` in the ledger."
+> 🎯 **Feynman Prompt:** Giải thích `satisfies` operator (TS 4.9) cho developer chỉ biết type annotation — "Tại sao `const x: Config = {...}` và `const x = {...} satisfies Config` lại khác nhau?"
 
 ---
 
@@ -533,4 +562,3 @@ const getter: () => Animal = getAnimal  // ✅ Dog is assignable to Animal
 ---
 
 [← Related: TypeScript Basics](./01-typescript-basics.md) | [Next: TypeScript Modern Features →](./06-typescript-modern-features.md) | [Back to Table of Contents](../../00-table-of-contents.md)
-

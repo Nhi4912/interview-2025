@@ -672,17 +672,29 @@ class User {
 
 ---
 
-## Self-Check / Tự Kiểm Tra ⚡
-> **Đóng tài liệu lại trước khi làm — Close this doc before attempting.**
+## 🔄 Self-Check / Tự Kiểm Tra
 
-- [ ] **Retrieval**: Viết định nghĩa closure từ trí nhớ — bao gồm [[Environment]] slot và sự khác biệt giữa capture reference vs value. Không nhìn lại.
-- [ ] **Visual**: Vẽ memory diagram: outer function returns, inner function still references outer variable. Ai prevent GC? So sánh với ASCII diagram trong Layer 2.
-- [ ] **Application**: Bạn có 1000 product cards, mỗi cái có scroll listener. Bạn dùng pattern gì để tránh leak? (Không hint — viết code từ đầu)
-- [ ] **Debug**: Code này print gì: `for (var i=0; i<3; i++) setTimeout(()=>console.log(i), 0)` — và tại sao?
-- [ ] **Teach**: Giải thích stale closure trong React cho người chưa biết React, dùng analogy "tờ nhắc từ quá khứ".
+> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
 
-💬 **Feynman Prompt:** Giải thích tại sao closure gây memory leak bằng cách nào đó mà bố/mẹ bạn hiểu được — không dùng từ "closure", "GC", hay "reference".
+| # | Loại | Câu hỏi |
+|---|------|---------|
+| 1 | 🔍 Retrieval | Viết định nghĩa **closure** từ trí nhớ — bao gồm `[[Environment]]` slot và sự khác biệt giữa capture **reference** vs **value**. Không nhìn lại. |
+| 2 | 🎨 Visual | Vẽ memory diagram: outer function returns, inner function **still references** outer variable. Ai prevent GC? So sánh với ASCII diagram trong Layer 2. |
+| 3 | 🛠️ Application | Bạn có 1000 product cards, mỗi cái có scroll listener. Bạn dùng pattern gì để tránh **memory leak**? (Không hint — viết code từ đầu) |
+| 4 | 🐛 Debug | Code này print gì: `for (var i=0; i<3; i++) setTimeout(()=>console.log(i), 0)` — và tại sao? |
+| 5 | 🎓 Teach | Giải thích **stale closure** trong React cho người chưa biết React, dùng analogy "tờ nhắc từ quá khứ". |
 
+### Key Points (tự kiểm tra)
+
+| # | Key Point |
+|---|-----------|
+| 1 | Closure = function + [[Environment]] của nó tại thời điểm tạo. **Capture by reference**: inner fn giữ live link đến outer variable, không phải copy giá trị. |
+| 2 | Inner fn giữ [[Environment]] reference → outer scope không bị GC dù outer fn đã return. Chỉ khi inner fn bị release → outer scope mới được thu hồi. |
+| 3 | Factory trả cleanup fn: `const handler = () => {...}; el.addEventListener('scroll', handler); return () => el.removeEventListener('scroll', handler);` |
+| 4 | Print `3 3 3` — `var i` được chia sẻ qua closure, khi setTimeout callbacks chạy vòng lặp đã xong và `i === 3`. Fix: `let` hoặc IIFE. |
+| 5 | Stale closure: component 'ghi lại' giá trị state từ lần render trước vào closure. Effect/handler dùng giá trị cũ dù state đã update. Như 'tờ nhắc' ghi thông tin lỗi thời. |
+
+> 🎯 **Feynman Prompt:** Giải thích tại sao closure gây memory leak bằng cách nào đó mà bố/mẹ bạn hiểu được — không dùng từ "closure", "GC", hay "reference".
 🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày → 7 ngày → 14 ngày** để chuyển vào long-term memory.
 
 ---

@@ -533,17 +533,29 @@ console.log(order.serialize());       // '{"id":1,"total":150}'
 
 ---
 
-## Self-Check / Tự Kiểm Tra ⚡
-> **Đóng tài liệu lại trước khi làm — Close this doc before attempting.**
+## 🔄 Self-Check / Tự Kiểm Tra
 
-- [ ] **Retrieval**: Viết ra 4 bước của `new` keyword từ trí nhớ — không nhìn lại.
-- [ ] **Visual**: Vẽ prototype chain cho `new Dog()` extends `Animal` — từ Dog instance lên đến `null`. Bao gồm tên các objects và links.
-- [ ] **Application**: `class Dog extends Animal {}` — `new Dog()` → kết quả gọi `dog.speak()` tìm `speak` ở đâu? Trace từng bước.
-- [ ] **Debug**: `const d = Dog()` (không có `new`) — lỗi gì xảy ra? Tại sao `class` khác function constructor ở đây?
-- [ ] **Teach**: Giải thích tại sao `[].map()` hoạt động cho người không biết JS, dùng analogy "thư viện dùng chung" không dùng từ "prototype".
+> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
 
-💬 **Feynman Prompt:** Giải thích prototype chain cho người không biết lập trình, dùng analogy "cây gia phả" — không dùng từ "prototype", "[[Prototype]]", "inheritance".
+| # | Loại | Câu hỏi |
+|---|------|---------|
+| 1 | 🔍 Retrieval | Viết ra **4 bước của `new` keyword** từ trí nhớ — không nhìn lại. |
+| 2 | 🎨 Visual | Vẽ **prototype chain** cho `new Dog()` extends `Animal` — từ Dog instance lên đến `null`. Bao gồm tên các objects và links. |
+| 3 | 🛠️ Application | `class Dog extends Animal {}` — `new Dog()` → kết quả gọi `dog.speak()` **tìm `speak` ở đâu**? Trace từng bước. |
+| 4 | 🐛 Debug | `const d = Dog()` (không có `new`) — lỗi gì xảy ra? Tại sao `class` **khác function constructor** ở đây? |
+| 5 | 🎓 Teach | Giải thích tại sao `[].map()` hoạt động cho người không biết JS, dùng analogy "thư viện dùng chung" không dùng từ "prototype". |
 
+### Key Points (tự kiểm tra)
+
+| # | Key Point |
+|---|-----------|
+| 1 | 4 bước `new`: (1) Tạo plain object `{}`, (2) Set `[[Prototype]] = Constructor.prototype`, (3) Bind `this` = new object & execute constructor, (4) Return `this` (trừ khi return object khác). |
+| 2 | dog → Dog.prototype (Dog-specific methods) → Animal.prototype (Animal methods) → Object.prototype (toString, hasOwnProperty) → null. |
+| 3 | `dog.speak()`: tìm `speak` ở dog instance (không có) → Dog.prototype (không có) → Animal.prototype (**tìm thấy**, execute với `this = dog`). |
+| 4 | Class syntax **không thể call như function** (throws TypeError). Function constructor call mà không có `new` → `this = global/undefined`, không tạo object. |
+| 5 | `[].map()` như 'thư viện chung của phường' — mỗi array không có map riêng, nhưng khi cần, tra lên 'kho chung' (Array.prototype) nơi mọi array đều được dùng. |
+
+> 🎯 **Feynman Prompt:** Giải thích prototype chain cho người không biết lập trình, dùng analogy "cây gia phả" — không dùng từ "prototype", "[[Prototype]]", "inheritance".
 🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày → 7 ngày → 14 ngày** để chuyển vào long-term memory.
 
 ---

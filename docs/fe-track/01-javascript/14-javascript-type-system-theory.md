@@ -52,46 +52,48 @@
 **Why does this exist? / Tại sao tồn tại?**
 
 - Why does `typeof null === 'object'`? In the original 1995 V8 implementation, values were stored as 32-bit words where the low 3 bits were a type tag. `null` was stored as 0x00000000 — the null pointer. The Object type tag was also `000`. So `typeof null` read the tag bits, saw `000`, and returned `'object'`. A 30-year-old bug kept for backward compatibility.
-- Why does `typeof NaN === 'number'`? Because `NaN` (Not-a-Number) is defined in IEEE 754 as a special floating-point value. It's still in the Number space — it's a *failed* number operation result, not a different type. The name is misleading.
+- Why does `typeof NaN === 'number'`? Because `NaN` (Not-a-Number) is defined in IEEE 754 as a special floating-point value. It's still in the Number space — it's a _failed_ number operation result, not a different type. The name is misleading.
 - Why does `typeof function() {} === 'function'`? Functions are objects in JavaScript, but they're callable objects. ECMAScript spec added a special case for callable objects to return `'function'` — the only Object subtype that gets its own typeof tag.
 
 **Visual — typeof return values:**
 
 ```javascript
-typeof undefined    // "undefined"
-typeof null         // "object"      ← BUG: null is NOT an object
-typeof true         // "boolean"
-typeof 42           // "number"
-typeof NaN          // "number"      ← NaN IS a number type
-typeof ""           // "string"
-typeof Symbol()     // "symbol"
-typeof 42n          // "bigint"
-typeof {}           // "object"
-typeof []           // "object"      ← array is an object
-typeof function(){} // "function"    ← exception: callable object gets own tag
+typeof undefined; // "undefined"
+typeof null; // "object"      ← BUG: null is NOT an object
+typeof true; // "boolean"
+typeof 42; // "number"
+typeof NaN; // "number"      ← NaN IS a number type
+typeof ""; // "string"
+typeof Symbol(); // "symbol"
+typeof 42n; // "bigint"
+typeof {}; // "object"
+typeof []; // "object"      ← array is an object
+typeof function () {}; // "function"    ← exception: callable object gets own tag
 
 // Safe null check (because typeof null is broken):
-value !== null && typeof value === 'object'
+value !== null && typeof value === "object";
 
 // Safe array check:
-Array.isArray(value)  // NOT typeof value === 'object'
+Array.isArray(value); // NOT typeof value === 'object'
 ```
 
 **Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| `typeof value === 'object'` to check for objects | Includes null — use `value !== null && typeof value === 'object'` |
-| `typeof value === 'number'` to validate numbers | Also passes for `NaN` — add `&& !Number.isNaN(value) && isFinite(value)` |
-| `typeof [] === 'array'` | `typeof` never returns `'array'` — use `Array.isArray()` |
-| Using `typeof` for class instances | `typeof new Date()` → `'object'` (not `'date'`) — use `instanceof` or `Object.prototype.toString` |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `typeof value === 'object'` to check for objects | `typeof null === 'object'` — a 30-year-old historical bug; null passes this check | Use `value !== null && typeof value === 'object'` |
+| `typeof value === 'number'` to validate numbers | `typeof NaN === 'number'` — NaN passes this check; it's not a usable number | Add `&& !Number.isNaN(value) && isFinite(value)` for a valid numeric check |
+| `typeof [] === 'array'` | `typeof` only returns 8 type strings and never `'array'` — arrays return `'object'` | `typeof []` returns `'object'` — use `Array.isArray()` instead |
+| Using `typeof` for class instances | `typeof new Date()` → `'object'` — no class information; all instances look the same | Use `instanceof` or `Object.prototype.toString.call` for class instances |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "type checking" / "validate this value" / "why typeof null is object"
 - **Concept**: typeof type tags, the null historical bug, NaN as valid Number type
 - **Opening**: "typeof checks the spec-level type tag, not your intuitive type. The infamous `typeof null === 'object'` is a 30-year bug from 32-bit tag bits — null's 0x000 collided with the Object tag. For reliable type checks I use `Array.isArray`, `Number.isNaN`, and `Object.prototype.toString.call` depending on what I need..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: JavaScript primitive vs object types
 - **Enables**: Type guards in TypeScript, runtime validation, debugging `null` reference errors
 
@@ -135,19 +137,21 @@ What do you need to check?
 
 **Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| `isNaN(value)` for NaN check | `Number.isNaN(value)` — global `isNaN` coerces: `isNaN("hello") === true` |
-| `value instanceof Array` cross-frame | `Array.isArray(value)` — checks the internal `[[IsArray]]` slot |
-| `typeof value === 'null'` | `typeof null === 'object'` — use `value === null` |
-| `value.constructor === Object` | Fails if constructor was reassigned; use `Object.prototype.toString.call` |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `isNaN(value)` for NaN check | Global `isNaN` coerces the argument first — `isNaN("hello") === true` (coerced to NaN) | Use `Number.isNaN(value)` — no coercion, only true for actual NaN |
+| `value instanceof Array` cross-frame | `instanceof` checks the prototype chain against the current frame's `Array` — fails across iframes | `Array.isArray(value)` — checks internal `[[IsArray]]` slot, reliable across realms |
+| `typeof value === 'null'` | `typeof null === 'object'` — `'null'` is never a `typeof` result | Use `value === null` to check for null |
+| `value.constructor === Object` | Constructor can be reassigned or absent (null-prototype objects) — unreliable | Use `Object.prototype.toString.call(value)` for reliable built-in type tag |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "how to check if value is an array" / "type checking in production" / "Number.isNaN vs isNaN"
 - **Concept**: Each type checking method has a different mechanism and appropriate use case
 - **Opening**: "I use different tools for different type checks: `typeof` for primitive families, `Array.isArray` for arrays (reliable across iframes), `instanceof` for class instances within same realm, and `Number.isNaN` not global `isNaN` to avoid the coercion trap..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: Prototype chain, `typeof` behavior
 - **Enables**: TypeScript type guards, runtime validation libraries (Zod/Yup), defensive programming patterns
 
@@ -159,9 +163,9 @@ What do you need to check?
 
 **Why does this exist? / Tại sao tồn tại?**
 
-- Why do we care about V8 internals for interview prep? Because understanding that integers are stored differently from floats explains *why* `42 | 0` (bitwise OR for floor) is faster than `Math.floor` for small numbers — SMI avoids heap allocation
+- Why do we care about V8 internals for interview prep? Because understanding that integers are stored differently from floats explains _why_ `42 | 0` (bitwise OR for floor) is faster than `Math.floor` for small numbers — SMI avoids heap allocation
 - Why does V8 store integers specially (SMI)? Because integer arithmetic is extremely common. Allocating a heap object for every `i++` in a loop would be prohibitively slow. V8 stores integers ≤ 2^30-1 inline in the pointer itself using tag bits — zero allocation cost
-- Why do objects that *start* as integer arrays become slower? V8 tracks "element kinds" — if you add a float to an `[1, 2, 3]` array, V8 must transition from `PACKED_SMI_ELEMENTS` to `PACKED_DOUBLE_ELEMENTS`, reallocating the backing store. One `arr.push(3.14)` degrades the whole array.
+- Why do objects that _start_ as integer arrays become slower? V8 tracks "element kinds" — if you add a float to an `[1, 2, 3]` array, V8 must transition from `PACKED_SMI_ELEMENTS` to `PACKED_DOUBLE_ELEMENTS`, reallocating the backing store. One `arr.push(3.14)` degrades the whole array.
 
 **Definition:** V8 uses a **tagged pointer** representation: the lowest bit of each value indicates whether it's an SMI (31-bit integer, stored inline) or a pointer to a heap object. HeapNumbers are allocated for non-integer Number values. This means `42` and `42.0` have different internal representations.
 
@@ -190,27 +194,27 @@ V8 Array element kinds (transitions are one-way ← SLOW):
 
 **Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| Mixing integers and floats in performance-critical arrays | Initialize arrays with consistent types; avoid degrading element kinds |
-| `arr.length = 0` to clear a large array | `arr = []` is sometimes faster — creates a fresh array with fresh element kind |
-| Adding `undefined` to array holes | Creates `HOLEY_ELEMENTS` — V8 must check prototype chain for each access |
-| Premature optimization without profiling | These micro-optimizations matter only in hot loops (>10k iterations) — profile first |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Mixing integers and floats in performance-critical arrays | Forces V8 to change element kind from `PACKED_SMI` → `PACKED_DOUBLE` — backing store reallocated | Keep array types homogeneous; initialize with consistent types |
+| `arr.length = 0` to clear a large array | Array retains old backing store with its element kind transitions | `arr = []` creates a fresh array with a clean element kind |
+| Adding `undefined` to array holes | Creates `HOLEY_ELEMENTS` — V8 must check the prototype chain on every element access | Avoid holes; fill with `null` instead of leaving gaps or setting `undefined` |
+| Premature optimization without profiling | These micro-optimizations only matter in hot loops (>10k iterations) — profile first | Profile first; 90% of perf gains come from algorithmic improvements, not element kind tricks |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "JavaScript performance" / "V8 internals" / "why is this loop slow"
 - **Concept**: SMI/HeapNumber representation, array element kind transitions
 - **Opening**: "V8 stores integers ≤ 2^30 as SMIs — inline in the pointer itself, zero allocation. Floats go to the heap as HeapNumbers. For arrays, V8 tracks element kinds and optimizes accordingly — mixing floats into an integer array forces a backing store reallocation. In hot loops, keeping array types homogeneous is a meaningful optimization..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: Heap/stack memory model, Number type
 - **Enables**: V8 performance optimization, understanding why profilers show memory allocations in loops, hidden class theory
 
 ---
 
 ## Reference: Type System Internals / Tài Liệu Tham Khảo
-
-
 
 ## Type System Fundamentals / Cơ Bản Hệ Thống Kiểu
 
@@ -226,7 +230,7 @@ V8 Array element kinds (transitions are one-way ← SLOW):
 
 /**
  * JavaScript Type Hierarchy
- * 
+ *
  * Type
  * ├── Primitive Types
  * │   ├── Undefined
@@ -264,7 +268,7 @@ enum JSType {
   BigInt = 4,
   String = 5,
   Symbol = 6,
-  Object = 7
+  Object = 7,
 }
 
 enum TypeFlags {
@@ -274,7 +278,7 @@ enum TypeFlags {
   Callable = 1 << 2,
   Constructable = 1 << 3,
   Iterable = 1 << 4,
-  AsyncIterable = 1 << 5
+  AsyncIterable = 1 << 5,
 }
 
 class TypeSystem {
@@ -284,44 +288,52 @@ class TypeSystem {
     // Special cases
     if (value === null) return JSType.Null;
     if (value === undefined) return JSType.Undefined;
-    
+
     // Primitive types
     switch (typeof value) {
-      case 'boolean': return JSType.Boolean;
-      case 'number': return JSType.Number;
-      case 'bigint': return JSType.BigInt;
-      case 'string': return JSType.String;
-      case 'symbol': return JSType.Symbol;
-      case 'object': return JSType.Object;
-      case 'function': return JSType.Object; // Functions are objects
-      default: return JSType.Undefined;
+      case "boolean":
+        return JSType.Boolean;
+      case "number":
+        return JSType.Number;
+      case "bigint":
+        return JSType.BigInt;
+      case "string":
+        return JSType.String;
+      case "symbol":
+        return JSType.Symbol;
+      case "object":
+        return JSType.Object;
+      case "function":
+        return JSType.Object; // Functions are objects
+      default:
+        return JSType.Undefined;
     }
   }
-  
+
   // Check if value is primitive
   // Kiểm tra nếu giá trị là nguyên thủy
   static isPrimitive(value: any): boolean {
     const type = this.typeOf(value);
     return type !== JSType.Object;
   }
-  
+
   // Check if value is object
   // Kiểm tra nếu giá trị là object
   static isObject(value: any): boolean {
-    return value !== null && (typeof value === 'object' || typeof value === 'function');
+    return value !== null && (typeof value === "object" || typeof value === "function");
   }
-  
+
   // Check if value is callable
   // Kiểm tra nếu giá trị có thể gọi
   static isCallable(value: any): boolean {
-    return typeof value === 'function';
+    return typeof value === "function";
   }
-  
+
   // Check if value is constructable
   // Kiểm tra nếu giá trị có thể khởi tạo
   static isConstructable(value: any): boolean {
     if (!this.isCallable(value)) return false;
-    
+
     try {
       // Arrow functions and built-ins like Math.max are not constructable
       return value.prototype !== undefined;
@@ -349,129 +361,131 @@ class TypeSystem {
 class DynamicTypeChecker {
   // Type guards for runtime checking
   // Type guards cho kiểm tra runtime
-  
+
   static isString(value: unknown): value is string {
-    return typeof value === 'string';
+    return typeof value === "string";
   }
-  
+
   static isNumber(value: unknown): value is number {
-    return typeof value === 'number' && !isNaN(value);
+    return typeof value === "number" && !isNaN(value);
   }
-  
+
   static isBoolean(value: unknown): value is boolean {
-    return typeof value === 'boolean';
+    return typeof value === "boolean";
   }
-  
+
   static isNull(value: unknown): value is null {
     return value === null;
   }
-  
+
   static isUndefined(value: unknown): value is undefined {
     return value === undefined;
   }
-  
+
   static isNullish(value: unknown): value is null | undefined {
     return value == null; // Intentional == for null/undefined
   }
-  
+
   static isSymbol(value: unknown): value is symbol {
-    return typeof value === 'symbol';
+    return typeof value === "symbol";
   }
-  
+
   static isBigInt(value: unknown): value is bigint {
-    return typeof value === 'bigint';
+    return typeof value === "bigint";
   }
-  
+
   static isArray(value: unknown): value is any[] {
     return Array.isArray(value);
   }
-  
+
   static isFunction(value: unknown): value is Function {
-    return typeof value === 'function';
+    return typeof value === "function";
   }
-  
+
   static isObject(value: unknown): value is object {
-    return value !== null && typeof value === 'object';
+    return value !== null && typeof value === "object";
   }
-  
+
   static isPlainObject(value: unknown): value is Record<string, any> {
     if (!this.isObject(value)) return false;
-    
+
     const proto = Object.getPrototypeOf(value);
     return proto === null || proto === Object.prototype;
   }
-  
+
   static isDate(value: unknown): value is Date {
     return value instanceof Date && !isNaN(value.getTime());
   }
-  
+
   static isRegExp(value: unknown): value is RegExp {
     return value instanceof RegExp;
   }
-  
+
   static isPromise(value: unknown): value is Promise<any> {
-    return value instanceof Promise || 
-           (this.isObject(value) && 'then' in value && this.isFunction((value as any).then));
+    return (
+      value instanceof Promise ||
+      (this.isObject(value) && "then" in value && this.isFunction((value as any).then))
+    );
   }
-  
+
   static isIterable(value: unknown): value is Iterable<any> {
-    return value != null && typeof (value as any)[Symbol.iterator] === 'function';
+    return value != null && typeof (value as any)[Symbol.iterator] === "function";
   }
-  
+
   static isAsyncIterable(value: unknown): value is AsyncIterable<any> {
-    return value != null && typeof (value as any)[Symbol.asyncIterator] === 'function';
+    return value != null && typeof (value as any)[Symbol.asyncIterator] === "function";
   }
-  
+
   // Advanced type checking
   // Kiểm tra kiểu nâng cao
-  
+
   static getDetailedType(value: unknown): string {
-    if (value === null) return 'null';
-    if (value === undefined) return 'undefined';
-    
+    if (value === null) return "null";
+    if (value === undefined) return "undefined";
+
     const type = typeof value;
-    
-    if (type === 'object') {
-      if (Array.isArray(value)) return 'array';
-      if (value instanceof Date) return 'date';
-      if (value instanceof RegExp) return 'regexp';
-      if (value instanceof Map) return 'map';
-      if (value instanceof Set) return 'set';
-      if (value instanceof WeakMap) return 'weakmap';
-      if (value instanceof WeakSet) return 'weakset';
-      if (value instanceof Promise) return 'promise';
-      if (value instanceof Error) return 'error';
-      
+
+    if (type === "object") {
+      if (Array.isArray(value)) return "array";
+      if (value instanceof Date) return "date";
+      if (value instanceof RegExp) return "regexp";
+      if (value instanceof Map) return "map";
+      if (value instanceof Set) return "set";
+      if (value instanceof WeakMap) return "weakmap";
+      if (value instanceof WeakSet) return "weakset";
+      if (value instanceof Promise) return "promise";
+      if (value instanceof Error) return "error";
+
       // Check for typed arrays
       if (ArrayBuffer.isView(value)) {
         return value.constructor.name.toLowerCase();
       }
-      
-      return 'object';
+
+      return "object";
     }
-    
+
     return type;
   }
-  
+
   // Type compatibility checking
   // Kiểm tra tương thích kiểu
-  
+
   static isCompatible(value: unknown, expectedType: string): boolean {
     const actualType = this.getDetailedType(value);
-    
+
     // Exact match
     if (actualType === expectedType) return true;
-    
+
     // Compatible types
     const compatibilityMap: Record<string, string[]> = {
-      'number': ['number', 'bigint'],
-      'string': ['string'],
-      'boolean': ['boolean'],
-      'array': ['array', 'object'],
-      'function': ['function', 'object'],
-      'object': ['object', 'array', 'date', 'regexp', 'map', 'set']
+      number: ["number", "bigint"],
+      string: ["string"],
+      boolean: ["boolean"],
+      array: ["array", "object"],
+      function: ["function", "object"],
+      object: ["object", "array", "date", "regexp", "map", "set"],
     };
-    
+
     return compatibilityMap[expectedType]?.includes(actualType) || false;
   }
 }
@@ -494,226 +508,226 @@ class DynamicTypeChecker {
 class AbstractOperations {
   // ToPrimitive(input, preferredType)
   // Chuyển đổi sang kiểu nguyên thủy
-  static toPrimitive(input: any, preferredType?: 'string' | 'number'): any {
+  static toPrimitive(input: any, preferredType?: "string" | "number"): any {
     // If already primitive, return as-is
     if (TypeSystem.isPrimitive(input)) {
       return input;
     }
-    
+
     // Determine hint
-    const hint = preferredType || 'default';
-    
+    const hint = preferredType || "default";
+
     // Try Symbol.toPrimitive first
     if (Symbol.toPrimitive in input) {
       const result = input[Symbol.toPrimitive](hint);
       if (TypeSystem.isPrimitive(result)) {
         return result;
       }
-      throw new TypeError('Cannot convert object to primitive value');
+      throw new TypeError("Cannot convert object to primitive value");
     }
-    
+
     // Use OrdinaryToPrimitive
-    return this.ordinaryToPrimitive(input, hint === 'string' ? 'string' : 'number');
+    return this.ordinaryToPrimitive(input, hint === "string" ? "string" : "number");
   }
-  
-  private static ordinaryToPrimitive(input: any, hint: 'string' | 'number'): any {
-    const methodNames = hint === 'string' 
-      ? ['toString', 'valueOf']
-      : ['valueOf', 'toString'];
-    
+
+  private static ordinaryToPrimitive(input: any, hint: "string" | "number"): any {
+    const methodNames = hint === "string" ? ["toString", "valueOf"] : ["valueOf", "toString"];
+
     for (const name of methodNames) {
       const method = input[name];
-      if (typeof method === 'function') {
+      if (typeof method === "function") {
         const result = method.call(input);
         if (TypeSystem.isPrimitive(result)) {
           return result;
         }
       }
     }
-    
-    throw new TypeError('Cannot convert object to primitive value');
+
+    throw new TypeError("Cannot convert object to primitive value");
   }
-  
+
   // ToBoolean(argument)
   // Chuyển đổi sang boolean
   static toBoolean(argument: any): boolean {
     // Falsy values
-    if (argument === false ||
-        argument === 0 ||
-        argument === -0 ||
-        argument === 0n ||
-        argument === '' ||
-        argument === null ||
-        argument === undefined ||
-        Number.isNaN(argument)) {
+    if (
+      argument === false ||
+      argument === 0 ||
+      argument === -0 ||
+      argument === 0n ||
+      argument === "" ||
+      argument === null ||
+      argument === undefined ||
+      Number.isNaN(argument)
+    ) {
       return false;
     }
-    
+
     // Everything else is truthy
     return true;
   }
-  
+
   // ToNumber(argument)
   // Chuyển đổi sang number
   static toNumber(argument: any): number {
     // Primitive types
     if (argument === undefined) return NaN;
     if (argument === null) return 0;
-    if (typeof argument === 'boolean') return argument ? 1 : 0;
-    if (typeof argument === 'number') return argument;
-    if (typeof argument === 'bigint') throw new TypeError('Cannot convert BigInt to number');
-    if (typeof argument === 'symbol') throw new TypeError('Cannot convert Symbol to number');
-    
-    if (typeof argument === 'string') {
+    if (typeof argument === "boolean") return argument ? 1 : 0;
+    if (typeof argument === "number") return argument;
+    if (typeof argument === "bigint") throw new TypeError("Cannot convert BigInt to number");
+    if (typeof argument === "symbol") throw new TypeError("Cannot convert Symbol to number");
+
+    if (typeof argument === "string") {
       return this.stringToNumber(argument);
     }
-    
+
     // Object types
-    const primValue = this.toPrimitive(argument, 'number');
+    const primValue = this.toPrimitive(argument, "number");
     return this.toNumber(primValue);
   }
-  
+
   private static stringToNumber(str: string): number {
     // Trim whitespace
     str = str.trim();
-    
+
     // Empty string
-    if (str === '') return 0;
-    
+    if (str === "") return 0;
+
     // Infinity
-    if (str === 'Infinity' || str === '+Infinity') return Infinity;
-    if (str === '-Infinity') return -Infinity;
-    
+    if (str === "Infinity" || str === "+Infinity") return Infinity;
+    if (str === "-Infinity") return -Infinity;
+
     // Hex, octal, binary
-    if (str.startsWith('0x') || str.startsWith('0X')) {
+    if (str.startsWith("0x") || str.startsWith("0X")) {
       return parseInt(str, 16);
     }
-    if (str.startsWith('0o') || str.startsWith('0O')) {
+    if (str.startsWith("0o") || str.startsWith("0O")) {
       return parseInt(str, 8);
     }
-    if (str.startsWith('0b') || str.startsWith('0B')) {
+    if (str.startsWith("0b") || str.startsWith("0B")) {
       return parseInt(str, 2);
     }
-    
+
     // Parse as decimal
     const num = parseFloat(str);
     return num;
   }
-  
+
   // ToString(argument)
   // Chuyển đổi sang string
   static toString(argument: any): string {
     // Primitive types
-    if (argument === undefined) return 'undefined';
-    if (argument === null) return 'null';
-    if (typeof argument === 'boolean') return argument ? 'true' : 'false';
-    if (typeof argument === 'string') return argument;
-    if (typeof argument === 'symbol') throw new TypeError('Cannot convert Symbol to string');
-    
-    if (typeof argument === 'number') {
+    if (argument === undefined) return "undefined";
+    if (argument === null) return "null";
+    if (typeof argument === "boolean") return argument ? "true" : "false";
+    if (typeof argument === "string") return argument;
+    if (typeof argument === "symbol") throw new TypeError("Cannot convert Symbol to string");
+
+    if (typeof argument === "number") {
       return this.numberToString(argument);
     }
-    
-    if (typeof argument === 'bigint') {
+
+    if (typeof argument === "bigint") {
       return argument.toString();
     }
-    
+
     // Object types
-    const primValue = this.toPrimitive(argument, 'string');
+    const primValue = this.toPrimitive(argument, "string");
     return this.toString(primValue);
   }
-  
+
   private static numberToString(num: number): string {
-    if (Number.isNaN(num)) return 'NaN';
-    if (num === 0) return '0';
-    if (num === Infinity) return 'Infinity';
-    if (num === -Infinity) return '-Infinity';
-    
+    if (Number.isNaN(num)) return "NaN";
+    if (num === 0) return "0";
+    if (num === Infinity) return "Infinity";
+    if (num === -Infinity) return "-Infinity";
+
     return String(num);
   }
-  
+
   // ToObject(argument)
   // Chuyển đổi sang object
   static toObject(argument: any): object {
     if (argument === null || argument === undefined) {
-      throw new TypeError('Cannot convert null or undefined to object');
+      throw new TypeError("Cannot convert null or undefined to object");
     }
-    
+
     // Already an object
-    if (typeof argument === 'object') {
+    if (typeof argument === "object") {
       return argument;
     }
-    
+
     // Wrap primitives
-    if (typeof argument === 'boolean') return new Boolean(argument);
-    if (typeof argument === 'number') return new Number(argument);
-    if (typeof argument === 'string') return new String(argument);
-    if (typeof argument === 'bigint') return Object(argument);
-    if (typeof argument === 'symbol') return Object(argument);
-    
+    if (typeof argument === "boolean") return new Boolean(argument);
+    if (typeof argument === "number") return new Number(argument);
+    if (typeof argument === "string") return new String(argument);
+    if (typeof argument === "bigint") return Object(argument);
+    if (typeof argument === "symbol") return Object(argument);
+
     return argument;
   }
-  
+
   // ToPropertyKey(argument)
   // Chuyển đổi sang property key
   static toPropertyKey(argument: any): string | symbol {
-    const key = this.toPrimitive(argument, 'string');
-    
-    if (typeof key === 'symbol') {
+    const key = this.toPrimitive(argument, "string");
+
+    if (typeof key === "symbol") {
       return key;
     }
-    
+
     return this.toString(key);
   }
-  
+
   // ToLength(argument)
   // Chuyển đổi sang length (for arrays)
   static toLength(argument: any): number {
     const len = this.toInteger(argument);
-    
+
     if (len <= 0) return 0;
-    
+
     // Maximum array length
     return Math.min(len, Number.MAX_SAFE_INTEGER);
   }
-  
+
   // ToInteger(argument)
   // Chuyển đổi sang integer
   static toInteger(argument: any): number {
     const number = this.toNumber(argument);
-    
+
     if (Number.isNaN(number)) return 0;
     if (number === 0 || !Number.isFinite(number)) return number;
-    
+
     return Math.trunc(number);
   }
-  
+
   // ToInt32(argument)
   // Chuyển đổi sang 32-bit signed integer
   static toInt32(argument: any): number {
     const number = this.toNumber(argument);
-    
+
     if (!Number.isFinite(number) || number === 0) return 0;
-    
+
     const int = Math.trunc(number);
-    const int32bit = int % (2 ** 32);
-    
+    const int32bit = int % 2 ** 32;
+
     if (int32bit >= 2 ** 31) {
       return int32bit - 2 ** 32;
     }
-    
+
     return int32bit;
   }
-  
+
   // ToUint32(argument)
   // Chuyển đổi sang 32-bit unsigned integer
   static toUint32(argument: any): number {
     const number = this.toNumber(argument);
-    
+
     if (!Number.isFinite(number) || number === 0) return 0;
-    
+
     const int = Math.trunc(number);
-    return int % (2 ** 32);
+    return int % 2 ** 32;
   }
 }
 ```
@@ -740,69 +754,81 @@ class EqualityComparison {
     if (typeof x === typeof y) {
       return this.strictEquals(x, y);
     }
-    
+
     // 2. null == undefined
     if ((x === null && y === undefined) || (x === undefined && y === null)) {
       return true;
     }
-    
+
     // 3. Number == String
-    if (typeof x === 'number' && typeof y === 'string') {
+    if (typeof x === "number" && typeof y === "string") {
       return this.abstractEquals(x, AbstractOperations.toNumber(y));
     }
-    if (typeof x === 'string' && typeof y === 'number') {
+    if (typeof x === "string" && typeof y === "number") {
       return this.abstractEquals(AbstractOperations.toNumber(x), y);
     }
-    
+
     // 4. BigInt == String
-    if (typeof x === 'bigint' && typeof y === 'string') {
+    if (typeof x === "bigint" && typeof y === "string") {
       try {
         return x === BigInt(y);
       } catch {
         return false;
       }
     }
-    if (typeof x === 'string' && typeof y === 'bigint') {
+    if (typeof x === "string" && typeof y === "bigint") {
       try {
         return BigInt(x) === y;
       } catch {
         return false;
       }
     }
-    
+
     // 5. Boolean == any
-    if (typeof x === 'boolean') {
+    if (typeof x === "boolean") {
       return this.abstractEquals(AbstractOperations.toNumber(x), y);
     }
-    if (typeof y === 'boolean') {
+    if (typeof y === "boolean") {
       return this.abstractEquals(x, AbstractOperations.toNumber(y));
     }
-    
+
     // 6. (String | Number | BigInt | Symbol) == Object
-    if ((typeof x === 'string' || typeof x === 'number' || 
-         typeof x === 'bigint' || typeof x === 'symbol') &&
-        typeof y === 'object' && y !== null) {
+    if (
+      (typeof x === "string" ||
+        typeof x === "number" ||
+        typeof x === "bigint" ||
+        typeof x === "symbol") &&
+      typeof y === "object" &&
+      y !== null
+    ) {
       return this.abstractEquals(x, AbstractOperations.toPrimitive(y));
     }
-    if (typeof x === 'object' && x !== null &&
-        (typeof y === 'string' || typeof y === 'number' || 
-         typeof y === 'bigint' || typeof y === 'symbol')) {
+    if (
+      typeof x === "object" &&
+      x !== null &&
+      (typeof y === "string" ||
+        typeof y === "number" ||
+        typeof y === "bigint" ||
+        typeof y === "symbol")
+    ) {
       return this.abstractEquals(AbstractOperations.toPrimitive(x), y);
     }
-    
+
     // 7. BigInt == Number
-    if ((typeof x === 'bigint' && typeof y === 'number') ||
-        (typeof x === 'number' && typeof y === 'bigint')) {
+    if (
+      (typeof x === "bigint" && typeof y === "number") ||
+      (typeof x === "number" && typeof y === "bigint")
+    ) {
       if (Number.isNaN(x) || Number.isNaN(y)) return false;
       if (!Number.isFinite(x as number)) return false;
-      
+
       // Compare mathematically
       return Number(x) === Number(y);
     }
-    
+
     return false;
   }
-  
+
   // Strict Equality Comparison (===)
   // So sánh bằng nghiêm ngặt (===)
   static strictEquals(x: any, y: any): boolean {
@@ -810,26 +836,26 @@ class EqualityComparison {
     if (typeof x !== typeof y) {
       return false;
     }
-    
+
     // 2. Number type
-    if (typeof x === 'number') {
+    if (typeof x === "number") {
       // NaN !== NaN
       if (Number.isNaN(x) || Number.isNaN(y)) {
         return false;
       }
-      
+
       // +0 === -0
       if (x === 0 && y === 0) {
         return true;
       }
-      
+
       return x === y;
     }
-    
+
     // 3. Other types use SameValueNonNumber
     return x === y;
   }
-  
+
   // SameValue(x, y) - Used by Object.is()
   // SameValue(x, y) - Được sử dụng bởi Object.is()
   static sameValue(x: any, y: any): boolean {
@@ -837,37 +863,37 @@ class EqualityComparison {
     if (typeof x !== typeof y) {
       return false;
     }
-    
+
     // 2. Number type
-    if (typeof x === 'number') {
+    if (typeof x === "number") {
       // NaN === NaN
       if (Number.isNaN(x) && Number.isNaN(y)) {
         return true;
       }
-      
+
       // +0 !== -0
       if (x === 0 && y === 0) {
         return 1 / x === 1 / y;
       }
-      
+
       return x === y;
     }
-    
+
     // 3. Other types
     return x === y;
   }
-  
+
   // SameValueZero(x, y) - Used by Map, Set
   // SameValueZero(x, y) - Được sử dụng bởi Map, Set
   static sameValueZero(x: any, y: any): boolean {
     // Same as SameValue except +0 === -0
-    if (typeof x === 'number' && typeof y === 'number') {
+    if (typeof x === "number" && typeof y === "number") {
       if (Number.isNaN(x) && Number.isNaN(y)) {
         return true;
       }
       return x === y;
     }
-    
+
     return this.sameValue(x, y);
   }
 }
@@ -884,6 +910,7 @@ class EqualityComparison {
 Đây là lỗi lịch sử từ 1995 khi `null` (con trỏ null, all bits zero) trùng với Object type tag (`000`). Không thể fix vì sẽ phá vỡ hàng tỷ trang web đã check `typeof x === 'object'`.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Explains the 32-bit tag bits mechanism, the null pointer collision, why backward compat prevents fixing
 - ❌ Weak: "It's a bug in JavaScript" — without the 'why' mechanism, shows no spec depth
 
@@ -896,6 +923,7 @@ class EqualityComparison {
 `isNaN()` coerce trước rồi mới check — `isNaN("hello") === true`. `Number.isNaN()` không coerce — chỉ `true` cho actual NaN value. Dùng `Number.isNaN` trong production.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Explains the ToNumber coercion in global isNaN, gives string example, recommends Number.isNaN
 - ❌ Weak: "Number.isNaN is newer and safer" — correct but no explanation of the coercion difference
 
@@ -908,6 +936,7 @@ class EqualityComparison {
 `instanceof Array` fails cross-frame vì mỗi frame có `Array.prototype` khác nhau. `Array.isArray` đọc internal `[[IsArray]]` slot — reliable across realms. `Object.prototype.toString.call` cho introspection chi tiết.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Names the cross-realm failure mode of `instanceof`, explains `[[IsArray]]` internal slot, mentions `Object.prototype.toString` for general introspection
 - ❌ Weak: "Use Array.isArray" without explaining why instanceof is insufficient
 
@@ -920,6 +949,7 @@ class EqualityComparison {
 V8 SMI (small integer) được lưu inline trong pointer — zero heap allocation. Float → HeapNumber trên heap. Trong hot loops: array `[1,2,3]` với một `push(3.14)` trigger backing store reallocation (`PACKED_SMI_ELEMENTS` → `PACKED_DOUBLE_ELEMENTS`). Giữ array types homogeneous trong performance-critical code.
 
 **💡 Interview Signal:**
+
 - ✅ Strong: Explains SMI/HeapNumber distinction, element kind transitions, connects to practical loop optimization
 - ❌ Weak: "Use typed arrays for performance" — correct optimization but doesn't explain the V8 type representation reason
 
@@ -927,12 +957,12 @@ V8 SMI (small integer) được lưu inline trong pointer — zero heap allocati
 
 ## Q&A Summary / Tóm Tắt Q&A
 
-| # | Topic | Level | One-liner |
-|---|-------|-------|-----------|
-| 1 | `typeof null === 'object'` | 🟢 | 32-bit tag bits: null pointer (0x000) collided with Object tag — historical bug |
-| 2 | `isNaN` vs `Number.isNaN` | 🟢 | Global `isNaN` coerces first; `Number.isNaN` doesn't — always use Number.isNaN |
-| 3 | Cross-realm array check | 🟡 | `instanceof` breaks across iframes; `Array.isArray` uses `[[IsArray]]` slot |
-| 4 | SMI vs HeapNumber | 🔴 | SMI = inline integer (free); HeapNumber = heap float (allocation cost) |
+| #   | Topic                      | Level | One-liner                                                                       |
+| --- | -------------------------- | ----- | ------------------------------------------------------------------------------- |
+| 1   | `typeof null === 'object'` | 🟢    | 32-bit tag bits: null pointer (0x000) collided with Object tag — historical bug |
+| 2   | `isNaN` vs `Number.isNaN`  | 🟢    | Global `isNaN` coerces first; `Number.isNaN` doesn't — always use Number.isNaN  |
+| 3   | Cross-realm array check    | 🟡    | `instanceof` breaks across iframes; `Array.isArray` uses `[[IsArray]]` slot     |
+| 4   | SMI vs HeapNumber          | 🔴    | SMI = inline integer (free); HeapNumber = heap float (allocation cost)          |
 
 ---
 
@@ -955,6 +985,8 @@ V8 SMI (small integer) được lưu inline trong pointer — zero heap allocati
 - **Application**: You need to check if a value is a valid finite number (not NaN, not Infinity). Write the check.
 - **Debug**: `isNaN(userInput)` returns `true` even though `userInput = "123abc"`. Is that correct? How do you fix the validation?
 - **Teach**: Explain to a junior dev why `typeof value === 'object' && value !== null` is the correct "is this an object?" check — 2 sentences.
+
+> 🎯 **Feynman Prompt:** Giải thích cho designer: tại sao `typeof null === "object"` là một bug 30 năm tuổi chưa được sửa — và Symbol cùng BigInt ra đời để giải quyết vấn đề gì mà các kiểu dữ liệu cũ không làm được?
 
 🔁 **Spaced repetition**: Review in 3 days → 7 days → 14 days
 

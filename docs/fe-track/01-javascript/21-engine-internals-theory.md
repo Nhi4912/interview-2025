@@ -84,19 +84,21 @@ Source → [Parser] → AST → [Ignition] → Bytecode
 
 **Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| Function called with both integers and strings interchangeably | Keep function call sites monomorphic — same argument types every call |
-| `try/catch` inside tight loops | `try/catch` prevents TurboFan optimization of the enclosed code — extract hot code outside try blocks |
-| Using `arguments` object in inner loops | `arguments` is a legacy object that deoptimizes — use rest parameters `...args` |
-| `eval()` or `with` in performance-critical code | Both prevent static analysis — V8 can't optimize scopes containing these |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Function called with both integers and strings interchangeably | TurboFan compiles with type assumptions — type change triggers deoptimization back to interpreter | Keep function call sites monomorphic — same argument types every call |
+| `try/catch` inside tight loops | `try/catch` blocks prevent TurboFan from optimizing the enclosed function | Extract hot code outside `try` blocks — only wrap the unpredictable parts |
+| Using `arguments` object in inner loops | `arguments` is a legacy object that triggers deoptimization in TurboFan | Use rest parameters `...args` instead |
+| `eval()` or `with` in performance-critical code | Both prevent static scope analysis — V8 can't optimize any function containing them | Avoid `eval`/`with` in hot paths entirely |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "how do JS engines work" / "V8 optimization" / "why is my code slow"
 - **Concept**: Multi-tier: interpret cold → compile hot → deopt on type change
 - **Opening**: "V8 uses a two-tier system. Ignition interprets all JavaScript as bytecode — fast startup. TurboFan kicks in for hot functions, compiling them to native machine code using type feedback collected by Ignition. The key insight is TurboFan makes type assumptions — it compiles a fast path assuming integer arithmetic. If those assumptions are violated, V8 deoptimizes back to Ignition..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: Bytecode concepts, CPU instruction basics
 - **Enables**: Understanding why type consistency matters, why `eval` is slow, why `try/catch` in loops is bad
 
@@ -117,47 +119,49 @@ Source → [Parser] → AST → [Ignition] → Bytecode
 ```javascript
 // Bad: different property order → different hidden classes
 function createProductA() {
-  return { id: 1, name: 'A', price: 10 }  // Shape: id→name→price
+  return { id: 1, name: "A", price: 10 }; // Shape: id→name→price
 }
 function createProductB() {
-  return { id: 2, price: 20, name: 'B' }  // Shape: id→price→name ← DIFFERENT!
+  return { id: 2, price: 20, name: "B" }; // Shape: id→price→name ← DIFFERENT!
 }
 // Array of mixed shapes → polymorphic / megamorphic → slow
 
 // Good: consistent construction → shared hidden class
 function createProduct(id, name, price) {
-  return { id, name, price }  // Always: id→name→price → Shape shared ✅
+  return { id, name, price }; // Always: id→name→price → Shape shared ✅
 }
 
 // Also bad: adding properties conditionally
 function createUser(hasAdmin) {
-  const u = { id: 1, name: 'Nhi' }
-  if (hasAdmin) u.role = 'admin'  // ← some objects have 'role', others don't
+  const u = { id: 1, name: "Nhi" };
+  if (hasAdmin) u.role = "admin"; // ← some objects have 'role', others don't
   // → two different hidden classes → polymorphic lookups
-  return u
+  return u;
 }
 
 // Fix: always initialize all properties, use null for optional:
 function createUser(hasAdmin) {
-  return { id: 1, name: 'Nhi', role: hasAdmin ? 'admin' : null }  // ✅ same shape always
+  return { id: 1, name: "Nhi", role: hasAdmin ? "admin" : null }; // ✅ same shape always
 }
 ```
 
 **Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| `delete obj.property` | Set to `null`/`undefined` — `delete` changes the hidden class and can push to slow mode |
-| Adding properties outside constructor: `obj.newProp = x` | Define all properties in constructor/creation function |
-| Different creation order in different code paths | Single factory function with fixed property order |
-| `Object.assign({}, base, overrides)` with varying `overrides` keys | Ensure all possible properties are in the base, use `null` for absent values |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `delete obj.property` | `delete` changes the hidden class and can push the object to slow dictionary mode | Set to `null`/`undefined` — same semantic effect, preserves hidden class |
+| Adding properties outside constructor: `obj.newProp = x` | Each addition after construction creates a new hidden class transition — splits fast paths | Define all properties in constructor/creation function — same shape from birth |
+| Different property creation order in different code paths | Different order = different hidden class — two logically identical objects in different fast classes | Use a single factory function with fixed property order |
+| `Object.assign({}, base, overrides)` with varying `overrides` keys | Objects with different property sets get different hidden classes — IC misses on each new shape | Ensure all possible properties are in the base shape; use `null` for absent values |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "object performance" / "hidden class" / "V8 optimization tips"
 - **Concept**: Consistent shape = shared hidden class = O(1) direct offset access
 - **Opening**: "V8 creates hidden classes to track the structure of objects. If two objects have the same properties added in the same order, they share a hidden class, and property access is a direct memory offset — extremely fast. If property addition order varies, or properties are deleted, V8 creates separate hidden class transitions and can't use the fast path..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: Objects, prototypes, memory layout basics
 - **Enables**: Understanding Inline Caching, TypeScript `interface` performance benefit, `class` fields optimization
 
@@ -177,36 +181,43 @@ function createUser(hasAdmin) {
 
 ```javascript
 // Monomorphic — fast (1-2 cycles)
-function getPrice(product) { return product.price }
-const a = { id: 1, name: 'A', price: 10 }
-const b = { id: 2, name: 'B', price: 20 }
-getPrice(a); getPrice(b)  // ← both same shape → IC stays monomorphic ✅
+function getPrice(product) {
+  return product.price;
+}
+const a = { id: 1, name: "A", price: 10 };
+const b = { id: 2, name: "B", price: 20 };
+getPrice(a);
+getPrice(b); // ← both same shape → IC stays monomorphic ✅
 
 // Megamorphic — slow (50-100 cycles)
-function getValue(obj) { return obj.value }
-getValue({ value: 1 })
-getValue({ x: 1, value: 2 })
-getValue({ a: 1, b: 2, value: 3 })
-getValue({ name: 'x', value: 4 })
-getValue({ type: 'y', value: 5 })
+function getValue(obj) {
+  return obj.value;
+}
+getValue({ value: 1 });
+getValue({ x: 1, value: 2 });
+getValue({ a: 1, b: 2, value: 3 });
+getValue({ name: "x", value: 4 });
+getValue({ type: "y", value: 5 });
 // ← 5 different shapes → megamorphic ❌ → no cache, full lookup every call
 ```
 
 **Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| Single utility function handling multiple unrelated object types | Separate specialized functions per type — keep each call site monomorphic |
-| Array of mixed object shapes passed to same processing function | Normalize objects to same shape before processing |
-| TypeScript `any` — disables type checking and shape consistency hints | Use specific types/interfaces — encourages consistent shape |
-| "These shapes are conceptually compatible, performance doesn't matter" | IC state is the most impactful micro-optimization for hot loops |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Single utility function handling multiple unrelated object types | Polymorphic (2-4 shapes) is OK; megamorphic (5+ shapes) degrades to hash lookup — no fast path | Separate specialized functions per type — keep each call site monomorphic |
+| Array of mixed object shapes passed to same processing function | Mixed shapes at one call site push IC to megamorphic state — all lookups become hash-based | Normalize objects to same shape before processing |
+| TypeScript `any` — disables type checking and shape consistency hints | `any` hides shape inconsistencies that become IC megamorphism at runtime | Use specific types/interfaces — encourages consistent shape |
+| "These shapes are conceptually compatible, performance doesn't matter" | IC megamorphism in a hot loop is the single most impactful micro-optimization target | IC state is the most impactful micro-optimization for hot loops — measure before dismissing |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "why is this loop slow" / "inline caching" / "polymorphic call site"
 - **Concept**: IC caches property offset per shape; monomorphic=fast, megamorphic=slow
 - **Opening**: "Inline caching optimizes property lookups by caching the result — if `product.price` is always accessed on the same-shaped object, V8 caches the property offset and turns the lookup into a direct memory read. The IC has 3 states: monomorphic (one shape, fastest), polymorphic (2-4 shapes, acceptable), megamorphic (5+ shapes, falls back to full hash lookup). You can avoid megamorphic state by ensuring functions receive consistent-shaped objects..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: Hidden Classes, V8 compilation pipeline
 - **Enables**: Understanding why TypeScript interfaces improve performance, profiling `%NeverOptimizeFunction`, reading V8 deopt logs
 
@@ -225,11 +236,12 @@ getValue({ type: 'y', value: 5 })
 #### Engine Comparison / So Sánh Engine
 
 **1. V8 (Google Chrome, Node.js)**
+
 - **Developer**: Google
 - **Language**: C++
 - **JIT Compiler**: TurboFan
 - **Interpreter**: Ignition
-- **Features**: 
+- **Features**:
   - Hidden classes for object optimization
   - Inline caching
   - Generational garbage collection
@@ -237,6 +249,7 @@ getValue({ type: 'y', value: 5 })
   - Parallel compilation
 
 **2. SpiderMonkey (Firefox)**
+
 - **Developer**: Mozilla
 - **Language**: C++
 - **JIT Compilers**: Baseline, IonMonkey
@@ -248,6 +261,7 @@ getValue({ type: 'y', value: 5 })
   - Incremental GC
 
 **3. JavaScriptCore (Safari)**
+
 - **Developer**: Apple
 - **Language**: C++
 - **JIT Compilers**: LLInt, Baseline, DFG, FTL
@@ -259,6 +273,7 @@ getValue({ type: 'y', value: 5 })
   - Concurrent JIT compilation
 
 **4. Chakra (Legacy Edge)**
+
 - **Developer**: Microsoft
 - **Language**: C++
 - **Features**:
@@ -283,6 +298,7 @@ getValue({ type: 'y', value: 5 })
 **Purpose**: Break source code into tokens
 
 **Process**:
+
 - Scanner reads source code character by character
 - Identifies keywords, identifiers, operators, literals
 - Creates token stream
@@ -290,6 +306,7 @@ getValue({ type: 'y', value: 5 })
 - Detects syntax errors early
 
 **Token Types**:
+
 - Keywords: `if`, `function`, `const`
 - Identifiers: variable names
 - Operators: `+`, `-`, `===`
@@ -301,6 +318,7 @@ getValue({ type: 'y', value: 5 })
 **Purpose**: Build Abstract Syntax Tree (AST)
 
 **Process**:
+
 - Parser consumes token stream
 - Applies grammar rules
 - Builds hierarchical tree structure
@@ -308,6 +326,7 @@ getValue({ type: 'y', value: 5 })
 - Reports syntax errors
 
 **AST Structure**:
+
 - Represents program structure
 - Nodes for statements, expressions
 - Preserves semantic meaning
@@ -318,6 +337,7 @@ getValue({ type: 'y', value: 5 })
 **Purpose**: Validate program semantics
 
 **Checks**:
+
 - Variable declarations
 - Scope resolution
 - Type consistency (in TypeScript)
@@ -329,6 +349,7 @@ getValue({ type: 'y', value: 5 })
 **Purpose**: Create intermediate representation
 
 **Characteristics**:
+
 - Platform-independent
 - Lower-level than source
 - Higher-level than machine code
@@ -338,6 +359,7 @@ getValue({ type: 'y', value: 5 })
 **Stage 5: Execution**
 
 **Two Approaches**:
+
 1. **Interpretation**: Execute bytecode directly
 2. **Compilation**: Convert to machine code first
 
@@ -356,18 +378,21 @@ Modern engines use both (JIT compilation).
 #### Why JIT? / Tại Sao JIT?
 
 **Problems with Pure Interpretation**:
+
 - Slow execution
 - Repeated interpretation overhead
 - No optimization opportunities
 - Poor performance for hot code
 
 **Problems with Ahead-of-Time (AOT) Compilation**:
+
 - Long startup time
 - Cannot optimize for runtime behavior
 - Larger binary size
 - Less flexible
 
 **JIT Advantages**:
+
 - Fast startup (interpret first)
 - Optimize hot code paths
 - Profile-guided optimization
@@ -379,6 +404,7 @@ Modern engines use both (JIT compilation).
 **Tier 1: Interpreter (Ignition in V8)**
 
 **Characteristics**:
+
 - Executes bytecode directly
 - Fast startup
 - No compilation overhead
@@ -386,6 +412,7 @@ Modern engines use both (JIT compilation).
 - Identifies hot functions
 
 **When Used**:
+
 - First execution
 - Cold code paths
 - Short-lived functions
@@ -394,6 +421,7 @@ Modern engines use both (JIT compilation).
 **Tier 2: Baseline Compiler**
 
 **Characteristics**:
+
 - Quick compilation
 - Basic optimizations
 - Still collects profiling data
@@ -401,6 +429,7 @@ Modern engines use both (JIT compilation).
 - Fallback from optimized code
 
 **When Used**:
+
 - Warm code (executed multiple times)
 - Functions showing promise
 - After deoptimization
@@ -408,6 +437,7 @@ Modern engines use both (JIT compilation).
 **Tier 3: Optimizing Compiler (TurboFan in V8)**
 
 **Characteristics**:
+
 - Aggressive optimizations
 - Uses profiling data
 - Speculative optimization
@@ -415,6 +445,7 @@ Modern engines use both (JIT compilation).
 - Can deoptimize if assumptions wrong
 
 **When Used**:
+
 - Hot code paths
 - Functions executed many times
 - Performance-critical code
@@ -431,6 +462,7 @@ Modern engines use both (JIT compilation).
 5. **Complexity**: Not too complex to analyze
 
 **Heuristics**:
+
 - Function called > 100 times
 - Loop iterated > 1000 times
 - Execution time > threshold
@@ -451,18 +483,21 @@ Modern engines use both (JIT compilation).
 **Concept**: Replace function call with function body
 
 **Benefits**:
+
 - Eliminates call overhead
 - Enables further optimizations
 - Reduces stack operations
 - Better instruction cache usage
 
 **Conditions**:
+
 - Small functions
 - Called frequently
 - Not recursive
 - Predictable behavior
 
 **Example**:
+
 ```
 // Before inlining
 function add(a, b) { return a + b; }
@@ -477,12 +512,14 @@ let result = x + y;
 **Concept**: Remove code that never executes or affects output
 
 **Types**:
+
 - Unreachable code
 - Unused variables
 - Redundant computations
 - Constant folding results
 
 **Benefits**:
+
 - Smaller code size
 - Faster execution
 - Better cache usage
@@ -490,17 +527,20 @@ let result = x + y;
 #### 3. Loop Optimizations / Tối Ưu Hóa Vòng Lặp
 
 **Loop Invariant Code Motion**:
+
 - Move calculations outside loop
 - Compute once instead of repeatedly
 - Reduces loop overhead
 
 **Loop Unrolling**:
+
 - Duplicate loop body
 - Reduce iteration overhead
 - Better instruction pipelining
 - Trade code size for speed
 
 **Loop Fusion**:
+
 - Combine multiple loops
 - Reduce iteration overhead
 - Better cache locality
@@ -510,12 +550,14 @@ let result = x + y;
 **Concept**: Determine if object escapes function scope
 
 **Benefits**:
+
 - Stack allocation instead of heap
 - Eliminates garbage collection overhead
 - Scalar replacement
 - Better performance
 
 **Conditions**:
+
 - Object doesn't escape function
 - No references stored elsewhere
 - Lifetime limited to function
@@ -525,12 +567,14 @@ let result = x + y;
 **Concept**: Generate specialized code for specific types
 
 **Benefits**:
+
 - Eliminates type checks
 - Direct operations
 - Better performance
 - Enables further optimizations
 
 **Example**:
+
 ```
 // Generic code
 function add(a, b) { return a + b; }
@@ -547,11 +591,13 @@ function add_numbers(a, b) {
 **Concept**: Remove array bounds checks when provably safe
 
 **Benefits**:
+
 - Faster array access
 - Reduced overhead
 - Better performance in loops
 
 **Conditions**:
+
 - Index provably in bounds
 - Array length known
 - No modifications during access
@@ -569,6 +615,7 @@ function add_numbers(a, b) {
 #### How Hidden Classes Work / Cách Lớp Ẩn Hoạt Động
 
 **Concept**:
+
 - Objects with same structure share hidden class
 - Hidden class stores property layout
 - Fast property access via offset
@@ -582,6 +629,7 @@ function add_numbers(a, b) {
 4. **Optimization**: Fast property access
 
 **Example**:
+
 ```
 // Point1 and Point2 share hidden class
 let point1 = { x: 1, y: 2 };
@@ -594,18 +642,21 @@ let point3 = { y: 5, x: 6 };
 #### Property Access Optimization / Tối Ưu Hóa Truy Cập Thuộc Tính
 
 **Without Hidden Classes**:
+
 - Hash table lookup
 - String comparison
 - Slow access
 - O(n) complexity
 
 **With Hidden Classes**:
+
 - Direct memory offset
 - No lookup needed
 - Fast access
 - O(1) complexity
 
 **Memory Layout**:
+
 ```
 Hidden Class stores:
 - Property names
@@ -617,6 +668,7 @@ Hidden Class stores:
 #### Best Practices / Thực Hành Tốt Nhất
 
 **1. Initialize All Properties in Constructor**
+
 ```
 // Good: Same hidden class
 class Point {
@@ -636,6 +688,7 @@ class Point {
 ```
 
 **2. Add Properties in Same Order**
+
 ```
 // Good: Same hidden class
 let p1 = { x: 1, y: 2 };
@@ -646,6 +699,7 @@ let p3 = { y: 5, x: 6 };
 ```
 
 **3. Avoid Deleting Properties**
+
 ```
 // Bad: Breaks hidden class
 delete obj.property;
@@ -655,6 +709,7 @@ obj.property = undefined;
 ```
 
 **4. Avoid Adding Properties After Creation**
+
 ```
 // Bad: Changes hidden class
 let obj = { x: 1 };
@@ -677,6 +732,7 @@ let obj = { x: 1, y: 2 };
 #### How Inline Caching Works / Cách IC Hoạt Động
 
 **Concept**:
+
 - Cache property access results
 - Store at call site
 - Check cache before lookup
@@ -685,23 +741,27 @@ let obj = { x: 1, y: 2 };
 **States of IC**:
 
 **1. Uninitialized**:
+
 - First execution
 - No cache yet
 - Full lookup required
 
 **2. Monomorphic**:
+
 - One hidden class seen
 - Fast path for that class
 - Direct offset access
 - Optimal performance
 
 **3. Polymorphic**:
+
 - Few hidden classes seen (2-4)
 - Check against each
 - Still relatively fast
 - Small overhead
 
 **4. Megamorphic**:
+
 - Many hidden classes seen (>4)
 - Cache ineffective
 - Falls back to lookup
@@ -710,18 +770,21 @@ let obj = { x: 1, y: 2 };
 #### Performance Implications / Ảnh Hưởng Hiệu Suất
 
 **Monomorphic (Best)**:
+
 - Single type check
 - Direct access
 - ~1-2 CPU cycles
 - Optimal
 
 **Polymorphic (Good)**:
+
 - Multiple type checks
 - Still cached
 - ~5-10 CPU cycles
 - Acceptable
 
 **Megamorphic (Poor)**:
+
 - Full lookup
 - No caching benefit
 - ~50-100 CPU cycles
@@ -730,6 +793,7 @@ let obj = { x: 1, y: 2 };
 #### Optimization Strategies / Chiến Lược Tối Ưu Hóa
 
 **1. Keep Functions Monomorphic**
+
 ```
 // Good: Always receives same type
 function processPoint(point) {
@@ -743,6 +807,7 @@ processPoint(p2); // Same hidden class
 ```
 
 **2. Avoid Mixed Types**
+
 ```
 // Bad: Polymorphic
 function process(obj) {
@@ -754,6 +819,7 @@ process({ value: 2, extra: 3 }); // Different hidden class
 ```
 
 **3. Use Type-Specific Functions**
+
 ```
 // Good: Separate functions for different types
 function processNumber(n) { return n * 2; }
@@ -779,6 +845,7 @@ function process(x) {
 **Why not AOT (Ahead-of-Time)?** JS is dynamically typed — types aren't known until runtime. An AOT compiler can't generate type-specific fast paths without type annotations (that's what TypeScript does). Also, AOT would block page load while compiling.
 
 **V8's multi-tier approach:**
+
 - **Ignition** (interpreter): runs all code immediately, no warm-up, low memory, collects type feedback
 - **TurboFan** (JIT): kicks in for "hot" functions (called ~1000+ times), uses Ignition's feedback to generate type-specialized native code
 - **Deoptimization**: if TurboFan's type assumptions are violated (you call an int-specialized function with a string), V8 abandons the compiled code and falls back to Ignition
@@ -786,6 +853,7 @@ function process(x) {
 **Tiếng Việt:** JIT = bắt đầu interpret (startup nhanh) → compile hot paths sau (execution nhanh). V8: Ignition interpret tất cả + collect type feedback → TurboFan compile hot functions với type assumptions → deoptimize nếu assumptions sai. Không dùng AOT vì JS dynamically typed — không biết types trước khi chạy.
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Explains the startup vs throughput trade-off; names Ignition + TurboFan and their roles; explains deoptimization trigger
 - ❌ Weak: "JIT compiles JavaScript to machine code" — true but misses why (the trade-off), when (hot paths only), and what happens when it fails (deopt)
 
@@ -798,14 +866,21 @@ function process(x) {
 If properties are added in different orders across objects, V8 creates separate hidden class chains. Accessing properties on objects with different shapes becomes polymorphic or megamorphic (hash table lookup) — 10-100x slower.
 
 **Why property order matters:**
+
 ```javascript
 // Different orders → different hidden classes
-const p1 = {}; p1.id = 1; p1.price = 10   // Shape: {} → id → price
-const p2 = {}; p2.price = 20; p2.id = 2   // Shape: {} → price → id  ← DIFFERENT
+const p1 = {};
+p1.id = 1;
+p1.price = 10; // Shape: {} → id → price
+const p2 = {};
+p2.price = 20;
+p2.id = 2; // Shape: {} → price → id  ← DIFFERENT
 // A function processing [p1, p2] hits polymorphic IC ← slower
 
 // Fix: consistent construction
-function make(id, price) { return { id, price } }  // always same order ✅
+function make(id, price) {
+  return { id, price };
+} // always same order ✅
 ```
 
 **`delete` is especially harmful:** It invalidates the hidden class entirely and pushes the object to "slow mode" (dictionary), where all property accesses become hash lookups.
@@ -815,6 +890,7 @@ function make(id, price) { return { id, price } }  // always same order ✅
 **Tiếng Việt:** Hidden class = blueprint nội bộ của V8 cho layout của object. Same layout = same hidden class = property access O(1) direct offset. Khác thứ tự = khác hidden class = slow dictionary lookup. `delete` đặc biệt tệ — push object sang "slow mode". Fix: luôn khởi tạo tất cả properties cùng thứ tự trong constructor.
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Explains hidden class sharing condition (same order); explains what "direct offset" means; mentions `delete` pushing to slow mode; gives factory function solution
 - ❌ Weak: "Use hidden classes for fast property access" — backwards (developer doesn't use them; V8 creates them based on developer's code patterns)
 
@@ -836,21 +912,28 @@ function make(id, price) { return { id, price } }  // always same order ✅
 
 ```javascript
 // Megamorphic call site — worst case
-function render(item) { return item.name }  // ← this IC site will go megamorphic
-render({ name: 'A' })                         // shape 1
-render({ id: 1, name: 'B' })                  // shape 2
-render({ id: 1, type: 'x', name: 'C' })       // shape 3
-render({ id: 1, type: 'x', tag: 'y', name: 'D' })  // shape 4
-render({ id: 1, type: 'x', tag: 'y', src: 'z', name: 'E' })  // shape 5 → megamorphic!
+function render(item) {
+  return item.name;
+} // ← this IC site will go megamorphic
+render({ name: "A" }); // shape 1
+render({ id: 1, name: "B" }); // shape 2
+render({ id: 1, type: "x", name: "C" }); // shape 3
+render({ id: 1, type: "x", tag: "y", name: "D" }); // shape 4
+render({ id: 1, type: "x", tag: "y", src: "z", name: "E" }); // shape 5 → megamorphic!
 
 // Fix: normalize input shapes, or use separate specialized functions per type
-function renderProduct(p) { return p.name }
-function renderCategory(c) { return c.name }
+function renderProduct(p) {
+  return p.name;
+}
+function renderCategory(c) {
+  return c.name;
+}
 ```
 
 **Tiếng Việt:** IC cache kết quả lookup "property X ở offset Y cho shape Z" tại mỗi call site. Monomorphic (1 shape) = nhanh nhất. Megamorphic (5+ shapes) = V8 bỏ cache — full lookup mỗi lần. Fix: normalize object shapes hoặc tách separate functions per type để mỗi call site chỉ thấy 1-4 shapes.
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Explains IC as call-site-specific cache; names all 4 states with cycle counts; explains why megamorphic disables the cache; gives practical code fix
 - ❌ Weak: "Monomorphic is faster than polymorphic" — true but doesn't explain the mechanism or the 5+ threshold for megamorphic
 
@@ -861,30 +944,40 @@ function renderCategory(c) { return c.name }
 **A:** V8 deoptimizes a function when its compiled assumptions are violated. Common causes in React:
 
 **1. Mixed object shapes in arrays:**
+
 ```javascript
 // Items array with inconsistent shapes → megamorphic renders
 const items = [
-  { id: 1, name: 'A', price: 10 },
-  { id: 2, price: 20 },              // ← missing name!
-  { id: 3, name: 'C', discount: 5 }  // ← extra field
-]
+  { id: 1, name: "A", price: 10 },
+  { id: 2, price: 20 }, // ← missing name!
+  { id: 3, name: "C", discount: 5 }, // ← extra field
+];
 // Fix: normalize at API boundary
-const normalized = raw.map(item => ({
-  id: item.id, name: item.name ?? null, price: item.price, discount: item.discount ?? null
-}))
+const normalized = raw.map((item) => ({
+  id: item.id,
+  name: item.name ?? null,
+  price: item.price,
+  discount: item.discount ?? null,
+}));
 ```
 
 **2. `try/catch` inside render loops:**
+
 ```javascript
 // TurboFan won't optimize functions containing try/catch
-items.forEach(item => {
-  try { render(item) } catch(e) { }  // ← wrap at loop level blocks optimization
-})
+items.forEach((item) => {
+  try {
+    render(item);
+  } catch (e) {} // ← wrap at loop level blocks optimization
+});
 // Fix: extract the try/catch outside the hot loop
-try { items.forEach(render) } catch(e) { }
+try {
+  items.forEach(render);
+} catch (e) {}
 ```
 
 **3. Changing prop types between renders:**
+
 ```javascript
 // React: <Component count={isLoaded ? items.length : null} />
 // Type changes number → null → deopt
@@ -892,6 +985,7 @@ try { items.forEach(render) } catch(e) { }
 ```
 
 **Diagnosis:** Enable V8 deopt logging:
+
 ```bash
 node --trace-deopt --trace-opt app.js 2>&1 | grep -E "deopt|optimiz"
 ```
@@ -899,6 +993,7 @@ node --trace-deopt --trace-opt app.js 2>&1 | grep -E "deopt|optimiz"
 **Tiếng Việt:** Deoptimization xảy ra khi TurboFan's type assumptions bị vi phạm. Nguyên nhân phổ biến trong React: (1) array với mixed-shape objects → megamorphic render, (2) `try/catch` trong hot loops ngăn optimization, (3) prop type thay đổi giữa các render. Fix: normalize shapes ở API boundary, `try/catch` ở outer level, giữ consistent prop types.
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Identifies mixed shapes as primary cause; mentions try/catch optimization barrier; knows `--trace-deopt` flag exists; gives concrete normalization pattern
 - ❌ Weak: "Use React.memo to prevent rerenders" — that's a different optimization entirely; misses V8-level deopt diagnosis
 
@@ -906,12 +1001,12 @@ node --trace-deopt --trace-opt app.js 2>&1 | grep -E "deopt|optimiz"
 
 ## Q&A Summary / Tóm Tắt Q&A
 
-| # | Topic | Key Insight |
-|---|-------|-------------|
-| Q1 | JIT compilation | Interpret cold → TurboFan hot → deopt on type violation; startup vs throughput trade-off |
-| Q2 | Hidden classes | Same property order = shared shape = O(1) offset; `delete` → slow mode |
-| Q3 | Inline caching | Monomorphic fast, megamorphic = no cache; 5+ shapes = give up IC |
-| Q4 | Deoptimization in React | Mixed shapes + try/catch in loops + changing prop types = deopt |
+| #   | Topic                   | Key Insight                                                                              |
+| --- | ----------------------- | ---------------------------------------------------------------------------------------- |
+| Q1  | JIT compilation         | Interpret cold → TurboFan hot → deopt on type violation; startup vs throughput trade-off |
+| Q2  | Hidden classes          | Same property order = shared shape = O(1) offset; `delete` → slow mode                   |
+| Q3  | Inline caching          | Monomorphic fast, megamorphic = no cache; 5+ shapes = give up IC                         |
+| Q4  | Deoptimization in React | Mixed shapes + try/catch in loops + changing prop types = deopt                          |
 
 ---
 
@@ -929,6 +1024,7 @@ node --trace-deopt --trace-opt app.js 2>&1 | grep -E "deopt|optimiz"
 **Close this document. Answer from memory:**
 
 **Retrieval:**
+
 1. What are V8's two main compilation components? What does each do?
 2. When does TurboFan deoptimize a function? What happens after?
 3. What condition must be true for two objects to share a hidden class?
@@ -936,18 +1032,24 @@ node --trace-deopt --trace-opt app.js 2>&1 | grep -E "deopt|optimiz"
 5. Why does `delete obj.property` hurt performance more than `obj.property = null`?
 
 **Visual:**
+
 - Sketch the V8 compilation pipeline: source → Ignition → TurboFan → deopt path
 - Draw IC state transitions: Uninitialized → Monomorphic → Polymorphic → Megamorphic. What triggers each transition?
 
 **Application:**
+
 - You have a `processItem(item)` function called with 6 different object shapes. How do you fix the megamorphic IC problem?
 - A React component renders 10,000 rows with `{ id, name?, price, discount? }` where some fields are sometimes absent. How do you optimize?
 
 **Debug:**
+
 - V8 deopt log shows `processOrder` is deoptimized with reason "insufficient type feedback". What does this mean? How do you investigate?
 
 **Teach:**
+
 - Explain hidden classes to a junior: "Imagine V8 as a warehouse manager. Consistent-shape objects are stored in labeled shelves — manager knows exactly where item X is. Mixed-shape objects go into 'random pile' — manager must search every time."
+
+> 🎯 **Feynman Prompt:** Giải thích cho PM: tại sao cùng một đoạn code JavaScript nhưng lần đầu chạy chậm, sau đó nhanh hơn — V8 JIT compiler "học" code của bạn như thế nào và hidden classes giúp tăng tốc truy cập property ra sao?
 
 ---
 

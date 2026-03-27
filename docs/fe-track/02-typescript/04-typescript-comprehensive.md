@@ -60,35 +60,40 @@
 **Visual — Structural vs Excess Property Checking:**
 
 ```typescript
-interface User { id: string; name: string }
+interface User {
+  id: string;
+  name: string;
+}
 
 // Structural typing — variable reference: works (shape compatible)
-const richUser = { id: 'u1', name: 'Nhi', role: 'admin' }
-const u: User = richUser  // ✅ richUser has more fields but satisfies User shape
+const richUser = { id: "u1", name: "Nhi", role: "admin" };
+const u: User = richUser; // ✅ richUser has more fields but satisfies User shape
 
 // Excess property checking — direct literal: fails
-const u2: User = { id: 'u1', name: 'Nhi', role: 'admin' }
+const u2: User = { id: "u1", name: "Nhi", role: "admin" };
 // ❌ Error: Object literal may only specify known properties
 // TypeScript: "you typed 'role' — was that intentional?"
 
 // Bypass: intermediate variable OR type assertion
-const u3: User = richUser                // ✅ variable bypass
-const u4 = { id: 'u1', role: 'admin' } as User  // ← assertion (loses safety)
+const u3: User = richUser; // ✅ variable bypass
+const u4 = { id: "u1", role: "admin" } as User; // ← assertion (loses safety)
 ```
 
-**Common Mistakes:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| Confused why variable passes but inline literal fails | Excess property checking only applies to object literal expressions |
-| `as any` to bypass every type error | Use `as SpecificType` or intermediate variable |
-| Thinking TypeScript is nominal ("class A is not B") | TypeScript is structural — same shape = assignable regardless of name |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Confused why object literal fails but variable passes | TypeScript applies excess property checking only to fresh object literals, not variable assignments | Excess property checking only applies to object literal expressions — use an intermediate variable to bypass |
+| `as any` to bypass every type error | Disables the type checker entirely for that value, propagating unsafe `any` to all callers | Use `as SpecificType` or an intermediate variable to stay within the type system |
+| Thinking TypeScript is nominal: "class A is not assignable to B" | TypeScript uses structural typing — two types are compatible if they have the same shape, regardless of name | TypeScript is structural — same shape = assignable regardless of name |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "TypeScript says object literal has unknown property" / "structural vs nominal"
 - **Opening**: "TypeScript uses structural typing — if the shape matches, types are compatible regardless of name. The exception is object literals: excess property checking catches typos at literal-creation time. If you need to bypass: assign to an intermediate variable (structural check still applies) or use a type assertion..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: TypeScript basics, interfaces vs types
 - **Enables**: API contract design, understanding `extends` behavior with structural types
 
@@ -108,45 +113,46 @@ const u4 = { id: 'u1', role: 'admin' } as User  // ← assertion (loses safety)
 
 ```typescript
 // 1. Mapped Type
-type Optional<T> = { [K in keyof T]?: T[K] }
-type Flags<T> = { [K in keyof T]: boolean }
+type Optional<T> = { [K in keyof T]?: T[K] };
+type Flags<T> = { [K in keyof T]: boolean };
 
 // 2. Conditional Type with infer
-type ElementType<T> = T extends (infer U)[] ? U : never
-type A = ElementType<string[]>   // string
-type B = ElementType<number>     // never
+type ElementType<T> = T extends (infer U)[] ? U : never;
+type A = ElementType<string[]>; // string
+type B = ElementType<number>; // never
 
 // Built-in uses conditional types:
-type NonNullable<T> = T extends null | undefined ? never : T
-type Awaited<T> = T extends Promise<infer U> ? Awaited<U> : T  // recursive!
+type NonNullable<T> = T extends null | undefined ? never : T;
+type Awaited<T> = T extends Promise<infer U> ? Awaited<U> : T; // recursive!
 
 // 3. Template Literal
-type Event = 'click' | 'focus' | 'blur'
-type Handler = `on${Capitalize<Event>}`  // 'onClick' | 'onFocus' | 'onBlur'
+type Event = "click" | "focus" | "blur";
+type Handler = `on${Capitalize<Event>}`; // 'onClick' | 'onFocus' | 'onBlur'
 
 // All three combined — derive typed event handlers:
-type ComponentEvents = { click: MouseEvent; focus: FocusEvent }
+type ComponentEvents = { click: MouseEvent; focus: FocusEvent };
 type EventHandlers = {
-  [K in keyof ComponentEvents as `on${Capitalize<string & K>}`]:
-    (e: ComponentEvents[K]) => void
-}
+  [K in keyof ComponentEvents as `on${Capitalize<string & K>}`]: (e: ComponentEvents[K]) => void;
+};
 // Result: { onClick: (e: MouseEvent) => void; onFocus: (e: FocusEvent) => void }
 ```
 
-**Common Mistakes:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| Manually writing all handler names | Template literal: `` `on${Capitalize<EventName>}` `` |
-| `T extends any[]` to get element type | `T extends (infer U)[]` — use `infer` to capture |
-| `Partial<T>` for API responses with optional fields | Only use `Partial` for update payloads; for responses, type optional fields explicitly |
-| Forgetting conditional types are distributive | `string \| number extends string` → distributes over each member |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| Manually writing all handler names: `onClick`, `onFocus`... | Hard-coded names go stale when source types change and have no type-level connection | Use template literal: `` `on${Capitalize<EventName>}` `` to auto-derive all handler names |
+| `T extends any[]` to get element type | `any` breaks the type connection — the extracted element type becomes `any` | Use `T extends (infer U)[]` — `infer` captures the element type safely |
+| `Partial<T>` for API responses with optional fields | Makes all fields optional including required ones, hiding missing-data errors at compile time | Only use `Partial` for update payloads; for responses, type optional fields explicitly |
+| Forgetting conditional types are distributive over unions | Union members are checked independently — `string \| number extends string` tests each branch separately | Use `[T] extends [U]` (tuple wrap) to prevent distribution and treat the union as a whole |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "utility types" / "derive event handlers" / "make all fields optional"
 - **Opening**: "Mapped types transform all properties of a type systematically. Conditional types add type-level branching with `extends ? :`. Template literal types extend this to string patterns. Together they power TypeScript's built-in utility types and let you encode complex API contracts..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: Generics, `keyof`, `typeof`, `infer`
 - **Enables**: Custom utility types, typed event systems, API client typing
 
@@ -166,46 +172,52 @@ type EventHandlers = {
 
 ```typescript
 // === Declaration Merging ===
-interface User { id: string }
-interface User { name: string }  // merges — User now has id + name ✅
+interface User {
+  id: string;
+}
+interface User {
+  name: string;
+} // merges — User now has id + name ✅
 
 // === Module Augmentation ===
 // src/types/axios-ext.d.ts:
-import 'axios'  // ← REQUIRED: makes this a module (not ambient) augmentation
+import "axios"; // ← REQUIRED: makes this a module (not ambient) augmentation
 
-declare module 'axios' {
+declare module "axios" {
   interface AxiosRequestConfig {
-    requestId?: string
+    requestId?: string;
   }
 }
 
 // Now works everywhere:
-axios.get('/api/data', { requestId: generateId() })  // ✅ TypeScript knows this
+axios.get("/api/data", { requestId: generateId() }); // ✅ TypeScript knows this
 
 // === Express Request augmentation ===
 // src/types/express-ext.d.ts:
 declare global {
   namespace Express {
     interface Request {
-      user?: AuthenticatedUser  // req.user is now typed in all middleware
+      user?: AuthenticatedUser; // req.user is now typed in all middleware
     }
   }
 }
 ```
 
-**Common Mistakes:**
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-| ❌ Wrong | ✅ Correct |
-|---|---|
-| `declare module 'axios'` without any import/export | Add `import 'axios'` to make it a module augmentation (not ambient override) |
-| Merging `type` aliases: `type Foo = ...; type Foo = ...` | Use `interface` for mergeable types; `type` aliases cannot merge |
-| Augmented types not recognized by TypeScript | Include augmentation `.d.ts` in `tsconfig.json` `include` or `typeRoots` |
+| Sai lầm | Tại sao sai | Đúng là |
+|---------|------------|---------|
+| `declare module 'axios'` without any `import`/`export` in the file | Without an import/export the file is ambient — it overwrites the entire module declaration instead of merging | Add `import 'axios'` to make the file a module, enabling proper augmentation (not ambient override) |
+| Merging `type` aliases: `type Foo = ...; type Foo = ...` | Type aliases are closed shapes — duplicate declarations cause a compile error | Use `interface` for mergeable types; only `interface` declarations can be reopened |
+| Augmented types not being recognized by TypeScript | TypeScript only processes files listed in `include` or `typeRoots` in tsconfig | Include the augmentation `.d.ts` file path in `tsconfig.json` `include` or `typeRoots` |
 
 **🎯 Interview Pattern:**
+
 - **Trigger**: "extend third-party types" / "add field to Express Request" / "augment Axios"
 - **Opening**: "For adding properties to third-party types, I use module augmentation. I create a `.d.ts` file with an import of the target package (to scope it as module augmentation, not an ambient re-declaration), then use `declare module 'axios'` to merge new fields into the existing interface. Zero runtime cost..."
 
 **🔑 Knowledge Chain:**
+
 - **Prereq**: Declaration files, TypeScript module resolution
 - **Enables**: Express request user typing, Axios config extension, monorepo type sharing
 
@@ -220,8 +232,12 @@ declare global {
 **Giải thích (VI):** TS kiểm tra tương thích theo cấu trúc object.
 
 **Ví dụ (TypeScript):**
+
 ```ts
-interface Point2D { x: number; y: number }
+interface Point2D {
+  x: number;
+  y: number;
+}
 const p = { x: 1, y: 2, z: 3 };
 const ok: Point2D = p; // compatible by shape
 ```
@@ -233,9 +249,13 @@ const ok: Point2D = p; // compatible by shape
 **Giải thích (VI):** Khi truyền object literal, TS kiểm tra thuộc tính dư để bắt lỗi chính tả.
 
 **Ví dụ (TypeScript):**
+
 ```ts
-interface User { id: string; name: string }
-const u: User = { id: 'u1', name: 'Ann', role: 'admin' }; // error on literal
+interface User {
+  id: string;
+  name: string;
+}
+const u: User = { id: "u1", name: "Ann", role: "admin" }; // error on literal
 ```
 
 ## Index Signatures
@@ -245,6 +265,7 @@ const u: User = { id: 'u1', name: 'Ann', role: 'admin' }; // error on literal
 **Giải thích (VI):** Dùng index signature cho map động nhưng vẫn ràng buộc value type.
 
 **Ví dụ (TypeScript):**
+
 ```ts
 type Scores = { [subject: string]: number };
 const scores: Scores = { math: 9, cs: 10 };
@@ -257,6 +278,7 @@ const scores: Scores = { math: 9, cs: 10 };
 **Giải thích (VI):** Mapped type cho phép biến đổi toàn bộ thuộc tính theo quy tắc.
 
 **Ví dụ (TypeScript):**
+
 ```ts
 type Flags<T> = { [K in keyof T]: boolean };
 type UserFlags = Flags<{ id: string; active: boolean }>;
@@ -269,6 +291,7 @@ type UserFlags = Flags<{ id: string; active: boolean }>;
 **Giải thích (VI):** Conditional type mô hình hóa if/else ở tầng kiểu.
 
 **Ví dụ (TypeScript):**
+
 ```ts
 type ElementType<T> = T extends (infer U)[] ? U : T;
 type A = ElementType<string[]>; // string
@@ -281,8 +304,9 @@ type A = ElementType<string[]>; // string
 **Giải thích (VI):** Template literal type tạo union chuỗi và tách thông tin từ pattern.
 
 **Ví dụ (TypeScript):**
+
 ```ts
-type Event = 'click' | 'focus';
+type Event = "click" | "focus";
 type HandlerName = `on${Capitalize<Event>}`; // onClick | onFocus
 ```
 
@@ -293,9 +317,14 @@ type HandlerName = `on${Capitalize<Event>}`; // onClick | onFocus
 **Giải thích (VI):** Declaration merging giúp mở rộng định nghĩa theo nhiều file.
 
 **Ví dụ (TypeScript):**
+
 ```ts
-interface Box { width: number }
-interface Box { height: number }
+interface Box {
+  width: number;
+}
+interface Box {
+  height: number;
+}
 const b: Box = { width: 10, height: 20 };
 ```
 
@@ -306,9 +335,12 @@ const b: Box = { width: 10, height: 20 };
 **Giải thích (VI):** Module augmentation thêm type cho thư viện ngoài một cách an toàn.
 
 **Ví dụ (TypeScript):**
+
 ```ts
-declare module 'axios' {
-  interface AxiosRequestConfig { requestId?: string }
+declare module "axios" {
+  interface AxiosRequestConfig {
+    requestId?: string;
+  }
 }
 ```
 
@@ -319,9 +351,12 @@ declare module 'axios' {
 **Giải thích (VI):** Ưu tiên module ES; namespace chủ yếu cho legacy.
 
 **Ví dụ (TypeScript):**
+
 ```ts
 // module preferred
-export function add(a: number, b: number){ return a+b }
+export function add(a: number, b: number) {
+  return a + b;
+}
 ```
 
 ## Project References
@@ -331,6 +366,7 @@ export function add(a: number, b: number){ return a+b }
 **Giải thích (VI):** Project references tăng tốc build cho codebase lớn.
 
 **Ví dụ (TypeScript):**
+
 ```ts
 // tsconfig.json
 {
@@ -355,6 +391,7 @@ export function add(a: number, b: number){ return a+b }
 But **object literals** receive extra scrutiny: TypeScript assumes that if you're writing a literal `{ id: 'u1', role: 'admin' }` and assigning it to `User` which has no `role` field, you likely made a typo (`role` vs `name`). So TypeScript flags it — "Object literal may only specify known properties."
 
 **Fix options:**
+
 1. Assign to an intermediate variable first (structural check only — extra field is accepted)
 2. Use type assertion `as User` (unsafe — skips the check)
 3. Define `role` in the interface
@@ -364,6 +401,7 @@ This is why passing API response objects to typed parameters works fine (they co
 **Tiếng Việt:** Excess property checking chỉ áp dụng cho object literal trực tiếp. TypeScript giả định literal có field dư là typo. Variable reference dùng structural typing — có đủ required fields là pass. Fix: gán qua biến trung gian hoặc type assertion.
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Explains WHY literals are special (typo detection intent); correctly says structural typing still validates required fields; gives the variable-bypass workaround
 - ❌ Weak: "TypeScript is strict about object types" — doesn't explain the structural vs excess-property distinction
 
@@ -375,12 +413,12 @@ This is why passing API response objects to typed parameters works fine (they co
 
 ```typescript
 type DeepReadonly<T> = {
-  readonly [K in keyof T]: T[K] extends object ? DeepReadonly<T[K]> : T[K]
-}
+  readonly [K in keyof T]: T[K] extends object ? DeepReadonly<T[K]> : T[K];
+};
 
 // Usage:
-type Config = { server: { host: string; port: number }; debug: boolean }
-type ReadonlyConfig = DeepReadonly<Config>
+type Config = { server: { host: string; port: number }; debug: boolean };
+type ReadonlyConfig = DeepReadonly<Config>;
 // Result: { readonly server: { readonly host: string; readonly port: number }; readonly debug: boolean }
 
 // Explanation:
@@ -396,6 +434,7 @@ type ReadonlyConfig = DeepReadonly<Config>
 **Tiếng Việt:** `DeepReadonly<T>` dùng mapped type (`[K in keyof T]`) + conditional type (`T[K] extends object ? recurse : leaf`). Áp `readonly` ở mỗi level. Caveat: arrays là objects trong TypeScript — cần xử lý riêng nếu cần deeply readonly arrays.
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Correctly combines mapped + conditional + recursion; mentions the array edge case; explains each part
 - ❌ Weak: `type DeepReadonly<T> = Readonly<T>` — only one level deep, misses the recursive requirement
 
@@ -408,33 +447,34 @@ type ReadonlyConfig = DeepReadonly<Config>
 ```typescript
 // src/types/express.d.ts
 // IMPORTANT: must have an import/export to be treated as a module (not ambient):
-export {}  // ← makes this a module file
+export {}; // ← makes this a module file
 
 declare global {
   namespace Express {
     interface Request {
-      user?: AuthenticatedUser  // merged into Express.Request
+      user?: AuthenticatedUser; // merged into Express.Request
     }
   }
 }
 
 // Type definition:
 interface AuthenticatedUser {
-  id: string
-  email: string
-  roles: string[]
+  id: string;
+  email: string;
+  roles: string[];
 }
 
 // Now in middleware — TypeScript knows req.user:
 app.use((req, res, next) => {
-  req.user = verifyToken(req.headers.authorization)  // ✅ type-safe
-  next()
-})
+  req.user = verifyToken(req.headers.authorization); // ✅ type-safe
+  next();
+});
 ```
 
 **Key requirement:** The `.d.ts` file must be a **module** (has at least one `import` or `export`). Without this, `declare global` in a script-mode file would overwrite or conflict with the original types.
 
 **Include in tsconfig:**
+
 ```json
 { "include": ["src/**/*.ts", "src/types/*.d.ts"] }
 ```
@@ -442,6 +482,7 @@ app.use((req, res, next) => {
 **Tiếng Việt:** Dùng module augmentation: tạo `src/types/express.d.ts` với `export {}` (để là module file), sau đó `declare global { namespace Express { interface Request {...} } }`. TypeScript merge interface này với `@types/express`. Phải include file trong tsconfig. Zero runtime cost.
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Knows the `export {}` / import requirement for module vs ambient; uses `declare global` + `namespace Express`; mentions tsconfig include
 - ❌ Weak: "Edit the @types/express node_modules file" — modifies a package that gets wiped on `npm install`; or "use `as any`" — loses type safety
 
@@ -451,15 +492,16 @@ app.use((req, res, next) => {
 
 **A:** Both define object shapes, but have key differences:
 
-| Feature | `interface` | `type` |
-|---|---|---|
+| Feature             | `interface`                             | `type`                                   |
+| ------------------- | --------------------------------------- | ---------------------------------------- |
 | Declaration merging | ✅ Yes — multiple `interface Foo` merge | ❌ No — duplicate `type Foo` is an error |
-| `extends` | ✅ Can extend other interfaces + types | ✅ Can intersect with `&` |
-| Computed properties | ❌ No | ✅ Yes: `type K = { [key in Union]: T }` |
-| Primitives / unions | ❌ Objects only | ✅ `type ID = string \| number` |
-| Error messages | Better (shows interface name) | Can be verbose (shows expanded type) |
+| `extends`           | ✅ Can extend other interfaces + types  | ✅ Can intersect with `&`                |
+| Computed properties | ❌ No                                   | ✅ Yes: `type K = { [key in Union]: T }` |
+| Primitives / unions | ❌ Objects only                         | ✅ `type ID = string \| number`          |
+| Error messages      | Better (shows interface name)           | Can be verbose (shows expanded type)     |
 
 **When the choice matters:**
+
 1. **Library APIs and extensibility:** Use `interface` — consumers can augment with declaration merging
 2. **Union/intersection types:** Must use `type` — `interface` can't represent `string | number`
 3. **Mapped/conditional types:** Must use `type`
@@ -470,19 +512,20 @@ app.use((req, res, next) => {
 **Tiếng Việt:** `interface` hỗ trợ declaration merging — nhiều khai báo cùng tên sẽ merge. `type` không merge được nhưng hỗ trợ union/intersection/mapped types. Dùng `interface` cho object shapes có thể extend. Dùng `type` cho union, aliases, computed types.
 
 💡 **Interview Signal:**
+
 - ✅ Strong: Mentions declaration merging as THE key interface advantage; correctly says `type` is required for unions; gives the practical "library vs internal code" heuristic
 - ❌ Weak: "They're mostly the same, I use type for everything" — misses declaration merging which is critical for library design
 
 ---
 
-## Q&A Summary / Tóm Tắt Q&A
+## 📋 Interview Q&A Summary / Tóm Tắt Q&A Phỏng Vấn
 
-| # | Topic | Key Insight |
-|---|-------|-------------|
-| Q1 | Excess property checking | Literals get extra scrutiny; variables use structural typing only |
-| Q2 | `DeepReadonly<T>` | Mapped + conditional + recursive = type-level programming |
-| Q3 | Module augmentation | `export {}` + `declare global` + tsconfig include = type-safe Express req.user |
-| Q4 | interface vs type | Declaration merging = interface's key advantage; unions require type |
+| #   | Câu hỏi                                                     | Difficulty | Core Concept             | Key Signal                                        |
+| --- | ----------------------------------------------------------- | ---------- | ------------------------ | ------------------------------------------------- |
+| 1   | Tại sao TS reject object literal nhưng accept qua variable? | 🟡 Mid     | Excess property checking | Phân biệt fresh object vs structural typing       |
+| 2   | Implement `DeepReadonly<T>` cho nested objects              | 🟡 Mid     | Mapped types             | Recursive mapped + conditional types              |
+| 3   | Thêm `user` vào Express `Request` không sửa @types          | 🔴 Senior  | Module augmentation      | `export {}` + `declare module` + tsconfig include |
+| 4   | `interface` vs `type` — khi nào quan trọng?                 | 🔴 Senior  | Type system              | Declaration merging vs union requirement          |
 
 ---
 
@@ -495,29 +538,29 @@ app.use((req, res, next) => {
 
 ---
 
-## Retrieval Self-Check / Tự Kiểm Tra
+## 🔄 Self-Check / Tự Kiểm Tra
 
-**Close this document. Answer from memory:**
+> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
 
-**Retrieval:**
-1. Why do TypeScript object literals fail excess property checking when a variable of the same shape passes?
-2. Write `Readonly<T>` using a mapped type (without using the built-in).
-3. What does `T extends (infer U)[] ? U : never` compute?
-4. What is the critical requirement for module augmentation (`declare module 'axios'`) to work without overwriting existing types?
-5. Name 2 things `type` can do that `interface` cannot.
+| #   | Loại           | Câu hỏi                                                                                                                                                   |
+| --- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 🔍 Retrieval   | Tại sao object literal fail excess property checking khi variable cùng shape lại pass? Nêu điều kiện để module augmentation (`declare module`) hoạt động. |
+| 2   | 🎨 Visual      | Vẽ excess property checking rule: khi nào áp dụng vs khi nào structural typing áp dụng. Vẽ declaration merging: 2 `interface User` + merged result.       |
+| 3   | 🛠️ Application | Viết `RequireAtLeastOne<T>` — object type yêu cầu ít nhất một field của T phải có mặt. Sketch approach dùng mapped + conditional types.                   |
+| 4   | 🐛 Debug       | `declare module 'express'` augmentation không work — TypeScript vẫn báo `req.user` là undefined. Liệt kê các nguyên nhân có thể và cách kiểm tra.         |
+| 5   | 🎓 Teach       | Giải thích structural typing cho Java developer: tại sao TypeScript không cần explicit `implements`?                                                      |
 
-**Visual:**
-- Draw the excess property checking rule: when does it apply vs when does structural typing apply?
-- Draw declaration merging: two `interface User` declarations + what the merged type looks like.
+### Key Points (tự kiểm tra)
 
-**Application:**
-- You need a `RequireAtLeastOne<T>` type — an object where at least one of T's fields must be present. Sketch the approach using mapped + conditional types.
+| #   | Key Point                                                                                                                                                                        |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Excess property check chỉ áp dụng khi gán trực tiếp object literal (fresh object). Assign qua variable = structural typing. Module aug cần file là module (có `export {}`).      |
+| 2   | Direct literal: `{ id: 1, extra: true }` as `User` → error. Variable: `const x = { id: 1, extra: true }; fn(x)` → OK. Declaration merging chỉ với `interface`, không với `type`. |
+| 3   | `type RequireAtLeastOne<T> = { [K in keyof T]-?: Required<Pick<T,K>> & Partial<Omit<T,K>> }[keyof T]` — mapped type tạo union, mỗi variant có 1 field required.                  |
+| 4   | Nguyên nhân: file không phải module (thiếu `export {}`), import path sai, `@types` override. Fix: thêm `export {}` để biến thành module.                                         |
+| 5   | TypeScript kiểm tra shape (duck typing): nếu object có đủ properties với đúng types → compatible. Như Java nhưng không cần viết `implements Interface`.                          |
 
-**Debug:**
-- Your `declare module 'express'` augmentation doesn't work — TypeScript still shows `req.user` as `undefined`. What are the likely causes?
-
-**Teach:**
-- Explain structural typing to a Java developer: "TypeScript doesn't care what you called the type. If your object has `id: string` and `name: string`, it's a valid `User` — even if you created it as a `Visitor`. TypeScript is about shape, not name."
+> 🎯 **Feynman Prompt:** Giải thích declaration merging cho backend developer: "Tại sao bạn có thể viết `interface User` hai lần mà không báo lỗi — và điều gì xảy ra khi bạn làm vậy?"
 
 ---
 
@@ -530,6 +573,5 @@ app.use((req, res, next) => {
 - **Prereqs**: [02-advanced-types.md](./02-advanced-types.md), [03-generics-deep-dive.md](./03-generics-deep-dive.md)
 - **See also**: [05-type-inference-theory.md](./05-type-inference-theory.md), [06-typescript-modern-features.md](./06-typescript-modern-features.md)
 - **React**: [05-react-typescript.md](./05-react-typescript.md) — module augmentation is used heavily in React component libraries
-
 
 [← Previous: Generics Deep Dive](./03-generics-deep-dive.md) | [Next: React + TypeScript →](./05-react-typescript.md) | [Back to Table of Contents](../../00-table-of-contents.md)

@@ -508,17 +508,29 @@ let requestCount = 0;     // let only if you need to reassign
 
 ---
 
-## Self-Check / Tự Kiểm Tra ⚡
-> **Đóng tài liệu lại trước khi làm — Close this doc before attempting.**
+## 🔄 Self-Check / Tự Kiểm Tra
 
-- [ ] **Retrieval**: Không nhìn lại — viết ra: `var` scope là gì? `let` scope là gì? Khác nhau điểm gì trong for-loop?
-- [ ] **Visual**: Vẽ scope chain cho đoạn code này từ trí nhớ: `const x = 1; function a() { const y = 2; function b() { console.log(x, y); } }` — b() tìm x và y ở đâu?
-- [ ] **Application**: Code này print gì: `console.log(typeof undeclaredVar)` vs `console.log(typeof letVar); let letVar = 1`? Tại sao khác nhau?
-- [ ] **Debug**: Bạn refactor code từ `var` sang `let` trong 1 function và bắt đầu thấy `ReferenceError`. Nguyên nhân có thể là gì?
-- [ ] **Teach**: Giải thích cho người không biết lập trình tại sao `var` trong for-loop gây bug, dùng analogy "nhân viên dùng chung notepad".
+> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
 
-💬 **Feynman Prompt:** Giải thích Temporal Dead Zone cho 1 người chưa bao giờ code. Không dùng từ "hoisting", "TDZ", "scope" — chỉ dùng analogy thực tế.
+| # | Loại | Câu hỏi |
+|---|------|---------|
+| 1 | 🔍 Retrieval | Không nhìn lại — viết ra: `var` scope là gì? `let` scope là gì? Khác nhau điểm gì trong **for-loop**? |
+| 2 | 🎨 Visual | Vẽ scope chain cho đoạn code này từ trí nhớ: `const x = 1; function a() { const y = 2; function b() { console.log(x, y); } }` — b() tìm `x` và `y` ở đâu? |
+| 3 | 🛠️ Application | Code này print gì: `console.log(typeof undeclaredVar)` vs `console.log(typeof letVar); let letVar = 1`? Tại sao khác nhau? |
+| 4 | 🐛 Debug | Bạn refactor code từ `var` sang `let` trong 1 function và bắt đầu thấy `ReferenceError`. Nguyên nhân có thể là gì? |
+| 5 | 🎓 Teach | Giải thích cho người không biết lập trình tại sao `var` trong for-loop gây bug, dùng analogy "nhân viên dùng chung notepad". |
 
+### Key Points (tự kiểm tra)
+
+| # | Key Point |
+|---|-----------|
+| 1 | `var`: function-scoped, hoisted+initialized `undefined`. `let`: block-scoped, TDZ. Trong for-loop: `var` chia sẻ 1 binding, `let` tạo **binding mới** mỗi iteration. |
+| 2 | b() tìm `y` trong scope a() (tìm thấy). Tìm `x` không thấy trong a(), đi lên global (tìm thấy). Scope chain: b → a → global. |
+| 3 | `typeof undeclaredVar` → `"undefined"` (safe, không throw). `typeof letVar` trước declaration → **ReferenceError** vì `let` có TDZ từ đầu block. |
+| 4 | `let`/`const` trong TDZ từ đầu block đến dòng khai báo. Code cũ dùng `var` trước khai báo (hoisted) → bây giờ thành TDZ error với `let`. |
+| 5 | `var` trong for-loop: tất cả vòng lặp dùng chung 1 biến (1 tờ notepad). `let`: mỗi vòng có bản sao riêng. Khi callback chạy sau, `var` đã bị ghi đè. |
+
+> 🎯 **Feynman Prompt:** Giải thích Temporal Dead Zone cho 1 người chưa bao giờ code. Không dùng từ "hoisting", "TDZ", "scope" — chỉ dùng analogy thực tế.
 🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày → 7 ngày → 14 ngày** để chuyển vào long-term memory.
 
 ---
