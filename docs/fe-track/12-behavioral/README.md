@@ -20,13 +20,15 @@ Behavioral interviews đánh giá:
 
 ## Cấu Trúc Module
 
+> **Note:** Behavioral content chung (STAR, Leadership, Common Questions, Storytelling) đã được chuyển sang `shared/09-behavioral/` để cả FE và BE track đều dùng được. Files dưới đây link đến shared.
+
 | File | Chủ Đề | Độ Quan Trọng |
 |------|--------|---------------|
-| [01-star-method.md](./01-star-method.md) | STAR Framework | ⭐⭐⭐⭐⭐ |
-| [02-leadership-principles.md](./02-leadership-principles.md) | Amazon LPs, etc. | ⭐⭐⭐⭐⭐ |
-| [03-common-questions.md](./03-common-questions.md) | 50+ Common Questions | ⭐⭐⭐⭐⭐ |
-| [04-storytelling.md](./04-storytelling.md) | How to Tell Stories | ⭐⭐⭐⭐ |
-| [mindmap-behavioral.md](./mindmap-behavioral.md) | Sơ Đồ Tổng Hợp | Review |
+| [01-star-method.md](../../shared/09-behavioral/01-star-method.md) | STAR Framework | ⭐⭐⭐⭐⭐ |
+| [02-leadership-principles.md](../../shared/09-behavioral/02-leadership-principles.md) | Amazon LPs, etc. | ⭐⭐⭐⭐⭐ |
+| [03-common-questions.md](../../shared/09-behavioral/03-common-questions.md) | 50+ Common Questions | ⭐⭐⭐⭐⭐ |
+| [04-storytelling.md](../../shared/09-behavioral/04-storytelling.md) | How to Tell Stories | ⭐⭐⭐⭐ |
+| [mindmap-behavioral.md](./mindmap-behavioral.md) | Sơ Đồ Tổng Hợp (FE-specific) | Review |
 
 ---
 

@@ -305,6 +305,10 @@ gaps_identified:     ["List of specific sub-topics missing"]
 19. **No generic overviews** — Overview must be specific to the file's topic
 20. **No duplicate Q&A answers** — every answer must be unique within the file
 21. **3-Block Learning Flow** — Core Concepts section MUST follow: Block A (Theory Foundation) → Block B (Interview Q&A) → Block C (Study Cases). Never start Q&A before theory layers are complete. Study Cases must name a real company/system/incident.
+22. **L5 Competency Tagging** — Every file header includes `> **L5 Competencies**: ...` mapping to 10-category L5 framework
+23. **Cross-Track Linking** — Files relevant to both FE and BE must include `## Cross-Track / Liên Kết Chéo` section
+24. **LeetCode Integration** — Algorithm/DS theory files link ≥3 LeetCode problems; LeetCode indices link back to theory
+25. **Follow-up Chain for Senior** — Every 🔴 Senior Q&A includes 3 progressive follow-up questions simulating L5 interviewer probing
 
 ---
 
@@ -355,6 +359,13 @@ Before marking a spec as done, verify:
 - [ ] Every A has both EN explanation and VI reinforcement
 - [ ] Technical terms kept in English, Vietnamese explanations alongside
 - [ ] Company-specific interview tips are bilingual
+
+### L5 Readiness
+- [ ] L5 Competency mapping in header: `> **L5 Competencies**: Technical Mastery (20pts), ...` (Rule 19)
+- [ ] Cross-track links present if topic is relevant to both FE and BE (Rule 20)
+- [ ] LeetCode cross-references for algorithm/data-structure content (Rule 21)
+- [ ] 🔴 Senior Q&A includes Follow-up Chain — 3 progressive follow-up questions (Rule 22)
+- [ ] ≥1 Study Case involves L5-level decision-making (architectural choice, team-level impact)
 
 ### Integration
 - [ ] File added to `docs/00-table-of-contents.md`

@@ -1,6 +1,6 @@
 # Storytelling - How to Tell Compelling Stories
 
-> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
 
 > Stories là công cụ mạnh nhất trong behavioral interviews. Học cách kể story hiệu quả.

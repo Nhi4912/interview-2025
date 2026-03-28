@@ -125,6 +125,80 @@
     BANNED: jumping to Q&A before theory is established.
     BANNED: generic "example:" without a named company/system/incident.
 
+## L5 Competency Rules (apply to all new content)
+
+19. **L5 Competency Tagging / Gắn Thẻ Năng Lực L5** — Every content file header MUST include:
+    ```
+    > **L5 Competencies**: Technical Mastery (20pts), Problem-Solving (15pts)
+    ```
+    Map to relevant competencies from the L5 framework (10 categories, 100 points total):
+    Scope & Impact (15) | Problem-Solving (15) | Technical Mastery (20) |
+    Communication (10) | Leadership (10) | Ownership (10) | Quality & Risk (10) |
+    Team Multiplier (5) | Behaviour (3) | Business Awareness (2).
+    Giúp learner thấy mỗi file đóng góp vào năng lực nào khi phỏng vấn L5.
+
+20. **Cross-Track Linking Mandatory / Liên Kết Chéo Bắt Buộc** — When a file in fe-track or
+    be-track covers a topic also relevant to the other track, add at end of file:
+    ```
+    ## Cross-Track / Liên Kết Chéo
+    - 🔗 BE perspective: [related BE file](path)
+    - 🔗 FE perspective: [related FE file](path)
+    - 🔗 Shared theory: [shared file](path)
+    ```
+    Giúp learner thấy cùng một concept từ nhiều góc nhìn khác nhau.
+
+21. **LeetCode Integration / Tích Hợp LeetCode** — Every algorithm/data-structure theory file
+    MUST end with a "Practice Problems / Bài Tập Thực Hành" table linking ≥3 relevant LeetCode
+    problems from `docs/leetcode/`. Every LeetCode category index MUST link back to the relevant
+    theory file. Lý thuyết không có bài tập = kiến thức chưa được củng cố.
+
+22. **Follow-up Chain for Senior Q&A / Chuỗi Câu Hỏi Nối Tiếp** — Every 🔴 Senior Q&A MUST
+    include a Follow-up Chain: 3 progressively harder questions an interviewer would ask after
+    the initial answer. Format:
+    ```
+    🔗 **Follow-up Chain:**
+    1. → "If [constraint changes], how would your answer change?"
+    2. → "How would you debug this in production with [limitation]?"
+    3. → "Design a system that handles [edge case at scale]."
+    ```
+    Mô phỏng cách interviewer L5 đào sâu — nếu chỉ trả lời câu đầu thì chưa đủ Senior.
+
+---
+
+## L5 Competency File Format (Hybrid)
+
+Files in `docs/shared/08-l5-competencies/` use a hybrid format (not full technical template):
+
+```markdown
+# Title / Tiêu đề
+
+> **Track**: Shared | **L5 Weight**: Xpts/100
+> **See also**: [related]
+
+## Real-World Scenario / Tình Huống Thực Tế
+{Concrete situation showing why this competency matters at L5}
+
+## Framework / Khung Năng Lực
+{Actionable frameworks instead of Core Concept layers}
+- Framework name + when to apply
+- Step-by-step process
+- Visual: comparison table or decision matrix
+
+## Examples / Ví Dụ Thực Tế
+{2-3 STAR-format examples}
+- Situation → Task → Action → Result
+- ✅ Strong signal vs ❌ Weak signal per example
+
+## Anti-patterns / Sai Lầm Thường Gặp
+| Anti-pattern | Why it fails | Better approach |
+
+## Q&A Section — Interview Questions
+{Same Q&A format: 🟢→🟡→🔴, Interview Signals, Follow-up Chains}
+
+## Self-Check / Tự Kiểm Tra
+{Retrieval-based: close doc, write from memory}
+```
+
 ---
 
 ## Gap Tracking
