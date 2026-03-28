@@ -12,15 +12,15 @@
 
 ```javascript
 // SLOW: sequential await — 750ms total
-const product = await fetchProduct(id);          // 300ms
-const seller  = await fetchSeller(product.sellerId); // 250ms (independent!)
-const related = await fetchRelated(id);          // 200ms (independent!)
+const product = await fetchProduct(id); // 300ms
+const seller = await fetchSeller(product.sellerId); // 250ms (independent!)
+const related = await fetchRelated(id); // 200ms (independent!)
 
 // FAST: Promise.all for parallel — 550ms total (27% faster)
 const [seller, related] = await Promise.all([
-  fetchSeller(product.sellerId),  // 250ms
-  fetchRelated(id),               // 200ms
-]);                               // total: max(250, 200) = 250ms, not 450ms
+  fetchSeller(product.sellerId), // 250ms
+  fetchRelated(id), // 200ms
+]); // total: max(250, 200) = 250ms, not 450ms
 ```
 
 Senior engineer noticed during performance review: `seller` and `related` don't depend on each other — zero reason to serialize them. **3-line change, 200ms saved per page load.** At Shopee's scale (millions of pageviews), this matters.
@@ -39,11 +39,13 @@ Senior engineer noticed during performance review: `seller` and `related` don't 
 → Node.js handle 10,000 concurrent connections trên 1 thread nhờ async I/O — không cần 10,000 threads.
 
 **Evolution: Callbacks → Promises → async/await:**
+
 - Callbacks: "gọi function này khi done" — nesting hell, no error chain
 - Promises: "đây là đối tượng đại diện cho future value" — chainable, better error handling
 - async/await: syntactic sugar trên Promises — reads like sync code, behaves async
 
 **Why this matters for 2026 interviews:**
+
 - Async là 50% của FE development — every API call, timer, event
 - Microtask vs macrotask ordering xuất hiện ở Mid/Senior interviews
 - `Promise.all` vs `allSettled` vs `race` — design decisions tested at Senior
@@ -73,6 +75,7 @@ Senior engineer noticed during performance review: `seller` and `related` don't 
 ```
 
 **Bạn đang ở đây trong lộ trình học:**
+
 ```
 Closures → Event Loop → [ASYNC: Callbacks/Promises/await] → React useEffect
 ```
@@ -106,11 +109,11 @@ JavaScript is **single-threaded** but handles async operations via the **event l
 
 ```javascript
 // Callback hell — Node.js legacy pattern
-getUserData(userId, function(err, user) {
+getUserData(userId, function (err, user) {
   if (err) return handleError(err);
-  getOrders(user.id, function(err, orders) {
+  getOrders(user.id, function (err, orders) {
     if (err) return handleError(err);
-    getOrderDetails(orders[0].id, function(err, details) {
+    getOrderDetails(orders[0].id, function (err, details) {
       if (err) return handleError(err);
       renderPage(user, orders, details); // finally!
     });
@@ -144,11 +147,13 @@ Level 3:       renderPage(...)
 | Mixing sync and async callbacks | Causes Zalgo — inconsistent call timing | Always async: wrap sync result in `process.nextTick(cb)` or `Promise.resolve()` |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy: "what's wrong with this callback code?", "how to handle multiple async operations?"
 - → Identify: nesting depth, error handling, control flow
-- → Answer opens with: *"This is callback hell — the nested structure makes error handling difficult and the flow hard to follow. The modern fix is Promises or async/await which flatten the nesting and centralize error handling."*
+- → Answer opens with: _"This is callback hell — the nested structure makes error handling difficult and the flow hard to follow. The modern fix is Promises or async/await which flatten the nesting and centralize error handling."_
 
 **🔑 Knowledge Chain:**
+
 - 📚 Cần biết: [Closures](./03-closures-comprehensive.md) — callbacks capture scope
 - ➡️ Để hiểu: Promises below — direct motivation: "callbacks suck, here's better"
 
@@ -175,17 +180,17 @@ Promise như ticket khi gửi xe: bạn nhận ticket (pending), xe sẵn sàng 
 const promise = new Promise((resolve, reject) => {
   // pending here
   fetchData()
-    .then(data => resolve(data))    // → fulfilled
-    .catch(err => reject(err));     // → rejected
+    .then((data) => resolve(data)) // → fulfilled
+    .catch((err) => reject(err)); // → rejected
 });
 
 // Chaining — each .then returns a new Promise
 fetchUser(id)
-  .then(user => fetchOrders(user.id))  // returns Promise
-  .then(orders => orders.filter(o => o.status === 'active'))
-  .then(active => renderOrders(active))
-  .catch(err => showError(err))      // catches ANY error in the chain
-  .finally(() => hideLoading());     // runs always
+  .then((user) => fetchOrders(user.id)) // returns Promise
+  .then((orders) => orders.filter((o) => o.status === "active"))
+  .then((active) => renderOrders(active))
+  .catch((err) => showError(err)) // catches ANY error in the chain
+  .finally(() => hideLoading()); // runs always
 ```
 
 ```
@@ -203,18 +208,19 @@ Promise state machine:
 ```
 
 **Promise combinators:**
+
 ```javascript
 // All must succeed — fails fast on first rejection
 const [user, config] = await Promise.all([fetchUser(id), fetchConfig()]);
 
 // Wait for all regardless of outcome — useful for cleanup
 const results = await Promise.allSettled([req1(), req2(), req3()]);
-results.forEach(r => r.status === 'fulfilled' ? use(r.value) : log(r.reason));
+results.forEach((r) => (r.status === "fulfilled" ? use(r.value) : log(r.reason)));
 
 // First to settle wins — useful for timeout pattern
 const data = await Promise.race([
   fetchFromPrimary(),
-  new Promise((_, reject) => setTimeout(() => reject('timeout'), 3000))
+  new Promise((_, reject) => setTimeout(() => reject("timeout"), 3000)),
 ]);
 
 // First to FULFILL (ignores rejections unless ALL reject) — useful for fastest source
@@ -235,11 +241,13 @@ const data = await Promise.any([fetchFromCDN1(), fetchFromCDN2(), fetchFromCDN3(
 | `Promise.all` when 1 failure should not stop others | `all` fail-fast rejects everything | Use `Promise.allSettled` when partial failures are acceptable |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy: "fetch multiple resources", "handle error for all", "timeout pattern"
 - → Choose combinator: `all` (all must succeed), `allSettled` (partial failure OK), `race` (timeout), `any` (fastest winner)
-- → Answer opens with: *"This depends on whether ALL operations must succeed or if partial failures are acceptable. Promise.all for 'all or nothing', Promise.allSettled for 'try all, report each result'."*
+- → Answer opens with: _"This depends on whether ALL operations must succeed or if partial failures are acceptable. Promise.all for 'all or nothing', Promise.allSettled for 'try all, report each result'."_
 
 **🔑 Knowledge Chain:**
+
 - 📚 Cần biết: Callbacks — what problem Promises solve
 - ➡️ Để hiểu: async/await — syntactic sugar built on top of Promises
 
@@ -264,25 +272,26 @@ Async/await như đọc recipe theo từng bước: "Đun nước (await), cho t
 // Syntactic transformation: async/await ↔ Promises
 async function loadPage(userId) {
   try {
-    const user = await fetchUser(userId);       // = fetchUser(userId).then(...)
+    const user = await fetchUser(userId); // = fetchUser(userId).then(...)
     const [orders, prefs] = await Promise.all([
-      fetchOrders(user.id),                     // parallel!
+      fetchOrders(user.id), // parallel!
       fetchPreferences(user.id),
     ]);
     return renderPage(user, orders, prefs);
   } catch (err) {
-    return showError(err);                      // = .catch(err => ...)
+    return showError(err); // = .catch(err => ...)
   }
 }
 
 // Equivalent Promise chain (less readable):
 function loadPage(userId) {
   return fetchUser(userId)
-    .then(user => Promise.all([
-      fetchOrders(user.id),
-      fetchPreferences(user.id),
-    ]).then(([orders, prefs]) => renderPage(user, orders, prefs)))
-    .catch(err => showError(err));
+    .then((user) =>
+      Promise.all([fetchOrders(user.id), fetchPreferences(user.id)]).then(([orders, prefs]) =>
+        renderPage(user, orders, prefs),
+      ),
+    )
+    .catch((err) => showError(err));
 }
 ```
 
@@ -318,11 +327,13 @@ if (err) return handleError(err);
 | Not catching errors from `async` function callers | `async function` returns Promise — caller needs `.catch()` | Either try/catch inside OR caller handles: `loadPage().catch(log)` |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy: "rewrite this Promise chain", "why is this slow?", "why doesn't forEach wait?"
 - → Check: are awaits independent? Use Promise.all. forEach + async? Switch to for...of or Promise.all(map)
-- → Answer opens with: *"The issue is these awaits are running sequentially when they don't need to. Since [A] and [B] don't depend on each other, they should run in parallel with Promise.all."*
+- → Answer opens with: _"The issue is these awaits are running sequentially when they don't need to. Since [A] and [B] don't depend on each other, they should run in parallel with Promise.all."_
 
 **🔑 Knowledge Chain:**
+
 - 📚 Cần biết: Promises — async/await is syntactic sugar on top
 - ➡️ Để hiểu: [React Hooks](../03-react/03-hooks-deep-dive.md) — useEffect with async; [Event Loop](./06-event-loop-async.md) — microtask ordering
 
@@ -344,13 +355,13 @@ Như người chạy việc vặt: hoàn thành việc hiện tại (call stack)
 #### Layer 2: How It Works / Cơ Chế Hoạt Động
 
 ```javascript
-console.log('1');                         // sync
+console.log("1"); // sync
 
-setTimeout(() => console.log('2'), 0);   // macrotask queue
+setTimeout(() => console.log("2"), 0); // macrotask queue
 
-Promise.resolve().then(() => console.log('3')); // microtask queue
+Promise.resolve().then(() => console.log("3")); // microtask queue
 
-console.log('4');                         // sync
+console.log("4"); // sync
 
 // Output: 1, 4, 3, 2
 // Why: sync → sync → microtask queue drains → macrotask
@@ -383,11 +394,13 @@ Event loop tick:
 | "Promise callbacks are synchronous" | Promise.then always async — even if resolved immediately | `Promise.resolve().then(fn)` — fn runs after current sync code finishes |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy: "what order does this log?", "why does this run before that?"
 - → Categorize each: sync / microtask (Promise.then) / macrotask (setTimeout)
-- → Answer opens with: *"The execution order here is: sync code first, then all microtasks (Promise.then) drain completely, then macrotasks (setTimeout). So the output is..."*
+- → Answer opens with: _"The execution order here is: sync code first, then all microtasks (Promise.then) drain completely, then macrotasks (setTimeout). So the output is..."_
 
 **🔑 Knowledge Chain:**
+
 - 📚 Cần biết: [Event Loop](./06-event-loop-async.md) — the mechanism
 - ➡️ Để hiểu: React batching — React 18 uses microtasks for automatic batching
 
@@ -402,18 +415,19 @@ Event loop tick:
 ```javascript
 const p = new Promise((resolve, reject) => {
   fetchData()
-    .then(data => resolve(data))   // fulfilled
-    .catch(err => reject(err));    // rejected
+    .then((data) => resolve(data)) // fulfilled
+    .catch((err) => reject(err)); // rejected
 });
 
-p.then(data => use(data))
- .catch(err => handle(err))
- .finally(() => cleanup());
+p.then((data) => use(data))
+  .catch((err) => handle(err))
+  .finally(() => cleanup());
 ```
 
 **Tiếng Việt:** Promise là IOU (I Owe You) — đối tượng đại diện cho kết quả trong tương lai. 3 trạng thái: pending (đang xử lý), fulfilled (thành công + value), rejected (thất bại + reason). Không thể quay lại trạng thái trước — một khi settled là settled mãi. `.finally()` chạy dù fulfilled hay rejected — dùng cho cleanup.
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Nêu đủ 3 states + irreversibility, giải thích `.then/.catch/.finally`, biết Promise vs callback improvement
 - ❌ Weak: "Promise giúp tránh callback hell" — đúng nhưng không định nghĩa được Promise
 
@@ -423,25 +437,25 @@ p.then(data => use(data))
 
 **A:**
 
-| Method | Resolves when | Rejects when | Use case |
-|--------|--------------|--------------|----------|
-| `Promise.all` | ALL fulfilled | ANY rejects (fail-fast) | All operations must succeed |
-| `Promise.allSettled` | ALL settled (either) | Never rejects | Report all results, partial failure OK |
-| `Promise.race` | FIRST settles (any) | First settles with rejection | Timeout pattern |
-| `Promise.any` | FIRST fulfills | ALL reject | Fastest source wins |
+| Method               | Resolves when        | Rejects when                 | Use case                               |
+| -------------------- | -------------------- | ---------------------------- | -------------------------------------- |
+| `Promise.all`        | ALL fulfilled        | ANY rejects (fail-fast)      | All operations must succeed            |
+| `Promise.allSettled` | ALL settled (either) | Never rejects                | Report all results, partial failure OK |
+| `Promise.race`       | FIRST settles (any)  | First settles with rejection | Timeout pattern                        |
+| `Promise.any`        | FIRST fulfills       | ALL reject                   | Fastest source wins                    |
 
 ```javascript
 // Shopee parallel data load — all must succeed
 const [user, inventory] = await Promise.all([getUser(id), getInventory()]);
 
 // Grab analytics batch — report what succeeded
-const results = await Promise.allSettled([sendEvent('A'), sendEvent('B'), sendEvent('C')]);
-const failures = results.filter(r => r.status === 'rejected');
+const results = await Promise.allSettled([sendEvent("A"), sendEvent("B"), sendEvent("C")]);
+const failures = results.filter((r) => r.status === "rejected");
 
 // Timeout pattern with Promise.race
 const data = await Promise.race([
   fetchData(),
-  new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
+  new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 3000)),
 ]);
 
 // Fastest CDN — Promise.any
@@ -449,12 +463,14 @@ const asset = await Promise.any([cdnA.get(url), cdnB.get(url), cdnC.get(url)]);
 ```
 
 **Tiếng Việt:** Chọn đúng combinator là kỹ năng Senior:
+
 - `all`: "tất cả hoặc không gì cả" — order/payment flow
 - `allSettled`: "báo cáo tất cả" — analytics, batch operations
 - `race`: "ai nhanh nhất hoặc timeout" — SLA enforcement
 - `any`: "tìm source hoạt động đầu tiên" — fallback CDN, redundant APIs
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Biết fail-fast behavior của `all`, concrete use cases cho từng combinator, biết `any` vs `race` distinction
 - ❌ Weak: Chỉ biết `Promise.all` — miss `allSettled` và `any` (ES2021)
 
@@ -463,7 +479,7 @@ const asset = await Promise.any([cdnA.get(url), cdnB.get(url), cdnC.get(url)]);
 ### Q: Why does this async forEach not work as expected? Fix it 🟡 Mid
 
 ```javascript
-const urls = ['url1', 'url2', 'url3'];
+const urls = ["url1", "url2", "url3"];
 const results = [];
 await urls.forEach(async (url) => {
   const data = await fetch(url);
@@ -484,22 +500,25 @@ for (const url of urls) {
 }
 
 // Fix 2: Promise.all + map (parallel — best for independent operations)
-const results = await Promise.all(urls.map(async url => {
-  const data = await fetch(url);
-  return data;
-}));
+const results = await Promise.all(
+  urls.map(async (url) => {
+    const data = await fetch(url);
+    return data;
+  }),
+);
 
 // Fix 3: for...of with Promise.all for controlled concurrency
 const BATCH_SIZE = 3;
 for (let i = 0; i < urls.length; i += BATCH_SIZE) {
   const batch = urls.slice(i, i + BATCH_SIZE);
-  await Promise.all(batch.map(url => fetch(url)));
+  await Promise.all(batch.map((url) => fetch(url)));
 }
 ```
 
 **Tiếng Việt:** `forEach` không aware về Promises — nó invoke mỗi callback rồi ignore returned Promise. Dùng `for...of` khi cần sequential. Dùng `Promise.all(array.map(async ...))` khi muốn parallel. Dùng batching khi cần control concurrency (tránh làm quá tải server).
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Giải thích tại sao forEach không work, biết cả 3 fixes + khi nào dùng sequential vs parallel vs batching
 - ❌ Weak: "Dùng for...of" — đúng cho sequential nhưng bỏ qua parallel option và performance implications
 
@@ -510,12 +529,15 @@ for (let i = 0; i < urls.length; i += BATCH_SIZE) {
 **A:** For Grab driver location API with transient failures:
 
 ```javascript
-async function retryWithBackoff(fn, {
-  maxAttempts = 3,
-  baseDelay = 1000,
-  maxDelay = 30000,
-  shouldRetry = (err) => err.status >= 500 || err.code === 'NETWORK_ERROR',
-} = {}) {
+async function retryWithBackoff(
+  fn,
+  {
+    maxAttempts = 3,
+    baseDelay = 1000,
+    maxDelay = 30000,
+    shouldRetry = (err) => err.status >= 500 || err.code === "NETWORK_ERROR",
+  } = {},
+) {
   let lastError;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -528,13 +550,10 @@ async function retryWithBackoff(fn, {
       if (!shouldRetry(err) || attempt === maxAttempts) throw err;
 
       // Exponential backoff with jitter
-      const delay = Math.min(
-        baseDelay * Math.pow(2, attempt - 1) + Math.random() * 1000,
-        maxDelay
-      );
+      const delay = Math.min(baseDelay * Math.pow(2, attempt - 1) + Math.random() * 1000, maxDelay);
 
       console.warn(`Attempt ${attempt} failed, retrying in ${delay}ms...`, err.message);
-      await new Promise(resolve => setTimeout(resolve, delay));
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 
@@ -542,13 +561,15 @@ async function retryWithBackoff(fn, {
 }
 
 // Usage: Grab driver location service
-const location = await retryWithBackoff(
-  () => fetchDriverLocation(driverId),
-  { maxAttempts: 3, baseDelay: 500, shouldRetry: (e) => e.status !== 404 }
-);
+const location = await retryWithBackoff(() => fetchDriverLocation(driverId), {
+  maxAttempts: 3,
+  baseDelay: 500,
+  shouldRetry: (e) => e.status !== 404,
+});
 ```
 
 **Why this design:**
+
 1. **Exponential backoff**: 500ms → 1000ms → 2000ms — gives server time to recover
 2. **Jitter**: `+ Math.random() * 1000` — prevents thundering herd (many clients retrying simultaneously)
 3. **Configurable `shouldRetry`**: don't retry 404 (resource gone) or 401 (auth failed) — only transient errors
@@ -557,6 +578,7 @@ const location = await retryWithBackoff(
 **Tiếng Việt:** Retry với exponential backoff + jitter là production standard. Không retry blindly (sẽ làm server tệ hơn) — chỉ retry transient errors (5xx, network). Jitter quan trọng: nếu 1000 clients đều retry cùng lúc sau 2 giây, server bị spike. Jitter spread out the retries.
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Biết jitter và lý do (thundering herd), `shouldRetry` predicate, configurable options, max delay cap
 - ❌ Weak: `for (let i = 0; i < 3; i++) { try { return await fn() } catch {} }` — no backoff, no jitter, retries all errors
 
@@ -564,13 +586,13 @@ const location = await retryWithBackoff(
 
 ## Interview Q&A Summary / Tổng Kết Phỏng Vấn
 
-| Question | Level | Key Point |
-|----------|-------|-----------|
-| What is a Promise? States? | 🟢 | 3 states: pending/fulfilled/rejected; irreversible once settled |
-| Promise.all vs allSettled vs race vs any | 🟡 | all=fail-fast, allSettled=report-all, race=fastest-settles, any=fastest-fulfills |
-| async forEach bug | 🟡 | forEach ignores returned Promises; use for...of or Promise.all(map) |
-| Microtask vs macrotask order | 🟡 | sync → microtask queue drains → macrotask; Promise.then before setTimeout |
-| Async retry with backoff | 🔴 | Exponential backoff + jitter prevents thundering herd; shouldRetry predicate for error type discrimination |
+| Question                                 | Level | Key Point                                                                                                  |
+| ---------------------------------------- | ----- | ---------------------------------------------------------------------------------------------------------- |
+| What is a Promise? States?               | 🟢    | 3 states: pending/fulfilled/rejected; irreversible once settled                                            |
+| Promise.all vs allSettled vs race vs any | 🟡    | all=fail-fast, allSettled=report-all, race=fastest-settles, any=fastest-fulfills                           |
+| async forEach bug                        | 🟡    | forEach ignores returned Promises; use for...of or Promise.all(map)                                        |
+| Microtask vs macrotask order             | 🟡    | sync → microtask queue drains → macrotask; Promise.then before setTimeout                                  |
+| Async retry with backoff                 | 🔴    | Exponential backoff + jitter prevents thundering herd; shouldRetry predicate for error type discrimination |
 
 ---
 
@@ -579,6 +601,7 @@ const location = await retryWithBackoff(
 > 🎯 Interviewer asks cold: **"This code fetches 3 resources with sequential `await` — what's the problem and how do you fix it?"**
 
 **30 giây đầu — mở đầu lý tưởng:**
+
 1. "The issue is unnecessary serialization — if the 3 fetches don't depend on each other's results, running them sequentially wastes time equal to the sum of all delays."
 2. "With sequential await, total time = A + B + C. With Promise.all, total time = max(A, B, C)."
 3. "Looking at the code: [A] uses [B]'s result, so those must be sequential. But [C] is independent — it can run in parallel with [A+B]."
@@ -590,26 +613,43 @@ const location = await retryWithBackoff(
 
 > Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
 
-| # | Loại | Câu hỏi |
-|---|------|---------|
-| 1 | 🔍 Retrieval | Viết ra **4 Promise combinators** và khi nào dùng từng cái — không nhìn lại. |
-| 2 | 🎨 Visual | Vẽ event loop diagram với **microtask queue** và **macrotask queue**. Thêm `Promise.then` và `setTimeout` vào đúng queue. |
-| 3 | 🛠️ Application | Có 5 URLs cần fetch. Bạn muốn: (a) parallel tất cả, (b) sequential, (c) batches of 2. Viết code cho từng case. |
-| 4 | 🐛 Debug | `await arr.forEach(async fn)` — print empty array. Tại sao? Viết **2 cách fix** từ trí nhớ. |
-| 5 | 🎓 Teach | Giải thích tại sao `Promise.all` nhanh hơn sequential `await` cho người không biết async programming, dùng analogy **nhà hàng**. |
+| #   | Loại           | Câu hỏi                                                                                                                          |
+| --- | -------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 🔍 Retrieval   | Viết ra **4 Promise combinators** và khi nào dùng từng cái — không nhìn lại.                                                     |
+| 2   | 🎨 Visual      | Vẽ event loop diagram với **microtask queue** và **macrotask queue**. Thêm `Promise.then` và `setTimeout` vào đúng queue.        |
+| 3   | 🛠️ Application | Có 5 URLs cần fetch. Bạn muốn: (a) parallel tất cả, (b) sequential, (c) batches of 2. Viết code cho từng case.                   |
+| 4   | 🐛 Debug       | `await arr.forEach(async fn)` — print empty array. Tại sao? Viết **2 cách fix** từ trí nhớ.                                      |
+| 5   | 🎓 Teach       | Giải thích tại sao `Promise.all` nhanh hơn sequential `await` cho người không biết async programming, dùng analogy **nhà hàng**. |
 
 ### Key Points (tự kiểm tra)
 
-| # | Key Point |
-|---|-----------|
-| 1 | `Promise.all`: fail-fast khi 1 reject. `Promise.allSettled`: chờ tất cả, nhận kết quả dù fail. `Promise.race`: first settled (cả resolve/reject). `Promise.any`: first fulfilled. |
-| 2 | Microtask queue (Promise.then, queueMicrotask): chạy **hết sau mỗi task** trước khi lấy macrotask tiếp. Macrotask (setTimeout, setInterval, I/O): 1 callback mỗi turn. |
-| 3 | (a) `Promise.all(urls.map(u => fetch(u)))`. (b) `for (const u of urls) await fetch(u)`. (c) chunk urls thành pairs, `for (const batch of batches) await Promise.all(batch.map(fetch))`. |
-| 4 | `forEach` **không await** async callbacks — nó fire và quên. Fix 1: `for...of + await`. Fix 2: `await Promise.all(arr.map(async fn))`. |
-| 5 | Sequential await: 'gọi món 1, chờ xong mới gọi món 2'. `Promise.all`: 'gọi tất cả cùng lúc, bếp làm song song'. Thời gian = max(các món) thay vì sum(tất cả). |
+| #   | Key Point                                                                                                                                                                               |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `Promise.all`: fail-fast khi 1 reject. `Promise.allSettled`: chờ tất cả, nhận kết quả dù fail. `Promise.race`: first settled (cả resolve/reject). `Promise.any`: first fulfilled.       |
+| 2   | Microtask queue (Promise.then, queueMicrotask): chạy **hết sau mỗi task** trước khi lấy macrotask tiếp. Macrotask (setTimeout, setInterval, I/O): 1 callback mỗi turn.                  |
+| 3   | (a) `Promise.all(urls.map(u => fetch(u)))`. (b) `for (const u of urls) await fetch(u)`. (c) chunk urls thành pairs, `for (const batch of batches) await Promise.all(batch.map(fetch))`. |
+| 4   | `forEach` **không await** async callbacks — nó fire và quên. Fix 1: `for...of + await`. Fix 2: `await Promise.all(arr.map(async fn))`.                                                  |
+| 5   | Sequential await: 'gọi món 1, chờ xong mới gọi món 2'. `Promise.all`: 'gọi tất cả cùng lúc, bếp làm song song'. Thời gian = max(các món) thay vì sum(tất cả).                           |
 
 > 🎯 **Feynman Prompt:** Giải thích microtask vs macrotask cho người không biết lập trình, dùng analogy "người chạy việc vặt có 2 loại inbox: khẩn cấp và thường". Không dùng "microtask", "macrotask", "event loop".
-🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày → 7 ngày → 14 ngày** để chuyển vào long-term memory.
+> 🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày → 7 ngày → 14 ngày** để chuyển vào long-term memory.
+
+---
+
+---
+
+## 📚 References / Tài liệu tham khảo
+
+### Specifications
+
+- [ECMAScript: Promise Objects](https://tc39.es/ecma262/#sec-promise-objects)
+- [ECMAScript: Async Functions](https://tc39.es/ecma262/#sec-async-function-definitions)
+
+### MDN Web Docs
+
+- [MDN: Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)
+- [MDN: async function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function)
+- [MDN: Using Promises](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises)
 
 ---
 

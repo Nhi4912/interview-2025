@@ -427,6 +427,146 @@ OVERALL:
 
 ---
 
+## 🔄 Handling Follow-Up Questions
+
+> Sau khi bạn trả lời STAR, interviewer gần như _luôn luôn_ hỏi thêm. Đây là nơi nhiều ứng viên bị "trip up" nhất — chuẩn bị kỹ phần này có thể tạo ra sự khác biệt lớn.
+
+### Common Follow-Up Patterns
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                 COMMON FOLLOW-UP PATTERNS                       │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│   1. "What would you do differently?"                           │
+│      ─────────────────────────────────                           │
+│      Tests: Self-reflection and genuine growth mindset          │
+│      Do: Name 1-2 specific, concrete things you'd change        │
+│      Avoid: "Nothing — it went perfectly"                       │
+│      Avoid: Vague regret ("I'd communicate better")            │
+│      Example: "I'd involve the backend team 2 sprints earlier   │
+│      to surface API constraints before we built the UI layer.   │
+│      That would have saved us a week of rework in sprint 4."    │
+│                                                                   │
+│   2. "How did you measure success?"                             │
+│      ──────────────────────────────                              │
+│      Tests: Outcome-orientation vs. effort-orientation          │
+│      Do: Name leading indicators AND lagging business metrics   │
+│      Avoid: "Everyone seemed happy with the results"            │
+│      Example: "We tracked TTI weekly in WebPageTest and real    │
+│      user monitoring. Cart abandonment was our business KPI —   │
+│      we wanted to move it from 52% to below 40%."              │
+│                                                                   │
+│   3. "What was the biggest risk?"                               │
+│      ──────────────────────────                                  │
+│      Tests: Senior engineering thinking — planning for failure  │
+│      Do: Name the specific risk AND the mitigation you used     │
+│      Avoid: Pretending there was no meaningful risk             │
+│      Example: "Biggest risk was breaking the auth flow for      │
+│      500K active users. I set up a canary rollout at 5%,        │
+│      monitored error rates for 24 hours, then ramped up."       │
+│                                                                   │
+│   4. "How did others react?"                                    │
+│      ─────────────────────                                       │
+│      Tests: Team dynamics awareness and leadership maturity     │
+│      Do: Be honest — not everyone was immediately on board      │
+│      Avoid: "Everyone loved the idea from the start"            │
+│      Example: "Two teammates were skeptical of the new stack.   │
+│      I scheduled 1:1s to address their specific concerns and    │
+│      paired with them on the first sprint to reduce friction."  │
+│                                                                   │
+│   5. "What did you learn that you've applied since?"            │
+│      ───────────────────────────────────────────────             │
+│      Tests: Whether learning is genuine or performative         │
+│      Do: Give a SPECIFIC subsequent example where you applied it│
+│      Avoid: "I learned the importance of communication"         │
+│      Example: "I learned to write assumption logs. I've used    │
+│      this on 3 ambiguous sprints since — it's now a team        │
+│      standard whenever we're working without a PM."             │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Tips for Handling Unexpected Follow-Ups
+
+```
+WHEN YOU'RE CAUGHT OFF GUARD:
+─────────────────────────────────────────────────────────────────
+
+1. BUY TIME LEGITIMATELY
+   Say: "That's a good question — let me think for a second."
+   This is completely acceptable. 3-5 seconds of silence reads
+   as thoughtful, not unprepared. Most candidates rush to fill
+   silence — pausing sets you apart.
+
+2. BRIDGE TO WHAT YOU KNOW
+   If you don't have a perfect answer, bridge to what you do:
+   "I haven't faced exactly that scenario, but a related
+   situation was when [X]. I think the same principle applies
+   because [reasoning]."
+
+3. ADMIT KNOWLEDGE LIMITS GRACEFULLY
+   "Honestly, I hadn't considered that angle at the time.
+   If I were in that situation today, I'd [specific action]
+   because [reason]."
+   → This is STRONGER than a fabricated or hedged answer.
+   → Intellectual honesty is a signal interviewers value highly.
+
+4. DON'T WALK BACK YOUR STORY UNDER PRESSURE
+   When challenged, candidates often start contradicting their
+   own STAR answer. If your answer was honest and accurate,
+   hold your position. You can add nuance:
+   "I still think that decision was right given what we knew.
+   With hindsight, I'd add [X] — but I wouldn't reverse the
+   core call."
+
+COMMON UNEXPECTED QUESTIONS TO PREPARE FOR:
+   • "Walk me through your decision-making process in more detail."
+   • "Why didn't you consider [alternative approach]?"
+   • "How did this impact your relationship with [person] long-term?"
+   • "What would have happened if you hadn't stepped in?"
+   • "How did the rest of the team feel about your approach?"
+```
+
+### How to Handle "Tell Me More About..." Probes
+
+```
+"Tell me more about..." is a GOOD sign — the interviewer is
+engaged and going deeper. Treat it as an opportunity, not
+an interrogation. They want the next layer, not a new story.
+
+─────────────────────────────────────────────────────────────────
+
+PROBE: "Tell me more about how you convinced the team..."
+WHAT THEY WANT: Specific persuasion methods, not "I explained it"
+HOW TO RESPOND:
+  • Name the medium: 1:1, written doc, prototype, data demo
+  • Describe specific objections you heard and how you addressed each
+  • Mention if your approach changed based on who you were convincing
+  (e.g., technical lead vs. PM vs. exec)
+
+PROBE: "Tell me more about that technical decision..."
+WHAT THEY WANT: Trade-off analysis, alternatives you rejected
+HOW TO RESPOND:
+  "I evaluated three options. Option A gave us X benefit but
+  had the downside of Y. I chose Option B because [specific
+  reasoning]. I ruled out Option C because [reason]."
+
+PROBE: "Tell me more about the impact..."
+WHAT THEY WANT: Causation, not just correlation
+HOW TO RESPOND:
+  "The metric improved X%. We attributed it to [specific change]
+  because [how you isolated the variable — A/B test, before/after
+  with controlled conditions, or elimination of confounders]."
+
+UNIVERSAL RESPONSE TEMPLATE:
+  "Sure — specifically on [what they asked about], what I did
+  was [action]. My reasoning was [rationale]. The outcome of
+  that specific decision was [result]."
+```
+
+---
+
 ## 📚 Active Recall
 
 1. [ ] What percentage of your answer should each STAR component be?

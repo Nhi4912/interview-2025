@@ -16,9 +16,15 @@ Bạn build một dashboard hiển thị 10,000 `User` objects. Junior dev mới
 function createUser(name) {
   return {
     name,
-    greet() { return `Hello, ${this.name}`; },
-    logout() { /* 20 lines */ },
-    formatDate() { /* 15 lines */ }
+    greet() {
+      return `Hello, ${this.name}`;
+    },
+    logout() {
+      /* 20 lines */
+    },
+    formatDate() {
+      /* 15 lines */
+    },
   };
 }
 ```
@@ -29,7 +35,9 @@ Senior dev fix bằng một dòng:
 
 ```javascript
 // Thay vì copy vào mỗi object — dùng chung qua prototype
-UserPrototype.greet = function() { return `Hello, ${this.name}`; };
+UserPrototype.greet = function () {
+  return `Hello, ${this.name}`;
+};
 ```
 
 Memory giảm xuống còn **~4MB**. Đây là lý do prototype tồn tại: **chia sẻ behavior mà không copy data**.
@@ -47,6 +55,7 @@ Array.prototype  → CÓ 'map' ✓ → dùng ngay, không cần copy
 ```
 
 **Tại sao phải học topic này?**
+
 - Giải thích được tại sao `class` ES6 không phải OOP kiểu Java — đây là câu hỏi Senior hay hỏi
 - Debug được prototype pollution bugs — lỗi bảo mật phổ biến trong production
 - Hiểu được tại sao `this` trong class method có thể bị mất (liên quan prototype + binding)
@@ -75,6 +84,7 @@ myFn  → Function.prototype → Object.prototype → null
 ```
 
 **Bạn đang ở đây trong lộ trình học:**
+
 ```
 Scope → Closures → [PROTOTYPES] → this keyword → Event Loop
 ```
@@ -83,7 +93,7 @@ Scope → Closures → [PROTOTYPES] → this keyword → Event Loop
 
 ## Overview / Tổng Quan
 
-Prototypes are JavaScript's built-in sharing mechanism: instead of copying methods into every object, objects *delegate* property lookups up a chain to a shared prototype object. Every object has an internal `[[Prototype]]` slot. ES6 `class` syntax is syntactic sugar — under the hood it's still prototype delegation, not classical OOP copying.
+Prototypes are JavaScript's built-in sharing mechanism: instead of copying methods into every object, objects _delegate_ property lookups up a chain to a shared prototype object. Every object has an internal `[[Prototype]]` slot. ES6 `class` syntax is syntactic sugar — under the hood it's still prototype delegation, not classical OOP copying.
 
 JavaScript không copy method vào mỗi object — nó dùng cơ chế **delegation** (ủy quyền): khi object không có property, JS tự động tra lên prototype chain. ES6 `class` trông giống Java nhưng thực chất khác hoàn toàn — đây là trade-off quan trọng nhất cần nhớ khi phỏng vấn.
 
@@ -95,10 +105,44 @@ JavaScript không copy method vào mỗi object — nó dùng cơ chế **delega
 
 > 🧠 **Memory Hook**: "Prototype chain = elevator lookup — JS goes UP until it finds the property or hits the roof (null)"
 
+**Sơ đồ chuỗi prototype có sẵn / Built-in prototype chain of an array:**
+
+```text
+                          null      ← terminus: property returns undefined
+                           ↑
+                     [[Prototype]]
+                           │
+          ┌────────────────────────────────────────────┐
+          │            Object.prototype                │
+          │  toString()    hasOwnProperty()            │
+          │  valueOf()     isPrototypeOf()    ...      │
+          └─────────────────────┬──────────────────────┘
+                                ↑
+                          [[Prototype]]
+                                │
+          ┌────────────────────────────────────────────┐
+          │            Array.prototype                 │
+          │  push()  pop()  map()  filter()            │
+          │  reduce()  forEach()  slice()  ...         │
+          └─────────────────────┬──────────────────────┘
+                                ↑
+                          [[Prototype]]
+                                │
+          ┌────────────────────────────────────────────┐
+          │   [1, 2, 3]   ← your array instance        │
+          │   0:1  1:2  2:3  length:3                  │
+          │   (own properties only — no methods here)  │
+          └────────────────────────────────────────────┘
+
+arr.map()      → not on arr → walk ↑ → Array.prototype.map ✓
+arr.toString() → not on arr → not on Array → Object.prototype.toString ✓
+arr.fly()      → not found anywhere → null → undefined ✗
+```
+
 **Tại sao tồn tại? / Why does this exist?**
 JavaScript ban đầu cần một cách để nhiều objects chia sẻ behavior mà không tốn bộ nhớ.
 → **Why?** Vì copy function vào mỗi object = O(n) memory với n objects.
-→ **Why?** Vì RAM đắt và JavaScript chạy trên browser với tài nguyên hạn chế (1995). Giải pháp: object không có property thì *hỏi lên trên*, không phải giữ copy.
+→ **Why?** Vì RAM đắt và JavaScript chạy trên browser với tài nguyên hạn chế (1995). Giải pháp: object không có property thì _hỏi lên trên_, không phải giữ copy.
 
 #### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
 
@@ -107,14 +151,19 @@ Hãy nghĩ như tòa chung cư. Mỗi căn hộ (object) có đồ dùng riêng 
 #### Layer 2: How It Works / Cơ Chế Hoạt Động
 
 ```javascript
-const animal = { eats: true, walk() { return 'walking'; } };
+const animal = {
+  eats: true,
+  walk() {
+    return "walking";
+  },
+};
 const rabbit = { jumps: true, __proto__: animal };
 const longEar = { earLength: 10, __proto__: rabbit };
 
-longEar.earLength  // Own property → tìm thấy ngay ✓
-longEar.jumps      // Not own → look at rabbit → found ✓
-longEar.eats       // Not own → rabbit → not own → animal → found ✓
-longEar.fly        // Not own → rabbit → animal → Object.prototype → null → undefined
+longEar.earLength; // Own property → tìm thấy ngay ✓
+longEar.jumps; // Not own → look at rabbit → found ✓
+longEar.eats; // Not own → rabbit → not own → animal → found ✓
+longEar.fly; // Not own → rabbit → animal → Object.prototype → null → undefined
 ```
 
 ```
@@ -147,10 +196,13 @@ Prototype Chain Lookup:
 **Performance:** Chuỗi prototype dài = mỗi lookup phải traverse nhiều bước. Arrays và Objects được engine tối ưu, nhưng chuỗi tự tạo sâu >3 cấp là code smell.
 
 **Mutation gotcha:**
+
 ```javascript
 const arr1 = [1, 2, 3];
 const arr2 = [4, 5, 6];
-Array.prototype.sum = function() { return this.reduce((a,b) => a+b); };
+Array.prototype.sum = function () {
+  return this.reduce((a, b) => a + b);
+};
 // Đây là PROTOTYPE POLLUTION — ảnh hưởng TẤT CẢ arrays trong app
 arr1.sum(); // 6
 arr2.sum(); // 15
@@ -159,18 +211,20 @@ arr2.sum(); // 15
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-|---------|------------|---------|
-| Dùng `__proto__` trực tiếp trong production code | `__proto__` là deprecated, không phải spec chính thức | Dùng `Object.getPrototypeOf()` / `Object.create()` |
-| Thêm method vào `Array.prototype` / `Object.prototype` | Prototype pollution — ảnh hưởng toàn bộ codebase và third-party | Extend class riêng hoặc dùng utility function |
-| Nghĩ prototype chain copy data vào child object | Không có gì được copy — chỉ là traversal lúc runtime | Prototype là *live reference*, thay đổi prototype ảnh hưởng tất cả instances |
+| Sai lầm                                                | Tại sao sai                                                     | Đúng là                                                                      |
+| ------------------------------------------------------ | --------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Dùng `__proto__` trực tiếp trong production code       | `__proto__` là deprecated, không phải spec chính thức           | Dùng `Object.getPrototypeOf()` / `Object.create()`                           |
+| Thêm method vào `Array.prototype` / `Object.prototype` | Prototype pollution — ảnh hưởng toàn bộ codebase và third-party | Extend class riêng hoặc dùng utility function                                |
+| Nghĩ prototype chain copy data vào child object        | Không có gì được copy — chỉ là traversal lúc runtime            | Prototype là _live reference_, thay đổi prototype ảnh hưởng tất cả instances |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy câu hỏi về: "tại sao `arr.map` hoạt động", "explain delegation in JS", "`__proto__` vs `prototype`"
 - → Nhớ đến: cơ chế **property lookup traversal** — JS đi lên chain, không copy
-- → Mở đầu trả lời: *"JavaScript dùng prototype delegation thay vì class copying. Khi bạn gọi `arr.map`, JS không tìm `map` trực tiếp trên `arr` — nó traverse lên `Array.prototype` để tìm method đó."*
+- → Mở đầu trả lời: _"JavaScript dùng prototype delegation thay vì class copying. Khi bạn gọi `arr.map`, JS không tìm `map` trực tiếp trên `arr` — nó traverse lên `Array.prototype` để tìm method đó."_
 
 **🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
 - 📚 Cần biết trước: [Closures](./03-closures.md) — cả hai đều về cách JS manage scope và memory
 - ➡️ Để hiểu tiếp: [this keyword](./05-this-keyword.md) — `this` trong prototype method là object thực sự gọi method, không phải prototype
 
@@ -179,6 +233,50 @@ arr2.sum(); // 15
 ### 2. The `new` Keyword / Từ Khóa `new`
 
 > 🧠 **Memory Hook**: "`new` = **C**reate, **L**ink, **E**xecute, **R**eturn" (CLER — 4 bước tạo object)
+
+**Từ khóa new — luồng 4 bước CLER / new keyword — 4-step CLER flow:**
+
+```text
+  new Person('John', 30)
+         │
+         ▼
+  ┌──────────────────────────────────────────────┐
+  │  C — CREATE                                  │
+  │  const obj = {}                              │
+  │  (empty plain object allocated in memory)    │
+  └──────────────────────┬───────────────────────┘
+                         │
+                         ▼
+  ┌──────────────────────────────────────────────┐
+  │  L — LINK                                    │
+  │  obj[[Prototype]] = Person.prototype         │
+  │  ┌─────────┐      ┌───────────────────────┐  │
+  │  │   obj   │─────►│   Person.prototype    │  │
+  │  │ (empty) │      │  greet()  toString()  │  │
+  │  └─────────┘      └───────────────────────┘  │
+  └──────────────────────┬───────────────────────┘
+                         │
+                         ▼
+  ┌──────────────────────────────────────────────┐
+  │  E — EXECUTE                                 │
+  │  Person.call(obj, 'John', 30)                │
+  │  → obj.name = 'John'                         │
+  │  → obj.age  = 30                             │
+  └──────────────────────┬───────────────────────┘
+                         │
+                         ▼
+  ┌──────────────────────────────────────────────┐
+  │  R — RETURN                                  │
+  │  constructor returned an Object?             │
+  │    YES → use that object  ← (rare gotcha)    │
+  │    NO  → return obj       ← (normal case) ✓  │
+  └──────────────────────┬───────────────────────┘
+                         │
+                         ▼
+  const john = obj
+  john.name   // 'John'  (own property — set in step E)
+  john.greet  // → Person.prototype.greet  (via [[Prototype]] from step L)
+```
 
 **Tại sao tồn tại? / Why does this exist?**
 Trước `new`, lập trình viên phải thủ công tạo object, set prototype, gọi constructor — 3 bước dễ quên.
@@ -196,9 +294,11 @@ function Person(name, age) {
   this.name = name;
   this.age = age;
 }
-Person.prototype.greet = function() { return `Hi, ${this.name}`; };
+Person.prototype.greet = function () {
+  return `Hi, ${this.name}`;
+};
 
-const john = new Person('John', 30);
+const john = new Person("John", 30);
 ```
 
 **Những gì JavaScript thực sự làm:**
@@ -211,7 +311,7 @@ const __obj = {};
 Object.setPrototypeOf(__obj, Person.prototype);
 
 // Step E — Execute: chạy constructor với this = __obj
-Person.call(__obj, 'John', 30);
+Person.call(__obj, "John", 30);
 // → __obj.name = 'John', __obj.age = 30
 
 // Step R — Return: trả về __obj (trừ khi constructor return một Object khác)
@@ -232,6 +332,7 @@ Sau khi new Person('John', 30):
 ```
 
 **Constructor return gotcha:**
+
 ```javascript
 function Weird() {
   this.x = 1;
@@ -253,24 +354,28 @@ console.log(f.x); // 1 — works as expected
 
 ```javascript
 // Quên new → this = global (non-strict) or throws (strict)
-function Person(name) { this.name = name; }
-const oops = Person('John'); // strict mode: TypeError! non-strict: window.name = 'John'
+function Person(name) {
+  this.name = name;
+}
+const oops = Person("John"); // strict mode: TypeError! non-strict: window.name = 'John'
 ```
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-|---------|------------|---------|
-| Nghĩ `new` copy methods từ prototype | Không copy — chỉ tạo link `[[Prototype]]` | Instance *delegates* method lookup lên prototype lúc runtime |
-| Return object trong constructor không có ý định | Nếu return một object, instance bị thay thế — mất `this` properties | Chỉ return primitive (hoặc không return) trong constructor |
-| Gọi constructor function không có `new` | `this` bị trỏ sai (global hoặc TypeError trong strict mode) | Luôn dùng `new`, hoặc dùng factory function pattern |
+| Sai lầm                                         | Tại sao sai                                                         | Đúng là                                                      |
+| ----------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Nghĩ `new` copy methods từ prototype            | Không copy — chỉ tạo link `[[Prototype]]`                           | Instance _delegates_ method lookup lên prototype lúc runtime |
+| Return object trong constructor không có ý định | Nếu return một object, instance bị thay thế — mất `this` properties | Chỉ return primitive (hoặc không return) trong constructor   |
+| Gọi constructor function không có `new`         | `this` bị trỏ sai (global hoặc TypeError trong strict mode)         | Luôn dùng `new`, hoặc dùng factory function pattern          |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy câu hỏi về: "explain what `new` does", "implement your own `new`", "why use `new`?"
 - → Nhớ đến: **CLER — 4 bước Create/Link/Execute/Return**
-- → Mở đầu trả lời: *"`new` thực hiện 4 bước: tạo empty object, gắn nó vào `Constructor.prototype`, chạy constructor body với `this` trỏ vào object đó, rồi trả về object (trừ khi constructor return một object khác)."*
+- → Mở đầu trả lời: _"`new` thực hiện 4 bước: tạo empty object, gắn nó vào `Constructor.prototype`, chạy constructor body với `this` trỏ vào object đó, rồi trả về object (trừ khi constructor return một object khác)."_
 
 **🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
 - 📚 Cần biết trước: [this keyword](./05-this-keyword.md) — hiểu `this` binding trước khi hiểu `new`
 - ➡️ Để hiểu tiếp: ES6 Class syntax — `class` là wrapper gọn hơn quanh constructor + prototype pattern này
 
@@ -280,6 +385,50 @@ const oops = Person('John'); // strict mode: TypeError! non-strict: window.name 
 
 > 🧠 **Memory Hook**: "Class = syntactic sugar — đường bọc bên ngoài, bên trong vẫn là prototype"
 
+**Chuỗi kế thừa class ES6 với extends / ES6 class inheritance chain at runtime:**
+
+```text
+  class Animal { speak() {} }
+  class Dog extends Animal { fetch() {} }
+  const fido = new Dog('Rex')
+
+  ┌─────────────────────────┐
+  │  fido  (Dog instance)   │  ← new Dog('Rex')
+  │  name: 'Rex'            │
+  └────────────┬────────────┘
+               │ [[Prototype]]
+               ▼
+  ┌─────────────────────────┐
+  │  Dog.prototype          │  ← class Dog's methods live here
+  │  fetch()                │
+  │  constructor: Dog       │
+  └────────────┬────────────┘
+               │ [[Prototype]]   ← what `extends Animal` wires up
+               ▼
+  ┌─────────────────────────┐
+  │  Animal.prototype       │  ← class Animal's methods live here
+  │  speak()                │
+  │  constructor: Animal    │
+  └────────────┬────────────┘
+               │ [[Prototype]]
+               ▼
+  ┌─────────────────────────┐
+  │  Object.prototype       │  ← all objects inherit from here
+  │  toString()             │
+  │  hasOwnProperty()       │
+  └────────────┬────────────┘
+               │ [[Prototype]]
+               ▼
+             null              ← end of chain
+
+  fido.fetch()    → Dog.prototype.fetch ✓
+  fido.speak()    → Animal.prototype.speak ✓  (walks up chain)
+  fido.toString() → Object.prototype.toString ✓
+  fido.fly()      → null → undefined ✗
+  fido instanceof Dog    → true
+  fido instanceof Animal → true  (Animal.prototype is in fido's chain)
+```
+
 **Tại sao tồn tại? / Why does this exist?**
 Constructor function + prototype setup dài và dễ quên bước `Object.create(Parent.prototype)` khi setup inheritance.
 → **Why?** Vì developer từ Java/C# thấy JavaScript OOP khó hiểu và code verbose.
@@ -287,16 +436,22 @@ Constructor function + prototype setup dài và dễ quên bước `Object.creat
 
 #### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
 
-Class giống **bản thiết kế nhà**. Bản thiết kế không phải ngôi nhà — đó là khuôn mẫu. Khi bạn gọi `new House()`, bạn đang *xây* một ngôi nhà theo bản thiết kế đó. Nhiều nhà (instances) cùng một bản thiết kế (class/prototype), nhưng mỗi nhà độc lập.
+Class giống **bản thiết kế nhà**. Bản thiết kế không phải ngôi nhà — đó là khuôn mẫu. Khi bạn gọi `new House()`, bạn đang _xây_ một ngôi nhà theo bản thiết kế đó. Nhiều nhà (instances) cùng một bản thiết kế (class/prototype), nhưng mỗi nhà độc lập.
 
 #### Layer 2: How It Works / Cơ Chế Hoạt Động
 
 ```javascript
 // ES6 class syntax:
 class Animal {
-  constructor(name) { this.name = name; }
-  speak() { return `${this.name} speaks`; }
-  static create(name) { return new Animal(name); }
+  constructor(name) {
+    this.name = name;
+  }
+  speak() {
+    return `${this.name} speaks`;
+  }
+  static create(name) {
+    return new Animal(name);
+  }
 }
 
 class Dog extends Animal {
@@ -304,7 +459,9 @@ class Dog extends Animal {
     super(name); // MUST call before accessing this
     this.breed = breed;
   }
-  speak() { return `${super.speak()} (woof!)`; }
+  speak() {
+    return `${super.speak()} (woof!)`;
+  }
 }
 ```
 
@@ -312,9 +469,15 @@ class Dog extends Animal {
 
 ```javascript
 // Equivalent prototype code:
-function Animal(name) { this.name = name; }
-Animal.prototype.speak = function() { return `${this.name} speaks`; };
-Animal.create = function(name) { return new Animal(name); }; // static
+function Animal(name) {
+  this.name = name;
+}
+Animal.prototype.speak = function () {
+  return `${this.name} speaks`;
+};
+Animal.create = function (name) {
+  return new Animal(name);
+}; // static
 
 function Dog(name, breed) {
   Animal.call(this, name); // super()
@@ -322,8 +485,8 @@ function Dog(name, breed) {
 }
 Dog.prototype = Object.create(Animal.prototype); // extends
 Dog.prototype.constructor = Dog;
-Dog.prototype.speak = function() {
-  return Animal.prototype.speak.call(this) + ' (woof!)'; // super.speak()
+Dog.prototype.speak = function () {
+  return Animal.prototype.speak.call(this) + " (woof!)"; // super.speak()
 };
 ```
 
@@ -344,13 +507,13 @@ Class hierarchy prototype chain:
 
 **Class vs Constructor — key differences:**
 
-| Feature | `class` | Constructor fn |
-|---------|---------|----------------|
-| Hoisting | ❌ Not hoisted (TDZ) | ✅ Hoisted |
-| Strict mode | ✅ Always strict | Depends on file |
-| Methods enumerable | ❌ Non-enumerable | ✅ Enumerable |
-| Call without `new` | ❌ TypeError | ✅ Works (badly) |
-| Private fields | ✅ `#field` syntax | ❌ Convention only |
+| Feature            | `class`              | Constructor fn     |
+| ------------------ | -------------------- | ------------------ |
+| Hoisting           | ❌ Not hoisted (TDZ) | ✅ Hoisted         |
+| Strict mode        | ✅ Always strict     | Depends on file    |
+| Methods enumerable | ❌ Non-enumerable    | ✅ Enumerable      |
+| Call without `new` | ❌ TypeError         | ✅ Works (badly)   |
+| Private fields     | ✅ `#field` syntax   | ❌ Convention only |
 
 #### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
 
@@ -359,39 +522,52 @@ Class hierarchy prototype chain:
 class BankAccount {
   #balance = 0; // truly private — not accessible outside
 
-  deposit(amount) { this.#balance += amount; }
-  get balance() { return this.#balance; }
+  deposit(amount) {
+    this.#balance += amount;
+  }
+  get balance() {
+    return this.#balance;
+  }
 }
 
 const acc = new BankAccount();
 acc.deposit(100);
-console.log(acc.balance);   // 100
-console.log(acc.#balance);  // SyntaxError — cannot access private field
+console.log(acc.balance); // 100
+console.log(acc.#balance); // SyntaxError — cannot access private field
 
 // Mixins — JS không có multiple inheritance, workaround:
-const Serializable = (Base) => class extends Base {
-  serialize() { return JSON.stringify(this); }
-};
-const Timestamped = (Base) => class extends Base {
-  constructor(...args) { super(...args); this.createdAt = new Date(); }
-};
+const Serializable = (Base) =>
+  class extends Base {
+    serialize() {
+      return JSON.stringify(this);
+    }
+  };
+const Timestamped = (Base) =>
+  class extends Base {
+    constructor(...args) {
+      super(...args);
+      this.createdAt = new Date();
+    }
+  };
 class User extends Serializable(Timestamped(Object)) {}
 ```
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-|---------|------------|---------|
-| Nghĩ ES6 class là classical OOP như Java | JS dùng prototype delegation, không phải copy | Class là sugar — `instanceof` checks prototype chain, không phải "type" |
-| Quên `super()` trong child constructor | `this` chưa được khởi tạo → ReferenceError | Luôn gọi `super(...)` trước khi dùng `this` trong child constructor |
-| Dùng class method như callback không bind | Arrow function trong class field hay `bind` trong constructor | `class C { method = () => {} }` (class field arrow) giữ `this` binding |
+| Sai lầm                                   | Tại sao sai                                                   | Đúng là                                                                 |
+| ----------------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Nghĩ ES6 class là classical OOP như Java  | JS dùng prototype delegation, không phải copy                 | Class là sugar — `instanceof` checks prototype chain, không phải "type" |
+| Quên `super()` trong child constructor    | `this` chưa được khởi tạo → ReferenceError                    | Luôn gọi `super(...)` trước khi dùng `this` trong child constructor     |
+| Dùng class method như callback không bind | Arrow function trong class field hay `bind` trong constructor | `class C { method = () => {} }` (class field arrow) giữ `this` binding  |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy câu hỏi về: "class vs prototype", "what does `extends` do internally?", "is JS OOP?"
 - → Nhớ đến: **class = sugar over prototype** — syntactically familiar, mechanically different from Java
-- → Mở đầu trả lời: *"ES6 class là syntactic sugar — nó tạo ra constructor function và thiết lập prototype chain tự động. `extends` thực chất dùng `Object.create()` để link prototype, không phải copy methods như Java."*
+- → Mở đầu trả lời: _"ES6 class là syntactic sugar — nó tạo ra constructor function và thiết lập prototype chain tự động. `extends` thực chất dùng `Object.create()` để link prototype, không phải copy methods như Java."_
 
 **🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
 - 📚 Cần biết trước: Constructor functions + `new` keyword (mục 2 bên trên)
 - ➡️ Để hiểu tiếp: [Advanced Patterns](./08-advanced-concepts.md) — Mixins, composition over inheritance
 
@@ -408,12 +584,13 @@ Mỗi object JS có slot `[[Prototype]]` trỏ đến object cha. Khi truy cập
 ```javascript
 const arr = [1, 2, 3];
 // arr.map không nằm trên arr — nằm trên Array.prototype
-console.log(arr.hasOwnProperty('map')); // false
-console.log(Array.prototype.hasOwnProperty('map')); // true
+console.log(arr.hasOwnProperty("map")); // false
+console.log(Array.prototype.hasOwnProperty("map")); // true
 console.log(arr.__proto__ === Array.prototype); // true
 ```
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Giải thích được traversal direction (up, not copy), dùng `hasOwnProperty` để distinguish own vs inherited, mention `null` as chain terminus
 - ❌ Weak: "Prototype là một kiểu inheritance" — quá chung, không giải thích được cơ chế lookup
 
@@ -421,26 +598,31 @@ console.log(arr.__proto__ === Array.prototype); // true
 
 ### Q: What is the difference between `prototype` and `__proto__`? / Sự khác biệt giữa `prototype` và `__proto__`? 🟢 Junior
 
-**A:** `prototype` is a property on **constructor functions** — it's the object that will become `[[Prototype]]` of instances created by that constructor. `__proto__` is a property on **all objects** (instances) that *references* their actual `[[Prototype]]`.
+**A:** `prototype` is a property on **constructor functions** — it's the object that will become `[[Prototype]]` of instances created by that constructor. `__proto__` is a property on **all objects** (instances) that _references_ their actual `[[Prototype]]`.
 
 `prototype` là property của **constructor function** (hoặc class) — là object mà các instances sẽ delegate lên. `__proto__` là property của mọi **object instance** — trỏ đến `[[Prototype]]` của nó. Khi gọi `new Foo()`, instance's `__proto__` được set thành `Foo.prototype`.
 
 ```javascript
-function Dog(name) { this.name = name; }
-Dog.prototype.bark = function() { return 'Woof!'; };
+function Dog(name) {
+  this.name = name;
+}
+Dog.prototype.bark = function () {
+  return "Woof!";
+};
 
-const rex = new Dog('Rex');
+const rex = new Dog("Rex");
 
 // .prototype: chỉ có trên constructor function
-console.log(Dog.prototype);          // { bark: fn, constructor: Dog }
-console.log(rex.prototype);          // undefined (instances không có .prototype)
+console.log(Dog.prototype); // { bark: fn, constructor: Dog }
+console.log(rex.prototype); // undefined (instances không có .prototype)
 
 // __proto__: trỏ đến [[Prototype]] của instance
-console.log(rex.__proto__);          // Dog.prototype
+console.log(rex.__proto__); // Dog.prototype
 console.log(rex.__proto__ === Dog.prototype); // true
 ```
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Phân biệt rõ "property of function" vs "property of instance", biết cách check đúng với `Object.getPrototypeOf()` thay vì `__proto__`
 - ❌ Weak: Nhầm lẫn 2 khái niệm hoặc chỉ nói "chúng giống nhau" — đây là lỗi phổ biến
 
@@ -456,20 +638,25 @@ console.log(rex.__proto__ === Dog.prototype); // true
 // Manual implementation of new:
 function myNew(Constructor, ...args) {
   const obj = Object.create(Constructor.prototype); // Steps 1 + 2
-  const result = Constructor.apply(obj, args);       // Step 3
-  return result instanceof Object ? result : obj;    // Step 4
+  const result = Constructor.apply(obj, args); // Step 3
+  return result instanceof Object ? result : obj; // Step 4
 }
 
-function Cat(name) { this.name = name; }
-Cat.prototype.meow = function() { return `${this.name} says meow`; };
+function Cat(name) {
+  this.name = name;
+}
+Cat.prototype.meow = function () {
+  return `${this.name} says meow`;
+};
 
-const c1 = new Cat('Kitty');
-const c2 = myNew(Cat, 'Kitty');
+const c1 = new Cat("Kitty");
+const c2 = myNew(Cat, "Kitty");
 console.log(c1.meow()); // "Kitty says meow"
 console.log(c2.meow()); // "Kitty says meow" — identical
 ```
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Có thể implement `myNew` from scratch, biết constructor return-object override gotcha
 - ❌ Weak: Chỉ nói "new tạo instance" — thiếu hiểu biết về prototype linking (step 2 quan trọng nhất)
 
@@ -490,9 +677,11 @@ const f = new MyFn(); // Works! — function hoisted
 function MyFn() {}
 
 // Enumerability:
-class A { method() {} }
+class A {
+  method() {}
+}
 function B() {}
-B.prototype.method = function() {};
+B.prototype.method = function () {};
 
 console.log(Object.keys(A.prototype)); // [] — non-enumerable
 console.log(Object.keys(B.prototype)); // ['method'] — enumerable
@@ -504,6 +693,7 @@ console.log(typeof C); // 'function' — class IS a function under the hood
 ```
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: "Cùng cơ chế, khác behavior" — liệt kê được ít nhất 3/5 differences, biết `typeof class` là `'function'`
 - ❌ Weak: "Class mới hơn và tốt hơn" — không giải thích được trade-off hoặc không biết cả 2 tạo cùng prototype chain
 
@@ -519,7 +709,7 @@ Prototype pollution xảy ra khi input được dùng để modify `Object.proto
 // Vulnerable deep merge:
 function deepMerge(target, source) {
   for (let key of Object.keys(source)) {
-    if (typeof source[key] === 'object') {
+    if (typeof source[key] === "object") {
       target[key] = target[key] || {};
       deepMerge(target[key], source[key]); // recurse
     } else {
@@ -539,7 +729,7 @@ console.log(user.isAdmin); // true — pollution!
 // Fix: check for __proto__ and prototype keys:
 function safeMerge(target, source) {
   for (let key of Object.keys(source)) {
-    if (key === '__proto__' || key === 'constructor' || key === 'prototype') continue; // skip!
+    if (key === "__proto__" || key === "constructor" || key === "prototype") continue; // skip!
     // ... rest of merge
   }
 }
@@ -549,6 +739,7 @@ const safeMap = Object.create(null); // no __proto__ at all
 ```
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Giải thích được attack vector (deep merge + JSON input), biết `Object.create(null)` as defense, biết check `hasOwnProperty` vs inherited
 - ❌ Weak: "Prototype pollution là modify prototype của object" — không đề cập security impact hay cách prevent
 
@@ -608,6 +799,7 @@ const duck = createDuck('Donald');
 Chọn `extends` khi: hierarchy thực sự là IS-A relationship ổn định (không thay đổi), không quá 2 cấp sâu. Chọn composition khi: cần reuse behavior across unrelated types, hoặc anticipate frequent changes in behavior requirements.
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Implement working mixin pattern, articulate Gorilla-Banana problem, give concrete "when to use which" decision criteria, mention testability trade-off
 - ❌ Weak: "Composition tốt hơn inheritance" — không giải thích được tại sao hay khi nào, không có code example
 
@@ -622,13 +814,13 @@ Khi gặp bug liên quan prototype, cần distinguish own vs inherited, trace ch
 ```javascript
 // Symptom: unexpected property on objects
 function debugPrototypeIssue(obj) {
-  console.log('=== Own properties ===');
+  console.log("=== Own properties ===");
   console.log(Object.keys(obj)); // only enumerable own
 
-  console.log('=== All own properties (incl. non-enumerable) ===');
+  console.log("=== All own properties (incl. non-enumerable) ===");
   console.log(Object.getOwnPropertyNames(obj));
 
-  console.log('=== Full prototype chain ===');
+  console.log("=== Full prototype chain ===");
   let proto = Object.getPrototypeOf(obj);
   let level = 0;
   while (proto !== null) {
@@ -640,7 +832,7 @@ function debugPrototypeIssue(obj) {
 
 // Check if property is own or inherited:
 function propertySource(obj, prop) {
-  if (obj.hasOwnProperty(prop)) return 'own';
+  if (obj.hasOwnProperty(prop)) return "own";
   let proto = Object.getPrototypeOf(obj);
   let level = 1;
   while (proto !== null) {
@@ -648,24 +840,27 @@ function propertySource(obj, prop) {
     proto = Object.getPrototypeOf(proto);
     level++;
   }
-  return 'not found';
+  return "not found";
 }
 
 // Fix: sanitize input with Object.create(null) for data maps
 const config = Object.create(null); // no prototype chain — pure data
 // OR: always use hasOwnProperty when iterating
 for (const key in obj) {
-  if (Object.prototype.hasOwnProperty.call(obj, key)) { /* safe */ }
+  if (Object.prototype.hasOwnProperty.call(obj, key)) {
+    /* safe */
+  }
 }
 
 // Fix prototype pollution: Object.freeze built-ins (dev only):
-if (process.env.NODE_ENV === 'development') {
+if (process.env.NODE_ENV === "development") {
   Object.freeze(Object.prototype);
   // Now mutations throw TypeError → detect pollution early
 }
 ```
 
 **Production debugging checklist:**
+
 1. Reproduce with `console.log(Object.keys(obj))` vs `for...in` — difference = inherited props
 2. `Object.getPrototypeOf(obj)` chain walk to find origin
 3. Search codebase for mutations to `.prototype` of built-ins
@@ -673,6 +868,7 @@ if (process.env.NODE_ENV === 'development') {
 5. Add `Object.freeze(Object.prototype)` in test environment to catch violations early
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Systematic approach (isolate → trace → fix), biết `Object.freeze` trick cho dev, mention security angle, biết khi nào dùng `Object.create(null)`
 - ❌ Weak: "Dùng `hasOwnProperty`" — đúng nhưng không đủ, không có systematic debugging process
 
@@ -680,15 +876,15 @@ if (process.env.NODE_ENV === 'development') {
 
 ## Interview Q&A Summary / Tổng Kết Phỏng Vấn
 
-| Question | Level | Key Point |
-|----------|-------|-----------|
-| What is `[[Prototype]]` and property lookup? | 🟢 | Delegation traversal up chain, not copying |
-| `prototype` vs `__proto__`? | 🟢 | Constructor property vs instance property |
-| 4 steps of `new`? | 🟢 | Create, Link, Execute, Return (CLER) |
-| Class vs constructor function differences? | 🟡 | Same chain, different: hoisting, strict, enumerable, new-required |
-| What is prototype pollution? | 🟡 | Security: injecting props into Object.prototype via untrusted input |
-| Composition over inheritance — design & when? | 🔴 | Mixin pattern, Gorilla-Banana, IS-A vs HAS-A decision |
-| Debug inherited property bug? | 🔴 | Systematic: isolate own vs inherited, chain walk, freeze in dev |
+| Question                                      | Level | Key Point                                                           |
+| --------------------------------------------- | ----- | ------------------------------------------------------------------- |
+| What is `[[Prototype]]` and property lookup?  | 🟢    | Delegation traversal up chain, not copying                          |
+| `prototype` vs `__proto__`?                   | 🟢    | Constructor property vs instance property                           |
+| 4 steps of `new`?                             | 🟢    | Create, Link, Execute, Return (CLER)                                |
+| Class vs constructor function differences?    | 🟡    | Same chain, different: hoisting, strict, enumerable, new-required   |
+| What is prototype pollution?                  | 🟡    | Security: injecting props into Object.prototype via untrusted input |
+| Composition over inheritance — design & when? | 🔴    | Mixin pattern, Gorilla-Banana, IS-A vs HAS-A decision               |
+| Debug inherited property bug?                 | 🔴    | Systematic: isolate own vs inherited, chain walk, freeze in dev     |
 
 ---
 
@@ -697,12 +893,13 @@ if (process.env.NODE_ENV === 'development') {
 > 🎯 Interviewer asks cold: **"Explain how prototypal inheritance works in JavaScript and how it differs from classical inheritance."**
 
 **30 giây đầu — mở đầu lý tưởng / Ideal 30-second opening:**
-1. "JavaScript uses *prototype delegation*, not class copying — when you access a property, JS traverses a chain of linked objects upward until it finds it or hits null."
+
+1. "JavaScript uses _prototype delegation_, not class copying — when you access a property, JS traverses a chain of linked objects upward until it finds it or hits null."
 2. "Under the hood, every object has a `[[Prototype]]` slot; ES6 `class` syntax sets this up automatically but doesn't change the mechanism."
-3. "In classical OOP like Java, classes *copy* method definitions into each instance; in JS, instances *delegate* to a shared prototype object — that's why 10,000 arrays share one `Array.prototype.map` reference in memory."
+3. "In classical OOP like Java, classes _copy_ method definitions into each instance; in JS, instances _delegate_ to a shared prototype object — that's why 10,000 arrays share one `Array.prototype.map` reference in memory."
 4. "The trade-off: JS prototype chains are more memory-efficient and flexible, but less strict — there's no enforced interface contract, and mutation of shared prototypes can cause bugs across the entire codebase."
 
-*Sau đó mở rộng theo hướng interviewer dẫn dắt: memory model, security (prototype pollution), class sugar vs ES5 pattern, composition vs inheritance.*
+_Sau đó mở rộng theo hướng interviewer dẫn dắt: memory model, security (prototype pollution), class sugar vs ES5 pattern, composition vs inheritance._
 
 ---
 
@@ -710,31 +907,48 @@ if (process.env.NODE_ENV === 'development') {
 
 > Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
 
-| # | Loại | Câu hỏi |
-|---|------|---------|
-| 1 | 🔍 Retrieval | Viết ra từ trí nhớ: **4 bước `new` thực hiện** (không nhìn lại). So sánh với CLER pattern. |
-| 2 | 🎨 Visual | Vẽ **prototype chain** của `new Dog('Rex')` trên giấy: instance → Dog.prototype → Animal.prototype → Object.prototype → null. So sánh với ASCII diagram trên. |
-| 3 | 🛠️ Application | Bạn có 10,000 User objects cần 5 shared methods. Dùng class, constructor+prototype, hay factory function? Giải thích **memory trade-off**. |
-| 4 | 🐛 Debug | Code trả về `undefined` khi gọi `user.greet()` dù `User.prototype.greet` đã được định nghĩa. 3 nguyên nhân khả năng nhất? |
-| 5 | 🎓 Teach | Giải thích "tại sao `arr.map` hoạt động dù bạn không define nó" cho người không biết code — dùng liên tưởng cụ thể. |
+| #   | Loại           | Câu hỏi                                                                                                                                                       |
+| --- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 🔍 Retrieval   | Viết ra từ trí nhớ: **4 bước `new` thực hiện** (không nhìn lại). So sánh với CLER pattern.                                                                    |
+| 2   | 🎨 Visual      | Vẽ **prototype chain** của `new Dog('Rex')` trên giấy: instance → Dog.prototype → Animal.prototype → Object.prototype → null. So sánh với ASCII diagram trên. |
+| 3   | 🛠️ Application | Bạn có 10,000 User objects cần 5 shared methods. Dùng class, constructor+prototype, hay factory function? Giải thích **memory trade-off**.                    |
+| 4   | 🐛 Debug       | Code trả về `undefined` khi gọi `user.greet()` dù `User.prototype.greet` đã được định nghĩa. 3 nguyên nhân khả năng nhất?                                     |
+| 5   | 🎓 Teach       | Giải thích "tại sao `arr.map` hoạt động dù bạn không define nó" cho người không biết code — dùng liên tưởng cụ thể.                                           |
 
 ### Key Points (tự kiểm tra)
 
-| # | Key Point |
-|---|-----------|
-| 1 | 4 bước `new`: (1) Tạo plain object, (2) Set `[[Prototype]] = Constructor.prototype`, (3) Bind `this` = new object, (4) Execute constructor body, (5) Return `this` (unless explicit return object). |
-| 2 | Rex → Dog.prototype (có methods của Dog) → Animal.prototype (có methods của Animal) → Object.prototype (có toString, etc.) → null. |
-| 3 | Class/constructor+prototype: methods ở **prototype** → 1 copy dùng chung 10,000 instances. Factory: mỗi instance có bản copy riêng → 10,000x memory. |
-| 4 | (1) Typo: `User.prototype.greet` vs `User.prototype.Greet`, (2) `user.__proto__` bị thay đổi sau khi tạo, (3) `user` có own property `greet` shadow prototype method. |
-| 5 | `arr.map` như 'căn tin chung' — array không có map riêng, nhưng khi gọi JS tìm lên 'tầng trên' (Array.prototype) nơi mọi array đều có thể chia sẻ. |
+| #   | Key Point                                                                                                                                                                                           |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 4 bước `new`: (1) Tạo plain object, (2) Set `[[Prototype]] = Constructor.prototype`, (3) Bind `this` = new object, (4) Execute constructor body, (5) Return `this` (unless explicit return object). |
+| 2   | Rex → Dog.prototype (có methods của Dog) → Animal.prototype (có methods của Animal) → Object.prototype (có toString, etc.) → null.                                                                  |
+| 3   | Class/constructor+prototype: methods ở **prototype** → 1 copy dùng chung 10,000 instances. Factory: mỗi instance có bản copy riêng → 10,000x memory.                                                |
+| 4   | (1) Typo: `User.prototype.greet` vs `User.prototype.Greet`, (2) `user.__proto__` bị thay đổi sau khi tạo, (3) `user` có own property `greet` shadow prototype method.                               |
+| 5   | `arr.map` như 'căn tin chung' — array không có map riêng, nhưng khi gọi JS tìm lên 'tầng trên' (Array.prototype) nơi mọi array đều có thể chia sẻ.                                                  |
 
 > 🎯 **Feynman Prompt:** Giải thích prototype chain cho người không biết lập trình bằng liên tưởng "tòa chung cư với tiện ích chung". Không dùng từ "object", "prototype", "inherit".
-🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày → 7 ngày → 14 ngày** để chuyển vào long-term memory.
+> 🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày → 7 ngày → 14 ngày** để chuyển vào long-term memory.
+
+---
+
+---
+
+## 📚 References / Tài liệu tham khảo
+
+### Specifications
+
+- [ECMAScript: [[Prototype]] internal slot](https://tc39.es/ecma262/#sec-ordinary-object-internal-methods-and-internal-slots)
+- [ECMAScript: OrdinaryGetPrototypeOf](https://tc39.es/ecma262/#sec-ordinarygetprototypeof)
+
+### MDN Web Docs
+
+- [MDN: Inheritance and the prototype chain](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Inheritance_and_the_prototype_chain)
+- [MDN: Object.create()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/create)
+- [MDN: Classes](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes)
 
 ---
 
 ## Connections / Liên Kết
 
 - ⬅️ **Built on:** [Closures](./03-closures.md) — cả hai dùng lexical environment; closure là encapsulation via function scope, prototype là encapsulation via chain
-- ➡️ **Enables:** [this keyword](./05-this-keyword.md) — `this` trong prototype method = object *thực sự* gọi method (dynamic binding)
+- ➡️ **Enables:** [this keyword](./05-this-keyword.md) — `this` trong prototype method = object _thực sự_ gọi method (dynamic binding)
 - 🔗 **Applied in:** React class components (deprecated but still in legacy codebases), Node.js EventEmitter, Express middleware chain

@@ -125,7 +125,7 @@
 <!-- Announced: "About Us, link" -->
 
 <!-- Checkbox -->
-<input type="checkbox" id="agree" checked>
+<input type="checkbox" id="agree" checked />
 <label for="agree">I agree to terms</label>
 <!-- Announced: "I agree to terms, checkbox, checked" -->
 
@@ -134,11 +134,11 @@
 <!-- Announced: "Product Features, heading level 2" -->
 
 <!-- Image -->
-<img src="chart.png" alt="Sales increased 50% in Q4">
+<img src="chart.png" alt="Sales increased 50% in Q4" />
 <!-- Announced: "Sales increased 50% in Q4, image" -->
 
 <!-- Image (decorative) -->
-<img src="decoration.png" alt="">
+<img src="decoration.png" alt="" />
 <!-- Not announced (hidden from AT) -->
 ```
 
@@ -154,11 +154,11 @@
 <!-- Announced: "Close, button" -->
 
 <!-- ❌ BAD: Redundant image text -->
-<img src="logo.png" alt="Logo image">
+<img src="logo.png" alt="Logo image" />
 <!-- Don't say "image" - SR already says it -->
 
 <!-- ✅ GOOD: Descriptive alt -->
-<img src="logo.png" alt="Acme Corporation">
+<img src="logo.png" alt="Acme Corporation" />
 <!-- Announced: "Acme Corporation, image" -->
 
 <!-- ❌ BAD: Link text doesn't describe destination -->
@@ -250,80 +250,57 @@
 ```jsx
 // Loading state announcement
 function LoadingButton({ isLoading, children, ...props }) {
-    return (
-        <button
-            {...props}
-            aria-busy={isLoading}
-            aria-disabled={isLoading}
-        >
-            {isLoading ? (
-                <>
-                    <span aria-hidden="true">Loading...</span>
-                    <span className="sr-only">
-                        Loading, please wait
-                    </span>
-                </>
-            ) : children}
-        </button>
-    );
+  return (
+    <button {...props} aria-busy={isLoading} aria-disabled={isLoading}>
+      {isLoading ? (
+        <>
+          <span aria-hidden="true">Loading...</span>
+          <span className="sr-only">Loading, please wait</span>
+        </>
+      ) : (
+        children
+      )}
+    </button>
+  );
 }
 
 // Status messages
 function FormWithFeedback() {
-    const [status, setStatus] = useState({ type: null, message: '' });
+  const [status, setStatus] = useState({ type: null, message: "" });
 
-    return (
-        <form>
-            {/* Form fields */}
+  return (
+    <form>
+      {/* Form fields */}
 
-            {/* Status announcement - always in DOM */}
-            <div
-                role="status"
-                aria-live="polite"
-                aria-atomic="true"
-            >
-                {status.type === 'success' && (
-                    <p className="success">{status.message}</p>
-                )}
-            </div>
+      {/* Status announcement - always in DOM */}
+      <div role="status" aria-live="polite" aria-atomic="true">
+        {status.type === "success" && <p className="success">{status.message}</p>}
+      </div>
 
-            {/* Error announcement - assertive for errors */}
-            <div
-                role="alert"
-                aria-live="assertive"
-            >
-                {status.type === 'error' && (
-                    <p className="error">{status.message}</p>
-                )}
-            </div>
-        </form>
-    );
+      {/* Error announcement - assertive for errors */}
+      <div role="alert" aria-live="assertive">
+        {status.type === "error" && <p className="error">{status.message}</p>}
+      </div>
+    </form>
+  );
 }
 
 // Sortable table header
 function SortableHeader({ column, sortConfig, onSort }) {
-    const isSorted = sortConfig.key === column.key;
-    const direction = isSorted ? sortConfig.direction : null;
+  const isSorted = sortConfig.key === column.key;
+  const direction = isSorted ? sortConfig.direction : null;
 
-    return (
-        <th>
-            <button
-                onClick={() => onSort(column.key)}
-                aria-sort={
-                    isSorted
-                        ? direction === 'asc'
-                            ? 'ascending'
-                            : 'descending'
-                        : 'none'
-                }
-            >
-                {column.label}
-                <span aria-hidden="true">
-                    {isSorted && (direction === 'asc' ? '▲' : '▼')}
-                </span>
-            </button>
-        </th>
-    );
+  return (
+    <th>
+      <button
+        onClick={() => onSort(column.key)}
+        aria-sort={isSorted ? (direction === "asc" ? "ascending" : "descending") : "none"}
+      >
+        {column.label}
+        <span aria-hidden="true">{isSorted && (direction === "asc" ? "▲" : "▼")}</span>
+      </button>
+    </th>
+  );
 }
 ```
 
@@ -332,60 +309,50 @@ function SortableHeader({ column, sortConfig, onSort }) {
 ```jsx
 // Visually hidden but accessible
 function ScreenReaderOnly({ children }) {
-    return (
-        <span
-            style={{
-                position: 'absolute',
-                width: '1px',
-                height: '1px',
-                padding: 0,
-                margin: '-1px',
-                overflow: 'hidden',
-                clip: 'rect(0, 0, 0, 0)',
-                whiteSpace: 'nowrap',
-                border: 0,
-            }}
-        >
-            {children}
-        </span>
-    );
+  return (
+    <span
+      style={{
+        position: "absolute",
+        width: "1px",
+        height: "1px",
+        padding: 0,
+        margin: "-1px",
+        overflow: "hidden",
+        clip: "rect(0, 0, 0, 0)",
+        whiteSpace: "nowrap",
+        border: 0,
+      }}
+    >
+      {children}
+    </span>
+  );
 }
 
 // Usage examples
 function ProductCard({ product }) {
-    return (
-        <article>
-            <img src={product.image} alt="" /> {/* Decorative */}
-            <h3>{product.name}</h3>
-            <p className="price">
-                ${product.price}
-                <ScreenReaderOnly>dollars</ScreenReaderOnly>
-            </p>
-            <button>
-                Add to cart
-                <ScreenReaderOnly>
-                    {product.name}
-                </ScreenReaderOnly>
-            </button>
-        </article>
-    );
+  return (
+    <article>
+      <img src={product.image} alt="" /> {/* Decorative */}
+      <h3>{product.name}</h3>
+      <p className="price">
+        ${product.price}
+        <ScreenReaderOnly>dollars</ScreenReaderOnly>
+      </p>
+      <button>
+        Add to cart
+        <ScreenReaderOnly>{product.name}</ScreenReaderOnly>
+      </button>
+    </article>
+  );
 }
 
 // Icon button with context
 function IconButton({ icon, label, context }) {
-    return (
-        <button aria-label={`${label}${context ? ` ${context}` : ''}`}>
-            {icon}
-        </button>
-    );
+  return <button aria-label={`${label}${context ? ` ${context}` : ""}`}>{icon}</button>;
 }
 
 // Usage
-<IconButton
-    icon={<DeleteIcon />}
-    label="Delete"
-    context="user John Doe"
-/>
+<IconButton icon={<DeleteIcon />} label="Delete" context="user John Doe" />;
 // Announced: "Delete user John Doe, button"
 ```
 
@@ -394,68 +361,57 @@ function IconButton({ icon, label, context }) {
 ```jsx
 // Pagination with announcements
 function Pagination({ currentPage, totalPages, onPageChange }) {
-    const [announcement, setAnnouncement] = useState('');
+  const [announcement, setAnnouncement] = useState("");
 
-    function handlePageChange(newPage) {
-        onPageChange(newPage);
-        setAnnouncement(`Page ${newPage} of ${totalPages}`);
+  function handlePageChange(newPage) {
+    onPageChange(newPage);
+    setAnnouncement(`Page ${newPage} of ${totalPages}`);
 
-        // Clear after announcement
-        setTimeout(() => setAnnouncement(''), 1000);
-    }
+    // Clear after announcement
+    setTimeout(() => setAnnouncement(""), 1000);
+  }
 
-    return (
-        <nav aria-label="Pagination">
-            <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                aria-label="Previous page"
-            >
-                Previous
-            </button>
+  return (
+    <nav aria-label="Pagination">
+      <button
+        onClick={() => handlePageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        aria-label="Previous page"
+      >
+        Previous
+      </button>
 
-            <span aria-current="page">
-                Page {currentPage} of {totalPages}
-            </span>
+      <span aria-current="page">
+        Page {currentPage} of {totalPages}
+      </span>
 
-            <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                aria-label="Next page"
-            >
-                Next
-            </button>
+      <button
+        onClick={() => handlePageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        aria-label="Next page"
+      >
+        Next
+      </button>
 
-            {/* Live region for page change announcement */}
-            <div
-                role="status"
-                aria-live="polite"
-                className="sr-only"
-            >
-                {announcement}
-            </div>
-        </nav>
-    );
+      {/* Live region for page change announcement */}
+      <div role="status" aria-live="polite" className="sr-only">
+        {announcement}
+      </div>
+    </nav>
+  );
 }
 
 // Toast notifications
 function ToastContainer({ toasts }) {
-    return (
-        <div
-            role="region"
-            aria-label="Notifications"
-            aria-live="polite"
-        >
-            {toasts.map(toast => (
-                <div
-                    key={toast.id}
-                    role={toast.type === 'error' ? 'alert' : 'status'}
-                >
-                    {toast.message}
-                </div>
-            ))}
+  return (
+    <div role="region" aria-label="Notifications" aria-live="polite">
+      {toasts.map((toast) => (
+        <div key={toast.id} role={toast.type === "error" ? "alert" : "status"}>
+          {toast.message}
         </div>
-    );
+      ))}
+    </div>
+  );
 }
 ```
 
@@ -531,6 +487,116 @@ function ToastContainer({ toasts }) {
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+### TalkBack (Android) Basics
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│               TALKBACK TESTING                                  │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│   ENABLE/DISABLE:                                               │
+│   Settings → Accessibility → TalkBack → Toggle                  │
+│   OR: Hold both Volume keys for 3 seconds (shortcut)            │
+│                                                                   │
+│   ESSENTIAL GESTURES:                                           │
+│   ─────────────────────                                          │
+│   Swipe Right          Next element                             │
+│   Swipe Left           Previous element                         │
+│   Double Tap           Activate focused element                 │
+│   Two-finger swipe up  Read from top of page                    │
+│   Swipe Up then Right  Cycle to next navigation mode            │
+│   Two-finger tap       Pause / Resume speech                    │
+│   Swipe Up then Down   Local context menu                       │
+│   Swipe Down then Up   Global context menu                      │
+│   Two-finger swipe ←→  Scroll left / right                      │
+│                                                                   │
+│   NAVIGATION MODES (Swipe Up then Right to cycle):             │
+│   ─────────────────────────────────────────────────             │
+│   • Default  (navigate all elements)                            │
+│   • Headings                                                    │
+│   • Links                                                       │
+│   • Form fields                                                 │
+│   • Controls (buttons, checkboxes)                              │
+│   • Paragraphs                                                  │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### TalkBack Testing Checklist
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│               TALKBACK TESTING CHECKLIST                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│   FOCUSABILITY:                                                 │
+│   □ All interactive elements reachable by swiping right         │
+│   □ Non-interactive elements do not receive focus               │
+│   □ Custom views have proper AccessibilityNodeInfo              │
+│   □ Touch target size ≥ 48×48dp (Android recommendation)       │
+│                                                                   │
+│   CONTENT DESCRIPTIONS:                                         │
+│   □ Images have meaningful contentDescription                   │
+│   □ Icon buttons have descriptive contentDescription            │
+│   □ No generic descriptions ("imageView1", "button123")         │
+│   □ Decorative images have contentDescription="" or             │
+│       importantForAccessibility="no"                            │
+│                                                                   │
+│   LIVE REGIONS & ANNOUNCEMENTS:                                 │
+│   □ Dynamic content uses aria-live / accessibilityLiveRegion    │
+│   □ State changes announced (checked, selected, expanded)       │
+│   □ Form errors announced when they appear                      │
+│   □ Loading states communicated via live region                 │
+│                                                                   │
+│   ANDROID-SPECIFIC:                                             │
+│   □ Custom views implement AccessibilityNodeInfoCompat          │
+│   □ ViewCompat.setAccessibilityDelegate used where needed       │
+│   □ RecyclerView items have meaningful individual descriptions  │
+│   □ WebView content traversable with TalkBack swipe             │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### TalkBack vs VoiceOver: Key Differences
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│            TALKBACK vs VOICEOVER: KEY DIFFERENCES               │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│   NAVIGATION MODEL:                                             │
+│   TalkBack   ──▶ Swipe-based linear navigation (touch)         │
+│   VoiceOver  ──▶ VO+Arrow (macOS), Swipe (iOS)                 │
+│                                                                   │
+│   ACTIVATION:                                                   │
+│   TalkBack   ──▶ Double tap                                    │
+│   VoiceOver  ──▶ VO+Space (macOS) / Double tap (iOS)           │
+│                                                                   │
+│   NAVIGATION MENU:                                              │
+│   TalkBack   ──▶ Swipe Up then Right to cycle modes            │
+│   VoiceOver  ──▶ Rotor (VO+U) — lateral swipe to switch        │
+│                                                                   │
+│   COMMON TALKBACK-SPECIFIC ISSUES:                             │
+│   ─────────────────────────────────                             │
+│   • Missing contentDescription on ImageView / ImageButton      │
+│   • Custom views not announcing state changes                   │
+│   • Grouped view swipe navigation skips child elements          │
+│   • "Double tap to activate" not announced for custom controls │
+│   • WebView content not traversable with TalkBack swipe        │
+│   • Focus jumps on screen updates (missing accessibilityLive   │
+│     Region on parent container)                                 │
+│                                                                   │
+│   COMMON VOICEOVER-SPECIFIC ISSUES:                            │
+│   ─────────────────────────────────                             │
+│   • Rotor navigation fails to find headings (missing role)     │
+│   • aria-live regions not firing on Safari / iOS WebKit        │
+│   • SVG icons without aria-label read as filename              │
+│   • CSS display:none vs visibility:hidden AT behavior differs  │
+│   • position:fixed elements interrupt reading order            │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
 ### Testing Checklist
 
 ```
@@ -587,6 +653,7 @@ A: The accessibility tree is a simplified version of the DOM that assistive tech
 **Q: What makes good alt text?**
 
 A: Good alt text:
+
 - Describes the image's purpose, not just appearance
 - Is concise (under 125 characters typically)
 - Doesn't start with "image of" (SR announces "image" already)
@@ -598,6 +665,7 @@ A: Good alt text:
 **Q: How do you make dynamic content accessible to screen readers?**
 
 A: Use ARIA live regions:
+
 - `role="status"` or `aria-live="polite"` for non-urgent updates
 - `role="alert"` or `aria-live="assertive"` for urgent messages
 - `aria-atomic="true"` to announce entire region content
@@ -605,13 +673,14 @@ A: Use ARIA live regions:
 
 ```jsx
 <div role="status" aria-live="polite">
-    {message}
+  {message}
 </div>
 ```
 
 **Q: Explain the difference between aria-label, aria-labelledby, and aria-describedby.**
 
 A:
+
 - **aria-label**: Provides accessible name as a string
 - **aria-labelledby**: Points to ID(s) of elements providing the name
 - **aria-describedby**: Points to ID(s) providing additional description
@@ -622,7 +691,7 @@ A:
 <h2 id="title">Settings</h2>
 <form aria-labelledby="title">...</form>
 
-<input aria-describedby="hint error">
+<input aria-describedby="hint error" />
 <span id="hint">Must be 8+ chars</span>
 <span id="error">Password too weak</span>
 ```
@@ -632,34 +701,34 @@ A:
 **Q: How would you make a complex data table accessible?**
 
 A:
+
 ```html
 <table>
-    <caption>
-        Quarterly Sales Report 2024
-        <span class="sr-only">
-            Table has 4 columns and 5 rows
-        </span>
-    </caption>
-    <thead>
-        <tr>
-            <th scope="col">Product</th>
-            <th scope="col">Q1</th>
-            <th scope="col">Q2</th>
-            <th scope="col">Q3</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <th scope="row">Widget A</th>
-            <td>$10,000</td>
-            <td>$12,000</td>
-            <td>$15,000</td>
-        </tr>
-    </tbody>
+  <caption>
+    Quarterly Sales Report 2024
+    <span class="sr-only"> Table has 4 columns and 5 rows </span>
+  </caption>
+  <thead>
+    <tr>
+      <th scope="col">Product</th>
+      <th scope="col">Q1</th>
+      <th scope="col">Q2</th>
+      <th scope="col">Q3</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row">Widget A</th>
+      <td>$10,000</td>
+      <td>$12,000</td>
+      <td>$15,000</td>
+    </tr>
+  </tbody>
 </table>
 ```
 
 Key techniques:
+
 - Use `<caption>` for table title
 - `scope="col"` and `scope="row"` for headers
 - For complex tables with spanning cells, use `headers` attribute
@@ -668,31 +737,25 @@ Key techniques:
 **Q: Design an accessible autocomplete/combobox**
 
 A:
+
 ```jsx
 <div role="combobox" aria-expanded={isOpen} aria-haspopup="listbox">
-    <input
-        aria-autocomplete="list"
-        aria-controls="suggestions"
-        aria-activedescendant={activeId}
-    />
-    <ul id="suggestions" role="listbox">
-        {suggestions.map(item => (
-            <li
-                id={item.id}
-                role="option"
-                aria-selected={item.id === activeId}
-            >
-                {item.text}
-            </li>
-        ))}
-    </ul>
-    <div role="status" aria-live="polite">
-        {suggestions.length} results available
-    </div>
+  <input aria-autocomplete="list" aria-controls="suggestions" aria-activedescendant={activeId} />
+  <ul id="suggestions" role="listbox">
+    {suggestions.map((item) => (
+      <li id={item.id} role="option" aria-selected={item.id === activeId}>
+        {item.text}
+      </li>
+    ))}
+  </ul>
+  <div role="status" aria-live="polite">
+    {suggestions.length} results available
+  </div>
 </div>
 ```
 
 Critical aspects:
+
 - Proper combobox/listbox ARIA pattern
 - `aria-activedescendant` for virtual focus
 - Live region announcing result count

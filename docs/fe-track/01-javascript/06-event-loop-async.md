@@ -76,6 +76,43 @@ JavaScript Runtime:
 └─────────────────────────────────────────────────────────┘
 ```
 
+**Chu trình Event Loop — vòng lặp vô hạn / Event Loop cycle — how it runs forever:**
+
+```text
+  ┌──────────────────────────────────────────────────────────────────┐
+  │                        JS RUNTIME                                │
+  │                                                                  │
+  │   ┌──────────────┐       ┌──────────────────────────────────┐    │
+  │   │  CALL STACK  │       │      WEB APIs (Browser/Node)     │    │
+  │   │              │──────►│  setTimeout  → timer thread      │    │
+  │   │  [fn3()]     │offload│  fetch()     → network I/O       │    │
+  │   │  [fn2()]     │       │  addEventListener → OS events    │    │
+  │   │  [fn1()]     │       └──────────────────┬───────────────┘    │
+  │   └──────┬───────┘                          │  callback ready    │
+  │          │ stack empty?                     ▼                    │
+  │          │            ┌─────────────────────────────────────┐    │
+  │          │◄─drain ALL─│  MICROTASK QUEUE  ← HIGH PRIORITY   │    │
+  │          │            │  Promise.then   queueMicrotask()     │    │
+  │          │            │  async/await    MutationObserver     │    │
+  │          │            └─────────────────────────────────────┘    │
+  │          │            ┌─────────────────────────────────────┐    │
+  │          │◄──take 1───│  MACROTASK QUEUE  ← LOW PRIORITY    │    │
+  │          │            │  setTimeout   setInterval   I/O     │    │
+  │          │            │  UI events (click, scroll, ...)     │    │
+  │          │            └─────────────────────────────────────┘    │
+  │          │                                                        │
+  │          └──► RENDER STEP (if ~16.7ms frame due)                 │
+  │               rAF callbacks → Layout → Paint ───────────────┐    │
+  │                                                  loop back ◄──┘   │
+  └──────────────────────────────────────────────────────────────────┘
+
+  CYCLE (runs forever ∞):
+  ① Run sync code → call stack empties
+  ② Drain ALL microtasks (new ones added mid-drain also run now)
+  ③ Render opportunity: rAF → Layout → Paint  (if frame due ~16.7ms)
+  ④ Take ONE macrotask → push to call stack → back to ①
+```
+
 ---
 
 ## Core Concepts / Khái Niệm Cốt Lõi
@@ -176,6 +213,40 @@ Hàng đợi ngân hàng có hai loại vé: **vé đỏ** (microtask: khách VI
 | --------- | ----------------------------------------------------------------------------------- | -------- | ----------------------------------- |
 | Microtask | `Promise.then/catch/finally`, `queueMicrotask()`, `async/await`, `MutationObserver` | **Cao**  | Drain **ALL** before next macrotask |
 | Macrotask | `setTimeout`, `setInterval`, `setImmediate` (Node), I/O callbacks, UI events        | Thấp     | **1 task** per event loop iteration |
+
+**Thứ tự ưu tiên tác vụ / Task execution priority — what runs first:**
+
+```text
+  HIGHEST PRIORITY ─────────────────────────────────────────────────
+  📌 CALL STACK  (synchronous)
+     Runs immediately: function calls, assignments, console.log, math
+     Blocks all queues while running
+
+  ─── stack empties ─────────────────────────────────────────────────
+  ⚡ MICROTASK QUEUE  (drain completely — no limit per iteration)
+     • Promise.then() / .catch() / .finally()
+     • async/await continuations  (desugars to .then)
+     • queueMicrotask(fn)
+     • MutationObserver callbacks
+     ⚠ New microtasks spawned here also drain NOW (starvation risk!)
+
+  ─── microtask queue empty ─────────────────────────────────────────
+  🎨 RENDER STEP  (requestAnimationFrame — per frame ~16.7ms)
+     • rAF callbacks
+     • CSS animations & transitions
+     • Layout calculation → Paint → Composite
+     (skipped if no frame is due or tab is hidden)
+
+  ─── render done ───────────────────────────────────────────────────
+  ⏱  MACROTASK QUEUE  (ONE task per loop iteration)
+     • setTimeout(fn, 0)  ← still waits here, even with delay=0!
+     • setInterval(fn, n)
+     • fetch / XHR / I/O response callbacks
+     • UI event handlers: click, keydown, scroll
+     → After each macrotask: check microtask queue again (step ⚡)
+
+  LOWEST PRIORITY ───────────────────────────────────────────────────
+```
 
 ```javascript
 // Classic interview puzzle — predict the output:
@@ -573,15 +644,37 @@ useEffect(() => {
 
 ---
 
+---
+
+## 📚 References / Tài liệu tham khảo
+
+### Specifications
+
+- [HTML spec: Event loops](https://html.spec.whatwg.org/multipage/webappapis.html#event-loops)
+- [HTML spec: Microtask queuing](https://html.spec.whatwg.org/multipage/webappapis.html#queue-a-microtask)
+
+### MDN Web Docs
+
+- [MDN: Event loop](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Event_loop)
+- [MDN: queueMicrotask](https://developer.mozilla.org/en-US/docs/Web/API/queueMicrotask)
+
+### Articles
+
+- [Jake Archibald: Tasks, microtasks, queues and schedules](https://jakearchibald.com/2015/tasks-microtasks-queues-and-schedules/)
+
+---
+
 ## 🔗 Connections / Liên Kết
 
 ### Cùng track (Same track)
+
 - [Async Comprehensive](./09-async-comprehensive.md) — async/await and Promise patterns deep dive
 - [ES6 Features](./07-es6-features.md) — Promises and iterators introduced in ES6
 - [Advanced Concepts](./08-advanced-concepts.md) — Web APIs, debounce, throttle interact with event loop
 - [Concurrency Models Theory](./19-concurrency-models-theory.md) — theoretical model behind the event loop
 
 ### Khác track (Cross-track)
+
 - [CS Fundamentals: Concurrency & Parallelism](../../shared/01-cs-fundamentals/07-concurrency-and-parallelism.md) — concurrency theory underpinning the event loop
 - [CS Fundamentals: OS Theory](../../shared/01-cs-fundamentals/os-theory.md) — OS-level event models and I/O
 - [React Performance Optimization](../03-react/09-performance-optimization.md) — avoiding event loop blocks in React rendering

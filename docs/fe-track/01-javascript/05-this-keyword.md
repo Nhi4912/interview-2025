@@ -592,15 +592,34 @@ class Fetcher {
 
 ---
 
+---
+
+## 📚 References / Tài liệu tham khảo
+
+### Specifications
+
+- [ECMAScript: ResolveThisBinding](https://tc39.es/ecma262/#sec-resolvethisbinding)
+- [ECMAScript: Arrow function definitions](https://tc39.es/ecma262/#sec-arrow-function-definitions)
+
+### MDN Web Docs
+
+- [MDN: this](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/this)
+- [MDN: Function.prototype.bind()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind)
+- [MDN: Function.prototype.call()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/call)
+
+---
+
 ## 🔗 Connections / Liên Kết
 
 ### Cùng track (Same track)
+
 - [Closures](./03-closures.md) — closures capture `this` from surrounding scope
 - [Prototypes & Inheritance](./04-prototypes-inheritance.md) — prototype methods depend on correct `this` binding
 - [ES6 Features](./07-es6-features.md) — arrow functions eliminate `this` binding issues
 - [Execution Context Theory](./16-execution-context-theory.md) — execution context is how `this` gets its value
 
 ### Khác track (Cross-track)
+
 - [TypeScript Basics](../02-typescript/01-typescript-basics.md) — class method typing requires understanding `this`
 - [React Hooks Deep Dive](../03-react/03-hooks-deep-dive.md) — hooks replace class-component `this` patterns
 - [CS Fundamentals: OS Theory](../../shared/01-cs-fundamentals/os-theory.md) — execution environment and call stack concepts

@@ -1,771 +1,2000 @@
-# Frontend Caching Strategies (Browser, SW, App Cache, CDN)
+# Frontend Caching Strategies — Browser · Service Worker · App Cache · CDN
 
 > **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../00-table-of-contents.md)
+> **Specs**: [RFC 9111 — HTTP Caching](https://httpwg.org/specs/rfc9111.html) · [RFC 7232 — Conditional Requests](https://httpwg.org/specs/rfc7232.html) · [RFC 5861 — Stale Extensions](https://httpwg.org/specs/rfc5861.html)
 
-## Tổng Quan / Overview
-Tài liệu tập trung vào chiến lược caching frontend từ tầng browser đến CDN để tối ưu tốc độ tải và độ ổn định.
-Mục tiêu interview: trình bày đúng nguyên lý cache, invalidation, và trade-off giữa freshness với performance.
-Nội dung giữ tỷ trọng lý thuyết cao, bổ sung code minh họa tại các điểm quyết định kỹ thuật quan trọng.
-Nên liên hệ nhiều tầng cache đồng thời để thể hiện tư duy system design frontend toàn diện.
+---
 
-## Related Links / Tài Liệu Liên Quan
-- Xem thêm: `../../shared/02-system-design/caching-patterns.md`
-- Xem thêm: `../06-browser-performance/04-web-performance-comprehensive.md`
+## Concept Map / Bản Đồ Khái Niệm
 
-## Câu Hỏi Phỏng Vấn / Interview Q&A
+```
+Request Flow with Cache Layers
+══════════════════════════════════════════════════════════════════
 
-### Q01. What is browser cache and HTTP cache and when should FE teams use it?
-**Độ khó / Difficulty:** 🟢 [Junior]
-- **Tổng Quan:** `browser cache and HTTP cache` là kỹ thuật quan trọng để cải thiện hiệu năng, độ ổn định và trải nghiệm người dùng ở frontend.
-- **Giải thích:** Interviewer kỳ vọng ứng viên mô tả đúng mục tiêu cốt lõi, giới hạn áp dụng, và liên hệ với `Cache-Control + validator headers` như một tiêu chí kỹ thuật để ra quyết định.
-- **Ví dụ:** Asset tĩnh được cache dài hạn bằng filename hash.
+  Browser                                              Origin
+  ┌──────────────────────────────────────────────────┐  Server
+  │  ① Memory Cache  (fastest, tab-scoped)           │    │
+  │       ↓ miss                                     │    │
+  │  ② Service Worker Cache  (Cache API, offline)    │    │
+  │       ↓ miss                                     │    │
+  │  ③ Disk Cache  (HTTP cache, persistent)          │    │
+  │       ↓ miss                                     │    │
+  └──────────┬───────────────────────────────────────┘    │
+             │                                            │
+  ┌──────────▼───────────────────────────────────────┐    │
+  │  ④ CDN / Edge Cache  (geographically distributed)│    │
+  │       ↓ miss                                     │    │
+  └──────────┬───────────────────────────────────────┘    │
+             │                                            │
+             └────────── ⑤ Origin Server ─────────────────┘
+```
 
-### Q02. How do you design browser cache and HTTP cache for a production SPA?
-**Độ khó / Difficulty:** 🟡 [Mid]
-- **Tổng Quan:** Khi thiết kế `browser cache and HTTP cache` cho production, cần tách concern thành kiến trúc, policy, observability, và quy trình rollout.
-- **Giải thích:** Câu trả lời tốt nên nêu lifecycle đầy đủ: khởi tạo, sử dụng, đồng bộ, invalidation, fallback khi lỗi, và đánh giá qua metrics thực tế. Đồng thời nêu rủi ro khi scale multi-team.
-- **Ví dụ:** Áp dụng no-cache cho HTML để luôn revalidate trước khi render shell.
+🧠 **Memory Hook — "MSDN"**: Memory → Service Worker → Disk → Network (CDN → Origin)
 
-### Q03. What are trade-offs of browser cache and HTTP cache at scale?
-**Độ khó / Difficulty:** 🔴 [Senior]
-- **Tổng Quan:** Ở quy mô lớn, `browser cache and HTTP cache` luôn là bài toán cân bằng giữa performance, correctness, security, và chi phí vận hành.
-- **Giải thích:** Ứng viên senior nên nêu được failure modes, cách thiết kế guardrails, quy trình incident response, cũng như chiến lược migration khi policy hiện tại không còn phù hợp.
-- **Ví dụ:** Nếu quyết định thiên về tốc độ, cần bổ sung cảnh báo khi dữ liệu stale vượt ngưỡng SLA và cơ chế rollback policy bằng feature flags.
+---
 
-### Q04. What is Cache-Control directives and when should FE teams use it?
-**Độ khó / Difficulty:** 🟢 [Junior]
-- **Tổng Quan:** `Cache-Control directives` là kỹ thuật quan trọng để cải thiện hiệu năng, độ ổn định và trải nghiệm người dùng ở frontend.
-- **Giải thích:** Interviewer kỳ vọng ứng viên mô tả đúng mục tiêu cốt lõi, giới hạn áp dụng, và liên hệ với `max-age, s-maxage, private, no-store` như một tiêu chí kỹ thuật để ra quyết định.
-- **Ví dụ:** Response chứa dữ liệu nhạy cảm dùng `private` để tránh shared proxy cache.
+## Core Concepts / Khái Niệm Cốt Lõi
 
-### Q05. How do you design Cache-Control directives for a production SPA?
-**Độ khó / Difficulty:** 🟡 [Mid]
-- **Tổng Quan:** Khi thiết kế `Cache-Control directives` cho production, cần tách concern thành kiến trúc, policy, observability, và quy trình rollout.
-- **Giải thích:** Câu trả lời tốt nên nêu lifecycle đầy đủ: khởi tạo, sử dụng, đồng bộ, invalidation, fallback khi lỗi, và đánh giá qua metrics thực tế. Đồng thời nêu rủi ro khi scale multi-team.
-- **Ví dụ:** Xây matrix policy theo resource type: HTML/API/JS/CSS/Image.
+### 1. HTTP Cache Headers (RFC 9111)
 
-### Q06. What are trade-offs of Cache-Control directives at scale?
-**Độ khó / Difficulty:** 🔴 [Senior]
-- **Tổng Quan:** Ở quy mô lớn, `Cache-Control directives` luôn là bài toán cân bằng giữa performance, correctness, security, và chi phí vận hành.
-- **Giải thích:** Ứng viên senior nên nêu được failure modes, cách thiết kế guardrails, quy trình incident response, cũng như chiến lược migration khi policy hiện tại không còn phù hợp.
-- **Ví dụ:** Nếu quyết định thiên về tốc độ, cần bổ sung cảnh báo khi dữ liệu stale vượt ngưỡng SLA và cơ chế rollback policy bằng feature flags.
+| Directive                  | Ý nghĩa                                                    | Ví dụ                                                  |
+| -------------------------- | ---------------------------------------------------------- | ------------------------------------------------------ |
+| `max-age=N`                | Cache tối đa N giây kể từ response                         | `Cache-Control: max-age=31536000`                      |
+| `s-maxage=N`               | Như max-age nhưng chỉ cho shared cache (CDN)               | `Cache-Control: s-maxage=3600`                         |
+| `no-cache`                 | Cache ĐƯỢC lưu nhưng PHẢI revalidate trước khi dùng        | `Cache-Control: no-cache`                              |
+| `no-store`                 | KHÔNG được lưu cache ở bất kỳ đâu                          | `Cache-Control: no-store`                              |
+| `private`                  | Chỉ browser cache, CDN/proxy KHÔNG được cache              | `Cache-Control: private, max-age=600`                  |
+| `public`                   | Cho phép mọi cache layer lưu                               | `Cache-Control: public, max-age=86400`                 |
+| `must-revalidate`          | Khi stale, PHẢI revalidate — không dùng stale content      | `Cache-Control: max-age=60, must-revalidate`           |
+| `stale-while-revalidate=N` | Serve stale trong N giây while fetching fresh (RFC 5861)   | `Cache-Control: max-age=60, stale-while-revalidate=30` |
+| `immutable`                | Content sẽ không bao giờ thay đổi (dùng cho hashed assets) | `Cache-Control: max-age=31536000, immutable`           |
 
-### Q07. What is ETag and conditional requests and when should FE teams use it?
-**Độ khó / Difficulty:** 🟢 [Junior]
-- **Tổng Quan:** `ETag and conditional requests` là kỹ thuật quan trọng để cải thiện hiệu năng, độ ổn định và trải nghiệm người dùng ở frontend.
-- **Giải thích:** Interviewer kỳ vọng ứng viên mô tả đúng mục tiêu cốt lõi, giới hạn áp dụng, và liên hệ với `If-None-Match + 304` như một tiêu chí kỹ thuật để ra quyết định.
-- **Ví dụ:** Client gửi ETag để giảm payload khi dữ liệu không đổi.
+> ⚠️ **Critical distinction**: `no-cache` ≠ "don't cache". `no-cache` = "cache nhưng luôn hỏi lại server". `no-store` = "không cache gì cả".
 
-### Q08. How do you design ETag and conditional requests for a production SPA?
-**Độ khó / Difficulty:** 🟡 [Mid]
-- **Tổng Quan:** Khi thiết kế `ETag and conditional requests` cho production, cần tách concern thành kiến trúc, policy, observability, và quy trình rollout.
-- **Giải thích:** Câu trả lời tốt nên nêu lifecycle đầy đủ: khởi tạo, sử dụng, đồng bộ, invalidation, fallback khi lỗi, và đánh giá qua metrics thực tế. Đồng thời nêu rủi ro khi scale multi-team.
-- **Ví dụ:** Theo dõi tỉ lệ 304 để đánh giá hiệu quả revalidation.
+### 2. Validation Mechanisms (RFC 7232)
 
-```ts
-// pseudo configuration used in interviews
-const policy = {
-  staleTime: 60_000,
-  cacheTime: 10 * 60_000,
-  retry: 2,
-  revalidateOnFocus: true,
+```
+Strong Validator (ETag):
+  Client: GET /api/products
+  Server: 200 OK
+          ETag: "abc123"
+
+  Client: GET /api/products
+          If-None-Match: "abc123"
+  Server: 304 Not Modified  ← no body, save bandwidth
+
+Weak Validator (Last-Modified):
+  Client: GET /api/products
+  Server: 200 OK
+          Last-Modified: Wed, 21 Oct 2025 07:28:00 GMT
+
+  Client: GET /api/products
+          If-Modified-Since: Wed, 21 Oct 2025 07:28:00 GMT
+  Server: 304 Not Modified
+```
+
+| Aspect      | ETag                                             | Last-Modified                              |
+| ----------- | ------------------------------------------------ | ------------------------------------------ |
+| Precision   | Byte-level (strong) or semantic (weak `W/"..."`) | 1-second granularity                       |
+| Use case    | API responses, dynamic content                   | Static files                               |
+| Overhead    | Server must compute hash                         | Filesystem timestamp                       |
+| Reliability | Cao — chính xác theo nội dung                    | Thấp hơn — 2 thay đổi trong 1 giây bị miss |
+
+### 3. Cache Strategy Per Resource Type
+
+```
+Production SPA Cache Strategy
+═══════════════════════════════════════════════════════
+
+Resource          Cache-Control                     Why
+─────────────────────────────────────────────────────
+index.html        no-cache                          Always revalidate to get latest JS/CSS refs
+app.[hash].js     max-age=31536000, immutable       Content hash = new URL on change
+style.[hash].css  max-age=31536000, immutable       Same as JS
+/api/*            no-cache or short max-age          Dynamic data needs freshness
+images/logo.svg   max-age=86400, public             Rarely changes, CDN cacheable
+fonts/*.woff2     max-age=31536000, immutable       Never changes once published
+```
+
+🧠 **Memory Hook — "HIN"**: HTML=no-cache, Immutable=hashed assets, No-store=sensitive data
+
+---
+
+## Interview Q&A / Câu Hỏi Phỏng Vấn
+
+### Section A: HTTP Cache Fundamentals
+
+---
+
+### Q01. What is browser caching and how does Cache-Control work?
+
+**🟢 Junior**
+
+**EN**: Browser caching stores HTTP responses locally so subsequent requests can be served without hitting the network. The `Cache-Control` header is the primary mechanism to control caching behavior, defined in RFC 9111.
+
+When a browser receives a response with `Cache-Control: max-age=3600`, it stores the response and considers it "fresh" for 3600 seconds. During this time, the browser serves the cached version without making a network request.
+
+**VI**: Browser caching lưu HTTP response ở local để request sau không cần đi qua network. `Cache-Control` header là cơ chế chính để kiểm soát cache, được định nghĩa trong RFC 9111. Khi browser nhận response có `max-age=3600`, nó lưu và coi là "fresh" trong 3600 giây.
+
+```nginx
+# Nginx configuration example
+server {
+    # HTML — always revalidate
+    location / {
+        add_header Cache-Control "no-cache";
+    }
+
+    # Hashed static assets — cache forever
+    location ~* \.[0-9a-f]{8}\.(js|css)$ {
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+
+    # API responses — short cache with revalidation
+    location /api/ {
+        add_header Cache-Control "private, max-age=0, must-revalidate";
+        add_header ETag $request_id;
+    }
+
+    # Images — moderate cache
+    location /images/ {
+        add_header Cache-Control "public, max-age=86400";
+    }
+}
+```
+
+🎯 **Interview Signal**: Interviewer muốn nghe bạn phân biệt được `max-age` vs `s-maxage`, `private` vs `public`, và biết khi nào dùng `no-cache` vs `no-store`.
+
+❌ **Common Mistake**: Nói "no-cache means don't cache" — sai. `no-cache` = cache nhưng phải revalidate trước khi dùng.
+
+---
+
+### Q02. Explain the difference between `no-cache` and `no-store`.
+
+**🟢 Junior**
+
+**EN**: These are the two most confused Cache-Control directives:
+
+- **`no-cache`**: The response CAN be stored in cache, but the client MUST validate with the server (using ETag or Last-Modified) before using it. This means the browser always makes a conditional request, but if the content hasn't changed, it gets a fast `304 Not Modified` response with no body.
+
+- **`no-store`**: The response MUST NOT be stored anywhere — not in browser cache, not in CDN, not in proxy. Every request goes to origin. Use this for sensitive data (banking, health records).
+
+**VI**: Hai directive dễ nhầm nhất:
+
+- `no-cache`: ĐƯỢC lưu cache, nhưng PHẢI hỏi lại server trước khi dùng → conditional request → 304 nếu không đổi
+- `no-store`: KHÔNG ĐƯỢC lưu bất kỳ đâu → mọi request đều đi origin
+
+```
+                    no-cache                    no-store
+                  ┌───────────┐              ┌───────────┐
+  Request  ──────►│  Cache?   │   Request ──►│  Cache?   │
+                  │   YES ✓   │              │   NO ✗    │
+                  └─────┬─────┘              └─────┬─────┘
+                        │                          │
+                  ┌─────▼─────┐              ┌─────▼─────┐
+                  │Revalidate │              │  Origin   │
+                  │  Server   │              │  Server   │
+                  └─────┬─────┘              └───────────┘
+                   ┌────┴────┐
+                   │         │
+              304 (fast)  200 (full)
+```
+
+| Scenario             | Directive            | Lý do                                    |
+| -------------------- | -------------------- | ---------------------------------------- |
+| HTML entry point     | `no-cache`           | Luôn check phiên bản mới nhưng 304 nhanh |
+| Bank account balance | `no-store`           | Không được lưu thông tin nhạy cảm        |
+| User profile         | `private, no-cache`  | Cache riêng cho user, revalidate mỗi lần |
+| Public product list  | `public, max-age=60` | CDN cache được, refresh mỗi 60s          |
+
+🧠 **Memory Hook**: "no-cache = check first, no-store = forget everything"
+
+---
+
+### Q03. How do ETag and conditional requests work?
+
+**🟡 Mid**
+
+**EN**: ETag (Entity Tag) is a response header containing a unique identifier for a specific version of a resource. When the client makes a subsequent request, it sends the ETag value in the `If-None-Match` header. The server compares and returns either `304 Not Modified` (saving bandwidth) or `200 OK` with the new content.
+
+**VI**: ETag là một header chứa mã định danh duy nhất cho phiên bản cụ thể của resource. Client gửi lại ETag qua `If-None-Match` → server so sánh → trả 304 (tiết kiệm bandwidth) hoặc 200 (nội dung mới).
+
+```typescript
+// Express server with ETag
+import express from "express";
+import crypto from "crypto";
+
+const app = express();
+
+app.get("/api/products", async (req, res) => {
+  const products = await db.getProducts();
+  const data = JSON.stringify(products);
+
+  // Generate strong ETag from content hash
+  const etag = `"${crypto.createHash("md5").update(data).digest("hex")}"`;
+
+  // Check If-None-Match from client
+  if (req.headers["if-none-match"] === etag) {
+    return res.status(304).end(); // Not Modified — no body sent
+  }
+
+  res.set({
+    ETag: etag,
+    "Cache-Control": "private, no-cache", // Always revalidate
+  });
+
+  res.json(products);
+});
+```
+
+```typescript
+// Client-side: browser handles this automatically!
+// But for custom caching (e.g., Service Worker):
+async function fetchWithETag(url: string): Promise<Response> {
+  const cached = await caches.match(url);
+  const headers: HeadersInit = {};
+
+  if (cached) {
+    const etag = cached.headers.get("ETag");
+    if (etag) {
+      headers["If-None-Match"] = etag;
+    }
+  }
+
+  const response = await fetch(url, { headers });
+
+  if (response.status === 304 && cached) {
+    return cached; // Use cached version
+  }
+
+  // Store new response in cache
+  const cache = await caches.open("api-v1");
+  await cache.put(url, response.clone());
+  return response;
+}
+```
+
+**Strong vs Weak ETag**:
+
+- Strong: `"abc123"` — byte-for-byte identical
+- Weak: `W/"abc123"` — semantically equivalent (e.g., different whitespace OK)
+
+🎯 **Interview Signal**: Biết flow request/response hoàn chỉnh. Biết khi nào dùng strong vs weak ETag. Biết ETag ưu tiên hơn Last-Modified.
+
+---
+
+### Q04. Design a caching strategy for a production SPA.
+
+**🟡 Mid**
+
+**EN**: A production SPA needs different caching strategies for different resource types. The key insight is that **content-hashed filenames make assets immutable** — when content changes, the filename changes, so we can cache aggressively.
+
+**VI**: Production SPA cần chiến lược cache khác nhau cho từng loại resource. Insight quan trọng: **filename chứa content hash → immutable** — khi nội dung thay đổi thì URL mới → cache mạnh được.
+
+```typescript
+// Vite config for content-hashed output
+// vite.config.ts
+export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        // JS: app.a1b2c3d4.js
+        entryFileNames: "[name].[hash].js",
+        chunkFileNames: "chunks/[name].[hash].js",
+        // CSS: style.e5f6g7h8.css
+        assetFileNames: "assets/[name].[hash][extname]",
+      },
+    },
+  },
+});
+```
+
+```nginx
+# Complete Nginx config for production SPA
+server {
+    listen 443 ssl http2;
+    root /var/www/app;
+
+    # 1. HTML shell — ALWAYS revalidate
+    location = /index.html {
+        add_header Cache-Control "no-cache";
+        add_header X-Content-Type-Options "nosniff";
+    }
+
+    # 2. Hashed JS/CSS — cache 1 year, immutable
+    location ~* \.[0-9a-f]{8,}\.(js|css)$ {
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        add_header Vary "Accept-Encoding";
+    }
+
+    # 3. Fonts — cache 1 year
+    location ~* \.(woff2?|ttf|otf|eot)$ {
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        add_header Access-Control-Allow-Origin "*";
+    }
+
+    # 4. Images — cache 1 day, CDN cacheable
+    location ~* \.(png|jpg|jpeg|gif|svg|webp|avif)$ {
+        add_header Cache-Control "public, max-age=86400";
+    }
+
+    # 5. API proxy — no browser cache, let app-level cache handle
+    location /api/ {
+        proxy_pass http://backend;
+        add_header Cache-Control "private, no-cache";
+    }
+
+    # SPA fallback
+    location / {
+        try_files $uri /index.html;
+    }
+}
+```
+
+```
+Cache Strategy Matrix
+═══════════════════════════════════════════════════════════════
+Resource         Cache-Control                  TTL     ETag
+─────────────────────────────────────────────────────────────
+index.html       no-cache                       0*      ✓
+app.[hash].js    public, immutable              1 year  ✗
+style.[hash].css public, immutable              1 year  ✗
+/api/products    private, max-age=60, swr=30    60s     ✓
+/api/user        private, no-cache              0*      ✓
+logo.svg         public, max-age=86400          1 day   ✓
+*.woff2          public, immutable              1 year  ✗
+
+* 0 = always revalidate, but 304 is fast
+```
+
+🧠 **Memory Hook — "HIFI"**: HTML=no-cache, Immutable=hashed, Fonts=immutable, Images=1day
+
+❌ **Common Mistake**: Caching `index.html` with long max-age → users stuck on old version forever. HTML MUST be `no-cache`.
+
+---
+
+### Q05. You deployed a hotfix but users still see the old version. Debug this.
+
+**🔴 Senior**
+
+**EN**: This is a classic production caching incident. Systematic debugging approach:
+
+**VI**: Đây là sự cố caching production kinh điển. Cần debug có hệ thống:
+
+```
+Debugging Stale Content — Decision Tree
+════════════════════════════════════════════════════════════
+
+User reports old version
+         │
+    ┌────▼─────┐
+    │ Check    │──── Open DevTools → Network tab
+    │ index.   │     → Disable cache → Reload
+    │ html     │     → Is HTML fresh?
+    └────┬─────┘
+    YES  │  NO → Check Cache-Control on HTML
+         │       → Is CDN caching HTML? Check s-maxage
+         │       → Purge CDN: curl -X PURGE https://cdn.example.com/
+         │
+    ┌────▼─────┐
+    │ Check    │──── Are JS/CSS URLs updated in HTML?
+    │ asset    │     → New hash in <script src>?
+    │ refs     │
+    └────┬─────┘
+    YES  │  NO → Build didn't run or deploy incomplete
+         │       → Check CI/CD pipeline logs
+         │
+    ┌────▼──────┐
+    │ Check     │──── navigator.serviceWorker.getRegistrations()
+    │ Service   │     → Is SW serving stale from cache?
+    │ Worker    │
+    └────┬──────┘
+    NO   │  YES → SW update not triggering
+    SW   │       → skipWaiting() + clients.claim()
+         │       → Or: unregister SW and reload
+         │
+    ┌────▼─────┐
+    │ Check    │──── curl -I https://example.com/index.html
+    │ CDN      │     → X-Cache: HIT or MISS?
+    │ headers  │     → Age: header value?
+    └──────────┘     → Purge CDN and check again
+```
+
+```typescript
+// Emergency: force Service Worker update
+async function forceUpdate(): Promise<void> {
+  if ("serviceWorker" in navigator) {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    for (const reg of registrations) {
+      await reg.update(); // Force check for new SW
+    }
+  }
+  // Hard reload bypassing all caches
+  window.location.reload();
+}
+
+// In SW: ensure skipWaiting
+self.addEventListener("install", (event) => {
+  self.skipWaiting(); // Don't wait for old tabs to close
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches
+      .keys()
+      .then((names) =>
+        Promise.all(
+          names.filter((name) => name !== CURRENT_CACHE).map((name) => caches.delete(name)),
+        ),
+      ),
+  );
+  self.clients.claim(); // Take control of all open tabs
+});
+```
+
+```bash
+# CDN debugging commands
+# Check cache status
+curl -sI https://example.com/ | grep -i 'cache\|age\|etag\|x-cache'
+
+# Purge Cloudflare cache via API
+curl -X POST "https://api.cloudflare.com/client/v4/zones/{zone_id}/purge_cache" \
+  -H "Authorization: Bearer {token}" \
+  -H "Content-Type: application/json" \
+  --data '{"purge_everything":true}'
+
+# Purge specific URLs
+curl -X POST "https://api.cloudflare.com/client/v4/zones/{zone_id}/purge_cache" \
+  -H "Authorization: Bearer {token}" \
+  --data '{"files":["https://example.com/index.html"]}'
+```
+
+🎯 **Interview Signal**: Interviewer muốn thấy systematic debugging approach, không chỉ "clear cache". Cần biết check từng layer: browser → SW → CDN → origin.
+
+**Real-world case**: Shopee flash sale — deploy hotfix for cart bug nhưng CDN vẫn serve old HTML vì `s-maxage=300`. Fix: purge CDN + set `s-maxage=0` cho HTML.
+
+---
+
+### Q06. How does `stale-while-revalidate` work at the HTTP level?
+
+**🔴 Senior**
+
+**EN**: `stale-while-revalidate` (RFC 5861) is a Cache-Control extension that lets the browser serve a stale response immediately while fetching a fresh one in the background. This gives users instant responses while keeping content eventually fresh.
+
+**VI**: `stale-while-revalidate` cho phép browser trả stale response ngay lập tức trong khi fetch fresh version ở background. User thấy nội dung tức thì, và nội dung sẽ fresh cho request tiếp theo.
+
+```
+stale-while-revalidate Timeline
+═══════════════════════════════════════════════════════════
+
+Cache-Control: max-age=60, stale-while-revalidate=30
+
+ 0s          60s              90s
+ ├───fresh───┤──stale-ok──────┤──must-revalidate──►
+ │           │                │
+ │ Serve     │ Serve stale    │ Must fetch
+ │ from      │ immediately +  │ from origin
+ │ cache     │ revalidate in  │ (blocking)
+ │ (fast)    │ background     │
+ │           │ (fast+fresh)   │
+```
+
+```typescript
+// Server-side configuration
+// Express middleware for API caching
+function apiCache(maxAge: number, swr: number) {
+  return (_req: Request, res: Response, next: NextFunction) => {
+    res.set("Cache-Control", `public, max-age=${maxAge}, stale-while-revalidate=${swr}`);
+    next();
+  };
+}
+
+app.get("/api/products", apiCache(60, 30), getProducts);
+// Result: Cache-Control: public, max-age=60, stale-while-revalidate=30
+// → Fresh for 60s, then serve stale for 30s while revalidating
+```
+
+```typescript
+// Application-level SWR with TanStack Query
+import { useQuery } from '@tanstack/react-query';
+
+function ProductList() {
+  const { data, isStale, isFetching } = useQuery({
+    queryKey: ['products'],
+    queryFn: () => fetch('/api/products').then(r => r.json()),
+    staleTime: 60_000,        // Fresh for 60s (like max-age)
+    gcTime: 5 * 60_000,       // Keep in memory 5min (garbage collection)
+    refetchOnWindowFocus: true, // Revalidate when tab gets focus
+  });
+
+  return (
+    <div>
+      {isFetching && <Spinner className="corner" />}
+      {/* Data shown immediately even if stale */}
+      <ProductGrid products={data ?? []} />
+    </div>
+  );
+}
+```
+
+🧠 **Memory Hook**: SWR = "Serve stale, Worker revalidates" — instant UX, eventual freshness.
+
+---
+
+### Section B: Service Worker Cache
+
+---
+
+### Q07. What is the Service Worker Cache API?
+
+**🟢 Junior**
+
+**EN**: The Cache API provides a storage mechanism for Request/Response pairs within a Service Worker. Unlike HTTP cache (controlled by headers), the Cache API gives you programmatic control over what to cache and when.
+
+**VI**: Cache API cung cấp cơ chế lưu trữ cặp Request/Response trong Service Worker. Khác với HTTP cache (do header quyết định), Cache API cho bạn quyền kiểm soát programmatic: cache gì, khi nào, và xóa khi nào.
+
+```typescript
+// Basic Cache API operations
+// In service-worker.ts
+
+const CACHE_NAME = "my-app-v1";
+
+// Open a named cache
+const cache = await caches.open(CACHE_NAME);
+
+// Store a response
+await cache.put("/api/products", new Response(JSON.stringify(data)));
+
+// Match a request — returns Response | undefined
+const response = await cache.match("/api/products");
+
+// Add URL (fetch + store)
+await cache.add("/styles/main.css");
+
+// Add multiple URLs
+await cache.addAll(["/", "/styles/main.css", "/scripts/app.js", "/images/logo.svg"]);
+
+// Delete an entry
+await cache.delete("/api/products");
+
+// List all entries
+const keys = await cache.keys(); // Request[]
+
+// Delete entire cache
+await caches.delete(CACHE_NAME);
+
+// List all cache names
+const names = await caches.keys(); // string[]
+```
+
+🎯 **Interview Signal**: Biết Cache API khác HTTP cache. Biết lifecycle: open → put/add → match → delete.
+
+---
+
+### Q08. Compare Workbox caching strategies.
+
+**🟡 Mid**
+
+**EN**: Workbox is Google's library that provides pre-built caching strategies for Service Workers. Each strategy represents a different trade-off between speed and freshness.
+
+**VI**: Workbox là thư viện của Google cung cấp các chiến lược caching sẵn cho Service Worker. Mỗi strategy là một trade-off khác nhau giữa tốc độ và freshness.
+
+| Strategy                 | Hành vi                      | Use Case                        | Speed  | Freshness |
+| ------------------------ | ---------------------------- | ------------------------------- | ------ | --------- |
+| **CacheFirst**           | Cache → fallback Network     | Fonts, images, hashed JS/CSS    | ⚡⚡⚡ | ⭐        |
+| **NetworkFirst**         | Network → fallback Cache     | API data, user-specific content | ⚡     | ⭐⭐⭐    |
+| **StaleWhileRevalidate** | Cache → + background Network | Semi-dynamic content            | ⚡⚡⚡ | ⭐⭐      |
+| **NetworkOnly**          | Network only (no cache)      | Analytics, auth requests        | ⚡     | ⭐⭐⭐    |
+| **CacheOnly**            | Cache only (no network)      | Pre-cached app shell            | ⚡⚡⚡ | ⭐        |
+
+```typescript
+// workbox-config.ts — complete Workbox setup
+import { precacheAndRoute } from "workbox-precaching";
+import { registerRoute } from "workbox-routing";
+import { CacheFirst, NetworkFirst, StaleWhileRevalidate } from "workbox-strategies";
+import { ExpirationPlugin } from "workbox-expiration";
+import { CacheableResponsePlugin } from "workbox-cacheable-response";
+
+// Pre-cache app shell (build-time manifest)
+precacheAndRoute(self.__WB_MANIFEST);
+
+// 1. CacheFirst — static assets (fonts, images)
+registerRoute(
+  ({ request }) => request.destination === "image" || request.destination === "font",
+  new CacheFirst({
+    cacheName: "static-assets",
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 100,
+        maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+      }),
+      new CacheableResponsePlugin({
+        statuses: [0, 200],
+      }),
+    ],
+  }),
+);
+
+// 2. NetworkFirst — API data
+registerRoute(
+  ({ url }) => url.pathname.startsWith("/api/"),
+  new NetworkFirst({
+    cacheName: "api-cache",
+    networkTimeoutSeconds: 3, // Fallback to cache after 3s
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 50,
+        maxAgeSeconds: 5 * 60, // 5 minutes
+      }),
+    ],
+  }),
+);
+
+// 3. StaleWhileRevalidate — CSS/JS without hash
+registerRoute(
+  ({ request }) => request.destination === "style" || request.destination === "script",
+  new StaleWhileRevalidate({
+    cacheName: "dynamic-assets",
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 30,
+        maxAgeSeconds: 24 * 60 * 60, // 1 day
+      }),
+    ],
+  }),
+);
+```
+
+```
+Strategy Decision Tree
+═══════════════════════════════════════════
+
+Is the resource hashed / immutable?
+  YES → CacheFirst
+  NO  ↓
+
+Is freshness critical? (user data, prices)
+  YES → NetworkFirst
+  NO  ↓
+
+Is it semi-dynamic? (blog posts, configs)
+  YES → StaleWhileRevalidate
+  NO  ↓
+
+Should it never be cached? (analytics, auth)
+  YES → NetworkOnly
+  NO  → CacheOnly (pre-cached only)
+```
+
+🧠 **Memory Hook — "CNSNC"**: CacheFirst, NetworkFirst, StaleWhileRevalidate, NetworkOnly, CacheOnly
+
+---
+
+### Q09. Pre-caching vs runtime caching — what's the difference?
+
+**🟡 Mid**
+
+**EN**:
+
+- **Pre-caching** happens at Service Worker install time. You define a list of URLs (manifest) that gets cached before the SW activates. Used for the app shell — HTML, critical CSS, core JS.
+- **Runtime caching** happens on-the-fly as the user navigates. When a request matches a route pattern, the SW applies a caching strategy. Used for dynamic content — API data, images loaded on scroll.
+
+**VI**:
+
+- **Pre-caching**: Cache tại thời điểm SW install. Định nghĩa danh sách URL cố định (manifest) → cache trước khi SW active. Dùng cho app shell.
+- **Runtime caching**: Cache khi user duyệt web. Khi request match pattern → SW áp dụng strategy. Dùng cho nội dung động.
+
+```typescript
+// Pre-caching: defined at build time
+// vite.config.ts with vite-plugin-pwa
+import { VitePWA } from "vite-plugin-pwa";
+
+export default defineConfig({
+  plugins: [
+    VitePWA({
+      workbox: {
+        // Pre-cache these patterns
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+        // Runtime caching rules
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/api\.example\.com\/.*/i,
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "api-cache",
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 5,
+              },
+            },
+          },
+          {
+            urlPattern: /^https:\/\/cdn\.example\.com\/images\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "image-cache",
+              expiration: {
+                maxEntries: 200,
+                maxAgeSeconds: 60 * 60 * 24 * 30,
+              },
+            },
+          },
+        ],
+      },
+    }),
+  ],
+});
+```
+
+| Aspect  | Pre-caching                   | Runtime Caching                   |
+| ------- | ----------------------------- | --------------------------------- |
+| When    | SW install event              | On each request                   |
+| What    | Known URL list (manifest)     | Pattern-matched requests          |
+| Updates | New SW version = new manifest | Cache expires or strategy decides |
+| Size    | App shell only (~50-500KB)    | Grows with usage                  |
+| Offline | Available immediately         | Only after first visit            |
+
+---
+
+### Q10. How do you handle Service Worker cache versioning and cleanup?
+
+**🟡 Mid**
+
+**EN**: Cache versioning prevents users from getting stuck on stale content. The pattern is: name caches with versions, and in the `activate` event, delete old caches.
+
+**VI**: Cache versioning ngăn user bị kẹt với nội dung cũ. Pattern: đặt tên cache có version, và trong `activate` event, xóa cache cũ.
+
+```typescript
+// service-worker.ts
+const CACHE_VERSION = "v3";
+const CACHE_NAME = `app-${CACHE_VERSION}`;
+
+self.addEventListener("install", (event: ExtendableEvent) => {
+  event.waitUntil(
+    caches
+      .open(CACHE_NAME)
+      .then((cache) => cache.addAll(["/", "/index.html", "/styles/main.css", "/scripts/app.js"])),
+  );
+  self.skipWaiting(); // Don't wait for old SW to die
+});
+
+self.addEventListener("activate", (event: ExtendableEvent) => {
+  event.waitUntil(
+    caches
+      .keys()
+      .then((cacheNames) =>
+        Promise.all(
+          cacheNames
+            .filter((name) => name.startsWith("app-") && name !== CACHE_NAME)
+            .map((name) => {
+              console.log(`[SW] Deleting old cache: ${name}`);
+              return caches.delete(name);
+            }),
+        ),
+      )
+      .then(() => self.clients.claim()), // Take control immediately
+  );
+});
+```
+
+🎯 **Interview Signal**: Biết pattern `skipWaiting()` + `clients.claim()` + cleanup old caches. Biết rủi ro nếu không cleanup.
+
+---
+
+### Q11. Users report stale content after deploy. Service Worker is the culprit. Fix it.
+
+**🔴 Senior**
+
+**EN**: The classic Service Worker stale content problem. The SW lifecycle means a new SW won't activate until all tabs with the old SW are closed — unless you use `skipWaiting()`.
+
+**VI**: Vấn đề kinh điển với SW. Lifecycle SW nghĩa là SW mới không activate cho đến khi tất cả tab dùng SW cũ đóng — trừ khi dùng `skipWaiting()`.
+
+```typescript
+// Problem: User has old SW active, new SW is "waiting"
+// Solution 1: skipWaiting in SW
+self.addEventListener("install", () => {
+  self.skipWaiting(); // Activate immediately, don't wait
+});
+
+// Solution 2: Prompt user to update
+// In main app:
+if ("serviceWorker" in navigator) {
+  const reg = await navigator.serviceWorker.register("/sw.js");
+
+  reg.addEventListener("updatefound", () => {
+    const newWorker = reg.installing;
+    if (!newWorker) return;
+
+    newWorker.addEventListener("statechange", () => {
+      if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+        // New SW installed but old one still active
+        showUpdateBanner(); // "New version available! Click to update."
+      }
+    });
+  });
+}
+
+function showUpdateBanner() {
+  const banner = document.createElement("div");
+  banner.innerHTML = `
+    <div class="update-banner">
+      New version available!
+      <button onclick="applyUpdate()">Update now</button>
+    </div>
+  `;
+  document.body.appendChild(banner);
+}
+
+function applyUpdate() {
+  navigator.serviceWorker.getRegistration().then((reg) => {
+    reg?.waiting?.postMessage({ type: "SKIP_WAITING" });
+  });
+
+  // Reload after new SW takes over
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    window.location.reload();
+  });
+}
+
+// In SW: listen for skip waiting message
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+```
+
+❌ **Common Mistake**: Using `skipWaiting()` without `clients.claim()` → new SW active but old tabs still use old cache.
+
+---
+
+### Q12. Design an offline-first strategy using Service Worker.
+
+**🔴 Senior**
+
+**EN**: Offline-first means the app works without network and syncs when connected. Architecture: App Shell (pre-cached) + Dynamic Content (runtime cached) + Sync Queue (pending mutations).
+
+**VI**: Offline-first nghĩa là app hoạt động không cần network và sync khi có kết nối. Kiến trúc: App Shell (pre-cached) + Dynamic Content (runtime cached) + Sync Queue (mutations chờ gửi).
+
+```typescript
+// Offline-first architecture
+// 1. App Shell: pre-cache at install
+// 2. API data: NetworkFirst with cache fallback
+// 3. Mutations: queue in IndexedDB, replay when online
+
+// Background Sync for queued mutations
+self.addEventListener("sync", (event: SyncEvent) => {
+  if (event.tag === "sync-mutations") {
+    event.waitUntil(replayMutations());
+  }
+});
+
+async function replayMutations(): Promise<void> {
+  const db = await openDB("sync-queue", 1);
+  const tx = db.transaction("mutations", "readwrite");
+  const store = tx.objectStore("mutations");
+  const mutations = await store.getAll();
+
+  for (const mutation of mutations) {
+    try {
+      await fetch(mutation.url, {
+        method: mutation.method,
+        headers: mutation.headers,
+        body: mutation.body,
+      });
+      await store.delete(mutation.id);
+    } catch {
+      break; // Stop on first failure, retry later
+    }
+  }
+}
+
+// In the app: queue mutations when offline
+async function apiMutate(url: string, options: RequestInit): Promise<Response> {
+  try {
+    return await fetch(url, options);
+  } catch {
+    // Offline — queue for later
+    const db = await openDB("sync-queue", 1);
+    await db.add("mutations", {
+      id: crypto.randomUUID(),
+      url,
+      method: options.method,
+      headers: Object.fromEntries(new Headers(options.headers).entries()),
+      body: options.body,
+      timestamp: Date.now(),
+    });
+
+    // Register for background sync
+    const reg = await navigator.serviceWorker.ready;
+    await reg.sync.register("sync-mutations");
+
+    // Return optimistic response
+    return new Response(JSON.stringify({ queued: true }), {
+      status: 202,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+}
+```
+
+---
+
+### Section C: Application-Level Cache
+
+---
+
+### Q13. What is TanStack Query and how does it cache server data?
+
+**🟢 Junior**
+
+**EN**: TanStack Query (formerly React Query) is a server-state management library that handles fetching, caching, synchronizing, and updating server data. It distinguishes between **client state** (UI state like modals, form inputs) and **server state** (data from APIs that can be stale, shared, and needs background updating).
+
+**VI**: TanStack Query là thư viện quản lý server-state: fetch, cache, sync, và update dữ liệu từ server. Nó phân biệt rõ **client state** (UI: modal, form) và **server state** (API data: có thể stale, shared, cần background update).
+
+```typescript
+import { useQuery, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+// Configure cache behavior globally
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000,       // Data fresh for 60s
+      gcTime: 5 * 60_000,      // Keep in memory 5min after last use
+      retry: 3,                 // Retry failed requests 3 times
+      refetchOnWindowFocus: true, // Refetch when tab gets focus
+      refetchOnReconnect: true,   // Refetch when network reconnects
+    },
+  },
+});
+
+function ProductList() {
+  const {
+    data,        // Cached or fetched data
+    isLoading,   // First load, no cached data
+    isFetching,  // Background refetch (data may exist)
+    isStale,     // Data older than staleTime
+    error,       // Error object
+  } = useQuery({
+    queryKey: ['products', { category: 'electronics' }],
+    queryFn: async () => {
+      const res = await fetch('/api/products?category=electronics');
+      if (!res.ok) throw new Error('Failed to fetch');
+      return res.json() as Promise<Product[]>;
+    },
+    staleTime: 30_000, // Override: fresh for 30s
+  });
+
+  if (isLoading) return <Skeleton />;
+  if (error) return <ErrorFallback error={error} />;
+
+  return (
+    <>
+      {isFetching && <RefreshIndicator />}
+      <ProductGrid products={data} />
+    </>
+  );
+}
+```
+
+| Term         | Ý nghĩa                                                   | Default          |
+| ------------ | --------------------------------------------------------- | ---------------- |
+| `staleTime`  | Thời gian data được coi là fresh                          | 0 (always stale) |
+| `gcTime`     | Thời gian giữ data trong memory sau khi component unmount | 5 phút           |
+| `isLoading`  | Đang fetch lần đầu (không có cache)                       | —                |
+| `isFetching` | Đang fetch (có thể có cache)                              | —                |
+| `isStale`    | Data đã cũ hơn staleTime                                  | —                |
+
+🧠 **Memory Hook**: "staleTime = how long data stays VALID, gcTime = how long MEMORY keeps it"
+
+---
+
+### Q14. How do you design a queryKey hierarchy in TanStack Query?
+
+**🟡 Mid**
+
+**EN**: QueryKeys are arrays that uniquely identify cached data. A good hierarchy enables precise invalidation and automatic refetching.
+
+**VI**: QueryKeys là array định danh duy nhất cho data trong cache. Hierarchy tốt cho phép invalidation chính xác và auto refetch.
+
+```typescript
+// QueryKey hierarchy pattern
+// Level 1: Entity type
+['products']
+
+// Level 2: Entity type + filters
+['products', { category: 'electronics', sort: 'price' }]
+
+// Level 3: Single entity
+['products', 42]
+
+// Level 4: Nested resource
+['products', 42, 'reviews']
+
+// Factory pattern for queryKeys
+const productKeys = {
+  all:      ['products'] as const,
+  lists:    () => [...productKeys.all, 'list'] as const,
+  list:     (filters: ProductFilters) => [...productKeys.lists(), filters] as const,
+  details:  () => [...productKeys.all, 'detail'] as const,
+  detail:   (id: number) => [...productKeys.details(), id] as const,
+  reviews:  (id: number) => [...productKeys.detail(id), 'reviews'] as const,
 };
 
-function shouldUseFallback(isOnline: boolean, hasCache: boolean) {
-  return !isOnline && hasCache;
+// Usage
+useQuery({ queryKey: productKeys.detail(42), queryFn: ... });
+
+// Invalidation — fuzzy matching
+const queryClient = useQueryClient();
+
+// Invalidate ALL products (lists + details)
+queryClient.invalidateQueries({ queryKey: productKeys.all });
+
+// Invalidate only product lists (not details)
+queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+
+// Invalidate single product + its reviews
+queryClient.invalidateQueries({ queryKey: productKeys.detail(42) });
+```
+
+🎯 **Interview Signal**: Biết dùng factory pattern cho queryKey. Biết fuzzy matching cho invalidation.
+
+---
+
+### Q15. Explain Apollo Client's normalized cache.
+
+**🟡 Mid**
+
+**EN**: Apollo Client's `InMemoryCache` normalizes data by splitting query results into individual objects, each identified by `__typename:id`. This means if the same entity appears in multiple queries, it's stored once and updates propagate everywhere.
+
+**VI**: `InMemoryCache` của Apollo normalize data bằng cách tách query results thành objects riêng lẻ, mỗi cái định danh bởi `__typename:id`. Entity xuất hiện ở nhiều queries chỉ lưu 1 lần → update lan truyền khắp nơi.
+
+```typescript
+import { ApolloClient, InMemoryCache } from "@apollo/client";
+
+const client = new ApolloClient({
+  uri: "/graphql",
+  cache: new InMemoryCache({
+    typePolicies: {
+      Product: {
+        // Custom key fields (default: id)
+        keyFields: ["sku"],
+        fields: {
+          // Custom field merge for pagination
+          reviews: {
+            keyArgs: ["sort"],
+            merge(existing = [], incoming, { args }) {
+              if (args?.offset === 0) return incoming;
+              return [...existing, ...incoming];
+            },
+          },
+          // Computed field
+          displayPrice: {
+            read(_, { readField }) {
+              const price = readField<number>("price");
+              const currency = readField<string>("currency");
+              return `${currency} ${price?.toFixed(2)}`;
+            },
+          },
+        },
+      },
+      Query: {
+        fields: {
+          // Redirect single product to cached entity
+          product(_, { args, toReference }) {
+            return toReference({ __typename: "Product", sku: args?.sku });
+          },
+        },
+      },
+    },
+  }),
+});
+
+// Direct cache manipulation
+client.cache.modify({
+  id: client.cache.identify({ __typename: "Product", sku: "ABC-123" }),
+  fields: {
+    stock: (prev: number) => prev - 1,
+  },
+});
+```
+
+```
+Apollo Cache Normalization
+═══════════════════════════════════════════
+
+GraphQL Response:           Normalized Cache:
+{                           ┌────────────────────────┐
+  products: [               │ ROOT_QUERY             │
+    {                       │   products: [→Ref, →Ref]│
+      id: "1",             └─────┬──────────────────┘
+      name: "Phone",             │
+      reviews: [{                │
+        id: "r1",          ┌─────▼──────────────┐
+        text: "Great"      │ Product:1           │
+      }]                   │   name: "Phone"     │
+    },                     │   reviews: [→Ref]   │
+    {                      └─────┬──────────────┘
+      id: "2",                   │
+      name: "Laptop"       ┌─────▼──────────────┐
+    }                      │ Review:r1           │
+  ]                        │   text: "Great"     │
+}                          └────────────────────┘
+                           ┌────────────────────┐
+                           │ Product:2           │
+                           │   name: "Laptop"    │
+                           └────────────────────┘
+```
+
+---
+
+### Q16. How do you implement optimistic updates with rollback?
+
+**🟡 Mid**
+
+**EN**: Optimistic updates show the expected result immediately before the server confirms. If the server rejects, you rollback to the previous state.
+
+**VI**: Optimistic updates hiển thị kết quả mong đợi ngay trước khi server xác nhận. Nếu server reject → rollback về state cũ.
+
+```typescript
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+
+interface Todo {
+  id: number;
+  title: string;
+  completed: boolean;
+}
+
+function useTodoToggle() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (todo: Todo) =>
+      fetch(`/api/todos/${todo.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ completed: !todo.completed }),
+      }).then((r) => {
+        if (!r.ok) throw new Error("Update failed");
+        return r.json();
+      }),
+
+    // 1. Optimistic update BEFORE request
+    onMutate: async (newTodo) => {
+      // Cancel outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: ["todos"] });
+
+      // Snapshot previous value for rollback
+      const previous = queryClient.getQueryData<Todo[]>(["todos"]);
+
+      // Optimistically update
+      queryClient.setQueryData<Todo[]>(["todos"], (old) =>
+        old?.map((t) => (t.id === newTodo.id ? { ...t, completed: !t.completed } : t)),
+      );
+
+      return { previous }; // Context for rollback
+    },
+
+    // 2. Rollback on error
+    onError: (_err, _todo, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["todos"], context.previous);
+      }
+      toast.error("Failed to update. Reverted.");
+    },
+
+    // 3. Always refetch after mutation settles
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["todos"] });
+    },
+  });
 }
 ```
 
-### Q09. What are trade-offs of ETag and conditional requests at scale?
-**Độ khó / Difficulty:** 🔴 [Senior]
-- **Tổng Quan:** Ở quy mô lớn, `ETag and conditional requests` luôn là bài toán cân bằng giữa performance, correctness, security, và chi phí vận hành.
-- **Giải thích:** Ứng viên senior nên nêu được failure modes, cách thiết kế guardrails, quy trình incident response, cũng như chiến lược migration khi policy hiện tại không còn phù hợp.
-- **Ví dụ:** Nếu quyết định thiên về tốc độ, cần bổ sung cảnh báo khi dữ liệu stale vượt ngưỡng SLA và cơ chế rollback policy bằng feature flags.
+🧠 **Memory Hook — "SOR"**: Snapshot → Optimistic update → Rollback on error
 
-### Q10. What is Last-Modified validation and when should FE teams use it?
-**Độ khó / Difficulty:** 🟢 [Junior]
-- **Tổng Quan:** `Last-Modified validation` là kỹ thuật quan trọng để cải thiện hiệu năng, độ ổn định và trải nghiệm người dùng ở frontend.
-- **Giải thích:** Interviewer kỳ vọng ứng viên mô tả đúng mục tiêu cốt lõi, giới hạn áp dụng, và liên hệ với `If-Modified-Since` như một tiêu chí kỹ thuật để ra quyết định.
-- **Ví dụ:** API danh sách tin tức dùng Last-Modified khi không có ETag.
+❌ **Common Mistake**: Forgetting `cancelQueries` → race condition: refetch overwrites optimistic update.
 
-### Q11. How do you design Last-Modified validation for a production SPA?
-**Độ khó / Difficulty:** 🟡 [Mid]
-- **Tổng Quan:** Khi thiết kế `Last-Modified validation` cho production, cần tách concern thành kiến trúc, policy, observability, và quy trình rollout.
-- **Giải thích:** Câu trả lời tốt nên nêu lifecycle đầy đủ: khởi tạo, sử dụng, đồng bộ, invalidation, fallback khi lỗi, và đánh giá qua metrics thực tế. Đồng thời nêu rủi ro khi scale multi-team.
-- **Ví dụ:** Kết hợp Last-Modified với TTL ngắn để giảm request không cần thiết.
+---
 
-### Q12. What are trade-offs of Last-Modified validation at scale?
-**Độ khó / Difficulty:** 🔴 [Senior]
-- **Tổng Quan:** Ở quy mô lớn, `Last-Modified validation` luôn là bài toán cân bằng giữa performance, correctness, security, và chi phí vận hành.
-- **Giải thích:** Ứng viên senior nên nêu được failure modes, cách thiết kế guardrails, quy trình incident response, cũng như chiến lược migration khi policy hiện tại không còn phù hợp.
-- **Ví dụ:** Nếu quyết định thiên về tốc độ, cần bổ sung cảnh báo khi dữ liệu stale vượt ngưỡng SLA và cơ chế rollback policy bằng feature flags.
+### Q17. Compare React Query vs SWR vs Apollo Client caching.
 
-```ts
-type Meta = { version: string; expiresAt: number; etag?: string };
-const isExpired = (meta: Meta, now = Date.now()) => now > meta.expiresAt;
+**🟡 Mid**
 
-function isCompatible(meta: Meta, expectedVersion: string) {
-  return meta.version === expectedVersion;
+| Feature               | TanStack Query          | SWR                             | Apollo Client               |
+| --------------------- | ----------------------- | ------------------------------- | --------------------------- |
+| **Protocol**          | REST / any              | REST / any                      | GraphQL                     |
+| **Cache type**        | Query-key based         | Key-based                       | Normalized (entity)         |
+| **Stale concept**     | staleTime + gcTime      | dedupingInterval + revalidation | `fetchPolicy`               |
+| **Optimistic update** | `onMutate` snapshot     | `optimisticData` option         | `optimisticResponse`        |
+| **DevTools**          | ✅ React Query DevTools | ✅ SWR DevTools                 | ✅ Apollo DevTools          |
+| **Pagination**        | `useInfiniteQuery`      | `useSWRInfinite`                | `fetchMore` + merge         |
+| **Bundle size**       | ~13KB gzip              | ~4KB gzip                       | ~33KB gzip                  |
+| **Offline support**   | `persistQueryClient`    | Limited                         | `RetryLink` + cache persist |
+| **Auto dedup**        | ✅ By queryKey          | ✅ By key                       | ✅ By query + variables     |
+| **SSR**               | ✅ Hydration            | ✅ Hydration                    | ✅ `getDataFromTree`        |
+
+**When to use which**:
+
+- **TanStack Query**: REST APIs, complex mutations, need DevTools, large team
+- **SWR**: Simple data fetching, minimal config, small bundle priority
+- **Apollo**: GraphQL API, normalized cache needed, complex entity relationships
+
+---
+
+### Q18. How do you implement tag-based cache invalidation?
+
+**🔴 Senior**
+
+**EN**: Tag-based invalidation lets you invalidate groups of related queries using semantic tags rather than exact query keys. This is essential for complex UIs where a mutation affects multiple screens.
+
+**VI**: Tag-based invalidation cho phép invalidate nhóm queries liên quan bằng tag semantic thay vì exact query key. Cần thiết cho UI phức tạp khi mutation ảnh hưởng nhiều màn hình.
+
+```typescript
+// TanStack Query: fuzzy matching IS tag-based invalidation
+const queryClient = useQueryClient();
+
+// After creating a new product:
+// Invalidate all product-related queries
+queryClient.invalidateQueries({ queryKey: ["products"] });
+// This invalidates:
+// ['products']
+// ['products', 'list', { category: 'electronics' }]
+// ['products', 'detail', 42]
+// ['products', 42, 'reviews']
+
+// More precise: predicate-based invalidation
+queryClient.invalidateQueries({
+  predicate: (query) =>
+    query.queryKey[0] === "products" ||
+    query.queryKey[0] === "cart" || // Cart shows product info too
+    query.queryKey[0] === "recommendations",
+});
+
+// Server-driven invalidation via mutation response
+const mutation = useMutation({
+  mutationFn: updateProduct,
+  onSuccess: (data) => {
+    // Server tells us what to invalidate
+    if (data.invalidateTags) {
+      for (const tag of data.invalidateTags) {
+        queryClient.invalidateQueries({ queryKey: [tag] });
+      }
+    }
+  },
+});
+```
+
+---
+
+### Q19. Your app shows stale data after a mutation. Debug the cache.
+
+**🔴 Senior**
+
+**EN**: Systematic approach to debugging stale data after mutations.
+
+**VI**: Debug có hệ thống khi data cũ sau mutation.
+
+```
+Stale Data After Mutation — Debug Flow
+═══════════════════════════════════════════════════
+
+Data still stale after mutation
+         │
+    ┌────▼─────────┐
+    │ Open React   │  Is the mutation in the cache?
+    │ Query DevTool│  Check mutation status
+    └────┬─────────┘
+         │
+    ┌────▼─────────┐
+    │ Check        │  Is invalidateQueries called?
+    │ onSuccess /  │  Is the queryKey matching?
+    │ onSettled    │  Try: queryClient.getQueryState(['key'])
+    └────┬─────────┘
+         │
+    ┌────▼─────────┐
+    │ Check        │  Is staleTime too high?
+    │ staleTime    │  If staleTime=Infinity → never auto refetch
+    └────┬─────────┘
+         │
+    ┌────▼─────────┐
+    │ Check query  │  queryKey: ['products', { sort: 'name' }]
+    │ key match    │  invalidate: ['products']
+    │              │  → ✅ Fuzzy match works
+    └────┬─────────┘
+         │
+    ┌────▼─────────┐
+    │ Check        │  Network tab: is refetch request going out?
+    │ network      │  Is response returning updated data?
+    │ tab          │  If yes but UI stale → component not re-rendering
+    └──────────────┘
+```
+
+```typescript
+// Debug helpers
+const queryClient = useQueryClient();
+
+// Check all queries and their state
+const allQueries = queryClient.getQueryCache().getAll();
+for (const query of allQueries) {
+  console.log({
+    key: query.queryKey,
+    state: query.state.status,
+    stale: query.isStale(),
+    lastUpdated: new Date(query.state.dataUpdatedAt),
+    data: query.state.data,
+  });
+}
+
+// Force refetch specific query
+queryClient.refetchQueries({ queryKey: ["products"], type: "active" });
+```
+
+---
+
+### Section D: CDN & Edge Caching
+
+---
+
+### Q20. How does CDN caching work and how do you configure it?
+
+**🟡 Mid**
+
+**EN**: A CDN (Content Delivery Network) caches content at edge servers geographically close to users. CDN respects origin's `Cache-Control` headers but can also be controlled via CDN-specific headers.
+
+**VI**: CDN cache content tại edge servers gần user về địa lý. CDN tuân theo `Cache-Control` từ origin nhưng cũng có thể kiểm soát bằng CDN-specific headers.
+
+```typescript
+// Cloudflare Workers — edge caching with custom logic
+export default {
+  async fetch(request: Request): Promise<Response> {
+    const url = new URL(request.url);
+
+    // Different cache rules per path
+    const cacheRules: Record<string, string> = {
+      "/api/products": "public, s-maxage=60, stale-while-revalidate=30",
+      "/api/user": "private, no-store",
+      "/static/": "public, max-age=31536000, immutable",
+    };
+
+    const response = await fetch(request);
+    const newResponse = new Response(response.body, response);
+
+    // Apply cache rules
+    for (const [pattern, cacheControl] of Object.entries(cacheRules)) {
+      if (url.pathname.startsWith(pattern)) {
+        newResponse.headers.set("Cache-Control", cacheControl);
+        break;
+      }
+    }
+
+    // Add CDN-specific header
+    newResponse.headers.set("CDN-Cache-Control", "max-age=300");
+
+    return newResponse;
+  },
+};
+```
+
+| Header              | Scope                      | Ý nghĩa                              |
+| ------------------- | -------------------------- | ------------------------------------ |
+| `Cache-Control`     | All caches (browser + CDN) | Kiểm soát mọi cache layer            |
+| `CDN-Cache-Control` | CDN only                   | Override cho CDN, browser không thấy |
+| `Surrogate-Control` | CDN only (Fastly/Varnish)  | Tương tự CDN-Cache-Control           |
+| `s-maxage`          | Shared caches (CDN/proxy)  | Override max-age cho CDN             |
+
+---
+
+### Q21. What is Surrogate-Key / Cache-Tag based invalidation?
+
+**🟡 Mid**
+
+**EN**: Surrogate-Key (Fastly) or Cache-Tag (Cloudflare) lets you tag cached responses and purge all responses with a specific tag in one API call. This enables surgical invalidation instead of purging everything.
+
+**VI**: Surrogate-Key / Cache-Tag cho phép gắn tag vào cached responses và purge tất cả responses có tag cụ thể bằng 1 API call. Invalidation chính xác thay vì purge toàn bộ.
+
+```typescript
+// Origin server: tag responses
+app.get("/api/products/:id", async (req, res) => {
+  const product = await db.getProduct(req.params.id);
+
+  res.set({
+    "Cache-Control": "public, s-maxage=3600",
+    // Cloudflare Cache-Tag
+    "Cache-Tag": `product-${product.id}, category-${product.category}, all-products`,
+    // Fastly Surrogate-Key
+    "Surrogate-Key": `product-${product.id} category-${product.category}`,
+  });
+
+  res.json(product);
+});
+
+// When product is updated, purge by tag
+async function purgeProductCache(productId: string): Promise<void> {
+  // Cloudflare: purge by Cache-Tag
+  await fetch(`https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/purge_cache`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${CF_TOKEN}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      tags: [`product-${productId}`], // Purge all pages showing this product
+    }),
+  });
 }
 ```
 
-### Q13. What is Service Worker Cache API and when should FE teams use it?
-**Độ khó / Difficulty:** 🟢 [Junior]
-- **Tổng Quan:** `Service Worker Cache API` là kỹ thuật quan trọng để cải thiện hiệu năng, độ ổn định và trải nghiệm người dùng ở frontend.
-- **Giải thích:** Interviewer kỳ vọng ứng viên mô tả đúng mục tiêu cốt lõi, giới hạn áp dụng, và liên hệ với `cache put/match, versioned cache names` như một tiêu chí kỹ thuật để ra quyết định.
-- **Ví dụ:** App đọc shell từ Cache API khi offline.
+```
+Tag-based Purge Example
+═══════════════════════════════════════════
 
-### Q14. How do you design Service Worker Cache API for a production SPA?
-**Độ khó / Difficulty:** 🟡 [Mid]
-- **Tổng Quan:** Khi thiết kế `Service Worker Cache API` cho production, cần tách concern thành kiến trúc, policy, observability, và quy trình rollout.
-- **Giải thích:** Câu trả lời tốt nên nêu lifecycle đầy đủ: khởi tạo, sử dụng, đồng bộ, invalidation, fallback khi lỗi, và đánh giá qua metrics thực tế. Đồng thời nêu rủi ro khi scale multi-team.
-- **Ví dụ:** Khi deploy bản mới, xóa cache version cũ trong activate event.
+Product page /products/42 has tags:
+  → product-42, category-electronics, all-products
 
-### Q15. What are trade-offs of Service Worker Cache API at scale?
-**Độ khó / Difficulty:** 🔴 [Senior]
-- **Tổng Quan:** Ở quy mô lớn, `Service Worker Cache API` luôn là bài toán cân bằng giữa performance, correctness, security, và chi phí vận hành.
-- **Giải thích:** Ứng viên senior nên nêu được failure modes, cách thiết kế guardrails, quy trình incident response, cũng như chiến lược migration khi policy hiện tại không còn phù hợp.
-- **Ví dụ:** Nếu quyết định thiên về tốc độ, cần bổ sung cảnh báo khi dữ liệu stale vượt ngưỡng SLA và cơ chế rollback policy bằng feature flags.
+Category page /category/electronics has tags:
+  → category-electronics, all-products
 
-### Q16. What is Workbox cache-first strategy and when should FE teams use it?
-**Độ khó / Difficulty:** 🟢 [Junior]
-- **Tổng Quan:** `Workbox cache-first strategy` là kỹ thuật quan trọng để cải thiện hiệu năng, độ ổn định và trải nghiệm người dùng ở frontend.
-- **Giải thích:** Interviewer kỳ vọng ứng viên mô tả đúng mục tiêu cốt lõi, giới hạn áp dụng, và liên hệ với `static assets optimization` như một tiêu chí kỹ thuật để ra quyết định.
-- **Ví dụ:** Fonts/icons dùng cache-first để giảm thời gian paint.
+When product 42 price changes:
+  purge tag "product-42"
+  → /products/42 purged ✓
+  → /category/electronics NOT purged (different tag)
 
-### Q17. How do you design Workbox cache-first strategy for a production SPA?
-**Độ khó / Difficulty:** 🟡 [Mid]
-- **Tổng Quan:** Khi thiết kế `Workbox cache-first strategy` cho production, cần tách concern thành kiến trúc, policy, observability, và quy trình rollout.
-- **Giải thích:** Câu trả lời tốt nên nêu lifecycle đầy đủ: khởi tạo, sử dụng, đồng bộ, invalidation, fallback khi lỗi, và đánh giá qua metrics thực tế. Đồng thời nêu rủi ro khi scale multi-team.
-- **Ví dụ:** Đặt expiration plugin để tránh cache phình to.
+When new product added to electronics:
+  purge tag "category-electronics"
+  → /products/42 purged ✓
+  → /category/electronics purged ✓
+```
 
-```ts
-// pseudo configuration used in interviews
-const policy = {
-  staleTime: 60_000,
-  cacheTime: 10 * 60_000,
-  retry: 2,
-  revalidateOnFocus: true,
+---
+
+### Q22. Design a multi-layer cache architecture for an e-commerce app.
+
+**🔴 Senior**
+
+**EN**: Multi-layer cache architecture optimizes for both speed and freshness. Each layer has different TTLs and invalidation strategies.
+
+**VI**: Kiến trúc cache nhiều tầng tối ưu cả tốc độ và freshness. Mỗi tầng có TTL và invalidation strategy khác nhau.
+
+```
+E-Commerce Multi-Layer Cache Architecture
+═══════════════════════════════════════════════════════════════
+
+Layer 1: Browser (per-user)
+┌─────────────────────────────────────────────────┐
+│  TanStack Query: staleTime=30s, gcTime=5min     │
+│  Service Worker: CacheFirst for images/fonts     │
+│  HTTP Cache: immutable for hashed assets         │
+└────────────────────┬────────────────────────────┘
+                     │ miss
+Layer 2: CDN Edge (shared, geo-distributed)
+┌────────────────────▼────────────────────────────┐
+│  Cloudflare: s-maxage=60, swr=30                │
+│  Cache-Tag per product/category for purge       │
+│  Edge Worker: A/B test routing                   │
+└────────────────────┬────────────────────────────┘
+                     │ miss
+Layer 3: API Gateway Cache (shared, region)
+┌────────────────────▼────────────────────────────┐
+│  Redis: TTL=300s for product listings            │
+│  Response cache: hash(endpoint+params+user-tier) │
+│  Stampede protection: lock + stale-serve         │
+└────────────────────┬────────────────────────────┘
+                     │ miss
+Layer 4: Origin Server + Database
+┌────────────────────▼────────────────────────────┐
+│  PostgreSQL with query cache                     │
+│  Materialized views for heavy aggregations       │
+└─────────────────────────────────────────────────┘
+```
+
+```typescript
+// Preventing cache stampede at API gateway level
+class CacheWithStampedeProtection {
+  private cache: Map<string, { data: unknown; expires: number }> = new Map();
+  private locks: Map<string, Promise<unknown>> = new Map();
+
+  async get<T>(key: string, fetcher: () => Promise<T>, ttlMs: number): Promise<T> {
+    const cached = this.cache.get(key);
+
+    // Fresh cache hit
+    if (cached && cached.expires > Date.now()) {
+      return cached.data as T;
+    }
+
+    // Check if another request is already fetching
+    const existingLock = this.locks.get(key);
+    if (existingLock) {
+      // Wait for the other request, serve stale if available
+      if (cached) return cached.data as T; // Stale-while-revalidate
+      return existingLock as Promise<T>;
+    }
+
+    // This request wins the lock — fetch fresh data
+    const fetchPromise = fetcher()
+      .then((data) => {
+        this.cache.set(key, { data, expires: Date.now() + ttlMs });
+        this.locks.delete(key);
+        return data;
+      })
+      .catch((err) => {
+        this.locks.delete(key);
+        if (cached) return cached.data as T; // Fallback to stale on error
+        throw err;
+      });
+
+    this.locks.set(key, fetchPromise);
+    return fetchPromise;
+  }
+}
+```
+
+🎯 **Interview Signal**: Biết thiết kế cache theo tầng với TTL khác nhau. Biết cache stampede và cách phòng tránh. Biết invalidation propagation qua các tầng.
+
+---
+
+### Q23. How do you handle cache consistency across multiple CDN PoPs?
+
+**🔴 Senior**
+
+**EN**: CDN has multiple Points of Presence (PoPs) worldwide. When you purge, the purge needs to propagate to all PoPs, which takes time (typically 1-30 seconds). During this window, different users may see different versions.
+
+**VI**: CDN có nhiều PoPs trên toàn thế giới. Khi purge, cần propagate đến tất cả PoPs → mất thời gian (1-30 giây). Trong window này, user khác nhau có thể thấy phiên bản khác nhau.
+
+```
+CDN PoP Consistency Problem
+═══════════════════════════════════════════
+
+Timeline after purge at t=0:
+  t=0    Origin purges cache
+  t=0.1  US-East PoP purged ✓
+  t=0.5  US-West PoP purged ✓
+  t=2    EU PoP purged ✓
+  t=5    Asia PoP purged ✓
+
+User in Asia at t=1 still sees old content!
+```
+
+**Mitigation strategies**:
+
+1. **Soft purge** (Fastly): mark as stale, serve stale while revalidating
+2. **Content versioning**: URL changes = instant invalidation everywhere
+3. **Short s-maxage + stale-while-revalidate**: reduces inconsistency window
+4. **Accept eventual consistency**: for non-critical content (blog, product descriptions)
+5. **Real-time via WebSocket**: for critical data (prices, stock), bypass CDN
+
+---
+
+### Section E: Architecture & Trade-offs
+
+---
+
+### Q24. What is cache stampede and how do you prevent it?
+
+**🟡 Mid**
+
+**EN**: Cache stampede (thundering herd) happens when a cached item expires and hundreds of concurrent requests all try to regenerate it simultaneously, overwhelming the origin server.
+
+**VI**: Cache stampede xảy ra khi cached item hết hạn và hàng trăm request đồng thời cùng cố fetch lại, làm quá tải origin server.
+
+```
+Cache Stampede
+═══════════════════════════════════════════
+
+Normal:    ──▮──▮──▮──▮──▮──────────────────────────
+           Cache serves all requests
+
+Stampede:  ──────────X (cache expires)
+           ──────────┬──→ Origin
+           ──────────┬──→ Origin   ← All at once!
+           ──────────┬──→ Origin
+           ──────────┬──→ Origin
+           ──────────┬──→ Origin
+                     └── 💥 Origin overwhelmed
+
+Fixed:     ──────────X (cache expires)
+           ──────────┬──→ Origin (lock holder)
+           ──────────├──→ stale cache (others wait)
+           ──────────├──→ stale cache
+           ──────────├──→ stale cache
+           ──────────└──→ fresh cache ✓ (lock released)
+```
+
+**Prevention strategies**:
+
+```typescript
+// Strategy 1: Stale-while-revalidate (HTTP level)
+// Cache-Control: max-age=60, stale-while-revalidate=30
+// → After 60s, serve stale while ONE request revalidates
+
+// Strategy 2: Lock-based (application level)
+async function getWithLock<T>(key: string, fetcher: () => Promise<T>, redis: Redis): Promise<T> {
+  // Try cache first
+  const cached = await redis.get(key);
+  if (cached) return JSON.parse(cached);
+
+  // Try to acquire lock
+  const lockKey = `lock:${key}`;
+  const acquired = await redis.set(lockKey, "1", "NX", "EX", 10);
+
+  if (acquired) {
+    // This request fetches fresh data
+    const data = await fetcher();
+    await redis.set(key, JSON.stringify(data), "EX", 60);
+    await redis.del(lockKey);
+    return data;
+  }
+
+  // Another request holds the lock — wait and retry
+  await new Promise((r) => setTimeout(r, 100));
+  return getWithLock(key, fetcher, redis);
+}
+
+// Strategy 3: Jittered expiry (prevent synchronized expiration)
+function jitteredTTL(baseTTL: number): number {
+  const jitter = Math.random() * 0.2 * baseTTL; // ±20%
+  return baseTTL + jitter;
+}
+```
+
+🧠 **Memory Hook**: "Stampede = 100 horses through one gate. Lock = one horse goes, others wait."
+
+---
+
+### Q25. How do you monitor cache hit rates and debug cache misses?
+
+**🔴 Senior**
+
+**EN**: Monitoring cache effectiveness is critical for performance optimization. You need visibility into hit rates, miss reasons, and cache size across all layers.
+
+**VI**: Giám sát hiệu quả cache rất quan trọng cho tối ưu performance. Cần visibility vào hit rates, lý do miss, và cache size ở mọi tầng.
+
+```typescript
+// 1. CDN: Check via response headers
+// Cache-Status: "Cloudflare"; hit  (or miss, expired, stale)
+// Cf-Cache-Status: HIT | MISS | EXPIRED | STALE | DYNAMIC
+// Age: 45  (seconds since cached)
+
+// 2. Browser: Navigation Timing API
+const paintEntries = performance.getEntriesByType("resource");
+for (const entry of paintEntries as PerformanceResourceTiming[]) {
+  const cacheInfo = {
+    name: entry.name,
+    // transferSize = 0 means served from cache
+    fromCache: entry.transferSize === 0,
+    // decodedBodySize > 0 but transferSize = 0 → disk/memory cache
+    fromDiskCache: entry.transferSize === 0 && entry.decodedBodySize > 0,
+    duration: entry.duration,
+  };
+  console.log(cacheInfo);
+}
+
+// 3. TanStack Query: custom logger
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000,
+    },
+  },
+});
+
+// Monitor cache effectiveness
+setInterval(() => {
+  const cache = queryClient.getQueryCache();
+  const queries = cache.getAll();
+  const stats = {
+    total: queries.length,
+    fresh: queries.filter((q) => !q.isStale()).length,
+    stale: queries.filter((q) => q.isStale()).length,
+    fetching: queries.filter((q) => q.state.fetchStatus === "fetching").length,
+    error: queries.filter((q) => q.state.status === "error").length,
+  };
+  console.log("[QueryCache Stats]", stats);
+}, 30_000);
+
+// 4. Service Worker: cache hit tracking
+self.addEventListener("fetch", (event: FetchEvent) => {
+  event.respondWith(
+    caches.match(event.request).then((cached) => {
+      if (cached) {
+        // Track cache hit
+        analytics.track("sw_cache_hit", { url: event.request.url });
+        return cached;
+      }
+      // Track cache miss
+      analytics.track("sw_cache_miss", { url: event.request.url });
+      return fetch(event.request);
+    }),
+  );
+});
+```
+
+---
+
+### Q26. Design a cache warming strategy for a new deployment.
+
+**🔴 Senior**
+
+**EN**: After deploying new code, caches are empty (cold start). Cache warming pre-populates caches to avoid slow first requests and potential stampedes.
+
+**VI**: Sau deploy code mới, caches trống (cold start). Cache warming pre-populate caches để tránh request đầu tiên chậm và stampede.
+
+```typescript
+// Cache warming script — run post-deployment
+// scripts/warm-cache.ts
+
+const CRITICAL_URLS = [
+  "/",
+  "/products",
+  "/categories/electronics",
+  "/categories/clothing",
+  // Top 50 product pages from analytics
+  ...topProductUrls,
+];
+
+async function warmCache(): Promise<void> {
+  console.log(`Warming ${CRITICAL_URLS.length} URLs...`);
+
+  // Warm in batches to not overwhelm origin
+  const BATCH_SIZE = 10;
+  for (let i = 0; i < CRITICAL_URLS.length; i += BATCH_SIZE) {
+    const batch = CRITICAL_URLS.slice(i, i + BATCH_SIZE);
+    await Promise.all(
+      batch.map(async (url) => {
+        const fullUrl = `https://example.com${url}`;
+        try {
+          const res = await fetch(fullUrl, {
+            headers: {
+              "X-Cache-Warm": "true", // For logging
+              "User-Agent": "CacheWarmer/1.0",
+            },
+          });
+          console.log(`  ${res.status} ${url} (${res.headers.get("cf-cache-status")})`);
+        } catch (err) {
+          console.error(`  FAIL ${url}: ${err}`);
+        }
+      }),
+    );
+
+    // Rate limit between batches
+    await new Promise((r) => setTimeout(r, 500));
+  }
+
+  console.log("Cache warming complete.");
+}
+
+warmCache();
+```
+
+```yaml
+# GitHub Actions: warm cache after deploy
+name: Deploy & Warm Cache
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm ci && npm run build
+      - run: npx wrangler deploy # Deploy to Cloudflare
+
+      - name: Warm CDN Cache
+        run: npx tsx scripts/warm-cache.ts
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+```
+
+---
+
+### Q27. Case Study: Shopee Flash Sale — millions of users hit the same page. Design the caching.
+
+**🔴 Senior**
+
+**EN**: Flash sale = millions of concurrent users hitting the same product pages. The challenge is balancing freshness (real-time stock) with speed (not crushing origin).
+
+**VI**: Flash sale = hàng triệu user đồng thời truy cập cùng product pages. Thử thách: cân bằng freshness (stock real-time) với speed (không crush origin).
+
+```
+Flash Sale Caching Architecture
+═══════════════════════════════════════════════════════════════
+
+                    Static content        Dynamic content
+                    (page shell, images)  (stock, price)
+                         │                     │
+                    ┌────▼────┐           ┌────▼────┐
+                    │  CDN    │           │  Skip   │
+                    │  1 year │           │  CDN    │
+                    │  immut. │           │         │
+                    └─────────┘           └────┬────┘
+                                               │
+                                          ┌────▼────┐
+                                          │  Edge   │
+                                          │  Worker │
+                                          │  50ms   │
+                                          │  Redis  │
+                                          └────┬────┘
+                                               │
+                                          ┌────▼────┐
+                                          │ WebSock │
+                                          │ for     │
+                                          │ real-   │
+                                          │ time    │
+                                          │ stock   │
+                                          └─────────┘
+```
+
+```typescript
+// Strategy: Split static shell from dynamic data
+
+// 1. Page shell: aggressively cached at CDN
+// Cache-Control: public, s-maxage=86400, immutable
+// → Product name, images, description rarely change
+
+// 2. Stock & price: real-time via WebSocket + Edge Redis
+// Cloudflare Worker with Redis (Upstash)
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const url = new URL(request.url);
+
+    if (url.pathname.startsWith("/api/stock/")) {
+      const productId = url.pathname.split("/").pop();
+
+      // Check Edge Redis (Upstash) — < 5ms
+      const stock = await env.REDIS.get(`stock:${productId}`);
+
+      if (stock !== null) {
+        return new Response(JSON.stringify({ stock: Number(stock), cached: true }), {
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-store", // Never cache stock
+            "Access-Control-Allow-Origin": "*",
+          },
+        });
+      }
+
+      // Fallback to origin
+      return fetch(request);
+    }
+  },
 };
 
-function shouldUseFallback(isOnline: boolean, hasCache: boolean) {
-  return !isOnline && hasCache;
+// 3. Client: optimistic UI + real-time WebSocket
+function useFlashSaleStock(productId: string) {
+  const [stock, setStock] = useState<number | null>(null);
+
+  // Initial fetch via TanStack Query
+  const { data } = useQuery({
+    queryKey: ["stock", productId],
+    queryFn: () => fetch(`/api/stock/${productId}`).then((r) => r.json()),
+    refetchInterval: 5_000, // Poll every 5s as fallback
+  });
+
+  // Real-time updates via WebSocket
+  useEffect(() => {
+    const ws = new WebSocket(`wss://ws.example.com/stock/${productId}`);
+    ws.onmessage = (event) => {
+      const update = JSON.parse(event.data);
+      setStock(update.stock);
+    };
+    return () => ws.close();
+  }, [productId]);
+
+  return stock ?? data?.stock ?? null;
 }
 ```
 
-### Q18. What are trade-offs of Workbox cache-first strategy at scale?
-**Độ khó / Difficulty:** 🔴 [Senior]
-- **Tổng Quan:** Ở quy mô lớn, `Workbox cache-first strategy` luôn là bài toán cân bằng giữa performance, correctness, security, và chi phí vận hành.
-- **Giải thích:** Ứng viên senior nên nêu được failure modes, cách thiết kế guardrails, quy trình incident response, cũng như chiến lược migration khi policy hiện tại không còn phù hợp.
-- **Ví dụ:** Nếu quyết định thiên về tốc độ, cần bổ sung cảnh báo khi dữ liệu stale vượt ngưỡng SLA và cơ chế rollback policy bằng feature flags.
-
-### Q19. What is Workbox network-first strategy and when should FE teams use it?
-**Độ khó / Difficulty:** 🟢 [Junior]
-- **Tổng Quan:** `Workbox network-first strategy` là kỹ thuật quan trọng để cải thiện hiệu năng, độ ổn định và trải nghiệm người dùng ở frontend.
-- **Giải thích:** Interviewer kỳ vọng ứng viên mô tả đúng mục tiêu cốt lõi, giới hạn áp dụng, và liên hệ với `freshness-first dynamic data` như một tiêu chí kỹ thuật để ra quyết định.
-- **Ví dụ:** Profile endpoint ưu tiên network-first để dữ liệu mới hơn.
-
-### Q20. How do you design Workbox network-first strategy for a production SPA?
-**Độ khó / Difficulty:** 🟡 [Mid]
-- **Tổng Quan:** Khi thiết kế `Workbox network-first strategy` cho production, cần tách concern thành kiến trúc, policy, observability, và quy trình rollout.
-- **Giải thích:** Câu trả lời tốt nên nêu lifecycle đầy đủ: khởi tạo, sử dụng, đồng bộ, invalidation, fallback khi lỗi, và đánh giá qua metrics thực tế. Đồng thời nêu rủi ro khi scale multi-team.
-- **Ví dụ:** Khi timeout network, fallback cache để tránh blank UI.
-
-### Q21. What are trade-offs of Workbox network-first strategy at scale?
-**Độ khó / Difficulty:** 🔴 [Senior]
-- **Tổng Quan:** Ở quy mô lớn, `Workbox network-first strategy` luôn là bài toán cân bằng giữa performance, correctness, security, và chi phí vận hành.
-- **Giải thích:** Ứng viên senior nên nêu được failure modes, cách thiết kế guardrails, quy trình incident response, cũng như chiến lược migration khi policy hiện tại không còn phù hợp.
-- **Ví dụ:** Nếu quyết định thiên về tốc độ, cần bổ sung cảnh báo khi dữ liệu stale vượt ngưỡng SLA và cơ chế rollback policy bằng feature flags.
-
-### Q22. What is stale-while-revalidate strategy and when should FE teams use it?
-**Độ khó / Difficulty:** 🟢 [Junior]
-- **Tổng Quan:** `stale-while-revalidate strategy` là kỹ thuật quan trọng để cải thiện hiệu năng, độ ổn định và trải nghiệm người dùng ở frontend.
-- **Giải thích:** Interviewer kỳ vọng ứng viên mô tả đúng mục tiêu cốt lõi, giới hạn áp dụng, và liên hệ với `fast response + background refresh` như một tiêu chí kỹ thuật để ra quyết định.
-- **Ví dụ:** Feed hiển thị nhanh từ cache rồi update ngầm.
-
-### Q23. How do you design stale-while-revalidate strategy for a production SPA?
-**Độ khó / Difficulty:** 🟡 [Mid]
-- **Tổng Quan:** Khi thiết kế `stale-while-revalidate strategy` cho production, cần tách concern thành kiến trúc, policy, observability, và quy trình rollout.
-- **Giải thích:** Câu trả lời tốt nên nêu lifecycle đầy đủ: khởi tạo, sử dụng, đồng bộ, invalidation, fallback khi lỗi, và đánh giá qua metrics thực tế. Đồng thời nêu rủi ro khi scale multi-team.
-- **Ví dụ:** Hiển thị badge 'Updated' khi background refresh thành công.
-
-### Q24. What are trade-offs of stale-while-revalidate strategy at scale?
-**Độ khó / Difficulty:** 🔴 [Senior]
-- **Tổng Quan:** Ở quy mô lớn, `stale-while-revalidate strategy` luôn là bài toán cân bằng giữa performance, correctness, security, và chi phí vận hành.
-- **Giải thích:** Ứng viên senior nên nêu được failure modes, cách thiết kế guardrails, quy trình incident response, cũng như chiến lược migration khi policy hiện tại không còn phù hợp.
-- **Ví dụ:** Nếu quyết định thiên về tốc độ, cần bổ sung cảnh báo khi dữ liệu stale vượt ngưỡng SLA và cơ chế rollback policy bằng feature flags.
-
-```ts
-type Meta = { version: string; expiresAt: number; etag?: string };
-const isExpired = (meta: Meta, now = Date.now()) => now > meta.expiresAt;
-
-function isCompatible(meta: Meta, expectedVersion: string) {
-  return meta.version === expectedVersion;
-}
-```
-
-### Q25. What is background sync queue and when should FE teams use it?
-**Độ khó / Difficulty:** 🟢 [Junior]
-- **Tổng Quan:** `background sync queue` là kỹ thuật quan trọng để cải thiện hiệu năng, độ ổn định và trải nghiệm người dùng ở frontend.
-- **Giải thích:** Interviewer kỳ vọng ứng viên mô tả đúng mục tiêu cốt lõi, giới hạn áp dụng, và liên hệ với `offline write recovery` như một tiêu chí kỹ thuật để ra quyết định.
-- **Ví dụ:** Request tạo comment được queue khi offline.
-
-### Q26. How do you design background sync queue for a production SPA?
-**Độ khó / Difficulty:** 🟡 [Mid]
-- **Tổng Quan:** Khi thiết kế `background sync queue` cho production, cần tách concern thành kiến trúc, policy, observability, và quy trình rollout.
-- **Giải thích:** Câu trả lời tốt nên nêu lifecycle đầy đủ: khởi tạo, sử dụng, đồng bộ, invalidation, fallback khi lỗi, và đánh giá qua metrics thực tế. Đồng thời nêu rủi ro khi scale multi-team.
-- **Ví dụ:** Replay queue khi online và thông báo trạng thái đồng bộ.
-
-```ts
-// pseudo configuration used in interviews
-const policy = {
-  staleTime: 60_000,
-  cacheTime: 10 * 60_000,
-  retry: 2,
-  revalidateOnFocus: true,
-};
-
-function shouldUseFallback(isOnline: boolean, hasCache: boolean) {
-  return !isOnline && hasCache;
-}
-```
-
-### Q27. What are trade-offs of background sync queue at scale?
-**Độ khó / Difficulty:** 🔴 [Senior]
-- **Tổng Quan:** Ở quy mô lớn, `background sync queue` luôn là bài toán cân bằng giữa performance, correctness, security, và chi phí vận hành.
-- **Giải thích:** Ứng viên senior nên nêu được failure modes, cách thiết kế guardrails, quy trình incident response, cũng như chiến lược migration khi policy hiện tại không còn phù hợp.
-- **Ví dụ:** Nếu quyết định thiên về tốc độ, cần bổ sung cảnh báo khi dữ liệu stale vượt ngưỡng SLA và cơ chế rollback policy bằng feature flags.
-
-### Q28. What is React Query cache lifecycle and when should FE teams use it?
-**Độ khó / Difficulty:** 🟢 [Junior]
-- **Tổng Quan:** `React Query cache lifecycle` là kỹ thuật quan trọng để cải thiện hiệu năng, độ ổn định và trải nghiệm người dùng ở frontend.
-- **Giải thích:** Interviewer kỳ vọng ứng viên mô tả đúng mục tiêu cốt lõi, giới hạn áp dụng, và liên hệ với `staleTime/gcTime/invalidate` như một tiêu chí kỹ thuật để ra quyết định.
-- **Ví dụ:** Mutation thành công thì invalidate query tương ứng.
-
-### Q29. How do you design React Query cache lifecycle for a production SPA?
-**Độ khó / Difficulty:** 🟡 [Mid]
-- **Tổng Quan:** Khi thiết kế `React Query cache lifecycle` cho production, cần tách concern thành kiến trúc, policy, observability, và quy trình rollout.
-- **Giải thích:** Câu trả lời tốt nên nêu lifecycle đầy đủ: khởi tạo, sử dụng, đồng bộ, invalidation, fallback khi lỗi, và đánh giá qua metrics thực tế. Đồng thời nêu rủi ro khi scale multi-team.
-- **Ví dụ:** Tune staleTime theo business domain thay vì dùng một giá trị chung.
-
-### Q30. What are trade-offs of React Query cache lifecycle at scale?
-**Độ khó / Difficulty:** 🔴 [Senior]
-- **Tổng Quan:** Ở quy mô lớn, `React Query cache lifecycle` luôn là bài toán cân bằng giữa performance, correctness, security, và chi phí vận hành.
-- **Giải thích:** Ứng viên senior nên nêu được failure modes, cách thiết kế guardrails, quy trình incident response, cũng như chiến lược migration khi policy hiện tại không còn phù hợp.
-- **Ví dụ:** Nếu quyết định thiên về tốc độ, cần bổ sung cảnh báo khi dữ liệu stale vượt ngưỡng SLA và cơ chế rollback policy bằng feature flags.
-
-### Q31. What is React Query prefetch and when should FE teams use it?
-**Độ khó / Difficulty:** 🟢 [Junior]
-- **Tổng Quan:** `React Query prefetch` là kỹ thuật quan trọng để cải thiện hiệu năng, độ ổn định và trải nghiệm người dùng ở frontend.
-- **Giải thích:** Interviewer kỳ vọng ứng viên mô tả đúng mục tiêu cốt lõi, giới hạn áp dụng, và liên hệ với `prefetchQuery + hydration` như một tiêu chí kỹ thuật để ra quyết định.
-- **Ví dụ:** Prefetch dữ liệu trang kế tiếp khi user hover link.
-
-### Q32. How do you design React Query prefetch for a production SPA?
-**Độ khó / Difficulty:** 🟡 [Mid]
-- **Tổng Quan:** Khi thiết kế `React Query prefetch` cho production, cần tách concern thành kiến trúc, policy, observability, và quy trình rollout.
-- **Giải thích:** Câu trả lời tốt nên nêu lifecycle đầy đủ: khởi tạo, sử dụng, đồng bộ, invalidation, fallback khi lỗi, và đánh giá qua metrics thực tế. Đồng thời nêu rủi ro khi scale multi-team.
-- **Ví dụ:** Hydrate dữ liệu prefetched để tránh loading flash.
-
-### Q33. What are trade-offs of React Query prefetch at scale?
-**Độ khó / Difficulty:** 🔴 [Senior]
-- **Tổng Quan:** Ở quy mô lớn, `React Query prefetch` luôn là bài toán cân bằng giữa performance, correctness, security, và chi phí vận hành.
-- **Giải thích:** Ứng viên senior nên nêu được failure modes, cách thiết kế guardrails, quy trình incident response, cũng như chiến lược migration khi policy hiện tại không còn phù hợp.
-- **Ví dụ:** Nếu quyết định thiên về tốc độ, cần bổ sung cảnh báo khi dữ liệu stale vượt ngưỡng SLA và cơ chế rollback policy bằng feature flags.
-
-### Q34. What is SWR cache model and when should FE teams use it?
-**Độ khó / Difficulty:** 🟢 [Junior]
-- **Tổng Quan:** `SWR cache model` là kỹ thuật quan trọng để cải thiện hiệu năng, độ ổn định và trải nghiệm người dùng ở frontend.
-- **Giải thích:** Interviewer kỳ vọng ứng viên mô tả đúng mục tiêu cốt lõi, giới hạn áp dụng, và liên hệ với `revalidate on focus/reconnect` như một tiêu chí kỹ thuật để ra quyết định.
-- **Ví dụ:** Khi user quay lại tab, SWR tự làm mới dữ liệu.
-
-### Q35. How do you design SWR cache model for a production SPA?
-**Độ khó / Difficulty:** 🟡 [Mid]
-- **Tổng Quan:** Khi thiết kế `SWR cache model` cho production, cần tách concern thành kiến trúc, policy, observability, và quy trình rollout.
-- **Giải thích:** Câu trả lời tốt nên nêu lifecycle đầy đủ: khởi tạo, sử dụng, đồng bộ, invalidation, fallback khi lỗi, và đánh giá qua metrics thực tế. Đồng thời nêu rủi ro khi scale multi-team.
-- **Ví dụ:** Dùng dedupingInterval để tránh spam request.
-
-```ts
-// pseudo configuration used in interviews
-const policy = {
-  staleTime: 60_000,
-  cacheTime: 10 * 60_000,
-  retry: 2,
-  revalidateOnFocus: true,
-};
-
-function shouldUseFallback(isOnline: boolean, hasCache: boolean) {
-  return !isOnline && hasCache;
-}
-```
-
-### Q36. What are trade-offs of SWR cache model at scale?
-**Độ khó / Difficulty:** 🔴 [Senior]
-- **Tổng Quan:** Ở quy mô lớn, `SWR cache model` luôn là bài toán cân bằng giữa performance, correctness, security, và chi phí vận hành.
-- **Giải thích:** Ứng viên senior nên nêu được failure modes, cách thiết kế guardrails, quy trình incident response, cũng như chiến lược migration khi policy hiện tại không còn phù hợp.
-- **Ví dụ:** Nếu quyết định thiên về tốc độ, cần bổ sung cảnh báo khi dữ liệu stale vượt ngưỡng SLA và cơ chế rollback policy bằng feature flags.
-
-```ts
-type Meta = { version: string; expiresAt: number; etag?: string };
-const isExpired = (meta: Meta, now = Date.now()) => now > meta.expiresAt;
-
-function isCompatible(meta: Meta, expectedVersion: string) {
-  return meta.version === expectedVersion;
-}
-```
-
-### Q37. What is Apollo normalized cache and when should FE teams use it?
-**Độ khó / Difficulty:** 🟢 [Junior]
-- **Tổng Quan:** `Apollo normalized cache` là kỹ thuật quan trọng để cải thiện hiệu năng, độ ổn định và trải nghiệm người dùng ở frontend.
-- **Giải thích:** Interviewer kỳ vọng ứng viên mô tả đúng mục tiêu cốt lõi, giới hạn áp dụng, và liên hệ với `entity identity + field policy` như một tiêu chí kỹ thuật để ra quyết định.
-- **Ví dụ:** Entity User cập nhật một chỗ phản ánh toàn app.
-
-### Q38. How do you design Apollo normalized cache for a production SPA?
-**Độ khó / Difficulty:** 🟡 [Mid]
-- **Tổng Quan:** Khi thiết kế `Apollo normalized cache` cho production, cần tách concern thành kiến trúc, policy, observability, và quy trình rollout.
-- **Giải thích:** Câu trả lời tốt nên nêu lifecycle đầy đủ: khởi tạo, sử dụng, đồng bộ, invalidation, fallback khi lỗi, và đánh giá qua metrics thực tế. Đồng thời nêu rủi ro khi scale multi-team.
-- **Ví dụ:** Định nghĩa merge policy cho pagination fields.
-
-### Q39. What are trade-offs of Apollo normalized cache at scale?
-**Độ khó / Difficulty:** 🔴 [Senior]
-- **Tổng Quan:** Ở quy mô lớn, `Apollo normalized cache` luôn là bài toán cân bằng giữa performance, correctness, security, và chi phí vận hành.
-- **Giải thích:** Ứng viên senior nên nêu được failure modes, cách thiết kế guardrails, quy trình incident response, cũng như chiến lược migration khi policy hiện tại không còn phù hợp.
-- **Ví dụ:** Nếu quyết định thiên về tốc độ, cần bổ sung cảnh báo khi dữ liệu stale vượt ngưỡng SLA và cơ chế rollback policy bằng feature flags.
-
-### Q40. What is Apollo cache invalidation and when should FE teams use it?
-**Độ khó / Difficulty:** 🟢 [Junior]
-- **Tổng Quan:** `Apollo cache invalidation` là kỹ thuật quan trọng để cải thiện hiệu năng, độ ổn định và trải nghiệm người dùng ở frontend.
-- **Giải thích:** Interviewer kỳ vọng ứng viên mô tả đúng mục tiêu cốt lõi, giới hạn áp dụng, và liên hệ với `evict + gc + refetch` như một tiêu chí kỹ thuật để ra quyết định.
-- **Ví dụ:** Evict item bị xóa để danh sách không hiển thị ghost data.
-
-### Q41. How do you design Apollo cache invalidation for a production SPA?
-**Độ khó / Difficulty:** 🟡 [Mid]
-- **Tổng Quan:** Khi thiết kế `Apollo cache invalidation` cho production, cần tách concern thành kiến trúc, policy, observability, và quy trình rollout.
-- **Giải thích:** Câu trả lời tốt nên nêu lifecycle đầy đủ: khởi tạo, sử dụng, đồng bộ, invalidation, fallback khi lỗi, và đánh giá qua metrics thực tế. Đồng thời nêu rủi ro khi scale multi-team.
-- **Ví dụ:** Dùng cache.modify cho update cục bộ tránh refetch nặng.
-
-### Q42. What are trade-offs of Apollo cache invalidation at scale?
-**Độ khó / Difficulty:** 🔴 [Senior]
-- **Tổng Quan:** Ở quy mô lớn, `Apollo cache invalidation` luôn là bài toán cân bằng giữa performance, correctness, security, và chi phí vận hành.
-- **Giải thích:** Ứng viên senior nên nêu được failure modes, cách thiết kế guardrails, quy trình incident response, cũng như chiến lược migration khi policy hiện tại không còn phù hợp.
-- **Ví dụ:** Nếu quyết định thiên về tốc độ, cần bổ sung cảnh báo khi dữ liệu stale vượt ngưỡng SLA và cơ chế rollback policy bằng feature flags.
-
-### Q43. What is IndexedDB persistence and when should FE teams use it?
-**Độ khó / Difficulty:** 🟢 [Junior]
-- **Tổng Quan:** `IndexedDB persistence` là kỹ thuật quan trọng để cải thiện hiệu năng, độ ổn định và trải nghiệm người dùng ở frontend.
-- **Giải thích:** Interviewer kỳ vọng ứng viên mô tả đúng mục tiêu cốt lõi, giới hạn áp dụng, và liên hệ với `large structured client storage` như một tiêu chí kỹ thuật để ra quyết định.
-- **Ví dụ:** Lưu draft form lớn và attachment metadata ở IndexedDB.
-
-### Q44. How do you design IndexedDB persistence for a production SPA?
-**Độ khó / Difficulty:** 🟡 [Mid]
-- **Tổng Quan:** Khi thiết kế `IndexedDB persistence` cho production, cần tách concern thành kiến trúc, policy, observability, và quy trình rollout.
-- **Giải thích:** Câu trả lời tốt nên nêu lifecycle đầy đủ: khởi tạo, sử dụng, đồng bộ, invalidation, fallback khi lỗi, và đánh giá qua metrics thực tế. Đồng thời nêu rủi ro khi scale multi-team.
-- **Ví dụ:** Thiết kế schema version để hỗ trợ migrate dữ liệu cũ.
-
-```ts
-// pseudo configuration used in interviews
-const policy = {
-  staleTime: 60_000,
-  cacheTime: 10 * 60_000,
-  retry: 2,
-  revalidateOnFocus: true,
-};
-
-function shouldUseFallback(isOnline: boolean, hasCache: boolean) {
-  return !isOnline && hasCache;
-}
-```
-
-### Q45. What are trade-offs of IndexedDB persistence at scale?
-**Độ khó / Difficulty:** 🔴 [Senior]
-- **Tổng Quan:** Ở quy mô lớn, `IndexedDB persistence` luôn là bài toán cân bằng giữa performance, correctness, security, và chi phí vận hành.
-- **Giải thích:** Ứng viên senior nên nêu được failure modes, cách thiết kế guardrails, quy trình incident response, cũng như chiến lược migration khi policy hiện tại không còn phù hợp.
-- **Ví dụ:** Nếu quyết định thiên về tốc độ, cần bổ sung cảnh báo khi dữ liệu stale vượt ngưỡng SLA và cơ chế rollback policy bằng feature flags.
-
-### Q46. What is cache invalidation in SPA and when should FE teams use it?
-**Độ khó / Difficulty:** 🟢 [Junior]
-- **Tổng Quan:** `cache invalidation in SPA` là kỹ thuật quan trọng để cải thiện hiệu năng, độ ổn định và trải nghiệm người dùng ở frontend.
-- **Giải thích:** Interviewer kỳ vọng ứng viên mô tả đúng mục tiêu cốt lõi, giới hạn áp dụng, và liên hệ với `event-driven and key-based invalidation` như một tiêu chí kỹ thuật để ra quyết định.
-- **Ví dụ:** Đổi organization thì invalidate toàn bộ query phụ thuộc orgId.
-
-### Q47. How do you design cache invalidation in SPA for a production SPA?
-**Độ khó / Difficulty:** 🟡 [Mid]
-- **Tổng Quan:** Khi thiết kế `cache invalidation in SPA` cho production, cần tách concern thành kiến trúc, policy, observability, và quy trình rollout.
-- **Giải thích:** Câu trả lời tốt nên nêu lifecycle đầy đủ: khởi tạo, sử dụng, đồng bộ, invalidation, fallback khi lỗi, và đánh giá qua metrics thực tế. Đồng thời nêu rủi ro khi scale multi-team.
-- **Ví dụ:** Phân nhóm query keys để invalidation theo domain rõ ràng.
-
-### Q48. What are trade-offs of cache invalidation in SPA at scale?
-**Độ khó / Difficulty:** 🔴 [Senior]
-- **Tổng Quan:** Ở quy mô lớn, `cache invalidation in SPA` luôn là bài toán cân bằng giữa performance, correctness, security, và chi phí vận hành.
-- **Giải thích:** Ứng viên senior nên nêu được failure modes, cách thiết kế guardrails, quy trình incident response, cũng như chiến lược migration khi policy hiện tại không còn phù hợp.
-- **Ví dụ:** Nếu quyết định thiên về tốc độ, cần bổ sung cảnh báo khi dữ liệu stale vượt ngưỡng SLA và cơ chế rollback policy bằng feature flags.
-
-```ts
-type Meta = { version: string; expiresAt: number; etag?: string };
-const isExpired = (meta: Meta, now = Date.now()) => now > meta.expiresAt;
-
-function isCompatible(meta: Meta, expectedVersion: string) {
-  return meta.version === expectedVersion;
-}
-```
-
-### Q49. What is optimistic updates and when should FE teams use it?
-**Độ khó / Difficulty:** 🟢 [Junior]
-- **Tổng Quan:** `optimistic updates` là kỹ thuật quan trọng để cải thiện hiệu năng, độ ổn định và trải nghiệm người dùng ở frontend.
-- **Giải thích:** Interviewer kỳ vọng ứng viên mô tả đúng mục tiêu cốt lõi, giới hạn áp dụng, và liên hệ với `predictive UI update + rollback` như một tiêu chí kỹ thuật để ra quyết định.
-- **Ví dụ:** Like tăng ngay để UX mượt rồi rollback nếu lỗi.
-
-### Q50. How do you design optimistic updates for a production SPA?
-**Độ khó / Difficulty:** 🟡 [Mid]
-- **Tổng Quan:** Khi thiết kế `optimistic updates` cho production, cần tách concern thành kiến trúc, policy, observability, và quy trình rollout.
-- **Giải thích:** Câu trả lời tốt nên nêu lifecycle đầy đủ: khởi tạo, sử dụng, đồng bộ, invalidation, fallback khi lỗi, và đánh giá qua metrics thực tế. Đồng thời nêu rủi ro khi scale multi-team.
-- **Ví dụ:** Gắn mutation id để nhận diện update pending.
-
-### Q51. What are trade-offs of optimistic updates at scale?
-**Độ khó / Difficulty:** 🔴 [Senior]
-- **Tổng Quan:** Ở quy mô lớn, `optimistic updates` luôn là bài toán cân bằng giữa performance, correctness, security, và chi phí vận hành.
-- **Giải thích:** Ứng viên senior nên nêu được failure modes, cách thiết kế guardrails, quy trình incident response, cũng như chiến lược migration khi policy hiện tại không còn phù hợp.
-- **Ví dụ:** Nếu quyết định thiên về tốc độ, cần bổ sung cảnh báo khi dữ liệu stale vượt ngưỡng SLA và cơ chế rollback policy bằng feature flags.
-
-### Q52. What is prefetching strategies and when should FE teams use it?
-**Độ khó / Difficulty:** 🟢 [Junior]
-- **Tổng Quan:** `prefetching strategies` là kỹ thuật quan trọng để cải thiện hiệu năng, độ ổn định và trải nghiệm người dùng ở frontend.
-- **Giải thích:** Interviewer kỳ vọng ứng viên mô tả đúng mục tiêu cốt lõi, giới hạn áp dụng, và liên hệ với `route/data prefetch` như một tiêu chí kỹ thuật để ra quyết định.
-- **Ví dụ:** Prefetch route checkout khi gần hoàn tất giỏ hàng.
-
-### Q53. How do you design prefetching strategies for a production SPA?
-**Độ khó / Difficulty:** 🟡 [Mid]
-- **Tổng Quan:** Khi thiết kế `prefetching strategies` cho production, cần tách concern thành kiến trúc, policy, observability, và quy trình rollout.
-- **Giải thích:** Câu trả lời tốt nên nêu lifecycle đầy đủ: khởi tạo, sử dụng, đồng bộ, invalidation, fallback khi lỗi, và đánh giá qua metrics thực tế. Đồng thời nêu rủi ro khi scale multi-team.
-- **Ví dụ:** Giới hạn prefetch theo network condition để tránh lãng phí.
-
-```ts
-// pseudo configuration used in interviews
-const policy = {
-  staleTime: 60_000,
-  cacheTime: 10 * 60_000,
-  retry: 2,
-  revalidateOnFocus: true,
-};
-
-function shouldUseFallback(isOnline: boolean, hasCache: boolean) {
-  return !isOnline && hasCache;
-}
-```
-
-### Q54. What are trade-offs of prefetching strategies at scale?
-**Độ khó / Difficulty:** 🔴 [Senior]
-- **Tổng Quan:** Ở quy mô lớn, `prefetching strategies` luôn là bài toán cân bằng giữa performance, correctness, security, và chi phí vận hành.
-- **Giải thích:** Ứng viên senior nên nêu được failure modes, cách thiết kế guardrails, quy trình incident response, cũng như chiến lược migration khi policy hiện tại không còn phù hợp.
-- **Ví dụ:** Nếu quyết định thiên về tốc độ, cần bổ sung cảnh báo khi dữ liệu stale vượt ngưỡng SLA và cơ chế rollback policy bằng feature flags.
-
-### Q55. What is preloading critical resources and when should FE teams use it?
-**Độ khó / Difficulty:** 🟢 [Junior]
-- **Tổng Quan:** `preloading critical resources` là kỹ thuật quan trọng để cải thiện hiệu năng, độ ổn định và trải nghiệm người dùng ở frontend.
-- **Giải thích:** Interviewer kỳ vọng ứng viên mô tả đúng mục tiêu cốt lõi, giới hạn áp dụng, và liên hệ với `rel=preload/preconnect` như một tiêu chí kỹ thuật để ra quyết định.
-- **Ví dụ:** Preconnect CDN font để giảm handshake delay.
-
-### Q56. How do you design preloading critical resources for a production SPA?
-**Độ khó / Difficulty:** 🟡 [Mid]
-- **Tổng Quan:** Khi thiết kế `preloading critical resources` cho production, cần tách concern thành kiến trúc, policy, observability, và quy trình rollout.
-- **Giải thích:** Câu trả lời tốt nên nêu lifecycle đầy đủ: khởi tạo, sử dụng, đồng bộ, invalidation, fallback khi lỗi, và đánh giá qua metrics thực tế. Đồng thời nêu rủi ro khi scale multi-team.
-- **Ví dụ:** Chỉ preload tài nguyên thực sự critical cho above-the-fold.
-
-### Q57. What are trade-offs of preloading critical resources at scale?
-**Độ khó / Difficulty:** 🔴 [Senior]
-- **Tổng Quan:** Ở quy mô lớn, `preloading critical resources` luôn là bài toán cân bằng giữa performance, correctness, security, và chi phí vận hành.
-- **Giải thích:** Ứng viên senior nên nêu được failure modes, cách thiết kế guardrails, quy trình incident response, cũng như chiến lược migration khi policy hiện tại không còn phù hợp.
-- **Ví dụ:** Nếu quyết định thiên về tốc độ, cần bổ sung cảnh báo khi dữ liệu stale vượt ngưỡng SLA và cơ chế rollback policy bằng feature flags.
-
-### Q58. What is memory caching patterns and when should FE teams use it?
-**Độ khó / Difficulty:** 🟢 [Junior]
-- **Tổng Quan:** `memory caching patterns` là kỹ thuật quan trọng để cải thiện hiệu năng, độ ổn định và trải nghiệm người dùng ở frontend.
-- **Giải thích:** Interviewer kỳ vọng ứng viên mô tả đúng mục tiêu cốt lõi, giới hạn áp dụng, và liên hệ với `LRU + TTL in memory maps` như một tiêu chí kỹ thuật để ra quyết định.
-- **Ví dụ:** Cache transform nặng để giảm CPU render.
-
-### Q59. How do you design memory caching patterns for a production SPA?
-**Độ khó / Difficulty:** 🟡 [Mid]
-- **Tổng Quan:** Khi thiết kế `memory caching patterns` cho production, cần tách concern thành kiến trúc, policy, observability, và quy trình rollout.
-- **Giải thích:** Câu trả lời tốt nên nêu lifecycle đầy đủ: khởi tạo, sử dụng, đồng bộ, invalidation, fallback khi lỗi, và đánh giá qua metrics thực tế. Đồng thời nêu rủi ro khi scale multi-team.
-- **Ví dụ:** Dọn cache theo size limit để tránh memory leak.
-
-### Q60. What are trade-offs of memory caching patterns at scale?
-**Độ khó / Difficulty:** 🔴 [Senior]
-- **Tổng Quan:** Ở quy mô lớn, `memory caching patterns` luôn là bài toán cân bằng giữa performance, correctness, security, và chi phí vận hành.
-- **Giải thích:** Ứng viên senior nên nêu được failure modes, cách thiết kế guardrails, quy trình incident response, cũng như chiến lược migration khi policy hiện tại không còn phù hợp.
-- **Ví dụ:** Nếu quyết định thiên về tốc độ, cần bổ sung cảnh báo khi dữ liệu stale vượt ngưỡng SLA và cơ chế rollback policy bằng feature flags.
-
-```ts
-type Meta = { version: string; expiresAt: number; etag?: string };
-const isExpired = (meta: Meta, now = Date.now()) => now > meta.expiresAt;
-
-function isCompatible(meta: Meta, expectedVersion: string) {
-  return meta.version === expectedVersion;
-}
-```
-
-### Q61. What is request deduplication and when should FE teams use it?
-**Độ khó / Difficulty:** 🟢 [Junior]
-- **Tổng Quan:** `request deduplication` là kỹ thuật quan trọng để cải thiện hiệu năng, độ ổn định và trải nghiệm người dùng ở frontend.
-- **Giải thích:** Interviewer kỳ vọng ứng viên mô tả đúng mục tiêu cốt lõi, giới hạn áp dụng, và liên hệ với `coalescing concurrent requests` như một tiêu chí kỹ thuật để ra quyết định.
-- **Ví dụ:** Nhiều component mount cùng query chỉ phát 1 request.
-
-### Q62. How do you design request deduplication for a production SPA?
-**Độ khó / Difficulty:** 🟡 [Mid]
-- **Tổng Quan:** Khi thiết kế `request deduplication` cho production, cần tách concern thành kiến trúc, policy, observability, và quy trình rollout.
-- **Giải thích:** Câu trả lời tốt nên nêu lifecycle đầy đủ: khởi tạo, sử dụng, đồng bộ, invalidation, fallback khi lỗi, và đánh giá qua metrics thực tế. Đồng thời nêu rủi ro khi scale multi-team.
-- **Ví dụ:** Dùng shared promise map cho window thời gian ngắn.
-
-```ts
-// pseudo configuration used in interviews
-const policy = {
-  staleTime: 60_000,
-  cacheTime: 10 * 60_000,
-  retry: 2,
-  revalidateOnFocus: true,
-};
-
-function shouldUseFallback(isOnline: boolean, hasCache: boolean) {
-  return !isOnline && hasCache;
-}
-```
-
-### Q63. What are trade-offs of request deduplication at scale?
-**Độ khó / Difficulty:** 🔴 [Senior]
-- **Tổng Quan:** Ở quy mô lớn, `request deduplication` luôn là bài toán cân bằng giữa performance, correctness, security, và chi phí vận hành.
-- **Giải thích:** Ứng viên senior nên nêu được failure modes, cách thiết kế guardrails, quy trình incident response, cũng như chiến lược migration khi policy hiện tại không còn phù hợp.
-- **Ví dụ:** Nếu quyết định thiên về tốc độ, cần bổ sung cảnh báo khi dữ liệu stale vượt ngưỡng SLA và cơ chế rollback policy bằng feature flags.
-
-### Q64. What is CDN edge caching and when should FE teams use it?
-**Độ khó / Difficulty:** 🟢 [Junior]
-- **Tổng Quan:** `CDN edge caching` là kỹ thuật quan trọng để cải thiện hiệu năng, độ ổn định và trải nghiệm người dùng ở frontend.
-- **Giải thích:** Interviewer kỳ vọng ứng viên mô tả đúng mục tiêu cốt lõi, giới hạn áp dụng, và liên hệ với `s-maxage + edge TTL` như một tiêu chí kỹ thuật để ra quyết định.
-- **Ví dụ:** JS/CSS hash file cache dài ở CDN edge.
-
-### Q65. How do you design CDN edge caching for a production SPA?
-**Độ khó / Difficulty:** 🟡 [Mid]
-- **Tổng Quan:** Khi thiết kế `CDN edge caching` cho production, cần tách concern thành kiến trúc, policy, observability, và quy trình rollout.
-- **Giải thích:** Câu trả lời tốt nên nêu lifecycle đầy đủ: khởi tạo, sử dụng, đồng bộ, invalidation, fallback khi lỗi, và đánh giá qua metrics thực tế. Đồng thời nêu rủi ro khi scale multi-team.
-- **Ví dụ:** Tách policy CDN cho static và API để tránh cache nhầm.
-
-### Q66. What are trade-offs of CDN edge caching at scale?
-**Độ khó / Difficulty:** 🔴 [Senior]
-- **Tổng Quan:** Ở quy mô lớn, `CDN edge caching` luôn là bài toán cân bằng giữa performance, correctness, security, và chi phí vận hành.
-- **Giải thích:** Ứng viên senior nên nêu được failure modes, cách thiết kế guardrails, quy trình incident response, cũng như chiến lược migration khi policy hiện tại không còn phù hợp.
-- **Ví dụ:** Nếu quyết định thiên về tốc độ, cần bổ sung cảnh báo khi dữ liệu stale vượt ngưỡng SLA và cơ chế rollback policy bằng feature flags.
-
-### Q67. What is surrogate key purge and when should FE teams use it?
-**Độ khó / Difficulty:** 🟢 [Junior]
-- **Tổng Quan:** `surrogate key purge` là kỹ thuật quan trọng để cải thiện hiệu năng, độ ổn định và trải nghiệm người dùng ở frontend.
-- **Giải thích:** Interviewer kỳ vọng ứng viên mô tả đúng mục tiêu cốt lõi, giới hạn áp dụng, và liên hệ với `targeted CDN invalidation` như một tiêu chí kỹ thuật để ra quyết định.
-- **Ví dụ:** Chỉ purge nhóm sản phẩm vừa cập nhật thay vì purge all.
-
-### Q68. How do you design surrogate key purge for a production SPA?
-**Độ khó / Difficulty:** 🟡 [Mid]
-- **Tổng Quan:** Khi thiết kế `surrogate key purge` cho production, cần tách concern thành kiến trúc, policy, observability, và quy trình rollout.
-- **Giải thích:** Câu trả lời tốt nên nêu lifecycle đầy đủ: khởi tạo, sử dụng, đồng bộ, invalidation, fallback khi lỗi, và đánh giá qua metrics thực tế. Đồng thời nêu rủi ro khi scale multi-team.
-- **Ví dụ:** Tạo mapping content→surrogate key để purge chính xác.
-
-### Q69. What are trade-offs of surrogate key purge at scale?
-**Độ khó / Difficulty:** 🔴 [Senior]
-- **Tổng Quan:** Ở quy mô lớn, `surrogate key purge` luôn là bài toán cân bằng giữa performance, correctness, security, và chi phí vận hành.
-- **Giải thích:** Ứng viên senior nên nêu được failure modes, cách thiết kế guardrails, quy trình incident response, cũng như chiến lược migration khi policy hiện tại không còn phù hợp.
-- **Ví dụ:** Nếu quyết định thiên về tốc độ, cần bổ sung cảnh báo khi dữ liệu stale vượt ngưỡng SLA và cơ chế rollback policy bằng feature flags.
-
-### Q70. What is cache busting techniques and when should FE teams use it?
-**Độ khó / Difficulty:** 🟢 [Junior]
-- **Tổng Quan:** `cache busting techniques` là kỹ thuật quan trọng để cải thiện hiệu năng, độ ổn định và trải nghiệm người dùng ở frontend.
-- **Giải thích:** Interviewer kỳ vọng ứng viên mô tả đúng mục tiêu cốt lõi, giới hạn áp dụng, và liên hệ với `content hash + manifest version` như một tiêu chí kỹ thuật để ra quyết định.
-- **Ví dụ:** Deploy mới đổi hash filename để browser tải file mới.
-
-### Q71. How do you design cache busting techniques for a production SPA?
-**Độ khó / Difficulty:** 🟡 [Mid]
-- **Tổng Quan:** Khi thiết kế `cache busting techniques` cho production, cần tách concern thành kiến trúc, policy, observability, và quy trình rollout.
-- **Giải thích:** Câu trả lời tốt nên nêu lifecycle đầy đủ: khởi tạo, sử dụng, đồng bộ, invalidation, fallback khi lỗi, và đánh giá qua metrics thực tế. Đồng thời nêu rủi ro khi scale multi-team.
-- **Ví dụ:** Tăng app version để ép SW cập nhật asset set mới.
-
-```ts
-// pseudo configuration used in interviews
-const policy = {
-  staleTime: 60_000,
-  cacheTime: 10 * 60_000,
-  retry: 2,
-  revalidateOnFocus: true,
-};
-
-function shouldUseFallback(isOnline: boolean, hasCache: boolean) {
-  return !isOnline && hasCache;
-}
-```
-
-### Q72. What are trade-offs of cache busting techniques at scale?
-**Độ khó / Difficulty:** 🔴 [Senior]
-- **Tổng Quan:** Ở quy mô lớn, `cache busting techniques` luôn là bài toán cân bằng giữa performance, correctness, security, và chi phí vận hành.
-- **Giải thích:** Ứng viên senior nên nêu được failure modes, cách thiết kế guardrails, quy trình incident response, cũng như chiến lược migration khi policy hiện tại không còn phù hợp.
-- **Ví dụ:** Nếu quyết định thiên về tốc độ, cần bổ sung cảnh báo khi dữ liệu stale vượt ngưỡng SLA và cơ chế rollback policy bằng feature flags.
-
-```ts
-type Meta = { version: string; expiresAt: number; etag?: string };
-const isExpired = (meta: Meta, now = Date.now()) => now > meta.expiresAt;
-
-function isCompatible(meta: Meta, expectedVersion: string) {
-  return meta.version === expectedVersion;
-}
-```
-
-### Q73. What is multi-layer cache consistency and when should FE teams use it?
-**Độ khó / Difficulty:** 🟢 [Junior]
-- **Tổng Quan:** `multi-layer cache consistency` là kỹ thuật quan trọng để cải thiện hiệu năng, độ ổn định và trải nghiệm người dùng ở frontend.
-- **Giải thích:** Interviewer kỳ vọng ứng viên mô tả đúng mục tiêu cốt lõi, giới hạn áp dụng, và liên hệ với `browser+SW+app+CDN alignment` như một tiêu chí kỹ thuật để ra quyết định.
-- **Ví dụ:** TTL tầng trên dài hơn tầng dưới gây stale chéo lớp.
-
-### Q74. How do you design multi-layer cache consistency for a production SPA?
-**Độ khó / Difficulty:** 🟡 [Mid]
-- **Tổng Quan:** Khi thiết kế `multi-layer cache consistency` cho production, cần tách concern thành kiến trúc, policy, observability, và quy trình rollout.
-- **Giải thích:** Câu trả lời tốt nên nêu lifecycle đầy đủ: khởi tạo, sử dụng, đồng bộ, invalidation, fallback khi lỗi, và đánh giá qua metrics thực tế. Đồng thời nêu rủi ro khi scale multi-team.
-- **Ví dụ:** Thiết kế thứ tự TTL hợp lý và version propagation.
-
-### Q75. What are trade-offs of multi-layer cache consistency at scale?
-**Độ khó / Difficulty:** 🔴 [Senior]
-- **Tổng Quan:** Ở quy mô lớn, `multi-layer cache consistency` luôn là bài toán cân bằng giữa performance, correctness, security, và chi phí vận hành.
-- **Giải thích:** Ứng viên senior nên nêu được failure modes, cách thiết kế guardrails, quy trình incident response, cũng như chiến lược migration khi policy hiện tại không còn phù hợp.
-- **Ví dụ:** Nếu quyết định thiên về tốc độ, cần bổ sung cảnh báo khi dữ liệu stale vượt ngưỡng SLA và cơ chế rollback policy bằng feature flags.
-
-### Q76. What is security in caching and when should FE teams use it?
-**Độ khó / Difficulty:** 🟢 [Junior]
-- **Tổng Quan:** `security in caching` là kỹ thuật quan trọng để cải thiện hiệu năng, độ ổn định và trải nghiệm người dùng ở frontend.
-- **Giải thích:** Interviewer kỳ vọng ứng viên mô tả đúng mục tiêu cốt lõi, giới hạn áp dụng, và liên hệ với `avoid caching secrets/PII` như một tiêu chí kỹ thuật để ra quyết định.
-- **Ví dụ:** Không cache response chứa token trong shared cache.
-
-### Q77. How do you design security in caching for a production SPA?
-**Độ khó / Difficulty:** 🟡 [Mid]
-- **Tổng Quan:** Khi thiết kế `security in caching` cho production, cần tách concern thành kiến trúc, policy, observability, và quy trình rollout.
-- **Giải thích:** Câu trả lời tốt nên nêu lifecycle đầy đủ: khởi tạo, sử dụng, đồng bộ, invalidation, fallback khi lỗi, và đánh giá qua metrics thực tế. Đồng thời nêu rủi ro khi scale multi-team.
-- **Ví dụ:** Thiết lập no-store cho endpoint chứa dữ liệu nhạy cảm.
-
-### Q78. What are trade-offs of security in caching at scale?
-**Độ khó / Difficulty:** 🔴 [Senior]
-- **Tổng Quan:** Ở quy mô lớn, `security in caching` luôn là bài toán cân bằng giữa performance, correctness, security, và chi phí vận hành.
-- **Giải thích:** Ứng viên senior nên nêu được failure modes, cách thiết kế guardrails, quy trình incident response, cũng như chiến lược migration khi policy hiện tại không còn phù hợp.
-- **Ví dụ:** Nếu quyết định thiên về tốc độ, cần bổ sung cảnh báo khi dữ liệu stale vượt ngưỡng SLA và cơ chế rollback policy bằng feature flags.
-
-### Q79. What is cache poisoning prevention and when should FE teams use it?
-**Độ khó / Difficulty:** 🟢 [Junior]
-- **Tổng Quan:** `cache poisoning prevention` là kỹ thuật quan trọng để cải thiện hiệu năng, độ ổn định và trải nghiệm người dùng ở frontend.
-- **Giải thích:** Interviewer kỳ vọng ứng viên mô tả đúng mục tiêu cốt lõi, giới hạn áp dụng, và liên hệ với `Vary headers and strict keying` như một tiêu chí kỹ thuật để ra quyết định.
-- **Ví dụ:** Sai Vary header có thể trả nhầm locale/theme.
-
-### Q80. How do you design cache poisoning prevention for a production SPA?
-**Độ khó / Difficulty:** 🟡 [Mid]
-- **Tổng Quan:** Khi thiết kế `cache poisoning prevention` cho production, cần tách concern thành kiến trúc, policy, observability, và quy trình rollout.
-- **Giải thích:** Câu trả lời tốt nên nêu lifecycle đầy đủ: khởi tạo, sử dụng, đồng bộ, invalidation, fallback khi lỗi, và đánh giá qua metrics thực tế. Đồng thời nêu rủi ro khi scale multi-team.
-- **Ví dụ:** Chuẩn hóa cache key gồm locale, auth scope nếu cần.
-
-```ts
-// pseudo configuration used in interviews
-const policy = {
-  staleTime: 60_000,
-  cacheTime: 10 * 60_000,
-  retry: 2,
-  revalidateOnFocus: true,
-};
-
-function shouldUseFallback(isOnline: boolean, hasCache: boolean) {
-  return !isOnline && hasCache;
-}
-```
-
-### Q81. What are trade-offs of cache poisoning prevention at scale?
-**Độ khó / Difficulty:** 🔴 [Senior]
-- **Tổng Quan:** Ở quy mô lớn, `cache poisoning prevention` luôn là bài toán cân bằng giữa performance, correctness, security, và chi phí vận hành.
-- **Giải thích:** Ứng viên senior nên nêu được failure modes, cách thiết kế guardrails, quy trình incident response, cũng như chiến lược migration khi policy hiện tại không còn phù hợp.
-- **Ví dụ:** Nếu quyết định thiên về tốc độ, cần bổ sung cảnh báo khi dữ liệu stale vượt ngưỡng SLA và cơ chế rollback policy bằng feature flags.
-
-### Q82. What is runtime cache observability and when should FE teams use it?
-**Độ khó / Difficulty:** 🟢 [Junior]
-- **Tổng Quan:** `runtime cache observability` là kỹ thuật quan trọng để cải thiện hiệu năng, độ ổn định và trải nghiệm người dùng ở frontend.
-- **Giải thích:** Interviewer kỳ vọng ứng viên mô tả đúng mục tiêu cốt lõi, giới hạn áp dụng, và liên hệ với `hit ratio, revalidate latency` như một tiêu chí kỹ thuật để ra quyết định.
-- **Ví dụ:** Dashboard theo dõi hit/miss theo route.
-
-### Q83. How do you design runtime cache observability for a production SPA?
-**Độ khó / Difficulty:** 🟡 [Mid]
-- **Tổng Quan:** Khi thiết kế `runtime cache observability` cho production, cần tách concern thành kiến trúc, policy, observability, và quy trình rollout.
-- **Giải thích:** Câu trả lời tốt nên nêu lifecycle đầy đủ: khởi tạo, sử dụng, đồng bộ, invalidation, fallback khi lỗi, và đánh giá qua metrics thực tế. Đồng thời nêu rủi ro khi scale multi-team.
-- **Ví dụ:** Đặt alert khi stale-read rate tăng đột biến.
-
-### Q84. What are trade-offs of runtime cache observability at scale?
-**Độ khó / Difficulty:** 🔴 [Senior]
-- **Tổng Quan:** Ở quy mô lớn, `runtime cache observability` luôn là bài toán cân bằng giữa performance, correctness, security, và chi phí vận hành.
-- **Giải thích:** Ứng viên senior nên nêu được failure modes, cách thiết kế guardrails, quy trình incident response, cũng như chiến lược migration khi policy hiện tại không còn phù hợp.
-- **Ví dụ:** Nếu quyết định thiên về tốc độ, cần bổ sung cảnh báo khi dữ liệu stale vượt ngưỡng SLA và cơ chế rollback policy bằng feature flags.
-
-```ts
-type Meta = { version: string; expiresAt: number; etag?: string };
-const isExpired = (meta: Meta, now = Date.now()) => now > meta.expiresAt;
-
-function isCompatible(meta: Meta, expectedVersion: string) {
-  return meta.version === expectedVersion;
-}
-```
-
-### Q85. What is cache warm-up and when should FE teams use it?
-**Độ khó / Difficulty:** 🟢 [Junior]
-- **Tổng Quan:** `cache warm-up` là kỹ thuật quan trọng để cải thiện hiệu năng, độ ổn định và trải nghiệm người dùng ở frontend.
-- **Giải thích:** Interviewer kỳ vọng ứng viên mô tả đúng mục tiêu cốt lõi, giới hạn áp dụng, và liên hệ với `idle-time and post-login warmup` như một tiêu chí kỹ thuật để ra quyết định.
-- **Ví dụ:** Sau login prefetch dashboard critical endpoints.
-
-### Q86. How do you design cache warm-up for a production SPA?
-**Độ khó / Difficulty:** 🟡 [Mid]
-- **Tổng Quan:** Khi thiết kế `cache warm-up` cho production, cần tách concern thành kiến trúc, policy, observability, và quy trình rollout.
-- **Giải thích:** Câu trả lời tốt nên nêu lifecycle đầy đủ: khởi tạo, sử dụng, đồng bộ, invalidation, fallback khi lỗi, và đánh giá qua metrics thực tế. Đồng thời nêu rủi ro khi scale multi-team.
-- **Ví dụ:** Warm cache trong idle callback để không chặn tương tác.
-
-### Q87. What are trade-offs of cache warm-up at scale?
-**Độ khó / Difficulty:** 🔴 [Senior]
-- **Tổng Quan:** Ở quy mô lớn, `cache warm-up` luôn là bài toán cân bằng giữa performance, correctness, security, và chi phí vận hành.
-- **Giải thích:** Ứng viên senior nên nêu được failure modes, cách thiết kế guardrails, quy trình incident response, cũng như chiến lược migration khi policy hiện tại không còn phù hợp.
-- **Ví dụ:** Nếu quyết định thiên về tốc độ, cần bổ sung cảnh báo khi dữ liệu stale vượt ngưỡng SLA và cơ chế rollback policy bằng feature flags.
-
-### Q88. What is rollback cache policies and when should FE teams use it?
-**Độ khó / Difficulty:** 🟢 [Junior]
-- **Tổng Quan:** `rollback cache policies` là kỹ thuật quan trọng để cải thiện hiệu năng, độ ổn định và trải nghiệm người dùng ở frontend.
-- **Giải thích:** Interviewer kỳ vọng ứng viên mô tả đúng mục tiêu cốt lõi, giới hạn áp dụng, và liên hệ với `feature flags for caching rules` như một tiêu chí kỹ thuật để ra quyết định.
-- **Ví dụ:** Policy sai có thể rollback nhanh bằng config flag.
-
-### Q89. How do you design rollback cache policies for a production SPA?
-**Độ khó / Difficulty:** 🟡 [Mid]
-- **Tổng Quan:** Khi thiết kế `rollback cache policies` cho production, cần tách concern thành kiến trúc, policy, observability, và quy trình rollout.
-- **Giải thích:** Câu trả lời tốt nên nêu lifecycle đầy đủ: khởi tạo, sử dụng, đồng bộ, invalidation, fallback khi lỗi, và đánh giá qua metrics thực tế. Đồng thời nêu rủi ro khi scale multi-team.
-- **Ví dụ:** Tách config cache ra khỏi release code để đổi linh hoạt.
-
-```ts
-// pseudo configuration used in interviews
-const policy = {
-  staleTime: 60_000,
-  cacheTime: 10 * 60_000,
-  retry: 2,
-  revalidateOnFocus: true,
-};
-
-function shouldUseFallback(isOnline: boolean, hasCache: boolean) {
-  return !isOnline && hasCache;
-}
-```
-
-### Q90. What are trade-offs of rollback cache policies at scale?
-**Độ khó / Difficulty:** 🔴 [Senior]
-- **Tổng Quan:** Ở quy mô lớn, `rollback cache policies` luôn là bài toán cân bằng giữa performance, correctness, security, và chi phí vận hành.
-- **Giải thích:** Ứng viên senior nên nêu được failure modes, cách thiết kế guardrails, quy trình incident response, cũng như chiến lược migration khi policy hiện tại không còn phù hợp.
-- **Ví dụ:** Nếu quyết định thiên về tốc độ, cần bổ sung cảnh báo khi dữ liệu stale vượt ngưỡng SLA và cơ chế rollback policy bằng feature flags.
-
-## Practical Checklist / Checklist Thực Chiến
-- Định nghĩa freshness requirement theo từng loại dữ liệu trước khi chọn chiến lược.
-- Luôn có cơ chế quan sát: hit/miss ratio, stale-read rate, fallback frequency.
-- Thiết kế invalidation và rollback ngay từ đầu để tránh kỹ thuật chữa cháy.
-- Chuẩn hóa conventions cho đa team: naming, versioning, contract testing.
-- Viết tài liệu runbook để xử lý incident liên quan dữ liệu stale/conflict.
-
-## Interview Tips / Mẹo Trả Lời
-- Trình bày theo format: bối cảnh → lựa chọn → trade-off → quyết định → chỉ số đo lường.
-- Luôn nêu giả định business: latency target, consistency level, mức chịu stale data.
-- Đưa 1 tình huống production và cách bạn xử lý sau incident để tăng tính thuyết phục.
+**Key design decisions**:
+
+1. **Separate static from dynamic**: Shell cached aggressively, stock never cached
+2. **Edge Redis for stock**: 50ms latency instead of 200ms to origin
+3. **WebSocket for real-time**: Stock updates pushed to client
+4. **Graceful degradation**: If WebSocket fails, fall back to polling
+
+🎯 **Interview Signal**: Biết tách static vs dynamic content. Biết dùng edge computing cho low-latency. Biết khi nào KHÔNG cache (real-time stock).
+
+---
+
+## Q&A Summary Table / Bảng Tổng Hợp
+
+| Q#  | Topic                       | Difficulty | Key Concepts                                |
+| --- | --------------------------- | ---------- | ------------------------------------------- |
+| Q01 | Cache-Control basics        | 🟢         | max-age, private, public, nginx config      |
+| Q02 | no-cache vs no-store        | 🟢         | Revalidate vs don't store                   |
+| Q03 | ETag & conditional requests | 🟡         | If-None-Match, 304, strong/weak             |
+| Q04 | Production SPA caching      | 🟡         | Content hash, per-resource strategy         |
+| Q05 | Debug stale content         | 🔴         | SW, CDN, headers, systematic debug          |
+| Q06 | stale-while-revalidate      | 🔴         | RFC 5861, instant UX + fresh data           |
+| Q07 | Cache API basics            | 🟢         | caches.open, put, match, delete             |
+| Q08 | Workbox strategies          | 🟡         | CacheFirst, NetworkFirst, SWR               |
+| Q09 | Pre-cache vs runtime        | 🟡         | Manifest, route patterns                    |
+| Q10 | Cache versioning            | 🟡         | Cache names, activate cleanup               |
+| Q11 | Stale SW content            | 🔴         | skipWaiting, clients.claim, update flow     |
+| Q12 | Offline-first design        | 🔴         | App shell, sync queue, Background Sync      |
+| Q13 | TanStack Query caching      | 🟢         | staleTime, gcTime, queryKey                 |
+| Q14 | QueryKey hierarchy          | 🟡         | Factory pattern, fuzzy invalidation         |
+| Q15 | Apollo normalized cache     | 🟡         | InMemoryCache, type policies                |
+| Q16 | Optimistic updates          | 🟡         | Snapshot, rollback, cancelQueries           |
+| Q17 | Query vs SWR vs Apollo      | 🟡         | Feature comparison, when to use             |
+| Q18 | Tag-based invalidation      | 🔴         | Predicate, server-driven                    |
+| Q19 | Debug stale data            | 🔴         | DevTools, query state, network              |
+| Q20 | CDN caching config          | 🟡         | s-maxage, CDN-Cache-Control                 |
+| Q21 | Surrogate-Key purge         | 🟡         | Cache-Tag, targeted invalidation            |
+| Q22 | Multi-layer architecture    | 🔴         | Browser→CDN→Gateway→Origin                  |
+| Q23 | CDN PoP consistency         | 🔴         | Eventual consistency, soft purge            |
+| Q24 | Cache stampede              | 🟡         | Lock, SWR, jitter                           |
+| Q25 | Cache monitoring            | 🔴         | Hit rates, timing API, DevTools             |
+| Q26 | Cache warming               | 🔴         | Post-deploy, batch warm, CI                 |
+| Q27 | Flash sale case study       | 🔴         | Edge Redis, WebSocket, split static/dynamic |
+
+---
+
+## Common Mistakes / Lỗi Thường Gặp
+
+| #   | Mistake                                  | Correct Approach                                                       |
+| --- | ---------------------------------------- | ---------------------------------------------------------------------- |
+| 1   | `no-cache` = "don't cache"               | `no-cache` = cache but always revalidate. Use `no-store` to not cache. |
+| 2   | Long max-age on `index.html`             | HTML must be `no-cache`. Only hashed assets get long max-age.          |
+| 3   | Not using content hash in filenames      | Without hash, users get stale JS/CSS even after deploy.                |
+| 4   | Cache everything with same TTL           | Different resources need different strategies.                         |
+| 5   | Forgetting `skipWaiting()` in SW         | New SW stays in "waiting" state → users stuck on old version.          |
+| 6   | Not invalidating after mutations         | Data looks stale because cache wasn't told to refresh.                 |
+| 7   | Setting `staleTime: Infinity` everywhere | Query never auto-refetches → permanently stale data.                   |
+| 8   | Not handling cache stampede              | Popular cache key expires → origin overwhelmed by concurrent fetches.  |
+| 9   | Storing sensitive data in CDN cache      | Use `private` or `no-store` for user-specific data.                    |
+| 10  | Not monitoring cache hit rates           | Can't optimize what you don't measure.                                 |
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+### 🟢 Junior — Bạn có thể giải thích được:
+
+- [ ] Cache-Control directives: max-age, no-cache, no-store, private, public
+- [ ] Sự khác biệt giữa no-cache và no-store
+- [ ] ETag và conditional request hoạt động thế nào
+- [ ] Browser cache hierarchy (Memory → SW → Disk → Network)
+- [ ] Cache API cơ bản: open, put, match, delete
+
+### 🟡 Mid — Bạn có thể thiết kế:
+
+- [ ] Caching strategy cho production SPA (per-resource type)
+- [ ] Workbox configuration cho Service Worker
+- [ ] QueryKey hierarchy với factory pattern
+- [ ] Optimistic update với rollback pattern
+- [ ] CDN caching với Cache-Tag invalidation
+
+### 🔴 Senior — Bạn có thể giải quyết:
+
+- [ ] Debug stale content qua mọi cache layer
+- [ ] Cache stampede prevention (lock + SWR + jitter)
+- [ ] Multi-layer cache architecture design
+- [ ] Flash sale caching (edge + WebSocket + split static/dynamic)
+- [ ] Cache warming strategy post-deployment
+- [ ] CDN PoP consistency và eventual consistency trade-offs
+
+### 🧪 Feynman Prompt
+
+> Hãy giải thích cho đồng nghiệp junior: "Tại sao `index.html` phải dùng `no-cache` trong khi `app.abc123.js` dùng `immutable` với max-age 1 năm? Cả hai đều là file tĩnh mà?"
+
+### 📅 Spaced Repetition
+
+- **Day 1**: Đọc Core Concepts + Q01-Q06
+- **Day 3**: Ôn lại Q01-Q06, đọc Q07-Q12 (Service Worker)
+- **Day 7**: Ôn Q01-Q12, đọc Q13-Q19 (App Cache)
+- **Day 14**: Ôn tất cả, đọc Q20-Q27 (CDN + Architecture)
+- **Day 30**: Full review, focus on 🔴 Senior questions
+
+---
+
+## References / Tài Liệu Tham Khảo
+
+- [RFC 9111 — HTTP Caching](https://httpwg.org/specs/rfc9111.html)
+- [RFC 7232 — Conditional Requests](https://httpwg.org/specs/rfc7232.html)
+- [RFC 5861 — HTTP Cache-Control Extensions for Stale Content](https://httpwg.org/specs/rfc5861.html)
+- [MDN — HTTP Caching](https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching)
+- [web.dev — Caching best practices](https://web.dev/articles/http-cache)
+- [Workbox Documentation](https://developer.chrome.com/docs/workbox/)
+- [TanStack Query — Caching](https://tanstack.com/query/latest/docs/framework/react/guides/caching)
+- [Apollo Client — Caching](https://www.apollographql.com/docs/react/caching/overview)
+- [Cloudflare — Cache-Tag Purge](https://developers.cloudflare.com/cache/how-to/purge-cache/purge-by-tags/)

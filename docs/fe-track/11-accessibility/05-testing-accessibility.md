@@ -67,33 +67,31 @@
 
 ```javascript
 // Jest + React Testing Library + axe
-import { render } from '@testing-library/react';
-import { axe, toHaveNoViolations } from 'jest-axe';
+import { render } from "@testing-library/react";
+import { axe, toHaveNoViolations } from "jest-axe";
 
 expect.extend(toHaveNoViolations);
 
-describe('Button', () => {
-    it('should have no accessibility violations', async () => {
-        const { container } = render(
-            <button>Click me</button>
-        );
+describe("Button", () => {
+  it("should have no accessibility violations", async () => {
+    const { container } = render(<button>Click me</button>);
 
-        const results = await axe(container);
-        expect(results).toHaveNoViolations();
-    });
+    const results = await axe(container);
+    expect(results).toHaveNoViolations();
+  });
 });
 
 // With specific rules
-it('checks color contrast', async () => {
-    const { container } = render(<MyComponent />);
+it("checks color contrast", async () => {
+  const { container } = render(<MyComponent />);
 
-    const results = await axe(container, {
-        rules: {
-            'color-contrast': { enabled: true },
-        },
-    });
+  const results = await axe(container, {
+    rules: {
+      "color-contrast": { enabled: true },
+    },
+  });
 
-    expect(results).toHaveNoViolations();
+  expect(results).toHaveNoViolations();
 });
 ```
 
@@ -101,43 +99,43 @@ it('checks color contrast', async () => {
 
 ```javascript
 // cypress/support/commands.js
-import 'cypress-axe';
+import "cypress-axe";
 
 // cypress/e2e/accessibility.cy.js
-describe('Accessibility Tests', () => {
-    beforeEach(() => {
-        cy.visit('/');
-        cy.injectAxe();
-    });
+describe("Accessibility Tests", () => {
+  beforeEach(() => {
+    cy.visit("/");
+    cy.injectAxe();
+  });
 
-    it('has no detectable a11y violations on load', () => {
-        cy.checkA11y();
-    });
+  it("has no detectable a11y violations on load", () => {
+    cy.checkA11y();
+  });
 
-    it('has no a11y violations after opening modal', () => {
-        cy.get('[data-testid="open-modal"]').click();
-        cy.checkA11y('#modal');
-    });
+  it("has no a11y violations after opening modal", () => {
+    cy.get('[data-testid="open-modal"]').click();
+    cy.checkA11y("#modal");
+  });
 
-    it('checks specific elements', () => {
-        cy.checkA11y('form', {
-            rules: {
-                'label': { enabled: true },
-            },
+  it("checks specific elements", () => {
+    cy.checkA11y("form", {
+      rules: {
+        label: { enabled: true },
+      },
+    });
+  });
+
+  // Log violations to terminal
+  it("logs all violations", () => {
+    cy.checkA11y(null, null, (violations) => {
+      violations.forEach((violation) => {
+        cy.log(`${violation.id}: ${violation.description}`);
+        violation.nodes.forEach((node) => {
+          cy.log(`  - ${node.target}`);
         });
+      });
     });
-
-    // Log violations to terminal
-    it('logs all violations', () => {
-        cy.checkA11y(null, null, (violations) => {
-            violations.forEach((violation) => {
-                cy.log(`${violation.id}: ${violation.description}`);
-                violation.nodes.forEach((node) => {
-                    cy.log(`  - ${node.target}`);
-                });
-            });
-        });
-    });
+  });
 });
 ```
 
@@ -145,41 +143,40 @@ describe('Accessibility Tests', () => {
 
 ```javascript
 // playwright.config.js
-import { test, expect } from '@playwright/test';
-import AxeBuilder from '@axe-core/playwright';
+import { test, expect } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 
-test.describe('Accessibility', () => {
-    test('homepage should have no violations', async ({ page }) => {
-        await page.goto('/');
+test.describe("Accessibility", () => {
+  test("homepage should have no violations", async ({ page }) => {
+    await page.goto("/");
 
-        const accessibilityScanResults = await new AxeBuilder({ page })
-            .analyze();
+    const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
 
-        expect(accessibilityScanResults.violations).toEqual([]);
-    });
+    expect(accessibilityScanResults.violations).toEqual([]);
+  });
 
-    test('form should be accessible', async ({ page }) => {
-        await page.goto('/contact');
+  test("form should be accessible", async ({ page }) => {
+    await page.goto("/contact");
 
-        const results = await new AxeBuilder({ page })
-            .include('form')
-            .withTags(['wcag2a', 'wcag2aa'])
-            .analyze();
+    const results = await new AxeBuilder({ page })
+      .include("form")
+      .withTags(["wcag2a", "wcag2aa"])
+      .analyze();
 
-        expect(results.violations).toEqual([]);
-    });
+    expect(results.violations).toEqual([]);
+  });
 
-    // Exclude known issues temporarily
-    test('with exclusions', async ({ page }) => {
-        await page.goto('/');
+  // Exclude known issues temporarily
+  test("with exclusions", async ({ page }) => {
+    await page.goto("/");
 
-        const results = await new AxeBuilder({ page })
-            .exclude('#third-party-widget')
-            .disableRules(['color-contrast'])
-            .analyze();
+    const results = await new AxeBuilder({ page })
+      .exclude("#third-party-widget")
+      .disableRules(["color-contrast"])
+      .analyze();
 
-        expect(results.violations).toEqual([]);
-    });
+    expect(results.violations).toEqual([]);
+  });
 });
 ```
 
@@ -188,21 +185,27 @@ test.describe('Accessibility', () => {
 ```javascript
 // .eslintrc.js
 module.exports = {
-    plugins: ['jsx-a11y'],
-    extends: ['plugin:jsx-a11y/recommended'],
-    rules: {
-        // Override specific rules
-        'jsx-a11y/anchor-is-valid': ['error', {
-            components: ['Link'],
-            specialLink: ['to'],
-        }],
-        'jsx-a11y/label-has-associated-control': ['error', {
-            required: {
-                some: ['nesting', 'id'],
-            },
-        }],
-        'jsx-a11y/no-autofocus': 'warn',
-    },
+  plugins: ["jsx-a11y"],
+  extends: ["plugin:jsx-a11y/recommended"],
+  rules: {
+    // Override specific rules
+    "jsx-a11y/anchor-is-valid": [
+      "error",
+      {
+        components: ["Link"],
+        specialLink: ["to"],
+      },
+    ],
+    "jsx-a11y/label-has-associated-control": [
+      "error",
+      {
+        required: {
+          some: ["nesting", "id"],
+        },
+      },
+    ],
+    "jsx-a11y/no-autofocus": "warn",
+  },
 };
 ```
 
@@ -440,133 +443,291 @@ lighthouse https://example.com \
 ### Testing Library A11y Queries
 
 ```jsx
-import { render, screen } from '@testing-library/react';
+import { render, screen } from "@testing-library/react";
 
 // Prefer accessible queries
-describe('Accessible Queries', () => {
-    it('finds elements by role', () => {
-        render(<button>Submit</button>);
-        expect(screen.getByRole('button', { name: 'Submit' })).toBeInTheDocument();
-    });
+describe("Accessible Queries", () => {
+  it("finds elements by role", () => {
+    render(<button>Submit</button>);
+    expect(screen.getByRole("button", { name: "Submit" })).toBeInTheDocument();
+  });
 
-    it('finds elements by label', () => {
-        render(
-            <label>
-                Email
-                <input type="email" />
-            </label>
-        );
-        expect(screen.getByLabelText('Email')).toBeInTheDocument();
-    });
+  it("finds elements by label", () => {
+    render(
+      <label>
+        Email
+        <input type="email" />
+      </label>,
+    );
+    expect(screen.getByLabelText("Email")).toBeInTheDocument();
+  });
 
-    it('finds elements by placeholder (not recommended)', () => {
-        render(<input placeholder="Search..." />);
-        // Placeholder alone is not accessible
-        // Should have label or aria-label
-    });
+  it("finds elements by placeholder (not recommended)", () => {
+    render(<input placeholder="Search..." />);
+    // Placeholder alone is not accessible
+    // Should have label or aria-label
+  });
 
-    it('finds heading', () => {
-        render(<h1>Welcome</h1>);
-        expect(screen.getByRole('heading', { name: 'Welcome', level: 1 }))
-            .toBeInTheDocument();
-    });
+  it("finds heading", () => {
+    render(<h1>Welcome</h1>);
+    expect(screen.getByRole("heading", { name: "Welcome", level: 1 })).toBeInTheDocument();
+  });
 });
 ```
 
 ### Comprehensive Component Tests
 
 ```jsx
-import { render, screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { axe } from 'jest-axe';
+import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { axe } from "jest-axe";
 
-describe('Modal', () => {
-    it('should have no accessibility violations', async () => {
-        const { container } = render(
-            <Modal isOpen={true} title="Confirm">
-                <p>Are you sure?</p>
-                <button>Yes</button>
-                <button>No</button>
-            </Modal>
-        );
+describe("Modal", () => {
+  it("should have no accessibility violations", async () => {
+    const { container } = render(
+      <Modal isOpen={true} title="Confirm">
+        <p>Are you sure?</p>
+        <button>Yes</button>
+        <button>No</button>
+      </Modal>,
+    );
 
-        expect(await axe(container)).toHaveNoViolations();
-    });
+    expect(await axe(container)).toHaveNoViolations();
+  });
 
-    it('should have correct ARIA attributes', () => {
-        render(
-            <Modal isOpen={true} title="Confirm">
-                Content
-            </Modal>
-        );
+  it("should have correct ARIA attributes", () => {
+    render(
+      <Modal isOpen={true} title="Confirm">
+        Content
+      </Modal>,
+    );
 
-        const modal = screen.getByRole('dialog');
-        expect(modal).toHaveAttribute('aria-modal', 'true');
-        expect(modal).toHaveAttribute('aria-labelledby');
-    });
+    const modal = screen.getByRole("dialog");
+    expect(modal).toHaveAttribute("aria-modal", "true");
+    expect(modal).toHaveAttribute("aria-labelledby");
+  });
 
-    it('should trap focus within modal', async () => {
-        const user = userEvent.setup();
+  it("should trap focus within modal", async () => {
+    const user = userEvent.setup();
 
-        render(
-            <Modal isOpen={true} title="Confirm">
-                <button>First</button>
-                <button>Last</button>
-            </Modal>
-        );
+    render(
+      <Modal isOpen={true} title="Confirm">
+        <button>First</button>
+        <button>Last</button>
+      </Modal>,
+    );
 
-        // First focusable element should be focused
-        expect(screen.getByRole('button', { name: 'First' })).toHaveFocus();
+    // First focusable element should be focused
+    expect(screen.getByRole("button", { name: "First" })).toHaveFocus();
 
-        // Tab to last element
-        await user.tab();
-        expect(screen.getByRole('button', { name: 'Last' })).toHaveFocus();
+    // Tab to last element
+    await user.tab();
+    expect(screen.getByRole("button", { name: "Last" })).toHaveFocus();
 
-        // Tab should wrap to first
-        await user.tab();
-        expect(screen.getByRole('button', { name: 'First' })).toHaveFocus();
-    });
+    // Tab should wrap to first
+    await user.tab();
+    expect(screen.getByRole("button", { name: "First" })).toHaveFocus();
+  });
 
-    it('should close on Escape key', async () => {
-        const onClose = jest.fn();
-        const user = userEvent.setup();
+  it("should close on Escape key", async () => {
+    const onClose = jest.fn();
+    const user = userEvent.setup();
 
-        render(
-            <Modal isOpen={true} title="Confirm" onClose={onClose}>
-                Content
-            </Modal>
-        );
+    render(
+      <Modal isOpen={true} title="Confirm" onClose={onClose}>
+        Content
+      </Modal>,
+    );
 
-        await user.keyboard('{Escape}');
-        expect(onClose).toHaveBeenCalled();
-    });
+    await user.keyboard("{Escape}");
+    expect(onClose).toHaveBeenCalled();
+  });
 
-    it('should return focus to trigger on close', async () => {
-        const user = userEvent.setup();
+  it("should return focus to trigger on close", async () => {
+    const user = userEvent.setup();
 
-        function App() {
-            const [isOpen, setIsOpen] = useState(false);
-            return (
-                <>
-                    <button onClick={() => setIsOpen(true)}>Open</button>
-                    <Modal isOpen={isOpen} onClose={() => setIsOpen(false)}>
-                        <button onClick={() => setIsOpen(false)}>Close</button>
-                    </Modal>
-                </>
-            );
-        }
+    function App() {
+      const [isOpen, setIsOpen] = useState(false);
+      return (
+        <>
+          <button onClick={() => setIsOpen(true)}>Open</button>
+          <Modal isOpen={isOpen} onClose={() => setIsOpen(false)}>
+            <button onClick={() => setIsOpen(false)}>Close</button>
+          </Modal>
+        </>
+      );
+    }
 
-        render(<App />);
+    render(<App />);
 
-        const openButton = screen.getByRole('button', { name: 'Open' });
-        await user.click(openButton);
+    const openButton = screen.getByRole("button", { name: "Open" });
+    await user.click(openButton);
 
-        const closeButton = screen.getByRole('button', { name: 'Close' });
-        await user.click(closeButton);
+    const closeButton = screen.getByRole("button", { name: "Close" });
+    await user.click(closeButton);
 
-        expect(openButton).toHaveFocus();
-    });
+    expect(openButton).toHaveFocus();
+  });
 });
+```
+
+---
+
+## 🎨 Visual Regression Testing
+
+Visual regression testing captures screenshots and diffs them against baselines, automatically catching visual accessibility regressions — especially useful for detecting color contrast changes, focus indicator removal, and layout shifts that automated axe scans miss.
+
+### Why Visual Regression Matters for Accessibility
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│         VISUAL REGRESSION + ACCESSIBILITY                       │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│   WHAT IT CATCHES:                                              │
+│   ─────────────────                                              │
+│   • Color changes that break contrast ratios (1.4.3)            │
+│   • Focus indicator removal or style regression (2.4.7)         │
+│   • Layout shifts that obscure focused elements (2.4.11)        │
+│   • Accidental hiding of skip links or landmarks                │
+│   • Typography changes affecting text sizing and spacing        │
+│   • Dark mode / forced-colors (high contrast) regressions       │
+│                                                                   │
+│   WHAT IT DOESN'T CATCH:                                       │
+│   ──────────────────────                                         │
+│   • Missing alt text or aria-labels                             │
+│   • Keyboard navigation and focus order issues                  │
+│   • Screen reader announcement order / content                  │
+│   → Use alongside axe-core for full a11y coverage               │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Chromatic (Storybook Integration)
+
+[Chromatic](https://www.chromatic.com/) is the official visual testing tool for Storybook. It captures every component story as a screenshot and flags UI changes for review before merge.
+
+```javascript
+// No extra Storybook config needed — Chromatic reads existing stories
+// Install: npm install --save-dev chromatic
+
+// Run via CLI
+// npx chromatic --project-token=<your-token>
+```
+
+```yaml
+# .github/workflows/chromatic.yml
+name: Chromatic
+
+on: [push]
+
+jobs:
+  chromatic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required by Chromatic for baselines
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Publish to Chromatic
+        uses: chromaui/action@latest
+        with:
+          projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+          exitZeroOnChanges: false # Fail CI on unreviewed visual changes
+```
+
+```javascript
+// Storybook story: verify focus indicator is visually present
+export default {
+  title: "Button",
+  component: Button,
+  parameters: {
+    // Chromatic captures all mode combinations
+    chromatic: { modes: { light: {}, dark: {}, "high-contrast": {} } },
+  },
+};
+
+// Focused state story — catches accidental :focus outline removal
+export const Focused = {
+  play: async ({ canvasElement }) => {
+    const button = canvasElement.querySelector("button");
+    button.focus();
+  },
+};
+
+// Uses storybook-addon-pseudo-states to capture :focus-visible
+export const FocusVisible = {
+  args: { children: "Save" },
+  parameters: {
+    pseudo: { focusVisible: true },
+  },
+};
+```
+
+### Percy (BrowserStack)
+
+[Percy](https://percy.io/) is a cloud-based visual testing platform that integrates with Playwright, Cypress, Storybook, and more.
+
+```javascript
+// Install: npm install --save-dev @percy/playwright
+
+import { test } from "@playwright/test";
+import percySnapshot from "@percy/playwright";
+
+test("Homepage visual regression", async ({ page }) => {
+  await page.goto("/");
+  await percySnapshot(page, "Homepage");
+});
+
+// Capture focus state to verify focus indicators
+test("Button focus indicator visible", async ({ page }) => {
+  await page.goto("/");
+  await page.keyboard.press("Tab"); // Focus first interactive element
+  await percySnapshot(page, "First interactive element focused");
+});
+
+// High contrast mode — catches forced-colors regressions
+test("Forced colors (high contrast) mode", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "dark", forcedColors: "active" });
+  await page.goto("/");
+  await percySnapshot(page, "High contrast mode");
+});
+```
+
+```yaml
+# CI: Percy with Playwright
+- name: Run Percy visual tests
+  run: npx percy exec -- npx playwright test visual
+  env:
+    PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
+```
+
+### Visual Regression Tool Comparison
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│            VISUAL REGRESSION TOOL COMPARISON                    │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│   Tool         Integration          Best For                    │
+│   ─────────────────────────────────────────────────────────     │
+│   Chromatic    Storybook            Component-level testing     │
+│   Percy        Playwright/Cypress   Full-page E2E snapshots     │
+│   Playwright   Built-in (no SaaS)   Screenshots in CI free      │
+│   reg-suit     Any                  Self-hosted visual diff      │
+│                                                                   │
+│   ACCESSIBILITY-SPECIFIC TIPS:                                  │
+│   ─────────────────────────────                                  │
+│   • Always snapshot focused states (:focus-visible)             │
+│   • Test dark mode AND forced-colors (high contrast)            │
+│   • Snapshot hover states (tooltip / popover visibility)        │
+│   • Capture error states (red borders, warning icons)           │
+│   • Combine with axe-core scans for full a11y coverage          │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -590,7 +751,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: "18"
 
       - name: Install dependencies
         run: npm ci
@@ -622,25 +783,25 @@ jobs:
 ```javascript
 // lighthouserc.js
 module.exports = {
-    ci: {
-        collect: {
-            url: ['http://localhost:3000/'],
-            numberOfRuns: 3,
-        },
-        assert: {
-            preset: 'lighthouse:recommended',
-            assertions: {
-                'categories:accessibility': ['error', { minScore: 0.9 }],
-                'color-contrast': 'error',
-                'document-title': 'error',
-                'html-has-lang': 'error',
-                'meta-viewport': 'error',
-            },
-        },
-        upload: {
-            target: 'temporary-public-storage',
-        },
+  ci: {
+    collect: {
+      url: ["http://localhost:3000/"],
+      numberOfRuns: 3,
     },
+    assert: {
+      preset: "lighthouse:recommended",
+      assertions: {
+        "categories:accessibility": ["error", { minScore: 0.9 }],
+        "color-contrast": "error",
+        "document-title": "error",
+        "html-has-lang": "error",
+        "meta-viewport": "error",
+      },
+    },
+    upload: {
+      target: "temporary-public-storage",
+    },
+  },
 };
 ```
 
@@ -653,12 +814,14 @@ module.exports = {
 **Q: What percentage of accessibility issues can automated testing catch?**
 
 A: Automated testing catches approximately 30-40% of accessibility issues. It's good for detecting:
+
 - Missing alt text
 - Color contrast
 - Missing form labels
 - Invalid ARIA
 
 But it cannot test:
+
 - Keyboard navigation UX
 - Screen reader experience
 - Logical content order
@@ -667,6 +830,7 @@ But it cannot test:
 **Q: Name 3 automated a11y testing tools**
 
 A:
+
 1. **axe-core**: Industry standard, used in many tools
 2. **Lighthouse**: Built into Chrome, tests pages
 3. **eslint-plugin-jsx-a11y**: Catches issues during development
@@ -676,6 +840,7 @@ A:
 **Q: How do you integrate accessibility testing into CI/CD?**
 
 A: Multi-layer approach:
+
 1. **Build time**: ESLint jsx-a11y plugin catches issues in IDE and CI
 2. **Unit tests**: jest-axe checks component accessibility
 3. **E2E tests**: cypress-axe or playwright tests full pages
@@ -684,12 +849,13 @@ A: Multi-layer approach:
 ```yaml
 # Fail build if a11y score < 90
 assertions:
-  'categories:accessibility': ['error', { minScore: 0.9 }]
+  "categories:accessibility": ["error", { minScore: 0.9 }]
 ```
 
 **Q: What should you test manually that automated tools miss?**
 
 A:
+
 1. **Keyboard navigation**: Logical tab order, focus management
 2. **Screen reader experience**: Announcements make sense
 3. **Meaningful content**: Alt text describes purpose, not just appearance
@@ -739,6 +905,7 @@ A: Comprehensive strategy:
 **Q: How would you handle accessibility debt in a legacy codebase?**
 
 A:
+
 1. **Audit**: Run automated tools to identify scope
 2. **Prioritize**: Focus on critical user journeys first
 3. **Component library**: Create accessible base components
@@ -756,6 +923,25 @@ A:
 3. [ ] What are WCAG contrast requirements for normal text (AA)?
 4. [ ] How do you test color blindness accessibility?
 5. [ ] Name tools for each testing layer (lint, unit, e2e, CI)
+
+---
+
+---
+
+## 📚 References
+
+| Resource                             | URL                                                    |
+| ------------------------------------ | ------------------------------------------------------ |
+| axe-core (GitHub)                    | <https://github.com/dequelabs/axe-core>                |
+| Playwright Accessibility Testing     | <https://playwright.dev/docs/accessibility-testing>    |
+| Deque University                     | <https://dequeuniversity.com/>                         |
+| jest-axe                             | <https://github.com/nickcolley/jest-axe>               |
+| cypress-axe                          | <https://github.com/component-driven/cypress-axe>      |
+| eslint-plugin-jsx-a11y               | <https://github.com/jsx-eslint/eslint-plugin-jsx-a11y> |
+| Chromatic (Storybook visual testing) | <https://www.chromatic.com/>                           |
+| Percy (BrowserStack visual testing)  | <https://percy.io/>                                    |
+| Lighthouse CI                        | <https://github.com/GoogleChrome/lighthouse-ci>        |
+| WebAIM (Web Accessibility In Mind)   | <https://webaim.org/>                                  |
 
 ---
 

@@ -39,6 +39,8 @@
 
 ## 🗄️ HTTP Caching
 
+> **Specifications:** [RFC 9111](https://www.rfc-editor.org/rfc/rfc9111) (HTTP Caching) · [RFC 7232](https://www.rfc-editor.org/rfc/rfc7232) (Conditional Requests) · [RFC 5861](https://www.rfc-editor.org/rfc/rfc5861) (Stale-While-Revalidate / Stale-If-Error extensions)
+
 ### Cache-Control Header
 
 ```
@@ -134,43 +136,104 @@ Cache-Control: max-age=3600, stale-while-revalidate=86400
 
 ```javascript
 // Server implementation (Express)
-app.get('/api/data', (req, res) => {
-    const data = getData();
-    const etag = generateETag(data);
+app.get("/api/data", (req, res) => {
+  const data = getData();
+  const etag = generateETag(data);
 
-    // Check if client has current version
-    if (req.headers['if-none-match'] === etag) {
-        return res.status(304).end();
-    }
+  // Check if client has current version
+  if (req.headers["if-none-match"] === etag) {
+    return res.status(304).end();
+  }
 
-    res.setHeader('ETag', etag);
-    res.setHeader('Cache-Control', 'private, max-age=0, must-revalidate');
-    res.json(data);
+  res.setHeader("ETag", etag);
+  res.setHeader("Cache-Control", "private, max-age=0, must-revalidate");
+  res.json(data);
 });
 
 // Client handling 304
 async function fetchWithCache(url) {
-    const cached = localStorage.getItem(url);
-    const headers = {};
+  const cached = localStorage.getItem(url);
+  const headers = {};
 
-    if (cached) {
-        const { etag, data } = JSON.parse(cached);
-        headers['If-None-Match'] = etag;
-    }
+  if (cached) {
+    const { etag, data } = JSON.parse(cached);
+    headers["If-None-Match"] = etag;
+  }
 
-    const response = await fetch(url, { headers });
+  const response = await fetch(url, { headers });
 
-    if (response.status === 304) {
-        return JSON.parse(cached).data;
-    }
+  if (response.status === 304) {
+    return JSON.parse(cached).data;
+  }
 
-    const data = await response.json();
-    const etag = response.headers.get('ETag');
+  const data = await response.json();
+  const etag = response.headers.get("ETag");
 
-    localStorage.setItem(url, JSON.stringify({ etag, data }));
-    return data;
+  localStorage.setItem(url, JSON.stringify({ etag, data }));
+  return data;
 }
 ```
+
+---
+
+### Vary Header
+
+The `Vary` header tells caches that the response may differ based on certain request headers. It prevents serving a cached response intended for one client type to a different client type.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     VARY HEADER EXPLAINED                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│   Response: Vary: Accept-Encoding                                │
+│                                                                   │
+│   Request 1: Accept-Encoding: gzip       → cached as "gzip"     │
+│   Request 2: Accept-Encoding: br         → cached as "br"        │
+│   Request 3: (no Accept-Encoding)        → cached as "identity" │
+│                                                                   │
+│   Each variant is stored and served independently.               │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Common Vary use cases:**
+
+```javascript
+// 1. Content encoding – different compressed variants
+Vary: Accept-Encoding
+// Cache stores separate entries for: gzip, br, identity
+
+// 2. Content negotiation – language/format
+Vary: Accept-Language
+// Cache stores separate entries per language (en, vi, fr...)
+
+// 3. User-specific responses – prevent sharing private data
+Vary: Cookie
+// Each session/user gets its own cache entry (disables shared caching)
+
+// 4. API versioning via header
+Vary: Accept, X-API-Version
+// Different response shapes cached separately
+
+// 5. Avoid Vary: * – effectively disables caching for that response
+Vary: *  // ❌ Never cache this response
+```
+
+**Practical example (Express):**
+
+```javascript
+app.get("/api/products", (req, res) => {
+  // Tell CDN: cache separately per encoding and language
+  res.setHeader("Vary", "Accept-Encoding, Accept-Language");
+  res.setHeader("Cache-Control", "public, max-age=3600, s-maxage=86400");
+
+  const lang = req.headers["accept-language"]?.split(",")[0] || "en";
+  const products = getProductsForLocale(lang);
+  res.json(products);
+});
+```
+
+> ⚠️ **Pitfall:** Adding `Vary: Cookie` or `Vary: Authorization` to public resources effectively prevents CDN caching for those responses, since each request looks different to the cache.
 
 ---
 
@@ -213,41 +276,32 @@ async function fetchWithCache(url) {
 ```javascript
 // sw.js - Service Worker
 
-const CACHE_NAME = 'app-v1';
+const CACHE_NAME = "app-v1";
 const STATIC_ASSETS = [
-    '/',
-    '/index.html',
-    '/styles/main.css',
-    '/scripts/app.js',
-    '/images/logo.png'
+  "/",
+  "/index.html",
+  "/styles/main.css",
+  "/scripts/app.js",
+  "/images/logo.png",
 ];
 
 // Install - cache static assets
-self.addEventListener('install', (event) => {
-    event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(cache => cache.addAll(STATIC_ASSETS))
-    );
+self.addEventListener("install", (event) => {
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS)));
 });
 
 // Activate - clean old caches
-self.addEventListener('activate', (event) => {
-    event.waitUntil(
-        caches.keys().then(keys => {
-            return Promise.all(
-                keys.filter(key => key !== CACHE_NAME)
-                    .map(key => caches.delete(key))
-            );
-        })
-    );
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)));
+    }),
+  );
 });
 
 // Fetch - serve from cache, fallback to network
-self.addEventListener('fetch', (event) => {
-    event.respondWith(
-        caches.match(event.request)
-            .then(cached => cached || fetch(event.request))
-    );
+self.addEventListener("fetch", (event) => {
+  event.respondWith(caches.match(event.request).then((cached) => cached || fetch(event.request)));
 });
 ```
 
@@ -257,74 +311,74 @@ self.addEventListener('fetch', (event) => {
 // 1. CACHE FIRST (Static assets)
 // Good for: images, fonts, CSS, JS
 async function cacheFirst(request) {
-    const cached = await caches.match(request);
-    if (cached) return cached;
+  const cached = await caches.match(request);
+  if (cached) return cached;
 
-    const response = await fetch(request);
-    const cache = await caches.open(CACHE_NAME);
-    cache.put(request, response.clone());
-    return response;
+  const response = await fetch(request);
+  const cache = await caches.open(CACHE_NAME);
+  cache.put(request, response.clone());
+  return response;
 }
 
 // 2. NETWORK FIRST (Dynamic content)
 // Good for: API data, frequently updated content
 async function networkFirst(request) {
-    try {
-        const response = await fetch(request);
-        const cache = await caches.open(CACHE_NAME);
-        cache.put(request, response.clone());
-        return response;
-    } catch (error) {
-        const cached = await caches.match(request);
-        if (cached) return cached;
-        throw error;
-    }
+  try {
+    const response = await fetch(request);
+    const cache = await caches.open(CACHE_NAME);
+    cache.put(request, response.clone());
+    return response;
+  } catch (error) {
+    const cached = await caches.match(request);
+    if (cached) return cached;
+    throw error;
+  }
 }
 
 // 3. STALE-WHILE-REVALIDATE
 // Good for: content that should be fast but can be slightly outdated
 async function staleWhileRevalidate(request) {
-    const cache = await caches.open(CACHE_NAME);
-    const cached = await cache.match(request);
+  const cache = await caches.open(CACHE_NAME);
+  const cached = await cache.match(request);
 
-    const fetchPromise = fetch(request).then(response => {
-        cache.put(request, response.clone());
-        return response;
-    });
+  const fetchPromise = fetch(request).then((response) => {
+    cache.put(request, response.clone());
+    return response;
+  });
 
-    return cached || fetchPromise;
+  return cached || fetchPromise;
 }
 
 // 4. CACHE ONLY (Offline-first)
 // Good for: truly static assets, offline apps
 async function cacheOnly(request) {
-    const cached = await caches.match(request);
-    if (!cached) {
-        throw new Error('Not in cache');
-    }
-    return cached;
+  const cached = await caches.match(request);
+  if (!cached) {
+    throw new Error("Not in cache");
+  }
+  return cached;
 }
 
 // 5. NETWORK ONLY (Real-time data)
 // Good for: non-cacheable requests, analytics
 async function networkOnly(request) {
-    return fetch(request);
+  return fetch(request);
 }
 
 // Strategy selection in fetch handler
-self.addEventListener('fetch', (event) => {
-    const url = new URL(event.request.url);
+self.addEventListener("fetch", (event) => {
+  const url = new URL(event.request.url);
 
-    if (url.pathname.startsWith('/api/')) {
-        // API calls: network first
-        event.respondWith(networkFirst(event.request));
-    } else if (url.pathname.startsWith('/static/')) {
-        // Static assets: cache first
-        event.respondWith(cacheFirst(event.request));
-    } else {
-        // HTML pages: stale-while-revalidate
-        event.respondWith(staleWhileRevalidate(event.request));
-    }
+  if (url.pathname.startsWith("/api/")) {
+    // API calls: network first
+    event.respondWith(networkFirst(event.request));
+  } else if (url.pathname.startsWith("/static/")) {
+    // Static assets: cache first
+    event.respondWith(cacheFirst(event.request));
+  } else {
+    // HTML pages: stale-while-revalidate
+    event.respondWith(staleWhileRevalidate(event.request));
+  }
 });
 ```
 
@@ -427,17 +481,17 @@ Cache Level: Bypass
 
 // 2. Cache tags/keys (CDN-specific)
 // Cloudflare
-fetch('https://api.cloudflare.com/client/v4/zones/:zone/purge_cache', {
-    method: 'POST',
-    headers: {
-        'Authorization': 'Bearer ' + API_TOKEN,
-        'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-        files: ['https://example.com/styles.css'],
-        // or purge by tag
-        tags: ['static-assets', 'v1']
-    })
+fetch("https://api.cloudflare.com/client/v4/zones/:zone/purge_cache", {
+  method: "POST",
+  headers: {
+    Authorization: "Bearer " + API_TOKEN,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    files: ["https://example.com/styles.css"],
+    // or purge by tag
+    tags: ["static-assets", "v1"],
+  }),
 });
 
 // 3. Purge all (use sparingly)
@@ -456,74 +510,70 @@ fetch('https://api.cloudflare.com/client/v4/zones/:zone/purge_cache', {
 
 ```javascript
 // SWR - Stale-While-Revalidate pattern
-import useSWR from 'swr';
+import useSWR from "swr";
 
 function UserProfile({ userId }) {
-    const { data, error, isLoading, mutate } = useSWR(
-        `/api/users/${userId}`,
-        fetcher,
-        {
-            // Revalidation options
-            revalidateOnFocus: true,
-            revalidateOnReconnect: true,
-            refreshInterval: 30000, // Poll every 30s
+  const { data, error, isLoading, mutate } = useSWR(`/api/users/${userId}`, fetcher, {
+    // Revalidation options
+    revalidateOnFocus: true,
+    revalidateOnReconnect: true,
+    refreshInterval: 30000, // Poll every 30s
 
-            // Cache options
-            dedupingInterval: 2000, // Dedupe requests within 2s
+    // Cache options
+    dedupingInterval: 2000, // Dedupe requests within 2s
 
-            // Stale data handling
-            revalidateIfStale: true,
+    // Stale data handling
+    revalidateIfStale: true,
 
-            // Error handling
-            errorRetryCount: 3,
-            errorRetryInterval: 5000
-        }
-    );
+    // Error handling
+    errorRetryCount: 3,
+    errorRetryInterval: 5000,
+  });
 
-    // Optimistic update
-    const updateUser = async (updates) => {
-        // Immediately update cache
-        mutate({ ...data, ...updates }, false);
+  // Optimistic update
+  const updateUser = async (updates) => {
+    // Immediately update cache
+    mutate({ ...data, ...updates }, false);
 
-        // Send request
-        await fetch(`/api/users/${userId}`, {
-            method: 'PATCH',
-            body: JSON.stringify(updates)
-        });
+    // Send request
+    await fetch(`/api/users/${userId}`, {
+      method: "PATCH",
+      body: JSON.stringify(updates),
+    });
 
-        // Revalidate to ensure consistency
-        mutate();
-    };
+    // Revalidate to ensure consistency
+    mutate();
+  };
 
-    if (isLoading) return <Loading />;
-    if (error) return <Error />;
-    return <Profile data={data} onUpdate={updateUser} />;
+  if (isLoading) return <Loading />;
+  if (error) return <Error />;
+  return <Profile data={data} onUpdate={updateUser} />;
 }
 
 // React Query
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 function Products() {
-    const queryClient = useQueryClient();
+  const queryClient = useQueryClient();
 
-    const { data, isLoading } = useQuery({
-        queryKey: ['products'],
-        queryFn: () => fetch('/api/products').then(r => r.json()),
-        staleTime: 5 * 60 * 1000, // Consider fresh for 5 minutes
-        cacheTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
-    });
+  const { data, isLoading } = useQuery({
+    queryKey: ["products"],
+    queryFn: () => fetch("/api/products").then((r) => r.json()),
+    staleTime: 5 * 60 * 1000, // Consider fresh for 5 minutes
+    cacheTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
+  });
 
-    const mutation = useMutation({
-        mutationFn: (newProduct) =>
-            fetch('/api/products', {
-                method: 'POST',
-                body: JSON.stringify(newProduct)
-            }),
-        onSuccess: () => {
-            // Invalidate and refetch
-            queryClient.invalidateQueries({ queryKey: ['products'] });
-        }
-    });
+  const mutation = useMutation({
+    mutationFn: (newProduct) =>
+      fetch("/api/products", {
+        method: "POST",
+        body: JSON.stringify(newProduct),
+      }),
+    onSuccess: () => {
+      // Invalidate and refetch
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
 }
 ```
 
@@ -532,64 +582,64 @@ function Products() {
 ```javascript
 // Simple LRU cache implementation
 class LRUCache {
-    constructor(maxSize = 100) {
-        this.maxSize = maxSize;
-        this.cache = new Map();
+  constructor(maxSize = 100) {
+    this.maxSize = maxSize;
+    this.cache = new Map();
+  }
+
+  get(key) {
+    if (!this.cache.has(key)) return undefined;
+
+    // Move to end (most recently used)
+    const value = this.cache.get(key);
+    this.cache.delete(key);
+    this.cache.set(key, value);
+
+    return value;
+  }
+
+  set(key, value, ttl = 0) {
+    // Remove oldest if at capacity
+    if (this.cache.size >= this.maxSize) {
+      const firstKey = this.cache.keys().next().value;
+      this.cache.delete(firstKey);
     }
 
-    get(key) {
-        if (!this.cache.has(key)) return undefined;
+    this.cache.set(key, {
+      value,
+      expires: ttl ? Date.now() + ttl : 0,
+    });
+  }
 
-        // Move to end (most recently used)
-        const value = this.cache.get(key);
-        this.cache.delete(key);
-        this.cache.set(key, value);
+  has(key) {
+    if (!this.cache.has(key)) return false;
 
-        return value;
+    const item = this.cache.get(key);
+    if (item.expires && Date.now() > item.expires) {
+      this.cache.delete(key);
+      return false;
     }
 
-    set(key, value, ttl = 0) {
-        // Remove oldest if at capacity
-        if (this.cache.size >= this.maxSize) {
-            const firstKey = this.cache.keys().next().value;
-            this.cache.delete(firstKey);
-        }
-
-        this.cache.set(key, {
-            value,
-            expires: ttl ? Date.now() + ttl : 0
-        });
-    }
-
-    has(key) {
-        if (!this.cache.has(key)) return false;
-
-        const item = this.cache.get(key);
-        if (item.expires && Date.now() > item.expires) {
-            this.cache.delete(key);
-            return false;
-        }
-
-        return true;
-    }
+    return true;
+  }
 }
 
 // Usage with API calls
 const cache = new LRUCache(50);
 
 async function fetchWithCache(url, options = {}) {
-    const cacheKey = `${url}-${JSON.stringify(options)}`;
+  const cacheKey = `${url}-${JSON.stringify(options)}`;
 
-    if (cache.has(cacheKey)) {
-        return cache.get(cacheKey).value;
-    }
+  if (cache.has(cacheKey)) {
+    return cache.get(cacheKey).value;
+  }
 
-    const response = await fetch(url, options);
-    const data = await response.json();
+  const response = await fetch(url, options);
+  const data = await response.json();
 
-    cache.set(cacheKey, data, 60000); // Cache for 1 minute
+  cache.set(cacheKey, data, 60000); // Cache for 1 minute
 
-    return data;
+  return data;
 }
 ```
 
@@ -641,6 +691,7 @@ async function fetchWithCache(url, options = {}) {
 **Q: Cache-Control: no-cache vs no-store?**
 
 A:
+
 - `no-cache`: Browser CAN cache but MUST revalidate with server before using
 - `no-store`: Browser should NOT store the response at all (sensitive data)
 
@@ -653,6 +704,7 @@ A: Entity Tag - unique identifier for a specific version of a resource. Used for
 **Q: Explain stale-while-revalidate**
 
 A: Caching strategy where:
+
 1. Serve cached (stale) content immediately
 2. Fetch fresh content in background
 3. Update cache for next request
@@ -662,6 +714,7 @@ Benefits: Fast response + eventual consistency. Good for content that can be sli
 **Q: How do you invalidate CDN cache?**
 
 A:
+
 1. **Filename hashing**: Change filename when content changes (best)
 2. **Purge API**: Use CDN's API to invalidate specific URLs/tags
 3. **Cache tags**: Tag responses, purge by tag
@@ -672,6 +725,7 @@ A:
 **Q: Design caching strategy for e-commerce site**
 
 A:
+
 ```
 1. Static Assets (JS/CSS/Images):
    - Fingerprint filenames
@@ -709,6 +763,32 @@ A:
 3. [ ] Service Worker caching strategies (5 patterns)
 4. [ ] CDN cache invalidation methods
 5. [ ] When to use no-cache vs no-store vs must-revalidate
+
+---
+
+---
+
+## 📚 References / Tài liệu tham khảo
+
+### RFCs
+
+| RFC                                                | Description                                                           |
+| -------------------------------------------------- | --------------------------------------------------------------------- |
+| [RFC 9111](https://www.rfc-editor.org/rfc/rfc9111) | HTTP Caching – Cache-Control, freshness, validation                   |
+| [RFC 7232](https://www.rfc-editor.org/rfc/rfc7232) | Conditional Requests – ETag, If-None-Match, If-Modified-Since         |
+| [RFC 5861](https://www.rfc-editor.org/rfc/rfc5861) | HTTP Cache-Control Extensions: stale-while-revalidate, stale-if-error |
+| [RFC 9110](https://www.rfc-editor.org/rfc/rfc9110) | HTTP Semantics – Vary header definition (§12.5.5)                     |
+
+### MDN
+
+| Link                                                                                           | Topic                        |
+| ---------------------------------------------------------------------------------------------- | ---------------------------- |
+| [MDN: HTTP Caching](https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching)                 | Browser & HTTP cache guide   |
+| [MDN: Cache-Control](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control)  | All Cache-Control directives |
+| [MDN: ETag](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag)                    | ETag header reference        |
+| [MDN: Vary](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Vary)                    | Vary header reference        |
+| [MDN: Service Worker API](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) | Service Worker caching       |
+| [MDN: Cache API](https://developer.mozilla.org/en-US/docs/Web/API/Cache)                       | Cache storage API            |
 
 ---
 

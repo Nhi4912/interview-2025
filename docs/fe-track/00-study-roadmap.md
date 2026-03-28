@@ -117,6 +117,17 @@
 | 4   | Web Performance (Comprehensive) | `06-browser-performance/04-web-performance-comprehensive.md` | Medium   |
 | 5   | Rendering Optimization          | `06-browser-performance/05-rendering-optimization-theory.md` | Medium   |
 
+**Networking:**
+
+| #   | Topic                 | File                                      | Priority |
+| --- | --------------------- | ----------------------------------------- | -------- |
+| 1   | HTTP Fundamentals     | `10-networking/01-http-fundamentals.md`   | High     |
+| 2   | REST API Design       | `10-networking/02-rest-api-design.md`     | High     |
+| 3   | GraphQL Basics        | `10-networking/03-graphql-basics.md`      | Medium   |
+| 4   | WebSockets & Realtime | `10-networking/04-websockets-realtime.md` | Medium   |
+| 5   | Caching & CDN         | `10-networking/05-caching-cdn.md`         | High     |
+| 6   | CORS & Same-Origin    | `10-networking/06-cors-same-origin.md`    | High     |
+
 ---
 
 ### Phase 5: Security & System Design (2-3 weeks)
@@ -151,6 +162,16 @@
 | 2   | Database Theory      | `../shared/03-database/database-theory.md`           | Medium   |
 | 3   | Consensus Algorithms | `../shared/02-system-design/consensus-algorithms.md` | Low      |
 
+**Accessibility:**
+
+| #   | Topic                 | File                                           | Priority |
+| --- | --------------------- | ---------------------------------------------- | -------- |
+| 1   | WCAG Fundamentals     | `11-accessibility/01-wcag-fundamentals.md`     | High     |
+| 2   | ARIA Attributes       | `11-accessibility/02-aria-attributes.md`       | High     |
+| 3   | Keyboard Navigation   | `11-accessibility/03-keyboard-navigation.md`   | Medium   |
+| 4   | Screen Readers        | `11-accessibility/04-screen-readers.md`        | Medium   |
+| 5   | Testing Accessibility | `11-accessibility/05-testing-accessibility.md` | Medium   |
+
 ---
 
 ### Phase 6: CS Fundamentals & Algorithms (2-3 weeks)
@@ -169,6 +190,19 @@
 
 ---
 
+### Phase 7: Behavioral & Soft Skills (1-2 weeks)
+
+> Behavioral rounds quyết định 30-50% kết quả phỏng vấn. Đặc biệt quan trọng tại Amazon, Google, Microsoft.
+
+| #   | Topic                 | File                                        | Priority |
+| --- | --------------------- | ------------------------------------------- | -------- |
+| 1   | STAR Method           | `12-behavioral/01-star-method.md`           | Critical |
+| 2   | Leadership Principles | `12-behavioral/02-leadership-principles.md` | High     |
+| 3   | Common Questions      | `12-behavioral/03-common-questions.md`      | High     |
+| 4   | Storytelling          | `12-behavioral/04-storytelling.md`          | Medium   |
+
+---
+
 ### Reference — Tài liệu tham khảo
 
 | #   | Topic                       | File                                                   |
@@ -178,6 +212,11 @@
 | 3   | Interview Practice          | `09-advanced-topics/11-interview-practice-*` (8 files) |
 | 4   | Quick Reference Cheat Sheet | `../quick-reference-cheat-sheet.md`                    |
 | 5   | Quick Start Guide           | `../00-quick-start-guide.md`                           |
+| 6   | Frontend Testing            | `14-frontend-testing.md`                               |
+| 7   | Coding Practice             | `13-coding-practice/README.md`                         |
+| 8   | Accessibility Module        | `11-accessibility/README.md`                           |
+| 9   | Networking Module           | `10-networking/README.md`                              |
+| 10  | Behavioral Module           | `12-behavioral/README.md`                              |
 
 ---
 
@@ -197,6 +236,9 @@
 | Accessibility     | Low        | Low       | High   | Medium          | High      | Medium    |
 | Testing           | Medium     | High      | High   | High            | High      | Medium    |
 | Browser Internals | Medium     | Medium    | Low    | Low             | Medium    | High      |
+| Networking        | Medium     | High      | Medium | Medium          | High      | High      |
+| Behavioral Skills | Medium     | High      | Medium | Medium          | High      | Very High |
+| Coding Practice   | High       | Very High | Medium | Medium          | High      | Very High |
 
 ---
 
@@ -264,6 +306,7 @@
 | **Evening**   | Review: flashcards, revisit weak areas                  | 1h       |
 | **Weekend**   | Mock interview practice (system design hoặc coding)     | 2-3h     |
 | **Weekend**   | Build portfolio project hoặc contribute open source     | 2-3h     |
+| **Weekly**    | Behavioral: practice 1 STAR story, record and review    | 30min    |
 
 ---
 

@@ -71,28 +71,41 @@ GUIDELINES:
     • Text spacing
 ```
 
+**Key Success Criteria:**
+
+| SC                                                                                                 | Level | Description                                       |
+| -------------------------------------------------------------------------------------------------- | ----- | ------------------------------------------------- |
+| [1.1.1 Non-text Content](https://www.w3.org/WAI/WCAG22/Understanding/non-text-content)             | A     | Alt text for all non-text content                 |
+| [1.2.2 Captions (Prerecorded)](https://www.w3.org/WAI/WCAG22/Understanding/captions-prerecorded)   | A     | Captions for prerecorded audio/video              |
+| [1.3.1 Info and Relationships](https://www.w3.org/WAI/WCAG22/Understanding/info-and-relationships) | A     | Logical structure conveyed via markup             |
+| [1.4.1 Use of Color](https://www.w3.org/WAI/WCAG22/Understanding/use-of-color)                     | A     | Color not the sole visual means of conveying info |
+| [1.4.3 Contrast (Minimum)](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum)           | AA    | 4.5:1 normal text, 3:1 large text                 |
+| [1.4.4 Resize Text](https://www.w3.org/WAI/WCAG22/Understanding/resize-text)                       | AA    | Text resizable to 200% without content loss       |
+| [1.4.12 Text Spacing](https://www.w3.org/WAI/WCAG22/Understanding/text-spacing)                    | AA    | No content loss when text spacing adjusted        |
+
 ```html
 <!-- Text Alternatives Examples -->
 
 <!-- ❌ Bad - No alt text -->
-<img src="chart.png">
+<img src="chart.png" />
 
 <!-- ❌ Bad - Redundant -->
-<img src="logo.png" alt="Image of company logo">
+<img src="logo.png" alt="Image of company logo" />
 
 <!-- ✅ Good - Descriptive -->
-<img src="chart.png" alt="Bar chart showing Q3 sales increased 25%">
+<img src="chart.png" alt="Bar chart showing Q3 sales increased 25%" />
 
 <!-- ✅ Good - Decorative (empty alt) -->
-<img src="decorative-line.png" alt="">
+<img src="decorative-line.png" alt="" />
 
 <!-- ✅ Good - Complex image with extended description -->
 <figure>
-    <img src="infographic.png" alt="Infographic about climate change"
-         aria-describedby="infographic-desc">
-    <figcaption id="infographic-desc">
-        Detailed description of the infographic...
-    </figcaption>
+  <img
+    src="infographic.png"
+    alt="Infographic about climate change"
+    aria-describedby="infographic-desc"
+  />
+  <figcaption id="infographic-desc">Detailed description of the infographic...</figcaption>
 </figure>
 ```
 
@@ -126,6 +139,20 @@ GUIDELINES:
     • Target size (44x44px minimum)
 ```
 
+**Key Success Criteria:**
+
+| SC                                                                                                        | Level | Description                                                    |
+| --------------------------------------------------------------------------------------------------------- | ----- | -------------------------------------------------------------- |
+| [2.1.1 Keyboard](https://www.w3.org/WAI/WCAG22/Understanding/keyboard)                                    | A     | All functionality available via keyboard                       |
+| [2.1.2 No Keyboard Trap](https://www.w3.org/WAI/WCAG22/Understanding/no-keyboard-trap)                    | A     | Keyboard focus not trapped                                     |
+| [2.4.1 Bypass Blocks](https://www.w3.org/WAI/WCAG22/Understanding/bypass-blocks)                          | A     | Skip links or similar mechanism provided                       |
+| [2.4.2 Page Titled](https://www.w3.org/WAI/WCAG22/Understanding/page-titled)                              | A     | Pages have descriptive titles                                  |
+| [2.4.3 Focus Order](https://www.w3.org/WAI/WCAG22/Understanding/focus-order)                              | A     | Focus order preserves meaning and operability                  |
+| [2.4.7 Focus Visible](https://www.w3.org/WAI/WCAG22/Understanding/focus-visible)                          | AA    | Keyboard focus indicator is visible                            |
+| [2.4.11 Focus Not Obscured (Min)](https://www.w3.org/WAI/WCAG22/Understanding/focus-not-obscured-minimum) | AA ★  | Focused element not entirely hidden by overlays _(New in 2.2)_ |
+| [2.5.1 Pointer Gestures](https://www.w3.org/WAI/WCAG22/Understanding/pointer-gestures)                    | A     | Single-pointer alternatives for multi-point gestures           |
+| [2.5.8 Target Size (Minimum)](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum)            | AA ★  | 24×24 CSS px minimum target size _(New in 2.2)_                |
+
 ```html
 <!-- Keyboard Accessible Examples -->
 
@@ -136,29 +163,24 @@ GUIDELINES:
 <button onclick="handleAction()">Click me</button>
 
 <!-- ✅ Good - Custom element made accessible -->
-<div role="button"
-     tabindex="0"
-     onclick="handleAction()"
-     onkeydown="handleKeydown(event)">
-    Click me
+<div role="button" tabindex="0" onclick="handleAction()" onkeydown="handleKeydown(event)">
+  Click me
 </div>
 
 <script>
-function handleKeydown(event) {
-    if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        handleAction();
+  function handleKeydown(event) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleAction();
     }
-}
+  }
 </script>
 
 <!-- Skip Link -->
-<a href="#main-content" class="skip-link">
-    Skip to main content
-</a>
+<a href="#main-content" class="skip-link"> Skip to main content </a>
 
 <style>
-.skip-link {
+  .skip-link {
     position: absolute;
     top: -40px;
     left: 0;
@@ -166,10 +188,10 @@ function handleKeydown(event) {
     background: #000;
     color: #fff;
     z-index: 100;
-}
-.skip-link:focus {
+  }
+  .skip-link:focus {
     top: 0;
-}
+  }
 </style>
 ```
 
@@ -198,33 +220,42 @@ GUIDELINES:
     • Error prevention (for legal, financial)
 ```
 
+**Key Success Criteria:**
+
+| SC                                                                                                                     | Level | Description                                           |
+| ---------------------------------------------------------------------------------------------------------------------- | ----- | ----------------------------------------------------- |
+| [3.1.1 Language of Page](https://www.w3.org/WAI/WCAG22/Understanding/language-of-page)                                 | A     | Page language declared in HTML `lang` attribute       |
+| [3.2.1 On Focus](https://www.w3.org/WAI/WCAG22/Understanding/on-focus)                                                 | A     | No unexpected context change on focus                 |
+| [3.2.2 On Input](https://www.w3.org/WAI/WCAG22/Understanding/on-input)                                                 | A     | No unexpected context change on input                 |
+| [3.3.1 Error Identification](https://www.w3.org/WAI/WCAG22/Understanding/error-identification)                         | A     | Errors identified and described in text               |
+| [3.3.2 Labels or Instructions](https://www.w3.org/WAI/WCAG22/Understanding/labels-or-instructions)                     | A     | Labels provided for all user input                    |
+| [3.3.7 Redundant Entry](https://www.w3.org/WAI/WCAG22/Understanding/redundant-entry)                                   | A ★   | Previously entered info auto-populated _(New in 2.2)_ |
+| [3.3.8 Accessible Authentication (Min)](https://www.w3.org/WAI/WCAG22/Understanding/accessible-authentication-minimum) | AA ★  | No cognitive-only authentication test _(New in 2.2)_  |
+
 ```html
 <!-- Understandable Examples -->
 
 <!-- Language -->
 <html lang="en">
-<p>This is English text.</p>
-<p lang="vi">Đây là tiếng Việt.</p>
+  <p>This is English text.</p>
+  <p lang="vi">Đây là tiếng Việt.</p>
 
-<!-- Form with Error Handling -->
-<form>
+  <!-- Form with Error Handling -->
+  <form>
     <label for="email">Email (required)</label>
-    <input type="email" id="email"
-           aria-describedby="email-error"
-           aria-invalid="true">
-    <span id="email-error" role="alert">
-        Please enter a valid email address
-    </span>
-</form>
+    <input type="email" id="email" aria-describedby="email-error" aria-invalid="true" />
+    <span id="email-error" role="alert"> Please enter a valid email address </span>
+  </form>
 
-<!-- Consistent Navigation -->
-<!-- Keep navigation in same order on all pages -->
-<nav>
+  <!-- Consistent Navigation -->
+  <!-- Keep navigation in same order on all pages -->
+  <nav>
     <a href="/">Home</a>
     <a href="/products">Products</a>
     <a href="/about">About</a>
     <a href="/contact">Contact</a>
-</nav>
+  </nav>
+</html>
 ```
 
 ### 4. Robust
@@ -240,32 +271,39 @@ GUIDELINES:
     • Status messages (announce dynamically)
 ```
 
+**Key Success Criteria:**
+
+| SC                                                                                     | Level | Description                                       |
+| -------------------------------------------------------------------------------------- | ----- | ------------------------------------------------- |
+| [4.1.2 Name, Role, Value](https://www.w3.org/WAI/WCAG22/Understanding/name-role-value) | A     | UI components expose name, role, and value to AT  |
+| [4.1.3 Status Messages](https://www.w3.org/WAI/WCAG22/Understanding/status-messages)   | AA    | Status messages announced without receiving focus |
+
+> ℹ️ SC 4.1.1 Parsing was **removed** in WCAG 2.2 — modern browsers normalize HTML parsing automatically.
+
 ```html
 <!-- Robust Examples -->
 
 <!-- ❌ Bad - Invalid HTML -->
 <div id="header">
-    <div id="header">  <!-- Duplicate ID -->
-</div>
+  <div id="header"><!-- Duplicate ID --></div>
 
-<!-- ✅ Good - Valid HTML -->
-<header id="header">
-    <nav id="main-nav">
-    </nav>
-</header>
+  <!-- ✅ Good - Valid HTML -->
+  <header id="header">
+    <nav id="main-nav"></nav>
+  </header>
 
-<!-- Custom component with proper semantics -->
-<div role="slider"
-     aria-valuenow="50"
-     aria-valuemin="0"
-     aria-valuemax="100"
-     aria-label="Volume"
-     tabindex="0">
-</div>
+  <!-- Custom component with proper semantics -->
+  <div
+    role="slider"
+    aria-valuenow="50"
+    aria-valuemin="0"
+    aria-valuemax="100"
+    aria-label="Volume"
+    tabindex="0"
+  ></div>
 
-<!-- Status message for screen readers -->
-<div role="status" aria-live="polite">
-    3 items added to cart
+  <!-- Status message for screen readers -->
+  <div role="status" aria-live="polite">3 items added to cart</div>
 </div>
 ```
 
@@ -273,53 +311,55 @@ GUIDELINES:
 
 ## 📊 Key Success Criteria (Level AA)
 
-### Color Contrast
+### Color Contrast — [SC 1.4.3](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum) (AA) + [SC 1.4.11](https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast) Non-text Contrast (AA)
 
 ```css
 /* Minimum contrast ratios */
 
 /* Normal text (<24px or <19px bold): 4.5:1 */
 .normal-text {
-    color: #595959; /* On white: 4.6:1 ✅ */
-    color: #767676; /* On white: 4.5:1 ✅ (minimum) */
-    color: #888888; /* On white: 3.5:1 ❌ */
+  color: #595959; /* On white: 4.6:1 ✅ */
+  color: #767676; /* On white: 4.5:1 ✅ (minimum) */
+  color: #888888; /* On white: 3.5:1 ❌ */
 }
 
 /* Large text (≥24px or ≥19px bold): 3:1 */
 .large-text {
-    font-size: 24px;
-    color: #949494; /* On white: 3:1 ✅ */
+  font-size: 24px;
+  color: #949494; /* On white: 3:1 ✅ */
 }
 
 /* Non-text (icons, borders): 3:1 */
 .icon {
-    color: #949494; /* 3:1 minimum ✅ */
+  color: #949494; /* 3:1 minimum ✅ */
 }
 
 /* Tools: WebAIM Contrast Checker, Stark */
 ```
 
-### Focus Visible
+### Focus Visible — [SC 2.4.7](https://www.w3.org/WAI/WCAG22/Understanding/focus-visible) (AA) + [SC 2.4.11](https://www.w3.org/WAI/WCAG22/Understanding/focus-not-obscured-minimum) Focus Not Obscured (AA, new in 2.2)
 
 ```css
 /* Default focus - don't remove! */
 :focus {
-    outline: 2px solid blue;
-    outline-offset: 2px;
+  outline: 2px solid blue;
+  outline-offset: 2px;
 }
 
 /* Custom focus that meets requirements */
 :focus-visible {
-    outline: 3px solid #005fcc;
-    outline-offset: 2px;
-    border-radius: 2px;
+  outline: 3px solid #005fcc;
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
 /* High contrast focus */
 button:focus-visible {
-    outline: 3px solid currentColor;
-    outline-offset: 3px;
-    box-shadow: 0 0 0 6px white, 0 0 0 9px currentColor;
+  outline: 3px solid currentColor;
+  outline-offset: 3px;
+  box-shadow:
+    0 0 0 6px white,
+    0 0 0 9px currentColor;
 }
 ```
 
@@ -346,6 +386,7 @@ Vietnamese explanation: Level A là mức tối thiểu — không đạt thì c
 ### Q: What are the four POUR principles of WCAG? / Bốn nguyên tắc POUR của WCAG là gì? 🟡 Mid
 
 **A:**
+
 - **Perceivable**: All information and UI components must be presentable to users in ways they can perceive — alt text for images, captions for video, sufficient color contrast.
 - **Operable**: All UI components and navigation must be operable — keyboard accessible, no keyboard traps, sufficient time limits.
 - **Understandable**: Information and UI operation must be understandable — readable text, predictable behavior, helpful error messages.
@@ -366,6 +407,7 @@ Vietnamese explanation: Đây là câu hỏi thực tiễn rất hay gặp. Cầ
 ### Q: How would you implement WCAG AA compliance in an existing project? / Làm thế nào để triển khai WCAG AA trong dự án có sẵn? 🔴 Senior
 
 **A:**
+
 ```
 1. Audit:
    - Run automated tools (axe, Lighthouse)
@@ -404,52 +446,50 @@ Strategies to manage focus in SPAs:
 // 1. Move focus to the new page heading on route change
 // (React Router example)
 function App() {
-    const location = useLocation();
-    const headingRef = useRef(null);
+  const location = useLocation();
+  const headingRef = useRef(null);
 
-    useEffect(() => {
-        // Wait for DOM to update, then focus the page heading
-        headingRef.current?.focus();
-    }, [location.pathname]);
+  useEffect(() => {
+    // Wait for DOM to update, then focus the page heading
+    headingRef.current?.focus();
+  }, [location.pathname]);
 
-    return (
-        <main>
-            <h1 tabIndex={-1} ref={headingRef}>Page Title</h1>
-            {/* page content */}
-        </main>
-    );
+  return (
+    <main>
+      <h1 tabIndex={-1} ref={headingRef}>
+        Page Title
+      </h1>
+      {/* page content */}
+    </main>
+  );
 }
 
 // 2. Use an aria-live region to announce the new page title
 function RouteAnnouncer() {
-    const location = useLocation();
-    const [announcement, setAnnouncement] = useState('');
+  const location = useLocation();
+  const [announcement, setAnnouncement] = useState("");
 
-    useEffect(() => {
-        const title = document.title || 'New page loaded';
-        setAnnouncement(title);
-    }, [location.pathname]);
+  useEffect(() => {
+    const title = document.title || "New page loaded";
+    setAnnouncement(title);
+  }, [location.pathname]);
 
-    return (
-        <div
-            aria-live="assertive"
-            aria-atomic="true"
-            style={{ position: 'absolute', left: '-9999px' }}
-        >
-            {announcement}
-        </div>
-    );
+  return (
+    <div aria-live="assertive" aria-atomic="true" style={{ position: "absolute", left: "-9999px" }}>
+      {announcement}
+    </div>
+  );
 }
 
 // 3. Return focus to the trigger element when closing a modal
 function Modal({ onClose, triggerRef }) {
-    useEffect(() => {
-        return () => {
-            // Restore focus to the element that opened the modal
-            triggerRef.current?.focus();
-        };
-    }, [triggerRef]);
-    // ...
+  useEffect(() => {
+    return () => {
+      // Restore focus to the element that opened the modal
+      triggerRef.current?.focus();
+    };
+  }, [triggerRef]);
+  // ...
 }
 ```
 
@@ -504,6 +544,22 @@ NEW IN WCAG 2.2:
     • No cognitive function test at all — no exceptions.
 ```
 
+**Quick Reference Links (WCAG 2.2 new Success Criteria):**
+
+| Success Criterion                                                                                                            | Level | Understanding Doc                                             |
+| ---------------------------------------------------------------------------------------------------------------------------- | ----- | ------------------------------------------------------------- |
+| [2.4.11 Focus Not Obscured (Min)](https://www.w3.org/WAI/WCAG22/Understanding/focus-not-obscured-minimum)                    | AA    | Focused element not entirely hidden by sticky headers/banners |
+| [2.4.12 Focus Not Obscured (Enhanced)](https://www.w3.org/WAI/WCAG22/Understanding/focus-not-obscured-enhanced)              | AAA   | Focused element fully visible — no overlap at all             |
+| [2.4.13 Focus Appearance](https://www.w3.org/WAI/WCAG22/Understanding/focus-appearance)                                      | AAA   | Focus indicator area + 3:1 contrast change                    |
+| [2.5.7 Dragging Movements](https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements)                                   | AA    | Single-pointer alternative for all drag-and-drop              |
+| [2.5.8 Target Size (Minimum)](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum)                               | AA    | 24×24 CSS px minimum target size                              |
+| [3.2.6 Consistent Help](https://www.w3.org/WAI/WCAG22/Understanding/consistent-help)                                         | AA    | Help mechanisms in consistent relative order across pages     |
+| [3.3.7 Redundant Entry](https://www.w3.org/WAI/WCAG22/Understanding/redundant-entry)                                         | A     | Previously entered info auto-populated or selectable          |
+| [3.3.8 Accessible Authentication (Min)](https://www.w3.org/WAI/WCAG22/Understanding/accessible-authentication-minimum)       | AA    | No cognitive-only auth test (captcha alternative allowed)     |
+| [3.3.9 Accessible Authentication (Enhanced)](https://www.w3.org/WAI/WCAG22/Understanding/accessible-authentication-enhanced) | AAA   | No cognitive function test — no exceptions                    |
+
+> ⚠️ **Note:** SC 4.1.1 Parsing was **removed** in WCAG 2.2 — modern browsers normalize HTML parsing, making this criterion obsolete.
+
 Vietnamese explanation: WCAG 2.2 phản ánh xu hướng mobile-first và cognitive accessibility. Ba tiêu chí quan trọng nhất cần nhớ cho Senior interview: (1) **Focus Not Obscured** — rất phổ biến khi có sticky header hay cookie banner che mất focused element; (2) **Target Size 24×24px** — thực tế hơn 44×44px của WCAG 2.1 AAA, áp dụng cho AA; (3) **Accessible Authentication** — ảnh hưởng trực tiếp đến captcha và multi-step auth flows. Lưu ý: 4.1.1 Parsing bị remove vì modern browsers đã tự normalize HTML parsing, tiêu chí này không còn tạo ra accessibility barriers thực tế.
 
 ---
@@ -516,34 +572,34 @@ Vietnamese explanation: WCAG 2.2 phản ánh xu hướng mobile-first và cognit
 // ─── Layer 1: Static analysis (ESLint) ───────────────────────────
 // .eslintrc.js
 module.exports = {
-    plugins: ['jsx-a11y'],
-    extends: ['plugin:jsx-a11y/recommended'],
+  plugins: ["jsx-a11y"],
+  extends: ["plugin:jsx-a11y/recommended"],
 };
 // Catches: missing alt text, invalid ARIA, empty labels, etc.
 // Runs at: editor / pre-commit / CI
 
 // ─── Layer 2: Unit tests with jest-axe ───────────────────────────
-import { render } from '@testing-library/react';
-import { axe, toHaveNoViolations } from 'jest-axe';
+import { render } from "@testing-library/react";
+import { axe, toHaveNoViolations } from "jest-axe";
 
 expect.extend(toHaveNoViolations);
 
-test('Button has no accessibility violations', async () => {
-    const { container } = render(<Button>Save</Button>);
-    const results = await axe(container);
-    expect(results).toHaveNoViolations();
+test("Button has no accessibility violations", async () => {
+  const { container } = render(<Button>Save</Button>);
+  const results = await axe(container);
+  expect(results).toHaveNoViolations();
 });
 
 // ─── Layer 3: Integration / E2E (Playwright + axe-core) ──────────
-import { test, expect } from '@playwright/test';
-import AxeBuilder from '@axe-core/playwright';
+import { test, expect } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 
-test('Homepage has no AA violations', async ({ page }) => {
-    await page.goto('/');
-    const results = await new AxeBuilder({ page })
-        .withTags(['wcag2a', 'wcag2aa', 'wcag22aa'])
-        .analyze();
-    expect(results.violations).toEqual([]);
+test("Homepage has no AA violations", async ({ page }) => {
+  await page.goto("/");
+  const results = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag22aa"])
+    .analyze();
+  expect(results.violations).toEqual([]);
 });
 
 // ─── Layer 4: CI gate ─────────────────────────────────────────────
@@ -581,16 +637,16 @@ Vietnamese explanation: Câu này kiểm tra khả năng xây dựng accessibili
 
 ## 📊 Interview Q&A Summary
 
-| Question | Level | Key Point |
-|----------|-------|-----------|
-| What does WCAG stand for? | 🟢 Junior | W3C standard for web accessibility across disability types |
-| Difference between Level A and AA? | 🟢 Junior | A = critical barriers; AA = standard target including contrast, focus |
-| What are the POUR principles? | 🟡 Mid | Perceivable, Operable, Understandable, Robust |
-| Required color contrast ratios? | 🟡 Mid | 4.5:1 normal text, 3:1 large text and non-text elements |
-| Focus management in SPAs? | 🟡 Mid | Move focus to page heading or use aria-live on route change; return focus on modal close |
-| Testing accessibility programmatically? | 🟡 Mid | Layered: ESLint + jest-axe + Playwright/axe-core; automated covers only ~30-40% |
-| Implementing WCAG AA in existing project? | 🔴 Senior | Audit → prioritize → fix common issues → prevent regression with CI |
-| New success criteria in WCAG 2.2? | 🔴 Senior | Focus Not Obscured, Target Size 24px, Accessible Authentication, Redundant Entry |
+| Question                                  | Level     | Key Point                                                                                |
+| ----------------------------------------- | --------- | ---------------------------------------------------------------------------------------- |
+| What does WCAG stand for?                 | 🟢 Junior | W3C standard for web accessibility across disability types                               |
+| Difference between Level A and AA?        | 🟢 Junior | A = critical barriers; AA = standard target including contrast, focus                    |
+| What are the POUR principles?             | 🟡 Mid    | Perceivable, Operable, Understandable, Robust                                            |
+| Required color contrast ratios?           | 🟡 Mid    | 4.5:1 normal text, 3:1 large text and non-text elements                                  |
+| Focus management in SPAs?                 | 🟡 Mid    | Move focus to page heading or use aria-live on route change; return focus on modal close |
+| Testing accessibility programmatically?   | 🟡 Mid    | Layered: ESLint + jest-axe + Playwright/axe-core; automated covers only ~30-40%          |
+| Implementing WCAG AA in existing project? | 🔴 Senior | Audit → prioritize → fix common issues → prevent regression with CI                      |
+| New success criteria in WCAG 2.2?         | 🔴 Senior | Focus Not Obscured, Target Size 24px, Accessible Authentication, Redundant Entry         |
 
 ---
 
@@ -604,6 +660,21 @@ Vietnamese explanation: Câu này kiểm tra khả năng xây dựng accessibili
 6. [ ] Focus management strategies for SPAs
 7. [ ] New WCAG 2.2 criteria (9 added, 1 removed)
 8. [ ] Accessibility testing toolchain layers
+
+---
+
+---
+
+## 📚 References
+
+| Resource                               | URL                                             |
+| -------------------------------------- | ----------------------------------------------- |
+| WCAG 2.2 Specification                 | <https://www.w3.org/TR/WCAG22/>                 |
+| Understanding WCAG 2.2                 | <https://www.w3.org/WAI/WCAG22/Understanding/>  |
+| How to Meet WCAG (Quick Reference)     | <https://www.w3.org/WAI/WCAG22/quickref/>       |
+| WAI-ARIA 1.2                           | <https://www.w3.org/TR/wai-aria-1.2/>           |
+| WebAIM Contrast Checker                | <https://webaim.org/resources/contrastchecker/> |
+| W3C Web Accessibility Initiative (WAI) | <https://www.w3.org/WAI/>                       |
 
 ---
 

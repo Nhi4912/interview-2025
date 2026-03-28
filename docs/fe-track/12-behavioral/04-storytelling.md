@@ -257,9 +257,11 @@ creating documentation for our patterns."
 ## Story: [Short Name]
 
 ### One-liner
+
 [Elevator pitch of the story in one sentence]
 
 ### Tags
+
 - [ ] Leadership
 - [ ] Problem Solving
 - [ ] Teamwork
@@ -268,6 +270,7 @@ creating documentation for our patterns."
 - [ ] Conflict
 
 ### Company Fit
+
 - Amazon LP: [Which LP?]
 - Google: [Which trait?]
 - Meta: [Which value?]
@@ -278,37 +281,44 @@ creating documentation for our patterns."
 [One attention-grabbing sentence]
 
 **SITUATION (30s):**
+
 - Company/context:
 - Project/initiative:
 - Stakes/why it mattered:
 
 **TASK (20s):**
+
 - My specific role:
 - What was expected:
 - Constraints/challenges:
 
 **ACTION (90s):**
+
 1. First, I...
 2. Then, I...
 3. When [obstacle], I...
 4. I also...
 
 **RESULT (30s):**
+
 - Quantified outcome:
 - Qualitative impact:
 - Recognition/follow-up:
 
 **LEARNING:**
+
 - What I learned:
 - How I apply it now:
 
 ### Variations
+
 - Short version (1 min):
 - Leadership angle:
 - Technical angle:
 - Failure angle:
 
 ### Practice Notes
+
 - Last practiced: [date]
 - Feedback received:
 - Things to improve:
@@ -488,6 +498,191 @@ telling it from 3 different angles.
    - Record mock interviews
    - Review together
    - Track improvement over time
+```
+
+---
+
+## 🌏 Cultural Considerations for International Interviews
+
+> Phần này đặc biệt quan trọng cho ứng viên Việt Nam phỏng vấn tại các công ty quốc tế như Grab, Sea Group, Google, Amazon, Meta. Sự khác biệt về văn hoá giao tiếp có thể là điểm trừ lớn nếu bạn không chuẩn bị.
+
+### Vietnamese vs. Western Communication Styles
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│              COMMUNICATION STYLE COMPARISON                     │
+├──────────────────────────────┬──────────────────────────────────┤
+│   Vietnamese Default Style   │   Western Interview Expectation  │
+├──────────────────────────────┼──────────────────────────────────┤
+│ Indirect, context-heavy      │ Direct — get to the point first  │
+│ Team credit ("chúng tôi")    │ Personal credit ("I did X")      │
+│ Humble about achievements    │ Confident, specific claims       │
+│ Defer to seniority           │ Show independent judgment        │
+│ Build rapport before task    │ Task-first, rapport follows      │
+│ Avoid saying "I don't know"  │ Admitting uncertainty = strength │
+│ Long context before the hook │ Hook first, then context         │
+│ Relationship-based trust     │ Evidence-based trust             │
+└──────────────────────────────┴──────────────────────────────────┘
+
+NOTE: Neither style is wrong — they're optimized for different
+cultures. Your job in an international interview is to code-switch
+into the expected style while staying authentic.
+```
+
+### How to Adapt for Different Companies
+
+```
+GRAB / SEA GROUP (Southeast Asian context):
+─────────────────────────────────────────────────────────────────
+• Regional context is an ADVANTAGE — lean into it
+• Reference SEA-specific constraints: mobile-first users, low-end
+  Android devices, 3G connectivity, multi-language UX, cash-heavy
+  payment behavior in Tier 2/3 cities
+• They value "move fast despite ambiguity" stories
+• Team outcomes still matter — individual + collective balance
+• Show you understand: your users are on $80 Android phones
+  with inconsistent 3G, not MacBooks on gigabit fiber
+
+GOOGLE:
+─────────────────────────────────────────────────────────────────
+• Data-driven decisions are non-negotiable — quantify everything
+• "Googliness" = intellectual humility + curiosity + collaboration
+• Do not oversell certainty. "I was wrong and here's what I
+  learned" stories are highly valued — they test Googleyness
+• Leadership = influence and clarity, not authority or hierarchy
+• Structured thinking matters as much as the outcome itself
+
+AMAZON:
+─────────────────────────────────────────────────────────────────
+• Every answer maps to ≥1 Leadership Principle — know all 16
+• "Disagree and Commit" is a real expectation — they want
+  evidence you've pushed back respectfully AND then fully committed
+• Customer obsession: always connect your work to user impact,
+  even for internal tools
+• Be extremely specific about YOUR role vs. the team's role
+• Vague answers without metrics or ownership are red flags
+• Interviewers take notes in a rubric — give them quotable data
+
+META:
+─────────────────────────────────────────────────────────────────
+• "Move Fast" is literal — show bias for action over deliberation
+• Impact at scale matters: how many users/engineers affected?
+• Collaboration across orgs is highly valued
+• Show comfort with ambiguity and changing direction based on data
+```
+
+### When to Use "I" vs. "We"
+
+```
+THE RULE:
+─────────────────────────────────────────────────────────────────
+
+Use "I" for:
+  ✅ Your decisions:     "I chose React Query because..."
+  ✅ Your actions:       "I wrote the RFC and presented it to..."
+  ✅ Your ownership:     "I made a mistake when I didn't test..."
+  ✅ Your proposals:     "I proposed that we adopt X pattern."
+  ✅ Your disagreements: "I pushed back because the data showed..."
+
+Use "we" for:
+  ✅ Shared outcomes:    "We shipped the feature on time."
+  ✅ Team agreement:     "We decided as a team to..."
+  ✅ Crediting others:   "My teammate owned the backend; I handled
+                          the frontend performance layer."
+
+NEVER use "we" to:
+  ❌ Obscure your personal contribution (sounds like you did nothing)
+  ❌ Avoid owning a failure ("we made a mistake in planning")
+  ❌ Dilute impact ("we improved performance" → who specifically?)
+
+CRITICAL FOR VIETNAMESE CANDIDATES:
+The single most common feedback from Western interviewers is:
+"I couldn't tell what YOU specifically contributed."
+
+Saying "I" in English doesn't sound arrogant — it sounds
+clear and confident. The interviewer is evaluating YOU.
+They will hire YOU, not your team. Give them the evidence.
+
+PRACTICE: Record yourself telling a story. Count how many times
+you say "we" vs "I". If ratio > 2:1, rewrite the story.
+```
+
+### Common Mistakes Vietnamese Candidates Make
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│         COMMON MISTAKES & HOW TO FIX THEM                      │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│   1. TOO MUCH CONTEXT BEFORE THE STORY                          │
+│      ───────────────────────────────────                         │
+│      ❌ 2 minutes explaining company history, team structure,   │
+│         product background before the actual event              │
+│      ✅ Hook in 1 sentence, context in 20 seconds, then action  │
+│      Why: Western interviewers will interrupt or tune out       │
+│           if your setup runs over 45 seconds                    │
+│                                                                   │
+│   2. EXCESSIVE MODESTY ("Khiêm tốn" in the wrong context)      │
+│      ──────────────────────────────────────────────────          │
+│      ❌ "I just helped a bit..." / "I only did a small part..." │
+│      ❌ Giving full credit to the team for your own initiative  │
+│      ✅ "I led the migration." "I designed the architecture."   │
+│      Why: Modesty reads as lack of confidence or low ownership  │
+│           In Western interviews, underselling = red flag        │
+│                                                                   │
+│   3. PIVOTING AWAY FROM THE FAILURE QUESTION                   │
+│      ──────────────────────────────────────────                  │
+│      ❌ Turning a failure question into a hidden success story  │
+│      ❌ "My failure was caring too much about code quality."    │
+│      ✅ Name a real failure → own it → show the lesson applied  │
+│      Why: Authentic failure stories are the #1 trust signal.    │
+│           Interviewers can always tell when it's been sanitized. │
+│                                                                   │
+│   4. OVER-INDEXING ON TECHNICAL DETAILS                         │
+│      ──────────────────────────────────                          │
+│      ❌ Spending 60%+ of the answer explaining the tech stack   │
+│         (React version, webpack config, CSS architecture...)    │
+│      ✅ ~20% tech context, ~80% decisions, leadership, people   │
+│      Why: Behavioral questions test WHO you are, not WHAT       │
+│           you know. Technical details belong in tech interviews. │
+│                                                                   │
+│   5. APOLOGIZING FOR ENGLISH                                    │
+│      ────────────────────────                                    │
+│      ❌ "Sorry, my English is not very good..."                 │
+│      ❌ Lengthy disclaimers before your answer                  │
+│      ✅ Speak confidently; ask to clarify if a question         │
+│         is unclear ("Could you clarify what you mean by X?")   │
+│      Why: Pre-emptive apologies reduce perceived confidence     │
+│           before you've said anything of substance              │
+│                                                                   │
+│   6. RESULTS WITHOUT NUMBERS                                    │
+│      ────────────────────────                                    │
+│      ❌ "Performance became much better after my changes."      │
+│      ❌ "The team was happier with the new process."            │
+│      ✅ "TTI improved from 11s to 3.1s; abandonment dropped 14%.│
+│      Why: Quantified results signal engineering maturity        │
+│           and business awareness. Vague results signal junior.  │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Quick Calibration Checklist Before International Interviews
+
+```
+□ Have I practiced saying "I" instead of "we" for my key stories?
+□ Does each story have at least one concrete number?
+  (time saved, % improvement, $ impact, user count, team size)
+□ Is my "failure" story actually about ME failing — not the team?
+□ Can I deliver my core 3-minute story in under 3.5 minutes?
+□ Have I researched this company's specific interview style?
+  □ Amazon  → mapped each story to a specific Leadership Principle
+  □ Google  → added data points and intellectual curiosity signals
+  □ Grab    → included SEA market context in at least one story
+  □ Meta    → emphasized speed, scale, and cross-team impact
+□ Am I comfortable pausing for 3-5 seconds when I need to think,
+  rather than filling silence with "um" or rushing?
+□ Have I practiced saying my stories OUT LOUD, not just writing
+  them? (Silent preparation does not build verbal fluency)
 ```
 
 ---

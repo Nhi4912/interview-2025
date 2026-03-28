@@ -15,7 +15,7 @@ Một engineer build infinite scroll component — mỗi scroll event attach m�
 ```javascript
 // BUG: every scroll creates new closure capturing growing productList
 function attachScrollListener(productList) {
-  window.addEventListener('scroll', function handleScroll() {
+  window.addEventListener("scroll", function handleScroll() {
     if (isNearBottom()) loadMore(productList); // closure holds productList reference
   });
 }
@@ -40,6 +40,7 @@ Fix: cleanup với `useEffect` return function. **1 dòng cleanup code tiết ki
 → Vì đây là cách duy nhất để function "nhớ" context của nó sau khi outer function đã return.
 
 **Why you must know this for 2026 interviews:**
+
 - React hooks (`useState`, `useEffect`, `useCallback`) đều dựa trên closure internals
 - Stale closure là bug #1 khó debug của React developers (tất cả công ty đều hỏi)
 - Module pattern, debounce, throttle, memoization — tất cả dùng closure
@@ -61,6 +62,7 @@ Fix: cleanup với `useEffect` return function. **1 dòng cleanup code tiết ki
 ```
 
 **Bạn đang ở đây trong lộ trình học:**
+
 ```
 Scope & Hoisting → [CLOSURE] → Prototypes → Async/Event Loop → React Hooks
 ```
@@ -94,16 +96,17 @@ Hãy tưởng tượng bạn đang làm việc trong văn phòng (outer function
 
 ```javascript
 function outer() {
-  const config = { apiUrl: 'https://api.grab.com' }; // stays in memory
+  const config = { apiUrl: "https://api.grab.com" }; // stays in memory
 
-  return function inner() {       // inner.[[Environment]] → outer's scope
-    return config.apiUrl;         // looks up scope chain, finds config
+  return function inner() {
+    // inner.[[Environment]] → outer's scope
+    return config.apiUrl; // looks up scope chain, finds config
   };
 }
 
-const getUrl = outer();  // outer() finishes, but config is NOT garbage collected
-                         // because getUrl.[[Environment]] still references it
-console.log(getUrl());   // 'https://api.grab.com'
+const getUrl = outer(); // outer() finishes, but config is NOT garbage collected
+// because getUrl.[[Environment]] still references it
+console.log(getUrl()); // 'https://api.grab.com'
 ```
 
 ```
@@ -126,8 +129,8 @@ Memory model:
 function makeCounter() {
   let n = 0;
   return {
-    inc: () => ++n,  // both share same environment record
-    get: () => n,    // if inc() runs, get() sees the change
+    inc: () => ++n, // both share same environment record
+    get: () => n, // if inc() runs, get() sees the change
   };
 }
 ```
@@ -140,11 +143,13 @@ function makeCounter() {
 | "Closure xảy ra khi dùng `return`" | Closure được tạo ngay khi function được định nghĩa | Mọi function object đã là closure từ khi tạo |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy câu hỏi về: "how does function remember variables?", "why can inner function access outer variables?"
 - → Nhớ đến: [[Environment]] internal slot + scope chain lookup
-- → Mở đầu trả lời: *"Every function in JavaScript has an internal [[Environment]] slot that holds a reference to the scope in which it was created. This is how closures work — it's not magic syntax, it's the default behavior of all functions."*
+- → Mở đầu trả lời: _"Every function in JavaScript has an internal [[Environment]] slot that holds a reference to the scope in which it was created. This is how closures work — it's not magic syntax, it's the default behavior of all functions."_
 
 **🔑 Knowledge Chain:**
+
 - 📚 Cần biết: [Scope & Hoisting](./02-scope-hoisting-comprehensive.md) — lexical scope phải hiểu trước
 - ➡️ Để hiểu: [React Hooks](../03-react/03-hooks-deep-dive.md) — useState/useEffect internals dùng closure
 
@@ -169,14 +174,14 @@ GC như người dọn nhà: chỉ vứt đồ khi không ai cần nữa. Closur
 // Pattern A: safe — closure is short-lived
 function processOrder(orderId) {
   const orderData = fetchOrder(orderId); // large object
-  return orderData.total;               // closure used once, then GC'd
+  return orderData.total; // closure used once, then GC'd
 }
 
 // Pattern B: LEAK — closure attached to permanent object
 function setupShopeeCart() {
-  const cartItems = [];  // grows unbounded
+  const cartItems = []; // grows unbounded
 
-  document.getElementById('addBtn').addEventListener('click', function() {
+  document.getElementById("addBtn").addEventListener("click", function () {
     cartItems.push(getSelectedItem()); // closure captures cartItems FOREVER
     // cartItems held in memory until page unload or listener removed
   });
@@ -190,10 +195,11 @@ function setupShopeeCart() {
     cartItems.push(getSelectedItem());
   }
 
-  document.getElementById('addBtn').addEventListener('click', handleAdd);
+  document.getElementById("addBtn").addEventListener("click", handleAdd);
 
-  return () => {  // cleanup function
-    document.getElementById('addBtn').removeEventListener('click', handleAdd);
+  return () => {
+    // cleanup function
+    document.getElementById("addBtn").removeEventListener("click", handleAdd);
   };
 }
 ```
@@ -220,11 +226,13 @@ closure created → scope record in heap
 | Nghĩ `null`-ing variable là đủ để GC | GC collect khi KHÔNG CÒN reference nào — set null chỉ release 1 reference | Đảm bảo tất cả closures pointing to object đều bị released |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy: "memory leak in React", "how to prevent closure memory issues", "GC and closures"
 - → Think: reference chain — ai đang hold reference đến gì?
-- → Answer opens with: *"Closures prevent garbage collection by holding references. The fix is always about breaking the reference chain — removeEventListener, useEffect cleanup, or WeakMap for optional caching."*
+- → Answer opens with: _"Closures prevent garbage collection by holding references. The fix is always about breaking the reference chain — removeEventListener, useEffect cleanup, or WeakMap for optional caching."_
 
 **🔑 Knowledge Chain:**
+
 - 📚 Cần biết: [Memory Management](./15-memory-management-advanced.md)
 - ➡️ Để hiểu: [React Performance](../06-browser-performance/02-react-performance.md) — memoization patterns
 
@@ -244,17 +252,26 @@ closure created → scope record in heap
 #### Layer 2: How It Works / Cơ Chế Hoạt Động
 
 **Module Pattern:**
+
 ```javascript
 // Private state via closure — classic pattern before ES modules
 const ShopeeCart = (() => {
-  let items = [];        // private — cannot access from outside
-  let discount = 0;      // private
+  let items = []; // private — cannot access from outside
+  let discount = 0; // private
 
   return {
-    add(item) { items.push(item); },
-    remove(id) { items = items.filter(i => i.id !== id); },
-    getTotal() { return items.reduce((s, i) => s + i.price, 0) * (1 - discount); },
-    applyDiscount(pct) { discount = pct / 100; },
+    add(item) {
+      items.push(item);
+    },
+    remove(id) {
+      items = items.filter((i) => i.id !== id);
+    },
+    getTotal() {
+      return items.reduce((s, i) => s + i.price, 0) * (1 - discount);
+    },
+    applyDiscount(pct) {
+      discount = pct / 100;
+    },
   };
 })();
 
@@ -265,10 +282,11 @@ console.log(ShopeeCart.getTotal()); // 90
 ```
 
 **Memoize:**
+
 ```javascript
 function memoize(fn) {
   const cache = new Map(); // closure: cache lives as long as memoized fn does
-  return function(...args) {
+  return function (...args) {
     const key = JSON.stringify(args);
     if (cache.has(key)) return cache.get(key);
     const result = fn.apply(this, args);
@@ -283,10 +301,11 @@ expensiveCalc(100); // from cache — O(1)
 ```
 
 **Debounce (Grab search box):**
+
 ```javascript
 function debounce(fn, ms) {
   let timerId; // closure: timerId persists across calls
-  return function(...args) {
+  return function (...args) {
     clearTimeout(timerId);
     timerId = setTimeout(() => fn.apply(this, args), ms);
   };
@@ -323,11 +342,13 @@ Pattern comparison:
 | IIFE module pattern với large data | Data live forever (tied to module lifecycle) | Prefer class hoặc ES module nếu cần tree-shaking |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy: "implement debounce", "create private state", "optimize expensive function"
 - → Think: which closure pattern fits? Module/Memoize/Debounce/Throttle/Once
-- → Answer opens with: *"This is a classic use case for closures — specifically the [pattern] pattern where we use a closure to maintain [state] across calls."*
+- → Answer opens with: _"This is a classic use case for closures — specifically the [pattern] pattern where we use a closure to maintain [state] across calls."_
 
 **🔑 Knowledge Chain:**
+
 - 📚 Cần biết: [Scope & Hoisting](./02-scope-hoisting-comprehensive.md) — block scope for let in loops
 - ➡️ Để hiểu: [React Hooks](../03-react/03-hooks-deep-dive.md) — useCallback/useMemo internals
 
@@ -351,7 +372,7 @@ Hãy tưởng tượng bạn viết tờ nhắc (function) với thông tin hi�
 ```javascript
 // BUG: stale closure
 function ChatComponent() {
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -361,7 +382,7 @@ function ChatComponent() {
     return () => clearInterval(interval);
   }, []); // [] means effect runs once → closure from first render only
 
-  return <input onChange={e => setMessage(e.target.value)} />;
+  return <input onChange={(e) => setMessage(e.target.value)} />;
 }
 
 // FIX 1: Add message to deps (recreate interval when message changes)
@@ -373,7 +394,7 @@ useEffect(() => {
 }, [message]); // effect re-runs with fresh closure
 
 // FIX 2: useRef for always-current value (no stale closure)
-const messageRef = useRef('');
+const messageRef = useRef("");
 messageRef.current = message; // update ref on every render
 
 useEffect(() => {
@@ -409,11 +430,13 @@ Fix: either recreate interval (FIX 1) or escape closure via ref (FIX 2)
 | `useCallback` với empty deps | Callback capture initial state values, never updates | useCallback deps phải include tất cả state/props mà callback đọc |
 
 **🎯 Interview Pattern:**
+
 - Khi thấy: "setInterval shows old value", "event handler uses wrong state", "why is my callback stale"
 - → Diagnose: khi nào closure được created vs khi nào state changed
-- → Answer opens with: *"This is a stale closure. The function was created during render N with state value X, but state has since changed to Y. The function still sees the old value because closures capture references to the environment at creation time."*
+- → Answer opens with: _"This is a stale closure. The function was created during render N with state value X, but state has since changed to Y. The function still sees the old value because closures capture references to the environment at creation time."_
 
 **🔑 Knowledge Chain:**
+
 - 📚 Cần biết: [Closures Core](#1-the-environment-slot--slot-environment) — must understand closure mechanics first
 - ➡️ Để hiểu: [React Hooks](../03-react/03-hooks-deep-dive.md) — useEffect/useCallback rules
 
@@ -427,7 +450,9 @@ Fix: either recreate interval (FIX 1) or escape closure via ref (FIX 2)
 
 ```javascript
 function makeAdder(x) {
-  return function(y) { return x + y; }; // captures x from outer scope
+  return function (y) {
+    return x + y;
+  }; // captures x from outer scope
 }
 const add5 = makeAdder(5);
 console.log(add5(3)); // 8 — x=5 is remembered even after makeAdder returned
@@ -436,6 +461,7 @@ console.log(add5(3)); // 8 — x=5 is remembered even after makeAdder returned
 **Tiếng Việt:** Closure là function giữ reference đến lexical environment nơi nó được tạo. Không phải cú pháp đặc biệt — mọi function trong JS đều là closure. Key point: closure captures variable REFERENCES (không phải values), nên nếu variable thay đổi, closure thấy giá trị mới nhất.
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Nói "every function is a closure", giải thích [[Environment]] slot, phân biệt capture reference vs value, đưa example thực tế (counter, module pattern)
 - ❌ Weak: "Closure là function bên trong function" — đúng nhưng không đủ, bỏ qua cơ chế thực sự
 
@@ -444,14 +470,17 @@ console.log(add5(3)); // 8 — x=5 is remembered even after makeAdder returned
 ### Q: Classic closure bug with `var` in a loop — explain and fix / Bug var trong vòng lặp? 🟢 Junior
 
 **A:** The classic bug:
+
 ```javascript
 for (var i = 0; i < 3; i++) {
   setTimeout(() => console.log(i), 100); // prints 3, 3, 3 — not 0, 1, 2
 }
 ```
+
 Why: `var` is function-scoped — all 3 closures share the **same `i` variable**. By the time setTimeout fires, the loop has finished and `i = 3`.
 
 **Three fixes:**
+
 ```javascript
 // Fix 1: let (block-scoped — new binding per iteration)
 for (let i = 0; i < 3; i++) {
@@ -472,6 +501,7 @@ for (var i = 0; i < 3; i++) {
 **Tiếng Việt:** `var` là function-scoped → tất cả closures trong loop share cùng 1 biến `i`. Khi setTimeout callback chạy, loop đã xong và `i = 3`. Fix chuẩn nhất: dùng `let` — mỗi iteration tạo 1 block scope mới, 1 binding mới cho `i`.
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Giải thích shared vs separate binding, biết cả 3 cách fix, biết tại sao `let` fix được
 - ❌ Weak: Chỉ nói "dùng let thay var" mà không giải thích tại sao
 
@@ -485,9 +515,9 @@ for (var i = 0; i < 3; i++) {
 function debounce(fn, ms) {
   let timerId; // closure: persists across invocations
   return function debounced(...args) {
-    clearTimeout(timerId);           // cancel previous pending call
+    clearTimeout(timerId); // cancel previous pending call
     timerId = setTimeout(() => {
-      fn.apply(this, args);          // execute with correct `this` and args
+      fn.apply(this, args); // execute with correct `this` and args
       timerId = null;
     }, ms);
   };
@@ -495,7 +525,7 @@ function debounce(fn, ms) {
 
 // Usage: search input at Grab — only call API after 300ms of no typing
 const search = debounce(fetchSearchResults, 300);
-input.addEventListener('input', search);
+input.addEventListener("input", search);
 ```
 
 Key: `timerId` is in the closure — each call to the debounced function shares the same `timerId`, so `clearTimeout` cancels the previous pending call.
@@ -503,6 +533,7 @@ Key: `timerId` is in the closure — each call to the debounced function shares 
 **Tiếng Việt:** Debounce dùng closure để "nhớ" `timerId` giữa các lần gọi. Mỗi lần gọi: clear timer cũ, tạo timer mới. Chỉ khi không gọi thêm trong `ms` miliseconds, callback mới thực sự chạy. **Throttle** khác ở chỗ: cho qua tối đa 1 lần mỗi `ms` (dùng `lastRun` timestamp thay `timerId`).
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Implement được, giải thích closure role (timerId persistence), phân biệt debounce vs throttle, biết leading/trailing edge variants
 - ❌ Weak: Chỉ biết khái niệm mà không implement được, hoặc không giải thích tại sao cần closure
 
@@ -514,7 +545,7 @@ Key: `timerId` is in the closure — each call to the debounced function shares 
 
 ```javascript
 // Bug: message always '' in interval
-const [message, setMessage] = useState('');
+const [message, setMessage] = useState("");
 useEffect(() => {
   setInterval(() => sendHeartbeat(message), 1000); // stale! always ''
 }, []);
@@ -527,7 +558,9 @@ useEffect(() => {
 
 // Fix 2: useRef — escape closure entirely
 const msgRef = useRef(message);
-useEffect(() => { msgRef.current = message; });
+useEffect(() => {
+  msgRef.current = message;
+});
 useEffect(() => {
   setInterval(() => sendHeartbeat(msgRef.current), 1000);
 }, []);
@@ -536,6 +569,7 @@ useEffect(() => {
 **Tiếng Việt:** Stale closure xảy ra vì React re-render tạo function instances mới, nhưng nếu function đó bị capture vào interval/listener/setTimeout với empty deps, nó "đông cứng" với state cũ. Cách debug: thêm `console.log` trong callback, nếu thấy giá trị cũ thì đó là stale closure. Hai fix: (1) add state to deps, (2) useRef để escape closure.
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Giải thích render cycle tạo new function instances, biết cả 2 fix strategies, biết khi nào dùng cái nào (useRef khi không cần reactive, deps khi cần reactive)
 - ❌ Weak: "Thêm dependency vào useEffect" mà không giải thích tại sao nó fix
 
@@ -562,13 +596,13 @@ function createEventManager() {
 
     cleanup(componentId) {
       const cleanups = registry.get(componentId) ?? [];
-      cleanups.forEach(fn => fn());
+      cleanups.forEach((fn) => fn());
       registry.delete(componentId);
     },
 
     cleanupAll() {
       registry.forEach((_, id) => this.cleanup(id));
-    }
+    },
   };
 }
 
@@ -577,8 +611,8 @@ const eventManager = createEventManager();
 
 function ProductCard({ id }) {
   onMount(() => {
-    eventManager.add(id, window, 'scroll', handleScroll);
-    eventManager.add(id, document, 'click', handleOutsideClick);
+    eventManager.add(id, window, "scroll", handleScroll);
+    eventManager.add(id, document, "click", handleOutsideClick);
   });
 
   onUnmount(() => eventManager.cleanup(id)); // removes ALL listeners for this component
@@ -586,6 +620,7 @@ function ProductCard({ id }) {
 ```
 
 **Why this design:**
+
 1. Closures capture `element + event + handler` triplet — each cleanup function knows exactly what to remove
 2. Registry prevents double-registration and provides bulk cleanup
 3. `Map` (vs object) handles componentId as any type; `WeakMap` if components are objects (auto-GC when component destroyed)
@@ -593,6 +628,7 @@ function ProductCard({ id }) {
 **Tiếng Việt:** Thiết kế trên tách biệt concerns: component chỉ cần gọi `add/cleanup`, không cần quản lý references. Registry pattern dùng closure để "nhớ" đủ thông tin để cleanup. Ở scale lớn (Shopee với 1000 product cards), pattern này ngăn memory leak hệ thống — không chỉ ngăn 1 component bị leak.
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Thiết kế registry pattern, nhắc đến WeakMap for auto-GC, xét edge cases (duplicate registration, component unmount order), biết trade-off Map vs WeakMap
 - ❌ Weak: Chỉ nói "dùng removeEventListener" — đúng nhưng không address scale, không có systematic cleanup
 
@@ -605,33 +641,44 @@ function ProductCard({ id }) {
 ```javascript
 // Closure-based private state
 function createUser(name) {
-  let _name = name;         // truly private — no reflection possible
+  let _name = name; // truly private — no reflection possible
   let _loginCount = 0;
 
   return {
-    login() { _loginCount++; console.log(`${_name} logged in`); },
-    getName() { return _name; },
+    login() {
+      _loginCount++;
+      console.log(`${_name} logged in`);
+    },
+    getName() {
+      return _name;
+    },
     // _name, _loginCount not accessible from outside AT ALL
   };
 }
 
 // ES2022 class private fields
 class User {
-  #name;           // accessible via Object.getOwnPropertyNames? No.
+  #name; // accessible via Object.getOwnPropertyNames? No.
   #loginCount = 0; // but: reflected in DevTools, accessible within class hierarchy
 
-  constructor(name) { this.#name = name; }
-  login() { this.#loginCount++; }
+  constructor(name) {
+    this.#name = name;
+  }
+  login() {
+    this.#loginCount++;
+  }
 }
 ```
 
 **When closure-based:**
+
 - Need truly zero-footprint private (no DevTools visibility)
 - Functional programming style (no `this` binding issues)
 - Dynamic object creation without class overhead
 - Legacy code compatibility (pre-ES2022 environments)
 
 **When class `#` private:**
+
 - Need `instanceof` checks, inheritance chains
 - Team is familiar with OOP patterns
 - Need TypeScript class decorators
@@ -640,6 +687,7 @@ class User {
 **Tiếng Việt:** Trade-off chính: closure private state tạo per-object function copies (memory overhead với 10000+ instances), trong khi class private fields dùng prototype chain (shared methods). Với Shopee có 1000 ProductCard instances, class `#` tốt hơn về memory. Với 1-3 singletons (ShopeeCart module), closure OK.
 
 **💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
 - ✅ Strong: Biết performance difference (per-instance vs prototype), xét inheritance, TypeScript implications, không chỉ nói "cả 2 đều OK"
 - ❌ Weak: "Closure cũ hơn, class modern hơn" — đây là oversimplification, mỗi cái có trường hợp tốt hơn
 
@@ -647,14 +695,14 @@ class User {
 
 ## Interview Q&A Summary / Tổng Kết Phỏng Vấn
 
-| Question | Level | Key Point |
-|----------|-------|-----------|
-| What is a closure? | 🟢 | Every function has [[Environment]] slot; captures reference not value |
-| var bug in loops | 🟢 | All closures share 1 var binding; let creates separate binding per iteration |
-| Implement debounce | 🟡 | Closure persists timerId across calls; clearTimeout + setTimeout pattern |
-| Stale closure in React | 🟡 | Empty deps freezes closure at render N; fix: deps array or useRef |
-| Production listener registry | 🔴 | Registry + closure-per-listener pattern; WeakMap for auto-GC at scale |
-| Closure vs class `#` private | 🔴 | Memory: closure = per-instance functions; `#` = shared prototype. Choose based on instance count and inheritance needs |
+| Question                     | Level | Key Point                                                                                                              |
+| ---------------------------- | ----- | ---------------------------------------------------------------------------------------------------------------------- |
+| What is a closure?           | 🟢    | Every function has [[Environment]] slot; captures reference not value                                                  |
+| var bug in loops             | 🟢    | All closures share 1 var binding; let creates separate binding per iteration                                           |
+| Implement debounce           | 🟡    | Closure persists timerId across calls; clearTimeout + setTimeout pattern                                               |
+| Stale closure in React       | 🟡    | Empty deps freezes closure at render N; fix: deps array or useRef                                                      |
+| Production listener registry | 🔴    | Registry + closure-per-listener pattern; WeakMap for auto-GC at scale                                                  |
+| Closure vs class `#` private | 🔴    | Memory: closure = per-instance functions; `#` = shared prototype. Choose based on instance count and inheritance needs |
 
 ---
 
@@ -663,12 +711,13 @@ class User {
 > 🎯 Interviewer asks cold: **"Explain the stale closure problem in React useEffect and how you'd fix it."**
 
 **30 giây đầu — mở đầu lý tưởng:**
+
 1. "Stale closure means a callback captured a state value at render time, and continues using that old value even after state updates — because closures capture references at creation time."
 2. "In useEffect with empty deps `[]`, the effect runs once and its closure freezes the initial state values."
 3. "Concrete example: `setInterval(() => sendMessage(text), 1000)` with `[]` deps — `text` is always empty string no matter what the user types."
 4. "Two fixes: add `text` to deps array (fresh closure per state change), or use `useRef` to escape the closure entirely when you don't need reactive behavior."
 
-*Sau đó offer to go deeper on either fix strategy.*
+_Sau đó offer to go deeper on either fix strategy._
 
 ---
 
@@ -676,26 +725,42 @@ class User {
 
 > Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
 
-| # | Loại | Câu hỏi |
-|---|------|---------|
-| 1 | 🔍 Retrieval | Viết định nghĩa **closure** từ trí nhớ — bao gồm `[[Environment]]` slot và sự khác biệt giữa capture **reference** vs **value**. Không nhìn lại. |
-| 2 | 🎨 Visual | Vẽ memory diagram: outer function returns, inner function **still references** outer variable. Ai prevent GC? So sánh với ASCII diagram trong Layer 2. |
-| 3 | 🛠️ Application | Bạn có 1000 product cards, mỗi cái có scroll listener. Bạn dùng pattern gì để tránh **memory leak**? (Không hint — viết code từ đầu) |
-| 4 | 🐛 Debug | Code này print gì: `for (var i=0; i<3; i++) setTimeout(()=>console.log(i), 0)` — và tại sao? |
-| 5 | 🎓 Teach | Giải thích **stale closure** trong React cho người chưa biết React, dùng analogy "tờ nhắc từ quá khứ". |
+| #   | Loại           | Câu hỏi                                                                                                                                                |
+| --- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | 🔍 Retrieval   | Viết định nghĩa **closure** từ trí nhớ — bao gồm `[[Environment]]` slot và sự khác biệt giữa capture **reference** vs **value**. Không nhìn lại.       |
+| 2   | 🎨 Visual      | Vẽ memory diagram: outer function returns, inner function **still references** outer variable. Ai prevent GC? So sánh với ASCII diagram trong Layer 2. |
+| 3   | 🛠️ Application | Bạn có 1000 product cards, mỗi cái có scroll listener. Bạn dùng pattern gì để tránh **memory leak**? (Không hint — viết code từ đầu)                   |
+| 4   | 🐛 Debug       | Code này print gì: `for (var i=0; i<3; i++) setTimeout(()=>console.log(i), 0)` — và tại sao?                                                           |
+| 5   | 🎓 Teach       | Giải thích **stale closure** trong React cho người chưa biết React, dùng analogy "tờ nhắc từ quá khứ".                                                 |
 
 ### Key Points (tự kiểm tra)
 
-| # | Key Point |
-|---|-----------|
-| 1 | Closure = function + [[Environment]] của nó tại thời điểm tạo. **Capture by reference**: inner fn giữ live link đến outer variable, không phải copy giá trị. |
-| 2 | Inner fn giữ [[Environment]] reference → outer scope không bị GC dù outer fn đã return. Chỉ khi inner fn bị release → outer scope mới được thu hồi. |
-| 3 | Factory trả cleanup fn: `const handler = () => {...}; el.addEventListener('scroll', handler); return () => el.removeEventListener('scroll', handler);` |
-| 4 | Print `3 3 3` — `var i` được chia sẻ qua closure, khi setTimeout callbacks chạy vòng lặp đã xong và `i === 3`. Fix: `let` hoặc IIFE. |
-| 5 | Stale closure: component 'ghi lại' giá trị state từ lần render trước vào closure. Effect/handler dùng giá trị cũ dù state đã update. Như 'tờ nhắc' ghi thông tin lỗi thời. |
+| #   | Key Point                                                                                                                                                                  |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Closure = function + [[Environment]] của nó tại thời điểm tạo. **Capture by reference**: inner fn giữ live link đến outer variable, không phải copy giá trị.               |
+| 2   | Inner fn giữ [[Environment]] reference → outer scope không bị GC dù outer fn đã return. Chỉ khi inner fn bị release → outer scope mới được thu hồi.                        |
+| 3   | Factory trả cleanup fn: `const handler = () => {...}; el.addEventListener('scroll', handler); return () => el.removeEventListener('scroll', handler);`                     |
+| 4   | Print `3 3 3` — `var i` được chia sẻ qua closure, khi setTimeout callbacks chạy vòng lặp đã xong và `i === 3`. Fix: `let` hoặc IIFE.                                       |
+| 5   | Stale closure: component 'ghi lại' giá trị state từ lần render trước vào closure. Effect/handler dùng giá trị cũ dù state đã update. Như 'tờ nhắc' ghi thông tin lỗi thời. |
 
 > 🎯 **Feynman Prompt:** Giải thích tại sao closure gây memory leak bằng cách nào đó mà bố/mẹ bạn hiểu được — không dùng từ "closure", "GC", hay "reference".
-🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày → 7 ngày → 14 ngày** để chuyển vào long-term memory.
+> 🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày → 7 ngày → 14 ngày** để chuyển vào long-term memory.
+
+---
+
+---
+
+## 📚 References / Tài liệu tham khảo
+
+### Specifications
+
+- [ECMAScript: Environment Records](https://tc39.es/ecma262/#sec-environment-records)
+- [ECMAScript: [[Environment]] slot](https://tc39.es/ecma262/#sec-ecmascript-function-objects)
+
+### MDN Web Docs
+
+- [MDN: Closures](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Closures)
+- [MDN: Memory management](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Memory_management)
 
 ---
 
