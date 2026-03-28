@@ -72,16 +72,16 @@
 
 ### Concept 1: NoSQL Categories
 
-🧠 **Memory Hook:** "5 loại xe" — Document=SUV (đa dụng), KV=xe máy (nhanh nhẹ), Column=tàu hàng (bulk), Graph=đường sắt (mạng lưới), TimeSeries=xe bus (theo lộ trình thời gian).
+> 🧠 **Memory Hook:** "5 loại xe" — Document=SUV (đa dụng), KV=xe máy (nhanh nhẹ), Column=tàu hàng (bulk), Graph=đường sắt (mạng lưới), TimeSeries=xe bus (theo lộ trình thời gian).
 
-**Why exists (tại sao tồn tại):**
+**Tại sao tồn tại?**
 
-- Level 1: Relational DB không tối ưu cho mọi access pattern
-- Level 2: Mỗi data model (document, key-value, graph) tối ưu cho một loại query cụ thể — O(1) lookup, traversal, range scan, full-text search
+→ **Why?** Relational DB không tối ưu cho mọi access pattern — mỗi workload có shape khác nhau (key lookup, graph traversal, full-text, time-window)
+→ **Why?** Mỗi data model tối ưu cho một loại query cụ thể — O(1) hash lookup, index-free adjacency, inverted index search — không thể có one-size-fits-all
 
-🔵 **Layer 1 — Analogy:** Cũng như không dùng búa cho mọi việc (cần tua-vít cho ốc, kìm cho dây), không dùng một DB cho mọi workload.
+🔵 **Layer 1 — Analogy:** Cũng như không dùng búa cho mọi việc (cần tua-vít cho ốc, kìm cho dây điện), không dùng một DB cho mọi workload. Một học sinh lớp 7 biết chọn đúng dụng cụ đúng việc — đó là điểm khởi đầu của NoSQL thinking.
 
-🔵 **Layer 2 — Mechanics:**
+🔵 **Layer 2 — How It Works:**
 
 ```
 Access Pattern → Best DB Type:
@@ -96,7 +96,13 @@ Access Pattern → Best DB Type:
 └─────────────────────┴──────────────────┴─────────────────┘
 ```
 
-🔵 **Layer 3 — Edge Cases:** Search engines (Elasticsearch) dùng inverted index — không phải primary storage. Multi-model DB (ArangoDB, CosmosDB) hỗ trợ nhiều API nhưng thường có trade-off ở mỗi model.
+🔵 **Layer 3 — Edge Cases & Trade-offs:**
+
+- Search engines (Elasticsearch) dùng inverted index — không phải primary storage, nên dùng làm read replica của source of truth
+- Multi-model DB (ArangoDB, CosmosDB) hỗ trợ nhiều API nhưng thường có trade-off performance ở mỗi model so với DB chuyên biệt
+- NewSQL (CockroachDB, TiDB) là category riêng — không phải NoSQL dù scale ngang giống NoSQL
+- Sai lầm phổ biến: chọn DB theo trend ("MongoDB hot") thay vì access pattern cụ thể của workload
+- DynamoDB là KV + Document hybrid — không thuộc hoàn toàn một category, là managed AWS service với pricing model riêng
 
 | Sai lầm                       | Tại sao sai                              | Đúng là                                      |
 | ----------------------------- | ---------------------------------------- | -------------------------------------------- |
@@ -106,20 +112,21 @@ Access Pattern → Best DB Type:
 
 🎯 **Interview Pattern:** "What NoSQL type for X?" → Nêu access pattern → chọn DB type → explain internal engine advantage → mention trade-off.
 
-🔗 **Knowledge Chain:** Data Structures (hash, tree, graph) → Storage Engines (B-Tree, LSM-Tree) → **NoSQL Categories** → Polyglot Persistence → System Design DB Selection
+📚 **Cần biết trước:** [Database Theory — ACID/BASE](./database-theory.md) | [Storage Engines — B-Tree vs LSM-Tree](./database-theory.md)
+➡️ **Để hiểu tiếp:** [Polyglot Persistence](#concept-6-polyglot-persistence) | [System Design DB Selection](../02-system-design/system-design-theory.md)
 
 ### Concept 2: Document Stores
 
-🧠 **Memory Hook:** "JSON tủ hồ sơ" — mỗi document là một folder chứa mọi thông tin liên quan, không cần tra cứu nhiều ngăn.
+> 🧠 **Memory Hook:** "JSON tủ hồ sơ" — mỗi document là một folder chứa mọi thông tin liên quan, không cần tra cứu nhiều ngăn.
 
-**Why exists:**
+**Tại sao tồn tại?**
 
-- Level 1: Schema thay đổi nhanh trong agile development
-- Level 2: Aggregate pattern — đọc toàn bộ entity trong 1 query thay vì JOIN 5 bảng
+→ **Why?** Schema thay đổi nhanh trong agile development — relational schema migration chậm và rủi ro cao khi production
+→ **Why?** Aggregate pattern — đọc toàn bộ entity trong 1 query thay vì JOIN 5 bảng, giảm latency và round-trips tới DB
 
-🔵 **Layer 1 — Analogy:** Document DB giống tủ hồ sơ: mỗi folder (document) chứa tất cả giấy tờ của một người — không cần chạy qua nhiều phòng ban.
+🔵 **Layer 1 — Analogy:** Document DB giống tủ hồ sơ: mỗi folder (document) chứa tất cả giấy tờ của một người — không cần chạy qua nhiều phòng ban để ghép thông tin. Học sinh lớp 7 giỏi giữ mọi thứ liên quan đến 1 môn trong 1 quyển vở — đó là triết lý embedding.
 
-🔵 **Layer 2 — Mechanics:**
+🔵 **Layer 2 — How It Works:**
 
 ```
 MongoDB Document:
@@ -135,7 +142,13 @@ Index: B-Tree on _id + compound indexes
 Sharding: by _id or custom shard key
 ```
 
-🔵 **Layer 3 — Edge Cases:** Multi-document transactions (MongoDB 4.0+) có overhead. Embedding quá sâu → 16MB document limit. Schema validation rules bắt buộc cho production.
+🔵 **Layer 3 — Edge Cases & Trade-offs:**
+
+- Multi-document transactions (MongoDB 4.0+) có overhead — thiết kế schema để tránh cross-document transactions khi có thể
+- Embedding quá sâu → 16MB document limit và update amplification (cập nhật 1 field = rewrite toàn bộ document)
+- Schema validation rules bắt buộc cho production — "schema-less" không có nghĩa là "no governance"
+- Unbounded arrays trong document → memory bloat khi document grow over time (e.g., embedding toàn bộ comments)
+- Index selectivity quan trọng: thứ tự fields trong compound index ảnh hưởng query performance đáng kể
 
 | Sai lầm              | Tại sao sai                   | Đúng là                                 |
 | -------------------- | ----------------------------- | --------------------------------------- |
@@ -145,20 +158,21 @@ Sharding: by _id or custom shard key
 
 🎯 **Interview Pattern:** "Design schema for X in MongoDB" → Identify aggregates → embed vs reference decision → index strategy → shard key.
 
-🔗 **Knowledge Chain:** JSON/BSON → **Document Stores** → Embedding vs Referencing → Schema Evolution → Migration Patterns
+📚 **Cần biết trước:** [NoSQL Categories](#concept-1-nosql-categories) | [Indexing & Optimization](./02-indexing-and-optimization.md)
+➡️ **Để hiểu tiếp:** [Data Modeling & Embedding vs Referencing](#concept-7-data-modeling--migration) | [Sharding](./04-sharding-and-transactions.md)
 
 ### Concept 3: Key-Value & Column-Family
 
-🧠 **Memory Hook:** "Redis = tủ khóa tốc độ ánh sáng, Cassandra = kho hàng xuyên lục địa" — Redis cho nano-second lookup, Cassandra cho petabyte writes.
+> 🧠 **Memory Hook:** "Redis = tủ khóa tốc độ ánh sáng, Cassandra = kho hàng xuyên lục địa" — Redis cho nano-second lookup, Cassandra cho petabyte writes.
 
-**Why exists:**
+**Tại sao tồn tại?**
 
-- Level 1: RDBMS quá chậm cho cache/session (KV) hoặc quá giới hạn cho write-heavy time-series (Column)
-- Level 2: KV = O(1) hash lookup trực tiếp. Column = LSM-Tree tối ưu sequential writes, compaction background
+→ **Why?** RDBMS quá chậm cho cache/session (KV) hoặc quá giới hạn write throughput cho time-series/activity log (Column-Family)
+→ **Why?** KV = O(1) hash lookup trực tiếp trong memory. Column = LSM-Tree tối ưu sequential writes, compaction chạy background
 
-🔵 **Layer 1 — Analogy:** Redis giống ATM (nhanh, đơn giản, theo key). Cassandra giống dây chuyền nhà máy (ghi liên tục, throughput cao, phân tán).
+🔵 **Layer 1 — Analogy:** Redis giống ATM (nhanh, đơn giản, lấy tiền đúng theo số tài khoản). Cassandra giống dây chuyền sản xuất nhà máy (ghi liên tục, throughput cao, phân tán nhiều xưởng). Mỗi loại phục vụ một nhu cầu hoàn toàn khác nhau — không thể dùng ATM để sản xuất hàng loạt.
 
-🔵 **Layer 2 — Mechanics:**
+🔵 **Layer 2 — How It Works:**
 
 ```
 Redis: Hash Table in-memory
@@ -174,7 +188,13 @@ Cassandra: LSM-Tree + SSTables
   Consistency: tunable per query (ONE/QUORUM/ALL)
 ```
 
-🔵 **Layer 3 — Edge Cases:** Redis single-thread nhưng io-threads cho networking. Cassandra tombstone accumulation cần repair. DynamoDB = managed KV + document hybrid.
+🔵 **Layer 3 — Edge Cases & Trade-offs:**
+
+- Redis single-threaded cho command execution nhưng io-threads cho networking — bottleneck thực sự ở network, không phải CPU command execution
+- Cassandra tombstone accumulation cần repair định kỳ — deleted data không xóa ngay, gây read amplification theo thời gian
+- DynamoDB = managed KV + document hybrid — không self-managed như Cassandra, trade-off là AWS vendor lock-in
+- Redis AOF fsync "everysec" → tối đa 1 giây data loss khi crash — không phải true durability, không dùng làm source of truth
+- Cassandra "query-first" modeling: không thiết kế schema trước rồi query sau — phải thiết kế query trước rồi model table theo query
 
 | Sai lầm                       | Tại sao sai                                  | Đúng là                                    |
 | ----------------------------- | -------------------------------------------- | ------------------------------------------ |
@@ -184,20 +204,21 @@ Cassandra: LSM-Tree + SSTables
 
 🎯 **Interview Pattern:** "Redis vs Memcached?" → data structures, persistence, cluster, Lua scripting. "Cassandra data model?" → query-driven, partition key = access path.
 
-🔗 **Knowledge Chain:** Hash Table → In-Memory Storage → **Redis** → Cache Patterns → Rate Limiting. LSM-Tree → **Cassandra** → Time-Series → Write Optimization
+📚 **Cần biết trước:** [Storage Engines — Hash Table vs LSM-Tree](./database-theory.md) | [In-Memory vs Disk-Based Storage](./database-theory.md)
+➡️ **Để hiểu tiếp:** [BE NoSQL Implementation — Redis & Mongo](../../be-track/03-database-advanced/03-nosql-redis-mongo.md) | [Sharding & Partitioning](./04-sharding-and-transactions.md)
 
 ### Concept 4: CAP/PACELC & BASE
 
-🧠 **Memory Hook:** "Partition = bão, chọn C (đúng) hay A (chạy)" — khi mạng partition, hệ thống phải chọn consistency (từ chối phục vụ sai) hoặc availability (phục vụ có thể sai).
+> 🧠 **Memory Hook:** "Partition = bão, chọn C (đúng) hay A (chạy)" — khi mạng partition, hệ thống phải chọn consistency (từ chối phục vụ sai) hoặc availability (phục vụ có thể sai).
 
-**Why exists:**
+**Tại sao tồn tại?**
 
-- Level 1: Network partition xảy ra trong mọi hệ phân tán — phải có framework quyết định trade-off
-- Level 2: CAP cho binary choice khi partition. PACELC mở rộng: khi KHÔNG có partition, vẫn phải chọn Latency vs Consistency
+→ **Why?** Network partition xảy ra trong mọi hệ phân tán — phải có framework để quyết định trade-off khi không thể có cả hai cùng lúc
+→ **Why?** CAP cho binary choice khi partition. PACELC mở rộng thực tế hơn: khi không có partition, vẫn phải chọn Latency vs Consistency mỗi ngày
 
-🔵 **Layer 1 — Analogy:** Bưu điện bão (partition): gửi thư không biết đến chưa. Chọn A = vẫn nhận thư mới (có thể mất). Chọn C = đóng cửa cho đến khi biết chắc thư cũ đã đến.
+🔵 **Layer 1 — Analogy:** Bưu điện trong bão (partition): không biết gói hàng cũ đã đến chưa. Chọn A = vẫn nhận gói mới (có thể trùng lặp hoặc mất). Chọn C = đóng cửa cho đến khi có xác nhận chắc chắn. Không có lựa chọn nào "đúng tuyệt đối" — tuỳ nghiệp vụ quan trọng cái gì hơn: chính xác hay sẵn sàng phục vụ.
 
-🔵 **Layer 2 — Mechanics:**
+🔵 **Layer 2 — How It Works:**
 
 ```
 CAP: During partition, choose C or A
@@ -210,7 +231,13 @@ PACELC: Even without partition:
   PA/EC: rare — available during partition but consistent otherwise
 ```
 
-🔵 **Layer 3 — Edge Cases:** CAP chỉ áp dụng cho distributed systems. Single-node DB = CA (nhưng single point of failure). "Consistency" trong CAP ≠ ACID consistency — CAP C = linearizability.
+🔵 **Layer 3 — Edge Cases & Trade-offs:**
+
+- CAP chỉ áp dụng cho distributed systems — single-node DB = CA nhưng là single point of failure, không thực sự scale
+- "Consistency" trong CAP ≠ ACID consistency: CAP C = linearizability (latest write visible), ACID C = business invariants maintained
+- Partition tolerance bắt buộc trong thực tế — network luôn có khả năng fail, nên real choice là CP hoặc AP, không phải CA
+- PACELC quan trọng hơn CAP trong thực tế: latency vs consistency trade-off xảy ra mỗi ngày, partition rất hiếm
+- "Eventual consistency" không có nghĩa là "eventually correct" — conflict resolution cũng cần thiết (LWW, CRDTs, application merge)
 
 | Sai lầm               | Tại sao sai                                  | Đúng là                                     |
 | --------------------- | -------------------------------------------- | ------------------------------------------- |
@@ -220,20 +247,21 @@ PACELC: Even without partition:
 
 🎯 **Interview Pattern:** "Is your system CP or AP?" → Identify partition behavior → explain normal-mode trade-off (PACELC) → give example (payment=CP, social feed=AP).
 
-🔗 **Knowledge Chain:** Distributed Systems Fundamentals → **CAP/PACELC** → Consistency Models → Replication Strategies → Database Selection
+📚 **Cần biết trước:** [Distributed Systems Fundamentals](../../be-track/02-backend-knowledge/03-distributed-systems.md) | [Replication & Consistency Models](./database-theory.md)
+➡️ **Để hiểu tiếp:** [Consensus Algorithms — Raft/Paxos](../02-system-design/consensus-algorithms.md) | [NewSQL](#concept-5-newsql)
 
 ### Concept 5: NewSQL
 
-🧠 **Memory Hook:** "SQL + superpowers" — NewSQL = muốn giữ SQL syntax + ACID transactions nhưng scale ngang như NoSQL.
+> 🧠 **Memory Hook:** "SQL + superpowers" — NewSQL = muốn giữ SQL syntax + ACID transactions nhưng scale ngang như NoSQL.
 
-**Why exists:**
+**Tại sao tồn tại?**
 
-- Level 1: Businesses muốn scale ngang mà không từ bỏ SQL và ACID guarantees
-- Level 2: Raft/Paxos consensus cho phép distributed transactions ACID mà không cần 2PC blocking
+→ **Why?** Businesses muốn scale ngang mà không từ bỏ SQL syntax và ACID guarantees — hai điều mà NoSQL buộc phải đánh đổi
+→ **Why?** Raft/Paxos consensus cho phép distributed transactions ACID mà không cần 2PC blocking — giải quyết bài toán mà trước đây chỉ có NoSQL mới làm được ở scale
 
-🔵 **Layer 1 — Analogy:** NewSQL giống xe hybrid — có cả xăng (SQL familiarity, ACID) và điện (horizontal scale, distributed).
+🔵 **Layer 1 — Analogy:** NewSQL giống xe hybrid — có cả xăng (SQL familiarity, ACID guarantees quen thuộc) và điện (horizontal scale, distributed storage). Không phải tốt nhất ở từng loại riêng, nhưng tiện lợi cho nhiều người không muốn phải chọn một trong hai.
 
-🔵 **Layer 2 — Mechanics:**
+🔵 **Layer 2 — How It Works:**
 
 ```
 CockroachDB/TiDB/Spanner architecture:
@@ -248,7 +276,13 @@ CockroachDB/TiDB/Spanner architecture:
   TiDB: Compatible with MySQL protocol
 ```
 
-🔵 **Layer 3 — Edge Cases:** Cross-region transactions = high latency (Spanner ~7ms same-region, ~200ms cross-region). Operational complexity vẫn cao. Cost-per-node cao hơn PostgreSQL. Not always faster than well-tuned PostgreSQL + read replicas.
+🔵 **Layer 3 — Edge Cases & Trade-offs:**
+
+- Cross-region transactions = high latency (Spanner ~7ms same-region, ~200ms cross-region) — không phù hợp latency-sensitive workloads
+- Operational complexity vẫn cao — không phải "plug and play" như managed PostgreSQL (RDS), đòi hỏi Raft và distributed systems expertise
+- Cost-per-node cao hơn PostgreSQL đáng kể — chỉ justify khi thực sự cần distributed ACID ở global scale
+- Not always faster than well-tuned PostgreSQL + read replicas cho workload không cần cross-shard transactions
+- Migration từ PostgreSQL sang NewSQL không trivial — query optimizer khác, edge cases khác, cần thorough testing và shadow traffic
 
 | Sai lầm                  | Tại sao sai                                     | Đúng là                                    |
 | ------------------------ | ----------------------------------------------- | ------------------------------------------ |
@@ -258,20 +292,21 @@ CockroachDB/TiDB/Spanner architecture:
 
 🎯 **Interview Pattern:** "When NewSQL over PostgreSQL?" → Need global distribution + ACID + SQL → CockroachDB/Spanner. Otherwise → PostgreSQL + read replicas + Citus for sharding.
 
-🔗 **Knowledge Chain:** RDBMS → Consensus (Raft/Paxos) → **NewSQL** → Global Databases → Multi-Region Architecture
+📚 **Cần biết trước:** [RDBMS Fundamentals](../../be-track/03-database-advanced/01-sql-fundamentals.md) | [Consensus — Raft/Paxos](../02-system-design/consensus-algorithms.md)
+➡️ **Để hiểu tiếp:** [Multi-Region Architecture](../02-system-design/system-design-theory.md) | [Polyglot Persistence](#concept-6-polyglot-persistence)
 
 ### Concept 6: Polyglot Persistence
 
-🧠 **Memory Hook:** "Nhà bếp chuyên nghiệp" — không dùng 1 dao cho mọi món: dao sushi (Redis), dao phay (PostgreSQL), dao bánh mì (Elasticsearch).
+> 🧠 **Memory Hook:** "Nhà bếp chuyên nghiệp" — không dùng 1 dao cho mọi món: dao sushi (Redis), dao phay (PostgreSQL), dao bánh mì (Elasticsearch).
 
-**Why exists:**
+**Tại sao tồn tại?**
 
-- Level 1: Không DB nào tốt nhất cho mọi workload
-- Level 2: Microservices architecture tự nhiên dẫn đến mỗi service chọn DB phù hợp nhất
+→ **Why?** Không DB nào tốt nhất cho mọi workload — mỗi DB tối ưu cho một access pattern và consistency model cụ thể
+→ **Why?** Microservices architecture tự nhiên dẫn đến mỗi service chọn DB phù hợp nhất cho domain — service boundary = data boundary
 
-🔵 **Layer 1 — Analogy:** Supermarket có tủ lạnh (Redis cache), kệ hàng (PostgreSQL), catalog tìm kiếm (Elasticsearch) — mỗi loại lưu trữ cho mục đích khác.
+🔵 **Layer 1 — Analogy:** Siêu thị có tủ lạnh (Redis cache — giữ đồ tươi sẵn sàng lấy ngay), kệ hàng (PostgreSQL — hàng hoá chính xác, đủ loại), catalog tìm kiếm (Elasticsearch — tìm nhanh theo từ khoá). Mỗi loại lưu trữ phục vụ mục đích riêng, không loại nào thay thế loại kia được.
 
-🔵 **Layer 2 — Mechanics:**
+🔵 **Layer 2 — How It Works:**
 
 ```
 Typical Polyglot Stack:
@@ -287,7 +322,13 @@ Data sync: CDC (Change Data Capture) / Event Bus
 Ownership: Each service owns its DB — no shared DB
 ```
 
-🔵 **Layer 3 — Edge Cases:** Data duplication across DBs needs ownership contracts. Monitoring N DBs is N× complexity. Team needs expertise across all DB types. Eventual consistency between DBs.
+🔵 **Layer 3 — Edge Cases & Trade-offs:**
+
+- Data duplication across DBs cần ownership contracts rõ ràng — ai là source of truth khi dữ liệu conflict giữa Postgres và Elasticsearch?
+- Monitoring N databases = N× operational complexity — cần unified observability platform, không chỉ riêng lẻ từng DB
+- Team cần expertise across all DB types — cost cao cho small teams, cân nhắc kỹ trước khi thêm DB mới vào stack
+- Eventual consistency giữa DBs (PostgreSQL → Elasticsearch sync qua CDC) — sync lag cần design UI/logic chịu được trạng thái tạm
+- "Right tool for right job" có thể thành "too many tools" — bắt đầu đơn giản, thêm DB mới chỉ khi có workload evidence rõ ràng
 
 | Sai lầm                         | Tại sao sai                               | Đúng là                              |
 | ------------------------------- | ----------------------------------------- | ------------------------------------ |
@@ -297,20 +338,21 @@ Ownership: Each service owns its DB — no shared DB
 
 🎯 **Interview Pattern:** "Design data layer for e-commerce" → PostgreSQL for orders, Redis for cart/session, ES for search, S3 for images → explain sync via CDC/events.
 
-🔗 **Knowledge Chain:** Single DB → Microservices → **Polyglot Persistence** → CDC/Event Bus → Data Mesh
+📚 **Cần biết trước:** [NoSQL Categories](#concept-1-nosql-categories) | [Microservices Architecture](../02-system-design/system-design-theory.md)
+➡️ **Để hiểu tiếp:** [CDC & Event Bus](../../be-track/02-backend-knowledge/03-distributed-systems.md) | [Data Modeling & Migration](#concept-7-data-modeling--migration)
 
 ### Concept 7: Data Modeling & Migration
 
-🧠 **Memory Hook:** "Dọn nhà" — migration là dọn từ nhà cũ (SQL) sang nhà mới (NoSQL) — phải đóng gói (ETL), kiểm tra (validation), chuyển từng phòng (strangler pattern).
+> 🧠 **Memory Hook:** "Dọn nhà" — migration là dọn từ nhà cũ (SQL) sang nhà mới (NoSQL) — phải đóng gói (ETL), kiểm tra (validation), chuyển từng phòng (strangler pattern).
 
-**Why exists:**
+**Tại sao tồn tại?**
 
-- Level 1: Business requirements thay đổi → DB cũ không phù hợp → cần migrate
-- Level 2: NoSQL data modeling (embedding, denormalization) khác fundamentally với SQL normalization
+→ **Why?** Business requirements thay đổi → DB cũ không phù hợp về scale hoặc access pattern → cần migrate an toàn mà không mất dữ liệu
+→ **Why?** NoSQL data modeling (embedding, denormalization) khác fundamentally với SQL normalization — không thể dump SQL schema thẳng vào MongoDB mà không redesign
 
-🔵 **Layer 1 — Analogy:** SQL normalization = sắp xếp sách theo tác giả. NoSQL denormalization = sắp xếp theo chủ đề đọc — cùng sách có thể ở nhiều kệ.
+🔵 **Layer 1 — Analogy:** SQL normalization = sắp xếp sách theo tác giả (mỗi tác giả 1 chỗ, join để tìm). NoSQL denormalization = sắp xếp theo chủ đề đọc (cùng sách có thể ở nhiều kệ — tốn chỗ hơn nhưng lấy nhanh hơn theo cách đọc của bạn). Không có cách nào đúng tuyệt đối — tuỳ cách bạn hay tra cứu.
 
-🔵 **Layer 2 — Mechanics:**
+🔵 **Layer 2 — How It Works:**
 
 ```
 NoSQL Modeling Decision:
@@ -325,7 +367,13 @@ Migration Pattern (SQL → NoSQL):
   Phase 4: Decommission old DB
 ```
 
-🔵 **Layer 3 — Edge Cases:** Migration rollback plan critical. Idempotent writes for retry safety. Schema versioning for document evolution. Anti-pattern: big-bang migration — always incremental.
+🔵 **Layer 3 — Edge Cases & Trade-offs:**
+
+- Migration rollback plan critical — nếu không thể rollback nhanh và an toàn, migration chưa đủ điều kiện cutover
+- Idempotent writes cho retry safety — network timeout không biết request thành công hay thất bại, retry phải safe không tạo duplicate
+- Schema versioning cho document evolution — v1 và v2 documents có thể tồn tại cùng lúc, cần lazy migration hoặc eager migration script
+- Big-bang migration là anti-pattern — luôn dùng strangler pattern, migrate từng bounded context một để giảm risk
+- Data validation trước cutover: so sánh read results từ old và new DB để detect silent corruption — latency tốt mà correctness kém = migration thất bại
 
 | Sai lầm                     | Tại sao sai                  | Đúng là                                |
 | --------------------------- | ---------------------------- | -------------------------------------- |
@@ -335,7 +383,8 @@ Migration Pattern (SQL → NoSQL):
 
 🎯 **Interview Pattern:** "How to migrate from PostgreSQL to DynamoDB?" → Identify bounded context → CDC pipeline → dual-write → shadow read → cutover → decommission.
 
-🔗 **Knowledge Chain:** Schema Design → Normalization vs Denormalization → **Data Modeling** → Migration Patterns → Strangler Fig → Blue-Green Deployment
+📚 **Cần biết trước:** [Schema Design & Normalization](../../be-track/03-database-advanced/01-sql-fundamentals.md) | [Document Stores](#concept-2-document-stores)
+➡️ **Để hiểu tiếp:** [Strangler Fig & Blue-Green Deployment](../02-system-design/system-design-theory.md) | [Sharding & Transactions](./04-sharding-and-transactions.md)
 
 ---
 
@@ -679,11 +728,15 @@ Single-table design:
 
 ## Self-Check / Tự Kiểm Tra
 
-- [ ] Can I name 4 NoSQL types with their internal data model and one production use case each?
-- [ ] Can I explain why Cassandra uses LSM-Tree instead of B+Tree (hint: write optimization)?
-- [ ] Can I describe when to use NewSQL (CockroachDB/Spanner) over traditional SQL?
-- [ ] Can I explain DynamoDB partition key vs sort key and what "hot partition" means?
-- 💬 **Feynman Prompt:** Giải thích tại sao MongoDB (document store) không phù hợp để replace Redis (key-value) cho session storage — dù cả hai đều là "NoSQL".
+| #   | Loại           | Câu hỏi tự kiểm                                                                                                       |
+| --- | -------------- | --------------------------------------------------------------------------------------------------------------------- |
+| 1   | 🔁 Retrieval   | Kể 5 loại NoSQL với internal data model và 1 production use case cụ thể cho mỗi loại (không dùng tài liệu)            |
+| 2   | 🖼️ Visual      | Vẽ write path của Cassandra (Memtable → SSTable) và so sánh với B+Tree write path của PostgreSQL                      |
+| 3   | ⚙️ Application | Thiết kế data layer cho e-commerce: chọn DB cho orders, cart, search, activity log — giải thích từng lựa chọn         |
+| 4   | 🐛 Debug       | Redis đang dùng AOF persistence nhưng vẫn mất ~1 giây dữ liệu sau crash — nguyên nhân chính xác và cách fix?          |
+| 5   | 🎓 Teach       | Giải thích CAP theorem cho junior engineer: tại sao P bắt buộc, CP vs AP khác nhau thế nào, ví dụ 1 hệ thống mỗi loại |
+
+💬 **Feynman Prompt:** Giải thích tại sao MongoDB (document store) không phù hợp để replace Redis (key-value) cho session storage — dù cả hai đều là "NoSQL". Nêu ít nhất 3 lý do kỹ thuật cụ thể (hint: latency model, data structure, persistence trade-off).
 
 ## Connections / Liên Kết
 

@@ -64,8 +64,31 @@ gRPC là RPC framework của Google, dùng Protocol Buffers (protobuf) cho seria
 
 ### Concept 1: gRPC vs REST Trade-offs
 
-**🧠 Memory Hook:** "gRPC = internal highway (fast, typed, binary), REST = public road (universal, readable, browser-friendly)."
-_gRPC = đường cao tốc nội bộ (nhanh, typed, binary), REST = đường công cộng (ai cũng dùng được, đọc được)._
+> 🧠 **Memory Hook:** "gRPC = internal highway (fast, typed, binary), REST = public road (universal, readable, browser-friendly)."
+> _gRPC = đường cao tốc nội bộ (nhanh, typed, binary), REST = đường công cộng (ai cũng dùng được, đọc được)._
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:** REST giống gửi thư tay — ai cũng đọc được, nhưng chậm và tốn giấy. gRPC giống gửi file ZIP đã nén nhị phân — nhanh hơn, nhỏ hơn, nhưng cần phần mềm đặc biệt để mở. Hai bên phải đồng ý cùng schema (`.proto`) trước khi giao tiếp.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+REST over HTTP/1.1:
+  Client ──► {"id":"123","name":"Alice","email":"alice@example.com"}
+              ↑ JSON text ~120 bytes + verbose headers ~500 bytes
+              ↑ One request per TCP roundtrip (head-of-line blocking)
+
+gRPC over HTTP/2 + Protobuf:
+  Client ──► [0x0a 0x03 31 32 33]  ← field 1 (id) = "123"
+              ↑ Binary ~5 bytes + HPACK compressed headers ~50 bytes
+              ↑ Multiple RPCs share ONE TCP connection (multiplexing)
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **Browser không hỗ trợ native:** HTTP/2 trailers (mang gRPC status code) bị browser XHR/fetch block → cần gRPC-Web proxy (Envoy) → thêm infra complexity
+- **Debugging khó hơn REST:** Binary payload không thể `curl` hay đọc bằng mắt thường — cần `grpcurl`, enable server reflection, hoặc Postman gRPC mode
+- **Low RPS không justify:** Nếu service chỉ có vài chục req/giây, overhead của proto toolchain (codegen CI, schema distribution) không đáng so với REST simplicity
+- **Team onboarding cost:** Protobuf toolchain, `protoc`, code generation pipeline — team mới cần thời gian làm quen so với REST + OpenAPI vốn đã familiar
 
 **❓ Why exists (root-cause tracing):**
 
@@ -75,20 +98,52 @@ _gRPC = đường cao tốc nội bộ (nhanh, typed, binary), REST = đường 
 
 **⚠️ Common Mistakes:**
 
-1. Using gRPC for public APIs → browser clients can't call directly
-2. Assuming gRPC = always faster → for low-frequency CRUD, REST simplicity wins
-3. Not considering debugging difficulty — binary payloads need tools like `grpcurl`
+| Sai lầm                      | Tại sao sai                                             | Đúng là                                                    |
+| ---------------------------- | ------------------------------------------------------- | ---------------------------------------------------------- |
+| Dùng gRPC cho public API     | Browser không call trực tiếp — HTTP/2 trailers bị block | Dùng REST hoặc gRPC-Web + Envoy proxy cho external clients |
+| Cho rằng gRPC luôn nhanh hơn | Low-frequency CRUD: REST đơn giản và đủ tốt             | So sánh dựa trên RPS thực tế, payload size, streaming need |
+| Bỏ qua khó debug             | Binary payload không đọc được bằng mắt thường           | Dùng `grpcurl`, enable server reflection khi dev/staging   |
 
 **🎯 Interview Pattern:** "Why did your team choose gRPC?" → specific numbers (payload size, latency, RPS) + explain when REST is better
 
-**🔗 Knowledge Chain:** REST Limitations → HTTP/2 Advantages → Protobuf Efficiency → gRPC Decision Framework
+📚 **Cần biết trước:** [API Design](./01-api-design.md) — REST fundamentals để so sánh; [Networking for Go](./06-networking-go.md) — HTTP/2 transport layer mechanics
+➡️ **Để hiểu tiếp:** [Protocol Buffers & Schema Evolution](#concept-2-protocol-buffers--schema-evolution) — binary serialization là lý do gRPC compact hơn; [Microservices](./02-microservices.md) — context cho internal service communication
 
 ---
 
 ### Concept 2: Protocol Buffers & Schema Evolution
 
-**🧠 Memory Hook:** "Field numbers are forever — change the name, never the number."
-_Field number là vĩnh viễn — đổi tên được, không đổi số._
+> 🧠 **Memory Hook:** "Field numbers are forever — change the name, never the number."
+> _Field number là vĩnh viễn — đổi tên được, không đổi số._
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:** Field number giống số CCCD — bạn có thể đổi tên (Nguyễn A → Nguyễn B), nhưng số định danh không bao giờ thay đổi. Nếu đổi số định danh, hệ thống cũ sẽ nhầm người. Protobuf dùng field number làm key trong binary encoding — thay đổi nó đồng nghĩa corrupt data với tất cả client cũ.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Proto definition:              Wire format (binary):
+message User {                 0x0a = field 1, type 2 (length-delimited)
+  string id    = 1;  ──────►  0x03 = length 3 bytes
+  string email = 2;           "123" = actual id value
+  string name  = 3;
+}
+
+Old server receives message with NEW unknown field 9:
+  → Silently ignores field 9 (forward-compatible ✓)
+
+New client receives message WITHOUT field 9 (old server):
+  → Gets zero value "" (backward-compatible ✓)
+
+Safe schema evolution:
+  string avatar_url = 9;  ← new field, old clients ignore, new clients use
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **`required` trong proto2 là anti-pattern:** Một field `required` bị xoá → tất cả client cũ fail deserialization → proto3 loại bỏ `required`, mọi field đều optional
+- **Default value gotcha:** Proto3 zero values (`0`, `""`, `false`) không được encode vào binary → client không phân biệt được "chưa set" vs "set = 0" → dùng `google.protobuf.Int32Value` (wrapper) nếu cần distinguish
+- **`oneof` evolution:** Thêm field vào `oneof` an toàn, nhưng move field ra khỏi `oneof` là breaking change — wire format khác nhau
+- **`reserved` keyword quan trọng:** Khi xoá field, phải `reserved 5, "old_field_name";` để ngăn tái sử dụng số đó — thiếu `reserved` → data corruption khi deploy rolling update
 
 **❓ Why exists (root-cause tracing):**
 
@@ -98,20 +153,51 @@ _Field number là vĩnh viễn — đổi tên được, không đổi số._
 
 **⚠️ Common Mistakes:**
 
-1. Changing field number → breaks all existing clients silently (data corruption, not error)
-2. Using `required` (proto2) → impossible to evolve schema → proto3 made everything optional
-3. Not using `reserved` for deleted fields → future developer reuses number → corrupt data
+| Sai lầm                             | Tại sao sai                                                                 | Đúng là                                                   |
+| ----------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------- |
+| Đổi field number của existing field | Binary encoding dùng số làm key → corrupt data với client cũ, không báo lỗi | Chỉ thêm field mới với số chưa dùng, không bao giờ đổi số |
+| Dùng `required` (proto2)            | Impossible to evolve — server mới không gửi field → client cũ crash         | Proto3: mọi field optional, validate ở application layer  |
+| Không dùng `reserved` khi xoá field | Developer sau tái sử dụng số đó → corrupt data khi cả hai version active    | `reserved 5, "deleted_field";` ngay khi xoá field         |
 
 **🎯 Interview Pattern:** "How do you evolve a protobuf schema without breaking clients?" → add fields (never remove number) + use `reserved` + version via package name
 
-**🔗 Knowledge Chain:** Schema Definition → Field Numbers → Wire Format → Backward Compatibility → Schema Evolution → API Versioning
+📚 **Cần biết trước:** [gRPC vs REST Trade-offs](#concept-1-grpc-vs-rest-trade-offs) — hiểu tại sao binary format quan trọng; [API Design](./01-api-design.md) — API versioning strategies
+➡️ **Để hiểu tiếp:** [gRPC Streaming Patterns](#concept-3-grpc-streaming-patterns) — proto messages dùng trong streaming; [Microservices](./02-microservices.md) — schema evolution critical khi multiple services share proto
 
 ---
 
 ### Concept 3: gRPC Streaming Patterns
 
-**🧠 Memory Hook:** "4 patterns = walkie-talkie modes: one-way message, broadcast, collect, two-way radio."
-_4 patterns = chế độ bộ đàm: gửi 1 chiều, phát sóng, thu thập, 2 chiều._
+> 🧠 **Memory Hook:** "4 patterns = walkie-talkie modes: one-way message, broadcast, collect, two-way radio."
+> _4 patterns = chế độ bộ đàm: gửi 1 chiều, phát sóng, thu thập, 2 chiều._
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:** Unary = nhắn tin SMS (gửi 1, nhận 1). Server Streaming = xem YouTube livestream (bạn request 1 lần, server liên tục gửi frames). Client Streaming = upload video (bạn gửi nhiều chunks, server confirm 1 lần khi done). Bidirectional = gọi điện video (cả hai gửi và nhận đồng thời, độc lập).
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Unary:          Client ──[req]──► Server ──[resp]──► Client
+
+Server Stream:  Client ──[req]──► Server ──[data]──► Client
+                                         ──[data]──► Client
+                                         ──[EOF]───► Client
+
+Client Stream:  Client ──[data]──► Server
+                       ──[data]──► Server
+                       ──[data]──► Server ──[resp]──► Client
+
+Bidirectional:  Client ──[data]──► Server
+                       ◄──[data]── Server
+                       ──[data]──► Server
+                       ◄──[data]── Server  (fully async, no turn-taking)
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **Flow control & backpressure:** HTTP/2 có window-based flow control — nếu consumer chậm hơn producer, buffer fill up → sender blocks → cần handle gracefully để tránh memory bloat
+- **Stream error mid-flight:** Nếu server gặp error sau khi đã gửi một số messages, client đã process partial data → cần idempotency design hoặc checkpoint/resume để rollback
+- **Forget to close send stream:** Client streaming: nếu client không gọi `CloseSend()`, server hang đợi thêm messages mãi mãi → resource leak và timeout
+- **Deadline applies to entire stream:** Deadline set ở đầu áp dụng cho toàn bộ stream lifecycle, không phải per-message — long-running streams cần careful deadline planning hoặc dùng keepalive
 
 **❓ Why exists (root-cause tracing):**
 
@@ -121,20 +207,53 @@ _4 patterns = chế độ bộ đàm: gửi 1 chiều, phát sóng, thu thập, 
 
 **⚠️ Common Mistakes:**
 
-1. Using unary for large data → OOM when response is 100MB → use server streaming instead
-2. Not handling stream errors mid-flight → partial data processed without rollback
-3. Forgetting to close send stream → server hangs waiting for more messages
+| Sai lầm                                    | Tại sao sai                                               | Đúng là                                                |
+| ------------------------------------------ | --------------------------------------------------------- | ------------------------------------------------------ |
+| Dùng unary cho large data (100MB response) | OOM khi load toàn bộ response vào memory trước khi gửi    | Dùng server streaming để gửi từng chunk                |
+| Không handle stream errors mid-flight      | Partial data đã process không rollback được               | Design idempotent ops hoặc implement checkpoint/resume |
+| Quên đóng send stream (client streaming)   | Server hang vô thời hạn đợi thêm messages → resource leak | Luôn gọi `CloseSend()`, dùng `defer` trong Go          |
 
 **🎯 Interview Pattern:** "Design real-time driver location tracking" → bidirectional stream: driver sends locations, server sends route updates
 
-**🔗 Knowledge Chain:** Unary RPC → Server Streaming → Client Streaming → Bidirectional → Flow Control → Backpressure
+📚 **Cần biết trước:** [Protocol Buffers & Schema Evolution](#concept-2-protocol-buffers--schema-evolution) — message types dùng trong stream; [Networking for Go](./06-networking-go.md) — HTTP/2 flow control
+➡️ **Để hiểu tiếp:** [Interceptors](#concept-4-interceptors-middleware) — stream interceptors wrap toàn bộ stream lifecycle; [Resilience Patterns](./07-resilience-patterns.md) — backpressure và circuit breaker
 
 ---
 
 ### Concept 4: Interceptors (Middleware)
 
-**🧠 Memory Hook:** "Interceptors = security checkpoints at the airport — every request passes through auth, logging, metrics before reaching the gate."
-_Interceptors = trạm kiểm soát sân bay — mọi request qua auth, logging, metrics trước khi đến gate._
+> 🧠 **Memory Hook:** "Interceptors = security checkpoints at the airport — every request passes through auth, logging, metrics before reaching the gate."
+> _Interceptors = trạm kiểm soát sân bay — mọi request qua auth, logging, metrics trước khi đến gate._
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:** Interceptors giống bảo vệ tại cổng toà nhà — mọi người (request) phải qua kiểm tra thẻ (auth), ghi tên vào sổ (logging), đo thân nhiệt (metrics) trước khi vào. Nếu đặt guard trong từng phòng riêng → inconsistent enforcement và dễ bỏ sót.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Incoming gRPC call
+        ▼
+┌─────────────────────────────┐
+│ recoveryInterceptor         │  ← outermost: catch panics
+│  ┌────────────────────────┐ │
+│  │ loggingInterceptor     │ │  ← record method, duration, code
+│  │  ┌─────────────────┐   │ │
+│  │  │ authInterceptor  │   │ │  ← validate JWT from metadata
+│  │  │  ┌────────────┐  │   │ │
+│  │  │  │ handler()  │  │   │ │  ← business logic
+│  │  │  └────────────┘  │   │ │
+│  │  └─────────────────┘   │ │
+│  └────────────────────────┘ │
+└─────────────────────────────┘
+        ▼
+gRPC Response
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **Interceptor order matters critically:** `recoveryInterceptor` phải là outermost → nếu auth interceptor panic, recovery phải bắt được; logging phải bọc auth để log cả rejected requests
+- **Unary vs Stream interceptors khác nhau:** Stream interceptor wrap toàn bộ stream lifecycle (connect → messages → disconnect), không phải mỗi message riêng lẻ như unary
+- **Metadata propagation chain:** Auth token extract ở inbound interceptor → phải forward qua outgoing context khi call downstream services → dễ bị mất nếu tạo `context.Background()` mới
+- **Panic trong stream handler:** gRPC không auto-recover panic trong stream handler như Unary → phải explicitly add recovery logic trong stream interceptor
 
 **❓ Why exists (root-cause tracing):**
 
@@ -144,20 +263,55 @@ _Interceptors = trạm kiểm soát sân bay — mọi request qua auth, logging
 
 **⚠️ Common Mistakes:**
 
-1. Putting auth logic in each handler → inconsistent enforcement, easy to miss one
-2. Wrong interceptor order → logging before auth means unauthenticated requests logged without rejection
-3. Not propagating metadata → auth token in metadata lost when calling downstream services
+| Sai lầm                                     | Tại sao sai                                                                 | Đúng là                                                         |
+| ------------------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Đặt auth logic trong từng handler           | Inconsistent enforcement, dễ bỏ sót handler nào đó                          | Centralize auth trong interceptor, áp dụng cho tất cả methods   |
+| Sai thứ tự interceptor (logging trước auth) | Unauthenticated requests được log trước khi reject → log noise và data leak | Recovery → Logging → Auth → RateLimit → Business logic          |
+| Không forward metadata xuống downstream     | Auth token mất khi call service tiếp theo → downstream reject               | Dùng `metadata.NewOutgoingContext` để forward relevant metadata |
 
 **🎯 Interview Pattern:** "How do you add auth to all gRPC services?" → unary + stream interceptors → extract JWT from metadata → validate → reject or continue chain
 
-**🔗 Knowledge Chain:** Handler Logic → Cross-Cutting Concerns → Interceptor Chain → Metadata Propagation → Context Enrichment
+📚 **Cần biết trước:** [gRPC Streaming Patterns](#concept-3-grpc-streaming-patterns) — cần hiểu stream lifecycle trước khi viết stream interceptor; [Auth & Security](./04-auth-security.md) — JWT validation patterns
+➡️ **Để hiểu tiếp:** [Error Handling & Status Codes](#concept-5-grpc-error-handling--status-codes) — interceptor return error với proper status codes; [Distributed Systems](./03-distributed-systems.md) — context propagation trong distributed tracing
 
 ---
 
 ### Concept 5: gRPC Error Handling & Status Codes
 
-**🧠 Memory Hook:** "gRPC status codes = HTTP status codes' disciplined cousin — specific, enumerated, with rich error details."
-_gRPC status codes = anh em có kỷ luật của HTTP status — cụ thể, liệt kê rõ, kèm chi tiết._
+> 🧠 **Memory Hook:** "gRPC status codes = HTTP status codes' disciplined cousin — specific, enumerated, with rich error details."
+> _gRPC status codes = anh em có kỷ luật của HTTP status — cụ thể, liệt kê rõ, kèm chi tiết._
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:** Tưởng tượng gọi điện đến thư viện để mượn sách. Thay vì nhân viên nói "không được" (string error), họ dùng mã cụ thể: 404 = sách không có, 403 = khu vực restricted, 429 = quá nhiều request hôm nay, 503 = thư viện đang đóng cửa tạm thời. Client có thể lập trình phản hồi từng mã khác nhau.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+gRPC Error Structure:
+┌─────────────────────────────────────────────┐
+│ Status Code: INVALID_ARGUMENT (3)           │
+│ Message: "validation failed"                │
+│ Details: [                                  │
+│   BadRequest {                              │
+│     field_violations: [                     │
+│       { field: "email",                     │
+│         description: "must be valid email"} │
+│     ]                                       │
+│   }                                         │
+│ ]                                           │
+└─────────────────────────────────────────────┘
+         ▼ Client switch on code:
+  INVALID_ARGUMENT  → show field errors to user
+  NOT_FOUND         → redirect to 404 page
+  UNAVAILABLE       → retry with exponential backoff
+  INTERNAL          → show generic error, page on-call
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **`INTERNAL` cho tất cả là anti-pattern:** Client không phân biệt retryable vs permanent errors → không retry INTERNAL (có thể data inconsistency), nhưng UNAVAILABLE thì safe to retry
+- **`NOT_FOUND` vs `FAILED_PRECONDITION`:** NOT_FOUND = resource không tồn tại; FAILED_PRECONDITION = resource tồn tại nhưng wrong state (vd: order đã cancel không thể ship) — dễ bị nhầm
+- **gRPC-Gateway HTTP mapping:** Khi expose gRPC qua REST proxy, status codes được map tự động → sai status code → sai HTTP code cho REST clients → double-check mapping
+- **Error details có cost:** Serializing rich error details (proto message) tốn thêm CPU và bandwidth → chỉ dùng khi thực sự cần (validation), không phải cho mọi error
 
 **❓ Why exists (root-cause tracing):**
 
@@ -167,20 +321,52 @@ _gRPC status codes = anh em có kỷ luật của HTTP status — cụ thể, li
 
 **⚠️ Common Mistakes:**
 
-1. Returning `Internal` for everything → client can't distinguish retryable vs permanent errors
-2. Not using error details → `InvalidArgument` without field name forces client to guess
-3. Confusing `NotFound` vs `FailedPrecondition` → NotFound = resource doesn't exist, FailedPrecondition = resource exists but wrong state
+| Sai lầm                                   | Tại sao sai                                                                | Đúng là                                                                    |
+| ----------------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Return `INTERNAL` cho mọi lỗi             | Client không phân biệt retry vs permanent → over-retry hoặc under-retry    | Map cụ thể: NOT_FOUND, INVALID_ARGUMENT, UNAVAILABLE, v.v.                 |
+| Không dùng error details                  | `INVALID_ARGUMENT` không nói field nào sai → client phải guess             | Dùng `errdetails.BadRequest` với `FieldViolation` cho validation errors    |
+| Nhầm `NOT_FOUND` vs `FAILED_PRECONDITION` | Wrong semantic → client handle sai (retry NOT_FOUND không bao giờ succeed) | NOT_FOUND = không tồn tại; FAILED_PRECONDITION = tồn tại nhưng wrong state |
 
 **🎯 Interview Pattern:** "How do you design error responses in gRPC?" → specific status codes + error details + mapping to retry policy
 
-**🔗 Knowledge Chain:** Status Codes → Error Details (proto) → Client Handling → Retry Decision → gRPC-Gateway HTTP Mapping
+📚 **Cần biết trước:** [Interceptors](#concept-4-interceptors-middleware) — interceptors return errors với status codes; [gRPC vs REST Trade-offs](#concept-1-grpc-vs-rest-trade-offs) — context về tại sao structured errors quan trọng
+➡️ **Để hiểu tiếp:** [Load Balancing for gRPC](#concept-6-load-balancing-for-grpc) — status codes drive retry decisions; [Resilience Patterns](./07-resilience-patterns.md) — circuit breaker based on error rate
 
 ---
 
 ### Concept 6: Load Balancing for gRPC
 
-**🧠 Memory Hook:** "L4 LB + HTTP/2 = all eggs in one basket — one connection, all RPCs, one backend."
-_L4 LB + HTTP/2 = bỏ hết trứng vào 1 rổ — 1 connection, mọi RPC, 1 backend._
+> 🧠 **Memory Hook:** "L4 LB + HTTP/2 = all eggs in one basket — one connection, all RPCs, one backend."
+> _L4 LB + HTTP/2 = bỏ hết trứng vào 1 rổ — 1 connection, mọi RPC, 1 backend._
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:** L4 load balancer giống người điều phối taxi — khi taxi (TCP connection) đến, anh ta giao hết tất cả khách (RPC calls) cho 1 taxi đó. HTTP/2 giữ connection alive và multiplexes nhiều RPCs trên 1 connection → L4 chỉ thấy 1 connection → giao hết cho 1 backend. L7 LB hiểu từng hành khách (RPC frame) và phân phối đúng.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+❌ L4 Load Balancer (TCP mode) + HTTP/2:
+Client ──[1 TCP conn]──► L4 LB ──► Backend A (100% load)
+                                └─► Backend B (  0% load)
+                                └─► Backend C (  0% load)
+  All RPCs on same connection → same backend!
+
+✓ L7 Load Balancer (Envoy/Istio) + HTTP/2:
+Client ──[1 TCP conn]──► L7 Proxy ──[RPC 1]──► Backend A
+                                   ──[RPC 2]──► Backend B  ← per-RPC routing
+                                   ──[RPC 3]──► Backend C
+
+✓ Client-Side Load Balancing (round_robin):
+Client ──[conn A]──► Backend A ← RPC 1, RPC 4
+       ──[conn B]──► Backend B ← RPC 2, RPC 5
+       ──[conn C]──► Backend C ← RPC 3, RPC 6
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **DNS caching problem:** Client resolve DNS 1 lần → cache → khi pod scale up, client không biết pod mới → stale backend list → set DNS TTL thấp và implement re-resolution
+- **Keepalive affects LB decisions:** gRPC keepalive giữ connection alive lâu → L4 LB không có cơ hội phân phối lại connections → càng cần L7 hoặc client-side LB
+- **Health check lag:** Pod mới start nhưng chưa warm up → client-side LB gửi traffic ngay → first few requests slow hoặc fail → cần readiness probe + initial delay
+- **Client-side LB state divergence:** Trong K8s multi-replica client, mỗi replica có LB state riêng → không guaranteed even distribution across all client-server pairs
 
 **❓ Why exists (root-cause tracing):**
 
@@ -190,20 +376,52 @@ _L4 LB + HTTP/2 = bỏ hết trứng vào 1 rổ — 1 connection, mọi RPC, 1 
 
 **⚠️ Common Mistakes:**
 
-1. Using TCP-mode load balancer → all traffic to one backend → others idle
-2. Not enabling `round_robin` in client service config → default picks one and sticks
-3. DNS caching → client resolves once, doesn't pick up new pods → stale backend list
+| Sai lầm                              | Tại sao sai                                                   | Đúng là                                                                    |
+| ------------------------------------ | ------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Dùng TCP-mode load balancer cho gRPC | HTTP/2 multiplexing → tất cả RPCs đến 1 backend → others idle | Dùng L7 LB (Envoy/ALB HTTP2 mode) hoặc client-side round_robin             |
+| Không enable `round_robin` policy    | gRPC client default `pick_first`: chọn 1 backend và dùng mãi  | Set `loadBalancingPolicy: round_robin` trong service config                |
+| DNS caching → stale pod list         | Client không discover pod mới → uneven load khi scale         | Set DNS TTL thấp, dùng headless service trong K8s, implement re-resolution |
 
 **🎯 Interview Pattern:** "Your gRPC service has uneven load across pods" → check if using L4 LB → switch to client-side or L7 proxy
 
-**🔗 Knowledge Chain:** HTTP/2 Multiplexing → L4 vs L7 LB → Client-Side LB → Service Mesh → Health Checking
+📚 **Cần biết trước:** [Networking for Go](./06-networking-go.md) — HTTP/2 connection management; [Microservices](./02-microservices.md) — service discovery patterns
+➡️ **Để hiểu tiếp:** [gRPC Retry & Resilience](#concept-7-grpc-retry--resilience) — retry interacts với backend selection; [Distributed Systems](./03-distributed-systems.md) — health checking và service mesh
 
 ---
 
 ### Concept 7: gRPC Retry & Resilience
 
-**🧠 Memory Hook:** "Retry only UNAVAILABLE and RESOURCE*EXHAUSTED — never retry INVALID_ARGUMENT (garbage in, garbage out)."
-\_Chỉ retry UNAVAILABLE và RESOURCE_EXHAUSTED — đừng bao giờ retry INVALID_ARGUMENT (rác vào, rác ra).*
+> 🧠 **Memory Hook:** "Retry only UNAVAILABLE and RESOURCE*EXHAUSTED — never retry INVALID_ARGUMENT (garbage in, garbage out)."
+> \_Chỉ retry UNAVAILABLE và RESOURCE_EXHAUSTED — đừng bao giờ retry INVALID_ARGUMENT (rác vào, rác ra).*
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:** Retry giống gọi điện bị mất sóng — nếu máy bận (UNAVAILABLE) thì gọi lại sau vài giây là hợp lý. Nhưng nếu bạn gọi nhầm số (INVALID_ARGUMENT), gọi lại 10 lần cũng vô ích — số điện thoại đó không phải người bạn cần. Deadline propagation giống timer đếm ngược chung — nếu gần hết thời gian, không nên bắt đầu lại từ đầu.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+gRPC Call Failure → Retry Decision Tree:
+
+Status code?
+  ├── UNAVAILABLE       → ✓ Retry (server temporarily down)
+  ├── RESOURCE_EXHAUSTED → ✓ Retry with backoff (rate limited)
+  ├── DEADLINE_EXCEEDED  → ✗ No retry (deadline already expired)
+  ├── INVALID_ARGUMENT   → ✗ No retry (client bug, permanent)
+  ├── NOT_FOUND          → ✗ No retry (resource doesn't exist)
+  └── INTERNAL           → ✗ No retry (unknown server state)
+
+Retry backoff schedule (maxAttempts: 4):
+  Attempt 1: immediate
+  Attempt 2: 100ms + jitter
+  Attempt 3: 200ms + jitter
+  Attempt 4: 400ms + jitter  (capped at maxBackoff: 1s)
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **Thundering herd on retry:** Tất cả clients retry cùng lúc sau outage → server vừa recover lại bị flood → dùng jitter (random delay) trong backoff để spread requests
+- **Deadline propagation chain:** Parent timeout 5s → child service timeout 5s → nếu parent đã dùng 4s, child chỉ còn 1s thực tế → phải propagate `ctx` từ parent, không tạo context mới
+- **Non-idempotent operations:** Retry `CreateOrder` có thể tạo duplicate orders → chỉ retry idempotent operations hoặc implement idempotency key pattern
+- **Hedging vs Retry trade-off:** Hedging gửi request đến multiple backends đồng thời (giảm tail latency) nhưng tăng server load 2-3x → chỉ dùng cho read-only, low-cost operations
 
 **❓ Why exists (root-cause tracing):**
 
@@ -213,13 +431,16 @@ _L4 LB + HTTP/2 = bỏ hết trứng vào 1 rổ — 1 connection, mọi RPC, 1 
 
 **⚠️ Common Mistakes:**
 
-1. Retrying `DEADLINE_EXCEEDED` → original deadline already passed → retry with same deadline fails immediately
-2. No max attempts → exponential retry creates thundering herd → amplifies outage
-3. Not propagating deadline → parent deadline 5s, child call also 5s → total could exceed 10s
+| Sai lầm                    | Tại sao sai                                                       | Đúng là                                                          |
+| -------------------------- | ----------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Retry `DEADLINE_EXCEEDED`  | Deadline đã hết → retry với cùng deadline fail ngay lập tức       | Không retry DEADLINE_EXCEEDED; set new deadline nếu muốn thử lại |
+| Không giới hạn maxAttempts | Exponential retry → thundering herd → amplify outage              | Giới hạn maxAttempts (3-5) + add jitter vào backoff              |
+| Không propagate deadline   | Parent 5s, child cũng set 5s → total có thể 10s → cascade timeout | Dùng `ctx` từ parent — deadline tự động propagate                |
 
 **🎯 Interview Pattern:** "How do you handle transient failures in gRPC?" → service config retry policy + deadline propagation + circuit breaker for persistent failures
 
-**🔗 Knowledge Chain:** Status Code Classification → Retry Policy Config → Backoff Strategy → Hedging → Deadline Propagation → Circuit Breaker
+📚 **Cần biết trước:** [Error Handling & Status Codes](#concept-5-grpc-error-handling--status-codes) — status code classification drives retry decision; [Load Balancing for gRPC](#concept-6-load-balancing-for-grpc) — retry interacts với backend selection
+➡️ **Để hiểu tiếp:** [Resilience Patterns](./07-resilience-patterns.md) — circuit breaker complements retry để prevent cascade failure; [Distributed Systems](./03-distributed-systems.md) — deadline propagation trong distributed tracing
 
 ---
 
@@ -733,15 +954,15 @@ Vietnamese: gRPC retry policy quan trọng cần biết: (1) Chỉ retry **idemp
 
 **Instructions:** Cover the answers, try to recall from memory. Check key points after.
 
-| #   | Question                                              | Key Points to Recall                                                                          |
-| --- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| 1   | Why is protobuf binary smaller than JSON?             | Field numbers (1-2 bytes) vs field names (N bytes) + no whitespace + varint encoding          |
-| 2   | Name 4 gRPC streaming patterns with use cases         | Unary (CRUD), Server streaming (feed), Client streaming (upload), Bidirectional (chat)        |
-| 3   | Why does HTTP/2 multiplexing break L4 load balancing? | One TCP connection = one L4 routing decision → all RPCs to one backend                        |
-| 4   | Which gRPC status codes should trigger retry?         | UNAVAILABLE (transient) + RESOURCE_EXHAUSTED (rate limit). Never: INVALID_ARGUMENT, NOT_FOUND |
-| 5   | How does protobuf achieve backward compatibility?     | Add new fields freely + never change/reuse field numbers + use `reserved` for deleted fields  |
-| 6   | Why interceptor order matters?                        | Auth must run before logging/metrics → reject before recording + metadata must exist          |
-| 7   | What is hedging and when to use it?                   | Send to multiple backends, take first response → reduces p99 → only for read-only operations  |
+| #   | Type        | Question                                                                    | Key Points to Recall                                                                          |
+| --- | ----------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| 1   | Conceptual  | Why is protobuf binary smaller than JSON?                                   | Field numbers (1-2 bytes) vs field names (N bytes) + no whitespace + varint encoding          |
+| 2   | Trade-off   | Why does HTTP/2 multiplexing break L4 load balancing?                       | One TCP connection = one L4 routing decision → all RPCs to one backend                        |
+| 3   | Application | Which gRPC status codes should trigger retry?                               | UNAVAILABLE (transient) + RESOURCE_EXHAUSTED (rate limit). Never: INVALID_ARGUMENT, NOT_FOUND |
+| 4   | Recall      | How does protobuf achieve backward compatibility?                           | Add new fields freely + never change/reuse field numbers + use `reserved` for deleted fields  |
+| 5   | Design      | How would you add auth to all gRPC services without modifying each handler? | Unary + stream interceptors → extract JWT from metadata → validate → reject or propagate ctx  |
+
+💬 **Feynman Prompt:** Giải thích cho một junior developer tại sao team bạn chọn gRPC thay vì REST cho internal services — và tại sao không dùng gRPC cho public API. Dùng ví dụ cụ thể với số liệu (payload size, RPS) như Grab driver-dispatch để làm rõ.
 
 ### 📅 Spaced Repetition Schedule
 

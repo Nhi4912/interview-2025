@@ -22,6 +22,7 @@
 ## Visual Overview / Sơ Đồ Tổng Quan
 
 ### OAuth 2.0 Authorization Code Flow
+
 ```
 USER          APP (Client)      AUTH SERVER     RESOURCE SERVER
   │                │                 │                 │
@@ -51,6 +52,7 @@ USER          APP (Client)      AUTH SERVER     RESOURCE SERVER
 ```
 
 ### JWT Structure / Cấu Trúc JWT
+
 ```
 JWT = base64url(header) . base64url(payload) . signature
 
@@ -81,6 +83,7 @@ Verification: recipient uses PUBLIC key to verify signature
 ```
 
 ### Session vs JWT Comparison
+
 ```
 SESSION-BASED:                    JWT (Stateless):
 ┌─────────────────────┐          ┌─────────────────────────────┐
@@ -107,6 +110,56 @@ JWT: stateless, fast, hard to revoke
 ---
 
 ## OAuth 2.0
+
+> 🧠 **Memory Hook:** OAuth = cho bạn mượn chìa khóa **phòng khách**, KHÔNG cho phòng ngủ. Bạn uỷ quyền truy cập giới hạn scope mà không cần đưa chìa khóa nhà (password).
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Trước OAuth, ứng dụng bên thứ ba phải xin username/password để thay mặt bạn đăng nhập vào dịch vụ khác. Điều này nguy hiểm vì bạn không kiểm soát được ứng dụng sẽ làm gì với mật khẩu đó. Ứng dụng có toàn quyền truy cập — không giới hạn phạm vi hay thời gian.
+→ **Why?** Ứng dụng biết password = có toàn quyền như chính chủ tài khoản, không thể thu hồi từng phần.
+→ **Why?** Không có cơ chế uỷ quyền có giới hạn phạm vi (scoped delegation) trong HTTP truyền thống.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Tưởng tượng bạn có căn hộ nhiều phòng. Bạn thuê người dọn dẹp, nhưng chỉ cho họ vào phòng khách và bếp — không cho vào phòng ngủ và két sắt. OAuth làm điều tương tự: ứng dụng calendar xin quyền đọc email (phòng khách) nhưng không thể xóa email hay đọc tin nhắn riêng (phòng ngủ). Bạn đưa "chìa khóa phòng khách" (access token với scope `mail.read`), không đưa mật khẩu. Khi không cần nữa, chỉ cần thu lại chìa khóa đó — không cần đổi ổ toàn bộ căn hộ.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+1. Ứng dụng redirect user → Authorization Server (/authorize?scope=mail.read&state=xyz)
+2. User đăng nhập tại Auth Server + đồng ý scope
+3. Auth Server redirect về → ứng dụng kèm authorization_code (one-time, short-lived)
+4. Ứng dụng POST /token {code + code_verifier + client_id} → nhận access_token + refresh_token
+5. Ứng dụng gọi Resource Server với Authorization: Bearer <access_token>
+6. Resource Server verify token → trả dữ liệu trong scope đã cấp
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- Client Credentials flow không có user — dành cho machine-to-machine (billing service gọi invoice API)
+- Implicit flow bị deprecated vì token trả về trong URL fragment, bị leak qua browser history và Referer header
+- PKCE bắt buộc cho public client (SPA, mobile) vì không thể giữ `client_secret` an toàn
+- Refresh token cần rotation + reuse detection để phát hiện token bị đánh cắp
+- `redirect_uri` phải exact-match để tránh open redirect attack — wildcard là lỗ hổng
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                   | Tại sao sai                                 | Đúng là                                     |
+| ----------------------------------------- | ------------------------------------------- | ------------------------------------------- |
+| Dùng Implicit flow cho SPA                | Token trong URL bị leak qua history/logs    | Dùng Authorization Code + PKCE              |
+| Không validate `state` param sau redirect | CSRF có thể inject/swap session             | Luôn verify `state` khớp với giá trị đã gửi |
+| Cấp scope rộng (`*` hoặc `admin`)         | Ứng dụng có quyền quá mức, blast radius lớn | Cấp minimal scope cần thiết cho use case    |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: "Login with Google/Facebook" hoặc "third-party app integration"
+- → Nhớ đến: OAuth 2.0 Authorization Code + PKCE — không phải Implicit
+- → Mở đầu: "OAuth 2.0 giải quyết bài toán uỷ quyền có giới hạn scope mà không chia sẻ password. Flow an toàn nhất hiện nay là Authorization Code + PKCE..."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Cryptography & Protocols](./02-cryptography-and-protocols.md) — PKCE dùng SHA-256, token dùng RSA
+- ➡️ Để hiểu tiếp: [OpenID Connect (OIDC)](#openid-connect-oidc) — identity layer on top of OAuth 2.0
 
 ### 🟢 [Junior] What is OAuth 2.0 and what problem does it solve?
 
@@ -237,6 +290,63 @@ Client App                   Browser                  Auth Server               
 
 ## OpenID Connect (OIDC)
 
+> 🧠 **Memory Hook:** OIDC = OAuth + thẻ CCCD. OAuth cho biết "bạn được làm gì", OIDC còn cho biết "bạn là **ai**". ID Token là tờ giấy tờ tùy thân đính kèm cùng quyền truy cập.
+
+**Tại sao tồn tại? / Why does this exist?**
+
+OAuth 2.0 tốt cho ủy quyền nhưng không chuẩn hóa thông tin danh tính. Mỗi provider trả về user info theo cách khác nhau — không có tiêu chuẩn về format, endpoint, hay cách verify. Developer phải viết code riêng cho từng provider để parse thông tin user.
+→ **Why?** Không có "identity layer" chuẩn hóa — Google trả `name`, Facebook trả `full_name`, Twitter không trả gì.
+→ **Why?** OAuth được thiết kế cho delegation, không phải authentication — cần extend thêm một layer chuẩn.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Giả sử bạn vào hội nghị và bảo vệ cần biết 2 điều: bạn được phép vào khu vực nào, và bạn là ai. OAuth chỉ cấp badge cho phép vào khu vực nhất định. OIDC bổ sung thêm tấm thẻ CCCD đính kèm badge — ghi rõ họ tên, phòng ban, ảnh chân dung. Khi ứng dụng nhận ID Token, họ biết chính xác "người này là Nguyễn Văn A, email abc@company.com, đã xác minh lúc 9:00 sáng" — không cần hỏi thêm bất kỳ đâu. Và tấm CCCD có chữ ký số — không thể giả mạo.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Client              OIDC Provider
+  |-- GET /.well-known/openid-configuration ──────────────────>
+  |<─ {issuer, authorization_endpoint, token_endpoint, jwks_uri} ─
+  |-- GET {jwks_uri} ─────────────────────────────────────────>
+  |<─ {keys: [{kid, kty, n, e, alg}]} ────────────────────────
+  |-- /authorize?scope=openid+profile+email&nonce=abc ────────>
+  |   [User login + consent at IdP]
+  |<─ callback?code=AUTH_CODE ─────────────────────────────────
+  |-- POST /token {code + code_verifier} ─────────────────────>
+  |<─ {access_token, id_token (JWT)} ──────────────────────────
+  Client MUST verify: iss ✓  aud==client_id ✓  exp ✓  nonce ✓
+  |-- (optional) GET /userinfo Authorization: Bearer access_token>
+  |<─ {sub, name, email, picture} ─────────────────────────────
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- ID Token chỉ dành cho client verify identity — KHÔNG gửi ID Token đến Resource Server thay access token
+- `nonce` claim chống replay attack — phải generate mới cho mỗi login attempt, không tái sử dụng
+- JWKS cần cache + hỗ trợ key rotation qua `kid` — khi Auth Server rotate key, client cần re-fetch JWKS
+- `sub` là stable identifier (không thay đổi), `email` có thể thay đổi — dùng `sub` làm primary key user
+- OIDC Discovery endpoint `.well-known/openid-configuration` giúp tự động cấu hình, không hardcode URL
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                           | Tại sao sai                                              | Đúng là                                          |
+| ------------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------ |
+| Gửi ID Token đến Resource Server để authorize API | ID Token cho client verify identity, không phải API auth | Dùng access token cho API calls                  |
+| Không verify `nonce` trong ID Token               | Replay attack — attacker tái sử dụng ID Token cũ         | Luôn generate nonce mới và verify trong callback |
+| Lưu `email` làm primary key user                  | Email có thể thay đổi → account merge lỗi                | Dùng `sub` (stable, provider-unique identifier)  |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: "Login with Google" / "federated identity" / "SSO với external IdP"
+- → Nhớ đến: OIDC = authentication layer on top of OAuth 2.0, ID Token + UserInfo endpoint
+- → Mở đầu: "OIDC bổ sung ID Token vào OAuth 2.0 để chuẩn hóa xác thực danh tính. OAuth trả lời 'bạn được làm gì', OIDC trả lời 'bạn là ai'..."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [OAuth 2.0](#oauth-20) — OIDC build on top của OAuth 2.0 flows
+- ➡️ Để hiểu tiếp: [SSO](#single-sign-on-sso) — OIDC là nền tảng của modern SSO
+
 ### 🟢 [Junior] What is OIDC and how is it different from OAuth 2.0?
 
 - **Tổng Quan:**
@@ -325,6 +435,66 @@ Client              OIDC Provider
 ---
 
 ## JWT Deep Dive
+
+> 🧠 **Memory Hook:** JWT = giấy thông hành có con dấu quốc gia. Ai cũng **đọc được** nội dung (base64 không phải mã hóa), nhưng không **giả được** dấu nếu không có private key. Hết hạn là hết hạn — không gia hạn trực tiếp.
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Hệ thống microservices cần xác minh danh tính và quyền mà không cần gọi về auth server cho mỗi request. Session server-side tốn một round-trip DB/Redis cho mỗi API call — với hàng nghìn request/giây, mỗi lookup thêm latency và tải DB.
+→ **Why?** Mỗi service cần biết "người này là ai và được làm gì" — không thể gọi centralized auth server mỗi lần.
+→ **Why?** Cần cơ chế xác minh stateless, self-contained, không phụ thuộc shared state — JWT là câu trả lời.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Hãy nghĩ đến hộ chiếu khi du lịch. Nhân viên hải quan có thể đọc ngay tên, quốc tịch, ngày sinh — không cần gọi về Hà Nội để xác minh. Con dấu và hologram đảm bảo không ai làm giả được. JWT cũng vậy: payload chứa thông tin user, chữ ký RSA đảm bảo không ai sửa nội dung. Nhưng khác hộ chiếu: JWT có ngày hết hạn rất ngắn (15 phút) và không thể thu hồi trước khi hết hạn — như vé tàu đã bán ra không thể vô hiệu hóa từng vé lẻ.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+JWT = base64url(HEADER) . base64url(PAYLOAD) . SIGNATURE
+
+HEADER:  {"alg":"RS256","typ":"JWT","kid":"key-2024-01"}
+PAYLOAD: {"sub":"u123","iss":"auth.app","aud":"api.app",
+          "exp":1699999999,"iat":1699996399,"scope":"invoice.read"}
+SIGNATURE: RS256(base64url(header)+"."+base64url(payload), private_key)
+
+Validation pipeline (skip ANY step = security hole):
+┌─────────────────────────────────────────────────────┐
+│ 1. Parse: đúng 3 phần?          → NO  = Reject 401 │
+│ 2. alg trong allowlist?         → NO  = Reject 401 │  ← "alg:none" attack
+│ 3. Load key bằng kid + issuer   → FAIL= Reject 401 │
+│ 4. Verify signature             → FAIL= Reject 401 │
+│ 5. Validate iss/aud/exp/nbf/sub → FAIL= Reject 403 │
+│ 6. Map scopes → authz decision                     │
+└─────────────────────────────────────────────────────┘
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- `alg:none` attack — thư viện cũ chấp nhận token không chữ ký như hợp lệ; phải whitelist algorithm cứng
+- Key confusion attack — attacker chuyển RS256 sang HS256, dùng public key làm HMAC secret để forge token
+- JWT payload visible sau base64 decode — không đặt password, PII, hay secret trong payload (dùng JWE nếu cần)
+- Không thể revoke trước `exp` — cần short TTL (5-15 phút) + refresh token rotation + denylist nếu cần immediate revocation
+- Clock skew giữa các server có thể làm expired token hợp lệ trong window nhỏ — cho phép tối đa 60-120 giây skew
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                          | Tại sao sai                                         | Đúng là                                                      |
+| ------------------------------------------------ | --------------------------------------------------- | ------------------------------------------------------------ |
+| Không whitelist algorithm, tin `alg` trong token | `alg:none` bypass toàn bộ auth                      | Cấu hình allowlist cứng RS256/ES256, reject mọi giá trị khác |
+| Đặt `exp` dài 24h+ để tránh refresh              | Token bị đánh cắp dùng được cả ngày                 | Short-lived 5-15min + refresh token với rotation             |
+| Đặt password hoặc PII trong payload              | Base64 không phải encrypt — ai decode cũng đọc được | Chỉ để minimal claims: sub, scope, exp, iss, aud             |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: "stateless auth" / "microservices identity" / "token validation" / "API authentication"
+- → Nhớ đến: JWT = self-contained signed token, verify locally, không thể revoke trước `exp`
+- → Mở đầu: "JWT cho phép stateless verification — mỗi service tự verify chữ ký mà không cần shared state. Trade-off là không thể revoke ngay lập tức..."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Cryptography](./02-cryptography-and-protocols.md) — RS256, HMAC, asymmetric keys
+- ➡️ Để hiểu tiếp: [Session Management](#session-management) — so sánh JWT vs session-based approach
 
 ### 🟢 [Junior] What is the structure of a JWT?
 
@@ -484,6 +654,72 @@ Map scopes/roles -> authorization decision
 
 ## Session Management
 
+> 🧠 **Memory Hook:** Session = vòng tay công viên nước. Đeo vào là đăng nhập, nhân viên kiểm tra vòng tay mỗi lần vào khu vực. **Cắt vòng = đăng xuất ngay lập tức** — không cần chờ hết hạn.
+
+**Tại sao tồn tại? / Why does this exist?**
+
+HTTP là stateless — mỗi request độc lập, server không nhớ request trước. Người dùng cần đăng nhập một lần và duy trì phiên làm việc mà không nhập lại password mỗi lần click. Cần một cơ chế "nhớ" trạng thái đăng nhập giữa các request.
+→ **Why?** HTTP thiết kế stateless để đơn giản và scalable — state quản lý phiên phải được build thêm ở tầng ứng dụng.
+→ **Why?** Đặt toàn bộ state vào client (cookie/token) thì dễ scale nhưng khó revoke; giữ state server-side thì revoke dễ nhưng cần shared storage.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Khi vào công viên nước, bạn mua vé một lần và được đeo vòng tay. Suốt ngày hôm đó, nhân viên chỉ cần nhìn vòng tay để biết bạn có quyền sử dụng tất cả khu vực — không cần hỏi vé gốc nữa. Khi bạn cần về sớm hoặc vi phạm nội quy, nhân viên cắt vòng — từ đó vào lại phải mua vé mới. Session cookie hoạt động y hệt: server cấp `session_id` khi đăng nhập (đeo vòng), browser gửi kèm mỗi request (nhân viên kiểm tra), logout xóa session khỏi Redis (cắt vòng tức thì).
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+[Login Success]
+      │
+      ▼
+Server tạo session record trong Redis:
+  KEY:   sess:abc123xyz  (random 256-bit, không đoán được)
+  VALUE: {user_id, roles, created_at, last_seen, ip_hash}
+  TTL:   30 phút idle / 8 giờ absolute
+      │
+      ▼
+Response: Set-Cookie: sid=abc123xyz; HttpOnly; Secure; SameSite=Lax
+
+[Subsequent Requests]
+  Browser tự gửi Cookie: sid=abc123xyz
+  Server: redis.get("sess:abc123xyz") → user data → serve request
+  Server: redis.expire("sess:abc123xyz", 1800)  ← renew idle TTL
+
+[Risk Event: MFA passed / privilege elevated]
+  → Rotate session ID: redis.del(old) + redis.set(new_id, same_data)
+
+[Logout / Admin revoke]
+  → redis.del("sess:abc123xyz") → session vô hiệu tức thì
+  → Set-Cookie: sid=; Max-Age=0
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- Session fixation — attacker ép nạn nhân dùng session ID định sẵn → **rotate session ID ngay sau login**
+- Session hijacking qua XSS — cookie không có `HttpOnly` bị đọc bằng `document.cookie`
+- Sticky session khi dùng in-memory local — không hoạt động đúng với multi-instance; dùng Redis shared
+- Absolute timeout vs idle timeout — cả hai cần thiết; chỉ idle timeout không đủ nếu session bị hijack và giữ active
+- Redis failover ảnh hưởng toàn bộ active session — cần replication và persistence policy cho production
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                      | Tại sao sai                                                              | Đúng là                                                  |
+| -------------------------------------------- | ------------------------------------------------------------------------ | -------------------------------------------------------- |
+| Giữ nguyên session ID trước và sau khi login | Session fixation — attacker đã biết session ID trước khi auth            | Rotate session ID ngay sau authentication thành công     |
+| Cookie không set `HttpOnly` và `Secure`      | JavaScript đọc được cookie → XSS steal session; plain HTTP expose cookie | Luôn `HttpOnly; Secure; SameSite=Lax` trên production    |
+| TTL session admin vô tận                     | Session không hết hạn = cửa luôn mở dù đã bỏ máy                         | Set absolute TTL ngắn hơn cho privileged sessions (2-4h) |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: "user login state" / "logout functionality" / "force logout all devices"
+- → Nhớ đến: server-side session = easy revoke, cần shared store (Redis); so sánh với JWT stateless
+- → Mở đầu: "Session server-side cho phép revoke ngay lập tức khi logout hoặc phát hiện compromise — trade-off là cần shared Redis và thêm latency per request..."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [JWT Deep Dive](#jwt-deep-dive) — hiểu rõ JWT vs session trade-offs
+- ➡️ Để hiểu tiếp: [API Security Patterns](#api-security-patterns) — session và token áp dụng vào API như thế nào
+
 ### 🟢 [Junior] What are server-side sessions?
 
 - **Tổng Quan:**
@@ -578,6 +814,75 @@ Map scopes/roles -> authorization decision
 ---
 
 ## API Security Patterns
+
+> 🧠 **Memory Hook:** API Security = quầy giao dịch ngân hàng nhiều lớp. CMND (identity) → số tài khoản (API key/token) → xác minh quyền hạn (scope) → giới hạn giao dịch (rate limit) → ghi sổ (audit log). **Bỏ lớp nào cũng thành lỗ hổng.**
+
+**Tại sao tồn tại? / Why does this exist?**
+
+API là "cửa sổ" vào hệ thống — ai gọi đúng endpoint với đúng tham số có thể đọc/ghi dữ liệu. Không có bảo vệ = bất kỳ ai trên internet cũng có thể truy cập. API không có giao diện đồ họa — không có captcha, không có browser protection tự nhiên.
+→ **Why?** API được thiết kế cho machine-to-machine — phải explicitly thêm security, không có mặc định.
+→ **Why?** Mỗi lớp bảo vệ chỉ giải quyết một rủi ro cụ thể; bỏ một lớp = blind spot cho một loại attack.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Hãy hình dung quầy giao dịch ngân hàng. Đầu tiên bảo vệ kiểm tra CMND (authentication — bạn là ai). Sau đó nhân viên xác nhận bạn có tài khoản tại ngân hàng (authorization — bạn được làm gì). Rồi kiểm tra bạn có đủ quyền thực hiện giao dịch cụ thể này không — rút hay chuyển khoản (scope enforcement). Cuối cùng giới hạn số lần giao dịch một ngày (rate limiting). Và mọi giao dịch đều được ghi vào sổ (audit log). Bỏ bất kỳ bước nào, ngân hàng mất tiền.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Client Request
+      │
+      ▼
+[WAF / CDN Layer]
+  • Bot filtering, IP reputation, DDoS protection
+  • Geographic blocking nếu cần
+      │
+      ▼
+[API Gateway Layer]
+  • TLS termination — HTTPS bắt buộc, không chấp nhận HTTP
+  • Authentication: verify Bearer token (JWT signature + claims)
+  • Rate limiting: per client_id / per IP / per endpoint
+  • Basic scope pre-check trước khi route
+      │
+      ▼
+[Service / Application Layer]
+  • Business authorization: RBAC/ABAC, resource ownership check
+  • Input validation: schema, type, range, injection prevention
+  • Idempotency keys cho write operations
+      │
+      ▼
+[Data Layer]
+  • Row-level security / tenant isolation
+  • Encryption at rest
+  • Immutable audit logs (ai làm gì, lúc nào, với dữ liệu nào)
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- Bearer token trong query string (`?token=xxx`) bị leak qua server logs và Referer header — dùng `Authorization: Bearer` header
+- API key bị commit vào public git repo là nguồn breach phổ biến — quét secret trong CI/CD pipeline
+- Missing scope enforcement: token hợp lệ nhưng không đủ quyền cho endpoint cụ thể — check scope per endpoint
+- mTLS cho service-to-service thêm lớp identity không forgeable — không chỉ dựa vào token
+- HMAC request signing chống replay và man-in-the-middle trên backend channels (AWS Signature V4)
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                                  | Tại sao sai                                        | Đúng là                                                       |
+| -------------------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------------- |
+| Truyền Bearer token qua query string                     | Token lộ trong URL, server logs, và Referer header | Dùng `Authorization: Bearer <token>` header                   |
+| Chỉ check token hợp lệ, không enforce scope per endpoint | Mọi valid token = mọi quyền — privilege escalation | Mỗi endpoint phải check scope cụ thể (vd: `invoice.write`)    |
+| Rate limit chỉ theo IP                                   | Botnet thay đổi IP dễ dàng, bypass rate limit      | Rate limit theo `client_id` và `sub` (authenticated identity) |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: "design a secure API" / "protect endpoints" / "API authentication strategy"
+- → Nhớ đến: Defense in depth — authentication + authorization + rate limiting + audit log, không có "single layer"
+- → Mở đầu: "API security hiệu quả là defense-in-depth: WAF → API Gateway (authn + rate limit) → Service (authz) → Data (RLS). Không có một cơ chế nào đủ một mình..."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [OAuth 2.0](#oauth-20) — Bearer token, scopes, client credentials flow
+- ➡️ Để hiểu tiếp: [Zero Trust Architecture](#zero-trust-architecture) — API security là một phần của ZT model
 
 ### 🟢 [Junior] What are API keys and when are they appropriate?
 
@@ -682,6 +987,76 @@ Client
 
 ## Multi-Factor Authentication (MFA)
 
+> 🧠 **Memory Hook:** MFA = **2 ổ khóa khác loại** trên cùng 1 cửa. Khóa thứ nhất (password) bị phá không ảnh hưởng khóa thứ hai (TOTP/passkey). Kẻ trộm cần cả 2 loại chìa hoàn toàn khác nhau.
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Password một mình không đủ — có thể bị phishing, bị leak qua data breach, hoặc bị credential stuffing từ breach cũ. Hàng triệu tài khoản bị chiếm mà không cần hack trực tiếp — chỉ cần thử list password từ breach.
+→ **Why?** Người dùng tái sử dụng password trên nhiều dịch vụ; khi một dịch vụ bị breach, domino effect xảy ra.
+→ **Why?** Password là single point of failure — một yếu tố duy nhất, shared secret, có thể bị đánh cắp mà **không cần thiết bị của nạn nhân**.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Tưởng tượng cửa nhà bạn có 2 ổ khóa: một ổ chìa thông thường và một ổ cần mã số thay đổi mỗi 30 giây (hiển thị trên điện thoại). Kẻ trộm cướp được chìa khóa (password bị phishing) vẫn không vào được — vì cần mã số mà chỉ điện thoại của bạn mới hiển thị. Quan trọng là 2 ổ **khác loại nhau**: nếu cùng loại 2 ổ chìa thì kém bảo vệ hơn nhiều. MFA mạnh khi yếu tố thứ hai thuộc **loại** khác (biết ≠ có ≠ là).
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+[Login Attempt]
+       │
+       ▼
+Bước 1: Nhập password ──── something you KNOW
+       │
+  ✓ password correct
+       │
+       ▼
+Bước 2: Second factor challenge (chọn 1):
+  ┌─────────────────────────────────────────────────────────┐
+  │ TOTP (something you HAVE — phone/authenticator app)     │
+  │   OTP = HMAC-SHA1(shared_secret, floor(time/30))        │
+  │   Valid window: ±1 step (bù clock skew 90 giây)         │
+  │   Yếu điểm: secret lưu server → breach = compromise all │
+  ├─────────────────────────────────────────────────────────┤
+  │ WebAuthn / Passkey (something you HAVE — device key)    │
+  │   Challenge-response với private key (không rời thiết bị)│
+  │   Origin-bound: chỉ hoạt động đúng domain → chống phishing│
+  │   Gold standard — phishing-resistant theo thiết kế      │
+  ├─────────────────────────────────────────────────────────┤
+  │ Push Notification (something you HAVE — phone)          │
+  │   Risk: MFA fatigue → thêm number matching bắt buộc     │
+  └─────────────────────────────────────────────────────────┘
+       │ ✓ second factor verified
+       ▼
+[Session/token issued → Login Success]
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- SMS OTP yếu nhất vì SIM swapping và SS7 protocol attacks — tránh cho high-security accounts
+- MFA fatigue attack: attacker spam push notification → user mệt mỏi và bấm approve nhầm → thêm number matching
+- Recovery codes phải hash trước khi lưu server (không lưu plaintext) — mỗi code chỉ dùng được một lần
+- Step-up auth: không phải mọi action cần MFA — chỉ khi sensitive operation (transfer tiền, thay đổi email)
+- WebAuthn passkeys là gold standard: private key không rời thiết bị, credential bound to origin → chống phishing tuyệt đối
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                 | Tại sao sai                                                  | Đúng là                                              |
+| --------------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------- |
+| Dùng SMS OTP cho high-security accounts | SIM swapping bypass MFA hoàn toàn, SS7 có thể intercept      | Dùng TOTP app hoặc WebAuthn/passkey thay thế         |
+| Không giới hạn số lần nhập OTP sai      | Brute-force 6 chữ số TOTP (chỉ 1M combinations)              | Lock account sau 3-5 lần fail + notify user          |
+| Không audit recovery code usage         | Recovery code là backdoor đặc biệt, giá trị cao cho attacker | Log + flag security alert mọi lần dùng recovery code |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: "account security" / "prevent account takeover" / "2FA/MFA implementation"
+- → Nhớ đến: MFA = multiple factors of different _types_; hierarchy: WebAuthn > TOTP > Push > SMS
+- → Mở đầu: "MFA giảm drastically rủi ro account takeover vì attacker cần cả knowledge (password) và physical possession (device). Trade-off là UX friction và recovery complexity..."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Session Management](#session-management) — MFA kết hợp với session lifecycle
+- ➡️ Để hiểu tiếp: [SSO](#single-sign-on-sso) — MFA tích hợp vào IdP centralized, tránh MFA per-app
+
 ### 🟢 [Junior] What is MFA and why does it matter?
 
 - **Tổng Quan:**
@@ -775,6 +1150,72 @@ Evaluate risk signals (IP, geo, device, velocity, impossible travel)
 
 ## Single Sign-On (SSO)
 
+> 🧠 **Memory Hook:** SSO = thẻ nhân viên tập đoàn đa tòa nhà. Quẹt thẻ **một lần** tại cổng bảo vệ, tất cả tòa nhà đều nhận ra bạn. **Mất thẻ = thu hồi quyền vào khắp nơi ngay lập tức.**
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Người dùng làm việc với hàng chục ứng dụng — email, HR, CRM, wiki, Slack. Mỗi app một password khác nhau dẫn đến password fatigue, tái sử dụng password, và offboarding nhân viên nghỉ việc phải reset thủ công từng app.
+→ **Why?** Với 50 ứng dụng, IT phải thu hồi quyền 50 lần khi nhân viên nghỉ — dễ bỏ sót, tạo lingering access.
+→ **Why?** Identity phân tán = quản lý khó, security yếu. Cần tập trung identity tại một IdP để single point of control.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Nhân viên Vingroup được cấp một thẻ nhân viên. Mỗi sáng quẹt thẻ vào cổng công ty — đó là đăng nhập IdP một lần. Sau đó đến bất kỳ tòa nhà nào trong tập đoàn — từ Vincom, Vinmec, đến VinFast — cửa đều mở tự động vì hệ thống nhận ra thẻ đã xác minh. Khi nhân viên nghỉ việc, IT chỉ cần vô hiệu hóa **một thẻ duy nhất** — toàn bộ quyền truy cập bị thu hồi ngay lập tức ở mọi tòa nhà. SSO là thẻ nhân viên số hóa.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+[User truy cập App A (Service Provider / Relying Party)]
+      │ Không có session → redirect
+      ▼
+[Identity Provider (IdP) — Google, Azure AD, Okta...]
+      │ Chưa có SSO session → yêu cầu login
+      ▼
+[User login: username + password + MFA]
+      │ ✓ auth success → tạo SSO session tại IdP
+      ▼
+[IdP phát assertion/token → callback App A]
+      │ App A validate: signature ✓  issuer ✓  audience ✓
+      │                 expiry ✓  replay check ✓
+      ▼
+[App A tạo local session → User vào App A]
+
+[User truy cập App B (same browser, same IdP)]
+      │ Redirect → IdP
+      │ IdP đã có SSO session cookie → KHÔNG cần login lại
+      ▼
+[IdP phát token ngay → App B]
+      ▼
+[App B tạo local session → User vào App B ngay lập tức]
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- IdP là single point of failure — nếu IdP down, nhiều app bị ảnh hưởng cùng lúc; cần break-glass admin account
+- SAML vs OIDC: SAML XML-based phức tạp nhưng legacy enterprise cần; OIDC JSON/REST phù hợp modern apps
+- Account linking nguy hiểm — phải xác minh domain ownership trước khi link external identity, tránh account takeover
+- SP-initiated vs IdP-initiated flow — IdP-initiated thiếu cơ chế state/nonce chống CSRF, nên prefer SP-initiated
+- Group/claim mapping từ external IdP sang local roles cần whitelist chặt — tránh privilege escalation qua IdP claim
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                   | Tại sao sai                                                 | Đúng là                                                       |
+| ----------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------- |
+| Không verify SAML assertion signature     | Forged assertion bypass authentication hoàn toàn            | Luôn verify với certificate đã pin/trust, không trust tự khai |
+| Dùng `email` làm unique identifier từ IdP | Email có thể thay đổi → account merge lỗi, account takeover | Dùng `sub` (stable, provider-unique identifier)               |
+| Không có break-glass admin account        | IdP down → không ai có thể vào hệ thống quản trị            | Maintain local emergency admin account với MFA                |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: "enterprise authentication" / "multi-app login" / "SAML/OIDC integration" / "offboarding"
+- → Nhớ đến: SSO = centralized IdP, federated trust, single login nhiều app, single revoke point
+- → Mở đầu: "SSO tập trung identity tại IdP, giảm password fatigue và đơn giản hóa lifecycle management — trade-off là IdP trở thành single point of failure..."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [OIDC](#openid-connect-oidc) — SSO hiện đại dùng OIDC cho federated identity
+- ➡️ Để hiểu tiếp: [Authorization Patterns](#authorization-patterns) — sau SSO, cần map IdP claims sang local permissions
+
 ### 🟢 [Junior] What is Single Sign-On?
 
 - **Tổng Quan:**
@@ -854,6 +1295,72 @@ Create SaaS session / issue app token
 ---
 
 ## Authorization Patterns
+
+> 🧠 **Memory Hook:** Authorization = bảng phân công việc nhà máy. Công nhân A phụ trách dây chuyền 1-3 (role), công nhân B chỉ làm buổi sáng khi không hỏng máy (attribute+context). **Không phải ai vào nhà máy cũng làm được mọi việc.**
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Authentication (xác thực "bạn là ai") chỉ là bước đầu. Hệ thống cần biết "bạn được làm gì với resource nào trong điều kiện nào" — đây là bài toán authorization. Một user có thể đọc tài liệu nhưng không được xóa, đọc dữ liệu phòng mình nhưng không phòng khác.
+→ **Why?** Business rules phức tạp và đa chiều — phụ thuộc user, resource, action, context, thời gian, và tổ chức.
+→ **Why?** Không có model nào "đúng cho tất cả" — mỗi model có trade-off về độ phức tạp, linh hoạt, và khả năng audit.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Trong nhà máy lớn, mỗi công nhân có bảng phân công khác nhau. Anh An là tổ trưởng (RBAC — role), được quản lý dây chuyền 1-5 và tất cả công nhân trong tổ. Chị Bình chỉ được vào kho nếu có phiếu xuất kho và đúng ca làm việc (ABAC — attribute + context). Khi có dự án đặc biệt, bảng phân công cập nhật theo "ai tham gia dự án nào" (ReBAC — quan hệ). Phòng IT quản lý policy tập trung và xuất báo cáo audit (PBAC). Không ai có quyền "tất cả" trừ giám đốc — và ngay cả giám đốc cũng phải qua cổng bảo vệ.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+RBAC (Role-Based Access Control):
+  User ──assigned──► Role ──has──► Permissions
+  Admin  → [read, write, delete, manage_users]
+  Editor → [read, write]
+  Viewer → [read]
+  ✓ Đơn giản, dễ audit  |  ✗ Role explosion khi business complex
+
+ABAC (Attribute-Based Access Control):
+  ALLOW if: user.department == resource.department
+         AND current_time BETWEEN 09:00 AND 17:00
+         AND device.managed == true
+  ✓ Linh hoạt, context-aware  |  ✗ Khó debug, policy phức tạp
+
+PBAC (Policy-Based, dùng OPA/Rego):
+  App → PEP (enforcement) → PDP (OPA evaluate policy) → allow/deny
+  Policy-as-code, version-controlled, centralized
+  ✓ Consistent across services  |  ✗ Cần infra, latency
+
+ReBAC (Relationship-Based):
+  User ──[owner|editor|viewer]──► Document
+  "Nguyễn Văn A là editor của document #42"
+  ✓ Phù hợp collaborative apps  |  ✗ Graph query cost
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- Role explosion: 50+ roles trong RBAC lớn hơn nhiều so với dự kiến khi business rules phức tạp
+- ABAC silent deny — điều kiện không khớp → deny mà không có rõ lý do, khó debug trong production
+- OPA fail-open vs fail-closed — nếu OPA down, cho qua hay block? (fail-closed = safer, nhưng impact UX)
+- Tenant isolation trong multi-tenant SaaS — authorization phải enforce tenant boundary ở mọi query
+- Privilege escalation qua group/claim mapping từ external IdP nếu không có whitelist
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                        | Tại sao sai                                     | Đúng là                                                        |
+| ---------------------------------------------- | ----------------------------------------------- | -------------------------------------------------------------- |
+| Chỉ dùng RBAC cho mọi thứ → role explosion     | 100+ roles = không ai hiểu hết, audit nightmare | Hybrid RBAC (coarse-grained) + ABAC (fine-grained context)     |
+| Không log authorization decision (deny)        | Không biết ai bị từ chối gì khi incident xảy ra | Audit log mọi allow/deny với context đủ để reconstruct         |
+| Hardcode permission check trong business logic | Khó thay đổi policy khi scale, không consistent | Externalize policy ra PBAC engine (OPA) hoặc dedicated service |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: "who can access what" / "permission system" / "multi-tenant data isolation" / "RBAC design"
+- → Nhớ đến: Spectrum RBAC → ABAC → PBAC → ReBAC; hệ thống lớn thường hybrid
+- → Mở đầu: "Authorization là bài toán đa chiều — RBAC cho baseline coarse-grained, ABAC cho context runtime, PBAC để centralize enforcement, ReBAC cho collaborative sharing..."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [OAuth 2.0 Scopes](#oauth-20) — scopes là authorization primitive đơn giản nhất
+- ➡️ Để hiểu tiếp: [Zero Trust Architecture](#zero-trust-architecture) — ZT dùng continuous authorization, không chỉ one-time check
 
 ### 🟢 [Junior] What is RBAC?
 
@@ -958,6 +1465,74 @@ Policy evaluation (RBAC + ABAC/PBAC/ReBAC)
 ---
 
 ## Zero Trust Architecture
+
+> 🧠 **Memory Hook:** Zero Trust = tòa nhà an ninh tối cao: **không tin ai kể cả người trong nội bộ**. Mỗi lần vào phòng mới phải xuất trình CCCD + mã PIN. Ngồi trong phòng rồi vẫn bị kiểm tra định kỳ.
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Mô hình "tin tưởng mạng nội bộ" (castle-and-moat) thất bại vì attacker có thể đã ở trong mạng — lateral movement sau khi compromise một node. Remote work và cloud phá vỡ ranh giới perimeter network truyền thống.
+→ **Why?** Khi nhân viên làm remote hoặc đối tác truy cập cloud, "bên trong firewall" không còn nghĩa là "đáng tin".
+→ **Why?** Perimeter security giả định attackers luôn bên ngoài — không đúng trong breach, insider threat, và supply chain attacks.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Hình dung văn phòng an ninh tối cao: ngay cả nhân viên lâu năm cũng phải quét thẻ ở mỗi cánh cửa, không phải chỉ một lần ở cổng chính. Vào tòa nhà rồi nhưng muốn vào phòng server phải thêm mã PIN. Muốn truy cập tài liệu mật phải dùng thêm vân tay. Và bảo vệ vẫn nhìn camera kiểm tra hành vi trong suốt thời gian ở trong — không phải "vào rồi thì thôi". Zero Trust áp dụng triết lý này cho hệ thống số: không có "mạng nội bộ đáng tin mặc định" — mọi truy cập đều phải chứng minh.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+3 Nguyên tắc cốt lõi Zero Trust:
+  1. Verify Explicitly   — luôn xác minh identity + device + context
+  2. Least Privilege     — chỉ cấp đúng quyền tối thiểu cần thiết
+  3. Assume Breach       — thiết kế như thể đã bị compromise
+
+Access Decision Flow (mỗi request đều đi qua):
+  Request
+      │
+      ▼
+  Identity Verification (IdP + MFA status hiện tại)
+      │
+      ▼
+  Device Posture Check (managed? patched? encrypted? compliant?)
+      │
+      ▼
+  Context Evaluation (location / risk score / data sensitivity / velocity)
+      │
+      ├─ Insufficient trust ──► Deny / Step-up auth required
+      │
+      └─ Sufficient trust  ──► Least-privilege access grant
+                                      │
+                                      ▼
+                             Continuous Monitoring
+                         (revoke ngay khi risk thay đổi giữa phiên)
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- Zero Trust là **kiến trúc và triết lý**, không phải sản phẩm — mọi vendor đều gắn nhãn "Zero Trust", cần đánh giá thực chất
+- Micro-segmentation giảm blast radius — khi một node bị compromise, không thể lateral move sang node khác
+- Service-to-service cần workload identity (mTLS + SPIFFE/SPIRE) — không chỉ áp dụng cho users
+- Continuous verification có thể impact UX — cần risk-based thresholds để tránh friction quá mức với user thường
+- Migration pragmatic theo 5 giai đoạn — không thể migrate toàn bộ cùng lúc; bắt đầu từ identity centralization + MFA
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                                   | Tại sao sai                                                   | Đúng là                                                  |
+| --------------------------------------------------------- | ------------------------------------------------------------- | -------------------------------------------------------- |
+| Mua "Zero Trust product" là xong                          | ZT là kiến trúc không phải sản phẩm; không có silver bullet   | Thiết kế theo principles trước, chọn tooling phù hợp sau |
+| Chỉ áp dụng ZT cho user access, bỏ qua service-to-service | Lateral movement vẫn xảy ra qua compromised service           | mTLS + workload identity (SPIFFE) cho service-to-service |
+| Continuous monitoring nhưng không có automated response   | Alert mà không action = vô ích khi incident xảy ra 3 giờ sáng | Automate revocation khi risk score vượt threshold        |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: "network security architecture" / "remote work security" / "microservices security at scale"
+- → Nhớ đến: Zero Trust = never trust, always verify, least privilege, assume breach — not a product
+- → Mở đầu: "Zero Trust từ bỏ mô hình perimeter — mọi truy cập đều verify identity, device, và context bất kể source. Bắt đầu migrate bằng centralize identity + MFA trước..."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Authorization Patterns](#authorization-patterns) — ZT cần fine-grained authz liên tục
+- ➡️ Để hiểu tiếp: [Web Security OWASP](./03-web-security-owasp.md) — ZT giảm attack surface cho web threats
 
 ### 🟢 [Junior] What is Zero Trust?
 
@@ -1311,11 +1886,15 @@ Vietnamese explanation: Passkeys (WebAuthn) là gold standard vì private key kh
 
 ## Self-Check / Tự Kiểm Tra
 
-- [ ] Can I draw the OAuth 2.0 Authorization Code Flow with PKCE step by step?
-- [ ] Can I explain the difference between OAuth 2.0 (authorization) and OIDC (authentication)?
-- [ ] Can I explain why Implicit Flow was deprecated and what PKCE solves?
-- [ ] Can I compare magic link vs TOTP vs Passkeys — security trade-offs of each?
-- 💬 **Feynman Prompt:** Giải thích tại sao "Login with Google" không cho Google biết password của bạn ở Tiki — và điều gì thực sự được truyền giữa Tiki server và Google server.
+| #   | Loại           | Câu hỏi                                                                                                                                                           |
+| --- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 🔁 Retrieval   | Can I draw the OAuth 2.0 Authorization Code Flow with PKCE step by step — from redirect to token exchange — without looking at notes?                             |
+| 2   | 👁️ Visual      | Can I sketch the JWT structure (header.payload.signature) and explain what each part contains, why base64 is not encryption, and where the signature is verified? |
+| 3   | 🛠️ Application | Can I compare magic link vs TOTP vs Passkeys — security trade-offs, attack vectors for each, and when to recommend which?                                         |
+| 4   | 🐛 Debug       | Given a JWT validation bug where `alg:none` tokens are accepted, can I trace why it happens, what the attacker can do, and how to fix it?                         |
+| 5   | 🎓 Teach       | Can I explain to a junior dev why OAuth 2.0 is _authorization_ and OIDC is _authentication_ using a concrete real-world analogy?                                  |
+
+💬 **Feynman Prompt:** Giải thích tại sao "Login with Google" không cho Google biết password của bạn ở Tiki — và điều gì thực sự được truyền giữa Tiki server và Google server.
 
 ## Connections / Liên Kết
 

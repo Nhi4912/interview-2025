@@ -68,143 +68,611 @@ Distributed Systems là nền tảng engineering cho mọi hệ thống quy mô 
 
 ### Concept 1: CAP Theorem & PACELC
 
-**🧠 Memory Hook:** "**CAP = Choose 2 of 3, but P is mandatory → really C vs A.** PACELC adds: Even without partition, Latency vs Consistency."
+> 🧠 **Memory Hook:** "**CAP = Choose 2 of 3, but P is mandatory → really C vs A.** PACELC adds: Even without partition, Latency vs Consistency."
 
-**Tại sao tồn tại / Why exists:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: Network partitions are inevitable in distributed systems — must choose behavior during partition
-- Level 2: Brewer proved (2000) that simultaneous C+A+P is impossible → formalized what practitioners knew intuitively
-- Level 3: PACELC (Abadi 2012) extends: even without partition (E), you trade Latency vs Consistency — this explains why DynamoDB chooses eventual consistency for speed
+Trong mạng thực tế, đường truyền có thể bị gián đoạn bất cứ lúc nào — hệ thống phân tán PHẢI có hành vi xác định khi partition xảy ra.
+→ **Why?** Brewer (2000) chứng minh rằng C+A+P đồng thời là bất khả thi — buộc kỹ sư phải chọn: từ chối request (CP) hay trả về data cũ (AP).
+→ **Why?** PACELC (Abadi 2012) mở rộng: ngay cả khi không có partition, việc đồng bộ dữ liệu giữa các node vẫn tốn thời gian — đây là lý do DynamoDB chọn eventual consistency để đạt low latency hàng ngày.
 
-**❌ Common Mistakes:**
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-- "MongoDB is CP" → Depends on configuration (writeConcern: majority = CP, writeConcern: 1 = AP behavior)
-- Thinking CAP applies to single-node systems → CAP only relevant when data replicated across nodes
-- Ignoring PACELC → Most production time is partition-free, so E/L vs E/C tradeoff matters more daily
+Hãy tưởng tượng bạn quản lý **chuỗi siêu thị** với 3 chi nhánh nối với nhau qua đường dây điện thoại. Khi đường dây bị đứt (network partition), bạn phải chọn:
 
-**🎯 Interview Pattern:** "Design a system where consistency matters" → Start with CAP position → Justify CP or AP → Then discuss PACELC for normal operation latency tradeoffs
+- **CP**: Tất cả chi nhánh ngừng bán hàng cho đến khi đường dây thông lại — tồn kho luôn chính xác, nhưng khách hàng bị từ chối phục vụ.
+- **AP**: Mỗi chi nhánh tiếp tục bán theo tồn kho ước tính — khách hàng được phục vụ, nhưng có thể bán vượt số lượng thực tế.
+  Không có lựa chọn nào sai — phụ thuộc vào bạn đang bán gì: vé máy bay (cần CP!) hay bánh mì (AP là đủ).
 
-**🔗 Knowledge Chain:** CAP Theorem → Consistency Models → Consensus Algorithms → Replication Strategies
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+CAP phân loại cách hệ thống ứng xử khi xảy ra network partition:
+
+```
+Khi Network Partition xảy ra:
+┌────────────────────────────────────────────────────────────┐
+│ CP (Consistency + Partition Tolerance):                    │
+│                                                            │
+│  Client ──▶ Node A  ══╗ PARTITION ╔══  Node B             │
+│                        ╚══════════╝                        │
+│  Node A: "Không xác nhận được với B"                       │
+│         → Reject write, return error 503                   │
+│                                                            │
+│ AP (Availability + Partition Tolerance):                   │
+│                                                            │
+│  Client ──▶ Node A  ══╗ PARTITION ╔══  Node B ◀── Client  │
+│                        ╚══════════╝                        │
+│  Node A: Accept write (local)                              │
+│  Node B: Accept write (local) ← CONFLICT possible!        │
+│  Sau khi heal: conflict resolution chạy                    │
+└────────────────────────────────────────────────────────────┘
+
+PACELC — Khi KHÔNG có Partition (trường hợp thường ngày):
+┌───────────┬──────────────┬────────────────────────────────┐
+│ System    │ Partition    │ Else (normal operation)        │
+├───────────┼──────────────┼────────────────────────────────┤
+│ Cassandra │ AP           │ EL (ưu tiên Low Latency)       │
+│ DynamoDB  │ AP           │ EL (ưu tiên Low Latency)       │
+│ etcd      │ CP           │ EC (ưu tiên Consistency)       │
+│ MongoDB   │ CP           │ EC (majority writes)           │
+│ Cosmos DB │ Configurable │ Configurable                   │
+└───────────┴──────────────┴────────────────────────────────┘
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **MongoDB không phải luôn là CP**: với `writeConcern: 1` nó có thể mất data nếu primary crash trước khi replicate — hành vi thực tế là AP.
+- **"P" không phải là lựa chọn**: Không ai chọn "no partition tolerance" trong production; P là thực tế bắt buộc của mạng vật lý.
+- **CAP không nói về latency**: Hệ thống CP vẫn có thể rất nhanh trong điều kiện bình thường — PACELC mới quantify tradeoff latency vs consistency.
+- **Split-brain trong AP**: Khi 2 node cùng accept write, ai thắng? Last-Write-Wins có thể mất data; CRDTs giải quyết nhưng phức tạp hơn.
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                        | Tại sao sai                                                                 | Đúng là                                            |
+| ------------------------------ | --------------------------------------------------------------------------- | -------------------------------------------------- |
+| "MongoDB là CP"                | Phụ thuộc vào writeConcern config; mặc định có thể là AP                    | Phải nói "MongoDB với writeConcern majority là CP" |
+| "CAP áp dụng cho mọi hệ thống" | CAP chỉ relevant khi data được replicate trên nhiều node                    | Single-node DB không áp dụng CAP                   |
+| Bỏ qua PACELC                  | Hầu hết thời gian không có partition — E/L vs E/C mới là tradeoff hàng ngày | Phân tích cả PACELC cho thiết kế hệ thống thực tế  |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy câu hỏi về: "system design where consistency matters" hoặc "distributed database tradeoffs"
+- → Nhớ đến: CAP position → CP hay AP? → rồi PACELC cho normal operation
+- → Mở đầu trả lời: _"Trước tiên tôi cần xác định CAP position của hệ thống: với yêu cầu này, partition tolerance là bắt buộc, nên câu hỏi thực sự là Consistency hay Availability khi network partition xảy ra..."_
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Microservices Architecture](./02-microservices.md) — hiểu tại sao cần nhiều node trước khi học CAP
+- ➡️ Để hiểu tiếp: [Consistency Models](#concept-2-consistency-models) — spectrum từ Strong đến Eventual sau khi nắm CAP framework
 
 ### Concept 2: Consistency Models
 
-**🧠 Memory Hook:** "**Strong → Sequential → Causal → Eventual = Strictness spectrum.** Strong = expensive, Eventual = fast but stale."
+> 🧠 **Memory Hook:** "**Strong → Sequential → Causal → Eventual = Strictness spectrum.** Strong = expensive, Eventual = fast but stale."
 
-**Tại sao tồn tại / Why exists:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: Different applications need different guarantees — banking needs strong, social feed accepts eventual
-- Level 2: Stronger consistency requires more coordination (network round-trips) → higher latency, lower throughput
-- Level 3: Tunable consistency (Cassandra QUORUM) lets you pick per-query — read-heavy analytics uses ONE, payment uses ALL
+Các ứng dụng khác nhau có nhu cầu về độ chính xác dữ liệu hoàn toàn khác nhau — không thể dùng một mức consistency cho tất cả.
+→ **Why?** Consistency càng mạnh thì hệ thống càng phải đợi nhiều node đồng thuận → latency cao hơn, throughput thấp hơn.
+→ **Why?** Tunable consistency (như trong Cassandra) cho phép chọn per-query — analytics dùng ONE, thanh toán dùng QUORUM — tối ưu hóa cho từng use case mà không cần xây 2 hệ thống riêng.
 
-**❌ Common Mistakes:**
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-- "Eventual consistency means data will be wrong" → No, it means temporarily stale, will converge
-- Confusing linearizability with serializability → Linearizability = single-object real-time, Serializability = multi-object transaction ordering
-- Not knowing tunable consistency exists → Miss that you can mix models in same system
+Hãy nghĩ đến **tốc độ cập nhật tin tức** với các kênh khác nhau:
 
-**🎯 Interview Pattern:** "How do you handle stale reads?" → Explain consistency spectrum → Propose tunable consistency → Show tradeoff awareness
+- **Linearizability** = Phát thanh viên đọc tin LIVE, mọi người nghe cùng lúc — không ai nhận tin cũ hơn người khác.
+- **Causal consistency** = Báo in: bài phản hồi phải đăng SAU bài gốc, nhưng thứ tự các tin không liên quan thì tùy biên tập.
+- **Eventual consistency** = Tin đồn lan truyền: cuối cùng ai cũng biết, nhưng mỗi người biết vào thời điểm khác nhau và tạm thời nghe các phiên bản khác nhau.
+  Dùng phát thanh LIVE để đưa tin gossip là lãng phí; dùng tin đồn để thông báo khẩn cấp là nguy hiểm — consistency model phải phù hợp với use case.
 
-**🔗 Knowledge Chain:** Consistency Models → Tunable Consistency → Read-Your-Writes → Session Guarantees
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Consistency Spectrum — từ mạnh nhất đến yếu nhất:
+
+Client A: write(x=2) ──────── done
+Client B:                           read(x) = ?
+
+┌──────────────────────────────────────────────────────────┐
+│ Linearizability (Strongest)                              │
+│ → read(x) PHẢI trả về 2                                 │
+│ → Hệ thống hoạt động như thể chỉ có 1 bản copy duy nhất │
+│ → Cost: Cao — cần coordination tất cả nodes             │
+├──────────────────────────────────────────────────────────┤
+│ Sequential Consistency                                   │
+│ → Mọi client thấy ops theo CÙNG thứ tự                  │
+│ → Nhưng thứ tự đó không nhất thiết là real-time order   │
+│ → Cost: Trung bình — không cần real-time sync            │
+├──────────────────────────────────────────────────────────┤
+│ Causal Consistency                                       │
+│ → Chỉ ops có quan hệ nhân quả mới phải theo thứ tự      │
+│ → "Hello" phải thấy trước "Reply to Hello"              │
+│ → Cost: Thấp — chỉ track causal dependencies            │
+├──────────────────────────────────────────────────────────┤
+│ Eventual Consistency (Weakest practical)                 │
+│ → Không có write mới → eventually tất cả converge       │
+│ → read(x) có thể trả về 0 ngay sau write(x=2)           │
+│ → Cost: Rất thấp — no coordination needed               │
+└──────────────────────────────────────────────────────────┘
+
+Cassandra Tunable Consistency (N=3 replicas):
+┌──────────────────┬───┬───┬──────┬───────────────┬────────────────────┐
+│ Level            │ W │ R │ W+R  │ Consistency   │ Use case           │
+├──────────────────┼───┼───┼──────┼───────────────┼────────────────────┤
+│ ONE/ONE          │ 1 │ 1 │ 2 ≤3 │ Eventual      │ Logging, metrics   │
+│ QUORUM/QUORUM    │ 2 │ 2 │ 4 >3 │ Strong        │ Payment, inventory │
+│ ALL/ALL          │ 3 │ 3 │ 6 >3 │ Strongest     │ Không nên dùng     │
+└──────────────────┴───┴───┴──────┴───────────────┴────────────────────┘
+Rule: W + R > N → Strong consistency (ít nhất 1 node overlap)
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **Linearizability ≠ Serializability**: Linearizability là về single-object real-time ordering; Serializability là về multi-object transaction isolation — hai khái niệm hoàn toàn độc lập.
+- **Read-Your-Writes vẫn có thể fail**: Nếu client kết nối vào replica khác nhau qua load balancer, có thể đọc từ replica chưa nhận write. Cần sticky session hoặc read-from-leader.
+- **Eventual consistency có thể rất lâu**: Trong điều kiện network partition kéo dài, "eventual" có thể là hàng phút — application phải handle gracefully.
+- **Monotonic reads cần state tracking**: Để đảm bảo client không "thấy lùi về quá khứ", server phải track version cuối cùng mà client đã đọc.
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                  | Tại sao sai                                                            | Đúng là                                                                                |
+| ---------------------------------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| "Eventual consistency = data sai"        | Eventual consistency nghĩa là tạm thời stale, KHÔNG phải sai vĩnh viễn | Data sẽ converge; stale window thường dưới 1 giây trong điều kiện bình thường          |
+| Nhầm linearizability với serializability | Đây là hai khái niệm ở hai level khác nhau                             | Linearizability = single-object real-time; Serializability = multi-object transactions |
+| Không biết tunable consistency tồn tại   | Miss cơ hội optimize per-query trong cùng 1 hệ thống                   | Cassandra/DynamoDB cho phép chọn consistency level per-request                         |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy câu hỏi về: "stale reads", "consistency trong microservices", "database guarantees"
+- → Nhớ đến: Consistency spectrum → đặt câu hỏi về business requirement → propose tunable consistency
+- → Mở đầu trả lời: _"Câu trả lời phụ thuộc vào use case — nếu đây là hệ thống thanh toán thì cần linearizability, nhưng nếu là social feed thì eventual consistency là đủ và rẻ hơn nhiều về latency..."_
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [CAP Theorem](#concept-1-cap-theorem--pacelc) — framework để hiểu tại sao consistency spectrum tồn tại
+- ➡️ Để hiểu tiếp: [Consensus & Leader Election](#concept-3-consensus--leader-election) — cơ chế kỹ thuật để đạt strong consistency
 
 ### Concept 3: Consensus & Leader Election
 
-**🧠 Memory Hook:** "**Raft = Understandable Paxos.** 3 phases: Leader Election → Log Replication → Safety. Majority quorum = (N/2)+1."
+> 🧠 **Memory Hook:** "**Raft = Understandable Paxos.** 3 phases: Leader Election → Log Replication → Safety. Majority quorum = (N/2)+1."
 
-**Tại sao tồn tại / Why exists:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: Multiple nodes must agree on a single value (leader, committed log entry) despite failures
-- Level 2: FLP impossibility (1985) proves no deterministic algorithm solves consensus in async network with even 1 crash → Raft uses timeouts (partial synchrony) to work around this
-- Level 3: Raft separates concerns (leader election, log replication, safety) making it implementable — used in etcd, CockroachDB, TiKV
+Trong môi trường nhiều node, mỗi node có thể crash hoặc mất kết nối bất cứ lúc nào — cần cơ chế để tất cả node còn lại đồng ý về một giá trị chung (ai là leader? entry nào đã committed?).
+→ **Why?** FLP Impossibility (1985) chứng minh không có thuật toán deterministic nào đảm bảo đồng thuận trong hệ thống async nếu có dù chỉ 1 node crash — Raft dùng timeout (partial synchrony) để bypass giới hạn này.
+→ **Why?** Raft tách bài toán thành 3 sub-problem độc lập (election, replication, safety) giúp dễ implement và verify — đây là lý do etcd, CockroachDB, TiKV đều dùng Raft thay vì Paxos phức tạp hơn.
 
-**❌ Common Mistakes:**
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-- "Raft needs all nodes to agree" → Only majority (quorum) needed — 3-node cluster tolerates 1 failure
-- Confusing leader election with distributed locking → Election chooses 1 leader, lock protects a resource
-- Not understanding split-brain risk when quorum not maintained
+Hãy tưởng tượng **hội đồng nhà chung cư** cần bầu ra 1 trưởng ban quản lý:
 
-**🎯 Interview Pattern:** "How does etcd ensure consistency?" → Explain Raft → Leader election with term numbers → Log replication with majority commit
+- Mỗi cư dân (node) cầm 1 phiếu bầu — ai được quá nửa phiếu (majority) thì thắng, dù không phải tất cả đều có mặt.
+- Người thắng trở thành "leader", nhận tất cả yêu cầu sửa chữa, ghi vào sổ, rồi thông báo cho tất cả cư dân.
+- Nếu trưởng ban đột ngột biến mất (node crash), cư dân đợi một lúc (election timeout), rồi bầu lại — vẫn cần quá nửa đồng ý.
+- Điểm mấu chốt: Không bao giờ có 2 "trưởng ban" cùng lúc trong cùng 1 "nhiệm kỳ" (term) — term number là cơ chế ngăn split-brain.
 
-**🔗 Knowledge Chain:** Consensus → Raft/Paxos → etcd/ZooKeeper → Service Discovery → Leader Election
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Raft Leader Election:
+
+Term 1: Node A là Leader
+─────────────────────────────────────────────────────────────
+  Node A ──heartbeat──▶ Node B
+         ──heartbeat──▶ Node C
+
+[Node A CRASH!]
+
+Term 2: Election
+─────────────────────────────────────────────────────────────
+  Node B timer hết trước (randomized 150-300ms)
+    ↓ Tăng term=2, vote cho mình
+    ↓ Gửi RequestVote(term=2) tới A và C
+  Node C: term 2 > term 1 của mình → grant vote
+  Node A: đang crash, không reply
+    ↓ Node B nhận 2 votes (self + C) ≥ majority(3)=2
+    → Node B trở thành Leader!
+
+Raft Log Replication (Node B là leader):
+─────────────────────────────────────────────────────────────
+Client ──SET x=5──▶ Node B (Leader)
+                      ↓ Append (term=2, SET x=5) vào log
+                      ↓ Gửi AppendEntries tới C và A
+  Node C: ACK success
+  Node A: crash (no reply)
+                      ↓ Got 2/3 ACKs ≥ majority → COMMIT
+                      ↓ Apply to state machine
+                    ──200 OK──▶ Client
+
+Safety Invariant (Election Restriction):
+┌────────────────────────────────────────────────────────────┐
+│  Candidate chỉ thắng election nếu log của nó              │
+│  UP-TO-DATE ≥ majority voters                             │
+│  → Leader luôn có đầy đủ tất cả committed entries         │
+│  → Không bao giờ mất committed data khi failover          │
+└────────────────────────────────────────────────────────────┘
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **Split vote**: Nếu 2 node cùng timeout và gửi RequestVote đồng thời, không ai đạt majority → restart election với randomized delay mới (giải quyết qua randomized timeout).
+- **Stale leader**: Node A recover, nghĩ mình vẫn là leader nhưng đã có B thay thế. Term number giải quyết: B gửi reply với term cao hơn → A tự động revert về follower.
+- **Log divergence**: Sau partition heal, follower có thể có log khác leader. Raft xử lý bằng cách follower luôn override log của mình theo leader (không merge, không conflict resolution).
+- **Minority partition**: Nếu cluster 5 node mà 3 node bị cô lập, 2 node còn lại KHÔNG thể elect leader — hệ thống unavailable nhưng không corrupt data.
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                      | Tại sao sai                                                                              | Đúng là                                                      |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| "Raft cần tất cả node đồng ý"                | Chỉ cần majority (N/2+1) — cluster 3 node chịu được 1 node fail                          | 3-node cluster: 2 votes là đủ; 5-node cluster: 3 votes là đủ |
+| Nhầm leader election với distributed locking | Leader election chọn 1 coordinator duy nhất; distributed lock bảo vệ một resource cụ thể | Chúng giải quyết hai bài toán khác nhau với cơ chế khác nhau |
+| Không hiểu split-brain risk khi mất quorum   | Nếu không đủ quorum, cluster nên từ chối write — không phải tiếp tục hoạt động           | Majority-based quorum là biện pháp ngăn split-brain chính    |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy câu hỏi về: "etcd consistency", "leader election trong Kubernetes", "consensus algorithm"
+- → Nhớ đến: Raft 3 phases → Leader Election với term numbers → Log Replication với majority commit → Safety invariant
+- → Mở đầu trả lời: _"etcd dùng Raft consensus — khi leader fail, follower đợi election timeout ngẫu nhiên (để tránh split vote), node đầu tiên tăng term và gửi RequestVote, ai nhận được majority votes trước thì trở thành leader mới..."_
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Consistency Models](#concept-2-consistency-models) — hiểu tại sao cần strong consistency trước khi học cơ chế đạt được nó
+- ➡️ Để hiểu tiếp: [Replication & Partitioning](#concept-4-replication--partitioning) — cách áp dụng consensus khi replicate data ở quy mô lớn
 
 ### Concept 4: Replication & Partitioning
 
-**🧠 Memory Hook:** "**Replication = copies for availability. Partitioning = splits for scale.** Consistent hashing = minimize reshuffling when nodes change."
+> 🧠 **Memory Hook:** "**Replication = copies for availability. Partitioning = splits for scale.** Consistent hashing = minimize reshuffling when nodes change."
 
-**Tại sao tồn tại / Why exists:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: Single node can't handle all data/traffic — must distribute across machines
-- Level 2: Replication handles read scale + fault tolerance. Partitioning handles write scale + data size
-- Level 3: Consistent hashing (Karger 1997) solves the "add/remove node = reshuffle everything" problem — only K/N keys move on average
+Một server đơn lẻ không thể chứa hết dữ liệu hay xử lý hết traffic của một hệ thống lớn — cần phân tán dữ liệu ra nhiều máy.
+→ **Why?** Replication tạo nhiều bản sao để tăng read throughput và chịu được node failure; Partitioning chia nhỏ dataset để tăng write throughput và vượt giới hạn dung lượng đĩa của một node.
+→ **Why?** Consistent Hashing (Karger 1997) giải quyết vấn đề "thêm/bớt node phải reshuffle toàn bộ data" — chỉ di chuyển ~K/N keys khi node thay đổi, giúp Cassandra và DynamoDB scale mà không cần downtime.
 
-**❌ Common Mistakes:**
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-- Confusing replication with partitioning → Replication = same data on multiple nodes, Partitioning = different data on different nodes
-- "Hash partitioning is always better" → Range partitioning needed for range queries (time-series data)
-- Not using virtual nodes with consistent hashing → Physical nodes get uneven load
+Hình dung bạn quản lý **thư viện** với hàng triệu cuốn sách:
 
-**🎯 Interview Pattern:** "Design a distributed key-value store" → Consistent hashing for partitioning → Replication factor for durability → Quorum reads/writes for consistency
+- **Replication** = Photocopy mỗi cuốn ra 3 bản, đặt ở 3 tủ khác nhau — nếu 1 tủ bị khóa, vẫn còn 2 tủ kia phục vụ.
+- **Partitioning** = Chia sách ra theo chủ đề: tủ A chứa Khoa học, tủ B chứa Lịch sử, tủ C chứa Văn học — mỗi tủ chỉ giữ 1/3 tổng số sách.
+- **Consistent Hashing** = Xếp sách theo số hiệu ISBN trên một vòng tròn — khi thêm tủ mới, chỉ di chuyển sách "gần" tủ mới, không cần sắp xếp lại toàn bộ thư viện.
 
-**🔗 Knowledge Chain:** Partitioning → Consistent Hashing → Virtual Nodes → Rebalancing → Hot Spots
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Consistent Hashing Ring (Hash Space: 0 → 2^32):
+
+              0 / 2^32
+                 │
+          ┌──────┴──────┐
+         ╱   Node A      ╲
+        │    (pos: 50)    │
+        │                 │ Node B
+        │                 │ (pos: 150)
+         ╲               ╱
+          └──────┬──────┘
+            Node C
+            (pos: 230)
+
+Key routing (clockwise → first node encountered):
+  "user:001" → hash=80  → Node B (150) ✓
+  "order:42" → hash=200 → Node C (230) ✓
+  "prod:99"  → hash=240 → wraps → Node A (50) ✓
+
+Thêm Node D (pos: 120) — chỉ ~1/N keys di chuyển:
+  Trước: keys [51..150] → Node B
+  Sau:   keys [51..120] → Node D  ← di chuyển
+         keys [121..150] → Node B ← giữ nguyên
+
+Virtual Nodes — giải quyết data imbalance:
+┌────────────────────────────────────────────────────────────┐
+│ Mỗi physical node → nhiều vị trí trên ring (vnodes)       │
+│                                                            │
+│  Node A: pos 50, 180, 310  (3 vnodes)                     │
+│  Node B: pos 100, 230, 350 (3 vnodes)                     │
+│  Node C: pos 75, 160, 290  (3 vnodes)                     │
+│                                                            │
+│  → Phân phối đều hơn giữa các node                        │
+│  → Khi Node A fail → data phân tán sang B VÀ C            │
+│    (không dồn hết vào 1 node)                             │
+│  Cassandra dùng 256 vnodes/node mặc định                   │
+└────────────────────────────────────────────────────────────┘
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **Hot keys vẫn tồn tại**: Consistent hashing phân phối keys đều, nhưng nếu 1 key được đọc hàng triệu lần/giây (celeb post trên Twitter), node chứa key đó vẫn bị quá tải — giải pháp: key splitting hoặc caching layer riêng.
+- **Replication lag trong reads**: Đọc từ replica có thể trả về data cũ nếu replication lag lớn — business phải quyết định có chấp nhận stale reads không.
+- **Cross-shard transactions**: 1 giao dịch cần update 2 records ở 2 shard khác nhau buộc phải dùng 2PC hoặc Saga — không có "free" cross-shard ACID.
+- **Range queries với hash partitioning**: `SELECT * WHERE time BETWEEN A AND B` cần scatter tới tất cả partitions — range partitioning phù hợp hơn cho time-series data.
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                         | Tại sao sai                                                                          | Đúng là                                                                                            |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| Nhầm replication với partitioning               | Replication = cùng data trên nhiều node; Partitioning = data khác nhau trên mỗi node | Hầu hết hệ thống dùng cả hai: partition để scale write, replicate mỗi partition để fault-tolerance |
+| "Hash partitioning luôn tốt hơn range"          | Hash partitioning không hiệu quả cho range queries                                   | Dùng range partitioning cho time-series; hash partitioning cho random key access                   |
+| Không dùng virtual nodes với consistent hashing | Physical nodes sẽ nhận data không đều trên ring                                      | Cassandra dùng 256 vnodes/node mặc định để đảm bảo cân bằng tải                                    |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy câu hỏi về: "design distributed key-value store", "database sharding", "horizontal scaling"
+- → Nhớ đến: Consistent hashing cho partitioning → replication factor cho durability → quorum reads/writes cho consistency
+- → Mở đầu trả lời: _"Tôi sẽ dùng consistent hashing để phân phối data — mỗi key được hash vào ring và route tới node đầu tiên theo chiều kim đồng hồ. Với replication factor 3, mỗi key được lưu trên 3 node liên tiếp để fault-tolerance..."_
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Consensus & Leader Election](#concept-3-consensus--leader-election) — consensus đảm bảo consistency khi replicate data
+- ➡️ Để hiểu tiếp: [Message Queues & Events](#concept-5-message-queues--event-streaming) — cách decouple services khi data đã được distributed
 
 ### Concept 5: Message Queues & Event Streaming
 
-**🧠 Memory Hook:** "**Queue = task distribution (RabbitMQ). Stream = event log (Kafka).** Queue: message consumed once. Stream: message replayable."
+> 🧠 **Memory Hook:** "**Queue = task distribution (RabbitMQ). Stream = event log (Kafka).** Queue: message consumed once. Stream: message replayable."
 
-**Tại sao tồn tại / Why exists:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: Synchronous service-to-service calls create tight coupling and cascade failures
-- Level 2: Queues enable load leveling (absorb spikes), streams enable event sourcing (replay history)
-- Level 3: Kafka's log-based architecture (immutable append-only) enables both messaging and stream processing — consumer groups for parallel processing, compaction for state snapshots
+Khi service A gọi service B trực tiếp (synchronous), nếu B chậm hoặc crash thì A cũng bị kéo theo — tight coupling tạo ra cascade failures.
+→ **Why?** Message queue tạo buffer giữa producer và consumer: producer không cần đợi consumer xử lý xong — giúp absorb traffic spikes và decouple failure domains.
+→ **Why?** Kafka với kiến trúc immutable append-only log cho phép nhiều consumer đọc cùng 1 stream độc lập, replay lại event history, và scale horizontally — các tính năng mà traditional queue không có.
 
-**❌ Common Mistakes:**
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-- Using Kafka for simple task queues → Overkill, RabbitMQ simpler for fire-and-forget tasks
-- "Kafka guarantees exactly-once" → Only within Kafka transactions (producer + consumer in same Kafka cluster)
-- Not understanding consumer group rebalancing → Can cause duplicate processing during rebalance
+- **Message Queue (RabbitMQ)** = **Hộp thư email**: bạn nhận email, đọc xong thì xóa. Nếu nhiều người cùng nhận chung 1 inbox, chia nhau mỗi người đọc 1 cái — ai đọc rồi thì người khác không đọc nữa.
+- **Event Stream (Kafka)** = **Kênh YouTube**: video được đăng lên một lần, nhưng hàng triệu người có thể xem bất kỳ lúc nào, từ bất kỳ điểm nào trong video. Chủ kênh không xóa video sau khi ai đó xem.
 
-**🎯 Interview Pattern:** "How to handle 100K orders/sec?" → Kafka for ingestion → Consumer groups for parallel processing → Idempotent consumers for exactly-once semantics
+Dùng "hộp thư" cho đơn hàng cần xử lý đúng một lần; dùng "YouTube" cho event log cần nhiều service đọc độc lập và có thể replay khi cần.
 
-**🔗 Knowledge Chain:** Message Queues → Event Streaming → Event Sourcing → CQRS → Saga Pattern
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Message Queue vs Event Stream Architecture:
+
+RabbitMQ (Task Queue):
+┌──────────┐  publish  ┌───────────┐  consume+delete  ┌────────────┐
+│ Producer │──────────▶│  Queue    │─────────────────▶│ Consumer A │
+└──────────┘           └───────────┘                  └────────────┘
+                             │ (round-robin)
+                             └─consume+delete──────────▶ Consumer B
+                        Each message processed by EXACTLY ONE consumer
+
+Kafka (Event Stream):
+┌──────────┐  append  ┌──────────────────────────────────────┐
+│ Producer │─────────▶│  Topic: "orders" (3 partitions)      │
+└──────────┘          │  P0: [msg0][msg1][msg2][msg3]        │
+                      │  P1: [msg0][msg1][msg2]              │
+                      │  P2: [msg0][msg1]                    │
+                      └──────────────────────────────────────┘
+                              │              │
+                              ▼              ▼
+                     Consumer Group A  Consumer Group B
+                      (order-service)  (analytics)
+                       reads P0,P1,P2   reads P0,P1,P2
+                       INDEPENDENTLY    INDEPENDENTLY
+                       → Both groups see ALL messages
+                       → Kafka doesn't delete on consume
+
+Consumer Group Parallelism:
+Topic "orders" (3 partitions) + Consumer Group "processors":
+  Consumer 1 ← Partition 0   (processes independently)
+  Consumer 2 ← Partition 1   (processes independently)
+  Consumer 3 ← Partition 2   (processes independently)
+  → 3x throughput vs 1 consumer
+  → Max parallelism = number of partitions
+  → If Consumer 4 added: one consumer idle (no partition)
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **Consumer group rebalancing**: Khi thêm/bớt consumer trong group, Kafka rebalance partition assignment — trong thời gian này có thể xảy ra duplicate processing. Idempotent consumer là bắt buộc.
+- **Kafka exactly-once chỉ trong Kafka ecosystem**: Producer + Kafka topic = idempotent qua sequence numbers. Nhưng side effects (DB write, API call bên ngoài) vẫn cần application-level deduplication.
+- **RabbitMQ ordering**: Chỉ đảm bảo FIFO trong 1 queue với 1 consumer. Nhiều consumers cùng 1 queue → no ordering guarantee.
+- **Backpressure**: Nếu consumer chậm hơn producer, partition lag tăng liên tục — cần monitoring consumer lag và scale consumer kịp thời.
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                               | Tại sao sai                                                                                  | Đúng là                                                                                           |
+| ------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Dùng Kafka cho simple task queue      | Kafka có operational overhead cao (KRaft, partition management, consumer group coordination) | Dùng RabbitMQ cho fire-and-forget tasks; Kafka khi cần replay hoặc multiple independent consumers |
+| "Kafka đảm bảo exactly-once"          | Chỉ trong Kafka transactions — producer + consumer trong cùng Kafka cluster                  | Side effects bên ngoài Kafka (DB write, API call) vẫn cần application-level idempotency           |
+| Không hiểu consumer group rebalancing | Rebalance gây pause và có thể duplicate processing nếu consumer không idempotent             | Thiết kế idempotent consumer để handle duplicates một cách an toàn                                |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy câu hỏi về: "xử lý 100K orders/sec", "event-driven architecture", "decoupling services"
+- → Nhớ đến: Queue vs Stream distinction → Kafka cho ingestion → Consumer groups cho parallel processing → Idempotent consumers cho exactly-once semantics
+- → Mở đầu trả lời: _"Tôi sẽ dùng Kafka để ingest orders — producer publish vào topic với partition key là user_id để đảm bảo ordering per user, consumer group với N consumers xử lý song song tối đa N partitions..."_
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Replication & Partitioning](#concept-4-replication--partitioning) — hiểu partitioning concept giúp grasp Kafka partition model
+- ➡️ Để hiểu tiếp: [Distributed Locking & Caching](#concept-6-distributed-locking--caching) — cách xử lý contention khi nhiều consumers cùng access shared resources
 
 ### Concept 6: Distributed Locking & Caching
 
-**🧠 Memory Hook:** "**Redlock = Redis distributed lock with majority quorum. Cache patterns: Cache-Aside (lazy), Write-Through (eager), Write-Behind (async).**"
+> 🧠 **Memory Hook:** "**Redlock = Redis distributed lock with majority quorum. Cache patterns: Cache-Aside (lazy), Write-Through (eager), Write-Behind (async).**"
 
-**Tại sao tồn tại / Why exists:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: Multiple services accessing shared resources need mutual exclusion
-- Level 2: Single Redis lock has SPOF — Redlock uses N independent Redis instances with majority agreement
-- Level 3: Martin Kleppmann's critique: Redlock unsafe because Redis lacks consensus — use ZooKeeper/etcd for safety-critical locks. But Redlock fine for efficiency locks (prevent duplicate work)
+Trong hệ thống phân tán, nhiều service có thể cùng lúc cố gắng thay đổi cùng một resource — cần cơ chế mutual exclusion để tránh race condition.
+→ **Why?** Single Redis instance có SPOF — nếu Redis crash sau khi SET nhưng trước khi replicate, lock bị mất và 2 service có thể cùng hold lock; Redlock dùng N Redis instances độc lập với majority agreement để giảm thiểu rủi ro này.
+→ **Why?** Martin Kleppmann (2016) chỉ ra Redlock vẫn không an toàn cho correctness-critical operations vì GC pause và clock skew có thể khiến expired lock holder tiếp tục ghi — dùng etcd/ZooKeeper với fencing token nếu cần safety tuyệt đối.
 
-**❌ Common Mistakes:**
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-- Using SETNX without TTL → Lock never released if holder crashes
-- "Redlock is always safe" → Not safe for correctness-critical operations (Kleppmann critique)
-- Cache stampede: all caches expire simultaneously → Use jittered TTL + singleflight pattern
+Hình dung **phòng họp** trong văn phòng có nhiều chi nhánh:
 
-**🎯 Interview Pattern:** "Design a rate limiter" → Redis atomic operations → Distributed lock for cross-node coordination → Cache for counter state
+- **Distributed lock** = Đặt lịch phòng họp qua hệ thống tập trung — ai đặt trước thì được dùng, người khác phải đợi.
+- **Redlock** = Hệ thống đặt phòng có 5 server backup — bạn phải xác nhận với ít nhất 3 server (majority) mới được coi là đặt thành công. Nếu 2 server chết, vẫn hoạt động.
+- **Fencing token** = Mã số xác nhận tăng dần — khi vào phòng họp, bạn phải xuất trình mã số, và bảo vệ chỉ cho vào nếu mã số của bạn là mới nhất. Dù ai đó "đặt nhầm" với mã cũ hơn, bảo vệ sẽ từ chối ngay.
 
-**🔗 Knowledge Chain:** Distributed Lock → Redlock → Fencing Tokens → ZooKeeper Locks → Lease-based Locks
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Redis Single-Instance Lock:
+┌────────┐  SET lock:res "owner" NX PX 10000  ┌─────────┐
+│ Client │────────────────────────────────────▶│ Redis   │
+│        │◀── OK (lock acquired) ─────────────│         │
+│        │                                    └─────────┘
+│ ... critical section ...
+│        │  EVAL lua: if GET==owner then DEL  ┌─────────┐
+│        │────────────────────────────────────▶│ Redis   │
+│        │◀── released ───────────────────────│         │
+└────────┘                                    └─────────┘
+
+Redlock (N=5 independent Redis instances):
+┌────────┐  SET NX  ┌──────────┐
+│ Client ├─────────▶│ Redis 1  │ ✓
+│        ├─────────▶│ Redis 2  │ ✓
+│        ├─────────▶│ Redis 3  │ ✓  ← Majority (3/5) ✓
+│        ├─────────▶│ Redis 4  │ ✗  (timeout/down)
+│        ├─────────▶│ Redis 5  │ ✗  (timeout/down)
+└────────┘  elapsed_time < TTL → LOCK ACQUIRED!
+
+Kleppmann's GC Pause Attack:
+  t=0:  Client A acquires lock (TTL=10s)
+  t=5:  Client A enters GC pause ← DANGER
+  t=10: Lock TTL expires on Redis
+  t=11: Client B acquires same lock (token=34)
+  t=12: Client B writes to storage → accepted ✓
+  t=15: Client A resumes from GC pause
+        A still thinks it holds the lock!
+        A tries to write (token=33)
+        Without fencing → BOTH wrote! DATA CORRUPTION ❌
+        With fencing   → Storage rejects token 33 < 34 ✓
+
+Cache Pattern Comparison:
+┌──────────────────┬────────────────────────┬────────────────────┐
+│ Pattern          │ Write Flow             │ Read Miss Flow     │
+├──────────────────┼────────────────────────┼────────────────────┤
+│ Cache-Aside      │ App → DB only          │ App→Cache miss     │
+│ (Lazy Loading)   │ Cache invalidated/TTL  │ →DB→Cache SET      │
+├──────────────────┼────────────────────────┼────────────────────┤
+│ Write-Through    │ App→Cache→DB (sync)    │ App→Cache hit      │
+│ (Eager)          │ Consistent but slow    │ (always warm)      │
+├──────────────────┼────────────────────────┼────────────────────┤
+│ Write-Behind     │ App→Cache (async→DB)   │ App→Cache hit      │
+│ (Write-Back)     │ Fast writes, data loss │ (always warm)      │
+└──────────────────┴────────────────────────┴────────────────────┘
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **SETNX không có TTL**: Nếu lock holder crash mà không release, lock tồn tại mãi mãi — phải luôn set TTL khi acquire lock.
+- **Cache stampede**: Hot key hết hạn đồng thời → hàng nghìn request hit DB cùng lúc. Giải pháp: jittered TTL (thêm random delta) + singleflight pattern.
+- **Redlock không có fencing token**: Redis không generate monotonic token — nếu cần correctness-critical lock (payment, inventory), dùng etcd/ZooKeeper thay thế.
+- **Write-Behind data loss**: Nếu cache node crash trước khi flush async writes xuống DB, data mất vĩnh viễn — không phù hợp cho dữ liệu quan trọng.
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                  | Tại sao sai                                                                                    | Đúng là                                                                         |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Dùng SETNX mà không có TTL               | Nếu holder crash, lock không bao giờ được release → deadlock vĩnh viễn                         | Luôn kèm expiry: `SET key value NX PX <milliseconds>`                           |
+| "Redlock luôn an toàn"                   | Redlock không an toàn cho correctness-critical ops — GC pause và clock skew phá vỡ assumptions | Dùng etcd/ZooKeeper với fencing token cho safety-critical locking               |
+| Cache stampede khi TTL đồng loạt hết hạn | Toàn bộ cache miss cùng lúc → DB bị overload đột ngột                                          | Dùng jittered TTL (thêm random 0-10% delta) hoặc singleflight để dedup requests |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy câu hỏi về: "rate limiter", "prevent duplicate processing", "distributed cache strategy"
+- → Nhớ đến: Redis atomic ops → Redlock cho distributed lock → fencing token nếu cần safety → cache pattern phù hợp với write/read ratio
+- → Mở đầu trả lời: _"Để implement distributed rate limiter, tôi dùng Redis INCR với TTL — atomic operation đảm bảo counter chính xác trên nhiều instances. Nếu cần cross-node mutual exclusion, Redlock với 5 Redis instances độc lập là đủ cho efficiency lock..."_
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Message Queues & Events](#concept-5-message-queues--event-streaming) — hiểu async decoupling trước khi xem xét synchronous locking
+- ➡️ Để hiểu tiếp: [Clocks, Failures & Idempotency](#concept-7-clocks-failures--idempotency) — hiểu tại sao clock skew làm Redlock không an toàn
 
 ### Concept 7: Clocks, Failures & Idempotency
 
-**🧠 Memory Hook:** "**Physical clocks lie. Logical clocks (Lamport/Vector) track causality. Idempotency = safe retries = f(f(x)) = f(x).**"
+> 🧠 **Memory Hook:** "**Physical clocks lie. Logical clocks (Lamport/Vector) track causality. Idempotency = safe retries = f(f(x)) = f(x).**"
 
-**Tại sao tồn tại / Why exists:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: Network unreliability means requests can be duplicated, reordered, or lost — idempotency makes retries safe
-- Level 2: NTP clock sync has millisecond drift — cannot use wall clock for ordering events across nodes
-- Level 3: Hybrid Logical Clocks (HLC) combine physical + logical: physical for rough ordering, logical for causality — used in CockroachDB, MongoDB
+Trong mạng thực tế, request có thể bị duplicate (retry), reorder, hoặc mất hoàn toàn — hệ thống cần được thiết kế để handle tất cả trường hợp này một cách an toàn.
+→ **Why?** Đồng hồ vật lý (NTP) có drift hàng chục milliseconds và có thể jump backwards — không thể dùng wall clock để sắp xếp thứ tự events trên các node khác nhau, cần logical clocks để track causality.
+→ **Why?** Hybrid Logical Clocks (HLC) kết hợp độ "gần thực" của physical time với tính đúng đắn của logical clock — đây là lý do CockroachDB và MongoDB dùng HLC để có cả human-readable timestamps lẫn đúng causal ordering.
 
-**❌ Common Mistakes:**
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-- Using timestamps for event ordering → Clock skew causes incorrect ordering
-- "Exactly-once delivery is possible" → Only exactly-once processing (via idempotent consumers), delivery is at-least-once
-- Not using idempotency keys in APIs → Payment processed multiple times on retry
+Hình dung **cuộc trò chuyện nhóm qua messenger** khi internet không ổn định:
 
-**🎯 Interview Pattern:** "How to prevent duplicate payments?" → Idempotency key → Deduplication table → At-least-once delivery + idempotent processing = exactly-once semantics
+- Bạn gửi "Mình đồng ý" lúc 10:01 (đồng hồ điện thoại bạn).
+- Bạn bè nhận lúc 10:05 nhưng bạn bè khác gửi "Mình không đồng ý" lúc 10:03 (đồng hồ của họ).
+- Ai nói trước? Không thể biết chắc chỉ nhìn vào giờ đồng hồ!
+- **Lamport clock** = Đánh số thứ tự mỗi tin nhắn, khi nhận tin của ai thì số của mình phải lớn hơn — không cần đồng hồ chính xác.
+- **Idempotency** = Bạn gửi cùng 1 tin nhắn 2 lần vì mạng lỗi → hệ thống chỉ hiển thị 1 lần (dedup bằng message ID duy nhất).
 
-**🔗 Knowledge Chain:** Wall Clocks → NTP Drift → Lamport Clocks → Vector Clocks → HLC → Idempotency Keys
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Lamport Timestamps — Logical Ordering:
+
+Process A: (C=1) ──send m1──▶
+                             │
+Process B: (C=1) ────────── (C=max(1,1)+1=2) ──send m2──▶
+                                                          │
+Process C: (C=1) ──────────────────────────────────────  (C=max(1,2)+1=3)
+
+Rule: a→b implies L(a) < L(b)  [one direction only!]
+Limitation: L(a) < L(b) does NOT mean a happened-before b
+
+Vector Clocks — Detect Causality (3 processes):
+             [A, B, C]
+Process A:   [1,0,0] ──send──▶
+                    │
+Process B:   [0,1,0] ◀──recv── [2,1,0]  (merge: max each entry)
+             [0,2,0] ──send──▶
+                          │
+Process C:   [0,0,1] ◀────── [0,2,2]   (merge + increment C)
+
+Comparing:
+  [2,0,0] vs [0,2,0]: Neither ≤ other → CONCURRENT events ✓
+  [1,0,0] vs [2,2,2]: A ≤ B element-wise → A happened-before B ✓
+
+Idempotency Key Pattern (Payment Example):
+┌────────┐  POST /payment                    ┌─────────┐
+│ Client │  Idempotency-Key: uuid-abc-123    │ Server  │
+│        │──────────────────────────────────▶│         │
+│        │                                   │ Check:  │
+│        │                                   │ uuid-abc-123 in DB?
+│        │                                   │ NO → process & store
+│        │◀── 200 OK (payment done) ─────────│         │
+│        │                                   └─────────┘
+│  [network timeout! client retries]
+│        │  POST /payment                    ┌─────────┐
+│        │  Idempotency-Key: uuid-abc-123    │ Server  │
+│        │──────────────────────────────────▶│         │
+│        │                                   │ Check:  │
+│        │                                   │ uuid-abc-123 in DB?
+│        │                                   │ YES → return stored result
+│        │◀── 200 OK (idempotent return) ────│         │
+└────────┘                                   └─────────┘
+→ Payment processed ONCE, safely returned TWICE
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **NTP backward jump**: Đồng hồ có thể nhảy ngược (time went backward) khi NTP correction lớn — code dùng `time.Now()` để order events có thể tạo ra thứ tự sai hoàn toàn.
+- **Vector clock size**: Vector clock có kích thước O(N) với N processes — trong hệ thống hàng nghìn node, impractical; dùng dotted version vectors hoặc HLC thay thế.
+- **Idempotency key TTL**: Key TTL quá ngắn → retry sau 25 giờ bị coi là request mới → double charge. Nên dùng tối thiểu 24-48 giờ.
+- **"Exactly-once delivery" là myth**: Trong mạng không tin cậy, chỉ có at-least-once hoặc at-most-once delivery. "Exactly-once processing" đạt được qua idempotent consumer, không phải delivery guarantee.
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                      | Tại sao sai                                                                                    | Đúng là                                                                         |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Dùng timestamp để order events               | Clock skew có thể khiến event xảy ra sau lại có timestamp nhỏ hơn                              | Dùng Lamport clock hoặc vector clock cho causal ordering giữa các node          |
+| "Exactly-once delivery là possible"          | Two Generals Problem chứng minh không thể đảm bảo delivery đúng 1 lần trong mạng không tin cậy | Đạt "effectively exactly-once" = at-least-once delivery + idempotent processing |
+| Không dùng idempotency key trong payment API | Payment bị trừ 2 lần khi client retry sau network timeout                                      | Client tạo UUID trước khi gửi request, server dedup theo key đó với TTL ≥ 24h   |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy câu hỏi về: "prevent duplicate payments", "event ordering", "retry safety"
+- → Nhớ đến: Idempotency key → deduplication table → at-least-once delivery + idempotent processing = effectively exactly-once
+- → Mở đầu trả lời: _"Để tránh duplicate payment, client tạo một UUID trước khi gửi và đính kèm vào header Idempotency-Key. Server kiểm tra key này trong Redis/DB — nếu đã tồn tại thì trả về kết quả cũ mà không xử lý lại..."_
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Distributed Locking & Caching](#concept-6-distributed-locking--caching) — hiểu tại sao clock skew làm distributed lock không an toàn
+- ➡️ Để hiểu tiếp: [Microservices Architecture](./02-microservices.md) — áp dụng idempotency trong Saga pattern giữa các microservices
 
 ---
 
@@ -1585,19 +2053,19 @@ _Document version: 2026-03. Focus on theory and conceptual understanding for bac
 
 ---
 
-## Self-Check / Tự Kiểm Tra
+## Self-Check / Tự Kiểm Tra — Retrieval Practice
 
-### Retrieval Practice — Tự trả lời KHÔNG nhìn notes
+> ⏱️ Che cột "Câu hỏi" rồi tự trả lời, sau đó mở ra kiểm tra.
 
-| #   | Question                                               | Key Points                                                                        |
-| --- | ------------------------------------------------------ | --------------------------------------------------------------------------------- |
-| 1   | CAP Theorem nói gì? Tại sao thực tế là C vs A?         | 3 properties, P mandatory, choose C or A during partition                         |
-| 2   | Strong vs Eventual consistency — khi nào dùng cái nào? | Banking = strong, social feed = eventual, tunable = per-query                     |
-| 3   | Raft consensus hoạt động thế nào? (3 phases)           | Leader election (term), log replication (AppendEntries), safety (majority commit) |
-| 4   | Consistent hashing giải quyết vấn đề gì?               | Minimize key redistribution on node add/remove, virtual nodes for balance         |
-| 5   | Kafka vs RabbitMQ — khác biệt cốt lõi?                 | Kafka = replayable log, RabbitMQ = task queue (consumed once), consumer groups    |
-| 6   | Redlock controversy — Martin Kleppmann nói gì?         | Redlock unsafe for correctness (no consensus), fine for efficiency locks          |
-| 7   | Idempotency key pattern hoạt động thế nào?             | Client sends unique key, server deduplicates via lookup table, safe retries       |
+| #   | Loại           | Câu hỏi                                                                                                                                      |
+| --- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 🔍 Retrieval   | CAP Theorem nói gì? Tại sao trong thực tế chỉ là C vs A chứ không phải C+A+P?                                                                |
+| 2   | 🎨 Visual      | Vẽ sơ đồ Consistent Hashing Ring với 3 nodes — chỉ ra key routing và điều gì xảy ra (với bao nhiêu keys) khi thêm node thứ 4.                |
+| 3   | 🛠️ Application | Shopee Flash Sale: 1 triệu user mua 1000 iPhone cùng lúc. Bạn chọn CAP position nào, dùng tool gì để handle inventory, và tại sao?           |
+| 4   | 🐛 Debug       | Hệ thống payment trừ tiền user 2 lần dù client chỉ bấm 1 lần. Nguyên nhân có thể là gì và bạn fix thế nào mà không cần thay đổi client?      |
+| 5   | 🎓 Teach       | Giải thích cho junior developer tại sao Redlock không an toàn cho payment system, GC pause gây ra vấn đề gì cụ thể, và nên dùng gì thay thế. |
+
+💬 **Feynman Prompt:** Giải thích CAP Theorem cho người không biết gì về distributed systems bằng ví dụ chuỗi siêu thị — tại sao khi đường dây điện thoại đứt, bạn không thể vừa "luôn chính xác về tồn kho" vừa "luôn phục vụ khách hàng" cùng lúc?
 
 ### 📅 Spaced Repetition Schedule
 

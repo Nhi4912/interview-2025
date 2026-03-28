@@ -70,70 +70,359 @@ File này cover 7 nhóm Resilience Patterns thiết yếu cho Go Backend, từ l
 
 ### Concept 1: Load Balancing Strategies
 
-- **🧠 Memory Hook:** "LB = traffic cop at intersection — Round Robin counts cars, Least Connections watches queue length, Consistent Hashing remembers regular routes"
+> 🧠 **Memory Hook:** "LB = traffic cop at intersection — Round Robin counts cars, Least Connections watches queue length, Consistent Hashing remembers regular routes"
+
 - **Why exists (Level 1):** Single server can't handle all traffic → distribute across multiple servers.
 - **Why exists (Level 2):** Different algorithms for different needs: Round Robin for stateless, Least Connections for variable-cost requests, Consistent Hashing for caching (minimize redistribution on server add/remove). Health-check integration: remove unhealthy servers from pool.
-- **Common Mistakes:** ❌ "Round Robin = fair" → Not when requests have different costs. ❌ "Just add more servers" → LB itself can become bottleneck. ❌ "Health check = ping" → Deep health check validates dependencies too.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Hình dung trạm thu phí cao tốc với 5 làn xe. Nếu tất cả xe đổ vào 1 làn → tắc nghẽn. LB giống người điều phối: Round Robin chỉ xe vào làn theo lượt; Least Connections chỉ xe vào làn ít xe nhất; Consistent Hashing cho xe của cùng tỉnh luôn vào cùng một làn (để nhân viên quen mặt — giống cache hit, không phải xử lý lại từ đầu).
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+1. Request đến LB
+2. LB áp dụng algorithm để chọn backend
+3. LB kiểm tra health status — không route vào unhealthy backend
+4. Forward request, nhận response, trả về client
+
+```
+Round Robin:     req1→B1, req2→B2, req3→B3, req4→B1 ...
+Least Conn:      B1:10  B2:5 ←chọn  B3:15
+Consistent Hash: hash(user_id=123) → vnode42 → B2
+                 hash(user_id=124) → vnode17 → B2  (same node → cache hit)
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **LB là single point of failure**: bản thân LB cũng cần HA — dùng active-passive pair hoặc anycast DNS
+- **Stale health state**: health check interval lớn → LB vẫn route vào backend vừa die — cần passive health check (observe errors) bổ sung active check
+- **Hot keys với Consistent Hashing**: user cực active overload 1 node → dùng virtual nodes + bounded load để phân tán
+- **Session affinity phá distribution**: sticky sessions → khi node die, user mất session và distribution bị lệch nghiêm trọng
+- **Slow backend không bị eject**: Least Connections kém khi backend slow nhưng connections thấp → kết hợp latency EWMA để detect slow nodes
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm               | Tại sao sai                                                   | Đúng là                                                             |
+| --------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------- |
+| "Round Robin = fair"  | Request costs khác nhau; 1 heavy request ≠ 1 light request    | Dùng Least Connections hoặc weighted cho variable-cost workload     |
+| "Thêm server là đủ"   | LB chính nó có thể thành bottleneck nếu không scale           | LB cũng cần scale: anycast, multiple LB tiers                       |
+| "Health check = ping" | Ping chỉ check network reachability, không check dependencies | Deep health check: validate DB + cache connectivity trong readiness |
+
 - **Interview Pattern:** "Design LB for caching layer" → Consistent hashing with virtual nodes. On node failure, only 1/N keys redistribute. Bounded load to prevent hot spots.
-- **Knowledge Chain:** L4/L7 LB → Algorithms → Health Checks → Service Discovery → Auto-scaling
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Distributed Systems](./03-distributed-systems.md) — network partitions, node failures, CAP theorem
+- ➡️ Để hiểu tiếp: [Circuit Breaker](#concept-2-circuit-breaker) — khi backend fail, breaker phối hợp với LB để fast-fail sớm
 
 ### Concept 2: Circuit Breaker
 
-- **🧠 Memory Hook:** "Circuit breaker = electrical fuse: too many shorts (failures) → fuse blows (open) → try small test (half-open) → reset if OK"
+> 🧠 **Memory Hook:** "Circuit breaker = electrical fuse: too many shorts (failures) → fuse blows (open) → try small test (half-open) → reset if OK"
+
 - **Why exists (Level 1):** When dependency fails, keep calling it = waste resources + cascade failure. Circuit breaker stops calls to failing dependency.
 - **Why exists (Level 2):** 3 states: Closed (normal, counting failures) → Open (reject immediately, return fast error) → Half-Open (allow probe request, success→close, fail→open). Minimum request volume before tripping prevents false triggers on low traffic. Failure counting: only count 5xx and timeouts, not 4xx (client errors).
 - **Why exists (Level 3):** Integration with retry: retry first, then breaker evaluates. With bulkhead: breaker per-dependency, bulkhead per-resource-pool. Monitoring: breaker state change = alert. In Go: `sony/gobreaker` or custom with atomic state machine.
-- **Common Mistakes:** ❌ "Open breaker = service down" → It's protecting your service from a failed dependency. ❌ "Count all errors for breaker" → 4xx are client errors, don't trip breaker. ❌ "Fixed open timeout" → Should be adaptive based on dependency recovery speed.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Cầu dao điện trong nhà bạn. Khi quá nhiều thiết bị chạy cùng lúc (quá tải) → cầu dao nhảy (Open). Bạn không cứ cắm thêm thiết bị vào ổ chập điện — cầu dao ngắt bảo vệ toàn nhà. Sau vài phút, bạn thử bật lại (Half-Open) — nếu ổn thì dùng bình thường (Closed), nếu vẫn quá tải thì nhảy lại ngay.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+CLOSED ──(failures >= threshold)──► OPEN
+  ▲                                   │
+  │                              (after openTimeout)
+  │                                   ▼
+  └──(probe success)────────── HALF-OPEN
+                                       │
+                              (probe fail) ──► OPEN (lại)
+```
+
+1. **Closed**: request đi qua, đếm failures trong rolling window
+2. **Open**: reject ngay (trả ErrOpen), không gọi dependency → fast fail
+3. **Half-Open**: cho 1 probe request qua; success → Closed, fail → Open lại
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **Minimum request volume**: traffic thấp → 1/5 request fail = 20% error rate, đủ trip breaker sai → cần min request threshold trước khi evaluate
+- **4xx không nên trip breaker**: lỗi 404/400 là client error, dependency vẫn healthy → chỉ count 5xx và timeout
+- **Open timeout quá ngắn**: breaker liên tục Half-Open → probe → fail → Open → flapping, không cho dependency thời gian recover
+- **Shared breaker state**: nhiều instance có breaker state riêng → mỗi instance trip độc lập, không đồng bộ → cần centralized state (Redis) cho large deployments
+- **Breaker che lỗi thật**: khi breaker Open, mọi request fail-fast → khó phân biệt dependency đã recover hay chưa nếu thiếu monitoring
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                | Tại sao sai                                                    | Đúng là                                                            |
+| -------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------ |
+| "Open breaker = service của mình down" | Breaker Open nghĩa là đang bảo vệ service khỏi dependency fail | Open breaker = dependency fail, service vẫn sống và trả fast error |
+| "Count tất cả errors để trip breaker"  | 4xx là client errors, dependency vẫn healthy                   | Chỉ count 5xx + timeout; bỏ qua 4xx                                |
+| "Fixed open timeout"                   | Dependency có thể recover nhanh hoặc chậm tùy loại failure     | Adaptive timeout: tăng dần nếu dependency chậm recover             |
+
 - **Interview Pattern:** "How do you prevent cascading failures?" → Circuit breaker per dependency + timeout budget + retry budget (max 10% of traffic) + bulkhead isolation.
-- **Knowledge Chain:** Failure Detection → Circuit Breaker → Half-Open Probe → Recovery → Monitoring
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Retry & Timeout](#concept-5-retry--timeout) — retry là bước trước circuit breaker; timeout triggers failure counting
+- ➡️ Để hiểu tiếp: [Bulkhead Isolation](#concept-3-bulkhead-isolation) — bulkhead giới hạn resource, breaker giới hạn failure rate — dùng chung cho defense-in-depth
 
 ### Concept 3: Bulkhead Isolation
 
-- **🧠 Memory Hook:** "Bulkhead = ship compartments: water floods one compartment, but bulkhead walls prevent sinking the whole ship"
+> 🧠 **Memory Hook:** "Bulkhead = ship compartments: water floods one compartment, but bulkhead walls prevent sinking the whole ship"
+
 - **Why exists (Level 1):** One slow dependency shouldn't consume all goroutines/connections → isolate resource pools per dependency.
 - **Why exists (Level 2):** Thread-pool isolation (Java Hystrix) vs semaphore isolation (Go preferred). In Go: buffered channel as semaphore (`make(chan struct{}, limit)`). When bulkhead full → reject immediately with 503, not block. Sizing: start with 2× expected concurrent calls to dependency.
-- **Common Mistakes:** ❌ "Go doesn't need bulkheads because goroutines are cheap" → Goroutines are cheap but connections/fd/memory are not. ❌ "Global goroutine limit = bulkhead" → Need per-dependency isolation. ❌ "Bulkhead full → retry" → No, reject fast. Retrying adds load.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Tàu Titanic có các ngăn kín nước (bulkhead). Khi một ngăn thủng và ngập nước, các vách ngăn giữ nước không tràn sang ngăn khác. Service của bạn cũng vậy: nếu dependency Payment bị chậm, nó chỉ ăn hết pool 50 goroutine dành riêng cho Payment — không ảnh hưởng pool 100 goroutine dành cho Search hay Catalog.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Không có Bulkhead:
+  [Payment slow] ──► goroutine1 ... goroutine500 (tất cả block chờ)
+  [Search call]  ──► KHÔNG CÒN goroutine → 503!
+
+Có Bulkhead:
+  [Payment pool: max 50]  ──► goroutine1..50 (block, nhưng cô lập)
+  [Search pool:  max 100] ──► goroutine1..100 vẫn phục vụ bình thường ✓
+```
+
+Implement trong Go:
+
+1. `sem := make(chan struct{}, 50)` — buffered channel là semaphore
+2. `select { case sem <- struct{}{}: ... default: return ErrFull }` — acquire hoặc reject
+3. `defer func() { <-sem }()` — release sau khi xong
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **Sizing quá nhỏ**: reject request hợp lệ → false positive 503 — cần monitor rejection rate và tune dựa trên load test
+- **Sizing quá lớn**: bulkhead không hiệu quả — slow dependency vẫn ăn quá nhiều resource khi bị saturation
+- **Goroutine rẻ nhưng connection/fd đắt**: tạo 10k goroutines được, nhưng 10k DB connections → OOM → bulkhead protect connections
+- **Global limit ≠ bulkhead**: giới hạn tổng goroutine không cô lập blast radius — 1 dependency vẫn dùng hết quota toàn service
+- **Bulkhead full → không retry**: retry khi bulkhead full = thêm áp lực lên dependency đang chậm → reject fast và trả 503
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                  | Tại sao sai                                                         | Đúng là                                                          |
+| ---------------------------------------- | ------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| "Goroutine rẻ nên Go không cần bulkhead" | Goroutine rẻ nhưng connections, file descriptors, memory không rẻ   | Bulkhead protect connections và fd, không chỉ goroutines         |
+| "Global goroutine limit = bulkhead"      | Global limit không cô lập: 1 dependency dùng hết quota toàn service | Per-dependency semaphore: payment pool riêng, search pool riêng  |
+| "Bulkhead full → retry"                  | Retry khi full = thêm áp lực lên dependency đang chậm               | Reject ngay (503), không retry; caller quyết định có retry không |
+
 - **Interview Pattern:** "Bulkhead + Circuit Breaker — how do they work together?" → Bulkhead limits concurrency, breaker limits failure rate. Bulkhead triggers when dependency is slow, breaker triggers when dependency fails. Both reduce blast radius.
-- **Knowledge Chain:** Goroutine Pool → Semaphore → Per-Dependency Isolation → Circuit Breaker → Graceful Degradation
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Circuit Breaker](#concept-2-circuit-breaker) — breaker và bulkhead thường dùng cùng nhau cho defense-in-depth
+- ➡️ Để hiểu tiếp: [Graceful Degradation](#concept-6-graceful-degradation--health-checks) — khi bulkhead full, cần fallback thay vì hard error
 
 ### Concept 4: Rate Limiting
 
-- **🧠 Memory Hook:** "Rate limiter = nightclub bouncer: Token Bucket lets burst in then slows down, Leaky Bucket maintains steady flow, Sliding Window counts heads precisely"
+> 🧠 **Memory Hook:** "Rate limiter = nightclub bouncer: Token Bucket lets burst in then slows down, Leaky Bucket maintains steady flow, Sliding Window counts heads precisely"
+
 - **Why exists (Level 1):** Protect service from being overwhelmed by too many requests — whether malicious (DDoS) or legitimate (traffic spike).
 - **Why exists (Level 2):** Token bucket: burst-friendly (bucket has N tokens, refills at R/sec). Leaky bucket: constant output rate. Sliding window: precise per-second counting. Distributed rate limiting: Redis + Lua for atomic check-and-increment. Key dimensions: per-user, per-IP, per-endpoint, per-tenant.
 - **Why exists (Level 3):** Fail-open vs fail-closed when Redis fails: public APIs should fail-closed (deny), internal APIs can fail-open (allow). Response: HTTP 429 + Retry-After header + rate limit headers (X-RateLimit-Remaining). In Go: `golang.org/x/time/rate` for local, Redis Lua for distributed.
-- **Common Mistakes:** ❌ "Rate limiting at app level only" → Need at infra level too (CDN/LB/API Gateway). ❌ "Same limits for all endpoints" → Read endpoints can handle more than write. ❌ "Rate limit = security" → It's availability protection; need WAF for security.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Hình dung hầm Thủ Thiêm vào giờ cao điểm. Biển báo "Chỉ 500 xe/giờ được vào hầm". Bảo vệ đứng cổng đếm xe — đủ 500 xe rồi thì chặn lại, dù bạn có vé hay không. Token Bucket giống ví có sẵn 50 token — tiêu hết thì chờ nạp thêm; Sliding Window giống đếm xe trong 1 giờ gần nhất bất kể thời điểm nào bạn hỏi.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+| Algorithm      | Cơ chế                                                                     | Phù hợp                          |
+| -------------- | -------------------------------------------------------------------------- | -------------------------------- |
+| Token Bucket   | Bucket chứa N tokens, nạp R token/giây. Request tiêu 1 token. Hết → reject | Burst OK, API gateway phổ biến   |
+| Leaky Bucket   | Queue đầu vào; xử lý đầu ra tốc độ cố định. Queue đầy → reject             | Smooth output, streaming         |
+| Fixed Window   | Đếm request trong window cố định (VD: 00:00–00:59)                         | Đơn giản nhưng có boundary spike |
+| Sliding Window | Đếm request trong N giây gần nhất tại mọi thời điểm                        | Chính xác nhất, tốn memory hơn   |
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **Fixed Window boundary spike**: cuối window + đầu window tiếp theo có thể cho 2× limit (VD: 100 req lúc 00:59 + 100 req lúc 01:00 = 200 req trong 2 giây)
+- **Redis failure policy**: fail-open (allow all) tốt cho internal APIs; fail-closed (deny all) tốt cho public APIs — cần quyết định trước incident, không phải trong incident
+- **IP-based limiting bị phá bởi NAT**: nhiều user dùng chung IP (corporate proxy) → IP limit không fair → dùng API key/user_id làm key chính
+- **Không phân biệt endpoint cost**: GET /list rẻ hơn POST /generate-report 100× → cần endpoint-specific limits thay vì global limit
+- **Rate limit bypass qua distributed attack**: attacker dùng nhiều IP → cần WAF layer bổ sung; rate limit không phải security tool
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                          | Tại sao sai                                                                | Đúng là                                                          |
+| -------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| "Rate limit ở app level là đủ"   | Infra level (CDN/LB) cần chặn trước khi request đến app, tiết kiệm compute | Rate limit ở nhiều layer: CDN → API Gateway → App                |
+| "Cùng limit cho tất cả endpoint" | Read endpoint rẻ hơn write 10–100×; blanket limit quá strict hoặc quá lỏng | Endpoint-specific limits: GET 1000/min, POST write 100/min       |
+| "Rate limit = security"          | Rate limit bảo vệ availability, không ngăn được attack phức tạp            | Kết hợp WAF cho security, rate limit cho availability protection |
+
 - **Interview Pattern:** "Design distributed rate limiter" → Redis + Lua script for atomic increment + TTL. Sliding window counter: Redis sorted set with timestamp scores. Token bucket: Redis key with token count + last refill timestamp.
-- **Knowledge Chain:** Token Bucket → Sliding Window → Redis Lua → API Gateway → CDN Rate Limiting
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [API Design](./01-api-design.md) — HTTP 429, Retry-After header, rate limit response format
+- ➡️ Để hiểu tiếp: [Backpressure](#concept-7-backpressure) — rate limiting là ingress control; backpressure là internal flow control giữa các component
 
 ### Concept 5: Retry & Timeout
 
-- **🧠 Memory Hook:** "Timeout = alarm clock (don't wait forever), Retry = second chance (try again if failed), together = 'try 3 times but give up after 5 seconds total'"
+> 🧠 **Memory Hook:** "Timeout = alarm clock (don't wait forever), Retry = second chance (try again if failed), together = 'try 3 times but give up after 5 seconds total'"
+
 - **Why exists (Level 1):** Network calls fail transiently. Without timeout → goroutine leaks. Without retry → unnecessary failures on temporary glitches.
 - **Why exists (Level 2):** Exponential backoff + jitter prevents thundering herd. Retry budget: cap total retries at 10% of traffic to prevent amplification. Timeout budget: upstream timeout = sum of downstream timeouts + processing. Go context propagates deadline through call chain — `context.WithTimeout`.
 - **Why exists (Level 3):** Retry amplification: service A retries 3×, calls B which retries 3× = 9 calls to C. Fix: retry only at edge, pass deadline context downstream. Idempotency key required for write retries — without it, retry can cause duplicate operations.
-- **Common Mistakes:** ❌ "Retry everything" → Only retry transient errors (5xx, timeout), not 4xx. ❌ "Fixed delay retry" → Use exponential backoff + jitter. ❌ "No timeout on internal calls" → Every call needs timeout via context. ❌ "Timeout = time.Sleep" → Use context.WithTimeout for proper cancellation.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Gọi điện cho bạn nhưng bận máy. Timeout = bạn đợi tối đa 30 giây, nếu không nghe máy thì cúp. Retry = thử gọi lại lần 2, lần 3. Exponential backoff = lần 1 đợi 1s, lần 2 đợi 2s, lần 3 đợi 4s (không gọi liên tục làm phiền). Jitter = thêm ngẫu nhiên vài giây để không phải 1000 người cùng gọi lại đúng lúc 8:00 AM — tránh quá tải tổng đài.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+attempt 1 ──► [call] ──timeout──► FAIL
+   │
+   └─ wait: base * 2^0 + jitter = 100ms + 30ms
+attempt 2 ──► [call] ──timeout──► FAIL
+   │
+   └─ wait: base * 2^1 + jitter = 200ms + 50ms
+attempt 3 ──► [call] ───────────► SUCCESS ✓
+
+Deadline awareness:
+  remaining = deadline - now
+  if remaining < min_needed → fail-fast ngay, không retry vô ích
+
+Timeout budget chain (total 2000ms):
+  API Gateway  2000ms
+  └─ Service A 1500ms (xử lý + gọi B)
+     └─ Service B 800ms (gọi DB)
+        └─ DB query 300ms
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **Retry amplification**: A(3×) → B(3×) → C = 9 calls; 3 tầng × 3 retries = 27 calls tới leaf service — chỉ retry ở edge, pass deadline context xuống
+- **Non-idempotent write retry**: retry POST /payment không có idempotency key → double charge → luôn dùng idempotency key cho writes
+- **Thundering herd**: 1000 clients timeout đồng thời → cùng retry sau đúng 1 giây → DDoS chính mình → jitter là bắt buộc
+- **Context cancellation bị bỏ qua**: dùng `time.Sleep` thay `select { case <-time.After: case <-ctx.Done(): }` → goroutine tiếp tục chạy dù client đã cancel
+- **Timeout quá conservative**: timeout 10s cho call thường 50ms → goroutine leak khi dependency hang → timeout nên ≈ p99 × 2–3
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                            | Tại sao sai                                                      | Đúng là                                                              |
+| ---------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------- |
+| "Retry mọi lỗi"                    | 4xx là client error, retry vô nghĩa và lãng phí quota            | Chỉ retry 5xx, timeout, network error; không retry 4xx               |
+| "Fixed delay retry"                | Tất cả client retry cùng lúc → thundering herd, DDoS chính mình  | Exponential backoff + jitter: `base × 2^attempt + random(base)`      |
+| "Internal calls không cần timeout" | Goroutine block vô hạn → pool cạn → cascade failure toàn service | Mọi network call phải có timeout qua `context.WithTimeout`           |
+| "Timeout = time.Sleep"             | `time.Sleep` không cancel khi context cancel → goroutine leak    | Dùng `context.WithTimeout` + `select ctx.Done()` để cancel đúng cách |
+
 - **Interview Pattern:** "Combine timeout + retry + breaker safely" → Check deadline remaining → check breaker state → retry transient only → backoff + jitter → stop before deadline exhaustion → breaker counts final result.
-- **Knowledge Chain:** context.WithTimeout → Exponential Backoff → Retry Budget → Idempotency → Circuit Breaker
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Distributed Systems](./03-distributed-systems.md) — network failures, partial failures, transient vs permanent errors
+- ➡️ Để hiểu tiếp: [Circuit Breaker](#concept-2-circuit-breaker) — retry là lớp đầu; khi failures liên tiếp, circuit breaker ngắt để bảo vệ toàn hệ thống
 
 ### Concept 6: Graceful Degradation & Health Checks
 
-- **🧠 Memory Hook:** "Degradation = airplane losing an engine (still flies but slower), Health Checks = instrument panel (liveness = engine running, readiness = cleared for passengers)"
+> 🧠 **Memory Hook:** "Degradation = airplane losing an engine (still flies but slower), Health Checks = instrument panel (liveness = engine running, readiness = cleared for passengers)"
+
 - **Why exists (Level 1):** Under stress, better to serve reduced functionality than crash entirely. K8s needs to know if pod is alive (liveness) and can accept traffic (readiness).
 - **Why exists (Level 2):** Graceful degradation strategies: disable non-critical features (recommendations), return cached data, reduce response richness, priority-based shedding. Liveness: is process alive? Fail → K8s restarts pod. Readiness: can accept traffic? Fail → K8s removes from service endpoints. Deep health check: verify DB + cache connectivity in readiness.
-- **Common Mistakes:** ❌ "Liveness checks dependencies" → If DB is down and liveness fails, K8s restarts pod endlessly. Liveness should only check if process is healthy. ❌ "Degradation = error page" → Should be transparent to user (slightly slower, fewer features). ❌ "Health check = always 200" → Must reflect actual dependency state.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Máy bay mất 1 động cơ (trong 4 động cơ). Phi công không đáp khẩn cấp ngay — máy bay vẫn bay được với 3 động cơ, chỉ chậm hơn và hạn chế hành lý. Liveness = đèn báo "động cơ có chạy không". Readiness = clearance từ kiểm soát không lưu "máy bay sẵn sàng chở khách chưa". Hai thứ khác nhau: động cơ chạy nhưng chưa nạp đủ nhiên liệu thì vẫn chưa ready.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+K8s Probe Flow:
+  Liveness  ──fail──► K8s restarts pod   (process crashed / deadlocked)
+  Readiness ──fail──► K8s removes pod from Service endpoints (no traffic)
+                       (pod stays alive, waiting to recover dependencies)
+
+Graceful Degradation tiers:
+  Normal:    Core + Recommendations + Analytics
+  Stressed:  Core + Recommendations  (analytics disabled)
+  Critical:  Core only               (recommendations off, serve cached)
+  Emergency: Core + stale cache      (DB degraded, circuit breaker open)
+```
+
+| Probe     | Kiểm tra                      | Fail action    | Nên check dependencies?          |
+| --------- | ----------------------------- | -------------- | -------------------------------- |
+| Liveness  | Process alive, không deadlock | Restart pod    | ❌ KHÔNG — gây restart loop      |
+| Readiness | Có thể serve traffic          | Remove khỏi LB | ✅ CÓ — DB, cache, critical deps |
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **Liveness check dependencies → restart loop**: DB down + liveness check DB → pod restart → DB still down → infinite restart → K8s CrashLoopBackOff
+- **Readiness quá strict**: optional dependency fail → readiness fail → ALL instances removed → toàn bộ service down (tệ hơn cả partial outage)
+- **Degradation path không được test**: fallback code chạy lần đầu trong production → có bugs riêng → test fallback paths trong staging như test bình thường
+- **Stale cache không có timestamp**: user nhận data cũ mà không biết → cần metadata `"degraded": true` và `"data_age": "5m"` trong response
+- **Priority shedding cần header propagation**: P0 traffic cần mang priority header xuyên service mesh để không bị shed ở hop cuối
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                   | Tại sao sai                                                           | Đúng là                                                                |
+| ----------------------------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| "Liveness check dependencies (DB, Redis)" | DB down → liveness fail → K8s restart pod liên tục dù process healthy | Liveness chỉ check process health; dependencies thuộc readiness        |
+| "Degradation = hiện trang lỗi"            | User thấy error page = bad UX, không graceful                         | Trả response đầy đủ với feature phụ bị disable; set `"degraded": true` |
+| "Health check luôn trả 200"               | Che giấu real state, LB route vào instance không sẵn sàng             | Health check phản ánh actual dependency state với timeout ngắn         |
+
 - **Interview Pattern:** "Liveness healthy but users get 503 — why?" → Liveness only checks process alive. 503 from: breaker open, readiness failed (removed from LB), dependency down, queue saturated.
-- **Knowledge Chain:** Feature Flags → Graceful Degradation → Priority Shedding → Liveness → Readiness → Deep Health Check
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Bulkhead Isolation](#concept-3-bulkhead-isolation) — khi bulkhead full, degradation quyết định trả gì thay vì hard fail
+- ➡️ Để hiểu tiếp: [Load Balancing Strategies](#concept-1-load-balancing-strategies) — readiness probe kết hợp với LB để route traffic chỉ vào instance đang healthy
 
 ### Concept 7: Backpressure
 
-- **🧠 Memory Hook:** "Backpressure = highway on-ramp meter: when highway is full, traffic light slows cars entering to prevent gridlock"
+> 🧠 **Memory Hook:** "Backpressure = highway on-ramp meter: when highway is full, traffic light slows cars entering to prevent gridlock"
+
 - **Why exists (Level 1):** When consumer can't keep up with producer, need to signal upstream to slow down — otherwise queue grows unbounded → OOM.
 - **Why exists (Level 2):** Go channels naturally create backpressure: buffered channel full → sender blocks. Bounded queue with rejection: `select { case queue <- job: default: reject() }`. Adaptive concurrency limiting: Vegas/AIMD algorithm adjusts concurrency based on latency signals.
 - **Why exists (Level 3):** AIMD (Additive Increase Multiplicative Decrease): increase limit by 1 on success, halve on latency spike. Production: Netflix concurrency-limits library inspired. Metrics: queue depth, rejection rate, p99 latency. Backpressure vs rate limiting: rate limiting is ingress control (per-client), backpressure is internal flow control (per-component).
-- **Common Mistakes:** ❌ "Unbounded channel = flexible" → Unbounded queue = OOM under load. ❌ "Backpressure = drop requests" → First slow down, then reject. ❌ "Same as rate limiting" → Rate limiting is external per-client, backpressure is internal flow control.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Đèn đỏ ở điểm nhập cao tốc Hà Nội giờ cao điểm. Khi cao tốc đang kẹt (consumer chậm), đèn tín hiệu bật đỏ để xe (producer) ở lại đường dẫn — không cho thêm xe vào. Nếu không có đèn này, xe cứ vào → cao tốc nghẽn hoàn toàn → tất cả kẹt. Backpressure = đèn đó: tín hiệu ngược lại cho upstream "hãy chậm lại, tôi chưa xử lý kịp".
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Producer ──► [Bounded Queue: cap=100] ──► Consumer workers
+              │
+              ├── depth < 80%:  accept ✓
+              ├── depth 80–95%: accept + warn (slow down hint)
+              └── depth >= 95%: reject 503 + Retry-After ✗
+
+AIMD Adaptive Concurrency:
+  On success (latency < target): limit += 1        (additive increase)
+  On spike   (latency > target): limit = limit / 2 (multiplicative decrease)
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **Unbounded queue = OOM time bomb**: `make(chan Task)` không bounded → queue tăng tới khi hết RAM → crash toàn service
+- **Backpressure không propagate upstream**: service B reject nhưng service A retry ngay → vẫn overload — cần Retry-After header và caller tôn trọng nó
+- **AIMD oscillation**: limit giảm một nửa quá nhanh → throughput drop đột ngột → cần smooth decrease (VD: giảm 10% thay vì 50%)
+- **Queue depth metric lag**: monitor queue depth với scrape interval 15s → miss burst trong 15 giây → dùng histogram và alert trên rate of change
+- **Drop vs slow down**: drop request (reject 503) nhanh hơn slow down (block producer) nhưng cần caller có retry logic đúng cách
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                         | Tại sao sai                                                                 | Đúng là                                                                  |
+| ------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| "Unbounded channel = linh hoạt" | Queue tăng vô hạn → OOM khi load cao → toàn service crash                   | Dùng bounded channel với capacity rõ ràng; monitor queue depth           |
+| "Backpressure = drop requests"  | Drop ngay là load shedding; backpressure là slow down trước, drop sau       | Signal upstream slow down trước (Retry-After); drop chỉ khi queue đầy    |
+| "Backpressure = Rate Limiting"  | Rate limiting là external per-client; backpressure là internal flow control | Dùng cả hai: rate limit ở ingress, backpressure giữa internal components |
+
 - **Interview Pattern:** "How do you handle producer faster than consumer in Go?" → Bounded channel as queue. Full → reject or apply backpressure (return 503 with Retry-After). Monitor queue depth. Adaptive concurrency if load varies.
-- **Knowledge Chain:** Bounded Queue → Channel Backpressure → Adaptive Concurrency → AIMD → Load Shedding
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Rate Limiting](#concept-4-rate-limiting) — rate limiting là ingress; backpressure là internal — hai layer bổ sung nhau
+- ➡️ Để hiểu tiếp: [Graceful Degradation](#concept-6-graceful-degradation--health-checks) — khi backpressure signal, degradation quyết định serve gì với capacity còn lại
 
 ---
 
@@ -1688,17 +1977,15 @@ Adaptive limit:
 
 ## Self-Check / Tự Kiểm Tra
 
-> **Retrieval Practice / Thực Hành Truy Xuất:** Đóng tài liệu, trả lời từ trí nhớ trước khi kiểm tra đáp án.
+| #   | Loại           | Câu hỏi                                                                                                                        |
+| --- | -------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | 🔍 Retrieval   | Vẽ Circuit Breaker state machine: 3 states, tên transitions, điều kiện trip và reset về Closed                                 |
+| 2   | 🎨 Visual      | Vẽ sơ đồ Timeout + Retry + Circuit Breaker kết hợp an toàn — thứ tự kiểm tra từng bước trước khi gọi                           |
+| 3   | 🛠️ Application | Thiết kế distributed rate limiter cho payment API: chọn algorithm, storage backend, fail-open/closed policy và response format |
+| 4   | 🐛 Debug       | Service A gọi B, B chậm → A goroutine tăng đột biến → OOM. Nguyên nhân và cách fix với Bulkhead + Timeout + Breaker            |
+| 5   | 🎓 Teach       | Giải thích Backpressure cho junior engineer chưa biết distributed systems, dùng ví dụ đời thường Việt Nam                      |
 
-| #   | Question                                                        | Key Points                                                                                                                                                |
-| --- | --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Vẽ Circuit Breaker state machine (3 states + transitions)       | Closed(counting)→Open(reject)→Half-Open(probe). Trip on threshold. Close on success probe. Re-open on fail probe                                          |
-| 2   | Timeout + Retry + Breaker — thứ tự kết hợp an toàn?             | Check deadline→check breaker→execute with timeout→on fail: breaker counts→retry with backoff+jitter→stop before deadline                                  |
-| 3   | Token Bucket vs Sliding Window — khi nào dùng cái nào?          | Token bucket: burst-friendly, simple. Sliding window: precise per-second, no burst. Distributed: Redis Lua for both                                       |
-| 4   | Tại sao Go service vẫn cần Bulkhead dù goroutine rẻ?            | Goroutines cheap but connections/fd/memory not. Slow dependency consumes all → cascade. Semaphore per-dependency limits blast radius                      |
-| 5   | Liveness OK nhưng user 503 — debug thế nào?                     | Liveness only checks process alive. 503 from: readiness failed (removed from LB), breaker open, dependency down, queue saturated, rate limited            |
-| 6   | Retry amplification: A→B→C đều retry 3× — tổng bao nhiêu calls? | A:3 × B:3 × C:3 = 27 calls to C. Fix: retry at edge only, pass deadline context, retry budget (max 10% traffic)                                           |
-| 7   | Backpressure vs Rate Limiting — khác nhau thế nào?              | Rate limiting: external per-client ingress control. Backpressure: internal flow control between components. Both prevent overload but at different layers |
+💬 **Feynman Prompt:** Hãy giải thích tại sao cần kết hợp Circuit Breaker + Bulkhead + Timeout + Retry thành một "defense chain" — và nếu bỏ đi bất kỳ một pattern nào, hệ thống sẽ fail như thế nào trong Grab payment scenario từ đầu file này.
 
 ### 📅 Spaced Repetition Schedule / Lịch Ôn Tập
 

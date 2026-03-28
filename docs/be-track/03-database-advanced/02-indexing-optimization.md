@@ -67,101 +67,395 @@ Bài này cover toàn diện indexing & query optimization — từ B+ Tree fund
 
 ### Concept 1: Index Fundamentals
 
-- **Memory Hook / Móc Nhớ:** "Index = sách có mục lục vs đọc từ trang 1" — O(log n) vs O(n).
+> 🧠 **Memory Hook:** "Index = sách có mục lục vs đọc từ trang 1" — O(log n) vs O(n).
+
 - **Why exists:**
   - Level 1: Full table scan trên 10M rows mất vài giây — index lookup mất milliseconds
   - Level 2: B+ Tree balanced → height ~3-4 cho millions of rows → 3-4 disk reads max
   - Level 3: Trade-off: mỗi index thêm = write amplification (INSERT/UPDATE/DELETE phải maintain tất cả indexes) → over-indexing kills write performance
-- **Common Mistakes:**
-  - Index mọi column "phòng hờ" → write-heavy table chậm 5x
-  - Quên check index usage → unused index vẫn tốn write cost
-  - Low selectivity index (boolean column) → optimizer chọn seq scan
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Hãy tưởng tượng bạn có một cuốn sách giáo khoa dày 1000 trang. Không có mục lục, bạn phải lật từng trang để tìm chủ đề "quang hợp". Có mục lục, bạn tra ngay → trang 347. Database index hoạt động y hệt: thay vì đọc toàn bộ bảng, bạn tra "mục lục" → nhảy thẳng đến dữ liệu cần tìm. Nhưng mỗi lần thêm sách mới vào thư viện, bạn cũng phải cập nhật mục lục — đó là write cost.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+1. Khi tạo `CREATE INDEX`, database xây dựng B+ Tree riêng biệt từ values của column đó
+2. B+ Tree sắp xếp các giá trị theo thứ tự → có thể binary search
+3. Query với `WHERE email = ?` → database traverse B+ Tree từ root → internal nodes → leaf (3-4 bước)
+4. Leaf node chứa pointer → nhảy thẳng đến row trong bảng (heap)
+5. Thay vì đọc 10M rows, chỉ đọc 3-4 pages
+
+```
+Full Scan:  Row1 → Row2 → ... → Row10,000,000  (O(N), chậm)
+Index:      Root → Node → Leaf → pointer → Row  (O(log N), nhanh)
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- Index trên boolean column (gender, status) thường bị bỏ qua — optimizer chọn seq scan khi >20-30% rows match vì random I/O chậm hơn sequential I/O ở đó
+- Statistics stale: nếu `ANALYZE` chưa chạy sau bulk insert → planner underestimate rows → chọn wrong execution plan
+- Index không giúp `LIKE '%abc%'` (leading wildcard) — B+ Tree chỉ hỗ trợ prefix match `LIKE 'abc%'`
+- Quá nhiều indexes (>6-8 trên 1 bảng) → mỗi INSERT/UPDATE/DELETE phải update tất cả → write-heavy tables bị ảnh hưởng nghiêm trọng
+- Sau `DROP INDEX`, query tự động fallback về seq scan — không cần sửa application code
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                      | Tại sao sai                                                                           | Đúng là                                                                                           |
+| -------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Index mọi column "phòng hờ"                  | Mỗi index làm chậm write — 5 indexes = 6 writes per INSERT; write-heavy table chậm 5x | Chỉ index column xuất hiện trong WHERE/JOIN/ORDER BY của các query thực tế                        |
+| Quên kiểm tra index có được dùng không       | Unused index vẫn tốn chi phí write và storage — không bao giờ "free"                  | Dùng `pg_stat_user_indexes` / `sys.schema_unused_indexes` định kỳ để tìm và drop index không dùng |
+| Tạo index trên cột low selectivity (boolean) | Optimizer bỏ qua index khi >20-30% rows match vì seq scan nhanh hơn                   | Dùng partial index hoặc đặt column đó sau high-cardinality column trong composite index           |
+
 - **Interview Pattern:** "When to index?" → Signal: mention selectivity, write trade-off, EXPLAIN verification — không chỉ "when WHERE clause uses it"
-- **Knowledge Chain:** Index Fundamentals → B+ Tree Structure → Composite Index Design → EXPLAIN verification
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [SQL Fundamentals](./01-sql-fundamentals.md)
+- ➡️ Để hiểu tiếp: [B+ Tree & Clustered Index](#concept-2-b-tree--clustered-index)
+
+---
 
 ### Concept 2: B+ Tree & Clustered Index
 
-- **Memory Hook / Móc Nhớ:** "InnoDB PK = data sorted on disk (clustered). PG = heap + separate indexes (non-clustered)."
+> 🧠 **Memory Hook:** "InnoDB PK = data sorted on disk (clustered). PG = heap + separate indexes (non-clustered)."
+
 - **Why exists:**
   - Level 1: Clustered index = data physically sorted by PK → range scans trên PK cực nhanh (sequential I/O)
   - Level 2: Non-clustered = separate structure → secondary index lookup = 2 B-tree traversals (index → PK → clustered index/heap)
   - Level 3: UUID as PK trong InnoDB → random page splits (không sequential) → use ULID hoặc ordered UUID. PG: BRIN index cho naturally ordered data (timestamps)
-- **Common Mistakes:**
-  - UUID PK trong InnoDB không biết random insert → page split hell
-  - Quên covering index → always double lookup
-  - Assume PostgreSQL có clustered index like InnoDB
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Hãy tưởng tượng danh bạ điện thoại ở bưu điện. **Clustered index** giống danh bạ chính: tên và số điện thoại nằm cùng trang, sắp xếp theo tên — tra tên ra luôn số điện thoại. **Non-clustered index** giống bảng tra cứu riêng sắp xếp theo nghề nghiệp: tra "bác sĩ" → thấy tên "Nguyễn Văn A" → phải lật lại danh bạ chính tìm số điện thoại. Non-clustered = 2 lần tra sách!
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+InnoDB (Clustered Primary Key):
+  Leaf của PK index chứa FULL ROW DATA
+    → Tra PK=42 → lấy ngay full row
+  Leaf của secondary index chứa [email | PK=42]
+    → Tra email → lấy PK → tra PK index lần 2 (double lookup)
+
+PostgreSQL (All Non-Clustered, Heap Table):
+  Leaf của mọi index chứa [key | ctid (vị trí vật lý trong heap)]
+    → Tra email → lấy ctid → nhảy thẳng đến heap (1 lookup)
+```
+
+| Database   | Primary Index               | Secondary Index           | Số lần lookup |
+| ---------- | --------------------------- | ------------------------- | ------------- |
+| InnoDB     | Clustered (leaf = full row) | Non-clustered (leaf = PK) | 2 bước        |
+| PostgreSQL | Non-clustered (heap)        | Non-clustered (ctid)      | 1 bước        |
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- UUID v4 làm PK trong InnoDB gây "page split hell": inserts ngẫu nhiên phá vỡ B+ Tree balance → index fragmentation → dùng ULID hoặc UUID v7 (time-ordered)
+- InnoDB bảng không có PK → tự tạo hidden 6-byte rowid làm clustered index — không thể tận dụng từ application
+- Covering index quan trọng hơn trong InnoDB (tránh 2nd B-tree traversal) so với PostgreSQL (chỉ 1 lookup anyway)
+- `CLUSTER` command trong PostgreSQL physically sort bảng theo index — nhưng không auto-maintain, phải chạy lại sau bulk updates và nó lock bảng
+- Secondary index của InnoDB to hơn PostgreSQL vì mỗi leaf entry chứa full PK value (không chỉ pointer)
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                               | Tại sao sai                                                                                        | Đúng là                                                                                                            |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Dùng UUID v4 làm PK trong InnoDB                      | Random inserts vào random pages → page splits liên tục → index fragmentation → scans chậm dần      | Dùng ULID hoặc UUID v7 (time-ordered) để giữ insert order, hoặc dùng BIGSERIAL                                     |
+| Không tạo covering index cho hot queries trong InnoDB | Mỗi secondary index lookup = 2 B-tree traversals — với millions queries/day, overhead lớn          | Thêm `INCLUDE (col1, col2)` vào index để tránh double lookup cho top queries                                       |
+| Nghĩ PostgreSQL có clustered index như InnoDB         | PostgreSQL dùng heap table — tất cả indexes đều non-clustered, CLUSTER command không auto-maintain | Hiểu rõ: PostgreSQL secondary index lookup = 1 bước (ctid → heap), không cần covering index vì lý do double lookup |
+
 - **Interview Pattern:** "Clustered vs non-clustered?" → Signal: explain physical storage difference, double lookup, covering index solution
-- **Knowledge Chain:** B+ Tree → Clustered Index (InnoDB) → Secondary Index overhead → Covering Index optimization
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Index Fundamentals](#concept-1-index-fundamentals)
+- ➡️ Để hiểu tiếp: [Composite & Covering Index](#concept-4-composite--covering-index)
+
+---
 
 ### Concept 3: Index Types
 
-- **Memory Hook / Móc Nhớ:** "B-tree = Swiss Army knife, Hash = exact match only, GIN = full-text/array, BRIN = sorted data."
+> 🧠 **Memory Hook:** "B-tree = Swiss Army knife, Hash = exact match only, GIN = full-text/array, BRIN = sorted data."
+
 - **Why exists:**
   - Level 1: Khác nhau workload cần khác nhau index — range queries ≠ equality ≠ full-text search
   - Level 2: GIN inverted index cho JSONB `@>`, array `&&`, tsvector → không thể dùng B-tree cho these operations
   - Level 3: BRIN = block range index, tiny footprint, perfect cho timestamp columns inserted in order — 1000x smaller than B-tree
-- **Common Mistakes:**
-  - Hash index cho range query → không work (only equality)
-  - GIN index trên small table → overhead > benefit
-  - Quên BRIN cho time-series data → unnecessary B-tree bloat
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Hộp công cụ của thợ mộc: bạn có búa, tua vít, cưa, và thước dây. Dùng búa vặn ốc vít thì hỏng cả ốc lẫn gỗ. Index types cũng vậy: B-tree như thước dây đa năng (dùng được cho mọi việc), Hash như cân tiểu ly (chỉ so sánh bằng nhau, không biết lớn hơn hay nhỏ hơn), GIN như máy tìm kiếm (biết document nào chứa từ khóa nào), BRIN như sổ ghi nhiệt độ (biết min/max mỗi tuần mà không cần ghi từng ngày).
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+| Index Type | Cấu trúc nội bộ         | Hỗ trợ queries                        | Kích thước       | Dùng khi nào                            |
+| ---------- | ----------------------- | ------------------------------------- | ---------------- | --------------------------------------- |
+| B-tree     | Cây cân bằng            | =, <, >, BETWEEN, LIKE 'x%', ORDER BY | Medium           | Mọi query thông thường — default choice |
+| Hash       | Bảng băm                | Chỉ = (O(1))                          | Medium           | Point lookup cực nhanh, không cần range |
+| GIN        | Inverted index          | @>, &&, tsvector, JSONB containment   | Lớn              | JSONB queries, arrays, full-text search |
+| GiST       | Generalized tree        | Geometry, ranges, nearest-neighbor    | Medium           | PostGIS, range types, fuzzy search      |
+| BRIN       | Min/max per block range | Range trên ordered data               | Cực nhỏ (~0.01%) | Time-series, auto-increment columns     |
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- Hash index không hỗ trợ range queries — `WHERE id > 100` sẽ không dùng Hash index, fallback về seq scan
+- GIN index có "pending list" buffer để batch writes — định kỳ cần `vacuum` hoặc `gin_clean_pending_list()` để flush
+- BRIN chỉ hiệu quả nếu dữ liệu được insert theo thứ tự tự nhiên của column — nếu insert ngẫu nhiên, BRIN gần như vô dụng
+- PostgreSQL có thể combine nhiều B-tree indexes với Bitmap AND/OR — đôi khi 2 single-column indexes hiệu quả hơn 1 composite index
+- GIN reads nhanh, GIN writes chậm (phải update inverted lists) — cân nhắc `fastupdate = off` cho consistency
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                                                      | Tại sao sai                                                                                     | Đúng là                                                                                        |
+| ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Dùng Hash index cho range query                                              | Hash function không preserve ordering — `hash(1) < hash(2)` không đúng — range scan về seq scan | Dùng B-tree index cho mọi range condition (>, <, BETWEEN, ORDER BY)                            |
+| Tạo GIN index trên bảng nhỏ (<vài nghìn rows)                                | Overhead build và maintain GIN > benefit — B-tree nhanh hơn hoặc seq scan đủ                    | Chỉ dùng GIN khi bảng đủ lớn và query pattern thực sự là JSONB containment hoặc full-text      |
+| Dùng B-tree cho timestamp column được insert tuần tự trong bảng hàng trăm GB | B-tree index chiếm 10-30% table size — 100GB table = 10-30GB index                              | Dùng BRIN index: chỉ ~0.01% table size, hiệu quả cho range queries trên naturally-ordered data |
+
 - **Interview Pattern:** "Which index type for X?" → Signal: match workload to index type with reasoning
-- **Knowledge Chain:** Index Types → Workload Analysis → Storage Trade-offs → Monitoring Index Size
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [B+ Tree & Clustered Index](#concept-2-b-tree--clustered-index)
+- ➡️ Để hiểu tiếp: [Composite & Covering Index](#concept-4-composite--covering-index)
+
+---
 
 ### Concept 4: Composite & Covering Index
 
-- **Memory Hook / Móc Nhớ:** "Leftmost prefix = phone book sorted (lastname, firstname)" — search by lastname OK, firstname alone NOT OK.
+> 🧠 **Memory Hook:** "Leftmost prefix = phone book sorted (lastname, firstname)" — search by lastname OK, firstname alone NOT OK.
+
 - **Why exists:**
   - Level 1: Multi-column queries need multi-column indexes — single-column indexes combined = bitmap scan (slower)
   - Level 2: Column order matters: equality columns first, then range column last (ERS: Equal-Range-Sort rule)
   - Level 3: Covering index (INCLUDE) = all needed columns in index → Index Only Scan, zero heap access → fastest possible read
-- **Common Mistakes:**
-  - Wrong column order → index unusable for common queries
-  - Range column before equality → index partial use only
-  - Too many columns in covering index → write amplification, index bloat
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Danh bạ điện thoại Hà Nội sắp xếp theo (Quận, Họ tên). Bạn có thể tìm nhanh "tất cả người ở Quận Hoàn Kiếm" ✅ hoặc "Nguyễn Văn A ở Quận Đống Đa" ✅. Nhưng không thể tìm nhanh "tất cả người họ Nguyễn" ❌ — vì danh bạ sắp xếp theo Quận trước, không theo họ tên. INDEX(quận, họ_tên) = danh bạ này. Leftmost prefix = bạn phải biết Quận trước mới tra nhanh được.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+ERS Rule — thứ tự cột trong composite index:
+
+```
+Bước 1: Cột EQUALITY (=) đặt trước nhất
+Bước 2: Cột RANGE (>, <, BETWEEN) tiếp theo
+Bước 3: Cột SORT (ORDER BY) cuối cùng
+
+Query:  WHERE status = 'active'       ← Equality (E)
+        AND created_at > '2024-01-01' ← Range (R)
+        ORDER BY amount DESC          ← Sort (S)
+
+→ Optimal index: INDEX(status, created_at, amount)
+```
+
+| Query với INDEX(a, b, c) | Dùng được? | Lý do                                   |
+| ------------------------ | ---------- | --------------------------------------- |
+| WHERE a = 1              | ✅         | Leftmost prefix (a)                     |
+| WHERE a = 1 AND b = 2    | ✅         | Prefix (a, b)                           |
+| WHERE b = 2              | ❌         | Thiếu cột trái nhất (a)                 |
+| WHERE a = 1 AND c = 3    | ⚠️ Partial | Dùng (a), bỏ c vì thiếu b liên tục      |
+| WHERE a > 1 AND b = 2    | ⚠️ Partial | Range trên a "ngắt" — b không dùng được |
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- Range condition "ngắt" index: `WHERE a = 1 AND b > 5 AND c = 3` — c không được dùng bởi index dù có trong index
+- Low-cardinality column vẫn hữu ích là cột đầu trong composite index nếu query luôn filter theo nó (ví dụ: status + created_at)
+- Covering index với nhiều INCLUDE columns → index size lớn hơn → cache pressure cao hơn → cân nhắc chỉ INCLUDE cho top queries
+- `SELECT *` luôn phá covering index — optimizer phải về heap dù có index bao gồm mọi cột cần thiết
+- PostgreSQL `INCLUDE` syntax tốt hơn thêm column vào sort key — INCLUDE columns không nằm trong internal nodes, index nhỏ hơn
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                                                                         | Tại sao sai                                                                    | Đúng là                                                                                |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| Đặt range column trước equality — INDEX(created_at, status) cho WHERE status=? AND created_at>? | Chỉ dùng created_at, status không tận dụng được index → partial use            | Equality trước: INDEX(status, created_at) — ERS rule: E trước R trước S                |
+| Không biết leftmost prefix rule — tạo INDEX(b, c) rồi expect query WHERE a=1 AND b=2 dùng được  | B+ Tree sorted theo (b, c) — không biết gì về a — query phải scan toàn bộ      | Hiểu rõ: index chỉ dùng được bắt đầu từ cột trái nhất; thiếu cột đầu = không dùng được |
+| Thêm quá nhiều cột vào INCLUDE cho covering index                                               | Index size tăng → buffer pool pressure → cache hit ratio giảm → overall slower | Chỉ INCLUDE columns của 3-5 hot queries quan trọng nhất, không INCLUDE tất cả          |
+
 - **Interview Pattern:** "Design composite index for query X" → Signal: explain ERS rule, leftmost prefix, covering index option
-- **Knowledge Chain:** Composite Index → EXPLAIN verification → Covering Index → Index-Only Scan → Query Plan optimization
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Index Types](#concept-3-index-types)
+- ➡️ Để hiểu tiếp: [EXPLAIN / EXPLAIN ANALYZE](#concept-5-explain--explain-analyze)
+
+---
 
 ### Concept 5: EXPLAIN / EXPLAIN ANALYZE
 
-- **Memory Hook / Móc Nhớ:** "EXPLAIN = doctor's prediction, EXPLAIN ANALYZE = actual blood test results."
+> 🧠 **Memory Hook:** "EXPLAIN = doctor's prediction, EXPLAIN ANALYZE = actual blood test results."
+
 - **Why exists:**
   - Level 1: Không đoán query slow ở đâu — EXPLAIN shows exactly what database will do
   - Level 2: Estimated vs actual rows mismatch → stale statistics → run ANALYZE → optimizer re-estimates
   - Level 3: Plan nodes hierarchy: Seq Scan → Index Scan → Index Only Scan (best). Join types: Nested Loop (small), Hash Join (medium), Merge Join (large sorted)
-- **Common Mistakes:**
-  - EXPLAIN without ANALYZE → only estimates, not reality
-  - Ignore "Rows Removed by Filter" → index not selective enough
-  - Run EXPLAIN ANALYZE on production with mutating query → actually modifies data! Wrap in transaction + rollback
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Bạn đến bệnh viện khám. Bác sĩ nhìn triệu chứng và **dự đoán** bạn bị cảm cúm (= EXPLAIN: chỉ ước tính dựa trên statistics). Sau đó bác sĩ cho làm **xét nghiệm máu thật sự** — điện tâm đồ, kết quả sau 30 phút (= EXPLAIN ANALYZE: thực thi query thật và đo lường chính xác). Dự đoán có thể sai hoàn toàn; xét nghiệm mới cho kết quả tin cậy để ra quyết định điều trị.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Cách đọc EXPLAIN ANALYZE output:
+
+Seq Scan on orders  (cost=0.00..25432.00 rows=15 width=128)
+                     (actual time=142.5..312.8 rows=12 loops=1)
+  Filter: (customer_id = 42 AND status = 'pending')
+  Rows Removed by Filter: 999988
+                  │
+                  └─ Scan 1,000,000 rows, giữ lại 12 → rất kém!
+
+Đọc format: (startup_cost..total_cost  estimated_rows  actual_time  actual_rows)
+```
+
+| Node            | Ý nghĩa                          | Tốt hay xấu?                             |
+| --------------- | -------------------------------- | ---------------------------------------- |
+| Seq Scan        | Full table scan                  | ❌ Xấu với bảng lớn                      |
+| Index Scan      | Dùng index → còn phải fetch heap | ✅ Tốt                                   |
+| Index Only Scan | Covering index — không cần heap  | ✅✅ Tốt nhất                            |
+| Nested Loop     | Loop join — O(N×M) worst case    | ⚠️ Chỉ tốt khi inner table nhỏ + indexed |
+| Hash Join       | Build hash table → probe         | ✅ Tốt cho medium tables, equality join  |
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **NGUY HIỂM trên production:** `EXPLAIN ANALYZE DELETE/UPDATE/INSERT` thực sự sửa data — luôn wrap trong `BEGIN; EXPLAIN ANALYZE ...; ROLLBACK;`
+- Estimated rows khác xa actual rows → statistics stale → chạy `ANALYZE table_name` để refresh, sau đó re-EXPLAIN
+- Planner có thể cố ý chọn Seq Scan dù có index khi estimated return >5-10% rows (seq scan = sequential I/O, nhanh hơn random I/O)
+- `EXPLAIN (ANALYZE, BUFFERS)` cho thấy cache hit/miss per node — quan trọng khi debug buffer pool issues
+- `auto_explain` extension tự động log execution plan của slow queries vào PostgreSQL logs — enable trong production
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                                           | Tại sao sai                                                                                    | Đúng là                                                                                     |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Chạy EXPLAIN (không ANALYZE) để debug performance thực tế         | Chỉ cho estimated plan — planner có thể ước tính sai hoàn toàn, actual rows rất khác estimated | Luôn dùng EXPLAIN ANALYZE để thấy actual time, actual rows, và Rows Removed by Filter       |
+| Bỏ qua "Rows Removed by Filter"                                   | Con số lớn (ví dụ: 999,988 removed để giữ 12) = index không dùng hoặc không selective          | Nếu Rows Removed > 10x rows returned → cần index tốt hơn hoặc index đang không được sử dụng |
+| Chạy EXPLAIN ANALYZE với mutating query trực tiếp trên production | DELETE/UPDATE/INSERT trong EXPLAIN ANALYZE chạy thật — data bị thay đổi vĩnh viễn              | Wrap trong transaction: `BEGIN; EXPLAIN ANALYZE DELETE ...; ROLLBACK;`                      |
+
 - **Interview Pattern:** "Walk through EXPLAIN output" → Signal: identify Seq Scan as red flag, check actual vs estimated, suggest specific fix
-- **Knowledge Chain:** EXPLAIN → Identify bottleneck → Design index → Re-EXPLAIN verify → Monitor pg_stat_statements
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Composite & Covering Index](#concept-4-composite--covering-index)
+- ➡️ Để hiểu tiếp: [Query Optimization Patterns](#concept-6-query-optimization-patterns)
+
+---
 
 ### Concept 6: Query Optimization Patterns
 
-- **Memory Hook / Móc Nhớ:** "N+1 = hỏi từng người 1 thay vì hỏi cả lớp. OFFSET = đếm từ đầu mỗi lần."
+> 🧠 **Memory Hook:** "N+1 = hỏi từng người 1 thay vì hỏi cả lớp. OFFSET = đếm từ đầu mỗi lần."
+
 - **Why exists:**
   - Level 1: Application-level patterns (N+1, OFFSET) cause more damage than missing indexes
   - Level 2: Function-on-column (WHERE YEAR(x)=2024) prevents index usage → rewrite as range condition
   - Level 3: Keyset pagination = cursor-based → O(log N) constant regardless of page number vs OFFSET O(N)
-- **Common Mistakes:**
-  - ORM hide N+1 → only visible in query logs or APM
-  - Correlated subquery thay vì JOIN → O(n²) execution
-  - `SELECT *` prevents covering index optimization
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+N+1 giống giáo viên gọi từng học sinh lên bảng hỏi điểm: "Bạn An điểm mấy? Bạn Bình điểm mấy?..." — 30 chuyến đi lên bảng. Thay vì thế, phát một tờ giấy cho cả lớp điền vào — 1 lần là xong. OFFSET giống bảo học sinh xếp hàng rồi đếm: "Bỏ qua 10.000 bạn đầu hàng, lấy 20 bạn tiếp theo" — phải đếm 10.000 người mỗi lần dù chỉ cần 20!
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+N+1 Pattern (BAD):
+  Query 1:    SELECT * FROM users LIMIT 100         → 100 users
+  Query 2-101: SELECT * FROM orders WHERE user_id = {id}  → 100 queries
+  Tổng: 101 queries, ~200ms network overhead
+
+Batch Pattern (GOOD):
+  Query 1:  SELECT * FROM users LIMIT 100                         → 100 users
+  Query 2:  SELECT * FROM orders WHERE user_id IN (1,2,...,100)   → 1 query
+  Tổng: 2 queries, ~10ms
+
+OFFSET vs Keyset Pagination:
+  OFFSET 100000 LIMIT 20:
+    → Scan 100,020 rows → bỏ 100,000 → trả về 20   ❌ O(OFFSET)
+
+  WHERE id > 100000 LIMIT 20:
+    → Index scan → nhảy thẳng đến id=100001 → trả về 20   ✅ O(log N)
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- N+1 thường vô hình trong development (ít data, nhanh) — chỉ lộ ra trên production khi volume lớn và database round trips nhiều
+- Keyset pagination không hỗ trợ nhảy đến trang tùy ý (page 50 of 100) — chỉ prev/next navigation
+- `IN (...)` clause với quá nhiều giá trị (>1000-10000 tùy DB) có thể chậm — chia batch hoặc dùng temp table JOIN
+- Function on column là "index killer": `WHERE LOWER(email) = ?`, `WHERE DATE(created_at) = ?` — giải pháp: functional index hoặc store normalized value
+- `SELECT *` trong N+1 queries đặc biệt nguy hiểm — fetch full row (bao gồm BLOB, TEXT lớn) chỉ để dùng 1-2 cột
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                           | Tại sao sai                                                                                           | Đúng là                                                                                                        |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Không phát hiện N+1 trong ORM                     | ORM lazy loading ẩn N+1 — trông như 1 dòng code nhưng sinh ra 100 queries; chỉ thấy khi bật query log | Enable query logging trong dev; nếu thấy >10 queries cùng pattern → N+1; dùng eager loading (Preload/includes) |
+| Dùng OFFSET cho deep pagination (trang 500, 1000) | OFFSET 10,000 = scan 10,020 rows rồi bỏ 10,000 — O(N) với N là offset value                           | Keyset pagination: `WHERE id > :last_seen_id ORDER BY id LIMIT 20` — O(log N) bất kể trang thứ bao nhiêu       |
+| Dùng correlated subquery thay vì JOIN             | Database thực thi subquery cho mỗi row của outer query → O(n²) → chậm theo bậc hai                    | Viết lại thành JOIN + GROUP BY — modern optimizer (PG 12+, MySQL 8) xử lý tốt hơn và có thể flatten            |
+
 - **Interview Pattern:** "Optimize this slow query" → Signal: check N+1 first, then EXPLAIN, then index design
-- **Knowledge Chain:** N+1 Detection → Eager Loading → Pagination Strategy → EXPLAIN-driven optimization
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [EXPLAIN / EXPLAIN ANALYZE](#concept-5-explain--explain-analyze)
+- ➡️ Để hiểu tiếp: [Partitioning & Monitoring](#concept-7-partitioning--monitoring)
+
+---
 
 ### Concept 7: Partitioning & Monitoring
 
-- **Memory Hook / Móc Nhớ:** "Partition = chia tủ sách theo năm, chỉ mở đúng tủ cần tìm."
+> 🧠 **Memory Hook:** "Partition = chia tủ sách theo năm, chỉ mở đúng tủ cần tìm."
+
 - **Why exists:**
   - Level 1: Single table 500M rows → even with index, vacuum/maintenance painful → partition by range/list/hash
   - Level 2: Partition pruning → optimizer chỉ scan relevant partitions → dramatic speedup cho time-range queries
   - Level 3: DROP partition = instant vs DELETE 500M rows. Write optimization: batch insert, async commit, minimal indexes per partition
-- **Common Mistakes:**
-  - Partition key not in WHERE → scan all partitions (worse than no partition)
-  - Too many partitions (daily for 10 years = 3650) → planning overhead
-  - Forget monitoring: pg_stat_statements, index bloat, partition size balance
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Kho lưu trữ hồ sơ của ngân hàng có hàng triệu tài liệu. Thay vì bỏ tất cả vào một phòng khổng lồ, nhân viên chia thành các tủ theo năm: "Tủ 2022", "Tủ 2023", "Tủ 2024". Khi cần tìm hóa đơn tháng 6/2024, nhân viên chỉ mở tủ 2024 — bỏ qua hàng triệu tài liệu năm cũ. Đó là **partition pruning**. Và muốn xóa toàn bộ hồ sơ năm 2020? Đốt nguyên tủ 2020 — không cần lật từng tờ!
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Bảng orders (500M rows) → PARTITION BY RANGE (created_at):
+
+  orders_2022 (100M)    orders_2023 (150M)    orders_2024_q2 (50M)
+       │                      │                       │
+       └──── Partition pruning: query WHERE created_at = '2024-05-15'
+             → Chỉ scan orders_2024_q2 (50M rows)
+             → Skip 450M rows trong 2 partitions kia!
+```
+
+| Partition Type | Key điển hình            | Dùng khi                                   |
+| -------------- | ------------------------ | ------------------------------------------ |
+| RANGE          | Date, ID ranges          | Time-series, data archiving, log retention |
+| LIST           | Region, category, status | Multi-tenant, geographic data split        |
+| HASH           | User ID, order ID        | Even distribution khi không có natural key |
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- Partition key PHẢI có trong WHERE clause — nếu không, PostgreSQL scan tất cả partitions (worse than unpartitioned!)
+- Quá nhiều partitions (>1000) → planning overhead tăng đáng kể mỗi query — tránh partition daily cho nhiều năm (10 năm × 365 = 3650 partitions)
+- Foreign key constraints không hoạt động tốt với partitioned tables trong một số database versions — check docs
+- `DROP PARTITION` instant nhưng `DETACH PARTITION` an toàn hơn cho production (non-blocking, có thể archive trước khi drop)
+- Partition pruning chỉ hoạt động với static conditions hoặc runtime-evaluable conditions — function trên partition key (`WHERE YEAR(created_at) = 2024`) có thể disable pruning
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                                | Tại sao sai                                                                               | Đúng là                                                                                         |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Partition key không có trong WHERE clause khi query    | Optimizer scan tất cả partitions — overhead lớn hơn bảng không partition                  | Luôn đảm bảo WHERE clause chứa partition key; nếu không thể, partition không giúp gì            |
+| Tạo quá nhiều partitions nhỏ (daily cho 10 năm = 3650) | Planning overhead cho 3650 partitions mỗi query — planner phải check tất cả               | Dùng monthly/quarterly partitions — balance giữa granularity và overhead                        |
+| Không thiết lập monitoring sau khi partition           | Partition lệch size, index bloat trong từng partition, autovacuum lag trên partitions lớn | Định kỳ check partition sizes, pg_stat_statements top slow queries, và autovacuum per-partition |
+
 - **Interview Pattern:** "Design for 500M row table" → Signal: partition strategy + index per partition + monitoring plan
-- **Knowledge Chain:** Partitioning → Write Optimization → Monitoring → Capacity Planning → Production Operations
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Query Optimization Patterns](#concept-6-query-optimization-patterns)
+- ➡️ Để hiểu tiếp: [NoSQL & Redis](./03-nosql-redis-mongo.md)
 
 ---
 
@@ -1789,17 +2083,17 @@ Vietnamese explanation: `cost` là estimated (planner dùng statistics), `actual
 
 ## ✅ Self-Check / Tự Kiểm Tra
 
-Trả lời không nhìn tài liệu. Nếu < 5/7 đúng → đọc lại phần tương ứng.
+Trả lời không nhìn tài liệu. Nếu < 4/5 đúng → đọc lại phần tương ứng.
 
-| #   | Question                                                        | Key Points                                                       |
-| --- | --------------------------------------------------------------- | ---------------------------------------------------------------- |
-| 1   | B+ Tree tại sao nhanh hơn seq scan?                             | Balanced, height 3-4, O(log n), leaf nodes linked for range scan |
-| 2   | Clustered vs non-clustered: cái nào 2 lần lookup?               | Non-clustered: index→PK→clustered data (double lookup)           |
-| 3   | Leftmost prefix rule: INDEX(a,b,c), WHERE b=1 dùng index không? | Không — phải match từ trái: a trước, rồi b, rồi c                |
-| 4   | Covering index tránh được gì?                                   | Tránh heap/table access — tất cả data từ index → Index Only Scan |
-| 5   | EXPLAIN ANALYZE: Seq Scan 10M rows có phải red flag?            | Có — cần index hoặc partition. Check Rows Removed by Filter      |
-| 6   | N+1 problem: 100 users + posts → bao nhiêu queries?             | 101 queries (1 + 100). Fix: JOIN hoặc IN query batch             |
-| 7   | OFFSET 1M + LIMIT 20: tại sao chậm? Fix?                        | Scan 1M rows rồi bỏ. Fix: keyset pagination WHERE id > last_id   |
+| #   | Loại           | Câu hỏi                                                                                                                                                                                    |
+| --- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | 🔍 Retrieval   | B+ Tree tại sao nhanh hơn seq scan? Tại sao chỉ cần 3-4 levels để index 700 triệu rows?                                                                                                    |
+| 2   | 🎨 Visual      | Vẽ sơ đồ so sánh Clustered Index (InnoDB) và Non-Clustered Index (PostgreSQL). Chỉ ra leaf node chứa gì trong mỗi loại và tại sao InnoDB cần 2 lần lookup với secondary index.             |
+| 3   | 🛠️ Application | Viết composite index tối ưu cho query: `WHERE customer_id = ? AND created_at BETWEEN ? AND ? ORDER BY amount DESC LIMIT 20`. Giải thích tại sao chọn thứ tự cột đó (áp dụng ERS rule).     |
+| 4   | 🐛 Debug       | Query chạy 300ms dù đã có index trên `created_at`. EXPLAIN ANALYZE cho thấy Seq Scan với `Rows Removed by Filter: 999988`. Liệt kê 3 nguyên nhân có thể và cách kiểm tra từng nguyên nhân. |
+| 5   | 🎓 Teach       | Giải thích N+1 problem cho junior developer dùng một ví dụ từ trường học hoặc cuộc sống hàng ngày. Mô tả 2 cách fix (eager loading và batch loading) và khi nào dùng cách nào.             |
+
+💬 **Feynman Prompt:** Giải thích cho một người không biết gì về database tại sao thêm index giúp query nhanh hơn nhưng cũng làm chậm việc ghi dữ liệu. Dùng ví dụ từ cuộc sống hàng ngày (như mục lục sách, danh bạ điện thoại, v.v.) và không dùng thuật ngữ kỹ thuật như B+ Tree hay I/O.
 
 ### Spaced Repetition / Lặp Lại Ngắt Quãng
 

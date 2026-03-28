@@ -21,6 +21,65 @@
 
 ## 1. Machine Learning Overview / Tổng quan Machine Learning
 
+> 🧠 **Memory Hook:** ML như dạy em bé nhận biết "con chó" bằng cách cho xem 1000 tấm ảnh — không cần code từng quy tắc "nếu có 4 chân và lông thì là chó", máy tự học pattern từ ví dụ.
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Nhiều bài toán thực tế quá phức tạp để viết if/else thủ công — nhận diện khuôn mặt, lọc spam, dự đoán churn đều có hàng triệu trường hợp ngoại lệ. ML giải quyết bằng cách để dữ liệu tự định nghĩa logic.
+→ **Why?** Vì pattern ẩn trong dữ liệu chứa kiến thức mà con người không thể phát biểu tường minh.
+→ **Why?** Vì thế giới thực có quá nhiều edge case và context — không thể enumerate thủ công đầy đủ.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Dạy trẻ nhận biết trái xoài bằng cách cho xem 500 quả xoài — không cần giải thích "phải màu vàng, hình oval, mùi thơm". Trẻ tự học pattern. ML làm y vậy: cho máy xem đủ ví dụ, máy tự rút ra quy tắc. "Training data" là các quả xoài mẫu, "model" là trí nhớ của trẻ sau khi học.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Raw Data ──► Feature Engineering ──► Model Training ──► Evaluation
+   │                                        │                │
+(emails,                             (learns weights    (accuracy,
+ images,                              to minimize         F1, AUC)
+ transactions)                          loss)
+                                         │
+                                    ─────▼─────
+                                    Deployment
+                                    + Monitoring
+                                    (data drift!)
+```
+
+1. Thu thập & làm sạch dữ liệu (thường chiếm 70% thời gian)
+2. Feature engineering: biến raw data thành vector số
+3. Training: tối ưu tham số model để minimize loss function
+4. Evaluation: đánh giá trên held-out test set
+5. Deploy + monitor: production ≠ test set (data drift, concept drift)
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- Chất lượng model phụ thuộc data nhiều hơn thuật toán — "garbage in, garbage out"
+- Production accuracy thường thấp hơn test accuracy đáng kể (distribution shift)
+- Thêm data không phải lúc nào cũng giúp — cần đúng loại data
+- ML pipeline phức tạp hơn software thông thường: data versioning, model versioning, feature skew
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                            | Tại sao sai                                                  | Đúng là                                                   |
+| -------------------------------------------------- | ------------------------------------------------------------ | --------------------------------------------------------- |
+| Dùng accuracy làm metric chính với imbalanced data | 99% accuracy có thể đạt bằng cách predict majority class mãi | Dùng F1/AUC-ROC, phân tích confusion matrix               |
+| Skip baseline model, nhảy thẳng vào model phức tạp | Không biết improvement thực sự bao nhiêu, khó debug          | Luôn build baseline đơn giản (logistic regression) trước  |
+| Train và test trên cùng một tập dữ liệu            | Đánh giá sai — model chỉ memorize, không generalize          | Tách train/val/test nghiêm ngặt, test chỉ dùng 1 lần cuối |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: "Explain what ML is" hoặc "When would you use ML?"
+- Nhớ đến: data → pattern → prediction, supervised/unsupervised/RL, production challenges
+- Mở đầu: "From an engineering perspective, ML is learning a function from data rather than hard-coding rules. The real challenge isn't the algorithm — it's data quality and production monitoring."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [CS Fundamentals](../01-cs-fundamentals/README.md)
+- ➡️ Để hiểu tiếp: [Supervised Learning](#2-supervised-learning--học-có-giám-sát)
+
 ### 🟢 Q: What is Machine Learning from a software engineer perspective? `[Junior]`
 
 **A:** Machine Learning (ML) là cách viết phần mềm mà **logic được học từ dữ liệu** thay vì hard-code hoàn toàn bằng if/else.
@@ -44,6 +103,64 @@
 ---
 
 ## 2. Supervised Learning / Học có giám sát
+
+> 🧠 **Memory Hook:** Supervised learning như thầy giáo chấm bài có đáp án — mỗi lần em trả lời sai, thầy chỉ rõ "đáp án đúng là X", em học từ lỗi sai, dần dần làm bài mới không cần thầy.
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Chúng ta có hàng triệu email đã được đánh nhãn spam/không-spam, hàng triệu giao dịch đã biết fraud/legitimate — tại sao không tận dụng kiến thức ẩn trong dữ liệu đó để tự động hóa quyết định?
+→ **Why?** Vì rule-based systems thất bại khi pattern quá phức tạp hoặc thay đổi theo thời gian.
+→ **Why?** Vì thế giới thực có quá nhiều exception để hard-code, nhưng historical data đã "encode" những exception đó.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Học sinh ôn thi với bộ đề có đáp án — làm đề, chấm điểm, xem lỗi sai, làm đề mới. Sau 1000 bài, học sinh học được pattern của "đề đúng". Supervised learning y vậy: (X = input, Y = correct label) là bộ đề có đáp án, model "ôn thi" cho đến khi predict đúng trên data mới chưa thấy.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+1. Collect labeled data: [(email_1, spam=1), (email_2, spam=0), ...]
+         ↓
+2. Split: 70% Train | 15% Validation | 15% Test (NEVER touch test until final eval!)
+         ↓
+3. Train: model learns f(X) → Y by minimizing loss on train set
+   ┌─────────────────────────────────────────┐
+   │  Classification: Cross-Entropy loss     │
+   │  Regression:     MSE / MAE / Huber loss │
+   └─────────────────────────────────────────┘
+         ↓
+4. Tune hyperparams on VALIDATION set (not test!)
+         ↓
+5. Final evaluation on TEST set (once!)
+         ↓
+6. Deploy → monitor for distribution drift
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- Label noise (nhãn sai do human annotator mệt) làm hỏng model không kém data ít
+- Class imbalance (99% negative, 1% positive) khiến model ignore minority class
+- Feature leakage: dùng feature chỉ có sau khi biết kết quả — model "gian lận" trong training
+- Train-production distribution shift: behavior user tháng 8 ≠ tháng 1 (xem VinAI scenario)
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                              | Tại sao sai                                    | Đúng là                                           |
+| ------------------------------------ | ---------------------------------------------- | ------------------------------------------------- |
+| Đánh giá model trên training data    | Cho kết quả tốt giả tạo — model chỉ memorize   | Luôn dùng held-out test set chưa từng "nhìn thấy" |
+| Fit scaler/encoder trên toàn bộ data | Data leakage từ test vào train, inflate metric | Fit scaler chỉ trên train set, transform val/test |
+| Bỏ qua class imbalance               | Model predict majority class mãi, recall=0     | Dùng class_weight, SMOTE, hoặc threshold tuning   |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: câu hỏi về classification/regression, spam, fraud, churn prediction
+- Nhớ đến: labels required → loss function → metric phụ thuộc business cost of FP/FN
+- Mở đầu: "This is a supervised learning problem. I'd frame it as classification because the output is discrete. Key question: what's the cost of false positives vs false negatives?"
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [ML Overview](#1-machine-learning-overview--tổng-quan-machine-learning)
+- ➡️ Để hiểu tiếp: [Unsupervised Learning](#3-unsupervised-learning--học-không-giám-sát)
 
 ### 🟡 Q: How do classification and regression differ in practice? `[Mid]`
 
@@ -78,6 +195,62 @@
 
 ## 3. Unsupervised Learning / Học không giám sát
 
+> 🧠 **Memory Hook:** Unsupervised learning như nhân viên mới nhận đống hồ sơ khách hàng không có nhãn — tự tìm ra nhóm "khách VIP", "khách churn", "khách tiềm năng" mà không ai chỉ trước.
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Tạo labeled data tốn tiền và thời gian — cần human annotator chuyên môn. Với clustering/DR, ta vẫn rút được insight từ raw unlabeled data: phân nhóm khách hàng, phát hiện anomaly, compress feature space.
+→ **Why?** Vì pattern tự nhiên tồn tại trong data ngay cả khi không có nhãn do con người đặt.
+→ **Why?** Vì data được sinh ra bởi các quá trình có cấu trúc — hành vi người dùng, tính chất sản phẩm tạo ra cụm tự nhiên.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Sắp xếp một đống đồ chơi Lego hỗn hợp thành nhóm mà không có hướng dẫn — bạn tự nhiên nhóm theo màu sắc, hình dạng, kích thước. Đó là clustering: tìm nhóm tự nhiên mà không cần ai nói trước "nhóm nào là nhóm nào". Machine tự tìm ra cấu trúc ẩn trong data.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+K-Means Clustering:
+1. Chọn K centroids ngẫu nhiên
+2. Gán mỗi điểm vào centroid gần nhất
+3. Cập nhật centroid = trung bình các điểm trong nhóm
+4. Lặp cho đến khi không thay đổi
+
+      Before              After K-Means (K=3)
+   ○○○△△□□□             ○──Group A
+   ○△△□□○△              △──Group B
+   △□○○△□               □──Group C
+
+DBSCAN (density-based): không cần chọn K trước, tìm cụm mật độ cao, bắt outlier tốt
+PCA (dimensionality reduction): giữ directions of max variance, compress feature space
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- K-Means yêu cầu chọn K trước — chọn sai K cho kết quả vô nghĩa về mặt business
+- Curse of dimensionality: khoảng cách Euclidean mất ý nghĩa ở không gian chiều cao
+- K-Means giả định cụm hình cầu — thất bại với cụm hình dạng phức tạp (dùng DBSCAN)
+- Silhouette score tốt ≠ cụm có ý nghĩa business — cần validate với domain expert
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                      | Tại sao sai                                       | Đúng là                                                           |
+| -------------------------------------------- | ------------------------------------------------- | ----------------------------------------------------------------- |
+| Chọn K bằng cảm tính trong K-Means           | Clusters không có ý nghĩa thực tế, unstable       | Dùng elbow method hoặc silhouette score để chọn K                 |
+| Quên normalize features trước clustering     | Feature có scale lớn (giá tiền) dominate distance | StandardScaler trước, hoặc dùng distance metric phù hợp           |
+| Coi cluster output là ground truth tuyệt đối | Clustering là exploratory, không có "đáp án đúng" | Kết hợp với domain expert để validate cluster có ý nghĩa business |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: "customer segmentation", "anomaly detection", "topic discovery", "no labels available"
+- Nhớ đến: K-Means vs DBSCAN tradeoff, silhouette score, luôn validate với business
+- Mở đầu: "Since we don't have labels, I'd use unsupervised clustering. My first choice would be K-Means for speed, but I'd validate K with silhouette score and run DBSCAN to catch non-spherical clusters."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Supervised Learning](#2-supervised-learning--học-có-giám-sát)
+- ➡️ Để hiểu tiếp: [Reinforcement Learning Basics](#4-reinforcement-learning-basics--cơ-bản-về-rl)
+
 ### 🟡 Q: What is clustering and when do we use it? `[Mid]`
 
 **A:** Clustering là nhóm các điểm dữ liệu tương tự nhau khi chưa có nhãn ground truth.
@@ -100,6 +273,68 @@
 ---
 
 ## 4. Reinforcement Learning Basics / Cơ bản về RL
+
+> 🧠 **Memory Hook:** RL như dạy chó bằng bánh thưởng — ngồi xuống được kẹo, cắn chủ bị phạt, chó tự học hành xử đúng để maximize phần thưởng mà không cần ai code từng quy tắc.
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Có những bài toán không có "đáp án đúng" cố định để học — trong game cờ vua, quyết định tốt nhất phụ thuộc vào hàng triệu tình huống tiếp theo. RL cho phép agent học policy qua trial-and-error với feedback từ môi trường.
+→ **Why?** Vì action tối ưu phụ thuộc vào future states, không chỉ current state — cần maximize cumulative reward.
+→ **Why?** Vì maximize short-term reward thường dẫn đến sub-optimal long-term outcome (đi xe nhanh để đến sớm nhưng gây tai nạn).
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Học chơi cờ vua — không ai đưa cho bạn "bộ đề có đáp án" cho từng nước đi. Bạn chơi nhiều ván, thắng/thua, và dần nhận ra pattern nào dẫn đến chiến thắng. Reward (thắng=+1, thua=-1) đến cuối game mới biết. RL agent học theo cách này: thử, nhận feedback, điều chỉnh chiến lược.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+┌─────────────────────────────────────────────────┐
+│                  RL Loop                        │
+│                                                 │
+│  Agent observes State (s_t)                     │
+│       ↓                                         │
+│  Policy π(s_t) → selects Action (a_t)           │
+│       ↓                                         │
+│  Environment transitions to State (s_{t+1})     │
+│       ↓                                         │
+│  Agent receives Reward (r_t)                    │
+│       ↓                                         │
+│  Update policy to maximize Σ γ^t * r_t          │
+│  (γ = discount factor, values future rewards)   │
+└─────────────────────────────────────────────────┘
+
+Key strategies:
+  ε-greedy: explore random action with prob ε, exploit best known (1-ε)
+  UCB: explore actions with high uncertainty
+  PPO: modern policy gradient, used in RLHF for LLMs
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- Sparse reward: reward chỉ ở cuối game → học rất chậm (credit assignment problem)
+- Reward hacking: agent tìm cách "gian lận" để maximize reward theo cách không mong muốn
+- Real-world RL nguy hiểm hơn simulation — bad action có thể affect real users
+- Exploration quá mạnh trong production gây trải nghiệm xấu cho user thật
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                                | Tại sao sai                                       | Đúng là                                                        |
+| ------------------------------------------------------ | ------------------------------------------------- | -------------------------------------------------------------- |
+| Chỉ dùng reward tức thời (greedy policy)               | Bỏ qua hệ quả dài hạn, local optimum              | Dùng discounted future reward với γ (gamma discount factor)    |
+| Bỏ qua exploration khi deploy                          | Agent không bao giờ học được cách mới tốt hơn     | Duy trì ε nhỏ để thỉnh thoảng thử action mới                   |
+| Deploy RL agent trực tiếp lên production chưa converge | Agent chưa học xong có thể gây hại cho users thật | Test trong simulation → A/B test nhỏ → rollout dần có giám sát |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: recommendation systems, ad bidding, robotics, game AI, RLHF
+- Nhớ đến: agent-environment loop, exploration vs exploitation, reward design là trọng tâm
+- Mở đầu: "This is a sequential decision problem — RL applies. The critical design question is: how do we define the reward function to capture what we actually want the business to optimize?"
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Supervised Learning](#2-supervised-learning--học-có-giám-sát)
+- ➡️ Để hiểu tiếp: [Neural Networks](#5-neural-networks--mạng-nơ-ron)
 
 ### 🟢 Q: What are agent, environment, state, action, reward in RL? `[Junior]`
 
@@ -124,6 +359,62 @@
 ---
 
 ## 5. Neural Networks / Mạng nơ-ron
+
+> 🧠 **Memory Hook:** Neural network như nhà máy chế biến có nhiều công đoạn — mỗi công nhân (neuron) làm một việc nhỏ rất đơn giản, nhưng cộng nhiều tầng lại tạo ra sản phẩm phức tạp mà không công nhân nào hiểu toàn bộ.
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Linear models chỉ học được đường thẳng phân chia class — không thể nhận ra khuôn mặt hay dịch ngôn ngữ. Neural networks stack nhiều lớp phi tuyến để học được function cực kỳ phức tạp từ raw data.
+→ **Why?** Vì mỗi layer học một mức representation trừu tượng hơn — pixel → cạnh → mắt → khuôn mặt.
+→ **Why?** Vì composition của các hàm đơn giản có thể xấp xỉ bất kỳ hàm liên tục nào (Universal Approximation Theorem).
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Dây chuyền phân loại xoài: công nhân tầng 1 kiểm tra màu sắc, tầng 2 kiểm tra kích thước và độ cứng, tầng 3 kiểm tra mùi, tầng 4 tổng hợp để quyết định "xoài hạng A/B/C". Không công nhân nào tự làm được một mình, nhưng dây chuyền kết hợp cho ra quyết định chính xác hơn chuyên gia đơn lẻ.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Input         Hidden-L1       Hidden-L2        Output
+  [x1] ──┐       [h1] ──┐        [h4] ──┐
+  [x2] ──┼──w──▶ [h2] ──┼──w──▶  [h5] ──┼──w──▶ [ŷ]
+  [x3] ──┘       [h3] ──┘
+              (ReLU activation) (ReLU activation) (Sigmoid)
+
+Each node: z = Σ(w_i * x_i) + b
+           output = activation(z)
+
+Training via Backpropagation:
+  Forward pass  → compute loss L(ŷ, y_true)
+  Backward pass → compute ∂L/∂w for every weight (chain rule)
+  Update        → w = w - lr * ∂L/∂w  (gradient descent)
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- Vanishing gradient: gradient trở nên cực nhỏ ở layer đầu → weights không update (common với sigmoid)
+- Dying ReLU: neuron bị kẹt output=0 khi weight âm, không bao giờ activate nữa
+- Batch normalization giúp ổn định training nhưng thêm complexity lúc inference
+- Depth vs width tradeoff: sâu hơn học abstract features tốt hơn, rộng hơn capture patterns đơn giản nhiều hơn
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                             | Tại sao sai                                            | Đúng là                                                      |
+| ----------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------ |
+| Dùng sigmoid ở tất cả hidden layers | Vanishing gradient trong deep networks, train rất chậm | Dùng ReLU/GELU cho hidden layers, sigmoid chỉ ở output layer |
+| Không normalize input data          | Gradient descent hội tụ chậm, weight update không đều  | StandardScaler input hoặc dùng BatchNorm layer               |
+| Không dùng regularization từ đầu    | Overfit nhanh trên training data                       | Thêm dropout (0.1–0.5) và L2 weight decay ngay từ đầu        |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: image, text, audio, video — bất kỳ unstructured data
+- Nhớ đến: MLP → CNN (image) → RNN/LSTM (sequence) → Transformer (modern); activation + backprop
+- Mở đầu: "For this unstructured data, I'd use a neural network. Architecture choice depends on data type: CNN for spatial data, Transformer for sequences..."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [ML Overview](#1-machine-learning-overview--tổng-quan-machine-learning)
+- ➡️ Để hiểu tiếp: [Deep Learning vs Traditional ML](#6-deep-learning-vs-traditional-ml--deep-learning-và-ml-truyền-thống)
 
 ### 🟢 Q: What is a perceptron? `[Junior]`
 
@@ -164,6 +455,67 @@ def perceptron(x, w, b):
 
 ## 6. Deep Learning vs Traditional ML / Deep Learning và ML truyền thống
 
+> 🧠 **Memory Hook:** Deep learning như máy CNC đắt tiền — cực mạnh và linh hoạt, nhưng nếu chỉ cần cắt gỗ thẳng thì cưa tay (XGBoost) vẫn nhanh hơn, rẻ hơn, và dễ sửa hơn.
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Developers thường default vào deep learning vì trendy, nhưng với tabular data, dataset nhỏ, hoặc cần interpretability — traditional ML như XGBoost thường thắng ở lower cost. Cần framework để chọn đúng công cụ.
+→ **Why?** Vì model complexity phải match data complexity — dùng model quá phức tạp với data đơn giản gây overfit và waste compute.
+→ **Why?** Vì business care về ROI: accuracy/latency/cost/maintainability, không phải "dùng model ngầu nhất".
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Chọn phương tiện phù hợp với đường đi: xe máy (logistic regression) chạy tốt trong hẻm nhỏ ít data, ô tô (Random Forest/XGBoost) phù hợp đường quốc lộ tabular data lớn, máy bay (deep learning) cần đường băng dài (massive unstructured data) mới phát huy tốc độ. Dùng máy bay cho chuyến 10km là sai công cụ.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Decision Framework — Chọn model theo đặc điểm bài toán:
+
+          Kiểu Data?
+         /           \
+    Tabular          Unstructured (text/image/audio)
+   (structured)              │
+      /    \                 └──► Deep Learning
+  Small   Large                   (CNN/Transformer)
+ Dataset Dataset
+    │       │
+  Linear  XGBoost /
+  + LR    LightGBM    ← SOTA for structured business data
+  + rules (CatBoost)
+
+Ngoài ra cần cân nhắc:
+  Interpretability needed? → Tree models + SHAP
+  Latency < 10ms?          → Smaller/quantized models
+  Tiny dataset (<1k)?      → Transfer learning or classical
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- XGBoost/LightGBM thường beat deep learning trên tabular data ngay cả ở scale lớn
+- Deep learning cần 10-100x data hơn traditional ML để tránh overfitting
+- Traditional ML dễ explain hơn nhiều (feature importance, SHAP) — quan trọng với regulated industries
+- DL inference latency khó optimize hơn XGBoost (quantization, pruning phức tạp hơn)
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                             | Tại sao sai                                              | Đúng là                                                                    |
+| --------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Luôn dùng deep learning vì "mạnh hơn"               | Overengineering, tốn compute/time, khó maintain          | Thử XGBoost trước cho tabular data, chỉ dùng DL khi cần                    |
+| Bỏ qua feature engineering khi dùng DL              | Deep learning không phải magic — garbage in, garbage out | Đầu tư data cleaning và domain feature engineering                         |
+| So sánh model chỉ dựa accuracy, bỏ qua latency/cost | Model "tốt nhất" không feasible là model vô dụng         | So sánh toàn diện: accuracy + p95 latency + serving cost + maintainability |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: "which model would you use?", "how do you choose between DL and traditional ML?"
+- Nhớ đến: data type → tabular=XGBoost first, unstructured=DL; rồi xét interpretability + SLO + budget
+- Mở đầu: "Before choosing, I'd ask: What's the data type? Dataset size? Latency SLO? Interpretability requirement? Budget? For tabular business data, my default is XGBoost — beats DL more often than people think."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Neural Networks](#5-neural-networks--mạng-nơ-ron)
+- ➡️ Để hiểu tiếp: [Training Concepts](#7-training-concepts--khái-niệm-huấn-luyện)
+
 ### 🟡 Q: When should we use traditional ML instead of deep learning? `[Mid]`
 
 **A:** Dữ liệu tabular vừa/nhỏ, cần interpretability cao, hoặc compute hạn chế thì model truyền thống thường thắng.
@@ -186,6 +538,64 @@ def perceptron(x, w, b):
 ---
 
 ## 7. Training Concepts / Khái niệm huấn luyện
+
+> 🧠 **Memory Hook:** Training ML như chạy bộ giảm cân — loss function là cân nặng hiện tại, gradient descent là hướng chạy để giảm cân nhanh nhất, learning rate là sải chân, epoch là số ngày tập, batch là km mỗi buổi chạy.
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Hiểu các khái niệm training là điều kiện để diagnose vấn đề: model không hội tụ, train chậm, loss đột ngột tăng — tất cả đều có nguyên nhân cụ thể liên quan đến learning rate, batch size, hay optimizer.
+→ **Why?** Vì ML training là optimization problem phức tạp — loss surface có nhiều local minima và saddle points.
+→ **Why?** Vì con đường đi đến minimum (path) quan trọng không kém bản thân minimum đó — ảnh hưởng đến generalization.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Học tiếng Anh có phương pháp: loss là điểm IELTS hiện tại, gradient descent là "học theo kỹ năng yếu nhất", learning rate là số giờ học mỗi ngày (học 16h/ngày = burnout = diverge), epoch là hoàn thành 1 lượt hết sách giáo trình, batch là số bài tập mỗi buổi trước khi ôn lại. Tune sai learning rate (học quá nhiều quá sớm) gây tác dụng ngược.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Training Loop (Gradient Descent):
+
+1. Initialize weights W randomly
+2. For each epoch:
+   For each mini-batch B of size b:
+     a. Forward pass:  ŷ = model(X_B; W)
+     b. Compute loss:  L = loss(ŷ, y_B)
+     c. Backward pass: ∂L/∂W = backprop(L)
+     d. Update:        W = W - lr × ∂L/∂W
+
+Key hyperparameters:
+  Learning rate (lr): step size — too high=diverge, too low=slow
+  Batch size (b):     32–256 typical; affects GPU utilization + generalization
+  Epochs:             full passes through dataset; use early stopping
+  Optimizer:          SGD (simple) → Adam (adaptive, default for DL)
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- Learning rate quá cao: loss thành NaN/Inf trong vài epoch đầu → reduce LR ngay
+- Batch size 1 (pure stochastic): gradient rất noisy, train không ổn định, không tận dụng GPU
+- Gradient explosion trong RNN: giải quyết bằng gradient clipping
+- Learning rate warmup quan trọng với Transformer — tránh collapse ở đầu training
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                          | Tại sao sai                                             | Đúng là                                                  |
+| ------------------------------------------------ | ------------------------------------------------------- | -------------------------------------------------------- |
+| Giữ learning rate cố định suốt training          | LR cao tốt ban đầu nhưng cần giảm khi gần minimum       | Dùng LR scheduler: warmup → cosine decay hoặc step decay |
+| Dùng batch size 1 (pure stochastic GD)           | Gradient noise quá lớn, không tận dụng GPU parallelism  | Dùng mini-batch (32–256), tune batch cùng learning rate  |
+| Train đến epoch cố định, không theo dõi val loss | Overfit sau early stopping point — model bị "học thuộc" | Dùng early stopping + lưu checkpoint best val metric     |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: "Why isn't my model converging?", "Explain the training pipeline"
+- Nhớ đến: loss → gradient → optimizer (Adam default) → LR scheduler → early stopping
+- Mở đầu: "To diagnose convergence issues, I first plot the learning curve. Loss diverging? LR too high. Plateauing early? Try reducing LR or increasing model capacity..."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Neural Networks](#5-neural-networks--mạng-nơ-ron)
+- ➡️ Để hiểu tiếp: [Overfitting and Underfitting](#8-overfitting-and-underfitting--quá-khớp-và-thiếu-khớp)
 
 ### 🟢 Q: What are loss function, gradient descent, learning rate, epoch, and batch size? `[Junior]`
 
@@ -211,6 +621,63 @@ def perceptron(x, w, b):
 
 ## 8. Overfitting and Underfitting / Quá khớp và thiếu khớp
 
+> 🧠 **Memory Hook:** Overfitting như học sinh học thuộc đề thi cũ — thi lại y chang thì 10 điểm, đổi đề một chút là 0 điểm; underfitting như không học gì cả — đề nào cũng 2 điểm.
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Hầu hết dự án ML thất bại đầu tiên vì overfitting hoặc underfitting. Hiểu bias-variance tradeoff là nền tảng để diagnose vấn đề model và chọn đúng giải pháp thay vì thử ngẫu nhiên.
+→ **Why?** Vì model không generalize được lên data mới thì không có giá trị production nào.
+→ **Why?** Vì model phải học underlying signal của data, không phải noise ngẫu nhiên trong training set.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Ba kiểu học sinh: học thuộc lòng đáp án (overfit — train 10đ, test 2đ), hiểu lý thuyết thật sự (good fit — cả train và test đều tốt), không học gì (underfit — cả train và test đều kém). Giáo viên (validation set) là người phát hiện ra học sinh nào chỉ học vẹt mà không thực sự hiểu bài.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Learning Curves — Chẩn đoán bằng biểu đồ:
+
+Training Loss  │ Val Loss  │ Chẩn đoán      │ Giải pháp
+───────────────┼───────────┼────────────────┼──────────────────────
+HIGH           │ HIGH      │ Underfitting   │ Model lớn hơn, thêm features
+LOW            │ HIGH      │ Overfitting    │ Regularization, dropout, more data
+LOW            │ LOW   ✓  │ Good fit       │ Deploy!
+LOW→HIGH curve │ Diverging │ LR hoặc bug   │ Debug pipeline
+
+Regularization tools:
+  L2 (Ridge):   phạt weight lớn → weight nhỏ đều → smooth model
+  L1 (Lasso):   phạt |weight| → sparse weights (feature selection)
+  Dropout:      tắt ngẫu nhiên neurons lúc train → ensemble effect
+  Early stopping: dừng khi val loss ngừng cải thiện
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- Double descent: với model rất lớn (overparameterized), test error có thể giảm lại — hiện tượng DL hiện đại
+- Underfitting có thể do architecture sai, không chỉ do model quá nhỏ
+- Regularization quá mạnh → underfitting — cần tune lambda/dropout rate
+- Trong transfer learning, các layer khác nhau có thể overfit độc lập
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                       | Tại sao sai                                             | Đúng là                                                          |
+| --------------------------------------------- | ------------------------------------------------------- | ---------------------------------------------------------------- |
+| Chỉ nhìn training loss để đánh giá model      | Training loss thấp ≠ model tốt — có thể chỉ là memorize | Luôn theo dõi validation loss song song trong mọi experiment     |
+| Thêm dropout mạnh khi model đang underfitting | Dropout giảm effective capacity → underfitting tệ hơn   | Xác định overfitting bằng learning curve TRƯỚC khi dùng dropout  |
+| Dùng test set nhiều lần để tune hyperparams   | Vô tình overfit hyperparams đến test data               | Tune trên validation set, dùng test set chỉ đúng 1 lần cuối cùng |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: "model performs well in training but poorly in production"
+- Nhớ đến: plot train vs val loss → diagnose over/underfitting → chọn đúng fix
+- Mở đầu: "This sounds like overfitting or distribution shift. I'd first compare training vs validation loss curves. If val diverges, it's overfitting — I'd add regularization and check for data leakage..."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Training Concepts](#7-training-concepts--khái-niệm-huấn-luyện)
+- ➡️ Để hiểu tiếp: [Transfer Learning and RLHF](#9-transfer-learning-and-rlhf--transfer-learning-và-rlhf)
+
 ### 🟢 Q: What is overfitting and underfitting? `[Junior]`
 
 **A:** Overfitting: model học cả noise nên train tốt nhưng test kém; underfitting: model quá đơn giản nên cả train/test đều kém.
@@ -232,6 +699,68 @@ def perceptron(x, w, b):
 ---
 
 ## 9. Transfer Learning and RLHF / Transfer Learning và RLHF
+
+> 🧠 **Memory Hook:** Transfer learning như thuê nhân viên có kinh nghiệm từ công ty khác — không cần train từ đầu, chỉ cần onboard thêm kỹ năng mới cho task cụ thể của bạn, tiết kiệm cả năm đào tạo.
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Hầu hết công ty không có đủ data và compute để train model lớn từ đầu. Transfer learning cho phép tận dụng kiến thức từ model đã pre-train trên hàng tỷ ví dụ và fine-tune với data nhỏ hơn nhiều.
+→ **Why?** Vì representation học được từ data lớn transfer tốt sang task liên quan — lower layers học universal features.
+→ **Why?** Vì deep networks học hierarchical features: pixels → edges → shapes → objects — các tầng thấp là "universal" across tasks.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Đầu bếp giỏi từ nhà hàng Pháp sang làm cho nhà hàng Ý — kỹ năng dao, nhiệt, kỹ thuật nấu đã có sẵn (pre-trained knowledge), chỉ cần học thêm công thức Ý và hương vị đặc trưng (fine-tuning on new domain). So với tuyển người chưa biết nấu ăn: tiết kiệm 90% thời gian đào tạo.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Transfer Learning Flow:
+  Pre-trained Model (trained on massive data: ImageNet/internet text)
+         ↓
+  Load checkpoint ───── Freeze lower layers (optional)
+         │                (preserve universal features)
+         ↓
+  Add task-specific head
+  [frozen encoder layers] → [new trainable head]
+         ↓
+  Fine-tune on small domain dataset (small LR!)
+         ↓
+  Evaluate → Deploy
+
+RLHF (LLM Alignment) — 4 bước:
+  Step 1: Pretrain   → predict next token on trillion tokens of text
+  Step 2: SFT        → fine-tune on curated human-written responses
+  Step 3: Reward Model → learn human preference from ranked (A vs B) pairs
+  Step 4: PPO/GRPO   → optimize SFT model toward reward model
+                        + KL penalty (stay close to SFT, prevent collapse)
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- Domain mismatch: medical images ≠ ImageNet — transfer kém hiệu quả hơn, cần nhiều data hơn
+- Catastrophic forgetting: fine-tuning trên task mới xóa kiến thức task cũ
+- RLHF reward hacking: model học "gian lận" reward model → sycophancy, over-explanation
+- LoRA/QLoRA: fine-tune chỉ low-rank adapter matrices — tiết kiệm 99% memory so với full fine-tune
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                         | Tại sao sai                                             | Đúng là                                                         |
+| ----------------------------------------------- | ------------------------------------------------------- | --------------------------------------------------------------- |
+| Fine-tune toàn bộ model trên dataset nhỏ        | Catastrophic forgetting + overfit nhanh trên domain nhỏ | Freeze early layers, chỉ fine-tune top layers + head            |
+| Bỏ qua domain gap giữa pre-train và target data | Transfer kém, metric thấp hơn kỳ vọng                   | Kiểm tra data distribution similarity trước khi chọn base model |
+| Dùng learning rate cao khi fine-tuning          | Phá vỡ features đã học từ pre-training                  | Dùng LR nhỏ hơn 10–100x so với training from scratch            |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: "small dataset", "domain-specific NLP/Vision task", "LLM fine-tuning", "how ChatGPT is trained"
+- Nhớ đến: load pretrained → freeze → add head → fine-tune small LR; RLHF = SFT → RM → PPO
+- Mở đầu: "With limited domain data, I'd use transfer learning. Start from a pre-trained checkpoint — this leverages features from massive datasets we couldn't afford to train ourselves..."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Neural Networks](#5-neural-networks--mạng-nơ-ron)
+- ➡️ Để hiểu tiếp: [LLM & Transformers](./02-llm-and-transformers.md)
 
 ### 🟢 Q: What is transfer learning? `[Junior]`
 
@@ -255,6 +784,64 @@ def perceptron(x, w, b):
 ---
 
 ## 10. Evaluation Metrics / Chỉ số đánh giá
+
+> 🧠 **Memory Hook:** Chọn metric ML như chấm thi theo môn: môn Toán (precision — bao nhiêu bài nói đúng thật đúng), môn Văn (recall — bao nhiêu ý quan trọng không bị bỏ sót), F1 là điểm tổng hợp. Chấm Toán bằng thang đo Văn là sai.
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Chọn sai metric có thể khiến bạn deploy một model tệ trông như model tốt. 99% accuracy trên fraud detection có thể đạt bằng cách không catch được fraudster nào cả — nếu chỉ có 1% giao dịch là gian lận.
+→ **Why?** Vì class imbalance khiến accuracy trở thành chỉ số vô nghĩa.
+→ **Why?** Vì chi phí của false positive và false negative hiếm khi bằng nhau trong thực tế business.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Tuyển thủ bóng đá có metric khác nhau: thủ môn cần "recall cao" — không để lọt bóng (miss fraud = disaster), tiền đạo cần "precision cao" — sút là phải ghi bàn (spam filter wrongly blocking real emails = users angry). Mỗi vị trí có KPI riêng. Đánh giá thủ môn bằng số bàn thắng là sai hoàn toàn.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Confusion Matrix (Binary Classification):
+                    Predicted +    Predicted -
+Actual Positive:    TP (correct!)  FN (missed — dangerous!)
+Actual Negative:    FP (false alarm) TN (correct!)
+
+Metrics derived:
+  Precision = TP / (TP + FP)   "Sút là phải vào" — clean predictions
+  Recall    = TP / (TP + FN)   "Không để lọt bóng" — catch all positives
+  F1        = 2·P·R / (P+R)   Harmonic mean — balanced
+  AUC-ROC   = area under ROC  Threshold-independent, good for balanced data
+  PR-AUC    = area under PR   Better than ROC for HEAVY class imbalance
+
+Fraud detection example (99% negative, 1% fraud):
+  Predict "no fraud" always → Accuracy=99%, Recall=0% ← useless model!
+  Fix: PR-AUC + cost-sensitive threshold tuning on validation set
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- AUC-ROC có thể misleading với extreme imbalance (1:1000) — PR-AUC is preferred
+- Threshold tuning thay đổi precision/recall tradeoff mà không retraining
+- Multi-class: micro-average (weight by count) vs macro-average (weight by class) cho kết quả khác nhau
+- Business utility function ($ saved per 1000 transactions) thường là metric cuối cùng cần optimize
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                         | Tại sao sai                                              | Đúng là                                                               |
+| ----------------------------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------- |
+| Báo accuracy 99% với imbalanced dataset         | Đạt được bằng cách predict majority class mãi — recall=0 | Dùng F1/PR-AUC, phân tích confusion matrix đầy đủ                     |
+| Tune threshold trên test set                    | Overfit threshold đến test data — inflate metric giả     | Tune threshold trên validation set, evaluate 1 lần trên test          |
+| Dùng AUC-ROC cho fraud detection cực imbalanced | ROC curve có thể trông tốt dù precision rất thấp         | Dùng PR-AUC và precision-recall curve, cộng thêm business cost metric |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: "how do you evaluate this model?", bất kỳ classification problem nào
+- Nhớ đến: hỏi về class balance → hỏi về cost FP vs FN → chọn metric → tune threshold trên val
+- Mở đầu: "Metric choice depends on class distribution and business cost of errors. For fraud with extreme imbalance, I'd use PR-AUC over ROC-AUC, and optimize threshold based on expected dollar cost per error..."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Supervised Learning](#2-supervised-learning--học-có-giám-sát)
+- ➡️ Để hiểu tiếp: [AI Engineering Practice](./05-ai-engineering-practice.md)
 
 ### 🟢 Q: How do accuracy, precision, recall, F1, and AUC differ? `[Junior]`
 
@@ -1018,6 +1605,7 @@ Reinforcement Learning
 ```
 
 **Khi nào dùng loại nào:**
+
 - **Supervised**: bạn có labeled data và rõ ràng output mong muốn (most production ML)
 - **Unsupervised**: không có labels, muốn khám phá cấu trúc dữ liệu (customer segmentation)
 - **Reinforcement**: tối ưu hóa sequential decisions với delayed reward (game AI, trading bots)
@@ -1034,6 +1622,7 @@ Overfit:   ██               ████████████   (train lo
 ```
 
 **Prevention techniques:**
+
 ```
 1. Regularization
    - L1 (Lasso): adds |weights| penalty → sparse weights (feature selection)
@@ -1057,6 +1646,7 @@ Overfit:   ██               ████████████   (train lo
 ```
 
 **Bias-Variance Tradeoff:**
+
 - High bias = underfitting (model too simple, wrong assumptions)
 - High variance = overfitting (model too complex, too sensitive to training data)
 - Goal: find sweet spot where bias + variance is minimized
@@ -1075,13 +1665,14 @@ Overfit:   ██               ████████████   (train lo
 # Three variants:
 # 1. Batch GD: use ALL training examples per update
 #    - Stable, but slow for large datasets
-# 2. Stochastic GD (SGD): use 1 example per update  
+# 2. Stochastic GD (SGD): use 1 example per update
 #    - Fast, noisy, can escape local minima
 # 3. Mini-batch GD: use small batch (32-256) per update
 #    - Best of both worlds — most commonly used in practice
 ```
 
 **Modern optimizers:**
+
 ```
 SGD with Momentum
 ├── Accumulate velocity in gradient direction
@@ -1096,6 +1687,7 @@ Adam (Adaptive Moment Estimation)
 ```
 
 **Learning rate intuition:**
+
 - Too high → diverge (loss explodes)
 - Too low → slow convergence, stuck in local minima
 - Learning rate schedules: warmup → decay (cosine, step, exponential)
@@ -1125,6 +1717,7 @@ F1 = 2 * (Precision * Recall) / (Precision + Recall)
 ```
 
 **Decision framework:**
+
 ```
 High Recall priority (low FN):
 ├── Medical diagnosis (missing cancer = fatal)
@@ -1172,6 +1765,7 @@ SOTA:    Random Forest    XGBoost/LightGBM (Kaggle winner baseline)
 ```
 
 **XGBoost vs LightGBM:**
+
 - XGBoost: level-wise tree growth, more regularization options
 - LightGBM: leaf-wise growth (faster), better on large datasets
 - CatBoost: handles categorical features natively
@@ -1182,11 +1776,15 @@ SOTA:    Random Forest    XGBoost/LightGBM (Kaggle winner baseline)
 
 ## Self-Check / Tự Kiểm Tra
 
-- [ ] Can I explain the bias-variance tradeoff with a concrete example?
-- [ ] Can I describe 3 evaluation metrics beyond accuracy (precision, recall, F1, AUC-ROC) and when to use each?
-- [ ] Can I explain what data drift is and how to detect it in production?
-- [ ] Can I compare supervised vs unsupervised learning with use cases?
-- 💬 **Feynman Prompt:** Giải thích tại sao model với 95% accuracy có thể vô dụng cho fraud detection — và metric nào phù hợp hơn (hint: class imbalance).
+| #   | Loại           | Câu hỏi                                                                                                                                                    |
+| --- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 🔍 Retrieval   | Giải thích bias-variance tradeoff với một ví dụ cụ thể — khi nào thì model có high bias? High variance?                                                    |
+| 2   | 🎨 Visual      | Vẽ confusion matrix 2×2, điền TP/FP/TN/FN, sau đó tính precision, recall, F1 cho bài toán fraud detection với TP=80, FP=20, FN=10, TN=890                  |
+| 3   | 🛠️ Application | Model fraud detection của bạn đạt 99% accuracy. Product manager vui mừng. Bạn có deploy không? Giải thích tại sao và chọn metric nào thay thế              |
+| 4   | 🐛 Debug       | Model supervised learning accuracy cao khi train nhưng thấp khi production sau 2 tuần. List ít nhất 4 nguyên nhân có thể và cách kiểm tra từng nguyên nhân |
+| 5   | 🎓 Teach       | Giải thích supervised vs unsupervised learning cho người không biết ML, dùng 1 analogy từ cuộc sống hàng ngày ở Việt Nam                                   |
+
+💬 **Feynman Prompt:** Giải thích tại sao model với 95% accuracy có thể vô dụng cho fraud detection — và metric nào phù hợp hơn (hint: class imbalance).
 
 ## Connections / Liên Kết
 

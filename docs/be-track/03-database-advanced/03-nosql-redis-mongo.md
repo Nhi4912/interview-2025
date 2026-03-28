@@ -68,7 +68,7 @@
 
 ### Concept 1: SQL vs NoSQL Fundamentals
 
-> 🪝 **Memory Hook:** "SQL = Excel with foreign keys; NoSQL = flexible drawers — each drawer type for a different job"
+> 🧠 **Memory Hook:** "SQL = Excel with foreign keys; NoSQL = flexible drawers — each drawer type for a different job"
 
 **Why exists (Root-cause):**
 
@@ -76,19 +76,52 @@
 - **Level 2:** RDBMS hit write throughput limits at scale; NoSQL sacrifices JOIN capability for partition tolerance and linear scalability
 - **Level 3:** CAP theorem forces explicit trade-offs; PACELC extends this to latency vs consistency even when no partition
 
-**Common Mistakes:**
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-- ❌ "NoSQL is faster than SQL" → Depends on access pattern; PostgreSQL with proper indexes beats MongoDB for complex JOINs
-- ❌ Using NoSQL to avoid learning SQL → Many NoSQL use cases still need relational thinking for data integrity
-- ❌ Ignoring PACELC → CAP only covers partition scenario; real systems also choose between latency and consistency daily
+Tưởng tượng bạn quản lý hồ sơ học sinh trong trường. SQL giống bảng điểm chuẩn: mỗi học sinh có đúng các cột (tên, ngày sinh, điểm toán, điểm văn) — ngăn nắp, dễ so sánh, nhưng nếu cần thêm cột mới phải sửa cả bảng. NoSQL giống hồ sơ cá nhân trong ngăn kéo riêng: một học sinh có thêm tờ "đăng ký ngoại khoá", học sinh khác có thêm "đơn xin miễn học" — linh hoạt, nhưng khó so sánh đồng loạt.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+SQL Data Model:              NoSQL Document Model:
+┌──────────────────┐         ┌──────────────────────────────┐
+│ TABLE: users     │         │ Collection: users             │
+├────┬─────┬───────┤         │                               │
+│ id │name │ email │         │ { id:1, name:"An",            │
+├────┼─────┼───────┤         │   email:"an@x.com",           │
+│  1 │ An  │an@x.. │         │   address:{city:"HCM"}, ←─ extra
+│  2 │ Bình│bn@x.. │         │   tags:["vip","new"]  } ←─ array
+└────┴─────┴───────┘         │ { id:2, name:"Bình" }   ←─ OK
+Schema-on-write              └──────────────────────────────┘
+(cột cố định)                Schema-on-read (linh hoạt)
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **Eventual consistency trap**: NoSQL AP systems (Cassandra, DynamoDB) có thể trả data cũ vài ms/giây sau write — không dùng cho tài khoản ngân hàng.
+- **PACELC gotcha**: CAP chỉ mô tả khi có network partition. Thực tế, lựa chọn latency vs consistency xảy ra **mọi request** — không cần partition.
+- **"NoSQL không cần schema" là myth**: Schema vẫn tồn tại nhưng enforce ở application layer — type bugs khó phát hiện hơn nhiều.
+- **Polyglot persistence overhead**: Mỗi DB thêm vào = thêm monitoring, backup, expertise, on-call — đừng thêm DB chỉ vì "nghe hay".
+- **Cross-store transaction cực phức tạp**: Saga/outbox patterns phức tạp và dễ bug — thiết kế để tránh cross-store transactions từ đầu.
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                     | Tại sao sai                                                                                  | Đúng là                                                    |
+| --------------------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| "NoSQL nhanh hơn SQL"       | Phụ thuộc access pattern; PostgreSQL với index tốt đánh bại MongoDB cho complex JOINs        | So sánh dựa trên access pattern cụ thể, không phải loại DB |
+| Dùng NoSQL để tránh học SQL | Nhiều NoSQL use case vẫn cần relational thinking cho data integrity                          | Học SQL vững trước; NoSQL là lựa chọn thêm, không thay thế |
+| Bỏ qua PACELC               | CAP chỉ cover partition scenario; real systems cũng trade-off latency vs consistency mọi lúc | Hiểu PACELC để thiết kế system đúng                        |
 
 **Interview Pattern:** "When would you choose NoSQL over SQL?" → Name 3 criteria (schema flexibility, write throughput, horizontal scale) + 1 counter-example (financial transactions need ACID → SQL)
 
-**Knowledge Chain:** SQL Fundamentals → CAP Theorem → NoSQL Categories → Database Selection → System Design Data Layer
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [SQL Fundamentals](./01-sql-fundamentals.md)
+- ➡️ Để hiểu tiếp: [Indexing Optimization](./02-indexing-optimization.md)
 
 ### Concept 2: Redis Deep Dive
 
-> 🪝 **Memory Hook:** "Redis = RAM dictionary with 16384 mailboxes (hash slots), single postman (thread), but fastest in the city"
+> 🧠 **Memory Hook:** "Redis = RAM dictionary with 16384 mailboxes (hash slots), single postman (thread), but fastest in the city"
 
 **Why exists (Root-cause):**
 
@@ -96,20 +129,62 @@
 - **Level 2:** Single-threaded event loop eliminates lock contention; I/O multiplexing (epoll) handles 100K+ connections
 - **Level 3:** Hash slots enable horizontal scale (Cluster) while Sentinel provides HA for single-master setups; persistence (RDB/AOF) trades durability for speed
 
-**Common Mistakes:**
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-- ❌ Treating Redis as primary DB → No ACID, no complex queries; use as cache/session/counter layer
-- ❌ Using KEYS in production → O(N) blocks entire server; use SCAN instead
-- ❌ Ignoring maxmemory + eviction policy → OOM kills the process; always set allkeys-lfu for cache workloads
-- ❌ Confusing Pub/Sub (fire-and-forget) with Streams (persistent) → Pub/Sub loses messages if subscriber is down
+Redis giống bàn làm việc so với kho lưu trữ dưới tầng hầm (database trên đĩa). Tìm tài liệu trên bàn = tức thì. Tìm trong kho = phải đi bộ, mở ngăn kéo, tìm kiếm. Redis giữ mọi thứ "trên bàn" (RAM) — đó là lý do nó nhanh gấp 100–1000 lần. Nhưng khi mất điện, bàn làm việc bị xáo trộn — cần persistence để không mất dữ liệu.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Client Request Flow trong Redis:
+
+Client → Network I/O (epoll) → Event Loop (single thread)
+                                       │
+                          ┌────────────┴──────────────┐
+                          │       Command Queue        │
+                          │  SET key1 "val"  ←         │
+                          │  GET key2        ← ← ← ←   │  Không block nhau
+                          │  ZADD lb 100 "p1"←         │
+                          └────────────┬──────────────┘
+                                       │
+                               In-Memory Store
+                               ┌──────────────┐
+                               │ key1: "val"  │
+                               │ key2: ...    │
+                               │ lb: ZSet...  │
+                               └──────────────┘
+                                       │
+                              (async) Persistence
+                              RDB snapshot / AOF log
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **Single-threaded không có nghĩa là chậm**: Bottleneck của Redis là network bandwidth, không phải CPU — hầu hết lệnh hoàn thành trong microseconds.
+- **O(N) commands là mìn trong production**: `KEYS *`, `SMEMBERS large_set` trên data lớn → block toàn bộ server. Luôn dùng SCAN thay KEYS.
+- **Replication lag**: Replication async — trong window nhỏ sau write, replica có thể trả data cũ. Đọc từ replica = chấp nhận eventual consistency.
+- **Memory fragmentation**: `mem_fragmentation_ratio > 1.5` cần `MEMORY PURGE` hoặc restart; monitor thường xuyên.
+- **Cluster multi-key gotcha**: Multi-key ops (MSET, pipeline) chỉ hoạt động khi tất cả keys cùng hash slot — dùng hash tags `{user:1}` để group.
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                               | Tại sao sai                                                | Đúng là                                                                  |
+| ------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Dùng Redis làm primary DB             | Không có ACID, không có complex queries; OOM = mất dữ liệu | Dùng Redis làm cache/session/counter layer; SQL/NoSQL là source of truth |
+| Dùng KEYS trong production            | O(N) block toàn bộ server; 1 triệu keys = freeze vài giây  | Dùng SCAN với cursor để iterate từng batch nhỏ                           |
+| Không set maxmemory + eviction policy | OOM killer sẽ kill Redis process khi hết RAM               | Luôn set `maxmemory` và `allkeys-lfu` cho cache workloads                |
+| Nhầm Pub/Sub với Streams              | Pub/Sub fire-and-forget: subscriber offline = mất message  | Dùng Redis Streams khi cần reliability, acknowledgment, consumer groups  |
 
 **Interview Pattern:** "Why is Redis fast despite being single-threaded?" → In-memory + epoll + no locks + efficient data structures. Follow up: "What about Redis 6.0 I/O threads?" → I/O threads for network read/write only; command execution still single-threaded
 
-**Knowledge Chain:** Memory hierarchy → In-memory storage → Redis data types → Persistence trade-offs → Cluster sharding → Caching patterns
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [SQL vs NoSQL Fundamentals](#concept-1-sql-vs-nosql-fundamentals) (Concept 1, cùng file)
+- ➡️ Để hiểu tiếp: [Caching Patterns](./04-caching-patterns.md)
 
 ### Concept 3: MongoDB
 
-> 🪝 **Memory Hook:** "MongoDB = JSON filing cabinet with WiredTiger engine — document-level locks, ESR index rule, oplog replication"
+> 🧠 **Memory Hook:** "MongoDB = JSON filing cabinet with WiredTiger engine — document-level locks, ESR index rule, oplog replication"
 
 **Why exists (Root-cause):**
 
@@ -117,20 +192,57 @@
 - **Level 2:** WiredTiger replaced MMAPv1 for document-level locking + compression; B-tree indexes similar to PostgreSQL
 - **Level 3:** Sharding distributes data by shard key; poor shard key (low cardinality) creates "jumbo chunks" and hotspots
 
-**Common Mistakes:**
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-- ❌ Embedding everything in one document → 16MB doc limit + update amplification; reference when data is shared across contexts
-- ❌ Missing compound indexes → ESR rule (Equality-Sort-Range) determines optimal index order
-- ❌ Using multi-document transactions heavily → MongoDB transactions are slower than PostgreSQL; if you need many transactions, reconsider SQL
-- ❌ Wrong shard key → Cannot change shard key after creation; high cardinality + query isolation required
+MongoDB giống tủ hồ sơ văn phòng hiện đại thay vì bảng tính Excel. Mỗi ngăn kéo (collection) chứa các phong bì (documents) — mỗi phong bì có thể chứa giấy tờ khác nhau. Hồ sơ khách VIP có thêm tờ "thông tin doanh nghiệp", hồ sơ khách thường thì không — không ai phàn nàn vì không có cột chuẩn bắt buộc. Khi cần tra cứu, bạn lật qua phong bì nào có chứa từ khoá đó.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+SQL (PostgreSQL):                    MongoDB:
+┌──────────────────────┐             ┌──────────────────────────────┐
+│ TABLE: users         │             │ Collection: users             │
+│ id | name | city_id  │             │ {                             │
+├────┼──────┼──────────┤             │   _id: ObjectId("abc123"),    │
+│  1 │ An   │    5     │             │   name: "An",                 │
+└────┴──────┴──────────┘             │   address: {                  │
+                                     │     city: "HCM",  ← embedded  │
+┌──────────────────────┐             │     district: "Q1"            │
+│ TABLE: cities        │             │   },                          │
+│ id | name            │             │   tags: ["vip","active"]      │
+├────┼──────────────── ┤             │ }                             │
+│  5 │ Ho Chi Minh     │             └──────────────────────────────┘
+└────┴─────────────────┘
+JOIN required for city               Single document query — no JOIN
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **16MB document limit**: Không nhúng arrays không giới hạn (comments, logs) vào document — dùng referencing hoặc collection riêng khi array có thể lớn.
+- **Shard key không thể đổi dễ dàng**: Trước MongoDB 5.0 là bất biến; từ 5.0 có thể reshard nhưng rất tốn kém — cân nhắc kỹ từ đầu.
+- **Aggregation pipeline memory limit**: Mỗi stage được phép dùng 100MB RAM — nếu vượt cần `allowDiskUse: true`, nhưng chậm hơn nhiều.
+- **Transactions đắt hơn PostgreSQL**: Nếu schema cần nhiều multi-document transactions, đó là dấu hiệu nên dùng SQL thay vì MongoDB.
+- **NRT read concern**: `readConcern: "majority"` yêu cầu majority replicas xác nhận — tăng read latency nhưng đảm bảo không đọc rollback-able data.
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                       | Tại sao sai                                                          | Đúng là                                                                     |
+| ----------------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Nhúng mọi thứ vào 1 document  | Giới hạn 16MB + update amplification khi array lớn                   | Nhúng khi data luôn đọc cùng nhau; reference khi data share hoặc có thể lớn |
+| Thiếu compound index theo ESR | Index không dùng được tối đa, query chậm hoặc không dùng index       | Đặt Equality → Sort → Range trong compound index                            |
+| Dùng transactions nhiều       | MongoDB transactions chậm hơn PostgreSQL ACID đáng kể                | Nếu cần nhiều transactions, cân nhắc dùng SQL thay                          |
+| Chọn sai shard key            | Không thể thay đổi dễ dàng; low cardinality tạo jumbo chunks/hotspot | High cardinality + query isolation + non-monotonic                          |
 
 **Interview Pattern:** "When would you use MongoDB vs PostgreSQL?" → Document model when schema varies per record + read-heavy with known query patterns. Counter: financial ledger with complex JOINs → PostgreSQL
 
-**Knowledge Chain:** Document Model → WiredTiger → Indexing (ESR) → Sharding → Replica Sets → Read/Write Concern → Transactions
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [SQL Fundamentals](./01-sql-fundamentals.md) và [Indexing Optimization](./02-indexing-optimization.md)
+- ➡️ Để hiểu tiếp: [Caching Patterns](./04-caching-patterns.md) (MongoDB + Redis kết hợp)
 
 ### Concept 4: Elasticsearch
 
-> 🪝 **Memory Hook:** "ES = inverted index phone book — BM25 ranks pages, ~1s delay (NRT), NEVER the source of truth"
+> 🧠 **Memory Hook:** "ES = inverted index phone book — BM25 ranks pages, ~1s delay (NRT), NEVER the source of truth"
 
 **Why exists (Root-cause):**
 
@@ -138,19 +250,59 @@
 - **Level 2:** BM25 scoring (improved TF-IDF) ranks results by relevance; analyzers tokenize + normalize text
 - **Level 3:** NRT (Near Real-Time) ~1s refresh delay means ES is eventually consistent; filter context is cacheable, query context scores relevance
 
-**Common Mistakes:**
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-- ❌ Using ES as primary database → No ACID, eventual consistency, update = delete + reindex
-- ❌ Not understanding NRT delay → Writes visible after ~1s refresh; not suitable for real-time reads
-- ❌ Over-sharding → Each shard has overhead (Lucene segment); start with fewer shards, reindex to scale
+Inverted index giống mục lục ở cuối sách giáo khoa. Thay vì đọc từng trang để tìm từ "quang hợp" (forward search), bạn tra mục lục: "quang hợp → trang 45, 78, 102" — tìm ngay lập tức. Elasticsearch xây một mục lục khổng lồ cho toàn bộ text của bạn, nên tìm trong triệu documents chỉ mất milliseconds. Nhưng giống mục lục sách: khi có chỉnh sửa, phải in lại mục lục — đó là lý do update trong ES rất tốn kém.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Cách Inverted Index được xây dựng:
+
+Doc 1: "Redis is fast"      Analyzer Pipeline:
+Doc 2: "Redis is scalable"  Input → Tokenize → Lowercase → Remove stopwords
+Doc 3: "MongoDB is fast"                                        │
+                                                                ↓
+                            Inverted Index:
+                            ┌────────────┬──────────────────────┐
+                            │   Term     │    Posting List      │
+                            ├────────────┼──────────────────────┤
+                            │ "redis"    │ [Doc1(pos:0), Doc2]  │
+                            │ "fast"     │ [Doc1(pos:2), Doc3]  │
+                            │ "mongodb"  │ [Doc3(pos:0)]        │
+                            │ "scalable" │ [Doc2(pos:2)]        │
+                            └────────────┴──────────────────────┘
+
+Search "redis fast":
+  [Doc1,Doc2] ∩ [Doc1,Doc3] = [Doc1] → ranked by BM25 score ✓
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **NRT ~1 giây delay**: ES không phù hợp real-time reads ngay sau write — Kibana logs có thể hiện muộn ~1 giây sau ingest.
+- **Update = delete + reindex**: Không có in-place update; mỗi update tạo document mới + đánh dấu cũ là deleted → segment bloat nếu update thường xuyên.
+- **Over-sharding tax**: Mỗi shard là 1 Lucene index với overhead riêng — quá nhiều shards nhỏ tiêu tốn memory và CPU. Rule of thumb: target 20–40GB/shard.
+- **Mapping explosion**: Dynamic mapping tự thêm fields → có thể tạo hàng ngàn fields không mong muốn. Dùng `dynamic: "strict"` trong production.
+- **ES ≠ primary database**: Không có relational integrity, no ACID, eventual consistency — luôn sync từ source of truth qua CDC/event-driven.
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                      | Tại sao sai                                                            | Đúng là                                                                  |
+| ---------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Dùng ES làm primary database | Không có ACID, eventual consistency, update = delete + reindex tốn kém | Dùng PostgreSQL/MongoDB làm source of truth; ES chỉ là search layer      |
+| Không hiểu NRT delay         | Writes cần ~1s để visible; không phù hợp real-time reads               | Thiết kế app chấp nhận ~1s delay hoặc dùng `?refresh=true` (rất tốn kém) |
+| Over-sharding                | Mỗi shard có overhead; quá nhiều shards nhỏ gây slowdowns              | Bắt đầu ít shards, reindex khi cần scale; target 20–40GB/shard           |
 
 **Interview Pattern:** "How would you implement search for an e-commerce site?" → ES for product search + PostgreSQL as source of truth → CDC/event-driven sync → Index with custom analyzers for Vietnamese text
 
-**Knowledge Chain:** Inverted Index → Analyzers → BM25 Scoring → Query DSL → Sharding → CDC pipeline → Search architecture
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Indexing Optimization](./02-indexing-optimization.md) (B-Tree index concepts)
+- ➡️ Để hiểu tiếp: [System Design Framework](../04-be-system-design/01-design-framework.md) (search architecture patterns)
 
 ### Concept 5: Cassandra
 
-> 🪝 **Memory Hook:** "Cassandra = append-only log wall (LSM-tree) — partition key picks the wall, clustering key sorts the bricks"
+> 🧠 **Memory Hook:** "Cassandra = append-only log wall (LSM-tree) — partition key picks the wall, clustering key sorts the bricks"
 
 **Why exists (Root-cause):**
 
@@ -158,20 +310,63 @@
 - **Level 2:** Partition key determines node placement; clustering key determines sort order within partition — query-first data modeling is mandatory
 - **Level 3:** R + W > N gives strong consistency; tombstones from deletes accumulate and slow reads — design to avoid frequent deletes
 
-**Common Mistakes:**
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-- ❌ Modeling data like SQL (normalize, then query) → Cassandra requires query-first denormalized design
-- ❌ Frequent deletes → Tombstones accumulate until compaction; design with TTL instead
-- ❌ Using secondary indexes heavily → Anti-pattern; creates scatter-gather queries across nodes
-- ❌ Ignoring partition sizing → Large partitions (>100MB) cause GC pressure and slow queries
+Cassandra giống sổ nhật ký dạng append-only tại bưu điện: mỗi lần có giao dịch, nhân viên CHỈ ghi thêm dòng mới vào cuối sổ — không bao giờ xoá hay sửa dòng cũ. Sổ được đánh dấu theo ngày (partition key) và giờ (clustering key). Tìm giao dịch ngày 20/3 → lật thẳng đến trang ngày 20/3, đọc tuần tự. Rất nhanh cho ghi và đọc theo thời gian, nhưng không thể "tìm tất cả giao dịch trên 1 triệu đồng" mà không xét từng sổ.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+LSM-Tree Write Path trong Cassandra:
+
+Client Write
+     │
+     ├──→ Commit Log (WAL on disk) ← crash recovery
+     │
+     └──→ MemTable (RAM, sorted)
+               │ (khi đầy)
+               ↓
+          SSTable (disk, immutable, sorted)
+          SSTable
+          SSTable  ──→ Compaction ──→ Merged SSTable
+          SSTable           (giảm read amplification)
+
+Partition Key → Hash → Token Ring:
+         ┌──────────────┐
+      Node A          Node C
+    (0-5460)      (10922-16383)
+         └────Node B────┘
+           (5461-10922)
+    Data replicated across RF nodes
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **Hot partition**: Nếu dùng ngày hiện tại làm partition key, TẤT CẢ writes trong ngày đổ vào 1 partition → 1 node bị quá tải. Thêm bucket/random suffix.
+- **Tombstone accumulation**: DELETE tạo marker, không xóa ngay → phải scan qua tombstones khi đọc. `gc_grace_seconds` (10 ngày) phải qua trước khi compaction dọn.
+- **Secondary index là anti-pattern**: Scatter-gather query qua tất cả nodes → latency cao. Tạo separate denormalized lookup table thay vì secondary index.
+- **Eventual repair required**: Khi node offline rồi online lại, data có thể không đồng bộ — chạy `nodetool repair` định kỳ.
+- **Query-first là bắt buộc, không tùy chọn**: Không thể viết query tùy ý như SQL — mỗi query pattern cần 1 table riêng. Thay đổi query = tạo table mới.
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                  | Tại sao sai                                                        | Đúng là                                                              |
+| ---------------------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------- |
+| Model data như SQL (normalize rồi query) | Cassandra không hỗ trợ JOINs; scatter-gather queries rất chậm      | Query-first design: 1 query pattern = 1 table, denormalize hoàn toàn |
+| Xóa data thường xuyên                    | Tombstones tích tụ → read performance giảm mạnh đến khi compaction | Dùng TTL thay DELETE; thiết kế để minimize deletes ngay từ đầu       |
+| Dùng secondary indexes nặng              | Tạo scatter-gather queries qua tất cả nodes → chậm                 | Tạo separate lookup table với partition key phù hợp                  |
+| Bỏ qua partition size                    | Partition > 100MB gây GC pressure và slow reads                    | Monitor partition size; dùng time-bucket strategy để giới hạn        |
 
 **Interview Pattern:** "Design time-series storage for IoT with 1M writes/sec" → Cassandra with time-bucketed partition keys + clustering key on timestamp → Explain compaction strategy (TWCS for time-series)
 
-**Knowledge Chain:** LSM-tree → Partition/Clustering Key → Consistency Levels → Compaction → Tombstones → Query-first modeling
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Distributed Systems](../02-backend-knowledge/03-distributed-systems.md) (CAP theorem, consistency models)
+- ➡️ Để hiểu tiếp: [System Design Framework](../04-be-system-design/01-design-framework.md) (data layer design for write-heavy systems)
 
 ### Concept 6: Time-Series & Graph Databases
 
-> 🪝 **Memory Hook:** "InfluxDB = metrics firehose with auto-downsampling; Neo4j = relationship web where JOINs become O(1) pointer chasing"
+> 🧠 **Memory Hook:** "InfluxDB = metrics firehose with auto-downsampling; Neo4j = relationship web where JOINs become O(1) pointer chasing"
 
 **Why exists (Root-cause):**
 
@@ -179,19 +374,58 @@
 - **Level 2:** Graph DBs store relationships as first-class citizens; traversing N hops is O(N) regardless of data size vs SQL's N JOINs
 - **Level 3:** InfluxDB uses TSM (Time-Structured Merge) tree; TimescaleDB extends PostgreSQL with hypertables; Neo4j uses index-free adjacency for O(1) relationship traversal
 
-**Common Mistakes:**
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-- ❌ Using generic DB for metrics → Wastes 10x storage; no built-in downsampling/retention
-- ❌ Using graph DB for everything → Only beneficial when relationship traversal depth > 2; simple lookups are slower than RDBMS
-- ❌ Confusing property graph (Neo4j) with RDF/triple store → Different query languages (Cypher vs SPARQL)
+**Time-Series:** Hãy tưởng tượng trạm khí tượng ghi nhiệt độ mỗi 5 phút trong 10 năm — hàng triệu điểm số. PostgreSQL như cuốn sổ tay thông thường: ghi được nhưng chậm, tốn chỗ. InfluxDB như máy ghi tự động chuyên dụng: nén dữ liệu 10x, tự xoá số liệu cũ, trả lời "nhiệt độ trung bình tuần này?" trong milliseconds.
+
+**Graph:** Mạng xã hội như mạng nhện — người A quen B quen C quen D. SQL phải JOIN bảng friends 4 lần. Neo4j "bước đi" theo sợi tơ từ A → D — mỗi bước O(1), tổng O(4 hops).
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Time-Series Compression (TSM Engine):
+
+Raw data:    [10:00=23.1, 10:05=23.2, 10:10=23.4, 10:15=23.3]
+Delta enc:   [23.1, +0.1, +0.2, -0.1]  → smaller integers
+XOR float:   further compressed         → ~10x smaller vs PostgreSQL!
++ Retention: data > 30d auto-deleted, 5min → hourly aggregation
+
+Graph Traversal vs SQL JOIN:
+
+SQL: 4-hop friend query                Neo4j (index-free adjacency):
+SELECT * FROM friends f1               MATCH (a)-[:FRIEND*4]->(d)
+JOIN friends f2 ON f1.b=f2.a           RETURN d.name
+JOIN friends f3 ON f2.b=f3.a
+JOIN friends f4 ON f3.b=f4.a           Each hop = O(1) pointer follow
+→ O(n^4) table scan                    → O(hops) regardless of size
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **TSDB downsampling từ đầu**: Dữ liệu cũ không cần độ phân giải cao — cấu hình "average mỗi 1 phút cho data > 1 tuần" từ đầu, không phải sau khi disk đầy.
+- **InfluxDB tag vs field**: Tags nên là low-cardinality (device_type, region) và được index; Fields là actual values, không indexed — thiết kế sai gây slow queries.
+- **Graph DB không phải magic cho mọi thứ**: Chỉ nhanh hơn SQL khi traversal depth > 2 và dataset lớn. Simple lookups có thể chậm hơn RDBMS.
+- **Graph write bottleneck**: Neo4j thường read-optimized; write-heavy graph workloads cần careful architecture (JanusGraph, hoặc batch writes).
+- **TimescaleDB sweet spot**: Khi team đã dùng PostgreSQL và cần time-series, TimescaleDB là lựa chọn ít migration nhất — full SQL support.
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                  | Tại sao sai                                                             | Đúng là                                                              |
+| ---------------------------------------- | ----------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Dùng generic DB cho metrics              | Tốn 10x storage; không có built-in downsampling/retention policy        | Dùng InfluxDB hoặc TimescaleDB được tối ưu cho time-series patterns  |
+| Dùng Graph DB cho mọi thứ                | Chỉ hiệu quả khi traversal depth > 2; simple lookups chậm hơn RDBMS     | Chỉ dùng khi relationship traversal là core use case (social, fraud) |
+| Nhầm property graph với RDF/triple store | Query language hoàn toàn khác (Cypher vs SPARQL); không interchangeable | Xác định rõ loại graph cần trước khi chọn DB                         |
 
 **Interview Pattern:** "Design monitoring for 10K microservices" → Prometheus (pull-based metrics) + InfluxDB (long-term storage) + Grafana (visualization). Follow up: "Why not just use PostgreSQL?" → Compression ratio, retention policies, native downsampling
 
-**Knowledge Chain:** Time-Series use cases → TSM/compression → Retention policies → Graph model → Cypher → Social network/fraud detection
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [SQL Fundamentals](./01-sql-fundamentals.md) và [Cassandra](#concept-5-cassandra) (LSM-tree, append-only patterns)
+- ➡️ Để hiểu tiếp: [System Design Framework](../04-be-system-design/01-design-framework.md) (chọn DB cho use cases cụ thể)
 
 ### Concept 7: Decision Matrix & Multi-DB Architecture
 
-> 🪝 **Memory Hook:** "No single DB wins all — design a data layer like a team: PostgreSQL for truth, Redis for speed, ES for search, Cassandra for firehose"
+> 🧠 **Memory Hook:** "No single DB wins all — design a data layer like a team: PostgreSQL for truth, Redis for speed, ES for search, Cassandra for firehose"
 
 **Why exists (Root-cause):**
 
@@ -199,15 +433,57 @@
 - **Level 2:** Multi-layer caching (L1 local → L2 Redis → L3 CDN) reduces latency at each tier
 - **Level 3:** CDC (Change Data Capture) keeps secondary stores in sync with source of truth; event-driven invalidation prevents stale data
 
-**Common Mistakes:**
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-- ❌ Using one DB for everything → Leads to performance cliffs at scale
-- ❌ Too many DBs without operational capability → Each DB needs monitoring, backup, expertise
-- ❌ Ignoring consistency between stores → CDC lag means temporary inconsistency; design for eventual consistency
+Chọn DB giống tuyển nhân viên cho từng phòng ban: kế toán cần người chặt chẽ, đúng từng đồng (PostgreSQL ACID); lễ tân cần người nhanh nhẹn nhớ mặt khách quen (Redis cache); thư viện cần người giỏi tìm sách theo chủ đề (Elasticsearch); kho hàng cần người ghi chép siêu nhanh từng kiện hàng (Cassandra). Không ai một mình làm tốt tất cả — polyglot persistence là đúng người đúng việc.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Multi-DB Architecture — Ride-hailing App:
+
+     [User Request]
+           │
+     [API Gateway]
+      ┌────┴──────────────────────────────┐
+      │                                   │
+[Auth/Session]              [Business Logic Layer]
+      │                      │         │          │
+   Redis               PostgreSQL  MongoDB   Elasticsearch
+(session, OTP,         (orders,   (driver   (ride search,
+ rate limit,            payments,  profiles,  analytics)
+ driver coords)         ACID)      flexible)
+      │
+   Kafka (event streaming)
+      │
+ ┌────┴─────────────┐
+ InfluxDB         Cassandra
+(metrics,        (ride history,
+ monitoring)      GPS logs)
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **CDC consistency lag**: Sync từ PostgreSQL sang Elasticsearch qua CDC (Debezium) có độ trễ ~100ms–seconds — app phải handle "search results slightly stale".
+- **Operational complexity nhân lên**: 5 loại DB = 5 lần monitoring, 5 lần backup procedures, 5 lần on-call expertise. Bắt đầu với ít DB, thêm khi có evidence.
+- **Cross-store transaction là anti-pattern**: Nếu cần atomic operation trên 2 DB khác nhau, cần saga/outbox pattern — phức tạp, dễ bug, khó debug.
+- **Hot/warm/cold tiering**: Hot data (7 ngày) → fast expensive storage; warm (7–90 ngày) → slower; cold (>90 ngày) → S3/object storage với query engine.
+- **Vendor lock-in risk**: Managed cloud DBs (DynamoDB, Firestore) có pricing và API quirks riêng — đánh giá exit cost trước khi commit.
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                 | Tại sao sai                                                             | Đúng là                                                                |
+| --------------------------------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Dùng 1 DB cho tất cả                    | Performance cliff ở scale cao; 1 DB không tối ưu cho mọi access pattern | Polyglot persistence: chọn DB phù hợp từng workload                    |
+| Thêm quá nhiều DB không có ops capacity | Mỗi DB cần monitoring, backup, expertise, on-call riêng                 | Bắt đầu đơn giản (PostgreSQL + Redis), thêm DB khi có evidence rõ ràng |
+| Bỏ qua consistency giữa các store       | CDC lag = temporary inconsistency; gây confusing UX                     | Thiết kế cho eventual consistency, handle stale data gracefully        |
 
 **Interview Pattern:** "Design the data layer for a ride-hailing app" → PostgreSQL (drivers, riders, payments) + Redis (driver locations, surge pricing cache) + ES (ride search) + Kafka (event streaming) + S3 (ride history cold storage)
 
-**Knowledge Chain:** Individual DB strengths → Access pattern analysis → Polyglot persistence → CDC/sync → Operational complexity → Cost optimization
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: Concepts 1–6 trong file này và [Distributed Systems](../02-backend-knowledge/03-distributed-systems.md)
+- ➡️ Để hiểu tiếp: [System Design Framework](../04-be-system-design/01-design-framework.md) (áp dụng vào thiết kế hệ thống thực tế)
 
 ---
 
@@ -1315,15 +1591,15 @@ _Tài liệu tham khảo: Redis documentation, MongoDB University, Elasticsearch
 
 > **Instructions:** Cover the right column. Try to recall from memory, then verify.
 
-| #   | Question                                                              | Key Points                                                                                                                                     |
-| --- | --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Name 4 NoSQL types with production use case each                      | Key-Value (Redis: session), Document (MongoDB: user profile), Wide-Column (Cassandra: IoT logs), Graph (Neo4j: fraud detection)                |
-| 2   | Explain CAP theorem — which side do Redis, Cassandra, MongoDB choose? | Redis: CP (single-master, reject writes on partition); Cassandra: AP (tunable, usually eventual); MongoDB: CP (primary election blocks writes) |
-| 3   | Why is Redis fast despite single-threaded?                            | In-memory + epoll I/O multiplexing + no lock contention + efficient data structures + network is bottleneck not CPU                            |
-| 4   | MongoDB ESR rule for compound indexes?                                | Equality fields first, Sort fields second, Range fields last — maximizes index scan efficiency                                                 |
-| 5   | Why can't Elasticsearch be a primary database?                        | No ACID, NRT ~1s delay, update = delete + reindex, no relational integrity, can lose data                                                      |
-| 6   | Cassandra partition key vs clustering key?                            | Partition key → determines which node; Clustering key → sort order within partition; together = primary key                                    |
-| 7   | Design multi-layer caching for e-commerce?                            | L1: in-process local cache (product catalog), L2: Redis cluster (session, cart), L3: CDN (images, static); invalidation via CDC/event-driven   |
+| #   | Loại           | Câu hỏi                                                                                                                                                 |
+| --- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 🔍 Retrieval   | Kể tên 4 loại NoSQL, cho một production use case mỗi loại. CAP position của Redis, Cassandra, MongoDB là gì? Tại sao Redis nhanh dù single-threaded?    |
+| 2   | 🎨 Visual      | Vẽ inverted index cho 3 câu: "Redis is fast", "Redis is scalable", "MongoDB is fast". Thể hiện cách search query "redis fast" tìm kết quả từ sơ đồ đó.  |
+| 3   | 🛠️ Application | Viết compound index tối ưu cho MongoDB query: filter `status="active"`, sort `name`, range `createdAt >= date`. Giải thích thứ tự fields theo ESR rule. |
+| 4   | 🐛 Debug       | Redis server bị OOM killed sau vài ngày chạy, memory usage tăng liên tục. Nêu 3 nguyên nhân phổ biến và cách diagnose + fix từng cái.                   |
+| 5   | 🎓 Teach       | Giải thích cho junior dev tại sao Elasticsearch không nên dùng làm primary database, bằng ngôn ngữ đơn giản không dùng jargon kỹ thuật.                 |
+
+💬 **Feynman Prompt:** Giải thích cho người bạn không làm IT: tại sao một ứng dụng thương mại điện tử lớn dùng 4–5 "kho lưu trữ" khác nhau thay vì chỉ một cái? Dùng ví dụ từ cuộc sống hàng ngày (chợ, ngân hàng, bưu điện, thư viện...).
 
 ### Spaced Repetition Schedule / Lịch Ôn Tập
 

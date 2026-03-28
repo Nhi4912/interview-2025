@@ -3,6 +3,7 @@
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
 > **Prerequisites**: [SOLID & Design Patterns](./01-solid-and-design-patterns.md)
 > **See also**: [Table of Contents](../../00-table-of-contents.md)
+>
 > - `docs/shared/05-software-engineering/03-sdlc-and-practices.md`
 > - `docs/be-track/01-golang/05-testing-profiling.md`
 > - `docs/fe-track/03-react/06-testing.md`
@@ -14,6 +15,7 @@
 Bạn refactor payment function để thêm discount logic. Không có tests. Deploy lên production. 3 giờ sau: 200 khách bị charge sai tiền. Rollback khẩn cấp, hotfix, postmortem — một ngày làm việc mất.
 
 **Với tests:**
+
 - Unit test cho discount logic: catch bug ngay lúc viết code (30 giây)
 - Integration test cho payment flow: catch regression trước khi merge
 - E2E test cho checkout: catch UI bugs trước khi deploy
@@ -28,6 +30,7 @@ Testing không phải về "code coverage 100%" — nó về **confidence to cha
 Tests giống lưới an toàn. Không có lưới: mọi bước đi đều sợ. Có lưới: thử những động tác phức tạp hơn — refactor bolder, move faster.
 
 **Testing Pyramid:**
+
 ```
        /  E2E  \        ← Ít nhất: chậm, đắt, brittle (UI changes)
       /─────────\
@@ -37,11 +40,11 @@ Tests giống lưới an toàn. Không có lưới: mọi bước đi đều s�
   /─────────────────\
 ```
 
-| Test type | Speed | Cost | Tests what |
-|-----------|-------|------|------------|
-| **Unit** | ms | Low | Pure logic, functions, classes |
+| Test type       | Speed    | Cost   | Tests what                                |
+| --------------- | -------- | ------ | ----------------------------------------- |
+| **Unit**        | ms       | Low    | Pure logic, functions, classes            |
 | **Integration** | 100ms-1s | Medium | DB queries, API calls, module interaction |
-| **E2E** | 5-30s | High | Full user journey from UI to DB |
+| **E2E**         | 5-30s    | High   | Full user journey from UI to DB           |
 
 ---
 
@@ -88,19 +91,69 @@ Sau khi hoàn thành phần này, bạn cần:
 
 ## 1. Why Testing Matters — Vì sao testing quan trọng
 
+> 🧠 **Memory Hook:** "Kiểm tra xe trước khi lái — không ai muốn phanh hỏng giữa đường cao tốc!"
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Bug production gây thiệt hại gấp 100 lần so với bug phát hiện khi code. → **Why?** Vì khi đã deploy, bạn phải hotfix khẩn cấp, rollback data, xử lý khách hàng phàn nàn. → **Why?** Vì phần mềm phức tạp — một thay đổi nhỏ có thể phá vỡ chỗ khác mà mắt thường không thấy được.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Hãy tưởng tượng bạn sắp lái xe đi một chuyến dài. Trước khi xuất phát, bạn kiểm tra phanh, đèn, dầu nhớt — đó là "testing". Nếu bạn bỏ qua bước này và phanh hỏng giữa đường cao tốc ở tốc độ 120km/h, hậu quả sẽ nghiêm trọng hơn rất nhiều so với phát hiện phanh kém lúc còn trong garage. Code cũng vậy — test sớm, thì sửa rẻ; để production mới phát hiện, thì trả giá đắt.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Chi phí sửa bug theo giai đoạn:
+
+Yêu cầu   → [1x]    ✏️  Sửa trên giấy
+Thiết kế  → [5x]    📐  Sửa tài liệu kiến trúc
+Code      → [10x]   💻  Fix trước commit
+QA/Test   → [20x]   🔍  Bug ticket + reproduce + fix + re-test
+Production → [100x] 🔥  Hotfix + data restore + khách hàng churn
+```
+
+1. **Shift-left**: Đưa testing về sớm nhất → tiết kiệm tiền và thời gian
+2. **Living documentation**: Test mô tả behavior chính xác, không bao giờ outdated
+3. **Confidence net**: Test suite = lưới an toàn để refactor không sợ
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- Quá nhiều test cũng có chi phí: maintenance burden khi requirement thay đổi
+- Test suite chậm làm developer né không chạy → mất giá trị toàn bộ
+- 100% coverage không nghĩa là không có bug nếu test chất lượng thấp
+- "False confidence" — test xanh nhưng test sai business logic vẫn gây bug production
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                   | Tại sao sai                                                      | Đúng là                                                            |
+| ----------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------ |
+| "Tôi viết code cẩn thận, không cần tests" | Não người không thể track tất cả edge case khi hệ thống phức tạp | Tests = automation cho verification, không phải nghi ngờ developer |
+| Chỉ test happy path                       | 80% bug nằm ở edge case và error path                            | Test boundary values, null, empty, overflow                        |
+| Bỏ qua test vì "deadline gấp"             | Tech debt tích lũy, bug production đắt hơn gấp 10 lần            | Viết ít test tốt hơn không viết gì                                 |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: câu hỏi "why is testing important" → Nhớ đến: Shift-left economics + Living docs + Safety net → Mở đầu: "Testing matters for three core reasons: the exponential cost of late bugs, tests as living documentation, and the confidence to refactor safely."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [SOLID Principles](./01-solid-and-design-patterns.md) — code dễ test là code tốt
+- ➡️ Để hiểu tiếp: [Test Pyramid](#2-test-pyramid--kim-tự-tháp-kiểm-thử) — phân bổ testing effort thế nào
+
 ### 🟢 Q: Why is software testing important? `[Junior]`
 
 **A:** Testing quan trọng vì ba lý do cốt lõi:
 
 **1. Cost of Bugs — Chi phí phát hiện bug muộn (Shift-left economics)**
 
-| Phase Discovered | Relative Cost | Ví dụ |
-|-----------------|---------------|-------|
-| Requirements | 1x | Sửa spec trên giấy |
-| Design | 5x | Sửa architecture document |
-| Coding | 10x | Fix trong IDE trước commit |
-| Testing / QA | 20x | Bug ticket, reproduce, fix, re-test |
-| Production | 100x+ | Hotfix, data corruption, customer churn, reputation damage |
+| Phase Discovered | Relative Cost | Ví dụ                                                      |
+| ---------------- | ------------- | ---------------------------------------------------------- |
+| Requirements     | 1x            | Sửa spec trên giấy                                         |
+| Design           | 5x            | Sửa architecture document                                  |
+| Coding           | 10x           | Fix trong IDE trước commit                                 |
+| Testing / QA     | 20x           | Bug ticket, reproduce, fix, re-test                        |
+| Production       | 100x+         | Hotfix, data corruption, customer churn, reputation damage |
 
 > "Shift-left" nghĩa là đưa testing về sớm nhất có thể trong development lifecycle. Bug phát hiện ở giai đoạn requirements rẻ hơn 100 lần so với production.
 
@@ -135,6 +188,7 @@ With tests:      Change code → Run tests → Green? Ship! Red? Fix before ship
 - **Validation**: Spec có đúng nhu cầu user không? (Are we building the right thing?)
 
 Testing bao phủ cả hai:
+
 - Unit/integration tests → verification (code behavior đúng)
 - E2E/acceptance tests → validation (user journey hoạt động)
 
@@ -143,6 +197,57 @@ Testing bao phủ cả hai:
 ---
 
 ## 2. Test Pyramid — Kim tự tháp kiểm thử
+
+> 🧠 **Memory Hook:** "Kim tự tháp Ai Cập — càng xuống đáy càng rộng, càng lên đỉnh càng nhỏ. Unit tests = đáy pyramid!"
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Không phải mọi test đều có chi phí bằng nhau. → **Why?** Vì E2E test cần browser, server, database — mất 30 giây mỗi test; unit test chạy trong millisecond. → **Why?** Nên phải có framework phân bổ hợp lý: nhiều test rẻ/nhanh, ít test đắt/chậm.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Tưởng tượng kim tự tháp Ai Cập. Đáy rộng nhất — đó là unit tests, hàng ngàn viên gạch nhỏ, rẻ tiền, đặt nhanh. Lên đến giữa — integration tests, ít hơn, mỗi lớp cần nhiều công hơn. Đỉnh nhọn — E2E tests, chỉ vài cái nhưng mỗi cái rất tốn kém. Nếu bạn lật ngược kim tự tháp (nhiều E2E ở đáy), toàn bộ cấu trúc sẽ sụp đổ vì không vững.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+         /\
+        /  \       E2E (~10%)       30s/test | Browser+DB | User journeys
+       /----\
+      /      \     Integration      1s/test  | Module     | API + DB queries
+     / Integ  \    (~20%)
+    /----------\
+   /            \  Unit (~70%)     1ms/test | Function   | Pure logic
+  /______________\
+```
+
+1. Tỷ lệ chuẩn: **70% Unit : 20% Integration : 10% E2E**
+2. Anti-pattern "Ice Cream Cone": lật ngược pyramid → CI chậm, flaky tests nhiều
+3. Anti-pattern "Hourglass": nhiều unit + E2E nhưng thiếu integration → bugs lọt qua
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- Testing Trophy (Kent C. Dodds) đề xuất integration ở giữa nhiều hơn → phù hợp frontend
+- Microservices có thể cần contract tests thay vì E2E truyền thống
+- Tỷ lệ 70/20/10 không cứng nhắc — tùy domain và risk profile của từng dự án
+- Pyramid áp dụng cho team/codebase level, không phải từng feature riêng lẻ
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                            | Tại sao sai                                           | Đúng là                                                    |
+| ---------------------------------- | ----------------------------------------------------- | ---------------------------------------------------------- |
+| Viết E2E cho tất cả scenarios      | E2E chậm → CI mất hàng giờ → developer không chờ được | Dùng E2E cho happy path chính, unit test cho edge cases    |
+| Không có integration test          | Unit pass riêng lẻ không đảm bảo khi kết hợp          | Test ít nhất: DB queries, API endpoints, module boundaries |
+| Xem tỷ lệ 70/20/10 là quy tắc cứng | Mỗi dự án có risk profile khác nhau                   | Ưu tiên test nơi có nhiều business risk nhất               |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: câu hỏi về test pyramid hoặc "how do you structure tests" → Nhớ đến: Kim tự tháp 70/20/10, Ice Cream Cone anti-pattern → Mở đầu: "The Test Pyramid guides us to have many fast cheap unit tests at the base and few slow expensive E2E tests at the top."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Why Testing Matters](#1-why-testing-matters--vì-sao-testing-quan-trọng) — hiểu chi phí của từng tầng
+- ➡️ Để hiểu tiếp: [Unit Testing](#3-unit-testing--kiểm-thử-đơn-vị) — xây dựng tầng đáy vững chắc
 
 ### 🟢 Q: What is the Test Pyramid? `[Junior]`
 
@@ -161,11 +266,11 @@ Testing bao phủ cả hai:
  /____________________\
 ```
 
-| Layer | Tỷ lệ | Speed | Cost | Scope | Confidence |
-|-------|--------|-------|------|-------|------------|
-| **Unit** | ~70% | Milliseconds | Rất thấp | Single function/class | Logic đúng |
-| **Integration** | ~20% | Seconds | Trung bình | Multiple components + external | Tương tác đúng |
-| **E2E** | ~10% | Minutes | Cao | Entire system | User flow đúng |
+| Layer           | Tỷ lệ | Speed        | Cost       | Scope                          | Confidence     |
+| --------------- | ----- | ------------ | ---------- | ------------------------------ | -------------- |
+| **Unit**        | ~70%  | Milliseconds | Rất thấp   | Single function/class          | Logic đúng     |
+| **Integration** | ~20%  | Seconds      | Trung bình | Multiple components + external | Tương tác đúng |
+| **E2E**         | ~10%  | Minutes      | Cao        | Entire system                  | User flow đúng |
 
 **Nguyên tắc:** Càng xuống đáy → càng nhiều test, càng nhanh, càng rẻ. Càng lên đỉnh → càng ít test, càng chậm, càng đắt.
 
@@ -220,13 +325,13 @@ Testing bao phủ cả hai:
     |_____________|
 ```
 
-| Aspect | Test Pyramid | Testing Trophy |
-|--------|-------------|----------------|
-| Emphasis | Unit tests nhiều nhất | Integration tests nhiều nhất |
-| Philosophy | Test isolated units | Test user behavior |
-| Static analysis | Không đề cập | Là tầng nền tảng |
-| Best for | Backend, business logic nặng | Frontend, UI-driven apps |
-| Coined by | Mike Cohn (2009) | Kent C. Dodds (2018) |
+| Aspect          | Test Pyramid                 | Testing Trophy               |
+| --------------- | ---------------------------- | ---------------------------- |
+| Emphasis        | Unit tests nhiều nhất        | Integration tests nhiều nhất |
+| Philosophy      | Test isolated units          | Test user behavior           |
+| Static analysis | Không đề cập                 | Là tầng nền tảng             |
+| Best for        | Backend, business logic nặng | Frontend, UI-driven apps     |
+| Coined by       | Mike Cohn (2009)             | Kent C. Dodds (2018)         |
 
 **Lý do Trophy ưu tiên integration:** Trong frontend, unit test một React component tách biệt ít phản ánh thực tế. Test component cùng children, state, và API calls (integration) cho confidence cao hơn.
 
@@ -235,6 +340,59 @@ Testing bao phủ cả hai:
 ---
 
 ## 3. Unit Testing — Kiểm thử đơn vị
+
+> 🧠 **Memory Hook:** "Kiểm tra từng viên gạch trước khi xây tường — một viên gạch xấu sẽ làm yếu cả bức tường!"
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Hàm/class hoạt động đúng trong isolation không có nghĩa là toàn bộ hệ thống đúng, nhưng nếu unit sai thì chắc chắn hệ thống sai. → **Why?** Vì bug càng nhỏ và càng được isolate, càng dễ tìm và sửa. → **Why?** Vì khi test fail, bạn biết ngay chính xác function nào sai, không phải lần mò qua hàng ngàn dòng log.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Khi xây một ngôi nhà, người thợ kiểm tra từng viên gạch trước khi đặt vào tường — viên nào rạn nứt, vứt ngay. Unit test làm điều tương tự với code: kiểm tra từng function một cách độc lập, trong môi trường kiểm soát, không để network hay database ảnh hưởng kết quả. Một viên gạch chắc → tường chắc → ngôi nhà vững.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Cấu trúc Arrange-Act-Assert (AAA):
+
+  ┌─────────────┐
+  │   ARRANGE   │  → Setup input data, khởi tạo objects, mock dependencies
+  ├─────────────┤
+  │     ACT     │  → Gọi function/method đang test
+  ├─────────────┤
+  │   ASSERT    │  → Kiểm tra output đúng với expected
+  └─────────────┘
+```
+
+1. **FIRST Principles**: Fast, Independent, Repeatable, Self-validating, Timely
+2. **Boundary Value Analysis**: Test tại biên (0, -1, max, max+1) — bug thường ở đây
+3. **Equivalence Partitioning**: Chia input thành nhóm tương đương, test đại diện mỗi nhóm
+4. **Isolation**: Dùng test doubles để loại bỏ dependencies (DB, network, time)
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- Test quá nhiều implementation detail → test brittle khi refactor nội bộ
+- Mocking quá nhiều → test không thực tế, không phát hiện integration issues
+- "Hard to test" thường là signal của bad design (violate SRP, tight coupling)
+- Test name quan trọng — `test_calculateTax_returns_0_when_income_below_threshold` tốt hơn `test1`
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                        | Tại sao sai                                                         | Đúng là                                                         |
+| ------------------------------ | ------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Test private methods trực tiếp | Private method là implementation detail, không phải public contract | Test qua public interface; private method được verify gián tiếp |
+| Nhiều assertions trong 1 test  | Khi fail không biết assertion nào gây ra                            | Mỗi test kiểm tra 1 behavior cụ thể                             |
+| Không test error cases         | Happy path không đủ, edge case thường là nguồn bug                  | Test null, empty, invalid input, và error conditions            |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: "write a unit test for..." hoặc "what makes a good unit test" → Nhớ đến: AAA pattern + FIRST principles + boundary values → Mở đầu: "A good unit test follows Arrange-Act-Assert, tests one behavior at a time, and is fast and isolated from external dependencies."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Test Pyramid](#2-test-pyramid--kim-tự-tháp-kiểm-thử) — unit tests là tầng đáy quan trọng nhất
+- ➡️ Để hiểu tiếp: [Test Doubles](#4-test-doubles--các-bản-thay-thế-trong-test) — cách isolate dependencies trong unit test
 
 ### 🟢 Q: What is a unit test? `[Junior]`
 
@@ -259,13 +417,13 @@ FUNCTION test_calculate_discount():
 
 **A:** FIRST là 5 đặc tính của unit test chất lượng:
 
-| Principle | Meaning | Giải thích |
-|-----------|---------|------------|
-| **F** — Fast | Tests run quickly | Mỗi test < 100ms. Suite of 1000 tests chạy trong vài giây. Nếu chậm → dev skip running tests. |
-| **I** — Isolated | Tests don't depend on each other | Test A fail không ảnh hưởng test B. Không shared state. Chạy bất kỳ thứ tự nào đều pass. |
-| **R** — Repeatable | Same result every time | Không phụ thuộc datetime, random, network, file system. Chạy 1000 lần đều cùng kết quả. |
-| **S** — Self-validating | Pass or fail, no manual check | Test tự assert, không cần dev đọc log để verify. Output là binary: green/red. |
-| **T** — Timely | Written at the right time | Viết test cùng lúc (hoặc trước) production code. Test viết muộn thường bỏ sót edge cases. |
+| Principle               | Meaning                          | Giải thích                                                                                    |
+| ----------------------- | -------------------------------- | --------------------------------------------------------------------------------------------- |
+| **F** — Fast            | Tests run quickly                | Mỗi test < 100ms. Suite of 1000 tests chạy trong vài giây. Nếu chậm → dev skip running tests. |
+| **I** — Isolated        | Tests don't depend on each other | Test A fail không ảnh hưởng test B. Không shared state. Chạy bất kỳ thứ tự nào đều pass.      |
+| **R** — Repeatable      | Same result every time           | Không phụ thuộc datetime, random, network, file system. Chạy 1000 lần đều cùng kết quả.       |
+| **S** — Self-validating | Pass or fail, no manual check    | Test tự assert, không cần dev đọc log để verify. Output là binary: green/red.                 |
+| **T** — Timely          | Written at the right time        | Viết test cùng lúc (hoặc trước) production code. Test viết muộn thường bỏ sót edge cases.     |
 
 ### 🟢 Q: What is the Arrange-Act-Assert pattern? `[Junior]`
 
@@ -291,6 +449,7 @@ FUNCTION test_user_registration():
 ```
 
 **Best practices:**
+
 - Mỗi test chỉ có **một Act** section (test one behavior)
 - Arrange có thể dài → extract vào helper/factory nếu cần
 - Assert nên kiểm tra **behavior**, không kiểm tra implementation detail
@@ -300,25 +459,28 @@ FUNCTION test_user_registration():
 **A:** Tên test phải mô tả rõ scenario mà không cần đọc code. Ba convention phổ biến:
 
 **1. Given-When-Then style:**
+
 ```
 test_givenInvalidEmail_whenRegister_thenReturnsValidationError
 ```
 
 **2. Should style:**
+
 ```
 test_register_shouldReturnError_whenEmailIsInvalid
 ```
 
 **3. Method-Scenario-Expected style:**
+
 ```
 test_calculateDiscount_withExpiredCoupon_returnsZero
 ```
 
-| Convention | Ưu điểm | Nhược điểm |
-|------------|---------|------------|
-| Given-When-Then | Rõ context, action, result | Tên dài |
-| Should | Đọc tự nhiên | Dễ vague ("should work") |
-| Method-Scenario-Expected | Ngắn gọn, structured | Coupled to method name |
+| Convention               | Ưu điểm                    | Nhược điểm               |
+| ------------------------ | -------------------------- | ------------------------ |
+| Given-When-Then          | Rõ context, action, result | Tên dài                  |
+| Should                   | Đọc tự nhiên               | Dễ vague ("should work") |
+| Method-Scenario-Expected | Ngắn gọn, structured       | Coupled to method name   |
 
 **Anti-pattern:** `test1`, `testAdd`, `testHappy` — không mô tả gì về behavior.
 
@@ -378,16 +540,16 @@ FUNCTION is_eligible(age):
 
 Boundary values cần test:
 
-| Category | Values | Expected |
-|----------|--------|----------|
-| Below minimum | 17 | false |
-| At minimum | 18 | true |
-| Just above minimum | 19 | true |
-| Normal | 40 | true |
-| Just below maximum | 64 | true |
-| At maximum | 65 | true |
-| Above maximum | 66 | false |
-| Edge cases | 0, -1, MAX_INT | false |
+| Category           | Values         | Expected |
+| ------------------ | -------------- | -------- |
+| Below minimum      | 17             | false    |
+| At minimum         | 18             | true     |
+| Just above minimum | 19             | true     |
+| Normal             | 40             | true     |
+| Just below maximum | 64             | true     |
+| At maximum         | 65             | true     |
+| Above maximum      | 66             | false    |
+| Edge cases         | 0, -1, MAX_INT | false    |
 
 **Tại sao BVA quan trọng:** Thống kê cho thấy phần lớn bugs xảy ra tại boundary. Off-by-one errors (`<` vs `<=`) là bug phổ biến nhất.
 
@@ -417,19 +579,69 @@ Equivalence classes:
 
 ## 4. Test Doubles — Các bản thay thế trong test
 
+> 🧠 **Memory Hook:** "Diễn viên đóng thế trong phim — khi cảnh nguy hiểm, thay thế bằng người giả để bảo vệ diễn viên chính!"
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Unit test cần isolation nhưng code thực có dependencies (database, API, thời gian). → **Why?** Vì gọi database thật trong unit test làm test chậm, flaky, và không deterministic. → **Why?** Cần "diễn viên đóng thế" — objects giả thay thế dependencies thật để test chạy nhanh và ổn định.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Trong bộ phim hành động, khi diễn viên chính cần nhảy từ tòa nhà cao, đạo diễn thay bằng diễn viên đóng thế chuyên nghiệp. Diễn viên đóng thế (test double) trông giống diễn viên chính (real dependency) từ xa nhưng không thật. Trong testing: khi code cần gọi database hay email service, ta dùng "stunt double" — object giả có cùng interface nhưng không thực sự kết nối internet hay ghi dữ liệu.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+5 loại Test Double (từ đơn giản → phức tạp):
+
+Dummy   → Truyền vào nhưng không dùng         fillArgs(new DummyLogger())
+  ↓
+Stub    → Trả về data cố định                  stub.getUser() → {id:1, name:"test"}
+  ↓
+Spy     → Wrap real object, ghi lại calls      spy.verify(calledWith("arg"), times(3))
+  ↓
+Mock    → Pre-programmed expectations          mock.expects("save").once().returns(true)
+  ↓
+Fake    → Implementation thật nhưng đơn giản   InMemoryDB thay vì PostgreSQL thật
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- Mock quá nhiều → test chỉ verify mock behavior, không test real code
+- Fake có thể diverge từ real implementation theo thời gian → false confidence
+- Spy thích hợp khi muốn giữ behavior thật nhưng cần verify calls
+- "Don't mock what you don't own" — tạo wrapper cho third-party APIs trước khi mock
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                           | Tại sao sai                                                                    | Đúng là                                                    |
+| --------------------------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| Dùng mock cho tất cả dependencies | Mock quá nhiều → test verify mock không verify code thật                       | Chỉ mock external dependencies (DB, API, time, filesystem) |
+| Nhầm mock và stub                 | Mock verify behavior (interaction testing), stub cung cấp data (state testing) | Stub khi cần return value, Mock khi cần verify interaction |
+| Không verify mock expectations    | Mock setup nhưng không assert → test luôn xanh dù sai                          | Verify mock được gọi đúng số lần và đúng params            |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: "what is the difference between mock, stub, and spy" → Nhớ đến: Stub=fake data, Mock=verify calls, Spy=wrap real → Mở đầu: "A stub provides fake return values, a mock also verifies how it was called, and a spy wraps a real object to record interactions while keeping real behavior."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Unit Testing](#3-unit-testing--kiểm-thử-đơn-vị) — test doubles dùng để isolate unit
+- ➡️ Để hiểu tiếp: [Integration Testing](#5-integration-testing--kiểm-thử-tích-hợp) — khi nào không nên mock
+
 ### 🟢 Q: What are test doubles? `[Junior]`
 
 **A:** Test double là đối tượng thay thế dependency thật trong test, giúp isolate unit đang test. Thuật ngữ từ Gerard Meszaros (xUnit Patterns), lấy ý tưởng từ "stunt double" trong phim.
 
 Có 5 loại chính:
 
-| Type | Mục đích | Behavior | Ví dụ |
-|------|---------|----------|-------|
-| **Dummy** | Lấp chỗ trống parameter | Không bao giờ được gọi | `new NullLogger()` truyền vào constructor |
-| **Stub** | Trả giá trị định sẵn | Trả response cố định khi được gọi | `userRepo.findById → returns User("Alice")` |
-| **Spy** | Ghi nhận tương tác | Thực thi + ghi lại calls | `emailSpy.send(...)` → verify `send` called 1 time |
-| **Mock** | Verify behavior | Có expectations, fail nếu sai | `mock.expect(send).with("hello").once()` |
-| **Fake** | Implementation thật nhưng đơn giản | Hoạt động thật, dùng in-memory | In-memory database, local fake S3 |
+| Type      | Mục đích                           | Behavior                          | Ví dụ                                              |
+| --------- | ---------------------------------- | --------------------------------- | -------------------------------------------------- |
+| **Dummy** | Lấp chỗ trống parameter            | Không bao giờ được gọi            | `new NullLogger()` truyền vào constructor          |
+| **Stub**  | Trả giá trị định sẵn               | Trả response cố định khi được gọi | `userRepo.findById → returns User("Alice")`        |
+| **Spy**   | Ghi nhận tương tác                 | Thực thi + ghi lại calls          | `emailSpy.send(...)` → verify `send` called 1 time |
+| **Mock**  | Verify behavior                    | Có expectations, fail nếu sai     | `mock.expect(send).with("hello").once()`           |
+| **Fake**  | Implementation thật nhưng đơn giản | Hoạt động thật, dùng in-memory    | In-memory database, local fake S3                  |
 
 ### 🟡 Q: Explain each test double type with examples. `[Mid]`
 
@@ -521,19 +733,20 @@ FUNCTION test_user_crud():
 
 **A:**
 
-| Scenario | Recommended | Lý do |
-|----------|-------------|-------|
-| Parameter cần nhưng test không dùng | **Dummy** | Đơn giản nhất, không behavior |
-| Kiểm soát input gián tiếp (DB trả gì) | **Stub** | Chỉ cần output, không verify calls |
-| Verify method được gọi đúng | **Spy** | Ghi nhận nhưng không ép behavior |
-| Verify đúng method, đúng args, đúng số lần | **Mock** | Strict expectations |
-| Cần behavior gần thật, nhiều tests share | **Fake** | Reusable, realistic behavior |
+| Scenario                                   | Recommended | Lý do                              |
+| ------------------------------------------ | ----------- | ---------------------------------- |
+| Parameter cần nhưng test không dùng        | **Dummy**   | Đơn giản nhất, không behavior      |
+| Kiểm soát input gián tiếp (DB trả gì)      | **Stub**    | Chỉ cần output, không verify calls |
+| Verify method được gọi đúng                | **Spy**     | Ghi nhận nhưng không ép behavior   |
+| Verify đúng method, đúng args, đúng số lần | **Mock**    | Strict expectations                |
+| Cần behavior gần thật, nhiều tests share   | **Fake**    | Reusable, realistic behavior       |
 
 ### 🔴 Q: What is the over-mocking anti-pattern? `[Senior]`
 
 **A:** Over-mocking xảy ra khi mock quá nhiều dependency → test trở nên **coupled với implementation** thay vì behavior.
 
 **Triệu chứng:**
+
 - Refactor code (không đổi behavior) → hàng chục test fail
 - Test setup dài hơn test assertion
 - Mock trả mock trả mock (mock chain)
@@ -572,6 +785,56 @@ FUNCTION test_get_user():
 
 ## 5. Integration Testing — Kiểm thử tích hợp
 
+> 🧠 **Memory Hook:** "Ghép hai bộ phận máy lại xem có khớp không — bánh răng A và B tốt riêng nhưng khi ghép có thể không ăn khớp!"
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Unit tests pass không đảm bảo hệ thống hoạt động khi các component kết hợp. → **Why?** Vì interface giữa các module có thể sai: data format, protocol, naming, timing. → **Why?** Cần test ở "boundaries" — nơi code gặp database, API, file system, hay module khác — để đảm bảo sự tương tác đúng.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Hãy tưởng tượng bạn lắp ráp một chiếc máy. Bạn kiểm tra từng bộ phận riêng lẻ và tất cả đều hoạt động tốt. Nhưng khi ghép bánh răng A với bánh răng B lại, chúng không ăn khớp vì kích thước răng không đúng. Integration test chính là bước "ghép bánh răng" — kiểm tra xem các bộ phận có thực sự làm việc được với nhau không, chứ không chỉ hoạt động độc lập.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Integration test boundaries:
+
+  [Code]    ──→ [Database]        Test: SQL queries đúng, schema match
+  [Code]    ──→ [External API]    Test: Request format, auth headers, error handling
+  [ServiceA] ──→ [ServiceB]      Test: Contract — data format giữa hai service
+  [Controller] → [Service] → [Repo]  Test: Request → business logic → persistence
+```
+
+1. **Database testing**: Dùng test database (Docker/in-memory) — không test DB thật
+2. **Contract testing**: Pact framework — verify consumer/provider agree on interface
+3. **API integration**: Supertest/httptest — test HTTP layer với real routing
+4. **Scope rõ ràng**: Test ít nhất 2 component thật, mock external services ở ranh giới
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- Integration test chậm hơn unit → không chạy sau mỗi save, chỉ trước commit/PR
+- Database state phải clean giữa các test (transactions rollback hoặc truncate)
+- Contract tests phù hợp microservices hơn là E2E toàn bộ hệ thống
+- "Big bang" integration (test tất cả cùng lúc) khó debug khi fail — chia nhỏ hơn
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                 | Tại sao sai                                       | Đúng là                                                         |
+| --------------------------------------- | ------------------------------------------------- | --------------------------------------------------------------- |
+| Test cả hệ thống trong integration test | Ranh giới mờ với E2E, quá chậm và phức tạp        | Giữ integration test tập trung vào 2-3 component                |
+| Dùng production database cho tests      | Data bị thay đổi, tests ảnh hưởng nhau, nguy hiểm | Dùng Docker DB hoặc in-memory DB riêng cho test                 |
+| Bỏ qua integration test vì "có E2E rồi" | E2E quá chậm để cover tất cả edge case            | Integration test nhanh hơn E2E và cover boundary errors tốt hơn |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: "how do you test database interactions" hoặc "what is integration testing" → Nhớ đến: Test at boundaries, real components + isolated external → Mở đầu: "Integration tests verify that components work correctly together at their boundaries — like testing that our code actually queries the database correctly, not just that the logic is right in isolation."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Test Doubles](#4-test-doubles--các-bản-thay-thế-trong-test) — biết khi nào mock và khi nào dùng real
+- ➡️ Để hiểu tiếp: [End-to-End Testing](#6-end-to-end-testing--kiểm-thử-đầu-cuối) — khi cần test toàn bộ user journey
+
 ### 🟢 Q: What is integration testing? `[Junior]`
 
 **A:** Integration test kiểm tra **sự tương tác giữa các component** — khi unit tests pass riêng lẻ nhưng chưa đảm bảo khi kết hợp lại.
@@ -592,14 +855,14 @@ FUNCTION test_get_user():
 
 **A:** Integration test tập trung tại các **boundary** (ranh giới) nơi data chuyển đổi format:
 
-| Boundary | What to Test | Ví dụ |
-|----------|-------------|-------|
-| **Database** | Queries, migrations, constraints | INSERT đúng column, FK constraint, index usage |
-| **HTTP API** | Request/response format, status codes | POST /users trả 201, body đúng schema |
-| **File System** | Read/write, permissions, encoding | CSV export, file upload processing |
-| **Message Queue** | Publish/consume, serialization | Event serialized đúng, consumer parse được |
-| **Cache** | Set/get, TTL, invalidation | Redis key format, expiry behavior |
-| **External Service** | API contract, error handling | Third-party API trả 429, service handles gracefully |
+| Boundary             | What to Test                          | Ví dụ                                               |
+| -------------------- | ------------------------------------- | --------------------------------------------------- |
+| **Database**         | Queries, migrations, constraints      | INSERT đúng column, FK constraint, index usage      |
+| **HTTP API**         | Request/response format, status codes | POST /users trả 201, body đúng schema               |
+| **File System**      | Read/write, permissions, encoding     | CSV export, file upload processing                  |
+| **Message Queue**    | Publish/consume, serialization        | Event serialized đúng, consumer parse được          |
+| **Cache**            | Set/get, TTL, invalidation            | Redis key format, expiry behavior                   |
+| **External Service** | API contract, error handling          | Third-party API trả 429, service handles gracefully |
 
 ### 🟡 Q: What are test containers and why are they useful? `[Mid]`
 
@@ -630,11 +893,13 @@ FUNCTION test_user_repository():
 ```
 
 **Ưu điểm:**
+
 - Test chạy với engine thật (PostgreSQL, không phải SQLite mock)
 - Phát hiện bugs liên quan SQL dialect, constraints, indexes
 - Reproducible: mỗi test run = clean database
 
 **Nhược điểm:**
+
 - Chậm hơn in-memory fakes (startup container ~2-5s)
 - Cần Docker trên CI machine
 - Resource-intensive khi chạy parallel
@@ -670,17 +935,18 @@ PROVIDER_TEST "AuthAPI fulfills UserService contract":
 ```
 
 **Khi nào dùng contract testing:**
+
 - Microservices nhiều team develop độc lập
 - Provider thay đổi API nhưng consumer chưa biết
 - E2E test quá chậm và flaky cho cross-service testing
 
 **So sánh:**
 
-| Approach | Speed | Scope | Independence |
-|----------|-------|-------|-------------|
-| E2E test | Chậm | Toàn hệ thống | Cần tất cả services chạy |
-| Integration test (stub) | Nhanh | Một service | Stub có thể sai lệch |
-| Contract test | Nhanh | API boundary | Mỗi team test riêng, contract là source of truth |
+| Approach                | Speed | Scope         | Independence                                     |
+| ----------------------- | ----- | ------------- | ------------------------------------------------ |
+| E2E test                | Chậm  | Toàn hệ thống | Cần tất cả services chạy                         |
+| Integration test (stub) | Nhanh | Một service   | Stub có thể sai lệch                             |
+| Contract test           | Nhanh | API boundary  | Mỗi team test riêng, contract là source of truth |
 
 ### 🟡 Q: What are database testing strategies? `[Mid]`
 
@@ -717,15 +983,72 @@ FUNCTION test_query():
 
 Ưu điểm: Hoàn toàn isolated. Nhược điểm: Chậm nhất, resource-heavy.
 
-| Strategy | Speed | Isolation | Realism |
-|----------|-------|-----------|---------|
-| Transaction rollback | Nhanh nhất | Tốt | Trung bình (skip commit) |
-| Seed + truncate | Trung bình | Tốt | Cao |
-| Container per suite | Chậm | Tuyệt đối | Cao nhất |
+| Strategy             | Speed      | Isolation | Realism                  |
+| -------------------- | ---------- | --------- | ------------------------ |
+| Transaction rollback | Nhanh nhất | Tốt       | Trung bình (skip commit) |
+| Seed + truncate      | Trung bình | Tốt       | Cao                      |
+| Container per suite  | Chậm       | Tuyệt đối | Cao nhất                 |
 
 ---
 
 ## 6. End-to-End Testing — Kiểm thử đầu-cuối
+
+> 🧠 **Memory Hook:** "Lái thử xe trên đường thật — không chỉ kiểm tra từng bộ phận mà lái từ điểm A đến điểm B xem có trục trặc gì không!"
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Unit và integration tests không bắt được bugs xảy ra khi user thực sự dùng hệ thống qua browser. → **Why?** Vì UI interactions, routing, state management, và toàn bộ stack phối hợp tạo ra behaviors phức tạp không thể test riêng lẻ. → **Why?** Cần "lái thử" toàn bộ hệ thống như user thật để đảm bảo user journey hoạt động end-to-end.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Bạn vừa mua một chiếc xe mới. Nhà sản xuất đã kiểm tra từng bộ phận (unit), kiểm tra các cụm máy (integration), nhưng trước khi giao xe, họ vẫn phải cho người lái thử trên đường thật — từ điểm A đến điểm B — để đảm bảo xe thực sự chạy được. E2E test là "lái thử" đó: giả lập user click button, điền form, chờ response, kiểm tra kết quả trên màn hình.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+E2E Test Flow (Playwright/Cypress):
+
+  Browser ──→ Click "Login" button
+      ↓
+  Fill username + password form
+      ↓
+  Submit → HTTP request → Backend → DB auth
+      ↓
+  Redirect to dashboard
+      ↓
+  Assert: URL = "/dashboard", welcome message visible
+      ↓
+  ✅ PASS hoặc ❌ FAIL với screenshot/video
+```
+
+1. **Page Object Model (POM)**: Encapsulate page interactions → reusable + maintainable
+2. **Test isolation**: Mỗi test setup/teardown state riêng — seed data, clear cookies
+3. **Flaky test causes**: timing, animation, network latency → dùng wait conditions thay vì sleep
+4. **Chỉ test critical paths**: Login, checkout, core features — không test mọi UI detail
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- E2E test rất chậm → chạy trong CI/CD pipeline, không trong development loop
+- Flaky tests phá vỡ team trust → phải investigate và fix ngay, không ignore
+- Visual regression testing: screenshot comparison để catch UI changes vô tình
+- E2E không thay thế được unit/integration — nó complement, không substitute
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                         | Tại sao sai                                   | Đúng là                                                         |
+| ------------------------------- | --------------------------------------------- | --------------------------------------------------------------- |
+| Test mọi functionality bằng E2E | Quá chậm, chi phí maintenance cao, dễ flaky   | Chỉ E2E cho critical user journeys (login, purchase, core flow) |
+| Không có test isolation         | Tests ảnh hưởng nhau, thứ tự test quan trọng  | Mỗi test độc lập: seed data riêng, cleanup sau khi chạy         |
+| Bỏ qua flaky tests              | Dần dần team mất tin tưởng, bắt đầu ignore CI | Fix hoặc quarantine flaky tests ngay, track flakiness rate      |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: "how do you handle flaky tests" hoặc "when do you write E2E tests" → Nhớ đến: Critical paths only, Page Object Model, wait conditions thay vì sleep → Mở đầu: "E2E tests should cover critical user journeys only. We use Page Object Model to keep them maintainable and condition-based waits instead of arbitrary sleeps to avoid flakiness."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Integration Testing](#5-integration-testing--kiểm-thử-tích-hợp) — E2E bổ sung, không thay thế
+- ➡️ Để hiểu tiếp: [TDD](#7-tdd--phát-triển-hướng-kiểm-thử) — methodology để viết test trước, không sau
 
 ### 🟢 Q: What is end-to-end testing? `[Junior]`
 
@@ -751,22 +1074,22 @@ TEST "User can login and view dashboard":
 
 **A:** Landscape các tools phổ biến:
 
-| Tool | Architecture | Language | Key Feature |
-|------|-------------|----------|-------------|
-| **Cypress** | Runs inside browser | JavaScript | Time-travel debugging, auto-wait |
-| **Playwright** | Controls browser via CDP/WebSocket | JS/TS/Python/C# | Multi-browser, auto-wait, codegen |
-| **Selenium** | WebDriver protocol | Java/Python/JS/... | Mature ecosystem, many languages |
-| **Puppeteer** | Chrome DevTools Protocol | JavaScript | Chrome-focused, lightweight |
+| Tool           | Architecture                       | Language           | Key Feature                       |
+| -------------- | ---------------------------------- | ------------------ | --------------------------------- |
+| **Cypress**    | Runs inside browser                | JavaScript         | Time-travel debugging, auto-wait  |
+| **Playwright** | Controls browser via CDP/WebSocket | JS/TS/Python/C#    | Multi-browser, auto-wait, codegen |
+| **Selenium**   | WebDriver protocol                 | Java/Python/JS/... | Mature ecosystem, many languages  |
+| **Puppeteer**  | Chrome DevTools Protocol           | JavaScript         | Chrome-focused, lightweight       |
 
 **So sánh key factors:**
 
-| Factor | Cypress | Playwright | Selenium |
-|--------|---------|-----------|----------|
-| Multi-browser | Limited | Chromium, Firefox, WebKit | All major browsers |
-| Speed | Nhanh | Rất nhanh | Trung bình |
-| Parallel | Paid (Dashboard) | Built-in | Cần Selenium Grid |
-| Auto-wait | Có | Có | Không (manual waits) |
-| Learning curve | Dễ | Trung bình | Khó |
+| Factor         | Cypress          | Playwright                | Selenium             |
+| -------------- | ---------------- | ------------------------- | -------------------- |
+| Multi-browser  | Limited          | Chromium, Firefox, WebKit | All major browsers   |
+| Speed          | Nhanh            | Rất nhanh                 | Trung bình           |
+| Parallel       | Paid (Dashboard) | Built-in                  | Cần Selenium Grid    |
+| Auto-wait      | Có               | Có                        | Không (manual waits) |
+| Learning curve | Dễ               | Trung bình                | Khó                  |
 
 ### 🔴 Q: How do you handle flaky tests? `[Senior]`
 
@@ -774,14 +1097,14 @@ TEST "User can login and view dashboard":
 
 **Nguyên nhân phổ biến:**
 
-| Cause | Ví dụ | Fix |
-|-------|-------|-----|
-| **Race conditions** | Element chưa render xong | Auto-wait, explicit wait for element |
-| **Time dependency** | Test dùng `new Date()` | Inject clock, freeze time |
-| **Shared state** | Test A tạo data, test B assume clean DB | Isolate data per test |
-| **Network latency** | API response chậm hơn timeout | Retry logic, increase timeout, mock external |
-| **Order dependency** | Test B pass chỉ khi test A chạy trước | Mỗi test tự setup data riêng |
-| **Animation/transition** | Click vào element đang animate | Disable animations in test mode |
+| Cause                    | Ví dụ                                   | Fix                                          |
+| ------------------------ | --------------------------------------- | -------------------------------------------- |
+| **Race conditions**      | Element chưa render xong                | Auto-wait, explicit wait for element         |
+| **Time dependency**      | Test dùng `new Date()`                  | Inject clock, freeze time                    |
+| **Shared state**         | Test A tạo data, test B assume clean DB | Isolate data per test                        |
+| **Network latency**      | API response chậm hơn timeout           | Retry logic, increase timeout, mock external |
+| **Order dependency**     | Test B pass chỉ khi test A chạy trước   | Mỗi test tự setup data riêng                 |
+| **Animation/transition** | Click vào element đang animate          | Disable animations in test mode              |
 
 **Chiến lược xử lý:**
 
@@ -848,6 +1171,7 @@ TEST "login flow":
 ```
 
 **Lợi ích:**
+
 - UI selector thay đổi → sửa 1 chỗ (Page Object), không phải sửa 50 tests
 - Test đọc như user story, không cần biết HTML structure
 - Reusable: nhiều tests share cùng Page Objects
@@ -872,6 +1196,7 @@ FUNCTION test_homepage_visual():
 ```
 
 **Khi nào dùng:**
+
 - CSS refactoring (đổi từ CSS Modules → Tailwind)
 - Component library updates
 - Cross-browser rendering consistency
@@ -883,19 +1208,72 @@ FUNCTION test_homepage_visual():
 
 **A:** E2E overkill khi:
 
-| Scenario | Why E2E is Overkill | Better Alternative |
-|----------|--------------------|--------------------|
-| Pure business logic (calculate tax) | Không cần browser | Unit test |
-| API response format | Không cần full stack | Contract test / API integration test |
-| Component rendering | Không cần real backend | Component test (Testing Library) |
-| Database query correctness | Không cần UI | Repository integration test |
-| Every edge case of a form | Quá nhiều combinations | Unit test validation + 1 happy path E2E |
+| Scenario                            | Why E2E is Overkill    | Better Alternative                      |
+| ----------------------------------- | ---------------------- | --------------------------------------- |
+| Pure business logic (calculate tax) | Không cần browser      | Unit test                               |
+| API response format                 | Không cần full stack   | Contract test / API integration test    |
+| Component rendering                 | Không cần real backend | Component test (Testing Library)        |
+| Database query correctness          | Không cần UI           | Repository integration test             |
+| Every edge case of a form           | Quá nhiều combinations | Unit test validation + 1 happy path E2E |
 
 **Nguyên tắc:** E2E test cho **critical user journeys** (login, checkout, payment). Tất cả logic chi tiết → unit + integration. Aim for 5-15 E2E tests cho một app trung bình, không phải 500.
 
 ---
 
 ## 7. TDD — Phát triển hướng kiểm thử
+
+> 🧠 **Memory Hook:** "Viết đề thi trước rồi mới học — đề thi xác định chính xác bạn cần học gì!"
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Developer thường viết code trước rồi mới nghĩ đến test, nhưng code khó test thường là code có bad design. → **Why?** Vì tightly coupled code, side effects, và hidden dependencies xuất hiện khi viết code trước mà không nghĩ đến testability. → **Why?** TDD buộc bạn thiết kế API của function trước khi implement — test chính là API spec đầu tiên.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Thầy giáo giỏi viết đề thi trước rồi mới soạn bài giảng — đề thi xác định chính xác kiến thức cần truyền đạt. TDD làm điều tương tự với code: viết test (đề thi) trước, rồi viết code (học bài) để vượt qua. Test đỏ (fail) nghĩa là "chưa học được", test xanh (pass) nghĩa là "đã nắm được", rồi refactor (ôn lại cho gọn) để giữ chất lượng.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Red → Green → Refactor cycle:
+
+  🔴 RED:      Viết test cho behavior chưa có
+               ↓ (Test PHẢI fail — nếu không fail, test sai)
+  🟢 GREEN:    Viết code tối thiểu để test pass
+               ↓ (Code có thể xấu, miễn test xanh)
+  🔵 REFACTOR: Clean up code, giữ test xanh
+               ↓ (Loại bỏ duplication, improve naming)
+               → Lặp lại cho behavior tiếp theo
+```
+
+1. Test phải **thực sự fail** trước khi viết code — không skip bước RED
+2. Viết **code tối thiểu** để pass — không over-engineer ở GREEN phase
+3. Refactor **chỉ khi tests xanh** — safety net đang hoạt động
+4. Mỗi cycle ngắn (2-5 phút) — nếu dài hơn, chia task nhỏ hơn
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- TDD khó với UI components, legacy code, và complex integrations
+- "Test-last" vẫn tốt hơn "no test" — TDD không phải luật bắt buộc tuyệt đối
+- Quá chú trọng 100% TDD có thể làm chậm development khi design chưa clear
+- TDD tốt nhất khi behavior rõ ràng có thể express thành assertions
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                           | Tại sao sai                                        | Đúng là                                 |
+| ------------------------------------------------- | -------------------------------------------------- | --------------------------------------- |
+| Viết nhiều tests một lúc trước khi implement      | Mất feedback loop, khó biết test nào cần fix trước | Một test → implement → pass → next test |
+| Skip Red phase (chưa thấy fail đã implement)      | Không biết test có thực sự kiểm tra được không     | Chạy test, thấy đỏ, rồi mới viết code   |
+| Refactor trong Green phase khi tests chưa ổn định | Test có thể break, mất safety net                  | Chỉ refactor khi tất cả tests đang xanh |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: "describe TDD" hoặc "what is Red-Green-Refactor" → Nhớ đến: Test trước, code tối thiểu, refactor sau → Mở đầu: "TDD follows Red-Green-Refactor: write a failing test first to define the desired behavior, then write just enough code to make it pass, then clean up while keeping tests green."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Unit Testing](#3-unit-testing--kiểm-thử-đơn-vị) — TDD dùng unit tests là chính
+- ➡️ Để hiểu tiếp: [BDD](#8-bdd--phát-triển-hướng-hành-vi) — TDD mở rộng sang ngôn ngữ business
 
 ### 🟢 Q: What is TDD? `[Junior]`
 
@@ -981,25 +1359,27 @@ FUNCTION FizzBuzz(n):
 
 **A:**
 
-| Benefit | Giải thích |
-|---------|------------|
-| **Design pressure** | Viết test trước buộc bạn nghĩ về interface trước implementation. Code TDD thường loosely coupled hơn. |
-| **Living documentation** | Test suite mô tả mọi behavior. New team member đọc tests hiểu spec nhanh. |
-| **Regression safety** | Mỗi feature có test từ đầu → refactor an toàn, merge confident. |
-| **Small increments** | Red-Green-Refactor buộc làm từng bước nhỏ → dễ debug, ít overwhelm. |
-| **100% coverage by design** | Mọi line of production code tồn tại vì có test yêu cầu → không viết code thừa. |
+| Benefit                     | Giải thích                                                                                            |
+| --------------------------- | ----------------------------------------------------------------------------------------------------- |
+| **Design pressure**         | Viết test trước buộc bạn nghĩ về interface trước implementation. Code TDD thường loosely coupled hơn. |
+| **Living documentation**    | Test suite mô tả mọi behavior. New team member đọc tests hiểu spec nhanh.                             |
+| **Regression safety**       | Mỗi feature có test từ đầu → refactor an toàn, merge confident.                                       |
+| **Small increments**        | Red-Green-Refactor buộc làm từng bước nhỏ → dễ debug, ít overwhelm.                                   |
+| **100% coverage by design** | Mọi line of production code tồn tại vì có test yêu cầu → không viết code thừa.                        |
 
 ### 🔴 Q: When does TDD work well vs when doesn't it? `[Senior]`
 
 **A:**
 
 **TDD hoạt động tốt khi:**
+
 - Business logic rõ ràng, input/output xác định (calculator, parser, validator)
 - API design ổn định — contract không thay đổi liên tục
 - Code có nhiều edge cases — TDD buộc bạn nghĩ từng case
 - Legacy code refactoring — viết characterization tests trước, sau đó refactor
 
 **TDD không phù hợp khi:**
+
 - Prototyping / spike — chưa biết solution hình thù gì, viết test cho gì?
 - UI layout — pixel position khó assert, thay đổi liên tục
 - Exploratory research — đang thử ML model, algorithm mới
@@ -1007,31 +1387,86 @@ FUNCTION FizzBuzz(n):
 
 **TDD vs Test-After:**
 
-| Aspect | TDD (Test-First) | Test-After |
-|--------|-------------------|------------|
-| Design impact | Drives better design | Retrofits tests on existing design |
-| Coverage | High by nature | Varies — easy to skip edge cases |
-| Speed (short term) | Slower | Faster |
-| Speed (long term) | Faster (fewer bugs) | Slower (more debugging) |
-| Discipline required | High | Low |
-| Adoption difficulty | Hard habit to build | Familiar to most devs |
+| Aspect              | TDD (Test-First)     | Test-After                         |
+| ------------------- | -------------------- | ---------------------------------- |
+| Design impact       | Drives better design | Retrofits tests on existing design |
+| Coverage            | High by nature       | Varies — easy to skip edge cases   |
+| Speed (short term)  | Slower               | Faster                             |
+| Speed (long term)   | Faster (fewer bugs)  | Slower (more debugging)            |
+| Discipline required | High                 | Low                                |
+| Adoption difficulty | Hard habit to build  | Familiar to most devs              |
 
 ### 🟡 Q: What are common misconceptions about TDD? `[Mid]`
 
 **A:**
 
-| Misconception | Reality |
-|--------------|---------|
-| "TDD means 100% coverage" | TDD means test everything that could break. Not trivial getters/setters. |
-| "TDD is slow" | Short-term slower, long-term faster due to fewer bugs and easier refactoring. |
-| "TDD replaces design" | TDD informs design, doesn't replace upfront thinking about architecture. |
-| "TDD = unit tests only" | You can TDD at any level: unit, integration, acceptance (ATDD). |
-| "If tests pass, code is correct" | Tests only verify what you thought to test. Missing test = missing spec. |
-| "TDD works for everything" | Some domains (UI, ML, prototypes) benefit less from strict TDD. |
+| Misconception                    | Reality                                                                       |
+| -------------------------------- | ----------------------------------------------------------------------------- |
+| "TDD means 100% coverage"        | TDD means test everything that could break. Not trivial getters/setters.      |
+| "TDD is slow"                    | Short-term slower, long-term faster due to fewer bugs and easier refactoring. |
+| "TDD replaces design"            | TDD informs design, doesn't replace upfront thinking about architecture.      |
+| "TDD = unit tests only"          | You can TDD at any level: unit, integration, acceptance (ATDD).               |
+| "If tests pass, code is correct" | Tests only verify what you thought to test. Missing test = missing spec.      |
+| "TDD works for everything"       | Some domains (UI, ML, prototypes) benefit less from strict TDD.               |
 
 ---
 
 ## 8. BDD — Phát triển hướng hành vi
+
+> 🧠 **Memory Hook:** "Viết kịch bản phim trước khi quay — đạo diễn, diễn viên, và nhà sản xuất đều hiểu cùng một story!"
+
+**Tại sao tồn tại? / Why does this exist?**
+
+TDD viết test theo góc nhìn developer, nhưng PM và QA không hiểu assertions kỹ thuật. → **Why?** Vì business requirements thường bị lost in translation khi chuyển thành code. → **Why?** BDD dùng ngôn ngữ tự nhiên (Given/When/Then) để spec behavior — cả team hiểu cùng một ngôn ngữ, giảm miscommunication giữa business và engineering.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Trước khi quay phim, đạo diễn viết kịch bản: "Cảnh 1: Nam chính bước vào nhà hàng (Given). Khi nhìn thấy menu (When). Thì gọi món yêu thích (Then)." Mọi người trong đoàn phim — từ diễn viên đến nhà sản xuất — đều đọc và hiểu kịch bản này. BDD làm điều tương tự: viết "kịch bản" cho software theo format Given-When-Then mà cả dev, QA, và PM đều đọc được.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Given-When-Then format (Gherkin syntax):
+
+  Feature: User Login
+
+  Scenario: Successful login with valid credentials
+    Given the user is on the login page
+    And   the user has a registered account
+    When  the user enters valid email and password
+    And   clicks the "Login" button
+    Then  the user should be redirected to dashboard
+    And   the welcome message should display their name
+```
+
+1. **Feature file**: Plain text, viết bởi PM/QA/Dev cùng nhau — shared language
+2. **Step definitions**: Dev implement code cho mỗi Given/When/Then step
+3. **Living documentation**: Feature files là spec luôn up-to-date với code
+4. **Tools**: Cucumber (Java/JS), SpecFlow (.NET), Behave (Python)
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- BDD có overhead lớn: viết Gherkin + maintain step definitions + cần cả team tham gia
+- Không phù hợp với tất cả dự án — tốt nhất khi business logic phức tạp
+- "BDD light": dùng Given/When/Then naming trong test functions mà không cần Cucumber
+- BDD không thay thế unit tests — nó operate ở acceptance test level
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                      | Tại sao sai                                       | Đúng là                                                           |
+| -------------------------------------------- | ------------------------------------------------- | ----------------------------------------------------------------- |
+| Viết Gherkin chỉ có Dev                      | BDD mất ý nghĩa nếu business không tham gia vào   | Collaborate: PM/QA viết scenarios, Dev implement step definitions |
+| Quá chi tiết về implementation trong Gherkin | Gherkin mô tả behavior, không phải cách implement | "User clicks login" đúng, "system calls POST /auth/login" sai     |
+| Dùng BDD cho unit-level tests                | Overhead quá lớn cho logic nhỏ, kém hiệu quả      | BDD cho acceptance/feature tests, unit test cho logic chi tiết    |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: "what is BDD" hoặc "how do you collaborate with QA on tests" → Nhớ đến: Given-When-Then, cả team cùng viết, living documentation → Mở đầu: "BDD extends TDD by expressing behavior in business language using Given-When-Then, enabling developers, QA, and product managers to collaborate on specifications that also serve as automated tests."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [TDD](#7-tdd--phát-triển-hướng-kiểm-thử) — BDD là evolution của TDD
+- ➡️ Để hiểu tiếp: [Property-Based Testing](#9-property-based-testing--kiểm-thử-dựa-trên-thuộc-tính) — kiểm tra thuộc tính tổng quát
 
 ### 🟢 Q: What is BDD? `[Junior]`
 
@@ -1057,16 +1492,16 @@ Feature: Apply discount
 
 **A:** Gherkin là ngôn ngữ structured cho BDD specifications. Các keyword chính:
 
-| Keyword | Purpose | Ví dụ |
-|---------|---------|-------|
-| `Feature` | Mô tả feature | `Feature: User Registration` |
-| `Scenario` | Một use case cụ thể | `Scenario: Register with valid email` |
-| `Given` | Precondition (context) | `Given user is on registration page` |
-| `When` | Action (trigger) | `When user submits the form` |
-| `Then` | Expected outcome | `Then account should be created` |
-| `And` / `But` | Additional steps | `And welcome email should be sent` |
-| `Scenario Outline` | Data-driven scenario | Template with `<variable>` |
-| `Examples` | Data table for outline | Table of test data |
+| Keyword            | Purpose                | Ví dụ                                 |
+| ------------------ | ---------------------- | ------------------------------------- |
+| `Feature`          | Mô tả feature          | `Feature: User Registration`          |
+| `Scenario`         | Một use case cụ thể    | `Scenario: Register with valid email` |
+| `Given`            | Precondition (context) | `Given user is on registration page`  |
+| `When`             | Action (trigger)       | `When user submits the form`          |
+| `Then`             | Expected outcome       | `Then account should be created`      |
+| `And` / `But`      | Additional steps       | `And welcome email should be sent`    |
+| `Scenario Outline` | Data-driven scenario   | Template with `<variable>`            |
+| `Examples`         | Data table for outline | Table of test data                    |
 
 ```
 Feature: Money Transfer
@@ -1108,6 +1543,7 @@ Living documentation (BDD):
 ```
 
 **Workflow:**
+
 1. PM/QA viết Gherkin scenario (business language)
 2. Dev implement step definitions (glue code)
 3. CI chạy scenarios mỗi commit
@@ -1141,13 +1577,13 @@ BDD (outer loop):                    TDD (inner loop):
                                     scenario passes
 ```
 
-| Aspect | TDD | BDD |
-|--------|-----|-----|
-| Audience | Developers | Dev + QA + PM + Stakeholders |
-| Language | Technical (test method names) | Business (Given-When-Then) |
-| Scope | Unit / class | Feature / behavior |
-| Focus | Code correctness | Business value delivery |
-| Drives | Code design | Shared understanding |
+| Aspect   | TDD                           | BDD                          |
+| -------- | ----------------------------- | ---------------------------- |
+| Audience | Developers                    | Dev + QA + PM + Stakeholders |
+| Language | Technical (test method names) | Business (Given-When-Then)   |
+| Scope    | Unit / class                  | Feature / behavior           |
+| Focus    | Code correctness              | Business value delivery      |
+| Drives   | Code design                   | Shared understanding         |
 
 ### 🟡 Q: What is Specification by Example? `[Mid]`
 
@@ -1181,6 +1617,59 @@ Then no discount should be applied
 
 ## 9. Property-Based Testing — Kiểm thử dựa trên thuộc tính
 
+> 🧠 **Memory Hook:** "Kiểm tra luật chung thay vì từng trường hợp — như kiểm tra 'mọi tam giác có tổng góc = 180°' thay vì đo từng tam giác một!"
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Example-based tests chỉ kiểm tra các inputs bạn nghĩ ra — bạn không thể nghĩ ra mọi edge case. → **Why?** Vì không gian input thường vô hạn (strings, numbers, lists) nhưng test chỉ cover vài chục cases cụ thể. → **Why?** Property-based testing generate hàng trăm random inputs tự động, tìm counterexample phá vỡ property bạn định nghĩa — bắt bugs bạn không nghĩ tới.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Trong toán học, thay vì đo từng tam giác một để kiểm tra "tổng góc = 180°", bạn chứng minh luật đó đúng cho mọi tam giác. Property-based testing làm tương tự với code: thay vì test `add(2, 3) = 5` và `add(-1, 4) = 3`, bạn phát biểu property "với mọi a và b, add(a, b) = add(b, a)" rồi để framework tự tạo hàng trăm cặp (a, b) ngẫu nhiên để kiểm tra.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Example-based vs Property-based:
+
+Example-based:           Property-based:
+test("add 2+3"):         property("commutative"):
+  expect(add(2,3))         forAll(integer, integer,
+    .toBe(5)                 (a, b) => add(a,b) === add(b,a))
+  ✓ Tests 1 case           ✓ Tests 100+ random cases automatically
+                           ✗ Found: add(MAX_INT, 1) → overflow bug!
+                                    (shrunk to minimal failing case)
+```
+
+1. **Define property**: Invariant luôn đúng với mọi valid input
+2. **Framework generates**: 100+ random examples tự động mỗi lần chạy
+3. **Shrinking**: Khi tìm failure, thu nhỏ input đến case đơn giản nhất để debug
+4. **Common properties**: Commutativity, associativity, idempotency, round-trip encoding
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- Khó định nghĩa property cho business logic phức tạp — không phải mọi thứ có invariant rõ ràng
+- Chậm hơn example-based do generate nhiều cases — không phù hợp khi cần speed tuyệt đối
+- Shrinking không phải lúc nào cũng cho counterexample đơn giản nhất
+- Tốt nhất cho: data transformations, algorithms, parsers, data structures, serialization
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                     | Tại sao sai                                                  | Đúng là                                                       |
+| ------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------- |
+| Viết property quá yếu ("output không null") | Quá dễ pass, không phân biệt buggy vs correct implementation | Property phải fail với buggy implementation, pass với correct |
+| Dùng property testing cho mọi thứ           | Overhead cao, không phải mọi logic có property rõ ràng       | Dùng cho algorithmic code, parsers, data transformations      |
+| Bỏ qua shrinking output                     | Failure case phức tạp khó debug                              | Xem shrunken counterexample — đó là minimal failing case      |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: "how do you ensure comprehensive test coverage" hoặc "what is property-based testing" → Nhớ đến: Generate random inputs, verify invariants, tìm edge cases bạn không nghĩ ra → Mở đầu: "Property-based testing defines invariants that must hold for all inputs, then automatically generates hundreds of test cases to find counterexamples — it catches bugs that example-based tests miss."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Unit Testing](#3-unit-testing--kiểm-thử-đơn-vị) — property tests là unit tests ở level cao hơn
+- ➡️ Để hiểu tiếp: [Mutation Testing](#10-mutation-testing--kiểm-thử-đột-biến) — đo xem tests có đủ mạnh không
+
 ### 🟡 Q: What is property-based testing? `[Mid]`
 
 **A:** Thay vì viết từng test case cụ thể (example-based), property-based testing **generate hàng trăm/ngàn input ngẫu nhiên** rồi verify rằng **properties (tính chất)** luôn đúng.
@@ -1209,15 +1698,15 @@ FOR random_list in generate(list_of_integers, count=1000):
 
 **A:**
 
-| Property | Mô tả | Ví dụ |
-|----------|--------|-------|
-| **Idempotency** | Áp dụng nhiều lần = áp dụng 1 lần | `abs(abs(x)) == abs(x)` |
-| **Commutativity** | Thứ tự input không ảnh hưởng | `add(a, b) == add(b, a)` |
-| **Associativity** | Nhóm input không ảnh hưởng | `concat(concat(a,b), c) == concat(a, concat(b,c))` |
-| **Round-trip / Inverse** | Encode rồi decode = original | `decode(encode(x)) == x` |
-| **Invariant** | Tính chất luôn đúng trước và sau | `sort(list).length == list.length` |
-| **Oracle** | So sánh với implementation đơn giản hơn | `fast_sort(x) == naive_sort(x)` |
-| **Hard to compute, easy to verify** | Verify kết quả dễ hơn tính | `is_sorted(sort(x))` |
+| Property                            | Mô tả                                   | Ví dụ                                              |
+| ----------------------------------- | --------------------------------------- | -------------------------------------------------- |
+| **Idempotency**                     | Áp dụng nhiều lần = áp dụng 1 lần       | `abs(abs(x)) == abs(x)`                            |
+| **Commutativity**                   | Thứ tự input không ảnh hưởng            | `add(a, b) == add(b, a)`                           |
+| **Associativity**                   | Nhóm input không ảnh hưởng              | `concat(concat(a,b), c) == concat(a, concat(b,c))` |
+| **Round-trip / Inverse**            | Encode rồi decode = original            | `decode(encode(x)) == x`                           |
+| **Invariant**                       | Tính chất luôn đúng trước và sau        | `sort(list).length == list.length`                 |
+| **Oracle**                          | So sánh với implementation đơn giản hơn | `fast_sort(x) == naive_sort(x)`                    |
+| **Hard to compute, easy to verify** | Verify kết quả dễ hơn tính              | `is_sorted(sort(x))`                               |
 
 ```
 // Round-trip example: JSON serialize/deserialize
@@ -1250,6 +1739,7 @@ FOR random_object in generate(nested_objects, count=500):
 ```
 
 **Shrinking strategies:**
+
 - Integers: giảm dần về 0
 - Strings: giảm length, simplify characters
 - Lists: bỏ elements, shrink remaining elements
@@ -1261,13 +1751,13 @@ FOR random_object in generate(nested_objects, count=500):
 
 **A:**
 
-| Use Property-Based When | Use Example-Based When |
-|------------------------|----------------------|
-| Input domain rộng (numbers, strings) | Business rules cụ thể với expected outputs |
-| Có properties rõ ràng (sort, encode/decode) | Happy path + known edge cases |
-| Muốn tìm unexpected edge cases | Test documentation purpose |
-| Serialization / parsing code | UI behavior testing |
-| Mathematical / algorithmic functions | Integration with external systems |
+| Use Property-Based When                     | Use Example-Based When                     |
+| ------------------------------------------- | ------------------------------------------ |
+| Input domain rộng (numbers, strings)        | Business rules cụ thể với expected outputs |
+| Có properties rõ ràng (sort, encode/decode) | Happy path + known edge cases              |
+| Muốn tìm unexpected edge cases              | Test documentation purpose                 |
+| Serialization / parsing code                | UI behavior testing                        |
+| Mathematical / algorithmic functions        | Integration with external systems          |
 
 **Best practice:** Kết hợp cả hai. Example-based cho readable documentation + known edge cases. Property-based cho comprehensive coverage + tìm bugs bạn không nghĩ tới.
 
@@ -1276,25 +1766,82 @@ FOR random_object in generate(nested_objects, count=500):
 **A:** QuickCheck (Koen Claessen & John Hughes, 1999) là framework property-based testing đầu tiên, viết bằng Haskell. Đặt nền tảng cho mọi framework PBT sau này.
 
 **Ý tưởng core:**
+
 1. Dev khai báo **generator** cho random data
 2. Dev khai báo **property** (boolean function)
 3. QuickCheck tự generate inputs, chạy property, shrink khi fail
 
 **Implementations nổi tiếng:**
 
-| Language | Library |
-|----------|---------|
-| Haskell | QuickCheck (original) |
-| Python | Hypothesis |
-| JavaScript | fast-check |
-| Java | jqwik |
-| Go | gopter, rapid |
-| Rust | proptest |
-| Scala | ScalaCheck |
+| Language   | Library               |
+| ---------- | --------------------- |
+| Haskell    | QuickCheck (original) |
+| Python     | Hypothesis            |
+| JavaScript | fast-check            |
+| Java       | jqwik                 |
+| Go         | gopter, rapid         |
+| Rust       | proptest              |
+| Scala      | ScalaCheck            |
 
 ---
 
 ## 10. Mutation Testing — Kiểm thử đột biến
+
+> 🧠 **Memory Hook:** "Cố tình gây lỗi trong code xem test có bắt được không — như kiểm tra camera an ninh bằng cách thử đột nhập!"
+
+**Tại sao tồn tại? / Why does this exist?**
+
+High code coverage không đảm bảo test chất lượng cao — test chạy qua code không nghĩa là test sẽ fail khi code sai. → **Why?** Vì coverage chỉ đo "code được chạy", không đo "behavior được verify". → **Why?** Mutation testing kiểm tra chất lượng test bằng cách inject bugs cố ý — nếu tests không fail, tests đó không có giá trị thực sự.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Để kiểm tra hệ thống camera an ninh, bạn thuê người thử đột nhập vào tòa nhà. Nếu camera không phát hiện được, hệ thống vô dụng. Mutation testing làm tương tự: "đột nhập viên" là các mutations (thay đổi `>` thành `>=`, đổi `+` thành `-`). Nếu test suite không phát hiện mutations này, tức là tests đang "ngủ gật" — chạy qua code nhưng không thực sự verify gì có giá trị.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Mutation Testing Process:
+
+Source code → Inject mutation → Run tests
+                                    ↓
+              if tests FAIL → "Killed" ✅  (test caught the bug)
+              if tests PASS → "Survived" ❌ (test missed the bug)
+
+Mutation Score = Killed / (Killed + Survived) × 100%
+
+Common mutations:
+  >  → >=       |  +  → -    |  true  → false
+  && → ||       |  return 0  → return 1
+```
+
+1. **Mutation Score**: >80% = good test quality; <60% = test suite cần cải thiện
+2. **Equivalent mutants**: Mutation không thay đổi behavior → không thể kill → exclude
+3. **Tools**: Stryker (JS/TS), PIT (Java), mutmut (Python)
+4. **Chậm**: Chạy toàn bộ test suite N lần (N = số mutations) → dùng selective/incremental
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- Mutation testing rất chậm — chỉ dùng cho critical business logic, không toàn bộ codebase
+- Equivalent mutations làm score thiếu chính xác — cần manual review
+- Survivor không luôn có nghĩa là bug — có thể là dead code hoặc unreachable path
+- Incremental mutation (chỉ mutate code đã thay đổi trong PR) giảm runtime đáng kể
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                     | Tại sao sai                                                 | Đúng là                                                       |
+| ------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------- |
+| Chạy mutation testing trên toàn bộ codebase | Cực kỳ chậm, không thực tế cho large codebases              | Chỉ chạy trên critical business logic modules                 |
+| 100% mutation score là mục tiêu             | Equivalent mutants làm 100% impossible; diminishing returns | Target 80%+ cho critical paths, accept lower cho utility code |
+| Bỏ qua survived mutants                     | Là dấu hiệu quan trọng test cần bổ sung                     | Review survivors, thêm tests bao phủ behavior bị bỏ sót       |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: "how do you measure test quality" hoặc "what is mutation testing" → Nhớ đến: Inject bugs, measure kill rate, phân biệt coverage từ quality → Mở đầu: "Mutation testing injects small bugs into code and checks if tests fail — it measures whether tests actually verify behavior, not just whether they execute code."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Property-Based Testing](#9-property-based-testing--kiểm-thử-dựa-trên-thuộc-tính) — advanced testing techniques
+- ➡️ Để hiểu tiếp: [Test Coverage](#11-test-coverage--độ-phủ-kiểm-thử) — metrics bổ sung cho mutation score
 
 ### 🟡 Q: What is mutation testing? `[Mid]`
 
@@ -1336,16 +1883,16 @@ Mutation Score: 3/3 = 100%  → Test suite phát hiện mọi mutation
 
 **A:**
 
-| Category | Operator | Original | Mutant |
-|----------|----------|----------|--------|
-| **Relational** | Change comparator | `a >= b` | `a > b`, `a <= b`, `a == b` |
-| **Arithmetic** | Change operator | `a + b` | `a - b`, `a * b` |
-| **Logical** | Change connector | `a && b` | `a \|\| b` |
-| **Conditional** | Negate condition | `if (x)` | `if (!x)` |
-| **Removal** | Remove statement | `validate(input)` | (removed) |
-| **Return value** | Change return | `return true` | `return false` |
-| **Constant** | Change value | `timeout = 30` | `timeout = 0`, `timeout = 31` |
-| **Void method** | Remove call | `logger.log(msg)` | (removed) |
+| Category         | Operator          | Original          | Mutant                        |
+| ---------------- | ----------------- | ----------------- | ----------------------------- |
+| **Relational**   | Change comparator | `a >= b`          | `a > b`, `a <= b`, `a == b`   |
+| **Arithmetic**   | Change operator   | `a + b`           | `a - b`, `a * b`              |
+| **Logical**      | Change connector  | `a && b`          | `a \|\| b`                    |
+| **Conditional**  | Negate condition  | `if (x)`          | `if (!x)`                     |
+| **Removal**      | Remove statement  | `validate(input)` | (removed)                     |
+| **Return value** | Change return     | `return true`     | `return false`                |
+| **Constant**     | Change value      | `timeout = 30`    | `timeout = 0`, `timeout = 31` |
+| **Void method**  | Remove call       | `logger.log(msg)` | (removed)                     |
 
 ### 🔴 Q: What is the equivalent mutant problem? `[Senior]`
 
@@ -1368,6 +1915,7 @@ FUNCTION max(a, b):
 **Vấn đề:** Equivalent mutants làm mutation score thấp hơn thực tế. Phát hiện equivalent mutant là **undecidable problem** (chứng minh toán học).
 
 **Giải pháp thực tế:**
+
 - Heuristics để filter likely-equivalent mutants
 - Time-bound mutation testing (timeout các mutants chạy quá lâu)
 - Chấp nhận mutation score ~85% thay vì cố đạt 100%
@@ -1384,17 +1932,74 @@ FUNCTION test_calculate_tax():
   // Line coverage: 100%. Mutation score: 0%.
 ```
 
-| Metric | What it Measures | Limitation |
-|--------|-----------------|------------|
-| Line coverage | % lines executed by tests | Không biết assertions có đúng không |
-| Branch coverage | % branches executed | Vẫn có thể thiếu assertions |
-| Mutation score | % faults detected by tests | Đo chất lượng assertions thực sự |
+| Metric          | What it Measures           | Limitation                          |
+| --------------- | -------------------------- | ----------------------------------- |
+| Line coverage   | % lines executed by tests  | Không biết assertions có đúng không |
+| Branch coverage | % branches executed        | Vẫn có thể thiếu assertions         |
+| Mutation score  | % faults detected by tests | Đo chất lượng assertions thực sự    |
 
 **Mutation testing trả lời:** "Nếu ai đó introduce bug, test suite có bắt được không?"
 
 ---
 
 ## 11. Test Coverage — Độ phủ kiểm thử
+
+> 🧠 **Memory Hook:** "Bản đồ vùng đã khám phá — coverage 80% nghĩa là 20% đất chưa được đặt chân tới, ở đó có thể có nguy hiểm!"
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Developer cần biết test suite đang bao phủ bao nhiêu code để tránh blind spots. → **Why?** Vì code không được test là code có thể fail ở production mà không ai biết cho đến khi user gặp bug. → **Why?** Coverage metrics là "bản đồ" cho biết vùng nào an toàn (đã test) và vùng nào còn rủi ro (chưa test).
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Tưởng tượng bạn là nhà thám hiểm với một bản đồ. Vùng màu xanh = đã đi qua và biết là an toàn (code đã được test). Vùng màu trắng = terra incognita, chưa ai khám phá (code chưa có test). Coverage là tỷ lệ vùng đã khám phá. Nhưng cẩn thận — "đi qua" không nghĩa là "kiểm tra kỹ" — bạn có thể chạy qua mà không chú ý hố sâu ở hai bên đường!
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Các loại coverage (từ dễ → khó đạt):
+
+Statement coverage:  Mỗi dòng code được chạy ít nhất 1 lần
+  if (x > 0) return "positive";  ← Line covered ✓
+  return "non-positive";          ← Line covered ✓
+
+Branch coverage:     Mỗi nhánh if/else/switch được test
+  if (x > 0) ...    ← True branch ✓ AND False branch ✓
+
+Path coverage:       Mọi combination của branches
+  (x>0 AND y>0) | (x>0 AND y<=0) | (x<=0 AND y>0) | ...
+
+Mutation coverage:   Đo quality của assertions (xem Mutation Testing)
+```
+
+1. **Statement ≠ Branch**: 100% statement coverage có thể đạt với branch coverage thấp
+2. **80% heuristic**: Pragmatic target cho production codebase
+3. **Critical paths priority**: Payment logic cần 95%+, UI helpers có thể 60%
+4. **Tools**: Istanbul/V8 (JS), JaCoCo (Java), coverage.py (Python)
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- 100% coverage có thể đạt được với test không có assertions — coverage là điều kiện cần, không đủ
+- Coverage thấp ở nơi ít quan trọng vẫn ổn — focus vào critical paths
+- Branch coverage quan trọng hơn statement coverage cho logic phức tạp
+- Coverage giảm đột ngột có thể là dấu hiệu dead code hoặc test bị xóa nhầm
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                    | Tại sao sai                                                 | Đúng là                                                     |
+| -------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------- |
+| Đặt mục tiêu 100% coverage | Tốn thời gian, diminishing returns, test quality không tăng | Target 80% statement, tập trung vào critical business logic |
+| Coverage cao = test tốt    | Test không có assertion cũng tạo coverage                   | Kết hợp coverage với mutation score để đo quality thật sự   |
+| Ignore coverage drops      | Có thể là dead code, deleted test, hoặc new uncovered path  | Investigate drops >5% trước khi merge PR                    |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: "what code coverage should we target" hoặc "is 100% coverage necessary" → Nhớ đến: Coverage = bản đồ, không phải đích đến; 80% pragmatic; quality > quantity → Mở đầu: "Coverage is a useful indicator but not a goal in itself — 80% is a pragmatic target, and we should combine it with mutation testing to ensure tests actually verify behavior."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Mutation Testing](#10-mutation-testing--kiểm-thử-đột-biến) — coverage alone không đủ đo quality
+- ➡️ Để hiểu tiếp: [Testing Strategy](#12-testing-strategy--planning--chiến-lược-kiểm-thử) — đặt coverage vào context chiến lược
 
 ### 🟢 Q: What is code coverage? `[Junior]`
 
@@ -1461,12 +2066,12 @@ FUNCTION eligible(age, hasLicense):
 
 **So sánh các loại coverage:**
 
-| Type | Strength | Cost | Khi nào dùng |
-|------|----------|------|-------------|
-| Line | Thấp nhất | Rẻ | Baseline minimum |
-| Branch | Trung bình | Vừa phải | Standard cho hầu hết projects |
-| Path | Cao | Đắt (exponential) | Critical sections only |
-| MC/DC | Rất cao | Rất đắt | Aviation, medical (DO-178C) |
+| Type   | Strength   | Cost              | Khi nào dùng                  |
+| ------ | ---------- | ----------------- | ----------------------------- |
+| Line   | Thấp nhất  | Rẻ                | Baseline minimum              |
+| Branch | Trung bình | Vừa phải          | Standard cho hầu hết projects |
+| Path   | Cao        | Đắt (exponential) | Critical sections only        |
+| MC/DC  | Rất cao    | Rất đắt           | Aviation, medical (DO-178C)   |
 
 ### 🔴 Q: Is 100% code coverage a good goal? `[Senior]`
 
@@ -1494,15 +2099,16 @@ FUNCTION test_error_handling():
 
 **Practical targets:**
 
-| Type | Target | Rationale |
-|------|--------|-----------|
-| Line coverage | 80%+ | Diminishing returns beyond this |
-| Branch coverage | 70%+ | More meaningful than line |
-| Critical paths | 100% | Payment, auth, data mutation |
-| New code | 90%+ | Prevent coverage regression |
-| Overall | 80% line | Team standard, enforced in CI |
+| Type            | Target   | Rationale                       |
+| --------------- | -------- | ------------------------------- |
+| Line coverage   | 80%+     | Diminishing returns beyond this |
+| Branch coverage | 70%+     | More meaningful than line       |
+| Critical paths  | 100%     | Payment, auth, data mutation    |
+| New code        | 90%+     | Prevent coverage regression     |
+| Overall         | 80% line | Team standard, enforced in CI   |
 
 **Anti-patterns of coverage-chasing:**
+
 - Tests with no assertions (chỉ execute code)
 - Testing trivial getters/setters
 - Testing generated code / framework code
@@ -1514,6 +2120,60 @@ FUNCTION test_error_handling():
 ---
 
 ## 12. Testing Strategy & Planning — Chiến lược kiểm thử
+
+> 🧠 **Memory Hook:** "Chiến lược quân sự — không đủ quân để bảo vệ mọi nơi, phải tập trung lực lượng vào điểm then chốt!"
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Resources hữu hạn — không thể test mọi thứ đến mức tuyệt đối. → **Why?** Vì test effort cần được ưu tiên theo risk và business impact, không phải chia đều. → **Why?** Testing strategy xác định: test gì trước, test nhiều đến đâu, ai test, và integrate testing vào delivery pipeline như thế nào để maximize ROI.
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Một tướng quân không đủ lính để bảo vệ mọi vị trí — phải phân tích địa hình và đặt lính ở những điểm then chốt nhất. Testing strategy cũng vậy: phân tích codebase, xác định đâu là "điểm then chốt" (payment processing, auth, data integrity), rồi tập trung test effort vào đó. Các vùng ít quan trọng hơn (UI strings, simple utility helpers) có thể ít test hơn.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Risk-Based Testing Matrix:
+
+           HIGH Impact │ [MEDIUM PRIORITY]    [TOP PRIORITY]
+                       │  Low risk,            High risk,
+                       │  high impact          high impact
+           ────────────┼──────────────────────────────────→ Risk
+                       │ [LOW PRIORITY]        [HIGH PRIORITY]
+           LOW Impact  │  Low risk,            High risk,
+                       │  low impact           low impact
+                          LOW Risk              HIGH Risk
+```
+
+1. **Shift-left**: Integrate testing sớm trong SDLC — không phải chỉ cuối sprint
+2. **CI/CD gates**: Test suite chạy tự động trước mỗi merge → broken code không reach main
+3. **Test environments**: Dev → QA → Staging → Production với test phù hợp mỗi stage
+4. **Shift-right**: Monitoring, canary releases, chaos engineering ở production
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- "Shift-right" (testing in production) với feature flags và canary deploys bổ sung cho traditional testing
+- Testing strategy phải evolve — codebase thay đổi thì strategy cũng phải thay đổi
+- Team size ảnh hưởng đến strategy — solo developer vs 100-person team cần approach khác
+- Legacy code cần "characterization tests" trước khi refactor để capture current behavior
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                            | Tại sao sai                                      | Đúng là                                                    |
+| ---------------------------------- | ------------------------------------------------ | ---------------------------------------------------------- |
+| Testing chỉ ở cuối sprint          | Bug tìm thấy muộn, cost cao, deadline pressure   | Shift-left: developer tự test trong khi code, không chờ QA |
+| Không có test environment strategy | Tests dùng production data, tests ảnh hưởng nhau | Môi trường riêng cho dev/QA/staging, data isolation        |
+| Một-size-fits-all coverage target  | Tất cả code không có cùng risk level             | Risk-based: 90% cho payment, 70% cho reporting, 50% cho UI |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: "how would you set up testing for a new project" hoặc "describe your testing strategy" → Nhớ đến: Risk matrix, Test Pyramid, Shift-left, CI/CD gates → Mở đầu: "A testing strategy starts with risk-based prioritization — identify high-impact, high-risk areas and test them heavily, then layer in the test pyramid with automated CI gates."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Test Coverage](#11-test-coverage--độ-phủ-kiểm-thử) — strategy bao gồm coverage targets
+- ➡️ Để hiểu tiếp: [CI/CD & SDLC](./03-sdlc-and-practices.md) — integrate testing vào delivery pipeline
 
 ### 🟡 Q: What is risk-based testing? `[Mid]`
 
@@ -1539,12 +2199,12 @@ Risk Matrix:
 
 **Ví dụ cho e-commerce:**
 
-| Feature | Probability of Bug | Impact if Bug | Risk Level | Test Strategy |
-|---------|-------------------|---------------|------------|---------------|
-| Payment checkout | Medium | Critical (revenue loss) | HIGH | Unit + integration + E2E + manual |
-| User registration | Low | High (user acquisition) | MEDIUM | Unit + integration + 1 E2E |
-| Product search | Medium | Medium (UX degradation) | MEDIUM | Unit + integration |
-| Footer links | Low | Low (cosmetic) | LOW | 1 smoke test |
+| Feature           | Probability of Bug | Impact if Bug           | Risk Level | Test Strategy                     |
+| ----------------- | ------------------ | ----------------------- | ---------- | --------------------------------- |
+| Payment checkout  | Medium             | Critical (revenue loss) | HIGH       | Unit + integration + E2E + manual |
+| User registration | Low                | High (user acquisition) | MEDIUM     | Unit + integration + 1 E2E        |
+| Product search    | Medium             | Medium (UX degradation) | MEDIUM     | Unit + integration                |
+| Footer links      | Low                | Low (cosmetic)          | LOW        | 1 smoke test                      |
 
 ### 🟡 Q: How should tests be integrated into CI/CD pipeline? `[Mid]`
 
@@ -1564,13 +2224,13 @@ CI/CD Pipeline — Test Stages:
 └─────────────┘    └──────────────┘    └──────────────┘    └──────────┘
 ```
 
-| Stage | Tests | Gate | Timeout |
-|-------|-------|------|---------|
-| Pre-commit / Local | Lint, typecheck, affected unit tests | Fail → cannot commit | < 30s |
-| PR Build | All unit + integration + smoke E2E | Fail → cannot merge | < 10 min |
-| Staging Deploy | Full E2E, perf, security scan | Fail → no production deploy | < 30 min |
-| Production | Smoke, canary, monitoring | Fail → auto-rollback | Continuous |
-| Nightly | Full regression, mutation testing | Fail → Slack alert to team | 1-2 hours |
+| Stage              | Tests                                | Gate                        | Timeout    |
+| ------------------ | ------------------------------------ | --------------------------- | ---------- |
+| Pre-commit / Local | Lint, typecheck, affected unit tests | Fail → cannot commit        | < 30s      |
+| PR Build           | All unit + integration + smoke E2E   | Fail → cannot merge         | < 10 min   |
+| Staging Deploy     | Full E2E, perf, security scan        | Fail → no production deploy | < 30 min   |
+| Production         | Smoke, canary, monitoring            | Fail → auto-rollback        | Continuous |
+| Nightly            | Full regression, mutation testing    | Fail → Slack alert to team  | 1-2 hours  |
 
 ### 🟡 Q: What is test parallelization and why does it matter? `[Mid]`
 
@@ -1585,6 +2245,7 @@ Parallel (4):  Test1 ──→                                Total: 10 min
 ```
 
 **Challenges khi parallelize:**
+
 - **Shared state:** Tests đọc/ghi cùng database → race conditions
 - **Port conflicts:** Multiple test processes bind cùng port
 - **File system:** Tests write to same temp directory
@@ -1592,22 +2253,22 @@ Parallel (4):  Test1 ──→                                Total: 10 min
 
 **Solutions:**
 
-| Problem | Solution |
-|---------|----------|
-| Shared database | Database per worker, or schema per worker |
-| Port conflicts | Random port assignment |
-| File conflicts | Unique temp directories per test |
+| Problem          | Solution                                      |
+| ---------------- | --------------------------------------------- |
+| Shared database  | Database per worker, or schema per worker     |
+| Port conflicts   | Random port assignment                        |
+| File conflicts   | Unique temp directories per test              |
 | Order dependency | Fix tests to be independent (FIRST principle) |
 
 ### 🟡 Q: What are smoke tests, regression suites, and canary tests? `[Mid]`
 
 **A:**
 
-| Type | What | When | Scope |
-|------|------|------|-------|
-| **Smoke test** | Quick sanity check: "app starts, login works, main page loads" | Every deployment | 5-10 critical paths |
-| **Regression suite** | Full test suite — verify nothing broke | PR merge, nightly | All tests |
-| **Canary test** | Tests running against **production** with real traffic subset | After deploy | Critical business flows |
+| Type                 | What                                                           | When              | Scope                   |
+| -------------------- | -------------------------------------------------------------- | ----------------- | ----------------------- |
+| **Smoke test**       | Quick sanity check: "app starts, login works, main page loads" | Every deployment  | 5-10 critical paths     |
+| **Regression suite** | Full test suite — verify nothing broke                         | PR merge, nightly | All tests               |
+| **Canary test**      | Tests running against **production** with real traffic subset  | After deploy      | Critical business flows |
 
 ```
 // Smoke test example (runs in 2 minutes)
@@ -1642,25 +2303,25 @@ Requirements → Design → Code → Test → Deploy → Production → Monitor
 
 **Shift-Left Testing — Test sớm hơn:**
 
-| Practice | Stage | Value |
-|----------|-------|-------|
-| Static analysis (lint, typecheck) | Code | Catch bugs at write-time |
-| Unit tests in IDE | Code | Instant feedback |
-| TDD / BDD | Before code | Design-level defect prevention |
-| Code review | Pre-merge | Catch logic errors early |
-| Threat modeling | Design | Security by design |
-| Contract testing | API design | Catch integration issues early |
+| Practice                          | Stage       | Value                          |
+| --------------------------------- | ----------- | ------------------------------ |
+| Static analysis (lint, typecheck) | Code        | Catch bugs at write-time       |
+| Unit tests in IDE                 | Code        | Instant feedback               |
+| TDD / BDD                         | Before code | Design-level defect prevention |
+| Code review                       | Pre-merge   | Catch logic errors early       |
+| Threat modeling                   | Design      | Security by design             |
+| Contract testing                  | API design  | Catch integration issues early |
 
 **Shift-Right Testing — Test trong production:**
 
-| Practice | Stage | Value |
-|----------|-------|-------|
-| Feature flags | Deploy | Gradual rollout, quick rollback |
-| Canary deployment | Production | Detect issues with small traffic % |
-| A/B testing | Production | Validate business hypotheses |
-| Chaos engineering | Production | Verify resilience under failure |
+| Practice                              | Stage      | Value                                      |
+| ------------------------------------- | ---------- | ------------------------------------------ |
+| Feature flags                         | Deploy     | Gradual rollout, quick rollback            |
+| Canary deployment                     | Production | Detect issues with small traffic %         |
+| A/B testing                           | Production | Validate business hypotheses               |
+| Chaos engineering                     | Production | Verify resilience under failure            |
 | Observability (logs, metrics, traces) | Production | Detect issues not caught by pre-prod tests |
-| Synthetic monitoring | Production | Continuous probing of critical paths |
+| Synthetic monitoring                  | Production | Continuous probing of critical paths       |
 
 ### 🔴 Q: What is testing in production and how to do it safely? `[Senior]`
 
@@ -1707,6 +2368,7 @@ Requirements → Design → Code → Test → Deploy → Production → Monitor
 ```
 
 **Safety rails:**
+
 - Blast radius control (feature flags, canary %)
 - Automatic rollback on metric degradation
 - Synthetic users clearly flagged (không mix với real data)
@@ -1755,12 +2417,12 @@ that's unit test territory. E2E only for critical journeys."
 
 **A:**
 
-| Company Type | Commonly Asked Topics |
-|-------------|----------------------|
-| FAANG/Big Tech | Test pyramid, TDD, system design + testing strategy, coverage limitations |
-| Startup | Practical testing strategy, what to test first with limited time, CI/CD integration |
-| Fintech | Contract testing, mutation testing, MC/DC, regulatory compliance |
-| Product Company (Grab, VNG) | Integration testing patterns, E2E strategy, flaky test management |
+| Company Type                | Commonly Asked Topics                                                               |
+| --------------------------- | ----------------------------------------------------------------------------------- |
+| FAANG/Big Tech              | Test pyramid, TDD, system design + testing strategy, coverage limitations           |
+| Startup                     | Practical testing strategy, what to test first with limited time, CI/CD integration |
+| Fintech                     | Contract testing, mutation testing, MC/DC, regulatory compliance                    |
+| Product Company (Grab, VNG) | Integration testing patterns, E2E strategy, flaky test management                   |
 
 ### 🔴 Q: Design a testing strategy for a microservices e-commerce system. `[Senior]`
 
@@ -1820,15 +2482,15 @@ CI/CD:
 
 ### Testing Types at a Glance
 
-| Type | Scope | Speed | Cost | Confidence | When to Use |
-|------|-------|-------|------|------------|-------------|
-| Static Analysis | Syntax, types | Instant | Free | Catch typos/type errors | Always (lint + typecheck) |
-| Unit | Function/class | ms | Low | Logic correctness | Every function with logic |
-| Integration | Multi-component | seconds | Medium | Boundaries work | DB, API, queue interactions |
-| Contract | API schema | seconds | Medium | Services compatible | Microservices |
-| E2E | Full system | minutes | High | User flows work | Critical journeys only |
-| Performance | Load/latency | minutes | High | System scales | Before major releases |
-| Mutation | Test quality | minutes-hours | High | Tests catch bugs | Quarterly / critical modules |
+| Type            | Scope           | Speed         | Cost   | Confidence              | When to Use                  |
+| --------------- | --------------- | ------------- | ------ | ----------------------- | ---------------------------- |
+| Static Analysis | Syntax, types   | Instant       | Free   | Catch typos/type errors | Always (lint + typecheck)    |
+| Unit            | Function/class  | ms            | Low    | Logic correctness       | Every function with logic    |
+| Integration     | Multi-component | seconds       | Medium | Boundaries work         | DB, API, queue interactions  |
+| Contract        | API schema      | seconds       | Medium | Services compatible     | Microservices                |
+| E2E             | Full system     | minutes       | High   | User flows work         | Critical journeys only       |
+| Performance     | Load/latency    | minutes       | High   | System scales           | Before major releases        |
+| Mutation        | Test quality    | minutes-hours | High   | Tests catch bugs        | Quarterly / critical modules |
 
 ### Test Double Decision Tree
 
@@ -1854,14 +2516,14 @@ Need a test double?
 
 ### TDD vs BDD vs ATDD
 
-| Aspect | TDD | BDD | ATDD |
-|--------|-----|-----|------|
-| Full name | Test-Driven Development | Behavior-Driven Development | Acceptance Test-Driven Development |
-| Focus | Code correctness | Business behavior | Acceptance criteria |
-| Written by | Developer | Dev + QA + PM | QA + PM |
-| Format | Test functions | Given-When-Then | Acceptance scenarios |
-| Scope | Unit | Feature | User story |
-| Drives | Code design | Shared understanding | Requirements clarity |
+| Aspect     | TDD                     | BDD                         | ATDD                               |
+| ---------- | ----------------------- | --------------------------- | ---------------------------------- |
+| Full name  | Test-Driven Development | Behavior-Driven Development | Acceptance Test-Driven Development |
+| Focus      | Code correctness        | Business behavior           | Acceptance criteria                |
+| Written by | Developer               | Dev + QA + PM               | QA + PM                            |
+| Format     | Test functions          | Given-When-Then             | Acceptance scenarios               |
+| Scope      | Unit                    | Feature                     | User story                         |
+| Drives     | Code design             | Shared understanding        | Requirements clarity               |
 
 ---
 
@@ -1894,19 +2556,20 @@ Vietnamese explanation: "Ice cream cone" anti-pattern = inverted pyramid (nhiề
 
 ```javascript
 // Stub — just returns data
-const db = { findUser: jest.fn().mockResolvedValue({ id: 1, name: 'Alice' }) };
+const db = { findUser: jest.fn().mockResolvedValue({ id: 1, name: "Alice" }) };
 
 // Mock — verify it was called correctly
 const emailService = { send: jest.fn() };
 await sendWelcomeEmail(user, emailService);
 expect(emailService.send).toHaveBeenCalledWith({
-  to: 'alice@example.com', subject: 'Welcome!'
+  to: "alice@example.com",
+  subject: "Welcome!",
 });
 
 // Spy — wrap real implementation
-const consoleSpy = jest.spyOn(console, 'error');
+const consoleSpy = jest.spyOn(console, "error");
 doSomethingThatLogs();
-expect(consoleSpy).toHaveBeenCalledWith('Expected error');
+expect(consoleSpy).toHaveBeenCalledWith("Expected error");
 consoleSpy.mockRestore();
 ```
 
@@ -1940,21 +2603,23 @@ Vietnamese explanation: TDD không phải about 100% coverage — about design f
 
 ## Interview Q&A Summary / Tổng Kết
 
-| Question | Level | Key Point |
-|----------|-------|-----------|
-| Testing pyramid | 🟢 | Many unit, fewer integration, few E2E; avoid ice cream cone |
-| Mock vs stub vs spy | 🟡 | Stub=fake data; mock=verify calls; spy=wrap real; mock at boundaries |
-| TDD | 🟡 | Red→Green→Refactor; forces design; hard-to-test = bad design signal |
+| Question            | Level | Key Point                                                            |
+| ------------------- | ----- | -------------------------------------------------------------------- |
+| Testing pyramid     | 🟢    | Many unit, fewer integration, few E2E; avoid ice cream cone          |
+| Mock vs stub vs spy | 🟡    | Stub=fake data; mock=verify calls; spy=wrap real; mock at boundaries |
+| TDD                 | 🟡    | Red→Green→Refactor; forces design; hard-to-test = bad design signal  |
 
 ---
 
 ## Self-Check / Tự Kiểm Tra
 
-- [ ] Tôi có thể giải thích Testing Pyramid và tại sao có nhiều unit tests hơn E2E tests không?
-- [ ] Tôi có thể viết unit test với mock cho một function phụ thuộc vào external service không?
-- [ ] Tôi có thể giải thích sự khác biệt giữa mock, stub, và spy không?
-- [ ] Tôi có thể giải thích TDD và khi nào nên (và không nên) dùng nó không?
-- [ ] Tôi có thể giải thích "80% coverage" có nghĩa gì và tại sao 100% coverage không phải mục tiêu không?
+| #   | Câu hỏi tự kiểm tra                                                                                  | Chủ đề              | Mức độ    | Trạng thái |
+| --- | ---------------------------------------------------------------------------------------------------- | ------------------- | --------- | ---------- |
+| 1   | Tôi có thể giải thích Testing Pyramid và tại sao có nhiều unit tests hơn E2E tests không?            | Test Pyramid        | 🟢 Junior | [ ]        |
+| 2   | Tôi có thể viết unit test với mock cho một function phụ thuộc vào external service không?            | Unit + Test Doubles | 🟢 Junior | [ ]        |
+| 3   | Tôi có thể giải thích sự khác biệt giữa mock, stub, và spy không?                                    | Test Doubles        | 🟡 Mid    | [ ]        |
+| 4   | Tôi có thể giải thích TDD và khi nào nên (và không nên) dùng nó không?                               | TDD                 | 🟡 Mid    | [ ]        |
+| 5   | Tôi có thể giải thích "80% coverage" có nghĩa gì và tại sao 100% coverage không phải mục tiêu không? | Test Coverage       | 🟡 Mid    | [ ]        |
 
 💬 **Feynman Prompt:** Thuyết phục một developer đang nói "tôi viết code cẩn thận, không cần tests" bằng một tình huống production thực tế.
 

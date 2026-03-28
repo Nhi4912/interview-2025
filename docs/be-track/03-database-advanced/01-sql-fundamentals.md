@@ -68,101 +68,410 @@ Bài này cover toàn bộ nền tảng SQL & relational database — từ relat
 
 ### Concept 1: Relational Model
 
-- **Memory Hook / Móc Nhớ:** "Table = Excel sheet có rules" — PK là mã vạch, FK là hyperlink giữa sheets.
-- **Why exists (tại sao tồn tại):**
-  - Level 1: Tổ chức dữ liệu thành bảng có cấu trúc thay vì flat files hỗn loạn
-  - Level 2: Codd's 12 rules (1970) — mathematical foundation cho data independence, giải quyết hierarchical/network model limitations
-  - Level 3: Set theory + first-order logic → declarative querying (nói "what" không phải "how") → optimizer tự chọn execution plan
-- **Common Mistakes:**
-  - Dùng composite PK quá nhiều cột → JOIN complexity tăng
-  - Natural key thay đổi (email) → cascade update nightmare
-  - Quên FK constraint → orphan records silently corrupt data
+> 🧠 **Memory Hook:** "Table = Excel sheet có rules" — PK là mã vạch, FK là hyperlink giữa sheets.
+
+**Why exists (tại sao tồn tại):**
+
+- Level 1: Tổ chức dữ liệu thành bảng có cấu trúc thay vì flat files hỗn loạn
+- Level 2: Codd's 12 rules (1970) — mathematical foundation cho data independence, giải quyết hierarchical/network model limitations
+- Level 3: Set theory + first-order logic → declarative querying (nói "what" không phải "how") → optimizer tự chọn execution plan
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Hình dung **tủ hồ sơ ở trường học**: mỗi ngăn kéo là một bảng (ví dụ: "Học sinh", "Lớp học"). Mỗi tờ hồ sơ trong ngăn kéo là một hàng. Mỗi ô điền thông tin (họ tên, ngày sinh...) là một cột. **Mã số học sinh** (Primary Key) giúp tìm đúng tờ hồ sơ mà không cần lật từng tờ. **Mã lớp** ghi trong hồ sơ học sinh (Foreign Key) liên kết sang ngăn kéo "Lớp học" — chỉ cần mã lớp là tìm ra thông tin lớp ngay.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+1. Bảng (relation) định nghĩa schema: tên cột + kiểu dữ liệu — cấu trúc cố định
+2. Primary Key đảm bảo mỗi row có định danh duy nhất (NOT NULL + UNIQUE)
+3. Foreign Key lưu PK của bảng kia để tạo liên kết — DB tự enforce referential integrity
+4. Query engine dùng set operations để combine bảng (JOIN = phép giao/tích)
+
+```
+students ←──────────── enrollments ────────────→ courses
+id (PK)                student_id (FK)             id (PK)
+name                   course_id  (FK)             name
+email                  grade                       credits
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **Natural key thay đổi:** Email làm PK → user đổi email → phải UPDATE cascade mọi FK references → dùng surrogate key (auto-increment/UUID)
+- **NULL trong FK:** Cho phép "optional relationship" (order chưa có shipper) nhưng làm JOIN logic phức tạp hơn
+- **Composite PK:** Tốt cho junction tables nhưng FK ở bảng khác phải bao gồm tất cả cột composite
+- **Circular FK:** A references B, B references A → cần `DEFERRABLE INITIALLY DEFERRED` constraint
+- **Over-normalization:** Quá nhiều bảng nhỏ → JOIN hell, query timeout ở production scale
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                    | Tại sao sai                                                           | Đúng là                                                                     |
+| -------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Dùng email/phone làm PK    | Email có thể thay đổi → phải CASCADE UPDATE khắp nơi, tốn chi phí cao | Dùng surrogate key (auto-increment/UUID), email đặt UNIQUE constraint riêng |
+| Quên FK constraint         | Orphan records âm thầm corrupt data, chỉ phát hiện khi query bị sai   | Luôn khai báo FK khi bảng có quan hệ, dùng ON DELETE behavior phù hợp       |
+| Composite PK quá nhiều cột | JOIN complexity tăng theo hàm mũ, khó maintain FK ở bảng khác         | Dùng surrogate PK + UNIQUE constraint trên composite để giữ business rule   |
+
 - **Interview Pattern:** "Explain relational model basics" → Signal: mention Codd, distinguish PK/FK/candidate key, explain referential integrity không chỉ liệt kê
-- **Knowledge Chain:** Relational Model → Normalization → Query Optimization → Schema Design interviews
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Database Theory](../../shared/03-database/database-theory.md)
+- ➡️ Để hiểu tiếp: [Concept 2 — Normalization](#concept-2-normalization)
+
+---
 
 ### Concept 2: Normalization
 
-- **Memory Hook / Móc Nhớ:** "1NF = atomic, 2NF = no partial, 3NF = no transitive" — nhớ 3 từ khóa là đủ.
-- **Why exists:**
-  - Level 1: Loại bỏ data redundancy → giảm anomalies (insert/update/delete)
-  - Level 2: Functional dependency theory — nếu A→B thì B phụ thuộc A, normalize = tách các dependency vào đúng bảng
-  - Level 3: Trade-off: normalize tối đa → nhiều JOINs → denormalize có chủ đích khi read-heavy workload cần materialized view hoặc precomputed columns
-- **Common Mistakes:**
-  - Over-normalize: 20 bảng cho 1 entity → JOIN hell, query timeout
-  - Denormalize quá sớm không có benchmark evidence
-  - Quên BCNF khi composite key có overlapping dependencies
+> 🧠 **Memory Hook:** "1NF = atomic, 2NF = no partial, 3NF = no transitive" — nhớ 3 từ khóa là đủ.
+
+**Why exists:**
+
+- Level 1: Loại bỏ data redundancy → giảm anomalies (insert/update/delete)
+- Level 2: Functional dependency theory — nếu A→B thì B phụ thuộc A, normalize = tách các dependency vào đúng bảng
+- Level 3: Trade-off: normalize tối đa → nhiều JOINs → denormalize có chủ đích khi read-heavy workload cần materialized view hoặc precomputed columns
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Hình dung **sổ tay ghi chú ở chợ**: nếu bạn ghi "Thịt bò - cửa hàng Minh Béo - 0901234567 - 50.000đ/kg" vào mỗi đơn hàng, khi cửa hàng đổi số điện thoại bạn phải sửa hàng trăm chỗ (**update anomaly**). Normalization giống như **tách riêng sổ danh bạ cửa hàng**: chỉ lưu mã cửa hàng trong đơn, thông tin chi tiết ở sổ riêng — đổi SĐT chỉ sửa 1 chỗ.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Unnormalized (vi phạm nhiều forms):
+orders: (order_id, customer, phone, product1, product2, product3)
+    ↓ 1NF: tách product thành từng row riêng
+(order_id, customer, phone, product)
+    ↓ 2NF: tách customer info ra bảng riêng (khi composite PK)
+(order_id, product) + (customer_id, customer, phone)
+    ↓ 3NF: loại transitive dependency (phone phụ thuộc customer, không phải order)
+(order_id, customer_id, product) + (customer_id, customer, phone)
+```
+
+Quy tắc nhanh để nhớ:
+
+1. **1NF:** Mỗi ô chỉ 1 giá trị — không list, không array
+2. **2NF:** Mọi non-PK column phụ thuộc **cả** composite PK, không phải chỉ 1 phần
+3. **3NF:** Non-PK column chỉ phụ thuộc PK, không phụ thuộc non-PK column khác
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **BCNF khác 3NF:** Khi có nhiều candidate keys chồng chéo → 3NF không đủ, cần BCNF — hiếm gặp trong thực tế
+- **Denormalization có chủ đích:** Analytics tables thường denormalized — nhiều JOINs giết performance trên 100M+ rows
+- **Overfitting normalize:** Tách quá mịn → 20 bảng cho 1 entity → developer không hiểu schema → bug nhiều hơn
+- **4NF/5NF:** Tồn tại nhưng hiếm cần trong OLTP — chủ yếu học thuật
+- **Normalize trước, đo sau:** Đừng denormalize nếu chưa có benchmark evidence — tối ưu sớm là gốc của mọi tội lỗi
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                        | Tại sao sai                                                   | Đúng là                                                               |
+| ---------------------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Over-normalize: 20 bảng cho 1 entity           | JOIN hell, query timeout, developer khó hiểu schema           | Normalize đến 3NF, chỉ tách tiếp khi có functional dependency rõ ràng |
+| Denormalize sớm không có bằng chứng            | Tạo inconsistency risk mà không biết chắc có performance gain | Chạy EXPLAIN ANALYZE để chứng minh bottleneck trước khi denormalize   |
+| Quên xử lý BCNF với overlapping candidate keys | Data anomaly vẫn xảy ra dù đã ở 3NF                           | Kiểm tra BCNF khi bảng có nhiều candidate key chồng chéo              |
+
 - **Interview Pattern:** "When to denormalize?" → Signal: nói rõ "measure first" — show EXPLAIN ANALYZE proof trước khi denormalize
-- **Knowledge Chain:** Normalization → Index Design (normalized tables need targeted indexes) → Query Performance
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Concept 1 — Relational Model](#concept-1-relational-model)
+- ➡️ Để hiểu tiếp: [02-Indexing & Optimization](./02-indexing-optimization.md)
+
+---
 
 ### Concept 3: SQL Query Mastery
 
-- **Memory Hook / Móc Nhớ:** "FROM → WHERE → GROUP → HAVING → SELECT → ORDER → LIMIT" — query execution order, đọc như pipeline.
-- **Why exists:**
-  - Level 1: Declarative language — nói "lấy gì" thay vì "lặp thế nào" → optimizer quyết định execution plan
-  - Level 2: Set-based operations (JOIN, UNION) thay vì row-by-row → O(n) thay vì O(n²) cho nhiều patterns
-  - Level 3: Window Functions + CTEs mở rộng expressive power — running totals, ranking, recursive traversal mà không cần application code
-- **Common Mistakes:**
-  - `SELECT *` production → truyền thừa data, miss covering index opportunity
-  - Correlated subquery thay vì JOIN → O(n²)
-  - Window function without PARTITION BY → compute trên toàn bộ result set
+> 🧠 **Memory Hook:** "FROM → WHERE → GROUP → HAVING → SELECT → ORDER → LIMIT" — query execution order, đọc như pipeline.
+
+**Why exists:**
+
+- Level 1: Declarative language — nói "lấy gì" thay vì "lặp thế nào" → optimizer quyết định execution plan
+- Level 2: Set-based operations (JOIN, UNION) thay vì row-by-row → O(n) thay vì O(n²) cho nhiều patterns
+- Level 3: Window Functions + CTEs mở rộng expressive power — running totals, ranking, recursive traversal mà không cần application code
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+SQL giống như **đặt đơn ở bưu điện**: bạn viết phiếu yêu cầu ("lấy tất cả bưu kiện của khách hàng Minh, sắp xếp theo ngày gửi, chỉ lấy 10 kiện mới nhất") thay vì tự mình leo lên kho tìm từng kiện. **Nhân viên bưu điện** (query optimizer) tự tìm cách lấy nhanh nhất — dùng catalogue (index) hay tìm thủ công (full scan) là việc của họ. Bạn chỉ cần biết **muốn gì**, không cần biết **lấy thế nào**.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+SQL Execution Pipeline (thứ tự thực thi thực sự):
+
+  1. FROM / JOIN  → Xác định data source, materialize joins
+  2. WHERE        → Lọc rows (trước khi group) — dùng index ở đây
+  3. GROUP BY     → Gom nhóm các rows
+  4. HAVING       → Lọc nhóm theo aggregate condition
+  5. SELECT       → Tính toán columns, apply window functions
+  6. DISTINCT     → Loại duplicate (nếu có)
+  7. ORDER BY     → Sắp xếp kết quả
+  8. LIMIT/OFFSET → Cắt kết quả
+```
+
+Window function là thành phần đặc biệt: chạy ở bước SELECT nhưng thấy toàn bộ partition — không collapse rows như GROUP BY.
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **`SELECT *` trong production:** Fetch thừa data, miss covering index, gây network overhead — luôn chỉ định cột cần thiết
+- **Correlated subquery trong vòng lặp:** Chạy N lần cho N rows outer — O(n²), rewrite thành JOIN hoặc CTE
+- **Window function không có PARTITION BY:** Compute trên toàn bộ result set — có thể là ý định đúng (global rank) hoặc bug
+- **Recursive CTE không có depth limit:** Infinite loop nếu data có circular reference — luôn thêm `WHERE level < 100`
+- **OFFSET pagination:** Chậm tuyến tính khi offset lớn (vẫn scan offset rows) — dùng keyset/cursor pagination cho large datasets
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                            | Tại sao sai                                                                    | Đúng là                                                            |
+| ---------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| `SELECT *` trong production code   | Truyền dư data qua network, bỏ lỡ covering index, dễ break khi schema thay đổi | Liệt kê cụ thể các cột cần dùng                                    |
+| Correlated subquery thay vì JOIN   | Subquery chạy lại N lần cho mỗi row outer → O(n²), rất chậm khi N lớn          | Rewrite thành JOIN hoặc CTE để optimizer chọn plan tốt hơn         |
+| Window function thiếu PARTITION BY | Compute trên toàn bộ result set thay vì từng nhóm → kết quả sai logic          | Xác định partition rõ ràng, nếu muốn global thì document rõ ý định |
+
 - **Interview Pattern:** "Write a query for ranking/top-N/running total" → Signal: dùng Window Function, giải thích PARTITION BY vs ORDER BY
-- **Knowledge Chain:** SQL Queries → EXPLAIN ANALYZE → Index Optimization → Application Performance
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Concept 1 — Relational Model](#concept-1-relational-model)
+- ➡️ Để hiểu tiếp: [02-Indexing & Optimization](./02-indexing-optimization.md)
+
+---
 
 ### Concept 4: Transactions & ACID
 
-- **Memory Hook / Móc Nhớ:** "ACID = Bank transfer safety" — A: cả hai debit+credit hoặc rollback, C: tổng tiền không đổi, I: người khác không thấy trạng thái giữa, D: sau commit mất điện vẫn còn.
-- **Why exists:**
-  - Level 1: Đảm bảo correctness khi multiple operations phải succeed/fail together
-  - Level 2: WAL (Write-Ahead Log) + undo log — crash recovery mechanism: ghi log trước data → replay sau crash
-  - Level 3: 2PC (Two-Phase Commit) cho distributed transactions, nhưng performance penalty → eventual consistency alternatives (Saga pattern)
-- **Common Mistakes:**
-  - Long-running transactions → hold locks → block other queries → cascade timeout
-  - Quên `defer tx.Rollback()` trong Go → connection leak
-  - Assume ACID = no bugs → application logic errors vẫn commit wrong data
+> 🧠 **Memory Hook:** "ACID = Bank transfer safety" — A: cả hai debit+credit hoặc rollback, C: tổng tiền không đổi, I: người khác không thấy trạng thái giữa, D: sau commit mất điện vẫn còn.
+
+**Why exists:**
+
+- Level 1: Đảm bảo correctness khi multiple operations phải succeed/fail together
+- Level 2: WAL (Write-Ahead Log) + undo log — crash recovery mechanism: ghi log trước data → replay sau crash
+- Level 3: 2PC (Two-Phase Commit) cho distributed transactions, nhưng performance penalty → eventual consistency alternatives (Saga pattern)
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Hình dung **chuyển tiền ngân hàng**: bạn chuyển 1 triệu từ tài khoản A sang B. Có 2 bước: trừ tiền A (-1tr) và cộng tiền B (+1tr). Nếu sau khi trừ tiền A xong thì **mất điện** — tiền mất luôn hay được hoàn lại? **ACID đảm bảo**: hoặc cả 2 bước thành công, hoặc cả 2 bị hoàn lại — **không bao giờ** chỉ 1 bước thành công. Đây là lý do ngân hàng dùng database transaction, không phải ghi file Excel.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Atomicity (A) — Undo Log:
+  BEGIN TX → ghi giá trị CŨ vào undo log → sửa data
+  COMMIT   → undo log marked done, data pages persisted
+  CRASH    → Recovery đọc undo log → phục hồi giá trị cũ
+
+Durability (D) — WAL (Write-Ahead Log):
+  COMMIT → ghi log entry vào WAL (sequential write) → fsync
+         → return success to client
+         → data pages flushed later (async)
+  CRASH  → Redo WAL entries chưa apply → DB consistent
+
+Isolation (I) — MVCC:
+  TX A reads → thấy snapshot tại thời điểm bắt đầu TX
+  TX B writes → tạo row version mới, không ghi đè version cũ
+  → Readers không block writers, writers không block readers
+
+Consistency (C) — Database Constraints:
+  COMMIT → Engine kiểm tra tất cả constraints (FK, UNIQUE, CHECK)
+         → Vi phạm → tự động ROLLBACK
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **Long transaction giữ lock:** Transaction mở nhiều giây → block tất cả UPDATE trên rows liên quan → cascade timeout
+- **Savepoints:** Rollback về điểm giữa trong transaction — ít dùng nhưng hữu ích cho retry logic phức tạp
+- **Distributed ACID:** 2PC đảm bảo ACID trên nhiều DB nhưng blocking protocol — nếu coordinator crash, participants chờ mãi
+- **ACID ≠ correctness:** Application logic bug vẫn commit wrong data — ví dụ tính sai số tiền nhưng COMMIT thành công
+- **Read-only transaction:** Vẫn nên dùng transaction để đảm bảo snapshot consistent khi đọc nhiều bảng liên quan
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                               | Tại sao sai                                                              | Đúng là                                                                     |
+| ------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| Transaction mở quá lâu (long-running) | Giữ lock → block các query khác → cascade timeout, user thấy lỗi         | Giữ transaction ngắn nhất có thể, tách business logic ra ngoài BEGIN/COMMIT |
+| Quên `defer tx.Rollback()` trong Go   | Connection bị leak nếu hàm return sớm trước COMMIT/ROLLBACK              | Luôn `defer tx.Rollback()` ngay sau `Begin()` — safe no-op nếu đã COMMIT    |
+| Assume ACID = không có bug            | ACID chỉ đảm bảo database constraints, không đảm bảo logic ứng dụng đúng | Validate business rules trong code trước khi commit                         |
+
 - **Interview Pattern:** "Explain ACID with real example" → Signal: bank transfer + mention WAL cho Durability, undo log cho Atomicity
-- **Knowledge Chain:** ACID → Isolation Levels → Distributed Transactions (Saga) → System Design consistency choices
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Concept 1 — Relational Model](#concept-1-relational-model)
+- ➡️ Để hiểu tiếp: [Concept 5 — Isolation & Locking](#concept-5-isolation--locking)
+
+---
 
 ### Concept 5: Isolation & Locking
 
-- **Memory Hook / Móc Nhớ:** "Read Committed = đọc đúng nhưng phantom; Serializable = safe nhưng chậm" — isolation ladder.
-- **Why exists:**
-  - Level 1: Concurrent transactions cần rules — ai thấy gì, khi nào, để tránh dirty/phantom/non-repeatable reads
-  - Level 2: MVCC (Multi-Version Concurrency Control) — mỗi transaction thấy snapshot riêng, readers không block writers
-  - Level 3: PG SSI vs MySQL gap locks — hai approaches khác nhau cho serializable: PG detect dependency cycles, MySQL prevent phantom via gap+next-key locks
-- **Common Mistakes:**
-  - Default Read Committed cho financial system → write skew
-  - `SELECT FOR UPDATE` quên index → table-level lock
-  - Deadlock không có retry logic → user-facing error
+> 🧠 **Memory Hook:** "Read Committed = đọc đúng nhưng phantom; Serializable = safe nhưng chậm" — isolation ladder.
+
+**Why exists:**
+
+- Level 1: Concurrent transactions cần rules — ai thấy gì, khi nào, để tránh dirty/phantom/non-repeatable reads
+- Level 2: MVCC (Multi-Version Concurrency Control) — mỗi transaction thấy snapshot riêng, readers không block writers
+- Level 3: PG SSI vs MySQL gap locks — hai approaches khác nhau cho serializable: PG detect dependency cycles, MySQL prevent phantom via gap+next-key locks
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Hình dung **phòng khám có 2 bác sĩ** đang xem danh sách trực. Cả hai thấy "còn 2 bác sĩ trực" và cùng quyết định "mình nghỉ được". Kết quả: không ai trực! Đây là **write skew** — mỗi người quyết định dựa trên thông tin đúng tại thời điểm đọc, nhưng khi cả hai commit thì constraint bị vi phạm. **Isolation levels** quy định: transaction được thấy những thay đổi nào của transaction khác — càng cao thì an toàn hơn nhưng chậm hơn.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Isolation Ladder (tăng dần safety, giảm dần performance):
+
+Level              │ Dirty  │ Non-Rep│ Phantom│ Write  │ Cơ chế
+                   │ Read   │ Read   │ Read   │ Skew   │
+───────────────────┼────────┼────────┼────────┼────────┼──────────────────
+Read Uncommitted   │  ❌    │  ❌   │  ❌   │  ❌   │ No lock
+Read Committed     │  ✅    │  ❌   │  ❌   │  ❌   │ Statement snapshot
+(PG default)       │        │        │        │        │
+Repeatable Read    │  ✅    │  ✅   │  ⚠️   │  ⚠️   │ TX snapshot
+(MySQL default)    │        │        │(gap lk) │        │
+Serializable       │  ✅    │  ✅   │  ✅   │  ✅   │ SSI / 2PL
+```
+
+MVCC: mỗi row lưu xmin (TX tạo) + xmax (TX xóa), transaction chỉ thấy rows có xmin committed trước snapshot của mình.
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **PostgreSQL Repeatable Read ≠ MySQL Repeatable Read:** PG dùng TX snapshot từ đầu, MySQL thêm gap locks — behavior khác nhau với phantom reads
+- **Serializable abort:** PG SSI có thể abort transaction khi phát hiện conflict → cần retry logic trong application
+- **SELECT FOR UPDATE không có index:** Escalate thành table-level lock → block toàn bảng thay vì chỉ 1 row
+- **Advisory lock:** Useful cho distributed locking nhưng không tự release khi crash (cần session-level management)
+- **SKIP LOCKED:** Dùng cho job queue pattern — lấy rows chưa bị lock mà không chờ
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                  | Tại sao sai                                                        | Đúng là                                                              |
+| ---------------------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------- |
+| Dùng Read Committed cho financial system | Write skew vẫn xảy ra (ví dụ double-spend, over-booking)           | Dùng Serializable hoặc Repeatable Read + explicit SELECT FOR UPDATE  |
+| `SELECT FOR UPDATE` quên index           | Lock escalate lên table-level → block toàn bảng, throughput sụp đổ | Đảm bảo WHERE clause dùng indexed column trước khi SELECT FOR UPDATE |
+| Không có retry logic khi deadlock        | User thấy error 40001 / deadlock detected, không tự recover        | Implement retry với exponential backoff cho serialization failures   |
+
 - **Interview Pattern:** "MVCC deep dive" → Signal: explain xmin/xmax (PG) hoặc DB_TRX_ID (MySQL), visibility rules, VACUUM necessity
-- **Knowledge Chain:** Isolation → MVCC internals → Deadlock detection → Distributed locking (Redis/Consul)
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Concept 4 — Transactions & ACID](#concept-4-transactions--acid)
+- ➡️ Để hiểu tiếp: [Distributed Systems Consistency](../02-backend-knowledge/03-distributed-systems.md)
+
+---
 
 ### Concept 6: PostgreSQL & MySQL Internals
 
-- **Memory Hook / Móc Nhớ:** "PG = MVCC + VACUUM, MySQL = InnoDB + undo log chain" — hai triết lý khác nhau cho cùng vấn đề.
-- **Why exists:**
-  - Level 1: Production database cần hiểu internals để tune performance — không thể chỉ biết SQL syntax
-  - Level 2: VACUUM (PG) xoá dead tuples, autovacuum settings critical — InnoDB buffer pool sizing quyết định cache hit ratio
-  - Level 3: Partitioning strategies (range/list/hash), materialized views, pg_stat_statements → monitoring → informed optimization
-- **Common Mistakes:**
-  - VACUUM never tuned → table bloat 10x actual data size
-  - InnoDB buffer pool < 70% memory → disk I/O bottleneck
-  - Materialized view never refreshed → stale data in reports
+> 🧠 **Memory Hook:** "PG = MVCC + VACUUM, MySQL = InnoDB + undo log chain" — hai triết lý khác nhau cho cùng vấn đề.
+
+**Why exists:**
+
+- Level 1: Production database cần hiểu internals để tune performance — không thể chỉ biết SQL syntax
+- Level 2: VACUUM (PG) xoá dead tuples, autovacuum settings critical — InnoDB buffer pool sizing quyết định cache hit ratio
+- Level 3: Partitioning strategies (range/list/hash), materialized views, pg_stat_statements → monitoring → informed optimization
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Hình dung **thư viện với sách cũ không bao giờ xóa**: mỗi lần cập nhật thông tin sách (PostgreSQL MVCC), thư viện tạo **tờ mới** thay vì sửa tờ cũ — tờ cũ vẫn còn đó chiếm không gian. **VACUUM** là bác bảo vệ đi thu dọn tờ cũ định kỳ. Nếu bác bảo vệ không làm việc (**autovacuum bị disable**), tủ sách đầy tờ rác → tìm sách ngày càng chậm (**table bloat**). MySQL InnoDB dùng chiến lược khác: sửa tờ gốc nhưng lưu lịch sử chỉnh sửa vào **sổ lưu trữ riêng** (undo log).
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+PostgreSQL MVCC lifecycle:
+
+  INSERT row  → xmin=TX_ID, xmax=0,        data=value  (live)
+  UPDATE row  → old row: xmax=NEW_TX_ID               (dead)
+              → new row: xmin=NEW_TX_ID, xmax=0        (live)
+  DELETE row  → old row: xmax=TX_ID                   (dead)
+
+  Table page (bloat accumulates):
+  [LIVE:xmin=100] [DEAD:xmax=101] [LIVE:xmin=102] [DEAD:xmax=103]
+
+  After VACUUM:
+  [LIVE:xmin=100] [FREE SPACE    ] [LIVE:xmin=102] [FREE SPACE   ]
+
+InnoDB MVCC (undo log chain):
+  Current row → DB_TRX_ID=105, data="new"
+      ↓ DB_ROLL_PTR
+  Undo entry  → original data="old", TX_ID=100
+  (follow chain để reconstruct version cũ khi cần)
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **TX ID Wraparound (PG):** 32-bit TX ID = ~4 billion. Nếu autovacuum không chạy kịp, IDs wrap around → rows cũ thành "future" → DB tự shutdown để protect data
+- **InnoDB buffer pool < 70% RAM:** Cache hit rate thấp → mọi query đều hit disk → performance thảm họa
+- **Autovacuum bị throttle quá mạnh:** `autovacuum_vacuum_cost_limit` thấp → VACUUM chậm hơn tốc độ write → bloat tăng dần
+- **VACUUM FULL cần exclusive lock:** Compacts table nhưng lock toàn bảng — tránh production, dùng `pg_repack` thay thế
+- **Materialized view stale:** Không REFRESH → report lấy data cũ — cần schedule REFRESH CONCURRENTLY định kỳ
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                 | Tại sao sai                                                                | Đúng là                                                                                 |
+| --------------------------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Không tune autovacuum                   | Table bloat tăng 10x actual data size → slow sequential scans, index bloat | Monitor `n_dead_tup` trong `pg_stat_user_tables`, tune `autovacuum_vacuum_scale_factor` |
+| InnoDB buffer pool mặc định (128MB)     | Cache hit rate < 50% → disk I/O bottleneck, mọi query đều chậm             | Set `innodb_buffer_pool_size = 70-80%` tổng RAM cho dedicated DB server                 |
+| Materialized view không có lịch refresh | Report trả data cũ hàng giờ, user không biết                               | Setup `pg_cron` hoặc application trigger REFRESH CONCURRENTLY sau ETL job               |
+
 - **Interview Pattern:** "How would you tune a production PG?" → Signal: mention autovacuum, pg_stat_statements, connection limits, partitioning for large tables
-- **Knowledge Chain:** DBMS Internals → Performance Tuning → Monitoring → Capacity Planning
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Concept 5 — Isolation & Locking](#concept-5-isolation--locking)
+- ➡️ Để hiểu tiếp: [02-Indexing & Optimization](./02-indexing-optimization.md)
+
+---
 
 ### Concept 7: Pooling, Migration & ORM
 
-- **Memory Hook / Móc Nhớ:** "Pool = airport security gates, Migration = renovating while shop is open, ORM = Google Translate for SQL."
-- **Why exists:**
-  - Level 1: Database connections expensive (fork process in PG) → pool reuses connections → reduce overhead
-  - Level 2: Schema evolution without downtime: expand→migrate→contract pattern — add nullable first, backfill, add constraint, remove old
-  - Level 3: ORM trade-offs: GORM (fast dev, N+1 risk), sqlx (flexible, manual), sqlc (type-safe, compile-time checked) → choose by team size and query complexity
-- **Common Mistakes:**
-  - No `SetMaxOpenConns` in Go → unlimited connections → PG crashes
-  - `ALTER TABLE ADD NOT NULL` on large table → table lock minutes
-  - GORM eager loading without limit → load entire related tables
+> 🧠 **Memory Hook:** "Pool = airport security gates, Migration = renovating while shop is open, ORM = Google Translate for SQL."
+
+**Why exists:**
+
+- Level 1: Database connections expensive (fork process in PG) → pool reuses connections → reduce overhead
+- Level 2: Schema evolution without downtime: expand→migrate→contract pattern — add nullable first, backfill, add constraint, remove old
+- Level 3: ORM trade-offs: GORM (fast dev, N+1 risk), sqlx (flexible, manual), sqlc (type-safe, compile-time checked) → choose by team size and query complexity
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+**Connection pool** giống **cổng an ninh sân bay**: không tạo cổng mới cho mỗi hành khách — 10 cổng phục vụ 1000 hành khách luân phiên. **Migration** giống **sửa tiệm café đang mở cửa**: không đóng cửa mà sắp xếp từng bàn, khu vực mới trong khi khách vẫn uống cà phê — khách cũ dùng khu cũ, khách mới dùng khu mới, sau đó dọn khu cũ. **ORM** giống **Google Translate**: bạn nói tiếng Go, nó dịch sang SQL — tiện nhưng đôi khi dịch sai (N+1 problem).
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+Connection Pool lifecycle:
+  App start → create N connections (min_pool_size)
+  Request   → acquire connection from pool (or wait if full)
+  Query     → execute on acquired connection
+  Done      → return connection to pool (NOT close)
+  Idle      → pool keeps connections alive, pings periodically
+  Timeout   → close idle connections > ConnMaxIdleTime
+
+Expand-Contract Migration (zero-downtime):
+  Step 1 EXPAND:   ADD COLUMN new_col (nullable) ← App v1 unaffected
+  Step 2 MIGRATE:  backfill new_col WHERE NULL   ← App v2 writes both
+  Step 3 CONTRACT: DROP COLUMN old_col           ← App v3 uses new only
+
+ORM performance spectrum:
+  GORM (reflection) → sqlx (manual scan) → sqlc (generated code)
+  [slowest, easiest]                        [fastest, most explicit]
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **MaxOpenConns = 0 (unlimited):** Go mặc định unlimited → app có thể tạo 10,000 connections → PostgreSQL crash (max 100 mặc định)
+- **PgBouncer transaction mode + prepared statements:** Transaction pooling không support prepared statements per-connection — dùng `prefer` không phải `require`
+- **Migration lock contention:** `ALTER TABLE ADD COLUMN NOT NULL` trên 500M row table → lock minutes → downtime. Dùng ADD nullable + backfill + ADD CONSTRAINT
+- **GORM AutoMigrate trong production:** AutoMigrate có thể drop columns nếu không cẩn thận — **không bao giờ** dùng AutoMigrate ở production
+- **ORM N+1 trong loop:** GORM lazy load related records khi truy cập `.Orders` → 1 query/user → 1000 queries cho 1000 users
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                               | Tại sao sai                                                                                      | Đúng là                                                                             |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| Không set `SetMaxOpenConns` trong Go                  | `database/sql` mặc định unlimited connections → exhausts PostgreSQL (default max 100) → DB crash | Set `db.SetMaxOpenConns(25)` và `db.SetMaxIdleConns(10)` khi init                   |
+| `ALTER TABLE ADD NOT NULL` trực tiếp trên large table | Acquire ACCESS EXCLUSIVE lock, có thể lock bảng nhiều phút → downtime                            | Dùng expand-contract: ADD nullable → backfill → ADD CONSTRAINT NOT VALID → VALIDATE |
+| GORM eager loading không có limit                     | `Preload("Orders")` load toàn bộ orders của user, không phân trang → OOM nếu user có 100K orders | Thêm điều kiện Preload hoặc viết JOIN query với LIMIT                               |
+
 - **Interview Pattern:** "Connection pool sizing" → Signal: `(cores × 2) + spindles` formula, PgBouncer transaction mode, monitor pool_wait
-- **Knowledge Chain:** Pooling → Capacity Planning → Migration → CI/CD → ORM → Application Architecture
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Concept 6 — PostgreSQL & MySQL Internals](#concept-6-postgresql--mysql-internals)
+- ➡️ Để hiểu tiếp: [API Design & Pagination](../02-backend-knowledge/01-api-design.md)
 
 ---
 
@@ -1690,17 +1999,17 @@ Flowchart:
 
 ## ✅ Self-Check / Tự Kiểm Tra
 
-Trả lời không nhìn tài liệu. Nếu < 5/7 đúng → đọc lại phần tương ứng.
+Trả lời không nhìn tài liệu. Nếu < 4/5 đúng → đọc lại phần tương ứng.
 
-| #   | Question                                          | Key Points                                                                                    |
-| --- | ------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| 1   | PK, FK, candidate key khác nhau thế nào?          | PK=unique+not null (1/table), FK=reference PK khác, candidate=any column set that could be PK |
-| 2   | Normalization 1NF→3NF: mỗi level loại bỏ gì?      | 1NF: repeating groups, 2NF: partial dependency, 3NF: transitive dependency                    |
-| 3   | SQL execution order — viết 7 bước?                | FROM→WHERE→GROUP BY→HAVING→SELECT→ORDER BY→LIMIT                                              |
-| 4   | ACID — mỗi chữ cái đảm bảo gì, mechanism nào?     | A: undo log, C: constraints, I: MVCC/locks, D: WAL+fsync                                      |
-| 5   | MVCC hoạt động thế nào trong PG?                  | Multiple row versions, xmin/xmax visibility, snapshot per TX, VACUUM clean dead tuples        |
-| 6   | Optimistic vs Pessimistic locking — khi nào dùng? | Optimistic: version column, low contention. Pessimistic: FOR UPDATE, high contention          |
-| 7   | Connection pool sizing formula?                   | (cores × 2) + spindles, PgBouncer transaction mode, monitor pool_wait                         |
+| #   | Loại           | Câu hỏi                                                                                                                            |
+| --- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 🔍 Retrieval   | PK, FK, candidate key khác nhau thế nào? Liệt kê đặc điểm của từng loại.                                                           |
+| 2   | 🎨 Visual      | Vẽ sơ đồ pipeline thực thi SQL: từ FROM đến LIMIT. Thứ tự nào chạy trước GROUP BY? Thứ tự nào chạy sau SELECT?                     |
+| 3   | 🛠️ Application | Viết query lấy top-3 nhân viên lương cao nhất trong từng phòng ban bằng Window Function.                                           |
+| 4   | 🐛 Debug       | Transaction A thực hiện chuyển khoản, crash sau khi trừ tiền A nhưng chưa cộng tiền B. Điều gì xảy ra? Cơ chế nào đảm bảo điều đó? |
+| 5   | 🎓 Teach       | Giải thích MVCC cho junior: "Tại sao đọc không chặn ghi trong PostgreSQL?" — dùng ngôn ngữ không chuyên.                           |
+
+💬 **Feynman Prompt:** Giải thích cho một người chưa biết lập trình nghe: "Tại sao chúng ta cần transaction trong database? Điều gì xảy ra nếu không có nó?" — dùng ví dụ chuyển tiền ngân hàng, không dùng từ kỹ thuật.
 
 ### Spaced Repetition / Lặp Lại Ngắt Quãng
 

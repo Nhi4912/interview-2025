@@ -64,156 +64,516 @@ File này cover toàn bộ Microservices Architecture theory — từ khi nào n
 
 ### Concept 1: Architecture Patterns (Monolith → Microservices)
 
-**🧠 Memory Hook:** "Mall vs Supermarket" — Monolith = siêu thị (tất cả trong 1 toà nhà), Microservices = mall (mỗi cửa hàng độc lập, cần parking + security chung).
+> 🧠 **Memory Hook:** "Mall vs Supermarket" — Monolith = siêu thị (tất cả trong 1 toà nhà), Microservices = mall (mỗi cửa hàng độc lập, cần parking + security chung).
 
-**❓ Why exists / Tại sao tồn tại:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: Monolith chậm deploy khi team lớn — 50 devs, 1 deploy block tất cả
-- Level 2: Independent scaling impossible — chỉ cần scale Checkout nhưng phải scale toàn bộ monolith
-- Level 3: Conway's Law — org structure maps to system architecture. Khi team grows beyond 2-pizza (8 người), communication overhead forces architectural split. Microservices align service boundaries with team boundaries.
+Monolith chậm deploy khi team lớn — 50 devs, 1 deploy block tất cả
+→ **Why?** Independent scaling impossible — chỉ cần scale Checkout nhưng phải scale toàn bộ monolith, lãng phí tài nguyên
+→ **Why?** Conway's Law — org structure maps to system architecture. Khi team grows beyond 2-pizza (8 người), communication overhead forces architectural split. Microservices align service boundaries with team boundaries.
 
-**⚠️ Common Mistakes:**
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-- Start with microservices ngay từ đầu (premature decomposition — chưa hiểu domain)
-- "Distributed monolith" — tách services nhưng share database → worst of both worlds
-- Không invest vào infra (service mesh, tracing) trước khi migrate
+Hãy tưởng tượng bạn đang vận hành một siêu thị lớn kiểu Vinmart. Mọi khu vực — rau củ, hải sản, quần áo, điện tử — đều nằm trong cùng một toà nhà, dùng chung kho hàng và hệ thống tính tiền. Khi hệ thống điện của khu hải sản bị sự cố, toàn bộ siêu thị phải đóng cửa. Ngược lại, một trung tâm thương mại (Vincom) gồm nhiều cửa hàng độc lập — nếu cửa hàng giày bị cháy, các cửa hàng khác vẫn mở cửa bình thường. Microservices cũng vậy: mỗi "cửa hàng" (service) tự deploy, tự scale, tự quyết công nghệ — nhưng cần "ban quản lý trung tâm" (infra: CI/CD, tracing, service mesh) để vận hành trơn tru.
 
-**🎯 Interview Pattern:** "Monolith vs Microservices?" → trình bày trade-offs cả 2, nói rõ "Monolith First" approach, nhấn mạnh cost of distributed systems
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
 
-**🔗 Knowledge Chain:** Monolith → Modular Monolith → Strangler Fig → Microservices → Database-per-Service → Distributed Transactions
+Kiến trúc phần mềm tiến hóa theo 3 giai đoạn dựa trên quy mô team và domain complexity:
+
+1. **Monolith**: Toàn bộ code trong 1 codebase, 1 deploy unit, 1 database. Phù hợp khi team ≤ 10 người.
+2. **Modular Monolith**: Vẫn 1 codebase nhưng enforce module boundaries nghiêm ngặt qua interfaces. Middle ground tuyệt vời.
+3. **Microservices**: Tách thành services độc lập, mỗi service có DB riêng, deploy riêng, team riêng.
+
+```
+Team Size & Complexity Growth
+         │
+  Small  ├──[Monolith]────────────────────────────────
+  (<10)  │   • 1 codebase, 1 DB, 1 deploy unit
+         │   • Fast startup, simple local debugging
+         │   • Risk: coupling grows as team scales
+         │
+  Medium ├──[Modular Monolith]──────────────────────
+  (10-30)│   • 1 codebase, enforced module APIs
+         │   • Modules communicate via interfaces
+         │   • Can extract to service when ready
+         │
+  Large  └──[Microservices]──────────────────────────
+  (30+)      • N services, N DBs, N CI/CD pipelines
+             • Requires: distributed tracing + mesh
+             • Team owns service end-to-end
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **Conway's Law backfire**: Nếu team structure không match service boundaries → "distributed monolith": tách service nhưng vẫn deploy cùng nhau vì business logic vẫn coupled
+- **Domain instability trap**: Nếu business thay đổi liên tục, wrong boundaries cực tốn kém khi refactor — phải di chuyển data, thay đổi API contracts của nhiều consumers cùng lúc
+- **Startup overhead**: 90% startups không cần microservices trong 2 năm đầu — latency, eventual consistency, và infra overhead > benefit khi scale nhỏ
+- **Nano-service hell**: Chia quá nhỏ → operational overhead lớn hơn business value → khó trace lỗi, khó onboard developer mới
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                   | Tại sao sai                                                                             | Đúng là                                                                        |
+| ----------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Bắt đầu dự án mới bằng microservices ngay | Chưa hiểu domain, service boundaries sai → cực kỳ tốn kém khi refactor sau này          | Monolith/Modular Monolith trước, migrate khi domain ổn định và có lý do cụ thể |
+| Tách services nhưng share database        | Distributed monolith — worst of both worlds: distributed complexity + monolith coupling | Database-per-service, giao tiếp qua API, không truy cập DB của service khác    |
+| Migrate mà chưa có tracing và CI/CD       | Không thể debug failures trong distributed system, không thể deploy reliably            | Đầu tư observability + automated CI/CD pipeline trước khi bắt đầu migrate      |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy câu hỏi về: "Monolith vs Microservices? Khi nào nên chuyển?"
+- → Nhớ đến: Trade-offs cả hai, Monolith First (Martin Fowler), Conway's Law, distributed systems cost
+- → Mở đầu trả lời: _"Microservices không phải silver bullet — tôi sẽ phân tích trade-offs và khi nào thực sự nên chuyển dựa trên team size, domain clarity và DevOps maturity..."_
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [API Design](./01-api-design.md) — REST/gRPC là nền tảng giao tiếp giữa các services
+- ➡️ Để hiểu tiếp: [Distributed Systems](./03-distributed-systems.md) — CAP theorem và consistency challenges trong hệ phân tán
 
 ---
 
 ### Concept 2: Service Decomposition
 
-**🧠 Memory Hook:** DDD Bounded Context = "Biên giới quốc gia" — mỗi context có "ngôn ngữ" riêng (ubiquitous language), "luật" riêng (business rules), không shared database.
+> 🧠 **Memory Hook:** DDD Bounded Context = "Biên giới quốc gia" — mỗi context có "ngôn ngữ" riêng (ubiquitous language), "luật" riêng (business rules), không shared database.
 
-**❓ Why exists / Tại sao tồn tại:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: Cần criteria rõ ràng để quyết định service boundaries — không phải random split
-- Level 2: Wrong boundaries → tight coupling → sửa 1 feature phải deploy 5 services → tệ hơn monolith
-- Level 3: DDD provides domain-driven approach: identify bounded contexts from business domains, not technical layers. Strangler Fig enables incremental migration — wrap legacy with API, route traffic gradually.
+Cần criteria rõ ràng để quyết định service boundaries — không thể split ngẫu nhiên theo trực giác
+→ **Why?** Wrong boundaries → tight coupling → sửa 1 feature phải deploy 5 services → tệ hơn monolith
+→ **Why?** DDD cung cấp domain-driven approach: identify bounded contexts từ business domains, không phải từ technical layers. Strangler Fig cho phép migrate dần mà không cần Big Bang rewrite — wrap legacy bằng API rồi route traffic dần dần.
 
-**⚠️ Common Mistakes:**
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-- Decompose by technical layer (UserController, UserService, UserRepo) thay vì by business domain
-- Services quá nhỏ (nano-services) → overhead > benefit
-- Không có anti-corruption layer giữa old và new system
+Hãy nghĩ đến cách Việt Nam được chia thành các tỉnh, thành phố. Tỉnh Đà Lạt có "ngôn ngữ" riêng về du lịch (homestay, trekking, cà phê vườn), tỉnh Vũng Tàu có "ngôn ngữ" riêng về dầu khí (offshore, platform, refinery). Từ "khách hàng" trong context du lịch Đà Lạt là người đặt tour, còn trong context dầu khí Vũng Tàu là doanh nghiệp ký hợp đồng khai thác. Bounded Context trong DDD cũng vậy — cùng từ "Product" nhưng ý nghĩa hoàn toàn khác trong Catalog service (thông tin mô tả) vs Inventory service (số lượng tồn kho). Mỗi bounded context có domain model riêng, không mix chung.
 
-**🎯 Interview Pattern:** "How would you break up a monolith?" → Strangler Fig + DDD bounded contexts + specific example from experience
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
 
-**🔗 Knowledge Chain:** Domain Analysis → Bounded Contexts → Context Mapping → Strangler Fig → Anti-corruption Layer → Service Boundaries
+Quy trình xác định service boundaries theo DDD gồm 4 bước:
+
+1. **Event Storming**: Workshop với domain experts, dán sticky notes cho domain events trên timeline
+2. **Identify Bounded Contexts**: Tìm điểm ngôn ngữ thay đổi → ranh giới context
+3. **Evaluate Coupling**: High cohesion + Low coupling = good boundary
+4. **Apply Strangler Fig**: Wrap từng module bằng API facade, route traffic dần dần
+
+```
+Event Storming → Service Boundaries
+
+Domain Events (orange):
+[UserRegistered]──[OrderPlaced]──[PaymentProcessed]──[ItemShipped]
+       │                │                │                  │
+   User BC          Order BC        Payment BC         Shipping BC
+       │                │                │                  │
+  [User Svc]       [Order Svc]     [Payment Svc]      [Ship Svc]
+  own: users DB    own: orders DB  own: payments DB   own: ship DB
+
+Context Mapping (relationships):
+  User Svc ──[published event]──► Order Svc
+  Order Svc ──[command]──────────► Payment Svc
+  Payment Svc ──[event]──────────► Order Svc (confirm/reject)
+  Order Svc ──[event]────────────► Shipping Svc
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **Technical layer trap**: Nếu chia theo UserController/UserService/UserRepo thay vì business domain → tất cả services phải deploy cùng nhau khi sửa 1 user feature
+- **Boundary too fine**: Service chỉ có 1-2 API endpoints → network overhead > business logic, team phải maintain 50+ repos
+- **Shared kernel risk**: Khi 2 bounded contexts share common domain model → coupling dần dần, thay đổi shared model ảnh hưởng cả hai
+- **Strangler Fig timing**: Extract sai thứ tự → service mới phụ thuộc vào code trong monolith chưa được extract → circular dependency
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                                  | Tại sao sai                                                               | Đúng là                                                              |
+| -------------------------------------------------------- | ------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Decompose theo technical layer (Controller/Service/Repo) | Tất cả layers cho 1 feature nằm ở 3 services khác nhau → deploy coupling  | Decompose theo business domain (Order, Payment, Inventory)           |
+| Tạo nano-services quá nhỏ                                | Network overhead + operational cost > business value, khó onboard dev mới | Mỗi service nên có đủ business logic để justify operational cost     |
+| Không có Anti-Corruption Layer khi Strangler Fig         | Old system data model "nhiễm" vào new service → coupling tái xuất hiện    | Tạo ACL layer để translate giữa old domain model và new domain model |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy câu hỏi về: "Làm sao tách monolith? Xác định service boundaries thế nào?"
+- → Nhớ đến: DDD Bounded Context, Event Storming, Strangler Fig Pattern, Anti-Corruption Layer
+- → Mở đầu trả lời: _"Tôi sẽ dùng DDD để xác định bounded contexts từ business domain, sau đó áp dụng Strangler Fig để migrate từng phần mà không cần rewrite toàn bộ..."_
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [API Design](./01-api-design.md) — API contracts giữa services là biên giới của bounded contexts
+- ➡️ Để hiểu tiếp: [Distributed Systems](./03-distributed-systems.md) — sau khi tách services, cần hiểu consistency challenges
 
 ---
 
 ### Concept 3: Communication Patterns
 
-**🧠 Memory Hook:** Sync = "Gọi điện thoại" (đợi trả lời), Async = "Gửi email" (gửi xong làm việc khác). Choreography = "Jazz band" (mỗi nhạc cụ tự phối), Orchestration = "Orchestra" (conductor điều khiển).
+> 🧠 **Memory Hook:** Sync = "Gọi điện thoại" (đợi trả lời), Async = "Gửi email" (gửi xong làm việc khác). Choreography = "Jazz band" (mỗi nhạc cụ tự phối), Orchestration = "Orchestra" (conductor điều khiển).
 
-**❓ Why exists / Tại sao tồn tại:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: Microservices communicate qua network → cần patterns cho reliability và decoupling
-- Level 2: Sync coupling creates cascade failures (Service A → B → C, C down = all down). Async decouples via message broker → sender doesn't wait.
-- Level 3: Choreography scales better (no central coordinator) nhưng harder to debug. Orchestration simpler to understand nhưng single point of failure. Real systems use hybrid — sync for queries, async for commands/events.
+Microservices communicate qua network → cần patterns đảm bảo reliability và decoupling giữa các services
+→ **Why?** Sync coupling tạo cascade failures — Service A → B → C, C down = toàn bộ chain down. Async decouples qua message broker → sender tiếp tục làm việc ngay.
+→ **Why?** Choreography scales tốt hơn (không có central coordinator) nhưng harder to debug khi flow phức tạp. Orchestration dễ hiểu hơn nhưng có single point of failure. Real systems dùng hybrid: sync cho queries, async cho commands/events.
 
-**⚠️ Common Mistakes:**
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-- Everything async → khó debug, eventual consistency everywhere
-- Everything sync → tight coupling, cascade failures
-- Choreography without distributed tracing → impossible to follow event flow
+Tưởng tượng bạn đặt một bữa tiệc tất niên. Cách sync: bạn gọi điện cho từng người — Linh làm MC, Tuấn mua bánh, Hương đặt nhà hàng — và chờ từng người xác nhận trước khi gọi người tiếp theo. Nếu Tuấn không nghe máy, bạn bị kẹt. Cách async: bạn gửi group chat một tin nhắn duy nhất, mọi người tự đọc và xử lý theo lịch trình — bạn không cần chờ. Choreography giống nhóm bạn thân tự phân công nhau không cần ai chỉ đạo. Orchestration giống bạn đứng ra làm "trưởng ban tổ chức" điều phối từng bước: "Tuấn mua bánh xong rồi báo Hương đặt bàn nhé."
 
-**🎯 Interview Pattern:** "Sync vs Async communication?" → trade-offs + khi nào dùng gì + real example (payment = sync, notification = async)
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
 
-**🔗 Knowledge Chain:** REST/gRPC (sync) → Message Queue (async) → Event-Driven → Choreography vs Orchestration → Saga Pattern
+Hai paradigm communication chính, mỗi cái phù hợp với use case khác nhau:
+
+1. **Sync (REST/gRPC)**: Caller chờ response → tight temporal coupling, nhưng immediate feedback
+2. **Async (Message Queue)**: Caller gửi message vào broker rồi tiếp tục → loose coupling, resilient
+3. **Choreography**: Services react to events độc lập, không có central coordinator
+4. **Orchestration**: Một coordinator service điều phối toàn bộ workflow
+
+```
+Sync Call (REST/gRPC):
+Service A ──────request─────► Service B
+    │        (blocked/waiting)      │
+    │ ◄───────response──────────────│
+    ▼ (continues after response)
+
+Async Call (Message Broker):
+Service A ──publish──► [Kafka/RabbitMQ] ──deliver──► Service B
+    │       (returns immediately)              (processes when ready)
+    ▼ (continues without waiting)
+
+Choreography:
+  OrderSvc ──"OrderCreated"──► Bus ──► PaymentSvc
+                                  ──► InventorySvc
+  PaymentSvc ──"PaymentDone"──► Bus ──► ShippingSvc
+
+Orchestration:
+  Coordinator ──1.Validate──► OrderSvc
+               ──2.Charge───► PaymentSvc
+               ──3.Reserve──► InventorySvc
+               ──4.Ship─────► ShippingSvc
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **Async idempotency**: Message broker có thể deliver cùng message nhiều lần (at-least-once delivery) → consumer phải idempotent, dùng idempotency key để deduplicate
+- **Choreography spaghetti**: Khi flow có 7+ services, rất khó trace "OrderCreated" trigger gì, và gì trigger gì tiếp theo → cần distributed tracing bắt buộc
+- **Orchestrator SPOF**: Nếu orchestrator service crash giữa chừng → cần persistent state (Temporal, AWS Step Functions) để resume từ điểm cuối cùng
+- **Mixed pattern complexity**: Hybrid sync+async làm khó hiểu overall data flow — cần document rõ which calls are sync và which are async
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                      | Tại sao sai                                                       | Đúng là                                                                               |
+| -------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Dùng sync cho tất cả communications          | Cascade failures: 1 service slow/down kéo theo toàn bộ chain      | Sync cho queries cần immediate response, async cho commands và events                 |
+| Dùng async cho tất cả communications         | Khó debug, eventual consistency ở mọi nơi, khó guarantee ordering | Hybrid: sync khi cần immediate feedback (payment), async khi không cần (notification) |
+| Choreography mà không có distributed tracing | Impossible to follow event flow qua nhiều services khi có bug     | Setup distributed tracing (Jaeger/Tempo) trước khi dùng choreography                  |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy câu hỏi về: "Sync vs Async? Choreography vs Orchestration?"
+- → Nhớ đến: Cascade failure risk của sync, decoupling benefit của async, debug complexity của choreography
+- → Mở đầu trả lời: _"Tôi sẽ phân tích trade-offs: sync phù hợp khi cần immediate response như payment validation, async phù hợp khi có thể tolerate delay như email notification..."_
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [API Design](./01-api-design.md) — REST/gRPC protocols là building blocks của sync communication
+- ➡️ Để hiểu tiếp: [Message Queues](./08-message-queues.md) — Kafka/RabbitMQ internals cho async communication patterns
 
 ---
 
 ### Concept 4: Distributed Transactions (Saga Pattern)
 
-**🧠 Memory Hook:** Saga = "Du lịch theo tour" — mỗi stop (service) xử lý riêng, nếu 1 stop cancel → compensating actions (refund) cho tất cả stops trước đó.
+> 🧠 **Memory Hook:** Saga = "Du lịch theo tour" — mỗi stop (service) xử lý riêng, nếu 1 stop cancel → compensating actions (refund) cho tất cả stops trước đó.
 
-**❓ Why exists / Tại sao tồn tại:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: Microservices có database-per-service → không thể dùng single ACID transaction
-- Level 2: 2PC (Two-Phase Commit) blocks resources → latency + single coordinator failure = all blocked
-- Level 3: Saga trades strong consistency for availability (CAP theorem). Each service executes local transaction + publishes event → next service continues or compensates. Transactional Outbox + CDC ensures reliable event publishing without dual-write problem.
+Microservices có database-per-service → không thể dùng single ACID transaction cross services
+→ **Why?** 2PC (Two-Phase Commit) blocks resources trong toàn bộ quá trình → latency cao và coordinator failure làm tất cả participants bị stuck indefinitely
+→ **Why?** Saga trades strong consistency cho availability (CAP theorem): mỗi service thực hiện local transaction + publishes event → service tiếp theo continues hoặc compensates. Transactional Outbox + CDC đảm bảo reliable event publishing mà không có dual-write problem.
 
-**⚠️ Common Mistakes:**
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-- Forget compensating transactions (rollback logic for each step)
-- Assume saga = eventual consistency is good enough everywhere (payment needs strong consistency)
-- Dual-write problem: write DB + publish event non-atomically → Outbox pattern fixes this
+Hãy nghĩ đến quy trình đặt tour du lịch Đà Nẵng - Hội An - Huế. Bạn cần book vé máy bay (bước 1), đặt khách sạn ở 3 nơi (bước 2-4), và thuê xe (bước 5) — mỗi bước là một "transaction" với một nhà cung cấp khác nhau. Nếu đến bước 4 khách sạn Huế báo hết phòng, bạn không thể "rollback database" — thay vào đó bạn phải gọi điện hủy vé máy bay, hủy 2 khách sạn đã đặt, và hủy xe. Đây chính xác là Saga: chuỗi local transactions với compensating transactions để "undo" khi có lỗi — không phải database rollback, mà là business actions ngược lại.
 
-**🎯 Interview Pattern:** "How do you handle transactions across services?" → explain why 2PC fails → Saga (choreography vs orchestration) → Outbox/CDC for reliable events
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
 
-**🔗 Knowledge Chain:** ACID → CAP Theorem → 2PC Limitations → Saga Pattern → Compensating Transactions → Outbox/CDC → Eventual Consistency
+Saga là chuỗi local transactions, mỗi bước xử lý trong 1 service và publish event cho bước tiếp theo. Khi fail → compensating transactions được kích hoạt ngược lại:
+
+1. **Happy Path**: T1 → event → T2 → event → T3 → ... → Tn
+2. **Failure Path**: T1 → T2 → T3 fails → C2 (compensate T2) → C1 (compensate T1)
+3. **Choreography**: Events truyền tự động giữa services qua message broker
+4. **Orchestration**: Một Saga orchestrator điều khiển toàn bộ flow và compensations
+
+```
+Choreography Saga — Happy Path:
+OrderSvc       PaymentSvc      InventorySvc    ShippingSvc
+    │               │               │               │
+    ├─"OrderCreated"►│               │               │
+    │               ├─"PaymentDone"─►│               │
+    │               │               ├─"StockReserved"►│
+    │               │               │               │ ship()
+    │◄──────────────────────"OrderShipped"───────────│
+
+Choreography Saga — Compensation:
+OrderSvc       PaymentSvc      InventorySvc
+    │               │               │
+    ├─"OrderCreated"►│               │
+    │               ├─"PaymentDone"─►│
+    │               │               │ FAILS!
+    │               │◄─"StockFailed"─│
+    │               │ refund()        │
+    │◄─"PaymentRefunded"             │
+    │ cancel()                        │
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **Compensating transaction failures**: Compensating transaction cũng có thể fail → cần retry logic và idempotency trên compensation operations
+- **Saga timeout**: Nếu một step không respond, orchestrator cần timeout policy — cancel toàn bộ hay chờ thêm?
+- **Concurrent sagas**: Hai sagas song song cùng modify inventory → race condition → cần optimistic locking hoặc reservation pattern
+- **Strong consistency domains**: Payments thực tế vẫn cần eventual consistency được thiết kế cẩn thận, không phải tùy tiện — cần idempotency keys để tránh double charge
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                               | Tại sao sai                                                                                                        | Đúng là                                                                                                        |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| Quên implement compensating transactions cho mỗi step | Khi có failure, không thể undo → data inconsistency vĩnh viễn                                                      | Thiết kế compensating transaction ngay khi thiết kế forward transaction                                        |
+| Assume Saga phù hợp cho tất cả cases                  | Payments và financial transfers cần được thiết kế với idempotency keys, không thể dùng eventual consistency sơ sài | Phân tích từng domain: financial = design carefully with idempotency, catalog update = eventual consistency OK |
+| Dual-write: write DB và publish event riêng lẻ        | Nếu event publish fail sau khi DB commit → inconsistency; nếu DB fail sau khi event publish → ghost events         | Dùng Transactional Outbox pattern: ghi event vào cùng DB transaction, relay process publish sau                |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy câu hỏi về: "Distributed transactions? Làm sao đảm bảo consistency across services?"
+- → Nhớ đến: 2PC limitations, Saga (choreography vs orchestration), compensating transactions, Outbox/CDC
+- → Mở đầu trả lời: _"Trong microservices, chúng ta không dùng 2PC vì nó blocking và có coordinator SPOF. Thay vào đó tôi dùng Saga pattern với compensating transactions..."_
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Distributed Systems](./03-distributed-systems.md) — CAP theorem và eventual consistency fundamentals
+- ➡️ Để hiểu tiếp: [Message Queues](./08-message-queues.md) — Kafka/RabbitMQ làm backbone cho Saga choreography
 
 ---
 
 ### Concept 5: Event-Driven Architecture
 
-**🧠 Memory Hook:** Event Sourcing = "Sổ kế toán" — không sửa balance trực tiếp, ghi mọi giao dịch (event), replay để tính balance hiện tại. CQRS = "2 cửa sổ ngân hàng" — 1 cửa gửi tiền (write), 1 cửa check balance (read).
+> 🧠 **Memory Hook:** Event Sourcing = "Sổ kế toán" — không sửa balance trực tiếp, ghi mọi giao dịch (event), replay để tính balance hiện tại. CQRS = "2 cửa sổ ngân hàng" — 1 cửa gửi tiền (write), 1 cửa check balance (read).
 
-**❓ Why exists / Tại sao tồn tại:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: Traditional CRUD loses history — chỉ biết current state, không biết how we got here
-- Level 2: Event Sourcing provides complete audit trail + time travel (rebuild state at any point). CQRS separates read/write models → optimize each independently.
-- Level 3: At scale, read and write patterns differ dramatically (read 100x more than write). CQRS + Event Sourcing enables different storage per model (write: event store, read: denormalized read DB). But adds significant complexity — only worth it for specific domains (financial, audit-heavy).
+Traditional CRUD mất lịch sử — chỉ biết current state, không biết làm sao đến trạng thái đó, không audit trail
+→ **Why?** Event Sourcing cung cấp complete audit trail + time travel (rebuild state tại bất kỳ thời điểm). CQRS tách read/write models → optimize mỗi model độc lập.
+→ **Why?** Ở quy mô lớn, read và write patterns khác nhau đáng kể (read 100x nhiều hơn write). CQRS + Event Sourcing cho phép dùng storage khác nhau per model (write: event store, read: denormalized DB). Nhưng thêm complexity đáng kể — chỉ worth it cho specific domains (financial, audit-heavy).
 
-**⚠️ Common Mistakes:**
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-- Apply Event Sourcing everywhere (chỉ cần cho domains cần audit trail hoặc temporal queries)
-- CQRS without understanding eventual consistency (read model lags behind write)
-- Confuse Event-Driven Architecture với Event Sourcing (EDA = loose coupling pattern, ES = persistence pattern)
+Hãy nghĩ về sổ kế toán của một tiệm tạp hóa. Cách CRUD truyền thống: mỗi lần có giao dịch, kế toán xóa số cũ và ghi số mới vào ô "Tồn kho: 50". Cuối ngày, nếu sếp hỏi "Tại sao chỉ còn 50 thùng?" — không ai biết. Cách Event Sourcing: kế toán ghi từng dòng — "Nhập 100 thùng lúc 8:00", "Bán 30 thùng lúc 10:00", "Bán 20 thùng lúc 14:00". Muốn biết tồn kho? Cộng lại. Muốn biết tại sao giảm? Đọc lịch sử. CQRS thêm vào đó hai "quầy" riêng — quầy nhập hàng (write) và quầy tra cứu (read, có thể dùng bảng tóm tắt riêng cho nhanh).
 
-**🎯 Interview Pattern:** "Event Sourcing vs CQRS vs Event-Driven?" → 3 different things, explain each, when to combine, khi nào KHÔNG nên dùng
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
 
-**🔗 Knowledge Chain:** Events → Event-Driven Architecture → Event Sourcing → CQRS → Projection/Materialized View → Eventual Consistency
+Event Sourcing lưu state dưới dạng immutable event log. Để đọc current state, chạy projection function qua toàn bộ events:
+
+1. **Write**: Append event vào event store (immutable log)
+2. **Read**: Projection function replay events → build materialized view
+3. **Snapshot**: Sau N events, lưu snapshot để tăng tốc replay
+4. **CQRS**: Write side dùng event store, Read side dùng optimized read DB
+
+```
+Event Sourcing Flow:
+
+Write Side:                      Read Side:
+Command ──► Aggregate           Event Store ──replay──► Projection
+             │                      │                        │
+             ▼                      │                        ▼
+         Validate ─────────────────►│               Read Model (DB)
+             │          events       │               (denormalized,
+             ▼                       │               optimized for
+         Event Store                 │               query patterns)
+    ┌────────────────┐               │
+    │ OrderCreated   │◄──────────────┘
+    │ ItemAdded      │
+    │ PaymentDone    │
+    │ OrderShipped   │
+    └────────────────┘
+         (immutable log)
+
+Snapshot Optimization:
+Events 1-1000 → Snapshot(state@1000) → Events 1001-1200
+Replay = load snapshot + apply events 1001-1200 (not 1-1200)
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **Schema evolution**: Event schema thay đổi sau khi events đã được lưu → cần event upcasting (transform old event format sang new format khi replay)
+- **Projection lag**: Read model có delay so với write model → queries trả về stale data → UI cần xử lý eventual consistency gracefully
+- **Event store size**: Aggregates tồn tại lâu (e.g., user account 10 năm) → replay từ đầu rất chậm → cần snapshot strategy
+- **Không phải domain nào cũng cần**: Shopping cart đơn giản không cần audit trail → Event Sourcing over-engineering, thêm complexity không cần thiết
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                               | Tại sao sai                                                                         | Đúng là                                                                                    |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Áp dụng Event Sourcing cho toàn bộ hệ thống           | Complexity cao hơn CRUD đáng kể, team cần mindset shift hoàn toàn                   | Chỉ dùng cho domains thực sự cần audit trail hoặc temporal queries (financial, healthcare) |
+| CQRS mà không understand eventual consistency         | Read model lag behind write model → user thấy stale data sau khi update             | Design UI với eventual consistency: "Thay đổi sẽ phản ánh sau vài giây"                    |
+| Nhầm lẫn Event-Driven Architecture với Event Sourcing | EDA = communication pattern giữa services; ES = persistence pattern trong 1 service | EDA và ES là hai concepts độc lập, có thể dùng một hoặc cả hai                             |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy câu hỏi về: "Event Sourcing? CQRS? Event-Driven Architecture?"
+- → Nhớ đến: 3 concepts khác nhau (EDA=communication, ES=persistence, CQRS=read/write separation), khi nào combine, khi nào KHÔNG nên dùng
+- → Mở đầu trả lời: _"Ba concepts này thường bị nhầm lẫn nhưng hoàn toàn độc lập. Event Sourcing là persistence pattern, CQRS là architecture pattern, Event-Driven là communication pattern..."_
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Distributed Systems](./03-distributed-systems.md) — CAP theorem và eventual consistency là prerequisite
+- ➡️ Để hiểu tiếp: [Message Queues](./08-message-queues.md) — Kafka làm event store và event bus cho Event-Driven Architecture
 
 ---
 
 ### Concept 6: Resilience Patterns
 
-**🧠 Memory Hook:** Circuit Breaker = "Cầu dao điện" — quá tải thì ngắt (Open), chờ nguội thì thử lại (Half-Open), ổn thì đóng lại (Closed). Bulkhead = "Vách ngăn tàu" — 1 khoang ngập không chìm cả tàu.
+> 🧠 **Memory Hook:** Circuit Breaker = "Cầu dao điện" — quá tải thì ngắt (Open), chờ nguội thì thử lại (Half-Open), ổn thì đóng lại (Closed). Bulkhead = "Vách ngăn tàu" — 1 khoang ngập không chìm cả tàu.
 
-**❓ Why exists / Tại sao tồn tại:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: Distributed systems = network failures are normal, not exception
-- Level 2: Without resilience patterns, one failing service cascades to all dependent services → total system failure
-- Level 3: Cascade failure prevention requires multiple layers: Circuit Breaker (stop calling failing service) + Retry with exponential backoff + jitter (avoid thundering herd) + Bulkhead (isolate failure) + Timeout (don't wait forever) + Fallback (degrade gracefully)
+Distributed systems = network failures là normal, không phải exception — cần chuẩn bị sẵn sàng
+→ **Why?** Không có resilience patterns, 1 failing service cascades đến toàn bộ dependent services → total system failure (cascade failure)
+→ **Why?** Ngăn cascade failure cần nhiều lớp bảo vệ: Circuit Breaker (dừng gọi service đang fail) + Retry với exponential backoff + jitter (tránh thundering herd) + Bulkhead (isolate failure domain) + Timeout (không chờ mãi) + Fallback (degrade gracefully thay vì lỗi hoàn toàn).
 
-**⚠️ Common Mistakes:**
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-- Retry without backoff → DDoS own system
-- Retry without jitter → thundering herd when service recovers
-- Circuit breaker threshold too aggressive → open too early on transient errors
-- No fallback → user sees 500 instead of degraded experience
+Hãy nghĩ đến hệ thống điện trong một toà nhà chung cư. Cầu dao điện (Circuit Breaker) tự ngắt khi phát hiện quá tải — bảo vệ toàn bộ hệ thống khỏi cháy. Sau khi thợ điện sửa xong, bạn đóng cầu dao thử lại. Vách ngăn (Bulkhead) trong tàu thủy ngăn nước từ 1 khoang bị thủng không chảy sang khoang khác. Retry with backoff giống như khi nhắn tin cho người yêu không trả lời — bạn chờ 1 phút, rồi 2 phút, rồi 5 phút — không nhắn liên tục mỗi giây (đó là thundering herd). Fallback giống như backup generator khi mất điện — không phải chức năng đầy đủ, nhưng đủ để tiếp tục hoạt động cơ bản.
 
-**🎯 Interview Pattern:** "Service B is failing, how do you prevent cascade?" → Circuit Breaker states → Retry with backoff + jitter → Bulkhead isolation → Fallback → Timeout propagation
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
 
-**🔗 Knowledge Chain:** Failure Modes → Circuit Breaker (Closed→Open→Half-Open) → Retry + Backoff + Jitter → Bulkhead → Timeout → Fallback → Graceful Degradation
+Circuit Breaker hoạt động như state machine với 3 states, tự động chuyển trạng thái dựa trên failure metrics:
+
+1. **CLOSED**: Normal operation, count failures trong sliding window
+2. **OPEN**: Reject all requests fast (không gọi downstream), timer chạy
+3. **HALF-OPEN**: Cho phép một số test requests qua để kiểm tra recovery
+
+```
+Circuit Breaker State Machine:
+
+┌──────────────┐  failure_rate > threshold  ┌──────────────┐
+│              │──────────────────────────►│              │
+│    CLOSED    │                            │     OPEN     │
+│  (normal)    │◄──────────────────────────│  (reject all)│
+│              │    success in half-open    │              │
+└──────────────┘                            └──────┬───────┘
+       ▲                                           │
+       │                               timeout expires
+       │                                           │
+       │                                    ┌──────▼───────┐
+       └────────────────────────────────────│  HALF-OPEN   │
+                  success                   │ (test probes)│
+                                            └──────────────┘
+                                               │ failure
+                                               ▼
+                                          back to OPEN
+
+Retry + Jitter Formula:
+  base_delay = min(cap, base * 2^attempt)
+  actual_delay = base_delay + random(0, base_delay * 0.3)
+
+  attempt=0: 1s + jitter
+  attempt=1: 2s + jitter
+  attempt=2: 4s + jitter   ← spread out retries
+  attempt=3: 8s + jitter
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **Threshold tuning**: Circuit breaker quá sensitive (low threshold) → trips on transient errors, giảm availability; quá tolerant → cascade failure xảy ra trước khi trip
+- **Thundering herd after recovery**: Nếu không có jitter, khi service recover → tất cả clients retry cùng lúc → service quá tải ngay lập tức → trip lại
+- **Bulkhead resource sizing**: Thread pool cho ServiceA quá nhỏ → legitimate traffic bị reject; quá lớn → không isolate được failure
+- **Fallback data staleness**: Cache fallback trả về stale data → user thấy cũ, nhưng tốt hơn 500 error. Cần communicate clearly về data freshness.
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                 | Tại sao sai                                                                               | Đúng là                                                                   |
+| --------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Retry mà không có exponential backoff   | Retry ngay lập tức liên tục → overwhelm service đang cố recover                           | Retry với exponential backoff: 1s → 2s → 4s → 8s (max 30s)                |
+| Retry với backoff nhưng không có jitter | Tất cả instances retry cùng lúc (thundering herd) → service quá tải đúng lúc đang recover | Thêm random jitter vào mỗi backoff interval để spread out retries         |
+| Không có fallback khi circuit open      | User nhận 500 Internal Error thay vì degraded experience                                  | Implement fallback: cached response, default value, hoặc partial response |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy câu hỏi về: "Service B đang fail, làm sao ngăn cascade failure? Hệ thống resilient thế nào?"
+- → Nhớ đến: Circuit Breaker states, Retry with backoff + jitter, Bulkhead isolation, Fallback, Timeout propagation
+- → Mở đầu trả lời: _"Tôi sẽ áp dụng multiple layers of resilience: Circuit Breaker để fail fast khi Service B down, Retry với exponential backoff + jitter khi có transient errors, Bulkhead để isolate failures..."_
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Distributed Systems](./03-distributed-systems.md) — failure modes trong distributed systems
+- ➡️ Để hiểu tiếp: [Resilience Patterns](./07-resilience-patterns.md) — Circuit Breaker, Retry, Bulkhead deep dive với implementation
 
 ---
 
 ### Concept 7: Observability & Operations
 
-**🧠 Memory Hook:** Three Pillars = "3 giác quan của bác sĩ" — Logs (bệnh nhân kể triệu chứng), Metrics (đo nhiệt độ/huyết áp), Traces (chụp X-ray theo dõi request qua từng organ/service).
+> 🧠 **Memory Hook:** Three Pillars = "3 giác quan của bác sĩ" — Logs (bệnh nhân kể triệu chứng), Metrics (đo nhiệt độ/huyết áp), Traces (chụp X-ray theo dõi request qua từng organ/service).
 
-**❓ Why exists / Tại sao tồn tại:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: Distributed systems = request goes through 10+ services → impossible to debug without tracing
-- Level 2: Three pillars complement each other: Metrics detect anomalies → Traces pinpoint which service → Logs show exact error. Without all 3, debugging distributed systems is guesswork.
-- Level 3: SLI/SLO/SLA create feedback loop: define acceptable performance → measure → alert when budget burning → prioritize reliability work. Service Mesh (Istio/Linkerd) adds observability at infrastructure layer without code changes.
+Distributed systems = một request đi qua 10+ services → impossible to debug mà không có tracing
+→ **Why?** Ba trụ cột bổ sung lẫn nhau: Metrics phát hiện anomalies → Traces xác định service nào bị lỗi → Logs hiển thị exact error. Thiếu 1 trong 3, debugging distributed systems là guesswork.
+→ **Why?** SLI/SLO/SLA tạo feedback loop: define acceptable performance → measure → alert khi budget burning → prioritize reliability work. Service Mesh (Istio/Linkerd) thêm observability ở infrastructure layer mà không cần code changes.
 
-**⚠️ Common Mistakes:**
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-- Only logging, no structured metrics or tracing → "log searching" instead of observability
-- 100% SLO target (impossible — even Google targets 99.99%)
-- Not propagating trace context across async boundaries (Kafka, RabbitMQ)
+Hãy tưởng tượng bác sĩ khám bệnh nhân bị đau bụng. Logs giống bệnh nhân tường thuật: "Tôi ăn hải sản tối qua, sau đó đau bụng lúc 11 giờ đêm, đau quặn ở vùng bụng dưới bên phải." Metrics giống kết quả đo lường: nhiệt độ 38.5°C, huyết áp 130/90, bạch cầu 12.000. Distributed Tracing giống chụp CT scan — bác sĩ theo dõi từng "organ" (service) mà cơn đau đi qua, xem chính xác điểm nào bị tắc nghẽn và mất bao lâu. Thiếu 1 trong 3, bác sĩ rất khó chẩn đoán — và trong microservices, "bệnh nhân" của bạn là một request đi qua API Gateway → Order Svc → Payment Svc → Inventory Svc.
 
-**🎯 Interview Pattern:** "How do you debug a slow request in microservices?" → distributed tracing (trace ID) → identify bottleneck service → check metrics (latency p99) → read logs for that service + time range
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
 
-**🔗 Knowledge Chain:** Logs → Metrics → Traces → Correlation (trace ID) → SLI/SLO/SLA → Error Budget → Service Mesh → 12-Factor App
+Ba trụ cột hoạt động cùng nhau qua correlation ID (trace ID) để có full observability:
+
+1. **Metrics**: Prometheus scrape metrics từ services → Grafana visualize → Alert khi threshold breach
+2. **Logs**: Services write structured JSON logs → Collector (Fluentd/Vector) → Elasticsearch/Loki → Kibana/Grafana
+3. **Traces**: OpenTelemetry instrument code → Jaeger/Tempo store spans → Visualize request journey
+
+```
+Request Flow & Observability Correlation:
+
+Client ──► API GW ──► Order Svc ──► Payment Svc ──► Inventory Svc
+  │           │            │               │                │
+  │     trace_id:abc123    │               │                │
+  │           │            │               │                │
+  ▼           ▼            ▼               ▼                ▼
+[Metrics]  latency=250ms  cpu=40%    latency=80ms       latency=40ms
+[Logs]     "req start"  "order OK"  "charge $50"      "stock -1"
+[Traces]   span:0-250ms span:10-200ms span:50-130ms   span:140-180ms
+
+Trace Waterfall (Jaeger view):
+API GW       [═══════════════════════════ 250ms ══════════════]
+  Order Svc    [══════════════════ 200ms ═══════════]
+    Payment Svc   [════════ 80ms ════]
+      Bank API        [══ 50ms ══]
+    Inventory Svc              [════ 40ms ════]
+
+Alert Pipeline:
+Prometheus ──► AlertManager ──► PagerDuty/Slack
+  (SLO breach: p99 latency > 500ms → fire alert)
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **Async trace propagation**: Khi request đi qua Kafka message → trace context phải được nhúng vào message headers để trace không bị "đứt"
+- **Cardinality explosion**: Nếu dùng user_id làm Prometheus label → hàng triệu label → OOM. Labels phải có low cardinality (status_code, service_name, method)
+- **Log volume cost**: Structured logging với DEBUG level ở production → log volume khổng lồ → storage cost cao. Production nên dùng INFO+, bật DEBUG chỉ khi troubleshoot
+- **100% SLO là sai**: Ngay cả Google target 99.99% (52 phút downtime/năm). 100% SLO loại bỏ error budget → không thể deploy, không thể experiment
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                            | Tại sao sai                                                                       | Đúng là                                                                          |
+| -------------------------------------------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Chỉ có logging, không có metrics hoặc tracing      | "Log searching" thay vì observability — tìm kim trong đống cỏ khô khi có incident | Setup cả 3 trụ cột: metrics cho alerting, traces cho root cause, logs cho detail |
+| SLO target 100% availability                       | Loại bỏ error budget → freeze deployments mãi mãi, không thể improve              | Target 99.9% hoặc 99.99% với error budget rõ ràng                                |
+| Không propagate trace context qua async boundaries | Trace bị đứt tại Kafka/RabbitMQ → không thể trace end-to-end request journey      | Nhúng trace context vào message headers khi publish async events                 |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy câu hỏi về: "Debug slow request trong microservices? Monitor hệ thống thế nào?"
+- → Nhớ đến: Distributed tracing (trace ID qua services), metrics (p99 latency), logs (error detail), SLO/error budget
+- → Mở đầu trả lời: _"Tôi bắt đầu với distributed tracing — tìm trace ID của request chậm, xem waterfall diagram để identify bottleneck service, sau đó check metrics và logs của service đó..."_
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Distributed Systems](./03-distributed-systems.md) — hiểu distributed system failures trước khi monitor chúng
+- ➡️ Để hiểu tiếp: [Auth & Security](./04-auth-security.md) — Service Mesh cung cấp cả observability lẫn mTLS security
 
 ---
 
@@ -1598,24 +1958,24 @@ Khi thiết kế microservices, trả lời các câu hỏi sau:
 
 ## Self-Check / Tự Kiểm Tra — Retrieval Practice
 
-> ⏱️ Che cột "Key Points" rồi tự trả lời, sau đó mở ra kiểm tra.
+> ⏱️ Che cột "Câu hỏi" rồi tự trả lời, sau đó mở ra kiểm tra.
 
-| #   | Question                                     | Key Points                                                                                                                              |
-| --- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Khi nào KHÔNG nên dùng microservices?        | Team nhỏ (<10), chưa hiểu domain, pre-product-market-fit, không có infra (tracing, CI/CD)                                               |
-| 2   | Strangler Fig Pattern hoạt động thế nào?     | Wrap legacy with API facade → route traffic gradually → remove legacy when 100% migrated                                                |
-| 3   | Saga Pattern: Choreography vs Orchestration? | Choreography = events between services (scalable, hard to debug); Orchestration = central coordinator (easier to understand, SPOF risk) |
-| 4   | Tại sao 2PC không phù hợp microservices?     | Blocking protocol — coordinator failure blocks all participants, high latency, violates service autonomy                                |
-| 5   | Circuit Breaker 3 states?                    | Closed (normal) → threshold failures → Open (reject all) → timeout → Half-Open (test request) → success → Closed                        |
-| 6   | Three Pillars of Observability?              | Logs (what happened), Metrics (how much), Traces (where in the system) — correlated by trace ID                                         |
-| 7   | Distributed monolith là gì?                  | Services deployed independently but coupled via shared DB, sync calls, or shared libraries → tệ hơn monolith                            |
+| #   | Loại           | Câu hỏi                                                                                                                              |
+| --- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | 🔍 Retrieval   | Khi nào KHÔNG nên dùng microservices? Liệt kê 3 dấu hiệu team chưa sẵn sàng.                                                         |
+| 2   | 🎨 Visual      | Vẽ sơ đồ Saga choreography cho order flow: Order → Payment → Inventory → Shipping, kể cả compensation path khi Inventory fail.       |
+| 3   | 🛠️ Application | Service Payment đang bị chậm (p99 = 3s). Describe từng bước bạn debug — dùng tool gì, nhìn vào đâu?                                  |
+| 4   | 🐛 Debug       | Team vừa migrate sang microservices nhưng thấy "phải deploy Order Svc và Payment Svc cùng lúc mỗi lần release". Lỗi gì? Fix thế nào? |
+| 5   | 🎓 Teach       | Giải thích Transactional Outbox Pattern cho một junior developer mới biết microservices — tại sao cần, hoạt động thế nào.            |
+
+💬 **Feynman Prompt:** Giải thích cho một người bạn không biết lập trình: Tại sao khi đặt hàng trên Shopee, đôi khi bạn thấy "đơn hàng đã xác nhận" nhưng tiền chưa bị trừ ngay — sau đó mới thấy thông báo trừ tiền? Đó là vì hệ thống microservices hoạt động thế nào?
 
 ### 📅 Spaced Repetition Schedule
 
 | Round | Timing        | Focus                                          |
 | ----- | ------------- | ---------------------------------------------- |
 | 1     | Day 1 (today) | Đọc toàn bộ, highlight Memory Hooks            |
-| 2     | Day 3         | Self-Check without looking — đạt ≥5/7          |
+| 2     | Day 3         | Self-Check without looking — đạt ≥4/5          |
 | 3     | Day 7         | Cold Call simulation — trả lời trong 30s       |
 | 4     | Day 14        | Q&A 🔴 only — Saga, CQRS, Event Sourcing deep  |
 | 5     | Day 30        | Mock interview — design microservice migration |

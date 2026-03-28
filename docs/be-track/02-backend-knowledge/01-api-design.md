@@ -89,157 +89,598 @@ File này cover toàn bộ API Design theory cần cho phỏng vấn Backend —
 
 ### Concept 1: REST API Design
 
-**🧠 Memory Hook:** REST = **R**esource **E**verywhere, **S**tateless **T**ransfer — mỗi URL là một resource, mỗi request tự chứa đủ context.
+> 🧠 **Memory Hook:** REST = **R**esource **E**verywhere, **S**tateless **T**ransfer — mỗi URL là một resource, mỗi request tự chứa đủ context.
 
-**❓ Why exists / Tại sao tồn tại:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: Cần standard way để client-server communicate qua HTTP
-- Level 2: Web cần stateless protocol để scale horizontally — server không lưu session = bất kỳ instance nào xử lý được
-- Level 3: Roy Fielding's 2000 dissertation formalized HTTP best practices thành architectural constraints — từ chaos of RPC-style APIs thành uniform interface
+Cần standard way để client-server communicate qua HTTP — trước REST, mỗi API là ad-hoc RPC với convention riêng.
+→ **Why?** Web cần stateless protocol để scale horizontally — server không lưu session = bất kỳ instance nào xử lý được.
+→ **Why?** Roy Fielding's 2000 dissertation formalized HTTP best practices thành architectural constraints — từ chaos of RPC-style APIs thành uniform interface, enabling the web to scale to billions of users.
 
-**⚠️ Common Mistakes:**
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-- Dùng verbs trong URL (`/getUser/123` thay vì `GET /users/123`)
-- Trả 200 OK cho tất cả responses kể cả errors
-- Không implement pagination → API trả 100K records
-- Confuse REST với "just using HTTP + JSON" — miss HATEOAS, caching constraints
+Tưởng tượng thư viện công cộng. Mỗi cuốn sách có mã số (URL). Bạn có thể mượn sách (GET), thêm sách mới (POST), thay toàn bộ nội dung sách (PUT), hoặc xóa sách (DELETE). Thư viện không nhớ bạn là ai giữa các lần ghé thăm — mỗi lần bạn phải mang thẻ thư viện (stateless). Và bạn có thể photocopy sách về nhà đọc thay vì mượn lại mỗi lần (caching).
 
-**🎯 Interview Pattern:** "Thiết kế REST API cho X" → luôn bắt đầu với resource identification → URI naming → HTTP methods → status codes → pagination → versioning → caching headers
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
 
-**🔗 Knowledge Chain:** HTTP Methods → Status Codes → URI Design → Richardson Maturity → HATEOAS → Versioning → Pagination → Caching
+REST hoạt động qua HTTP protocol với 6 constraints:
+
+```
+Client                                    Server
+  │                                         │
+  ├── GET /users/42 ──────────────────────►│
+  │   Headers: Accept: application/json     │
+  │   Auth: Bearer <JWT>                    │
+  │                                         ├── Route to handler
+  │                                         ├── Query database
+  │                                         ├── Serialize to JSON
+  │◄── 200 OK ────────────────────────────┤
+  │   Content-Type: application/json        │
+  │   Cache-Control: max-age=60             │
+  │   ETag: "abc123"                        │
+  │   Body: {"id":42,"name":"Alice"}        │
+  │                                         │
+  ├── GET /users/42 ──────────────────────►│
+  │   If-None-Match: "abc123"               │
+  │◄── 304 Not Modified ─────────────────┤  ← Cache hit!
+```
+
+| Constraint        | Mechanism                                | Benefit                    |
+| ----------------- | ---------------------------------------- | -------------------------- |
+| Client-Server     | HTTP request-response                    | Independent evolution      |
+| Stateless         | Token/JWT in each request                | Horizontal scaling         |
+| Cacheable         | Cache-Control, ETag, Last-Modified       | Reduced server load        |
+| Uniform Interface | Resources + HTTP verbs + representations | Decoupled, predictable     |
+| Layered System    | Proxy, LB, CDN transparent to client     | Infrastructure flexibility |
+| Code-on-Demand    | Server sends JS to client (optional)     | Extended client capability |
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- Hầu hết API tự gọi "REST" chỉ đạt Level 2 Richardson Maturity — HATEOAS gần như không ai implement
+- Stateless constraint buộc dùng JWT/token → JWT không revoke được trực tiếp → cần refresh token strategy
+- Over-fetching (trả quá nhiều data) và under-fetching (cần nhiều requests) là nhược điểm lớn nhất → GraphQL ra đời vì lý do này
+- Caching headers (ETag, Cache-Control) bị bỏ qua ở hầu hết API → miss performance gains lớn
+- PATCH semantics không standardized — JSON Merge Patch vs JSON Patch có behavior khác nhau
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                      | Tại sao sai                                                        | Đúng là                                                |
+| -------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------ |
+| Dùng verbs trong URL (`/getUser/123`)        | REST dùng HTTP methods cho actions, URL chỉ cho resources          | `GET /users/123` — method = action, URI = resource     |
+| Trả 200 OK cho tất cả responses kể cả errors | Client không biết request fail, phải parse body để check           | Dùng đúng status codes: 400, 404, 422, 500             |
+| Không implement pagination                   | API trả 100K records → timeout, OOM, bandwidth waste               | Luôn paginate list endpoints, default limit 20-50      |
+| Confuse REST với "just HTTP + JSON"          | REST là architectural style với 6 constraints, không chỉ là format | REST bao gồm statelessness, caching, uniform interface |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy câu hỏi về: "thiết kế REST API", "API design", "endpoint design"
+- → Nhớ đến: REST 6 constraints + Richardson Maturity Model
+- → Mở đầu trả lời: _"REST API design bắt đầu với resource identification — tôi xác định resources trước, map HTTP methods vào CRUD, rồi xử lý cross-cutting concerns: pagination, versioning, caching headers, error format."_
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Networking Theory](../../shared/01-cs-fundamentals/networking-theory.md) — HTTP protocol fundamentals
+- ➡️ Để hiểu tiếp: [API Gateway & BFF](#concept-5-api-gateway--bff) — aggregation layer trên REST APIs
 
 ---
 
 ### Concept 2: Idempotency
 
-**🧠 Memory Hook:** Idempotent = "Bấm nút thang máy 10 lần, kết quả vẫn như bấm 1 lần" — f(f(x)) = f(x).
+> 🧠 **Memory Hook:** Idempotent = "Bấm nút thang máy 10 lần, kết quả vẫn như bấm 1 lần" — f(f(x)) = f(x).
 
-**❓ Why exists / Tại sao tồn tại:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: Network có thể timeout → client retry → server nhận duplicate request
-- Level 2: Distributed systems có partial failures — không biết request đã thành công hay chưa → cần safe retry
-- Level 3: Exactly-once delivery là impossible trong distributed systems (FLP impossibility) → idempotency là workaround: at-least-once delivery + idempotent operations = safe
+Network có thể timeout → client retry → server nhận duplicate request → cần guarantee rằng retry không gây side effects.
+→ **Why?** Distributed systems có partial failures — không biết request đã thành công hay chưa → cần safe retry mechanism.
+→ **Why?** Exactly-once delivery là impossible trong distributed systems (FLP impossibility) → idempotency là workaround: at-least-once delivery + idempotent operations = effectively exactly-once.
 
-**⚠️ Common Mistakes:**
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-- Assume POST luôn non-idempotent (có thể implement idempotency key)
-- Không phân biệt idempotent vs safe (GET = safe + idempotent; PUT = idempotent nhưng not safe)
-- Idempotency key không expire → database bloat
+Tưởng tượng bạn gửi thư qua bưu điện. Thư bị mất giữa đường, bạn gửi lại. Nếu thư là "đặt địa chỉ mới = 123 Nguyễn Huệ" (PUT) — gửi 2 lần vẫn same kết quả. Nhưng nếu thư là "thêm 100k vào tài khoản" (POST) — gửi 2 lần = thêm 200k! Idempotency key giống như số tracking — bưu điện thấy cùng tracking number → chỉ deliver 1 lần.
 
-**🎯 Interview Pattern:** "How do you handle duplicate payments?" → Idempotency key → store in Redis/DB with TTL → check before processing → return cached result if duplicate
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
 
-**🔗 Knowledge Chain:** Network Failure → Retry → Duplicate → Idempotency Key → At-least-once + Idempotent = Exactly-once Effect
+```
+┌──────────────────────────────────────────────────────────┐
+│              HTTP Method Idempotency Matrix               │
+├──────────┬────────────┬─────────────┬────────────────────┤
+│ Method   │ Safe?      │ Idempotent? │ Why                │
+├──────────┼────────────┼─────────────┼────────────────────┤
+│ GET      │ ✅ Yes     │ ✅ Yes      │ Read-only          │
+│ HEAD     │ ✅ Yes     │ ✅ Yes      │ Read-only          │
+│ OPTIONS  │ ✅ Yes     │ ✅ Yes      │ Read-only          │
+│ PUT      │ ❌ No      │ ✅ Yes      │ Full replace       │
+│ DELETE   │ ❌ No      │ ✅ Yes      │ Already deleted=OK │
+│ POST     │ ❌ No      │ ❌ No       │ Creates new each   │
+│ PATCH    │ ❌ No      │ ❌ No*      │ Can increment      │
+└──────────┴────────────┴─────────────┴────────────────────┘
+
+Idempotency Key Pattern (biến POST thành idempotent):
+
+Client                    Server                     Redis
+  │                         │                          │
+  ├─ POST + Key:uuid-1 ──►│                          │
+  │                         ├─ SETNX uuid-1 ────────►│
+  │                         │◄─ OK (new) ─────────────┤
+  │                         ├─ Process payment         │
+  │                         ├─ SET uuid-1=response ──►│
+  │◄─ 201 Created ────────┤                          │
+  │                         │                          │
+  │  (timeout, retry)       │                          │
+  │                         │                          │
+  ├─ POST + Key:uuid-1 ──►│                          │
+  │                         ├─ SETNX uuid-1 ────────►│
+  │                         │◄─ EXISTS ────────────────┤
+  │                         ├─ GET uuid-1 ────────────►│
+  │                         │◄─ cached response ───────┤
+  │◄─ 201 Created (cached)─┤  ← Không xử lý lại!    │
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- PATCH không idempotent vì `{"op": "increment", "path": "/views", "value": 1}` — gọi 2 lần tăng 2
+- Idempotency key cần TTL (24-48h) — không expire → Redis/DB bloat
+- Race condition: 2 requests cùng key đến đồng thời → cần SETNX atomic hoặc DB unique constraint
+- Request fingerprint: nếu client gửi cùng key nhưng body khác → phải reject (422) vì semantic conflict
+- DELETE idempotent nhưng response có thể khác: lần 1 → 200, lần 2 → 404 — tuy nhiên final state giống nhau
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                            | Tại sao sai                                                               | Đúng là                                                       |
+| ---------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Assume POST luôn non-idempotent    | Có thể implement idempotency key để biến POST thành idempotent            | POST + idempotency key = safe retry (Stripe, Square đều dùng) |
+| Không phân biệt idempotent vs safe | GET = safe + idempotent; PUT = idempotent nhưng not safe (thay đổi state) | Safe = không thay đổi state; Idempotent = N lần = 1 lần       |
+| Idempotency key không expire       | Database/Redis bloat vô hạn, key collision risk tăng                      | Set TTL 24-48h, cleanup expired keys                          |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy câu hỏi về: "duplicate payments", "retry safety", "exactly-once"
+- → Nhớ đến: Idempotency key pattern
+- → Mở đầu trả lời: _"Trong distributed systems, exactly-once delivery là impossible — nhưng at-least-once delivery + idempotent processing cho ta effectively exactly-once. Tôi implement bằng idempotency key: client gửi UUID, server check Redis trước khi process."_
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [REST API Design](#concept-1-rest-api-design) — HTTP methods và safety/idempotency semantics
+- ➡️ Để hiểu tiếp: [Distributed Systems](./03-distributed-systems.md) — at-least-once, exactly-once delivery guarantees
 
 ---
 
 ### Concept 3: gRPC & Protocol Buffers
 
-**🧠 Memory Hook:** gRPC = "Google's Remote Procedure Call trên HTTP/2" — binary protobuf thay JSON, streaming thay request-response, codegen thay manual parsing.
+> 🧠 **Memory Hook:** gRPC = "Google's Remote Procedure Call trên HTTP/2" — binary protobuf thay JSON, streaming thay request-response, codegen thay manual parsing.
 
-**❓ Why exists / Tại sao tồn tại:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: REST + JSON quá chậm cho internal microservice communication (serialization overhead, text-based)
-- Level 2: HTTP/2 multiplexing eliminates head-of-line blocking → multiple streams trên 1 TCP connection → gRPC leverage HTTP/2 natively
-- Level 3: Google cần framework thống nhất cho 10B+ internal RPCs/second → Stubby (internal) → gRPC (open-source) — strong typing via proto schema prevents integration bugs at compile time
+REST + JSON quá chậm cho internal microservice communication — text-based serialization, no multiplexing, no streaming.
+→ **Why?** HTTP/2 multiplexing eliminates head-of-line blocking → multiple streams trên 1 TCP connection → gRPC leverage HTTP/2 natively.
+→ **Why?** Google cần framework thống nhất cho 10B+ internal RPCs/second → Stubby (internal) → gRPC (open-source). Strong typing via proto schema prevents integration bugs at compile time, saving enormous debugging cost at scale.
 
-**⚠️ Common Mistakes:**
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-- Dùng gRPC cho public-facing APIs (browsers không support native gRPC → cần gRPC-Web/Envoy proxy)
-- Breaking proto schema changes (đổi field number, thay type)
-- Không set deadlines → request chờ vô hạn → cascade timeout
+REST + JSON giống gửi thư viết tay — dễ đọc, ai cũng hiểu, nhưng chậm và tốn giấy. gRPC + Protobuf giống gửi mã Morse — người thường không đọc được (binary), nhưng nhanh gấp nhiều lần, và cả hai bên đều có codebook (proto file) để encode/decode chính xác. Thêm nữa, Morse có thể gửi nhiều message song song trên cùng dây (HTTP/2 multiplexing).
 
-**🎯 Interview Pattern:** "gRPC vs REST" → luôn discuss: binary vs text, HTTP/2 vs HTTP/1.1, streaming patterns (4 types), schema evolution, khi nào dùng gì
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
 
-**🔗 Knowledge Chain:** HTTP/2 → Protobuf Schema → Code Generation → 4 Streaming Patterns → Interceptors → Deadline Propagation → Error Model
+```
+gRPC Architecture Stack:
+
+┌─────────────────────────────────────────────┐
+│         Client Application Code              │
+├─────────────────────────────────────────────┤
+│     Generated Client Stub (from .proto)      │
+├─────────────────────────────────────────────┤
+│     gRPC Framework (interceptors, etc.)      │
+├─────────────────────────────────────────────┤
+│     HTTP/2 Transport (multiplexing)          │
+├─────────────────────────────────────────────┤
+│     TLS / TCP                                │
+└─────────────────────────────────────────────┘
+         ║ Binary Protobuf frames ║
+┌─────────────────────────────────────────────┐
+│     TLS / TCP                                │
+├─────────────────────────────────────────────┤
+│     HTTP/2 Transport                         │
+├─────────────────────────────────────────────┤
+│     gRPC Framework (interceptors)            │
+├─────────────────────────────────────────────┤
+│     Generated Server Stub (from .proto)      │
+├─────────────────────────────────────────────┤
+│         Server Application Code              │
+└─────────────────────────────────────────────┘
+
+4 Communication Patterns:
+┌─────────────┬──────────────────────────────────┐
+│ Unary       │ 1 req → 1 resp (CRUD)            │
+│ Server-stream│ 1 req → N resp (feed, logs)      │
+│ Client-stream│ N req → 1 resp (upload, batch)   │
+│ Bidi-stream │ N req ↔ M resp (chat, collab)    │
+└─────────────┴──────────────────────────────────┘
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- Browsers không support native gRPC → cần gRPC-Web proxy (Envoy) → thêm complexity cho web clients
+- Breaking proto schema changes: đổi field number hoặc type → toàn bộ clients break. Rule: NEVER change field numbers
+- Không set deadlines → request chờ vô hạn → cascade timeout across services
+- Binary protocol khó debug — không thể dùng curl, cần grpcurl hoặc BloomRPC
+- Load balancing phức tạp hơn REST: HTTP/2 long-lived connections → L4 LB không hiệu quả → cần L7 gRPC-aware LB
+- Protobuf encoding: field number < 16 dùng 1 byte, ≥16 dùng 2 bytes → plan field numbers carefully
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                  | Tại sao sai                                                   | Đúng là                                                       |
+| ---------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------- |
+| Dùng gRPC cho public-facing APIs         | Browsers không support native gRPC, tooling hạn chế           | gRPC cho internal service-to-service; REST/GraphQL cho public |
+| Breaking proto schema (đổi field number) | Field number là wire format ID — đổi = silent data corruption | Chỉ thêm field mới, reserve deleted field numbers             |
+| Không set deadlines cho RPC calls        | Request chờ vô hạn → resource leak → cascade failure          | Luôn set deadline, propagate qua service chain                |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy câu hỏi về: "gRPC vs REST", "microservice communication", "protocol buffers"
+- → Nhớ đến: binary vs text, HTTP/2 benefits, 4 streaming patterns, schema evolution
+- → Mở đầu trả lời: _"gRPC là Google's RPC framework trên HTTP/2 với Protocol Buffers — binary serialization nhanh 3-10x so với JSON, HTTP/2 multiplexing eliminates head-of-line blocking, và proto schema cho strong typing + code generation đa ngôn ngữ."_
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Networking Theory](../../shared/01-cs-fundamentals/networking-theory.md) — HTTP/2, TCP, TLS
+- ➡️ Để hiểu tiếp: [gRPC & Protobuf Deep](./09-grpc-protobuf.md) — implementation patterns, interceptors, deadline propagation
 
 ---
 
 ### Concept 4: GraphQL
 
-**🧠 Memory Hook:** GraphQL = "SQL for APIs" — client viết query chính xác data cần, server trả đúng shape đó, không thừa không thiếu.
+> 🧠 **Memory Hook:** GraphQL = "SQL for APIs" — client viết query chính xác data cần, server trả đúng shape đó, không thừa không thiếu.
 
-**❓ Why exists / Tại sao tồn tại:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: Mobile apps cần flexible data fetching — REST over-fetches (too much data) hoặc under-fetches (multiple round trips)
-- Level 2: Facebook 2012 — News Feed cần khác nhau trên iOS/Android/Web → 1 REST endpoint per screen không scale → GraphQL cho phép mỗi client tự define data shape
-- Level 3: Graph-based data model (social network) naturally maps to graph queries — single endpoint, type system, introspection → self-documenting API
+Mobile apps cần flexible data fetching — REST over-fetches (too much data) hoặc under-fetches (multiple round trips).
+→ **Why?** Facebook 2012 — News Feed cần khác nhau trên iOS/Android/Web → 1 REST endpoint per screen không scale → GraphQL cho phép mỗi client tự define data shape.
+→ **Why?** Graph-based data model (social network) naturally maps to graph queries — single endpoint, type system, introspection → self-documenting API. Fundamental constraint: diverse clients with different data needs nhưng cùng backend.
 
-**⚠️ Common Mistakes:**
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-- Không implement DataLoader → N+1 query problem explodes database
-- Allow arbitrarily deep nested queries → DoS via query complexity
-- Cache invalidation khó hơn REST vì mỗi query unique
+REST giống đặt cơm phần — nhà hàng quyết định món gì trong phần, bạn không chọn được (over-fetching). Muốn thêm món phải gọi phần khác (under-fetching). GraphQL giống buffet — bạn tự chọn chính xác món cần, không thừa không thiếu, chỉ 1 lần lấy. Nhưng buffet cần quản lý phức tạp hơn — ai lấy quá nhiều thì phải giới hạn (query complexity limiting).
 
-**🎯 Interview Pattern:** "GraphQL N+1 problem" → explain: each resolver fetches independently → 1 query + N child queries → DataLoader batches into 1 → discuss query depth limiting
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
 
-**🔗 Knowledge Chain:** Schema Definition → Resolvers → N+1 Problem → DataLoader → Query Complexity → Caching Strategy → Subscriptions
+```
+GraphQL Request/Response Flow:
+
+Client                      GraphQL Server              Database
+  │                              │                         │
+  ├─ POST /graphql ────────────►│                         │
+  │  query {                     │                         │
+  │    user(id: 42) {           ├─ Parse query             │
+  │      name                    ├─ Validate vs schema     │
+  │      posts(first: 3) {      ├─ Execute resolvers       │
+  │        title                 │                         │
+  │      }                       ├─ user resolver ────────►│
+  │    }                         │◄─ {id:42, name, ...} ──┤
+  │  }                           │                         │
+  │                              ├─ posts resolver ───────►│
+  │                              │◄─ [{title}, ...] ──────┤
+  │                              │                         │
+  │◄─ 200 OK ─────────────────┤                         │
+  │  { "data": {                │                         │
+  │      "user": {              │                         │
+  │        "name": "Alice",     │                         │
+  │        "posts": [           │                         │
+  │          {"title": "..."}   │                         │
+  │        ]                    │                         │
+  │  }}}                        │                         │
+
+N+1 Problem vs DataLoader Fix:
+Without DataLoader: 1 + N queries    With DataLoader: 1 + 1 queries
+user(42)      → SELECT * users      user(42)      → SELECT * users
+  posts(42)   → SELECT * posts...   [batch all]   → SELECT * posts
+  posts(43)   → SELECT * posts...                    WHERE user_id
+  posts(44)   → SELECT * posts...                    IN (42,43,44)
+  ...100 more queries                → 2 queries total!
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- N+1 query problem: mỗi resolver fetch independently → cần DataLoader batching (Facebook pattern)
+- Query complexity attack: deeply nested query → DoS → cần depth limiting + cost analysis
+- Caching khó hơn REST: mỗi query unique (POST-based) → HTTP caching không áp dụng → cần application-level cache (persisted queries, CDN với query hashing)
+- File upload phức tạp — GraphQL spec không support multipart → cần workaround (separate REST endpoint hoặc multipart spec extension)
+- Schema stitching/federation khi có nhiều teams: Apollo Federation vs schema merging
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                        | Tại sao sai                                                      | Đúng là                                                                     |
+| ------------------------------ | ---------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Không implement DataLoader     | N+1 query problem → database overwhelm (100 users = 101 queries) | DataLoader batch + cache per-request: 100 users = 2 queries                 |
+| Allow arbitrarily deep queries | DoS attack: `{a{b{c{d{e{...}}}}}}` → exponential DB load         | Set max depth (e.g., 10), query cost analysis, timeout                      |
+| Dùng GraphQL cho mọi thứ       | Overhead không justify cho simple CRUD, server-to-server         | GraphQL cho complex client needs; REST cho simple/public; gRPC cho internal |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy câu hỏi về: "GraphQL N+1", "over-fetching", "flexible API"
+- → Nhớ đến: DataLoader pattern, query complexity, caching challenges
+- → Mở đầu trả lời: _"GraphQL giải quyết over/under-fetching bằng cách cho client specify exact data shape — nhưng đi kèm trade-offs: N+1 query problem cần DataLoader, caching phức tạp hơn REST vì POST-based, và cần query complexity limiting để chống abuse."_
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [REST API Design](#concept-1-rest-api-design) — hiểu REST limitations mà GraphQL giải quyết
+- ➡️ Để hiểu tiếp: [API Gateway & BFF](#concept-5-api-gateway--bff) — GraphQL thường deploy ở BFF layer
 
 ---
 
 ### Concept 5: API Gateway & BFF
 
-**🧠 Memory Hook:** API Gateway = "Bảo vệ building" — tất cả traffic vào 1 cửa, guard kiểm tra badge (auth), đếm người (rate limit), hướng dẫn đường (routing).
+> 🧠 **Memory Hook:** API Gateway = "bảo vệ chung cư" — mọi khách phải qua reception (auth, rate limit, logging) trước khi lên phòng (service). BFF = "trợ lý riêng cho từng loại khách" — mỗi client type có gateway riêng.
 
-**❓ Why exists / Tại sao tồn tại:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: Microservices có nhiều services → client không muốn biết từng service address → cần single entry point
-- Level 2: Cross-cutting concerns (auth, rate limiting, logging) duplicate ở mỗi service → centralize tại gateway
-- Level 3: BFF pattern emerged khi mobile vs web cần different API shapes → 1 gateway per client type → each BFF tailored for specific frontend needs
+Microservices có nhiều services → client không muốn biết từng service address → cần single entry point.
+→ **Why?** Cross-cutting concerns (auth, rate limiting, logging) duplicate ở mỗi service → centralize vào gateway.
+→ **Why?** BFF pattern (Sam Newman 2015) — mobile cần ít data + different format vs web → 1 general-purpose gateway không optimize cho ai → BFF = specialized gateway per client type, mỗi frontend có backend riêng.
 
-**⚠️ Common Mistakes:**
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-- Gateway trở thành bottleneck / single point of failure → cần HA + horizontal scaling
-- Đặt business logic trong gateway (chỉ nên cross-cutting concerns)
-- Confuse API Gateway với Service Mesh (gateway = north-south traffic, mesh = east-west)
+Tưởng tượng chung cư có 50 công ty. Không có lễ tân → khách phải biết từng công ty ở tầng nào, tự kiểm tra ID. API Gateway = lễ tân chung — kiểm tra ID (auth), ghi sổ (logging), giới hạn lượt vào (rate limiting), chỉ đường đúng tầng (routing). BFF = mỗi tầng có thêm lễ tân riêng — tầng mobile, tầng web, tầng partner — mỗi lễ tân biết khách của mình cần gì.
 
-**🎯 Interview Pattern:** "API Gateway vs Service Mesh?" → Gateway handles external→internal (north-south); Mesh handles service→service (east-west with sidecars)
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
 
-**🔗 Knowledge Chain:** Single Entry Point → Routing → Auth/Rate Limit → BFF Pattern → Service Mesh Comparison → Kong vs Envoy
+```
+API Gateway Architecture:
+
+                   Internet
+                      │
+                ┌─────┴──────┐
+                │ API Gateway │  ← Single entry point
+                │  - Auth     │
+                │  - Rate Limit│
+                │  - Logging  │
+                │  - Transform│
+                └──┬──┬──┬───┘
+                   │  │  │
+          ┌────────┘  │  └────────┐
+          ▼           ▼           ▼
+    ┌──────────┐ ┌──────────┐ ┌──────────┐
+    │ User Svc │ │ Order Svc│ │Product Svc│
+    └──────────┘ └──────────┘ └──────────┘
+
+BFF Pattern (Backend for Frontend):
+
+  Mobile App      Web App       Partner API
+      │              │              │
+      ▼              ▼              ▼
+ ┌─────────┐   ┌─────────┐   ┌─────────┐
+ │Mobile BFF│   │ Web BFF │   │Partner  │
+ │-Compact  │   │-Rich    │   │BFF      │
+ │-Offline  │   │-Full    │   │-Stable  │
+ │ support  │   │ features│   │-Versioned│
+ └────┬─────┘   └────┬────┘   └────┬────┘
+      │              │              │
+      └──────────┬───┴──────────────┘
+                 ▼
+          Internal Services
+```
+
+| Pattern  | Use Case                            | Trade-off                 |
+| -------- | ----------------------------------- | ------------------------- |
+| Gateway  | Single entry, cross-cutting         | Single point of failure   |
+| BFF      | Client-specific optimization        | N BFFs to maintain        |
+| Sidecar  | Per-service concerns (service mesh) | Resource overhead per pod |
+| API Mesh | Decentralized gateway (e.g., Istio) | Operational complexity    |
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- API Gateway là single point of failure → cần high availability (active-active, multi-region)
+- Gateway trở thành "God service" nếu chứa business logic → giữ gateway thin: chỉ cross-cutting concerns
+- Confuse API Gateway với Service Mesh — gateway = north-south traffic (external→internal), mesh = east-west traffic (service→service with sidecars)
+- Request aggregation: fan-out to N services + merge → latency = slowest service → cần timeout + partial response strategy
+- BFF per team vs BFF per client type: quá nhiều BFFs → maintenance burden
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                   | Tại sao sai                                                              | Đúng là                                                           |
+| ----------------------------------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| Đặt business logic trong API Gateway      | Gateway thành monolith mới, coupling tất cả services                     | Gateway chỉ cho cross-cutting: auth, rate limit, logging, routing |
+| Một BFF cho tất cả client types           | Mobile cần compact data, web cần rich data — 1 BFF không optimize cho ai | BFF per client type: mobile BFF, web BFF, partner BFF             |
+| Không implement circuit breaker ở gateway | 1 downstream service chết → gateway block → toàn bộ API chết             | Circuit breaker per upstream service, fallback responses          |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy câu hỏi về: "API gateway", "BFF pattern", "API Gateway vs Service Mesh"
+- → Nhớ đến: cross-cutting concerns centralization + client-specific optimization
+- → Mở đầu trả lời: _"API Gateway centralize cross-cutting concerns — auth, rate limiting, logging. Gateway = north-south traffic; Service Mesh = east-west. Khi clients có data needs khác nhau, tôi thêm BFF layer per client type."_
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Microservices](./02-microservices.md) — service decomposition patterns
+- ➡️ Để hiểu tiếp: [Rate Limiting](#concept-6-rate-limiting--throttling) — rate limiting thường implement tại gateway layer
 
 ---
 
-### Concept 6: Rate Limiting
+### Concept 6: Rate Limiting & Throttling
 
-**🧠 Memory Hook:** Rate Limiting = "Vòi nước có van" — mở hết thì tràn (DDoS), van điều chỉnh flow đúng capacity.
+> 🧠 **Memory Hook:** Rate Limiting = "vòi nước có van" — mở hết thì tràn (DDoS), van điều chỉnh flow đúng capacity. Token bucket = xô chứa xu — mỗi request lấy 1 xu, hết xu thì chờ.
 
-**❓ Why exists / Tại sao tồn tại:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: Protect servers from overload — too many requests = service crash
-- Level 2: Fairness — prevent single client from monopolizing resources → ensure SLA for all clients
-- Level 3: Cascading failure prevention — without rate limiting, upstream spike → downstream overwhelm → cascade → total system failure. Rate limiting is circuit breaker's cousin at the API layer.
+Protect servers from overload — too many requests = service crash.
+→ **Why?** Fairness — prevent single client from monopolizing resources → ensure SLA for all clients.
+→ **Why?** Cascading failure prevention — without rate limiting, upstream spike → downstream overwhelm → cascade → total system failure. Rate limiting là circuit breaker's cousin ở API layer — defense at the perimeter.
 
-**⚠️ Common Mistakes:**
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-- Token bucket vs sliding window log confusion (bucket = memory efficient, sliding log = precise but memory heavy)
-- Distributed rate limiting: local counters → inconsistent across instances → cần Redis centralized hoặc approximate algorithms
-- Không return `Retry-After` header → client retry storm
+Tưởng tượng cửa hàng có quầy thu ngân duy nhất, xử lý 10 khách/phút. Nếu 100 khách ùa vào cùng lúc → hỗn loạn → shop đóng cửa (crash). Rate limiter giống bảo vệ ở cửa — chỉ cho 10 khách/phút vào, còn lại xếp hàng chờ (throttle) hoặc quay về sau (429). Token bucket = bảo vệ có hộp xu, mỗi khách vào lấy 1 xu, hết xu thì chờ xu mới được thêm vào (refill rate).
 
-**🎯 Interview Pattern:** "Design rate limiter" → clarify scope (per-user, per-IP, global) → choose algorithm (token bucket) → discuss distributed implementation (Redis + Lua atomic) → handle edge cases (burst, Retry-After)
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
 
-**🔗 Knowledge Chain:** Token Bucket → Sliding Window → Fixed Window → Leaky Bucket → Distributed Challenges → Redis Lua Atomic → 429 + Retry-After
+```
+4 Rate Limiting Algorithms So Sánh:
+
+┌─────────────────┬────────────────────┬────────────────────┬──────────────┐
+│ Algorithm       │ How it works       │ Pros               │ Cons         │
+├─────────────────┼────────────────────┼────────────────────┼──────────────┤
+│ Token Bucket    │ Bucket fills at    │ Allow bursts,      │ Memory per   │
+│                 │ constant rate,     │ smooth rate,       │ bucket       │
+│                 │ 1 token per req    │ simple to impl.    │              │
+├─────────────────┼────────────────────┼────────────────────┼──────────────┤
+│ Leaky Bucket    │ Queue fills,       │ Constant output    │ No burst     │
+│                 │ drains at fixed    │ rate, predictable  │ handling     │
+│                 │ rate               │                    │              │
+├─────────────────┼────────────────────┼────────────────────┼──────────────┤
+│ Fixed Window    │ Counter per time   │ Memory efficient   │ Boundary     │
+│                 │ window (e.g., /min)│ (1 counter)        │ spike (2x)   │
+├─────────────────┼────────────────────┼────────────────────┼──────────────┤
+│ Sliding Window  │ Weighted sum of    │ No boundary spike  │ More memory  │
+│ Log/Counter     │ current + previous │ Accurate           │ & compute    │
+└─────────────────┴────────────────────┴────────────────────┴──────────────┘
+
+Token Bucket in Action (limit: 5 tokens, refill: 1/sec):
+
+Time  Bucket  Request    Result
+t=0   [5]     req1       ✅ Allow (4 left)
+t=0   [4]     req2       ✅ Allow (3 left)
+t=0   [3]     req3-5     ✅ Allow (0 left)
+t=0   [0]     req6       ❌ 429 Too Many Requests
+t=1   [1]     req7       ✅ Allow (0 left, refilled 1)
+t=5   [5]     burst!     ✅ All 5 allowed (full refill)
+
+Distributed Rate Limiting (Redis + Lua):
+
+Service A ──┐                    ┌── Service A
+Service B ──┼── Redis Cluster ──┤── Service B
+Service C ──┘   (Lua atomic)    └── Service C
+
+-- Redis Lua script (atomic increment + check):
+local current = redis.call('INCR', KEYS[1])
+if current == 1 then
+    redis.call('EXPIRE', KEYS[1], ARGV[1])
+end
+if current > tonumber(ARGV[2]) then
+    return 0  -- Rate limited
+end
+return 1  -- Allowed
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- Fixed window boundary spike: 100 req limit/min, 100 requests ở t=0:59, 100 requests ở t=1:00 → 200 requests in 2 seconds!
+- Distributed rate limiting: local counters per instance → inconsistent → cần Redis centralized hoặc approximate algorithms
+- Không return `Retry-After` header → client retry storm → amplifies the problem
+- Rate limiting by IP problematic khi shared NAT (e.g., corporate network: 1000 users, 1 IP)
+- Graceful degradation: shed low-priority traffic first, keep health checks and admin endpoints exempt
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                       | Tại sao sai                                               | Đúng là                                                  |
+| --------------------------------------------- | --------------------------------------------------------- | -------------------------------------------------------- |
+| Dùng fixed window cho production              | Boundary spike: 2x traffic at window edge (59s + 1s)      | Token bucket hoặc sliding window counter cho smooth rate |
+| Local counter mỗi instance (không centralize) | 5 instances × 100 req limit = 500 actual requests allowed | Redis centralized counter với Lua atomic operations      |
+| Không trả Retry-After header                  | Client retry immediately → retry storm → amplify problem  | `429 + Retry-After: 30` → client backoff gracefully      |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy câu hỏi về: "design rate limiter", "throttling", "DDoS protection"
+- → Nhớ đến: token bucket algorithm + distributed Redis implementation
+- → Mở đầu trả lời: _"Tôi clarify scope trước: rate limit per-user, per-IP, hay global? Sau đó chọn token bucket (cho phép burst), implement distributed via Redis + Lua atomic script, return 429 + Retry-After header."_
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [API Gateway & BFF](#concept-5-api-gateway--bff) — rate limiting deploy ở đâu
+- ➡️ Để hiểu tiếp: [Resilience Patterns](./07-resilience-patterns.md) — circuit breaker, bulkhead cùng family with rate limiting
 
 ---
 
 ### Concept 7: API Security & Contract
 
-**🧠 Memory Hook:** API Security = "3 câu hỏi cửa khẩu" — Bạn là ai? (Authentication) → Bạn được phép làm gì? (Authorization) → Bạn có đang thay đổi hợp đồng không? (Contract/Versioning)
+> 🧠 **Memory Hook:** API Security = "3 câu hỏi cửa khẩu" — Bạn là ai? (AuthN) → Bạn được phép làm gì? (AuthZ) → Bạn có đang thay đổi hợp đồng không? (Contract/Versioning).
 
-**❓ Why exists / Tại sao tồn tại:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: APIs exposed to internet → cần verify identity + permissions
-- Level 2: JWT stateless auth enables horizontal scaling (no session store) → OAuth2 standardizes delegation → mTLS for service-to-service zero-trust
-- Level 3: API contract (OpenAPI/Swagger) makes API-first development possible — design before implement, auto-generate clients, contract testing catches breaking changes before deploy
+APIs exposed to internet → cần verify identity + permissions.
+→ **Why?** JWT stateless auth enables horizontal scaling (no session store) → OAuth2 standardizes delegation → mTLS for service-to-service zero-trust.
+→ **Why?** API contract (OpenAPI/Swagger) makes API-first development possible — design before implement, auto-generate clients, contract testing catches breaking changes before deploy. Without contracts, API changes break consumers silently.
 
-**⚠️ Common Mistakes:**
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-- Store JWT in localStorage (XSS vulnerable) → nên dùng httpOnly cookie
-- Không validate JWT signature → anyone can forge tokens
-- Breaking backward compatibility without versioning
-- CORS misconfiguration: `Access-Control-Allow-Origin: *` for authenticated APIs
+Tưởng tượng tòa nhà an ninh. Bước 1 — bảo vệ kiểm tra CMND (Authentication): bạn là ai? Bước 2 — check danh sách phòng được vào (Authorization): bạn được phép làm gì? Bước 3 — check hợp đồng thuê (API Contract): bạn thuê phòng nào, điều kiện gì? Nếu tòa nhà đổi layout (breaking change) mà không thông báo → người thuê không tìm được phòng (client break).
 
-**🎯 Interview Pattern:** "How do you secure a public API?" → layers: HTTPS → Authentication (JWT/OAuth2) → Authorization (RBAC/ABAC) → Rate limiting → Input validation → CORS → API key rotation
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
 
-**🔗 Knowledge Chain:** API Key → JWT → OAuth2 → mTLS → RBAC/ABAC → CORS → Input Validation → Contract Testing → Backward Compatibility
+```
+Authentication → Authorization → Request Processing
+
+                 JWT Token Lifecycle:
+Client                    Auth Server              API Server
+  │                           │                       │
+  ├─ POST /auth/login ──────►│                       │
+  │  {user, pass}             ├─ Verify credentials   │
+  │                           ├─ Create JWT:          │
+  │                           │  Header.Payload.Sig   │
+  │◄─ {access_token, ───────┤                       │
+  │    refresh_token}         │                       │
+  │                           │                       │
+  ├─ GET /api/data ─────────────────────────────────►│
+  │  Authorization: Bearer <JWT>                      │
+  │                           │    ├─ Verify signature │
+  │                           │    ├─ Check expiry     │
+  │                           │    ├─ Extract claims   │
+  │                           │    ├─ Check permissions│
+  │◄─ 200 OK ───────────────────────────────────────┤
+
+API Security Layers (Defense in Depth):
+┌────────────────────────────────────────────┐
+│ 1. HTTPS/TLS         (transport)           │
+├────────────────────────────────────────────┤
+│ 2. Authentication     (JWT/OAuth2/mTLS)    │
+├────────────────────────────────────────────┤
+│ 3. Authorization      (RBAC/ABAC)          │
+├────────────────────────────────────────────┤
+│ 4. Rate Limiting      (per client/IP)      │
+├────────────────────────────────────────────┤
+│ 5. Input Validation   (schema + sanitize)  │
+├────────────────────────────────────────────┤
+│ 6. CORS               (origin whitelist)   │
+├────────────────────────────────────────────┤
+│ 7. API Versioning     (URL/header/content) │
+└────────────────────────────────────────────┘
+
+Versioning Strategies:
+┌──────────────┬──────────────────────┬──────────────┐
+│ Strategy     │ Example              │ Trade-off    │
+├──────────────┼──────────────────────┼──────────────┤
+│ URL path     │ /api/v1/users        │ Simple, ugly │
+│ Header       │ X-API-Version: 2     │ Clean, hidden│
+│ Content-Type │ Accept: app/vnd.v2   │ RESTful, hard│
+│ Query param  │ /users?version=2     │ Easy, messy  │
+└──────────────┴──────────────────────┴──────────────┘
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- JWT stored in localStorage → XSS attack có thể steal token → dùng httpOnly cookie (but then CSRF risk → need CSRF token)
+- JWT stateless = cannot revoke immediately → short expiry (15min) + refresh token rotation
+- OAuth2 complexity: 4 grant types, mỗi cái cho use case khác nhau — chọn sai → security vulnerability
+- CORS `Access-Control-Allow-Origin: *` cho authenticated APIs = security hole → whitelist specific origins
+- Contract testing (Pact) vs API gateway validation: both needed for different failure modes
+- Backward compatibility: additive changes OK (new fields), removal/rename = breaking → version or deprecate
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                        | Tại sao sai                                                    | Đúng là                                                            |
+| ---------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Store JWT trong localStorage                   | XSS attack steal token — any injected JS can read localStorage | httpOnly secure cookie (immune to XSS) + CSRF protection           |
+| Không validate JWT signature                   | Anyone can modify payload (đổi role: "admin")                  | Always verify signature with server's secret/public key            |
+| `Access-Control-Allow-Origin: *` cho auth APIs | Any website can make authenticated requests                    | Whitelist specific origins, never wildcard for auth APIs           |
+| Breaking API without versioning                | Client code breaks silently, trust destroyed                   | Additive changes only; breaking = new version + deprecation period |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy câu hỏi về: "secure a public API", "JWT vs session", "API versioning"
+- → Nhớ đến: defense-in-depth layers + JWT lifecycle + versioning strategies
+- → Mở đầu trả lời: _"API security là defense in depth: HTTPS → Authentication (JWT/OAuth2) → Authorization (RBAC) → Rate limiting → Input validation → CORS → Versioning. Mỗi layer catches failures mà layer khác miss."_
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Auth & Security](./04-auth-security.md) — deep dive vào JWT, OAuth2, mTLS
+- ➡️ Để hiểu tiếp: [Security Shared](../../shared/04-security/) — OWASP, threat modeling, encryption
 
 ---
 
@@ -1673,24 +2114,24 @@ Vietnamese explanation: Distributed rate limiting: Redis is the standard (Lua sc
 
 ## Self-Check / Tự Kiểm Tra — Retrieval Practice
 
-> ⏱️ Che cột "Key Points" rồi tự trả lời, sau đó mở ra kiểm tra.
+> ⏱️ Che cột "Câu hỏi" rồi tự trả lời, sau đó mở ra kiểm tra.
 
-| #   | Question                                     | Key Points                                                                                               |
-| --- | -------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| 1   | 6 constraints của REST là gì?                | Client-Server, Stateless, Cacheable, Uniform Interface, Layered, Code-on-Demand (optional)               |
-| 2   | Idempotency key pattern hoạt động thế nào?   | Client gửi UUID → server check Redis → nếu exists return cached → nếu mới thì process + store result     |
-| 3   | gRPC dùng gì thay JSON và tại sao nhanh hơn? | Protocol Buffers (binary) — smaller payload, no parsing overhead, schema-enforced, HTTP/2 multiplexing   |
-| 4   | N+1 problem trong GraphQL là gì?             | Mỗi resolver fetch riêng → 1 query parent + N query children → DataLoader batch thành 1 query            |
-| 5   | API Gateway vs Service Mesh?                 | Gateway = north-south (external→internal), Mesh = east-west (service→service via sidecars)               |
-| 6   | Token Bucket vs Sliding Window?              | Bucket = counter + refill rate (allows burst), Sliding Window = timestamp log (precise but memory heavy) |
-| 7   | JWT stored ở đâu và tại sao?                 | httpOnly cookie (not localStorage) — prevents XSS access to token                                        |
+| #   | Loại           | Câu hỏi                                                                                                                                                   |
+| --- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 🔍 Retrieval   | Kể tên 6 REST constraints và giải thích tại sao statelessness quan trọng nhất cho scaling?                                                                |
+| 2   | 🎨 Visual      | Vẽ diagram Token Bucket algorithm: bucket size=5, refill=1/sec — 8 requests đến t=0, chuyện gì xảy ra?                                                    |
+| 3   | 🛠️ Application | Implement idempotency key pattern: client gửi POST /payments + Idempotency-Key header — viết pseudocode cho server xử lý (check Redis → process → store). |
+| 4   | 🐛 Debug       | GraphQL API trả response chậm 10x khi query nested 3 level — root cause là gì? Giải pháp?                                                                 |
+| 5   | 🎓 Teach       | Giải thích cho junior: API Gateway và BFF khác nhau thế nào? Khi nào cần BFF thay vì chỉ dùng gateway?                                                    |
+
+💬 **Feynman Prompt:** Giải thích cho một frontend developer tại sao gRPC không thể dùng trực tiếp từ browser, và khi nào nên chọn gRPC vs REST vs GraphQL. Dùng ví dụ thực tế: e-commerce app có mobile + web + internal microservices.
 
 ### 📅 Spaced Repetition Schedule
 
 | Round | Timing        | Focus                                    |
 | ----- | ------------- | ---------------------------------------- |
 | 1     | Day 1 (today) | Đọc toàn bộ, highlight Memory Hooks      |
-| 2     | Day 3         | Self-Check without looking — đạt ≥5/7    |
+| 2     | Day 3         | Self-Check without looking — đạt ≥4/5    |
 | 3     | Day 7         | Cold Call simulation — trả lời trong 30s |
 | 4     | Day 14        | Q&A 🔴 only — giải thích deep trade-offs |
 | 5     | Day 30        | Mock interview — API design full topic   |

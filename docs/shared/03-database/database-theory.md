@@ -79,17 +79,17 @@ E-commerce app của bạn bắt đầu chậm. User phàn nàn checkout mất 8
 
 ### Concept 1: Relational Model & SQL
 
-🪝 **Memory Hook:** Bảng = spreadsheet có rules — mỗi row unique (PK), columns có types, relationships qua Foreign Keys
+> 🧠 **Memory Hook:** Bảng = spreadsheet có rules — mỗi row unique (PK), columns có types, relationships qua Foreign Keys
 
-**Why exists / Tại sao tồn tại:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: Need structured way to store and query interconnected data
-- Level 2: Mathematical foundation (relational algebra) enables query optimization
-- Level 3: Decades of battle-tested reliability — banks, hospitals, governments all use relational DBs
+Data cần được lưu trữ có cấu trúc để query hiệu quả → **Why?** Nếu không có structure, mỗi query phải scan toàn bộ data lộn xộn → **Why?** Mathematical foundation (relational algebra) cho phép optimizer tự động tìm execution plan tốt nhất → **Why?** Hàng thập kỷ battle-tested reliability: banks, hospitals, governments đều tin dùng relational DBs vì correctness guarantees.
 
-**Layer 1 (Simple Analogy):** Library card catalog — each card (row) has fixed fields (title, author, ISBN). You can cross-reference cards (JOIN) to find "all books by author X in section Y."
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-**Layer 2 (Technical Mechanics):**
+Library card catalog — each card (row) has fixed fields (title, author, ISBN). Bạn có thể cross-reference cards (JOIN) để tìm "all books by author X in section Y." Không có catalog → phải đi từng kệ sách (full scan).
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
 
 ```
 Relational Algebra Operations → SQL Mapping:
@@ -105,7 +105,15 @@ Foreign Key: references PK of another table (referential integrity)
 Composite Key: multiple columns together form PK
 ```
 
-**Layer 3 (Edge Cases):** NULL semantics — NULL ≠ NULL (three-valued logic), NULL in WHERE: use IS NULL not = NULL. Composite key ordering matters for index usage.
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- NULL ≠ NULL — SQL dùng three-valued logic (TRUE/FALSE/UNKNOWN), nên `WHERE col = NULL` không bao giờ match
+- `IS NULL` / `IS NOT NULL` là cách duy nhất kiểm tra NULL đúng cách
+- Composite key thứ tự quan trọng: index (a, b) không serve `WHERE b = ?` (skips leftmost prefix)
+- Outer JOIN vs Inner JOIN: INNER loại bỏ non-matching rows, OUTER giữ lại với NULL fill
+- Natural JOIN nguy hiểm vì join trên ALL common column names — prefer explicit `ON` clause
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
 | Sai lầm                    | Tại sao sai                             | Đúng là                       |
 | -------------------------- | --------------------------------------- | ----------------------------- |
@@ -115,20 +123,24 @@ Composite Key: multiple columns together form PK
 
 🎯 **Interview Pattern:** "Explain relational model" → Tables with rows/columns, PKs for identity, FKs for relationships, relational algebra enables optimization
 
-🔗 **Knowledge Chain:** Set theory → Relational algebra → SQL → Query optimizer → Execution plan
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Data Structures — B-Tree, Hash Table](../01-cs-fundamentals/data-structures-theory.md)
+- ➡️ Để hiểu tiếp: [Normalization Theory](#concept-2-normalization-1nfbcnf) | [Indexing & Optimization](./02-indexing-and-optimization.md)
 
 ### Concept 2: Normalization (1NF→BCNF)
 
-🪝 **Memory Hook:** Normalization = dọn dẹp phòng — mỗi thứ đúng chỗ, không duplicate, thay đổi một chỗ đủ
+> 🧠 **Memory Hook:** Normalization = dọn dẹp phòng — mỗi thứ đúng chỗ, không duplicate, thay đổi một chỗ đủ
 
-**Why exists / Tại sao tồn tại:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: Duplicate data → update anomalies (change in one place, miss in another)
-- Level 2: Mathematical decomposition ensures lossless join and dependency preservation
+Duplicate data gây ra update anomalies — thay đổi một chỗ, miss ở chỗ khác → **Why?** Inconsistent data corrupt business logic và báo cáo → **Why?** Mathematical decomposition dựa trên functional dependencies đảm bảo lossless join và dependency preservation — đây là lý thuyết nền tảng để design schema đúng từ đầu.
 
-**Layer 1:** Filing cabinet — 1NF: one item per drawer. 2NF: group by full label (not partial). 3NF: no indirect references (A→B→C means C should be with B, not A).
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-**Layer 2:**
+Filing cabinet — 1NF: mỗi ngăn chứa một item. 2NF: gom nhóm đúng nhãn đầy đủ (không partial). 3NF: không có reference gián tiếp (A→B→C nghĩa là C nên ở cùng B, không phải A). Như vậy mỗi file chỉ cần cập nhật ở một chỗ.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
 
 ```
 Normal Forms progression:
@@ -142,10 +154,18 @@ Normal Forms progression:
      employee → department → department_location → violation (location depends on dept, not employee)
 
 BCNF: Every determinant is a candidate key
-     Stricter than 3NF — handles edge cases with overlapping candidate keys
+      Stricter than 3NF — handles edge cases with overlapping candidate keys
 ```
 
-**Layer 3:** Denormalization is intentional 3NF violation for read performance — common in OLAP/data warehouses. Star schema = deliberate denormalization.
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- Denormalization là intentional 3NF violation cho read performance — phổ biến trong OLAP/data warehouses
+- Star schema (data warehouse): fact table + dimension tables = deliberate denormalization cho analytics query
+- Over-normalization có thể làm chậm hơn nếu query cần nhiều JOINs phức tạp (10+ table joins)
+- BCNF đôi khi không thể preserve tất cả functional dependencies — phải trade-off với 3NF
+- Normalization analysis bắt đầu từ functional dependencies, không phải "viết bảng trước rồi tính"
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
 | Sai lầm                      | Tại sao sai                                       | Đúng là                                         |
 | ---------------------------- | ------------------------------------------------- | ----------------------------------------------- |
@@ -155,21 +175,24 @@ BCNF: Every determinant is a candidate key
 
 🎯 **Interview Pattern:** "2NF vs 3NF?" → 2NF eliminates partial dependencies (on part of composite PK), 3NF eliminates transitive dependencies (non-key→non-key)
 
-🔗 **Knowledge Chain:** Functional dependencies → Normal forms → Decomposition → Lossless join → Performance tradeoffs
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Relational Model & SQL](#concept-1-relational-model--sql) | [Data Structures](../01-cs-fundamentals/data-structures-theory.md)
+- ➡️ Để hiểu tiếp: [Query Processing](#concept-5-query-processing--optimizer) | [Indexing](./02-indexing-and-optimization.md)
 
 ### Concept 3: ACID & Transactions
 
-🪝 **Memory Hook:** ACID = bốn lời hứa của database — "tất cả hoặc không" (A), "luôn hợp lệ" (C), "không ai thấy giữa chừng" (I), "đã xong là xong" (D)
+> 🧠 **Memory Hook:** ACID = bốn lời hứa của database — "tất cả hoặc không" (A), "luôn hợp lệ" (C), "không ai thấy giữa chừng" (I), "đã xong là xong" (D)
 
-**Why exists / Tại sao tồn tại:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: Without transactions, concurrent operations corrupt data (double charge, lost updates)
-- Level 2: WAL (Write-Ahead Log) enables durability — write log before data, replay on crash
-- Level 3: Isolation levels trade correctness for performance — choose per use case
+Concurrent operations cần đảm bảo correctness — không có transactions, double charge và lost updates xảy ra dễ dàng → **Why?** WAL (Write-Ahead Log) cho phép durability — ghi log trước data, replay khi crash → **Why?** Isolation levels cho phép trade-off giữa correctness và performance — không cần Serializable cho mọi use case, chọn đúng level tránh bottleneck không cần thiết.
 
-**Layer 1:** ATM withdrawal — you see balance (Isolation), withdraw $100: both debit account AND dispense cash happen, or neither (Atomicity). Balance never negative (Consistency). Once receipt printed, money is yours even if ATM crashes (Durability).
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-**Layer 2:**
+ATM withdrawal — bạn thấy số dư (Isolation), rút $100: cả debit account lẫn dispense cash xảy ra cùng nhau, hoặc cả hai đều không (Atomicity). Số dư không bao giờ âm (Consistency). Khi receipt in ra, tiền là của bạn dù ATM crash ngay sau đó (Durability).
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
 
 ```
 Transaction lifecycle:
@@ -190,7 +213,15 @@ Serializable       │    ✅      │      ✅        │   ✅    │
 *MySQL InnoDB: gap locks prevent phantoms at RR level
 ```
 
-**Layer 3:** MVCC (Multi-Version Concurrency Control) — readers don't block writers by reading old versions. PostgreSQL keeps old row versions in heap, MySQL InnoDB uses undo log.
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- MVCC (Multi-Version Concurrency Control) — readers không block writers bằng cách đọc old versions
+- PostgreSQL lưu old row versions trong heap (dead tuples), cần `VACUUM` để reclaim space định kỳ
+- MySQL InnoDB lưu old versions trong undo log segment, purge thread tự cleanup
+- Savepoints cho phép partial rollback trong một transaction lớn: `SAVEPOINT sp1; ... ROLLBACK TO sp1`
+- Distributed transactions (2PC): coordinator + participants — blocking failure mode khi coordinator crash là điểm yếu kinh điển
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
 | Sai lầm                         | Tại sao sai                                                   | Đúng là                                                      |
 | ------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------ |
@@ -200,21 +231,24 @@ Serializable       │    ✅      │      ✅        │   ✅    │
 
 🎯 **Interview Pattern:** "Explain ACID" → Bank transfer example: debit+credit atomic, balance valid, concurrent transfers isolated, committed = permanent
 
-🔗 **Knowledge Chain:** ACID → WAL → Isolation levels → MVCC → Deadlock detection → Distributed transactions (2PC)
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Relational Model & SQL](#concept-1-relational-model--sql) | [Data Structures](../01-cs-fundamentals/data-structures-theory.md)
+- ➡️ Để hiểu tiếp: [Concurrency Control](#concept-6-concurrency-control) | [Sharding & Transactions](./04-sharding-and-transactions.md)
 
 ### Concept 4: Indexing (B-Tree, Hash)
 
-🪝 **Memory Hook:** Index = mục lục sách — không có → đọc từng trang (O(n)), có → nhảy thẳng trang cần (O(log n))
+> 🧠 **Memory Hook:** Index = mục lục sách — không có → đọc từng trang (O(n)), có → nhảy thẳng trang cần (O(log n))
 
-**Why exists / Tại sao tồn tại:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: Full table scan on millions of rows is unacceptably slow
-- Level 2: B-Tree maintains sorted order → range queries efficient. Hash → O(1) point lookups
-- Level 3: Index selection is the #1 performance optimization in production
+Full table scan trên hàng triệu rows là unacceptably slow → **Why?** B-Tree duy trì sorted order cho phép range queries hiệu quả; Hash index cho O(1) point lookups → **Why?** Index selection là #1 performance optimization trong production — đúng index có thể giảm query từ 8 giây xuống 50ms mà không cần thay đổi một dòng code.
 
-**Layer 1:** Phone book — sorted by last name (clustered index). Separate index by phone number (non-clustered) points back to the main entry.
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-**Layer 2:**
+Phone book — sorted by last name (clustered index). Có thể có index riêng theo số điện thoại (non-clustered) trỏ về entry chính. Không có phone book → phải gọi hỏi từng người (full scan).
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
 
 ```
 B-Tree Index (most common):
@@ -234,7 +268,15 @@ Composite Index: CREATE INDEX idx ON orders(customer_id, created_at)
   ❌ WHERE created_at > '2024-01-01' (skips leftmost)
 ```
 
-**Layer 3:** Covering index — includes all columns needed by query → no table lookup. Index-only scan = fastest possible query.
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- Covering index bao gồm tất cả columns query cần → no heap lookup → index-only scan (fastest)
+- Index selectivity quan trọng: low-selectivity index (e.g., `gender = 'M'`) có thể bị optimizer bỏ qua
+- Functional index: `CREATE INDEX ON users(LOWER(email))` cho `WHERE LOWER(email) = ?`
+- Partial index: `WHERE is_active = true` giảm index size đáng kể cho large tables với nhiều inactive rows
+- Too many indexes = slow writes — mỗi INSERT/UPDATE/DELETE phải update ALL indexes trên bảng đó
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
 | Sai lầm                     | Tại sao sai                                               | Đúng là                                                      |
 | --------------------------- | --------------------------------------------------------- | ------------------------------------------------------------ |
@@ -244,20 +286,24 @@ Composite Index: CREATE INDEX idx ON orders(customer_id, created_at)
 
 🎯 **Interview Pattern:** "Clustered vs non-clustered?" → Clustered = data sorted by index (1/table), non-clustered = separate pointer structure (many/table)
 
-🔗 **Knowledge Chain:** B-Tree structure → Clustered/non-clustered → Composite index → Covering index → EXPLAIN plan → Query optimization
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Data Structures — B-Tree](../01-cs-fundamentals/data-structures-theory.md) | [Relational Model](#concept-1-relational-model--sql)
+- ➡️ Để hiểu tiếp: [Indexing & Optimization Deep Dive](./02-indexing-and-optimization.md) | [Query Processing](#concept-5-query-processing--optimizer)
 
 ### Concept 5: Query Processing & Optimizer
 
-🪝 **Memory Hook:** Query optimizer = GPS — nhiều đường đến đích, optimizer chọn đường nhanh nhất (cost-based)
+> 🧠 **Memory Hook:** Query optimizer = GPS — nhiều đường đến đích, optimizer chọn đường nhanh nhất (cost-based)
 
-**Why exists / Tại sao tồn tại:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: Same result can be computed many ways — optimizer finds cheapest execution plan
-- Level 2: Cost-based optimizer estimates row counts, I/O costs, CPU costs for each plan
+Cùng một result có thể được tính bằng nhiều cách khác nhau → **Why?** Cost-based optimizer ước tính row counts, I/O costs, CPU costs cho mỗi plan để chọn cái rẻ nhất → **Why?** Không có optimizer, developer phải manually tune mọi query — optimizer tự động làm điều này dựa trên statistics, giúp DB scale mà không cần DBA can thiệp từng query.
 
-**Layer 1:** Travel planner — fly direct ($500, 3h) vs drive + fly ($300, 8h) vs all-drive ($100, 20h). Optimizer picks based on "cost" (time, money tradeoffs).
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-**Layer 2:**
+Travel planner — bay thẳng ($500, 3h) vs lái xe + bay ($300, 8h) vs lái toàn bộ ($100, 20h). Optimizer chọn dựa trên "cost" (thời gian, tài nguyên). Nếu statistics sai (ví dụ không biết đường đang kẹt), optimizer chọn sai plan.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
 
 ```
 Query Processing Pipeline:
@@ -276,7 +322,15 @@ Index Scan using idx_customer on orders  (cost=0.42..8.44 rows=1 width=48)
   → Index lookup, cheap
 ```
 
-**Layer 3:** Stale statistics → optimizer chooses wrong plan. Run ANALYZE regularly. Query hints override optimizer (last resort).
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- Stale statistics → optimizer chọn sai plan → chạy `ANALYZE` (PG) / `UPDATE STATISTICS` (SQL Server) regularly
+- Query hints (`FORCE INDEX`, `USE INDEX`) là last resort — thường là symptom của statistics problem thực sự
+- Nested loop join tốt cho small inner table; hash join tốt khi cả hai relations lớn; sort-merge khi đã sorted
+- Subquery vs JOIN: optimizer thường tự rewrite subquery thành join — `EXPLAIN` cho thấy actual plan
+- N+1 query problem: ORM generate 1 query để fetch list + N queries cho related data → dùng JOIN/eager loading
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
 | Sai lầm                     | Tại sao sai                                   | Đúng là                                 |
 | --------------------------- | --------------------------------------------- | --------------------------------------- |
@@ -286,21 +340,24 @@ Index Scan using idx_customer on orders  (cost=0.42..8.44 rows=1 width=48)
 
 🎯 **Interview Pattern:** "How debug slow query?" → EXPLAIN ANALYZE → check Seq Scan vs Index Scan, row estimates vs actual, join order
 
-🔗 **Knowledge Chain:** SQL parsing → Logical plan → Physical plan → Cost estimation → Execution → EXPLAIN output
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Indexing — B-Tree & Hash](#concept-4-indexing-b-tree-hash) | [Relational Algebra](#concept-1-relational-model--sql)
+- ➡️ Để hiểu tiếp: [Indexing & Optimization](./02-indexing-and-optimization.md) | [Concurrency Control](#concept-6-concurrency-control)
 
 ### Concept 6: Concurrency Control
 
-🪝 **Memory Hook:** Concurrency control = đèn giao thông — không có → tai nạn (race condition), quá strict → kẹt xe (deadlock)
+> 🧠 **Memory Hook:** Concurrency control = đèn giao thông — không có → tai nạn (race condition), quá strict → kẹt xe (deadlock)
 
-**Why exists / Tại sao tồn tại:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: Multiple transactions reading/writing same data simultaneously → conflicts
-- Level 2: MVCC allows reads without blocking writes — key to PostgreSQL/InnoDB performance
-- Level 3: Deadlock detection + prevention strategies essential for production
+Nhiều transactions cùng đọc/ghi data → conflicts xảy ra → **Why?** MVCC cho phép reads không block writes — key to PostgreSQL/InnoDB high throughput → **Why?** Deadlock detection và prevention strategies là bắt buộc trong production — không xử lý deadlock thì application crash silently mà không retry.
 
-**Layer 1:** Hotel booking — two people try to book last room simultaneously. Without concurrency control, both succeed → overbooking. With it: one succeeds, other gets "room unavailable."
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-**Layer 2:**
+Hotel booking — hai người cùng book phòng cuối cùng. Không có concurrency control: cả hai thành công → overbooking. Có concurrency control: một người thành công, người kia nhận "phòng không còn trống." Pessimistic = chặn phòng ngay khi xem; Optimistic = confirm lúc thanh toán.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
 
 ```
 Concurrency strategies:
@@ -319,7 +376,15 @@ Deadlock: T1 locks A, waits B. T2 locks B, waits A. → cycle → DB kills one.
 Prevention: always lock in same order, keep transactions short
 ```
 
-**Layer 3:** Gap locks (MySQL RR) prevent phantom inserts in range. Advisory locks for application-level coordination. SELECT FOR UPDATE SKIP LOCKED for queue patterns.
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- Gap locks (MySQL Repeatable Read): lock range giữa rows để prevent phantom inserts trong range
+- Advisory locks (`pg_advisory_lock`): application-level locks không liên quan đến table rows
+- `SELECT FOR UPDATE SKIP LOCKED`: pattern cho job queue — skip locked rows thay vì wait → no blocking
+- Deadlock resolution: DB tự detect và kill một transaction — application MUST catch error và retry
+- Optimistic locking via version column: `UPDATE ... WHERE version = N AND id = ?` → affected rows = 0 means conflict
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
 | Sai lầm                            | Tại sao sai                                    | Đúng là                                               |
 | ---------------------------------- | ---------------------------------------------- | ----------------------------------------------------- |
@@ -329,21 +394,24 @@ Prevention: always lock in same order, keep transactions short
 
 🎯 **Interview Pattern:** "Optimistic vs pessimistic locking?" → Pessimistic: lock before read (FOR UPDATE). Optimistic: read freely, check version on write, retry on conflict.
 
-🔗 **Knowledge Chain:** Isolation levels → Locking strategies → MVCC → Deadlock → Distributed locking (Redis/etcd)
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [ACID & Transactions](#concept-3-acid--transactions) | [Isolation Levels](#concept-3-acid--transactions)
+- ➡️ Để hiểu tiếp: [Sharding & Transactions](./04-sharding-and-transactions.md) | [Distributed DB & NoSQL](#concept-7-distributed-db--nosql)
 
 ### Concept 7: Distributed DB & NoSQL
 
-🪝 **Memory Hook:** CAP theorem = tam giác bất khả thi — partition xảy ra chắc chắn → chọn C (correct) hoặc A (available)
+> 🧠 **Memory Hook:** CAP theorem = tam giác bất khả thi — partition xảy ra chắc chắn → chọn C (correct) hoặc A (available)
 
-**Why exists / Tại sao tồn tại:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: Single server can't handle all traffic → distribute data across machines
-- Level 2: CAP theorem: network partitions happen, so choose CP or AP per use case
-- Level 3: NoSQL trades ACID guarantees for specific performance/scaling advantages
+Single server không thể handle tất cả traffic khi scale → **Why?** CAP theorem: network partitions luôn xảy ra, buộc phải chọn CP hoặc AP cho từng use case → **Why?** NoSQL trade ACID guarantees để đổi lấy specific performance/scaling advantages — không phải "NoSQL tốt hơn SQL" mà là "right tool for right access pattern."
 
-**Layer 1:** Chain restaurant — one kitchen (single DB) vs many branches (distributed). Branches can serve more customers but keeping menus synchronized is hard (consistency vs availability).
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-**Layer 2:**
+Chain restaurant — một bếp trung tâm (single DB) vs nhiều chi nhánh (distributed). Chi nhánh phục vụ nhiều khách hơn nhưng đồng bộ menu khó hơn (consistency vs availability). Khi đường liên lạc bị cắt (partition): chi nhánh vẫn phục vụ (AP) hay đóng cửa chờ sync (CP)?
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
 
 ```
 CAP Theorem:
@@ -364,7 +432,15 @@ Column-Family (Cassandra): high write throughput, wide rows
 Graph (Neo4j): relationship-heavy queries
 ```
 
-**Layer 3:** PACELC extends CAP: even without Partition, trade Latency for Consistency. Most real systems are "tunable" — per-query consistency level (Cassandra: ONE, QUORUM, ALL).
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- PACELC extends CAP: kể cả không có Partition, còn có Latency vs Consistency trade-off trong normal operation
+- Cassandra tunable consistency: ONE (fastest, least safe), QUORUM (balanced), ALL (slowest, most safe)
+- Eventual consistency: "eventual" có thể là milliseconds hoặc seconds — depends on replication lag và network
+- Read-your-writes consistency: sau khi write, cùng user phải thấy update ngay → routing writes+reads to same replica
+- Sharding hot spots: range-based sharding tạo hot spots nếu data distribution không đều — hash sharding giải quyết
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
 | Sai lầm                     | Tại sao sai                                                 | Đúng là                                                       |
 | --------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------- |
@@ -374,7 +450,10 @@ Graph (Neo4j): relationship-heavy queries
 
 🎯 **Interview Pattern:** "SQL vs NoSQL?" → SQL: ACID, complex queries, relationships. NoSQL: flexible schema, horizontal scaling, specific access patterns. Start with SQL, add NoSQL for specific needs.
 
-🔗 **Knowledge Chain:** Single DB limits → Replication → Sharding → CAP → NoSQL categories → Polyglot persistence
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [ACID & Transactions](#concept-3-acid--transactions) | [Concurrency Control](#concept-6-concurrency-control)
+- ➡️ Để hiểu tiếp: [NoSQL & NewSQL](./03-nosql-and-newsql.md) | [Sharding & Transactions](./04-sharding-and-transactions.md)
 
 ---
 
@@ -1801,13 +1880,13 @@ Run EXPLAIN ANALYZE to confirm Seq Scan. Identify the WHERE/JOIN columns — lik
 
 > Đóng tài liệu lại và trả lời:
 
-| #   | Type           | Question                                                                | Key Points                                                                       |
-| --- | -------------- | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| 1   | 🔍 Retrieval   | Liệt kê 4 ACID properties và ví dụ cho mỗi cái                          | A=all-or-nothing, C=valid state, I=no intermediate visibility, D=survives crash  |
-| 2   | 🎨 Visual      | Vẽ B-Tree index lookup flow cho WHERE customer_id = 42                  | Root → internal nodes → leaf node → pointer to data row (O(log n))               |
-| 3   | 🛠️ Application | Design schema cho e-commerce: users, orders, products, order_items      | Normalize to 3NF, PKs, FKs, composite index on (customer_id, created_at)         |
-| 4   | 🐛 Debug       | Query dùng index nhưng vẫn chậm — 3 nguyên nhân có thể                  | Stale stats, low selectivity (index scan + many lookups), covering index missing |
-| 5   | 🎓 Teach       | Giải thích cho junior tại sao không nên dùng SELECT \* trong production | Fetches unnecessary data, prevents covering index, wastes I/O and network        |
+| #   | Loại           | Câu hỏi                                                                 |
+| --- | -------------- | ----------------------------------------------------------------------- |
+| 1   | 🔍 Retrieval   | Liệt kê 4 ACID properties và ví dụ cho mỗi cái                          |
+| 2   | 🎨 Visual      | Vẽ B-Tree index lookup flow cho WHERE customer_id = 42                  |
+| 3   | 🛠️ Application | Design schema cho e-commerce: users, orders, products, order_items      |
+| 4   | 🐛 Debug       | Query dùng index nhưng vẫn chậm — 3 nguyên nhân có thể                  |
+| 5   | 🎓 Teach       | Giải thích cho junior tại sao không nên dùng SELECT \* trong production |
 
 💬 **Feynman Prompt:** Giải thích database index cho manager không biết kỹ thuật. Tại sao thêm index làm SELECT nhanh hơn nhưng INSERT/UPDATE chậm hơn?
 

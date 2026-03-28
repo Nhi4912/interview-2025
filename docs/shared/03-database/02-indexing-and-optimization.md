@@ -62,17 +62,17 @@
 
 ### Concept 1: B+Tree & Index Structure
 
-🪝 **Memory Hook:** B+Tree = mục lục sách nhiều cấp — internal nodes chỉ đường, leaf nodes chứa dữ liệu + linked list cho range scan
+> 🧠 **Memory Hook:** B+Tree = mục lục sách nhiều cấp — internal nodes chỉ đường, leaf nodes chứa dữ liệu + linked list cho range scan
 
-**Why exists / Tại sao tồn tại:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: Full table scan is O(n) — need O(log n) lookup structure
-- Level 2: B+Tree's high fanout keeps tree height low (3-4 levels for millions of rows)
-- Level 3: Leaf linked list enables efficient range scans without tree traversal per row
+Full table scan đọc toàn bộ dữ liệu — O(n) — không chấp nhận được với hàng triệu rows → **Why?** cần cấu trúc tìm kiếm O(log n). B+Tree với fanout ~500 giữ chiều cao cây chỉ 3-4 levels cho hàng trăm triệu rows → **Why?** mỗi level là một disk I/O, ít levels = ít I/O = cực nhanh. Leaf nodes liên kết thành linked list → **Why?** range scan (`BETWEEN`, `>`, `<`) không cần quay lại tree — chỉ đi theo linked list, đạt O(log n + k) thay vì O(k × log n).
 
-**Layer 1 (Simple Analogy):** Library with floor directory (root) → section signs (internal) → shelf labels (leaf). Finding a book: floor→section→shelf = 3 steps regardless of library size.
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-**Layer 2 (Technical Mechanics):**
+Thư viện với bảng thư mục nhiều cấp: tầng (root) → khu vực (internal nodes) → kệ sách (leaf nodes). Tìm sách: tầng → khu → kệ = 3 bước, dù thư viện có 1 triệu cuốn. Range scan = khi tìm được kệ đầu tiên, chỉ cần đi dọc theo kệ — không phải quay về bảng thư mục mỗi lần.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
 
 ```
 B+Tree (height 3, fanout ~500):
@@ -86,7 +86,15 @@ Leaf node structure:
   linked list → range scan follows pointers
 ```
 
-**Layer 3 (Edge Cases):** B+Tree vs LSM-Tree — B+Tree optimized for reads (in-place update), LSM-Tree optimized for writes (append-only, compaction). Cassandra/RocksDB use LSM-Tree.
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **B+Tree vs LSM-Tree:** B+Tree tối ưu cho read (in-place update), LSM-Tree tối ưu cho write (append-only + compaction). Cassandra, RocksDB, LevelDB dùng LSM-Tree — chọn đúng engine theo workload.
+- **Page splits:** Khi leaf node đầy, split tạo 2 nodes mới → tăng tree height nhẹ và gây fragmentation. Monitor bloat với `pgstattuple`, REINDEX định kỳ.
+- **Clustered vs Non-clustered:** InnoDB (MySQL) clustered index theo primary key — data rows sắp xếp vật lý theo PK. PostgreSQL heap-organized — tất cả indexes là non-clustered, trỏ qua CTID.
+- **Fanout ảnh hưởng chiều cao:** Fanout thấp → tree cao hơn → nhiều disk I/O. Lý do DB dùng page 8KB–16KB: maximize fanout, minimize height.
+- **NULL trong index:** PostgreSQL index NULL values; `IS NULL` predicate thường không selective. Cân nhắc partial index `WHERE col IS NOT NULL` để loại NULLs khỏi index.
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
 | Sai lầm                              | Tại sao sai                                            | Đúng là                                                 |
 | ------------------------------------ | ------------------------------------------------------ | ------------------------------------------------------- |
@@ -96,20 +104,24 @@ Leaf node structure:
 
 🎯 **Interview Pattern:** "Why B+Tree not hash?" → B+Tree: range queries, ORDER BY, LIKE prefix. Hash: O(1) equality only.
 
-🔗 **Knowledge Chain:** Disk I/O cost → Tree structure → Fanout optimization → Leaf linked list → Range scan efficiency
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Complexity Analysis — O(log n) vs O(n)](../01-cs-fundamentals/complexity-analysis.md)
+- ➡️ Để hiểu tiếp: [Composite & Covering Index](#concept-2-composite--covering-index)
 
 ### Concept 2: Composite & Covering Index
 
-🪝 **Memory Hook:** ESR = Equality → Sort → Range — thứ tự vàng cho composite index design
+> 🧠 **Memory Hook:** ESR = Equality → Sort → Range — thứ tự vàng cho composite index design
 
-**Why exists / Tại sao tồn tại:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: Single-column index can't serve multi-column WHERE efficiently
-- Level 2: Covering index eliminates heap lookup — Index Only Scan = fastest
+Single-column index không đủ khi query cần WHERE nhiều cột + ORDER BY → **Why?** DB phải merge nhiều index scans hoặc dùng filesort, đều chậm. Composite index giải quyết: một index phục vụ nhiều conditions cùng lúc → **Why?** leftmost prefix rule cho phép một index match WHERE + ORDER BY + một phần SELECT. Covering index đi xa hơn: loại bỏ heap lookup hoàn toàn → **Why?** khi index chứa đủ tất cả columns cần thiết, DB chạy "Index Only Scan" — không cần đọc thêm table rows, nhanh nhất có thể.
 
-**Layer 1:** Phone book sorted by (LastName, FirstName) — find "Smith, John" fast. But find "all Johns" requires scanning everything (leftmost prefix rule).
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-**Layer 2:**
+Danh bạ điện thoại sắp xếp theo (Họ, Tên): tìm "Nguyễn Văn An" cực nhanh. Nhưng tìm "tất cả người tên An" phải duyệt toàn bộ — leftmost prefix rule: cột đầu tiên phải khớp để index có tác dụng.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
 
 ```
 Composite Index on (status, created_at, user_id):
@@ -124,7 +136,15 @@ Covering Index:
   → "Index Only Scan" — no heap fetch needed
 ```
 
-**Layer 3:** INCLUDE columns (PG 11+) are stored in leaf nodes only, not search keys — smaller index, still covers queries.
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **INCLUDE columns (PostgreSQL 11+):** Stored only in leaf nodes, không phải search key — index nhỏ hơn, vẫn cover queries. Không dùng được trong WHERE clause.
+- **Leftmost prefix breaks:** Index (a, b, c) không dùng được cho `WHERE b=1` hoặc `WHERE c=1` — chỉ hoạt động từ cột đầu tiên trở đi theo thứ tự.
+- **Quá nhiều cột trong composite:** Index lớn → write chậm hơn, storage nhiều hơn. Thực tế: max 3-4 cột, dựa trên top query patterns thực tế.
+- **Overlapping indexes:** Index (a, b) và (a, b, c) — cái đầu thường dư thừa. Audit định kỳ để drop/merge, giảm write amplification.
+- **Sort direction trong composite:** `INDEX ON t(status, created_at DESC)` — direction matters cho ORDER BY. Khớp direction giữa index và query để tránh backward scan penalty.
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
 | Sai lầm                       | Tại sao sai                              | Đúng là                                             |
 | ----------------------------- | ---------------------------------------- | --------------------------------------------------- |
@@ -134,20 +154,24 @@ Covering Index:
 
 🎯 **Interview Pattern:** "Design index for WHERE status='active' ORDER BY created_at" → Composite (status, created_at), ESR rule
 
-🔗 **Knowledge Chain:** Query patterns → ESR ordering → Leftmost prefix → Covering optimization → EXPLAIN verification
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [B+Tree & Index Structure](#concept-1-btree--index-structure)
+- ➡️ Để hiểu tiếp: [EXPLAIN & Query Plans](#concept-4-explain--query-plans)
 
 ### Concept 3: Specialized Indexes
 
-🪝 **Memory Hook:** B+Tree là dao đa năng — Hash/Bitmap/Full-text là dao chuyên dụng cho từng bài toán
+> 🧠 **Memory Hook:** B+Tree là dao đa năng — Hash/Bitmap/Full-text là dao chuyên dụng cho từng bài toán
 
-**Why exists / Tại sao tồn tại:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: B+Tree can't do everything — hash is faster for equality, full-text needs inverted index
-- Level 2: Bitmap enables fast multi-column AND/OR on low-cardinality columns (OLAP)
+B+Tree giỏi mọi thứ nhưng không tốt nhất cho tất cả → **Why?** equality lookup với B+Tree là O(log n), hash là O(1) — khi chỉ cần equality, hash nhanh hơn. Full-text search với B+Tree chỉ match prefix, không handle stemming/ranking → **Why?** cần inverted index (GIN/GiST) để tokenize và rank text. Bitmap index cho low-cardinality OLAP → **Why?** bitwise AND/OR trên hàng triệu rows cực nhanh khi cardinality thấp (gender, status 3-4 giá trị).
 
-**Layer 1:** Kitchen tools — B+Tree is a chef's knife (versatile). Hash index is a garlic press (one job, fast). Full-text index is a food processor (handles text specifically).
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-**Layer 2:**
+Dụng cụ nhà bếp: B+Tree là dao đầu bếp (làm được mọi thứ). Hash index là cái bào tỏi (chỉ một việc, cực nhanh). Full-text index là máy xay thịt (xử lý text phức tạp). Bitmap là cái lọc (AND/OR siêu nhanh cho dữ liệu thưa). Chọn đúng dụng cụ cho đúng bài toán.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
 
 ```
 Hash Index: hash(key) → bucket → O(1) lookup
@@ -164,7 +188,15 @@ Full-Text (GIN/GiST in PostgreSQL):
   Supports: stemming, ranking, boolean operators
 ```
 
-**Layer 3:** Partial index: `CREATE INDEX ON orders(user_id) WHERE status = 'pending'` — 10x smaller than full index, faster for specific workload.
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **Partial index:** `CREATE INDEX ON orders(user_id) WHERE status = 'pending'` — 10x nhỏ hơn full index, nhanh hơn cho workload cụ thể. Lý tưởng khi chỉ query một subset rows thường xuyên.
+- **Hash index và WAL recovery:** PostgreSQL hash indexes không WAL-logged trước PG10 — sau crash cần REINDEX. PG10+ đã fix nhưng hash vẫn hiếm được dùng production.
+- **Bitmap lock contention:** Bitmap index trong OLTP với UPDATE thường xuyên → row-level lock contention cao. Chỉ dùng cho OLAP / read-heavy workloads.
+- **GIN vs GiST:** GIN nhanh hơn cho lookup (exact token match), GiST nhanh hơn cho insert và hỗ trợ fuzzy/spatial search. Chọn GIN cho full-text, GiST cho geometric/range types.
+- **Partial index và query planner:** Planner chỉ dùng partial index khi WHERE clause của query khớp chính xác với WHERE clause của index — predicate phải viết giống hệt nhau.
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
 | Sai lầm                             | Tại sao sai                                 | Đúng là                                   |
 | ----------------------------------- | ------------------------------------------- | ----------------------------------------- |
@@ -174,20 +206,24 @@ Full-Text (GIN/GiST in PostgreSQL):
 
 🎯 **Interview Pattern:** "When use hash vs B+Tree?" → Hash: O(1) equality only. B+Tree: equality + range + sort + prefix.
 
-🔗 **Knowledge Chain:** Access pattern → Index type selection → Storage tradeoffs → Maintenance cost
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [B+Tree & Index Structure](#concept-1-btree--index-structure)
+- ➡️ Để hiểu tiếp: [EXPLAIN & Query Plans](#concept-4-explain--query-plans)
 
 ### Concept 4: EXPLAIN & Query Plans
 
-🪝 **Memory Hook:** EXPLAIN = X-ray cho query — thấy bên trong DB đang làm gì thật sự
+> 🧠 **Memory Hook:** EXPLAIN = X-ray cho query — thấy bên trong DB đang làm gì thật sự
 
-**Why exists / Tại sao tồn tại:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: Can't optimize what you can't measure — EXPLAIN shows actual execution path
-- Level 2: Estimated rows vs actual rows reveals stale statistics
+"Query chậm" là triệu chứng — không nói lên nguyên nhân → **Why?** cần công cụ thấy execution path thực tế của DB. EXPLAIN cho thấy DB chọn plan nào (Seq Scan, Index Scan, Hash Join…) → **Why?** chỉ khi biết DB đang làm gì mới có thể sửa đúng chỗ (thêm index, viết lại query, update statistics). EXPLAIN ANALYZE chạy query thật và trả về số thực → **Why?** estimate vs actual rows khác nhau nhiều = statistics lỗi thời — phải fix stats trước khi thêm index để tránh optimize sai chỗ.
 
-**Layer 1:** Doctor's X-ray — symptom is "query slow" (patient hurts), EXPLAIN shows the internal cause (broken bone = Seq Scan on 10M rows).
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-**Layer 2:**
+Bác sĩ chụp X-quang: bệnh nhân kêu đau (query chậm), nhưng không biết tại sao. X-quang (EXPLAIN) cho thấy xương gãy đúng chỗ nào (Seq Scan trên 10M rows, missing index, wrong join order). Không có X-ray thì bác sĩ chỉ đoán mò — và thường đoán sai.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
 
 ```
 EXPLAIN ANALYZE SELECT * FROM orders WHERE customer_id = 123;
@@ -203,7 +239,15 @@ Fix workflow:
   Slow query → EXPLAIN ANALYZE → identify bottleneck → add index or rewrite → verify
 ```
 
-**Layer 3:** EXPLAIN BUFFERS (PostgreSQL) shows I/O: shared hit (cache) vs read (disk). High reads = not enough shared_buffers.
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **EXPLAIN BUFFERS:** PostgreSQL option hiển thị `shared hit` (từ cache) vs `shared read` (từ disk). `read` cao = thiếu `shared_buffers` hoặc working set lớn hơn RAM.
+- **EXPLAIN vs EXPLAIN ANALYZE:** EXPLAIN chỉ estimate (không chạy query). EXPLAIN ANALYZE chạy query thật — cẩn thận với DML (INSERT/UPDATE/DELETE), wrap trong transaction và rollback.
+- **Parallel query plans:** PostgreSQL có thể dùng parallel workers — `Gather` node xuất hiện trong plan. Chỉnh `max_parallel_workers_per_gather` nếu table lớn nhưng không chạy parallel.
+- **JIT compilation:** PostgreSQL 11+ có JIT cho complex queries — thấy "JIT: Functions" trong EXPLAIN output. JIT có overhead với short-lived queries — có thể disable per session.
+- **Plan instability:** Cùng query, khác parameter → khác plan (parameter sniffing). Nếu plan flip-flop, cần extended statistics hoặc query hint/recompile.
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
 | Sai lầm                               | Tại sao sai                                    | Đúng là                                       |
 | ------------------------------------- | ---------------------------------------------- | --------------------------------------------- |
@@ -213,20 +257,24 @@ Fix workflow:
 
 🎯 **Interview Pattern:** "How debug slow query?" → EXPLAIN ANALYZE → check access type, row estimates, join order
 
-🔗 **Knowledge Chain:** Slow query → EXPLAIN ANALYZE → Access path → Statistics → Index/rewrite → Verify
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [B+Tree & Index Structure](#concept-1-btree--index-structure) | [Composite & Covering Index](#concept-2-composite--covering-index)
+- ➡️ Để hiểu tiếp: [Query Optimizer & Statistics](#concept-5-query-optimizer--statistics)
 
 ### Concept 5: Query Optimizer & Statistics
 
-🪝 **Memory Hook:** Optimizer = GPS nội bộ — chọn route dựa trên traffic data (statistics). Stale data → wrong route.
+> 🧠 **Memory Hook:** Optimizer = GPS nội bộ — chọn route dựa trên traffic data (statistics). Stale data → wrong route.
 
-**Why exists / Tại sao tồn tại:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: Multiple execution plans exist — optimizer picks cheapest based on cost model
-- Level 2: Statistics (histograms, MCV, null fraction) drive cardinality estimates
+Một SQL query có thể thực thi theo nhiều cách — optimizer chọn cách rẻ nhất → **Why?** không phải developer chọn execution plan, DB tự tính cost của từng plan và pick cheapest. Cost model dựa trên statistics (cardinality, histogram, null fraction) → **Why?** statistics cũ = estimate sai = plan sai = query chậm dù có đủ indexes. Autovacuum/autoanalyze giúp statistics luôn fresh → **Why?** nếu thiếu fresh stats, optimizer blind — có thể chọn Seq Scan thay vì Index Scan dù index đúng đã tồn tại.
 
-**Layer 1:** GPS routing — recalculates based on current traffic. If traffic data is stale (no live updates), GPS sends you through a traffic jam. Same with DB: stale stats → wrong plan.
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-**Layer 2:**
+GPS chọn đường dựa trên dữ liệu giao thông real-time: nếu data giao thông cũ (không update), GPS gửi bạn vào đường tắc. DB optimizer làm y hệt: stale statistics → chọn plan tệ dù có index đúng. Update statistics như update GPS traffic data.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
 
 ```
 Cost-based optimizer flow:
@@ -246,7 +294,15 @@ Parameter sniffing (SQL Server/MySQL):
   Different parameter → same plan → may be terrible for different data distribution
 ```
 
-**Layer 3:** Extended statistics (PostgreSQL 10+) for correlated columns — default assumes independence, extended stats handle correlations.
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **Extended statistics (PostgreSQL 10+):** Mặc định optimizer giả định các cột độc lập. Khi 2 cột tương quan (city + zip_code), dùng `CREATE STATISTICS` để dạy optimizer về correlation — giúp estimate chính xác hơn.
+- **Parameter sniffing:** SQL Server/MySQL cache execution plan theo parameter đầu tiên. Parameter khác distribution → cùng plan → chậm. Fix: `OPTION(RECOMPILE)` (SQL Server) hoặc query rewrite.
+- **Planner hints PostgreSQL:** PostgreSQL không có optimizer hints (by design). Dùng `SET enable_seqscan=off` cho session để force Index Scan — chỉ để debug, không dùng production.
+- **Statistics target:** `ALTER TABLE t ALTER COLUMN c SET STATISTICS 500` — tăng từ default 100. Cho columns với skewed distribution, tăng statistics target giúp estimate chính xác hơn.
+- **Join order matters:** Optimizer thử nhiều join orders — với nhiều tables, wrong join order → Nested Loop O(n²) thay vì Hash Join O(n). Dùng `join_collapse_limit` để control.
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
 | Sai lầm                       | Tại sao sai                                   | Đúng là                                                   |
 | ----------------------------- | --------------------------------------------- | --------------------------------------------------------- |
@@ -256,20 +312,24 @@ Parameter sniffing (SQL Server/MySQL):
 
 🎯 **Interview Pattern:** "Why can EXPLAIN estimate be wrong?" → Stale statistics, correlated columns, skewed data
 
-🔗 **Knowledge Chain:** Statistics collection → Cardinality estimation → Cost model → Plan selection → Plan cache
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [EXPLAIN & Query Plans](#concept-4-explain--query-plans)
+- ➡️ Để hiểu tiếp: [Index Maintenance & Costs](#concept-6-index-maintenance--costs)
 
 ### Concept 6: Index Maintenance & Costs
 
-🪝 **Memory Hook:** Mỗi index = cái giá phải trả khi write — INSERT/UPDATE/DELETE đều update tất cả indexes
+> 🧠 **Memory Hook:** Mỗi index = cái giá phải trả khi write — INSERT/UPDATE/DELETE đều update tất cả indexes
 
-**Why exists / Tại sao tồn tại:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: More indexes = slower writes (write amplification)
-- Level 2: Dead tuples from updates accumulate → index bloat → needs VACUUM
+Indexes không free — mỗi index là overhead cho mọi write operation → **Why?** INSERT phải update heap + N indexes, nếu có 10 indexes = 11 write operations mỗi row. Dead tuples từ UPDATE/DELETE accumulate trong indexes → **Why?** PostgreSQL MVCC không xóa row cũ ngay, index entries vẫn trỏ vào dead tuples — index bloat làm scan chậm dần. VACUUM/REINDEX cleanup bloat → **Why?** nếu không vacuum, bloat tăng dần, index pages đầy dead entries, fanout giảm, tree cao hơn, performance suy giảm từ từ theo thời gian.
 
-**Layer 1:** Library card catalog with 10 cross-reference systems — every new book requires updating all 10 catalogs. Remove catalogs you don't actually use.
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-**Layer 2:**
+Thư viện với 10 bộ mục lục chéo: mỗi cuốn sách mới nhập phải cập nhật cả 10 bộ mục lục. Nếu mục lục nào không ai dùng, vẫn phải update — lãng phí. Kiểm tra và bỏ mục lục không ai dùng, giữ thư viện gọn và nhanh.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
 
 ```
 Write amplification per index:
@@ -285,7 +345,15 @@ Index bloat:
   VACUUM cleans dead tuples → REINDEX rebuilds index compactly
 ```
 
-**Layer 3:** HOT (Heap-Only Tuple) optimization in PostgreSQL — if updated columns aren't indexed, new version stays on same page → no index update needed.
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **HOT (Heap-Only Tuple):** PostgreSQL optimization — nếu updated column không được index, row mới nằm cùng page → không cần update index. Thêm index trên column thường xuyên update phá vỡ HOT → write chậm đáng kể.
+- **CONCURRENTLY:** `CREATE INDEX CONCURRENTLY` không lock table nhưng chậm hơn, cần 2 passes. `REINDEX CONCURRENTLY` (PG12+) tương tự. Production: luôn dùng CONCURRENTLY.
+- **Index bloat detection:** `SELECT * FROM pgstattuple('index_name')` — xem dead_tuple_percent và bloat ratio. >30% bloat → cân nhắc `REINDEX CONCURRENTLY`.
+- **Partial index giảm write cost:** Index chỉ trên subset rows → ít entries hơn, update ít hơn khi write không match WHERE clause của index — hiệu quả kép: nhỏ hơn + ít write amplification.
+- **Foreign key indexes:** PostgreSQL không tự tạo index cho FK (khác MySQL InnoDB). Missing FK index → lock contention khi DELETE parent rows. Luôn index FK columns.
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
 | Sai lầm                               | Tại sao sai                              | Đúng là                                                    |
 | ------------------------------------- | ---------------------------------------- | ---------------------------------------------------------- |
@@ -295,20 +363,24 @@ Index bloat:
 
 🎯 **Interview Pattern:** "Too many indexes — what to do?" → Monitor usage stats, drop unused, consolidate overlapping composites
 
-🔗 **Knowledge Chain:** Write amplification → Index cost → Usage monitoring → Bloat → VACUUM/REINDEX
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [B+Tree & Index Structure](#concept-1-btree--index-structure) | [Query Optimizer & Statistics](#concept-5-query-optimizer--statistics)
+- ➡️ Để hiểu tiếp: [Denormalization & Pooling](#concept-7-denormalization--pooling)
 
 ### Concept 7: Denormalization & Pooling
 
-🪝 **Memory Hook:** Denormalization = duplicate data intentionally for read speed — bất đắc dĩ, không phải default
+> 🧠 **Memory Hook:** Denormalization = duplicate data intentionally for read speed — bất đắc dĩ, không phải default
 
-**Why exists / Tại sao tồn tại:**
+**Tại sao tồn tại? / Why does this exist?**
 
-- Level 1: Normalized schema → many JOINs → slow reads at scale
-- Level 2: Connection pooling reuses DB connections — avoids expensive handshake per request
+Normalized schema tối ưu cho write (no duplication, easy update) nhưng đắt đỏ cho read (nhiều JOINs) → **Why?** ở scale lớn, 3-4 table JOINs với millions of rows tốn cả giây dù có index. Denormalization precomputes joins bằng cách duplicate data → **Why?** trade-off: write phức tạp hơn (update nhiều chỗ), nhưng read cực nhanh (single table scan). Connection pooling giải quyết vấn đề khác: mỗi DB connection tốn ~10MB RAM + handshake overhead → **Why?** 1000 requests/s = 1000 connections = 10GB RAM chỉ cho connections — pooling giới hạn connections thực, reuse cho nhiều requests.
 
-**Layer 1:** Pre-printed reports vs real-time query — report (denormalized view) is instant to read but may be slightly stale. Real-time query (normalized JOINs) is always fresh but slower.
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
 
-**Layer 2:**
+Báo cáo in sẵn vs query real-time: báo cáo in sẵn (denormalized view) đọc ngay, nhưng có thể hơi cũ. Query real-time (normalized JOINs) luôn fresh nhưng mất thời gian tính. Connection pooling như taxi dùng chung: không mỗi hành khách mua taxi riêng — taxi (connection) được tái sử dụng cho nhiều hành khách (requests).
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
 
 ```
 Denormalization example:
@@ -324,7 +396,15 @@ Connection Pooling:
   → 4 cores = ~10 connections (not 100!)
 ```
 
-**Layer 3:** Materialized views — database-managed denormalization with REFRESH. Good for dashboards, bad for real-time.
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- **Materialized views:** Database-managed denormalization với `REFRESH MATERIALIZED VIEW CONCURRENTLY` — không lock read. Tốt cho dashboards, không phù hợp real-time (có độ trễ refresh).
+- **CDC pipeline cho sync:** Khi denormalize, dùng Change Data Capture (Debezium, Kafka Connect) để sync updates từ source → denormalized tables. Tránh update thủ công — dễ miss và dẫn đến inconsistency.
+- **Connection pool exhaustion:** Pool full → requests queue/timeout. Monitor pool wait time; không tăng pool size vô tội vạ — tăng pool = tăng DB load. Fix root cause: slow queries, connection leaks.
+- **PgBouncer modes:** Session pooling (1 connection per client session), transaction pooling (reuse after each transaction — hiệu quả nhất), statement pooling (aggressive, breaks prepared statements).
+- **Premature denormalization:** Normalize trước, chỉ denormalize khi có bằng chứng cụ thể (EXPLAIN, slow query logs, SLO breach). Denormalization sớm làm schema phức tạp không cần thiết.
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
 | Sai lầm                                  | Tại sao sai                                        | Đúng là                                                   |
 | ---------------------------------------- | -------------------------------------------------- | --------------------------------------------------------- |
@@ -334,7 +414,10 @@ Connection Pooling:
 
 🎯 **Interview Pattern:** "When denormalize?" → Read-heavy dashboards, hot paths with complex JOINs, after proving normalization is the bottleneck
 
-🔗 **Knowledge Chain:** Normalization cost → JOIN overhead → Denormalization strategy → Materialized views → Connection pooling
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Database Theory — Normalization](./database-theory.md)
+- ➡️ Để hiểu tiếp: [Sharding & Transactions](./04-sharding-and-transactions.md)
 
 ---
 

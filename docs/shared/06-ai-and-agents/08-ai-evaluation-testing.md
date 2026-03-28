@@ -23,6 +23,7 @@
 ## Overview / Tổng Quan
 
 Evaluating AI systems is fundamentally different from evaluating traditional software:
+
 - Traditional software: deterministic → `assert output == expected`
 - AI/LLM: probabilistic → outputs vary, quality is subjective, "correctness" is fuzzy
 
@@ -31,6 +32,66 @@ Evaluating AI systems is fundamentally different from evaluating traditional sof
 ---
 
 ## 1. Evaluation Framework / Khung Đánh Giá
+
+> 🧠 **Memory Hook:** Đây như kiểm định thực phẩm của Chi cục An toàn vệ sinh thực phẩm — không thể chỉ nếm thử 5 mẫu phở rồi kết luận cả kho nguyên liệu "an toàn cho production"!
+
+**Tại sao tồn tại? / Why does this exist?**
+
+LLM outputs không deterministic — không thể viết `assert output == expected` như software thường. Không có framework đánh giá, bạn không biết AI feature đang tốt hay đang âm thầm tệ đi mỗi ngày.
+→ **Why?** Vì "looks good to me" bias — con người không thể tự tay review hàng nghìn outputs khách quan
+→ **Why?** Vì AI models degrade silently — một thay đổi prompt nhỏ có thể phá vỡ quality trên edge cases mà không ai hay
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Giống như bếp trưởng nhà hàng không thể chỉ nếm 1–2 món rồi kết luận bếp đang nấu ngon. Cần có bảng tiêu chí rõ ràng (độ chín, vị mặn ngọt, nhiệt độ), thử nghiệm nhiều mẫu khác nhau từ nhiều ca khác nhau, và kiểm tra lại mỗi ngày. Nếu không, hôm nay ngon, ngày mai bị phàn nàn mà không biết tại sao.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+EVALUATION PYRAMID (chi phí tăng dần, độ tin cậy tăng dần):
+
+Level 1 — Unit Evals (tự động, rẻ)
+  Input → LLM → Check structure/properties
+  ✓ nhanh  ✓ rẻ  ✗ không đánh giá "chất lượng" open-ended
+
+Level 2 — LLM-as-Judge (tự động, trung bình)
+  LLM mạnh chấm điểm LLM yếu hơn
+  ✓ scalable  ✓ có thể giải thích  ✗ có bias
+
+Level 3 — Human Evaluation (chậm, đắt)
+  A/B test + real user thumbs up/down
+  ✓ ground truth  ✗ chậm tuần/tháng
+
+Level 4 — Business Metrics (thực tế nhất)
+  Ticket deflection, conversion, time-on-task
+  ✓ ROI rõ ràng  ✗ lag vài tuần mới thấy
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- LLM-as-Judge bị "verbosity bias" — câu trả lời dài hơn thường được chấm điểm cao hơn dù không tốt hơn
+- Golden sets bị stale sau 3–6 tháng khi hành vi người dùng thay đổi
+- Business metrics lag quá lâu — không dùng được để iterate nhanh
+- Human evaluators có inter-rater reliability thấp nếu không có rubrics rõ ràng
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                              | Tại sao sai                                   | Đúng là                                                                                    |
+| ------------------------------------ | --------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Chỉ manual test 5–10 cases           | Không đủ diversity, miss edge cases hoàn toàn | 200+ golden cases với diverse inputs và adversarial cases                                  |
+| Assert exact string output           | LLM non-deterministic, test sẽ fail random    | Test structure/properties: `assert "Paris" in response`                                    |
+| Chỉ đo accuracy, bỏ qua latency/cost | LLM chậm và đắt — đây cũng là chất lượng      | Track cả 7 dimensions: accuracy, relevance, coherence, safety, groundedness, latency, cost |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: "How do you ensure the quality of an AI feature?"
+- Nhớ đến: 4-level evaluation framework (unit → LLM-judge → human → business)
+- Mở đầu: "I start with a golden eval dataset and automated unit evals, then layer in LLM-as-judge for scalable quality scoring — and only go to human eval for high-stakes decisions."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [ML Fundamentals](./01-ml-fundamentals.md) — precision, recall, F1 là nền tảng của eval metrics
+- ➡️ Để hiểu tiếp: [LLM Testing Patterns](#2-llm-testing-patterns--mẫu-kiểm-thử-llm) — cách code cụ thể cho eval framework này
 
 ### Q: How do you evaluate an LLM-powered feature? 🟡 Mid
 
@@ -43,7 +104,7 @@ Level 1 — Unit Evals (automated):
   Input: test prompts → LLM → Output
   Check: does output contain expected elements?
   Tools: pytest + regex/string matching
-  
+
 Level 2 — Model-as-Judge (LLM grades LLM):
   Use a stronger LLM (GPT-4, Claude) to grade your model's outputs
   Judge prompt: "Rate this response 1-5 for helpfulness/accuracy/safety"
@@ -61,25 +122,92 @@ Level 4 — Business Metrics:
 
 ### Key Evaluation Dimensions
 
-| Dimension | What it measures | Example metric |
-|-----------|-----------------|----------------|
-| **Accuracy** | Is the output factually correct? | % correct answers on test set |
-| **Relevance** | Does output address the question? | Cosine similarity to ideal response |
-| **Coherence** | Is the output well-structured? | Human rating 1-5 |
-| **Safety** | Does output avoid harmful content? | % harmful responses in adversarial test set |
-| **Groundedness** | Is output supported by context (RAG)? | Citation accuracy |
-| **Latency** | How fast? | p50/p95/p99 response time |
-| **Cost** | $ per query | Tokens × $/token |
+| Dimension        | What it measures                      | Example metric                              |
+| ---------------- | ------------------------------------- | ------------------------------------------- |
+| **Accuracy**     | Is the output factually correct?      | % correct answers on test set               |
+| **Relevance**    | Does output address the question?     | Cosine similarity to ideal response         |
+| **Coherence**    | Is the output well-structured?        | Human rating 1-5                            |
+| **Safety**       | Does output avoid harmful content?    | % harmful responses in adversarial test set |
+| **Groundedness** | Is output supported by context (RAG)? | Citation accuracy                           |
+| **Latency**      | How fast?                             | p50/p95/p99 response time                   |
+| **Cost**         | $ per query                           | Tokens × $/token                            |
 
 ---
 
 ## 2. LLM Testing Patterns / Mẫu Kiểm Thử LLM
+
+> 🧠 **Memory Hook:** Test LLM giống chấm bài văn học sinh — giáo viên không cần bài viết y hệt đáp án mẫu, chỉ cần: có đủ ý chính, không sai thực tế, đủ độ dài, không chép bài bạn (hallucinate).
+
+**Tại sao tồn tại? / Why does this exist?**
+
+LLM outputs là non-deterministic — cùng một input, mỗi lần gọi ra output khác nhau. Viết `assert output == "The capital is Paris"` sẽ fail ngẫu nhiên, tạo ra flaky tests vô dụng.
+→ **Why?** Vì điều quan trọng không phải _từng chữ_ của câu trả lời, mà là _tính chất_ của nó
+→ **Why?** Vì brittle tests làm team mất niềm tin vào CI và bắt đầu ignore failures — đây là anti-pattern nguy hiểm
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Giống như kiểm tra đầu bếp mới — không hỏi "anh nấu phở theo đúng công thức từng bước này không?" mà hỏi "nước dùng có trong không? thịt có chín không? không có mùi lạ không?" Đó chính là cách test LLM — kiểm tra tính chất (properties), không kiểm tra từng chữ.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+3 TESTING PATTERNS:
+
+Pattern 1 — Deterministic (cho structured outputs):
+  Input: "Order 2 pizzas"
+  ✓ output["intent"] == "order"         ← test structure
+  ✓ output["quantity"] == 2             ← test value
+  ✗ output["text"] == "Sure, I'll..."  ← test exact wording (WRONG)
+
+Pattern 2 — Golden Set (cho batch quality):
+  200 curated (input, expected_properties) pairs
+      ↓
+  Run all → score each (0 or 1)
+      ↓
+  pass_rate = sum/total
+      ↓
+  assert pass_rate >= 0.85  ← threshold, not exact
+
+Pattern 3 — LLM-as-Judge (cho open-ended quality):
+  User question → Your LLM → Response
+                                   ↓
+  Judge LLM: "Rate 1-5 for helpfulness"
+                                   ↓
+  assert score >= 4
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- Pattern 1 chỉ hoạt động cho structured outputs (JSON extraction, classification) — không dùng được cho free-form text
+- Golden set drift: test cases viết 6 tháng trước có thể không còn phản ánh real user queries
+- LLM-as-Judge "positional bias" — judge thường prefer response nào được show trước
+- Judge LLM không nên là cùng model đang test (self-evaluation bias inflate scores)
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                             | Tại sao sai                                          | Đúng là                                             |
+| ----------------------------------- | ---------------------------------------------------- | --------------------------------------------------- |
+| `assert response == "exact answer"` | LLM non-deterministic → test fail random             | `assert "Paris" in response` hoặc dùng threshold    |
+| Golden set chỉ 5–10 cases           | Không phát hiện edge cases, pass rate không có nghĩa | Tối thiểu 50 cases, aim 200+ với diverse inputs     |
+| Dùng cùng model làm judge           | Self-evaluation bias — model tự chấm cao cho mình    | Judge phải là model mạnh hơn (GPT-4 judges GPT-3.5) |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: "How do you write tests for LLM-powered code?"
+- Nhớ đến: 3 patterns — deterministic assertions, golden set evaluation, LLM-as-judge
+- Mở đầu: "For LLM testing, I use three complementary patterns: deterministic assertions on structured outputs, golden set evaluation with threshold scoring, and LLM-as-judge for open-ended quality assessment."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Evaluation Framework](#1-evaluation-framework--khung-đánh-giá) — hiểu 4 levels trước khi code
+- ➡️ Để hiểu tiếp: [Regression Testing for LLMs](#3-regression-testing-for-llms--kiểm-thử-hồi-quy) — dùng patterns này trong CI pipeline
 
 ### Q: How do you write tests for LLM-powered code? 🟢 Junior → 🔴 Senior
 
 **A:**
 
 **Pattern 1: Deterministic tests (for structured outputs)**
+
 ```python
 import pytest
 from app.services.ai import extract_intent
@@ -87,7 +215,7 @@ from app.services.ai import extract_intent
 def test_extract_order_intent():
     """LLM should extract structured data reliably for well-defined inputs"""
     result = extract_intent("I want to order 2 large pizzas")
-    
+
     # Don't test exact wording — test structure
     assert result["intent"] == "order"
     assert result["quantity"] == 2
@@ -97,6 +225,7 @@ def test_extract_order_intent():
 ```
 
 **Pattern 2: Golden set evaluation**
+
 ```python
 # Curate a set of input → expected_output pairs
 GOLDEN_SET = [
@@ -116,7 +245,7 @@ def evaluate_summarizer(model_fn, dataset=GOLDEN_SET, threshold=0.85):
         output = model_fn(case["input"])
         score = grade_output(output, case)
         scores.append(score)
-    
+
     pass_rate = sum(scores) / len(scores)
     assert pass_rate >= threshold, f"Model quality dropped: {pass_rate:.2%}"
     return pass_rate
@@ -137,6 +266,7 @@ def grade_output(output, case):
 ```
 
 **Pattern 3: LLM-as-Judge**
+
 ```python
 import anthropic
 
@@ -163,7 +293,7 @@ Respond with JSON:
         max_tokens=500,
         messages=[{"role": "user", "content": judge_prompt}]
     )
-    
+
     import json
     return json.loads(result.content[0].text)
 
@@ -171,19 +301,84 @@ Respond with JSON:
 def test_customer_service_quality():
     question = "How do I cancel my subscription?"
     response = ai_service.answer(question)
-    
+
     judgment = llm_judge(
         question=question,
         response=response,
         criteria="helpfulness, accuracy, and clarity"
     )
-    
+
     assert judgment["score"] >= 4, f"Quality too low: {judgment}"
 ```
 
 ---
 
 ## 3. Regression Testing for LLMs / Kiểm Thử Hồi Quy
+
+> 🧠 **Memory Hook:** Regression testing LLM như kiểm tra sức khỏe định kỳ sau khi thay thuốc — mỗi lần đổi prompt (thay thuốc), phải xét nghiệm lại đủ chỉ số để chắc bệnh cũ không tái phát và thuốc mới không gây tác dụng phụ.
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Prompts thay đổi liên tục trong development, và mỗi thay đổi có thể âm thầm phá vỡ quality trên các cases đã hoạt động tốt trước đó. Không có regression testing, team chỉ biết quality drop khi users phàn nàn — đã quá muộn.
+→ **Why?** Vì LLMs rất nhạy cảm với wording — di chuyển một câu trong prompt có thể break unrelated capabilities
+→ **Why?** Vì trust damage từ quality regression rất khó recover — users đã bad experience sẽ không quay lại
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Giống như kỹ sư xây cầu — mỗi khi sửa một thanh dầm, phải kiểm tra lại toàn bộ cầu có còn chịu tải được không. Không ai nói "tôi chỉ sửa một chỗ nhỏ, chắc không sao đâu" — cầu sập thì cả thành phố chịu. Prompt change nhỏ mà không test lại toàn bộ golden set = rủi ro cầu sập với users.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+PROMPT REGRESSION CI PIPELINE:
+
+  Developer changes prompt (v1 → v2)
+           │
+           ▼
+  ┌──────────────────────────────────┐
+  │  CI auto-runs 200 golden cases   │
+  │  against BOTH v1 and v2          │
+  └──────────────┬───────────────────┘
+                 │
+                 ▼
+  ┌──────────────────────────────────┐
+  │  Compare scores:                 │
+  │    v1 baseline:  0.87            │
+  │    v2 candidate: 0.82            │
+  │    Δ degradation: -5.7%          │
+  │    Threshold: > 5% → BLOCK ❌    │
+  └──────────────────────────────────┘
+           │                  │
+     Blocked → fix       Passed → merge ✅
+     and retry            + post score diff
+                            to PR comment
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- "Ratchet effect": luôn dùng current baseline làm threshold, không phải original — tránh slow drift tích lũy
+- Flaky evals: LLM-as-judge tự nó cũng vary → chạy mỗi case 3 lần và lấy average score
+- Golden set contamination: nếu test cases leak vào training data, eval scores sẽ inflate ảo
+- Language/locale coverage: regression suite phải include tất cả ngôn ngữ feature hỗ trợ
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                           | Tại sao sai                                               | Đúng là                                                             |
+| --------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------- |
+| Chỉ manual test trước khi release | Không catch edge cases, subjective, chậm                  | Automated eval suite chạy trong CI/CD mỗi PR                        |
+| Binary pass/fail như unit tests   | LLM outputs fuzzy → quá nhiều false negatives             | Threshold-based: fail nếu score drop > 5% so với baseline           |
+| Không version control prompts     | Không biết prompt nào gây regression, không rollback được | Store prompts as versioned files trong git (prompts/v1.txt, v2.txt) |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: "How do you prevent quality regression when updating prompts?"
+- Nhớ đến: Versioned prompts + golden dataset + CI gate on score threshold
+- Mở đầu: "I treat prompts like code — versioned in git, with a golden eval dataset that runs in CI and blocks any merge that degrades quality by more than 5% from baseline."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [LLM Testing Patterns](#2-llm-testing-patterns--mẫu-kiểm-thử-llm) — golden set và threshold scoring
+- ➡️ Để hiểu tiếp: [Monitoring AI in Production](#4-monitoring-ai-in-production--giám-sát-ai-trong-production) — sau khi deploy, tiếp tục watch production signals
 
 ### Q: How do you prevent LLM quality regression when updating prompts? 🔴 Senior
 
@@ -217,6 +412,64 @@ Tools:
 ---
 
 ## 4. Monitoring AI in Production / Giám Sát AI trong Production
+
+> 🧠 **Memory Hook:** Monitor AI trong production giống theo dõi bệnh nhân ICU — không chỉ đo nhịp tim (latency), mà còn đo ý thức (user feedback), nhiệt độ (error rate), và chi phí truyền dịch (cost/token) — thiếu bất kỳ chỉ số nào là nguy hiểm.
+
+**Tại sao tồn tại? / Why does this exist?**
+
+Evals kiểm tra model trong lab; monitoring kiểm tra model ngoài đời thực. Production có input distribution khác hoàn toàn với golden set — real users hỏi những thứ bạn chưa từng nghĩ đến.
+→ **Why?** Vì distribution shift xảy ra liên tục — model API update, prompt injection attacks, seasonal user behavior change
+→ **Why?** Vì một prompt loop bug không được monitor có thể tốn $10,000+ trong vài giờ trước khi ai phát hiện
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Giống như quản lý nhà hàng không chỉ kiểm tra món ăn trước khi mở cửa (evaluation), mà còn đọc Google Reviews mỗi ngày, theo dõi tỷ lệ hoàn trả món, và để ý khi nào khách gọi bếp ra phàn nàn nhiều hơn bình thường. Evaluation = trước khi mở cửa; Monitoring = khi nhà hàng đang chạy.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+3 MONITORING CATEGORIES:
+
+OPERATIONAL          AI-SPECIFIC           SAFETY
+──────────────────   ─────────────────── ──────────────────────
+Latency p50/p95/p99  User thumbs up/down  PII scan in outputs
+Error rate (timeout) Task completion %    Harmful content %
+Token count/request  Fallback rate        Prompt injection %
+Cost $/request/day   Hallucination flags
+                     Response length ←
+                     (too short/long =
+                      quality signal)
+         ↓
+  OpenTelemetry traces → Grafana / Datadog
+         ↓
+  Alerts: error spike | cost spike | quality drop
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- Thumbs up/down signal là sparse — hầu hết users không rating → selection bias nặng
+- "Regenerate" button click là strong negative signal mạnh hơn thumbs down — track separately
+- Production input distribution drift theo thời gian → cần update golden set định kỳ
+- PII logging risk: không log raw prompts/responses trước khi strip PII — GDPR violation
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                            | Tại sao sai                                     | Đúng là                                                                   |
+| ---------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------- |
+| Chỉ monitor latency và error rate  | Miss quality degradation hoàn toàn              | Monitor cả AI-specific: feedback rate, fallback rate, hallucination flags |
+| Không alert khi cost tăng đột biến | Prompt loop bug tốn $10K+/ngày trước khi ai hay | Set cost alerts, budget caps, và rate limits per user                     |
+| Log toàn bộ prompts/responses      | Privacy violation, GDPR risk                    | Log aggregated metrics; sample logs sau khi PII đã được remove            |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: "What metrics do you monitor for an LLM in production?"
+- Nhớ đến: 3 categories — operational, AI-specific quality, safety
+- Mở đầu: "I monitor three categories: operational metrics like latency and cost, AI-specific metrics like user feedback rate and fallback rate, and safety metrics like PII leakage detection and prompt injection attempts."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Regression Testing for LLMs](#3-regression-testing-for-llms--kiểm-thử-hồi-quy) — offline eval; monitoring là online counterpart
+- ➡️ Để hiểu tiếp: [Advanced Eval Frameworks](#5-advanced-eval-frameworks--framework-đánh-giá-nâng-cao) — tools chuyên biệt cho RAG evaluation
 
 ### Q: What metrics do you monitor for an LLM in production? 🔴 Senior
 
@@ -257,19 +510,19 @@ def call_llm(prompt: str, user_id: str) -> str:
     with tracer.start_as_current_span("llm.call") as span:
         span.set_attribute("user.id", user_id)
         span.set_attribute("prompt.length", len(prompt))
-        
+
         start = time.time()
         try:
             response = client.messages.create(...)
             latency = (time.time() - start) * 1000
-            
+
             llm_latency.record(latency)
             llm_tokens.add(response.usage.input_tokens + response.usage.output_tokens)
-            
+
             span.set_attribute("response.tokens", response.usage.output_tokens)
             span.set_attribute("latency.ms", latency)
             return response.content[0].text
-            
+
         except Exception as e:
             llm_errors.add(1, {"error.type": type(e).__name__})
             span.record_exception(e)
@@ -279,6 +532,65 @@ def call_llm(prompt: str, user_id: str) -> str:
 ---
 
 ## 5. Advanced Eval Frameworks / Framework Đánh Giá Nâng Cao
+
+> 🧠 **Memory Hook:** RAGAS như bộ tứ thám tử chuyên nghiệp — Faithfulness (có bịa đặt không?), Answer Relevancy (có trả lời đúng câu không?), Context Precision (có kéo rác về không?), Context Recall (có bỏ sót manh mối không?) — mỗi người chuyên một loại tội.
+
+**Tại sao tồn tại? / Why does this exist?**
+
+RAG systems có nhiều điểm thất bại độc lập — retrieval có thể tệ, generation có thể tệ, hoặc cả hai. Dùng accuracy tổng thể không giúp bạn biết cần fix chỗ nào, gây lãng phí weeks of engineering effort.
+→ **Why?** Vì "câu trả lời sai" không cho bạn biết đó là lỗi của retriever hay của generator
+→ **Why?** Vì fix sai component (rewrite prompts khi thực ra retrieval đang hỏng) tốn thời gian mà không giải quyết gốc rễ
+
+**Layer 1 — Simple Analogy / Liên Tưởng Đơn Giản:**
+
+Giống như khám bệnh toàn diện — bác sĩ không hỏi "bạn có khỏe không?" rồi kê thuốc ngay. Bác sĩ đo riêng: huyết áp (Faithfulness), nhịp tim (Answer Relevancy), xét nghiệm máu (Context Precision), chụp phổi (Context Recall). Mỗi chỉ số chỉ ra đúng cơ quan bị vấn đề và cách điều trị khác nhau.
+
+**Layer 2 — How It Works / Cơ Chế Hoạt Động:**
+
+```
+RAGAS DIAGNOSTIC MAP:
+
+User Question → [Retriever] → Retrieved Chunks → [Generator] → Answer
+                    │                                  │
+             Context Precision              Faithfulness
+             Context Recall                Answer Relevancy
+
+DIAGNOSIS TABLE:
+  Faithfulness LOW     → Generator đang hallucinate
+                          Fix: stronger system prompt, reduce temperature
+  Answer Relevancy LOW → Generator off-topic / incomplete
+                          Fix: prompt engineering, few-shot examples
+  Context Precision LOW→ Retriever kéo về chunks vô dụng
+                          Fix: better embedding model, add reranker
+  Context Recall LOW   → Retriever bỏ sót chunks quan trọng
+                          Fix: chunking strategy, hybrid search (BM25 + dense)
+```
+
+**Layer 3 — Edge Cases & Trade-offs / Trường Hợp Đặc Biệt:**
+
+- RAGAS dùng LLM-as-judge internally → không free, mỗi eval run tốn tiền
+- Context Recall đòi hỏi ground truth labels — rất khó có ở scale lớn
+- **Faithfulness ≠ Factual accuracy**: answer có thể faithful với context nhưng context bị sai → answer sai (garbage in, garbage out)
+- RAGAS scores có thể bị "game" bằng cách return toàn bộ context làm answer — high faithfulness, low relevancy
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                     | Tại sao sai                                              | Đúng là                                                                     |
+| ------------------------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Chỉ đo end-to-end accuracy tổng hợp của RAG | Không biết retrieval hay generation bị lỗi, fix sai chỗ  | Đo riêng từng RAGAS metric để diagnose đúng layer                           |
+| Faithfulness = Factual accuracy             | Answer faithful với context sai → vẫn sai                | Faithfulness chỉ đo grounding; factual accuracy cần external knowledge base |
+| Bỏ qua Context Precision vì khó đo          | Retrieval noise tăng cost và giảm quality của generation | Track precision, dùng reranker để lọc chunks không liên quan                |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy: "How do you debug a RAG system that's giving poor answers?"
+- Nhớ đến: RAGAS 4 metrics để pinpoint đúng layer đang fail
+- Mở đầu: "I'd start with RAGAS metrics — they let me diagnose whether it's a retrieval problem (low Context Precision/Recall) or a generation problem (low Faithfulness/Answer Relevancy) because the fixes are completely different."
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Monitoring AI in Production](#4-monitoring-ai-in-production--giám-sát-ai-trong-production) — offline eval tools cho RAG
+- ➡️ Để hiểu tiếp: [AI Production Challenges](./07-ai-production-challenges.md) — các challenges RAGAS giúp detect
 
 ### Q: What is RAGAS and when do you use it for RAG evaluation? / RAGAS là gì và dùng khi nào? 🔴 Senior
 
@@ -341,16 +653,16 @@ Vietnamese: Regression test cho AI khác software test thông thường vì: (1)
 
 ## 5. Interview Q&A Summary / Tổng Kết
 
-| Question | Level | Key Answer |
-|----------|-------|-----------|
-| How do you test LLM outputs? | 🟡 | Golden set + structural assertions; avoid exact string matching |
-| What is LLM-as-Judge? | 🟡 | Use strong LLM to score another LLM's outputs at scale |
-| How to prevent regression when changing prompts? | 🔴 | Versioned prompts + golden eval set + CI gate on score threshold |
-| What metrics matter for AI in prod? | 🔴 | Latency, cost, user feedback, fallback rate, hallucination flags |
-| How to handle non-determinism in tests? | 🟡 | Test structure/properties not exact output; use threshold-based pass rates |
-| Evaluation vs monitoring difference? | 🟡 | Eval = offline quality assessment; monitoring = online production health |
-| What is RAGAS? | 🔴 | RAG eval framework: faithfulness, answer relevancy, context precision/recall |
-| How to build AI regression suite? | 🔴 | Golden dataset + threshold scoring + CI gate + trend tracking |
+| Question                                         | Level | Key Answer                                                                   |
+| ------------------------------------------------ | ----- | ---------------------------------------------------------------------------- |
+| How do you test LLM outputs?                     | 🟡    | Golden set + structural assertions; avoid exact string matching              |
+| What is LLM-as-Judge?                            | 🟡    | Use strong LLM to score another LLM's outputs at scale                       |
+| How to prevent regression when changing prompts? | 🔴    | Versioned prompts + golden eval set + CI gate on score threshold             |
+| What metrics matter for AI in prod?              | 🔴    | Latency, cost, user feedback, fallback rate, hallucination flags             |
+| How to handle non-determinism in tests?          | 🟡    | Test structure/properties not exact output; use threshold-based pass rates   |
+| Evaluation vs monitoring difference?             | 🟡    | Eval = offline quality assessment; monitoring = online production health     |
+| What is RAGAS?                                   | 🔴    | RAG eval framework: faithfulness, answer relevancy, context precision/recall |
+| How to build AI regression suite?                | 🔴    | Golden dataset + threshold scoring + CI gate + trend tracking                |
 
 ---
 
@@ -360,11 +672,15 @@ Vietnamese: Regression test cho AI khác software test thông thường vì: (1)
 
 ## Self-Check / Tự Kiểm Tra
 
-- [ ] Can I explain the difference between traditional unit tests and LLM evals?
-- [ ] Can I describe 3 RAGAS metrics (faithfulness, answer relevance, context recall)?
-- [ ] Can I design a minimal eval dataset for a customer service chatbot?
-- [ ] Can I explain why "LLM-as-judge" can be cost-effective and when it fails?
-- 💬 **Feynman Prompt:** Giải thích tại sao factuality và faithfulness là different metrics in RAG evaluation — ví dụ khi answer là faithful but not factual (hay ngược lại).
+| #   | Loại           | Câu hỏi                                                                                                                                                        |
+| --- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 🔍 Retrieval   | Kể tên 4 RAGAS metrics và ý nghĩa của từng metric trong việc diagnose RAG pipeline?                                                                            |
+| 2   | 🎨 Visual      | Vẽ sơ đồ CI pipeline cho prompt regression testing: từ "developer changes prompt" đến "merge blocked hoặc approved"?                                           |
+| 3   | 🛠️ Application | Thiết kế minimal eval dataset (input, expected properties) cho một customer service chatbot của ngân hàng — cần bao nhiêu cases và cover những loại input nào? |
+| 4   | 🐛 Debug       | RAGAS cho thấy Faithfulness = 0.95 nhưng users vẫn phàn nàn câu trả lời sai — nguyên nhân có thể là gì và bạn sẽ debug thế nào?                                |
+| 5   | 🎓 Teach       | Giải thích cho junior engineer tại sao "LLM-as-judge" có thể cost-effective hơn human evaluation, và khi nào nó fail (ít nhất 2 failure modes)?                |
+
+💬 **Feynman Prompt:** Giải thích tại sao factuality và faithfulness là different metrics in RAG evaluation — ví dụ khi answer là faithful but not factual (hay ngược lại).
 
 ## Connections / Liên Kết
 
