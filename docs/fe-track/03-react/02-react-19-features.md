@@ -1,306 +1,310 @@
-# React 19 Features / Tính Năng React 19
+# React 19 New Features / Tính Năng Mới Của React 19
 
 > **Track**: FE | **Difficulty**: 🟡 Mid → 🔴 Senior
-> **Prerequisites**: [React Fundamentals](./01-react-fundamentals.md) | [Hooks Deep Dive](./03-hooks-deep-dive.md)
-> **See also**: [React Performance](./09-performance-optimization.md) | [Next.js App Router](../04-nextjs/04-nextjs-fundamentals-appRouter.md)
-
-[← Previous](./01-react-fundamentals.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next →](./03-hooks-deep-dive.md)
-
----
-
-## Real-World Scenario / Tình Huống Thực Tế 🏭
-
-> **Bối cảnh**: Shopee FE team, 2024. Form checkout có 12 input fields. Mỗi keystroke trigger
-> re-render toàn bộ form vì state management phức tạp. Devs thêm `useMemo`/`useCallback` ở khắp
-> nơi — code khó đọc, dễ bug (stale closure), PR review tranh cãi "có cần memo không?"
->
-> React 19 giải quyết 3 vấn đề lớn cùng lúc:
-> 1. **React Compiler** tự động memo hóa — xóa sạch `useMemo`/`useCallback` thủ công
-> 2. **Actions pattern** (`useActionState`) — form mutation không cần `useState(isLoading)` +
->    `useState(error)` + `try/catch` + `finally setLoading(false)` boilerplate
-> 3. **`use()` API** — đọc Context có điều kiện, đọc Promise trong render (không cần useEffect)
->
-> **Interview insight**: React 19 là chủ đề hot 2025-2026. Biết `useActionState` vs `useFormStatus`
-> và khi nào cần `useOptimistic` giúp bạn stand out.
+> **Prerequisites**: [React Fundamentals](./01-react-fundamentals.md)
+> **See also**: [Hooks Deep Dive](./03-hooks-deep-dive.md) | [Modern React Features](./10-modern-react-features.md)
+> **L5 Competencies**: System Design, Architecture Decision, Migration Strategy
 
 ---
 
-## What & Why / Cái Gì & Tại Sao 🤔
+## Real-World Scenario / Tình Huống Thực Tế
 
-**React 19** là bản major release lớn nhất kể từ Hooks (React 16.8), giải quyết 3 pain points
-mà developer phàn nàn nhiều nhất:
+Bạn đang maintain một React 18 app. Codebase có hàng trăm `useMemo`, `useCallback`, `React.memo` — ai cũng sợ xoá vì "xoá lỡ chậm thì sao?". Form submit thì phải tự quản lý `isLoading`, `error`, `optimisticData` bằng tay — mỗi form 30 dòng boilerplate. Team lead hỏi: **"React 19 có gì mới? Có nên upgrade không? Migration risk là gì?"**
 
-**Tương tự đời thường:**
-- **React Compiler** = autocorrect trên điện thoại — tự sửa performance issues mà bạn không cần nghĩ
-- **Actions** = form bancaire — submit form, ngân hàng xử lý (pending), báo thành công/thất bại (state)
-- **`use()`** = đọc sách bất kỳ lúc nào — không bị ép đọc lúc mới mở sách (mount) mà thôi
+Nếu không hiểu React 19, bạn sẽ không trả lời được câu hỏi đó — và quan trọng hơn, bạn đang viết code theo cách sẽ bị React loại bỏ dần.
+
+---
+
+## What & Why / Cái Gì & Tại Sao
+
+**Analogy / Liên Tưởng:**
+Nghĩ React 18 như lái xe số sàn — bạn phải tự sang số (useMemo), tự đạp côn (useCallback), tự kiểm tra gương (memo). React 19 là xe số tự động — hộp số tự chuyển (Compiler), hệ thống hỗ trợ lái (Actions), và GPS tích hợp (use() API). Bạn vẫn cần biết lái, nhưng máy lo phần nhàm chán.
+
+| React 18 (Số sàn)                     | React 19 (Số tự động)                     |
+| ------------------------------------- | ----------------------------------------- |
+| `useMemo(() => expensive, [deps])`    | Compiler tự detect và memo                |
+| Tự quản lý `loading/error/optimistic` | `useActionState` + `useOptimistic` lo hết |
+| `forwardRef(Component)`               | `ref` là prop bình thường                 |
+| `useEffect` đọc Promise               | `use(promise)` trong render               |
+| `<Context.Provider value={}>`         | `<Context value={}>` trực tiếp            |
+
+**Tại sao phải học topic này?**
+
+- Phỏng vấn React ở mức Mid+ bây giờ **luôn hỏi React 19** — đặc biệt Compiler và Actions
+- Hiểu React 19 = hiểu hướng đi của React → cho thấy bạn cập nhật, không stuck ở kiến thức cũ
+- Migration strategy là câu hỏi System Design thực tế — Senior phải trả lời được
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
 
 ```
-[React 18 — manual optimization]
-        │
-        │  React 19 improvements
-        ▼
-[React Compiler] → auto-memoize → no more useMemo/useCallback boilerplate
-        │
-[Actions Pattern]
-        ├── useActionState  — form state + submission + error in one hook
-        ├── useFormStatus   — pending/error for nested form components
-        └── useOptimistic   — optimistic UI before server confirms
-        │
-[New APIs]
-        ├── use()           — read Context/Promise inside render (no hook rules)
-        ├── ref as prop     — no more forwardRef boilerplate
-        └── Server Actions  — async functions that run on server from client
+                        ┌─────────────────┐
+                        │   REACT 19      │
+                        └────────┬────────┘
+              ┌──────────────────┼──────────────────┐
+              ▼                  ▼                   ▼
+   ┌──────────────────┐ ┌───────────────┐ ┌─────────────────┐
+   │  React Compiler  │ │    Actions    │ │   use() API     │
+   │  (auto-memo)     │ │  (form flow)  │ │  (async read)   │
+   └──────────────────┘ └───────────────┘ └─────────────────┘
+              │                  │                   │
+              ▼                  ▼                   ▼
+   Loại bỏ useMemo/     useActionState     Thay useEffect
+   useCallback/memo      useFormStatus      fetch pattern
+                         useOptimistic
+              │                  │                   │
+              └──────────────────┼───────────────────┘
+                                 ▼
+                    ┌────────────────────────┐
+                    │  Thay đổi nhỏ khác:    │
+                    │  • ref as prop         │
+                    │  • ref cleanup fn      │
+                    │  • <Context> directly  │
+                    └────────────────────────┘
 ```
+
+**Bạn đang ở đây trong lộ trình học:**
+
+```
+React Fundamentals → [REACT 19 FEATURES] → Hooks Deep Dive → State Management
+```
+
+---
+
+## Overview / Tổng Quan
+
+React 19 introduces three major categories of changes: the React Compiler (automatic memoization at build time), Actions (a managed async lifecycle for form submissions), and the `use()` API (reading async resources during render). Together with smaller changes like ref-as-prop and Context simplification, React 19 represents the biggest API shift since Hooks.
+
+React 19 có 3 thay đổi lớn: Compiler tự memo hoá, Actions quản lý form async, và `use()` đọc Promise/Context trong render. Kèm theo nhiều thay đổi nhỏ giúp đơn giản hoá API. Đây là bước nhảy lớn nhất kể từ khi Hooks ra đời.
 
 ---
 
 ## Core Concepts / Khái Niệm Cốt Lõi
 
----
+### 1. React Compiler / Trình Biên Dịch React
 
-### 1. React Compiler — Automatic Memoization / Memo Hóa Tự Động
-
-> 🧠 **Memory Hook**: **"Compiler = TypeScript for performance"** — TypeScript infers types so you don't write them, React Compiler infers memoization so you don't write useMemo/useCallback
+> 🧠 **Memory Hook**: "React Compiler = TypeScript cho performance — phân tích code lúc build, tự thêm memo mà dev không phải viết."
 
 **Tại sao tồn tại? / Why does this exist?**
-
-Manual memoization (`useMemo`, `useCallback`, `React.memo`) là nguồn gốc của hàng loạt bugs:
-stale closures, dependency arrays sai, over-memo (memo mọi thứ "phòng xa"), under-memo (quên memo).
-
-→ **Why?** Vì con người không track được dependency graph của entire component tree. Developer hoặc
-memo quá nhiều (wasted effort) hoặc quá ít (performance bug).
-
-→ **Why?** Vì React's re-render model (parent re-renders → children re-render) là "pessimistic"
-by default. Compiler makes it "optimistic" — chỉ re-render component khi data nó dùng thực sự thay đổi.
+Developer phải tự thêm `useMemo`, `useCallback`, `React.memo` để tránh re-render thừa. Nhưng phần lớn dev thêm sai (thiếu deps, quá nhiều, hoặc quên).
+→ **Why?** Vì con người không giỏi track dependency thay đổi qua nhiều render — đó là việc máy làm tốt hơn.
+→ **Why?** Vì bản chất React re-render toàn bộ subtree khi state thay đổi (Virtual DOM design decision từ đầu) — memoization là cách "chữa cháy" cho design đó.
 
 #### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
 
-Giống TypeScript tự suy luận kiểu (bạn không cần viết `: string` ở mọi nơi), React Compiler
-tự suy luận memoization (bạn không cần viết `useMemo` ở mọi nơi). Cả hai đều analyze code tại
-build time và thêm optimization tự động.
+Hãy tưởng tượng bạn viết bài luận bằng tay. Mỗi lần sửa 1 từ, bạn phải chép lại toàn bộ bài (= React re-render). Trước đây bạn phải tự đánh dấu "đoạn này không đổi, không cần chép lại" (= useMemo). React Compiler giống như có thầy giáo đọc bài bạn và tự đánh dấu giùm: "đoạn 1 giữ nguyên, đoạn 3 giữ nguyên, chỉ chép lại đoạn 2".
 
 #### Layer 2: How It Works / Cơ Chế Hoạt Động
 
+React Compiler là một **Babel plugin** chạy lúc build time. Nó phân tích source code (static analysis) và tự thêm memoization vào output.
+
 ```
-React Compiler — Build-time transformation:
-
-  YOUR CODE (input):                 COMPILED OUTPUT:
-  ─────────────────                  ──────────────────
-  function Price({ item }) {         function Price({ item }) {
-    const total = item.price         const $0 = useMemo(
-      * item.qty;                      () => item.price * item.qty,
-                                       [item.price, item.qty]
-    return <span>{total}</span>;       );
-  }                                  return useMemo(
-                                       () => <span>{$0}</span>,
-                                       [$0]
-                                     );
-                                   }
-
-  WHAT COMPILER ANALYZES:
-  1. Static analysis: which variables each expression depends on
-  2. Inserts useMemo/useCallback at optimal granularity
-  3. Skips re-render when computed value unchanged
-  4. Works at EXPRESSION level (finer than component-level React.memo)
+  SOURCE CODE (bạn viết)          COMPILED OUTPUT (Compiler tạo)
+  ─────────────────────           ──────────────────────────────
+  function Cart({ items }) {      function Cart({ items }) {
+    const total =                   const total = useMemo(
+      items.reduce(...)               () => items.reduce(...),
+                                      [items]
+    return <div>{total}</div>       );
+  }                                 return useMemo(
+                                      () => <div>{total}</div>,
+                                      [total]
+                                    );
+                                  }
 ```
 
-```typescript
-// ✅ Before React 19: manual memo hell
-function ProductList({ products, onSelect }: Props) {
-  const sorted = useMemo(
-    () => [...products].sort((a, b) => a.name.localeCompare(b.name)),
-    [products]
-  );
+**Quy tắc Compiler phân tích:**
 
-  const handleSelect = useCallback(
-    (id: string) => onSelect(id),
-    [onSelect]
-  );
-
-  return sorted.map(p => (
-    <ProductCard key={p.id} product={p} onSelect={handleSelect} />
-  ));
-}
-const MemoProductCard = React.memo(ProductCard);
-
-// ✅ After React 19 (with Compiler): just write plain code
-function ProductList({ products, onSelect }: Props) {
-  const sorted = [...products].sort((a, b) => a.name.localeCompare(b.name));
-
-  return sorted.map(p => (
-    <ProductCard key={p.id} product={p} onSelect={(id) => onSelect(id)} />
-  ));
-}
-// Compiler auto-memoizes sorted, the arrow function, and ProductCard renders
+```
+  ┌────────────────────────────────────────┐
+  │        React Compiler Pipeline         │
+  ├────────────────────────────────────────┤
+  │  1. Parse AST (cây cú pháp)           │
+  │           ▼                            │
+  │  2. Phân tích data flow               │
+  │     - Biến nào depend vào biến nào?   │
+  │     - Giá trị nào thay đổi giữa       │
+  │       các render?                      │
+  │           ▼                            │
+  │  3. Tìm "stable regions"              │
+  │     - Code nào cho cùng output        │
+  │       nếu input không đổi?            │
+  │           ▼                            │
+  │  4. Wrap bằng memoization cache       │
+  │     - Thêm useMemo/useCallback tự    │
+  │       động vào compiled output        │
+  └────────────────────────────────────────┘
 ```
 
-**Incremental adoption:**
+**Cách adopt dần (incremental adoption):**
 
-```javascript
-// babel.config.js — enable per directory
+```js
+// babel.config.js — chỉ áp dụng cho 1 folder
 module.exports = {
   plugins: [
-    ['babel-plugin-react-compiler', {
-      sources: (filename) => {
-        return filename.includes('src/components/');
-        // Start with shared components, expand gradually
-      }
-    }]
-  ]
+    [
+      "babel-plugin-react-compiler",
+      {
+        sources: (filename) => {
+          return filename.includes("src/components/new/");
+        },
+      },
+    ],
+  ],
 };
+```
 
-// Opt-out per component with directive:
-function LegacyComponent() {
-  'use no memo'; // ← escape hatch
-  // ...
-}
+**ESLint plugin kiểm tra trước khi bật:**
+
+```bash
+npx react-compiler-healthcheck   # scan codebase
+npx eslint-plugin-react-compiler # audit từng file
 ```
 
 #### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
 
-- **Rules of React required**: Compiler assumes pure render functions. Code that mutates during render, reads `Date.now()`, or has side effects in render will produce incorrect memoization
-- **Build time**: Compiler adds 10-30% build time — acceptable for most apps
-- **`eslint-plugin-react-compiler`**: Run this BEFORE enabling compiler — surfaces violations that would cause wrong behavior
-- **Existing memo is redundant**: After compiler, `useMemo`/`useCallback`/`React.memo` are no-ops. Remove them gradually
+- **Không compile được:** Code vi phạm Rules of React (mutate state trực tiếp, side effect trong render). Compiler sẽ **skip** file đó, không báo lỗi.
+- **Directive opt-out:** Thêm `"use no memo"` ở đầu function để Compiler bỏ qua.
+- **Không thay thế 100%:** Compiler xử lý render logic, nhưng **không fix** re-render do Context (vẫn cần context splitting).
+- **Build time tăng:** Thêm 1 bước vào build pipeline — đo benchmark trước khi deploy.
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-|---------|------------|---------|
-| "Compiler makes all code fast" | Compiler only optimizes re-renders — doesn't fix O(n²) algorithms or unnecessary API calls | Compiler handles memoization, you still own algorithmic efficiency |
-| "I can ignore Rules of React now" | Compiler DEPENDS on purity — violations cause silent wrong behavior (worse than before) | Purity is now mandatory, not just recommended |
-| Keeping manual `useMemo` after enabling compiler | Redundant memo adds noise and confusing deps arrays | Remove manual memo after compiler is verified stable |
-| "Compiler replaces React.memo entirely" | Compiler memoizes at expression level, React.memo at component level — different granularity | Compiler is generally finer-grained and better |
+| Sai lầm                               | Tại sao sai                                                                                | Đúng là                                                         |
+| ------------------------------------- | ------------------------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| "Compiler thay thế hoàn toàn useMemo" | Compiler skip code violate Rules of React                                                  | Compiler là best-effort — clean code trước, Compiler tối ưu sau |
+| "Bật Compiler = app nhanh hơn ngay"   | Nếu code có mutation/side-effect, Compiler skip                                            | Cần audit code quality trước bằng ESLint plugin                 |
+| "Xoá hết memo khi dùng Compiler"      | Compiler sinh ra memo tương đương — xoá cũng OK, nhưng nếu Compiler skip file thì mất memo | Giữ memo cũ, Compiler sẽ tự nhận ra và không thêm trùng         |
+| "Compiler fix re-render problem"      | Compiler chỉ memo render output, không fix Context propagation                             | Vẫn cần context splitting / state colocation                    |
 
 **🎯 Interview Pattern:**
-- Khi thấy câu hỏi về: "React Compiler", "automatic memoization", "useMemo alternatives"
-- → Nhớ đến: "TypeScript for performance" — infers memoization at build time
-- → Mở đầu trả lời: "React Compiler performs static analysis at build time to automatically insert fine-grained memoization, eliminating the need for manual useMemo, useCallback, and React.memo. It requires code to follow the Rules of React — pure render functions with no side effects — because it assumes purity to determine what can be safely cached."
 
-**🔑 Knowledge Chain:**
-- 📚 Cần biết: [Hooks — useMemo/useCallback](./03-hooks-deep-dive.md) — understand what the compiler replaces
-- ➡️ Để hiểu: [React Performance](./09-performance-optimization.md) — when manual optimization is still needed
+- Khi thấy câu hỏi về: "React Compiler", "auto-memoization", "tương lai của useMemo"
+- → Nhớ đến: Build-time static analysis, Babel plugin, incremental adoption
+- → Mở đầu trả lời: _"React Compiler phân tích code lúc build time và tự thêm memoization — giống TypeScript phân tích type. Nó không thay thế developer thinking, mà automate phần mechanical. Áp dụng incremental qua Babel plugin config."_
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [useMemo/useCallback](./03-hooks-deep-dive.md), [Virtual DOM & Reconciliation](./01-react-fundamentals.md)
+- ➡️ Để hiểu tiếp: [Performance Optimization](./09-performance-optimization.md)
 
 ---
 
-### 2. Actions Pattern — useActionState, useFormStatus, useOptimistic
+### 2. Actions Pattern / Mô Hình Actions
 
-> 🧠 **Memory Hook**: **"Actions = managed async lifecycle"** — React handles pending/error/success so you don't manage 3 separate useStates
+> 🧠 **Memory Hook**: "Actions = React quản lý vòng đời async cho bạn — `pending → success/error` tự động, không cần useState thủ công."
 
 **Tại sao tồn tại? / Why does this exist?**
-
-Every form mutation before React 19 needed: `const [isLoading, setIsLoading] = useState(false)`,
-`const [error, setError] = useState(null)`, `try { setIsLoading(true); await submit(); } catch (e)
-{ setError(e); } finally { setIsLoading(false); }`. This boilerplate was in EVERY form component.
-
-→ **Why?** Vì React trước 19 không có first-class concept cho "mutation" — chỉ có "state" và
-"effect". Mutation lifecycle (pending → success/error) phải build thủ công.
-
-→ **Why?** Vì Actions integrate với transition system — form submission là transition, UI remains
-responsive, multiple submits are queued (no race conditions), và progressive enhancement
-(forms work trước khi JS load) becomes possible.
+Mỗi form submit cần quản lý: loading state, error state, optimistic update, form reset. Dev phải viết 4-5 useState + try/catch mỗi form — boilerplate lặp đi lặp lại.
+→ **Why?** Vì async operation có lifecycle phức tạp (pending/success/error/retry) mà useState đơn giản không model được.
+→ **Why?** Vì React trước v19 chỉ cung cấp primitive (useState/useEffect) — dev phải tự compose lifecycle từ primitive. Actions nâng abstraction level lên.
 
 #### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
 
-Actions giống **giao dịch ngân hàng online**: bạn nhấn "chuyển tiền" → ngân hàng hiển thị
-"đang xử lý" (pending) → thành công hoặc báo lỗi → tài khoản cập nhật. Bạn không cần
-tự theo dõi state "đang chuyển"/"đã xong"/"lỗi" — ngân hàng (React) quản lý lifecycle cho bạn.
+Hãy tưởng tượng bạn gửi thư ở bưu điện. Trước React 19, bạn phải tự: (1) ghi "đang gửi" lên bảng, (2) đưa thư cho nhân viên, (3) đợi, (4) nếu OK thì xoá bảng, nếu thất bại thì ghi lỗi lên bảng. React 19 Actions giống như bưu điện tự động: bạn chỉ đưa thư, hệ thống tự hiển thị "đang xử lý", tự thông báo kết quả, tự xử lý lỗi.
 
 #### Layer 2: How It Works / Cơ Chế Hoạt Động
 
+Actions gồm 3 hooks phối hợp:
+
 ```
-Actions Lifecycle:
-
-  User submits form
-       │
-       ▼
-  useActionState wraps action
-       │
-       ├── isPending = true (automatic)
-       │
-       ▼
-  Async action runs (server or client)
-       │
-       ├── Success → state updated with result
-       │   └── useOptimistic reverts to real data
-       │
-       └── Error → state updated with error
-           └── useOptimistic reverts to previous
-       │
-       ▼
-  isPending = false (automatic)
-
-  Component tree:
-  ┌─────────────────────────────────┐
-  │ <FormParent>                    │ ← useActionState (owns lifecycle)
-  │   ├── useOptimistic (instant UI)│
-  │   │                             │
-  │   ├── <form action={formAction}>│
-  │   │   ├── <Input />             │
-  │   │   ├── <Input />             │
-  │   │   └── <SubmitBtn />         │ ← useFormStatus (reads pending)
-  │   │                             │
-  │   └── <ErrorMessage />          │ ← reads state.error
-  └─────────────────────────────────┘
+  ┌─────────────────────────────────────────────────────────┐
+  │                    ACTIONS TRIO                          │
+  ├─────────────────────────────────────────────────────────┤
+  │                                                         │
+  │  useActionState(action, initialState)                   │
+  │  ├── Quản lý: state + pending + error                  │
+  │  ├── Input: async function (prevState, formData)        │
+  │  └── Output: [state, formAction, isPending]             │
+  │                                                         │
+  │  useFormStatus()                                        │
+  │  ├── Dùng trong: child component của <form>             │
+  │  ├── Biết: pending status của parent form               │
+  │  └── Output: { pending, data, method, action }          │
+  │                                                         │
+  │  useOptimistic(state, updateFn)                         │
+  │  ├── Hiển thị: kết quả giả trước khi server confirm    │
+  │  ├── Tự rollback: nếu server trả error                 │
+  │  └── Output: [optimisticState, addOptimistic]           │
+  │                                                         │
+  └─────────────────────────────────────────────────────────┘
 ```
 
-```typescript
-// ✅ Complete Actions pattern — form with optimistic update
-import { useActionState, useOptimistic } from 'react';
-import { useFormStatus } from 'react-dom';
+**Flow hoạt động:**
 
-// Server or client action
-async function addTodo(prevState: State, formData: FormData): Promise<State> {
-  const text = formData.get('text') as string;
+```
+  User click Submit
+       │
+       ▼
+  ┌──────────────┐    ┌──────────────────┐    ┌────────────────┐
+  │ useOptimistic│───▶│ useActionState   │───▶│ Server/API     │
+  │ show result  │    │ set isPending    │    │ process data   │
+  │ immediately  │    │ = true           │    │                │
+  └──────────────┘    └──────────────────┘    └───────┬────────┘
+                                                      │
+                              ┌────────────────────────┤
+                              ▼                        ▼
+                      ┌──────────────┐        ┌──────────────┐
+                      │   Success    │        │    Error     │
+                      │ state update │        │ rollback     │
+                      │ isPending=   │        │ optimistic   │
+                      │ false        │        │ show error   │
+                      └──────────────┘        └──────────────┘
+```
 
+**Complete code example:**
+
+```tsx
+// ---- Action function (có thể tách riêng file) ----
+async function updateName(prevState, formData) {
+  const name = formData.get("name");
+  if (!name || name.length < 2) {
+    return { error: "Name must be at least 2 characters" };
+  }
   try {
-    const todo = await fetch('/api/todos', {
-      method: 'POST',
-      body: JSON.stringify({ text }),
-    }).then(r => r.json());
-
-    return { ...prevState, todos: [...prevState.todos, todo], error: null };
+    await api.updateUser({ name });
+    return { name, error: null };
   } catch (e) {
-    return { ...prevState, error: 'Failed to add todo' };
+    return { ...prevState, error: e.message };
   }
 }
 
-function TodoForm() {
-  const [state, formAction, isPending] = useActionState(addTodo, {
-    todos: [],
+// ---- Form Component ----
+function ProfileForm({ currentName }) {
+  // useActionState quản lý toàn bộ lifecycle
+  const [state, formAction, isPending] = useActionState(updateName, {
+    name: currentName,
     error: null,
   });
 
-  // Optimistic: show new todo immediately before server confirms
-  const [optimisticTodos, addOptimistic] = useOptimistic(
-    state.todos,
-    (current, newText: string) => [...current, { id: 'temp', text: newText, pending: true }]
+  // useOptimistic hiện kết quả ngay lập tức
+  const [optimisticName, setOptimisticName] = useOptimistic(
+    state.name,
+    (current, newName) => newName,
   );
 
   return (
-    <form action={async (formData) => {
-      addOptimistic(formData.get('text') as string); // instant UI
-      await formAction(formData);                      // actual submission
-    }}>
-      <input name="text" required />
+    <form
+      action={async (formData) => {
+        setOptimisticName(formData.get("name")); // UI cập nhật ngay
+        await formAction(formData); // gửi lên server
+      }}
+    >
+      <p>Current: {optimisticName}</p>
+      <input name="name" disabled={isPending} />
+      {state.error && <p style={{ color: "red" }}>{state.error}</p>}
       <SubmitButton />
-      {state.error && <p className="error">{state.error}</p>}
-      <ul>
-        {optimisticTodos.map(t => (
-          <li key={t.id} style={{ opacity: t.pending ? 0.5 : 1 }}>{t.text}</li>
-        ))}
-      </ul>
     </form>
   );
 }
 
-// Reusable submit button — works in ANY form
+// ---- Submit Button dùng useFormStatus ----
 function SubmitButton() {
-  const { pending } = useFormStatus(); // reads from nearest parent <form>
+  const { pending } = useFormStatus(); // tự biết parent form đang pending
   return (
     <button type="submit" disabled={pending}>
-      {pending ? 'Saving...' : 'Add Todo'}
+      {pending ? "Saving..." : "Save"}
     </button>
   );
 }
@@ -308,388 +312,568 @@ function SubmitButton() {
 
 #### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
 
-- **`useActionState` moved**: Was `useFormState` in react-dom → renamed to `useActionState` in react and works with non-form actions too
-- **`useFormStatus` scope**: Only reads from nearest parent `<form>` — must be a CHILD of `<form>`, not the component that renders `<form>`
-- **Progressive enhancement**: With Server Actions, `<form action={serverAction}>` works before JS loads — true HTML form behavior
-- **Sequential submission**: Multiple rapid submits are queued, not concurrent — prevents race conditions by default
-- **Optimistic rollback**: `useOptimistic` automatically reverts when the action completes (success replaces with real data, error reverts to previous)
+- **useFormStatus chỉ hoạt động trong child:** Phải là component con nằm bên trong `<form>`. Dùng trong cùng component với form sẽ không work.
+- **Action function nhận `prevState`:** Khác với event handler thông thường — state là return value của lần gọi trước, giống useReducer.
+- **Optimistic rollback:** `useOptimistic` tự rollback khi action function hoàn tất (success hoặc error). Không cần manually reset.
+- **Server Actions (Next.js):** `"use server"` directive biến function thành API endpoint — Actions pattern hoạt động cả client lẫn server.
+- **Progressive Enhancement:** `<form action={formAction}>` hoạt động ngay cả khi JavaScript chưa load — HTML form gửi bình thường.
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-|---------|------------|---------|
-| Using `useFormStatus` in the same component as `<form>` | `useFormStatus` reads from PARENT form — must be a child component | Extract submit button into a separate component |
-| Confusing `useActionState` with `useReducer` | `useActionState` handles async + pending + form integration; `useReducer` is sync-only | Use `useActionState` for server mutations, `useReducer` for complex client state |
-| Not handling optimistic rollback on error | `useOptimistic` auto-reverts, but you still need error UI | Always check `state.error` and show user feedback |
-| "Actions replace all form handlers" | Actions are for mutations (POST/PUT/DELETE). Read-only forms (search, filters) are fine with `onChange` | Use Actions for writes, events for reads |
+| Sai lầm                                          | Tại sao sai                                                   | Đúng là                                                       |
+| ------------------------------------------------ | ------------------------------------------------------------- | ------------------------------------------------------------- |
+| Dùng `useFormStatus` cùng component với `<form>` | Hook cần context từ parent form — cùng level không có context | Tách `<SubmitButton>` ra component riêng                      |
+| Quên return new state từ action function         | `useActionState` dùng return value làm state mới              | Luôn return object `{ data, error }`                          |
+| Dùng `useState` + `try/catch` thay vì Actions    | Boilerplate nhiều, không có pending/optimistic tự động        | Dùng `useActionState` cho form, `useState` cho non-form state |
+| Gọi `setOptimisticName` sau `formAction`         | Optimistic phải hiển thị TRƯỚC khi server response            | Gọi `setOptimistic` trước, `formAction` sau                   |
 
 **🎯 Interview Pattern:**
-- Khi thấy câu hỏi về: "useActionState", "useFormStatus", "useOptimistic", "React 19 forms"
-- → Nhớ đến: "Managed async lifecycle" — pending/error/success automatic
-- → Mở đầu trả lời: "React 19 introduces the Actions pattern with three hooks that work together: useActionState owns the form's async lifecycle — it wraps the action and returns state plus isPending, eliminating the need for manual loading/error state management. useFormStatus distributes pending state to child components without prop drilling. useOptimistic provides instant UI feedback before the server confirms, with automatic rollback on failure."
 
-**🔑 Knowledge Chain:**
-- 📚 Cần biết: [Hooks — useState/useReducer](./03-hooks-deep-dive.md) — Actions build on the reducer mental model
-- ➡️ Để hiểu: [Next.js Server Actions](../04-nextjs/04-nextjs-fundamentals-appRouter.md) — Actions + `"use server"` = full-stack mutations
+- Khi thấy câu hỏi về: "form handling React 19", "useActionState", "optimistic updates"
+- → Nhớ đến: Actions trio (useActionState + useFormStatus + useOptimistic), managed async lifecycle
+- → Mở đầu trả lời: _"React 19 Actions quản lý toàn bộ async lifecycle của form: pending state, error handling, và optimistic update — thay vì dev tự compose từ useState + try/catch. Bộ ba hook phối hợp: useActionState quản lý state, useFormStatus cho child components biết trạng thái, useOptimistic hiện kết quả ngay trước khi server confirm."_
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [useState/useReducer](./03-hooks-deep-dive.md), [Form handling basics](./01-react-fundamentals.md)
+- ➡️ Để hiểu tiếp: [State Management](./05-state-management.md), [Server Components](./10-modern-react-features.md)
 
 ---
 
-### 3. use() API, Ref Changes & Other Breaking Changes
+### 3. use() API
 
-> 🧠 **Memory Hook**: **"`use()` = unconditional read"** — unlike hooks, it can be called inside if/else/loops because it reads a value NOW, not sets up a subscription
+> 🧠 **Memory Hook**: "use() = đọc async value trong render — KHÔNG phải hook (không tuân theo Rules of Hooks), nên dùng được trong if/else."
 
 **Tại sao tồn tại? / Why does this exist?**
-
-`useContext` is subject to Rules of Hooks — can't call inside conditions. But sometimes you
-NEED conditional context: `if (isLoggedIn) { const prefs = use(UserPrefsContext); }`.
-
-→ **Why?** Vì `useContext` lưu vào linked list of hook calls (phải cùng order mỗi render).
-`use()` KHÔNG lưu vào linked list — nó resolve giá trị tại thời điểm gọi.
-
-→ **Why?** Vì `use()` cũng đọc Promises — cho phép data fetching trong render mà không cần
-`useEffect`. Kết hợp với Suspense, tạo ra pattern mới: component "waits" cho data trong render
-thay vì mount → fetch → re-render.
+Trước React 19, đọc data async phải dùng `useEffect` + `useState` (3-state dance: loading/data/error). Hoặc dùng thư viện như React Query. Không có cách native để "đọc Promise trong render".
+→ **Why?** Vì React render phải synchronous — Promise là async. Cần 1 primitive nối 2 thế giới.
+→ **Why?** Vì Suspense (React 18) đã có khả năng "pause render" — `use()` là API chính thức để trigger Suspense từ component code.
 
 #### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
 
-`useContext` giống **đăng ký nhận báo** — bạn đăng ký 1 lần lúc chuyển vào nhà (mount), nhận
-báo mỗi sáng (re-render). Không thể đăng ký có điều kiện. `use()` giống **mua báo ở sạp** —
-mua khi nào cần, bỏ qua khi không cần. Tự do hơn nhưng cần biết sạp ở đâu (stable reference).
+Hãy tưởng tượng bạn đang đọc sách, gặp footnote ghi "xem phụ lục trang 200". Bạn giữ ngón tay ở trang hiện tại (= Suspense giữ vị trí render), lật sang trang 200 đọc xong (= `use()` đợi Promise resolve), rồi quay lại đọc tiếp. Nếu phụ lục chưa in xong (= Promise pending), bạn thấy tờ giấy ghi "đang in..." (= fallback).
 
 #### Layer 2: How It Works / Cơ Chế Hoạt Động
 
 ```
-use() vs useContext:
-
-  useContext(ThemeCtx)                use(ThemeCtx)
-  ───────────────────                ─────────────
-  ❌ Can't call in if/else           ✅ Can call anywhere
-  ❌ Can't call in loops             ✅ Can call in loops
-  ✅ Sets up subscription            ✅ Reads current value
-  Stored in hook linked list         NOT stored in linked list
-
-  use() with Promises:
-  ───────────────────
-  function UserProfile({ userPromise }) {
-    const user = use(userPromise);  // suspends until resolved
-    return <h1>{user.name}</h1>;
-  }
-
-  <Suspense fallback={<Skeleton />}>
-    <UserProfile userPromise={fetchUser(id)} />
-  </Suspense>
+  ┌──────────────────────────────────────────────────┐
+  │              use() vs useEffect                   │
+  ├──────────────────────────────────────────────────┤
+  │                                                   │
+  │  TRƯỚC (useEffect pattern):                      │
+  │  ┌─────────────────────────────┐                 │
+  │  │ function UserProfile({ id })│                 │
+  │  │   const [user, setUser]     │  3 useState     │
+  │  │   const [loading, setLoad]  │  + useEffect    │
+  │  │   const [error, setError]   │  + cleanup      │
+  │  │   useEffect(() => {         │  = 15+ dòng     │
+  │  │     fetch(...)              │  boilerplate    │
+  │  │       .then(setUser)        │                 │
+  │  │       .catch(setError)      │                 │
+  │  │   }, [id])                  │                 │
+  │  └─────────────────────────────┘                 │
+  │                                                   │
+  │  SAU (use() + Suspense):                         │
+  │  ┌─────────────────────────────┐                 │
+  │  │ function UserProfile({ p }) │                 │
+  │  │   const user = use(p);      │  1 dòng.       │
+  │  │   return <div>{user.name}   │  Suspense lo   │
+  │  │   </div>                    │  loading.       │
+  │  └─────────────────────────────┘  ErrorBoundary  │
+  │                                   lo error.      │
+  └──────────────────────────────────────────────────┘
 ```
 
-```typescript
-// ✅ use() for conditional context
-function Dashboard({ isAdmin }: { isAdmin: boolean }) {
-  const theme = use(ThemeContext); // always needed
+**Cách hoạt động bên trong:**
 
-  if (isAdmin) {
-    const adminConfig = use(AdminConfigContext); // conditional!
-    return <AdminPanel config={adminConfig} theme={theme} />;
-  }
+```
+  Component gọi use(promise)
+       │
+       ├── Promise đã resolved?
+       │   └── YES → return giá trị → render tiếp bình thường
+       │
+       ├── Promise đang pending?
+       │   └── YES → throw promise → Suspense bắt
+       │            → hiển thị fallback
+       │            → khi resolve, React retry render
+       │
+       └── Promise bị rejected?
+           └── YES → throw error → ErrorBoundary bắt
+```
 
-  return <UserPanel theme={theme} />;
+**Code thực tế:**
+
+```tsx
+import { use, Suspense } from "react";
+
+// QUAN TRỌNG: Promise phải stable reference (tạo bên ngoài render)
+// Sai: use(fetch(...)) — tạo Promise mới mỗi render → infinite loop
+// Đúng: nhận promise từ prop hoặc cache
+function UserProfile({ userPromise }) {
+  const user = use(userPromise); // đọc trực tiếp trong render
+  return <h1>{user.name}</h1>;
 }
 
-// ✅ use() for data fetching (replaces useEffect + useState pattern)
-async function fetchUser(id: string): Promise<User> {
-  const res = await fetch(`/api/users/${id}`);
-  return res.json();
+// Có thể dùng trong conditional! (không phải hook)
+function MaybeUser({ userPromise, showProfile }) {
+  if (!showProfile) return <p>Hidden</p>;
+  const user = use(userPromise); // OK trong if block!
+  return <h1>{user.name}</h1>;
 }
 
-// Parent caches the promise (CRITICAL: must be stable reference)
+// Suspense + ErrorBoundary wrap bên ngoài
 function App() {
-  const [userPromise] = useState(() => fetchUser('123'));
+  const userPromise = fetchUser(1); // tạo 1 lần, truyền xuống
 
   return (
-    <Suspense fallback={<Skeleton />}>
-      <UserProfile userPromise={userPromise} />
-    </Suspense>
+    <ErrorBoundary fallback={<p>Something went wrong</p>}>
+      <Suspense fallback={<p>Loading...</p>}>
+        <UserProfile userPromise={userPromise} />
+      </Suspense>
+    </ErrorBoundary>
   );
 }
+```
 
-function UserProfile({ userPromise }: { userPromise: Promise<User> }) {
-  const user = use(userPromise); // suspends component until resolved
-  return <h1>{user.name}</h1>;   // renders AFTER data is ready
+**use() cũng đọc được Context:**
+
+```tsx
+// Thay thế useContext — nhưng dùng được trong conditional
+function ThemeButton({ showTheme }) {
+  if (!showTheme) return null;
+  const theme = use(ThemeContext); // OK! useContext thì không được
+  return <button className={theme}>Click</button>;
 }
-
-// ✅ Ref as prop — no more forwardRef boilerplate (React 19)
-// Before:
-const Input = forwardRef<HTMLInputElement, Props>((props, ref) => (
-  <input ref={ref} {...props} />
-));
-
-// After (React 19):
-function Input({ ref, ...props }: Props & { ref?: Ref<HTMLInputElement> }) {
-  return <input ref={ref} {...props} />;
-}
-
-// ✅ Ref cleanup function (React 19)
-<div ref={(node) => {
-  const observer = new ResizeObserver(entries => {
-    // handle resize
-  });
-  observer.observe(node);
-  return () => observer.disconnect(); // cleanup on unmount!
-}} />
 ```
 
 #### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
 
-- **Promise stability**: `use(fetchUser(id))` in render creates new promise each render → infinite suspension. Promise MUST come from cache (parent state, TanStack Query, etc.)
-- **Context.Provider deprecated**: React 19 uses `<MyContext>` directly as provider, not `<MyContext.Provider>`. Old syntax shows deprecation warning
-- **forwardRef deprecated**: `ref` is now a regular prop. Existing `forwardRef` code works but logs warnings — use codemod to convert
-- **String refs removed**: `this.refs.myRef` completely removed (deprecated since React 16)
-- **`ReactDOM.render` removed**: Must use `createRoot`. Legacy render API throws in React 19
-
-**Key migration pitfalls:**
-
-| Removed/Changed | Migration |
-|-----------------|-----------|
-| `useFormState` (react-dom) | → `useActionState` (react) |
-| `forwardRef` | → `ref` as regular prop |
-| `<Ctx.Provider>` | → `<Ctx>` directly |
-| `ReactDOM.render` | → `createRoot().render()` |
-| `propTypes`/`defaultProps` on fn components | → TypeScript + JS default params |
-| String refs (`this.refs.x`) | → `useRef` / callback refs |
+- **Stable reference bắt buộc:** `use(fetch('/api'))` tạo Promise mới mỗi render → infinite loop. Promise phải từ prop, cache, hoặc module scope.
+- **Không phải hook:** `use()` không lưu trong linked list → dùng trong if/loop OK. Nhưng vẫn chỉ gọi trong React component/hook.
+- **Cần Suspense boundary:** Nếu không có Suspense wrap, pending Promise sẽ throw lên ErrorBoundary hoặc crash.
+- **Streaming SSR:** `use()` + Suspense cho phép stream HTML từ server — component nào ready thì gửi trước.
+- **React Query vẫn hữu ích:** `use()` chỉ là primitive — không có cache invalidation, retry, refetch on focus như React Query.
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm | Tại sao sai | Đúng là |
-|---------|------------|---------|
-| Creating Promise in render for `use()` | New promise each render → infinite suspend/re-render loop | Cache promise in parent state or use TanStack Query |
-| Ref callbacks that accidentally return a value | React 19 treats ANY return value as cleanup function | If your old ref callback returns something, remove the return |
-| "use() replaces useContext entirely" | `use()` and `useContext` both work — `use()` adds conditional capability | Use `useContext` for always-needed context, `use()` for conditional |
-| Ignoring eslint-plugin-react-compiler before migration | Violations cause silent bugs — worse than no compiler at all | Always audit with ESLint plugin before enabling compiler |
+| Sai lầm                                           | Tại sao sai                                                    | Đúng là                                                              |
+| ------------------------------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `use(fetch('/api/user'))` trong render            | Tạo Promise mới mỗi render → infinite suspend/retry            | Promise phải stable: từ prop, useMemo, hoặc cache ngoài component    |
+| Nghĩ `use()` thay thế React Query                 | `use()` là primitive đọc Promise, không có cache/retry/refetch | Dùng `use()` cho simple cases, React Query cho complex data fetching |
+| Gọi `use()` mà không có Suspense                  | Pending Promise throw ra ngoài → crash hoặc ErrorBoundary bắt  | Luôn wrap component dùng `use()` trong `<Suspense>`                  |
+| Nghĩ `use()` là hook nên phải tuân Rules of Hooks | `use()` KHÔNG phải hook — không lưu trong linked list          | Dùng trong if/for/early return đều OK                                |
 
 **🎯 Interview Pattern:**
-- Khi thấy câu hỏi về: "use() API", "React 19 changes", "forwardRef removal", "migration"
-- → Nhớ đến: "`use()` = unconditional read" — not stored in hook linked list
-- → Mở đầu trả lời: "The `use()` API intentionally breaks the Rules of Hooks — it can be called inside conditionals and loops because unlike useState or useContext, it's not stored in a linked list of hook calls. It reads the current value of a Context or Promise at call time. For Promises, it integrates with Suspense to pause rendering until data is ready, replacing the useEffect + useState fetch pattern."
 
-**🔑 Knowledge Chain:**
-- 📚 Cần biết: [Hooks — Rules of Hooks](./03-hooks-deep-dive.md) — understand WHY hooks can't be conditional (linked list)
-- ➡️ Để hiểu: [Next.js Server Components](../04-nextjs/04-nextjs-fundamentals-appRouter.md) — `use()` + Suspense + Server Components = new data loading model
+- Khi thấy câu hỏi về: "use() API", "đọc Promise trong render", "Suspense data fetching"
+- → Nhớ đến: Không phải hook, cần stable reference, throw-to-Suspense mechanism
+- → Mở đầu trả lời: _"use() là API mới của React 19 cho phép đọc async value trực tiếp trong render — khác với hook vì không lưu trong linked list, nên dùng được trong conditional. Nó throw Promise pending lên Suspense boundary, và throw error lên ErrorBoundary. Quan trọng nhất: Promise phải là stable reference."_
 
----
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
 
-## Interview Q&A / Hỏi Đáp Phỏng Vấn
-
-### Q1: What problem does React Compiler solve, and what are its limitations? / React Compiler giải quyết vấn đề gì và có hạn chế gì? 🟡 Mid
-
-**A:** React Compiler automatically memoizes components and values at build time, eliminating manual `React.memo`, `useMemo`, and `useCallback`. It performs static analysis to track which values depend on which inputs and inserts fine-grained memoization.
-
-**Limitations:** It requires code to follow the Rules of React (pure render, no side effects during render). Can't optimize dynamic patterns (`eval()`, non-deterministic code, render-time mutations). Increases build time 10-30% in exchange for runtime performance.
-
-Giải thích tiếng Việt: Compiler tự động memo hóa tại build time, loại bỏ nhu cầu memo thủ công. Hạn chế: yêu cầu code tuân thủ Rules of React, không tối ưu được code động hoặc có side effect trong render, tăng build time.
-
-**💡 Interview Signal:**
-- ✅ Strong: Explains build-time analysis vs runtime memo, mentions ESLint plugin for auditing, discusses migration strategy
-- ❌ Weak: Only says "it auto-memoizes" without understanding the purity requirement
+- 📚 Cần biết trước: [Suspense](./10-modern-react-features.md), [useEffect pattern](./03-hooks-deep-dive.md)
+- ➡️ Để hiểu tiếp: [Server Components & Streaming](./10-modern-react-features.md)
 
 ---
 
-### Q2: Explain the relationship between useActionState, useFormStatus, and useOptimistic. / Giải thích mối quan hệ giữa ba hooks. 🔴 Senior
+### 4. Ref Changes / Thay Đổi Về Ref
 
-**A:** These three hooks form a complete form mutation system:
+> 🧠 **Memory Hook**: "React 19: ref là prop bình thường — forwardRef xoá, ref có cleanup như useEffect."
 
-- **`useActionState(action, initialState)`** — used in the **parent** that owns the form. Wraps the action and returns `[state, formAction, isPending]`. Manages result/error state and pending status.
-- **`useFormStatus()`** — used in **child components** inside `<form>`. Reads `{ pending, data, method, action }` from nearest parent form context. Ideal for reusable submit buttons.
-- **`useOptimistic(state, updateFn)`** — provides immediate UI feedback before action completes. Automatically reverts if action fails.
+**Tại sao tồn tại? / Why does this exist?**
+`forwardRef` là wrapper verbose — mỗi component chỉ để truyền ref phải bọc thêm 1 lớp HOC. Và ref không có cleanup function — khi component unmount, dev phải tự dọn dẹp trong useEffect riêng.
+→ **Why?** Vì ref ban đầu được thiết kế là "escape hatch" đặc biệt, không phải prop thông thường. Nhưng thực tế ref được dùng rất phổ biến → cần đơn giản hoá.
+→ **Why?** Vì API phức tạp không cần thiết tạo ra cognitive overhead — mỗi lần dùng ref phải nhớ "à, cái này phải forwardRef".
 
-```typescript
-// Parent: useActionState (owns lifecycle)
-const [state, formAction, isPending] = useActionState(submitOrder, initialState);
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
 
-// Optimistic (instant feedback)
-const [optimisticItems, addOptimistic] = useOptimistic(state.items, (curr, newItem) => [...curr, newItem]);
+Trước React 19, muốn đưa chìa khoá (ref) cho nhà bên trong (child component), bạn phải đưa qua trung gian (forwardRef wrapper). Bây giờ bạn đưa thẳng — chìa khoá là đồ vật bình thường, không cần xử lý đặc biệt.
 
-// Child: useFormStatus (reads pending without prop drilling)
-function SubmitBtn() {
-  const { pending } = useFormStatus(); // MUST be inside <form>
-  return <button disabled={pending}>{pending ? 'Saving...' : 'Submit'}</button>;
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
+```
+  TRƯỚC React 19:                       SAU React 19:
+  ─────────────────                     ─────────────────
+  // Phải dùng forwardRef               // ref là prop thường
+  const Input = forwardRef(             function Input({ ref, ...props }) {
+    (props, ref) => {                     return <input ref={ref} {...props} />;
+      return <input ref={ref}           }
+        {...props} />;
+    }
+  );
+```
+
+**Ref cleanup function (mới):**
+
+```
+  TRƯỚC: ref callback không có cleanup
+  ──────────────────────────────────────
+  <div ref={(node) => {
+    // gắn observer
+    observer.observe(node);
+    // KHÔNG CÓ CÁCH CLEANUP!
+    // phải dùng useEffect riêng
+  }} />
+
+  SAU: ref callback return cleanup function
+  ──────────────────────────────────────
+  <div ref={(node) => {
+    observer.observe(node);
+    return () => observer.disconnect(); // cleanup!
+  }} />
+```
+
+**Ví dụ thực tế — IntersectionObserver với ref cleanup:**
+
+```tsx
+function LazyImage({ src }) {
+  return (
+    <img
+      ref={(node) => {
+        if (!node) return;
+        const observer = new IntersectionObserver(([entry]) => {
+          if (entry.isIntersecting) {
+            node.src = src;
+            observer.disconnect();
+          }
+        });
+        observer.observe(node);
+        return () => observer.disconnect(); // tự cleanup khi unmount
+      }}
+    />
+  );
 }
 ```
 
-Giải thích tiếng Việt: Ba hook tạo hệ thống mutation hoàn chỉnh. `useActionState` quản lý lifecycle ở parent (state + pending + error). `useFormStatus` phân phối pending state cho children không cần prop drilling. `useOptimistic` cho UI cảm giác tức thì — tự động revert nếu action fail.
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
 
-**💡 Interview Signal:**
-- ✅ Strong: Explains which hook goes WHERE in component tree, mentions `useFormStatus` must be child of `<form>`
-- ❌ Weak: Confuses `useActionState` with `useReducer`, doesn't know `useFormStatus` scoping
+- **forwardRef vẫn hoạt động:** Không bị xoá, chỉ deprecated. Codebase cũ vẫn chạy.
+- **Ref cleanup timing:** Cleanup chạy khi component unmount HOẶC khi ref callback thay đổi (giống useEffect cleanup).
+- **TypeScript:** `ref` prop type tự động infer — không cần `ForwardedRef<T>` nữa.
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                               | Tại sao sai                                | Đúng là                                              |
+| ------------------------------------- | ------------------------------------------ | ---------------------------------------------------- |
+| Vẫn dùng forwardRef cho component mới | forwardRef deprecated trong React 19       | Nhận `ref` như prop bình thường                      |
+| Không return cleanup từ ref callback  | Observer/listener leak khi unmount         | Luôn return cleanup function nếu ref gắn side-effect |
+| Xoá hết forwardRef ngay khi upgrade   | Migration cần dần dần, forwardRef vẫn work | Để forwardRef cho code cũ, code mới dùng ref-as-prop |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy câu hỏi về: "forwardRef deprecated", "ref changes React 19"
+- → Nhớ đến: ref as prop, cleanup function, migration gradual
+- → Mở đầu trả lời: _"React 19 biến ref thành prop bình thường — không cần forwardRef wrapper nữa. Thêm vào đó, ref callback giờ có thể return cleanup function, giống useEffect, giúp dọn dẹp observer/listener ngay tại nơi tạo."_
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [useRef](./03-hooks-deep-dive.md), [Component & Props](./01-react-fundamentals.md)
+- ➡️ Để hiểu tiếp: [Advanced Patterns - Imperative Handle](./04-advanced-patterns.md)
 
 ---
 
-### Q3: Why is use() not a hook? What implications does this have? / Tại sao use() không phải hook? 🔴 Senior
+### 5. Context Simplification & Other Changes / Context Đơn Giản Hoá
 
-**A:** `use()` intentionally breaks Rules of Hooks — it can be called inside conditionals, loops, and early returns. This is possible because `use()` is NOT stored in the linked list of hook calls like `useState` or `useEffect`. Instead, it resolves the value at call time.
+> 🧠 **Memory Hook**: "React 19: `<Context>` trực tiếp thay `<Context.Provider>` — bớt 1 tầng nesting."
 
-**Implications:**
-1. **Conditional context**: `if (isAdmin) { const config = use(AdminCtx); }` — impossible with `useContext`
-2. **Promise in render**: `const data = use(promise)` integrates with Suspense, replacing `useEffect` data fetching
-3. **Mental model shift**: Hooks = "subscriptions set up once"; `use()` = "read a value right now"
+**Tại sao tồn tại? / Why does this exist?**
+`<ThemeContext.Provider value={theme}>` là verbose — `.Provider` là chi tiết implementation không cần thiết. React 19 cho phép `<ThemeContext value={theme}>` trực tiếp.
+→ **Why?** Vì API đơn giản hơn = ít lỗi hơn + dễ đọc hơn. Mỗi ký tự thừa là cognitive cost.
+→ **Why?** Vì React team đang dọn dẹp technical debt từ API design cũ để chuẩn bị cho React Compiler + Server Components.
 
-**Key gotcha:** Promises passed to `use()` must be stable references. Creating a new promise in render causes infinite suspension — the promise resolves, triggers re-render, creates new promise, suspends again forever.
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
 
-Giải thích tiếng Việt: `use()` không lưu trong linked list hook → có thể gọi trong if/loop. Cho phép đọc context có điều kiện và đọc Promise trong render với Suspense. Promise PHẢI là tham chiếu ổn định (cached) — tạo promise mới trong render gây infinite loop.
+Thay vì nói "Tôi gửi thư qua bưu điện trung ương chi nhánh Quận 1" (Context.Provider), bây giờ nói "Tôi gửi thư qua bưu điện Quận 1" (Context). Cùng kết quả, bớt chữ.
 
-**💡 Interview Signal:**
-- ✅ Strong: Explains linked list reason, gives conditional context example, warns about promise stability
-- ❌ Weak: Only knows "it can be called conditionally" without understanding WHY
-
----
-
-### Q4: How do Server Components affect application architecture? / Server Components ảnh hưởng architecture thế nào? 🔴 Senior
-
-**A:** Server Components split the component tree into server-executed (zero client JS) and client-executed pieces:
-
-1. **Data layer**: Server Components access databases directly — no API routes needed for reads
-2. **Bundle size**: Heavy deps (markdown parsers, ORMs) stay on server. Client only includes interactive components
-3. **Composition rules**: Server can render Client (`'use client'`), but NOT vice versa. Client receives Server as `children` (donut pattern)
-4. **Caching shifts**: From client-side (React Query) to server/edge (CDN, ISR)
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
 
 ```
-Composition Rules:
-
-  ✅ Server renders Client:
-  // server-component.tsx
-  import ClientBtn from './client-btn'; // 'use client'
-  export default function Page() {
-    return <ClientBtn />; // works — server renders the boundary
-  }
-
-  ✅ Client receives Server as children (donut pattern):
-  // client-layout.tsx ('use client')
-  export default function Layout({ children }) {
-    const [open, setOpen] = useState(false);
-    return <div>{children}</div>; // children can be Server Components!
-  }
-
-  ❌ Client imports Server:
-  // client.tsx ('use client')
-  import ServerComp from './server'; // ❌ CANNOT import server into client
+  TRƯỚC React 19:                        SAU React 19:
+  ─────────────────                      ─────────────────
+  <ThemeContext.Provider value={theme}>   <ThemeContext value={theme}>
+    <App />                                <App />
+  </ThemeContext.Provider>               </ThemeContext>
 ```
 
-Giải thích tiếng Việt: Server Components chia tree thành phần server (0 JS client) và phần client. Data access trực tiếp DB (không cần API route), bundle nhẹ hơn, nhưng có quy tắc composition: Server → Client OK, Client → Server NOT OK (chỉ qua children). Caching chuyển từ client sang server/edge.
+**Các thay đổi nhỏ khác trong React 19:**
 
-**💡 Interview Signal:**
-- ✅ Strong: Explains donut pattern, discusses caching shift, knows composition constraints
-- ❌ Weak: Only says "runs on server, less JS" without architectural implications
+```
+  ┌────────────────────────────────────────────────────────┐
+  │  Thay đổi              │ Trước          │ Sau          │
+  ├────────────────────────┼────────────────┼──────────────┤
+  │  Context Provider      │ <Ctx.Provider> │ <Ctx>        │
+  │  Document metadata     │ react-helmet   │ <title> etc  │
+  │                        │                │ in component │
+  │  Stylesheet priority   │ manual <link>  │ precedence   │
+  │                        │                │ prop         │
+  │  Async scripts         │ manual loading │ dedup by src │
+  │  ref                   │ forwardRef()   │ ref as prop  │
+  │  Error reporting       │ componentDid   │ onCaughtError│
+  │                        │ Catch only     │ + onUncaught │
+  └────────────────────────┴────────────────┴──────────────┘
+```
+
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
+- **Context.Provider vẫn hoạt động:** Deprecated nhưng không bị xoá ngay. Codebase cũ an toàn.
+- **Document metadata:** `<title>`, `<meta>`, `<link>` viết trong component tự hoist lên `<head>` — không cần thư viện ngoài.
+- **Stylesheet `precedence`:** React quản lý thứ tự CSS — `precedence="default"` load trước `precedence="high"`.
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                              | Tại sao sai                                          | Đúng là                                     |
+| ---------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------- |
+| Dùng react-helmet cho `<title>` trong React 19       | React 19 native hỗ trợ document metadata             | Dùng `<title>` trực tiếp trong component    |
+| Quên `precedence` prop cho `<link rel="stylesheet">` | Không có precedence → React không quản lý thứ tự CSS | Thêm `precedence` để React dedup + ordering |
+| Nghĩ tất cả thay đổi bắt buộc migrate ngay           | Deprecated ≠ removed — code cũ vẫn work              | Migrate dần, ưu tiên code mới dùng API mới  |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy câu hỏi về: "React 19 breaking changes", "migration strategy"
+- → Nhớ đến: Context simplification, metadata, ref, progressive migration
+- → Mở đầu trả lời: _"React 19 có nhiều thay đổi nhỏ đều hướng tới đơn giản hoá API: Context dùng trực tiếp không cần .Provider, ref thành prop thường, native document metadata. Phần lớn là deprecation không phải breaking — migration dần được."_
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Context API](./05-state-management.md)
+- ➡️ Để hiểu tiếp: [Server Components](./10-modern-react-features.md)
 
 ---
 
-### Q5: How would you incrementally adopt React Compiler in a large codebase? / Adopt React Compiler từng bước thế nào? 🔴 Senior
+## Q&A Section / Câu Hỏi Phỏng Vấn
 
-**A:** Six-step strategy:
+### Q1: React Compiler là gì và nó giải quyết vấn đề gì? / What is React Compiler and what problem does it solve? 🟢 Junior
 
-1. **Audit**: Run `eslint-plugin-react-compiler` to surface Rules of React violations
-2. **Fix violations**: Most are genuine bugs (render-time mutations, conditional hooks). Improves code regardless of compiler
-3. **Enable per-directory**: Babel/SWC plugin config — start with shared UI components
-4. **Measure**: Compare bundle size, runtime perf (DevTools Profiler), and build time before/after
-5. **Remove manual memo**: After compiler is stable, existing `useMemo`/`useCallback`/`React.memo` are redundant
-6. **Monitor production**: Watch for behavior regressions — edge cases with impure code that passed undetected
+**A:** React Compiler is a build-time tool (Babel plugin) that automatically adds memoization to your React code. It analyzes your components during build and inserts `useMemo`/`useCallback` equivalents where needed, so developers don't have to manually optimize re-renders.
 
-Giải thích tiếng Việt: 6 bước: audit với ESLint plugin → fix violations → bật compiler theo từng thư mục → đo lường (build time +10-30%, runtime cải thiện) → xóa memo thủ công dần → monitor production.
+React Compiler là công cụ chạy lúc build (Babel plugin), tự động thêm memoization vào code React. Nó phân tích component và thêm cache ở những chỗ cần thiết — developer không cần tự viết `useMemo`/`useCallback`. Giống TypeScript tự check type, Compiler tự check performance.
 
-**💡 Interview Signal:**
-- ✅ Strong: Starts with ESLint audit (not blind enable), gives per-directory strategy, mentions measurement
-- ❌ Weak: Says "just enable it" without migration strategy
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
+- ✅ Strong: Đề cập "build-time static analysis", "Babel plugin", so sánh với TypeScript
+- ❌ Weak: Chỉ nói "nó tự optimize" mà không biết cơ chế (build vs runtime) hoặc limitations
 
 ---
 
-### Q6: What is the ref cleanup function pattern in React 19? / Pattern ref cleanup function là gì? 🟡 Mid
+### Q2: Actions pattern giải quyết gì? Kể tên 3 hooks liên quan. / What does the Actions pattern solve? Name the 3 related hooks. 🟢 Junior
 
-**A:** React 19 allows ref callbacks to return a cleanup function, similar to `useEffect` cleanup:
+**A:** Actions solve the boilerplate problem of managing async form submissions — pending state, error handling, and optimistic updates. The three hooks are: `useActionState` (manages form state + pending + error), `useFormStatus` (child component reads parent form status), and `useOptimistic` (shows result immediately before server confirms).
+
+Actions giải quyết boilerplate khi submit form async — thay vì 4-5 useState để quản lý loading/error/optimistic, Actions tự lo lifecycle. Ba hooks: `useActionState` quản lý state tổng thể, `useFormStatus` cho child biết form đang pending, `useOptimistic` hiển thị kết quả giả trước khi server xác nhận.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
+- ✅ Strong: Kể tên đúng 3 hooks, giải thích vai trò từng cái, biết `useFormStatus` phải ở child component
+- ❌ Weak: Nhầm lẫn 3 hooks, không biết `useFormStatus` chỉ work trong child
+
+---
+
+### Q3: use() khác useEffect để đọc data async như thế nào? / How does use() differ from useEffect for reading async data? 🟡 Mid
+
+**A:** `useEffect` runs after render — you need separate useState for data/loading/error, and the component renders multiple times (empty → loading → data). `use()` reads the Promise during render — it suspends (via Suspense) until the Promise resolves, then renders once with data. Key difference: `use()` is NOT a hook (not stored in the linked list), so it can be called conditionally. But it requires a stable Promise reference and a Suspense boundary.
+
+`useEffect` chạy SAU render — cần thêm 3 useState (data, loading, error), component render nhiều lần. `use()` đọc Promise TRONG render — suspend cho đến khi resolve, render 1 lần với data. Khác biệt quan trọng: `use()` KHÔNG phải hook (không lưu trong linked list) nên dùng trong if/else được. Nhưng bắt buộc Promise phải stable reference và có Suspense boundary.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
+- ✅ Strong: Giải thích "not a hook", "throw to Suspense", "stable reference requirement"
+- ❌ Weak: Chỉ nói "use() tiện hơn useEffect" mà không biết cơ chế Suspense hay stable reference
+
+---
+
+### Q4: forwardRef bị deprecated trong React 19 — thay đổi thế nào? / forwardRef is deprecated in React 19 — what changed? 🟡 Mid
+
+**A:** In React 19, `ref` becomes a regular prop — no wrapper needed. Instead of `forwardRef((props, ref) => ...)`, you write `function Input({ ref, ...props })`. Additionally, ref callbacks can now return a cleanup function (like useEffect cleanup), enabling co-located setup/teardown for observers and listeners.
+
+Trong React 19, `ref` trở thành prop bình thường — không cần forwardRef wrapper. Viết `function Input({ ref, ...props })` trực tiếp. Thêm vào đó, ref callback giờ return được cleanup function (giống useEffect), cho phép gắn observer và cleanup ngay cùng chỗ — không cần useEffect riêng.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
+- ✅ Strong: Biết cả 2 thay đổi (ref as prop + ref cleanup), cho ví dụ IntersectionObserver
+- ❌ Weak: Chỉ biết forwardRef deprecated mà không biết alternative hoặc ref cleanup
+
+---
+
+### Q5: So sánh cách tiếp cận memoization thủ công vs React Compiler. Khi nào Compiler không giúp được? / Compare manual memoization vs React Compiler. When does the Compiler fall short? 🟡 Mid
+
+**A:** Manual memoization (useMemo/useCallback/memo) requires developers to correctly identify expensive computations and specify dependency arrays — error-prone and often either over-applied or under-applied. React Compiler automates this through build-time static analysis. However, the Compiler falls short when: (1) code violates Rules of React (mutations, side effects in render) — Compiler silently skips, (2) re-renders caused by Context propagation — Compiler doesn't split contexts, (3) dynamic patterns the static analyzer can't reason about.
+
+Memoization thủ công yêu cầu dev tự xác định computation nào đắt và deps đúng — dễ sai, thường thêm quá nhiều hoặc quá ít. React Compiler tự động hoá qua static analysis lúc build. Nhưng Compiler không giúp khi: (1) code vi phạm Rules of React (mutation, side-effect trong render) — Compiler im lặng skip, (2) re-render do Context propagation — Compiler không split context giùm, (3) pattern dynamic mà static analysis không phân tích được.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
+- ✅ Strong: Nêu được 2-3 limitations cụ thể, hiểu Compiler là "best-effort" không phải "magic"
+- ❌ Weak: Nghĩ Compiler fix tất cả performance problem hoặc không biết limitation
+
+---
+
+### Q6: Thiết kế migration strategy từ React 18 lên React 19 cho production app. Rủi ro chính là gì? / Design a migration strategy from React 18 to React 19 for a production app. What are the key risks? 🔴 Senior
+
+**A:** Migration strategy follows a phased approach:
+
+**Phase 1 — Audit:** Run `react-compiler-healthcheck` to identify code that violates Rules of React. Run ESLint plugin to audit per-file. Estimate percentage of code that Compiler can optimize.
+
+**Phase 2 — Enable Compiler incrementally:** Configure Babel plugin to target only new/clean directories first. Monitor bundle size and runtime performance via Core Web Vitals. Gradually expand scope.
+
+**Phase 3 — Migrate API surface:** Replace `forwardRef` with ref-as-prop in new components. Replace `Context.Provider` with `Context` in new code. Adopt Actions pattern for new forms (keep existing useState forms working).
+
+**Phase 4 — Adopt use() cautiously:** Only for new data fetching patterns with Suspense boundaries. Don't replace working useEffect patterns that have caching (React Query etc).
+
+**Key risks:**
+
+- Compiler silently skipping code that violates Rules → performance regression appears "random"
+- useFormStatus only works in child components → existing form architectures may need refactoring
+- use() requires stable Promise references → easy to cause infinite loops if not careful
+- Third-party libraries may not be Compiler-compatible
+
+Chiến lược migration theo phase: (1) Audit code quality bằng healthcheck + ESLint, (2) Bật Compiler cho từng folder mới, (3) Migrate API (forwardRef → ref prop, Context.Provider → Context), (4) Adopt use() cho data fetching mới.
+
+Rủi ro: Compiler skip code sai im lặng, useFormStatus đòi refactor form architecture, use() dễ infinite loop nếu Promise không stable, third-party lib chưa compatible.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
+- ✅ Strong: Phased approach, mention healthcheck tool, identify silent skip risk, discuss rollback plan
+- ❌ Weak: "Upgrade package version and test" — no strategy, no risk assessment
+
+**🔴 Follow-up Chain:**
+
+1. "Bạn sẽ measure thế nào để biết Compiler thực sự improve performance?" → Core Web Vitals (INP, LCP), React Profiler before/after, bundle size comparison, synthetic benchmarks on heavy components
+2. "Nếu third-party library không compatible với Compiler, bạn xử lý sao?" → `"use no memo"` directive trên wrapper component, hoặc exclude file/folder qua Babel config `sources` filter
+3. "Actions pattern có thay thế hoàn toàn Redux form handling không?" → Actions handle individual form lifecycle, Redux handles cross-component shared state — different concerns. Actions cho local form state, Redux/Zustand cho global state coordination
+
+---
+
+### Q7: use() cần stable reference — thiết kế cache layer cho use() trong production. / use() needs stable references — design a cache layer for use() in production. 🔴 Senior
+
+**A:** The core problem: `use(fetch('/api/user'))` creates a new Promise every render → infinite suspend loop. We need a cache that returns the same Promise for the same key.
 
 ```tsx
-// Before: check null for cleanup
-<div ref={(node) => {
-  if (node) observer.observe(node);
-  else observer.disconnect(); // null = unmount
-}} />
+// Simple cache implementation
+const cache = new Map<string, Promise<any>>();
 
-// React 19: explicit cleanup
-<div ref={(node) => {
-  const observer = new ResizeObserver(() => {});
-  observer.observe(node);
-  return () => observer.disconnect(); // cleanup on unmount!
-}} />
+function cachedFetch<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
+  if (!cache.has(key)) {
+    cache.set(key, fetcher());
+  }
+  return cache.get(key)!;
+}
+
+// Usage
+function UserProfile({ userId }) {
+  const user = use(cachedFetch(`user-${userId}`, () => fetchUser(userId)));
+  return <h1>{user.name}</h1>;
+}
 ```
 
-Use for: ResizeObserver, IntersectionObserver, third-party library setup/teardown. Cleanup pattern is clearer because you close over the exact resources created during setup.
+**Production considerations:**
 
-**Migration pitfall**: If your existing ref callbacks accidentally return a value, React 19 treats it as a cleanup function. Previously return values were ignored.
+- **Cache invalidation:** TTL-based expiry, or manual invalidation on mutation
+- **Memory:** WeakMap hoặc LRU cache để tránh memory leak
+- **Dedup:** Nếu 2 component cùng fetch user-1 cùng lúc, chỉ 1 request
+- **React.cache() (RSC):** Server Components có built-in `cache()` — per-request dedup
+- **Real-world:** React Query/SWR already solve this — `use()` là low-level primitive
 
-Giải thích tiếng Việt: React 19 cho phép ref callback trả về cleanup function. Trước đây kiểm tra `null` để biết unmount. Pattern mới rõ ràng hơn. Cẩn thận: nếu ref callback cũ vô tình return giá trị, React 19 sẽ coi đó là cleanup function.
+Vấn đề cốt lõi: `use(fetch(...))` tạo Promise mới mỗi render → vòng lặp vô hạn. Cần cache layer trả cùng Promise cho cùng key. Production cần: TTL, memory management (LRU/WeakMap), request dedup. Thực tế React Query/SWR đã giải quyết — `use()` là primitive, không phải solution hoàn chỉnh.
 
-**💡 Interview Signal:**
-- ✅ Strong: Shows before/after pattern, mentions migration pitfall (accidental return values)
-- ❌ Weak: Only knows "refs changed" without specific cleanup mechanism
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
+- ✅ Strong: Giải thích tại sao cần stable reference (infinite loop), thiết kế cache với invalidation + dedup, biết React.cache() cho RSC
+- ❌ Weak: Chỉ biết "cần stable reference" mà không thiết kế được cache hoặc không biết React Query vẫn cần
+
+**🔴 Follow-up Chain:**
+
+1. "Cache invalidation strategy nào phù hợp với use()?" → TTL cho read-heavy data, mutation-based invalidation cho write-heavy, stale-while-revalidate cho hybrid
+2. "So sánh cache layer tự viết vs React Query với use()." → React Query có retry, refetch-on-focus, garbage collection, devtools — tự viết chỉ nên cho simple cases hoặc khi bundle size critical
+3. "Trong SSR/RSC context, caching thay đổi thế nào?" → Server: per-request cache (React.cache()), Client: across-requests cache (React Query). Không share cache giữa requests trên server (data isolation).
 
 ---
 
-## Interview Q&A Summary / Tổng Kết Q&A
+### Q8: Đánh giá trade-off giữa React 19 Actions vs React Hook Form + React Query cho form handling. / Evaluate trade-offs between React 19 Actions vs React Hook Form + React Query for form handling. 🔴 Senior
 
-| # | Topic | Difficulty | Key Concept |
-|---|-------|-----------|-------------|
-| Q1 | React Compiler | 🟡 Mid | Build-time memoization, purity required |
-| Q2 | Actions trio | 🔴 Senior | useActionState (parent) + useFormStatus (child) + useOptimistic (instant) |
-| Q3 | use() API | 🔴 Senior | Not a hook, no linked list, conditional + Promise |
-| Q4 | Server Components | 🔴 Senior | Composition rules, donut pattern, caching shift |
-| Q5 | Compiler adoption | 🔴 Senior | ESLint audit → per-directory → measure → remove manual memo |
-| Q6 | Ref cleanup | 🟡 Mid | Cleanup function return, migration pitfall |
+**A:** This is a architectural comparison between built-in vs ecosystem solutions:
+
+| Tiêu chí           | React 19 Actions             | RHF + React Query                        |
+| ------------------ | ---------------------------- | ---------------------------------------- |
+| **Bundle size**    | 0 extra (built-in)           | +20-30KB                                 |
+| **Learning curve** | New API but small surface    | Established patterns, large docs         |
+| **Validation**     | Manual or Zod                | Built-in validation, Zod/Yup integration |
+| **Caching**        | None built-in                | Full cache + dedup + retry               |
+| **Optimistic**     | `useOptimistic` (basic)      | `useMutation` + `onMutate` (advanced)    |
+| **Form state**     | Per-field state in component | Uncontrolled with ref-based perf         |
+| **SSR/RSC**        | Native "use server" Actions  | Client-only                              |
+| **Ecosystem**      | New, evolving                | Mature, well-tested                      |
+
+**Recommendation:**
+
+- **Small app / new project with RSC:** React 19 Actions — simpler, no extra deps, progressive enhancement
+- **Complex forms (multi-step, validation-heavy):** React Hook Form — field-level validation, touched/dirty tracking
+- **Data-heavy app (cache, retry, pagination):** React Query + whatever form lib — caching layer is critical
+- **Hybrid:** Actions for simple forms, RHF for complex forms, React Query for data fetching — they're not mutually exclusive
+
+Trade-off không phải "chọn 1 bỏ 1" — Actions cho form simple + RSC, RHF cho form phức tạp, React Query cho caching layer. Chúng bổ sung nhau, không thay thế nhau.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
+- ✅ Strong: Comparison table với tiêu chí cụ thể, recommendation theo use case, biết chúng bổ sung nhau
+- ❌ Weak: "Actions thay thế React Hook Form" hoặc "React Hook Form vẫn tốt hơn" — binary thinking
+
+**🔴 Follow-up Chain:**
+
+1. "Trong monorepo có cả RSC và client-heavy pages, bạn chọn thế nào?" → RSC pages dùng Server Actions + useActionState, client pages dùng RHF + React Query. Shared validation schema (Zod) giữa cả hai.
+2. "Progressive enhancement quan trọng không?" → Nếu app cần work without JS (accessibility, slow networks), Actions + form action= là lợi thế lớn. RHF client-only không progressive enhance.
+3. "Performance comparison cho form với 50+ fields?" → RHF uncontrolled approach wins — chỉ ref, không re-render. Actions re-render toàn form mỗi keystroke nếu không optimize. Nhưng React Compiler có thể bridge gap này.
+
+---
+
+## Interview Q&A Summary / Tổng Kết Phỏng Vấn
+
+| #   | Question                  | Level | Key Point                                                                  |
+| --- | ------------------------- | ----- | -------------------------------------------------------------------------- |
+| Q1  | React Compiler là gì?     | 🟢    | Build-time Babel plugin, auto-memoization, static analysis                 |
+| Q2  | Actions pattern + 3 hooks | 🟢    | useActionState + useFormStatus + useOptimistic, managed async lifecycle    |
+| Q3  | use() vs useEffect        | 🟡    | Not a hook, reads in render, throws to Suspense, stable reference required |
+| Q4  | forwardRef deprecated     | 🟡    | ref as prop + ref cleanup function                                         |
+| Q5  | Manual memo vs Compiler   | 🟡    | Compiler is best-effort, silent skip, no Context fix                       |
+| Q6  | Migration strategy 18→19  | 🔴    | Phased: audit → incremental Compiler → API migrate → use() cautious        |
+| Q7  | Cache layer cho use()     | 🔴    | Stable ref problem, cache + dedup + invalidation, React Query still useful |
+| Q8  | Actions vs RHF + RQ       | 🔴    | Complementary not competing, choose by use case (RSC vs complex forms)     |
 
 ---
 
 ## ⚡ Cold Call Simulation / Mô Phỏng Phỏng Vấn
 
-> 🎯 Interviewer asks cold: **"What are the most important changes in React 19?"**
+> 🎯 Interviewer asks cold: **"React 19 có gì mới? Nếu bạn phải upgrade production app, bạn bắt đầu từ đâu?"**
 
-**30 giây đầu — mở đầu lý tưởng:**
-1. "React 19 has three major categories of changes: the React Compiler for automatic memoization, the Actions pattern for form mutations, and the `use()` API that breaks the Rules of Hooks intentionally."
-2. "The Compiler performs build-time static analysis to auto-insert fine-grained memoization, eliminating the need for manual `useMemo`, `useCallback`, and `React.memo` — but it requires code to follow the Rules of React strictly."
-3. "The Actions pattern introduces `useActionState` for managing async form lifecycles, `useFormStatus` for distributing pending state to child components, and `useOptimistic` for instant UI feedback with automatic rollback."
-4. "There are also breaking changes: `forwardRef` is deprecated in favor of ref-as-prop, `Context.Provider` becomes just `<Context>`, and `ReactDOM.render` is fully removed — apps must use `createRoot`."
+**30 giây đầu — mở đầu lý tưởng / Ideal 30-second opening:**
 
----
+1. "React 19 có 3 thay đổi chính: React Compiler tự thêm memoization lúc build, Actions pattern quản lý form async lifecycle, và use() API đọc Promise trong render."
+2. "Compiler hoạt động như TypeScript — static analysis lúc build, không thay đổi runtime behavior, nhưng tự insert useMemo/useCallback."
+3. "Ở production app trước đây, tôi sẽ bắt đầu bằng chạy react-compiler-healthcheck để audit code quality, sau đó bật Compiler cho folder mới trước, mở rộng dần."
+4. "Rủi ro chính là Compiler im lặng skip code vi phạm Rules of React — cần monitor Core Web Vitals trước và sau khi bật."
 
-## 🔄 Self-Check / Tự Kiểm Tra
-
-> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
-
-| # | Loại | Câu hỏi |
-|---|------|---------|
-| 1 | 🔍 Retrieval | React Compiler làm gì tại build time? Yêu cầu gì từ code? Hạn chế gì cần biết khi adopt? |
-| 2 | 🎨 Visual | Vẽ component tree cho form với `useActionState` (parent), `useFormStatus` (child button), `useOptimistic` (instant list update). |
-| 3 | 🛠️ Application | Viết form checkout: submit → pending state → error handling → optimistic update dùng React 19 Actions pattern (không dùng `useState isLoading`). |
-| 4 | 🐛 Debug | `use(fetchUser(id))` gọi trong render gây infinite loop. Tại sao? Fix thế nào mà vẫn dùng `use()`? |
-| 5 | 🎓 Teach | Giải thích tại sao `use()` có thể gọi trong `if/else` nhưng `useContext` không — dùng ví dụ "đăng ký nhận báo vs mua báo ở sạp". |
-
-### Key Points (tự kiểm tra)
-
-| # | Key Point |
-|---|-----------|
-| 1 | Compiler auto-memoize theo Rules of Hooks, không cần `useMemo`/`useCallback` thủ công. Yêu cầu: code phải tuân thủ Rules of Hooks. Hạn chế: chưa support toàn bộ patterns. |
-| 2 | `<Form>` dùng `useActionState(action, null)` → `formAction`. `<SubmitButton>` dùng `useFormStatus().pending`. `<List>` dùng `useOptimistic(items, (s,n) => [...s,n])`. |
-| 3 | `const [state, formAction] = useActionState(checkoutAction, null)`. `useOptimistic` cho instant feedback. `useFormStatus` trong child component cho `pending`. |
-| 4 | `fetchUser(id)` tạo new Promise mỗi render → Suspense boundary reset → re-render loop. Fix: cache promise bên ngoài render (useMemo, module-level, hay cache lib). |
-| 5 | `useContext` = "đăng ký nhận báo hàng ngày" (subscription, phải ổn định). `use()` = "ra sạp mua báo" (one-time read). Subscription cần Rules of Hooks; one-time read thì không. |
-
-> 🎯 **Feynman Prompt:** Giải thích React Actions pattern cho dev đã biết React 18 — tại sao `useActionState` thay thế pattern `isLoading + error + try/catch`?
-🔁 **Spaced Repetition reminder:** Review this file again on 2026-03-22, then 2026-03-26, then 2026-04-02.
+_Sau đó mở rộng theo hướng interviewer dẫn dắt._
 
 ---
 
-## 🔗 Connections / Liên Kết
+## Self-Check / Tự Kiểm Tra ⚡
 
-### Cùng track (Same track)
-- [Modern React Features](./10-modern-react-features.md) — concurrent rendering and Server Components in depth
-- [Performance Optimization](./09-performance-optimization.md) — Compiler's memoization fits here
-- [React Fundamentals](./01-react-fundamentals.md) — baseline model that React 19 extends
-- [State Management](./05-state-management.md) — Actions pattern replaces manual loading state
+> **Đóng tài liệu lại trước khi làm — Close the doc before attempting.**
 
-### Khác track (Cross-track)
-- [App Router & Server Components](../04-nextjs/01-app-router-server-components.md) — framework layer for React Server Components
-- [React Performance](../06-browser-performance/02-react-performance.md) — browser-level impact of React 19 improvements
-- [Architecture Styles](../../shared/05-software-engineering/02-architecture-styles.md) — RSC changes client/server architecture boundaries
+- [ ] **Retrieval**: Viết 3 thay đổi chính của React 19 từ trí nhớ, mỗi cái 2 câu. So sánh với Overview.
+- [ ] **Visual**: Vẽ Actions flow diagram (user click → optimistic → server → success/error) ra giấy. So sánh với ASCII diagram trên.
+- [ ] **Application**: Form đăng ký có validation + optimistic update — bạn dùng `useState + try/catch` hay Actions? Viết code skeleton cho cách bạn chọn.
+- [ ] **Debug**: `use(fetch('/api/user'))` gây infinite loop — nguyên nhân? Fix? Viết cache function đơn giản.
+- [ ] **Teach**: Giải thích React Compiler cho người không biết lập trình bằng liên tưởng "xe số sàn vs số tự động".
+
+💬 **Feynman Prompt:** Giải thích Actions pattern cho người không biết lập trình, dùng liên tưởng "bưu điện tự động". Không dùng thuật ngữ kỹ thuật.
+
+🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày → 7 ngày → 14 ngày** để chuyển vào long-term memory.
+
+---
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on:** [React Fundamentals](./01-react-fundamentals.md) — cần hiểu VDOM, reconciliation, component model trước khi hiểu Compiler optimize gì
+- ➡️ **Enables:** [Hooks Deep Dive](./03-hooks-deep-dive.md) — hiểu hook nào Compiler thay thế, hook nào vẫn cần viết tay
+- ➡️ **Enables:** [Modern React Features](./10-modern-react-features.md) — Server Components + Streaming SSR tận dụng Actions + use()
+- 🔗 **Applied in:** Next.js 14+ (Server Actions), Remix (form actions), production React 19 apps

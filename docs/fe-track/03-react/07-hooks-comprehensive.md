@@ -1,654 +1,998 @@
-# Hooks Comprehensive / Tổng Hợp Hooks Nâng Cao
+# React Hooks Comprehensive / Toàn Bộ Hooks React
 
-> **Track**: FE | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **Prerequisites**: [Hooks Deep Dive](./03-hooks-deep-dive.md) | [React Fundamentals](./01-react-fundamentals.md)
-> **See also**: [React Patterns](./08-react-patterns-advanced.md) | [Performance](./09-performance-optimization.md)
-
-[← Previous](./06-testing.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next →](./08-react-patterns-advanced.md)
+| Thuộc tính          | Giá trị                                                                  |
+| ------------------- | ------------------------------------------------------------------------ |
+| **Track**           | Frontend — React                                                         |
+| **Difficulty**      | 🟡 Mid → 🔴 Senior                                                       |
+| **Prerequisites**   | 03-hooks-deep-dive (useState, useEffect, useRef, useMemo, useCallback)   |
+| **See also**        | 01-react-fundamentals, 09-performance-optimization, 02-react-19-features |
+| **L5 Competencies** | System Design, Performance Engineering, API Design                       |
 
 ---
 
 ## Real-World Scenario / Tình Huống Thực Tế
 
-**English:** Your team's dashboard at Shopee has three problems: a tab switch causes a 400ms freeze, a live inventory component shows stale data that "flickers" between old and new values during page transitions (concurrent mode tearing), and a shared `useFetch` hook is leaking memory — it calls `setState` on unmounted components during fast navigation. The PM wants all three fixed before the 11.11 sale.
+Bạn đang build một trang **search products** cho sàn thương mại điện tử. User gõ "iphone" vào ô tìm kiếm — mỗi ký tự gõ ra đều trigger API call và re-render danh sách 10,000 sản phẩm. Kết quả: **ô input lag**, user gõ "i-p-h" mà input chỉ hiện "i", cảm giác app bị đơ.
 
-**Tiếng Việt:** Dashboard của team tại Shopee có ba vấn đề: chuyển tab gây lag 400ms, component hiển thị tồn kho bị "tearing" (hiển thị giá trị cũ và mới lẫn lộn), và hook `useFetch` dùng chung bị memory leak vì gọi `setState` sau khi component đã unmount. PM muốn fix trước sale 11.11.
+Senior dev trong team nói: "Dùng `useTransition` cho search, `useDeferredValue` cho danh sách, rồi wrap external analytics store bằng `useSyncExternalStore`."
 
-**Why this matters**: All three bugs stem from the same root: not understanding React's concurrent rendering model, hook cleanup lifecycle, and the boundary between React state and external stores.
+Bạn biết `useState` và `useEffect` rồi — nhưng **3 hooks này là gì? Khi nào dùng cái nào? Tại sao không dùng `debounce` như trước?**
 
----
-
-## What & Why / Cái Gì & Tại Sao
-
-**What**: Advanced hooks are React's tool set for concurrent rendering (`useTransition`, `useDeferredValue`, `useSyncExternalStore`), effect timing (`useLayoutEffect`, `useInsertionEffect`), and composable logic extraction (custom hooks, hook composition).
-
-**Why they exist**: Class components had a fatal organization flaw — lifecycle methods (`componentDidMount`, `componentDidUpdate`, `componentWillUnmount`) forced you to scatter related logic across three different methods while mixing unrelated logic in one. A WebSocket subscription's setup, cleanup, and error handling were in three different places. Hooks collapse them into one co-located unit.
-
-**Why the concurrent hooks**: React 18's interruptible rendering (Concurrent Mode) introduced a new class of bugs where external state could become inconsistent between renders. `useTransition` / `useDeferredValue` / `useSyncExternalStore` are the answers.
+File này sẽ đưa bạn từ "biết hooks cơ bản" lên "hiểu toàn bộ hooks ecosystem" — bao gồm cả cách thiết kế custom hooks chuyên nghiệp.
 
 ---
 
-## Core Concept 1: Hooks Taxonomy, Rules & Lifecycle Mapping
+**Bạn đang ở đây trong lộ trình học:**
 
-> 🧠 **Memory Hook**: "Hooks = co-locate by **what**, not by **when**. Class components organized by lifecycle timing; hooks organize by concern."
+```
+03-hooks-deep-dive (useState/useEffect/useRef) → [HOOKS COMPREHENSIVE] → 09-performance-optimization
+```
+
+---
+
+## Concept Map / Bản Đồ Khái Niệm
+
+```
+                        React Hooks Ecosystem
+                               │
+          ┌────────────────────┼────────────────────┐
+          │                    │                     │
+    State Hooks          Effect Hooks          Ref Hooks
+    ┌─────────┐         ┌──────────┐         ┌─────────┐
+    │useState  │         │useEffect │         │useRef   │
+    │useReducer│         │useLayout │         │useImper.│
+    │useContext│         │  Effect  │         │         │
+    │          │         │useInsert.│         │         │
+    │          │         │  Effect  │         │         │
+    └─────────┘         └──────────┘         └─────────┘
+          │
+          ▼
+    Concurrency Hooks (React 18+)
+    ┌──────────────────────────────────┐
+    │ useTransition    — "Tôi đang bận"│
+    │ useDeferredValue — "Để sau cũng │
+    │                    được"         │
+    │ useSyncExternal  — "Đồng bộ bên │
+    │   Store            ngoài"        │
+    └──────────────────────────────────┘
+          │
+          ▼
+    Performance Hooks
+    ┌─────────────────────┐
+    │ useMemo             │
+    │ useCallback         │
+    │ useId               │
+    └─────────────────────┘
+          │
+          ▼
+    Custom Hooks = Lego blocks
+    (Kết hợp tất cả ở trên)
+```
+
+---
+
+## Overview / Tổng Quan
+
+React provides ~15 built-in hooks, each solving a specific problem. Understanding **when** to use each hook matters more than memorizing their APIs.
+
+React cung cấp ~15 hooks, mỗi cái giải quyết 1 vấn đề cụ thể. Trong phỏng vấn, người ta không hỏi "API của useTransition là gì?" mà hỏi **"Khi nào dùng useTransition thay vì debounce?"** — tức là bạn cần hiểu **bài toán** mà mỗi hook giải quyết, không chỉ cú pháp.
+
+File này tập trung vào **3 nhóm bạn chưa biết sâu**: Concurrency Hooks (React 18), Custom Hook Architecture, và Hooks Lifecycle — để bổ sung cho kiến thức useState/useEffect từ file 03.
+
+---
+
+## Core Concepts / Khái Niệm Cốt Lõi
+
+### 1. Hooks Taxonomy & Lifecycle / Phân Loại Hooks & Vòng Đời
+
+> 🧠 **Memory Hook**: "Hooks là **hộp công cụ** — mỗi ngăn chứa 1 loại dụng cụ khác nhau. Dùng sai ngăn = vặn ốc bằng búa."
 
 **Tại sao tồn tại? / Why does this exist?**
-Class components mixed unrelated code in one lifecycle and split related code across three.
-→ Why? Because lifecycle methods (mount/update/unmount) were the only extension points in the class model.
-→ Why is that a problem? A single `componentDidMount` could contain WebSocket setup, analytics tracking, AND data fetching — impossible to extract or reuse without complex mixins.
+Class components trộn lẫn logic vào lifecycle methods (componentDidMount chứa cả fetch data + setup listener + animation). Hooks tách logic theo **mục đích**, không theo **thời điểm**.
+→ **Why?** Vì logic theo thời điểm khiến code không thể reuse — bạn không thể "copy componentDidMount" sang component khác mà không kéo theo cả đống unrelated code.
+→ **Why?** Vì separation of concerns là nguyên tắc cốt lõi: mỗi đơn vị code nên làm **1 việc duy nhất** để dễ test, dễ debug, dễ thay đổi.
 
-### Layer 1: Hook Categories / Phân Loại Hook
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
 
-Think of hooks as power tools organized by job:
+Tưởng tượng **hộp công cụ sửa xe**:
 
-```
-STATE TOOLS          TIMING TOOLS          IDENTITY TOOLS
-─────────────        ────────────          ──────────────
-useState             useEffect             useId
-useReducer           useLayoutEffect       useRef
-                     useInsertionEffect    useImperativeHandle
+- **Ngăn State** (useState, useReducer, useContext): Giữ đồ đang dùng — ốc vít, bu lông đang tháo
+- **Ngăn Effect** (useEffect, useLayoutEffect): Hướng dẫn "sau khi lắp xong thì kiểm tra X"
+- **Ngăn Ref** (useRef, useImperativeHandle): Giấy nhớ dán lên máy — ghi nhớ nhưng không ảnh hưởng quy trình
+- **Ngăn Performance** (useMemo, useCallback): Bộ cache — "cái này làm rồi, không cần làm lại"
+- **Ngăn Concurrency** (useTransition, useDeferredValue): Hệ thống ưu tiên — "việc gấp làm trước, việc nặng làm sau"
 
-PERFORMANCE TOOLS    CONCURRENCY TOOLS     STORE TOOLS
-─────────────────    ─────────────────     ───────────
-useMemo              useTransition         useSyncExternalStore
-useCallback          useDeferredValue
-```
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
 
-**Rules of Hooks — the why:**
-React tracks each hook's state using an **ordered linked list**. Call order = position in list = identity of that hook's state. Break the order → wrong state for every subsequent hook.
+React hooks được lưu dưới dạng **linked list** trên mỗi Fiber node. Thứ tự gọi hooks trong mỗi render phải giống nhau — đó là lý do "Rules of Hooks".
 
 ```
-// ✅ Safe: always same order
-function Good() {
-  const [a] = useState(0);  // position 0
-  const [b] = useState(0);  // position 1
-}
-
-// ❌ Breaks order: position 1 disappears conditionally
-function Bad({ show }) {
-  const [a] = useState(0);          // position 0
-  if (show) const [b] = useState(0); // position 1 → MISSING some renders!
-  // next hook thinks it's position 1 but reads position 2's data
-}
+Fiber Node cho <SearchPage>
+├── hooks: LinkedList
+│   ├── [0] useState("") ←── query
+│   ├── [1] useEffect(fetchData) ←── sync API
+│   ├── [2] useTransition() ←── isPending, startTransition
+│   ├── [3] useDeferredValue(query) ←── deferred search
+│   ├── [4] useMemo(filterResults) ←── cached computation
+│   └── [5] useRef(null) ←── DOM reference
+│
+│  Execution Order (mỗi render):
+│  ──────────────────────────────
+│  1. Render phase: useState → useTransition → useDeferredValue
+│                   → useMemo → useRef (đọc giá trị)
+│  2. DOM update: React commit changes to DOM
+│  3. Effect phase: useLayoutEffect (sync, block paint)
+│                   → useEffect (async, after paint)
 ```
 
-### Layer 2: Lifecycle Mapping / Ánh Xạ Vòng Đời
+**Hooks Lifecycle Mapping (so với Class):**
 
-```
-CLASS LIFECYCLE              HOOKS EQUIVALENT
-────────────────────────     ────────────────────────────────────────────
-componentDidMount            useEffect(fn, [])
-                             ⚠️ Strict Mode: runs TWICE in dev (intentional)
+| Class Lifecycle            | Hooks Equivalent                          | Ghi chú              |
+| -------------------------- | ----------------------------------------- | -------------------- |
+| `constructor`              | `useState(initialValue)`                  | Chỉ chạy lần đầu     |
+| `componentDidMount`        | `useEffect(() => {}, [])`                 | Empty deps = mount   |
+| `componentDidUpdate`       | `useEffect(() => {}, [dep])`              | Deps change = update |
+| `componentWillUnmount`     | `useEffect(() => { return cleanup }, [])` | Cleanup function     |
+| `shouldComponentUpdate`    | `React.memo` + `useMemo`                  | Ngoài hooks system   |
+| `getDerivedStateFromProps` | Tính trong render body                    | Không cần effect     |
 
-componentDidUpdate           useEffect(fn, [dep1, dep2])
-                             Granular: runs only when listed deps change
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
 
-componentWillUnmount         return () => cleanup inside useEffect
-                             ⚠️ Also runs before each effect re-run (not just unmount)
-
-shouldComponentUpdate        React.memo + stable props (useMemo/useCallback)
-
-getDerivedStateFromProps     Derive inline during render with useMemo
-
-getSnapshotBeforeUpdate      useLayoutEffect + useRef (no direct equivalent)
-
-componentDidCatch            ❌ NO HOOK EQUIVALENT — must use class ErrorBoundary
-getDerivedStateFromError     ❌ NO HOOK EQUIVALENT — use react-error-boundary lib
-```
-
-### Layer 3: Effect Execution Order / Thứ Tự Effect
-
-```
-DOM committed (React writes to DOM)
-          │
-          ▼
-useInsertionEffect  ← CSS-in-JS style injection only (library authors only)
-          │
-          ▼
-useLayoutEffect     ← DOM measurement, scroll position (synchronous, blocks paint)
-          │
-          ▼
-[Browser paints frame]
-          │
-          ▼
-useEffect           ← subscriptions, fetch, analytics (async, non-blocking)
-```
+- **useLayoutEffect vs useEffect**: `useLayoutEffect` chạy **đồng bộ sau DOM update, trước paint**. Dùng khi cần đo DOM (tooltip position, scroll restore). Nếu dùng sai → block rendering, app lag.
+- **useInsertionEffect**: Chỉ dành cho CSS-in-JS libraries (styled-components, emotion). Bạn gần như không bao giờ dùng trực tiếp.
+- **useId**: Tạo unique ID ổn định giữa server và client (SSR hydration). Không dùng cho key trong list.
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm                                                         | Tại sao sai                                           | Đúng là                                                      |
-| --------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------ |
-| `useEffect(fn, [])` is identical to `componentDidMount`         | React 18 Strict Mode runs it twice in dev             | It's similar but not identical — always write cleanup        |
-| Calling a hook inside an `if` or loop                           | Breaks the linked-list ordering React depends on      | Always call at top level; put the condition INSIDE the hook  |
-| `useEffect` cleanup runs only on unmount                        | Cleanup also runs before each re-run when deps change | Cleanup runs: on unmount AND before each effect re-execution |
-| `getDerivedStateFromProps` → `useEffect` to sync props to state | Causes extra render cycle                             | Derive inline with `useMemo` or compute directly in render   |
+| Sai lầm                               | Tại sao sai                                      | Đúng là                                                               |
+| ------------------------------------- | ------------------------------------------------ | --------------------------------------------------------------------- |
+| Dùng `useLayoutEffect` cho fetch data | Block rendering, user thấy blank screen lâu hơn  | `useEffect` cho async work, `useLayoutEffect` chỉ cho DOM measurement |
+| Gọi hooks trong if/else               | React dùng linked list, thứ tự phải cố định      | Luôn gọi hooks ở top level, dùng condition bên trong                  |
+| Dùng `useId()` làm key cho list       | `useId` tạo 1 ID duy nhất per component instance | Key nên từ data (id, slug), không từ hook                             |
+| Derived state trong `useEffect`       | Thừa 1 render cycle, dễ bug                      | Tính trực tiếp trong render body hoặc `useMemo`                       |
 
 **🎯 Interview Pattern:**
 
-- Khi thấy: "Why can't hooks be called inside if statements?"
-- → Nhớ: React's linked-list call-order identity
-- → Mở đầu: "React identifies each hook by its call order in a linked list — skip a hook conditionally and every subsequent hook reads the wrong state slot."
+- Khi thấy câu hỏi về: "phân loại hooks", "khi nào dùng hook nào", "hooks lifecycle"
+- → Nhớ đến: 5 ngăn hộp công cụ + lifecycle mapping table
+- → Mở đầu trả lời: _"React hooks chia thành 5 nhóm theo mục đích: State, Effect, Ref, Performance, và Concurrency. Điều quan trọng nhất là hiểu mỗi nhóm giải quyết bài toán gì — vì dùng sai nhóm sẽ gây bug hoặc performance issue."_
 
-**🔑 Knowledge Chain:**
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
 
-- 📚 Cần biết: [React Fundamentals — component lifecycle](./01-react-fundamentals.md)
-- ➡️ Để hiểu: [React Patterns — State Reducer pattern](./08-react-patterns-advanced.md)
+- 📚 Cần biết trước: [Hooks Deep Dive](./03-hooks-deep-dive.md) — useState, useEffect, useRef cơ bản
+- ➡️ Để hiểu tiếp: [Performance Optimization](./09-performance-optimization.md) — áp dụng hooks đúng cách để tối ưu
 
 ---
 
-## Core Concept 2: Concurrency Hooks — useTransition, useDeferredValue, useSyncExternalStore
+### 2. useTransition / Đánh Dấu "Không Gấp"
 
-> 🧠 **Memory Hook**: **Transition** = "this update can wait". **Deferred** = "show stale until ready". **SyncExternal** = "don't let renders tear".
+> 🧠 **Memory Hook**: "useTransition = biển báo **'ĐƯỜNG CHẬM'** — nói React: 'Cập nhật này không gấp, làm sau được, đừng block input user.'"
 
 **Tại sao tồn tại? / Why does this exist?**
-React 18 introduced interruptible rendering — React can pause a render mid-way and restart it.
-→ Why? To keep the browser responsive: a user typing in a search box shouldn't be blocked by a 200ms render.
-→ Why is that a problem for state? If an external store (Redux, Zustand) updates between render pauses, some components see the new value and others see the old. This inconsistency is called "tearing" — it looks like corrupted data to the user.
+Trước React 18, mọi state update đều có **cùng priority**. Gõ vào input (cần phản hồi ngay) và filter 10,000 items (nặng) đều xếp hàng chờ nhau → input lag.
+→ **Why?** Vì user perception: nếu input lag > 100ms, user cảm thấy app "đơ". Nhưng danh sách update chậm 300ms thì user chấp nhận được.
+→ **Why?** Vì não người phân biệt **phản hồi trực tiếp** (tay gõ → chữ hiện) và **kết quả gián tiếp** (filter list). Concurrent rendering khai thác sự khác biệt này.
 
-### Layer 1: The Priority Mental Model
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
 
-```
-HIGH PRIORITY (cannot interrupt)    LOW PRIORITY (interruptible)
-────────────────────────────────    ────────────────────────────
-User typing in input                Tab switch rendering 2000 items
-Button click feedback               Filtering a large product list
-Focus/blur events                   Navigating to a new route
-```
+Bạn đang ở **quầy giao dịch ngân hàng**. Có 2 loại khách:
 
-`useTransition` and `useDeferredValue` move state updates from the left column to the right — React handles the high-priority work first.
+- **Khách VIP** (urgent): Chỉ cần ký 1 chữ ký → xong trong 5 giây
+- **Khách thường** (non-urgent): Cần xử lý hồ sơ dài → mất 5 phút
 
-### Layer 2: The Three Hooks Explained
+Nếu không có hệ thống ưu tiên: khách VIP phải chờ 5 phút sau khách thường → tệ.
+`useTransition` = **"Anh/chị thường ơi, dừng lại 1 chút, để khách VIP ký trước rồi tiếp tục nhé."**
 
-**`useTransition` — control the update source:**
+Input user gõ = khách VIP (urgent). Filter danh sách = khách thường (transition).
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
 
 ```tsx
-const [isPending, startTransition] = useTransition();
+function SearchPage() {
+  const [query, setQuery] = useState(""); // Urgent: input value
+  const [isPending, startTransition] = useTransition();
+  const [results, setResults] = useState([]); // Non-urgent: filtered list
 
-// State updater marks the update as low-priority
-startTransition(() => {
-  setActiveTab(newTab); // React can interrupt and discard this render
-});
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const value = e.target.value;
+    setQuery(value); // ⚡ Urgent — update input ngay lập tức
 
-// Show stale UI while transition is in progress
-{
-  isPending && <Spinner />;
+    startTransition(() => {
+      // 🐢 Non-urgent — React có thể interrupt và làm sau
+      const filtered = allProducts.filter((p) =>
+        p.name.toLowerCase().includes(value.toLowerCase()),
+      );
+      setResults(filtered);
+    });
+  }
+
+  return (
+    <div>
+      <input value={query} onChange={handleChange} />
+      {isPending && <Spinner />} {/* Loading indicator */}
+      <ProductList items={results} /> {/* Có thể render chậm hơn */}
+    </div>
+  );
 }
 ```
 
-**`useDeferredValue` — control the value consumer:**
+```
+Timeline khi user gõ "iph":
 
-```tsx
-// When you don't own the state setter (it comes from props/context)
-const deferredQuery = useDeferredValue(props.query);
+Không có useTransition:
+─────────────────────────────────────────────
+  gõ "i" → [filter 10K items ████████] → gõ "p" → [filter ████████] → gõ "h"
+           input bị block ở đây!          lag tiếp!
 
-// Pass deferred value to expensive component instead of live value
-<ProductList query={deferredQuery} />; // re-renders only when React has bandwidth
+Có useTransition:
+─────────────────────────────────────────────
+  gõ "i" → input update ngay ✓
+            [filter bắt đầu ░░░░]
+  gõ "p" → input update ngay ✓  ← interrupt filter cũ
+            [filter mới ░░░░░░░░]
+  gõ "h" → input update ngay ✓  ← interrupt lần nữa
+            [filter cuối ████████] → render results
 ```
 
-**`useSyncExternalStore` — prevent tearing in concurrent renders:**
+**Cơ chế bên trong:**
 
-```tsx
-// Bridge React to any non-React state store
-const count = useSyncExternalStore(
-  store.subscribe, // notify React when store changes
-  store.getSnapshot, // read current value (must be synchronous, stable)
-  store.getServerSnapshot, // SSR initial value (required for server rendering)
-);
-```
+1. `startTransition(fn)` đánh dấu state updates bên trong `fn` là **low priority**
+2. React bắt đầu render với giá trị mới, nhưng **có thể interrupt** giữa chừng
+3. Nếu có urgent update (user gõ tiếp), React **bỏ render cũ**, xử lý urgent trước
+4. `isPending = true` trong khi transition đang xử lý → hiện loading indicator
 
-**Comparison table:**
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
 
-```
-Hook                 | Who uses it     | Controls                     | Use when
-─────────────────────┼─────────────────┼──────────────────────────────┼──────────────────────────
-useTransition        | State updater   | Which update is low-priority  | You own the setState call
-useDeferredValue     | Value consumer  | Which value gets stale copy   | You receive a prop/context value
-useSyncExternalStore | Store consumer  | Reading external store safely | Subscribing to non-React state
-```
-
-### Layer 3: Edge Cases & Gotchas
-
-**useTransition gotchas:**
-
-- The callback must call `setState` **synchronously** — cannot wrap `async/await`
-- Requires `createRoot` (React 18) — `ReactDOM.render` ignores it
-- Child must be wrapped in `React.memo` or it re-renders anyway
-
-**useSyncExternalStore gotchas:**
-
-- `getSnapshot` must return a **stable reference** when the value hasn't changed (use selector memoization)
-- Missing `getServerSnapshot` throws during SSR
-- Redux Toolkit, Zustand v4+, Jotai all use this hook internally
+- **Không phải debounce**: Debounce delay cố định (300ms). `useTransition` thì React tự quyết — nếu máy nhanh, delay gần 0. Nếu máy chậm, delay tự tăng.
+- **Chỉ cho state updates**: Bạn không thể wrap `fetch()` trong `startTransition`. Nó chỉ đánh dấu `setState` bên trong là low priority.
+- **Stale results**: Trong lúc pending, user nhìn thấy **kết quả cũ**. Cần design UI để user biết "đang loading" (dùng `isPending`).
+- **React 19 Actions**: `useActionState` tự động wrap trong transition — không cần gọi `startTransition` thủ công cho form submissions.
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm                                                | Tại sao sai                                          | Đúng là                                                                       |
-| ------------------------------------------------------ | ---------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `startTransition(async () => fetch(...))`              | startTransition callback must be synchronous         | Manage loading state separately; only put the setState inside startTransition |
-| `useDeferredValue` without `React.memo` on consumer    | Child re-renders every parent render anyway          | Wrap the heavy component in `React.memo` for useDeferredValue to have effect  |
-| `useEffect + useState` for external store subscription | Has a race condition on mount (missed update window) | Use `useSyncExternalStore` — it eliminates the mount gap                      |
-| Using `getSnapshot` that returns new object each call  | React sees constant "changes", triggers loop         | Memoize or use primitive return values from getSnapshot                       |
+| Sai lầm                                       | Tại sao sai                                      | Đúng là                                                              |
+| --------------------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------- |
+| Wrap tất cả setState trong startTransition    | Urgent updates (input, hover) bị delay           | Chỉ wrap non-urgent updates (list filter, tab switch)                |
+| Dùng useTransition thay debounce cho API call | useTransition cho render work, không cho network | Debounce/throttle cho API calls, useTransition cho CPU-heavy renders |
+| Không dùng isPending                          | User không biết đang loading                     | Luôn show loading state khi isPending = true                         |
+| Expect synchronous result                     | Transition là async, result có thể chậm          | Design UI cho trường hợp pending                                     |
 
 **🎯 Interview Pattern:**
 
-- Khi thấy: "How would you handle a slow render caused by filtering 5000 items as the user types?"
-- → Nhớ: useTransition (if you own the state) or useDeferredValue (if you receive the value)
-- → Mở đầu: "I'd use `useDeferredValue` on the query value passed to the list — it shows the previous results while React prepares the new render in the background, keeping the input responsive."
+- Khi thấy câu hỏi về: "useTransition", "concurrent rendering", "priority updates", "input lag"
+- → Nhớ đến: Ngân hàng VIP vs thường, urgent vs non-urgent
+- → Mở đầu trả lời: _"useTransition cho phép đánh dấu một state update là non-urgent, để React ưu tiên xử lý urgent updates trước — giống như ngân hàng có 2 hàng đợi: VIP cho giao dịch nhanh và thường cho hồ sơ phức tạp. Khác với debounce, React tự điều chỉnh thời gian chờ dựa trên khả năng máy."_
 
-**🔑 Knowledge Chain:**
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
 
-- 📚 Cần biết: [React 19 Features — Concurrent Mode](./02-react-19-features.md)
-- ➡️ Để hiểu: [Performance Optimization — memoization strategies](./09-performance-optimization.md)
+- 📚 Cần biết trước: [React Fundamentals — Fiber & Render/Commit](./01-react-fundamentals.md) — hiểu render có thể bị interrupt
+- ➡️ Để hiểu tiếp: [Performance Optimization](./09-performance-optimization.md) — kết hợp useTransition với các kỹ thuật khác
 
 ---
 
-## Core Concept 3: Custom Hook Architecture & Performance Patterns
+### 3. useDeferredValue / Giá Trị "Chờ Được"
 
-> 🧠 **Memory Hook**: "Custom hook = **extract logic, not state**. Each call site gets its own state instance. It's like a recipe, not a pot of shared soup."
+> 🧠 **Memory Hook**: "useDeferredValue = **bản copy chậm** — như cái bóng đi sau bạn 1 bước. Input chạy trước, danh sách chạy sau."
 
 **Tại sao tồn tại? / Why does this exist?**
-Before hooks, sharing stateful logic between class components required render props or HOCs — both introduced extra component tree nodes and "wrapper hell".
-→ Why is wrapper hell bad? DevTools showed 8+ layers of `<WithAuth><WithTheme><WithData>` wrappers, making debugging a nightmare.
-→ Why can't you just share class instances? Class instances are tied to component instances — you can't extract lifecycle logic without the component itself.
+Đôi khi bạn **không control được setState** (ví dụ: props từ parent, hoặc value từ library). Bạn không thể wrap trong `startTransition` vì bạn không gọi `setState`.
+→ **Why?** Vì component nhận **value từ bên ngoài** (props) — nó không biết ai đã set, chỉ biết value thay đổi và cần re-render.
+→ **Why?** Vì React cần cơ chế defer ở **consuming side** (nơi dùng value), không chỉ ở producing side (nơi tạo value).
 
-### Layer 1: Composition Mental Model
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
 
-```
-Primitive hooks (from React):     useState, useEffect, useRef
-         │
-         ▼
-Infrastructure hooks:             useFetch, useDebounce, useLocalStorage
-         │
-         ▼
-Domain hooks:                     useProductSearch, useCartTotal, useAuthUser
-         │
-         ▼
-Component:                        <SearchPage /> calls useProductSearch
-```
+Bạn đang xem **live stream** trên mạng chậm. Streamer nói realtime, nhưng video bạn nhận được **chậm 2-3 giây**. Bạn vẫn xem được nội dung, chỉ là phiên bản hơi cũ.
 
-**Single responsibility**: each layer only knows about the layer below it. `useProductSearch` calls `useDebounce` but does not call `useState` directly — it composes.
+`useDeferredValue(query)` = phiên bản **"live stream chậm"** của `query`. Input hiển thị giá trị mới ngay, nhưng danh sách dùng giá trị cũ cho đến khi React có thời gian render xong.
 
-### Layer 2: Custom Hook Design Rules
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
 
 ```tsx
-// ✅ Well-designed custom hook
-function useFetch<T>(url: string): { data: T | null; error: Error | null; loading: boolean } {
-  const [state, dispatch] = useReducer(fetchReducer, { data: null, error: null, loading: true });
+function SearchResults({ query }: { query: string }) {
+  // query thay đổi ngay khi parent re-render
+  // deferredQuery chậm hơn — React render với giá trị cũ trước
+  const deferredQuery = useDeferredValue(query);
+  const isStale = query !== deferredQuery; // Đang chờ update?
+
+  // useMemo đảm bảo chỉ re-compute khi deferredQuery thay đổi
+  const results = useMemo(() => filterProducts(deferredQuery), [deferredQuery]);
+
+  return (
+    <div style={{ opacity: isStale ? 0.7 : 1 }}>
+      {" "}
+      {/* Dim khi stale */}
+      {results.map((item) => (
+        <ProductCard key={item.id} {...item} />
+      ))}
+    </div>
+  );
+}
+
+// Parent component — không cần biết về deferred
+function SearchPage() {
+  const [query, setQuery] = useState("");
+  return (
+    <>
+      <input value={query} onChange={(e) => setQuery(e.target.value)} />
+      <SearchResults query={query} /> {/* Pass trực tiếp */}
+    </>
+  );
+}
+```
+
+```
+So sánh useTransition vs useDeferredValue:
+
+┌──────────────────┬───────────────────────────────────┐
+│   useTransition   │     useDeferredValue              │
+├──────────────────┼───────────────────────────────────┤
+│ Wrap setState     │ Wrap value (props/state)          │
+│ Control ở PRODUCER│ Control ở CONSUMER                │
+│ Bạn gọi setState │ Bạn nhận value từ bên ngoài       │
+│ isPending boolean │ So sánh value !== deferredValue   │
+│                   │                                   │
+│ startTransition(  │ const deferred =                  │
+│   () => setState  │   useDeferredValue(value)         │
+│ )                 │                                   │
+└──────────────────┴───────────────────────────────────┘
+
+Khi nào dùng cái nào?
+─────────────────────
+Bạn control setState? → useTransition
+Bạn nhận props?       → useDeferredValue
+```
+
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
+- **Kết hợp với useMemo**: `useDeferredValue` chỉ defer giá trị. Nếu child component vẫn nhận value mới qua props khác, nó vẫn re-render. Cần `useMemo` hoặc `React.memo` để thực sự skip render.
+- **Initial render**: Lần render đầu tiên, `deferredValue === value` (không defer).
+- **Không có fixed delay**: React tự quyết khi nào update deferred value — máy nhanh thì gần như instant, máy chậm thì delay lâu hơn.
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                     | Tại sao sai                                 | Đúng là                                                                     |
+| ------------------------------------------- | ------------------------------------------- | --------------------------------------------------------------------------- |
+| Dùng useDeferredValue mà không kết hợp memo | Component vẫn re-render vì reference mới    | Wrap expensive child trong `React.memo` hoặc dùng `useMemo` cho computation |
+| Dùng khi có thể control setState            | Thừa complexity, useTransition đơn giản hơn | useTransition nếu bạn control setState                                      |
+| Expect giá trị luôn chậm                    | Initial render trả về value gốc             | Chỉ defer từ render thứ 2 trở đi                                            |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy câu hỏi về: "useDeferredValue vs useTransition", "defer rendering", "stale UI"
+- → Nhớ đến: Live stream chậm, producer vs consumer control
+- → Mở đầu trả lời: _"useDeferredValue hoạt động ở phía consumer — khi bạn nhận value từ props mà không control được setState. Nó tạo một 'bản copy chậm' để React có thể ưu tiên urgent updates trước, rồi update deferred value sau."_
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [useTransition](#2-usetransition--đánh-dấu-không-gấp) — hiểu urgent vs non-urgent
+- ➡️ Để hiểu tiếp: [Performance Optimization](./09-performance-optimization.md) — kết hợp defer + memo + code splitting
+
+---
+
+### 4. useSyncExternalStore / Đồng Bộ Store Bên Ngoài
+
+> 🧠 **Memory Hook**: "useSyncExternalStore = **adapter ổ cắm điện** — chuyển đổi 'nguồn điện nước ngoài' (external store) sang 'ổ cắm React' để React dùng an toàn."
+
+**Tại sao tồn tại? / Why does this exist?**
+Nhiều state management libraries (Redux, Zustand, MobX) lưu state **bên ngoài React**. Khi state thay đổi, React cần biết để re-render — nhưng concurrent rendering có thể gây **tearing** (1 component đọc giá trị cũ, component khác đọc giá trị mới trong cùng 1 render).
+→ **Why?** Vì concurrent rendering cho phép React **interrupt và resume** render. Giữa 2 lần đọc, external store có thể đã thay đổi → inconsistency.
+→ **Why?** Vì React chỉ đảm bảo consistency cho **internal state** (useState, useReducer). External state cần cơ chế riêng.
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+
+Bạn đi du lịch nước ngoài mang theo **sạc điện thoại Việt Nam**. Ổ cắm ở châu Âu khác kiểu. Bạn cần **adapter** (cục chuyển đổi) để:
+
+1. **Cắm vào ổ châu Âu** (subscribe to external store)
+2. **Lấy điện ra đúng chuẩn** (getSnapshot — đọc giá trị)
+3. **An toàn** không bị giật (tearing-free rendering)
+
+`useSyncExternalStore` = adapter đó. Nó đảm bảo React đọc **consistent snapshot** từ external store, ngay cả khi concurrent rendering.
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
+```tsx
+import { useSyncExternalStore } from "react";
+
+// External store — nằm ngoài React
+const analyticsStore = {
+  _listeners: new Set<() => void>(),
+  _data: { pageViews: 0, clicks: 0 },
+
+  // subscribe: React gọi để đăng ký lắng nghe thay đổi
+  subscribe(listener: () => void) {
+    analyticsStore._listeners.add(listener);
+    return () => analyticsStore._listeners.delete(listener); // cleanup
+  },
+
+  // getSnapshot: React gọi để đọc giá trị HIỆN TẠI
+  getSnapshot() {
+    return analyticsStore._data; // PHẢI trả về reference ổn định
+  },
+
+  // Action: thay đổi data → notify React
+  trackClick() {
+    analyticsStore._data = { ...analyticsStore._data, clicks: analyticsStore._data.clicks + 1 };
+    analyticsStore._listeners.forEach((l) => l()); // Trigger re-render
+  },
+};
+
+// Component dùng external store
+function AnalyticsDashboard() {
+  const data = useSyncExternalStore(
+    analyticsStore.subscribe, // Cách đăng ký lắng nghe
+    analyticsStore.getSnapshot, // Cách đọc giá trị (client)
+    analyticsStore.getSnapshot, // Cách đọc giá trị (server SSR)
+  );
+
+  return <div>Clicks: {data.clicks}</div>;
+}
+```
+
+```
+Vấn đề Tearing (không có useSyncExternalStore):
+
+  External Store: value = "A"
+         │
+  ┌──────┴──────┐
+  │ Component 1 │ đọc "A" ✓
+  │ (render)    │
+  └─────────────┘
+         │
+  ← Store thay đổi: value = "B" →  ← INTERRUPT!
+         │
+  ┌──────┴──────┐
+  │ Component 2 │ đọc "B" ✗ ← SAI! cùng render mà khác giá trị
+  │ (render)    │
+  └─────────────┘
+
+  → UI inconsistent: Component 1 hiện "A", Component 2 hiện "B"
+
+Với useSyncExternalStore:
+  React đọc snapshot 1 lần và dùng cho TOÀN BỘ render
+  → Mọi component đều thấy cùng giá trị
+```
+
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
+- **getSnapshot PHẢI trả reference ổn định**: Nếu mỗi lần gọi tạo object mới (không dùng `===`), React sẽ re-render vô hạn. Cần cache hoặc trả immutable reference.
+- **Server rendering**: Tham số thứ 3 (`getServerSnapshot`) bắt buộc nếu dùng SSR. Thường trả default value.
+- **Bạn ít khi dùng trực tiếp**: Libraries (Redux, Zustand) đã wrap `useSyncExternalStore` rồi. Bạn cần hiểu khi nào building library hoặc custom store.
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                  | Tại sao sai                               | Đúng là                                                |
+| ---------------------------------------- | ----------------------------------------- | ------------------------------------------------------ |
+| `getSnapshot` trả object mới mỗi lần gọi | Infinite re-render vì reference luôn khác | Cache result, trả cùng reference nếu data không đổi    |
+| Quên `getServerSnapshot`                 | SSR crash hoặc hydration mismatch         | Luôn cung cấp server snapshot                          |
+| Dùng cho React internal state            | Overkill, useState đủ rồi                 | Chỉ dùng cho external stores (window, third-party lib) |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy câu hỏi về: "tearing", "external store", "useSyncExternalStore", "concurrent rendering consistency"
+- → Nhớ đến: Adapter ổ cắm điện, tearing diagram
+- → Mở đầu trả lời: _"useSyncExternalStore giải quyết vấn đề tearing trong concurrent rendering — khi external store thay đổi giữa lúc React đang render, các component có thể đọc giá trị không nhất quán. Hook này đảm bảo React đọc 1 snapshot duy nhất cho toàn bộ render tree."_
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [React Fundamentals — Fiber](./01-react-fundamentals.md) — hiểu concurrent rendering có thể interrupt
+- ➡️ Để hiểu tiếp: [State Management](./05-state-management.md) — hiểu tại sao Redux/Zustand cần hook này
+
+---
+
+### 5. Custom Hook Architecture / Kiến Trúc Custom Hook
+
+> 🧠 **Memory Hook**: "Custom hook = **công thức nấu ăn** — bạn gói nhiều bước (state + effect + logic) thành 1 tên gọi, ai cũng có thể nấu lại mà không cần biết chi tiết."
+
+**Tại sao tồn tại? / Why does this exist?**
+Components thường có logic lặp lại: fetch data → loading/error state → cleanup. Copy-paste logic này giữa components vi phạm DRY và tạo bugs khi fix 1 chỗ mà quên chỗ khác.
+→ **Why?** Vì trước hooks, reuse logic cần HOC hoặc render props — cả 2 đều tạo "wrapper hell" và khó debug.
+→ **Why?** Vì hooks cho phép **extract logic mà không thay đổi component tree** — custom hook là function thuần, không render JSX.
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+
+Bạn hay nấu ăn. Mỗi món cần bước "pha nước sốt": trộn dầu, giấm, muối, tiêu, khuấy đều. Thay vì viết lại bước này cho mỗi món, bạn tạo **công thức "Sốt cơ bản"** — ghi 1 lần, dùng ở bất kỳ món nào.
+
+Custom hook = công thức "Sốt cơ bản":
+
+- **Input**: nguyên liệu (parameters)
+- **Process**: các bước pha (hooks bên trong)
+- **Output**: nước sốt hoàn chỉnh (return values)
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
+```tsx
+// ============================
+// Custom Hook: useFetch
+// ============================
+function useFetch<T>(url: string) {
+  const [data, setData] = useState<T | null>(null);
+  const [error, setError] = useState<Error | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const controller = new AbortController();
-    dispatch({ type: "LOADING" });
+    const controller = new AbortController(); // Cleanup mechanism
 
-    fetch(url, { signal: controller.signal })
-      .then((r) => r.json())
-      .then((data) => dispatch({ type: "SUCCESS", data }))
-      .catch((err) => {
-        if (err.name !== "AbortError") dispatch({ type: "ERROR", error: err });
-      });
+    async function fetchData() {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(url, { signal: controller.signal });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        setData(json);
+      } catch (err) {
+        if (err instanceof Error && err.name !== "AbortError") {
+          setError(err);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    }
 
-    return () => controller.abort(); // cleanup: cancel on unmount or url change
+    fetchData();
+    return () => controller.abort(); // Cleanup khi url thay đổi hoặc unmount
   }, [url]);
 
-  return state;
+  return { data, error, isLoading } as const;
+}
+
+// ============================
+// Sử dụng — cực kỳ clean
+// ============================
+function ProductPage({ id }: { id: string }) {
+  const { data: product, error, isLoading } = useFetch<Product>(`/api/products/${id}`);
+
+  if (isLoading) return <Spinner />;
+  if (error) return <ErrorMessage error={error} />;
+  return <ProductDetail product={product!} />;
 }
 ```
 
-**Key design rules:**
+```
+Custom Hook Composition Layers:
 
-1. **Name with `use` prefix** — required for ESLint to enforce Rules of Hooks inside
-2. **Return stable references** — inline `{ data, error, loading }` creates new object each render; use `useReducer` state directly
-3. **Accept config, don't hardcode** — `url` is a parameter, not hardcoded inside
-4. **Document cleanup semantics** in JSDoc — what gets cancelled, what side effects occur
-5. **Composition over monoliths** — `useProductSearch` = `useDebounce` + `useFetch`, not one giant hook
-
-### Layer 3: Performance Patterns & Pitfalls
-
-**The stale closure trap:**
-
-```tsx
-// ❌ Stale closure: count captured at effect creation time
-useEffect(() => {
-  const id = setInterval(() => {
-    console.log(count); // always logs the initial value!
-  }, 1000);
-  return () => clearInterval(id);
-}, []); // count missing from deps
-
-// ✅ Fix 1: add to deps (effect restarts on each count change)
-useEffect(() => {
-  const id = setInterval(() => console.log(count), 1000);
-  return () => clearInterval(id);
-}, [count]);
-
-// ✅ Fix 2: ref to latest value (effect never restarts)
-const countRef = useRef(count);
-useEffect(() => {
-  countRef.current = count;
-});
-useEffect(() => {
-  const id = setInterval(() => console.log(countRef.current), 1000);
-  return () => clearInterval(id);
-}, []);
+Layer 1: Primitive Hooks (React built-in)
+┌──────────────────────────────────────────┐
+│  useState  useEffect  useRef  useMemo    │
+└────────────────────┬─────────────────────┘
+                     │ compose
+Layer 2: Utility Hooks (tái sử dụng logic đơn)
+┌──────────────────────────────────────────┐
+│  useDebounce  useLocalStorage  useToggle │
+└────────────────────┬─────────────────────┘
+                     │ compose
+Layer 3: Feature Hooks (logic nghiệp vụ)
+┌──────────────────────────────────────────┐
+│  useFetch  useForm  useAuth  useCart     │
+└────────────────────┬─────────────────────┘
+                     │ compose
+Layer 4: Page Hooks (orchestrate features)
+┌──────────────────────────────────────────┐
+│  useCheckoutFlow  useDashboardData       │
+└──────────────────────────────────────────┘
 ```
 
-**Context performance trap:**
+**Design Principles cho Custom Hooks:**
 
-```tsx
-// ❌ Creates new object on every render → all consumers re-render
-<ThemeContext.Provider value={{ theme, setTheme }}>
+| Nguyên tắc                   | Giải thích                            | Ví dụ                                               |
+| ---------------------------- | ------------------------------------- | --------------------------------------------------- |
+| **Single Responsibility**    | 1 hook = 1 concern                    | `useFetch` chỉ fetch, không format data             |
+| **Return tuple hoặc object** | Tuple cho ít values, object cho nhiều | `[value, setValue]` vs `{ data, error, isLoading }` |
+| **Prefix `use`**             | React lint rule yêu cầu               | `useWindowSize`, không phải `getWindowSize`         |
+| **Accept primitives**        | Tránh object trong deps array         | `useFetch(url)` not `useFetch({ url, method })`     |
+| **Cleanup**                  | Abort, unsubscribe trong return       | AbortController cho fetch, removeEventListener      |
 
-// ✅ Stable reference → consumers only re-render when theme/setTheme change
-const value = useMemo(() => ({ theme, setTheme }), [theme, setTheme]);
-<ThemeContext.Provider value={value}>
-```
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
+- **Mỗi component gọi hook = instance riêng**: `useFetch` trong ComponentA và ComponentB tạo **2 state riêng biệt**, 2 fetch calls. Muốn share → cần lift state hoặc cache layer (TanStack Query).
+- **Closure trap**: Nếu custom hook dùng callback mà reference value cũ (stale closure), cần `useRef` để giữ latest value.
+- **Testing**: Custom hook test bằng `renderHook` từ `@testing-library/react-hooks`. Không cần tạo dummy component.
 
 **❌ Sai lầm thường gặp / Common Mistakes:**
 
-| Sai lầm                                                      | Tại sao sai                                                    | Đúng là                                                            |
-| ------------------------------------------------------------ | -------------------------------------------------------------- | ------------------------------------------------------------------ |
-| Returning `{ data, error, loading }` inline from a hook      | New object each render breaks memoization downstream           | Return `useReducer` state directly, or `useMemo` the return object |
-| No `AbortController` in `useFetch`                           | setState called on unmounted component on fast navigation      | Always return `() => controller.abort()` from useEffect cleanup    |
-| Calling `useMemo`/`useCallback` everywhere by default        | Memoization has memory cost; adds cognitive overhead           | Measure first with Profiler; only memo when bottleneck confirmed   |
-| `<Child options={{ size: 'lg' }} />` with `React.memo` child | Inline object is new reference every render → memo never skips | Hoist constant outside component or `useMemo` the options object   |
+| Sai lầm                                | Tại sao sai                                  | Đúng là                                   |
+| -------------------------------------- | -------------------------------------------- | ----------------------------------------- |
+| Hook return quá nhiều thứ              | Interface phức tạp, khó maintain             | Tách thành nhiều hooks nhỏ                |
+| Không cleanup trong useEffect          | Memory leak, race condition                  | Luôn return cleanup function              |
+| Pass object làm dependency             | Object mới mỗi render → effect chạy liên tục | Destructure, pass primitive values        |
+| Nghĩ hooks share state giữa components | Mỗi component có instance riêng              | Dùng Context hoặc external store để share |
 
 **🎯 Interview Pattern:**
 
-- Khi thấy: "How would you design a shared data-fetching hook for a team of 20 developers?"
-- → Nhớ: composition layers + cancellation contract + stable return value
-- → Mở đầu: "I'd design it in two layers: a primitive `useFetch` handling AbortController and state machine, then a domain `useProductData` composing it — with JSDoc specifying which arguments must be stable references."
+- Khi thấy câu hỏi về: "custom hook", "reuse logic", "hook architecture", "extract logic"
+- → Nhớ đến: Công thức nấu ăn, 4 composition layers
+- → Mở đầu trả lời: _"Custom hook là cách extract và reuse stateful logic mà không thay đổi component tree. Tôi thiết kế theo 4 layers: primitive hooks → utility hooks → feature hooks → page hooks. Nguyên tắc quan trọng nhất là single responsibility và proper cleanup."_
 
-**🔑 Knowledge Chain:**
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
 
-- 📚 Cần biết: [Hooks Deep Dive — useEffect cleanup](./03-hooks-deep-dive.md)
-- ➡️ Để hiểu: [React Testing — testing custom hooks with renderHook](./06-testing.md)
-
----
-
-## Interview Q&A / Câu Hỏi Phỏng Vấn
-
-### Q: What are the Rules of Hooks and why does React require them? / Tại sao React có Rules of Hooks? 🟢 Junior
-
-**A:** Two rules: (1) only call hooks at the top level — never inside loops, conditions, or nested functions; (2) only call hooks from React function components or custom hooks.
-
-The reason is implementation: React tracks hook state using an ordered linked list — one node per `useState`/`useEffect`/etc. call. Position in that list is the only identifier React has for each hook's state. Conditionally skip a hook → every subsequent hook reads the wrong state slot.
-
-Tiếng Việt: React dùng linked list theo thứ tự gọi để track state của mỗi hook — bỏ qua hook có điều kiện sẽ làm mọi hook sau đọc nhầm ô state. ESLint plugin `eslint-plugin-react-hooks` phát hiện vi phạm tự động.
-
-**💡 Interview Signal:**
-
-- ✅ Strong: Names the linked-list implementation, explains why position = identity, mentions ESLint plugin
-- ❌ Weak: "Because React needs to track state" (doesn't explain the mechanism)
+- 📚 Cần biết trước: [Hooks Deep Dive](./03-hooks-deep-dive.md) — hiểu primitive hooks
+- ➡️ Để hiểu tiếp: [Advanced Patterns](./04-advanced-patterns.md) — kết hợp custom hooks với compound components
 
 ---
 
-### Q: What is a stale closure in a `useEffect` and how do you fix it? / Stale closure trong useEffect là gì? 🟡 Mid
+## Q&A Section / Câu Hỏi Phỏng Vấn
 
-**A:** A stale closure occurs when a `useEffect` callback closes over a variable (e.g., `count`) from the render at the time the effect was created, but the variable has changed in subsequent renders. The effect "sees" the old value because the closure was never re-created.
+### Q1: What are the main categories of React hooks? / Phân loại các nhóm hooks trong React? 🟢 Junior
 
-**Three fixes:**
+**A:** React hooks fall into 5 categories: **State** (useState, useReducer, useContext), **Effect** (useEffect, useLayoutEffect), **Ref** (useRef, useImperativeHandle), **Performance** (useMemo, useCallback), and **Concurrency** (useTransition, useDeferredValue, useSyncExternalStore).
 
-1. Add the variable to the dependency array — effect re-creates when it changes.
-2. `useRef` to hold latest value: `const ref = useRef(count); useEffect(() => { ref.current = count; })` — read `ref.current` inside the effect.
-3. Functional setState form: `setCount(c => c + 1)` avoids reading `count` from the closure.
+Mỗi nhóm giải quyết 1 bài toán khác nhau. State giữ dữ liệu, Effect đồng bộ bên ngoài, Ref giữ reference mà không trigger re-render, Performance cache kết quả, Concurrency ưu tiên render. Hiểu phân loại giúp bạn chọn đúng hook cho đúng vấn đề.
 
-Tiếng Việt: stale closure xảy ra khi effect dùng giá trị cũ từ lần render trước. Ba cách fix: (1) thêm dependency, (2) dùng `useRef` giữ value mới nhất, (3) dùng functional updater để tránh đọc closure.
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
 
-**💡 Interview Signal:**
-
-- ✅ Strong: Explains the closure mechanism, gives all three fixes with their trade-offs (ref = no restart; deps = restart; functional = no read)
-- ❌ Weak: "Just add it to the dependency array" (only one fix, doesn't mention trade-offs)
+- ✅ Strong: Phân loại theo **mục đích** (state/effect/ref/performance/concurrency) và giải thích khi nào dùng nhóm nào
+- ❌ Weak: Liệt kê tên hooks mà không giải thích tại sao chúng được nhóm lại
 
 ---
 
-### Q: What is the difference between `useTransition` and `useDeferredValue`? When do you use each? 🔴 Senior
+### Q2: When should you use useLayoutEffect instead of useEffect? / Khi nào dùng useLayoutEffect thay vì useEffect? 🟢 Junior
 
-**A:** Both defer non-urgent rendering, but they operate from different positions:
+**A:** `useLayoutEffect` runs **synchronously after DOM update but before browser paint**. Use it when you need to **measure DOM** (element dimensions, scroll position) or **prevent visual flicker** (positioning a tooltip before user sees it).
 
-- **`useTransition`** is used by the _state updater_. Call `startTransition(() => setState(newValue))` where the state update happens. Use when you **own** the state setter (e.g., user clicks a tab, you call `setActiveTab`).
-- **`useDeferredValue`** is used by the _value consumer_. Call `const deferred = useDeferredValue(props.query)` in the component rendering the expensive list. Use when you **receive** the value from outside (a prop or context value you don't control).
-
-Trade-off: both require `React.memo` on expensive children to have any effect. Without memoization, React still re-renders the child on every cycle.
-
-Tiếng Việt: `useTransition` đặt ở nguồn update (chỗ `setState`), `useDeferredValue` đặt ở nơi nhận value. Khi không kiểm soát nguồn state, chỉ có thể dùng `useDeferredValue`.
-
-**💡 Interview Signal:**
-
-- ✅ Strong: Identifies "who owns the state" as the decision criterion, mentions `React.memo` requirement
-- ❌ Weak: "useTransition is for transitions" (circular definition, doesn't distinguish the two)
-
----
-
-### Q: How does `useSyncExternalStore` prevent tearing, and when should you use it over `useEffect + useState`? 🔴 Senior
-
-**A:** In concurrent rendering, React may pause and resume a render. If an external store updates between pauses, some components see the old value and others the new — "tearing".
-
-`useSyncExternalStore(subscribe, getSnapshot)` prevents this by:
-
-1. Taking a **synchronous `getSnapshot`** that React calls multiple times during a single render pass.
-2. If `getSnapshot` returns a different value between calls (store changed mid-render), React synchronously re-renders to resolve inconsistency.
-
-The `useEffect + setState` subscription pattern has a race: between mount and the effect running, the store may have updated — causing a missed initial value. `useSyncExternalStore` eliminates this window by subscribing before the first paint.
-
-**When to use**: any non-React state components need to subscribe to — Redux store, Zustand store, `window.matchMedia`, `navigator.onLine`. Redux Toolkit and Zustand v4 both use it internally.
-
-Tiếng Việt: `useEffect + useState` có race condition giữa mount và subscribe — `useSyncExternalStore` subscribe ngay từ đầu và detect tearing trong concurrent renders.
-
-**💡 Interview Signal:**
-
-- ✅ Strong: Defines tearing, explains the mount race condition, mentions Redux/Zustand using it internally
-- ❌ Weak: "It's more reliable for external stores" (vague, doesn't explain the problem it solves)
-
----
-
-### Q: How do you design a custom `useFetch` hook that handles race conditions and cleanup? 🟡 Mid
-
-**A:** A production-grade `useFetch` must handle three problems: (1) unmounting mid-request, (2) rapid input changes causing stale responses, (3) invalid intermediate states.
-
-Key implementation points:
-
-- Use `AbortController` to cancel in-flight `fetch` in the cleanup function.
-- Use `useReducer` for `{ data, error, loading }` to keep state transitions atomic.
-- Accept a URL parameter — memoize config objects at the call site with `useMemo`.
+`useEffect` chạy **sau khi browser paint** — user đã thấy UI rồi. 99% trường hợp dùng `useEffect`. Chỉ dùng `useLayoutEffect` khi bạn cần **đọc layout DOM** (getBoundingClientRect) hoặc **thay đổi DOM trước khi user thấy** (tránh flicker).
 
 ```tsx
+// ✅ useLayoutEffect — đo tooltip position trước khi hiện
+useLayoutEffect(() => {
+  const rect = tooltipRef.current.getBoundingClientRect();
+  setPosition({ top: rect.bottom, left: rect.left });
+}, [isOpen]);
+
+// ✅ useEffect — fetch data (không cần đọc DOM)
 useEffect(() => {
-  const controller = new AbortController();
-  dispatch({ type: "LOADING" });
-  fetch(url, { signal: controller.signal })
-    .then((r) => r.json())
-    .then((data) => dispatch({ type: "SUCCESS", data }))
-    .catch((err) => {
-      if (err.name !== "AbortError") dispatch({ type: "ERROR", error: err });
-    });
-  return () => controller.abort();
-}, [url]);
+  fetchData(id);
+}, [id]);
 ```
 
-Tiếng Việt: hai lỗi phổ biến nhất: không cancel khi unmount, và state transition không atomic (loading: false + data: null tồn tại cùng lúc). `AbortController` + `useReducer` giải quyết cả hai.
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
 
-**💡 Interview Signal:**
-
-- ✅ Strong: Mentions AbortController cleanup, useReducer for atomic state, and the stale response race condition
-- ❌ Weak: Only mentions `useState` for loading/data/error separately (doesn't handle intermediate invalid states)
+- ✅ Strong: Nêu rõ "sync trước paint" vs "async sau paint", cho ví dụ cụ thể (tooltip, scroll restore)
+- ❌ Weak: "useLayoutEffect chạy trước useEffect" mà không giải thích **tại sao** điều đó quan trọng
 
 ---
 
-### Q: Why is Error Boundary still a class component? What is the hooks equivalent? 🟡 Mid
+### Q3: Explain useTransition vs useDeferredValue — when to use which? / Giải thích useTransition vs useDeferredValue — khi nào dùng cái nào? 🟡 Mid
 
-**A:** Error Boundaries require `getDerivedStateFromError` and `componentDidCatch` — two lifecycle methods with no hook equivalents. React has not added hook alternatives because catching render-phase errors requires intercepting during the rendering pass itself, which the current hooks architecture cannot do.
+**A:** Both enable **priority-based rendering** but differ in **who controls the update**:
 
-**Practical solution**: use `react-error-boundary` — provides `<ErrorBoundary>` component, `useErrorBoundary()` hook for throwing errors programmatically, and `withErrorBoundary` HOC.
+- `useTransition`: You control the setState call → wrap it in `startTransition()`. Used at the **producer** side.
+- `useDeferredValue`: You receive a value (props) you can't control → create a deferred copy. Used at the **consumer** side.
 
-Tiếng Việt: không có hook nào thay thế Error Boundary — câu bẫy phổ biến trong phỏng vấn. Dùng `react-error-boundary` để bọc function component.
+Cách nhớ đơn giản:
 
-**💡 Interview Signal:**
+- **Bạn gọi setState?** → `useTransition`
+- **Bạn nhận props?** → `useDeferredValue`
 
-- ✅ Strong: Names the specific missing lifecycle methods, explains why (render-phase error capture), mentions react-error-boundary
-- ❌ Weak: "You can't do it with hooks" (doesn't explain why or offer the solution)
-
----
-
-### Q: What is the execution order of `useInsertionEffect`, `useLayoutEffect`, and `useEffect`? Why does it matter? 🔴 Senior
-
-**A:** Order: **`useInsertionEffect`** → **`useLayoutEffect`** → **`useEffect`** — all run after DOM commit.
-
-- `useInsertionEffect`: synchronous before layout effects. Can only inject `<style>` tags — cannot read refs or call setState. For CSS-in-JS library authors only.
-- `useLayoutEffect`: synchronous after DOM mutation, before browser paints. Safe for DOM measurements (scroll position, element dimensions).
-- `useEffect`: asynchronous after paint. Non-blocking — use for subscriptions, fetching, analytics.
-
-Why it matters: if `useLayoutEffect` measures element size but a CSS-in-JS library also uses `useLayoutEffect` for style injection, the measurement may be wrong. `useInsertionEffect` guarantees styles exist before any layout measurement.
-
-Tiếng Việt: thứ tự đảm bảo: style có trước khi measure (`useInsertionEffect` trước `useLayoutEffect`), measure xong trước khi paint (`useLayoutEffect` trước paint), side effects sau khi render (`useEffect` sau paint).
-
-**💡 Interview Signal:**
-
-- ✅ Strong: Names all three, explains the ordering guarantee, gives the CSS-in-JS measurement race condition as the motivation
-- ❌ Weak: Only knows `useEffect` vs `useLayoutEffect` — misses `useInsertionEffect` entirely
-
----
-
-### Q: How does `useId` solve SSR hydration mismatches? 🟡 Mid
-
-**A:** Before `useId`, developers used module-level counters (`let id = 0`) or `Math.random()` for unique HTML `id` attributes. These fail during SSR:
-
-- Module counters reset between server requests but are shared across components in one render — increments differ server vs client.
-- `Math.random()` is non-deterministic.
-
-`useId` generates IDs from the component's **position in the React fiber tree**, which is identical on server and client given the same component structure. `<label htmlFor="r0:label">` on server matches `<input id="r0:label">` on client.
-
-**Important**: never use `useId` for list item `key` props — keys must come from data identity, not position.
-
-Tiếng Việt: `useId` tạo ID từ vị trí trong component tree — deterministic, giống nhau trên server và client. Dùng cho `htmlFor`/`id`, `aria-describedby` — không dùng cho `key` prop.
-
-**💡 Interview Signal:**
-
-- ✅ Strong: Explains the module-counter and Math.random() failures, fiber-tree determinism, and the key-prop antipattern
-- ❌ Weak: "useId generates unique IDs" (doesn't explain the SSR hydration problem it solves)
-
----
-
-### Q: What are the common pitfalls when migrating `componentDidUpdate` to hooks? 🟡 Mid
-
-**A:** Three major pitfalls:
-
-1. **Runs on mount too**: `useEffect(fn, [dep])` runs after initial render AND on dep changes. `componentDidUpdate` did NOT run on mount. Guard with: `const mounted = useRef(false); useEffect(() => { if (!mounted.current) { mounted.current = true; return; } fn(); }, [dep])`.
-
-2. **Object dep identity**: if `dep` is an object created inline, `useEffect` sees a new reference every render and runs every time. `componentDidUpdate` compared by explicit `prevProps.x !== this.props.x`.
-
-3. **Cleanup runs more than unmount**: the effect's return function runs before each re-run when deps change, not only on unmount. Expensive cleanup (e.g., cancelling a network request) that you expected to run once now runs on every dep change.
-
-Tiếng Việt: ba bẫy migrate: (1) effect chạy cả lần mount, (2) object dep luôn mới mỗi render, (3) cleanup chạy trước mỗi re-run không chỉ unmount.
-
-**💡 Interview Signal:**
-
-- ✅ Strong: All three pitfalls with concrete solutions (useRef guard, stable refs, cleanup awareness)
-- ❌ Weak: Only mentions the dependency array difference
-
----
-
-### Q: How do you test a custom hook that uses `setTimeout` internally? 🟢 Junior
-
-**A:** Use fake timers from the test framework to control time without actually waiting.
-
-```ts
-import { renderHook, act } from "@testing-library/react";
-import { useDebounce } from "./useDebounce";
-
-beforeEach(() => vi.useFakeTimers());
-afterEach(() => vi.useRealTimers());
-
-it("returns debounced value after delay", () => {
-  const { result, rerender } = renderHook(({ val }) => useDebounce(val, 300), {
-    initialProps: { val: "a" },
+```tsx
+// useTransition — bạn control setState
+const [isPending, startTransition] = useTransition();
+function handleSearch(query: string) {
+  setInput(query); // urgent
+  startTransition(() => {
+    setFilteredList(filter(query)); // non-urgent
   });
-  expect(result.current).toBe("a");
+}
 
-  rerender({ val: "b" });
-  expect(result.current).toBe("a"); // still stale
-
-  act(() => vi.advanceTimersByTime(300));
-  expect(result.current).toBe("b"); // now updated
-});
+// useDeferredValue — bạn nhận value từ parent
+function Results({ query }: { query: string }) {
+  const deferredQuery = useDeferredValue(query);
+  const results = useMemo(() => filter(deferredQuery), [deferredQuery]);
+}
 ```
 
-Wrap timer advancement in `act()` so React flushes state updates before assertions. Use `renderHook` to keep tests focused on hook logic without mounting a full component.
+Cả 2 đều khác debounce: debounce delay cố định bất kể máy nhanh hay chậm. useTransition/useDeferredValue để React **tự quyết** — máy nhanh thì delay gần 0, máy chậm thì delay tăng.
 
-Tiếng Việt: dùng `vi.useFakeTimers()` để control thời gian, `act(() => vi.advanceTimersByTime(300))` để advance timer và flush React state, sau đó mới assert.
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
 
-**💡 Interview Signal:**
-
-- ✅ Strong: Mentions `renderHook`, `act()` wrapper requirement, fake timers — and knows why act() is needed (flush state updates)
-- ❌ Weak: "Use setTimeout mock" without mentioning act() wrapping or renderHook
+- ✅ Strong: Phân biệt producer vs consumer, nêu scenario cụ thể cho mỗi cái, so sánh với debounce
+- ❌ Weak: "Cả 2 giống nhau, đều defer updates" mà không phân biệt use case
 
 ---
 
-## 📋 Interview Q&A Summary / Tóm Tắt Q&A Phỏng Vấn
+### Q4: What is tearing and how does useSyncExternalStore prevent it? / Tearing là gì và useSyncExternalStore ngăn chặn như thế nào? 🟡 Mid
 
-| #   | Câu hỏi                                                          | Difficulty | Core Concept      | Key Signal                                               |
-| --- | ---------------------------------------------------------------- | ---------- | ----------------- | -------------------------------------------------------- |
-| 1   | Rules of Hooks và tại sao React yêu cầu?                         | 🟢 Junior  | Hook internals    | Call order = linked list stability                       |
-| 2   | Stale closure trong `useEffect` — nguyên nhân và fix?            | 🟡 Mid     | Closure           | Dep array + functional updater + ref                     |
-| 3   | `useTransition` vs `useDeferredValue` — khi nào dùng?            | 🔴 Senior  | Concurrent React  | Initiator vs receiver deferral                           |
-| 4   | `useSyncExternalStore` ngăn tearing như thế nào?                 | 🔴 Senior  | Concurrent safety | External store + `getSnapshot` consistency               |
-| 5   | Design `useFetch` xử lý race conditions và cleanup               | 🟡 Mid     | Hook design       | AbortController + ignore flag                            |
-| 6   | Error Boundary vẫn là class component — tại sao?                 | 🟡 Mid     | React limitations | Không có hooks equivalent cho `getDerivedStateFromError` |
-| 7   | Thứ tự `useInsertionEffect` vs `useLayoutEffect` vs `useEffect`? | 🔴 Senior  | Render lifecycle  | CSS-in-JS timing, DOM mutation order                     |
-| 8   | `useId` giải quyết SSR hydration mismatch?                       | 🟡 Mid     | SSR               | Server/client stable ID generation                       |
-| 9   | Pitfalls khi migrate `componentDidUpdate` sang hooks?            | 🟡 Mid     | Migration         | Prev deps pattern, multiple effects                      |
-| 10  | Test custom hook dùng `setTimeout` internally?                   | 🟢 Junior  | Testing           | `jest.useFakeTimers` + `act()`                           |
+**A:** **Tearing** is when different parts of the UI show **inconsistent data** from the same source during a single render. It happens with concurrent rendering: React starts rendering Component A (reads value "X"), gets interrupted, external store changes to "Y", React continues rendering Component B (reads "Y") → A shows "X", B shows "Y".
+
+`useSyncExternalStore` prevents this by ensuring React reads a **single consistent snapshot** for the entire render tree.
+
+Tearing xảy ra vì concurrent rendering cho phép React **interrupt giữa chừng**. Trong khoảng thời gian đó, external store (Redux, Zustand, global variable) có thể thay đổi. `useSyncExternalStore` đảm bảo React đọc **1 snapshot duy nhất** cho toàn bộ render — không component nào thấy giá trị khác.
+
+Thực tế bạn ít gặp tearing trực tiếp vì các libraries đã xử lý. Nhưng nếu build custom store hoặc đọc từ `window`/`localStorage`, cần dùng hook này.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
+- ✅ Strong: Giải thích mechanism (interrupt → stale read), nêu ví dụ cụ thể, biết libraries đã wrap hook này
+- ❌ Weak: "Tearing là bug" mà không giải thích **tại sao** concurrent rendering gây ra nó
+
+---
+
+### Q5: How do you decide between useReducer and useState? / Khi nào chọn useReducer thay vì useState? 🟡 Mid
+
+**A:** Choose `useReducer` when:
+
+1. **State logic is complex** — multiple related values that change together
+2. **Next state depends on previous state** in non-trivial ways
+3. **You want testable logic** — reducer is a pure function, easy to unit test
+4. **State transitions need documentation** — action types serve as documentation
+
+Dùng `useState` cho state đơn giản (boolean, string, number). Dùng `useReducer` khi state có **nhiều trường liên quan nhau** (form với validation, multi-step wizard, shopping cart).
+
+```tsx
+// useState — đơn giản
+const [isOpen, setIsOpen] = useState(false);
+
+// useReducer — state phức tạp, nhiều action
+type CartAction =
+  | { type: "ADD_ITEM"; payload: Product }
+  | { type: "REMOVE_ITEM"; payload: string }
+  | { type: "UPDATE_QTY"; payload: { id: string; qty: number } }
+  | { type: "CLEAR" };
+
+function cartReducer(state: CartState, action: CartAction): CartState {
+  switch (action.type) {
+    case "ADD_ITEM":
+      return { ...state, items: [...state.items, action.payload] };
+    // ... predictable, testable transitions
+  }
+}
+
+const [cart, dispatch] = useReducer(cartReducer, initialCart);
+```
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
+- ✅ Strong: Nêu criteria rõ ràng (complex logic, related state, testability), cho ví dụ both sides
+- ❌ Weak: "useReducer cho state phức tạp" mà không giải thích **thế nào là phức tạp**
+
+---
+
+### Q6: Design a custom hook `useDebounce` — walk through architecture decisions. / Thiết kế custom hook `useDebounce` — trình bày các quyết định thiết kế. 🔴 Senior
+
+**A:**
+
+```tsx
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer); // Cleanup: cancel timer if value changes
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+// Usage
+function Search() {
+  const [query, setQuery] = useState("");
+  const debouncedQuery = useDebounce(query, 300);
+
+  useEffect(() => {
+    if (debouncedQuery) fetchResults(debouncedQuery);
+  }, [debouncedQuery]);
+}
+```
+
+**Architecture decisions:**
+
+1. **Debounce value, not callback**: Hook nhận `value` thay vì `callback` vì value-based debounce dễ compose hơn (kết hợp với useEffect downstream).
+2. **Cleanup pattern**: Mỗi lần `value` thay đổi, cleanup cancel timer cũ → chỉ timer cuối cùng được thực thi.
+3. **Generic type `<T>`**: Hoạt động với bất kỳ type nào (string, number, object).
+4. **Configurable delay**: Cho phép caller quyết định thời gian debounce.
+
+**Trade-offs:**
+
+- Value-based = thêm 1 render cycle so với callback-based
+- Nếu cần debounce **function call**, dùng `useMemo(() => debounce(fn, delay), [fn, delay])` thay vì hook này
+- Không xử lý leading edge (fire immediately rồi ignore) — cần thêm `options.leading` parameter
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
+- ✅ Strong: Giải thích cleanup mechanism, trade-off value vs callback, generic typing, extensibility (leading/trailing)
+- ❌ Weak: Chỉ show code mà không giải thích tại sao design như vậy
+
+**🔗 Follow-up Chain:**
+
+1. "Nếu cần debounce callback thay vì value thì thay đổi gì?" → `useCallback` + `useMemo(() => debounce(fn), [fn])`
+2. "So sánh useDebounce vs useDeferredValue?" → Debounce = fixed delay, deferred = React-controlled adaptive delay
+3. "Làm sao test hook này?" → `renderHook` + `act` + `jest.useFakeTimers` để control thời gian
+
+---
+
+### Q7: Explain the Rules of Hooks internals — why can't hooks be conditional? / Giải thích cơ chế internal của Rules of Hooks — tại sao hooks không được đặt trong điều kiện? 🔴 Senior
+
+**A:** React stores hooks as a **linked list** on each Fiber node. During each render, React traverses this list **sequentially by call order**. If hook calls are conditional, the list shifts and React reads the wrong hook's state.
+
+React lưu hooks dưới dạng **linked list** gắn vào Fiber node. Mỗi render, React đi qua list **theo thứ tự gọi** — hook thứ 1 = node thứ 1, hook thứ 2 = node thứ 2...
+
+```
+Render 1 (showExtra = true):
+  [0] useState("") ←── name
+  [1] useState(0)  ←── age
+  [2] useState("") ←── extra  ← GỌI vì showExtra = true
+
+Render 2 (showExtra = false):
+  [0] useState("") ←── name ✓
+  [1] useState(0)  ←── age ✓
+  ← [2] bị skip!
+
+  React nghĩ hook[1] = age, nhưng data ở [1] có thể bị shift
+  → STATE SAI, APP CRASH
+```
+
+**Tại sao linked list mà không dùng key?**
+
+- Performance: Linked list traverse O(1) per hook, không cần hash lookup
+- Simplicity: Không cần developer đặt tên/key cho mỗi hook
+- Trade-off: Mất flexibility (no conditional) để đổi lấy performance + simplicity
+
+**Cách React enforce:**
+
+- ESLint plugin `eslint-plugin-react-hooks` kiểm tra static analysis
+- Rule: Hooks phải ở **top level** của function component, không trong if/loop/nested function
+- Exception: `use()` API trong React 19 — **không** lưu trong linked list → CÓ THỂ dùng conditional
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
+- ✅ Strong: Giải thích linked list mechanism, nêu trade-off (simplicity vs flexibility), biết `use()` exception
+- ❌ Weak: "Vì React docs nói vậy" mà không giải thích cơ chế bên trong
+
+**🔗 Follow-up Chain:**
+
+1. "Tại sao React chọn linked list thay vì Map?" → Performance (no hashing overhead) + no key management burden
+2. "use() API khác hooks bình thường như thế nào?" → Không lưu trong linked list, React track bằng Promise identity
+3. "Nếu bạn thiết kế hooks system từ đầu, bạn chọn cách nào?" → Open-ended: named slots (Svelte-like) vs current approach, trade-offs
+
+---
+
+### Q8: Design a `usePagination` hook for infinite scroll with virtualization. / Thiết kế hook `usePagination` cho infinite scroll kết hợp virtualization. 🔴 Senior
+
+**A:**
+
+```tsx
+interface UsePaginationOptions {
+  fetchPage: (page: number) => Promise<{ data: Item[]; hasMore: boolean }>;
+  pageSize: number;
+  threshold?: number; // pixels from bottom to trigger next load
+}
+
+interface UsePaginationResult {
+  items: Item[];
+  isLoading: boolean;
+  error: Error | null;
+  hasMore: boolean;
+  sentinelRef: React.RefObject<HTMLDivElement>; // Attach to bottom sentinel
+}
+
+function usePagination({
+  fetchPage,
+  pageSize,
+  threshold = 200,
+}: UsePaginationOptions): UsePaginationResult {
+  const [items, setItems] = useState<Item[]>([]);
+  const [page, setPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  // Fetch page data
+  const loadPage = useCallback(
+    async (pageNum: number) => {
+      if (isLoading || !hasMore) return;
+      setIsLoading(true);
+      try {
+        const result = await fetchPage(pageNum);
+        setItems((prev) => [...prev, ...result.data]);
+        setHasMore(result.hasMore);
+        setPage(pageNum + 1);
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error("Fetch failed"));
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [fetchPage, isLoading, hasMore],
+  );
+
+  // IntersectionObserver for infinite scroll
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoading) {
+          loadPage(page);
+        }
+      },
+      { rootMargin: `${threshold}px` },
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [page, hasMore, isLoading, loadPage, threshold]);
+
+  // Initial load
+  useEffect(() => {
+    loadPage(1);
+  }, []); // eslint-disable-line
+
+  return { items, isLoading, error, hasMore, sentinelRef };
+}
+```
+
+**Architecture decisions:**
+
+1. **IntersectionObserver over scroll event**: Performance — no scroll handler firing 60fps, browser-native lazy detection
+2. **Sentinel element pattern**: Một `<div ref={sentinelRef} />` ở cuối list. Khi nó visible → load more. Decouple scroll logic khỏi list component.
+3. **Accumulate items**: `setItems(prev => [...prev, ...newData])` — append, không replace
+4. **Guard conditions**: `isLoading || !hasMore` prevents duplicate fetches
+
+**Kết hợp Virtualization:**
+Hook này return `items` array. Render bằng `react-window` hoặc `@tanstack/react-virtual` — chỉ render items trong viewport, sentinel ở cuối virtual list.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
+- ✅ Strong: IntersectionObserver thay scroll event, sentinel pattern, guard conditions, virtualization integration
+- ❌ Weak: Chỉ dùng `onScroll` + `scrollHeight` check mà không nói về performance implications
+
+**🔗 Follow-up Chain:**
+
+1. "Xử lý race condition khi user scroll nhanh?" → Abort previous fetch, use page number as key
+2. "Cache pages khi user scroll ngược lên?" → Keep items array, chỉ virtualize rendering
+3. "Reset khi filter thay đổi?" → Reset items/page state, cancel pending fetches
+
+---
+
+## Interview Q&A Summary / Tổng Kết Phỏng Vấn
+
+| #   | Question                          | Level | Key Point                                               |
+| --- | --------------------------------- | ----- | ------------------------------------------------------- |
+| Q1  | Hook categories                   | 🟢    | 5 nhóm: State, Effect, Ref, Performance, Concurrency    |
+| Q2  | useLayoutEffect vs useEffect      | 🟢    | Sync before paint (DOM measure) vs async after paint    |
+| Q3  | useTransition vs useDeferredValue | 🟡    | Producer (control setState) vs Consumer (receive props) |
+| Q4  | Tearing & useSyncExternalStore    | 🟡    | Consistent snapshot for concurrent rendering            |
+| Q5  | useReducer vs useState            | 🟡    | Complex related state + testable transitions            |
+| Q6  | Design useDebounce                | 🔴    | Cleanup mechanism, value vs callback, generic typing    |
+| Q7  | Rules of Hooks internals          | 🔴    | Linked list, sequential traversal, use() exception      |
+| Q8  | Design usePagination              | 🔴    | IntersectionObserver, sentinel pattern, virtualization  |
 
 ---
 
 ## ⚡ Cold Call Simulation / Mô Phỏng Phỏng Vấn
 
-> 🎯 Interviewer asks cold: **"Our React 18 app has a search input that freezes the UI for 300ms when filtering 8000 products. How would you fix it without virtualizing the list?"**
+> 🎯 Interviewer asks cold: **"Explain the difference between useTransition and useDeferredValue."**
 
-**30 giây đầu — mở đầu lý tưởng:**
+**30 giây đầu — mở đầu lý tưởng / Ideal 30-second opening:**
 
-1. "The freeze happens because filtering 8000 items is synchronous and blocks the browser — I'd make it a low-priority update using React 18 concurrency hooks."
-2. "If I own the filter state setter, `useTransition` lets me mark that setState as non-urgent — the input stays responsive while React prepares the filtered list."
-3. "If I only receive the query as a prop, I'd use `useDeferredValue` on it in the list component — it shows the previous results as a fade-out while the new ones render."
-4. "Both require wrapping the expensive list in `React.memo` — otherwise React re-renders it unconditionally regardless of the deferral."
+1. "Cả hai đều enable priority-based rendering trong React 18, nhưng khác nhau ở **vị trí control**."
+2. "`useTransition` dùng ở **producer** — khi bạn control setState call, wrap non-urgent update trong startTransition. `useDeferredValue` dùng ở **consumer** — khi bạn nhận value từ props mà không control setState."
+3. "Ví dụ thực tế: search page — nếu SearchPage tự manage state thì dùng useTransition. Nếu SearchResults nhận query qua props thì dùng useDeferredValue."
+4. "Cả 2 đều khác debounce — debounce delay cố định, còn React tự điều chỉnh delay dựa trên khả năng máy."
 
----
-
-## 🔄 Self-Check / Tự Kiểm Tra
-
-> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
-
-| #   | Loại           | Câu hỏi                                                                                                                               |
-| --- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | 🔍 Retrieval   | Viết ra 5 nhóm hook (state, effect, ref, memo, concurrency) và 1 hook ví dụ cho mỗi nhóm — không nhìn lại.                            |
-| 2   | 🎨 Visual      | Vẽ bảng lifecycle mapping: class lifecycle methods → hooks tương đương. Cái nào KHÔNG có hook tương đương?                            |
-| 3   | 🛠️ Application | Nhận `props.searchQuery` từ parent, render danh sách 5000 sản phẩm — dùng `useTransition` hay `useDeferredValue`? Tại sao? Viết code. |
-| 4   | 🐛 Debug       | `useEffect(() => { fetchData() }, [options])` bị re-run mỗi render dù options không đổi — nguyên nhân gì? Fix thế nào?                |
-| 5   | 🎓 Teach       | Giải thích "tearing" trong concurrent React cho developer chưa biết React 18 — dùng ví dụ thực tế trong 2 câu.                        |
-
-### Key Points (tự kiểm tra)
-
-| #   | Key Point                                                                                                                                                                                        |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1   | State: `useState`, `useReducer`. Effect: `useEffect`, `useLayoutEffect`. Ref: `useRef`, `useImperativeHandle`. Memo: `useMemo`, `useCallback`. Concurrency: `useTransition`, `useDeferredValue`. |
-| 2   | `componentDidMount` → `useEffect(fn, [])`. `componentDidUpdate` → `useEffect(fn, [deps])`. `componentWillUnmount` → cleanup function. `getSnapshotBeforeUpdate` = không có hook tương đương.     |
-| 3   | `useDeferredValue` khi nhận value từ parent (không control state). `useTransition` khi control state update. Dùng `useDeferredValue(searchQuery)` → deferred search với `useMemo` filter.        |
-| 4   | `options` là object/array được tạo mới mỗi render → reference thay đổi → deps thay đổi. Fix: `useMemo` cho options, hoặc stringify, hoặc destructure primitives làm deps.                        |
-| 5   | Tearing: concurrent mode có thể interrupt render → same `useSelector` trả values khác nhau trong một render pass → UI inconsistent. Như đọc báo bị chia trang giữa chừng.                        |
-
-> 🎯 **Feynman Prompt:** "Giải thích tại sao `useSyncExternalStore` tốt hơn `useEffect + useState` khi subscribe vào Redux store — dùng ví dụ cụ thể mà không dùng thuật ngữ 'tearing'."
-> 🔁 **Spaced Repetition reminder:** Ôn lại file này sau **3 ngày**, **7 ngày**, và **14 ngày**.
-
-[← Previous](./06-testing.md) | [Back to Table of Contents](../../00-table-of-contents.md) | [Next →](./08-react-patterns-advanced.md)
+_Sau đó mở rộng theo hướng interviewer dẫn dắt._
 
 ---
 
-## 🔗 Connections / Liên Kết
+## Self-Check / Tự Kiểm Tra ⚡
 
-### Cùng track (Same track)
-- [React Fundamentals](./01-react-fundamentals.md) — rendering model hooks are layered onto
-- [Hooks Deep Dive](./03-hooks-deep-dive.md) — internal mechanics and linked-list model
-- [State Management](./05-state-management.md) — escalating beyond useState/useReducer
-- [Performance Optimization](./09-performance-optimization.md) — useTransition and useDeferredValue profiling
+> **Đóng tài liệu lại trước khi làm — Close the doc before attempting.**
 
-### Khác track (Cross-track)
-- [Closures](../01-javascript/03-closures.md) — stale closure root cause for hook bugs
-- [Data Structures Theory](../../shared/01-cs-fundamentals/data-structures-theory.md) — hooks dispatcher implemented as linked list
+- [ ] **Retrieval**: Viết 5 nhóm hooks từ trí nhớ, mỗi nhóm ít nhất 2 hooks. So sánh với Concept Map.
+- [ ] **Visual**: Vẽ diagram useTransition timeline (gõ "iph") ra giấy. So sánh với ASCII diagram trên.
+- [ ] **Application**: User gõ vào search box, results list 5000 items render chậm. Bạn dùng useTransition hay useDeferredValue? Tại sao?
+- [ ] **Debug**: Custom hook `useFetch` gọi API 2 lần khi mount — nguyên nhân? Fix?
+- [ ] **Teach**: Giải thích useTransition cho người không biết lập trình bằng ví dụ ngân hàng VIP.
+
+💬 **Feynman Prompt:** Giải thích sự khác biệt giữa useTransition và useDeferredValue cho người bạn không biết code, dùng ví dụ ngân hàng 2 hàng đợi. Không dùng thuật ngữ kỹ thuật.
+
+🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày → 7 ngày → 14 ngày** để chuyển vào long-term memory.
+
+---
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on:** [Hooks Deep Dive](./03-hooks-deep-dive.md) — useState/useEffect/useRef là nền tảng cho mọi hook khác
+- ➡️ **Enables:** [Performance Optimization](./09-performance-optimization.md) — áp dụng concurrency hooks + custom hooks để tối ưu
+- 🔗 **Applied in:** React 18+ concurrent features, state management libraries (Zustand, Redux), form libraries (React Hook Form)

@@ -1,846 +1,792 @@
-# Advanced React Patterns / Mẫu React Nâng Cao
+# React Advanced Patterns / Các Pattern Nâng Cao Trong React
 
 > **Track**: FE | **Difficulty**: 🟡 Mid → 🔴 Senior
-> **Prerequisites**: [Hooks Deep Dive](./03-hooks-deep-dive.md), [React Fundamentals](./01-react-fundamentals.md)
-> **See also**: [State Management](./05-state-management.md), [Performance Optimization](./09-performance-optimization.md)
+> **Prerequisites**: [React Fundamentals](./01-react-fundamentals.md) | [Hooks Deep Dive](./03-hooks-deep-dive.md)
+> **See also**: [Advanced Patterns v2](./08-react-patterns-advanced.md) | [State Management](./05-state-management.md)
+> **L5 Competencies**: API Design, Component Architecture, Abstraction Design
 
 ---
 
 ## Real-World Scenario / Tình Huống Thực Tế
 
-Shopee's design system team built a `<Select>` component. Version 1: a monolithic component with 20+ props — `showSearch`, `multiSelect`, `grouping`, `virtualScroll`, `async`, `creatable`... After 6 months, every feature request added another prop. The component had 800 lines, prop conflicts were common, and consumers couldn't customize rendering without patching the library.
+Team bạn xây dựng Design System cho công ty. Component `<Select>` ban đầu nhận 15 props: `options`, `value`, `onChange`, `placeholder`, `isMulti`, `isSearchable`, `isDisabled`, `maxHeight`, `renderOption`, `renderValue`, `onSearch`, `filterFn`, `groupBy`, `customStyles`, `position`. Mỗi lần thêm feature mới lại thêm 2-3 props. Không ai nhớ hết props, TypeScript type dài 80 dòng. Tệ hơn, khi muốn `<Select>` trong modal khác với `<Select>` trong form, phải truyền lại 10 props giống nhau.
 
-Version 2 used **compound components + composition**: `<Select>`, `<Select.Option>`, `<Select.Group>`, `<Select.Search>`. Each sub-component was independently composable. The library shrank to 200 lines, and consumers could build custom variants without touching the source.
-
-This is the core insight behind advanced React patterns: **separate state sharing from rendering**.
+Bạn cần pattern nào để component vừa flexible vừa dễ dùng? Đây là câu hỏi architecture mà Senior phải trả lời.
 
 ---
 
 ## What & Why / Cái Gì & Tại Sao
 
-**English:** Advanced patterns solve the "impossible component" problem — when a single component can't accommodate all use cases through props alone. Patterns like compound components, render props, and HOCs shift control from the component author to the consumer.
+**Analogy / Liên Tưởng:**
+Nghĩ component patterns giống cách bạn mua đồ nội thất. **Props drilling = mua tủ lắp sẵn** — đẹp, nhanh, nhưng không thay đổi được gì. **Compound Components = mua tủ IKEA** — bạn chọn từng ngăn, từng cánh, lắp theo ý. **Render Props = thuê thợ mộc** — bạn nói "tôi muốn tủ hình thế này", thợ đo đạc và làm custom. **Custom Hooks = mua thiết kế (blueprint)** — bạn có logic, tự chọn vật liệu và lắp ráp.
 
-**Tiếng Việt:** Các pattern nâng cao giải quyết vấn đề "component không thể mở rộng" — khi một component đơn lẻ không đáp ứng được mọi use case chỉ qua props. Compound components, render props, HOC đều chuyển quyền kiểm soát từ tác giả component sang người dùng component.
+| Pattern                 | Khi nào dùng                                          | Ví dụ                           |
+| ----------------------- | ----------------------------------------------------- | ------------------------------- |
+| Compound Components     | UI có nhiều phần liên quan, user cần customize layout | Select, Tabs, Accordion, Menu   |
+| Render Props            | Cần share behavior, user tự quyết render gì           | Mouse tracker, Virtualized list |
+| Custom Hooks            | Share stateful logic, không liên quan đến UI          | useFetch, useAuth, useForm      |
+| Higher-Order Components | Wrap behavior vào component có sẵn (legacy)           | withAuth, withTheme             |
+| Controlled/Uncontrolled | Quyết định ai own state: parent hay component         | Form inputs, Modals             |
+
+**Tại sao phải học topic này?**
+
+- Phỏng vấn Senior **luôn** hỏi: "Thiết kế component API cho tình huống X" — cần biết pattern nào phù hợp
+- Pattern sai = technical debt tích tụ — component 50 props không ai muốn maintain
+- Hiểu pattern = đọc source code thư viện (Radix, Headless UI, React Hook Form) dễ dàng
 
 ---
 
-## Core Concept 1: Compound Components / Component Phức Hợp
+## Concept Map / Bản Đồ Khái Niệm
 
-> 🧠 **Memory Hook**: "Compound Components = HTML `<select>` + `<option>` — parent owns state, children read it through context"
->
-> Like `<table>` and `<tr>` and `<td>` — each is useless alone, powerful together, with implicit shared understanding.
+```
+                    ┌──────────────────────┐
+                    │  COMPONENT PATTERNS   │
+                    └──────────┬───────────┘
+          ┌────────────────────┼────────────────────┐
+          ▼                    ▼                     ▼
+  ┌───────────────┐  ┌─────────────────┐  ┌─────────────────┐
+  │ Composition   │  │ Logic Sharing   │  │ State Ownership │
+  │ Patterns      │  │ Patterns        │  │ Patterns        │
+  ├───────────────┤  ├─────────────────┤  ├─────────────────┤
+  │ Compound      │  │ Custom Hooks    │  │ Controlled      │
+  │ Components    │  │ (modern)        │  │ vs Uncontrolled │
+  │               │  │                 │  │                 │
+  │ Render Props  │  │ HOC (legacy)    │  │ State Reducer   │
+  │               │  │                 │  │                 │
+  │ Slots pattern │  │ Render Props    │  │ Control Props   │
+  └───────────────┘  └─────────────────┘  └─────────────────┘
+```
+
+**Bạn đang ở đây trong lộ trình học:**
+
+```
+Hooks Deep Dive → [ADVANCED PATTERNS] → State Management → Performance
+```
+
+---
+
+## Overview / Tổng Quan
+
+React patterns are proven solutions for designing reusable, flexible component APIs. The five essential patterns — Compound Components, Render Props, Custom Hooks, Controlled/Uncontrolled, and State Reducer — solve different aspects of the "how to make components both powerful and simple" challenge. Modern React (hooks era) has shifted most logic-sharing to Custom Hooks, but Compound Components remain the gold standard for complex UI composition.
+
+React patterns là các giải pháp đã được chứng minh để thiết kế component API linh hoạt. 5 patterns thiết yếu — Compound Components, Render Props, Custom Hooks, Controlled/Uncontrolled, State Reducer — giải quyết các khía cạnh khác nhau của bài toán "làm sao component vừa mạnh vừa đơn giản". Modern React đã chuyển phần lớn logic-sharing sang Custom Hooks, nhưng Compound Components vẫn là tiêu chuẩn vàng cho UI composition phức tạp.
+
+---
+
+## Core Concepts / Khái Niệm Cốt Lõi
+
+### 1. Compound Components / Component Kết Hợp
+
+> 🧠 **Memory Hook**: "Compound Components = HTML `<select>` + `<option>` — các phần riêng biệt nhưng chia sẻ state ngầm."
 
 **Tại sao tồn tại? / Why does this exist?**
-
-Single-component APIs accumulate props until they collapse. `<Tabs activeTab onTabChange showIcons vertical size variant>` is unreadable.
-→ Why does prop sprawl happen? Because state that belongs to the parent leaks into the API surface.
-→ Why not just use props? Because consumers need to compose sub-parts differently — tabs in header, panels in body, with other elements in between.
+Component nhận quá nhiều props → khó dùng, khó maintain. Cần cách chia component thành các phần nhỏ mà user tự compose, nhưng vẫn chia sẻ state nội bộ.
+→ **Why?** Vì 1 component "thông minh" (tự biết render tất cả) không thể dự đoán mọi cách user muốn dùng — Compound Components đẩy quyền quyết định layout/render cho user.
+→ **Why?** Vì inversion of control — thay vì component quyết định render gì, user quyết định. Component chỉ cung cấp behavior + state.
 
 #### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
 
-A restaurant set menu vs à la carte. Prop-based = set menu (fixed combinations). Compound components = à la carte (mix and match freely). The restaurant (parent) manages the bill (state); dishes (children) are ordered independently.
+HTML `<select>` là Compound Component tự nhiên: `<select>` giữ state (value hiện tại), `<option>` là các lựa chọn. Bạn không truyền `options={[...]}` prop — bạn TỰ VIẾT `<option>`. Muốn thêm group? Dùng `<optgroup>`. Muốn disable 1 option? Thêm `disabled` vào `<option>` đó. Flexible vì user compose.
 
 #### Layer 2: How It Works / Cơ Chế Hoạt Động
 
+```
+  ┌────────────────────────────────────────────────────────┐
+  │        Compound Components Architecture                │
+  │                                                        │
+  │  <Select>           ← Parent: giữ state (selectedValue)│
+  │    <Select.Trigger> ← Hiển thị giá trị đang chọn      │
+  │    <Select.List>    ← Container cho options             │
+  │      <Select.Option value="a"> ← Từng option          │
+  │      <Select.Option value="b">                         │
+  │    </Select.List>                                      │
+  │  </Select>                                             │
+  │                                                        │
+  │  State sharing: React Context                          │
+  │  ┌──────────┐                                          │
+  │  │ Select   │──creates──▶ SelectContext                │
+  │  │ (parent) │             { value, onChange, isOpen }   │
+  │  └──────────┘                    │                     │
+  │       ▼                          ▼                     │
+  │  ┌──────────┐  ┌──────────┐  ┌──────────┐            │
+  │  │ Trigger  │  │  List    │  │ Option   │            │
+  │  │ useCtx() │  │ useCtx() │  │ useCtx() │            │
+  │  └──────────┘  └──────────┘  └──────────┘            │
+  └────────────────────────────────────────────────────────┘
+```
+
+**Implementation:**
+
 ```tsx
-import { createContext, useContext, useState, ReactNode } from "react";
+// 1. Tạo Context
+const SelectContext = createContext<{
+  value: string;
+  onChange: (value: string) => void;
+  isOpen: boolean;
+  toggle: () => void;
+} | null>(null);
 
-// 1. Context = the implicit communication channel
-interface TabsContextType {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
-}
-const TabsContext = createContext<TabsContextType | null>(null);
-
-function useTabs() {
-  const ctx = useContext(TabsContext);
-  if (!ctx) throw new Error("Must be used within <Tabs>");
+// Helper hook — throw nếu dùng ngoài Select
+function useSelectContext() {
+  const ctx = useContext(SelectContext);
+  if (!ctx) throw new Error("Select.* must be used within <Select>");
   return ctx;
 }
 
-// 2. Parent manages state
-function Tabs({ defaultTab, children }: { defaultTab: string; children: ReactNode }) {
-  const [activeTab, setActiveTab] = useState(defaultTab);
-  return (
-    <TabsContext.Provider value={{ activeTab, setActiveTab }}>
-      <div className="tabs">{children}</div>
-    </TabsContext.Provider>
-  );
-}
-
-// 3. Children read from context — no prop drilling
-function Tab({ value, children }: { value: string; children: ReactNode }) {
-  const { activeTab, setActiveTab } = useTabs();
-  return (
-    <button
-      className={activeTab === value ? "tab active" : "tab"}
-      onClick={() => setActiveTab(value)}
-      aria-selected={activeTab === value}
-    >
-      {children}
-    </button>
-  );
-}
-
-function TabPanel({ value, children }: { value: string; children: ReactNode }) {
-  const { activeTab } = useTabs();
-  return activeTab === value ? <div role="tabpanel">{children}</div> : null;
-}
-
-// 4. Attach as namespace (dot notation)
-Tabs.Tab = Tab;
-Tabs.Panel = TabPanel;
-
-// Usage: consumer controls layout freely
-function App() {
-  return (
-    <Tabs defaultTab="home">
-      <nav>
-        <Tabs.Tab value="home">Home</Tabs.Tab>
-        <Tabs.Tab value="profile">Profile</Tabs.Tab>
-      </nav>
-      <main>
-        <Tabs.Panel value="home">
-          <HomePage />
-        </Tabs.Panel>
-        <Tabs.Panel value="profile">
-          <ProfilePage />
-        </Tabs.Panel>
-      </main>
-    </Tabs>
-  );
-}
-```
-
-```
-COMPOUND COMPONENT ANATOMY:
-
-  <Tabs>                   ← owns state (activeTab)
-  ├── Context.Provider     ← broadcasts state to tree
-  │
-  ├── <Tabs.Tab>           ← reads + writes state via context
-  ├── <Tabs.Tab>           ← reads + writes state via context
-  │
-  └── <Tabs.Panel>         ← reads state (no write needed)
-      <Tabs.Panel>
-
-  Key: no props passed between Tab → Panel
-       they communicate ONLY through context
-```
-
-#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
-
-```tsx
-// Controlled variant: consumer owns state
-function ControlledTabs({
-  activeTab,
-  onTabChange,
-  children,
-}: {
-  activeTab: string;
-  onTabChange: (tab: string) => void;
-  children: ReactNode;
-}) {
-  return (
-    <TabsContext.Provider value={{ activeTab, setActiveTab: onTabChange }}>
-      <div>{children}</div>
-    </TabsContext.Provider>
-  );
-}
-
-// Problem: compound children used outside parent
-// Tab throws error → good! Fail fast, clear message.
-// <Tab value="x">Outside</Tab>  // ❌ "Must be used within <Tabs>"
-```
-
-**❌ Sai lầm thường gặp / Common Mistakes:**
-
-| Sai lầm                                   | Tại sao sai                                   | Đúng là                                                        |
-| ----------------------------------------- | --------------------------------------------- | -------------------------------------------------------------- |
-| Using `React.Children.map` to pass props  | Breaks with wrapper divs, portals, fragments  | Use context instead                                            |
-| Null check on context instead of throwing | Silent failures — consumer doesn't know       | `throw new Error('Must be used within <Parent>')`              |
-| Deep context nesting for unrelated data   | Creates coupling between unrelated components | Separate contexts per compound group                           |
-| No controlled variant                     | Forces consumers to manage state externally   | Offer both controlled + uncontrolled via `defaultTab` vs `tab` |
-
-**🎯 Interview Pattern:**
-
-- Khi thấy câu hỏi về: "flexible component API", "avoid prop drilling without Redux", "design system component"
-- → Nhớ đến: compound components + context
-- → Mở đầu trả lời: "I'd use compound components here — the parent holds state in context, and each sub-component reads only what it needs, letting consumers compose the layout however they want."
-
-**🔑 Knowledge Chain:**
-
-- 📚 Cần biết: [Context API, useState](./03-hooks-deep-dive.md)
-- ➡️ Để hiểu: [Controlled vs uncontrolled components, state reducer pattern]
-
----
-
-## Core Concept 2: Render Props & Custom Hooks / Render Props & Custom Hooks
-
-> 🧠 **Memory Hook**: "Render Props = 'you render, I'll supply the data'. Custom Hooks = same idea, but the data flows through return values, not JSX."
->
-> Both patterns share _logic_, not _UI_. The difference is where JSX lives.
-
-**Tại sao tồn tại? / Why does this exist?**
-
-Logic (tracking mouse position, form state, infinite scroll) is reusable across many UI shapes. Copy-pasting logic breaks DRY.
-→ Why not just use HOCs? HOCs wrap JSX — they create invisible wrapper components, cause naming collisions, and are hard to compose.
-→ Why do hooks win over render props? Hooks compose without nesting. `useMousePosition()` + `useForm()` vs `<MouseTracker render={...}><FormTracker render={...}>...`.
-
-#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
-
-Render props = a contractor who builds the plumbing, then says "here's the water supply — you design the faucets." The consumer controls the UI (faucets); the render prop component owns the logic (plumbing).
-
-Custom hooks = same contractor, but instead of handing you JSX props, they return values you can use anywhere — no "nesting" required.
-
-#### Layer 2: How It Works / Cơ Chế Hoạt Động
-
-```tsx
-// Render Props pattern — still useful for HOC-like wrapping scenarios
-interface MouseTrackerRenderProps {
-  x: number;
-  y: number;
-}
-
-function MouseTracker({ render }: { render: (props: MouseTrackerRenderProps) => ReactNode }) {
-  const [pos, setPos] = useState({ x: 0, y: 0 });
-
-  return <div onMouseMove={(e) => setPos({ x: e.clientX, y: e.clientY })}>{render(pos)}</div>;
-}
-
-// Usage — consumer controls rendering
-<MouseTracker
-  render={({ x, y }) => (
-    <div style={{ position: "absolute", left: x, top: y }}>
-      🎯 {x}, {y}
-    </div>
-  )}
-/>;
-
-// Custom Hook — the modern equivalent (same logic, no JSX coupling)
-function useMousePosition() {
-  const [pos, setPos] = useState({ x: 0, y: 0 });
-  useEffect(() => {
-    const handler = (e: MouseEvent) => setPos({ x: e.clientX, y: e.clientY });
-    window.addEventListener("mousemove", handler);
-    return () => window.removeEventListener("mousemove", handler);
-  }, []);
-  return pos;
-}
-
-// Usage — no nesting, compose freely
-function Cursor() {
-  const { x, y } = useMousePosition(); // logic separated from UI
-  return <div style={{ position: "absolute", left: x, top: y }}>🎯</div>;
-}
-
-// HOC pattern — wraps a component to inject props
-function withAuth<P extends { user: User }>(Component: React.ComponentType<P>) {
-  return function AuthWrapped(props: Omit<P, "user">) {
-    const user = useCurrentUser();
-    if (!user) return <Navigate to="/login" />;
-    return <Component {...(props as P)} user={user} />;
-  };
-}
-// Usage: const ProtectedPage = withAuth(DashboardPage);
-```
-
-```
-EVOLUTION OF CROSS-CUTTING LOGIC SHARING:
-
-  HOC (2015–2018)           Render Props (2017–2019)     Custom Hook (2019–now)
-  ─────────────────         ───────────────────────      ──────────────────────
-  withAuth(Component)       <Auth render={fn} />         const auth = useAuth()
-
-  Invisible wrapper          JSX nesting                  Plain function call
-  Prop name collision        "Wrapper hell"               Flat composition
-  Hard to type               Verbose                      Easy TypeScript
-  Static (build time)        Dynamic                      Dynamic
-```
-
-#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
-
-```tsx
-// Render props still win for: sharing JSX scope + providing container behavior
-// Example: Intersection Observer (needs a ref on a DOM element)
-function InView({
-  children,
-  onEnter,
-  onLeave,
-}: {
-  children: (ref: React.Ref<HTMLDivElement>) => ReactNode;
-  onEnter?: () => void;
-  onLeave?: () => void;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) onEnter?.();
-      else onLeave?.();
-    });
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, [onEnter, onLeave]);
-
-  return <>{children(ref)}</>;
-}
-
-// Consumer attaches the ref to their own element
-<InView onEnter={() => trackImpression()}>
-  {(ref) => <article ref={ref}>Product Card</article>}
-</InView>;
-```
-
-**❌ Sai lầm thường gặp / Common Mistakes:**
-
-| Sai lầm                                                | Tại sao sai                                                 | Đúng là                                                |
-| ------------------------------------------------------ | ----------------------------------------------------------- | ------------------------------------------------------ |
-| Inline arrow in render prop: `render={() => <Comp />}` | Creates new function every render → child re-renders always | Define function outside or `useCallback`               |
-| HOC modifying `displayName`                            | Debug tools show "Component" not "withAuth(Component)"      | Always set `WrappedComponent.displayName`              |
-| Using render props when a hook would suffice           | Unnecessary nesting, harder to read                         | Default to hooks; use render props for DOM-ref sharing |
-| HOC reading from props it doesn't own                  | Prop name collisions (both HOC and consumer pass `data`)    | Use spread + explicit forwarding                       |
-
-**🎯 Interview Pattern:**
-
-- Khi thấy câu hỏi về: "share logic between components", "reuse stateful behavior", "HOC vs hooks tradeoff"
-- → Nhớ đến: custom hooks first, render props for DOM coupling, HOCs for legacy/third-party
-- → Mở đầu trả lời: "I'd extract this as a custom hook first — same logic reuse as render props but with flat composition. I'd only reach for render props if the shared logic needs to provide a ref to a DOM element."
-
-**🔑 Knowledge Chain:**
-
-- 📚 Cần biết: [useEffect, useRef, custom hooks](./03-hooks-deep-dive.md)
-- ➡️ Để hiểu: [Code sharing patterns in large apps](./08-react-patterns-advanced.md)
-
----
-
-## Core Concept 3: State Reducer & Controlled Props Patterns
-
-> 🧠 **Memory Hook**: "State Reducer = IoC for components — 'I'll manage state by default, but you can override any transition'"
->
-> Like a keyboard with custom shortcuts — default behavior works, but power users can rebind any key.
-
-**Tại sao tồn tại? / Why does this exist?**
-
-Complex components (combobox, multi-select, datepicker) have state machines with many valid transitions. Consumers often need to intercept just _one_ transition ("don't close on Escape") without rebuilding the whole component.
-→ Why not just use props for every edge case? Because every edge case becomes a new prop — you're back to prop sprawl.
-→ Why not just expose state fully? Because the consumer then owns the entire implementation burden.
-
-#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
-
-State reducer is like a hotel key card system. The door lock handles all the default logic (opens with correct card, logs entry). But the hotel manager (parent) can intercept specific events ("don't open after midnight") without rebuilding the lock.
-
-#### Layer 2: How It Works / Cơ Chế Hoạt Động
-
-```tsx
-// State Reducer Pattern — consumer can override any state transition
-type ToggleState = { isOpen: boolean };
-type ToggleAction = { type: "OPEN" } | { type: "CLOSE" } | { type: "TOGGLE" };
-
-function defaultToggleReducer(state: ToggleState, action: ToggleAction): ToggleState {
-  switch (action.type) {
-    case "OPEN":
-      return { isOpen: true };
-    case "CLOSE":
-      return { isOpen: false };
-    case "TOGGLE":
-      return { isOpen: !state.isOpen };
-    default:
-      return state;
-  }
-}
-
-function useToggle({
-  stateReducer = defaultToggleReducer,
-  initialOpen = false,
-}: {
-  stateReducer?: (state: ToggleState, action: ToggleAction) => ToggleState;
-  initialOpen?: boolean;
-} = {}) {
-  const [state, dispatch] = useReducer(stateReducer, { isOpen: initialOpen });
-  return {
-    isOpen: state.isOpen,
-    open: () => dispatch({ type: "OPEN" }),
-    close: () => dispatch({ type: "CLOSE" }),
-    toggle: () => dispatch({ type: "TOGGLE" }),
-  };
-}
-
-// Consumer use case: limit to max 3 opens
-function App() {
-  const openCountRef = useRef(0);
-
-  const { isOpen, toggle } = useToggle({
-    stateReducer(state, action) {
-      if (action.type === "OPEN" && openCountRef.current >= 3) {
-        return state; // prevent opening — return current state unchanged
-      }
-      if (action.type === "OPEN") openCountRef.current++;
-      return defaultToggleReducer(state, action);
-    },
-  });
-
-  return <button onClick={toggle}>{isOpen ? "Close" : "Open"}</button>;
-}
-```
-
-**Controlled Props Pattern — consumer fully owns state:**
-
-```tsx
-// Uncontrolled (internal state, consumer just reacts)
-function Dropdown({ defaultOpen, children }: { defaultOpen?: boolean; children: ReactNode }) {
-  const [isOpen, setIsOpen] = useState(defaultOpen ?? false);
-  // ...
-}
-
-// Controlled (consumer owns state)
-function Dropdown({
-  open, // if provided, controlled; if undefined, uncontrolled
-  onOpenChange,
-  defaultOpen,
-  children,
-}: {
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-  defaultOpen?: boolean;
-  children: ReactNode;
-}) {
-  // isControlled = consumer provided `open` prop
-  const isControlled = open !== undefined;
-  const [internalOpen, setInternalOpen] = useState(defaultOpen ?? false);
-  const isOpen = isControlled ? open : internalOpen;
-
-  const handleChange = (next: boolean) => {
-    if (!isControlled) setInternalOpen(next);
-    onOpenChange?.(next);
-  };
+// 2. Parent component — giữ state
+function Select({ children, value, onChange }) {
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div>
-      <button onClick={() => handleChange(!isOpen)}>Toggle</button>
-      {isOpen && children}
-    </div>
+    <SelectContext value={{ value, onChange, isOpen, toggle: () => setIsOpen(!isOpen) }}>
+      <div className="select-wrapper">{children}</div>
+    </SelectContext>
   );
 }
 
-// Uncontrolled usage (simpler)
-<Dropdown defaultOpen={false}>Menu content</Dropdown>;
-
-// Controlled usage (consumer owns state for sync with URL, etc.)
-const [menuOpen, setMenuOpen] = useState(false);
-<Dropdown open={menuOpen} onOpenChange={setMenuOpen}>
-  Menu
-</Dropdown>;
-```
-
-```
-CONTROLLED vs UNCONTROLLED:
-
-  Prop passed?     isControlled?    State lives in...
-  ──────────────────────────────────────────────────
-  open = undefined    NO            Component internal state
-  open = true/false   YES           Consumer (parent component)
-
-  Design rule:
-  - Provide BOTH defaultX (uncontrolled) and x + onChange (controlled)
-  - This is what every input, select, and complex UI component should do
-  - Radix UI, Headless UI, React Aria all follow this convention
-```
-
-#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
-
-```tsx
-// Warning: mixing controlled + uncontrolled (React warns about this)
-// ❌ Starting uncontrolled then becoming controlled
-const [val, setVal] = useState<string | undefined>(undefined);
-<input value={val} onChange={e => setVal(e.target.value)} />
-// First render: value=undefined (uncontrolled), then value="x" (controlled) → React warning
-
-// ✅ Pick one — null for controlled, omit for uncontrolled
-<input value={val ?? ''} onChange={e => setVal(e.target.value)} />
-```
-
-**❌ Sai lầm thường gặp / Common Mistakes:**
-
-| Sai lầm                                                 | Tại sao sai                                                    | Đúng là                                       |
-| ------------------------------------------------------- | -------------------------------------------------------------- | --------------------------------------------- |
-| No default reducer in state reducer pattern             | Forces consumer to implement entire state machine              | Always provide and export `defaultReducer`    |
-| Checking `open !== undefined` once then not re-checking | Controlled state can become undefined if consumer removes prop | Check on every render                         |
-| State reducer mutating state                            | Pure reducer requirement — bugs from shared references         | Always return new object or `state` unchanged |
-| Not exporting `defaultReducer`                          | Consumer can't compose their override with defaults            | Export it: `export { defaultToggleReducer }`  |
-
-**🎯 Interview Pattern:**
-
-- Khi thấy câu hỏi về: "let consumers customize component behavior", "override state transitions", "controlled vs uncontrolled"
-- → Nhớ đến: state reducer for behavioral override, controlled props for full consumer ownership
-- → Mở đầu trả lời: "I'd use the state reducer pattern — the component manages state by default, but the consumer can pass a custom reducer to intercept and override any specific state transition without rebuilding the whole component."
-
-**🔑 Knowledge Chain:**
-
-- 📚 Cần biết: [useReducer, Context](./03-hooks-deep-dive.md)
-- ➡️ Để hiểu: [Third-party library design, Radix UI patterns]
-
----
-
-## Interview Q&A / Câu Hỏi Phỏng Vấn
-
-### Q: When would you choose compound components over a single component with many props? 🟢 Junior
-
-**A:** When the _layout_ between sub-parts needs to be flexible. If consumers need to insert other elements between sub-components, or if different consumers need radically different structures, compound components are the right choice.
-
-```tsx
-// Props-based: rigid layout
-<Tabs tabs={[...]} panels={[...]} showTabsInHeader />
-
-// Compound: flexible layout
-<Tabs defaultTab="home">
-  <Header>
-    <Logo />
-    <Tabs.List>     {/* tabs in header */}
-      <Tabs.Tab value="home">Home</Tabs.Tab>
-    </Tabs.List>
-  </Header>
-  <Tabs.Panel value="home">Content</Tabs.Panel>
-</Tabs>
-```
-
-**Giải thích:** Props-based components kiểm soát layout — mọi thứ phải vừa vặn với cấu trúc được thiết kế sẵn. Compound components nhường layout cho consumer, component chỉ cung cấp state và behavior. Dấu hiệu cần compound components: khi người dùng yêu cầu "đặt tab ở sidebar thay vì header."
-
-**💡 Dấu hiệu trả lời tốt / Interview Signal:**
-
-- ✅ Strong: Identifies "flexible layout" as the key trigger, mentions the context mechanism, gives a concrete before/after
-- ❌ Weak: "compound components are more flexible" without explaining _what_ flexibility they enable
-
----
-
-### Q: Explain the difference between render props and custom hooks. When would you still choose render props? 🟡 Mid
-
-**A:** Both share _logic_ — the difference is where JSX lives.
-
-**Custom hook:** Logic returns data/functions. Consumer uses them anywhere in their JSX. Flat composition — multiple hooks side by side, no nesting.
-
-**Render prop:** Logic _calls_ a function to render — the logic and the JSX stay coupled, but the component owns the container DOM structure.
-
-```tsx
-// Hook — flat, composable
-function TrackingPage() {
-  const { x, y } = useMousePosition(); // logic extracted
-  const { data } = useUserData(); // compose freely
-  return (
-    <div>
-      Mouse at {x},{y}, User: {data?.name}
-    </div>
-  );
-}
-
-// Render prop — still wins when the container DOM matters
-<ResizablePanels>
-  {({ leftWidth, rightWidth }) => (
-    <>
-      <Panel width={leftWidth}>
-        <LeftContent />
-      </Panel>
-      <Panel width={rightWidth}>
-        <RightContent />
-      </Panel>
-    </>
-  )}
-</ResizablePanels>;
-```
-
-Use render props when: (1) the logic needs to control a DOM container with event listeners, (2) you need to provide a ref to consumer elements, (3) the container's JSX structure is integral to the behavior (drag and drop, portals, intersection observers).
-
-**Giải thích:** Custom hooks thắng trong 90% trường hợp vì không tạo wrapper component trong tree. Render props vẫn hữu ích khi behavior phụ thuộc vào DOM container — như IntersectionObserver cần ref trực tiếp trên element.
-
-**💡 Dấu hiệu trả lời tốt / Interview Signal:**
-
-- ✅ Strong: Explains the "where does JSX live" distinction, names a specific case where render props win (DOM ref), shows both patterns
-- ❌ Weak: "hooks are just better than render props" — misses the DOM coupling use case
-
----
-
-### Q: What is the State Reducer pattern and how does it solve "prop sprawl"? 🟡 Mid
-
-**A:** State Reducer is IoC (Inversion of Control) for component state. Instead of adding a new prop for every behavioral edge case, the component exposes its state transition function — the consumer intercepts only the transitions they care about.
-
-```tsx
-// Without state reducer: prop accumulation over time
-<Combobox
-  closeOnEscape        // feature request 1
-  reopenOnBackspace    // feature request 2
-  limitSelections={3}  // feature request 3
-  // ...12 more props
-/>
-
-// With state reducer: consumer handles their own case
-<Combobox
-  stateReducer={(state, action) => {
-    if (action.type === 'CLOSE' && action.source === 'escape') {
-      return state; // don't close on escape in my use case
-    }
-    return defaultComboboxReducer(state, action);
-  }}
-/>
-```
-
-**Giải thích:** Thay vì mỗi edge case thêm 1 prop vào component, State Reducer để consumer "hook into" bất kỳ state transition nào. Component vẫn dễ dùng với defaults, power users không cần fork library.
-
-**💡 Dấu hiệu trả lời tốt / Interview Signal:**
-
-- ✅ Strong: Names "IoC for state transitions", shows the prop-sprawl problem it solves, explains why `defaultReducer` export matters
-- ❌ Weak: Confuses state reducer pattern with just using `useReducer`
-
----
-
-### Q: How do you implement controlled and uncontrolled variants of a component? What's the "hybrid" pattern? 🔴 Senior
-
-**A:** The hybrid pattern (used by React's `<input>`, Radix UI, Headless UI) provides both `defaultValue` (uncontrolled) and `value + onChange` (controlled). The component detects which mode it's in on mount.
-
-```tsx
-function useControllable<T>({
-  value: controlledValue,
-  defaultValue,
-  onChange,
-}: {
-  value?: T;
-  defaultValue: T;
-  onChange?: (value: T) => void;
-}) {
-  const isControlled = controlledValue !== undefined;
-  const [internalValue, setInternalValue] = useState<T>(defaultValue);
-
-  const value = isControlled ? controlledValue : internalValue;
-
-  const setValue = useCallback(
-    (next: T | ((prev: T) => T)) => {
-      const nextValue = typeof next === "function" ? (next as (prev: T) => T)(value) : next;
-      if (!isControlled) setInternalValue(nextValue);
-      onChange?.(nextValue);
-    },
-    [isControlled, onChange, value],
-  );
-
-  return [value, setValue] as const;
-}
-
-// Usage in Dropdown
-function Dropdown({ open, defaultOpen = false, onOpenChange, children }: DropdownProps) {
-  const [isOpen, setIsOpen] = useControllable({
-    value: open,
-    defaultValue: defaultOpen,
-    onChange: onOpenChange,
-  });
-
-  return (
-    <div>
-      <button onClick={() => setIsOpen((v) => !v)}>Toggle</button>
-      {isOpen && <div>{children}</div>}
-    </div>
-  );
-}
-```
-
-Edge cases to handle:
-
-- **Warn on control switching**: use `useEffect` to warn if `open` changes from defined to undefined (switching modes is a bug)
-- **`isControlled` must be stable**: determine on mount, don't re-check every render in the controlling logic
-
-**Giải thích:** `useControllable` là helper tái sử dụng giúp bất kỳ component nào support cả 2 chế độ. Consumer dùng `defaultOpen` cho simplicity, dùng `open + onOpenChange` khi cần sync với URL/Redux/animation state.
-
-**💡 Dấu hiệu trả lời tốt / Interview Signal:**
-
-- ✅ Strong: Extracts `useControllable` as a reusable hook, handles both value forms (`T` and `(prev: T) => T`), mentions the "warn on switching modes" best practice
-- ❌ Weak: Just adds an `if (controlledValue !== undefined)` check inline without extracting the pattern
-
----
-
-### Q: Design a type-safe, accessible `<Select>` component using compound components and the state reducer pattern. 🔴 Senior
-
-**A:** This is a system design question — focus on the architecture decisions, not a complete implementation.
-
-```tsx
-// Architecture:
-// 1. SelectContext — shares: value, onChange, isOpen, activeIndex, options registry
-// 2. Compound sub-components: Select.Trigger, Select.Portal, Select.Content, Select.Option
-// 3. Controlled + uncontrolled via useControllable
-// 4. State reducer for behavioral customization
-// 5. Keyboard navigation managed in Select root
-
-type SelectState = {
-  isOpen: boolean;
-  activeIndex: number;
+// 3. Sub-components — đọc state từ context
+Select.Trigger = function Trigger() {
+  const { value, toggle } = useSelectContext();
+  return <button onClick={toggle}>{value || "Select..."}</button>;
 };
 
-type SelectAction =
-  | { type: "OPEN" }
-  | { type: "CLOSE" }
-  | { type: "SELECT"; value: string }
-  | { type: "MOVE"; direction: "up" | "down" };
-
-interface SelectProps<T extends string = string> {
-  value?: T;
-  defaultValue?: T;
-  onValueChange?: (value: T) => void;
-  stateReducer?: (state: SelectState, action: SelectAction) => SelectState;
-  children: ReactNode;
-}
-
-function Select<T extends string>({
-  value,
-  defaultValue,
-  onValueChange,
-  stateReducer = defaultSelectReducer,
-  children,
-}: SelectProps<T>) {
-  const [selectedValue, setSelectedValue] = useControllable({
-    value,
-    defaultValue: defaultValue ?? ("" as T),
-    onChange: onValueChange,
-  });
-
-  const [uiState, dispatch] = useReducer(stateReducer, { isOpen: false, activeIndex: 0 });
-  const optionsRef = useRef<Map<string, { label: string; index: number }>>(new Map());
-
-  // Keyboard navigation
-  useEffect(() => {
-    if (!uiState.isOpen) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "ArrowDown") dispatch({ type: "MOVE", direction: "down" });
-      if (e.key === "ArrowUp") dispatch({ type: "MOVE", direction: "up" });
-      if (e.key === "Escape") dispatch({ type: "CLOSE" });
-      if (e.key === "Enter") {
-        const active = [...optionsRef.current.entries()][uiState.activeIndex];
-        if (active) setSelectedValue(active[0] as T);
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [uiState.isOpen, uiState.activeIndex]);
-
-  return (
-    <SelectContext.Provider
-      value={{ selectedValue, setSelectedValue, uiState, dispatch, optionsRef }}
-    >
-      {children}
-    </SelectContext.Provider>
-  );
-}
-
-// Sub-components
-Select.Trigger = function SelectTrigger({ children }: { children: ReactNode }) {
-  const { uiState, dispatch, selectedValue } = useSelect();
-  return (
-    <button
-      aria-haspopup="listbox"
-      aria-expanded={uiState.isOpen}
-      onClick={() => dispatch({ type: uiState.isOpen ? "CLOSE" : "OPEN" })}
-    >
-      {selectedValue || children}
-    </button>
-  );
+Select.List = function List({ children }) {
+  const { isOpen } = useSelectContext();
+  if (!isOpen) return null;
+  return <ul className="select-list">{children}</ul>;
 };
 
-Select.Option = function SelectOption({ value, children }: { value: string; children: ReactNode }) {
-  const { selectedValue, setSelectedValue, optionsRef, dispatch } = useSelect();
-  // register option
-  useEffect(() => {
-    const idx = optionsRef.current.size;
-    optionsRef.current.set(value, { label: String(children), index: idx });
-    return () => {
-      optionsRef.current.delete(value);
-    };
-  }, [value]);
-
+Select.Option = function Option({ value, children }) {
+  const { onChange, value: selected, toggle } = useSelectContext();
   return (
-    <div
-      role="option"
-      aria-selected={selectedValue === value}
+    <li
+      className={value === selected ? "selected" : ""}
       onClick={() => {
-        setSelectedValue(value);
-        dispatch({ type: "CLOSE" });
+        onChange(value);
+        toggle();
       }}
     >
       {children}
-    </div>
+    </li>
   );
 };
+
+// 4. Usage — user tự compose
+function App() {
+  const [color, setColor] = useState("");
+  return (
+    <Select value={color} onChange={setColor}>
+      <Select.Trigger />
+      <Select.List>
+        <Select.Option value="red">Red</Select.Option>
+        <Select.Option value="blue">Blue</Select.Option>
+        <Select.Option value="green">Green</Select.Option>
+      </Select.List>
+    </Select>
+  );
+}
 ```
 
-Key architecture decisions:
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
 
-- **Options registry via ref** — avoids re-renders when options mount/unmount
-- **State reducer** — consumers customize behavior (e.g., multi-select, async loading) without props
-- **Controlled + uncontrolled** — via `useControllable`
-- **Accessibility** — `aria-haspopup`, `aria-expanded`, `role="option"` built in
+- **Context re-render:** Mỗi state change → tất cả consumer re-render. Fix: split context (state riêng, dispatch riêng) hoặc useMemo value.
+- **Type safety:** Sub-components gắn vào parent bằng static property (`Select.Option`) — TypeScript cần declare rõ ràng.
+- **Validation:** User có thể compose sai (Option ngoài Select). Cần validation bằng context check + clear error message.
+- **Nesting:** Compound components lồng nhau (Tabs trong Accordion) — mỗi cái phải có context riêng, không conflict.
 
-**Giải thích:** Không cần implement hoàn chỉnh trong phỏng vấn — quan trọng là trình bày được kiến trúc: compound components + context cho flexibility, state reducer cho behavioral customization, useControllable cho cả 2 usage modes, accessibility concerns từ đầu.
+**❌ Sai lầm thường gặp / Common Mistakes:**
 
-**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+| Sai lầm                                      | Tại sao sai                                                 | Đúng là                                    |
+| -------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------ |
+| Dùng `React.Children.map` để inject props    | Fragile — break khi wrap child trong Fragment hoặc HOC      | Dùng Context để share state                |
+| Quên validation khi Option dùng ngoài Select | Runtime error khó hiểu: "cannot read property of undefined" | Hook helper throw descriptive error        |
+| Truyền 20 props thay vì Compound pattern     | User phải nhớ hết props, không customize được layout        | Chia thành sub-components, user tự compose |
+| Không memo context value                     | Mỗi render tạo object mới → tất cả consumer re-render       | `useMemo` context value object             |
 
-- ✅ Strong: Identifies options registry pattern (ref vs state to avoid re-renders), mentions accessibility, designs state shape before writing code, names all 3 patterns being combined
-- ❌ Weak: Goes straight to writing JSX without discussing architecture tradeoffs first
+**🎯 Interview Pattern:**
+
+- Khi thấy câu hỏi về: "component API design", "flexible component", "design system"
+- → Nhớ đến: Compound Components + Context, Inversion of Control, HTML select analogy
+- → Mở đầu trả lời: _"Compound Components chia component thành các phần nhỏ share state qua Context — giống HTML select + option. User tự compose layout, component chỉ cung cấp behavior. Ưu điểm: flexible, clear API. Trade-off: cần context management, validation khi user compose sai."_
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Context API](./05-state-management.md), [Component & Props](./01-react-fundamentals.md)
+- ➡️ Để hiểu tiếp: [Headless Components](./08-react-patterns-advanced.md), [State Reducer pattern](#4-state-reducer-pattern)
 
 ---
 
-## 📋 Interview Q&A Summary / Tóm Tắt Q&A Phỏng Vấn
+### 2. Custom Hooks / Hooks Tùy Chỉnh
 
-| #   | Câu hỏi                                                       | Difficulty | Core Concept          | Key Signal                                            |
-| --- | ------------------------------------------------------------- | ---------- | --------------------- | ----------------------------------------------------- |
-| 1   | Compound components vs single component với nhiều props?      | 🟢 Junior  | Component API         | Implicit state sharing, flexible composition          |
-| 2   | Render props vs custom hooks — khi nào vẫn chọn render props? | 🟡 Mid     | Pattern evolution     | Hooks mostly supersede; render props: JSX flexibility |
-| 3   | State Reducer pattern giải quyết "prop sprawl" như thế nào?   | 🟡 Mid     | Inversion of control  | Caller overrides internal state transitions           |
-| 4   | Controlled và uncontrolled hybrid pattern?                    | 🔴 Senior  | Component flexibility | Uncontrolled default với override mechanism           |
-| 5   | Thiết kế type-safe, accessible `<Select>` component           | 🔴 Senior  | Component design      | Compound + state reducer + types + a11y               |
+> 🧠 **Memory Hook**: "Custom Hook = extract stateful logic ra function có prefix 'use' — share logic, không share UI."
+
+**Tại sao tồn tại? / Why does this exist?**
+Trước Hooks, share stateful logic giữa components phải dùng HOC hoặc render props → wrapper hell, prop conflict. Custom Hooks cho phép extract logic thành function gọi được trong bất kỳ component nào.
+→ **Why?** Vì logic (fetch data, form validation, auth check) thường giống nhau giữa nhiều components, nhưng UI khác nhau.
+→ **Why?** Vì Hooks compose tự nhiên — custom hook gọi hooks khác, không thêm wrapper vào component tree.
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+
+Custom Hook giống **công thức nấu ăn**. Thay vì mỗi đầu bếp (component) tự nhớ cách nấu phở (fetch + loading + error), bạn viết công thức (useFetch) 1 lần. Mỗi đầu bếp dùng cùng công thức nhưng chọn bát (UI) khác nhau — bát to, bát nhỏ, bát sành, bát inox. Logic giống, presentation khác.
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
+```
+  ┌────────────────────────────────────────────────────┐
+  │         Custom Hook = Logic Extraction              │
+  │                                                     │
+  │  TRƯỚC (logic lặp lại):                            │
+  │  ┌──────────────┐  ┌──────────────┐               │
+  │  │ ComponentA   │  │ ComponentB   │               │
+  │  │ [loading]    │  │ [loading]    │  Cùng logic   │
+  │  │ [data]       │  │ [data]       │  copy-paste   │
+  │  │ [error]      │  │ [error]      │               │
+  │  │ useEffect    │  │ useEffect    │               │
+  │  │   fetch...   │  │   fetch...   │               │
+  │  └──────────────┘  └──────────────┘               │
+  │                                                     │
+  │  SAU (extract to custom hook):                     │
+  │  ┌──────────────┐                                  │
+  │  │ useFetch(url)│  ← Shared logic                 │
+  │  │ [loading]    │                                  │
+  │  │ [data]       │                                  │
+  │  │ [error]      │                                  │
+  │  └──────┬───────┘                                  │
+  │         │                                          │
+  │    ┌────┴─────┐                                    │
+  │    ▼          ▼                                    │
+  │  CompA      CompB     ← Different UI, same logic  │
+  └────────────────────────────────────────────────────┘
+```
+
+**Design principles cho good custom hooks:**
+
+```tsx
+// PRINCIPLE 1: Return cả state VÀ actions
+function useToggle(initial = false) {
+  const [value, setValue] = useState(initial);
+
+  // Stable references — không cần useCallback vì không có deps
+  const toggle = useCallback(() => setValue((v) => !v), []);
+  const setTrue = useCallback(() => setValue(true), []);
+  const setFalse = useCallback(() => setValue(false), []);
+
+  return { value, toggle, setTrue, setFalse }; // object, không phải array
+}
+
+// PRINCIPLE 2: Compose hooks with hooks
+function useAuth() {
+  const { data: user, loading } = useFetch<User>("/api/me");
+  const { value: isModalOpen, toggle: toggleModal } = useToggle();
+
+  const logout = useCallback(async () => {
+    await fetch("/api/logout", { method: "POST" });
+    window.location.href = "/login";
+  }, []);
+
+  return { user, loading, isModalOpen, toggleModal, logout };
+}
+
+// PRINCIPLE 3: Accept configuration, return interface
+function useLocalStorage<T>(key: string, initialValue: T) {
+  const [value, setValue] = useState<T>(() => {
+    const stored = localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : initialValue;
+  });
+
+  useEffect(() => {
+    localStorage.setItem(key, JSON.stringify(value));
+  }, [key, value]);
+
+  return [value, setValue] as const;
+}
+```
+
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
+- **Mỗi component có instance riêng:** `useToggle()` trong ComponentA và ComponentB là 2 state riêng biệt — KHÔNG share state.
+- **Return object vs array:** Array `[value, setter]` khi chỉ 2 giá trị (dễ rename). Object `{ value, toggle }` khi > 2 giá trị (rõ ràng hơn).
+- **Rules of Hooks vẫn áp dụng:** Custom hook gọi hooks bên trong → phải tuân Rules of Hooks (top level, no conditional).
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                      | Tại sao sai                                        | Đúng là                                           |
+| -------------------------------------------- | -------------------------------------------------- | ------------------------------------------------- |
+| Nghĩ custom hook share state giữa components | Mỗi component gọi hook = instance mới              | Share state cần Context hoặc state management lib |
+| Custom hook không prefix "use"               | ESLint không apply rules-of-hooks check            | Luôn đặt tên `useSomething`                       |
+| Return quá nhiều thứ (10+ values)            | Hook đang làm quá nhiều việc → khó test, khó reuse | Tách thành nhiều hooks nhỏ hơn                    |
+| useEffect trong custom hook không cleanup    | Memory leak khi component unmount                  | Luôn return cleanup function trong useEffect      |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy câu hỏi về: "custom hooks", "share logic", "code reuse trong React"
+- → Nhớ đến: Extract stateful logic, compose hooks, mỗi instance riêng
+- → Mở đầu trả lời: _"Custom hooks extract stateful logic ra function prefix 'use' — share logic không share UI. Mỗi component gọi hook có state riêng biệt. Design principle: return state + actions, compose từ hooks khác, accept config return interface."_
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [useState, useEffect](./03-hooks-deep-dive.md), [Rules of Hooks](./03-hooks-deep-dive.md)
+- ➡️ Để hiểu tiếp: [Hooks Comprehensive](./07-hooks-comprehensive.md), [Testing Custom Hooks](./06-testing.md)
+
+---
+
+### 3. Controlled vs Uncontrolled / Kiểm Soát vs Không Kiểm Soát
+
+> 🧠 **Memory Hook**: "Controlled = parent giữ remote, Uncontrolled = TV tự có nút bấm — ai sở hữu state?"
+
+**Tại sao tồn tại? / Why does this exist?**
+Khi thiết kế component, phải quyết định: state nằm ở đâu? Nếu parent quản lý (controlled), component flexible nhưng parent phải handle mọi update. Nếu component tự quản lý (uncontrolled), dùng dễ nhưng parent ít kiểm soát.
+→ **Why?** Vì đây là fundamental trade-off trong UI design: flexibility vs simplicity. Không có đáp án đúng cho mọi trường hợp.
+→ **Why?** Vì React form inputs đã introduce pattern này (`<input value={x} onChange={fn}>` vs `<input defaultValue={x} ref={r}>`), và nó áp dụng cho mọi stateful component.
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+
+**Controlled** giống TV với remote — bạn (parent) giữ remote, mỗi lần muốn đổi kênh phải bấm nút (onChange), TV chỉ hiển thị kênh bạn chọn (value). **Uncontrolled** giống TV tự có nút bấm phía trước — TV tự quản lý kênh, bạn chỉ biết kênh nào đang chiếu khi nhìn màn hình (ref).
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
+```
+  CONTROLLED:                        UNCONTROLLED:
+  ─────────────                      ──────────────
+  Parent owns state                  Component owns state
+  ┌──────────────┐                   ┌──────────────┐
+  │ Parent       │                   │ Parent       │
+  │ [value, set] │                   │ ref          │
+  │      │       │                   │      │       │
+  │      ▼       │                   │      ▼       │
+  │ <Input       │                   │ <Input       │
+  │   value={v}  │                   │   defaultVal │
+  │   onChange=  │                   │   ref={ref}  │
+  │   {set}  /> │                   │  />          │
+  └──────────────┘                   └──────────────┘
+
+  Data flow:                         Data flow:
+  Parent → Input (value)             Input tự quản lý
+  Input → Parent (onChange)          Parent đọc qua ref.current.value
+```
+
+**Ví dụ thực tế — Accordion:**
+
+```tsx
+// CONTROLLED — parent quyết định panel nào mở
+function ControlledAccordion() {
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  return (
+    <Accordion openIndex={openIndex} onChange={(i) => setOpenIndex(i === openIndex ? null : i)}>
+      <Accordion.Item title="Section 1">Content 1</Accordion.Item>
+      <Accordion.Item title="Section 2">Content 2</Accordion.Item>
+    </Accordion>
+  );
+}
+
+// UNCONTROLLED — Accordion tự quản lý
+function UncontrolledAccordion() {
+  return (
+    <Accordion defaultOpenIndex={0}>
+      <Accordion.Item title="Section 1">Content 1</Accordion.Item>
+      <Accordion.Item title="Section 2">Content 2</Accordion.Item>
+    </Accordion>
+  );
+}
+
+// HYBRID — component hỗ trợ cả 2 mode
+function Accordion({ openIndex, defaultOpenIndex, onChange, children }) {
+  // Nếu openIndex prop tồn tại → controlled mode
+  const isControlled = openIndex !== undefined;
+  const [internalIndex, setInternalIndex] = useState(defaultOpenIndex ?? null);
+
+  const activeIndex = isControlled ? openIndex : internalIndex;
+
+  const handleChange = (index: number) => {
+    if (!isControlled) setInternalIndex(index);
+    onChange?.(index); // notify parent dù controlled hay không
+  };
+
+  return (
+    <AccordionContext value={{ activeIndex, onChange: handleChange }}>{children}</AccordionContext>
+  );
+}
+```
+
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
+- **Hybrid components** (như ví dụ trên) hỗ trợ cả 2 mode — industry standard cho Design System.
+- **React warn "switching controlled to uncontrolled":** Nếu `value` prop đổi từ defined → undefined, React cảnh báo. Luôn dùng `value ?? ""` để tránh.
+- **Performance:** Controlled re-render parent mỗi keystroke (vì parent setState). Uncontrolled không re-render parent → tốt cho form lớn (React Hook Form dùng cách này).
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                  | Tại sao sai                                                     | Đúng là                                                  |
+| ---------------------------------------- | --------------------------------------------------------------- | -------------------------------------------------------- |
+| Trộn controlled + uncontrolled cùng lúc  | `value` + `defaultValue` conflict → behavior không dự đoán được | Chọn 1: `value+onChange` HOẶC `defaultValue+ref`         |
+| value={undefined} rồi set value={string} | React chuyển từ uncontrolled → controlled → warning             | Dùng `value ?? ""` để luôn controlled                    |
+| Mọi input đều controlled trong form lớn  | Mỗi keystroke re-render toàn form → lag                         | Dùng uncontrolled (React Hook Form) cho form > 20 fields |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy câu hỏi về: "controlled vs uncontrolled", "form handling", "component state ownership"
+- → Nhớ đến: Ai sở hữu state? Flexibility vs simplicity trade-off, hybrid pattern
+- → Mở đầu trả lời: _"Controlled component nhận state từ parent qua props — parent sở hữu và kiểm soát hoàn toàn. Uncontrolled tự quản lý state nội bộ — parent đọc qua ref. Industry practice là hybrid: hỗ trợ cả 2 mode, detect controlled khi value prop tồn tại."_
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [useState](./03-hooks-deep-dive.md), [Component & Props](./01-react-fundamentals.md)
+- ➡️ Để hiểu tiếp: [State Reducer pattern](#4-state-reducer-pattern), [Form Libraries](./05-state-management.md)
+
+---
+
+### 4. State Reducer Pattern / Pattern Giảm State
+
+> 🧠 **Memory Hook**: "State Reducer = user override reducer của component — inversion of control cho state transitions."
+
+**Tại sao tồn tại? / Why does this exist?**
+Đôi khi user cần customize KHÔNG CHỈ UI mà cả BEHAVIOR. Ví dụ: Dropdown mặc định đóng sau khi chọn item, nhưng multi-select cần giữ mở. Compound Components cho customize UI, State Reducer cho customize behavior.
+→ **Why?** Vì component author không thể dự đoán mọi behavior variation. Thay vì thêm prop cho mỗi variation (`keepOpen`, `closeOnSelect`, `multiSelectBehavior`...), cho user inject reducer.
+→ **Why?** Vì đây là Inversion of Control ở mức state transition — user quyết định "khi action X xảy ra, state thay đổi thế nào".
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+
+Hãy tưởng tượng máy pha cà phê tự động. Mặc định: bấm "Espresso" → 30ml, "Americano" → 60ml. State Reducer giống bạn được quyền mở panel cài đặt bên trong: "Khi bấm Espresso, tôi muốn 50ml thay vì 30ml, và KHÔNG tự tắt máy". Bạn override hành vi mặc định mà không cần sửa máy.
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
+```
+  ┌───────────────────────────────────────────────────────┐
+  │           State Reducer Pattern Flow                   │
+  │                                                        │
+  │  Component internal:                                   │
+  │  1. Action xảy ra (user click option)                 │
+  │  2. Tạo action object { type: "SELECT", value: "a" }  │
+  │  3. Chạy QUA user reducer trước:                      │
+  │     newState = userReducer(state, action)              │
+  │     ↓ nếu user trả về state mới → dùng đó            │
+  │     ↓ nếu user trả về undefined → dùng default        │
+  │  4. Apply new state                                    │
+  └───────────────────────────────────────────────────────┘
+```
+
+```tsx
+// Component cung cấp stateReducer prop
+function useSelect({ stateReducer = defaultReducer, ...options }) {
+  // Default reducer — hành vi mặc định
+  function defaultReducer(state, action) {
+    switch (action.type) {
+      case "SELECT":
+        return { ...state, selectedValue: action.value, isOpen: false };
+      case "TOGGLE":
+        return { ...state, isOpen: !state.isOpen };
+      default:
+        return state;
+    }
+  }
+
+  // User reducer WRAP default reducer
+  function reducer(state, action) {
+    // User có thể modify action, state, hoặc cả hai
+    return stateReducer(state, action, defaultReducer);
+  }
+
+  const [state, dispatch] = useReducer(reducer, initialState);
+  return { state, dispatch };
+}
+
+// USER USAGE: Multi-select — giữ dropdown mở sau khi chọn
+function MultiSelect() {
+  const { state, dispatch } = useSelect({
+    stateReducer: (state, action, defaultReducer) => {
+      // Override: SELECT không đóng dropdown
+      if (action.type === "SELECT") {
+        return { ...state, selectedValue: action.value, isOpen: true }; // giữ mở!
+      }
+      // Mọi action khác → dùng default
+      return defaultReducer(state, action);
+    },
+  });
+  // ...
+}
+```
+
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
+- **API complexity:** User phải hiểu internal state shape + action types → higher learning curve. Cần document rõ.
+- **Breaking changes risk:** Nếu component đổi action type name → user reducer break. Cần stable action type API.
+- **Khi nào KHÔNG dùng:** Nếu variation chỉ là 1-2 boolean (keepOpen, disabled), prop đơn giản hơn.
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                       | Tại sao sai                                                     | Đúng là                                              |
+| --------------------------------------------- | --------------------------------------------------------------- | ---------------------------------------------------- |
+| Expose internal state shape mà không document | User reducer depend vào undocumented field → break khi refactor | Document mọi state field + action type               |
+| Không truyền defaultReducer cho user          | User phải copy-paste toàn bộ logic chỉ để thay 1 case           | Truyền defaultReducer làm param thứ 3                |
+| Dùng State Reducer cho variation đơn giản     | Over-engineering — boolean prop đủ                              | Chỉ dùng khi variation phức tạp + không dự đoán được |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy câu hỏi về: "inversion of control", "customize component behavior", "extensible component"
+- → Nhớ đến: State Reducer pattern, user override reducer, defaultReducer fallback
+- → Mở đầu trả lời: _"State Reducer pattern cho phép user override state transitions của component bằng cách inject custom reducer. Component chạy user reducer trước, user quyết định action nào thay đổi state thế nào, fallback về default reducer cho actions không override. Đây là Inversion of Control ở mức behavior, không chỉ UI."_
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [useReducer](./03-hooks-deep-dive.md), [Compound Components](#1-compound-components)
+- ➡️ Để hiểu tiếp: [Headless Components](./08-react-patterns-advanced.md), [Downshift/Radix source code]
+
+---
+
+### 5. Higher-Order Components (HOC) / Component Bậc Cao
+
+> 🧠 **Memory Hook**: "HOC = function nhận component, trả về component MỚI có thêm khả năng — decorator pattern cho React. LEGACY nhưng phỏng vấn vẫn hỏi."
+
+**Tại sao tồn tại? / Why does this exist?**
+Trước Hooks (React < 16.8), đây là cách duy nhất để share stateful logic giữa components. HOC wrap component trong 1 wrapper, inject props.
+→ **Why?** Vì class component không thể share logic bằng function call — phải dùng composition ở component level.
+→ **Why?** Đã bị custom hooks thay thế phần lớn. Nhưng phỏng vấn hỏi để test bạn biết evolution, và một số thư viện (React Router v5, Redux connect) vẫn dùng.
+
+#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+
+HOC giống **ốp lưng điện thoại** — điện thoại (component) vẫn nguyên, ốp thêm tính năng (auth check, theme, logging). Bạn bọc ốp vào: `withAuth(ProfilePage)` → ProfilePage giờ có thêm khả năng check auth.
+
+#### Layer 2: How It Works / Cơ Chế Hoạt Động
+
+```
+  ┌─────────────────────────────────────────────┐
+  │           HOC Pattern                        │
+  │                                              │
+  │  withAuth(ProfilePage)                       │
+  │     │                                        │
+  │     ▼                                        │
+  │  function EnhancedProfile(props) {           │
+  │    const user = useAuth();                   │
+  │    if (!user) return <Redirect to="/login">; │
+  │    return <ProfilePage {...props} user={u}>; │
+  │  }                                           │
+  │                                              │
+  │  Component Tree:                             │
+  │  <EnhancedProfile>   ← HOC wrapper          │
+  │    <ProfilePage>     ← Original component   │
+  └─────────────────────────────────────────────┘
+```
+
+```tsx
+// HOC implementation
+function withAuth<P extends object>(WrappedComponent: React.ComponentType<P & { user: User }>) {
+  return function WithAuth(props: P) {
+    const { user, loading } = useAuth();
+
+    if (loading) return <Spinner />;
+    if (!user) return <Navigate to="/login" />;
+
+    return <WrappedComponent {...props} user={user} />;
+  };
+}
+
+// Usage
+const ProtectedProfile = withAuth(ProfilePage);
+// <ProtectedProfile /> → auto-check auth, inject user prop
+```
+
+#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+
+- **Wrapper hell:** Nhiều HOC lồng nhau: `withAuth(withTheme(withRouter(Component)))` → debug DevTools thấy 4 wrappers.
+- **Props conflict:** Nếu 2 HOC inject cùng prop name → conflict. Custom hooks không có vấn đề này.
+- **Ref forwarding:** HOC phải forwardRef hoặc ref chỉ attach vào wrapper, không vào component gốc.
+- **Static methods lost:** HOC không tự copy static methods — cần `hoist-non-react-statics`.
+
+**❌ Sai lầm thường gặp / Common Mistakes:**
+
+| Sai lầm                                           | Tại sao sai                                                   | Đúng là                                                   |
+| ------------------------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------- |
+| Viết HOC mới cho logic sharing                    | Custom hooks đơn giản hơn, không wrapper, không prop conflict | Dùng custom hooks cho logic sharing                       |
+| Gọi HOC trong render: `return <WithAuth(Comp) />` | Tạo component type mới mỗi render → unmount/remount toàn bộ   | Gọi HOC ở module level: `const Enhanced = withAuth(Comp)` |
+| Quên forward ref qua HOC                          | ref gắn vào wrapper thay vì component gốc                     | Dùng React.forwardRef trong HOC                           |
+
+**🎯 Interview Pattern:**
+
+- Khi thấy câu hỏi về: "HOC", "higher-order component", "code reuse trước hooks"
+- → Nhớ đến: Function nhận component trả component, decorator pattern, legacy → hooks
+- → Mở đầu trả lời: _"HOC là function nhận component và trả về component mới có thêm khả năng — decorator pattern. Phổ biến trước hooks cho logic sharing. Nhược điểm: wrapper hell, prop naming conflict, DevTools nesting. Ngày nay phần lớn thay bằng custom hooks, nhưng Redux connect và một số pattern vẫn dùng HOC."_
+
+**🔑 Knowledge Chain / Chuỗi Kiến Thức:**
+
+- 📚 Cần biết trước: [Component & Props](./01-react-fundamentals.md)
+- ➡️ Để hiểu tiếp: [Custom Hooks](#2-custom-hooks) (replacement), [Render Props evolution](./08-react-patterns-advanced.md)
+
+---
+
+## Q&A Section / Câu Hỏi Phỏng Vấn
+
+### Q1: Compound Components là gì? Cho ví dụ. / What are Compound Components? Give an example. 🟢 Junior
+
+**A:** Compound Components are a pattern where a parent component shares implicit state with its children through Context, and children compose the UI. Like HTML `<select>` + `<option>` — `<select>` holds state, `<option>` renders choices, user arranges them freely.
+
+Compound Components là pattern mà parent component share state ngầm cho children qua Context. Children tự compose UI. Giống HTML select + option — parent giữ state, children render từng phần, user tự sắp xếp.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
+- ✅ Strong: Đề cập Context cho state sharing, cho ví dụ select/tabs, biết khác gì render props
+- ❌ Weak: Chỉ nói "component có component con" — thiếu implicit state sharing
+
+---
+
+### Q2: Custom hook khác gì regular function? / How is a custom hook different from a regular function? 🟢 Junior
+
+**A:** A custom hook can call other hooks (useState, useEffect, etc.) inside it — a regular function cannot. Custom hooks must be prefixed with "use" so React's ESLint plugin enforces Rules of Hooks. Each component calling the hook gets its own independent state — hooks don't share state between components.
+
+Custom hook gọi được hooks khác (useState, useEffect) bên trong — regular function thì không. Phải prefix "use" để ESLint check Rules of Hooks. Mỗi component gọi hook có state riêng — KHÔNG share state giữa components.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
+- ✅ Strong: Biết mỗi instance có state riêng, biết ESLint "use" prefix enforcement
+- ❌ Weak: "Giống regular function thêm use" — thiếu Rules of Hooks context
+
+---
+
+### Q3: Controlled vs Uncontrolled — khi nào dùng cái nào? / Controlled vs Uncontrolled — when to use which? 🟡 Mid
+
+**A:** Use **Controlled** when you need: validation on every keystroke, conditional logic based on input, or synchronized state across multiple inputs. Use **Uncontrolled** when: performance matters (large forms — React Hook Form approach), simple forms without complex validation, or integrating with non-React code. Best practice for libraries: support BOTH modes (hybrid) — detect controlled when `value` prop is defined.
+
+**Controlled** khi cần: validation mỗi keystroke, logic phụ thuộc input, đồng bộ nhiều input. **Uncontrolled** khi: performance (form lớn, React Hook Form dùng cách này), form đơn giản. Best practice cho lib: hỗ trợ CẢ HAI (hybrid) — detect controlled khi `value` prop defined.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
+- ✅ Strong: Biết trade-off performance (controlled re-render mỗi keystroke), đề cập hybrid pattern, React Hook Form
+- ❌ Weak: "Controlled tốt hơn uncontrolled" — binary thinking, không hiểu trade-off
+
+---
+
+### Q4: HOC vs Custom Hooks — tại sao hooks thắng? / HOC vs Custom Hooks — why did hooks win? 🟡 Mid
+
+**A:** Hooks won because they solve HOC's three fundamental problems: (1) **Wrapper hell** — HOCs nest components, hooks compose flatly; (2) **Prop naming conflicts** — two HOCs can inject same-named prop, hooks return values you name yourself; (3) **Indirection** — tracing where a prop comes from through 3 HOC wrappers is hard, hook calls are explicit. Plus, hooks don't add nodes to the component tree, making debugging and performance easier.
+
+Hooks thắng vì giải 3 vấn đề của HOC: (1) Wrapper hell — HOC lồng component, hooks compose phẳng; (2) Prop naming conflict — 2 HOC inject cùng tên prop, hooks return value bạn tự đặt tên; (3) Indirection — trace prop qua 3 HOC wrappers khó, hook call explicit. Thêm nữa, hooks không thêm node vào component tree.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
+- ✅ Strong: Nêu 3 vấn đề cụ thể, cho ví dụ `withAuth(withTheme(withRouter(C)))`, biết HOC vẫn dùng (Redux connect)
+- ❌ Weak: "Hooks mới hơn nên tốt hơn" — không giải thích technical reason
+
+---
+
+### Q5: Thiết kế component API cho Tabs component trong Design System. / Design a component API for a Tabs component in a Design System. 🔴 Senior
+
+**A:** I would use Compound Components pattern with hybrid controlled/uncontrolled support:
+
+```tsx
+// API Design
+<Tabs defaultValue="tab1" onValueChange={console.log}>
+  <Tabs.List>
+    <Tabs.Trigger value="tab1">Profile</Tabs.Trigger>
+    <Tabs.Trigger value="tab2">Settings</Tabs.Trigger>
+    <Tabs.Trigger value="tab3" disabled>Admin</Tabs.Trigger>
+  </Tabs.List>
+  <Tabs.Content value="tab1"><ProfilePanel /></Tabs.Content>
+  <Tabs.Content value="tab2"><SettingsPanel /></Tabs.Content>
+  <Tabs.Content value="tab3"><AdminPanel /></Tabs.Content>
+</Tabs>
+
+// Controlled mode
+<Tabs value={activeTab} onValueChange={setActiveTab}>
+  ...
+</Tabs>
+```
+
+**Design decisions:**
+
+- **Compound Components:** User controls layout (can put Trigger inside custom wrapper)
+- **Hybrid controlled/uncontrolled:** `value` prop → controlled, `defaultValue` → uncontrolled
+- **Accessibility built-in:** `role="tablist"`, `role="tab"`, `aria-selected`, keyboard navigation (Arrow keys)
+- **Context for state sharing:** TabsContext holds `{ activeValue, onValueChange }`
+- **Lazy rendering option:** `<Tabs.Content forceMount>` for always-mounted vs mount-on-active
+
+Compound Components cho flexible layout + hybrid controlled/uncontrolled. Accessibility built-in (ARIA roles, keyboard nav). Context share state. Design System cần: TypeScript strict, ref forwarding, customizable styling (className/style/asChild).
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
+- ✅ Strong: Compound pattern, hybrid mode, accessibility, lazy vs forceMount, TypeScript generics
+- ❌ Weak: Single component with 15 props, no accessibility consideration
+
+**🔴 Follow-up Chain:**
+
+1. "Làm sao handle keyboard navigation cho Tabs?" → Arrow Left/Right move focus giữa Triggers, Home/End jump first/last, Enter/Space activate. useFocusManager hook quản lý focus ring.
+2. "Nếu tab content load async, API thay đổi thế nào?" → `<Tabs.Content>` nhận children hoặc render prop. Kết hợp Suspense: `<Suspense fallback={<Skeleton />}><AsyncContent /></Suspense>` bên trong Content.
+3. "So sánh API này với Radix UI Tabs." → Radix dùng pattern gần giống: Compound + controlled/uncontrolled + asChild pattern (render as different element). Thêm `activationMode="manual"` cho tab chỉ active khi Enter, không khi focus.
+
+---
+
+### Q6: State Reducer pattern giải quyết gì? So sánh với render props. / What does the State Reducer pattern solve? Compare with render props. 🔴 Senior
+
+**A:** State Reducer gives users control over **state transitions** (behavior), while Render Props gives control over **rendering** (UI). They solve different aspects of Inversion of Control:
+
+| Aspect        | State Reducer                                              | Render Props                              |
+| ------------- | ---------------------------------------------------------- | ----------------------------------------- |
+| Controls      | Behavior (state transitions)                               | Presentation (UI output)                  |
+| User provides | Custom reducer function                                    | Custom render function                    |
+| Typical use   | Override default actions (multi-select, custom validation) | Custom item rendering, layout flexibility |
+| Complexity    | Higher (user needs internal state knowledge)               | Lower (user just returns JSX)             |
+
+State Reducer kiểm soát **behavior** (state transitions), Render Props kiểm soát **UI** (render output). Compound Components + State Reducer = kiểm soát CẢ HAI. Dùng State Reducer khi variation là hành vi (multi-select stay open, custom validation rule), không phải UI.
+
+**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+
+- ✅ Strong: Phân biệt behavior vs UI control, biết khi nào dùng cái nào, đề cập Downshift (thư viện dùng cả 2)
+- ❌ Weak: Nhầm lẫn 2 pattern hoặc chỉ biết 1
+
+**🔴 Follow-up Chain:**
+
+1. "Khi nào State Reducer trở thành over-engineering?" → Khi variation chỉ là 1-2 boolean flags. Rule: nếu có thể express bằng `if (multiSelect) {...}`, không cần State Reducer.
+2. "Làm sao document action types cho user?" → TypeScript discriminated union cho action types + JSDoc. Storybook story cho mỗi behavior variation.
+3. "Headless UI library như Radix dùng pattern nào?" → Radix dùng Compound Components + controlled/uncontrolled. Ít dùng State Reducer trực tiếp — thay vào đó expose event handlers (onOpenChange, onValueChange) mà user can prevent default.
+
+---
+
+## Interview Q&A Summary / Tổng Kết Phỏng Vấn
+
+| #   | Question                        | Level | Key Point                                                |
+| --- | ------------------------------- | ----- | -------------------------------------------------------- |
+| Q1  | Compound Components             | 🟢    | Context state sharing, like select+option, user compose  |
+| Q2  | Custom hook vs regular function | 🟢    | Can call hooks, "use" prefix, each instance own state    |
+| Q3  | Controlled vs Uncontrolled      | 🟡    | State ownership trade-off, hybrid pattern for libs       |
+| Q4  | HOC vs Custom Hooks             | 🟡    | Wrapper hell, prop conflict, indirection solved by hooks |
+| Q5  | Design Tabs API                 | 🔴    | Compound + hybrid + a11y + TypeScript                    |
+| Q6  | State Reducer vs Render Props   | 🔴    | Behavior control vs UI control, different IoC aspects    |
 
 ---
 
 ## ⚡ Cold Call Simulation / Mô Phỏng Phỏng Vấn
 
-> 🎯 Interviewer asks cold: **"What is the compound component pattern and when would you use it over a prop-based API?"**
+> 🎯 Interviewer asks cold: **"Thiết kế component API cho Dropdown/Select trong Design System — yêu cầu flexible, accessible, và maintainable."**
 
-**30 giây đầu — mở đầu lý tưởng:**
+**30 giây đầu — mở đầu lý tưởng / Ideal 30-second opening:**
 
-1. "Compound components let parent and child components share implicit state through context — like how `<select>` and `<option>` work together in HTML."
-2. "The key insight is that the parent owns state and provides it via context; children read from context without needing explicit props."
-3. "I'd choose compound components when consumers need layout flexibility — when they need to put sub-parts in different places, or insert their own elements between them."
-4. "The alternative — a single component with many props — collapses when you get feature requests like 'put the tab list in the sidebar' or 'add a badge between tabs.'"
+1. "Tôi sẽ dùng Compound Components pattern — tách Select thành Trigger, List, Option, mỗi phần share state qua Context. User tự compose layout."
+2. "Hỗ trợ cả controlled (value + onChange) và uncontrolled (defaultValue) mode — detect controlled khi value prop defined."
+3. "Ở dự án trước, chúng tôi dùng pattern này cho Design System — accessibility built-in với ARIA roles và keyboard navigation, TypeScript generics cho type-safe value."
+4. "Trade-off: Context re-render khi state change — fix bằng split context (state riêng, dispatch riêng) hoặc memo value."
 
----
-
-## 🔄 Self-Check / Tự Kiểm Tra
-
-> Đóng tài liệu lại. Trả lời từng câu, sau đó mở lại kiểm tra.
-
-| #   | Loại           | Câu hỏi                                                                                                                                     |
-| --- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | 🔍 Retrieval   | Viết cấu trúc compound component (Parent + Context + Child) từ trí nhớ: Context creation, Provider, và cách children consume.               |
-| 2   | 🎨 Visual      | Vẽ sơ đồ: trong compound component, state flow từ đâu đến đâu? (Parent → Context → Children) và component nào re-render khi state thay đổi? |
-| 3   | 🛠️ Application | Build `<Modal>` với `<Modal.Trigger>`, `<Modal.Content>`, `<Modal.CloseButton>` — viết phần Context + Provider và custom hook.              |
-| 4   | 🐛 Debug       | `useContext(TabsContext)` trả về `undefined` — component đang được render ở đâu? Tại sao xảy ra và cách fix?                                |
-| 5   | 🎓 Teach       | Giải thích sự khác biệt giữa render props và custom hooks cho junior developer trong 2 câu.                                                 |
-
-### Key Points (tự kiểm tra)
-
-| #   | Key Point                                                                                                                                                                              |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | `const Ctx = createContext(null)`. Parent có state + Provider. Children dùng `useContext`. Custom hook: `function useCtx() { const v = useContext(Ctx); if (!v) throw...; return v; }` |
-| 2   | State sống trong Parent. Provider truyền qua Context. Chỉ consumers (children gọi useContext) re-render. Children không subscribe → không re-render.                                   |
-| 3   | `ModalContext` với `{ isOpen, open, close }`. Provider wrap children. `Modal.Trigger` gọi `open()`. `Modal.CloseButton` gọi `close()`. `Modal.Content` render khi `isOpen`.            |
-| 4   | Component rendered OUTSIDE `<Tabs>` Provider → context value là default (undefined). Fix: đảm bảo component là descendant của Provider. Custom hook nên throw descriptive error.       |
-| 5   | Render props: chia sẻ logic qua JSX (truyền function làm children). Custom hooks: chia sẻ logic mà không cần thay đổi JSX structure. Hooks cleaner hơn cho logic tái sử dụng.          |
-
-> 🎯 **Feynman Prompt:** Giải thích tại sao State Reducer pattern tốt hơn việc thêm nhiều props, dùng ví dụ đời thường (không phải code).
-> 🔁 **Spaced Repetition reminder:** Review lại file này sau 3 ngày, rồi 7 ngày, rồi 14 ngày.
+_Sau đó mở rộng theo hướng interviewer dẫn dắt._
 
 ---
 
-## 🔗 Connections / Liên Kết
+## Self-Check / Tự Kiểm Tra ⚡
 
-### Cùng track (Same track)
-- [Hooks Deep Dive](./03-hooks-deep-dive.md) — hooks replace most render-prop and HOC patterns
-- [React Patterns Advanced](./08-react-patterns-advanced.md) — headless components and prop getters
-- [Testing](./06-testing.md) — patterns affect how components are tested
-- [State Management](./05-state-management.md) — compound components often wrap shared state
+> **Đóng tài liệu lại trước khi làm — Close the doc before attempting.**
 
-### Khác track (Cross-track)
-- [React TypeScript](../02-typescript/05-react-typescript.md) — typing compound components and generic patterns
-- [SOLID & Design Patterns](../../shared/05-software-engineering/01-solid-and-design-patterns.md) — compound = Composite, state reducer = Strategy
+- [ ] **Retrieval**: Viết 5 React patterns từ trí nhớ, mỗi cái 1 câu mô tả use case. So sánh với Overview.
+- [ ] **Visual**: Vẽ Compound Components architecture (parent + context + children) ra giấy. So sánh với ASCII diagram.
+- [ ] **Application**: Design System cần component `<Dialog>` — bạn chọn pattern nào? Viết API usage example.
+- [ ] **Debug**: Compound Component `<Select.Option>` dùng ngoài `<Select>` gây "Cannot read property of null" — nguyên nhân? Fix?
+- [ ] **Teach**: Giải thích Controlled vs Uncontrolled cho người không biết lập trình bằng liên tưởng "TV với remote vs TV tự bấm".
+
+💬 **Feynman Prompt:** Giải thích Compound Components cho người không biết lập trình, dùng liên tưởng "IKEA tủ tự lắp". Không dùng thuật ngữ kỹ thuật.
+
+🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày → 7 ngày → 14 ngày** để chuyển vào long-term memory.
+
+---
+
+## Connections / Liên Kết
+
+- ⬅️ **Built on:** [Hooks Deep Dive](./03-hooks-deep-dive.md) — hooks enable custom hooks pattern, useReducer enables state reducer
+- ⬅️ **Built on:** [React Fundamentals](./01-react-fundamentals.md) — component model, props, children composition
+- ➡️ **Enables:** [Advanced Patterns v2](./08-react-patterns-advanced.md) — headless components, prop getters, polymorphic components
+- ➡️ **Enables:** [State Management](./05-state-management.md) — Context + patterns = state management architecture
+- 🔗 **Applied in:** Design Systems (Radix, Headless UI, shadcn/ui), React Hook Form, Downshift
