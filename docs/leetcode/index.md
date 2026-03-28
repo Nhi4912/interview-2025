@@ -1,235 +1,99 @@
----
-layout: page
-title: LeetCode Problems
-description: Comprehensive algorithm practice with 200+ problems organized by category
----
-
-# Algorithm Practice - LeetCode Problems
+# LeetCode Practice — Algorithm & Data Structure Problems
 
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../00-table-of-contents.md)
-
-Master data structures and algorithms with our comprehensive collection of LeetCode problems, all implemented in TypeScript with detailed explanations.
-
-## Problem Categories
-
-### [Array & String Problems](array/)
-**45 Problems** covering fundamental array operations (26) and string manipulation (19)
-
-Key concepts:
-- Two pointers technique
-- Sliding window patterns
-- Array manipulation
-- String processing algorithms
-
-**Difficulty Distribution:**
-- Easy: 12 problems
-- Medium: 10 problems  
-- Hard: 4 problems
-
-[**Start with Array Problems →**](array/)
+> **See also**: [Study Guide](./00-study-guide.md) | [Patterns Index](./00-patterns-index.md) | [Algorithms Theory](../shared/01-cs-fundamentals/algorithms-theory.md)
 
 ---
 
-### [String Algorithms](string/)
-**19 Problems** focusing on string manipulation and pattern matching
+## 🎯 Start Here / Bắt Đầu Từ Đây
 
-Key concepts:
-- Pattern matching algorithms
-- String transformation
-- Palindrome detection
-- Substring problems
-
-**Difficulty Distribution:**
-- Easy: 8 problems
-- Medium: 8 problems
-- Hard: 3 problems
-
-[**Practice String Problems →**](string/)
+| Guide | Mục đích |
+|-------|----------|
+| **[Study Guide](./00-study-guide.md)** | ⭐ Interview priority tiers — biết ôn gì trước |
+| **[Patterns Index](./00-patterns-index.md)** | 12 patterns — nhận dạng pattern cho mọi bài |
+| **[Problem-Solving Meta Guide](../fe-track/13-coding-practice/00-problem-solving-meta-guide.md)** | UNPACK method — cách tiếp cận bài mới |
 
 ---
 
-### [Linked List Operations](linked-list/)
-**11 Problems** covering linked list manipulation and algorithms
+## Problem Categories / Danh Mục Bài Tập
 
-Key concepts:
-- List traversal and modification
-- Cycle detection
-- List merging and sorting
-- Complex pointer manipulation
+### [Array](array/) — 28 Problems
+Two pointers, sliding window, intervals, matrix, prefix sum
+- 🟢 Easy: 10 | 🟡 Medium: 14 | 🔴 Hard: 4
 
-**Difficulty Distribution:**
-- Easy: 5 problems
-- Medium: 4 problems
-- Hard: 2 problems
+### [String](string/) — 21 Problems
+Pattern matching, palindrome, substring, anagram
+- 🟢 Easy: 8 | 🟡 Medium: 10 | 🔴 Hard: 3
 
-[**Master Linked Lists →**](linked-list/)
+### [Tree & Graph](tree-graph/) — 18 Problems
+DFS, BFS, BST, topological sort, shortest path
+- 🟢 Easy: 5 | 🟡 Medium: 9 | 🔴 Hard: 4
 
----
+### [Dynamic Programming](dp/) — 12 Problems
+Fibonacci, knapsack, LIS, LCS, grid DP
+- 🟢 Easy: 3 | 🟡 Medium: 5 | 🔴 Hard: 4
 
-### [Tree & Graph Algorithms](tree-graph/)
-**18 Problems** exploring tree and graph data structures
+### [Backtracking](backtracking/) — 11 Problems
+Subsets, permutations, combinations, constraint satisfaction
+- 🟡 Medium: 7 | 🔴 Hard: 4
 
-Key concepts:
-- Tree traversal (DFS, BFS)
-- Binary search trees
-- Graph algorithms
-- Path finding
+### [Linked List](linked-list/) — 11 Problems
+Reversal, merge, cycle detection, two pointers
+- 🟢 Easy: 5 | 🟡 Medium: 4 | 🔴 Hard: 2
 
-**Difficulty Distribution:**
-- Easy: 6 problems
-- Medium: 8 problems
-- Hard: 4 problems
+### [Design](design/) — 11 Problems
+LRU Cache, data structure design, OOP design
+- 🟡 Medium: 8 | 🔴 Hard: 3
 
-[**Explore Trees & Graphs →**](tree-graph/)
+### [Stack & Queue / Others](others/) — 10 Problems
+Valid parentheses, monotonic stack, queue patterns
+- 🟢 Easy: 4 | 🟡 Medium: 4 | 🔴 Hard: 2
 
----
+### [Sorting & Searching](sorting-searching/) — 6 Problems
+Binary search, merge sort, quick select
+- 🟢 Easy: 2 | 🟡 Medium: 2 | 🔴 Hard: 2
 
-### [Dynamic Programming](dp/)
-**11 Problems** covering classic dynamic programming patterns
-
-Key concepts:
-- Memoization techniques
-- Bottom-up approaches
-- Optimization problems
-- State transition
-
-**Difficulty Distribution:**
-- Easy: 3 problems
-- Medium: 5 problems
-- Hard: 3 problems
-
-[**Learn Dynamic Programming →**](dp/)
+### [Math](math/) — 5 Problems
+Number theory, bit manipulation
+- 🟢 Easy: 2 | 🟡 Medium: 2 | 🔴 Hard: 1
 
 ---
 
-### [Backtracking](backtracking/)
-**11 Problems** focusing on backtracking and recursion
+## Statistics / Thống Kê
 
-Key concepts:
-- Recursive problem solving
-- Decision trees
-- Constraint satisfaction
-- Combinatorial problems
+```
+Total: 133 problems
+By difficulty: 🟢 39 Easy | 🟡 65 Medium | 🔴 29 Hard
 
-**Difficulty Distribution:**
-- Easy: 2 problems
-- Medium: 6 problems
-- Hard: 3 problems
-
-[**Practice Backtracking →**](backtracking/)
-
----
-
-### [Sorting & Searching](sorting-searching/)
-**4 Problems** covering sorting algorithms and binary search
-
-Key concepts:
-- Binary search variations
-- Sorting algorithm implementation
-- Search optimization
-- Time complexity analysis
-
-**Difficulty Distribution:**
-- Easy: 1 problem
-- Medium: 2 problems
-- Hard: 1 problem
-
-[**Master Sorting & Search →**](sorting-searching/)
+Coverage by pattern:
+├── Two Pointers:     9 problems  ✅
+├── Sliding Window:   6 problems  ✅
+├── Binary Search:    5 problems  ✅
+├── BFS/DFS:         14 problems  ✅
+├── Dynamic Prog:    12 problems  ✅
+├── Backtracking:    11 problems  ✅
+├── Linked List:     11 problems  ✅
+├── Stack/Queue:     10 problems  ✅
+├── Hash Map:         8 problems  ✅
+├── Interval:         4 problems  ✅
+├── Design:          11 problems  ✅
+└── Matrix:           3 problems  ✅
+```
 
 ---
 
-### [Stack & Queue / Other Problems](others/)
-**10 Problems** covering stack, queue, and miscellaneous algorithms
+## Study Path by Level / Lộ Trình Theo Level
 
-Key concepts:
-- Stack applications
-- Queue implementations
-- Design patterns
-- Data structure design
-
-**Difficulty Distribution:**
-- Easy: 4 problems
-- Medium: 4 problems
-- Hard: 2 problems
-
-[**Solve Other Problems →**](others/)
+| Level | Focus | Target | Guide |
+|-------|-------|--------|-------|
+| 🟢 L3 Junior | Easy + basic Medium | 30 problems | [Study Guide Tier 1](./00-study-guide.md) |
+| 🟡 L4 Mid | All Medium patterns | 50 problems | [Study Guide Tier 1+2](./00-study-guide.md) |
+| 🔴 L5 Senior | Hard + optimization | 80+ problems | [Full Study Guide](./00-study-guide.md) |
 
 ---
 
-### [System Design](design/)
-**9 Problems** focusing on data structure and system design
+## Connections / Liên Kết
 
-Key concepts:
-- Data structure design
-- API design
-- Scalability considerations
-- Object-oriented design
-
-**Difficulty Distribution:**
-- Easy: 3 problems
-- Medium: 4 problems
-- Hard: 2 problems
-
-[**Design Systems →**](design/)
-
----
-
-### [Mathematical Problems](math/)
-**5 Problems** covering mathematical algorithms and number theory
-
-Key concepts:
-- Number theory
-- Mathematical formulas
-- Algorithmic mathematics
-- Optimization
-
-**Difficulty Distribution:**
-- Easy: 2 problems
-- Medium: 2 problems
-- Hard: 1 problem
-
-[**Solve Math Problems →**](math/)
-
----
-
-## Study Approach
-
-### For Beginners
-1. Start with **Array** problems to build foundational skills
-2. Move to **String** algorithms for pattern recognition
-3. Practice **Linked List** for pointer manipulation
-4. Build up to **Tree & Graph** problems
-
-### For Intermediate
-1. Focus on **Dynamic Programming** for optimization
-2. Master **Backtracking** for complex recursion
-3. Practice **System Design** problems
-4. Challenge yourself with **Hard** difficulty problems
-
-### For Advanced
-1. Optimize solutions for time and space complexity
-2. Practice explaining solutions clearly
-3. Focus on edge cases and error handling
-4. Prepare for live coding scenarios
-
-## Progress Tracking
-
-Each problem includes:
-- ✅ **Detailed solution** in TypeScript
-- 📝 **Step-by-step explanation**
-- ⏱️ **Time & space complexity analysis**
-- 🎯 **Key insights and patterns**
-- 🔗 **Related problems**
-
-## Interview Tips
-
-1. **Understand the problem** - Ask clarifying questions
-2. **Think out loud** - Explain your thought process
-3. **Start simple** - Begin with brute force, then optimize
-4. **Test your solution** - Walk through examples
-5. **Analyze complexity** - Discuss time and space trade-offs
-
----
-
-*All solutions are implemented in TypeScript with modern ES6+ syntax and include comprehensive test cases.*
+- 🔗 **Theory**: [Algorithms](../shared/01-cs-fundamentals/algorithms-theory.md) | [Data Structures](../shared/01-cs-fundamentals/data-structures-theory.md) | [Complexity](../shared/01-cs-fundamentals/complexity-analysis.md)
+- 🔗 **Practice**: [FE Coding Practice](../fe-track/13-coding-practice/) | [Mock Coding Round](../fe-track/14-mock-interview/01-coding-round.md)
+- 🔗 **L5 Skills**: [Problem-Solving Frameworks](../shared/08-l5-competencies/02-problem-solving-frameworks.md)
