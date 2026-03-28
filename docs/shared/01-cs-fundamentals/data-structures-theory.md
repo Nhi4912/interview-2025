@@ -1212,6 +1212,30 @@ Vietnamese explanation: Call stack: mỗi function call push frame (local vars +
 
 ---
 
+## Practice Problems / Bài Tập Thực Hành
+
+| Data Structure | Problem | Difficulty | Key Technique |
+|---------------|---------|-----------|---------------|
+| Array | [Two Sum](../../leetcode/array/problems/04-two-sum.md) | 🟢 Easy | Hash Map lookup |
+| Array | [Contains Duplicate](../../leetcode/array/problems/05-contains-duplicate.md) | 🟢 Easy | Set / Hash Map |
+| Array | [Rotate Array](../../leetcode/array/problems/03-rotate-array.md) | 🟡 Medium | Reverse trick |
+| Linked List | [Reverse Linked List](../../leetcode/linked-list/problems/01-reverse-linked-list.md) | 🟢 Easy | Pointer manipulation |
+| Linked List | [Merge Two Sorted Lists](../../leetcode/linked-list/problems/02-merge-two-sorted-lists.md) | 🟢 Easy | Merge pattern |
+| Linked List | [Remove Nth Node From End](../../leetcode/linked-list/problems/04-remove-nth-node-from-end-of-list.md) | 🟡 Medium | Two pointers |
+| Stack | [Min Stack](../../leetcode/design/problems/01-min-stack.md) | 🟡 Medium | Auxiliary stack |
+| Stack | [Valid Parentheses](../../leetcode/string/problems/06-valid-parentheses.md) | 🟢 Easy | Stack matching |
+| Hash Map | [First Unique Character](../../leetcode/string/problems/03-first-unique-character-in-a-string.md) | 🟢 Easy | Frequency count |
+| Hash Map | [Valid Anagram](../../leetcode/string/problems/04-valid-anagram.md) | 🟢 Easy | Char frequency |
+| Tree (BST) | [Validate BST](../../leetcode/tree-graph/problems/02-validate-binary-search-tree.md) | 🟡 Medium | Inorder traversal |
+| Tree | [Symmetric Tree](../../leetcode/tree-graph/problems/04-symmetric-tree.md) | 🟢 Easy | Mirror recursion |
+| Tree → Array | [Sorted Array to BST](../../leetcode/tree-graph/problems/05-convert-sorted-array-to-binary-search-tree.md) | 🟢 Easy | Binary split |
+| Heap | [Find K Largest Elements](../../leetcode/sorting-searching/problems/02-find-k-largest-elements.md) | 🟡 Medium | Min-heap of size K |
+| Design (combo) | [Serialize/Deserialize Tree](../../leetcode/design/problems/04-serialize-and-deserialize-binary-tree.md) | 🔴 Hard | BFS/DFS + encoding |
+
+🔗 **Full pattern index**: [LeetCode Patterns Index](../../leetcode/00-patterns-index.md)
+
+---
+
 ## Connections / Liên Kết
 
 **Same track:**

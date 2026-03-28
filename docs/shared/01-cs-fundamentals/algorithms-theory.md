@@ -1052,6 +1052,30 @@ Vietnamese: Trie dùng trong autocomplete (search engines, IDE completions), IP 
 
 ---
 
+## Practice Problems / Bài Tập Thực Hành
+
+| Pattern | Problem | Difficulty | Key Technique |
+|---------|---------|-----------|---------------|
+| Binary Search | [First Bad Version](../../leetcode/sorting-searching/problems/02-first-bad-version.md) | 🟢 Easy | lo/hi boundary |
+| Binary Search | [Search in Rotated Sorted Array](../../leetcode/sorting-searching/problems/03-search-in-rotated-sorted-array.md) | 🟡 Medium | Modified binary search |
+| Two Pointers | [Two Sum (sorted)](../../leetcode/array/problems/04-two-sum.md) | 🟢 Easy | lo+hi converge |
+| Two Pointers | [Remove Duplicates](../../leetcode/array/problems/01-remove-duplicates-from-sorted-array.md) | 🟢 Easy | slow/fast write |
+| Two Pointers | [3Sum](../../leetcode/array/problems/12-3sum.md) | 🟡 Medium | Sort + two pointers |
+| Sliding Window | [Longest Substring Without Repeating](../../leetcode/string/problems/10-longest-substring-without-repeating-characters.md) | 🟡 Medium | Expand/shrink window |
+| Sorting | [Sort Colors](../../leetcode/sorting-searching/problems/03-sort-colors.md) | 🟡 Medium | Dutch National Flag |
+| Sorting | [Merge Sorted Array](../../leetcode/sorting-searching/problems/01-merge-sorted-array.md) | 🟢 Easy | Merge step |
+| BFS/DFS | [Binary Tree Level Order](../../leetcode/tree-graph/problems/03-binary-tree-level-order-traversal.md) | 🟡 Medium | BFS with queue |
+| BFS/DFS | [Max Depth of Binary Tree](../../leetcode/tree-graph/problems/01-maximum-depth-of-binary-tree.md) | 🟢 Easy | DFS recursion |
+| DP | [Climbing Stairs](../../leetcode/dp/problems/01-climbing-stairs.md) | 🟢 Easy | Fibonacci DP |
+| DP | [Maximum Subarray](../../leetcode/dp/problems/03-maximum-subarray.md) | 🟡 Medium | Kadane's algorithm |
+| DP | [House Robber](../../leetcode/dp/problems/04-house-robber.md) | 🟡 Medium | Linear DP |
+| Backtracking | [Permutations](../../leetcode/backtracking/problems/03-permutations.md) | 🟡 Medium | Swap/backtrack |
+| Backtracking | [Subsets](../../leetcode/backtracking/problems/02-subsets.md) | 🟡 Medium | Include/exclude |
+
+🔗 **Full pattern index**: [LeetCode Patterns Index](../../leetcode/00-patterns-index.md)
+
+---
+
 ## Connections / Liên Kết
 
 ### Same Track
