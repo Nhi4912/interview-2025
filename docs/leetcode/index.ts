@@ -19,7 +19,6 @@ export * from "./array/problems/17-product-of-array-except-self";
 export * from "./array/problems/18-container-with-most-water";
 export * from "./array/problems/19-merge-intervals";
 export * from "./array/problems/20-trapping-rain-water";
-export * from "./array/problems/21-merge-intervals";
 export * from "./array/problems/22-meeting-rooms-ii";
 export * from "./array/problems/23-insert-interval";
 export * from "./array/problems/24-three-sum-closest";
@@ -230,8 +229,7 @@ export const problemCategories = {
       "Product of Array Except Self",
       "Container With Most Water",
       "Merge Intervals",
-      "Trapping Rain Water", 
-      "Merge Intervals (Advanced)",
+      "Trapping Rain Water",
       "Meeting Rooms II",
       "Insert Interval",
       "3Sum Closest",

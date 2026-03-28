@@ -17,9 +17,9 @@
 
 ## Problem Categories / Danh Mục Bài Tập
 
-### [Array](array/) — 28 Problems
+### [Array](array/) — 27 Problems
 Two pointers, sliding window, intervals, matrix, prefix sum
-- 🟢 Easy: 10 | 🟡 Medium: 14 | 🔴 Hard: 4
+- 🟢 Easy: 10 | 🟡 Medium: 14 | 🔴 Hard: 3
 
 ### [String](string/) — 21 Problems
 Pattern matching, palindrome, substring, anagram
@@ -62,8 +62,8 @@ Number theory, bit manipulation
 ## Statistics / Thống Kê
 
 ```
-Total: 133 problems
-By difficulty: 🟢 39 Easy | 🟡 65 Medium | 🔴 29 Hard
+Total: 132 problems
+By difficulty: 🟢 39 Easy | 🟡 65 Medium | 🔴 28 Hard
 
 Coverage by pattern:
 ├── Two Pointers:     9 problems  ✅
