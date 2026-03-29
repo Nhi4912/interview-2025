@@ -9,7 +9,10 @@
       "Bash(find /Users/nee/Documents/Documents/interview/docs/interview/shared -type f -name *.md)",
       "Bash(wc -l /Users/nee/Documents/Documents/interview/docs/interview/shared/01-cs-fundamentals/*.md)",
       "Bash(find /Users/nee/Documents/Documents/interview/docs/interview -type f -name \"*.md\" -exec wc -l {} +)",
-      "Bash(find /Users/nee/Documents/Documents/interview/src/app -name \"page.tsx\" -exec wc -l {})"
+      "Bash(find /Users/nee/Documents/Documents/interview/src/app -name \"page.tsx\" -exec wc -l {})",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ]
   }
 }

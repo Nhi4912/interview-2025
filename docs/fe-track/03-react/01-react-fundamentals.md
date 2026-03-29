@@ -1,82 +1,106 @@
 # React Fundamentals / Nền Tảng React
 
-> **Track**: Frontend — React | **Difficulty**: 🟢 Junior → 🟡 Mid
-> **Prerequisites**: [JavaScript Closures](../02-javascript/), [HTML/CSS & DOM](../01-html-css/)
+> **Track**: FE | **Difficulty**: 🟢 Junior → 🟡 Mid
+> **Prerequisites**: [JavaScript cơ bản](../01-javascript/), [HTML/CSS & DOM](../02-html-css/)
 > **See also**: [Hooks Deep Dive](./03-hooks-deep-dive.md), [React 19 Features](./02-react-19-features.md)
-> **L5 Competencies**: Component Architecture, Rendering Pipeline, Performance Mental Model
+> **L5 Competencies**: Technical Mastery (20pts), Problem-Solving (15pts)
 
 ---
 
 ## Real-World Scenario / Tình Huống Thực Tế
 
-Bạn vào công ty mới. Senior giao: "Sửa trang giỏ hàng — khi thêm sản phẩm, số lượng, tổng tiền, và badge phải cập nhật cùng lúc."
+You join a new company. Your senior says: "Fix the shopping cart page — when user adds a product, the count, total price, and badge must all update at once."
 
-Bạn mở code, thấy Vanilla JS:
+Bạn vào công ty mới. Senior giao: "Sửa trang giỏ hàng — khi user thêm sản phẩm, số lượng, tổng tiền, và badge phải cập nhật cùng lúc."
+
+You open the code and see Vanilla JS (plain JavaScript, no library):
+
+Bạn mở code, thấy Vanilla JS (JS thuần, không dùng thư viện):
 
 ```javascript
 document.getElementById("cart-count").innerText = "3";
 document.getElementById("product-5").classList.add("in-cart");
 document.getElementById("total-price").innerText = "$150";
-// ... 10 chỗ nữa cần update
+// ... 10 more places to update / 10 chỗ nữa cần update
 ```
 
-Bạn sửa 1 chỗ — quên 2 chỗ khác → UI hiện số lượng "3" nhưng tổng tiền vẫn "$100". Bug.
+You fix one place — forget two others → Screen shows count "3" but total still "$100". Bug.
 
-React sinh ra để **xóa bỏ vấn đề này**: bạn chỉ mô tả "UI trông thế nào khi data = X", React lo toàn bộ việc update DOM.
+Bạn sửa 1 chỗ — quên 2 chỗ khác → Màn hình hiện "3" nhưng tổng tiền vẫn "$100". Bug.
+
+React was created to **eliminate this problem**: you just say "data changed", React automatically updates everything on screen correctly.
+
+React sinh ra để **xóa bỏ vấn đề này**: bạn chỉ nói "data thay đổi rồi", React tự lo update tất cả cho đúng.
 
 ---
 
 ## What & Why / Cái Gì & Tại Sao
 
-**React = thư viện JavaScript để xây dựng UI.**
+**What is React?** A JavaScript library for building user interfaces (UI = the part users see and interact with).
 
-**Ví dụ liên tưởng — Excel:**
+**React là gì?** Một thư viện JavaScript giúp xây dựng giao diện người dùng (UI = phần người dùng nhìn thấy và tương tác).
 
-| Ô   | Giá trị                   |
-| --- | ------------------------- |
-| A1  | `5` (input)               |
-| B1  | `=A1 * 2` → hiển thị `10` |
+**Easy analogy — Excel / Ví dụ dễ hiểu — Excel:**
+
+| Cell / Ô | Value / Giá trị           |
+| -------- | ------------------------- |
+| A1       | `5` (you type / bạn nhập) |
+| B1       | `=A1 * 2` → shows `10`    |
+
+You change A1 = 7 → B1 **automatically** becomes 14. You don't need to "tell" B1 to update.
 
 Bạn đổi A1 = 7 → B1 **tự động** thành 14. Bạn không cần "bảo" B1 cập nhật.
 
-React hoạt động y hệt: **bạn thay đổi data → UI tự động cập nhật đúng**.
+React works exactly like this: **you change data → UI automatically updates correctly**.
+
+React hoạt động y hệt: **bạn thay đổi dữ liệu → giao diện tự động cập nhật đúng**.
 
 ---
 
 ## Concept Map / Bản Đồ Khái Niệm
 
 ```
-Bạn đang ở đây trong lộ trình học:
+Where you are in the learning path / Bạn đang ở đây:
 
-[JavaScript Closures] → [THIS: React Fundamentals] → [Hooks Deep Dive]
-                                                    → [React 19 Features]
-                                                    → [State Management]
+[JS Basics] → [YOU ARE HERE: React Basics] → [Hooks Deep Dive]
+                                            → [React 19]
+                                            → [State Management]
 
-Bên trong file này:
-┌──────────────┐     ┌─────────┐     ┌───────────────────────┐
-│ UI = f(state)│────▶│   JSX   │────▶│ Component & Props     │
-└──────┬───────┘     └─────────┘     └───────────┬───────────┘
-       │                                         │
-       ▼                                         ▼
-┌──────────────────────────┐     ┌──────────────────────────┐
-│ Virtual DOM &            │────▶│ Render/Commit Phases     │
-│ Reconciliation & Key     │     │ & Fiber Architecture     │
-└──────────────────────────┘     └──────────────────────────┘
-                                          │
-                                          ▼
-                                 ┌─────────────────┐
-                                 │  Stale Closure   │
-                                 │  (cái bẫy #1)    │
-                                 └─────────────────┘
+Contents of this file / Nội dung file này:
+┌───────────────┐     ┌─────────┐     ┌─────────────────┐
+│ 1. UI = f(s)  │────▶│ 2. JSX  │────▶│ 3. Component    │
+└───────┬───────┘     └─────────┘     └────────┬────────┘
+        │                                      │
+        ▼                                      ▼
+┌───────────────────────┐     ┌─────────────────────────┐
+│ 4. Virtual DOM        │────▶│ 5. Render & Commit      │
+│    (Shadow copy)      │     │    (2-phase update)     │
+└───────────────────────┘     └────────────┬────────────┘
+                                           │
+                                           ▼
+                              ┌─────────────────────────┐
+                              │ 6. Fiber                 │
+                              │    (Work splitting)      │
+                              └────────────┬────────────┘
+                                           │
+                                           ▼
+                              ┌─────────────────────────┐
+                              │ 7. Stale Closure         │
+                              │    (Old value trap)      │
+                              └─────────────────────────┘
 ```
 
 ---
 
 ## Overview / Tổng Quan
 
-React is a JavaScript library for building user interfaces declaratively. Instead of manually manipulating the DOM, you describe what the UI should look like for a given state, and React handles all DOM updates efficiently through its Virtual DOM and reconciliation algorithm.
+React helps you build web UI in a **declarative** way — you describe "what the UI looks like when data = X", and React handles the actual screen updates.
 
-React là thư viện JS giúp xây UI theo kiểu **khai báo** (declarative): bạn mô tả UI, React lo update. Đây là nền tảng — hiểu sai concepts ở đây sẽ hiểu sai mọi thứ phía sau. Trong phỏng vấn, câu hỏi về Virtual DOM, Reconciliation, và Fiber xuất hiện ở MỌI cấp độ.
+React giúp bạn xây UI theo cách **khai báo** (declarative) — bạn chỉ mô tả "giao diện trông thế nào khi data = X", React lo việc update màn hình.
+
+This is the foundation — if you misunderstand here, everything after will be wrong. In interviews, questions about Virtual DOM, reconciliation, and Fiber appear at EVERY level.
+
+Đây là nền tảng — hiểu sai ở đây thì sẽ hiểu sai mọi thứ phía sau. Trong phỏng vấn, câu hỏi về Virtual DOM, reconciliation, và Fiber xuất hiện ở MỌI cấp độ.
 
 ---
 
@@ -84,137 +108,189 @@ React là thư viện JS giúp xây UI theo kiểu **khai báo** (declarative): 
 
 ---
 
-### 1. UI = f(state) / Công Thức Cốt Lõi
+### 1. UI = f(state) / The Core Formula / Công Thức Cốt Lõi
 
-> 🧠 **Memory Hook**: "UI = f(state) — cùng state → luôn cùng UI. Như Excel: đổi ô input → ô kết quả tự cập nhật."
+> 🧠 **Memory Hook**: "UI = result of function(data). Change data → UI changes automatically. Like Excel: change input cell → result cell auto-updates."
+>
+> **Móc nhớ**: "Giao diện = kết quả của hàm(dữ liệu). Đổi dữ liệu → giao diện tự đổi. Giống Excel: đổi ô input → ô kết quả tự cập nhật."
 
-**Tại sao tồn tại? / Why does this exist?**
-Vấn đề: UI imperative (jQuery, Vanilla JS) yêu cầu dev tự tay update từng phần DOM → quên 1 chỗ = bug.
-→ **Why?** Vì khi app phức tạp, số chỗ cần update tăng theo cấp số nhân. Con người không đáng tin trong việc nhớ hết.
-→ **Why?** Vì bộ não con người chỉ giữ được ~7 items trong working memory. UI phức tạp vượt quá giới hạn đó.
+**Why does this exist? / Tại sao cần hiểu?**
 
-#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+Before React, to update the UI, you had to MANUALLY find each HTML element and change it. E.g.: user clicks "Add to cart" → you write code to update badge count, total price, cart button, sidebar... Forget one place = bug.
 
-Tưởng tượng bạn có 1 bảng LED hiển thị. Cách cũ: bạn tự tay lật từng ô LED — lật sai 1 ô là hình bị lệch. Cách React: bạn gửi 1 bức ảnh mới → bảng LED tự tính xem ô nào cần lật → lật đúng.
+Trước React, muốn cập nhật UI, bạn phải TỰ TAY tìm từng phần tử HTML rồi sửa. Ví dụ: user click "Thêm vào giỏ" → phải sửa badge, tổng tiền, nút giỏ, sidebar... Quên 1 chỗ = bug.
 
-#### Layer 2: How It Works / Cơ Chế Hoạt Động
+→ **Why forget?** Because as apps grow complex, the number of places to update increases. Humans can't remember all of them.
+
+→ **Tại sao quên?** Vì khi app phức tạp, số chỗ cần update rất nhiều. Con người không nhớ hết.
+
+→ **Solution?** Instead of "manually fixing each place", just say: "Cart data is now 3 items, total $150". React calculates the correct UI automatically.
+
+→ **Giải pháp?** Thay vì "tự tay sửa từng chỗ", chỉ cần nói: "Giỏ hàng giờ = 3 sản phẩm, tổng $150". React tự tính ra UI đúng.
+
+#### Layer 1: Everyday Analogy / Tầng 1: Ví dụ đời thường
+
+Imagine a large LED billboard that displays images.
+
+Hình dung bảng LED lớn hiển thị hình ảnh.
+
+**Old way (Vanilla JS):** You manually flip each LED bulb — flip one wrong and the image is off.
+
+**Cách cũ (Vanilla JS):** Bạn tự tay lật từng bóng LED — sai 1 bóng là hình bị lệch.
+
+**React way:** You send a new image to the board → board compares new vs old → only flips bulbs that need changing → correct image.
+
+**Cách React:** Bạn gửi ảnh mới → bảng LED so sánh mới vs cũ → chỉ lật bóng cần thay đổi → hình đúng.
+
+#### Layer 2: How It Works / Tầng 2: Cách hoạt động
 
 ```
-state (data) ──▶ component (function) ──▶ UI (React Elements)
+data (state)  ──▶  function (component)  ──▶  UI
+dữ liệu      ──▶  hàm (component)       ──▶  giao diện
 ```
 
 ```jsx
 function Counter() {
+  // state = data. Here it's a count, starting at 0
+  // state = dữ liệu. Ở đây là số đếm, bắt đầu = 0
   const [count, setCount] = useState(0);
-  //     ^^^^^ state = data
 
+  // UI = result. Always shows count * 2
+  // Giao diện = kết quả. Luôn hiển thị count * 2
   return <h1>{count * 2}</h1>;
-  //     ^^^^^^^^^^^^^^^^ UI = kết quả
 }
 
-// setCount(7) → React gọi lại Counter() → return <h1>14</h1> → update DOM
+// When setCount(7) is called / Khi setCount(7) được gọi:
+// 1. React saves count = 7 / React lưu count = 7
+// 2. React calls Counter() again / React gọi lại Counter()
+// 3. Counter() returns <h1>14</h1>
+// 4. React updates screen: "0" → "14" / React cập nhật: "0" → "14"
 ```
 
 ```
-┌──────────────────────────────────────────┐
-│         UI = f(state) Pipeline           │
-│                                          │
-│  state={count:0}  ──▶  <h1>0</h1>       │
-│       │                                  │
-│  setCount(1)                             │
-│       │                                  │
-│  state={count:1}  ──▶  <h1>2</h1>       │
-│       │                                  │
-│  React diff: "0" → "2" → update DOM     │
-└──────────────────────────────────────────┘
+Flow / Luồng hoạt động:
+
+  count = 0  ──▶  Counter()  ──▶  <h1>0</h1>    ← first render / lần đầu
+       │
+  setCount(7)   ← user clicks button
+       │
+  count = 7  ──▶  Counter()  ──▶  <h1>14</h1>   ← React re-calls function
+       │
+  React compares: "0" ≠ "14" → update text on screen
+  React so sánh: "0" khác "14" → cập nhật chữ trên màn hình
 ```
 
-3 nguyên tắc kéo theo:
+3 key principles / 3 nguyên tắc quan trọng:
 
-| Nguyên tắc                   | Nghĩa                                         | Ví dụ                                             |
-| ---------------------------- | --------------------------------------------- | ------------------------------------------------- |
-| **Declarative** (khai báo)   | Mô tả UI trông thế nào, KHÔNG nói cách update | `<h1>{count}</h1>` thay vì `el.innerText = count` |
-| **Component-based**          | UI = nhiều hàm nhỏ ghép lại                   | `<App>` chứa `<Header>`, `<Cart>`                 |
-| **Unidirectional** (1 chiều) | Data chảy từ cha → con qua props              | Parent → `<Cart items={items}>`                   |
+| Principle / Nguyên tắc                         | Meaning / Nghĩa dễ hiểu                                                                                                      | Example / Ví dụ                                                                |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| **Declarative / Khai báo**                     | Describe "what UI looks like", NOT "change this, add that" / Mô tả "UI trông thế nào", KHÔNG nói "sửa cái này, thêm cái kia" | `<h1>{count}</h1>` instead of `document.querySelector('h1').innerText = count` |
+| **Component-based / Chia nhỏ**                 | UI = many small pieces, each is a function / UI = nhiều mảnh nhỏ, mỗi mảnh là 1 hàm                                          | `<App>` contains `<Header>`, `<Cart>`, `<Footer>`                              |
+| **Unidirectional data flow / Dữ liệu 1 chiều** | Data flows from parent to child, not backward / Dữ liệu chảy từ cha xuống con, không ngược                                   | Parent passes `items` to `<Cart items={items}>`                                |
 
-#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+#### Layer 3: Edge Cases / Tầng 3: Trường hợp đặc biệt
 
-- React KHÔNG phải framework — nó chỉ lo phần View. Routing, state management, data fetching cần thêm thư viện khác.
-- Declarative có overhead: React phải diff toàn bộ cây mỗi khi state đổi. Với app đơn giản, Vanilla JS nhanh hơn.
-- "Cùng input → cùng output" yêu cầu component phải **pure** trong render phase (không side effects).
+- React is NOT a framework. It only handles the UI. For routing, global state management... you need additional libraries. (React KHÔNG phải framework. Nó chỉ lo phần UI. Routing, quản lý state toàn app... phải dùng thêm thư viện.)
+- For simple apps (1 page, few interactions), plain JS is faster than React. React shines when the app is complex with many parts updating at once. (App đơn giản thì JS thuần nhanh hơn. React tỏa sáng khi app phức tạp, nhiều phần update cùng lúc.)
+- "Same data → same UI" requires component functions to be **pure** during rendering — no API calls, no modifying outside variables, no random. ("Cùng data → cùng UI" yêu cầu hàm component phải **thuần túy** khi render — không gọi API, không đổi biến ngoài.)
 
-**❌ Sai lầm thường gặp / Common Mistakes:**
+**❌ Common Mistakes / Sai lầm thường gặp:**
 
-| Sai lầm                                 | Tại sao sai                                               | Đúng là                                                     |
-| --------------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------- |
-| "React là framework"                    | React chỉ là thư viện UI, không có routing/state built-in | React = thư viện View. Next.js mới là framework             |
-| "React luôn nhanh hơn Vanilla JS"       | VDOM có overhead. Svelte compile-time không cần VDOM      | React tỏa sáng khi app phức tạp, nhiều update không dự đoán |
-| Mutate state trực tiếp: `state.count++` | React không detect mutation, UI không update              | Luôn tạo state mới: `setCount(c => c + 1)`                  |
+| Mistake / Sai lầm                        | Why wrong / Tại sao sai                                                                           | Correct / Đúng là                                                           |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| "React is a framework"                   | React is a UI library, no built-in routing or state management / React chỉ là thư viện UI         | React = View library. Next.js is a framework                                |
+| "React is always faster than plain JS"   | React has overhead from diffing step / React có chi phí thêm từ bước so sánh                      | React is fast **enough** for complex apps. Simple apps → plain JS is faster |
+| Mutating state directly: `state.count++` | React can't detect this change → UI won't update / React không phát hiện được → UI không cập nhật | Always use setter: `setCount(c => c + 1)`                                   |
 
-**🎯 Interview Pattern:**
+**🎯 Interview Pattern / Nhận dạng câu hỏi:**
 
-- Khi thấy câu hỏi về: "React khác gì jQuery?", "Declarative vs Imperative?"
-- → Nhớ đến: UI = f(state)
-- → Mở đầu: _"React theo mô hình declarative: UI là hàm thuần của state. Cùng input luôn cho cùng output. Điều này khác imperative ở chỗ dev không cần tự tay update DOM — React tính diff và apply tối thiểu."_
+- Trigger: "How is React different from jQuery?", "What is declarative vs imperative?"
+- Think of: UI = f(state)
+- Opening:
+  - 🇬🇧 _"React works declaratively: you describe what the UI should look like for each state, and React figures out the minimal DOM changes needed. Instead of manually manipulating DOM elements, you just update the state."_
+  - 🇻🇳 _"React hoạt động theo kiểu khai báo: mình mô tả UI trông thế nào cho từng trạng thái dữ liệu, React tự tính cần thay đổi gì trên DOM. Thay vì tự tay sửa từng phần tử DOM, mình chỉ cần update state."_
 
-**🔑 Knowledge Chain:**
+**🔑 Knowledge Chain / Chuỗi kiến thức:**
 
-- 📚 Cần biết trước: [JavaScript Functions & Closures](../02-javascript/) — vì component là function
-- ➡️ Để hiểu tiếp: [Hooks](./03-hooks-deep-dive.md) — cách quản lý state trong function component
+- 📚 Prerequisite: [JavaScript Functions](../01-javascript/) — components are JS functions
+- ➡️ Next: [Hooks](./03-hooks-deep-dive.md) — how to store and manage data inside components
 
 ---
 
-### 2. JSX / Cú Pháp JSX
+### 2. JSX / Syntax for Writing UI in JS / Cú Pháp Viết Giao Diện Trong JS
 
-> 🧠 **Memory Hook**: "JSX = HTML-like syntax trong JS. Compile thành `React.createElement()` → plain JS object. Không magic."
+> 🧠 **Memory Hook**: "JSX = write HTML inside JavaScript. When built, JSX becomes regular JS calls. No magic."
+>
+> **Móc nhớ**: "JSX = viết HTML bên trong JavaScript. Khi build, JSX thành lệnh JS thường. Không có gì ma thuật."
 
-**Tại sao tồn tại? / Why does this exist?**
-Vấn đề: `React.createElement("div", {className: "card"}, React.createElement("h1", null, "Hello"))` quá dài và khó đọc.
-→ **Why?** Vì UI inherently là tree structure, cần syntax giống HTML để dễ hình dung cấu trúc.
-→ **Why?** Vì developer productivity phụ thuộc vào khả năng đọc code nhanh. Syntax gần HTML = mental model match.
+**Why does this exist? / Tại sao cần?**
 
-#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+Without JSX, you'd write UI like this / Không có JSX thì phải viết thế này:
 
-JSX giống như viết tắt. Thay vì viết đầy đủ "Thành phố Hồ Chí Minh" mỗi lần, bạn viết "TP.HCM". Ai đọc cũng hiểu, và máy tính tự động mở rộng thành tên đầy đủ khi cần.
+```javascript
+React.createElement("div", { className: "card" }, React.createElement("h1", null, "Hello"));
+```
 
-#### Layer 2: How It Works / Cơ Chế Hoạt Động
+A few lines is OK, but complex UI becomes an unreadable mess. / Vài dòng thì OK, nhưng UI phức tạp sẽ thành mớ hỗn độn.
+
+→ **Why unreadable?** Web UI has nested structure (div > h1 > span...), needs HTML-like syntax to visualize the tree.
+
+→ **Tại sao khó đọc?** UI web có cấu trúc lồng nhau, cần cú pháp giống HTML để dễ hình dung cây cấu trúc.
+
+→ **Solution?** JSX lets you write HTML-like code in JS files. Build tools (Babel, Vite) auto-convert JSX to `React.createElement()` before the browser runs it.
+
+→ **Giải pháp?** JSX cho viết giống HTML trong file JS. Công cụ build tự chuyển JSX thành `React.createElement()` trước khi browser chạy.
+
+#### Layer 1: Everyday Analogy / Tầng 1: Ví dụ đời thường
+
+JSX is like **abbreviations**. Instead of writing "Ho Chi Minh City" every time, you write "HCMC". Everyone understands, and when sending official mail, the post office expands "HCMC" to the full name.
+
+JSX giống **viết tắt**. Thay vì viết "Thành phố Hồ Chí Minh" mỗi lần, bạn viết "TP.HCM". Bưu điện tự mở rộng ra tên đầy đủ.
+
+Similarly: you write `<h1>Hello</h1>` (short form), build tool converts to `React.createElement("h1", null, "Hello")` (full form, machine-readable).
+
+#### Layer 2: How It Works / Tầng 2: Cách hoạt động
 
 ```jsx
-// Bạn viết JSX:
-const el = <h1 className="title">Xin chào</h1>;
+// You write JSX (in .jsx or .tsx files):
+// Bạn viết JSX (trong file .jsx hoặc .tsx):
+const element = <h1 className="title">Hello</h1>;
 
-// Babel/SWC compile thành:
-const el = React.createElement("h1", { className: "title" }, "Xin chào");
+// Build tool (Babel/SWC/Vite) converts to:
+// Công cụ build chuyển thành:
+const element = React.createElement("h1", { className: "title" }, "Hello");
 
-// Kết quả = plain JS object (React Element):
-{ type: "h1", props: { className: "title", children: "Xin chào" }, key: null, ref: null }
+// Final result = a plain JavaScript object:
+// Kết quả = 1 object JS bình thường:
+// { type: "h1", props: { className: "title", children: "Hello" } }
 ```
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                 JSX Compilation Pipeline             │
-│                                                     │
-│  <div className="app">     Babel/SWC     JS Object  │
-│    <h1>Hello</h1>       ──────────▶  { type: "div", │
-│  </div>                              props: {...}}   │
-│                                                     │
-│  Viết lúc dev          Build time     Chạy ở browser│
-└─────────────────────────────────────────────────────┘
+Conversion process / Quá trình chuyển đổi:
+
+  You write (coding)          Build (auto)           Runs (in browser)
+  Bạn viết (lúc code)        Build (tự động)        Chạy (trong browser)
+  ─────────────────         ────────────────        ──────────────────
+  <div className="app">  ──▶  React.createElement  ──▶  { type: "div",
+    <h1>Hello</h1>             ("div", ...)              props: { ... } }
+  </div>
 ```
 
-Khác biệt JSX vs HTML:
+**JSX differs from HTML / JSX khác HTML:**
 
-| HTML            | JSX                 | Lý do                       |
-| --------------- | ------------------- | --------------------------- |
-| `class="title"` | `className="title"` | `class` là keyword trong JS |
-| `for="email"`   | `htmlFor="email"`   | `for` là keyword trong JS   |
-| `onclick="..."` | `onClick={...}`     | JSX dùng camelCase          |
-| `<br>`          | `<br />`            | JSX yêu cầu self-closing    |
+| HTML (.html file) | JSX (.jsx file)     | Why / Lý do                                                       |
+| ----------------- | ------------------- | ----------------------------------------------------------------- |
+| `class="title"`   | `className="title"` | `class` is a reserved keyword in JS / `class` là từ khóa trong JS |
+| `for="email"`     | `htmlFor="email"`   | `for` is a loop keyword in JS / `for` là từ khóa vòng lặp         |
+| `onclick="..."`   | `onClick={...}`     | JSX uses camelCase / JSX dùng kiểu camelCase                      |
+| `<br>`            | `<br />`            | JSX requires self-closing `/` / JSX yêu cầu tự đóng               |
 
-Quy tắc JSX:
+**3 most important JSX rules / 3 quy tắc JSX quan trọng nhất:**
 
 ```jsx
-// 1. CHỈ TRẢ VỀ 1 ELEMENT GỐC — dùng Fragment <>...</> nếu cần
+// Rule 1: RETURN ONLY 1 ROOT ELEMENT
+// Quy tắc 1: CHỈ TRẢ VỀ 1 PHẦN TỬ GỐC
+// Use <> </> (Fragment — invisible wrapper) for multiple elements
 return (
   <>
     <h1>Title</h1>
@@ -222,757 +298,1015 @@ return (
   </>
 );
 
-// 2. {} để nhúng JavaScript expression (KHÔNG phải statement)
-return <h1>Xin chào, {user.name}!</h1>;
+// Rule 2: Use {} to embed JavaScript inside HTML
+// Quy tắc 2: Dùng {} để chèn JavaScript vào giữa HTML
+// Inside {} only EXPRESSIONS (things that produce a value), NOT statements (if/for)
+return <h1>Hello, {user.name}!</h1>;
 
-// 3. Ternary thay vì if/else
-return <div>{loggedIn ? "Hello" : "Please login"}</div>;
+// Rule 3: Use ternary operator instead of if/else
+// Quy tắc 3: Dùng toán tử 3 ngôi thay vì if/else
+return <div>{isLoggedIn ? "Welcome!" : "Please log in"}</div>;
 ```
 
-#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+#### Layer 3: Edge Cases / Tầng 3: Trường hợp đặc biệt
 
-**Cái bẫy `0 && <Component />`:**
+**The zero trap / Cái bẫy số 0:**
 
 ```jsx
 const count = 0;
-// ❌ Hiển thị số "0" trên màn hình!
-return <div>{count && <ProductList />}</div>;
-// Vì: 0 && X = 0 (JS short-circuit), JSX render số 0 ra DOM
 
-// ✅ Fix:
+// ❌ WRONG — Shows "0" on screen!
+// ❌ SAI — Hiển thị số "0" trên màn hình!
+return <div>{count && <ProductList />}</div>;
+// Why: in JS, 0 && anything = 0. JSX renders number 0 on screen.
+// Lý do: trong JS, 0 && bất_kỳ = 0. JSX thấy số 0 thì hiển thị "0".
+
+// ✅ CORRECT — Use explicit comparison
+// ✅ ĐÚNG — Dùng so sánh rõ ràng
 return <div>{count > 0 && <ProductList />}</div>;
 ```
 
-**JSX injection:** JSX auto-escape strings → an toàn trước XSS. Nhưng `dangerouslySetInnerHTML` bypass escape → nguy hiểm nếu dùng với user input.
+**Security:** JSX auto-escapes special characters in strings (e.g., `<script>` becomes `&lt;script&gt;`), preventing code injection. But `dangerouslySetInnerHTML` bypasses this — very dangerous with user data.
 
-**❌ Sai lầm thường gặp / Common Mistakes:**
+**Bảo mật:** JSX tự động escape ký tự đặc biệt, ngăn chèn code độc. Nhưng `dangerouslySetInnerHTML` bỏ qua cơ chế này — rất nguy hiểm với dữ liệu từ user.
 
-| Sai lầm                           | Tại sao sai                          | Đúng là                          |
-| --------------------------------- | ------------------------------------ | -------------------------------- |
-| `{count && <Comp />}` khi count=0 | `0 && X = 0`, JSX render số 0        | Dùng `count > 0 &&` hoặc ternary |
-| Viết `class` thay vì `className`  | `class` là reserved keyword trong JS | Luôn dùng `className`            |
-| Return nhiều elements không bọc   | JSX chỉ return 1 root element        | Bọc trong `<>...</>` Fragment    |
+**❌ Common Mistakes / Sai lầm thường gặp:**
 
-**🎯 Interview Pattern:**
+| Mistake / Sai lầm                  | Why wrong / Tại sao sai                                    | Correct / Đúng là             |
+| ---------------------------------- | ---------------------------------------------------------- | ----------------------------- |
+| `{count && <Comp />}` when count=0 | `0 && X = 0` in JS, JSX renders "0" on screen              | Use `count > 0 &&` or ternary |
+| `class` instead of `className`     | `class` is a JS keyword / `class` là từ khóa JS            | Always use `className`        |
+| Return multiple elements unwrapped | JSX only allows 1 root element / JSX chỉ cho 1 phần tử gốc | Wrap in `<>...</>` (Fragment) |
 
-- Khi thấy câu hỏi về: "JSX là gì?", "JSX khác HTML thế nào?"
-- → Nhớ đến: JSX = syntactic sugar → compile → React.createElement → object
-- → Mở đầu: _"JSX là syntax extension cho JavaScript, compile thành React.createElement() calls. Kết quả là plain JS objects mô tả UI tree — không phải HTML thật."_
+**🎯 Interview Pattern / Nhận dạng câu hỏi:**
 
-**🔑 Knowledge Chain:**
+- Trigger: "What is JSX?", "How is JSX different from HTML?"
+- Think of: JSX = shorthand → build to `React.createElement()` → plain JS object
+- Opening:
+  - 🇬🇧 _"JSX is a syntax extension for JavaScript that lets you write HTML-like code in JS files. During build, it's transpiled to React.createElement() calls, which produce plain JavaScript objects describing the UI tree — not actual HTML."_
+  - 🇻🇳 _"JSX là cú pháp mở rộng của JavaScript, cho phép viết giao diện giống HTML trong file JS. Khi build, JSX được chuyển thành lệnh React.createElement(), kết quả là object JavaScript mô tả cây giao diện — không phải HTML thật."_
 
-- 📚 Cần biết trước: [JavaScript Expression vs Statement](../02-javascript/) — biết cái nào dùng trong `{}`
-- ➡️ Để hiểu tiếp: [Component & Props](#3-component--props--thành-phần--tham-số) — JSX tạo elements, components tổ chức chúng
+**🔑 Knowledge Chain / Chuỗi kiến thức:**
+
+- 📚 Prerequisite: [JS Expression vs Statement](../01-javascript/) — know what works inside `{}`
+- ➡️ Next: [Component & Props](#3-component--props) — JSX creates elements, components organize them
 
 ---
 
-### 3. Component & Props / Thành Phần & Tham Số
+### 3. Component & Props / UI Building Blocks & Parameters / Mảnh Ghép UI & Tham Số
 
-> 🧠 **Memory Hook**: "Component = hàm nhận props, trả về JSX. Props = read-only — con KHÔNG được sửa."
+> 🧠 **Memory Hook**: "Component = function that takes props, returns UI. Props = read-only — child CANNOT modify."
+>
+> **Móc nhớ**: "Component = hàm nhận props, trả về UI. Props = chỉ đọc (read-only) — con KHÔNG được sửa."
 
-**Tại sao tồn tại? / Why does this exist?**
-Vấn đề: UI phức tạp viết trong 1 file = không thể maintain.
-→ **Why?** Vì cần chia nhỏ + tái sử dụng. Button dùng 50 chỗ, không thể viết 50 lần.
-→ **Why?** Vì DRY principle + separation of concerns = code dễ test, dễ thay đổi, dễ chia việc trong team.
+**Why does this exist? / Tại sao cần?**
 
-#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+Complex UI in a single file is unmaintainable. An "Add to cart" button used in 50 places can't be copy-pasted 50 times.
 
-Component = khuôn bánh. Props = nguyên liệu bạn đổ vào khuôn. Cùng khuôn (component) nhưng đổ chocolate hay vanilla (props khác nhau) → ra bánh khác nhau. Nhưng bạn KHÔNG THỂ thay đổi khuôn từ bên trong — khuôn do nhà máy (parent) quyết định.
+UI phức tạp viết trong 1 file thì không thể bảo trì. Nút "Thêm vào giỏ" dùng ở 50 chỗ, không thể copy-paste 50 lần.
 
-#### Layer 2: How It Works / Cơ Chế Hoạt Động
+→ **Why not copy-paste?** When you need to change it (e.g., change button color), you'd have to fix all 50 places. Miss one = inconsistent UI.
+
+→ **Tại sao không copy-paste?** Khi cần sửa (đổi màu nút), phải sửa cả 50 chỗ. Quên 1 chỗ = UI không nhất quán.
+
+→ **Solution?** Split UI into small pieces (components). Each piece is a function. Want it to look different in different places → pass parameters (props).
+
+→ **Giải pháp?** Chia UI thành mảnh nhỏ (component). Mỗi mảnh = 1 hàm. Muốn hiển thị khác nhau → truyền tham số (props).
+
+#### Layer 1: Everyday Analogy / Tầng 1: Ví dụ đời thường
+
+Component = **cookie cutter** (khuôn bánh). Props = **ingredients** (nguyên liệu) you pour in.
+
+Same cutter (component `<Button>`) but different ingredients (props `color="red"` vs `color="blue"`) → different colored buttons.
+
+Important: you CANNOT change the cutter from inside — the cutter (props) is decided by the user (parent component).
+
+Cùng 1 khuôn (`<Button>`) nhưng nguyên liệu khác (props `color="red"` hay `color="blue"`) → ra nút khác màu. Quan trọng: con KHÔNG THỂ sửa khuôn — props do cha quyết định.
+
+#### Layer 2: How It Works / Tầng 2: Cách hoạt động
 
 ```jsx
-// Component = function nhận props, return JSX
+// Component = a function. Takes props (parameters), returns JSX (UI)
+// Component = 1 hàm. Nhận props (tham số), trả về JSX (giao diện)
 function Greeting({ name, age }) {
   return (
     <h1>
-      Xin chào {name}, {age} tuổi!
+      Hello {name}, {age} years old!
     </h1>
   );
 }
 
-// Parent truyền props xuống
+// Parent component passes props to child component
+// Component cha truyền props xuống con
 function App() {
   return <Greeting name="Buu" age={25} />;
 }
+// → Renders: "Hello Buu, 25 years old!"
 ```
 
 ```
-┌───────────────────────────────────────────────┐
-│              Component Tree                    │
-│                                               │
-│  <App>                                        │
-│    │── props: {}                              │
-│    │                                          │
-│    ├─ <Header>                                │
-│    │    └── props: { title: "Shop" }          │
-│    │                                          │
-│    ├─ <ProductList>                            │
-│    │    └── props: { items: [...] }           │
-│    │    │                                     │
-│    │    ├─ <ProductCard>                       │
-│    │    │    └── props: { product: {id:1} }   │
-│    │    └─ <ProductCard>                       │
-│    │         └── props: { product: {id:2} }   │
-│    │                                          │
-│    └─ <Cart>                                  │
-│         └── props: { count: 2 }               │
-│                                               │
-│  Data flows ONE WAY: parent → child           │
-└───────────────────────────────────────────────┘
+Data flow (one-way — parent to child):
+Luồng dữ liệu (1 chiều — từ cha xuống con):
+
+  App (parent / cha)
+  │
+  │  passes props: name="Buu", age=25
+  │  truyền props: name="Buu", age=25
+  │
+  └──▶ Greeting (child / con)
+       │
+       │  receives props → calculates UI
+       │  nhận props → tính giao diện
+       │
+       └──▶ <h1>Hello Buu, 25 years old!</h1>
+
+  ⚠️ Greeting CANNOT modify name or age.
+  ⚠️ Greeting KHÔNG THỂ sửa name hay age.
+  If change needed, tell parent (via callback).
+  Nếu cần thay đổi, phải báo cha (qua callback).
 ```
 
-**Props children — nội dung bên trong tag:**
+**Passing children (content between tags):**
 
 ```jsx
-function Card({ children }) {
-  return <div className="card">{children}</div>;
+// children = everything between opening and closing tags
+// children = mọi thứ giữa thẻ mở và thẻ đóng
+function Card({ title, children }) {
+  return (
+    <div className="card">
+      <h2>{title}</h2>
+      <div>{children}</div>
+    </div>
+  );
 }
 
-<Card>
-  <h2>Tiêu đề</h2>
-  <p>Nội dung bất kỳ</p>
+// Usage / Sử dụng:
+<Card title="Product">
+  <p>Product description</p> {/* ← children */}
+  <button>Buy now</button> {/* ← also children */}
 </Card>;
 ```
 
-**Quy tắc vàng: Props là READ-ONLY:**
+#### Layer 3: Edge Cases / Tầng 3: Trường hợp đặc biệt
+
+- **Props are read-only.** If you try `props.name = "other"` inside a child → React throws error (strict mode) or causes confusing bugs. (Props là read-only. Cố sửa `props.name = "khác"` bên trong con → lỗi hoặc bug khó hiểu.)
+- **Key is a special prop:** React uses it to identify list items. Key is NOT passed to the child component. (Key là prop đặc biệt: React dùng để phân biệt phần tử trong danh sách. Key KHÔNG truyền vào con.)
+- **Default props / Props mặc định:**
 
 ```jsx
-// ❌ TUYỆT ĐỐI KHÔNG:
-function Greeting({ name }) {
-  name = "Hacked"; // Vi phạm! Con không sửa props
+function Button({ color = "blue", size = "medium" }) {
+  return <button className={`btn-${color} btn-${size}`}>Click</button>;
 }
-
-// ✅ Nếu cần thay đổi → dùng state (học ở file hooks)
+// <Button /> → color="blue", size="medium" (defaults)
+// <Button color="red" /> → color="red", size="medium"
 ```
 
-#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+**❌ Common Mistakes / Sai lầm thường gặp:**
 
-- **Prop drilling:** Truyền props qua 5-6 tầng component → khó maintain. Giải pháp: Context API hoặc state management library.
-- **Render khi props thay đổi:** Parent re-render → tạo object/function mới làm props → child re-render dù giá trị không đổi. Giải pháp: `React.memo()`, `useMemo`, `useCallback`.
-- **Default props:** Dùng destructuring default: `function Btn({ variant = "primary" })`.
+| Mistake / Sai lầm                   | Why wrong / Tại sao sai                                                                  | Correct / Đúng là                                                 |
+| ----------------------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Mutating props in child             | Props are read-only / Props là read-only                                                 | Use state in parent + callback if change needed                   |
+| Forgetting key when rendering lists | React can't identify which items changed → wrong updates / React không biết item nào đổi | Always use unique key: `list.map(item => <Item key={item.id} />)` |
+| Using index as key                  | When adding/removing/sorting, index shifts → React updates wrong elements                | Use real ID from data, not index / Dùng ID thật, không dùng index |
 
-**❌ Sai lầm thường gặp / Common Mistakes:**
+**🎯 Interview Pattern / Nhận dạng câu hỏi:**
 
-| Sai lầm                                               | Tại sao sai                                   | Đúng là                                               |
-| ----------------------------------------------------- | --------------------------------------------- | ----------------------------------------------------- |
-| Mutate props: `props.name = "X"`                      | Violates one-way data flow, gây bug khó trace | Props immutable. Cần thay đổi → dùng state + callback |
-| Inline object props: `<Comp style={{color:"red"}} />` | Tạo object mới mỗi render → child re-render   | Extract ra biến ngoài hoặc dùng useMemo               |
-| Component name lowercase: `function card()`           | React nghĩ là HTML tag, không phải component  | Luôn PascalCase: `function Card()`                    |
+- Trigger: "Props vs State?", "Why do we need key?"
+- Think of: Props = data from parent (read-only), State = internal data (mutable)
+- Opening:
+  - 🇬🇧 _"Props are data passed from parent to child — the child can only read, not modify them. State is data managed internally by a component that can change. When state changes, React re-renders the component."_
+  - 🇻🇳 _"Props là dữ liệu cha truyền xuống con — con chỉ đọc, không sửa được. State là dữ liệu component tự quản lý bên trong, có thể thay đổi. Khi state đổi, React render lại component."_
 
-**🎯 Interview Pattern:**
+**🔑 Knowledge Chain / Chuỗi kiến thức:**
 
-- Khi thấy câu hỏi về: "Props vs State?", "Prop drilling?"
-- → Nhớ đến: Props = read-only, one-way flow, parent controls
-- → Mở đầu: _"Props là dữ liệu truyền từ parent xuống child, read-only. State là dữ liệu component tự quản lý. Props flow one-way — child muốn thay đổi parent thì gọi callback function được truyền qua props."_
-
-**🔑 Knowledge Chain:**
-
-- 📚 Cần biết trước: [JSX](#2-jsx--cú-pháp-jsx) — JSX tạo elements để component return
-- ➡️ Để hiểu tiếp: [Virtual DOM](#4-virtual-dom--reconciliation--key) — component tree → Virtual DOM tree
+- 📚 Prerequisite: [JSX](#2-jsx--syntax-for-writing-ui-in-js--cú-pháp-viết-giao-diện-trong-js)
+- ➡️ Next: [Virtual DOM](#4-virtual-dom--dom-ảo) — how React updates UI when props/state change
 
 ---
 
-### 4. Virtual DOM, Reconciliation & Key / DOM Ảo, Đối Soát & Khóa
+### 4. Virtual DOM / DOM Ảo
 
-> 🧠 **Memory Hook**: "VDOM = bản nháp JS trước khi vẽ lên DOM thật. Reconciliation so sánh 2 bản nháp bằng 2 quy tắc O(n). Key = thẻ tên để React không nhầm lẫn."
+> 🧠 **Memory Hook**: "Virtual DOM = draft blueprint on paper. React compares new draft vs old draft, then only fixes the EXACT differences on the real screen."
+>
+> **Móc nhớ**: "Virtual DOM = bản nháp trên giấy. React so bản mới vs bản cũ, rồi chỉ sửa ĐÚNG chỗ khác trên màn hình thật."
 
-**Tại sao tồn tại? / Why does this exist?**
-Vấn đề: Update DOM thật rất chậm (browser phải reflow + repaint).
-→ **Why?** Vì DOM API là synchronous, blocking main thread. Mỗi `el.innerHTML = ...` trigger layout recalculation.
-→ **Why?** Vì browser rendering pipeline: DOM change → Style → Layout → Paint → Composite. Mỗi DOM write có thể trigger cả chain.
+**Why does this exist? / Tại sao cần?**
 
-#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+DOM (Document Object Model) is the HTML tree structure browsers use to display web pages. Directly modifying the DOM is slow because the browser must recalculate layout and repaint.
 
-Bạn viết văn bản 100 trang. Mỗi khi sửa 1 câu, thay vì in lại 100 trang, bạn: (1) sửa trên bản nháp, (2) so sánh bản nháp mới vs cũ, (3) chỉ in lại trang có thay đổi. Virtual DOM = bản nháp đó.
+DOM là cây cấu trúc HTML mà browser dùng để hiển thị trang web. Sửa DOM trực tiếp rất chậm vì browser phải tính lại layout và paint.
 
-Còn Key = thẻ tên dán trên mỗi trang. Khi bạn xáo trộn thứ tự trang, nhờ thẻ tên mà bạn biết trang nào vẫn giữ nguyên, trang nào mới thêm, trang nào bị xóa.
+→ **Why slow?** Each DOM modification triggers: (1) recalculate size + position of affected elements, (2) repaint pixels. 10 consecutive modifications = 10 recalculations.
 
-#### Layer 2: How It Works / Cơ Chế Hoạt Động
+→ **Tại sao chậm?** Mỗi lần sửa DOM: (1) tính lại kích thước + vị trí, (2) vẽ lại pixel. Sửa 10 chỗ liên tiếp = tính lại 10 lần.
 
-**Virtual DOM = cây JS objects:**
+→ **Solution?** React creates a copy of the UI in memory (Virtual DOM). When data changes, React creates a new Virtual DOM, compares with the old one, finds differences, then updates the real DOM in ONE BATCH.
+
+→ **Giải pháp?** React tạo bản sao UI trong bộ nhớ (Virtual DOM). Khi data đổi, tạo Virtual DOM mới, so sánh với cũ, tìm khác biệt, rồi update DOM thật 1 LƯỢT.
+
+#### Layer 1: Everyday Analogy / Tầng 1: Ví dụ đời thường
+
+Imagine you're an architect renovating a house:
+
+Hình dung bạn là kiến trúc sư sửa nhà:
+
+**Old way (direct DOM):** Every time the client changes their mind, you run to the construction site and demolish walls immediately. Change mind 10 times = 10 demolitions.
+
+**Cách cũ (DOM trực tiếp):** Mỗi khi khách đổi ý, chạy ra công trường đập tường ngay. Đổi ý 10 lần = đập 10 lần.
+
+**React way (Virtual DOM):** You have 2 blueprints — old and new. Compare them, mark "fix here, keep there". Send 1 order to the crew: "Fix exactly these 3 spots". Much less work.
+
+**Cách React (DOM ảo):** Có 2 bản vẽ — cũ và mới. So sánh, đánh dấu "sửa chỗ này, giữ chỗ kia". Gửi 1 lệnh cho thợ: "Sửa đúng 3 chỗ này thôi".
+
+#### Layer 2: How It Works / Tầng 2: Cách hoạt động
+
+```
+Step 1: State changes (e.g., user clicks "Add product")
+Bước 1: State đổi (ví dụ: user click "Thêm sản phẩm")
+
+Step 2: React runs component → creates new Virtual DOM tree (= new blueprint)
+Bước 2: React chạy component → tạo cây Virtual DOM mới (= bản vẽ mới)
+
+Step 3: Reconciliation (comparing)
+Bước 3: Reconciliation (đối chiếu)
+        React compares 2 Virtual DOM trees (old vs new) top to bottom
+
+Step 4: Find list of differences (e.g., "text changed from '2' to '3'")
+Bước 4: Tìm ra danh sách khác biệt
+
+Step 5: Update real DOM in one batch — only touch what needs changing
+Bước 5: Cập nhật DOM thật 1 lần — chỉ sửa đúng chỗ cần
+```
+
+```
+Concrete example / Ví dụ cụ thể:
+
+  Old Virtual DOM:               New Virtual DOM:
+  Cây cũ:                        Cây mới:
+  ┌─────────────┐                ┌─────────────┐
+  │ <div>       │                │ <div>       │
+  │  <h1>2</h1> │  ──compare──▶  │  <h1>3</h1> │  ← different!
+  │  <p>abc</p> │                │  <p>abc</p> │  ← same → skip
+  └─────────────┘                └─────────────┘
+
+  Result: React only updates textContent of <h1> from "2" to "3"
+  Kết quả: React chỉ update textContent của <h1> từ "2" → "3"
+           <p> is not touched / <p> không bị đụng
+```
+
+**Reconciliation algorithm has 2 key assumptions / Thuật toán đối chiếu có 2 giả định:**
+
+1. **Different element type → destroy old, create new.** E.g.: `<div>` → `<span>` → React removes entire `<div>` tree and creates new `<span>`. (Khác loại thẻ → xóa cũ, tạo mới.)
+2. **Lists need keys.** React uses `key` to identify which items were added, removed, or moved. (Danh sách cần key để React nhận biết item nào thêm/xóa/đổi chỗ.)
+
+**Why key matters / Tại sao key quan trọng:**
 
 ```jsx
-// JSX bạn viết:
-<div className="app">
-  <h1>Hello</h1>
-  <p>World</p>
-</div>
+// Without key — React compares BY POSITION:
+// Không có key — React so sánh theo THỨ TỰ:
+// Old: [A, B, C]  →  New: [X, A, B, C]
+// React thinks: A→X (change), B→A (change), C→B (change), add C
+// → 4 updates 😰
 
-// Virtual DOM (plain JS object):
+// With key — React recognizes "A, B, C unchanged, just added X at start":
+// Có key — React nhận ra "A, B, C giữ nguyên, chỉ thêm X ở đầu"
+// → Only 1 insertion 😊 / Chỉ thêm 1 phần tử
+```
+
+```jsx
+// ✅ Correct: unique ID from data / Đúng: ID duy nhất từ dữ liệu
 {
-  type: "div",
-  props: {
-    className: "app",
-    children: [
-      { type: "h1", props: { children: "Hello" } },
-      { type: "p",  props: { children: "World" } }
-    ]
-  }
+  products.map((product) => <ProductCard key={product.id} product={product} />);
+}
+
+// ❌ Wrong: index — shifts when adding/removing → React gets confused
+// ❌ Sai: index — khi thêm/xóa, index thay đổi → React nhầm
+{
+  products.map((product, index) => <ProductCard key={index} product={product} />);
 }
 ```
 
-**Reconciliation — 2 quy tắc so sánh:**
+#### Layer 3: Edge Cases / Tầng 3: Trường hợp đặc biệt
 
-```
-┌────────────────────────────────────────────────────────┐
-│  Reconciliation Algorithm (O(n))                       │
-│                                                        │
-│  Quy tắc 1: KHÁC loại tag → XÓA cây con, làm lại     │
-│  ┌─────────┐      ┌──────────┐                         │
-│  │  <div>   │  →   │  <span>  │  = Xóa hết + mount mới│
-│  │ <Counter>│      │ <Counter>│    (state Counter RESET)│
-│  └─────────┘      └──────────┘                         │
-│                                                        │
-│  Quy tắc 2: CÙNG loại + CÙNG key → giữ, update props  │
-│  ┌──────────────┐      ┌──────────────┐                │
-│  │ <btn class=  │  →   │ <btn class=  │  = Giữ node,  │
-│  │  "blue">     │      │  "red">      │    đổi class   │
-│  └──────────────┘      └──────────────┘                │
-│                                                        │
-│  Tại sao O(n)? Tree diff chuẩn = O(n³), quá chậm.     │
-│  2 heuristics trên đúng >99% trường hợp thực tế.      │
-└────────────────────────────────────────────────────────┘
-```
+- **Virtual DOM is NOT always faster than direct DOM.** It has overhead from the diffing step. For simple changes (1-2 elements), direct DOM is faster. React's advantage is batching complex changes. (Virtual DOM KHÔNG phải luôn nhanh hơn DOM trực tiếp. Có overhead từ bước so sánh.)
+- **Svelte doesn't use Virtual DOM.** It compiles to direct DOM operations at build time → no diffing at runtime. This is a common interview debate. (Svelte không dùng Virtual DOM. Compile thành lệnh DOM trực tiếp lúc build.)
+- **Keys must be stable.** Using `Math.random()` as key → new key every render → React recreates ENTIRE list → very slow. (Key phải ổn định. `Math.random()` → key mới mỗi render → React tạo lại toàn bộ.)
 
-**Key — tại sao cần và dùng thế nào:**
+**❌ Common Mistakes / Sai lầm thường gặp:**
 
-```jsx
-// ❌ KHÔNG có key → React so sánh theo VỊ TRÍ:
-// Trước: [Táo(0), Cam(1), Xoài(2)]
-// Sau xóa Táo: [Cam(0), Xoài(1), Nho(2)]
-// React: vị trí 0 "Táo"→"Cam" (update), vị trí 1 "Cam"→"Xoài" (update)...
-// → Update CẢ 3 items! Dù chỉ cần xóa 1, thêm 1.
+| Mistake / Sai lầm                     | Why wrong / Tại sao sai                                                                     | Correct / Đúng là                            |
+| ------------------------------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| "Virtual DOM is a copy of real DOM"   | Virtual DOM is a lightweight JS object, not a heavy DOM node / Virtual DOM là object JS nhẹ | Virtual DOM = JS object tree describing UI   |
+| "Virtual DOM is always faster"        | Has overhead from diffing. Simple apps → direct DOM is faster                               | Virtual DOM is fast **enough** for most apps |
+| Using index as key for changing lists | When adding/removing, index shifts → React updates wrong elements                           | Use unique ID from data (`id`, `slug`, ...)  |
 
-// ✅ CÓ key → React so sánh theo ĐỊNH DANH:
-<li key="cam">Cam</li>     // key "cam" còn → giữ nguyên
-<li key="xoai">Xoài</li>   // key "xoai" còn → giữ nguyên
-<li key="nho">Nho</li>     // key "nho" mới → tạo mới
-// key "tao" mất → xóa. Chỉ 2 thao tác thay vì 3.
-```
+**🎯 Interview Pattern / Nhận dạng câu hỏi:**
 
-**Trick: Dùng key để RESET component:**
+- Trigger: "What is Virtual DOM?", "Why not modify DOM directly?", "How does reconciliation work?"
+- Think of: draft → compare → minimal changes
+- Opening:
+  - 🇬🇧 _"Virtual DOM is a lightweight copy of the UI tree stored as JavaScript objects in memory. When state changes, React creates a new Virtual DOM tree, diffs it against the old one using the reconciliation algorithm, then applies only the minimal changes to the real DOM."_
+  - 🇻🇳 _"Virtual DOM là bản sao nhẹ của cây UI, lưu dưới dạng object JS trong bộ nhớ. Khi state đổi, React tạo cây Virtual DOM mới, so sánh với cây cũ bằng thuật toán reconciliation, rồi chỉ update đúng chỗ khác biệt lên DOM thật."_
 
-```jsx
-// Đổi userId → key khác → React xóa component cũ + mount mới → state reset
-<UserProfile key={userId} userId={userId} />
-// Không cần useEffect phức tạp để reset form!
-```
+**🔑 Knowledge Chain / Chuỗi kiến thức:**
 
-#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
-
-- **VDOM không luôn nhanh hơn:** Svelte (compile-time) không dùng VDOM nhưng vẫn nhanh. VDOM tỏa sáng khi app phức tạp, nhiều update không dự đoán.
-- **Index làm key — khi nào OK?** Chỉ khi: list TĨNH (không thêm/xóa/sort) VÀ items không có state riêng.
-- **Bug index-as-key:** Todo list có checkbox → xóa item đầu → checkbox state bị gán cho item tiếp theo vì key=0 vẫn match.
-
-```
-Bug demo — index as key:
-Ban đầu:                     Sau xóa "Mua sữa":
-key=0 → "Mua sữa" ✓ checked   key=0 → "Giặt đồ" ✓ (state cũ từ key=0!)
-key=1 → "Giặt đồ"              key=1 → "Nấu cơm" (state cũ từ key=1!)
-key=2 → "Nấu cơm"
-```
-
-**❌ Sai lầm thường gặp / Common Mistakes:**
-
-| Sai lầm                               | Tại sao sai                                                                     | Đúng là                                      |
-| ------------------------------------- | ------------------------------------------------------------------------------- | -------------------------------------------- |
-| "VDOM nhanh hơn real DOM"             | VDOM có overhead (diff + object creation). Nhanh hơn **naive** DOM manipulation | VDOM giảm số lần chạm DOM thật xuống minimum |
-| Dùng `index` làm key cho dynamic list | Xóa/sort → state match sai item                                                 | Dùng `item.id` — id ổn định từ data          |
-| `key={Math.random()}`                 | Key mới mỗi render → React unmount + remount mọi thứ mỗi lần                    | Key phải stable, unique trong siblings       |
-
-**🎯 Interview Pattern:**
-
-- Khi thấy câu hỏi về: "Virtual DOM hoạt động thế nào?", "Tại sao cần key?"
-- → Nhớ đến: Bản nháp → diff O(n) → 2 quy tắc → key = thẻ tên
-- → Mở đầu: _"Virtual DOM là cây JS objects mô tả UI. Khi state đổi, React tạo VDOM mới, so sánh với cũ bằng thuật toán O(n) dựa trên 2 heuristics: khác tag thì xóa cây con, cùng tag thì diff props. Key giúp React nhận dạng phần tử trong list để diff chính xác."_
-
-**🔑 Knowledge Chain:**
-
-- 📚 Cần biết trước: [Component & Props](#3-component--props--thành-phần--tham-số) — component tree tạo VDOM tree
-- ➡️ Để hiểu tiếp: [Render/Commit Phases](#5-render-phase--commit-phase--hai-giai-đoạn-render) — VDOM diff xảy ra ở đâu trong pipeline
+- 📚 Prerequisite: [Component & Props](#3-component--props--ui-building-blocks--parameters--mảnh-ghép-ui--tham-số)
+- ➡️ Next: [Render & Commit](#5-render--commit--2-phase-update--2-giai-đoạn-vẽ-ui)
 
 ---
 
-### 5. Render Phase & Commit Phase / Hai Giai Đoạn Render
+### 5. Render & Commit / 2-Phase Update / 2 Giai Đoạn Vẽ UI
 
-> 🧠 **Memory Hook**: "Render = vẽ bản thiết kế (pure, có thể hủy). Commit = thợ xây thi công (sync, 1 lần). Side effects chỉ ở Commit."
+> 🧠 **Memory Hook**: "Render = draw blueprint (fast, can be canceled). Commit = build for real (touches DOM, can't cancel). Separated so React can be flexible."
+>
+> **Móc nhớ**: "Render = vẽ bản thiết kế (nhanh, có thể hủy). Commit = thi công thật (chạm DOM, không hủy). Tách biệt để React linh hoạt hơn."
 
-**Tại sao tồn tại? / Why does this exist?**
-Vấn đề: Nếu update DOM ngay trong render → render bị interrupt giữa chừng → user thấy UI nửa cũ nửa mới.
-→ **Why?** Vì Concurrent Mode cần khả năng hủy/tạm dừng render. Nếu DOM đã bị sửa thì không rollback được.
-→ **Why?** Vì user experience: input phải phản hồi ngay, không chờ heavy render xong.
+**Why does this exist? / Tại sao cần?**
 
-#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+Many people think when state changes, React "updates UI immediately". Actually React splits it into 2 separate steps. Misunderstanding this → code in wrong place → bugs.
 
-Kiến trúc sư (Render Phase): vẽ bản thiết kế trên giấy. Có thể vẽ lại bao nhiêu lần cũng được, xé bỏ, sửa — chưa đụng gì đến nhà thật. Thợ xây (Commit Phase): khi bản vẽ hoàn chỉnh, thi công 1 lần, nhanh gọn, không dừng giữa chừng.
+Nhiều người nghĩ khi state đổi, React "update UI ngay". Thực tế React chia thành 2 bước. Hiểu sai → đặt code sai chỗ → bug.
 
-#### Layer 2: How It Works / Cơ Chế Hoạt Động
+→ **Why 2 steps?** The calculation step (render) can run multiple times, be canceled, or paused. The real DOM step (commit) must run once and continuously — user sees the final result.
 
-```
-┌──────────────────────────────────────────────────────┐
-│  RENDER PHASE (kiến trúc sư vẽ bản thiết kế)        │
-│                                                      │
-│  1. React gọi component functions                    │
-│  2. Tạo Virtual DOM mới (React Elements)             │
-│  3. Diff với VDOM cũ → tính danh sách thay đổi      │
-│                                                      │
-│  ⚠️ KHÔNG chạm DOM thật                             │
-│  ⚠️ KHÔNG side effects (fetch, localStorage, etc.)  │
-│  ✅ CÓ THỂ bị interrupt & làm lại (Concurrent Mode) │
-│  ✅ CÓ THỂ chạy nhiều lần cho cùng 1 update        │
-└──────────────────────┬───────────────────────────────┘
-                       │
-                       ▼
-┌──────────────────────────────────────────────────────┐
-│  COMMIT PHASE (thợ xây thi công)                     │
-│                                                      │
-│  1. Apply changes lên DOM thật                       │
-│  2. Chạy useLayoutEffect() — đồng bộ, trước paint   │
-│  3. Browser paint (vẽ pixel lên màn hình)            │
-│  4. Chạy useEffect() — bất đồng bộ, sau paint       │
-│                                                      │
-│  ⚠️ ĐỒNG BỘ — không thể interrupt                  │
-│  ⚠️ Xảy ra 1 lần duy nhất                          │
-└──────────────────────────────────────────────────────┘
-```
+→ **Tại sao 2 bước?** Bước tính toán (render) có thể chạy nhiều lần, hủy, tạm dừng. Bước chạm DOM (commit) phải chạy 1 lần liên tục — user thấy kết quả cuối cùng.
 
-**Hệ quả trực tiếp cho code:**
+→ **Benefit?** React can calculate new UI WITHOUT blocking the current UI (foundation of Concurrent Rendering in React 18+).
 
-```jsx
-function MyComponent() {
-  // ❌ SAI — render phase KHÔNG được có side effects
-  fetch("/api/data");          // side effect!
-  document.title = "Hello";    // chạm DOM!
-  localStorage.setItem(...);   // side effect!
+→ **Lợi ích?** React tính UI mới MÀ KHÔNG chặn UI hiện tại (nền tảng Concurrent Rendering React 18+).
 
-  // ✅ ĐÚNG — side effects trong useEffect (chạy ở commit phase)
-  useEffect(() => {
-    fetch("/api/data");
-    document.title = "Hello";
-  }, []);
+#### Layer 1: Everyday Analogy / Tầng 1: Ví dụ đời thường
 
-  return <div>...</div>;
-}
-```
+Imagine ordering food on a delivery app / Hình dung đặt đồ ăn trên app:
 
-#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+**Render Phase (calculation)** = Kitchen cooks the food. Can cook multiple dishes in parallel, redo if wrong, even cancel. Customer sees nothing yet.
 
-- **StrictMode gọi render 2 lần** (dev only) để phát hiện side effects trong render phase. Nếu code bạn bị ảnh hưởng → code sai, không phải React sai.
-- **useLayoutEffect vs useEffect:** useLayoutEffect chạy đồng bộ SAU DOM update, TRƯỚC paint → dùng khi cần đo/sửa DOM trước khi user thấy (tránh flicker). useEffect chạy SAU paint.
-- **Render ≠ DOM update:** Component re-render nhưng output giống hệt → Commit phase không update DOM. React tối ưu sẵn.
+**Render Phase (tính toán)** = Nhà bếp nấu món. Nấu song song, nấu lại nếu sai, thậm chí hủy. Khách chưa thấy gì.
 
-**❌ Sai lầm thường gặp / Common Mistakes:**
+**Commit Phase (apply)** = Waiter brings food to the table. Once served, can't take it back — customer sees immediately.
 
-| Sai lầm                             | Tại sao sai                                            | Đúng là                                                       |
-| ----------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------- |
-| fetch() trong render body           | Render phase phải pure; fetch là side effect           | Dùng useEffect hoặc data fetching library                     |
-| Nghĩ "render = DOM update"          | Render = tạo VDOM. DOM chỉ update ở commit nếu có diff | Re-render ≠ DOM update. React skip DOM write nếu output giống |
-| `console.log` trong render để debug | Bị gọi 2x trong StrictMode, gây nhầm lẫn               | Biết StrictMode gọi 2 lần → console.log 2x là bình thường     |
+**Commit Phase (áp dụng)** = Phục vụ bưng đồ ra bàn. Bưng ra rồi thì không rút lại — khách thấy ngay.
 
-**🎯 Interview Pattern:**
-
-- Khi thấy câu hỏi về: "Render phase vs Commit phase?", "Tại sao tách 2 phase?"
-- → Nhớ đến: Render = pure + interruptible, Commit = sync + final
-- → Mở đầu: _"React tách update thành 2 phase. Render phase tạo VDOM và diff — pure, có thể interrupt trong Concurrent Mode. Commit phase apply changes lên DOM thật — synchronous, 1 lần. Tách như vậy để React có thể hủy render nếu có update ưu tiên hơn, và user luôn thấy UI nhất quán."_
-
-**🔑 Knowledge Chain:**
-
-- 📚 Cần biết trước: [Virtual DOM & Reconciliation](#4-virtual-dom-reconciliation--key--dom-ảo-đối-soát--khóa) — diff xảy ra trong render phase
-- ➡️ Để hiểu tiếp: [Fiber Architecture](#6-fiber-architecture--kiến-trúc-fiber) — Fiber cho phép interrupt render phase
-
----
-
-### 6. Fiber Architecture / Kiến Trúc Fiber
-
-> 🧠 **Memory Hook**: "Fiber = linked list thay vì đệ quy. React xử lý từng node, giữa mỗi node kiểm tra: có việc gấp hơn không? Nếu có → nhường → quay lại sau."
-
-**Tại sao tồn tại? / Why does this exist?**
-Vấn đề: React 15 render = đệ quy đồng bộ → không dừng giữa chừng. Component tree lớn → block main thread → UI đơ.
-→ **Why?** Vì browser chỉ có 1 main thread cho cả JS + rendering. Block 200ms = 200ms user không thể tương tác.
-→ **Why?** Vì human perception: delay >100ms = nhận thấy lag. >300ms = frustrating. UI phải phản hồi <100ms.
-
-#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
-
-React 15 = đầu bếp nấu 1 món 30 phút liên tục, không nghỉ. Khách VIP tới? Chờ. React Fiber = đầu bếp chia món thành bước 2 phút. Sau mỗi bước, kiểm tra: "Có order gấp không?" → có thì xử lý order gấp → quay lại bước tiếp.
-
-#### Layer 2: How It Works / Cơ Chế Hoạt Động
-
-Mỗi component = 1 **Fiber node** (object trong linked list):
+#### Layer 2: How It Works / Tầng 2: Cách hoạt động
 
 ```
-Fiber Node = {
-  type: Button,           // component nào
-  child: → Fiber con      // con đầu tiên
-  sibling: → Fiber kế     // anh em bên phải
-  return: → Fiber cha     // cha
+When state changes, React runs 2 phases:
+Khi state đổi, React chạy 2 giai đoạn:
 
-  memoizedState: ...,     // hooks data (linked list)
-  lanes: ...,             // priority (high/low)
-}
-```
-
-```
 ┌─────────────────────────────────────────────────────┐
-│               Fiber Linked List                      │
+│  RENDER PHASE (calculation / tính toán)              │
 │                                                     │
-│  App ──child──▶ Header ──sibling──▶ ProductList     │
-│   ▲               │                    │            │
-│   │return       child              child            │
-│   │               ▼                    ▼            │
-│   │             Logo          ProductCard ──sib──▶ ProductCard
-│   │                              │                  │
-│   └──────────────────────────────┘                  │
-│                  (return links go up)               │
+│  • React calls component function → gets new JSX    │
+│  • Compares new vs old JSX (reconciliation)          │
+│  • Finds list of changes to apply                    │
 │                                                     │
-│  Traversal: child → child → sibling → return → ...  │
-│  CÓ THỂ DỪNG ở bất kỳ node nào, quay lại sau      │
+│  ⚡ Properties:                                      │
+│  • Does NOT touch real DOM / KHÔNG chạm DOM thật    │
+│  • Can be canceled / restarted / có thể hủy/lặp lại│
+│  • Must NOT have side effects (API calls, mutating  │
+│    external vars) — may run multiple times           │
+└─────────────────────┬───────────────────────────────┘
+                      │
+                      ▼
+┌─────────────────────────────────────────────────────┐
+│  COMMIT PHASE (apply / áp dụng)                      │
+│                                                     │
+│  • Apply changes to real DOM                         │
+│  • Run useLayoutEffect (sync, before paint)          │
+│  • Run useEffect (async, after paint)                │
+│                                                     │
+│  ⚡ Properties:                                      │
+│  • Runs once, CANNOT be canceled                     │
+│  • Side effects go here (useEffect)                  │
+│  • Browser paints pixels after commit                │
 └─────────────────────────────────────────────────────┘
 ```
 
-**Priority Lanes — hệ thống ưu tiên:**
-
-```
-Ưu tiên CAO (xử lý ngay):     Ưu tiên THẤP (có thể chờ):
-• User click, gõ phím           • Render list 10,000 items
-• Input focus/blur              • Update chart phức tạp
-• Hover state                   • Offscreen content
-```
+**Practical example / Ví dụ thực tế:**
 
 ```jsx
-import { useTransition } from "react";
+function ProductCard({ product }) {
+  // 🔴 WRONG — API call during render (Render Phase)
+  // 🔴 SAI — gọi API trong lúc render
+  // fetch(`/api/product/${product.id}`); // React may call this multiple times!
 
-function SearchApp() {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState([]);
-  const [isPending, startTransition] = useTransition();
+  // ✅ CORRECT — API call in useEffect (Commit Phase)
+  // ✅ ĐÚNG — gọi API trong useEffect
+  useEffect(() => {
+    fetch(`/api/product/${product.id}`);
+  }, [product.id]);
 
-  function handleChange(e) {
-    setQuery(e.target.value); // HIGH priority → input cập nhật NGAY
-    startTransition(() => {
-      setResults(search(e.target.value)); // LOW priority → render kết quả có thể chờ
-    });
-  }
-
-  return (
-    <>
-      <input onChange={handleChange} value={query} />
-      {isPending ? <p>Đang tìm...</p> : <ResultsList items={results} />}
-    </>
-  );
+  return <h1>{product.name}</h1>;
 }
-// Kết quả: gõ → input phản hồi ngay, list update sau. Không bao giờ "đơ".
 ```
 
-#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+#### Layer 3: Edge Cases / Tầng 3: Trường hợp đặc biệt
 
-- **Double buffering:** Fiber duy trì 2 cây — `current` (đang hiển thị) và `workInProgress` (đang tính). Khi xong → swap. Giống GPU double buffering.
-- **Time slicing:** React chia render thành chunks ~5ms, yield cho browser giữa mỗi chunk. Dùng `MessageChannel` (không phải `requestIdleCallback`).
-- **Không phải tất cả update đều concurrent:** `flushSync()` force synchronous update. `useLayoutEffect` callback chạy synchronously.
+- **Render Phase can run multiple times** for the same update. In React 18 Strict Mode (dev), React INTENTIONALLY calls components twice to detect unwanted side effects. (Render Phase có thể chạy nhiều lần. Strict Mode CỐ TÌNH gọi component 2 lần để phát hiện side effect.)
+- **Commit Phase has 3 sub-steps:** (1) Modify DOM → (2) run `useLayoutEffect` (sync, before paint) → (3) browser paints → (4) run `useEffect` (async, after paint). (Commit có 3 bước con.)
+- **React can skip Commit Phase** if Render Phase determines nothing changed. (React có thể bỏ qua Commit nếu Render tính ra không có gì đổi.)
 
-**❌ Sai lầm thường gặp / Common Mistakes:**
+**❌ Common Mistakes / Sai lầm thường gặp:**
 
-| Sai lầm                            | Tại sao sai                                                   | Đúng là                                                      |
-| ---------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------ |
-| "Fiber làm React nhanh hơn"        | Fiber làm React **responsive** hơn, không nhanh hơn           | Fiber cho phép interrupt + prioritize, không giảm total work |
-| Nghĩ mọi render đều concurrent     | Chỉ update trong startTransition/Suspense mới concurrent      | Default vẫn là synchronous. Concurrent là opt-in             |
-| Đặt heavy computation trong render | Fiber interrupt render nhưng computation vẫn block từng chunk | Dùng useMemo, Web Worker, hoặc move computation ra ngoài     |
+| Mistake / Sai lầm                                      | Why wrong / Tại sao sai                                                    | Correct / Đúng là                                                      |
+| ------------------------------------------------------ | -------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| API call inside component function (outside useEffect) | Render Phase may run multiple times → multiple API calls                   | Put API calls in useEffect or event handlers                           |
+| Thinking "render = paint on screen"                    | Render is only calculation, doesn't touch screen / Render chỉ là tính toán | Render = calculate. Commit = apply to DOM. Browser paint = draw pixels |
+| Modifying external variables in component              | Component may run multiple times → variable modified multiple times        | Use useRef for persistent values, useEffect for side effects           |
 
-**🎯 Interview Pattern:**
+**🎯 Interview Pattern / Nhận dạng câu hỏi:**
 
-- Khi thấy câu hỏi về: "Fiber là gì?", "Concurrent rendering?"
-- → Nhớ đến: Linked list, interrupt, priority lanes, time slicing
-- → Mở đầu: _"Fiber là kiến trúc render mới từ React 16, biểu diễn mỗi component thành node trong linked list thay vì đệ quy. Điều này cho phép React interrupt render giữa chừng, ưu tiên user input, và resume sau — nền tảng cho Concurrent Mode, startTransition, Suspense."_
+- Trigger: "Why does React render twice?", "When does useEffect run?", "Where to put side effects?"
+- Think of: 2 phases — Render (calculate, may repeat) vs Commit (apply, once)
+- Opening:
+  - 🇬🇧 _"React splits updates into two phases. The Render Phase calls component functions to calculate the new UI — this is pure and can be interrupted or repeated. The Commit Phase applies changes to the real DOM — this runs once and can't be canceled. Side effects like API calls must go in useEffect during the Commit Phase."_
+  - 🇻🇳 _"React chia update thành 2 giai đoạn. Render Phase gọi hàm component để tính UI mới — thuần túy, có thể lặp/hủy. Commit Phase áp dụng thay đổi lên DOM thật — chạy 1 lần, không hủy được. Side effect như gọi API phải đặt trong useEffect ở Commit Phase."_
 
-**🔑 Knowledge Chain:**
+**🔑 Knowledge Chain / Chuỗi kiến thức:**
 
-- 📚 Cần biết trước: [Render/Commit Phases](#5-render-phase--commit-phase--hai-giai-đoạn-render) — Fiber cho phép interrupt render phase
-- ➡️ Để hiểu tiếp: [Hooks](./03-hooks-deep-dive.md) — hooks data lưu trong Fiber node (memoizedState)
+- 📚 Prerequisite: [Virtual DOM](#4-virtual-dom--dom-ảo)
+- ➡️ Next: [Fiber Architecture](#6-fiber--work-splitting--cách-react-chia-nhỏ-công-việc)
 
 ---
 
-### 7. Stale Closure / Closure Cũ
+### 6. Fiber / Work Splitting / Cách React Chia Nhỏ Công Việc
 
-> 🧠 **Memory Hook**: "Mỗi render = 1 bức ảnh chụp state. Callback từ render cũ mãi dùng giá trị cũ. Fix: functional updater `prev =>` hoặc useRef."
+> 🧠 **Memory Hook**: "Fiber = how React splits render work into small chunks, so the browser doesn't freeze. Like splitting homework into parts — do one part, rest, continue."
+>
+> **Móc nhớ**: "Fiber = cách React chia việc render thành mẩu nhỏ, để browser không bị đơ. Giống chia bài tập thành phần — làm 1 phần, nghỉ, làm tiếp."
 
-**Tại sao tồn tại? / Why does this exist?**
-Vấn đề: JavaScript closures capture biến theo reference tại thời điểm tạo. Mỗi render React tạo closure mới → closure cũ vẫn giữ giá trị cũ.
-→ **Why?** Vì React gọi lại component function mỗi render, tạo scope mới, nhưng callbacks (setTimeout, event handlers) vẫn reference scope cũ.
-→ **Why?** Vì đây là bản chất của JavaScript — closure là feature, không phải bug. React chỉ khiến nó trở nên rõ ràng hơn.
+**Why does this exist? / Tại sao cần?**
 
-#### Layer 1: Simple Analogy / Liên Tưởng Đơn Giản
+Before React 16, when the component tree was large, React rendered the ENTIRE tree continuously. During that time, the browser couldn't handle anything else (animation, clicks, typing...) → UI freezes.
 
-Bạn chụp ảnh phòng mình. 1 tuần sau dọn phòng, mua đồ mới. Nhưng bức ảnh vẫn hiện phòng cũ. Trong React, mỗi render = chụp 1 bức ảnh state. Callback từ render cũ = nhìn bức ảnh cũ, không biết phòng đã thay đổi.
+Trước React 16, khi cây component lớn, React render TOÀN BỘ liên tục. Trong thời gian đó, browser không xử lý được gì khác (animation, click, gõ chữ...) → UI đứng hình.
 
-#### Layer 2: How It Works / Cơ Chế Hoạt Động
+→ **Why freeze?** JavaScript is single-threaded: one thing at a time. If React takes all the time → browser has no chance to repaint.
+
+→ **Tại sao đứng?** JS chạy đơn luồng: 1 thời điểm chỉ 1 việc. React chiếm hết → browser không có cơ hội vẽ lại.
+
+→ **Solution?** Fiber lets React split Render Phase into small chunks. Process one chunk → yield to browser → browser handles animation/click → React continues next chunk.
+
+→ **Giải pháp?** Fiber cho React chia Render Phase thành mẩu nhỏ. Làm 1 mẩu → nhường browser → browser xử lý animation/click → React tiếp mẩu tiếp.
+
+#### Layer 1: Everyday Analogy / Tầng 1: Ví dụ đời thường
+
+Imagine you're a hotel receptionist (browser). One guest has a very complex booking (large component tree).
+
+Hình dung bạn là lễ tân khách sạn (browser). Có 1 khách đặt phòng rất phức tạp (cây component lớn).
+
+**Old way (before Fiber):** You process the complex booking from start to finish without looking up. Other guests wait. Phone rings — you can't hear.
+
+**Cách cũ (trước Fiber):** Xử lý đơn phức tạp từ đầu đến cuối, không ngẩng lên. Khách khác đợi. Điện thoại reng — không nghe.
+
+**Fiber way:** You split the booking into steps. After each step, look around: "Does anyone need anything?". If a VIP guest arrives (high-priority action) → handle VIP first → return to booking.
+
+**Cách Fiber:** Chia đơn thành nhiều bước. Sau mỗi bước, nhìn quanh: "Ai cần gì không?". Khách VIP đến (ưu tiên cao) → xử lý VIP trước → quay lại đơn.
+
+#### Layer 2: How It Works / Tầng 2: Cách hoạt động
+
+Each component in the React tree has a **Fiber node** — an object containing info about that component.
+
+Mỗi component trong cây React có 1 **Fiber node** — object chứa thông tin về component đó.
+
+```
+Component tree you write:        Fiber tree React creates:
+Cây component bạn viết:          Cây Fiber React tạo:
+
+     <App>                        Fiber(App)
+     ├─ <Header>                  ├─ Fiber(Header)
+     │   └─ <Logo>                │   └─ Fiber(Logo)
+     └─ <Main>                    └─ Fiber(Main)
+         ├─ <Sidebar>                 ├─ Fiber(Sidebar)
+         └─ <Content>                 └─ Fiber(Content)
+```
+
+**Each Fiber node contains / Mỗi Fiber node chứa:**
+
+| Info / Thông tin | Explanation / Giải thích                                           |
+| ---------------- | ------------------------------------------------------------------ |
+| `type`           | Component type (which function, which HTML tag) / Loại component   |
+| `props`          | Parameters passed in / Tham số truyền vào                          |
+| `state`          | Internal data (hooks stored here) / Dữ liệu nội bộ (hooks ở đây)   |
+| `child`          | First child / Con đầu tiên                                         |
+| `sibling`        | Next sibling / Anh em cùng cấp kế tiếp                             |
+| `return`         | Parent (to go back after processing) / Cha (quay lại sau khi xong) |
+
+**How React traverses the Fiber tree / Cách React duyệt cây Fiber:**
+
+```
+Traversal order / Thứ tự duyệt:
+1. Go down to first child
+2. If no child → go to next sibling
+3. If no sibling → go back to parent (return)
+
+        App
+        │
+        ▼
+      Header ──▶ Main
+        │          │
+        ▼          ▼
+       Logo    Sidebar ──▶ Content
+
+Processing order: App → Header → Logo → Main → Sidebar → Content
+Thứ tự xử lý:   App → Header → Logo → Main → Sidebar → Content
+
+⚡ After each node, React checks:
+   "Does the browser need to do anything?"
+   • If yes (e.g., user typing) → pause, yield to browser
+   • If no → continue to next node
+
+⚡ Sau mỗi node, React kiểm tra:
+   "Browser có cần xử lý gì không?"
+   • Nếu có (ví dụ: user đang gõ) → tạm dừng, nhường browser
+   • Nếu không → tiếp node kế tiếp
+```
+
+#### Layer 3: Edge Cases / Tầng 3: Trường hợp đặc biệt
+
+- **Fiber enables prioritization.** E.g.: user types in search box (high priority) while React is rendering a long list (low priority) → React pauses the list, handles the search input first, then resumes. (Fiber cho phép ưu tiên.)
+- **Double buffering:** React keeps 2 Fiber trees — current (displayed) and workInProgress (being built). When done, swap. Like game rendering technique: draw new frame in background, swap to foreground when done → no flickering. (Double buffer: giữ 2 cây Fiber, hoán đổi khi xong → không nhấp nháy.)
+- **Fiber is the foundation for React 18 Concurrent Features:** `useTransition`, `useDeferredValue`, Suspense — all work because Fiber can pause and resume. (Fiber là nền tảng cho React 18 Concurrent Features.)
+
+**❌ Common Mistakes / Sai lầm thường gặp:**
+
+| Mistake / Sai lầm                                  | Why wrong / Tại sao sai                                                                                      | Correct / Đúng là                                                       |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| "Fiber = Virtual DOM"                              | Fiber is the PROCESSING MECHANISM. Virtual DOM is the DATA STRUCTURE / Fiber = cơ chế. Virtual DOM = dữ liệu | Fiber = scheduler + work splitter. Virtual DOM = render result          |
+| "React renders multiple components simultaneously" | JS is still single-threaded. Fiber only splits, doesn't parallel / JS vẫn đơn luồng                          | Fiber = cooperative scheduling (yield), not parallel                    |
+| "Devs need to know Fiber to code React"            | Fiber is internal detail, 99% devs don't need to care                                                        | Know Fiber to understand WHY React works this way, not for daily coding |
+
+**🎯 Interview Pattern / Nhận dạng câu hỏi:**
+
+- Trigger: "What is Fiber?", "How does Concurrent Mode work?", "How does React handle large trees?"
+- Think of: split work + yield to browser + prioritize
+- Opening:
+  - 🇬🇧 _"Fiber is React's internal architecture since v16 that splits the Render Phase into small units of work. Each component has a Fiber node forming a linked list. React can pause mid-render to let the browser handle user input and animations, then resume — this is the foundation for Concurrent Features in React 18."_
+  - 🇻🇳 _"Fiber là kiến trúc nội bộ từ React 16, cho phép chia Render Phase thành đơn vị nhỏ. Mỗi component có 1 Fiber node tạo thành linked list. React có thể dừng giữa chừng để nhường browser xử lý input và animation, rồi tiếp tục — đây là nền tảng cho Concurrent Features React 18."_
+
+**🔑 Knowledge Chain / Chuỗi kiến thức:**
+
+- 📚 Prerequisite: [Render & Commit](#5-render--commit--2-phase-update--2-giai-đoạn-vẽ-ui)
+- ➡️ Next: [Hooks Comprehensive](./07-hooks-comprehensive.md) — `useTransition`, `useDeferredValue` use Fiber scheduling
+
+---
+
+### 7. Stale Closure / Old Value Trap / Bẫy Biến Cũ
+
+> 🧠 **Memory Hook**: "A function created at render N 'sees' data from render N. If you use an old function → see old data. That's stale closure."
+>
+> **Móc nhớ**: "Hàm tạo ở render N thì 'nhìn thấy' dữ liệu render N. Dùng hàm cũ → thấy data cũ. Đó là stale closure."
+
+**Why does this exist? / Tại sao cần?**
+
+This is the **most common bug** in React, especially with `useEffect` and event handlers. You'll see: "I called setCount(5) but console.log still shows 0!" Without understanding stale closures, you'll waste hours debugging.
+
+Đây là **bug phổ biến nhất** trong React, đặc biệt với `useEffect` và event handler. Triệu chứng: "Đã setCount(5) rồi mà console.log vẫn in 0!" Không hiểu stale closure thì mất hàng giờ debug.
+
+→ **Why does it happen?** In JavaScript, when you create a function inside another function, the inner function "captures a snapshot" of all surrounding variables at creation time. This is closure. In React, each render creates a new "snapshot" — but if you use a function from an old render, it still holds the old "snapshot".
+
+→ **Tại sao xảy ra?** Trong JS, hàm bên trong "chụp ảnh" biến xung quanh lúc tạo. Đây là closure. Trong React, mỗi render tạo "bức ảnh" mới — nhưng hàm từ render cũ vẫn giữ "bức ảnh" cũ.
+
+→ **Solution?** 3 ways: (1) Add variable to deps array, (2) Use functional updater `setCount(c => c + 1)`, (3) Use `useRef` for latest value.
+
+→ **Giải pháp?** 3 cách: (1) Thêm biến vào deps, (2) Dùng functional updater `setCount(c => c + 1)`, (3) Dùng `useRef`.
+
+#### Layer 1: Everyday Analogy / Tầng 1: Ví dụ đời thường
+
+Imagine you take a photo of your room every Monday. / Hình dung bạn chụp ảnh phòng mỗi Thứ Hai.
+
+Monday week 1: room has 2 chairs. / Thứ Hai tuần 1: phòng có 2 ghế.
+Tuesday you buy 1 more → room actually has 3 chairs. / Thứ Ba mua thêm 1 → phòng thật có 3 ghế.
+But Monday's photo still shows 2 chairs — because the photo is a "snapshot" from the past. / Nhưng ảnh Thứ Hai vẫn hiện 2 ghế — vì ảnh là "bản chụp" tại thời điểm cũ.
+
+Stale closure is the same: function created at render 1 → "captures" state at that time. Even though state updated at render 5, the old function still sees render 1's value.
+
+Stale closure y hệt: hàm tạo ở render 1 → "chụp" state lúc đó. Dù state đã update ở render 5, hàm cũ vẫn thấy giá trị render 1.
+
+#### Layer 2: How It Works / Tầng 2: Cách hoạt động
 
 ```jsx
-function Counter() {
+function Timer() {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
+    // This function is created when count = 0 (first render)
+    // Hàm này được tạo khi count = 0 (render đầu)
+    // It "captures" count = 0 into its closure
+    // Nó "chụp" count = 0 vào closure
     const id = setInterval(() => {
-      console.log(count); // Luôn là 0!
-      setCount(count + 1); // Luôn là 0 + 1 = 1!
+      console.log(count); // Always prints 0! Even though count changed
+      setCount(count + 1); // Always sets 0 + 1 = 1!
     }, 1000);
     return () => clearInterval(id);
-  }, []);
-  // deps=[] → effect chạy 1 LẦN → closure capture count=0 MÃIMÃI
+  }, []); // [] = only run once on mount → never recreates the function
+
+  return <h1>{count}</h1>;
+  // Screen shows: 1, 1, 1, 1, 1... (doesn't increment!)
+  // Màn hình: 1, 1, 1, 1, 1... (không tăng!)
 }
 ```
 
 ```
-┌────────────────────────────────────────────────────┐
-│           Stale Closure Timeline                    │
-│                                                    │
-│  Render 1: count=0                                 │
-│    └─ useEffect chạy, tạo setInterval              │
-│       └─ callback closure capture: count=0         │
-│                                                    │
-│  1 giây sau: setCount(0+1) → count=1               │
-│                                                    │
-│  Render 2: count=1                                 │
-│    └─ useEffect KHÔNG chạy lại (deps=[])           │
-│       └─ setInterval callback VẪN dùng count=0    │
-│                                                    │
-│  2 giây sau: setCount(0+1) → count vẫn =1          │
-│  3 giây sau: setCount(0+1) → count vẫn =1          │
-│  ...mãi mãi count=1 ──── BUG!                     │
-└────────────────────────────────────────────────────┘
+The problem / Vấn đề:
+
+  Render 1: count=0 → creates setInterval → function "captures" count=0
+  Render 2: count=1 → but setInterval function is still the old one → still sees count=0
+  Render 3: count=1 → still count=0 in old function...
+
+  ┌───────────────┐     ┌───────────────┐
+  │  Render 1     │     │  Render 2     │
+  │  count = 0    │     │  count = 1    │
+  │               │     │               │
+  │  setInterval  │     │  (old function │
+  │  sees: 0      │←────│   still used) │
+  └───────────────┘     └───────────────┘
 ```
 
-**Fix 1 — Functional updater (phổ biến nhất):**
+**3 ways to fix / 3 cách sửa:**
 
 ```jsx
-setCount((prev) => prev + 1);
-// Không đọc count từ closure
-// React đưa giá trị mới nhất qua tham số `prev`
-```
-
-**Fix 2 — useRef (khi cần ĐỌC giá trị, không chỉ SET):**
-
-```jsx
-const countRef = useRef(0);
-
+// Fix 1: Functional updater — doesn't need to read count
+// Cách 1: Functional updater — không cần đọc count
 useEffect(() => {
-  countRef.current = count; // cập nhật mỗi render
-}, [count]);
+  const id = setInterval(() => {
+    setCount((prev) => prev + 1); // prev = current value, not from closure
+  }, 1000);
+  return () => clearInterval(id);
+}, []);
+
+// Fix 2: Add count to deps → recreate function when count changes
+// Cách 2: Thêm count vào deps → tạo lại hàm mỗi khi count đổi
+useEffect(() => {
+  const id = setInterval(() => {
+    console.log(count); // Correct now!
+    setCount(count + 1);
+  }, 1000);
+  return () => clearInterval(id);
+}, [count]); // ← each count change: clear old interval, create new
+
+// Fix 3: useRef for latest value
+// Cách 3: Dùng useRef lưu giá trị mới nhất
+const countRef = useRef(count);
+countRef.current = count; // Update every render / Cập nhật mỗi render
 
 useEffect(() => {
   const id = setInterval(() => {
-    console.log(countRef.current); // luôn đọc giá trị mới nhất!
+    console.log(countRef.current); // Always reads latest value
   }, 1000);
   return () => clearInterval(id);
 }, []);
 ```
 
-| Tình huống                                        | Dùng                    |
-| ------------------------------------------------- | ----------------------- |
-| Chỉ cần SET state dựa trên state cũ               | `setState(prev => ...)` |
-| Cần ĐỌC giá trị mới nhất (log, API call, so sánh) | `useRef`                |
+#### Layer 3: Edge Cases / Tầng 3: Trường hợp đặc biệt
 
-#### Layer 3: Edge Cases & Trade-offs / Trường Hợp Biên
+- **Event handlers also get stale closures** if you pass a function to useCallback with missing deps. E.g.: `useCallback(() => console.log(count), [])` → always prints initial count. (Event handler cũng bị stale closure nếu useCallback deps thiếu.)
+- **React Compiler (React 19)** can detect some stale closure cases and warn. But it can't fix all — you still need to understand this. (React Compiler phát hiện 1 số trường hợp, nhưng không fix hết.)
+- **setTimeout is also affected:** `setTimeout(() => alert(count), 3000)` → alerts count value at setTimeout creation time, not when alert shows. (setTimeout cũng bị.)
 
-- **Event handlers cũng có stale closure** nhưng ít gây bug vì React tạo handler mới mỗi render. Vấn đề chủ yếu ở `setTimeout`, `setInterval`, `addEventListener` bên ngoài React.
-- **useEffect cleanup + re-run:** Thêm `count` vào deps sẽ fix stale nhưng tạo interval mới mỗi giây → acceptable cho timeout, problematic cho interval.
-- **React 19 compiler:** Có thể auto-detect một số stale closure patterns, nhưng không fix được tất cả.
+**❌ Common Mistakes / Sai lầm thường gặp:**
 
-**❌ Sai lầm thường gặp / Common Mistakes:**
+| Mistake / Sai lầm                                 | Why wrong / Tại sao sai                               | Correct / Đúng là                               |
+| ------------------------------------------------- | ----------------------------------------------------- | ----------------------------------------------- |
+| Using `[]` deps but reading state in effect       | Function created once → "captures" initial state only | Add state to deps, or use functional updater    |
+| Thinking `setCount(count + 1)` reads latest value | `count` is a closure value, may be stale              | Use `setCount(prev => prev + 1)`                |
+| Ignoring ESLint "missing dependency" warning      | ESLint is warning you're ABOUT to have stale closure  | Fix the dependency or use useRef if intentional |
 
-| Sai lầm                                     | Tại sao sai                                             | Đúng là                                                    |
-| ------------------------------------------- | ------------------------------------------------------- | ---------------------------------------------------------- |
-| "Thêm count vào deps array" để fix interval | Interval bị clear + recreate mỗi giây → drift over time | Dùng functional updater: `prev => prev + 1`                |
-| Nghĩ stale closure là bug của React         | Đây là behavior của JavaScript closures                 | React expose nó rõ hơn vì re-render tạo scope mới liên tục |
-| Dùng `useRef` cho mọi thứ để tránh stale    | Ref changes không trigger re-render → UI không update   | Chỉ dùng ref khi cần ĐỌC mà không cần UI update            |
+**🎯 Interview Pattern / Nhận dạng câu hỏi:**
 
-**🎯 Interview Pattern:**
+- Trigger: "What is stale closure?", "Why does useEffect read old state?", "How does setInterval work in React?"
+- Think of: function "captures snapshot" of state at creation time
+- Opening:
+  - 🇬🇧 _"Stale closure happens when a function created during a previous render is still being used, so it 'sees' old state values instead of current ones. The root cause is JavaScript closures — functions capture references to surrounding variables at creation time. Fix: use functional updater for setState, or add correct dependencies to the useEffect deps array."_
+  - 🇻🇳 _"Stale closure xảy ra khi hàm tạo ở render trước vẫn được dùng, nên nó 'thấy' state cũ thay vì mới. Nguyên nhân gốc là closure trong JS — hàm giữ tham chiếu biến xung quanh lúc tạo. Fix: dùng functional updater cho setState, hoặc thêm dependency đúng vào deps array."_
 
-- Khi thấy câu hỏi về: "Stale closure?", "setInterval trong useEffect?"
-- → Nhớ đến: Mỗi render = snapshot, closure capture tại thời điểm render
-- → Mở đầu: _"Stale closure xảy ra khi callback capture state/props từ render cũ. Trong React, mỗi render tạo closure mới, nhưng callbacks từ render trước vẫn giữ giá trị cũ. Fix bằng functional updater khi chỉ cần set, hoặc useRef khi cần đọc giá trị mới nhất."_
+**🔑 Knowledge Chain / Chuỗi kiến thức:**
 
-**🔑 Knowledge Chain:**
-
-- 📚 Cần biết trước: [JavaScript Closures](../02-javascript/) — hiểu closure mới hiểu stale closure
-- ➡️ Để hiểu tiếp: [Hooks Deep Dive](./03-hooks-deep-dive.md) — useEffect, useRef, useCallback và stale closure
+- 📚 Prerequisite: [JavaScript Closures](../01-javascript/04-closures.md) — understand closure mechanism in JS
+- ➡️ Next: [Hooks Deep Dive](./03-hooks-deep-dive.md) — deps array, cleanup, and related hooks
 
 ---
 
-## Q&A Section / Câu Hỏi Phỏng Vấn
+## Q&A Section — Interview Questions / Câu Hỏi Phỏng Vấn
+
+### 🟢 Q1: "How does React work? Explain UI = f(state)." / "React hoạt động theo kiểu nào? Giải thích UI = f(state)."
+
+**💡 Interview Signal:** Foundational question — tests if candidate understands the core.
+
+**Answer / Trả lời:**
+
+🇬🇧 React works **declaratively**: you describe what the UI should look like for each state, and React handles the DOM updates.
+
+`UI = f(state)` means: the UI is the output of a function given data as input. Same data → always same UI.
+
+**Old way (jQuery, Vanilla JS):** You manually write code to "add class here, change text there" — this is **imperative**. Easy to forget updating one place → inconsistent UI.
+
+**React way:** Just `setCount(5)` → React re-calls the component → calculates new UI → diffs with old → updates only what changed. Developer doesn't care "what to update" — only describes "what it should look like".
+
+🇻🇳 React hoạt động **khai báo**: mô tả UI trông thế nào cho từng state, React lo update DOM.
+
+`UI = f(state)` nghĩa là: UI là kết quả của hàm nhận dữ liệu. Cùng dữ liệu → luôn cùng UI.
+
+Cách cũ (jQuery): tự tay viết "thêm class ở đây, đổi text ở kia" — **mệnh lệnh**. Dễ quên 1 chỗ → UI không nhất quán.
+
+Cách React: `setCount(5)` → React gọi lại component → tính UI mới → so sánh với cũ → update đúng chỗ cần.
 
 ---
 
-### Q1: UI = f(state) có nghĩa gì? Declarative vs Imperative? 🟢 Junior
+### 🟢 Q2: "What is JSX? What does it become at runtime?" / "JSX là gì? Khi chạy nó biến thành gì?"
 
-**A:** UI = f(state) means the UI is a pure function of state: same state always produces the same UI output. Declarative means you describe WHAT the UI should look like; imperative means you describe HOW to update it step by step.
+**💡 Interview Signal:** Tests if candidate understands JSX or just "uses it without knowing".
 
-Mỗi component là 1 hàm: cho cùng state/props → luôn trả về cùng UI. React gọi lại hàm khi state đổi, diff kết quả, update DOM tối thiểu. Declarative: `<h1>{count}</h1>`. Imperative: `element.innerText = count`. Declarative ít bug hơn vì dev không cần nhớ update từng DOM node.
+**Answer / Trả lời:**
 
-**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+🇬🇧 JSX is a syntax extension for JavaScript that lets you write HTML-like code in JS files.
 
-- ✅ Strong: Liên kết declarative ↔ pure function, nhắc unidirectional data flow, nêu trade-off (overhead diff)
-- ❌ Weak: "React update DOM khi state đổi" — đúng nhưng quá chung, không cho thấy hiểu bản chất
+JSX is **not** HTML — browsers don't understand it. During build, tools (Babel, SWC, Vite) transpile JSX to `React.createElement()`:
 
----
+```jsx
+<h1 className="title">Hello</h1>
+// becomes:
+React.createElement("h1", { className: "title" }, "Hello")
+// result = a plain JS object:
+{ type: "h1", props: { className: "title", children: "Hello" } }
+```
 
-### Q2: JSX là gì? Khác HTML thế nào? 🟢 Junior
+This object is a **React Element** — it describes the UI but isn't real DOM. React uses it to build the Virtual DOM and diff.
 
-**A:** JSX is a syntax extension that lets you write HTML-like code in JavaScript. It compiles to `React.createElement()` calls, producing plain JS objects (React Elements) — not actual HTML or DOM nodes.
+Note: JSX differs from HTML: `className` not `class`, `htmlFor` not `for`, camelCase events, self-closing tags need `/`.
 
-JSX → Babel/SWC compile → `React.createElement()` → plain JS object. Khác HTML: `className` thay `class`, `htmlFor` thay `for`, self-closing tags bắt buộc, dùng `{}` để nhúng JS expressions. JSX tự escape strings → an toàn XSS mặc định.
-
-**💡 Dấu hiệu trả lời tốt / Interview Signal:**
-
-- ✅ Strong: Nêu compilation pipeline, biết kết quả là JS object không phải DOM, nhắc XSS safety
-- ❌ Weak: "JSX giống HTML nhưng viết trong JavaScript" — đúng bề mặt, không hiểu compile step
-
----
-
-### Q3: Virtual DOM là gì? Reconciliation hoạt động thế nào? 🟡 Mid
-
-**A:** Virtual DOM is a lightweight JS object tree describing the UI. When state changes, React creates a new VDOM, diffs it against the previous one using an O(n) algorithm with 2 heuristics, and applies minimal changes to the real DOM.
-
-VDOM = cây JS objects mô tả UI, rất nhẹ so với DOM thật. Reconciliation so sánh 2 VDOM trees bằng 2 quy tắc: (1) khác loại tag → xóa cây con, tạo mới, (2) cùng loại + cùng key → giữ node, update props. Thuật toán O(n) thay vì O(n³) của tree diff chuẩn. Trade-off: đôi khi xóa + tạo lại không cần thiết, nhưng đúng >99% trường hợp.
-
-**💡 Dấu hiệu trả lời tốt / Interview Signal:**
-
-- ✅ Strong: Nêu O(n) + 2 heuristics cụ thể, biết VDOM không luôn nhanh hơn (Svelte)
-- ❌ Weak: "VDOM nhanh hơn real DOM" — oversimplified, misses the point
+🇻🇳 JSX là cú pháp mở rộng cho JS, viết giao diện giống HTML trong file JS. Trình duyệt không hiểu JSX. Khi build, công cụ chuyển JSX thành `React.createElement()`, kết quả là object JS mô tả UI — không phải HTML thật. Object này gọi là React Element, React dùng nó để xây Virtual DOM.
 
 ---
 
-### Q4: Tại sao cần key? Index làm key có vấn đề gì? 🟡 Mid
+### 🟡 Q3: "How is Virtual DOM different from Real DOM? How does reconciliation work?" / "Virtual DOM khác Real DOM thế nào? Reconciliation hoạt động ra sao?"
 
-**A:** Keys help React identify which items in a list have changed, been added, or removed. Without keys, React compares by position — which breaks when items are reordered, deleted, or inserted.
+**💡 Interview Signal:** Classic question. Interviewer wants clear explanation, not vague "Virtual DOM is faster".
 
-Key = thẻ tên cho phần tử trong list. Không có key → React so sánh theo vị trí → xóa/sort gây state match sai item. Bug: todo list có checkbox, xóa item đầu → checked state bị gán cho item tiếp theo. Index chỉ OK khi list tĩnh + items không có state.
+**Answer / Trả lời:**
 
-**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+🇬🇧 **Real DOM** = HTML tree managed by the browser. Each modification triggers layout recalculation and repaint → expensive.
 
-- ✅ Strong: Nêu bug cụ thể (state assigned sai), biết khi nào index OK, biết trick reset component bằng key
-- ❌ Weak: "Key giúp React render nhanh hơn" — thiếu khía cạnh correctness, mới chỉ nói performance
+**Virtual DOM** = lightweight copy of the UI tree, stored as JS objects in memory. Operating on JS objects is much cheaper than real DOM.
 
----
+**Reconciliation** is the algorithm React uses to diff two Virtual DOM trees (old vs new) and find the minimal set of changes:
 
-### Q5: Render Phase vs Commit Phase? Tại sao tách 2 phase? 🟡 Mid
+1. Compare root nodes. Different types (`<div>` → `<span>`) → destroy old tree, create new.
+2. Same type → keep node, only update changed attributes.
+3. For lists → use `key` to identify which items were added, removed, or moved.
 
-**A:** Render Phase creates VDOM and diffs — it's pure and interruptible in Concurrent Mode. Commit Phase applies changes to the real DOM — it's synchronous and runs once. This separation enables React to cancel/reprioritize renders without corrupting the UI.
+Finally, React batches all changes and updates the real DOM once → fewer browser reflows.
 
-Render phase: gọi component functions, tạo VDOM, diff — pure, không chạm DOM, có thể interrupt + chạy lại nhiều lần. Commit phase: apply lên DOM thật, chạy useLayoutEffect (trước paint) rồi useEffect (sau paint) — synchronous, 1 lần. Tách 2 phase để Concurrent Mode có thể hủy render nếu có update ưu tiên hơn.
+**Important note:** Virtual DOM isn't "always faster" — it has overhead from diffing. For simple changes, direct DOM is faster (that's why Svelte doesn't use Virtual DOM). React's advantage is batching complex updates.
 
-**💡 Dấu hiệu trả lời tốt / Interview Signal:**
-
-- ✅ Strong: Biết render có thể chạy nhiều lần, phân biệt useLayoutEffect vs useEffect timing, nhắc Concurrent Mode
-- ❌ Weak: Chỉ mô tả "trước render / sau render" mà không nhắc interruptibility
+🇻🇳 **Real DOM** = cây HTML do browser quản lý. Mỗi lần sửa → tính lại layout + vẽ lại → tốn. **Virtual DOM** = bản sao nhẹ dạng object JS trong bộ nhớ. **Reconciliation** so 2 cây Virtual DOM, tìm khác biệt tối thiểu: (1) khác loại thẻ → xóa cũ tạo mới, (2) cùng loại → giữ node sửa thuộc tính, (3) danh sách dùng key. React gom thay đổi, update DOM thật 1 lần.
 
 ---
 
-### Q6: Fiber Architecture là gì? Tại sao React cần nó? 🔴 Senior
+### 🟡 Q4: "Why do we need key when rendering lists? Can we use index?" / "Tại sao cần key khi render danh sách? Dùng index được không?"
 
-**A:** Fiber is React's reimplemented reconciliation engine (React 16+). It represents each component as a node in a linked list instead of recursive call stack, enabling React to pause, abort, and resume rendering work — the foundation for Concurrent Mode.
+**💡 Interview Signal:** Tests practical understanding. "Index is bad" isn't enough — need to explain WHY.
 
-React 15: render = đệ quy đồng bộ, không dừng được. Tree lớn → block main thread → UI đơ. Fiber biểu diễn component thành linked list (child/sibling/return pointers). React xử lý từng node, giữa mỗi node check: có task ưu tiên cao hơn? Nếu có → yield → resume sau. Priority lanes phân loại: user input = high, background render = low. Double buffering: current tree + workInProgress tree → swap khi xong.
+**Answer / Trả lời:**
 
-**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+🇬🇧 Key helps React identify each list item when changes happen (add, remove, reorder).
 
-- ✅ Strong: Giải thích vấn đề trước Fiber, linked list vs đệ quy, priority lanes, double buffering, time slicing ~5ms chunks
-- ❌ Weak: "Fiber giúp React nhanh hơn" — Fiber làm responsive hơn, total work không giảm
+**Without key (or with index):** React compares by position. Adding an item at the start shifts all positions → React thinks EVERYTHING changed → updates all items.
 
-**🔴 Follow-up Chain:**
+**With key (unique ID):** React recognizes "A, B, C are unchanged, just X was added at start" → only creates 1 new element.
 
-1. "Fiber dùng linked list cụ thể thế nào? Child/sibling/return pointer?" → Traversal algorithm: child → sibling → return, có thể bookmark bất kỳ node nào
-2. "Priority lanes hoạt động ra sao? Có bao nhiêu lane?" → 31 lanes (bitmask), SyncLane cho flushSync, DefaultLane cho setState, TransitionLane cho startTransition
-3. "Time slicing thực tế dùng API nào? requestIdleCallback?" → Không, dùng MessageChannel. rIC có vấn đề: không fire khi tab inactive, priority không đủ granular
+**Can we use index?** Yes, but ONLY when the list never changes order, never adds/removes from the middle. If violated → bug:
 
----
+```jsx
+// List: [{id:1, name:"A"}, {id:2, name:"B"}]
+// User deletes first item
+// With key=index: item key=0 is now B, React thinks key=0 just changed name A→B
+// → If there's an input in the item → keeps old input value → BUG!
+```
 
-### Q7: Stale closure trong React là gì? Cách fix? 🔴 Senior
+Use unique ID from data (`id`, `slug`, `uuid`). If no ID exists, generate it when loading data — DON'T generate during render (`Math.random()` → new key every render → React recreates entire list).
 
-**A:** Stale closure occurs when a callback captures state/props from a previous render and continues using those outdated values. In React, every render creates a new closure scope, but asynchronous callbacks (setTimeout, setInterval) from earlier renders still reference the old scope.
-
-Mỗi render = snapshot state. Callback từ render N giữ giá trị render N. Bug: setInterval trong useEffect deps=[] → closure mãi dùng count ban đầu. Fix: (1) functional updater `prev => prev + 1` khi chỉ cần SET, (2) useRef khi cần ĐỌC giá trị mới nhất. Thêm dep vào array không phải best fix cho interval vì recreate mỗi giây → drift.
-
-**💡 Dấu hiệu trả lời tốt / Interview Signal:**
-
-- ✅ Strong: Giải thích closure capture tại render time, biết cả 2 fix + khi nào dùng, biết thêm dep vào interval có vấn đề
-- ❌ Weak: "Thêm variable vào deps array" — surface fix, misses functional updater pattern
-
-**🔴 Follow-up Chain:**
-
-1. "Functional updater vs useRef — khi nào dùng cái nào?" → Updater khi chỉ SET. Ref khi cần READ (log, API call, comparison). Ref change không trigger re-render.
-2. "Nếu callback cần đọc NHIỀU state values, không chỉ 1?" → useRef cho mỗi value, hoặc 1 ref object chứa tất cả. Hoặc useReducer — dispatch stable, reducer nhận current state.
-3. "React 19 Compiler có fix stale closure không?" → Compiler auto-memoize nhưng không fix stale closure vì đây là JS behavior, không phải React issue. Dev vẫn cần hiểu closure.
+🇻🇳 Key giúp React nhận biết từng item khi có thay đổi. Không có key → so sánh theo vị trí → thêm ở đầu thì React nghĩ tất cả đổi. Có key → nhận ra item nào giữ, nào thêm. Dùng index chỉ OK khi danh sách không bao giờ đổi thứ tự. Nên dùng ID duy nhất từ data.
 
 ---
 
-### Q8: Thiết kế virtualized list cho 100,000 items? 🔴 Senior
+### 🟡 Q5: "What's the difference between Render Phase and Commit Phase?" / "Render Phase và Commit Phase khác nhau thế nào?"
 
-**A:** Rendering 100k DOM nodes crashes the browser. Virtualization renders only visible items (~20-50) by calculating which items are in viewport based on scroll position, using a spacer element for correct scrollbar height.
+**💡 Interview Signal:** Separates deep understanding from surface-level knowledge.
 
-Render 100k DOM nodes = crash. Virtualization: (1) container fixed height + overflow scroll, (2) spacer div height = totalItems × itemHeight → scrollbar đúng, (3) tính startIndex từ scrollTop, chỉ render items visible, (4) translateY đặt items đúng vị trí (GPU compositing). Production: react-window hoặc @tanstack/virtual cho edge cases (dynamic height, horizontal scroll).
+**Answer / Trả lời:**
 
-**💡 Dấu hiệu trả lời tốt / Interview Signal:**
+🇬🇧 When state changes, React runs 2 phases:
 
-- ✅ Strong: Giải thích mechanism (spacer + translate + visible range), nhắc dynamic height challenge, biết khi nào cần virtualization vs pagination
-- ❌ Weak: "Dùng react-window" — biết library nhưng không hiểu mechanism bên dưới
+**Render Phase (calculation):**
 
-**🔴 Follow-up Chain:**
+- Calls component function → gets new JSX
+- Diffs new vs old (reconciliation)
+- **Does NOT touch real DOM.** Only calculates "what needs to change".
+- Can be interrupted or restarted (React 18 concurrent mode)
+- → Component function must be pure: no API calls, no external mutations, no Date.now()
 
-1. "Dynamic height items thì sao?" → Measure sau mount (ResizeObserver), cache heights, estimate cho unmeasured items. @tanstack/virtual hỗ trợ built-in.
-2. "Virtualization ảnh hưởng accessibility thế nào?" → Screen readers không thấy items ngoài viewport. Cần aria-rowcount, aria-rowindex. Keyboard navigation phải scroll-to-view.
-3. "Khi nào dùng virtualization vs pagination vs infinite scroll?" → Virtualization: user cần random access (scroll to any position). Pagination: SEO, shareable URLs. Infinite scroll: social feed, lazy exploration.
+**Commit Phase (apply):**
 
----
+- Applies changes to real DOM
+- Runs `useLayoutEffect` (sync, before browser paint)
+- Browser paints pixels
+- Runs `useEffect` (async, after browser paint)
+- **Cannot be interrupted.** Runs once.
 
-## Interview Q&A Summary / Tổng Kết Phỏng Vấn
+**Practical meaning:** Side effects (API calls, localStorage, event subscriptions...) must go in `useEffect` (Commit Phase), NOT directly in the component function (Render Phase) — because the component function may run multiple times.
 
-| #   | Question                                  | Level | Key Point                                              |
-| --- | ----------------------------------------- | ----- | ------------------------------------------------------ |
-| Q1  | UI = f(state)? Declarative vs Imperative? | 🟢    | Same state → same UI. Describe WHAT, not HOW           |
-| Q2  | JSX là gì?                                | 🟢    | Syntax sugar → React.createElement → JS object         |
-| Q3  | Virtual DOM & Reconciliation?             | 🟡    | JS object tree, O(n) diff, 2 heuristics                |
-| Q4  | Tại sao cần key?                          | 🟡    | Identity cho list items, index gây state mismatch      |
-| Q5  | Render vs Commit Phase?                   | 🟡    | Render=pure+interruptible, Commit=sync+final           |
-| Q6  | Fiber Architecture?                       | 🔴    | Linked list, interrupt, priority lanes, time slicing   |
-| Q7  | Stale closure?                            | 🔴    | Closure capture old render, fix: updater or ref        |
-| Q8  | Virtualized list design?                  | 🔴    | Render visible only, spacer+translate, measure dynamic |
+🇻🇳 **Render Phase**: gọi component → tính JSX mới → so sánh → KHÔNG chạm DOM, có thể lặp/hủy, phải thuần túy. **Commit Phase**: áp dụng lên DOM thật → chạy useLayoutEffect → browser vẽ → chạy useEffect. Không bị hủy, chạy 1 lần. Side effect đặt trong useEffect (Commit Phase).
 
 ---
 
-## ⚡ Cold Call Simulation / Mô Phỏng Phỏng Vấn
+### 🔴 Q6: "Explain Fiber Architecture. What problem does it solve compared to the old Stack Reconciler?" / "Giải thích Fiber Architecture. Nó giải quyết vấn đề gì so với Stack Reconciler cũ?"
 
-> 🎯 Interviewer hỏi đột ngột: **"Giải thích Virtual DOM và Reconciliation trong React."**
+**💡 Interview Signal:** Senior question — tests understanding of React internals, not just API surface.
 
-**30 giây đầu — mở đầu lý tưởng:**
+**Answer / Trả lời:**
 
-1. "Virtual DOM là cây JavaScript objects mô tả UI — lightweight representation, không phải DOM thật."
-2. "Khi state thay đổi, React tạo VDOM mới, diff với cũ bằng thuật toán O(n) dựa trên 2 heuristics: khác tag thì xóa cây con, cùng tag thì diff props."
-3. "Trong production, ví dụ Facebook feed, mỗi like/comment chỉ update đúng 1-2 DOM nodes thay vì re-render toàn bộ feed — nhờ reconciliation tính diff tối thiểu."
-4. "Trade-off: VDOM có overhead tạo + diff objects. Svelte compile-time approach không cần VDOM nhưng React's flexibility phù hợp hơn cho large teams với unpredictable update patterns."
+🇬🇧 **Old problem (Stack Reconciler — pre React 16):** When the component tree changed, React traversed the entire tree CONTINUOUSLY using recursion. The call stack was blocked until done. During that time, the browser couldn't process animation, input, or any interaction → UI jank/freeze.
 
-_Sau đó mở rộng theo hướng interviewer dẫn dắt: key mechanism, Fiber, performance optimization._
+**Solution — Fiber Architecture:**
+
+Fiber converts rendering from recursion (can't stop mid-way) into a while loop over a linked list (can stop anytime).
+
+Each component has a Fiber node — an object with `type`, `props`, `state`, and pointers: `child` / `sibling` / `return`. React traverses via a while loop, processing one Fiber node per iteration.
+
+**3 new capabilities from Fiber:**
+
+1. **Pause and resume** — render partially → yield to browser → continue
+2. **Prioritize** — user input (high priority) can interrupt rendering a long list (low priority)
+3. **Abort** — if a higher-priority update arrives → discard old render result, start fresh
+
+**Double buffering:** React maintains 2 Fiber trees — `current` (displayed) and `workInProgress` (being built). When done, swap. Like game double-buffering — render new frame in background, swap when ready → no flicker.
+
+🇻🇳 **Vấn đề cũ**: Stack Reconciler duyệt cây bằng đệ quy liên tục → browser đứng hình. **Fiber**: biến render thành while loop trên linked list → có thể dừng bất kỳ lúc nào. Mỗi component = 1 Fiber node. 3 khả năng mới: tạm dừng/tiếp tục, ưu tiên, hủy bỏ. Double buffering: giữ 2 cây (current + workInProgress), hoán đổi khi xong.
+
+🔗 **Follow-up Chain:**
+
+1. → "How does React 18 use Fiber for `useTransition` and `useDeferredValue`?"
+2. → "Explain `requestIdleCallback` and why React implements its own scheduler instead of using browser API?"
+3. → "If Fiber render is paused mid-way, how does React ensure UI consistency (tearing)?"
 
 ---
 
-## Self-Check / Tự Kiểm Tra ⚡
+### 🔴 Q7: "What is stale closure in React? Give an example and fix." / "Stale closure trong React là gì? Cho ví dụ và cách fix."
 
-> **Đóng tài liệu lại trước khi làm — Close the doc before attempting.**
+**💡 Interview Signal:** Practical debugging question. Tests JS closure knowledge + React rendering model.
 
-- [ ] **Retrieval**: Viết 2 quy tắc reconciliation từ trí nhớ. So sánh với Layer 2 của mục Virtual DOM.
-- [ ] **Visual**: Vẽ Fiber linked list (child/sibling/return) cho tree: App → Header + Main → Card + Card. So sánh với ASCII diagram.
-- [ ] **Application**: List 1000 todo items có checkbox. Dùng `index` hay `item.id` làm key? Tại sao? Viết code.
-- [ ] **Debug**: `useEffect(() => { setInterval(() => setCount(count + 1), 1000) }, [])` — tại sao count mãi = 1? Fix thế nào?
-- [ ] **Teach**: Giải thích Virtual DOM cho người không biết lập trình bằng 1 câu liên tưởng.
+**Answer / Trả lời:**
 
-💬 **Feynman Prompt:** Explain Virtual DOM to someone who doesn't code, using the "draft document" analogy from Layer 1. No jargon allowed.
+🇬🇧 Stale closure happens when a function (callback, effect handler) created during a previous render is still being used → it "sees" old state/props values instead of current ones.
 
-🔁 **Spaced Repetition:** Ôn lại file này sau **3 ngày → 7 ngày → 14 ngày** để chuyển vào long-term memory.
+**Most common example — setInterval:**
+
+```jsx
+function Timer() {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setCount(count + 1); // count is always 0 (closure from first render)
+    }, 1000);
+    return () => clearInterval(id);
+  }, []); // [] → function created once → "captures" count=0
+}
+```
+
+**Root cause:** Each render creates a new `count` variable. But the function inside `setInterval` was created at render 1 → holds a reference to render 1's `count` (= 0), never updates.
+
+**3 fixes:**
+
+1. **Functional updater** — doesn't need to read current state: `setCount(prev => prev + 1)` — React passes the latest value as `prev`.
+2. **Add to dependency array** — effect recreates when state changes: `useEffect(() => { ... }, [count])` — but with setInterval this means clear/create repeatedly.
+3. **useRef** — store latest value outside closure: `countRef.current = count;` every render, read `countRef.current` in effect.
+
+🇻🇳 Stale closure xảy ra khi hàm tạo ở render trước vẫn được dùng → thấy state cũ. Nguyên nhân: closure JS giữ tham chiếu biến lúc tạo. Ví dụ phổ biến: setInterval với `[]` deps → hàm chỉ tạo 1 lần → "chụp" count=0 mãi mãi. 3 cách fix: (1) functional updater `prev => prev + 1`, (2) thêm vào deps, (3) useRef lưu giá trị mới nhất.
+
+🔗 **Follow-up Chain:**
+
+1. → "If you have 10 state values to read in setInterval, what's the most efficient approach?"
+2. → "Can React Compiler in React 19 fix stale closures? Why or why not?"
+3. → "Design a custom hook `useLatest(value)` that returns a ref always containing the latest value."
+
+---
+
+### 🔴 Q8: "Design a page listing 10,000 products. Explain from Virtual DOM, key, render/commit, and optimizations." / "Thiết kế trang danh sách 10,000 sản phẩm. Giải thích từ Virtual DOM, key, render/commit, và tối ưu."
+
+**💡 Interview Signal:** Design question — tests ability to apply all fundamental knowledge to a real problem.
+
+**Answer / Trả lời:**
+
+🇬🇧 **Problem:** 10,000 DOM nodes → slow page. Render Phase is slow creating 10,000 Virtual DOM nodes. Commit Phase is slow because browser must layout + paint many elements.
+
+**Step 1: Virtualization (only render visible items)**
+Only render ~20-30 items visible on screen, not all 10,000. When scrolling → swap item content, don't create new DOM. Use `react-window` or `@tanstack/virtual`.
+→ Virtual DOM tree drops from 10,000 to ~30 nodes → Render Phase ~300x faster.
+
+**Step 2: Key strategy**
+Use `product.id` as key (not index). When scrolling, position 1 may change from product #1 to product #50 — if using index, React thinks item hasn't changed → wrong display.
+
+**Step 3: Optimize Render Phase**
+
+- `React.memo()` on `<ProductCard>` — if props unchanged, skip re-render.
+- If search box filters the list → `useTransition` to prioritize displaying typed characters (urgent) before filtering 10,000 items (non-urgent).
+
+**Step 4: Optimize Commit Phase**
+
+- `useDeferredValue` on search query → React commits old UI first, then updates filtered list later.
+- Reduce layout/paint: avoid CSS properties that trigger layout recalculation (`width`, `height`...).
+
+**Step 5: Loading**
+
+- `Suspense` + lazy loading: split `<ProductCard>` into a separate chunk → load when needed.
+- Infinite scroll instead of loading all: fetch first 50 items, near bottom → fetch more.
+
+🇻🇳 **Vấn đề**: 10,000 node DOM → chậm. **Bước 1**: Virtualization — chỉ render ~30 item hiện trên màn hình (react-window). **Bước 2**: Key dùng product.id, không dùng index. **Bước 3**: React.memo cho ProductCard, useTransition cho search. **Bước 4**: useDeferredValue cho search query. **Bước 5**: Suspense + lazy loading + infinite scroll.
+
+🔗 **Follow-up Chain:**
+
+1. → "How does virtualization affect accessibility (screen readers)?"
+2. → "If each ProductCard has a heavy image, how do you optimize image loading?"
+3. → "Compare virtualization vs pagination. When to use which?"
+
+---
+
+## Q&A Summary Table / Bảng Tổng Hợp Q&A
+
+| #   | Question / Câu hỏi           | Level | Key concepts                                         |
+| --- | ---------------------------- | ----- | ---------------------------------------------------- |
+| Q1  | UI = f(state)                | 🟢    | Declarative, pure function, same input → same output |
+| Q2  | What is JSX                  | 🟢    | Compile, createElement, JS object                    |
+| Q3  | Virtual DOM & Reconciliation | 🟡    | Shadow copy, diff, minimal updates                   |
+| Q4  | Key in lists                 | 🟡    | Identify elements, unique ID, not index              |
+| Q5  | Render vs Commit Phase       | 🟡    | Calculate vs apply, side effects, purity             |
+| Q6  | Fiber Architecture           | 🔴    | Split work, pause, prioritize, double buffer         |
+| Q7  | Stale Closure                | 🔴    | JS closure, functional updater, useRef               |
+| Q8  | Design large list            | 🔴    | Virtualization, memo, useTransition, key strategy    |
+
+---
+
+## ⚡ Cold Call Simulation / Mô Phỏng Hỏi Nhanh
+
+**Question: "What problem does Fiber Architecture solve?"**
+
+30-second answer:
+
+🇬🇧
+
+1. Before React 16, rendering traversed the entire component tree continuously with recursion — couldn't stop mid-way → UI freeze for large trees.
+2. Fiber converts rendering into a while loop over a linked list — each component = one Fiber node — React can stop after each node.
+3. Example: user typing in a search box while React renders a 1,000-item list → Fiber lets React pause the list, handle the input first, then resume.
+4. Tradeoff: added internal complexity (double buffer, scheduler), and developers need to understand that components may be called multiple times per update.
+
+🇻🇳
+
+1. Trước React 16, render duyệt toàn bộ cây bằng đệ quy — không dừng được → UI đứng hình với cây lớn.
+2. Fiber biến render thành while loop trên linked list — mỗi component = 1 Fiber node — có thể dừng sau mỗi node.
+3. Ví dụ: user gõ tìm kiếm trong khi React render danh sách 1,000 item → Fiber tạm dừng danh sách, xử lý input trước, rồi tiếp.
+4. Đánh đổi: thêm phức tạp nội bộ (double buffer, scheduler), và component có thể bị gọi nhiều lần trong 1 update.
+
+---
+
+## Self-Check / Tự Kiểm Tra
+
+**Close this document and write from memory: / Đóng tài liệu này lại và viết từ trí nhớ:**
+
+### Retrieval / Truy hồi
+
+- [ ] Write 3 core React principles (declarative, component-based, unidirectional) and explain each in 1 sentence / Viết 3 nguyên tắc React, giải thích mỗi cái bằng 1 câu
+- [ ] Draw the flow: state change → render → virtual DOM → diff → commit → real DOM → browser paint / Vẽ sơ đồ luồng
+
+### Visual / Hình dung
+
+- [ ] Draw 2 Virtual DOM trees (old and new), mark differences, list changes React needs to make / Vẽ 2 cây Virtual DOM, đánh dấu khác biệt
+- [ ] Draw a Fiber tree with 4-5 nodes, mark traversal direction (child → sibling → return) / Vẽ cây Fiber, đánh dấu chiều duyệt
+
+### Application / Ứng dụng
+
+- [ ] Write a simple Counter component, identify state, JSX, and data flow / Viết component Counter, chỉ ra state, JSX, luồng data
+- [ ] Write a 5-item product list with correct keys, explain why those keys are good / Viết danh sách 5 sản phẩm với key đúng
+
+### Debug
+
+- [ ] Write a stale closure example with setInterval, explain the bug, fix with functional updater / Viết ví dụ stale closure, giải thích, sửa
+- [ ] Find the bug: `{count && <ProductList />}` when count = 0. Explain and fix. / Tìm bug, giải thích, sửa
+
+### Teach / Dạy lại
+
+- [ ] Explain Virtual DOM to someone who doesn't know React, WITHOUT technical jargon / Giải thích Virtual DOM cho người chưa biết React, KHÔNG dùng thuật ngữ kỹ thuật
+
+**Feynman Prompt:** Explain how React updates the UI to a friend who uses jQuery. Use a concrete example, don't use "reconciliation" or "fiber". / Giải thích cách React update UI cho bạn đang dùng jQuery. Dùng ví dụ cụ thể, không dùng từ "reconciliation" hay "fiber".
+
+🔁 **Spaced Repetition:** Review this file after 3 days → 7 days → 14 days. / Ôn lại sau 3 → 7 → 14 ngày.
 
 ---
 
 ## Connections / Liên Kết
 
-- ⬅️ **Built on:** [JavaScript Closures & Functions](../02-javascript/) — React components là functions, stale closure là JS behavior
-- ➡️ **Enables:** [Hooks Deep Dive](./03-hooks-deep-dive.md) — hooks cần hiểu render cycle, closure, Fiber memoizedState
-- ➡️ **Enables:** [React 19 Features](./02-react-19-features.md) — Compiler, Actions, use() đều xây trên nền tảng này
-- 🔗 **Applied in:** Next.js, Remix, React Native — tất cả dùng React rendering pipeline
+- ➡️ **Next**: [React 19 Features](./02-react-19-features.md) — React Compiler, Actions, use()
+- ➡️ **Next**: [Hooks Deep Dive](./03-hooks-deep-dive.md) — useState, useEffect, useRef in detail
+- 🔗 **Related**: [JavaScript Closures](../01-javascript/04-closures.md) — foundation for understanding stale closure
+- 🔗 **Related**: [Performance Optimization](./09-performance-optimization.md) — applying render/commit knowledge
