@@ -1,650 +1,125 @@
 ---
 layout: page
 title: "String to Integer (atoi)"
-difficulty: Easy
+difficulty: Medium
 category: String
 tags: [String]
-leetcode_url: "https://leetcode.com/problems/string-to-integer-atoi-/"
+leetcode_url: "https://leetcode.com/problems/string-to-integer-atoi/"
 ---
 
-# String to Integer (atoi)
+# String to Integer (atoi) / Chuyển Chuỗi Thành Số Nguyên
 
-> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: State Machine / String Parsing
+> **Frequency**: 📘 Tier 2 — Edge case gauntlet; tests disciplined parsing under many conditions
+> **See also**: [Table of Contents](../../../00-table-of-contents.md) | [Reverse Integer](./02-reverse-integer.md)
 
-**LeetCode Problem # * 8. String to Integer (atoi)**
+## 🧠 Intuition / Tư Duy
+
+- **Analogy:** Hãy tưởng tượng một robot đọc bảng giá: nó bỏ qua khoảng trắng đầu, nhìn dấu `+`/`-`, đọc từng chữ số cho đến khi gặp chữ cái hoặc hết chuỗi, rồi kẹp kết quả vào phạm vi 32-bit. Robot không quay lại — chỉ đọc tiến một chiều.
+- **Pattern Recognition:**
+  - Parsing có thứ tự → State Machine: `whitespace → sign → digits → stop`
+  - Overflow phải check TRƯỚC khi nhân 10 — không phải sau
+  - "Clamp" (kẹp) không phải "return 0" như Reverse Integer — đọc đề kỹ!
+- **Visual — `s = "   -42abc"`:**
+
+```
+State:  [START] ──spaces──▶ [SIGN] ──'-'──▶ [DIGITS] ──'a'──▶ [STOP]
+         "   "               "-"              "42"               "abc" ignored
+
+i=0: ' ' → skip (whitespace state)
+i=1: ' ' → skip
+i=2: ' ' → skip
+i=3: '-' → sign = -1, advance
+i=4: '4' → digit=4, result = 0*10+4 = 4
+i=5: '2' → digit=2, result = 4*10+2 = 42
+i=6: 'a' → not digit → STOP
+
+return -1 * 42 = -42 ✓
+```
 
 ## Problem Description
 
- * Implement the myAtoi(string s) function, which converts a string to a 32-bit  * signed integer (similar to C/C++'s atoi function).  *  * The algorithm for myAtoi(string s) is as follows:  * 1. Read in and ignore any leading whitespace. 
+Implement `myAtoi(s)`: skip leading spaces, read optional sign, read digits until non-digit, clamp to `[-2³¹, 2³¹−1]`.
+
+```
+Input: s = "42"              → Output: 42
+Input: s = "   -42"          → Output: -42
+Input: s = "4193 with words" → Output: 4193
+Input: s = "-91283472332"    → Output: -2147483648  (clamped to INT_MIN)
+```
+
+## 📝 Interview Tips
+
+1. **List all edge cases before coding** / Trước khi code, liệt kê: khoảng trắng, dấu, overflow, chuỗi rỗng, chữ cái đầu.
+2. **Clamp, don't return 0** / Khác với Reverse Integer: overflow → clamp về `INT_MAX`/`INT_MIN`, không phải `0`.
+3. **Check overflow before multiplying** / `result > 214748364` → overflow chắc chắn; `=== 214748364 && digit > 7` → cũng overflow.
+4. **Sign affects clamp direction** / `sign === 1 ? INT_MAX : INT_MIN` — không phải lúc nào cũng clamp về INT_MAX.
+5. **Only one sign character allowed** / `"+-12"` → trả về `0` vì `+` đã đọc, gặp `-` là stop digit.
+6. **Regex shortcut exists but misses overflow** / `parseInt(s.trim().match(/^[+-]?\d+/)?.[0])` — OK nếu dùng BigInt để clamp chính xác.
 
 ## Solutions
 
 {% raw %}
-/**
- * 8. String to Integer (atoi)
- *
- * Problem:
- * Implement the myAtoi(string s) function, which converts a string to a 32-bit
- * signed integer (similar to C/C++'s atoi function).
- *
- * The algorithm for myAtoi(string s) is as follows:
- * 1. Read in and ignore any leading whitespace.
- * 2. Check if the next character (if not already at the end of the string) is '-' or '+'.
- *    Read this character in if it is either. This determines if the final result is
- *    negative or positive respectively. If neither is present, then the result is positive.
- * 3. Read in next the characters until the next non-digit character or the end of the
- *    input is reached. The rest of the string is ignored.
- * 4. Convert these digits into an integer (i.e. "123" -> 123, "0032" -> 32). If no
- *    digits were read, then the integer is 0. Change the sign as necessary (from step 2).
- * 5. If the integer is out of the 32-bit signed integer range [-2³¹, 2³¹ - 1], then
- *    clamp the integer so that it remains in the range. Specifically, integers less
- *    than -2³¹ should be clamped to -2³¹, and integers greater than 2³¹ - 1 should
- *    be clamped to 2³¹ - 1.
- * 6. Return the integer as the final result.
- *
- * Example:
- * Input: s = "42"
- * Output: 42
- *
- * Input: s = "   -42"
- * Output: -42
- *
- * Input: s = "4193 with words"
- * Output: 4193
- *
- * LeetCode: https://leetcode.com/problems/string-to-integer-atoi/
- */
+/\*\*
 
-/**
- * Solution 1: State Machine (Optimal)
- *
- * Approach:
- * - Use state machine to handle different parsing states
- * - Handle overflow carefully
- *
- * Time Complexity: O(n)
- * Space Complexity: O(1)
- */
-function myAtoi(s: string): number {
-  let i = 0;
-  let sign = 1;
-  let result = 0;
-
-  // Skip leading whitespace
-  while (i < s.length && s[i] === " ") {
-    i++;
-  }
-
-  if (i >= s.length) return 0;
-
-  // Handle sign
-  if (s[i] === "+" || s[i] === "-") {
-    sign = s[i] === "-" ? -1 : 1;
-    i++;
-  }
-
-  // Parse digits
-  while (i < s.length && s[i] >= "0" && s[i] <= "9") {
-    const digit = parseInt(s[i]);
-
-    // Check for overflow
-    if (
-      result > Math.floor(2147483647 / 10) ||
-      (result === Math.floor(2147483647 / 10) && digit > 7)
-    ) {
-      return sign === 1 ? 2147483647 : -2147483648;
-    }
-
-    result = result * 10 + digit;
-    i++;
-  }
-
-  return sign * result;
-}
-
-/**
- * Solution 2: Using Regular Expression
- *
- * Approach:
- * - Use regex to extract the number
- * - Simple but less efficient
- *
- * Time Complexity: O(n)
- * Space Complexity: O(n)
- */
-function myAtoiRegex(s: string): number {
+- Solution 1 — Brute: Regex + parseInt
+- Time: O(n) Space: O(n) — regex match allocates string
+- Concise but relies on JS parseInt overflow behavior (not safe for all edge cases).
+  \*/
+  function myAtoiRegex(s: string): number {
   const match = s.trim().match(/^[+-]?\d+/);
-
   if (!match) return 0;
-
   const num = parseInt(match[0]);
-
-  // Handle overflow
-  if (num > 2147483647) return 2147483647;
-  if (num < -2147483648) return -2147483648;
-
-  return num;
-}
-
-/**
- * Solution 3: Using parseInt with Validation
- *
- * Approach:
- * - Use built-in parseInt with custom validation
- * - Handle edge cases manually
- *
- * Time Complexity: O(n)
- * Space Complexity: O(1)
- */
-function myAtoiParseInt(s: string): number {
-  const trimmed = s.trim();
-
-  if (!trimmed) return 0;
-
-  // Check if starts with valid character
-  const firstChar = trimmed[0];
-  if (
-    !["+", "-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"].includes(
-      firstChar
-    )
-  ) {
-    return 0;
+  return Math.max(-2147483648, Math.min(2147483647, num));
   }
 
-  const num = parseInt(trimmed);
+/\*\*
 
-  if (isNaN(num)) return 0;
-
-  // Handle overflow
-  if (num > 2147483647) return 2147483647;
-  if (num < -2147483648) return -2147483648;
-
-  return num;
-}
-
-/**
- * Solution 4: Character by Character Parsing
- *
- * Approach:
- * - Parse character by character
- * - More explicit control over the process
- *
- * Time Complexity: O(n)
- * Space Complexity: O(1)
- */
-function myAtoiCharByChar(s: string): number {
+- Solution 2 — Optimal: State Machine
+- Time: O(n) Space: O(1)
+- Single pass: skip whitespace → read sign → read digits with overflow guard → clamp.
+  \*/
+  function myAtoi(s: string): number {
+  const INT_MAX = 2147483647;
+  const INT_MIN = -2147483648;
   let i = 0;
   let sign = 1;
   let result = 0;
 
-  // Skip whitespace
-  while (i < s.length && s[i] === " ") {
-    i++;
-  }
+// State 1: skip leading whitespace
+while (i < s.length && s[i] === " ") i++;
 
-  if (i >= s.length) return 0;
+// State 2: optional sign
+if (i < s.length && (s[i] === "+" || s[i] === "-")) {
+sign = s[i] === "-" ? -1 : 1;
+i++;
+}
 
-  // Handle sign
-  if (s[i] === "+" || s[i] === "-") {
-    sign = s[i] === "-" ? -1 : 1;
-    i++;
-  }
+// State 3: read digits with overflow check
+while (i < s.length && s[i] >= "0" && s[i] <= "9") {
+const digit = s[i].charCodeAt(0) - 48;
 
-  // Parse digits
-  while (i < s.length) {
-    const char = s[i];
-
-    if (char < "0" || char > "9") {
-      break;
-    }
-
-    const digit = char.charCodeAt(0) - "0".charCodeAt(0);
-
-    // Check for overflow
-    if (result > 214748364 || (result === 214748364 && digit > 7)) {
-      return sign === 1 ? 2147483647 : -2147483648;
-    }
+    if (result > Math.floor(INT_MAX / 10)) return sign === 1 ? INT_MAX : INT_MIN;
+    if (result === Math.floor(INT_MAX / 10) && digit > 7) return sign === 1 ? INT_MAX : INT_MIN;
 
     result = result * 10 + digit;
     i++;
-  }
 
-  return sign * result;
 }
 
-/**
- * Solution 5: Using BigInt (Modern JavaScript)
- *
- * Approach:
- * - Use BigInt to handle large numbers
- * - Convert back to number with clamping
- *
- * Time Complexity: O(n)
- * Space Complexity: O(1)
- */
-function myAtoiBigInt(s: string): number {
-  const trimmed = s.trim();
-
-  if (!trimmed) return 0;
-
-  const match = trimmed.match(/^[+-]?\d+/);
-
-  if (!match) return 0;
-
-  const bigNum = BigInt(match[0]);
-
-  // Clamp to 32-bit signed integer range
-  if (bigNum > BigInt(2147483647)) return 2147483647;
-  if (bigNum < BigInt(-2147483648)) return -2147483648;
-
-  return Number(bigNum);
+return sign \* result;
 }
 
-/**
- * Solution 6: Functional Approach
- *
- * Approach:
- * - Use functional programming concepts
- * - More declarative style
- *
- * Time Complexity: O(n)
- * Space Complexity: O(n)
- */
-function myAtoiFunctional(s: string): number {
-  const digits = s
-    .trim()
-    .split("")
-    .reduce((acc: string[], char: string, index: number) => {
-      if (index === 0 && (char === "+" || char === "-")) {
-        acc.push(char);
-      } else if (char >= "0" && char <= "9") {
-        acc.push(char);
-      } else {
-        return acc;
-      }
-      return acc;
-    }, [])
-    .join("");
-
-  if (!digits || digits === "+" || digits === "-") return 0;
-
-  const num = parseInt(digits);
-
-  if (isNaN(num)) return 0;
-
-  // Clamp to 32-bit signed integer range
-  return Math.max(-2147483648, Math.min(2147483647, num));
-}
-
-/**
- * Solution 7: Using Generator (Memory efficient)
- *
- * Approach:
- * - Use generator to yield characters
- * - Memory efficient for large strings
- *
- * Time Complexity: O(n)
- * Space Complexity: O(1)
- */
-function* characterGenerator(s: string): Generator<string> {
-  for (const char of s) {
-    yield char;
-  }
-}
-
-function myAtoiGenerator(s: string): number {
-  let sign = 1;
-  let result = 0;
-  let started = false;
-
-  for (const char of characterGenerator(s)) {
-    if (!started && char === " ") {
-      continue;
-    }
-
-    if (!started && (char === "+" || char === "-")) {
-      sign = char === "-" ? -1 : 1;
-      started = true;
-      continue;
-    }
-
-    if (char >= "0" && char <= "9") {
-      started = true;
-      const digit = parseInt(char);
-
-      // Check for overflow
-      if (
-        result > Math.floor(2147483647 / 10) ||
-        (result === Math.floor(2147483647 / 10) && digit > 7)
-      ) {
-        return sign === 1 ? 2147483647 : -2147483648;
-      }
-
-      result = result * 10 + digit;
-    } else {
-      break;
-    }
-  }
-
-  return sign * result;
-}
-
-/**
- * Solution 8: Using Class (Object-oriented)
- *
- * Approach:
- * - Create an AtoiParser class
- * - Encapsulate parsing logic
- *
- * Time Complexity: O(n)
- * Space Complexity: O(1)
- */
-class AtoiParser {
-  private s: string;
-  private i: number;
-  private sign: number;
-  private result: number;
-
-  constructor(s: string) {
-    this.s = s;
-    this.i = 0;
-    this.sign = 1;
-    this.result = 0;
-  }
-
-  parse(): number {
-    this.skipWhitespace();
-    this.parseSign();
-    this.parseDigits();
-    return this.sign * this.result;
-  }
-
-  private skipWhitespace(): void {
-    while (this.i < this.s.length && this.s[this.i] === " ") {
-      this.i++;
-    }
-  }
-
-  private parseSign(): void {
-    if (
-      this.i < this.s.length &&
-      (this.s[this.i] === "+" || this.s[this.i] === "-")
-    ) {
-      this.sign = this.s[this.i] === "-" ? -1 : 1;
-      this.i++;
-    }
-  }
-
-  private parseDigits(): void {
-    while (
-      this.i < this.s.length &&
-      this.s[this.i] >= "0" &&
-      this.s[this.i] <= "9"
-    ) {
-      const digit = parseInt(this.s[this.i]);
-
-      // Check for overflow
-      if (
-        this.result > Math.floor(2147483647 / 10) ||
-        (this.result === Math.floor(2147483647 / 10) && digit > 7)
-      ) {
-        this.result = this.sign === 1 ? 2147483647 : 2147483648;
-        return;
-      }
-
-      this.result = this.result * 10 + digit;
-      this.i++;
-    }
-  }
-}
-
-function myAtoiClass(s: string): number {
-  const parser = new AtoiParser(s);
-  return parser.parse();
-}
-
-/**
- * Solution 9: Using Bit Manipulation
- *
- * Approach:
- * - Use bit operations for overflow checking
- * - More efficient for certain operations
- *
- * Time Complexity: O(n)
- * Space Complexity: O(1)
- */
-function myAtoiBitwise(s: string): number {
-  let i = 0;
-  let sign = 1;
-  let result = 0;
-
-  // Skip whitespace
-  while (i < s.length && s[i] === " ") {
-    i++;
-  }
-
-  if (i >= s.length) return 0;
-
-  // Handle sign
-  if (s[i] === "+" || s[i] === "-") {
-    sign = s[i] === "-" ? -1 : 1;
-    i++;
-  }
-
-  // Parse digits
-  while (i < s.length && s[i] >= "0" && s[i] <= "9") {
-    const digit = s[i].charCodeAt(0) - "0".charCodeAt(0);
-
-    // Check for overflow using bit operations
-    if (result > 0x7fffffff / 10 || (result === 0x7fffffff / 10 && digit > 7)) {
-      return sign === 1 ? 0x7fffffff : -0x80000000;
-    }
-
-    result = (result << 3) + (result << 1) + digit; // result * 10 + digit
-    i++;
-  }
-
-  return sign * result;
-}
-
-// Test cases
-function testMyAtoi() {
-  console.log("=== Testing String to Integer (atoi) ===\n");
-
-  const testCases = [
-    {
-      input: "42",
-      expected: 42,
-      description: "Simple positive number",
-    },
-    {
-      input: "   -42",
-      expected: -42,
-      description: "Negative number with leading spaces",
-    },
-    {
-      input: "4193 with words",
-      expected: 4193,
-      description: "Number with trailing text",
-    },
-    {
-      input: "words and 987",
-      expected: 0,
-      description: "Text before number",
-    },
-    {
-      input: "-91283472332",
-      expected: -2147483648,
-      description: "Overflow negative",
-    },
-    {
-      input: "91283472332",
-      expected: 2147483647,
-      description: "Overflow positive",
-    },
-    {
-      input: "",
-      expected: 0,
-      description: "Empty string",
-    },
-    {
-      input: "   ",
-      expected: 0,
-      description: "Only spaces",
-    },
-    {
-      input: "+1",
-      expected: 1,
-      description: "Explicit positive",
-    },
-    {
-      input: "00000-42a1234",
-      expected: 0,
-      description: "Complex case",
-    },
-  ];
-
-  testCases.forEach((testCase, index) => {
-    console.log(`Test Case ${index + 1}: ${testCase.description}`);
-    console.log(`Input: "${testCase.input}"`);
-    console.log(`Expected: ${testCase.expected}\n`);
-
-    // Test Solution 1 (State Machine)
-    const result1 = myAtoi(testCase.input);
-    console.log(
-      `Solution 1 (State Machine): ${result1} ${
-        result1 === testCase.expected ? "✅" : "❌"
-      }`
-    );
-
-    // Test Solution 2 (Regex)
-    const result2 = myAtoiRegex(testCase.input);
-    console.log(
-      `Solution 2 (Regex): ${result2} ${
-        result2 === testCase.expected ? "✅" : "❌"
-      }`
-    );
-
-    // Test Solution 3 (parseInt)
-    const result3 = myAtoiParseInt(testCase.input);
-    console.log(
-      `Solution 3 (parseInt): ${result3} ${
-        result3 === testCase.expected ? "✅" : "❌"
-      }`
-    );
-
-    // Test Solution 4 (Char by Char)
-    const result4 = myAtoiCharByChar(testCase.input);
-    console.log(
-      `Solution 4 (Char by Char): ${result4} ${
-        result4 === testCase.expected ? "✅" : "❌"
-      }`
-    );
-
-    // Test Solution 5 (BigInt)
-    const result5 = myAtoiBigInt(testCase.input);
-    console.log(
-      `Solution 5 (BigInt): ${result5} ${
-        result5 === testCase.expected ? "✅" : "❌"
-      }`
-    );
-
-    // Test Solution 6 (Functional)
-    const result6 = myAtoiFunctional(testCase.input);
-    console.log(
-      `Solution 6 (Functional): ${result6} ${
-        result6 === testCase.expected ? "✅" : "❌"
-      }`
-    );
-
-    // Test Solution 7 (Generator)
-    const result7 = myAtoiGenerator(testCase.input);
-    console.log(
-      `Solution 7 (Generator): ${result7} ${
-        result7 === testCase.expected ? "✅" : "❌"
-      }`
-    );
-
-    // Test Solution 8 (Class)
-    const result8 = myAtoiClass(testCase.input);
-    console.log(
-      `Solution 8 (Class): ${result8} ${
-        result8 === testCase.expected ? "✅" : "❌"
-      }`
-    );
-
-    // Test Solution 9 (Bitwise)
-    const result9 = myAtoiBitwise(testCase.input);
-    console.log(
-      `Solution 9 (Bitwise): ${result9} ${
-        result9 === testCase.expected ? "✅" : "❌"
-      }`
-    );
-
-    console.log("\n---\n");
-  });
-}
-
-// Performance comparison
-function performanceComparison() {
-  console.log("=== Performance Comparison ===\n");
-
-  const testCases = [
-    { name: "State Machine", func: myAtoi },
-    { name: "Regex", func: myAtoiRegex },
-    { name: "parseInt", func: myAtoiParseInt },
-    { name: "Char by Char", func: myAtoiCharByChar },
-    { name: "BigInt", func: myAtoiBigInt },
-    { name: "Functional", func: myAtoiFunctional },
-    { name: "Generator", func: myAtoiGenerator },
-    { name: "Class", func: myAtoiClass },
-    { name: "Bitwise", func: myAtoiBitwise },
-  ];
-
-  // Create test strings
-  const shortString = "42";
-  const mediumString = "   -12345 with words";
-  const longString = "   " + "9".repeat(100) + " with lots of text";
-
-  const strings = [
-    { name: "Short", string: shortString },
-    { name: "Medium", string: mediumString },
-    { name: "Long", string: longString },
-  ];
-
-  strings.forEach(({ name, string }) => {
-    console.log(`${name} String:`);
-
-    testCases.forEach(({ name: funcName, func }) => {
-      const start = performance.now();
-      const result = func(string);
-      const end = performance.now();
-
-      console.log(`  ${funcName}: ${(end - start).toFixed(2)}ms (${result})`);
-    });
-
-    console.log("");
-  });
-}
-
-// Uncomment the following lines to run tests
-// testMyAtoi();
-// performanceComparison();
-
-export {
-  myAtoi,
-  myAtoiRegex,
-  myAtoiParseInt,
-  myAtoiCharByChar,
-  myAtoiBigInt,
-  myAtoiFunctional,
-  myAtoiGenerator,
-  myAtoiClass,
-  myAtoiBitwise,
-  AtoiParser,
-  characterGenerator,
-  testMyAtoi,
-  performanceComparison,
-};
+// Inline tests
+console.assert(myAtoi("42") === 42, "simple positive: expected 42");
+console.assert(myAtoi(" -42") === -42, "negative with spaces: expected -42");
+console.assert(myAtoi("4193 with words") === 4193, "trailing text: expected 4193");
+console.assert(myAtoi("-91283472332") === -2147483648, "overflow neg: expected INT_MIN");
 {% endraw %}
+
+## 🔗 Related Problems
+
+- [7. Reverse Integer](./02-reverse-integer.md) — same overflow guard logic, but returns 0 (not clamp)
+- [65. Valid Number](https://leetcode.com/problems/valid-number/) — stricter parsing, same state-machine approach
+- [273. Integer to English Words](https://leetcode.com/problems/integer-to-english-words/) — inverse direction
+- [9. Palindrome Number](https://leetcode.com/problems/palindrome-number/) — digit manipulation sibling

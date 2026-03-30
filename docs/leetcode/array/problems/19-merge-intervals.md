@@ -1,362 +1,139 @@
 ---
 layout: page
-title: "Merge Interval"
-difficulty: Hard
+title: "Merge Intervals"
+difficulty: Medium
 category: Array
-tags: [Array, Two Pointers, Hash Table, Sorting]
-leetcode_url: "https://leetcode.com/problems/merge-interval/"
+tags: [Array, Sorting, Greedy, Intervals]
+leetcode_url: "https://leetcode.com/problems/merge-intervals/"
 ---
 
-# Merge Interval
+# Merge Intervals / Gộp Các Khoảng Thời Gian
 
-> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Sort + Merge (Interval)
+> **Frequency**: 🔥 Tier 1 — xuất hiện thường xuyên ở Google, Meta dưới dạng lịch họp/lịch trình
+> **See also**: [Insert Interval](./23-insert-interval.md) | [Meeting Rooms II](./22-meeting-rooms-ii.md)
 
-**LeetCode Problem # * 56. Merge Intervals**
+---
+
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** Bạn có danh sách các cuộc họp với giờ bắt đầu và kết thúc. Nếu hai cuộc họp chồng lấp nhau (cuộc thứ hai bắt đầu trước khi cuộc đầu kết thúc), gộp chúng lại thành một. Để làm điều này hiệu quả, hãy sắp xếp theo giờ bắt đầu trước — khi đó ta chỉ cần so sánh với khoảng đang xét gần nhất.
+
+**Pattern Recognition:**
+
+- Signal: "overlapping intervals", "merge", "schedule" → **Sort by start + linear scan**
+- Sau khi sort, overlap chỉ xảy ra với khoảng ngay liền trước: `current[0] <= last[1]`
+- Merge = kéo dài end: `last[1] = max(last[1], current[1])`
+
+**Visual — Merge [1,3],[2,6],[8,10],[15,18]:**
+
+```
+Sort by start: [1,3] [2,6] [8,10] [15,18]
+
+[1,3] → result = [[1,3]]
+[2,6] → 2 <= 3 (overlap!) → extend: [[1,6]]
+[8,10]→ 8 > 6 (no overlap) → add:   [[1,6],[8,10]]
+[15,18]→15 > 10 (no overlap)→ add:  [[1,6],[8,10],[15,18]]
+```
+
+---
 
 ## Problem Description
 
-LeetCode problem solution with multiple approaches and explanations.
+Given an array of intervals where `intervals[i] = [start, end]`, merge all overlapping intervals and return the non-overlapping result covering all input intervals.
+
+```
+Example 1: [[1,3],[2,6],[8,10],[15,18]] → [[1,6],[8,10],[15,18]]
+Example 2: [[1,4],[4,5]]               → [[1,5]]  (touching = overlapping)
+```
+
+Constraints:
+
+- 1 <= intervals.length <= 10⁴
+- 0 <= start ≤ end <= 10⁴
+
+---
+
+## 📝 Interview Tips
+
+1. **Clarify**: "Touching intervals như [1,4],[4,5] có được gộp không?" / "Do touching intervals merge?" (yes, overlap = `start <= last_end`)
+2. **Brute force**: Sort rồi so sánh từng cặp — O(n log n) time, O(n) space
+3. **Optimize**: In-place merge với write pointer — O(n log n) time, O(1) extra space
+4. **Edge cases**: 1 interval → trả ngay; interval lồng nhau [1,10],[2,3] → max end quan trọng
+5. **Follow-up**: "Insert one new interval vào danh sách đã sorted?" — xem Insert Interval (bài 57)
+
+---
 
 ## Solutions
 
 {% raw %}
-/**
- * 56. Merge Intervals
- * 
- * Given an array of intervals where intervals[i] = [start_i, end_i], merge all overlapping intervals, 
- * and return an array of the non-overlapping intervals that cover all the intervals in the input.
- * 
- * Example 1:
- * Input: intervals = [[1,3],[2,6],[8,10],[15,18]]
- * Output: [[1,6],[8,10],[15,18]]
- * Explanation: Since intervals [1,3] and [2,6] overlap, merge them into [1,6].
- * 
- * Example 2:
- * Input: intervals = [[1,4],[4,5]]
- * Output: [[1,5]]
- * Explanation: Intervals [1,4] and [4,5] are considered overlapping.
- * 
- * Constraints:
- * - 1 <= intervals.length <= 10^4
- * - intervals[i].length == 2
- * - 0 <= start_i <= end_i <= 10^4
- */
 
-// Solution 1: Sort and Merge
-// Time: O(n log n), Space: O(1) excluding output
-export function merge1(intervals: number[][]): number[][] {
-    if (intervals.length <= 1) return intervals;
-    
-    // Sort by start time
-    intervals.sort((a, b) => a[0] - b[0]);
-    
-    const result: number[][] = [intervals[0]];
-    
-    for (let i = 1; i < intervals.length; i++) {
-        const current = intervals[i];
-        const last = result[result.length - 1];
-        
-        if (current[0] <= last[1]) {
-            // Overlapping intervals, merge them
-            last[1] = Math.max(last[1], current[1]);
-        } else {
-            // Non-overlapping, add to result
-            result.push(current);
-        }
+/\*\*
+
+- Solution 1: Sort + Merge into result array (Standard)
+- Time: O(n log n) — dominated by sort; merge scan is O(n)
+- Space: O(n) — result array (output space, usually not counted)
+  \*/
+  function merge(intervals: number[][]): number[][] {
+  if (intervals.length <= 1) return intervals;
+
+intervals.sort((a, b) => a[0] - b[0]);
+
+const result: number[][] = [intervals[0]];
+
+for (let i = 1; i < intervals.length; i++) {
+const current = intervals[i];
+const last = result[result.length - 1];
+
+    if (current[0] <= last[1]) {
+      // overlap: extend the end of last merged interval
+      last[1] = Math.max(last[1], current[1]);
+    } else {
+      // no overlap: start a new interval
+      result.push(current);
     }
-    
-    return result;
+
 }
 
-// Solution 2: Two Pointers Approach
-// Time: O(n log n), Space: O(n)
-export function merge2(intervals: number[][]): number[][] {
-    if (intervals.length <= 1) return intervals;
-    
-    intervals.sort((a, b) => a[0] - b[0]);
-    
-    const result: number[][] = [];
-    let start = intervals[0][0];
-    let end = intervals[0][1];
-    
-    for (let i = 1; i < intervals.length; i++) {
-        const [currentStart, currentEnd] = intervals[i];
-        
-        if (currentStart <= end) {
-            // Overlapping, extend the end
-            end = Math.max(end, currentEnd);
-        } else {
-            // Non-overlapping, add previous interval and start new one
-            result.push([start, end]);
-            start = currentStart;
-            end = currentEnd;
-        }
-    }
-    
-    // Add the last interval
-    result.push([start, end]);
-    
-    return result;
+return result;
 }
 
-// Solution 3: Stack-based Approach
-// Time: O(n log n), Space: O(n)
-export function merge3(intervals: number[][]): number[][] {
-    if (intervals.length <= 1) return intervals;
-    
-    intervals.sort((a, b) => a[0] - b[0]);
-    
-    const stack: number[][] = [intervals[0]];
-    
-    for (let i = 1; i < intervals.length; i++) {
-        const current = intervals[i];
-        const top = stack[stack.length - 1];
-        
-        if (current[0] <= top[1]) {
-            // Overlapping, merge with top of stack
-            top[1] = Math.max(top[1], current[1]);
-        } else {
-            // Non-overlapping, push to stack
-            stack.push(current);
-        }
-    }
-    
-    return stack;
+/\*\*
+
+- Solution 2: Sort + In-place merge with write pointer (Optimal, O(1) extra)
+- Time: O(n log n) — same as above
+- Space: O(1) extra — modifies input in-place, write pointer compacts result
+  \*/
+  function mergeInPlace(intervals: number[][]): number[][] {
+  if (intervals.length <= 1) return intervals;
+
+intervals.sort((a, b) => a[0] - b[0]);
+
+let w = 0; // write pointer
+
+for (let r = 1; r < intervals.length; r++) {
+if (intervals[r][0] <= intervals[w][1]) {
+intervals[w][1] = Math.max(intervals[w][1], intervals[r][1]);
+} else {
+w++;
+intervals[w] = intervals[r];
+}
 }
 
-// Solution 4: Sweep Line Algorithm
-// Time: O(n log n), Space: O(n)
-export function merge4(intervals: number[][]): number[][] {
-    if (intervals.length <= 1) return intervals;
-    
-    // Create events: start = +1, end = -1
-    const events: [number, number][] = [];
-    
-    for (const [start, end] of intervals) {
-        events.push([start, 1]);    // Start event
-        events.push([end + 1, -1]); // End event (end + 1 to handle touching intervals)
-    }
-    
-    // Sort events by position, then by type (start before end)
-    events.sort((a, b) => a[0] - b[0] || b[1] - a[1]);
-    
-    const result: number[][] = [];
-    let count = 0;
-    let start = -1;
-    
-    for (const [pos, type] of events) {
-        if (count === 0 && type === 1) {
-            // Start of a new merged interval
-            start = pos;
-        }
-        
-        count += type;
-        
-        if (count === 0 && type === -1) {
-            // End of a merged interval
-            result.push([start, pos - 1]);
-        }
-    }
-    
-    return result;
+return intervals.slice(0, w + 1);
 }
 
-// Solution 5: Interval Tree Approach (Advanced)
-// Time: O(n log n), Space: O(n)
-export function merge5(intervals: number[][]): number[][] {
-    if (intervals.length <= 1) return intervals;
-    
-    // Build a sorted list of unique time points
-    const timePoints = new Set<number>();
-    for (const [start, end] of intervals) {
-        timePoints.add(start);
-        timePoints.add(end);
-    }
-    
-    const sortedTimes = Array.from(timePoints).sort((a, b) => a - b);
-    
-    // Mark which time segments are covered
-    const covered = new Array(sortedTimes.length - 1).fill(false);
-    
-    for (const [start, end] of intervals) {
-        const startIdx = sortedTimes.indexOf(start);
-        const endIdx = sortedTimes.indexOf(end);
-        
-        for (let i = startIdx; i < endIdx; i++) {
-            covered[i] = true;
-        }
-    }
-    
-    // Merge consecutive covered segments
-    const result: number[][] = [];
-    let i = 0;
-    
-    while (i < covered.length) {
-        if (covered[i]) {
-            const mergedStart = sortedTimes[i];
-            while (i < covered.length && covered[i]) {
-                i++;
-            }
-            const mergedEnd = sortedTimes[i];
-            result.push([mergedStart, mergedEnd]);
-        } else {
-            i++;
-        }
-    }
-    
-    return result;
-}
+// === Test Cases ===
+console.log(JSON.stringify(merge([[1,3],[2,6],[8,10],[15,18]]))); // [[1,6],[8,10],[15,18]]
+console.log(JSON.stringify(merge([[1,4],[4,5]]))); // [[1,5]]
+console.log(JSON.stringify(merge([[1,4],[2,3]]))); // [[1,4]] (nested)
+console.log(JSON.stringify(mergeInPlace([[2,3],[4,5],[6,7],[8,9],[1,10]]))); // [[1,10]]
 
-// Solution 6: Optimized In-Place Merge
-// Time: O(n log n), Space: O(1)
-export function merge6(intervals: number[][]): number[][] {
-    if (intervals.length <= 1) return intervals;
-    
-    intervals.sort((a, b) => a[0] - b[0]);
-    
-    let writeIndex = 0;
-    
-    for (let readIndex = 1; readIndex < intervals.length; readIndex++) {
-        const current = intervals[readIndex];
-        const previous = intervals[writeIndex];
-        
-        if (current[0] <= previous[1]) {
-            // Overlapping, merge in-place
-            previous[1] = Math.max(previous[1], current[1]);
-        } else {
-            // Non-overlapping, move to next position
-            writeIndex++;
-            intervals[writeIndex] = current;
-        }
-    }
-    
-    // Return only the merged intervals
-    return intervals.slice(0, writeIndex + 1);
-}
-
-// Test cases
-export function testMerge() {
-    console.log("Testing Merge Intervals:");
-    
-    const testCases = [
-        {
-            input: [[1, 3], [2, 6], [8, 10], [15, 18]],
-            expected: [[1, 6], [8, 10], [15, 18]]
-        },
-        {
-            input: [[1, 4], [4, 5]],
-            expected: [[1, 5]]
-        },
-        {
-            input: [[1, 4], [2, 3]],
-            expected: [[1, 4]]
-        },
-        {
-            input: [[1, 4], [0, 4]],
-            expected: [[0, 4]]
-        },
-        {
-            input: [[1, 4], [0, 0]],
-            expected: [[0, 0], [1, 4]]
-        },
-        {
-            input: [[2, 3], [4, 5], [6, 7], [8, 9], [1, 10]],
-            expected: [[1, 10]]
-        }
-    ];
-    
-    const solutions = [
-        { name: "Sort and Merge", fn: merge1 },
-        { name: "Two Pointers", fn: merge2 },
-        { name: "Stack-based", fn: merge3 },
-        { name: "Sweep Line", fn: merge4 },
-        { name: "Interval Tree", fn: merge5 },
-        { name: "In-Place Merge", fn: merge6 }
-    ];
-    
-    solutions.forEach(solution => {
-        console.log(`\n${solution.name}:`);
-        testCases.forEach((test, i) => {
-            // Deep copy input for each test
-            const inputCopy = test.input.map(interval => [...interval]);
-            const result = solution.fn(inputCopy);
-            const passed = JSON.stringify(result) === JSON.stringify(test.expected);
-            console.log(`  Test ${i + 1}: ${passed ? 'PASS' : 'FAIL'}`);
-            if (!passed) {
-                console.log(`    Input: ${JSON.stringify(test.input)}`);
-                console.log(`    Expected: ${JSON.stringify(test.expected)}`);
-                console.log(`    Got: ${JSON.stringify(result)}`);
-            }
-        });
-    });
-}
-
-/**
- * Key Insights:
- * 
- * 1. **Sorting is Essential**:
- *    - Sort intervals by start time
- *    - Enables linear scan for overlaps
- *    - Time complexity dominated by sorting: O(n log n)
- * 
- * 2. **Overlap Detection**:
- *    - Two intervals [a,b] and [c,d] overlap if: a <= d and c <= b
- *    - After sorting: only need to check if start <= previous_end
- * 
- * 3. **Merging Strategy**:
- *    - Keep track of current merged interval
- *    - Extend end time when overlapping
- *    - Start new interval when non-overlapping
- * 
- * 4. **Edge Cases**:
- *    - Empty or single interval
- *    - Touching intervals ([1,4] and [4,5])
- *    - Nested intervals ([1,4] and [2,3])
- *    - Multiple overlapping intervals
- * 
- * 5. **Space Optimization**:
- *    - In-place modification possible
- *    - Use write pointer to compact result
- *    - Avoid creating new arrays when possible
- * 
- * 6. **Interview Strategy**:
- *    - Start with sorting approach
- *    - Explain overlap detection logic
- *    - Handle edge cases carefully
- *    - Consider space optimization
- * 
- * 7. **Time Complexity**: O(n log n)
- *    - Sorting: O(n log n)
- *    - Merging: O(n)
- *    - Cannot be optimized further without constraints
- * 
- * 8. **Space Complexity**: O(1) to O(n)
- *    - In-place: O(1) excluding output
- *    - Stack/events: O(n) for intermediate storage
- * 
- * 9. **Advanced Techniques**:
- *    - Sweep line for complex scenarios
- *    - Interval trees for range queries
- *    - Event-based processing
- * 
- * 10. **Big Tech Variations**:
- *     - Google: Meeting rooms scheduling
- *     - Meta: Timeline merging
- *     - Amazon: Delivery time windows
- *     - Microsoft: Calendar conflicts
- * 
- * 11. **Follow-up Questions**:
- *     - Insert new interval into sorted list
- *     - Find minimum number of rooms needed
- *     - Merge intervals with priorities
- *     - Handle infinite intervals
- * 
- * 12. **Real-world Applications**:
- *     - Calendar scheduling
- *     - Resource allocation
- *     - Time series data processing
- *     - Network bandwidth management
- *     - Database query optimization
- */
 {% endraw %}
+
+---
+
+## 🔗 Related Problems
+
+- [Insert Interval](./23-insert-interval.md) — merge một interval mới vào danh sách đã sorted
+- [Meeting Rooms II](./22-meeting-rooms-ii.md) — đếm số phòng tối thiểu (min overlapping count)

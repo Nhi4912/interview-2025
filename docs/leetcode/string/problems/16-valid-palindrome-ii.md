@@ -3,389 +3,139 @@ layout: page
 title: "Valid Palindrome II"
 difficulty: Easy
 category: String
-tags: [String, Two Pointers, Hash Table, Greedy]
+tags: [String, Two Pointers, Greedy]
 leetcode_url: "https://leetcode.com/problems/valid-palindrome-ii/"
 ---
 
-# Valid Palindrome II
+# Valid Palindrome II / Palindrome Hợp Lệ II
 
-> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Two Pointers + One-Skip Greedy
+> **Frequency**: 📗 Tier 2 — Meta's favorite phone screen; tests two-pointer fluency
+> **See also**: [Table of Contents](../../../00-table-of-contents.md) | [Minimum Window Substring](15-minimum-window-substring.md)
 
-**LeetCode Problem # * 680. Valid Palindrome II**
+## 🧠 Intuition / Tư Duy
+
+- **Analogy:** Giống như đọc một chuỗi từ hai đầu vào giữa — khi gặp hai ký tự không khớp, bạn được phép bỏ qua _một_ ký tự (bên trái hoặc bên phải) rồi tiếp tục kiểm tra. Nếu sau khi bỏ qua mà chuỗi còn lại là palindrome, trả lời là `true`. Chỉ được bỏ qua đúng một lần.
+
+- **Pattern Recognition:**
+  - Kiểm tra palindrome từ hai đầu → **Two Pointers** hội tụ vào giữa
+  - Khi không khớp: thử bỏ ký tự trái **hoặc** ký tự phải → **Greedy fork** (chỉ tại điểm không khớp đầu tiên)
+  - Không cần tạo chuỗi con thực sự — chỉ cần truyền chỉ số `[l, r]` vào hàm helper
+
+- **Visual — "abca":**
+
+  ```
+  s = "abca"
+  l=0  r=3: s[0]='a' == s[3]='a' ✓  → l=1, r=2
+  l=1  r=2: s[1]='b' ≠  s[2]='c' ✗  → MISMATCH
+
+  Fork:
+  ① Skip left  → isPalin(s, l=2, r=2): 'c'=='c' ✓  → true
+  ② (no need to check skip right)
+
+  Result: true   (delete 'b' → "aca" is palindrome)
+  ```
 
 ## Problem Description
 
-LeetCode problem solution with multiple approaches and explanations.
+Given string `s`, return `true` if it can become a palindrome by deleting **at most one** character.
+
+```
+Input: "aba"   → Output: true  (already palindrome)
+Input: "abca"  → Output: true  (delete 'c' → "aba")
+Input: "abc"   → Output: false (no single deletion works)
+```
+
+## 📝 Interview Tips
+
+1. **Greedy is safe / Greedy là đúng**: The first mismatch is the only place a deletion can help — no benefit from checking earlier positions.
+2. **Two branches, not two passes / Hai nhánh, không hai lần duyệt**: At the mismatch, try `isPalin(l+1, r)` OR `isPalin(l, r-1)` — whichever returns `true` wins.
+3. **Don't create substrings / Không tạo chuỗi con**: Pass indices to the helper — avoids O(n) allocation and keeps Space O(1).
+4. **Already a palindrome / Đã là palindrome**: If the outer loop completes without mismatch, return `true` immediately — no deletion needed.
+5. **Common extension: k deletions / Mở rộng phổ biến: k lần xóa**: Meta often asks this follow-up. Two-pointer with a `deletions` counter still works up to small k; for large k use DP on LPS.
 
 ## Solutions
 
 {% raw %}
-/**
- * 680. Valid Palindrome II
- * 
- * Given a string s, return true if the s can be palindrome after deleting at most one character from it.
- * 
- * Example 1:
- * Input: s = "aba"
- * Output: true
- * 
- * Example 2:
- * Input: s = "abca"
- * Output: true
- * Explanation: You could delete the character 'c'.
- * 
- * Example 3:
- * Input: s = "abc"
- * Output: false
- * 
- * Constraints:
- * - 1 <= s.length <= 10^5
- * - s consists of lowercase English letters.
- */
+/\*\*
 
-// Solution 1: Two Pointers with Helper Function
-// Time: O(n), Space: O(1)
-export function validPalindrome1(s: string): boolean {
-    function isPalindrome(str: string, left: number, right: number): boolean {
-        while (left < right) {
-            if (str[left] !== str[right]) {
-                return false;
-            }
-            left++;
-            right--;
-        }
-        return true;
-    }
-    
-    let left = 0;
-    let right = s.length - 1;
-    
-    while (left < right) {
-        if (s[left] !== s[right]) {
-            // Try deleting left character or right character
-            return isPalindrome(s, left + 1, right) || isPalindrome(s, left, right - 1);
-        }
-        left++;
-        right--;
-    }
-    
-    return true;
+- Valid Palindrome II
+- https://leetcode.com/problems/valid-palindrome-ii/
+  \*/
+
+/\*\*
+
+- Solution 1: Two Pointers + isPalin Helper (Standard)
+- At first mismatch, try skipping left char or right char.
+- Time O(n) | Space O(1)
+  \*/
+  function validPalindrome(s: string): boolean {
+  function isPalin(l: number, r: number): boolean {
+  while (l < r) {
+  if (s[l] !== s[r]) return false;
+  l++;
+  r--;
+  }
+  return true;
+  }
+
+let l = 0;
+let r = s.length - 1;
+
+while (l < r) {
+if (s[l] !== s[r]) {
+return isPalin(l + 1, r) || isPalin(l, r - 1);
+}
+l++;
+r--;
 }
 
-// Solution 2: Recursive Approach with Memoization
-// Time: O(n), Space: O(n)
-export function validPalindrome2(s: string): boolean {
-    const memo = new Map<string, boolean>();
-    
-    function canBeValidPalindrome(left: number, right: number, deletions: number): boolean {
-        if (deletions > 1) return false;
-        if (left >= right) return true;
-        
-        const key = `${left},${right},${deletions}`;
-        if (memo.has(key)) {
-            return memo.get(key)!;
-        }
-        
-        let result = false;
-        
-        if (s[left] === s[right]) {
-            result = canBeValidPalindrome(left + 1, right - 1, deletions);
-        } else {
-            // Try deleting left character
-            result = canBeValidPalindrome(left + 1, right, deletions + 1) ||
-                    // Try deleting right character
-                    canBeValidPalindrome(left, right - 1, deletions + 1);
-        }
-        
-        memo.set(key, result);
-        return result;
-    }
-    
-    return canBeValidPalindrome(0, s.length - 1, 0);
+return true;
 }
 
-// Solution 3: Iterative with Early Termination
-// Time: O(n), Space: O(1)
-export function validPalindrome3(s: string): boolean {
-    function checkPalindrome(left: number, right: number, allowDelete: boolean): boolean {
-        while (left < right) {
-            if (s[left] !== s[right]) {
-                if (!allowDelete) return false;
-                
-                // Try both options and return true if either works
-                return checkPalindrome(left + 1, right, false) || 
-                       checkPalindrome(left, right - 1, false);
-            }
-            left++;
-            right--;
-        }
-        return true;
-    }
-    
-    return checkPalindrome(0, s.length - 1, true);
+/\*\*
+
+- Solution 2: Greedy Two-Pass (explicit mismatch detection)
+- Separate the "find first mismatch" step from the "check both options" step.
+- Time O(n) | Space O(1) — slightly clearer intent at interview
+  \*/
+  function validPalindromeGreedy(s: string): boolean {
+  function isPalinRange(l: number, r: number): boolean {
+  while (l < r) {
+  if (s[l] !== s[r]) return false;
+  l++;
+  r--;
+  }
+  return true;
+  }
+
+let l = 0;
+let r = s.length - 1;
+
+// Find first mismatch position
+while (l < r && s[l] === s[r]) {
+l++;
+r--;
 }
 
-// Solution 4: Greedy Approach
-// Time: O(n), Space: O(1)
-export function validPalindrome4(s: string): boolean {
-    let left = 0;
-    let right = s.length - 1;
-    
-    // Find first mismatch
-    while (left < right && s[left] === s[right]) {
-        left++;
-        right--;
-    }
-    
-    // If no mismatch found, it's already a palindrome
-    if (left >= right) return true;
-    
-    // Helper function to check if substring is palindrome
-    function isPalindrome(l: number, r: number): boolean {
-        while (l < r) {
-            if (s[l] !== s[r]) return false;
-            l++;
-            r--;
-        }
-        return true;
-    }
-    
-    // Try removing either the left or right character
-    return isPalindrome(left + 1, right) || isPalindrome(left, right - 1);
+// No mismatch → already a palindrome
+if (l >= r) return true;
+
+// Try removing either character at the mismatch
+return isPalinRange(l + 1, r) || isPalinRange(l, r - 1);
 }
 
-// Solution 5: Dynamic Programming
-// Time: O(n²), Space: O(n²)
-export function validPalindrome5(s: string): boolean {
-    const n = s.length;
-    // dp[i][j][k] = can substring s[i..j] be palindrome with at most k deletions
-    const dp = Array(n).fill(null).map(() => 
-        Array(n).fill(null).map(() => Array(2).fill(false))
-    );
-    
-    // Base cases: single characters are palindromes
-    for (let i = 0; i < n; i++) {
-        dp[i][i][0] = true;
-        dp[i][i][1] = true;
-    }
-    
-    // Fill for all lengths
-    for (let len = 2; len <= n; len++) {
-        for (let i = 0; i <= n - len; i++) {
-            const j = i + len - 1;
-            
-            if (s[i] === s[j]) {
-                // Characters match
-                if (len === 2) {
-                    dp[i][j][0] = true;
-                    dp[i][j][1] = true;
-                } else {
-                    dp[i][j][0] = dp[i + 1][j - 1][0];
-                    dp[i][j][1] = dp[i + 1][j - 1][1];
-                }
-            } else {
-                // Characters don't match
-                dp[i][j][0] = false;
-                if (len > 2) {
-                    dp[i][j][1] = dp[i + 1][j][0] || dp[i][j - 1][0];
-                } else {
-                    dp[i][j][1] = true; // Can delete one character
-                }
-            }
-        }
-    }
-    
-    return dp[0][n - 1][1];
-}
-
-// Solution 6: Optimized Two-Pass
-// Time: O(n), Space: O(1)
-export function validPalindrome6(s: string): boolean {
-    function findMismatch(left: number, right: number): [number, number] | null {
-        while (left < right) {
-            if (s[left] !== s[right]) {
-                return [left, right];
-            }
-            left++;
-            right--;
-        }
-        return null;
-    }
-    
-    function isPalindromeRange(left: number, right: number): boolean {
-        while (left < right) {
-            if (s[left] !== s[right]) return false;
-            left++;
-            right--;
-        }
-        return true;
-    }
-    
-    const mismatch = findMismatch(0, s.length - 1);
-    
-    if (!mismatch) return true; // Already a palindrome
-    
-    const [left, right] = mismatch;
-    
-    // Try deleting left character
-    if (isPalindromeRange(left + 1, right)) return true;
-    
-    // Try deleting right character
-    if (isPalindromeRange(left, right - 1)) return true;
-    
-    return false;
-}
-
-// Test cases
-export function testValidPalindrome() {
-    console.log("Testing Valid Palindrome II:");
-    
-    const testCases = [
-        {
-            input: "aba",
-            expected: true
-        },
-        {
-            input: "abca",
-            expected: true
-        },
-        {
-            input: "abc",
-            expected: false
-        },
-        {
-            input: "raceacar",
-            expected: true
-        },
-        {
-            input: "race",
-            expected: false
-        },
-        {
-            input: "abcddcba",
-            expected: true
-        },
-        {
-            input: "abcdef",
-            expected: false
-        },
-        {
-            input: "a",
-            expected: true
-        },
-        {
-            input: "ab",
-            expected: true
-        },
-        {
-            input: "deeee",
-            expected: true
-        }
-    ];
-    
-    const solutions = [
-        { name: "Two Pointers", fn: validPalindrome1 },
-        { name: "Recursive + Memo", fn: validPalindrome2 },
-        { name: "Iterative Early Term", fn: validPalindrome3 },
-        { name: "Greedy", fn: validPalindrome4 },
-        { name: "Dynamic Programming", fn: validPalindrome5 },
-        { name: "Two-Pass Optimized", fn: validPalindrome6 }
-    ];
-    
-    solutions.forEach(solution => {
-        console.log(`\n${solution.name}:`);
-        testCases.forEach((test, i) => {
-            const result = solution.fn(test.input);
-            const passed = result === test.expected;
-            console.log(`  Test ${i + 1}: ${passed ? 'PASS' : 'FAIL'}`);
-            if (!passed) {
-                console.log(`    Input: "${test.input}"`);
-                console.log(`    Expected: ${test.expected}`);
-                console.log(`    Got: ${result}`);
-            }
-        });
-    });
-}
-
-/**
- * Key Insights:
- * 
- * 1. **Problem Understanding**:
- *    - Can delete AT MOST one character
- *    - Must check if resulting string is palindrome
- *    - Original string might already be palindrome
- * 
- * 2. **Two Pointers Strategy**:
- *    - Start from both ends
- *    - When mismatch found, try deleting either character
- *    - Continue palindrome check from remaining substring
- * 
- * 3. **Key Optimization**:
- *    - Only need to check deletion when first mismatch occurs
- *    - Don't need to generate actual substrings
- *    - Can check validity with indices only
- * 
- * 4. **Time Complexity**: O(n)
- *    - Single pass to find mismatch: O(n)
- *    - At most two palindrome checks: O(n)
- *    - Total: O(n)
- * 
- * 5. **Space Complexity**: O(1)
- *    - Only using pointers and variables
- *    - No additional data structures needed
- * 
- * 6. **Edge Cases**:
- *    - Single character (always valid)
- *    - Two characters (always valid)
- *    - Already palindrome (no deletion needed)
- *    - No valid deletion possible
- * 
- * 7. **Interview Strategy**:
- *    - Start with basic palindrome check
- *    - Extend to handle one deletion
- *    - Optimize to avoid unnecessary work
- *    - Handle edge cases carefully
- * 
- * 8. **Common Mistakes**:
- *    - Checking all possible deletions (O(n²))
- *    - Not handling edge cases properly
- *    - Creating unnecessary substrings
- *    - Incorrect index management
- * 
- * 9. **Why Greedy Works**:
- *    - First mismatch determines deletion candidates
- *    - Only two choices: delete left or right character
- *    - If neither works, no solution exists
- * 
- * 10. **Alternative Approaches**:
- *     - DP: O(n²) time and space (overkill)
- *     - Recursion: Cleaner code but may have stack overhead
- *     - Brute force: Check all n possible deletions (inefficient)
- * 
- * 11. **Big Tech Variations**:
- *     - Google: Valid palindrome with k deletions
- *     - Meta: Minimum deletions to make palindrome
- *     - Amazon: Palindrome with character substitutions
- *     - Microsoft: Case-insensitive palindrome validation
- * 
- * 12. **Follow-up Questions**:
- *     - Extend to k deletions
- *     - Return the actual palindrome string
- *     - Handle Unicode/special characters
- *     - Find minimum deletions needed
- * 
- * 13. **Real-world Applications**:
- *     - Text processing and validation
- *     - DNA sequence analysis
- *     - Data deduplication
- *     - String similarity measures
- *     - Auto-correction systems
- * 
- * 14. **Pattern Recognition**:
- *     - Two pointers for palindrome problems
- *     - Greedy choice when limited operations allowed
- *     - Early termination for optimization
- *     - Index-based processing to avoid string creation
- */
+// Inline tests
+console.log(validPalindrome("aba")); // true
+console.log(validPalindrome("abca")); // true
+console.log(validPalindromeGreedy("abc")); // false
+console.log(validPalindromeGreedy("deeee")); // true
 {% endraw %}
+
+## 🔗 Related Problems
+
+- [125. Valid Palindrome](https://leetcode.com/problems/valid-palindrome/) — Base problem (ignore non-alphanumeric)
+- [5. Longest Palindromic Substring](https://leetcode.com/problems/longest-palindromic-substring/) — Expand-around-center approach
+- [516. Longest Palindromic Subsequence](https://leetcode.com/problems/longest-palindromic-subsequence/) — DP for k-deletion generalization
+- [1216. Valid Palindrome III](https://leetcode.com/problems/valid-palindrome-iii/) — Paid; k deletions allowed (DP)
+- [680. Valid Palindrome II](https://leetcode.com/problems/valid-palindrome-ii/) — This problem (self-reference for bookmarking)

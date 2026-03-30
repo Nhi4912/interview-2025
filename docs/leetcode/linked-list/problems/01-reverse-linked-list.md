@@ -3,460 +3,140 @@ layout: page
 title: "Reverse Linked List"
 difficulty: Easy
 category: Linked List
-tags: [Linked List, Two Pointers, Hash Table]
+tags: [Linked List, Iterative]
 leetcode_url: "https://leetcode.com/problems/reverse-linked-list/"
 ---
 
-# Reverse Linked List
+# Reverse Linked List / Đảo Ngược Danh Sách Liên Kết
 
-> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Linked List (Iterative Reversal)
+> **Frequency**: 🔥 Tier 1 — xuất hiện rất thường trong vòng phone screen và onsite
+> **See also**: [Merge Two Sorted Lists](./02-merge-two-sorted-lists.md) | [Palindrome Linked List](./03-palindrome-linked-list.md)
 
-**LeetCode Problem # * 206. Reverse Linked List**
+---
+
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** Hãy tưởng tượng bạn có một đoàn tàu đang di chuyển — bạn cần đổi hướng từng toa tàu một. Mỗi toa chỉ được móc vào toa phía sau, vì vậy bạn cần lưu tạm toa kế tiếp trước khi đổi hướng. Sau khi đổi hết, đầu tàu cũ trở thành đuôi tàu mới.
+
+**Pattern Recognition:**
+
+- Signal: "reverse / đảo ngược linked list" → **Iterative Reversal with 3 pointers**
+- Không thể đi ngược trên singly linked list → phải giữ `prev`, `curr`, `next`
+- Mỗi bước: đổi hướng `curr.next`, rồi tiến cả 3 con trỏ lên
+
+**Visual — Iterative Reversal on [1→2→3→4→5]:**
+
+```
+Initial:  prev=null  curr=1→2→3→4→5
+
+Step 1:   next=2, 1.next=null, prev=1, curr=2
+          null←1  2→3→4→5
+
+Step 2:   next=3, 2.next=1,    prev=2, curr=3
+          null←1←2  3→4→5
+
+Step 3:   next=4, 3.next=2,    prev=3, curr=4
+          null←1←2←3  4→5
+
+Step 4:   next=5, 4.next=3,    prev=4, curr=5
+          null←1←2←3←4  5
+
+Step 5:   next=null, 5.next=4, prev=5, curr=null
+          null←1←2←3←4←5
+
+Return: prev=5  (new head)
+```
+
+---
 
 ## Problem Description
 
- * Given the head of a singly linked list, reverse the list, and return the reversed list.  *  * Input: head = [1,2,3,4,5]  * Output: [5,4,3,2,1]  * 
+Given the head of a singly linked list, reverse the list and return the reversed list's head. Each node's `next` pointer must be redirected to the previous node.
+
+```
+Example 1: [1,2,3,4,5] → [5,4,3,2,1]
+Example 2: [1,2]       → [2,1]
+Example 3: []          → []
+```
+
+Constraints:
+
+- The number of nodes is in the range `[0, 5000]`
+- `-5000 <= Node.val <= 5000`
+
+---
+
+## 📝 Interview Tips
+
+1. **Clarify**: Singly or doubly linked list? / Danh sách đơn hay đôi?
+2. **Brute force**: Collect all values into array, reverse, rebuild — O(n) time, O(n) space / Lưu vào mảng rồi xây lại
+3. **Optimize**: In-place with 3 pointers — O(n) time, O(1) space / Dùng 3 con trỏ, không cần bộ nhớ thêm
+4. **Edge cases**: Empty list, single node / Danh sách rỗng, 1 phần tử
+5. **Follow-up**: Reverse only k nodes at a time (LC 25) / Đảo ngược từng nhóm k nút
+
+---
 
 ## Solutions
 
 {% raw %}
-/**
- * 206. Reverse Linked List
- *
- * Problem:
- * Given the head of a singly linked list, reverse the list, and return the reversed list.
- *
- * Example:
- * Input: head = [1,2,3,4,5]
- * Output: [5,4,3,2,1]
- *
- * Input: head = [1,2]
- * Output: [2,1]
- *
- * LeetCode: https://leetcode.com/problems/reverse-linked-list/
- */
 
-// Definition for singly-linked list
-class ListNode {
-  val: number;
-  next: ListNode | null;
-
-  constructor(val: number = 0, next: ListNode | null = null) {
-    this.val = val;
-    this.next = next;
-  }
+interface ListNode {
+val: number;
+next: ListNode | null;
 }
 
-/**
- * Solution 1: Iterative Approach (Optimal)
- *
- * Approach:
- * - Use three pointers: prev, current, next
- * - Reverse links one by one
- * - Move pointers forward
- *
- * Time Complexity: O(n) - traverse the entire list
- * Space Complexity: O(1) - constant extra space
- */
-function reverseList(head: ListNode | null): ListNode | null {
+/\*\*
+
+- Solution 1: Stack / Array (Brute Force)
+- Time: O(n) — two passes: collect values then rebuild
+- Space: O(n) — stores all node values in an array
+  \*/
+  function reverseListBrute(head: ListNode | null): ListNode | null {
+  const vals: number[] = [];
+  let curr = head;
+  while (curr) { vals.push(curr.val); curr = curr.next; }
+
+if (!vals.length) return null;
+const dummy: ListNode = { val: 0, next: null };
+let node = dummy;
+for (const v of vals.reverse()) {
+node.next = { val: v, next: null };
+node = node.next;
+}
+return dummy.next;
+}
+
+/\*\*
+
+- Solution 2: Iterative with 3 Pointers (Optimal)
+- Time: O(n) — single pass, each node visited once
+- Space: O(1) — only three pointer variables
+  \*/
+  function reverseList(head: ListNode | null): ListNode | null {
   let prev: ListNode | null = null;
-  let current: ListNode | null = head;
+  let curr: ListNode | null = head;
 
-  while (current !== null) {
-    const next = current.next; // Store next node
-    current.next = prev; // Reverse the link
-    prev = current; // Move prev forward
-    current = next; // Move current forward
-  }
-
-  return prev; // prev becomes the new head
+while (curr) {
+const next = curr.next; // 1. save next before overwriting
+curr.next = prev; // 2. reverse the link
+prev = curr; // 3. advance prev
+curr = next; // 4. advance curr
 }
 
-/**
- * Solution 2: Recursive Approach
- *
- * Approach:
- * - Use recursion to reverse the rest of the list
- * - Base case: when head is null or head.next is null
- * - Reverse the link and return new head
- *
- * Time Complexity: O(n) - recursive calls for each node
- * Space Complexity: O(n) - recursion stack space
- */
-function reverseListRecursive(head: ListNode | null): ListNode | null {
-  // Base case: empty list or single node
-  if (head === null || head.next === null) {
-    return head;
-  }
-
-  // Recursively reverse the rest of the list
-  const newHead = reverseListRecursive(head.next);
-
-  // Reverse the link
-  head.next.next = head;
-  head.next = null;
-
-  return newHead;
+return prev; // prev is the new head
 }
 
-/**
- * Solution 3: Using Stack (Not optimal, but educational)
- *
- * Approach:
- * - Push all nodes to stack
- * - Pop them back to create reversed list
- *
- * Time Complexity: O(n)
- * Space Complexity: O(n) - stack storage
- */
-function reverseListStack(head: ListNode | null): ListNode | null {
-  if (head === null) return null;
+// === Test Cases ===
+const list1: ListNode = { val: 1, next: { val: 2, next: { val: 3, next: { val: 4, next: { val: 5, next: null } } } } };
+console.log(reverseList(list1)); // 5→4→3→2→1
+console.log(reverseList(null)); // null
 
-  const stack: ListNode[] = [];
-  let current: ListNode | null = head;
-
-  // Push all nodes to stack
-  while (current !== null) {
-    stack.push(current);
-    current = current.next;
-  }
-
-  // Create new head from stack
-  const newHead = stack.pop()!;
-  current = newHead;
-
-  // Pop remaining nodes and link them
-  while (stack.length > 0) {
-    current.next = stack.pop()!;
-    current = current.next;
-  }
-
-  // Set last node's next to null
-  current.next = null;
-
-  return newHead;
-}
-
-/**
- * Solution 4: In-place with Two Pointers
- *
- * Approach:
- * - Use two pointers to reverse links
- * - Similar to Solution 1 but with different variable names
- *
- * Time Complexity: O(n)
- * Space Complexity: O(1)
- */
-function reverseListTwoPointers(head: ListNode | null): ListNode | null {
-  let previous: ListNode | null = null;
-  let current: ListNode | null = head;
-
-  while (current !== null) {
-    const temp = current.next;
-    current.next = previous;
-    previous = current;
-    current = temp;
-  }
-
-  return previous;
-}
-
-/**
- * Solution 5: Using Array (Not recommended, but shows alternative)
- *
- * Approach:
- * - Convert linked list to array
- * - Reverse array
- * - Reconstruct linked list
- *
- * Time Complexity: O(n)
- * Space Complexity: O(n) - array storage
- */
-function reverseListArray(head: ListNode | null): ListNode | null {
-  if (head === null) return null;
-
-  const values: number[] = [];
-  let current: ListNode | null = head;
-
-  // Collect all values
-  while (current !== null) {
-    values.push(current.val);
-    current = current.next;
-  }
-
-  // Reverse array
-  values.reverse();
-
-  // Reconstruct linked list
-  const newHead = new ListNode(values[0]);
-  current = newHead;
-
-  for (let i = 1; i < values.length; i++) {
-    current.next = new ListNode(values[i]);
-    current = current.next;
-  }
-
-  return newHead;
-}
-
-/**
- * Solution 6: Tail Recursive (Optimized recursion)
- *
- * Approach:
- * - Use tail recursion to avoid stack overflow
- * - Pass accumulated result as parameter
- *
- * Time Complexity: O(n)
- * Space Complexity: O(1) - tail call optimization
- */
-function reverseListTailRecursive(head: ListNode | null): ListNode | null {
-  function reverseHelper(
-    current: ListNode | null,
-    prev: ListNode | null
-  ): ListNode | null {
-    if (current === null) {
-      return prev;
-    }
-
-    const next = current.next;
-    current.next = prev;
-    return reverseHelper(next, current);
-  }
-
-  return reverseHelper(head, null);
-}
-
-// Helper function to create linked list from array
-function createLinkedList(arr: number[]): ListNode | null {
-  if (arr.length === 0) return null;
-
-  const head = new ListNode(arr[0]);
-  let current = head;
-
-  for (let i = 1; i < arr.length; i++) {
-    current.next = new ListNode(arr[i]);
-    current = current.next;
-  }
-
-  return head;
-}
-
-// Helper function to convert linked list to array
-function linkedListToArray(head: ListNode | null): number[] {
-  const result: number[] = [];
-  let current = head;
-
-  while (current !== null) {
-    result.push(current.val);
-    current = current.next;
-  }
-
-  return result;
-}
-
-// Test cases
-function testReverseLinkedList() {
-  console.log("=== Testing Reverse Linked List ===\n");
-
-  const testCases = [
-    {
-      input: [1, 2, 3, 4, 5],
-      expected: [5, 4, 3, 2, 1],
-      description: "Basic case",
-    },
-    {
-      input: [1, 2],
-      expected: [2, 1],
-      description: "Two nodes",
-    },
-    {
-      input: [1],
-      expected: [1],
-      description: "Single node",
-    },
-    {
-      input: [],
-      expected: [],
-      description: "Empty list",
-    },
-    {
-      input: [1, 2, 3],
-      expected: [3, 2, 1],
-      description: "Three nodes",
-    },
-  ];
-
-  testCases.forEach((testCase, index) => {
-    console.log(`Test Case ${index + 1}: ${testCase.description}`);
-    console.log(`Input: [${testCase.input}]`);
-    console.log(`Expected: [${testCase.expected}]\n`);
-
-    // Test Solution 1 (Iterative)
-    const head1 = createLinkedList(testCase.input);
-    const result1 = reverseList(head1);
-    const array1 = linkedListToArray(result1);
-    console.log(
-      `Solution 1 (Iterative): [${array1}] ${
-        JSON.stringify(array1) === JSON.stringify(testCase.expected)
-          ? "✅"
-          : "❌"
-      }`
-    );
-
-    // Test Solution 2 (Recursive)
-    const head2 = createLinkedList(testCase.input);
-    const result2 = reverseListRecursive(head2);
-    const array2 = linkedListToArray(result2);
-    console.log(
-      `Solution 2 (Recursive): [${array2}] ${
-        JSON.stringify(array2) === JSON.stringify(testCase.expected)
-          ? "✅"
-          : "❌"
-      }`
-    );
-
-    // Test Solution 3 (Stack)
-    const head3 = createLinkedList(testCase.input);
-    const result3 = reverseListStack(head3);
-    const array3 = linkedListToArray(result3);
-    console.log(
-      `Solution 3 (Stack): [${array3}] ${
-        JSON.stringify(array3) === JSON.stringify(testCase.expected)
-          ? "✅"
-          : "❌"
-      }`
-    );
-
-    // Test Solution 4 (Two Pointers)
-    const head4 = createLinkedList(testCase.input);
-    const result4 = reverseListTwoPointers(head4);
-    const array4 = linkedListToArray(result4);
-    console.log(
-      `Solution 4 (Two Pointers): [${array4}] ${
-        JSON.stringify(array4) === JSON.stringify(testCase.expected)
-          ? "✅"
-          : "❌"
-      }`
-    );
-
-    // Test Solution 5 (Array)
-    const head5 = createLinkedList(testCase.input);
-    const result5 = reverseListArray(head5);
-    const array5 = linkedListToArray(result5);
-    console.log(
-      `Solution 5 (Array): [${array5}] ${
-        JSON.stringify(array5) === JSON.stringify(testCase.expected)
-          ? "✅"
-          : "❌"
-      }`
-    );
-
-    // Test Solution 6 (Tail Recursive)
-    const head6 = createLinkedList(testCase.input);
-    const result6 = reverseListTailRecursive(head6);
-    const array6 = linkedListToArray(result6);
-    console.log(
-      `Solution 6 (Tail Recursive): [${array6}] ${
-        JSON.stringify(array6) === JSON.stringify(testCase.expected)
-          ? "✅"
-          : "❌"
-      }`
-    );
-
-    console.log("\n---\n");
-  });
-}
-
-// Performance comparison
-function performanceComparison() {
-  console.log("=== Performance Comparison ===\n");
-
-  // Create large linked list
-  const largeArray = Array.from({ length: 10000 }, (_, i) => i);
-  const largeList = createLinkedList(largeArray);
-
-  const testCases = [
-    { name: "Iterative", func: reverseList },
-    { name: "Recursive", func: reverseListRecursive },
-    { name: "Stack", func: reverseListStack },
-    { name: "Two Pointers", func: reverseListTwoPointers },
-    { name: "Array", func: reverseListArray },
-    { name: "Tail Recursive", func: reverseListTailRecursive },
-  ];
-
-  testCases.forEach(({ name, func }) => {
-    const testList = createLinkedList(largeArray);
-    const start = performance.now();
-    func(testList);
-    const end = performance.now();
-
-    console.log(`${name}:`);
-    console.log(`  Time: ${(end - start).toFixed(2)}ms`);
-    console.log(
-      `  Memory: ${
-        name === "Recursive" || name === "Stack" || name === "Array"
-          ? "O(n)"
-          : "O(1)"
-      }\n`
-    );
-  });
-}
-
-// Memory usage test
-function memoryUsageTest() {
-  console.log("=== Memory Usage Test ===\n");
-
-  const sizes = [100, 1000, 10000];
-
-  sizes.forEach((size) => {
-    console.log(`Testing with ${size} nodes:`);
-
-    const testArray = Array.from({ length: size }, (_, i) => i);
-
-    // Test iterative (should handle large lists)
-    try {
-      const list = createLinkedList(testArray);
-      const start = performance.now();
-      reverseList(list);
-      const end = performance.now();
-      console.log(`  Iterative: ${(end - start).toFixed(2)}ms ✅`);
-    } catch (error) {
-      console.log(`  Iterative: Stack overflow ❌`);
-    }
-
-    // Test recursive (might overflow for large lists)
-    try {
-      const list = createLinkedList(testArray);
-      const start = performance.now();
-      reverseListRecursive(list);
-      const end = performance.now();
-      console.log(`  Recursive: ${(end - start).toFixed(2)}ms ✅`);
-    } catch (error) {
-      console.log(`  Recursive: Stack overflow ❌`);
-    }
-
-    console.log("");
-  });
-}
-
-// Uncomment the following lines to run tests
-// testReverseLinkedList();
-// performanceComparison();
-// memoryUsageTest();
-
-export {
-  ListNode,
-  reverseList,
-  reverseListRecursive,
-  reverseListStack,
-  reverseListTwoPointers,
-  reverseListArray,
-  reverseListTailRecursive,
-  createLinkedList,
-  linkedListToArray,
-  testReverseLinkedList,
-  performanceComparison,
-  memoryUsageTest,
-};
 {% endraw %}
+
+---
+
+## 🔗 Related Problems
+
+- [Merge Two Sorted Lists](./02-merge-two-sorted-lists.md) — cùng thao tác con trỏ trên linked list
+- [Palindrome Linked List](./03-palindrome-linked-list.md) — dùng reverse làm bước phụ để so sánh nửa sau

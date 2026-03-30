@@ -3,470 +3,115 @@ layout: page
 title: "Sliding Window Maximum"
 difficulty: Hard
 category: String
-tags: [String, Sliding Window]
+tags: [Array, Deque, Sliding Window, Monotonic Queue]
 leetcode_url: "https://leetcode.com/problems/sliding-window-maximum/"
 ---
 
-# Sliding Window Maximum
+# Sliding Window Maximum / Giá Trị Lớn Nhất Trong Cửa Sổ Trượt
 
-> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Monotonic Deque
+> **Frequency**: ⭐ Tier 2 — Bài chuẩn FAANG Hard, kiểm tra nắm vững monotonic deque
+> **See also**: [Table of Contents](../../../00-table-of-contents.md) | [Find All Anagrams](./19-find-all-anagrams-in-string.md)
 
-**LeetCode Problem # * 239. Sliding Window Maximum**
+## 🧠 Intuition / Tư Duy
+
+- **Analogy:** Bạn ngồi trên đoàn tàu, nhìn qua cửa sổ thấy đúng `k` cột điện. Mỗi khi tàu tiến thêm một ga, một cột mới xuất hiện và một cột cũ biến mất. Bạn muốn biết cột cao nhất trong tầm nhìn ở mọi thời điểm. Mẹo: khi cột mới cao hơn tất cả cột còn lại phía sau, những cột thấp đó sẽ không bao giờ là cao nhất — hãy loại bỏ chúng ngay để chỉ duy trì "danh sách ứng viên" hữu ích.
+
+- **Pattern Recognition:**
+  - "Max/min of each fixed-size window" → **Monotonic Deque** (O(n) vs O(nk) brute)
+  - Store **indices**, not values — needed to check if front index is still inside window
+  - Deque maintains **decreasing value order**: front = window max, back = smallest candidate
+
+- **Visual — nums=[1,3,-1,-3,5], k=3:**
+
+```
+i=0: push 0        deque=[0]      vals=[1]         window not ready
+i=1: 3>nums[0]=1 → pop 0, push 1  deque=[1]  [3]  window not ready
+i=2: -1<3→push 2   deque=[1,2]   [3,-1]     → max = nums[1] = 3
+i=3: -3<-1→push 3  deque=[1,2,3] [3,-1,-3]  → front idx=1 in [1..3] ✓ → max = 3
+i=4: 5>all→clear, push 4  deque=[4]  [5]    → max = nums[4] = 5
+
+result = [3, 3, 5] ✓
+```
 
 ## Problem Description
 
-LeetCode problem solution with multiple approaches and explanations.
+Given integer array `nums` and window size `k`, return the maximum value at each window position as it slides right by one step.
+
+```
+Input: nums=[1,3,-1,-3,5,3,6,7], k=3 → Output: [3,3,5,5,6,7]
+Input: nums=[1],                  k=1 → Output: [1]
+Input: nums=[9,11],               k=2 → Output: [11]
+```
+
+## 📝 Interview Tips
+
+1. **Brute first** / **Bắt đầu brute**: giải thích O(nk) trước, sau đó hỏi "làm sao tránh tính lại max?"
+2. **Indices not values** / **Lưu index không lưu value**: cần kiểm tra `deque[0] <= i - k` để loại phần tử ra ngoài cửa sổ.
+3. **Two-step cleanup per iteration** / **Hai bước mỗi vòng**: (1) pop front nếu out-of-window; (2) pop back khi `nums[back] <= nums[i]`.
+4. **Deque invariant** / **Bất biến**: indices tăng dần, values giảm dần — front luôn là max của cửa sổ hiện tại.
+5. **Amortized O(n)** / **O(n) amortized**: mỗi index push và pop tối đa 1 lần → tổng O(2n).
+6. **Follow-up** / **Mở rộng**: sliding window minimum (đảo `<=` thành `>=`); sliding window median (max-heap + min-heap).
 
 ## Solutions
 
 {% raw %}
-/**
- * 239. Sliding Window Maximum
- * 
- * You are given an array of integers nums, there is a sliding window of size k which is moving 
- * from the very left of the array to the very right. You can only see the k numbers in the window. 
- * Each time the sliding window moves right by one position.
- * 
- * Return the max sliding window.
- * 
- * Example 1:
- * Input: nums = [1,3,-1,-3,5,3,6,7], k = 3
- * Output: [3,3,5,5,6,7]
- * Explanation: 
- * Window position                Max
- * ---------------               -----
- * [1  3  -1] -3  5  3  6  7       3
- *  1 [3  -1  -3] 5  3  6  7       3
- *  1  3 [-1  -3  5] 3  6  7       5
- *  1  3  -1 [-3  5  3] 6  7       5
- *  1  3  -1  -3 [5  3  6] 7       6
- *  1  3  -1  -3  5 [3  6  7]      7
- * 
- * Example 2:
- * Input: nums = [1], k = 1
- * Output: [1]
- * 
- * Constraints:
- * - 1 <= nums.length <= 10^5
- * - -10^4 <= nums[i] <= 10^4
- * - 1 <= k <= nums.length
- */
+/\*\*
 
-// Solution 1: Brute Force (Check each window)
-// Time: O(n*k), Space: O(1)
-export function maxSlidingWindow1(nums: number[], k: number): number[] {
-    const result: number[] = [];
-    
-    for (let i = 0; i <= nums.length - k; i++) {
-        let maxVal = nums[i];
-        for (let j = i + 1; j < i + k; j++) {
-            maxVal = Math.max(maxVal, nums[j]);
-        }
-        result.push(maxVal);
-    }
-    
-    return result;
-}
+- 239.  Sliding Window Maximum
+- Brute: scan every element in each window independently.
+- Time O(n·k), Space O(1)
+  \*/
+  function maxSlidingWindowBrute(nums: number[], k: number): number[] {
+  const result: number[] = [];
+  for (let i = 0; i <= nums.length - k; i++) {
+  let max = nums[i];
+  for (let j = i + 1; j < i + k; j++) max = Math.max(max, nums[j]);
+  result.push(max);
+  }
+  return result;
+  }
 
-// Solution 2: Deque (Double-ended queue) - Optimal
-// Time: O(n), Space: O(k)
-export function maxSlidingWindow2(nums: number[], k: number): number[] {
-    const result: number[] = [];
-    const deque: number[] = []; // Store indices
-    
-    for (let i = 0; i < nums.length; i++) {
-        // Remove indices that are out of current window
-        while (deque.length > 0 && deque[0] <= i - k) {
-            deque.shift();
-        }
-        
-        // Remove indices of elements smaller than current element
-        while (deque.length > 0 && nums[deque[deque.length - 1]] <= nums[i]) {
-            deque.pop();
-        }
-        
-        // Add current index
-        deque.push(i);
-        
-        // Add maximum to result when window is complete
-        if (i >= k - 1) {
-            result.push(nums[deque[0]]);
-        }
-    }
-    
-    return result;
-}
+/\*\*
 
-// Solution 3: Segment Tree
-// Time: O(n log k), Space: O(k)
-export function maxSlidingWindow3(nums: number[], k: number): number[] {
-    class SegmentTree {
-        tree: number[];
-        n: number;
-        
-        constructor(size: number) {
-            this.n = size;
-            this.tree = new Array(4 * size).fill(-Infinity);
-        }
-        
-        update(node: number, start: number, end: number, idx: number, val: number): void {
-            if (start === end) {
-                this.tree[node] = val;
-            } else {
-                const mid = Math.floor((start + end) / 2);
-                if (idx <= mid) {
-                    this.update(2 * node, start, mid, idx, val);
-                } else {
-                    this.update(2 * node + 1, mid + 1, end, idx, val);
-                }
-                this.tree[node] = Math.max(this.tree[2 * node], this.tree[2 * node + 1]);
-            }
-        }
-        
-        query(node: number, start: number, end: number, l: number, r: number): number {
-            if (r < start || end < l) return -Infinity;
-            if (l <= start && end <= r) return this.tree[node];
-            
-            const mid = Math.floor((start + end) / 2);
-            const leftMax = this.query(2 * node, start, mid, l, r);
-            const rightMax = this.query(2 * node + 1, mid + 1, end, l, r);
-            return Math.max(leftMax, rightMax);
-        }
-        
-        updateValue(idx: number, val: number): void {
-            this.update(1, 0, this.n - 1, idx, val);
-        }
-        
-        rangeMax(l: number, r: number): number {
-            return this.query(1, 0, this.n - 1, l, r);
-        }
-    }
-    
-    const result: number[] = [];
-    const segTree = new SegmentTree(k);
-    
-    // Initialize first window
-    for (let i = 0; i < k; i++) {
-        segTree.updateValue(i, nums[i]);
-    }
-    result.push(segTree.rangeMax(0, k - 1));
-    
-    // Slide the window
-    for (let i = k; i < nums.length; i++) {
-        const removeIdx = (i - k) % k;
-        segTree.updateValue(removeIdx, nums[i]);
-        result.push(segTree.rangeMax(0, k - 1));
-    }
-    
-    return result;
-}
+- Monotonic Deque — optimal solution.
+- Deque stores indices in decreasing-value order.
+- Front always points to the current window's maximum.
+- Each element is pushed and popped at most once → amortized O(1) per element.
+- Time O(n), Space O(k)
+  \*/
+  function maxSlidingWindow(nums: number[], k: number): number[] {
+  const result: number[] = [];
+  const deque: number[] = []; // indices
 
-// Solution 4: Heap (Priority Queue)
-// Time: O(n log k), Space: O(k)
-export function maxSlidingWindow4(nums: number[], k: number): number[] {
-    class MaxHeap {
-        heap: [number, number][]; // [value, index]
-        
-        constructor() {
-            this.heap = [];
-        }
-        
-        push(val: number, idx: number): void {
-            this.heap.push([val, idx]);
-            this.heapifyUp(this.heap.length - 1);
-        }
-        
-        pop(): [number, number] | undefined {
-            if (this.heap.length === 0) return undefined;
-            
-            const max = this.heap[0];
-            const last = this.heap.pop()!;
-            
-            if (this.heap.length > 0) {
-                this.heap[0] = last;
-                this.heapifyDown(0);
-            }
-            
-            return max;
-        }
-        
-        peek(): [number, number] | undefined {
-            return this.heap.length > 0 ? this.heap[0] : undefined;
-        }
-        
-        private heapifyUp(idx: number): void {
-            while (idx > 0) {
-                const parentIdx = Math.floor((idx - 1) / 2);
-                if (this.heap[parentIdx][0] >= this.heap[idx][0]) break;
-                
-                [this.heap[parentIdx], this.heap[idx]] = [this.heap[idx], this.heap[parentIdx]];
-                idx = parentIdx;
-            }
-        }
-        
-        private heapifyDown(idx: number): void {
-            while (true) {
-                let maxIdx = idx;
-                const leftChild = 2 * idx + 1;
-                const rightChild = 2 * idx + 2;
-                
-                if (leftChild < this.heap.length && this.heap[leftChild][0] > this.heap[maxIdx][0]) {
-                    maxIdx = leftChild;
-                }
-                
-                if (rightChild < this.heap.length && this.heap[rightChild][0] > this.heap[maxIdx][0]) {
-                    maxIdx = rightChild;
-                }
-                
-                if (maxIdx === idx) break;
-                
-                [this.heap[idx], this.heap[maxIdx]] = [this.heap[maxIdx], this.heap[idx]];
-                idx = maxIdx;
-            }
-        }
-    }
-    
-    const result: number[] = [];
-    const heap = new MaxHeap();
-    
-    for (let i = 0; i < nums.length; i++) {
-        heap.push(nums[i], i);
-        
-        // Remove elements outside current window
-        while (heap.peek() && heap.peek()![1] <= i - k) {
-            heap.pop();
-        }
-        
-        // Add maximum to result when window is complete
-        if (i >= k - 1) {
-            result.push(heap.peek()![0]);
-        }
-    }
-    
-    return result;
-}
+      for (let i = 0; i < nums.length; i++) {
+          // Step 1: remove front index if it has left the window
+          while (deque.length > 0 && deque[0] <= i - k) deque.shift();
 
-// Solution 5: Divide and Conquer with Sparse Table
-// Time: O(n log n), Space: O(n log n)
-export function maxSlidingWindow5(nums: number[], k: number): number[] {
-    const n = nums.length;
-    const logN = Math.floor(Math.log2(n)) + 1;
-    
-    // Build sparse table
-    const st = Array(n).fill(null).map(() => Array(logN).fill(0));
-    
-    // Initialize for length 1
-    for (let i = 0; i < n; i++) {
-        st[i][0] = nums[i];
-    }
-    
-    // Build sparse table
-    for (let j = 1; j < logN; j++) {
-        for (let i = 0; i + (1 << j) <= n; i++) {
-            st[i][j] = Math.max(st[i][j - 1], st[i + (1 << (j - 1))][j - 1]);
-        }
-    }
-    
-    function rangeMax(l: number, r: number): number {
-        const length = r - l + 1;
-        const k = Math.floor(Math.log2(length));
-        return Math.max(st[l][k], st[r - (1 << k) + 1][k]);
-    }
-    
-    const result: number[] = [];
-    for (let i = 0; i <= n - k; i++) {
-        result.push(rangeMax(i, i + k - 1));
-    }
-    
-    return result;
-}
+          // Step 2: remove back indices whose values are ≤ current (they can never be max)
+          while (deque.length > 0 && nums[deque[deque.length - 1]] <= nums[i]) deque.pop();
 
-// Solution 6: Two Stacks Approach
-// Time: O(n), Space: O(k)
-export function maxSlidingWindow6(nums: number[], k: number): number[] {
-    const result: number[] = [];
-    const maxStack: number[] = [];
-    const minStack: number[] = [];
-    
-    let left = 0;
-    let right = 0;
-    
-    function pushRight(): void {
-        const val = nums[right];
-        while (maxStack.length > 0 && maxStack[maxStack.length - 1] < val) {
-            maxStack.pop();
-        }
-        maxStack.push(val);
-        right++;
-    }
-    
-    function popLeft(): void {
-        const val = nums[left];
-        if (maxStack.length > 0 && maxStack[0] === val) {
-            maxStack.shift();
-        }
-        left++;
-    }
-    
-    function getMax(): number {
-        return maxStack.length > 0 ? maxStack[0] : -Infinity;
-    }
-    
-    // Initialize first window
-    while (right < k) {
-        pushRight();
-    }
-    result.push(getMax());
-    
-    // Slide window
-    while (right < nums.length) {
-        pushRight();
-        popLeft();
-        result.push(getMax());
-    }
-    
-    return result;
-}
+          deque.push(i);
 
-// Test cases
-export function testMaxSlidingWindow() {
-    console.log("Testing Sliding Window Maximum:");
-    
-    const testCases = [
-        {
-            nums: [1, 3, -1, -3, 5, 3, 6, 7],
-            k: 3,
-            expected: [3, 3, 5, 5, 6, 7]
-        },
-        {
-            nums: [1],
-            k: 1,
-            expected: [1]
-        },
-        {
-            nums: [1, -1],
-            k: 1,
-            expected: [1, -1]
-        },
-        {
-            nums: [9, 11],
-            k: 2,
-            expected: [11]
-        },
-        {
-            nums: [4, -2, -1, 3, 1, 2],
-            k: 2,
-            expected: [4, -1, 3, 3, 2]
-        }
-    ];
-    
-    const solutions = [
-        { name: "Brute Force", fn: maxSlidingWindow1 },
-        { name: "Deque (Optimal)", fn: maxSlidingWindow2 },
-        { name: "Segment Tree", fn: maxSlidingWindow3 },
-        { name: "Heap", fn: maxSlidingWindow4 },
-        { name: "Sparse Table", fn: maxSlidingWindow5 },
-        { name: "Two Stacks", fn: maxSlidingWindow6 }
-    ];
-    
-    solutions.forEach(solution => {
-        console.log(`\n${solution.name}:`);
-        testCases.forEach((test, i) => {
-            const result = solution.fn([...test.nums], test.k);
-            const passed = JSON.stringify(result) === JSON.stringify(test.expected);
-            console.log(`  Test ${i + 1}: ${passed ? 'PASS' : 'FAIL'}`);
-            if (!passed) {
-                console.log(`    Input: nums=${JSON.stringify(test.nums)}, k=${test.k}`);
-                console.log(`    Expected: ${JSON.stringify(test.expected)}`);
-                console.log(`    Got: ${JSON.stringify(result)}`);
-            }
-        });
-    });
-}
+          // Record window max once the first full window is formed
+          if (i >= k - 1) result.push(nums[deque[0]]);
+      }
 
-/**
- * Key Insights:
- * 
- * 1. **Problem Pattern**:
- *    - Classic sliding window with range maximum query
- *    - Need to efficiently track maximum in moving window
- *    - Window size is fixed, slides one position at a time
- * 
- * 2. **Deque Solution (Optimal)**:
- *    - Maintain decreasing order of elements in deque
- *    - Store indices, not values (for window boundary checking)
- *    - Front of deque always contains maximum of current window
- * 
- * 3. **Deque Invariants**:
- *    - Indices are in increasing order
- *    - Values are in decreasing order
- *    - Remove indices outside current window from front
- *    - Remove smaller elements from back before adding new element
- * 
- * 4. **Time Complexity Analysis**:
- *    - Brute Force: O(n*k) - check each window
- *    - Deque: O(n) - each element added/removed once
- *    - Heap: O(n log k) - heap operations
- *    - Segment Tree: O(n log k) - range queries
- * 
- * 5. **Space Complexity**:
- *    - Deque: O(k) - at most k elements
- *    - Heap: O(k) - window size elements
- *    - Segment Tree: O(k) - tree structure
- * 
- * 6. **Why Deque Works**:
- *    - Smaller elements can never be maximum while larger element exists
- *    - Remove obsolete elements to maintain useful candidates
- *    - Amortized O(1) per element due to single add/remove
- * 
- * 7. **Interview Strategy**:
- *    - Start with brute force explanation
- *    - Identify inefficiency (recalculating max)
- *    - Introduce deque for efficient tracking
- *    - Explain deque invariants clearly
- * 
- * 8. **Edge Cases**:
- *    - k = 1 (each element is its own window)
- *    - k = n (entire array is one window)
- *    - All elements equal
- *    - Strictly increasing/decreasing arrays
- * 
- * 9. **Common Mistakes**:
- *    - Storing values instead of indices in deque
- *    - Not removing out-of-window elements
- *    - Incorrect deque maintenance order
- *    - Off-by-one errors in window boundaries
- * 
- * 10. **Alternative Data Structures**:
- *     - Heap: Good but O(log k) operations
- *     - Segment Tree: Overkill for this problem
- *     - Sparse Table: Precomputation heavy
- *     - Balanced BST: Complex implementation
- * 
- * 11. **Big Tech Variations**:
- *     - Google: Sliding window minimum
- *     - Meta: Moving average/median
- *     - Amazon: K-th largest in sliding window
- *     - Microsoft: Sliding window with different metrics
- * 
- * 12. **Follow-up Questions**:
- *     - Find minimum in sliding window
- *     - K largest elements in sliding window
- *     - Sliding window median
- *     - Variable window size problems
- * 
- * 13. **Real-world Applications**:
- *     - Stock price analysis (moving maximum)
- *     - Network monitoring (peak traffic)
- *     - Signal processing (peak detection)
- *     - Game development (high score tracking)
- *     - System monitoring (resource usage peaks)
- * 
- * 14. **Optimization Tips**:
- *     - Use deque instead of custom queue
- *     - Store indices for boundary checking
- *     - Maintain invariants consistently
- *     - Consider amortized analysis for complexity
- */
+      return result;
+
+  }
+
+// Inline checks
+console.log(JSON.stringify(maxSlidingWindow([1,3,-1,-3,5,3,6,7], 3))); // [3,3,5,5,6,7]
+console.log(JSON.stringify(maxSlidingWindow([1], 1))); // [1]
+console.log(JSON.stringify(maxSlidingWindowBrute([9,11], 2))); // [11]
+console.log(JSON.stringify(maxSlidingWindow([4,-2,-1,3,1,2], 2))); // [4,-1,3,3,2]
 {% endraw %}
+
+## 🔗 Related Problems
+
+- [862. Shortest Subarray with Sum ≥ K](https://leetcode.com/problems/shortest-subarray-with-sum-at-least-k/) — monotonic deque on prefix sums
+- [1438. Longest Subarray with Absolute Diff ≤ Limit](https://leetcode.com/problems/longest-continuous-subarray-with-absolute-diff-less-than-or-equal-to-limit/) — two deques (min + max) simultaneously
+- [76. Minimum Window Substring](https://leetcode.com/problems/minimum-window-substring/) — variable-size sliding window classic
+- [918. Maximum Sum Circular Subarray](https://leetcode.com/problems/maximum-sum-circular-subarray/) — deque variant on circular array
+- [567. Permutation in String](https://leetcode.com/problems/permutation-in-string/) — fixed-size window with character matching

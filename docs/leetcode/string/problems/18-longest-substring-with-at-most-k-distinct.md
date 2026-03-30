@@ -1,473 +1,128 @@
 ---
 layout: page
-title: "Longest Substring with At Most K Distinct Character"
-difficulty: Easy
+title: "Longest Substring with At Most K Distinct Characters"
+difficulty: Medium
 category: String
-tags: [String, Two Pointers, Hash Table, Sliding Window]
-leetcode_url: "https://leetcode.com/problems/longest-substring-with-at-most-k-distinct-character/"
+tags: [String, Hash Table, Sliding Window, Two Pointers]
+leetcode_url: "https://leetcode.com/problems/longest-substring-with-at-most-k-distinct-characters/"
 ---
 
-# Longest Substring with At Most K Distinct Character
+# Longest Substring with At Most K Distinct Characters / Chuỗi Con Dài Nhất Với Tối Đa K Ký Tự Phân Biệt
 
-> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Variable-size Sliding Window
+> **Frequency**: 📘 Tier 3 — Classic sliding window drill, hay xuất hiện trong phone screen
+> **See also**: [Table of Contents](../../../00-table-of-contents.md) | [3. Longest Substring Without Repeating Characters](https://leetcode.com/problems/longest-substring-without-repeating-characters/)
 
-**LeetCode Problem # * 340. Longest Substring with At Most K Distinct Characters**
+## 🧠 Intuition / Tư Duy
+
+- **Analogy:** Tưởng tượng bạn mang chiếc ví chỉ chứa được `k` loại thẻ ngân hàng khác nhau. Bạn đi dọc hàng cửa hàng — mỗi cửa hàng cần một loại thẻ. Khi gặp loại thẻ mới mà ví đã đầy, bạn phải bỏ đi loại thẻ "cũ nhất" (lùi con trỏ trái) cho đến khi ví còn chỗ. Mục tiêu là đi được đoạn dài nhất liên tục mà không vi phạm giới hạn ví.
+
+- **Pattern Recognition:**
+  - "Longest substring satisfying constraint on distinct chars" → **Variable-size Sliding Window**
+  - Expand right freely; shrink from left **while** constraint is violated (`map.size > k`)
+  - HashMap tracks count of each char in window; `map.size` = number of distinct chars
+
+- **Visual — s="eceba", k=2:**
+
+```
+r=0: add 'e' → {e:1}         size=1≤2  window="e"    len=1
+r=1: add 'c' → {e:1,c:1}    size=2≤2  window="ec"   len=2
+r=2: add 'e' → {e:2,c:1}    size=2≤2  window="ece"  len=3  ← max
+r=3: add 'b' → {e:2,c:1,b:1} size=3>2  shrink:
+       remove s[0]='e' → {e:1,c:1,b:1} size=3>2  left=1
+       remove s[1]='c' → {e:1,b:1}     size=2≤2  left=2
+     window="eb"  len=2
+r=4: add 'a' → {e:1,b:1,a:1} size=3>2  shrink:
+       remove s[2]='e' → {b:1,a:1}     size=2≤2  left=3
+     window="ba"  len=2
+
+maxLength = 3  ("ece") ✓
+```
 
 ## Problem Description
 
-LeetCode problem solution with multiple approaches and explanations.
+Given string `s` and integer `k`, return the length of the longest substring containing at most `k` distinct characters.
+
+```
+Input: s="eceba",  k=2 → Output: 3  ("ece")
+Input: s="aa",     k=1 → Output: 2  ("aa")
+Input: s="abaccc", k=2 → Output: 4  ("accc")
+```
+
+## 📝 Interview Tips
+
+1. **Shrink while** / **Thu nhỏ với while**: dùng `while (map.size > k)` không phải `if` — có thể cần shrink nhiều bước liên tiếp.
+2. **Delete when 0** / **Xóa khi count về 0**: `map.delete(char)` để `map.size` phản ánh đúng số ký tự phân biệt.
+3. **k=0 edge** / **Trường hợp k=0**: không có chuỗi nào hợp lệ → trả về 0 ngay.
+4. **k ≥ distinct** / **k lớn hơn số unique**: window không bao giờ cần shrink → trả về `s.length`.
+5. **Generalizes LC 3 and LC 159** / **Tổng quát hóa**: LC 3 (không lặp = k=1 distinct per char), LC 159 (k=2 "fruit basket") đều là trường hợp đặc biệt.
+6. **Unicode** / **Ký tự Unicode**: dùng `Map<string, number>` thay vì `int[26]` khi alphabet không giới hạn.
 
 ## Solutions
 
 {% raw %}
-/**
- * 340. Longest Substring with At Most K Distinct Characters
- * 
- * Given a string s and an integer k, return the length of the longest substring 
- * of s that contains at most k distinct characters.
- * 
- * Example 1:
- * Input: s = "eceba", k = 2
- * Output: 3
- * Explanation: The substring is "ece" with length 3.
- * 
- * Example 2:
- * Input: s = "aa", k = 1
- * Output: 2
- * Explanation: The substring is "aa" with length 2.
- * 
- * Constraints:
- * - 1 <= s.length <= 5 * 10^4
- * - 0 <= k <= 50
- * - s consists of lowercase English letters.
- */
+/\*\*
 
-// Solution 1: Sliding Window with HashMap
-// Time: O(n), Space: O(k)
-export function lengthOfLongestSubstringKDistinct1(s: string, k: number): number {
-    if (k === 0) return 0;
-    
-    const charCount = new Map<string, number>();
-    let left = 0;
-    let maxLength = 0;
-    
-    for (let right = 0; right < s.length; right++) {
-        const rightChar = s[right];
-        charCount.set(rightChar, (charCount.get(rightChar) || 0) + 1);
-        
-        // Shrink window if we have more than k distinct characters
-        while (charCount.size > k) {
-            const leftChar = s[left];
-            charCount.set(leftChar, charCount.get(leftChar)! - 1);
-            
-            if (charCount.get(leftChar) === 0) {
-                charCount.delete(leftChar);
-            }
-            
-            left++;
-        }
-        
-        maxLength = Math.max(maxLength, right - left + 1);
-    }
-    
-    return maxLength;
-}
+- 340.  Longest Substring with At Most K Distinct Characters
+- Brute: try every substring and track distinct count.
+- Time O(n²), Space O(k)
+  \*/
+  function lengthOfLongestSubstringKDistinctBrute(s: string, k: number): number {
+  if (k === 0) return 0;
+  let max = 0;
+  for (let i = 0; i < s.length; i++) {
+  const seen = new Map<string, number>();
+  for (let j = i; j < s.length; j++) {
+  seen.set(s[j], (seen.get(s[j]) ?? 0) + 1);
+  if (seen.size > k) break;
+  max = Math.max(max, j - i + 1);
+  }
+  }
+  return max;
+  }
 
-// Solution 2: Sliding Window with Last Occurrence Tracking
-// Time: O(n), Space: O(k)
-export function lengthOfLongestSubstringKDistinct2(s: string, k: number): number {
-    if (k === 0) return 0;
-    
-    const lastOccurrence = new Map<string, number>();
-    let left = 0;
-    let maxLength = 0;
-    
-    for (let right = 0; right < s.length; right++) {
-        const rightChar = s[right];
-        lastOccurrence.set(rightChar, right);
-        
-        // If we have more than k distinct characters
-        if (lastOccurrence.size > k) {
-            // Find the character with the smallest last occurrence
-            let minIdx = right;
-            let charToRemove = '';
-            
-            for (const [char, idx] of lastOccurrence) {
-                if (idx < minIdx) {
-                    minIdx = idx;
-                    charToRemove = char;
-                }
-            }
-            
-            lastOccurrence.delete(charToRemove);
-            left = minIdx + 1;
-        }
-        
-        maxLength = Math.max(maxLength, right - left + 1);
-    }
-    
-    return maxLength;
-}
+/\*\*
 
-// Solution 3: Optimized with Ordered Map Simulation
-// Time: O(n), Space: O(k)
-export function lengthOfLongestSubstringKDistinct3(s: string, k: number): number {
-    if (k === 0) return 0;
-    
-    // Use array to simulate ordered map for better performance
-    const chars: string[] = [];
-    const charIndex = new Map<string, number>();
-    let left = 0;
-    let maxLength = 0;
-    
-    for (let right = 0; right < s.length; right++) {
-        const rightChar = s[right];
-        
-        // If character already exists, remove it from current position
-        if (charIndex.has(rightChar)) {
-            const idx = charIndex.get(rightChar)!;
-            chars.splice(idx, 1);
-            // Update indices for characters after the removed one
-            for (let i = idx; i < chars.length; i++) {
-                charIndex.set(chars[i], i);
-            }
-        }
-        
-        // Add character to the end
-        chars.push(rightChar);
-        charIndex.set(rightChar, chars.length - 1);
-        
-        // If we have more than k distinct characters, remove the first one
-        if (chars.length > k) {
-            const charToRemove = chars.shift()!;
-            charIndex.delete(charToRemove);
-            // Update indices
-            for (let i = 0; i < chars.length; i++) {
-                charIndex.set(chars[i], i);
-            }
-            // Move left pointer to exclude the removed character
-            while (left <= right && s[left] !== charToRemove) {
-                left++;
-            }
-            left++;
-        }
-        
-        maxLength = Math.max(maxLength, right - left + 1);
-    }
-    
-    return maxLength;
-}
+- Variable-size Sliding Window with HashMap — optimal.
+- Expand right freely; shrink left until at most k distinct chars remain.
+- Time O(n), Space O(k)
+  \*/
+  function lengthOfLongestSubstringKDistinct(s: string, k: number): number {
+  if (k === 0) return 0;
+  const count = new Map<string, number>();
+  let left = 0;
+  let max = 0;
 
-// Solution 4: Two Pointers with Frequency Array
-// Time: O(n), Space: O(1) - assuming lowercase letters only
-export function lengthOfLongestSubstringKDistinct4(s: string, k: number): number {
-    if (k === 0) return 0;
-    
-    const freq = new Array(26).fill(0);
-    let distinctCount = 0;
-    let left = 0;
-    let maxLength = 0;
-    
-    for (let right = 0; right < s.length; right++) {
-        const rightCharCode = s.charCodeAt(right) - 97; // 'a' = 97
-        
-        if (freq[rightCharCode] === 0) {
-            distinctCount++;
-        }
-        freq[rightCharCode]++;
-        
-        // Shrink window if necessary
-        while (distinctCount > k) {
-            const leftCharCode = s.charCodeAt(left) - 97;
-            freq[leftCharCode]--;
-            
-            if (freq[leftCharCode] === 0) {
-                distinctCount--;
-            }
-            
-            left++;
-        }
-        
-        maxLength = Math.max(maxLength, right - left + 1);
-    }
-    
-    return maxLength;
-}
+      for (let right = 0; right < s.length; right++) {
+          // Expand: include s[right]
+          const rc = s[right];
+          count.set(rc, (count.get(rc) ?? 0) + 1);
 
-// Solution 5: Sliding Window with Deque for LRU
-// Time: O(n), Space: O(k)
-export function lengthOfLongestSubstringKDistinct5(s: string, k: number): number {
-    if (k === 0) return 0;
-    
-    const charDeque: string[] = []; // LRU order
-    const charSet = new Set<string>();
-    let left = 0;
-    let maxLength = 0;
-    
-    for (let right = 0; right < s.length; right++) {
-        const rightChar = s[right];
-        
-        // If character already exists, move it to the end
-        if (charSet.has(rightChar)) {
-            const idx = charDeque.indexOf(rightChar);
-            charDeque.splice(idx, 1);
-        } else {
-            charSet.add(rightChar);
-        }
-        
-        charDeque.push(rightChar);
-        
-        // If we exceed k distinct characters
-        if (charSet.size > k) {
-            const lruChar = charDeque.shift()!;
-            charSet.delete(lruChar);
-            
-            // Move left pointer past all occurrences of removed character
-            while (left <= right && s[left] !== lruChar) {
-                left++;
-            }
-            left++;
-        }
-        
-        maxLength = Math.max(maxLength, right - left + 1);
-    }
-    
-    return maxLength;
-}
+          // Shrink: move left until constraint is satisfied
+          while (count.size > k) {
+              const lc = s[left++];
+              count.set(lc, count.get(lc)! - 1);
+              if (count.get(lc) === 0) count.delete(lc);
+          }
 
-// Solution 6: Advanced with Character Position Tracking
-// Time: O(n), Space: O(k)
-export function lengthOfLongestSubstringKDistinct6(s: string, k: number): number {
-    if (k === 0) return 0;
-    
-    class CharTracker {
-        char: string;
-        positions: number[] = [];
-        
-        constructor(char: string) {
-            this.char = char;
-        }
-        
-        addPosition(pos: number): void {
-            this.positions.push(pos);
-        }
-        
-        getEarliestPosition(): number {
-            return this.positions.length > 0 ? this.positions[0] : -1;
-        }
-        
-        removePositionsUpTo(pos: number): void {
-            while (this.positions.length > 0 && this.positions[0] <= pos) {
-                this.positions.shift();
-            }
-        }
-        
-        isEmpty(): boolean {
-            return this.positions.length === 0;
-        }
-    }
-    
-    const charTrackers = new Map<string, CharTracker>();
-    let left = 0;
-    let maxLength = 0;
-    
-    for (let right = 0; right < s.length; right++) {
-        const rightChar = s[right];
-        
-        if (!charTrackers.has(rightChar)) {
-            charTrackers.set(rightChar, new CharTracker(rightChar));
-        }
-        
-        charTrackers.get(rightChar)!.addPosition(right);
-        
-        // If we have more than k distinct characters
-        while (charTrackers.size > k) {
-            // Find character with earliest position
-            let earliestPos = right;
-            let charToRemove = '';
-            
-            for (const [char, tracker] of charTrackers) {
-                const earliestCharPos = tracker.getEarliestPosition();
-                if (earliestCharPos < earliestPos) {
-                    earliestPos = earliestCharPos;
-                    charToRemove = char;
-                }
-            }
-            
-            // Remove this character and update left pointer
-            if (charToRemove) {
-                charTrackers.delete(charToRemove);
-                left = earliestPos + 1;
-                
-                // Clean up positions for remaining characters
-                for (const tracker of charTrackers.values()) {
-                    tracker.removePositionsUpTo(earliestPos);
-                }
-            }
-        }
-        
-        maxLength = Math.max(maxLength, right - left + 1);
-    }
-    
-    return maxLength;
-}
+          max = Math.max(max, right - left + 1);
+      }
 
-// Test cases
-export function testLengthOfLongestSubstringKDistinct() {
-    console.log("Testing Longest Substring with At Most K Distinct Characters:");
-    
-    const testCases = [
-        {
-            s: "eceba",
-            k: 2,
-            expected: 3
-        },
-        {
-            s: "aa",
-            k: 1,
-            expected: 2
-        },
-        {
-            s: "abaccc",
-            k: 2,
-            expected: 4
-        },
-        {
-            s: "abcdef",
-            k: 3,
-            expected: 3
-        },
-        {
-            s: "aaaaaaa",
-            k: 1,
-            expected: 7
-        },
-        {
-            s: "abcadcacacaca",
-            k: 3,
-            expected: 11
-        },
-        {
-            s: "a",
-            k: 0,
-            expected: 0
-        },
-        {
-            s: "abc",
-            k: 4,
-            expected: 3
-        }
-    ];
-    
-    const solutions = [
-        { name: "HashMap Sliding Window", fn: lengthOfLongestSubstringKDistinct1 },
-        { name: "Last Occurrence Tracking", fn: lengthOfLongestSubstringKDistinct2 },
-        { name: "Ordered Map Simulation", fn: lengthOfLongestSubstringKDistinct3 },
-        { name: "Frequency Array", fn: lengthOfLongestSubstringKDistinct4 },
-        { name: "Deque LRU", fn: lengthOfLongestSubstringKDistinct5 },
-        { name: "Position Tracking", fn: lengthOfLongestSubstringKDistinct6 }
-    ];
-    
-    solutions.forEach(solution => {
-        console.log(`\n${solution.name}:`);
-        testCases.forEach((test, i) => {
-            const result = solution.fn(test.s, test.k);
-            const passed = result === test.expected;
-            console.log(`  Test ${i + 1}: ${passed ? 'PASS' : 'FAIL'}`);
-            if (!passed) {
-                console.log(`    Input: s="${test.s}", k=${test.k}`);
-                console.log(`    Expected: ${test.expected}`);
-                console.log(`    Got: ${result}`);
-            }
-        });
-    });
-}
+      return max;
 
-/**
- * Key Insights:
- * 
- * 1. **Sliding Window Pattern**:
- *    - Expand right pointer to include new characters
- *    - Contract left pointer when constraint violated
- *    - Track distinct character count efficiently
- * 
- * 2. **Character Tracking Strategies**:
- *    - HashMap with frequency counting
- *    - Last occurrence tracking for LRU eviction
- *    - Position arrays for advanced scenarios
- * 
- * 3. **Window Shrinking Logic**:
- *    - When distinct count > k, remove leftmost character
- *    - Different approaches to find "leftmost" character
- *    - Update left pointer to exclude removed character
- * 
- * 4. **Time Complexity**: O(n)
- *    - Each character processed at most twice
- *    - HashMap operations are O(1) on average
- *    - Linear scan with constant work per character
- * 
- * 5. **Space Complexity**: O(k)
- *    - HashMap stores at most k+1 characters
- *    - Additional data structures bounded by k
- *    - Can be O(1) with character array for limited alphabet
- * 
- * 6. **Optimization Techniques**:
- *    - Character arrays for limited alphabets
- *    - LRU tracking for efficient eviction
- *    - Position tracking for advanced use cases
- * 
- * 7. **Interview Strategy**:
- *    - Start with basic sliding window approach
- *    - Explain character counting mechanism
- *    - Handle window shrinking logic carefully
- *    - Optimize based on constraints
- * 
- * 8. **Edge Cases**:
- *    - k = 0 (no characters allowed)
- *    - k >= unique characters in string
- *    - Single character string
- *    - Empty string
- * 
- * 9. **Common Mistakes**:
- *    - Incorrect window shrinking logic
- *    - Not updating left pointer properly
- *    - Off-by-one errors in length calculation
- *    - Inefficient character removal
- * 
- * 10. **Pattern Recognition**:
- *     - Classic sliding window with constraint
- *     - Maintain invariant: at most k distinct
- *     - Expand when possible, contract when necessary
- * 
- * 11. **Big Tech Variations**:
- *     - Google: Exactly k distinct characters
- *     - Meta: Weighted characters
- *     - Amazon: Multiple strings processing
- *     - Microsoft: Stream processing version
- * 
- * 12. **Follow-up Questions**:
- *     - Return the actual substring
- *     - Handle Unicode characters
- *     - Process streaming data
- *     - Find all substrings of length exactly k distinct
- * 
- * 13. **Real-world Applications**:
- *     - Text analysis and pattern matching
- *     - Data compression algorithms
- *     - Network packet analysis
- *     - Bioinformatics sequence analysis
- *     - Language model training data preprocessing
- * 
- * 14. **Alternative Approaches**:
- *     - Two-pass algorithm (less efficient)
- *     - Recursive with memoization (overkill)
- *     - Trie-based solutions (complex)
- * 
- * 15. **Performance Considerations**:
- *     - Cache locality with character arrays
- *     - Memory allocation patterns
- *     - String operation efficiency
- *     - Early termination opportunities
- */
+  }
+
+// Inline checks
+console.log(lengthOfLongestSubstringKDistinct("eceba", 2)); // 3
+console.log(lengthOfLongestSubstringKDistinct("aa", 1)); // 2
+console.log(lengthOfLongestSubstringKDistinct("abaccc", 2)); // 4
+console.log(lengthOfLongestSubstringKDistinctBrute("abcdef", 3)); // 3
 {% endraw %}
+
+## 🔗 Related Problems
+
+- [3. Longest Substring Without Repeating Characters](https://leetcode.com/problems/longest-substring-without-repeating-characters/) — special case: no char may repeat (k-distinct per char)
+- [159. Longest Substring with At Most Two Distinct Characters](https://leetcode.com/problems/longest-substring-with-at-most-two-distinct-characters/) — identical problem with k=2
+- [76. Minimum Window Substring](https://leetcode.com/problems/minimum-window-substring/) — harder variant: variable window with superset constraint
+- [438. Find All Anagrams in a String](./19-find-all-anagrams-in-string.md) — fixed-size window with exact character matching
+- [395. Longest Substring with At Least K Repeating Characters](https://leetcode.com/problems/longest-substring-with-at-least-k-repeating-characters/) — complementary constraint (at-least instead of at-most)

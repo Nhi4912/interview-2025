@@ -1,448 +1,134 @@
 ---
 layout: page
-title: "Sort Color"
-difficulty: Hard
-category: Sorting/Searching
-tags: [Sorting/Searching, Hash Table, Sorting]
+title: "Sort Colors"
+difficulty: Medium
+category: Sorting-Searching
+tags: [Array, Two Pointers, Sorting]
 leetcode_url: "https://leetcode.com/problems/sort-colors/"
 ---
 
-# Sort Color
+# Sort Colors / Sắp Xếp Màu Sắc
 
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dutch National Flag (3-way partition)
+> **Frequency**: ⭐ Tier 2 — Dutch Flag pattern xuất hiện nhiều trong partition / 3-way split
+> **See also**: [Merge Sorted Array](./01-merge-sorted-array.md) | [Search in Rotated Array](./03-search-in-rotated-sorted-array.md)
 
+---
 
+## 🧠 Intuition / Tư Duy
 
-> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+**Analogy:** Hãy tưởng tượng bạn đang sắp xếp bi thủy tinh màu đỏ (0), trắng (1), xanh (2) vào ba nhóm chỉ bằng một lần duyệt. Bạn dùng ba "lằn ranh": tất cả bên trái `low` là đỏ đã sắp, tất cả bên phải `high` là xanh đã sắp, vùng giữa `mid↔high` chưa xét. Cứ xem bi tại `mid`: đỏ thì trao đổi với `low`; xanh thì trao đổi với `high`; trắng thì giữ nguyên.
+
+**Pattern Recognition:**
+
+- Signal: sort 3 categories in-place, 1 pass → **Dutch National Flag** (Dijkstra)
+- 3 pointers: `low` (0-boundary), `mid` (current), `high` (2-boundary)
+- Invariant: `nums[0..low-1]=0`, `nums[low..mid-1]=1`, `nums[high+1..n-1]=2`
+- Khi swap với `high`: không tăng `mid` vì chưa biết phần tử vừa swap về
+
+**Visual — nums=[2,0,2,1,1,0]:**
+
+```
+Initial: [2,0,2,1,1,0]  low=0, mid=0, high=5
+
+mid=0: nums[0]=2 → swap(mid,high) → [0,0,2,1,1,2]  high=4
+mid=0: nums[0]=0 → swap(low,mid) → [0,0,2,1,1,2]   low=1,mid=1
+mid=1: nums[1]=0 → swap(low,mid) → [0,0,2,1,1,2]   low=2,mid=2
+mid=2: nums[2]=2 → swap(mid,high)→ [0,0,1,1,2,2]   high=3
+mid=2: nums[2]=1 → mid++         → mid=3
+mid=3: nums[3]=1 → mid++         → mid=4 > high=3  ✅ done
+Result: [0,0,1,1,2,2]
+```
+
+---
 
 ## Problem Description
 
- *  * Given an array nums with n objects colored red, white, or blue, sort them in-place  * so that objects of the same color are adjacent, with the colors in the order red,  * white, and blue.  * 
+Given array `nums` of 0s (red), 1s (white), 2s (blue), sort **in-place** without using library sort. Objects of same color must be adjacent in order: red, white, blue.
+
+```
+Example 1: nums=[2,0,2,1,1,0]  → [0,0,1,1,2,2]
+Example 2: nums=[2,0,1]        → [0,1,2]
+Example 3: nums=[1]            → [1]
+```
+
+Constraints: `1 <= n <= 300`, `nums[i]` ∈ {0,1,2}
+
+---
+
+## 📝 Interview Tips
+
+1. **Counting Sort** là brute force hợp lệ (2 passes), nhưng interviewer muốn nghe **1 pass in-place**
+2. **Tại sao không tăng `mid` khi swap với `high`?** Phần tử từ `high` về chưa được xét — có thể là 0 cần swap tiếp
+3. **Tại sao tăng `mid` khi swap với `low`?** `low` chỉ chứa 0 hoặc 1 đã xét — an toàn để tiến
+4. **Invariant** quan trọng: nói được 3 vùng và bất biến → interviewer rất ấn tượng
+5. **Follow-up**: "4 màu thì sao?" → 2 lần Dutch Flag, hoặc counting sort O(n)
+6. **Đặt tên rõ ràng**: gọi `low`, `mid`, `high` thay vì `i`, `j`, `k` để code tự giải thích
+
+---
 
 ## Solutions
 
 {% raw %}
-/**
- * Sort Colors
- *
- * Problem: https://leetcode.com/problems/sort-colors/
- *
- * Given an array nums with n objects colored red, white, or blue, sort them in-place
- * so that objects of the same color are adjacent, with the colors in the order red,
- * white, and blue.
- *
- * We will use the integers 0, 1, and 2 to represent the color red, white, and blue, respectively.
- *
- * You must solve this problem without using the library's sort function.
- *
- * Example 1:
- * Input: nums = [2,0,2,1,1,0]
- * Output: [0,0,1,1,2,2]
- *
- * Example 2:
- * Input: nums = [2,2,2,2]
- * Output: [2,2,2,2]
- *
- * Constraints:
- * - n == nums.length
- * - 1 <= n <= 300
- * - nums[i] is 0, 1, or 2.
- *
- * Solution Approach:
- * 1. Dutch National Flag Algorithm (Three-way partitioning)
- * 2. Use three pointers: low, mid, high
- * 3. Maintain invariant: elements before low are 0, after high are 2
- * 4. Process elements at mid pointer
- *
- * Time Complexity: O(n) where n is the length of nums array
- * Space Complexity: O(1) as we sort in-place
- */
+/\*\*
 
-/**
- * Sort Colors - Dutch National Flag Algorithm
- *
- * Sắp xếp màu sắc - Thuật toán cờ quốc gia Hà Lan
- *
- * @param nums - Mảng các số đại diện cho màu sắc (0=đỏ, 1=trắng, 2=xanh)
- */
-function sortColors(nums: number[]): void {
-  let low = 0; // Con trỏ cho vùng màu đỏ (0)
-  let mid = 0; // Con trỏ hiện tại
-  let high = nums.length - 1; // Con trỏ cho vùng màu xanh (2)
-
-  while (mid <= high) {
-    if (nums[mid] === 0) {
-      // Hoán đổi với phần tử ở vị trí low
-      [nums[low], nums[mid]] = [nums[mid], nums[low]];
-      low++;
-      mid++;
-    } else if (nums[mid] === 1) {
-      // Giữ nguyên, di chuyển mid
-      mid++;
-    } else if (nums[mid] === 2) {
-      // Hoán đổi với phần tử ở vị trí high
-      [nums[mid], nums[high]] = [nums[high], nums[mid]];
-      high--;
-    }
-  }
-}
-
-/**
- * Alternative Solution: Counting Sort
- *
- * Giải pháp thay thế: Sắp xếp đếm
- *
- * @param nums - Mảng các số đại diện cho màu sắc
- */
-function sortColorsCounting(nums: number[]): void {
-  const counts = [0, 0, 0]; // Đếm số lượng 0, 1, 2
-
-  // Đếm số lượng mỗi màu
-  for (const num of nums) {
-    counts[num]++;
-  }
-
-  // Điền lại mảng theo thứ tự
-  let index = 0;
+- Solution 1: Counting Sort (2 passes)
+- Time O(n), Space O(1) — simple but two passes
+  \*/
+  function sortColorsCounting(nums: number[]): void {
+  const count = [0, 0, 0];
+  for (const n of nums) count[n]++;
+  let i = 0;
   for (let color = 0; color <= 2; color++) {
-    for (let i = 0; i < counts[color]; i++) {
-      nums[index++] = color;
-    }
+  for (let j = 0; j < count[color]; j++) nums[i++] = color;
   }
-}
-
-/**
- * Solution with Two Passes
- *
- * Giải pháp với hai lần duyệt
- *
- * @param nums - Mảng các số đại diện cho màu sắc
- */
-function sortColorsTwoPass(nums: number[]): void {
-  // Lần đầu: đưa tất cả số 0 về đầu
-  let insertPos = 0;
-  for (let i = 0; i < nums.length; i++) {
-    if (nums[i] === 0) {
-      [nums[insertPos], nums[i]] = [nums[i], nums[insertPos]];
-      insertPos++;
-    }
   }
 
-  // Lần hai: đưa tất cả số 1 về sau số 0
-  for (let i = insertPos; i < nums.length; i++) {
-    if (nums[i] === 1) {
-      [nums[insertPos], nums[i]] = [nums[i], nums[insertPos]];
-      insertPos++;
-    }
-  }
-  // Số 2 sẽ tự động ở cuối
-}
+/\*\*
 
-/**
- * Solution with Visualization
- *
- * Giải pháp với hiển thị quá trình
- *
- * @param nums - Mảng các số đại diện cho màu sắc
- * @returns Mảng các bước thực hiện
- */
-function sortColorsWithSteps(
-  nums: number[]
-): Array<{ step: number; array: number[]; description: string }> {
-  const steps: Array<{ step: number; array: number[]; description: string }> =
-    [];
-  const workingArray = [...nums];
-
+- Solution 2: Dutch National Flag — 1 pass in-place (Optimal)
+- Time O(n), Space O(1)
+-
+- Invariant at each step:
+- nums[0..low-1] = 0 (red, finalized)
+- nums[low..mid-1] = 1 (white,finalized)
+- nums[mid..high] = ? (unprocessed)
+- nums[high+1..n-1]= 2 (blue, finalized)
+  \*/
+  function sortColors(nums: number[]): void {
   let low = 0;
   let mid = 0;
-  let high = workingArray.length - 1;
-  let step = 0;
+  let high = nums.length - 1;
 
-  steps.push({
-    step: step++,
-    array: [...workingArray],
-    description: "Initial state",
-  });
-
-  while (mid <= high) {
-    if (workingArray[mid] === 0) {
-      [workingArray[low], workingArray[mid]] = [
-        workingArray[mid],
-        workingArray[low],
-      ];
-      steps.push({
-        step: step++,
-        array: [...workingArray],
-        description: `Swapped 0 at position ${mid} with position ${low}`,
-      });
-      low++;
-      mid++;
-    } else if (workingArray[mid] === 1) {
-      steps.push({
-        step: step++,
-        array: [...workingArray],
-        description: `Kept 1 at position ${mid}`,
-      });
-      mid++;
-    } else if (workingArray[mid] === 2) {
-      [workingArray[mid], workingArray[high]] = [
-        workingArray[high],
-        workingArray[mid],
-      ];
-      steps.push({
-        step: step++,
-        array: [...workingArray],
-        description: `Swapped 2 at position ${mid} with position ${high}`,
-      });
-      high--;
-    }
-  }
-
-  return steps;
+while (mid <= high) {
+if (nums[mid] === 0) {
+[nums[low], nums[mid]] = [nums[mid], nums[low]];
+low++;
+mid++; // nums[low] was 1 (already seen), safe to advance
+} else if (nums[mid] === 1) {
+mid++; // already in correct zone
+} else { // nums[mid] === 2
+[nums[mid], nums[high]] = [nums[high], nums[mid]];
+high--; // DON'T advance mid — swapped element is unseen
+}
+}
 }
 
-/**
- * Solution with Color Names
- *
- * Giải pháp với tên màu
- *
- * @param nums - Mảng các số đại diện cho màu sắc
- * @returns Mảng tên màu đã sắp xếp
- */
-function sortColorsWithNames(nums: number[]): string[] {
-  const colorMap = { 0: "Red", 1: "White", 2: "Blue" };
-  const sortedNums = [...nums];
-
-  sortColors(sortedNums);
-
-  return sortedNums.map((num) => colorMap[num as keyof typeof colorMap]);
-}
-
-/**
- * Validation function
- *
- * Hàm kiểm tra tính hợp lệ
- *
- * @param nums - Mảng cần kiểm tra
- * @returns true nếu mảng đã được sắp xếp đúng
- */
-function isSorted(nums: number[]): boolean {
-  for (let i = 1; i < nums.length; i++) {
-    if (nums[i] < nums[i - 1]) {
-      return false;
-    }
-  }
-  return true;
-}
-
-/**
- * Count colors function
- *
- * Hàm đếm số lượng màu
- *
- * @param nums - Mảng các số đại diện cho màu sắc
- * @returns Object chứa số lượng mỗi màu
- */
-function countColors(nums: number[]): {
-  red: number;
-  white: number;
-  blue: number;
-} {
-  const counts = { red: 0, white: 0, blue: 0 };
-
-  for (const num of nums) {
-    if (num === 0) counts.red++;
-    else if (num === 1) counts.white++;
-    else if (num === 2) counts.blue++;
-  }
-
-  return counts;
-}
-
-// Test cases / Các trường hợp kiểm thử
-function runTests() {
-  console.log("=== Sort Colors Tests ===");
-  console.log("=== Kiểm thử bài toán Sắp xếp màu sắc ===\n");
-
-  const testCases = [
-    {
-      name: "Example 1: Mixed colors",
-      input: [2, 0, 2, 1, 1, 0],
-      expected: [0, 0, 1, 1, 2, 2],
-      description: "Mixed colors with all three types",
-    },
-    {
-      name: "Example 2: All same color",
-      input: [2, 2, 2, 2],
-      expected: [2, 2, 2, 2],
-      description: "All elements are blue",
-    },
-    {
-      name: "Single element",
-      input: [1],
-      expected: [1],
-      description: "Single white element",
-    },
-    {
-      name: "Two elements",
-      input: [2, 0],
-      expected: [0, 2],
-      description: "Blue and red elements",
-    },
-    {
-      name: "Already sorted",
-      input: [0, 0, 1, 1, 2, 2],
-      expected: [0, 0, 1, 1, 2, 2],
-      description: "Array already in correct order",
-    },
-    {
-      name: "Reverse sorted",
-      input: [2, 2, 1, 1, 0, 0],
-      expected: [0, 0, 1, 1, 2, 2],
-      description: "Array in reverse order",
-    },
-    {
-      name: "Only red and white",
-      input: [1, 0, 1, 0, 1],
-      expected: [0, 0, 1, 1, 1],
-      description: "Only red and white colors",
-    },
-    {
-      name: "Only white and blue",
-      input: [2, 1, 2, 1, 2],
-      expected: [1, 1, 2, 2, 2],
-      description: "Only white and blue colors",
-    },
-  ];
-
-  let passedTests = 0;
-  const totalTests = testCases.length;
-
-  for (const testCase of testCases) {
-    console.log(`Test: ${testCase.name}`);
-    console.log(`Input: [${testCase.input.join(", ")}]`);
-    console.log(`Expected: [${testCase.expected.join(", ")}]`);
-    console.log(`Description: ${testCase.description}`);
-
-    const nums = [...testCase.input];
-    sortColors(nums);
-
-    const passed = JSON.stringify(nums) === JSON.stringify(testCase.expected);
-
-    console.log(`Result: [${nums.join(", ")}]`);
-    console.log(`Status: ${passed ? "✅ PASSED" : "❌ FAILED"}`);
-
-    if (passed) {
-      passedTests++;
-    } else {
-      console.log(
-        `Expected: [${testCase.expected.join(", ")}], Got: [${nums.join(", ")}]`
-      );
-    }
-
-    console.log("---");
-  }
-
-  console.log(`\nTest Summary: ${passedTests}/${totalTests} tests passed`);
-  console.log(
-    `Tóm tắt kiểm thử: ${passedTests}/${totalTests} bài kiểm thử đã qua`
-  );
-
-  // Test with visualization
-  console.log("\n=== Testing with Visualization ===");
-  console.log("=== Kiểm thử với hiển thị quá trình ===\n");
-
-  const testArray = [2, 0, 2, 1, 1, 0];
-  const steps = sortColorsWithSteps(testArray);
-
-  console.log("Sorting steps:");
-  console.log("Các bước sắp xếp:");
-  for (const step of steps) {
-    console.log(
-      `Step ${step.step}: [${step.array.join(", ")}] - ${step.description}`
-    );
-  }
-
-  // Test with color names
-  console.log("\n=== Testing with Color Names ===");
-  console.log("=== Kiểm thử với tên màu ===\n");
-
-  const colorArray = [2, 0, 2, 1, 1, 0];
-  const sortedColors = sortColorsWithNames(colorArray);
-
-  console.log(`Original: [${colorArray.join(", ")}]`);
-  console.log(`Sorted: [${sortedColors.join(", ")}]`);
-
-  // Performance comparison
-  console.log("\n=== Performance Comparison ===");
-  console.log("=== So sánh hiệu suất ===\n");
-
-  const largeArray = Array.from({ length: 10000 }, () =>
-    Math.floor(Math.random() * 3)
-  );
-
-  console.log("Testing with large array (10,000 elements)...");
-  console.log("Kiểm thử với mảng lớn (10,000 phần tử)...");
-
-  const start1 = performance.now();
-  const array1 = [...largeArray];
-  sortColors(array1);
-  const time1 = performance.now() - start1;
-
-  const start2 = performance.now();
-  const array2 = [...largeArray];
-  sortColorsCounting(array2);
-  const time2 = performance.now() - start2;
-
-  const start3 = performance.now();
-  const array3 = [...largeArray];
-  sortColorsTwoPass(array3);
-  const time3 = performance.now() - start3;
-
-  console.log(`Dutch National Flag: ${time1.toFixed(4)}ms`);
-  console.log(`Counting Sort: ${time2.toFixed(4)}ms`);
-  console.log(`Two Pass: ${time3.toFixed(4)}ms`);
-
-  const resultsMatch =
-    JSON.stringify(array1) === JSON.stringify(array2) &&
-    JSON.stringify(array2) === JSON.stringify(array3);
-  console.log(`Results match: ${resultsMatch ? "✅ Yes" : "❌ No"}`);
-
-  // Verify sorting
-  console.log(
-    `All arrays are sorted: ${
-      isSorted(array1) && isSorted(array2) && isSorted(array3)
-        ? "✅ Yes"
-        : "❌ No"
-    }`
-  );
-
-  // Show color distribution
-  const originalCounts = countColors(largeArray);
-  const sortedCounts = countColors(array1);
-
-  console.log("\nColor distribution:");
-  console.log("Phân bố màu sắc:");
-  console.log(
-    `Original - Red: ${originalCounts.red}, White: ${originalCounts.white}, Blue: ${originalCounts.blue}`
-  );
-  console.log(
-    `Sorted - Red: ${sortedCounts.red}, White: ${sortedCounts.white}, Blue: ${sortedCounts.blue}`
-  );
-}
-
-// Run tests if this file is executed directly
-if (require.main === module) {
-  runTests();
-}
-
-export {
-  sortColors,
-  sortColorsCounting,
-  sortColorsTwoPass,
-  sortColorsWithSteps,
-  sortColorsWithNames,
-  isSorted,
-  countColors,
-};
+// --- Quick inline tests ---
+const a1 = [2,0,2,1,1,0]; sortColors(a1); console.log(JSON.stringify(a1)==='[0,0,1,1,2,2]'); // true
+const a2 = [2,0,1]; sortColors(a2); console.log(JSON.stringify(a2)==='[0,1,2]'); // true
+const a3 = [1]; sortColors(a3); console.log(JSON.stringify(a3)==='[1]'); // true
+const a4 = [0,0,0]; sortColors(a4); console.log(JSON.stringify(a4)==='[0,0,0]'); // true
 {% endraw %}
+
+---
+
+## 🔗 Related Problems
+
+| Problem                                                                                      | Relationship                          |
+| -------------------------------------------------------------------------------------------- | ------------------------------------- |
+| [75. Sort Colors](https://leetcode.com/problems/sort-colors/)                                | This problem                          |
+| [283. Move Zeroes](https://leetcode.com/problems/move-zeroes/)                               | 2-way partition, simpler Dutch Flag   |
+| [905. Sort Array By Parity](https://leetcode.com/problems/sort-array-by-parity/)             | 2-way partition (even/odd)            |
+| [215. Kth Largest Element](https://leetcode.com/problems/kth-largest-element-in-an-array/)   | QuickSelect uses same partition logic |
+| [4. Median of Two Sorted Arrays](https://leetcode.com/problems/median-of-two-sorted-arrays/) | Hard follow-up on partition concepts  |

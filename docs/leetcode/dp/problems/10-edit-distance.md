@@ -1,469 +1,146 @@
 ---
 layout: page
 title: "Edit Distance"
-difficulty: Hard
+difficulty: Medium
 category: Dynamic Programming
-tags: [Dynamic Programming, Hash Table]
+tags: [String, Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/edit-distance/"
 ---
 
-# Edit Distance
+# Edit Distance / Khoảng Cách Chỉnh Sửa
 
-> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: 2D DP
+> **Frequency**: ⭐ Tier 2 — Gặp >40% interviews
+> **See also**: [Coin Change](./02-coin-change.md) | [Longest Common Subsequence](https://leetcode.com/problems/longest-common-subsequence/)
 
-**LeetCode Problem # * 72. Edit Distance**
+---
+
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** Tưởng tượng bạn là biên tập viên phải biến từ "horse" thành "ros" bằng ít thao tác nhất — xóa chữ, thêm chữ, hoặc thay chữ, mỗi thao tác tốn 1 đơn vị. DP lưu lại kết quả của các cặp tiền tố ngắn hơn, rồi dùng chúng để xây đáp án cho cặp dài hơn — tránh tính lại từ đầu.
+
+**Pattern Recognition:**
+
+- Signal: "minimum operations to convert" → **2D DP (Levenshtein Distance)**
+- dp[i][j] = min ops to convert word1[0..i-1] → word2[0..j-1]
+- Recurrence: chars match → dp[i-1][j-1]; else → 1 + min(delete, insert, replace)
+
+**Visual — DP table for "horse" → "ros":**
+
+```
+      ""  r  o  s
+  ""  [ 0  1  2  3 ]
+  h   [ 1  1  2  3 ]
+  o   [ 2  2  1  2 ]
+  r   [ 3  2  2  2 ]
+  s   [ 4  3  3  2 ]
+  e   [ 5  4  4  3 ] ← dp[5][3] = 3 ✅
+
+  Cell rule:
+  word1[i-1] == word2[j-1]: dp[i][j] = dp[i-1][j-1]         (no op)
+  else:                      dp[i][j] = 1 + min(
+                               dp[i-1][j],    ← delete from word1
+                               dp[i][j-1],    ← insert into word1
+                               dp[i-1][j-1])  ← replace
+```
+
+---
 
 ## Problem Description
 
-LeetCode problem solution with multiple approaches and explanations.
+Given two strings `word1` and `word2`, return the minimum number of operations to convert `word1` to `word2`. Allowed operations: insert, delete, or replace a character (each costs 1).
+
+```
+Example 1: word1="horse", word2="ros" → 3
+  horse → rorse (replace h→r) → rose (delete r) → ros (delete e)
+
+Example 2: word1="intention", word2="execution" → 5
+
+Example 3: word1="", word2="abc" → 3  (insert 3 chars)
+```
+
+Constraints:
+
+- 0 ≤ word1.length, word2.length ≤ 500
+
+---
+
+## 📝 Interview Tips
+
+1. **Clarify**: Are all three operations cost-1? / Ba thao tác có chi phí bằng nhau không?
+2. **Brute force**: Recursion without memo → O(3^(m+n)), exponential / Đệ quy thuần bùng nổ tổ hợp.
+3. **Optimize**: Memoize → bottom-up 2D DP → space-optimize with rolling array / Tối ưu dần: memo → bảng 2D → 1 hàng rolling.
+4. **Edge cases**: Either string empty → answer is the other string's length / Chuỗi rỗng thì đáp án = độ dài chuỗi còn lại.
+5. **Complexity**: Time O(m×n), Space O(m×n) → optimized O(min(m,n)) / Space tối ưu xuống O(n).
+6. **Follow-up**: Reconstruct the actual edit sequence by backtracking from dp[m][n] / Tái tạo chuỗi thao tác cụ thể.
+
+---
 
 ## Solutions
 
 {% raw %}
-/**
- * 72. Edit Distance
- * 
- * Given two strings word1 and word2, return the minimum number of operations required 
- * to convert word1 to word2.
- * 
- * You have the following three operations permitted on a word:
- * - Insert a character
- * - Delete a character
- * - Replace a character
- * 
- * Example 1:
- * Input: word1 = "horse", word2 = "ros"
- * Output: 3
- * Explanation: 
- * horse -> rorse (replace 'h' with 'r')
- * rorse -> rose (remove 'r')
- * rose -> ros (remove 'e')
- * 
- * Example 2:
- * Input: word1 = "intention", word2 = "execution"
- * Output: 5
- * Explanation: 
- * intention -> inention (remove 't')
- * inention -> enention (replace 'i' with 'e')
- * enention -> exention (replace 'n' with 'x')
- * exention -> exection (replace 'n' with 'c')
- * exection -> execution (insert 'u')
- * 
- * Constraints:
- * - 0 <= word1.length, word2.length <= 500
- * - word1 and word2 consist of lowercase English letters.
- */
 
-// Solution 1: 2D Dynamic Programming (Classic)
-// Time: O(m×n), Space: O(m×n)
-export function minDistance1(word1: string, word2: string): number {
-    const m = word1.length;
-    const n = word2.length;
-    
-    // dp[i][j] = min operations to convert word1[0...i-1] to word2[0...j-1]
-    const dp = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
-    
-    // Base cases: converting empty string
-    for (let i = 0; i <= m; i++) {
-        dp[i][0] = i; // Delete all characters from word1
-    }
-    for (let j = 0; j <= n; j++) {
-        dp[0][j] = j; // Insert all characters to match word2
-    }
-    
-    // Fill the DP table
-    for (let i = 1; i <= m; i++) {
-        for (let j = 1; j <= n; j++) {
-            if (word1[i - 1] === word2[j - 1]) {
-                // Characters match, no operation needed
-                dp[i][j] = dp[i - 1][j - 1];
-            } else {
-                // Take minimum of three operations
-                dp[i][j] = Math.min(
-                    dp[i - 1][j] + 1,     // Delete from word1
-                    dp[i][j - 1] + 1,     // Insert into word1
-                    dp[i - 1][j - 1] + 1  // Replace in word1
-                );
-            }
-        }
-    }
-    
-    return dp[m][n];
+/\*\*
+
+- Solution 1: 2D DP Bottom-Up (Classic)
+- Time: O(m×n) — fill entire m×n table
+- Space: O(m×n) — 2D dp array
+  \*/
+  function minDistance(word1: string, word2: string): number {
+  const m = word1.length, n = word2.length;
+  // dp[i][0]=i (delete all), dp[0][j]=j (insert all)
+  const dp: number[][] = Array.from({ length: m + 1 }, (_, i) =>
+  Array.from({ length: n + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0))
+  );
+
+for (let i = 1; i <= m; i++) {
+for (let j = 1; j <= n; j++) {
+dp[i][j] = word1[i - 1] === word2[j - 1]
+? dp[i - 1][j - 1]
+: 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+}
+}
+return dp[m][n];
 }
 
-// Solution 2: Space Optimized DP (1D Array)
-// Time: O(m×n), Space: O(min(m,n))
-export function minDistance2(word1: string, word2: string): number {
-    // Ensure word1 is the shorter string for space optimization
-    if (word1.length > word2.length) {
-        [word1, word2] = [word2, word1];
-    }
-    
-    const m = word1.length;
-    const n = word2.length;
-    
-    let prev = Array.from({ length: m + 1 }, (_, i) => i);
-    let curr = new Array(m + 1);
-    
-    for (let j = 1; j <= n; j++) {
-        curr[0] = j;
-        
-        for (let i = 1; i <= m; i++) {
-            if (word1[i - 1] === word2[j - 1]) {
-                curr[i] = prev[i - 1];
-            } else {
-                curr[i] = Math.min(
-                    prev[i] + 1,      // Delete
-                    curr[i - 1] + 1,  // Insert
-                    prev[i - 1] + 1   // Replace
-                );
-            }
-        }
-        
-        [prev, curr] = [curr, prev];
-    }
-    
-    return prev[m];
+/\*\*
+
+- Solution 2: Space-Optimized 1D Rolling Array (Optimal)
+- Time: O(m×n) — same computation
+- Space: O(min(m,n)) — single row, reused each iteration
+  \*/
+  function minDistanceOptimal(word1: string, word2: string): number {
+  // Iterate over longer string; store shorter in array dimension
+  if (word1.length < word2.length) [word1, word2] = [word2, word1];
+  const m = word1.length, n = word2.length;
+
+let prev = Array.from({ length: n + 1 }, (\_, j) => j);
+
+for (let i = 1; i <= m; i++) {
+const curr: number[] = [i];
+for (let j = 1; j <= n; j++) {
+curr[j] = word1[i - 1] === word2[j - 1]
+? prev[j - 1]
+: 1 + Math.min(prev[j], curr[j - 1], prev[j - 1]);
+}
+prev = curr;
+}
+return prev[n];
 }
 
-// Solution 3: Memoization (Top-Down)
-// Time: O(m×n), Space: O(m×n)
-export function minDistance3(word1: string, word2: string): number {
-    const memo = new Map<string, number>();
-    
-    function dp(i: number, j: number): number {
-        // Base cases
-        if (i === 0) return j; // Insert all remaining characters from word2
-        if (j === 0) return i; // Delete all remaining characters from word1
-        
-        const key = `${i},${j}`;
-        if (memo.has(key)) {
-            return memo.get(key)!;
-        }
-        
-        let result;
-        if (word1[i - 1] === word2[j - 1]) {
-            // Characters match
-            result = dp(i - 1, j - 1);
-        } else {
-            // Try all three operations
-            result = 1 + Math.min(
-                dp(i - 1, j),     // Delete
-                dp(i, j - 1),     // Insert
-                dp(i - 1, j - 1)  // Replace
-            );
-        }
-        
-        memo.set(key, result);
-        return result;
-    }
-    
-    return dp(word1.length, word2.length);
-}
+// === Test Cases ===
+console.log(minDistance("horse", "ros")); // 3
+console.log(minDistance("intention", "execution")); // 5
+console.log(minDistance("", "abc")); // 3
+console.log(minDistanceOptimal("abc", "abc")); // 0
 
-// Solution 4: Optimized with Two Variables
-// Time: O(m×n), Space: O(min(m,n))
-export function minDistance4(word1: string, word2: string): number {
-    const m = word1.length;
-    const n = word2.length;
-    
-    if (m === 0) return n;
-    if (n === 0) return m;
-    
-    // Use the shorter string for the array dimension
-    if (m > n) {
-        return minDistance4(word2, word1);
-    }
-    
-    let dp = Array.from({ length: m + 1 }, (_, i) => i);
-    
-    for (let j = 1; j <= n; j++) {
-        let prev = dp[0];
-        dp[0] = j;
-        
-        for (let i = 1; i <= m; i++) {
-            const temp = dp[i];
-            
-            if (word1[i - 1] === word2[j - 1]) {
-                dp[i] = prev;
-            } else {
-                dp[i] = 1 + Math.min(dp[i], dp[i - 1], prev);
-            }
-            
-            prev = temp;
-        }
-    }
-    
-    return dp[m];
-}
-
-// Solution 5: Recursive with Path Tracking
-// Time: O(m×n), Space: O(m×n)
-export function minDistance5(word1: string, word2: string): number {
-    const memo = new Map<string, { cost: number; path: string[] }>();
-    
-    function dp(i: number, j: number): { cost: number; path: string[] } {
-        if (i === 0) {
-            return {
-                cost: j,
-                path: Array.from({ length: j }, (_, k) => `Insert '${word2[k]}'`)
-            };
-        }
-        
-        if (j === 0) {
-            return {
-                cost: i,
-                path: Array.from({ length: i }, (_, k) => `Delete '${word1[i - 1 - k]}'`)
-            };
-        }
-        
-        const key = `${i},${j}`;
-        if (memo.has(key)) {
-            return memo.get(key)!;
-        }
-        
-        let result;
-        if (word1[i - 1] === word2[j - 1]) {
-            result = dp(i - 1, j - 1);
-        } else {
-            const deleteOp = dp(i - 1, j);
-            const insertOp = dp(i, j - 1);
-            const replaceOp = dp(i - 1, j - 1);
-            
-            const operations = [
-                {
-                    cost: deleteOp.cost + 1,
-                    path: [...deleteOp.path, `Delete '${word1[i - 1]}'`]
-                },
-                {
-                    cost: insertOp.cost + 1,
-                    path: [...insertOp.path, `Insert '${word2[j - 1]}'`]
-                },
-                {
-                    cost: replaceOp.cost + 1,
-                    path: [...replaceOp.path, `Replace '${word1[i - 1]}' with '${word2[j - 1]}'`]
-                }
-            ];
-            
-            result = operations.reduce((min, op) => op.cost < min.cost ? op : min);
-        }
-        
-        memo.set(key, result);
-        return result;
-    }
-    
-    const result = dp(word1.length, word2.length);
-    // Uncomment to see the operations:
-    // console.log("Operations:", result.path);
-    return result.cost;
-}
-
-// Solution 6: Iterative with Diagonal Optimization
-// Time: O(m×n), Space: O(min(m,n))
-export function minDistance6(word1: string, word2: string): number {
-    const m = word1.length;
-    const n = word2.length;
-    
-    if (m === 0) return n;
-    if (n === 0) return m;
-    
-    // Process diagonally to optimize cache usage
-    const maxLen = Math.max(m, n);
-    const minLen = Math.min(m, n);
-    
-    // Use rolling array
-    let prev = new Array(minLen + 1);
-    let curr = new Array(minLen + 1);
-    
-    // Initialize
-    for (let i = 0; i <= minLen; i++) {
-        prev[i] = i;
-    }
-    
-    const longer = m > n ? word1 : word2;
-    const shorter = m > n ? word2 : word1;
-    
-    for (let i = 1; i <= maxLen; i++) {
-        curr[0] = i;
-        
-        for (let j = 1; j <= Math.min(i, minLen); j++) {
-            const longIdx = m > n ? i - 1 : j - 1;
-            const shortIdx = m > n ? j - 1 : i - 1;
-            
-            if (longer[longIdx] === shorter[shortIdx]) {
-                curr[j] = prev[j - 1];
-            } else {
-                curr[j] = 1 + Math.min(
-                    prev[j],      // Delete
-                    curr[j - 1],  // Insert
-                    prev[j - 1]   // Replace
-                );
-            }
-        }
-        
-        [prev, curr] = [curr, prev];
-    }
-    
-    return prev[minLen];
-}
-
-// Test cases
-export function testMinDistance() {
-    console.log("Testing Edit Distance:");
-    
-    const testCases = [
-        {
-            word1: "horse",
-            word2: "ros",
-            expected: 3
-        },
-        {
-            word1: "intention",
-            word2: "execution",
-            expected: 5
-        },
-        {
-            word1: "",
-            word2: "abc",
-            expected: 3
-        },
-        {
-            word1: "abc",
-            word2: "",
-            expected: 3
-        },
-        {
-            word1: "abc",
-            word2: "abc",
-            expected: 0
-        },
-        {
-            word1: "a",
-            word2: "b",
-            expected: 1
-        },
-        {
-            word1: "kitten",
-            word2: "sitting",
-            expected: 3
-        }
-    ];
-    
-    const solutions = [
-        { name: "2D DP", fn: minDistance1 },
-        { name: "Space Optimized", fn: minDistance2 },
-        { name: "Memoization", fn: minDistance3 },
-        { name: "Two Variables", fn: minDistance4 },
-        { name: "Path Tracking", fn: minDistance5 },
-        { name: "Diagonal Optimization", fn: minDistance6 }
-    ];
-    
-    solutions.forEach(solution => {
-        console.log(`\n${solution.name}:`);
-        testCases.forEach((test, i) => {
-            const result = solution.fn(test.word1, test.word2);
-            const passed = result === test.expected;
-            console.log(`  Test ${i + 1}: ${passed ? 'PASS' : 'FAIL'}`);
-            if (!passed) {
-                console.log(`    Input: "${test.word1}" -> "${test.word2}"`);
-                console.log(`    Expected: ${test.expected}`);
-                console.log(`    Got: ${result}`);
-            }
-        });
-    });
-}
-
-/**
- * Key Insights:
- * 
- * 1. **Problem Definition**:
- *    - Levenshtein Distance: minimum edit operations
- *    - Three operations: insert, delete, replace
- *    - Transform word1 to word2 with minimum cost
- * 
- * 2. **DP State Definition**:
- *    - dp[i][j] = min operations to convert word1[0...i-1] to word2[0...j-1]
- *    - Base cases: dp[i][0] = i, dp[0][j] = j
- * 
- * 3. **Recurrence Relation**:
- *    - If chars match: dp[i][j] = dp[i-1][j-1]
- *    - Else: dp[i][j] = 1 + min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1])
- *    - Three choices correspond to delete, insert, replace
- * 
- * 4. **Space Optimization**:
- *    - 2D → 1D: Only need previous row
- *    - Two variables: Track diagonal value separately
- *    - Choose shorter string for space dimension
- * 
- * 5. **Time Complexity**: O(m×n)
- *    - Must fill m×n table entries
- *    - Each entry computed in O(1)
- *    - Cannot be improved asymptotically
- * 
- * 6. **Space Complexity**:
- *    - Naive: O(m×n) for 2D table
- *    - Optimized: O(min(m,n)) using rolling arrays
- *    - Extreme: O(1) with careful variable management
- * 
- * 7. **Operation Interpretation**:
- *    - dp[i-1][j] + 1: Delete char from word1
- *    - dp[i][j-1] + 1: Insert char into word1
- *    - dp[i-1][j-1] + 1: Replace char in word1
- * 
- * 8. **Interview Strategy**:
- *    - Start with recursive solution
- *    - Identify overlapping subproblems
- *    - Apply memoization
- *    - Convert to bottom-up DP
- *    - Optimize space if needed
- * 
- * 9. **Edge Cases**:
- *    - Empty strings (one or both)
- *    - Identical strings
- *    - Single character strings
- *    - No common characters
- * 
- * 10. **Path Reconstruction**:
- *     - Track which operation led to optimal solution
- *     - Backtrack from dp[m][n] to dp[0][0]
- *     - Build sequence of operations
- * 
- * 11. **Variants and Extensions**:
- *     - Weighted operations (different costs)
- *     - Allow transposition (Damerau-Levenshtein)
- *     - Multiple string alignment
- *     - Approximate string matching
- * 
- * 12. **Big Tech Applications**:
- *     - Google: Spell checkers, search suggestions
- *     - Meta: Content similarity, deduplication
- *     - Amazon: Product matching, recommendations
- *     - Microsoft: Auto-correction, text comparison
- * 
- * 13. **Follow-up Questions**:
- *     - Return the actual edit sequence
- *     - Handle different operation costs
- *     - Optimize for very long strings
- *     - Handle Unicode/multibyte characters
- * 
- * 14. **Real-world Applications**:
- *     - DNA sequence alignment
- *     - Plagiarism detection
- *     - Version control (diff algorithms)
- *     - Natural language processing
- *     - Database record matching
- * 
- * 15. **Optimization Techniques**:
- *     - Early termination with distance bounds
- *     - Diagonal processing for cache efficiency
- *     - Bit-parallel algorithms for small alphabets
- *     - Suffix tree/array optimizations
- * 
- * 16. **Common Mistakes**:
- *     - Wrong base case initialization
- *     - Incorrect operation cost accounting
- *     - Off-by-one errors in indexing
- *     - Not handling empty string cases
- */
 {% endraw %}
+
+---
+
+## 🔗 Related Problems
+
+- [Longest Common Subsequence](https://leetcode.com/problems/longest-common-subsequence/) — same 2D DP structure; LCS helps bound edit distance
+- [One Edit Distance](https://leetcode.com/problems/one-edit-distance/) — simplified: check if edit distance equals exactly 1
+- [Minimum ASCII Delete Sum](https://leetcode.com/problems/minimum-ascii-delete-sum-for-two-strings/) — variant with character cost weighting
+- [Delete Operation for Two Strings](https://leetcode.com/problems/delete-operation-for-two-strings/) — only delete operations allowed

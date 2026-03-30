@@ -1,202 +1,122 @@
-# Decode Ways / Số cách giải mã
-
-> **Track**: Shared | **Difficulty**: 🟡 Medium
-> **LeetCode**: #91 | **Pattern**: Dynamic Programming
-> **Category**: String, DP
-
-## Problem / Đề bài
-
-**English**: A message containing letters A–Z is encoded as numbers using the mapping `'A' → "1"`, `'B' → "2"`, ..., `'Z' → "26"`. Given a string `s` of digits, return the **number of ways** to decode it. If there are no valid decodings, return 0.
-
-**Vietnamese**: Một thông điệp gồm các chữ cái A–Z được mã hóa thành số theo ánh xạ `'A' → "1"`, `'B' → "2"`, ..., `'Z' → "26"`. Cho chuỗi số `s`, trả về **số cách giải mã** hợp lệ. Nếu không có cách nào, trả về 0.
-
-**Example**:
-```
-Input: s = "12"
-Output: 2
-Explanation: "12" → "AB" (1,2) OR "L" (12) — 2 ways
-
-Input: s = "226"
-Output: 3
-Explanation: "BZ"(2,26), "VF"(22,6), "BBF"(2,2,6) — 3 ways
-
-Input: s = "06"
-Output: 0
-Explanation: "06" cannot be decoded — "06" ≠ "6", leading zero is invalid
-```
-
-**Constraints**:
-- 1 <= s.length <= 100
-- `s` contains only digits
-- `s` may contain leading zeros
-
+---
+layout: page
+title: "Decode Ways"
+difficulty: Medium
+category: String
+tags: [String, Dynamic Programming]
+leetcode_url: "https://leetcode.com/problems/decode-ways/"
 ---
 
-## Approach / Hướng giải
+# Decode Ways / Số Cách Giải Mã
 
-### Pattern nhận dạng / Pattern recognition
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dynamic Programming
+> **Frequency**: 📘 Tier 3 — Common DP string problem
+> **See also**: [Table of Contents](../../../00-table-of-contents.md) | [Word Break](./20-word-break.md)
 
-Khi bài hỏi **"đếm số cách"** để phân tách / giải mã một chuỗi, đây là DP đếm (counting DP). Subproblem: "có bao nhiêu cách giải mã `s[0..i-1]`?" — đây là dạng tương tự **Climbing Stairs** (DP bước 1 hoặc bước 2) nhưng có điều kiện validity cho mỗi bước.
+## 🧠 Intuition / Tư Duy
 
-### Key Insight / Ý tưởng chính
+- **Analogy:** Tưởng tượng bạn nhận được một băng mã morse và phải đọc từng đoạn để giải mã thành chữ cái. Tại mỗi bước, bạn có thể đọc 1 ký hiệu hoặc 2 ký hiệu liên tiếp — nhưng chỉ khi chúng tạo thành mã hợp lệ (1–26, không có số "0" đứng đầu). Số cách đọc toàn bộ băng chính là đáp án.
 
-Tại mỗi vị trí `i`, bạn có thể:
-1. Decode **1 chữ số** `s[i]` (hợp lệ nếu `s[i] != '0'`) → kế thừa `dp[i-1]` cách
-2. Decode **2 chữ số** `s[i-1..i]` (hợp lệ nếu tạo thành số từ 10–26) → kế thừa `dp[i-2]` cách
+- **Pattern Recognition:**
+  - "Count number of ways to decode a string" → **Counting DP** (subproblem = prefix count)
+  - Two choices at each position (1-digit or 2-digit) with validity constraints → same skeleton as **Climbing Stairs**
+  - `dp[i]` only depends on `dp[i-1]` and `dp[i-2]` → space-optimizable to O(1)
 
-`dp[i]` = tổng các trường hợp hợp lệ từ bước 1 và bước 2.
+- **Visual — s="226":**
 
----
-
-## Solutions / Các cách giải
-
-### Solution 1: Bottom-Up DP — O(n) time, O(n) space ✅ Recommended
-
-**Idea**: Define `dp[i]` = number of ways to decode the first `i` characters of `s`. Fill the array left to right using the 1-digit and 2-digit transition rules.
-
-**Ý tưởng**: Định nghĩa `dp[i]` = số cách giải mã `i` ký tự đầu tiên của `s`. Điền mảng từ trái sang phải, mỗi ô xét 2 khả năng: lấy 1 ký tự hoặc lấy 2 ký tự liền trước.
-
-**Algorithm**:
-1. If `s[0] == '0'`: return 0 (can't decode leading zero)
-2. Create `dp[0..n]`, set `dp[0] = 1` (empty string = 1 way), `dp[1] = 1`
-3. For `i` from 2 to n:
-   - **One-digit**: if `s[i-1] != '0'`: `dp[i] += dp[i-1]`
-   - **Two-digit**: let `two = s[i-2..i-1]` as integer; if `10 <= two <= 26`: `dp[i] += dp[i-2]`
-4. Return `dp[n]`
-
-**Pseudocode**:
 ```
-function numDecodings(s):
-    n = length(s)
-    if s[0] == '0': return 0
-
-    dp = array of (n+1) integers, all 0
-    dp[0] = 1    // base: empty string
-    dp[1] = 1    // base: first char (already checked != '0')
-
-    for i from 2 to n:
-        oneDigit = s[i-1]           // current character
-        twoDigit = s[i-2..i-1]      // last two characters as number
-
-        if oneDigit != '0':
-            dp[i] += dp[i-1]
-
-        if 10 <= twoDigit <= 26:
-            dp[i] += dp[i-2]
-
-    return dp[n]
-```
-
-**Visual**:
-```
-s = "2 2 6"
-     0 1 2   (0-indexed chars)
-
-dp index: 0   1   2   3
-          [1] [1] [?] [?]
+dp index: 0    1    2    3
+          [1]  [1]  [?]  [?]
 
 i=2: s[1]='2' (≠'0') → dp[2] += dp[1] = 1
-     s[0..1]="22" → 22 is 10-26 → dp[2] += dp[0] = 1
+     s[0..1]="22" → 10≤22≤26 → dp[2] += dp[0] = 1
      dp[2] = 2
 
 i=3: s[2]='6' (≠'0') → dp[3] += dp[2] = 2
-     s[1..2]="26" → 26 is 10-26 → dp[3] += dp[1] = 1
+     s[1..2]="26" → 10≤26≤26 → dp[3] += dp[1] = 1
      dp[3] = 3
 
-Answer: dp[3] = 3 ✓  ("BBF", "BZ", "VF")
-
----
-s = "0 6"
-
-s[0]='0' → return 0 immediately ✓
-
----
-s = "1 0 6"
-
-dp: [1][1][?][?]
-
-i=2: s[1]='0' → skip one-digit
-     s[0..1]="10" → 10-26 → dp[2] += dp[0] = 1
-     dp[2] = 1   ("J" only, not "1","0" separately)
-
-i=3: s[2]='6' → dp[3] += dp[2] = 1
-     s[1..2]="06" → 6 < 10 → skip
-     dp[3] = 1   ("JF" only)
+Return dp[3] = 3  ✓  ("BBF", "BZ", "VF")
 ```
 
-**Complexity**:
-- Time: O(n) — single pass through the string
-- Space: O(n) — dp array of size n+1
+## Problem Description
 
----
+Given a string `s` of digits, where `'A'→"1"`, `'B'→"2"`, ..., `'Z'→"26"`, return the **number of ways** to decode it. Leading zeros are always invalid.
 
-### Solution 2: Space-Optimized DP — O(n) time, O(1) space
-
-**Idea**: Notice that `dp[i]` only depends on `dp[i-1]` and `dp[i-2]`. Use two variables instead of an array — identical to the space-optimized Fibonacci pattern.
-
-**Algorithm**:
-1. Handle `s[0] == '0'` edge case → return 0
-2. `prev2 = 1` (represents dp[i-2]), `prev1 = 1` (represents dp[i-1])
-3. For `i` from 2 to n:
-   - `curr = 0`
-   - If `s[i-1] != '0'`: `curr += prev1`
-   - If `10 <= int(s[i-2..i-1]) <= 26`: `curr += prev2`
-   - `prev2 = prev1`, `prev1 = curr`
-4. Return `prev1`
-
-**Pseudocode**:
 ```
-function numDecodings(s):
-    if s[0] == '0': return 0
-    n = length(s)
-    prev2 = 1
-    prev1 = 1
-
-    for i from 2 to n:
-        curr = 0
-        if s[i-1] != '0':
-            curr += prev1
-        twoDigit = integer value of s[i-2..i-1]
-        if 10 <= twoDigit <= 26:
-            curr += prev2
-        prev2 = prev1
-        prev1 = curr
-
-    return prev1
+Input: s = "12"   → 2   ("AB" or "L")
+Input: s = "226"  → 3   ("BBF", "BZ", "VF")
+Input: s = "06"   → 0   (leading zero — invalid)
 ```
 
-**Complexity**:
-- Time: O(n)
-- Space: O(1) — only two variables
+## 📝 Interview Tips
 
----
+1. **This is Climbing Stairs with conditions** / **Leo cầu thang có điều kiện**: mỗi bước có thể bước 1 hoặc 2 bậc, nhưng chỉ khi ký tự tạo thành mã hợp lệ (1–26, không có zero đứng đầu).
+2. **Handle '0' carefully** / **Xử lý '0' cẩn thận**: `s[i]='0'` → không thể decode 1 ký tự; `s[i-1]='0'` → `twoDigit < 10` → không thể decode 2 ký tự. Cả hai fail → `dp[i] = 0` lan truyền qua mảng.
+3. **Base case dp[0]=1** / **Base case dp[0]=1**: chuỗi rỗng = 1 cách (nền để tích lũy) — quy ước DP đếm, không phải cách giải thực tế.
+4. **Two-digit range is 10–26** / **Phạm vi hợp lệ là 10–26**: `"01"` → parseInt=1 < 10 → invalid; `"27"` → 27 > 26 → invalid. Luôn check `10 ≤ two ≤ 26`.
+5. **Space-optimize in interviews** / **Tối ưu bộ nhớ trong phỏng vấn**: chỉ cần 2 biến `prev1`, `prev2` thay vì mảng O(n) — giống Fibonacci rolling.
+6. **Edge cases to mention** / **Edge case cần nêu**: `"0"→0`, `"10"→1` ("J" only), `"100"→0` (đuôi "0" không decode được), `"30"→0` (30>26).
 
-## Comparison / So sánh
+## Solutions
 
-| Solution | Time | Space | Notes |
-|----------|------|-------|-------|
-| Bottom-Up DP | O(n) | O(n) | Easier to understand and debug |
-| Space-Optimized DP | O(n) | O(1) | Optimal — preferred in interviews |
+{% raw %}
+/\*\* \* 91. Decode Ways — Recursive + Memoization (Top-Down DP) \* At each index, try decoding 1 digit then 2 digits; cache results. \* Time O(n), Space O(n) — memo map + call stack
+\*/
+function numDecodingsMemo(s: string): number {
+const memo = new Map<number, number>();
 
----
+    function dp(i: number): number {
+        if (i === s.length) return 1;
+        if (s[i] === '0') return 0;
+        if (memo.has(i)) return memo.get(i)!;
 
-## Interview Tips / Mẹo phỏng vấn
+        let ways = dp(i + 1);
+        if (i + 1 < s.length) {
+            const two = parseInt(s.slice(i, i + 2));
+            if (two >= 10 && two <= 26) ways += dp(i + 2);
+        }
 
-- **Key point**: This is "Climbing Stairs with conditions." At each step, you can take 1 or 2 steps, but only if the corresponding digit(s) form a valid letter (1-26, no leading zeros).
-- **Edge cases**:
-  - `s = "0"` → 0 (invalid)
-  - `s = "10"` → 1 (only "J", not "1"+"0")
-  - `s = "100"` → 0 ("10"+"0" — the trailing 0 can't be decoded alone)
-  - `s = "30"` → 0 ("30" > 26, and "0" alone is invalid)
-  - `s = "27"` → 1 ("BG" only, 27 > 26 so can't be one letter)
-- **Follow-up**: LC 639 — Decode Ways II with `*` wildcards (much harder).
-- **Tricky**: "06" is NOT valid for two-digit decode because it represents 6, not a two-digit number. Always check `twoDigit >= 10`.
+        memo.set(i, ways);
+        return ways;
+    }
 
----
+    return dp(0);
 
-## Related Problems / Bài liên quan
+}
 
-- LC 70 — Climbing Stairs (same DP skeleton without conditions)
-- LC 139 — Word Break (segmentation counting DP)
-- LC 639 — Decode Ways II (with wildcards)
-- LC 509 — Fibonacci Number (pure recurrence, same space optimization)
+/\*\* \* Bottom-Up DP — space-optimized, recommended for interviews. \* dp[i] = ways to decode s[0..i-1]; only prev1/prev2 needed at each step. \* Transition: if s[i-1]≠'0' → curr += prev1; if 10≤two≤26 → curr += prev2. \* Time O(n), Space O(1)
+\*/
+function numDecodings(s: string): number {
+if (s[0] === '0') return 0;
+const n = s.length;
+let prev2 = 1; // dp[i-2]: base dp[0]
+let prev1 = 1; // dp[i-1]: base dp[1]
+
+    for (let i = 2; i <= n; i++) {
+        let curr = 0;
+        if (s[i - 1] !== '0') curr += prev1;           // valid 1-digit decode
+        const two = parseInt(s.slice(i - 2, i));
+        if (two >= 10 && two <= 26) curr += prev2;      // valid 2-digit decode
+        prev2 = prev1;
+        prev1 = curr;
+    }
+
+    return prev1;
+
+}
+
+// Inline checks
+console.log(numDecodings("12")); // 2 ("AB" or "L")
+console.log(numDecodings("226")); // 3 ("BBF", "BZ", "VF")
+console.log(numDecodings("06")); // 0 (leading zero)
+console.log(numDecodings("10")); // 1 ("J" only, "0" alone invalid)
+{% endraw %}
+
+## 🔗 Related Problems
+
+- [70. Climbing Stairs](https://leetcode.com/problems/climbing-stairs/) — same DP skeleton without validity conditions
+- [139. Word Break](./20-word-break.md) — segmentation counting DP, same position-based structure
+- [639. Decode Ways II](https://leetcode.com/problems/decode-ways-ii/) — adds `*` wildcard, significantly harder variant
+- [509. Fibonacci Number](https://leetcode.com/problems/fibonacci-number/) — same two-variable rolling space optimization
+- [198. House Robber](https://leetcode.com/problems/house-robber/) — same dp[i] = f(dp[i-1], dp[i-2]) recurrence pattern

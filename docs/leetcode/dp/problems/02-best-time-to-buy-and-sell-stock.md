@@ -1,264 +1,121 @@
 ---
 layout: page
 title: "Best Time to Buy and Sell Stock"
-difficulty: Hard
+difficulty: Easy
 category: Dynamic Programming
-tags: [Dynamic Programming, Two Pointers]
+tags: [Dynamic Programming, Greedy, Array]
 leetcode_url: "https://leetcode.com/problems/best-time-to-buy-and-sell-stock/"
 ---
 
-# Best Time to Buy and Sell Stock
+# Best Time to Buy and Sell Stock / Thời Điểm Tốt Nhất Để Mua và Bán Cổ Phiếu
 
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: DP/Greedy (Kadane variant)
+> **Frequency**: 🔥 Tier 1 — Bài kinh điển xuất hiện trong hầu hết vòng coding interview
+> **See also**: [Maximum Subarray](./03-maximum-subarray.md) | [Best Time II](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-ii/)
 
+---
 
+## 🧠 Intuition / Tư Duy
 
-> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+**Analogy:** Như người đi chợ theo dõi giá rau mỗi ngày: bạn muốn mua lúc giá thấp nhất và bán lúc giá cao nhất _sau đó_. Mỗi ngày bạn chỉ cần hỏi: "Nếu tôi đã mua ở mức giá thấp nhất từ trước đến hôm nay, lợi nhuận hôm nay là bao nhiêu?" — chỉ cần một lần duyệt.
+
+**Pattern Recognition:**
+
+- Signal: "maximize profit", "single transaction", "buy before sell" → **Greedy / Kadane variant**
+- Duy trì `minPrice` liên tục — tại mỗi điểm, lợi nhuận = `price[i] - minPrice`
+- Tương đương tìm max subarray trên mảng diff `prices[i] - prices[i-1]`
+
+**Visual — prices = [7, 1, 5, 3, 6, 4]:**
+
+```
+Day:      0    1    2    3    4    5
+Price:    7    1    5    3    6    4
+minPrice: 7    1    1    1    1    1
+profit:   0    0    4    2    5    3
+                              ↑
+                         maxProfit = 5  (buy day 1, sell day 4)
+```
+
+---
 
 ## Problem Description
 
- *  * You are given an array prices where prices[i] is the price of a given stock on the ith day.  * You want to maximize your profit by choosing a single day to buy one stock and choosing  * a different day in the future to sell that stock.  * 
+Given an array `prices` where `prices[i]` is the stock price on day `i`, choose **one day to buy** and a **later day to sell** to maximize profit. Return the maximum profit, or `0` if no profit is possible.
+
+```
+Example 1: [7,1,5,3,6,4] → 5    (buy@1, sell@6)
+Example 2: [7,6,4,3,1]   → 0    (prices only fall)
+Example 3: [2,4,1]       → 2    (buy@2, sell@4)
+```
+
+Constraints:
+
+- `1 <= prices.length <= 10^5`
+- `0 <= prices[i] <= 10^4`
+
+---
+
+## 📝 Interview Tips
+
+1. **Clarify**: Can we hold the stock over multiple days? Must we make exactly one transaction? / Chỉ được 1 lần mua-bán, không bắt buộc phải giao dịch
+2. **Brute force**: Try all pairs (i, j) where i < j — O(n²) / Thử tất cả cặp mua-bán
+3. **Optimize**: Track running minimum — single pass O(n) / Duyệt 1 lần, cập nhật giá min liên tục
+4. **Edge cases**: All same prices → 0; single element → 0; strictly decreasing → 0
+5. **Follow-up**: Multiple transactions allowed? → LC 122; with cooldown? → LC 309
+
+---
 
 ## Solutions
 
 {% raw %}
-/**
- * Best Time to Buy and Sell Stock
- *
- * Problem: https://leetcode.com/problems/best-time-to-buy-and-sell-stock/
- *
- * You are given an array prices where prices[i] is the price of a given stock on the ith day.
- * You want to maximize your profit by choosing a single day to buy one stock and choosing
- * a different day in the future to sell that stock.
- *
- * Return the maximum profit you can achieve from this transaction. If you cannot achieve
- * any profit, return 0.
- *
- * Example 1:
- * Input: prices = [7,1,5,3,6,4]
- * Output: 5
- * Explanation: Buy on day 2 (price = 1) and sell on day 5 (price = 6), profit = 6-1 = 5.
- * Note that buying on day 2 and selling on day 1 is not allowed because you must buy before you sell.
- *
- * Example 2:
- * Input: prices = [7,6,4,3,1]
- * Output: 0
- * Explanation: In this case, no transactions are done and the max profit = 0.
- *
- * Constraints:
- * - 1 <= prices.length <= 10^5
- * - 0 <= prices[i] <= 10^4
- *
- * Solution Approach:
- * 1. One Pass Algorithm (Kadane's Algorithm variant)
- * 2. Keep track of minimum price seen so far
- * 3. Calculate potential profit at each step
- * 4. Update maximum profit if current profit is higher
- *
- * Time Complexity: O(n) where n is the length of prices array
- * Space Complexity: O(1) as we only use a constant amount of extra space
- */
 
-/**
- * Best Time to Buy and Sell Stock - One Pass Solution
- *
- * Thuật toán một lần duyệt (biến thể của thuật toán Kadane)
- *
- * @param prices - Mảng giá cổ phiếu theo ngày
- * @returns Lợi nhuận tối đa có thể đạt được
- */
-function maxProfit(prices: number[]): number {
-  if (prices.length < 2) return 0;
+/\*\*
 
-  let minPrice = prices[0]; // Giá thấp nhất đã thấy
-  let maxProfit = 0; // Lợi nhuận tối đa
-
-  for (let i = 1; i < prices.length; i++) {
-    // Cập nhật giá thấp nhất nếu tìm thấy giá thấp hơn
-    minPrice = Math.min(minPrice, prices[i]);
-
-    // Tính lợi nhuận tiềm năng nếu bán tại ngày hiện tại
-    const currentProfit = prices[i] - minPrice;
-
-    // Cập nhật lợi nhuận tối đa nếu lợi nhuận hiện tại cao hơn
-    maxProfit = Math.max(maxProfit, currentProfit);
-  }
-
-  return maxProfit;
-}
-
-/**
- * Alternative Solution: Two Pointers Approach
- *
- * Giải pháp thay thế: Sử dụng hai con trỏ
- *
- * @param prices - Mảng giá cổ phiếu theo ngày
- * @returns Lợi nhuận tối đa có thể đạt được
- */
-function maxProfitTwoPointers(prices: number[]): number {
-  if (prices.length < 2) return 0;
-
-  let buy = 0; // Con trỏ mua
-  let sell = 1; // Con trỏ bán
+- Solution 1: Brute Force
+- Time: O(n²) — try every buy/sell pair
+- Space: O(1) — no extra memory
+  \*/
+  function maxProfitBrute(prices: number[]): number {
   let maxProfit = 0;
 
-  while (sell < prices.length) {
-    const profit = prices[sell] - prices[buy];
-
-    if (profit > 0) {
-      // Có lợi nhuận, cập nhật maxProfit
-      maxProfit = Math.max(maxProfit, profit);
-    } else {
-      // Không có lợi nhuận, di chuyển con trỏ mua
-      buy = sell;
-    }
-
-    sell++;
-  }
-
-  return maxProfit;
+for (let i = 0; i < prices.length - 1; i++) {
+for (let j = i + 1; j < prices.length; j++) {
+maxProfit = Math.max(maxProfit, prices[j] - prices[i]);
+}
 }
 
-/**
- * Brute Force Solution (for comparison)
- *
- * Giải pháp vét cạn (để so sánh)
- *
- * @param prices - Mảng giá cổ phiếu theo ngày
- * @returns Lợi nhuận tối đa có thể đạt được
- */
-function maxProfitBruteForce(prices: number[]): number {
+return maxProfit;
+}
+
+/\*\*
+
+- Solution 2: One-Pass Greedy (Optimal)
+- Time: O(n) — single scan, update min price and max profit
+- Space: O(1) — two variables only
+  \*/
+  function maxProfit(prices: number[]): number {
+  let minPrice = prices[0];
   let maxProfit = 0;
 
-  for (let i = 0; i < prices.length - 1; i++) {
-    for (let j = i + 1; j < prices.length; j++) {
-      const profit = prices[j] - prices[i];
-      maxProfit = Math.max(maxProfit, profit);
-    }
-  }
-
-  return maxProfit;
+for (let i = 1; i < prices.length; i++) {
+minPrice = Math.min(minPrice, prices[i]);
+maxProfit = Math.max(maxProfit, prices[i] - minPrice);
 }
 
-// Test cases / Các trường hợp kiểm thử
-function runTests() {
-  console.log("=== Best Time to Buy and Sell Stock Tests ===");
-  console.log("=== Kiểm thử bài toán Mua bán cổ phiếu ===\n");
-
-  const testCases = [
-    {
-      name: "Example 1: Normal case with profit",
-      input: [7, 1, 5, 3, 6, 4],
-      expected: 5,
-      description: "Buy at 1, sell at 6 = profit of 5",
-    },
-    {
-      name: "Example 2: No profit possible",
-      input: [7, 6, 4, 3, 1],
-      expected: 0,
-      description: "Prices only decrease, no profit possible",
-    },
-    {
-      name: "Single day",
-      input: [5],
-      expected: 0,
-      description: "Cannot buy and sell on same day",
-    },
-    {
-      name: "Two days - profit",
-      input: [3, 8],
-      expected: 5,
-      description: "Buy at 3, sell at 8 = profit of 5",
-    },
-    {
-      name: "Two days - no profit",
-      input: [8, 3],
-      expected: 0,
-      description: "Price decreases, no profit",
-    },
-    {
-      name: "All same prices",
-      input: [5, 5, 5, 5],
-      expected: 0,
-      description: "No price difference, no profit",
-    },
-    {
-      name: "Large profit at end",
-      input: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-      expected: 9,
-      description: "Buy at 1, sell at 10 = profit of 9",
-    },
-    {
-      name: "Large profit at beginning",
-      input: [10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
-      expected: 0,
-      description: "Prices only decrease, no profit",
-    },
-    {
-      name: "Profit in middle",
-      input: [3, 2, 6, 5, 0, 3],
-      expected: 4,
-      description: "Buy at 2, sell at 6 = profit of 4",
-    },
-  ];
-
-  let passedTests = 0;
-  const totalTests = testCases.length;
-
-  for (const testCase of testCases) {
-    console.log(`Test: ${testCase.name}`);
-    console.log(`Input: [${testCase.input.join(", ")}]`);
-    console.log(`Expected: ${testCase.expected}`);
-    console.log(`Description: ${testCase.description}`);
-
-    const result = maxProfit(testCase.input);
-    const passed = result === testCase.expected;
-
-    console.log(`Result: ${result}`);
-    console.log(`Status: ${passed ? "✅ PASSED" : "❌ FAILED"}`);
-
-    if (passed) {
-      passedTests++;
-    } else {
-      console.log(`Expected: ${testCase.expected}, Got: ${result}`);
-    }
-
-    console.log("---");
-  }
-
-  console.log(`\nTest Summary: ${passedTests}/${totalTests} tests passed`);
-  console.log(
-    `Tóm tắt kiểm thử: ${passedTests}/${totalTests} bài kiểm thử đã qua`
-  );
-
-  // Performance comparison / So sánh hiệu suất
-  console.log("\n=== Performance Comparison ===");
-  console.log("=== So sánh hiệu suất ===\n");
-
-  const largeInput = Array.from({ length: 10000 }, (_, i) =>
-    Math.floor(Math.random() * 1000)
-  );
-
-  console.log("Testing with large input (10,000 elements)...");
-  console.log("Kiểm thử với dữ liệu lớn (10,000 phần tử)...");
-
-  const start1 = performance.now();
-  const result1 = maxProfit(largeInput);
-  const time1 = performance.now() - start1;
-
-  const start2 = performance.now();
-  const result2 = maxProfitTwoPointers(largeInput);
-  const time2 = performance.now() - start2;
-
-  console.log(`One Pass Solution: ${time1.toFixed(4)}ms`);
-  console.log(`Two Pointers Solution: ${time2.toFixed(4)}ms`);
-  console.log(`Results match: ${result1 === result2 ? "✅ Yes" : "❌ No"}`);
+return maxProfit;
 }
 
-// Run tests if this file is executed directly
-if (require.main === module) {
-  runTests();
-}
+// === Test Cases ===
+console.log(maxProfit([7, 1, 5, 3, 6, 4])); // 5
+console.log(maxProfit([7, 6, 4, 3, 1])); // 0
+console.log(maxProfit([1])); // 0 (edge: single day)
 
-export { maxProfit, maxProfitTwoPointers, maxProfitBruteForce };
 {% endraw %}
+
+---
+
+## 🔗 Related Problems
+
+- [Maximum Subarray](./03-maximum-subarray.md) — cùng tư duy Kadane, tìm max gain liên tiếp
+- [Best Time to Buy and Sell Stock II](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-ii/) — biến thể cho phép nhiều giao dịch
+- [Best Time to Buy and Sell Stock with Cooldown](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-cooldown/) — thêm ràng buộc cooldown

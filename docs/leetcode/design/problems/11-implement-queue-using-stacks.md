@@ -1,158 +1,137 @@
-# Implement Queue using Stacks / Cài đặt Queue bằng Stacks
+---
+layout: page
+title: "Implement Queue using Stacks"
+difficulty: Easy
+category: Design
+tags: [Design, Stack, Queue]
+leetcode_url: "https://leetcode.com/problems/implement-queue-using-stacks/"
+---
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy
-> **LeetCode**: #232 | **Pattern**: Two Stacks (Amortized)
-> **Category**: Design
+# Implement Queue using Stacks / Cài Đặt Queue Bằng Stacks
 
-## Problem / Đề bài
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Two Stacks (Lazy Transfer)
+> **Frequency**: 📘 Tier 3
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
 
-**English**: Implement a first-in-first-out (FIFO) queue using only two stacks. The queue must support `push(x)` (push element to back), `pop()` (remove and return front element), `peek()` (return front element without removing), and `empty()` (return whether queue is empty). You may only use standard stack operations: push to top, pop from top, peek at top, size, and isEmpty.
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese**: Cài đặt hàng đợi FIFO chỉ sử dụng hai stack. Queue cần hỗ trợ 4 thao tác: `push` (thêm vào cuối), `pop` (xóa và trả về phần tử đầu), `peek` (xem phần tử đầu không xóa), `empty` (kiểm tra rỗng). Chỉ được dùng các thao tác chuẩn của stack: push top, pop top, peek top, size, isEmpty.
+**Analogy (Vietnamese)**: Hai thùng thư: `inbox` nhận thư, `outbox` phát thư. Khi `outbox` rỗng và cần lấy thư, đổ toàn bộ `inbox` sang `outbox` — thứ tự bị đảo ngược. Thư vào trước (đáy inbox) lên đỉnh outbox và được lấy ra trước → FIFO.
+
+**Pattern Recognition**: Stack đảo thứ tự một lần. Hai stack đảo hai lần = thứ tự ban đầu = FIFO. **Lazy transfer** (chỉ đổ khi outbox rỗng) → O(1) amortized.
+
+**ASCII Visual**:
+
+```
+push(1), push(2), push(3):
+inbox=[1,2,3]  outbox=[]    (3 on top)
+
+peek() → outbox empty → TRANSFER:
+inbox=[]   outbox=[3,2,1]   (1 on top = front of queue)
+
+peek()→1   pop()→1   outbox=[3,2]
+push(4): inbox=[4]   outbox=[3,2]
+pop() → outbox not empty → pop()→2  ✓ FIFO maintained
+```
+
+## Problem Description
+
+Implement FIFO queue using only two stacks. Support `push(x)`, `pop()`, `peek()`, `empty()`.
 
 **Example**:
+
 ```
-Input:
-["MyQueue", "push", "push", "peek", "pop", "empty"]
-[[], [1], [2], [], [], []]
-
-Output: [null, null, null, 1, 1, false]
-
-Explanation:
-MyQueue queue = new MyQueue();
-queue.push(1);   // queue: [1]
-queue.push(2);   // queue: [1, 2]
-queue.peek();    // return 1 (front element)
-queue.pop();     // return 1, queue: [2]
-queue.empty();   // return false
+Input:  ["MyQueue","push","push","peek","pop","empty"]
+        [[],       [1],   [2],   [],    [],   []     ]
+Output: [null,     null,  null,  1,     1,    false  ]
 ```
 
-**Constraints**: `1 <= x <= 9`, at most 100 calls, calls to `pop` and `peek` are always valid (queue is non-empty).
+**Constraints**: `1 ≤ x ≤ 9`, ≤ 100 calls, pop/peek always called on non-empty queue.
 
----
+## 📝 Interview Tips
 
-## Approach / Hướng giải
+- **Amortized O(1) là trọng tâm**: Mỗi phần tử di chuyển inbox→outbox đúng 1 lần → tổng O(2n) cho n ops → O(1) amortized.
+- **Amortized O(1)**: Each element is pushed once and transferred once — total work O(2n) = O(1) amortized per op.
+- **Lazy, not eager**: Chỉ transfer khi `outbox` rỗng — không transfer sau mỗi push.
+- **peek() sets up pop()**: Sau `peek()`, outbox đã được fill → `pop()` ngay sau đó là O(1) guaranteed.
+- **Follow-up**: "Worst-case O(1) for all ops?" — không thể với stacks đơn giản; requires more complex structure.
+- **Inverse problem**: LC 225 (Implement Stack using Queues) dùng BFS queue để simulate stack.
 
-### Pattern nhận dạng / Pattern recognition
+## Solutions
 
-Bài này kiểm tra hiểu biết về cách đảo ngược thứ tự bằng hai stack. Stack là LIFO (Last-In-First-Out), Queue là FIFO. Để mô phỏng FIFO bằng LIFO, ta dùng **hai stack**: một stack để nhận dữ liệu vào (`inbox`), một stack để lấy dữ liệu ra (`outbox`). Khi `outbox` rỗng, đổ toàn bộ `inbox` vào `outbox` — thứ tự bị đảo ngược hai lần, trở thành đúng thứ tự FIFO.
+{% raw %}
+/\*\*
 
-When you see "simulate one data structure with another", think about what transformation reverses the property — two reversals (stacks) create a queue.
+- Implement Queue using Stacks — LeetCode #232
+-
+- Two-stack lazy transfer: amortized O(1) per operation.
+- Each element moves inbox→outbox exactly once across all operations.
+-
+- Time: push O(1), pop/peek O(1) amortized (O(n) worst) | Space: O(n)
+  \*/
+  class MyQueue {
+  private inbox: number[] = []; // receives new elements
+  private outbox: number[] = []; // serves pop/peek requests
 
-### Key Insight / Ý tưởng chính
+/\*_ Push element to back of queue. / Thêm phần tử vào cuối hàng đợi. _/
+push(x: number): void {
+this.inbox.push(x);
+}
 
-A stack reverses order. Two stacks reverse order twice = original order. The **lazy transfer** approach (only move from inbox to outbox when outbox is empty) gives **amortized O(1)** per operation — each element is pushed and popped exactly twice total.
+/\*\*
 
----
+- Move all elements from inbox to outbox, but only when outbox is empty.
+- Chuyển inbox sang outbox, chỉ khi outbox rỗng.
+- Reversal restores FIFO order: bottom of inbox → top of outbox.
+  \*/
+  private transfer(): void {
+  if (this.outbox.length === 0) {
+  while (this.inbox.length > 0) {
+  this.outbox.push(this.inbox.pop()!);
+  }
+  }
+  }
 
-## Solutions / Các cách giải
+/\*_ Remove and return front element. / Xóa và trả về phần tử đầu hàng. _/
+pop(): number {
+this.transfer();
+return this.outbox.pop()!;
+}
 
-### Solution 1: Two Stacks (Lazy Transfer) — Amortized O(1) time, O(N) space ✅ Recommended
+/\*_ Return front element without removing. / Xem phần tử đầu không xóa. _/
+peek(): number {
+this.transfer();
+return this.outbox[this.outbox.length - 1];
+}
 
-**Idea**: Use `inbox` stack for all pushes. Use `outbox` stack for all pops/peeks. When `outbox` is empty and we need to pop/peek, transfer all elements from `inbox` to `outbox` (reversing order to restore FIFO). This is "lazy" because we only transfer when needed.
+empty(): boolean {
+return this.inbox.length === 0 && this.outbox.length === 0;
+}
+}
 
-**Ý tưởng**: Dùng stack `inbox` để nhận tất cả push. Dùng stack `outbox` để phục vụ pop/peek. Khi `outbox` rỗng mà cần pop/peek, chuyển toàn bộ `inbox` sang `outbox` (đảo ngược thứ tự, khôi phục FIFO). Vì mỗi phần tử chỉ được chuyển đúng một lần, độ phức tạp phân bổ là O(1).
+// Inline tests — LeetCode example
+const q = new MyQueue();
+q.push(1); q.push(2);
+console.assert(q.peek() === 1, 'peek returns front element');
+console.assert(q.pop() === 1, 'pop removes front element');
+console.assert(q.empty() === false);
 
-**Algorithm**:
-1. `push(x)`: push x onto `inbox`.
-2. `pop()`: call `transfer()`, then pop from `outbox`.
-3. `peek()`: call `transfer()`, then peek at top of `outbox`.
-4. `empty()`: return `inbox` is empty AND `outbox` is empty.
-5. `transfer()`: if `outbox` is empty, pop everything from `inbox` and push onto `outbox`.
+// FIFO order across push/pop interleaved
+q.push(3);
+console.assert(q.pop() === 2, 'FIFO: 2 before 3');
+console.assert(q.pop() === 3);
+console.assert(q.empty() === true);
 
-**Pseudocode**:
-```
-class MyQueue:
-    inbox  = Stack()   // receives new elements
-    outbox = Stack()   // serves pop/peek requests
+// peek() is idempotent — does not consume element
+const q2 = new MyQueue();
+q2.push(5);
+console.assert(q2.peek() === 5);
+console.assert(q2.peek() === 5, 'second peek still returns 5');
+console.assert(q2.pop() === 5, 'pop after peek returns same element');
+{% endraw %}
 
-    function push(x):
-        inbox.push(x)
+## 🔗 Related Problems
 
-    function transfer():
-        if outbox.isEmpty():
-            while not inbox.isEmpty():
-                outbox.push(inbox.pop())
-
-    function pop():
-        transfer()
-        return outbox.pop()
-
-    function peek():
-        transfer()
-        return outbox.peek()
-
-    function empty():
-        return inbox.isEmpty() and outbox.isEmpty()
-```
-
-**Visual**:
-```
-push(1), push(2), push(3)
-inbox  = [1, 2, 3]  (3 on top)
-outbox = []
-
-peek() called:
-  outbox is empty → transfer!
-  pop 3 from inbox → push to outbox
-  pop 2 from inbox → push to outbox
-  pop 1 from inbox → push to outbox
-
-inbox  = []
-outbox = [3, 2, 1]  (1 on top ← front of queue)
-
-peek() → 1  ✓
-pop()  → 1  (outbox = [3, 2])
-pop()  → 2  (outbox = [3])
-
-push(4):
-inbox  = [4]
-outbox = [3]
-
-pop() called:
-  outbox not empty → no transfer needed
-  pop() → 3  ✓  (FIFO order maintained)
-```
-
-**Complexity**:
-- Time: O(1) amortized — each element is pushed to inbox once and popped from outbox once; worst case O(N) for a single pop
-- Space: O(N) — all elements stored across the two stacks
-
----
-
-### Solution 2: Single Stack with Recursion — O(N) time, O(N) space
-
-**Idea**: Use one stack. To simulate `pop`, recursively pop all elements, save the bottom element, then push everything back. Simpler conceptually but O(N) per pop.
-
-**Algorithm**:
-1. `push(x)`: push to stack.
-2. `pop()`: if stack has 1 element, pop and return it. Otherwise pop top, recursively call `pop()`, then push the saved top back, return the recursively obtained bottom.
-
-**Complexity**:
-- Time: O(N) per pop/peek
-- Space: O(N) call stack depth
-
----
-
-## Comparison / So sánh
-
-| Solution | push | pop/peek | Space | Notes |
-|----------|------|----------|-------|-------|
-| Two Stacks (Lazy) | O(1) | O(1) amortized | O(N) | Recommended — interview standard |
-| Recursive | O(1) | O(N) | O(N) | Clever but slow |
-
----
-
-## Interview Tips / Mẹo phỏng vấn
-
-- **Key point**: The amortized analysis is the key talking point — each element is moved at most once from inbox to outbox, so total cost across all operations is O(N) → amortized O(1) each.
-- **Edge cases**: `pop()` on empty queue (problem says input is always valid, but mention this); calling `peek()` then `pop()` back-to-back (outbox already filled from peek, so pop is O(1)).
-- **Follow-up**: "What if we need worst-case O(1) for all operations?" — This is not achievable with simple stacks; lead-in to more complex designs.
-
----
-
-## Related Problems / Bài liên quan
-
-- LC 225 — Implement Stack using Queues (inverse problem)
-- LC 155 — Min Stack (stack augmentation)
-- LC 622 — Design Circular Queue
+- [LC 225 — Implement Stack using Queues](https://leetcode.com/problems/implement-stack-using-queues/) — inverse problem
+- [LC 155 — Min Stack](https://leetcode.com/problems/min-stack/) — stack augmentation
+- [LC 622 — Design Circular Queue](https://leetcode.com/problems/design-circular-queue/) — queue design
+- [LC 641 — Design Circular Deque](https://leetcode.com/problems/design-circular-deque/) — deque design

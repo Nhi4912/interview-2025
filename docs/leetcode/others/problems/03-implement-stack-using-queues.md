@@ -1,593 +1,129 @@
 ---
 layout: page
-title: "Implement Stack using Queue"
+title: "Implement Stack using Queues"
 difficulty: Easy
 category: Others
-tags: [Others]
+tags: [Stack, Queue, Design]
 leetcode_url: "https://leetcode.com/problems/implement-stack-using-queues/"
 ---
 
-# Implement Stack using Queue
+# Implement Stack using Queues / Xây Dựng Stack Bằng Queue
 
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Single Queue Rotation
+> **Frequency**: 📘 Tier 2 — Paired with Queue-via-Stacks; tests inverse design thinking
+> **See also**: [Implement Queue using Stacks](./02-implement-queue-using-stacks.md) | [Design Circular Queue](./07-design-circular-queue.md)
 
+## 🧠 Intuition / Tư Duy
 
+- **Analogy:** Hãy tưởng tượng hàng đợi xe buýt — ai lên sau muốn ra trước (LIFO), nhưng hàng đợi chỉ cho rời từ đầu hàng (FIFO). Mỗi khi có người mới xếp vào, dịch chuyển cả hàng để người mới đứng đầu — tốn công nhưng sau đó lấy ra trong O(1).
 
-> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+- **Pattern Recognition:**
+  - Signal: cần LIFO nhưng chỉ có FIFO → rotate queue on each push
+  - Sau khi push mới, dequeue từng người và enqueue lại → phần tử mới lên đầu
+  - push O(n), pop/top O(1) — ngược với Queue-via-Stacks trade-off
+
+- **Visual — push(1), push(2), push(3), pop:**
+
+```
+push(1): queue=[1]
+
+push(2): enqueue 2 → [1,2]
+         rotate (size-1 times): dequeue 1, enqueue 1 → [2,1]
+         queue=[2,1]  (front=top of stack ✓)
+
+push(3): enqueue 3 → [2,1,3]
+         rotate 2 times: move 2 then 1 to back → [3,2,1]
+         queue=[3,2,1]
+
+pop():   dequeue from front → 3 ✓  (LIFO!)
+```
 
 ## Problem Description
 
- *  * Implement a last in first out (LIFO) stack using only two queues.  * The implemented stack should support all the functions of a normal stack  * (push, top, pop, and empty).  * 
+Implement a LIFO stack using only queues. Operations: `push(x)`, `pop()`, `top()`, `empty()`.
+
+```
+Input:  ["MyStack","push","push","top","pop","empty"]
+        [[]       ,[1]   ,[2]   ,[]  ,[]   ,[]     ]
+Output: [null,    null,  null,  2,   2,    false   ]
+```
+
+## 📝 Interview Tips
+
+1. **Rotate queue sau mỗi push: dequeue (n-1) phần tử rồi enqueue lại / Rotate on push: dequeue (n-1) elements back to end**
+2. **Sau khi rotate, front của queue = top của stack / After rotation, queue front equals stack top**
+3. **pop() và top() đều O(1) — không cần transfer / pop() and top() are O(1) after rotation approach**
+4. **Two-queue approach: pop O(n), push O(1) — kém hơn single queue / Two-queue lazy: pop O(n) — worse trade-off**
+5. **Ít khi hỏi follow-up về single element / Edge: single element push then pop immediately**
 
 ## Solutions
 
 {% raw %}
-/**
- * Implement Stack using Queues
- *
- * Problem: https://leetcode.com/problems/implement-stack-using-queues/
- *
- * Implement a last in first out (LIFO) stack using only two queues.
- * The implemented stack should support all the functions of a normal stack
- * (push, top, pop, and empty).
- *
- * Implement the MyStack class:
- * - void push(int x) Pushes element x to the top of the stack.
- * - int pop() Removes the element on the top of the stack and returns it.
- * - int top() Returns the element on the top of the stack.
- * - boolean empty() Returns true if the stack is empty, false otherwise.
- *
- * Notes:
- * - You must use only standard operations of a queue, which means only push to back,
- *   peek/pop from front, size, and is empty operations are valid.
- * - Depending on your language, queue may not be supported natively. You may simulate
- *   a queue using a list or deque (double-ended queue) as long as you use only a
- *   queue's standard operations.
- *
- * Example 1:
- * Input:
- * ["MyStack", "push", "push", "top", "pop", "empty"]
- * [[], [1], [2], [], [], []]
- * Output: [null, null, null, 2, 2, false]
- *
- * Explanation:
- * MyStack myStack = new MyStack();
- * myStack.push(1);
- * myStack.push(2);
- * myStack.top();   // return 2
- * myStack.pop();   // return 2
- * myStack.empty(); // return false
- *
- * Constraints:
- * - 1 <= x <= 9
- * - At most 100 calls will be made to push, pop, top, and empty.
- * - All the calls to pop and top are valid.
- *
- * Solution Approaches:
- * 1. Two-queue approach with lazy transfer
- * 2. Two-queue approach with eager transfer
- * 3. Single queue approach
- * 4. Using array as queue
- *
- * Time Complexity: O(1) for push, O(n) for pop/top operations
- * Space Complexity: O(n) where n is the number of elements
- */
+/\*\*
 
-/**
- * MyStack - Two Queue Implementation with Lazy Transfer
- *
- * MyStack - Triển khai hai Queue với chuyển đổi lười
- *
- * This approach uses two queues:
- * - mainQueue: contains the stack elements
- * - tempQueue: used for temporary storage during pop/top operations
- */
-class MyStack {
-  private mainQueue: number[];
-  private tempQueue: number[];
+- Solution 1 — Two-Queue Lazy (push O(1), pop O(n))
+- On pop: drain main queue except last element into temp
+- Time: push O(1), pop/top O(n) | Space: O(n)
+  \*/
+  class MyStackLazy {
+  private main: number[] = [];
+  private temp: number[] = [];
 
-  constructor() {
-    this.mainQueue = [];
-    this.tempQueue = [];
-  }
-
-  /**
-   * Push element to the top of stack
-   * Đẩy phần tử lên đỉnh stack
-   */
-  push(x: number): void {
-    this.mainQueue.push(x);
-  }
-
-  /**
-   * Removes the element on the top of the stack and returns it
-   * Xóa phần tử ở đỉnh stack và trả về nó
-   */
-  pop(): number {
-    // Move all elements except the last one to temp queue
-    while (this.mainQueue.length > 1) {
-      this.tempQueue.push(this.mainQueue.shift()!);
-    }
-
-    // Get the top element
-    const result = this.mainQueue.shift()!;
-
-    // Swap queues
-    [this.mainQueue, this.tempQueue] = [this.tempQueue, this.mainQueue];
-
-    return result;
-  }
-
-  /**
-   * Returns the element on the top of the stack
-   * Trả về phần tử ở đỉnh stack
-   */
-  top(): number {
-    // Move all elements except the last one to temp queue
-    while (this.mainQueue.length > 1) {
-      this.tempQueue.push(this.mainQueue.shift()!);
-    }
-
-    // Get the top element
-    const result = this.mainQueue[0];
-
-    // Move the last element to temp queue as well
-    this.tempQueue.push(this.mainQueue.shift()!);
-
-    // Swap queues
-    [this.mainQueue, this.tempQueue] = [this.tempQueue, this.mainQueue];
-
-    return result;
-  }
-
-  /**
-   * Returns true if the stack is empty, false otherwise
-   * Trả về true nếu stack rỗng, false nếu không
-   */
-  empty(): boolean {
-    return this.mainQueue.length === 0;
-  }
-
-  /**
-   * Get the current size of the stack
-   * Lấy kích thước hiện tại của stack
-   */
-  size(): number {
-    return this.mainQueue.length;
-  }
-
-  /**
-   * Get the internal state for debugging
-   * Lấy trạng thái nội bộ để debug
-   */
-  getState(): { mainQueue: number[]; tempQueue: number[] } {
-    return {
-      mainQueue: [...this.mainQueue],
-      tempQueue: [...this.tempQueue],
-    };
-  }
+push(x: number): void {
+this.main.push(x);
 }
 
-/**
- * Alternative Implementation: Eager Transfer
- *
- * Triển khai thay thế: Chuyển đổi ngay lập tức
- *
- * This approach maintains the stack order after each push operation
- */
-class MyStackEager {
-  private mainQueue: number[];
-  private tempQueue: number[];
-
-  constructor() {
-    this.mainQueue = [];
-    this.tempQueue = [];
-  }
-
-  push(x: number): void {
-    // Move all existing elements to temp queue
-    while (this.mainQueue.length > 0) {
-      this.tempQueue.push(this.mainQueue.shift()!);
-    }
-
-    // Add the new element to main queue
-    this.mainQueue.push(x);
-
-    // Move all elements back to main queue
-    while (this.tempQueue.length > 0) {
-      this.mainQueue.push(this.tempQueue.shift()!);
-    }
-  }
-
-  pop(): number {
-    return this.mainQueue.shift()!;
-  }
-
-  top(): number {
-    return this.mainQueue[0];
-  }
-
-  empty(): boolean {
-    return this.mainQueue.length === 0;
-  }
-
-  size(): number {
-    return this.mainQueue.length;
-  }
+pop(): number {
+while (this.main.length > 1) this.temp.push(this.main.shift()!);
+const val = this.main.shift()!;
+[this.main, this.temp] = [this.temp, this.main];
+return val;
 }
 
-/**
- * Implementation using Single Queue
- *
- * Triển khai sử dụng một Queue duy nhất
- */
-class MyStackSingleQueue {
-  private queue: number[];
-
-  constructor() {
-    this.queue = [];
-  }
-
-  push(x: number): void {
-    this.queue.push(x);
-  }
-
-  pop(): number {
-    // Move all elements except the last one to the back
-    for (let i = 0; i < this.queue.length - 1; i++) {
-      this.queue.push(this.queue.shift()!);
-    }
-
-    return this.queue.shift()!;
-  }
-
-  top(): number {
-    // Move all elements except the last one to the back
-    for (let i = 0; i < this.queue.length - 1; i++) {
-      this.queue.push(this.queue.shift()!);
-    }
-
-    const result = this.queue[0];
-    this.queue.push(this.queue.shift()!);
-
-    return result;
-  }
-
-  empty(): boolean {
-    return this.queue.length === 0;
-  }
-
-  size(): number {
-    return this.queue.length;
-  }
+top(): number {
+while (this.main.length > 1) this.temp.push(this.main.shift()!);
+const val = this.main[0];
+this.temp.push(this.main.shift()!);
+[this.main, this.temp] = [this.temp, this.main];
+return val;
 }
 
-/**
- * Implementation using Array as Queue
- *
- * Triển khai sử dụng Array làm Queue
- */
-class MyStackArray {
-  private queue: number[];
-
-  constructor() {
-    this.queue = [];
-  }
-
-  push(x: number): void {
-    this.queue.push(x);
-  }
-
-  pop(): number {
-    // Create a temporary array
-    const temp: number[] = [];
-
-    // Move all elements except the last one to temp
-    while (this.queue.length > 1) {
-      temp.push(this.queue.shift()!);
-    }
-
-    // Get the last element
-    const result = this.queue.shift()!;
-
-    // Move all elements back
-    while (temp.length > 0) {
-      this.queue.push(temp.shift()!);
-    }
-
-    return result;
-  }
-
-  top(): number {
-    // Create a temporary array
-    const temp: number[] = [];
-
-    // Move all elements to temp
-    while (this.queue.length > 0) {
-      temp.push(this.queue.shift()!);
-    }
-
-    // Get the last element
-    const result = temp[temp.length - 1];
-
-    // Move all elements back
-    while (temp.length > 0) {
-      this.queue.push(temp.shift()!);
-    }
-
-    return result;
-  }
-
-  empty(): boolean {
-    return this.queue.length === 0;
-  }
-
-  size(): number {
-    return this.queue.length;
-  }
+empty(): boolean { return this.main.length === 0; }
 }
 
-/**
- * Implementation with Performance Tracking
- *
- * Triển khai với theo dõi hiệu suất
- */
-class MyStackWithPerformance extends MyStack {
-  private operationCount: number;
-  private transferCount: number;
+/\*\*
 
-  constructor() {
-    super();
-    this.operationCount = 0;
-    this.transferCount = 0;
-  }
+- Solution 2 — Single Queue Rotate on Push (push O(n), pop O(1)) ✅ Recommended
+- After each push, rotate queue so new element is at front
+- Time: push O(n), pop/top O(1) | Space: O(n)
+  \*/
+  class MyStack {
+  private queue: number[] = [];
 
-  push(x: number): void {
-    this.operationCount++;
-    super.push(x);
-  }
-
-  pop(): number {
-    this.operationCount++;
-    this.transferCount++;
-    return super.pop();
-  }
-
-  top(): number {
-    this.operationCount++;
-    this.transferCount++;
-    return super.top();
-  }
-
-  getPerformanceStats(): {
-    operationCount: number;
-    transferCount: number;
-    transferRatio: number;
-  } {
-    return {
-      operationCount: this.operationCount,
-      transferCount: this.transferCount,
-      transferRatio:
-        this.operationCount > 0 ? this.transferCount / this.operationCount : 0,
-    };
-  }
+push(x: number): void {
+this.queue.push(x);
+// Rotate all elements before x to the back
+for (let i = 0; i < this.queue.length - 1; i++) {
+this.queue.push(this.queue.shift()!);
+}
 }
 
-/**
- * Stack Implementation with Additional Features
- *
- * Triển khai Stack với các tính năng bổ sung
- */
-class MyStackExtended extends MyStack {
-  private maxSize: number;
-
-  constructor(maxSize: number = Infinity) {
-    super();
-    this.maxSize = maxSize;
-  }
-
-  push(x: number): boolean {
-    if (this.size() >= this.maxSize) {
-      return false; // Stack is full
-    }
-    super.push(x);
-    return true;
-  }
-
-  /**
-   * Check if stack is full
-   * Kiểm tra xem stack có đầy không
-   */
-  isFull(): boolean {
-    return this.size() >= this.maxSize;
-  }
-
-  /**
-   * Get the capacity of the stack
-   * Lấy dung lượng của stack
-   */
-  getCapacity(): number {
-    return this.maxSize;
-  }
-
-  /**
-   * Get the remaining capacity
-   * Lấy dung lượng còn lại
-   */
-  getRemainingCapacity(): number {
-    return this.maxSize - this.size();
-  }
-
-  /**
-   * Get all elements in the stack (for debugging)
-   * Lấy tất cả phần tử trong stack (để debug)
-   */
-  getAllElements(): number[] {
-    const elements: number[] = [];
-    const tempStack = new MyStack();
-
-    // Pop all elements and store them
-    while (!this.empty()) {
-      const element = this.pop();
-      elements.push(element);
-      tempStack.push(element);
-    }
-
-    // Restore the stack
-    while (!tempStack.empty()) {
-      this.push(tempStack.pop());
-    }
-
-    return elements.reverse(); // Return in original order
-  }
+pop(): number { return this.queue.shift()!; }
+top(): number { return this.queue[0]; }
+empty(): boolean { return this.queue.length === 0; }
 }
 
-/**
- * Performance Comparison Function
- *
- * Hàm so sánh hiệu suất các phương pháp
- */
-function compareStackImplementations(
-  operations: Array<{ type: "push" | "pop" | "top"; value?: number }>
-): void {
-  console.log(
-    "Stack Implementation Performance Comparison / So sánh hiệu suất triển khai Stack"
-  );
-  console.log("=".repeat(70));
-
-  const implementations = [
-    { name: "Lazy Transfer", stack: new MyStack() },
-    { name: "Eager Transfer", stack: new MyStackEager() },
-    { name: "Single Queue", stack: new MyStackSingleQueue() },
-    { name: "Array-based", stack: new MyStackArray() },
-  ];
-
-  for (const impl of implementations) {
-    console.log(`\nTesting ${impl.name}:`);
-
-    const start = performance.now();
-
-    for (const op of operations) {
-      switch (op.type) {
-        case "push":
-          impl.stack.push(op.value!);
-          break;
-        case "pop":
-          impl.stack.pop();
-          break;
-        case "top":
-          impl.stack.top();
-          break;
-      }
-    }
-
-    const end = performance.now();
-    console.log(`  Time: ${(end - start).toFixed(4)}ms`);
-    console.log(`  Final size: ${impl.stack.size()}`);
-  }
-}
-
-/**
- * Test Cases
- *
- * Các trường hợp kiểm thử
- */
-function runTests(): void {
-  console.log("Stack using Queues Tests / Kiểm thử Stack sử dụng Queues");
-  console.log("=".repeat(50));
-
-  // Test 1: Basic operations
-  console.log("\nTest 1: Basic operations / Các thao tác cơ bản");
-  const stack1 = new MyStack();
-  stack1.push(1);
-  stack1.push(2);
-  stack1.push(3);
-
-  console.log(`Top: ${stack1.top()}`); // Expected: 3
-  console.log(`Pop: ${stack1.pop()}`); // Expected: 3
-  console.log(`Top: ${stack1.top()}`); // Expected: 2
-  console.log(`Pop: ${stack1.pop()}`); // Expected: 2
-  console.log(`Empty: ${stack1.empty()}`); // Expected: false
-  console.log(`Pop: ${stack1.pop()}`); // Expected: 1
-  console.log(`Empty: ${stack1.empty()}`); // Expected: true
-
-  // Test 2: Performance tracking
-  console.log("\nTest 2: Performance tracking / Theo dõi hiệu suất");
-  const perfStack = new MyStackWithPerformance();
-
-  for (let i = 0; i < 10; i++) {
-    perfStack.push(i);
-  }
-
-  for (let i = 0; i < 5; i++) {
-    perfStack.pop();
-  }
-
-  for (let i = 0; i < 3; i++) {
-    perfStack.top();
-  }
-
-  const stats = perfStack.getPerformanceStats();
-  console.log(`Operations: ${stats.operationCount}`);
-  console.log(`Transfers: ${stats.transferCount}`);
-  console.log(`Transfer ratio: ${(stats.transferRatio * 100).toFixed(2)}%`);
-
-  // Test 3: Extended stack
-  console.log("\nTest 3: Extended stack / Stack mở rộng");
-  const extStack = new MyStackExtended(5);
-
-  for (let i = 0; i < 7; i++) {
-    const success = extStack.push(i);
-    console.log(`Push ${i}: ${success ? "success" : "failed (full)"}`);
-  }
-
-  console.log(`Capacity: ${extStack.getCapacity()}`);
-  console.log(`Size: ${extStack.size()}`);
-  console.log(`Remaining: ${extStack.getRemainingCapacity()}`);
-  console.log(`Is full: ${extStack.isFull()}`);
-  console.log(`All elements: [${extStack.getAllElements().join(", ")}]`);
-
-  // Test 4: State inspection
-  console.log("\nTest 4: State inspection / Kiểm tra trạng thái");
-  const stateStack = new MyStack();
-  stateStack.push(1);
-  stateStack.push(2);
-
-  console.log("Before pop:");
-  console.log(stateStack.getState());
-
-  stateStack.pop();
-
-  console.log("After pop:");
-  console.log(stateStack.getState());
-
-  // Test 5: Performance comparison
-  console.log("\nTest 5: Performance comparison / So sánh hiệu suất");
-  const testOperations = [
-    { type: "push" as const, value: 1 },
-    { type: "push" as const, value: 2 },
-    { type: "push" as const, value: 3 },
-    { type: "pop" as const },
-    { type: "top" as const },
-    { type: "push" as const, value: 4 },
-    { type: "pop" as const },
-    { type: "pop" as const },
-  ];
-
-  compareStackImplementations(testOperations);
-}
-
-// Uncomment to run tests
-// runTests();
-
-export {
-  MyStack,
-  MyStackEager,
-  MyStackSingleQueue,
-  MyStackArray,
-  MyStackWithPerformance,
-  MyStackExtended,
-  compareStackImplementations,
-  runTests,
-};
+// ── inline tests ──
+// const s = new MyStack();
+// s.push(1); s.push(2); s.top() // → 2 (LIFO top)
+// s.pop() // → 2
+// s.empty() // → false
+// s.pop(); s.empty() // → true
 {% endraw %}
+
+## 🔗 Related Problems
+
+- [LC #232 Implement Queue using Stacks](./02-implement-queue-using-stacks.md) — inverse problem (FIFO via LIFO)
+- [LC #622 Design Circular Queue](./07-design-circular-queue.md) — fixed-capacity queue design
+- [LC #155 Min Stack](https://leetcode.com/problems/min-stack/) — stack design with O(1) min tracking
+- [LC #716 Max Stack](https://leetcode.com/problems/max-stack/) — stack with max retrieval

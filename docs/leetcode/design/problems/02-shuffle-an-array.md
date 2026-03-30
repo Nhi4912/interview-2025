@@ -1,339 +1,121 @@
 ---
 layout: page
 title: "Shuffle an Array"
-difficulty: Easy
+difficulty: Medium
 category: Design
-tags: [Design, Hash Table]
+tags: [Design, Randomized]
 leetcode_url: "https://leetcode.com/problems/shuffle-an-array/"
 ---
 
-# Shuffle an Array
+# Shuffle an Array / Xáo Trộn Mảng
 
-
-
-
-> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Fisher-Yates Shuffle
+> **Frequency**: 📘 Tier 3
 > **See also**: [Table of Contents](../../../00-table-of-contents.md)
+
+## 🧠 Intuition / Tư Duy
+
+**Analogy (Vietnamese)**: Tưởng tượng bạn đang trộn một bộ bài. Bạn lấy lá bài cuối cùng, chọn ngẫu nhiên một lá bài ở vị trí bất kỳ (kể cả chính nó), rồi hoán đổi. Lặp lại từ cuối về đầu. Mỗi hoán vị đều có xác suất bằng nhau.
+
+**Pattern Recognition**: Khi bài yêu cầu "equally likely permutation" → Fisher-Yates. **Không** dùng `.sort(() => Math.random() - 0.5)` vì comparator phải nhất quán — random comparisons vi phạm tính bắc cầu, dẫn đến phân phối bị lệch.
+
+**ASCII Visual**:
+
+```
+Array: [A, B, C, D]
+i=3: swap(D, arr[rand 0..3]) → e.g. [A, D, C, B]
+i=2: swap(C, arr[rand 0..2]) → e.g. [C, D, A, B]
+i=1: swap(D, arr[rand 0..1]) → e.g. [D, C, A, B]
+Result: one of 4! = 24 equally likely permutations
+```
 
 ## Problem Description
 
- *  * Given an integer array nums, design an algorithm to randomly shuffle the array.  * All permutations of the array should be equally likely as a result of the shuffling.  *  * Implement the Solution class: 
+Given integer array `nums`, design an algorithm to randomly shuffle it where all permutations are equally likely.
+
+Implement: `Solution(nums)` — init; `reset()` — return original; `shuffle()` — return random permutation.
+
+**Example**:
+
+```
+Input:  ["Solution","shuffle","reset","shuffle"]
+        [[[1,2,3]],  [],       [],     []]
+Output: [null,       [3,1,2],  [1,2,3],[1,3,2]]
+```
+
+**Constraints**: `1 ≤ nums.length ≤ 200`, all elements unique, ≤ 5×10⁴ calls.
+
+## 📝 Interview Tips
+
+- **Thuật toán đúng**: Luôn dùng Fisher-Yates — `sort` trick cho kết quả bị lệch vì comparator phải có tính bắc cầu nhưng random thì không.
+- **Use Fisher-Yates, not sort**: Random comparators violate transitivity — sort-based shuffle is provably biased.
+- **Reset efficiently**: Giữ bản sao `original` trong constructor; `reset()` chỉ cần copy lại — O(n).
+- **Shuffle on copy**: Làm việc trên `[...original]` mỗi lần shuffle để không làm hỏng bản gốc.
+- **Complexity**: `constructor` O(n), `reset` O(n), `shuffle` O(n) — tất cả đều tuyến tính.
+- **Verification**: Để kiểm tra tính uniform, chạy N lần và đếm tần suất mỗi hoán vị — nên xấp xỉ 1/n!.
 
 ## Solutions
 
 {% raw %}
-/**
- * Shuffle an Array
- *
- * Problem: https://leetcode.com/problems/shuffle-an-array/
- *
- * Given an integer array nums, design an algorithm to randomly shuffle the array.
- * All permutations of the array should be equally likely as a result of the shuffling.
- *
- * Implement the Solution class:
- * - Solution(int[] nums) Initializes the object with the integer array nums.
- * - int[] reset() Resets the array to its original configuration and returns it.
- * - int[] shuffle() Returns a random shuffling of the array.
- *
- * Example:
- * Input: ["Solution", "shuffle", "reset", "shuffle"]
- * [[[1, 2, 3]], [], [], []]
- * Output: [null, [3, 1, 2], [1, 2, 3], [1, 3, 2]]
- *
- * Explanation:
- * Solution solution = new Solution([1, 2, 3]);
- * solution.shuffle();    // Shuffle the array [1,2,3] and return its result. Any permutation of [1,2,3] must be equally likely to be returned. Example: return [3, 1, 2]
- * solution.reset();      // Resets the array back to its original configuration [1,2,3]. Return [1, 2, 3]
- * solution.shuffle();    // Returns the random shuffling of array [1,2,3]. Example: return [1, 3, 2]
- *
- * Constraints:
- * - 1 <= nums.length <= 200
- * - -10^6 <= nums[i] <= 10^6
- * - All the elements of nums are unique.
- * - At most 5 * 10^4 calls will be made to reset and shuffle.
- *
- * Solution Approach:
- * 1. Store original array for reset functionality
- * 2. Use Fisher-Yates shuffle algorithm for unbiased shuffling
- * 3. Work on a copy of the array to avoid modifying original
- * 4. Ensure each permutation has equal probability
- *
- * Time Complexity: O(n) for shuffle, O(1) for reset
- * Space Complexity: O(n) to store original array
- */
+/\*\*
 
-/**
- * Solution class for Shuffle an Array
- *
- * Lớp giải pháp cho bài toán Xáo trộn mảng
- */
-class Solution {
+- Shuffle an Array — LeetCode #384
+-
+- Fisher-Yates algorithm: for each position i from end to 1,
+- swap arr[i] with arr[rand(0..i)].
+- Each of the n! permutations has equal probability.
+-
+- Time: O(n) shuffle, O(n) reset | Space: O(n) for original copy
+  \*/
+  class Solution {
   private original: number[];
   private current: number[];
 
-  constructor(nums: number[]) {
-    this.original = [...nums];
-    this.current = [...nums];
-  }
+constructor(nums: number[]) {
+this.original = [...nums];
+this.current = [...nums];
+}
 
-  /**
-   * Reset the array to its original configuration
-   *
-   * Đặt lại mảng về cấu hình ban đầu
-   *
-   * @returns Mảng ban đầu
-   */
+/\*\*
+
+- Reset to original configuration.
+- Đặt lại về cấu hình ban đầu.
+  \*/
   reset(): number[] {
-    this.current = [...this.original];
-    return this.current;
+  this.current = [...this.original];
+  return this.current;
   }
 
-  /**
-   * Shuffle the array using Fisher-Yates algorithm
-   *
-   * Xáo trộn mảng sử dụng thuật toán Fisher-Yates
-   *
-   * @returns Mảng đã được xáo trộn
-   */
+/\*\*
+
+- Return a uniformly random permutation using Fisher-Yates.
+- Trả về hoán vị ngẫu nhiên đều đặn dùng Fisher-Yates.
+  _/
   shuffle(): number[] {
-    // Reset to original before shuffling
-    this.current = [...this.original];
-
-    // Fisher-Yates shuffle algorithm
-    for (let i = this.current.length - 1; i > 0; i--) {
-      // Generate random index from 0 to i (inclusive)
-      const j = Math.floor(Math.random() * (i + 1));
-
-      // Swap elements at positions i and j
-      [this.current[i], this.current[j]] = [this.current[j], this.current[i]];
-    }
-
-    return this.current;
+  this.current = [...this.original];
+  for (let i = this.current.length - 1; i > 0; i--) {
+  const j = Math.floor(Math.random() _ (i + 1));
+  [this.current[i], this.current[j]] = [this.current[j], this.current[i]];
   }
-}
-
-/**
- * Alternative Implementation: Using Array methods
- *
- * Giải pháp thay thế: Sử dụng các phương thức mảng
- */
-class SolutionAlternative {
-  private original: number[];
-
-  constructor(nums: number[]) {
-    this.original = [...nums];
+  return this.current;
+  }
   }
 
-  reset(): number[] {
-    return [...this.original];
-  }
-
-  shuffle(): number[] {
-    // Create a copy and shuffle using sort with random comparison
-    return [...this.original].sort(() => Math.random() - 0.5);
-  }
-}
-
-/**
- * Implementation with Statistics Tracking
- *
- * Giải pháp với theo dõi thống kê
- */
-class SolutionWithStats {
-  private original: number[];
-  private shuffleCount: number = 0;
-  private permutationCounts: Map<string, number> = new Map();
-
-  constructor(nums: number[]) {
-    this.original = [...nums];
-  }
-
-  reset(): number[] {
-    return [...this.original];
-  }
-
-  shuffle(): number[] {
-    this.shuffleCount++;
-
-    const shuffled = [...this.original];
-
-    // Fisher-Yates shuffle
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-
-    // Track permutation statistics
-    const permutation = shuffled.join(",");
-    this.permutationCounts.set(
-      permutation,
-      (this.permutationCounts.get(permutation) || 0) + 1
-    );
-
-    return shuffled;
-  }
-
-  getStats(): {
-    shuffleCount: number;
-    uniquePermutations: number;
-    distribution: Map<string, number>;
-  } {
-    return {
-      shuffleCount: this.shuffleCount,
-      uniquePermutations: this.permutationCounts.size,
-      distribution: new Map(this.permutationCounts),
-    };
-  }
-}
-
-/**
- * Test Fisher-Yates Algorithm Implementation
- *
- * Kiểm thử thuật toán Fisher-Yates
- */
-function testFisherYates() {
-  console.log("=== Fisher-Yates Algorithm Test ===");
-  console.log("=== Kiểm thử thuật toán Fisher-Yates ===\n");
-
-  const original = [1, 2, 3, 4, 5];
-  const iterations = 10000;
-  const permutationCounts = new Map<string, number>();
-
-  console.log(`Original array: [${original.join(", ")}]`);
-  console.log(`Testing ${iterations} shuffles...`);
-  console.log(`Kiểm thử ${iterations} lần xáo trộn...\n`);
-
-  for (let i = 0; i < iterations; i++) {
-    const shuffled = [...original];
-
-    // Fisher-Yates shuffle
-    for (let j = shuffled.length - 1; j > 0; j--) {
-      const k = Math.floor(Math.random() * (j + 1));
-      [shuffled[j], shuffled[k]] = [shuffled[k], shuffled[j]];
-    }
-
-    const permutation = shuffled.join(",");
-    permutationCounts.set(
-      permutation,
-      (permutationCounts.get(permutation) || 0) + 1
-    );
-  }
-
-  console.log(`Unique permutations found: ${permutationCounts.size}`);
-  console.log(`Expected permutations: ${factorial(original.length)}`);
-  console.log(`Số hoán vị duy nhất tìm thấy: ${permutationCounts.size}`);
-  console.log(`Số hoán vị mong đợi: ${factorial(original.length)}\n`);
-
-  // Show distribution
-  console.log("Permutation distribution (first 10):");
-  console.log("Phân bố hoán vị (10 đầu tiên):");
-  let count = 0;
-  for (const [permutation, frequency] of permutationCounts) {
-    if (count >= 10) break;
-    const percentage = ((frequency / iterations) * 100).toFixed(2);
-    console.log(`  [${permutation}]: ${frequency} times (${percentage}%)`);
-    count++;
-  }
-}
-
-function factorial(n: number): number {
-  if (n <= 1) return 1;
-  return n * factorial(n - 1);
-}
-
-// Test cases / Các trường hợp kiểm thử
-function runTests() {
-  console.log("=== Shuffle Array Tests ===");
-  console.log("=== Kiểm thử bài toán Xáo trộn mảng ===\n");
-
-  const testCases = [
-    {
-      name: "Example case",
-      input: [1, 2, 3],
-      description: "Basic 3-element array",
-    },
-    {
-      name: "Single element",
-      input: [5],
-      description: "Array with single element",
-    },
-    {
-      name: "Two elements",
-      input: [10, 20],
-      description: "Array with two elements",
-    },
-    {
-      name: "Large array",
-      input: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-      description: "Array with 10 elements",
-    },
-    {
-      name: "Negative numbers",
-      input: [-3, -2, -1, 0, 1, 2, 3],
-      description: "Array with negative and positive numbers",
-    },
-  ];
-
-  for (const testCase of testCases) {
-    console.log(`Test: ${testCase.name}`);
-    console.log(`Input: [${testCase.input.join(", ")}]`);
-    console.log(`Description: ${testCase.description}`);
-
-    const solution = new Solution(testCase.input);
-
-    // Test reset
-    const resetResult = solution.reset();
-    console.log(`Reset: [${resetResult.join(", ")}]`);
-
-    // Test shuffle multiple times
-    console.log("Shuffle results:");
-    console.log("Kết quả xáo trộn:");
-    for (let i = 0; i < 5; i++) {
-      const shuffleResult = solution.shuffle();
-      console.log(`  ${i + 1}. [${shuffleResult.join(", ")}]`);
-    }
-
-    // Test reset again
-    const resetAgain = solution.reset();
-    console.log(`Reset again: [${resetAgain.join(", ")}]`);
-
-    console.log("---");
-  }
-
-  // Test with statistics
-  console.log("\n=== Testing with Statistics ===");
-  console.log("=== Kiểm thử với thống kê ===\n");
-
-  const statsSolution = new SolutionWithStats([1, 2, 3]);
-
-  console.log("Performing 1000 shuffles...");
-  console.log("Thực hiện 1000 lần xáo trộn...");
-
-  for (let i = 0; i < 1000; i++) {
-    statsSolution.shuffle();
-  }
-
-  const stats = statsSolution.getStats();
-  console.log(`Total shuffles: ${stats.shuffleCount}`);
-  console.log(`Unique permutations: ${stats.uniquePermutations}`);
-  console.log(`Expected permutations: ${factorial(3)}`);
-
-  console.log("\nPermutation distribution:");
-  console.log("Phân bố hoán vị:");
-  for (const [permutation, count] of stats.distribution) {
-    const percentage = ((count / stats.shuffleCount) * 100).toFixed(2);
-    console.log(`  [${permutation}]: ${count} times (${percentage}%)`);
-  }
-
-  // Test Fisher-Yates algorithm
-  console.log("\n");
-  testFisherYates();
-}
-
-// Run tests if this file is executed directly
-if (require.main === module) {
-  runTests();
-}
-
-export { Solution, SolutionAlternative, SolutionWithStats, testFisherYates };
+// Inline tests
+const sol = new Solution([1, 2, 3]);
+console.assert(sol.reset().join(',') === '1,2,3', 'reset returns original');
+const shuffled = sol.shuffle();
+console.assert(shuffled.length === 3, 'shuffle preserves length');
+console.assert(new Set(shuffled).size === 3, 'shuffle preserves elements');
+console.assert(sol.reset().join(',') === '1,2,3', 'reset after shuffle still works');
+// Single-element array: shuffle is identity
+const single = new Solution([42]);
+console.assert(single.shuffle().join(',') === '42');
 {% endraw %}
+
+## 🔗 Related Problems
+
+- [LC 470 — Implement rand10() using rand7()](https://leetcode.com/problems/implement-rand10-using-rand7/) — randomized algorithms
+- [LC 398 — Random Pick Index](https://leetcode.com/problems/random-pick-index/) — reservoir sampling
+- [LC 382 — Linked List Random Node](https://leetcode.com/problems/linked-list-random-node/) — uniform random over stream
+- [LC 528 — Random Pick with Weight](https://leetcode.com/problems/random-pick-with-weight/) — weighted random selection

@@ -1,194 +1,121 @@
-# Maximum Product Subarray / Tích lớn nhất của mảng con
-
-> **Track**: Shared | **Difficulty**: 🟡 Medium
-> **LeetCode**: #152 | **Pattern**: Dynamic Programming (Kadane's variant)
-> **Category**: Array, DP
-
-## Problem / Đề bài
-
-**English**: Given an integer array `nums`, find the contiguous subarray (containing at least one element) that has the largest product, and return that product.
-
-**Vietnamese**: Cho mảng số nguyên `nums`, tìm mảng con liên tiếp (ít nhất 1 phần tử) có tích lớn nhất và trả về tích đó.
-
-**Example**:
-```
-Input: nums = [2, 3, -2, 4]
-Output: 6
-Explanation: Subarray [2, 3] has the largest product = 6
-
-Input: nums = [-2, 0, -1]
-Output: 0
-Explanation: The result cannot be 2 because [-2,-1] is not contiguous with subarray skipping 0.
-Actually: subarrays are [-2], [0], [-1], [-2,0], [0,-1], [-2,0,-1] → max = 0
-
-Input: nums = [-2, 3, -4]
-Output: 24
-Explanation: [-2, 3, -4] = 24 (two negatives make positive)
-```
-
-**Constraints**:
-- 1 <= nums.length <= 2 × 10⁴
-- -10 <= nums[i] <= 10
-- The product of any subarray fits in a 32-bit integer
-
+---
+layout: page
+title: "Maximum Product Subarray"
+difficulty: Medium
+category: Dynamic Programming
+tags: [Array, Dynamic Programming]
+leetcode_url: "https://leetcode.com/problems/maximum-product-subarray/"
 ---
 
-## Approach / Hướng giải
+# Maximum Product Subarray / Tích Lớn Nhất Của Mảng Con
 
-### Pattern nhận dạng / Pattern recognition
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Kadane's Variant (Track Min + Max)
+> **Frequency**: 📘 Tier 2 — Classic DP twist; frequently asked at FAANG alongside Maximum Subarray
+> **See also**: [Regular Expression Matching](./11-regular-expression-matching.md) | [Maximum Subarray LC #53](https://leetcode.com/problems/maximum-subarray/)
 
-Bài này trông giống **Maximum Subarray** (Kadane's Algorithm) nhưng có một điểm khác biệt quan trọng: **tích của số âm**. Số âm × số âm = số dương lớn. Vì vậy, ta phải theo dõi **cả max lẫn min** tại mỗi vị trí — vì min hiện tại (số âm lớn nhất về giá trị tuyệt đối) có thể trở thành max khi nhân với số âm tiếp theo.
+## 🧠 Intuition / Tư Duy
 
-Khi thấy bài về subarray + product → nghĩ ngay đến việc maintain cả max và min running product.
+- **Analogy:** Như chọn loạt sản phẩm bán hàng liên tiếp — mỗi sản phẩm nhân vào doanh thu hiện tại. Có sản phẩm "lỗ" (số âm) nhưng hai sản phẩm lỗ liên tiếp lại tạo lãi lớn (âm × âm = dương). Vì vậy luôn phải ghi nhớ cả giá trị LỖ NHẤT (min) lẫn LÃI NHẤT (max) — min hôm nay có thể là max vàng ngày mai.
 
-### Key Insight / Ý tưởng chính
+- **Pattern Recognition:**
+  - Signal: subarray + product + negative numbers → track both max AND min at each position
+  - Khác với Maximum Subarray: tại mỗi `num`, max_new có thể từ `maxProd*num`, `minProd*num`, hoặc `num` itself
+  - Khi gặp 0: cả max và min đều reset về `num` (= 0)
 
-Tại mỗi vị trí `i`, giá trị max product kết thúc tại `i` có thể là:
-1. `nums[i]` itself (bắt đầu subarray mới)
-2. `maxProd * nums[i]` (extend subarray có max product)
-3. `minProd * nums[i]` (min âm × nums[i] âm = max dương)
+- **Visual — nums = [2, 3, -2, 4]:**
 
-→ Track both `maxEndingHere` và `minEndingHere` at every step.
-
----
-
-## Solutions / Các cách giải
-
-### Solution 1: DP with Min/Max Tracking — O(n) time, O(1) space ✅ Recommended
-
-**Idea**: Extend Kadane's algorithm by tracking both the maximum and minimum product ending at each position. At each step, the new max could come from multiplying the previous max, the previous min (if current is negative), or starting fresh.
-
-**Ý tưởng**: Mở rộng Kadane's bằng cách theo dõi cả max và min product kết thúc tại mỗi vị trí. Max mới có thể đến từ: max cũ × hiện tại, min cũ × hiện tại (đảo dấu), hoặc bắt đầu lại từ phần tử hiện tại.
-
-**Algorithm**:
-1. Initialize `maxProd = nums[0]`, `minProd = nums[0]`, `result = nums[0]`
-2. For each `num` from `nums[1]` to `nums[n-1]`:
-   a. `candidates = [num, maxProd * num, minProd * num]`
-   b. `maxProd = max(candidates)`
-   c. `minProd = min(candidates)`
-   d. `result = max(result, maxProd)`
-3. Return `result`
-
-**Pseudocode**:
 ```
-function maxProduct(nums):
-    maxProd = nums[0]
-    minProd = nums[0]
-    result  = nums[0]
+        num   maxProd  minProd  result
+Start:   —      2        2       2    (init with nums[0])
+i=1:     3      6        3       6    max(3, 2×3, 2×3)=6, min(…)=3
+i=2:    -2     -2      -12       6    max(-2, 6×-2=-12, 3×-2=-6) = -2
+                                      min(-2, -12, -6) = -12
+i=3:     4      4      -48       6    max(4, -2×4=-8, -12×4=-48) = 4
+                                      result stays 6
 
-    for i from 1 to length(nums) - 1:
-        num = nums[i]
+Answer: 6  (subarray [2,3])
 
-        // Must save maxProd before overwriting
-        tempMax = maxProd
-
-        maxProd = max(num, maxProd * num, minProd * num)
-        minProd = min(num, tempMax * num, minProd * num)
-
-        result = max(result, maxProd)
-
-    return result
+nums = [-2, 3, -4]:
+Start:   —     -2       -2      -2
+i=1:     3      3       -6       3    max(3, -2×3=-6, -2×3=-6)=3
+i=2:    -4     24      -12      24    max(-4, 3×-4=-12, -6×-4=24)=24  ← neg×neg!
+Answer: 24  (subarray [-2,3,-4])
 ```
 
-**Visual**:
+## Problem Description
+
+Find the contiguous subarray with the largest product (at least one element).
+
 ```
-nums = [2, 3, -2, 4]
-
-       num  maxProd  minProd  result
-Start:  -      2        2      2
-i=1:    3      6        3      6    max(3, 2*3, 2*3)=6, min(3, 2*3, 2*3)=3
-i=2:   -2     -3      -12      6    max(-2, 6*-2, 3*-2)=-2 → wait:
-                                    max(-2, -12, -6) = -2
-                                    min(-2, -12, -6) = -12
-                                    result = max(6, -2) = 6
-i=3:    4      -8      -48     6    max(4, -2*4, -12*4)=max(4,-8,-48)=4
-                                    min(4, -8, -48) = -48
-                                    result = max(6, 4) = 6
-
-Final: 6 ✓
-
----
-nums = [-2, 3, -4]
-
-       num  maxProd  minProd  result
-Start:  -     -2       -2      -2
-i=1:    3      3       -6      3    max(3, -6, -6)=3, min(3,-6,-6)=-6
-i=2:   -4     24       -12    24    max(-4, 3*-4, -6*-4)=max(-4,-12,24)=24
-                                    min(-4, -12, 24) = -12
-                                    result = max(3, 24) = 24
-
-Final: 24 ✓  (subarray [-2,3,-4])
+nums = [2,3,-2,4]   → 6       ([2,3])
+nums = [-2,0,-1]    → 0       (zero resets the product)
+nums = [-2,3,-4]    → 24      ([-2,3,-4]: two negatives flip to positive)
 ```
 
-**Complexity**:
-- Time: O(n) — single pass through the array
-- Space: O(1) — only three variables
+## 📝 Interview Tips
 
----
+1. **Luôn lưu `tempMax = maxProd` TRƯỚC khi tính maxProd mới — cả max và min dùng OLD maxProd / Save tempMax before overwriting — both new max and min use the old maxProd**
+2. **Ba ứng viên cho max: `num`, `maxProd*num`, `minProd*num` — không bao giờ bỏ qua `num` itself / Three candidates for max: num itself, maxProd×num, minProd×num**
+3. **Mảng một phần tử âm: `[-5]` → -5; không được trả về 0 / Single negative: [-5] → -5; never return 0**
+4. **Nếu có 0 trong mảng: product reset, nhưng prefix/suffix approach tự xử lý / Zero resets product; prefix/suffix approach handles it naturally**
+5. **Follow-up overflow: dùng BigInt hoặc logarithm (sum of logs) / For overflow: use logarithm (sum of logs = log of product)**
 
-### Solution 2: Prefix/Suffix Products — O(n) time, O(1) space
+## Solutions
 
-**Idea**: Key observation — if there is an even number of negative numbers, the entire array product is the answer. A zero resets the product. Scan left-to-right (prefix) and right-to-left (suffix), tracking the running product and max seen. Reset to 1 when hitting zero. The maximum of all prefix and suffix products is the answer.
+{% raw %}
+/\*\*
 
-**Algorithm**:
-1. Initialize `maxProd = max(nums)`, `prefixProd = 1`, `suffixProd = 1`
-2. For `i` from 0 to n-1:
-   - `prefixProd *= nums[i]`
-   - `suffixProd *= nums[n-1-i]`
-   - `maxProd = max(maxProd, prefixProd, suffixProd)`
-   - If `prefixProd == 0`: reset `prefixProd = 1`
-   - If `suffixProd == 0`: reset `suffixProd = 1`
-3. Return `maxProd`
+- Solution 1 — Brute Force O(n²)
+- Check all subarrays explicitly
+- Time: O(n²) | Space: O(1)
+  _/
+  function maxProductBrute(nums: number[]): number {
+  let result = nums[0];
+  for (let i = 0; i < nums.length; i++) {
+  let prod = 1;
+  for (let j = i; j < nums.length; j++) {
+  prod _= nums[j];
+  result = Math.max(result, prod);
+  }
+  }
+  return result;
+  }
 
-**Pseudocode**:
-```
-function maxProduct(nums):
-    n = length(nums)
-    maxProd = max(nums)
-    prefix = 1
-    suffix = 1
+/\*\*
 
-    for i from 0 to n-1:
-        prefix *= nums[i]
-        suffix *= nums[n-1-i]
-        maxProd = max(maxProd, prefix, suffix)
-        if prefix == 0: prefix = 1
-        if suffix == 0: suffix = 1
+- Solution 2 — Kadane's Variant: Track Min & Max ✅ Recommended
+- At each position, new max might come from flipping the minimum (neg×neg)
+- Time: O(n) | Space: O(1)
+  \*/
+  function maxProduct(nums: number[]): number {
+  let maxProd = nums[0];
+  let minProd = nums[0];
+  let result = nums[0];
 
-    return maxProd
-```
+for (let i = 1; i < nums.length; i++) {
+const num = nums[i];
+const tempMax = maxProd; // save before overwrite!
 
-**Complexity**:
-- Time: O(n)
-- Space: O(1)
+    maxProd = Math.max(num, tempMax * num, minProd * num);
+    minProd = Math.min(num, tempMax * num, minProd * num);
+    result  = Math.max(result, maxProd);
 
----
+}
 
-## Comparison / So sánh
+return result;
+}
 
-| Solution | Time | Space | Notes |
-|----------|------|-------|-------|
-| DP Min/Max | O(n) | O(1) | Recommended — intuitive extension of Kadane's |
-| Prefix/Suffix | O(n) | O(1) | Elegant but less intuitive to derive |
+// ── inline tests ──
+// maxProduct([2,3,-2,4]) → 6
+// maxProduct([-2,0,-1]) → 0
+// maxProduct([-2,3,-4]) → 24
+// maxProduct([-2]) → -2 (must return element even if negative)
+{% endraw %}
 
----
+## 🔗 Related Problems
 
-## Interview Tips / Mẹo phỏng vấn
-
-- **Key point**: This is Kadane's Algorithm with a twist — because of negative numbers, track BOTH max and min. A negative min becomes a positive max when multiplied by another negative. Always compute `tempMax` before overwriting `maxProd`.
-- **Edge cases**:
-  - Single element: `[-5]` → -5 (must return it, even if negative)
-  - Contains zero: `[0, 2]` → 2 (zero resets the product)
-  - All negatives even count: `[-2, -3]` → 6 (both negatives cancel)
-  - All negatives odd count: `[-2, -3, -4]` → 12 (best is [-3,-4] or [-2,-3])
-- **Follow-up**: What if the array has very large numbers and you need to avoid overflow? Use logarithms (sum of logs instead of product).
-- **Common mistake**: Forgetting to save `tempMax = maxProd` before computing the new `maxProd` and `minProd` — both use the OLD `maxProd`.
-
----
-
-## Related Problems / Bài liên quan
-
-- LC 53 — Maximum Subarray (Kadane's without the min tracking)
-- LC 628 — Maximum Product of Three Numbers
-- LC 713 — Subarray Product Less Than K
-- LC 238 — Product of Array Except Self
+- [LC #53 Maximum Subarray](https://leetcode.com/problems/maximum-subarray/) — Kadane's without min tracking (sum version)
+- [LC #152 Maximum Product Subarray](https://leetcode.com/problems/maximum-product-subarray/) — this problem
+- [LC #238 Product of Array Except Self](https://leetcode.com/problems/product-of-array-except-self/) — prefix/suffix products technique
+- [LC #713 Subarray Product Less Than K](https://leetcode.com/problems/subarray-product-less-than-k/) — counting subarrays by product constraint
+- [LC #628 Maximum Product of Three Numbers](https://leetcode.com/problems/maximum-product-of-three-numbers/) — simplified product optimization

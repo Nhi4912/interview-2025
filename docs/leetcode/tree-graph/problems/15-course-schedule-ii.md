@@ -1,542 +1,167 @@
 ---
 layout: page
 title: "Course Schedule II"
-difficulty: Easy
+difficulty: Medium
 category: Tree/Graph
-tags: [Tree/Graph, Hash Table, Sorting]
+tags: [Depth-First Search, Breadth-First Search, Graph, Topological Sort]
 leetcode_url: "https://leetcode.com/problems/course-schedule-ii/"
 ---
 
-# Course Schedule II
+# Course Schedule II / Thứ Tự Hoàn Thành Các Khóa Học
 
-> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Topological Sort (Kahn's BFS / DFS)
+> **Frequency**: ⭐ Tier 2 — Gặp >40% interviews
+> **See also**: [Course Schedule I](https://leetcode.com/problems/course-schedule/) | [Lowest Common Ancestor](./16-lowest-common-ancestor-binary-tree.md)
 
-**LeetCode Problem # * 210. Course Schedule II**
+---
+
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** Giống như bạn đang lên kế hoạch học lái xe: phải học luật giao thông trước, rồi mới học thực hành, rồi mới thi bằng. Mỗi bước phụ thuộc vào bước trước. Nếu có vòng lặp (A cần B, B lại cần A), thì không thể hoàn thành — đó là cycle trong đồ thị có hướng, và cần Topological Sort để phát hiện và sắp xếp thứ tự.
+
+**Pattern Recognition:**
+
+- Signal: "ordering with dependencies, detect if possible" → **Topological Sort on directed graph**
+- Kahn's (BFS): Bắt đầu từ các node không có prerequisite (in-degree = 0), lần lượt xử lý và giảm in-degree của các node kế tiếp
+- Cycle detection: `result.length < numCourses` → có cycle → trả về `[]`
+
+**Visual — Kahn's BFS: numCourses=4, prereqs=[[1,0],[2,0],[3,1],[3,2]]:**
+
+```
+Graph: 0→1, 0→2, 1→3, 2→3
+inDegree: [0, 1, 1, 2]
+
+Init queue: [0]  (only course 0 has inDegree=0)
+
+Step 1: pop 0, result=[0]
+  → course 1: inDegree 1→0 → enqueue
+  → course 2: inDegree 1→0 → enqueue
+  Queue: [1, 2]
+
+Step 2: pop 1, result=[0,1]
+  → course 3: inDegree 2→1
+  Queue: [2]
+
+Step 3: pop 2, result=[0,1,2]
+  → course 3: inDegree 1→0 → enqueue
+  Queue: [3]
+
+Step 4: pop 3, result=[0,1,2,3]
+result.length=4 === numCourses=4 → return [0,1,2,3] ✅
+```
+
+---
 
 ## Problem Description
 
-LeetCode problem solution with multiple approaches and explanations.
+Given `numCourses` (labeled 0 to numCourses-1) and `prerequisites[i] = [a, b]` meaning "take b before a", return a valid ordering to finish all courses. If impossible (cycle exists), return `[]`.
+
+```
+Example 1: numCourses=2, prerequisites=[[1,0]]         → [0,1]
+Example 2: numCourses=4, prerequisites=[[1,0],[2,0],[3,1],[3,2]] → [0,2,1,3]
+Example 3: numCourses=2, prerequisites=[[1,0],[0,1]]   → [] (cycle)
+```
+
+Constraints:
+
+- 1 <= numCourses <= 2000
+- 0 <= prerequisites.length <= numCourses \* (numCourses - 1)
+- All prerequisite pairs are distinct
+
+---
+
+## 📝 Interview Tips
+
+1. **Clarify**: Multiple valid orderings are fine — return any one / VI: "Nhiều thứ tự hợp lệ tồn tại, trả về bất kỳ cái nào đúng là được"
+2. **Brute force**: DFS with 3-color cycle detection (WHITE/GRAY/BLACK) — recursive, push to result on finish / VI: DFS đánh dấu 3 trạng thái, node đang thăm (GRAY) là dấu hiệu cycle; kết quả reverse post-order
+3. **Optimize**: Kahn's BFS — iterative, in-degree array, easier to trace in interview / VI: BFS với mảng in-degree trực quan hơn khi explain; queue chứa các node sẵn sàng xử lý
+4. **Edge cases**: No prerequisites → return `[0,1,...,n-1]`; single course → `[0]` / VI: Không có dependency → bất kỳ thứ tự nào đều hợp lệ
+5. **Follow-up**: Minimum number of semesters if parallelism is allowed? / VI: Số học kỳ tối thiểu nếu có thể học nhiều môn song song trong cùng kỳ
+
+---
 
 ## Solutions
 
 {% raw %}
-/**
- * 210. Course Schedule II
- * 
- * There are a total of numCourses courses you have to take, labeled from 0 to numCourses - 1. 
- * You are given an array prerequisites where prerequisites[i] = [ai, bi] indicates that you 
- * must take course bi first if you want to take course ai.
- * 
- * For example, the pair [0, 1], indicates that to take course 0 you have to first take course 1.
- * Return the ordering of courses you should take to finish all courses. If there are many valid 
- * answers, return any of them. If it is impossible to finish all courses, return an empty array.
- * 
- * Example 1:
- * Input: numCourses = 2, prerequisites = [[1,0]]
- * Output: [0,1]
- * Explanation: There are a total of 2 courses to take. To take course 1 you should have finished course 0. So the correct course order is [0,1].
- * 
- * Example 2:
- * Input: numCourses = 4, prerequisites = [[1,0],[2,0],[3,1],[3,2]]
- * Output: [0,2,1,3]
- * Explanation: There are a total of 4 courses to take. To take course 3 you should have finished both courses 1 and 2. Both courses 1 and 2 should be taken after you finished course 0.
- * So one correct course order is [0,2,1,3]. Another correct ordering is [0,1,2,3].
- * 
- * Example 3:
- * Input: numCourses = 1, prerequisites = []
- * Output: [0]
- * 
- * Constraints:
- * - 1 <= numCourses <= 2000
- * - 0 <= prerequisites.length <= numCourses * (numCourses - 1)
- * - prerequisites[i].length == 2
- * - 0 <= ai, bi < numCourses
- * - ai != bi
- * - All the pairs [ai, bi] are distinct.
- */
 
-// Solution 1: Kahn's Algorithm (BFS-based Topological Sort)
-// Time: O(V + E), Space: O(V + E)
-export function findOrder1(numCourses: number, prerequisites: number[][]): number[] {
-    // Build adjacency list and in-degree array
-    const graph: number[][] = Array(numCourses).fill(null).map(() => []);
-    const inDegree = new Array(numCourses).fill(0);
-    
-    for (const [course, prereq] of prerequisites) {
-        graph[prereq].push(course);
-        inDegree[course]++;
-    }
-    
-    // Initialize queue with courses having no prerequisites
-    const queue: number[] = [];
-    for (let i = 0; i < numCourses; i++) {
-        if (inDegree[i] === 0) {
-            queue.push(i);
-        }
-    }
-    
-    const result: number[] = [];
-    
-    while (queue.length > 0) {
-        const course = queue.shift()!;
-        result.push(course);
-        
-        // Process all courses that depend on current course
-        for (const nextCourse of graph[course]) {
-            inDegree[nextCourse]--;
-            
-            if (inDegree[nextCourse] === 0) {
-                queue.push(nextCourse);
-            }
-        }
-    }
-    
-    // Check if all courses can be completed
-    return result.length === numCourses ? result : [];
+/\*\*
+
+- Solution 1: DFS with 3-Color Cycle Detection (Brute Force)
+- Time: O(V + E) — visit each node and edge once
+- Space: O(V + E) — adjacency list + recursion stack
+  \*/
+  function findOrderDFS(numCourses: number, prerequisites: number[][]): number[] {
+  const graph: number[][] = Array.from({ length: numCourses }, () => []);
+  for (const [a, b] of prerequisites) graph[b].push(a);
+
+const WHITE = 0, GRAY = 1, BLACK = 2;
+const color = new Array(numCourses).fill(WHITE);
+const result: number[] = [];
+
+function dfs(node: number): boolean {
+if (color[node] === GRAY) return false; // back edge → cycle
+if (color[node] === BLACK) return true; // already fully processed
+color[node] = GRAY;
+for (const next of graph[node]) {
+if (!dfs(next)) return false;
+}
+color[node] = BLACK;
+result.push(node); // post-order push
+return true;
 }
 
-// Solution 2: DFS-based Topological Sort
-// Time: O(V + E), Space: O(V + E)
-export function findOrder2(numCourses: number, prerequisites: number[][]): number[] {
-    // Build adjacency list
-    const graph: number[][] = Array(numCourses).fill(null).map(() => []);
-    for (const [course, prereq] of prerequisites) {
-        graph[prereq].push(course);
-    }
-    
-    const WHITE = 0; // Unvisited
-    const GRAY = 1;  // Visiting (in current path)
-    const BLACK = 2; // Visited (completed)
-    
-    const colors = new Array(numCourses).fill(WHITE);
-    const result: number[] = [];
-    
-    function dfs(course: number): boolean {
-        if (colors[course] === GRAY) {
-            // Cycle detected
-            return false;
-        }
-        
-        if (colors[course] === BLACK) {
-            // Already processed
-            return true;
-        }
-        
-        // Mark as visiting
-        colors[course] = GRAY;
-        
-        // Visit all dependencies
-        for (const nextCourse of graph[course]) {
-            if (!dfs(nextCourse)) {
-                return false;
-            }
-        }
-        
-        // Mark as completed and add to result
-        colors[course] = BLACK;
-        result.push(course);
-        
-        return true;
-    }
-    
-    // Process all courses
-    for (let i = 0; i < numCourses; i++) {
-        if (colors[i] === WHITE && !dfs(i)) {
-            return []; // Cycle detected
-        }
-    }
-    
-    // Reverse to get correct topological order
-    return result.reverse();
+for (let i = 0; i < numCourses; i++) {
+if (color[i] === WHITE && !dfs(i)) return [];
+}
+return result.reverse(); // post-order is reverse topological
 }
 
-// Solution 3: DFS with Explicit Stack
-// Time: O(V + E), Space: O(V + E)
-export function findOrder3(numCourses: number, prerequisites: number[][]): number[] {
-    // Build adjacency list
-    const graph: number[][] = Array(numCourses).fill(null).map(() => []);
-    for (const [course, prereq] of prerequisites) {
-        graph[prereq].push(course);
-    }
-    
-    const visited = new Set<number>();
-    const visiting = new Set<number>();
-    const result: number[] = [];
-    
-    function hasNoCycle(course: number): boolean {
-        if (visiting.has(course)) {
-            return false; // Cycle detected
-        }
-        
-        if (visited.has(course)) {
-            return true; // Already processed
-        }
-        
-        visiting.add(course);
-        
-        for (const nextCourse of graph[course]) {
-            if (!hasNoCycle(nextCourse)) {
-                return false;
-            }
-        }
-        
-        visiting.delete(course);
-        visited.add(course);
-        result.push(course);
-        
-        return true;
-    }
-    
-    // Check all courses
-    for (let i = 0; i < numCourses; i++) {
-        if (!visited.has(i) && !hasNoCycle(i)) {
-            return [];
-        }
-    }
-    
-    return result.reverse();
+/\*\*
+
+- Solution 2: Kahn's Algorithm — BFS Topological Sort (Optimal)
+- Time: O(V + E) — each vertex and edge processed exactly once
+- Space: O(V + E) — adjacency list + in-degree array + queue
+  \*/
+  function findOrder(numCourses: number, prerequisites: number[][]): number[] {
+  const graph: number[][] = Array.from({ length: numCourses }, () => []);
+  const inDegree = new Array(numCourses).fill(0);
+
+for (const [a, b] of prerequisites) {
+graph[b].push(a);
+inDegree[a]++;
 }
 
-// Solution 4: Modified Kahn's with Priority Queue (Lexicographic Order)
-// Time: O(V log V + E), Space: O(V + E)
-export function findOrder4(numCourses: number, prerequisites: number[][]): number[] {
-    // Build adjacency list and in-degree array
-    const graph: number[][] = Array(numCourses).fill(null).map(() => []);
-    const inDegree = new Array(numCourses).fill(0);
-    
-    for (const [course, prereq] of prerequisites) {
-        graph[prereq].push(course);
-        inDegree[course]++;
-    }
-    
-    // Use a min heap to ensure lexicographic order
-    class MinHeap {
-        heap: number[] = [];
-        
-        push(val: number): void {
-            this.heap.push(val);
-            this.heapifyUp(this.heap.length - 1);
-        }
-        
-        pop(): number | undefined {
-            if (this.heap.length === 0) return undefined;
-            
-            const min = this.heap[0];
-            const last = this.heap.pop()!;
-            
-            if (this.heap.length > 0) {
-                this.heap[0] = last;
-                this.heapifyDown(0);
-            }
-            
-            return min;
-        }
-        
-        isEmpty(): boolean {
-            return this.heap.length === 0;
-        }
-        
-        private heapifyUp(idx: number): void {
-            while (idx > 0) {
-                const parentIdx = Math.floor((idx - 1) / 2);
-                if (this.heap[parentIdx] <= this.heap[idx]) break;
-                
-                [this.heap[parentIdx], this.heap[idx]] = [this.heap[idx], this.heap[parentIdx]];
-                idx = parentIdx;
-            }
-        }
-        
-        private heapifyDown(idx: number): void {
-            while (true) {
-                let minIdx = idx;
-                const leftChild = 2 * idx + 1;
-                const rightChild = 2 * idx + 2;
-                
-                if (leftChild < this.heap.length && this.heap[leftChild] < this.heap[minIdx]) {
-                    minIdx = leftChild;
-                }
-                
-                if (rightChild < this.heap.length && this.heap[rightChild] < this.heap[minIdx]) {
-                    minIdx = rightChild;
-                }
-                
-                if (minIdx === idx) break;
-                
-                [this.heap[idx], this.heap[minIdx]] = [this.heap[minIdx], this.heap[idx]];
-                idx = minIdx;
-            }
-        }
-    }
-    
-    const pq = new MinHeap();
-    
-    // Add all courses with no prerequisites
-    for (let i = 0; i < numCourses; i++) {
-        if (inDegree[i] === 0) {
-            pq.push(i);
-        }
-    }
-    
-    const result: number[] = [];
-    
-    while (!pq.isEmpty()) {
-        const course = pq.pop()!;
-        result.push(course);
-        
-        // Process all dependent courses
-        for (const nextCourse of graph[course]) {
-            inDegree[nextCourse]--;
-            
-            if (inDegree[nextCourse] === 0) {
-                pq.push(nextCourse);
-            }
-        }
-    }
-    
-    return result.length === numCourses ? result : [];
+const queue: number[] = [];
+for (let i = 0; i < numCourses; i++) {
+if (inDegree[i] === 0) queue.push(i); // courses with no prerequisites
 }
 
-// Solution 5: Union-Find with Topological Sort
-// Time: O(V + E), Space: O(V + E)
-export function findOrder5(numCourses: number, prerequisites: number[][]): number[] {
-    // First check for cycles using Union-Find
-    class UnionFind {
-        parent: number[];
-        rank: number[];
-        
-        constructor(n: number) {
-            this.parent = Array.from({ length: n }, (_, i) => i);
-            this.rank = new Array(n).fill(0);
-        }
-        
-        find(x: number): number {
-            if (this.parent[x] !== x) {
-                this.parent[x] = this.find(this.parent[x]);
-            }
-            return this.parent[x];
-        }
-        
-        union(x: number, y: number): boolean {
-            const rootX = this.find(x);
-            const rootY = this.find(y);
-            
-            if (rootX === rootY) return false; // Would create cycle
-            
-            if (this.rank[rootX] < this.rank[rootY]) {
-                this.parent[rootX] = rootY;
-            } else if (this.rank[rootX] > this.rank[rootY]) {
-                this.parent[rootY] = rootX;
-            } else {
-                this.parent[rootY] = rootX;
-                this.rank[rootX]++;
-            }
-            
-            return true;
-        }
-    }
-    
-    // Build adjacency list
-    const graph: number[][] = Array(numCourses).fill(null).map(() => []);
-    const inDegree = new Array(numCourses).fill(0);
-    
-    for (const [course, prereq] of prerequisites) {
-        graph[prereq].push(course);
-        inDegree[course]++;
-    }
-    
-    // Use Kahn's algorithm for topological sort
-    const queue: number[] = [];
-    for (let i = 0; i < numCourses; i++) {
-        if (inDegree[i] === 0) {
-            queue.push(i);
-        }
-    }
-    
-    const result: number[] = [];
-    
-    while (queue.length > 0) {
-        const course = queue.shift()!;
-        result.push(course);
-        
-        for (const nextCourse of graph[course]) {
-            inDegree[nextCourse]--;
-            
-            if (inDegree[nextCourse] === 0) {
-                queue.push(nextCourse);
-            }
-        }
-    }
-    
-    return result.length === numCourses ? result : [];
+const result: number[] = [];
+while (queue.length > 0) {
+const course = queue.shift()!;
+result.push(course);
+for (const next of graph[course]) {
+inDegree[next]--;
+if (inDegree[next] === 0) queue.push(next); // ready to take now
+}
 }
 
-// Test cases
-export function testFindOrder() {
-    console.log("Testing Course Schedule II:");
-    
-    const testCases = [
-        {
-            numCourses: 2,
-            prerequisites: [[1, 0]],
-            expectedLength: 2,
-            description: "Simple dependency"
-        },
-        {
-            numCourses: 4,
-            prerequisites: [[1, 0], [2, 0], [3, 1], [3, 2]],
-            expectedLength: 4,
-            description: "Multiple dependencies"
-        },
-        {
-            numCourses: 1,
-            prerequisites: [],
-            expectedLength: 1,
-            description: "Single course"
-        },
-        {
-            numCourses: 2,
-            prerequisites: [[1, 0], [0, 1]],
-            expectedLength: 0,
-            description: "Circular dependency"
-        },
-        {
-            numCourses: 3,
-            prerequisites: [[0, 1], [0, 2], [1, 2]],
-            expectedLength: 3,
-            description: "Diamond dependency"
-        }
-    ];
-    
-    const solutions = [
-        { name: "Kahn's Algorithm", fn: findOrder1 },
-        { name: "DFS Topological", fn: findOrder2 },
-        { name: "DFS with Stack", fn: findOrder3 },
-        { name: "Priority Queue", fn: findOrder4 },
-        { name: "Union-Find + Kahn", fn: findOrder5 }
-    ];
-    
-    function isValidOrder(order: number[], numCourses: number, prerequisites: number[][]): boolean {
-        if (order.length !== numCourses) return false;
-        
-        const position = new Map<number, number>();
-        for (let i = 0; i < order.length; i++) {
-            position.set(order[i], i);
-        }
-        
-        for (const [course, prereq] of prerequisites) {
-            if (!position.has(course) || !position.has(prereq)) return false;
-            if (position.get(prereq)! >= position.get(course)!) return false;
-        }
-        
-        return true;
-    }
-    
-    solutions.forEach(solution => {
-        console.log(`\n${solution.name}:`);
-        testCases.forEach((test, i) => {
-            const result = solution.fn(test.numCourses, test.prerequisites);
-            
-            let passed = false;
-            if (test.expectedLength === 0) {
-                passed = result.length === 0;
-            } else {
-                passed = isValidOrder(result, test.numCourses, test.prerequisites);
-            }
-            
-            console.log(`  Test ${i + 1} (${test.description}): ${passed ? 'PASS' : 'FAIL'}`);
-            if (!passed) {
-                console.log(`    Result: ${JSON.stringify(result)}`);
-            }
-        });
-    });
+return result.length === numCourses ? result : []; // incomplete → cycle
 }
 
-/**
- * Key Insights:
- * 
- * 1. **Problem Recognition**:
- *    - Topological sorting of directed acyclic graph (DAG)
- *    - Must detect cycles (impossible to complete courses)
- *    - Multiple valid orderings possible
- * 
- * 2. **Kahn's Algorithm**:
- *    - BFS-based approach
- *    - Start with nodes having in-degree 0
- *    - Remove edges as nodes are processed
- *    - Cycle detection: not all nodes processed
- * 
- * 3. **DFS Approach**:
- *    - Post-order traversal gives reverse topological order
- *    - Three colors: White (unvisited), Gray (visiting), Black (visited)
- *    - Gray nodes in path indicate cycle
- * 
- * 4. **Time Complexity**: O(V + E)
- *    - V = numCourses, E = prerequisites
- *    - Each vertex and edge processed once
- *    - Optimal for this problem
- * 
- * 5. **Space Complexity**: O(V + E)
- *    - Adjacency list: O(E)
- *    - Additional arrays/sets: O(V)
- *    - Recursion stack: O(V) in worst case
- * 
- * 6. **Cycle Detection**:
- *    - Kahn's: Count processed nodes
- *    - DFS: Detect back edges (gray → gray)
- *    - Both approaches handle cycles effectively
- * 
- * 7. **Interview Strategy**:
- *    - Recognize as topological sort problem
- *    - Choose approach (Kahn's or DFS)
- *    - Implement cycle detection
- *    - Handle edge cases
- * 
- * 8. **Edge Cases**:
- *    - No prerequisites (all courses independent)
- *    - Circular dependencies (no valid order)
- *    - Single course
- *    - Self-dependencies (should not occur per constraints)
- * 
- * 9. **Algorithm Comparison**:
- *    - Kahn's: More intuitive, iterative
- *    - DFS: Recursive, elegant for some
- *    - Both have same complexity
- * 
- * 10. **Common Mistakes**:
- *     - Wrong direction of edges in graph
- *     - Forgetting to reverse DFS result
- *     - Incorrect cycle detection logic
- *     - Not handling disconnected components
- * 
- * 11. **Optimizations**:
- *     - Priority queue for lexicographic order
- *     - Early termination on cycle detection
- *     - Memory-efficient representations
- * 
- * 12. **Big Tech Variations**:
- *     - Google: Build order with priorities
- *     - Meta: Dependency resolution in systems
- *     - Amazon: Package installation order
- *     - Microsoft: Build pipeline optimization
- * 
- * 13. **Follow-up Questions**:
- *     - Find minimum number of semesters
- *     - Multiple valid orders, return specific one
- *     - Weighted dependencies (time/cost)
- *     - Dynamic dependency updates
- * 
- * 14. **Real-world Applications**:
- *     - Course scheduling systems
- *     - Build dependency resolution
- *     - Task scheduling with dependencies
- *     - Package manager installations
- *     - Makefile dependency tracking
- * 
- * 15. **Graph Theory Context**:
- *     - DAG property essential
- *     - Topological sort uniqueness
- *     - Strongly connected components
- *     - Critical path analysis
- */
+// === Test Cases ===
+console.log(findOrder(2, [[1, 0]])); // [0,1]
+console.log(findOrder(4, [[1,0],[2,0],[3,1],[3,2]])); // [0,1,2,3] (or any valid)
+console.log(findOrder(2, [[1, 0],[0, 1]])); // [] (cycle)
+console.log(findOrder(1, [])); // [0]
+
 {% endraw %}
+
+---
+
+## 🔗 Related Problems
+
+- [Course Schedule I](https://leetcode.com/problems/course-schedule/) — same problem, return bool instead of ordering
+- [Alien Dictionary](https://leetcode.com/problems/alien-dictionary/) — topological sort on character dependency
+- [Minimum Height Trees](https://leetcode.com/problems/minimum-height-trees/) — similar in-degree peeling technique
+- [Lowest Common Ancestor](./16-lowest-common-ancestor-binary-tree.md) — tree DFS with state propagation

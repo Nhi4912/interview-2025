@@ -1,168 +1,153 @@
-# Design Twitter / Thiết kế Twitter
+---
+layout: page
+title: "Design Twitter"
+difficulty: Medium
+category: Design
+tags: [Design, Hash Table, Heap]
+leetcode_url: "https://leetcode.com/problems/design-twitter/"
+---
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium
-> **LeetCode**: #355 | **Pattern**: Heap + OOP Design
-> **Category**: Design
+# Design Twitter / Thiết Kế Twitter
 
-## Problem / Đề bài
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Heap Merge + OOP Design
+> **Frequency**: 📘 Tier 3
+> **See also**: [Table of Contents](../../../00-table-of-contents.md)
 
-**English**: Design a simplified version of Twitter where users can post tweets, follow/unfollow another user, and see the 10 most recent tweets in the user's news feed. Implement the `Twitter` class with: `postTweet(userId, tweetId)`, `getNewsFeed(userId)` (returns 10 most recent tweet IDs from the user and people they follow), `follow(followerId, followeeId)`, and `unfollow(followerId, followeeId)`.
+## 🧠 Intuition / Tư Duy
 
-**Vietnamese**: Thiết kế phiên bản đơn giản của Twitter gồm các thao tác: đăng tweet, follow/unfollow người dùng khác, và xem 10 tweet gần nhất trong news feed (bao gồm tweet của bản thân và những người mình đang follow). Cần cài đặt 4 method: `postTweet`, `getNewsFeed`, `follow`, `unfollow`.
+**Analogy (Vietnamese)**: Mỗi user có một cuốn nhật ký tweets (mới nhất ở cuối). Khi xem feed, bạn mở tất cả nhật ký của người mình follow đến trang cuối, rồi mỗi lần chọn trang mới nhất trong số đó. Đó chính là k-way merge với max-heap.
+
+**Pattern Recognition**: "Top K từ nhiều danh sách đã sắp xếp" → **k-way merge**. Đây là pattern của LC 23 (Merge K Sorted Lists) ẩn dưới dạng OOP. Luôn nêu điều này với interviewer.
+
+**ASCII Visual**:
+
+```
+User 1 tweets: [(t=0, id=5), (t=3, id=9)]   ← newest at end
+User 2 tweets: [(t=1, id=6)]
+Following[1] = {2}
+
+getNewsFeed(1): init heap with newest tweet per user
+  Max-heap: [(-3,9,u1,idx=1), (-1,6,u2,idx=0)]
+
+Pop (-3,9,u1): result=[9], push prev from u1 → (-0,5,u1,idx=0)
+Pop (-1,6,u2): result=[9,6], no more from u2
+Pop ( 0,5,u1): result=[9,6,5]          → return [9,6,5]
+```
+
+## Problem Description
+
+Implement: `postTweet(userId, tweetId)`, `getNewsFeed(userId)` (10 most recent from self + followed), `follow(followerId, followeeId)`, `unfollow(followerId, followeeId)`.
 
 **Example**:
+
 ```
-twitter = Twitter()
-twitter.postTweet(1, 5)       // User 1 posts tweet id=5
-twitter.getNewsFeed(1)        // Returns [5]
-twitter.follow(1, 2)          // User 1 follows user 2
-twitter.postTweet(2, 6)       // User 2 posts tweet id=6
-twitter.getNewsFeed(1)        // Returns [6, 5] — most recent first
-twitter.unfollow(1, 2)        // User 1 unfollows user 2
-twitter.getNewsFeed(1)        // Returns [5]
+postTweet(1,5)        → getNewsFeed(1) = [5]
+follow(1,2)           → postTweet(2,6)
+getNewsFeed(1) = [6,5] → unfollow(1,2)
+getNewsFeed(1) = [5]
 ```
 
-**Constraints**: `1 <= userId, tweetId <= 500`, at most 3×10⁴ total calls, a user always follows themselves implicitly for the feed.
+**Constraints**: `1 ≤ userId, tweetId ≤ 500`, ≤ 3×10⁴ calls.
 
----
+## 📝 Interview Tips
 
-## Approach / Hướng giải
+- **Nhận diện pattern**: Đây là LC 23 "Merge K Sorted Lists" dưới dạng OOP — luôn nêu điều này.
+- **Heap merge**: "Top 10 from K users' sorted tweet lists" = classic k-way merge pattern.
+- **Global timestamp**: Dùng biến `time` toàn cục tăng dần để so sánh thứ tự tweet across users.
+- **Self-follow**: User luôn thấy tweet của chính mình — include `userId` vào candidates khi build heap.
+- **Scale follow-up**: Fan-out on write (precompute feed on post, fast read) vs fan-out on read (merge at query, slow read, simple write). Twitter dùng hybrid.
 
-### Pattern nhận dạng / Pattern recognition
+## Solutions
 
-Bài này có hai phần: (1) data modeling — lưu tweets và follow relationships; (2) merge k sorted lists — lấy 10 tweet mới nhất từ nhiều user. Khi thấy "top K from multiple sorted sources", nghĩ ngay đến **min-heap / max-heap merge**.
+{% raw %}
+/\*\*
 
-When you see "get most recent N items from multiple users", recognize this as a **k-way merge** problem — the same pattern as merging k sorted linked lists.
+- Design Twitter — LeetCode #355
+-
+- HashMap stores each user's tweets as [(timestamp, tweetId), ...] (newest last).
+- getNewsFeed uses sorted-array heap simulation for k-way merge.
+-
+- Time: O(1) post/follow/unfollow, O(F·T log F·T) getNewsFeed (F=following, T=tweets)
+- Space: O(total tweets + follow edges)
+  _/
+  class Twitter {
+  private time = 0;
+  /\*\* userId → list of [timestamp, tweetId], oldest first _/
+  private tweets = new Map<number, [number, number][]>();
+  /\*_ userId → Set of followeeIds _/
+  private following = new Map<number, Set<number>>();
 
-### Key Insight / Ý tưởng chính
+postTweet(userId: number, tweetId: number): void {
+if (!this.tweets.has(userId)) this.tweets.set(userId, []);
+this.tweets.get(userId)!.push([this.time++, tweetId]);
+}
 
-Assign a global timestamp (incrementing counter) to each tweet. Each user has their own list of tweets (sorted by time, newest last). For `getNewsFeed`, use a **max-heap** keyed on timestamp to efficiently pull the most recent tweet across all followed users, similar to merging k sorted lists.
+/\*\*
 
----
+- Return 10 most recent tweetIds from user + everyone they follow.
+- Trả về 10 tweet gần nhất của user + người đang follow.
+-
+- Each user contributes tweets in reverse-chronological order.
+- Simulate max-heap via min-heap on negated timestamps.
+- heap entry: [negTimestamp, tweetId, userId, listIndex]
+  \*/
+  getNewsFeed(userId: number): number[] {
+  const candidates = new Set([userId, ...(this.following.get(userId) ?? [])]);
 
-## Solutions / Các cách giải
 
-### Solution 1: HashMap + Max-Heap Merge — O(N log K) time, O(N) space ✅ Recommended
+    // Heap: [negTimestamp, tweetId, uid, index] — sorted ascending by negTs
+    const heap: [number, number, number, number][] = [];
+    for (const uid of candidates) {
+      const list = this.tweets.get(uid);
+      if (list && list.length > 0) {
+        const idx = list.length - 1;
+        heap.push([-list[idx][0], list[idx][1], uid, idx]);
+      }
+    }
+    heap.sort((a, b) => a[0] - b[0]);
 
-**Idea**: Store each user's tweets in a list with a global timestamp. On `getNewsFeed`, initialize the heap with the latest tweet from each followed user, then pop and optionally push the next tweet from that user's list.
+    const result: number[] = [];
+    while (heap.length > 0 && result.length < 10) {
+      const [, tweetId, uid, idx] = heap.shift()!;
+      result.push(tweetId);
+      if (idx > 0) {
+        const list = this.tweets.get(uid)!;
+        heap.push([-list[idx - 1][0], list[idx - 1][1], uid, idx - 1]);
+        heap.sort((a, b) => a[0] - b[0]);
+      }
+    }
+    return result;
 
-**Ý tưởng**: Lưu tweet của mỗi user trong một danh sách kèm timestamp toàn cục. Khi `getNewsFeed`, khởi tạo max-heap với tweet mới nhất của mỗi người đang follow, rồi lần lượt pop ra và đẩy tweet kế tiếp của người đó vào heap (pattern merge k sorted lists).
+}
 
-**Algorithm**:
-1. Maintain a global `time` counter (increments with each tweet).
-2. `postTweet(userId, tweetId)`: append `(time++, tweetId)` to `tweets[userId]`.
-3. `follow(followerId, followeeId)`: add `followeeId` to `following[followerId]` set.
-4. `unfollow(followerId, followeeId)`: remove from that set.
-5. `getNewsFeed(userId)`:
-   a. Build candidate set = `following[userId]` ∪ `{userId}`.
-   b. For each candidate, push `(−timestamp, tweetId, userId, index)` into a min-heap (negate timestamp to simulate max-heap).
-   c. Pop up to 10 items; after each pop, push the next older tweet from that same user if it exists.
-   d. Return collected tweetIds.
+follow(followerId: number, followeeId: number): void {
+if (!this.following.has(followerId)) this.following.set(followerId, new Set());
+this.following.get(followerId)!.add(followeeId);
+}
 
-**Pseudocode**:
-```
-class Twitter:
-    time = 0
-    tweets = defaultdict(list)      // userId -> [(timestamp, tweetId), ...]
-    following = defaultdict(set)    // userId -> set of followeeIds
+unfollow(followerId: number, followeeId: number): void {
+this.following.get(followerId)?.delete(followeeId);
+}
+}
 
-    function postTweet(userId, tweetId):
-        tweets[userId].append((time, tweetId))
-        time += 1
+// Inline tests — LeetCode example
+const tw = new Twitter();
+tw.postTweet(1, 5);
+console.assert(tw.getNewsFeed(1).join(',') === '5', 'own tweet appears in feed');
+tw.follow(1, 2);
+tw.postTweet(2, 6);
+console.assert(tw.getNewsFeed(1).join(',') === '6,5', 'most recent first; followed user included');
+tw.unfollow(1, 2);
+console.assert(tw.getNewsFeed(1).join(',') === '5', 'unfollowed user removed from feed');
 
-    function follow(followerId, followeeId):
-        following[followerId].add(followeeId)
+// User sees own tweets even without explicit follow
+tw.postTweet(1, 9);
+console.assert(tw.getNewsFeed(1)[0] === 9, 'most recent own tweet is first');
+{% endraw %}
 
-    function unfollow(followerId, followeeId):
-        following[followerId].discard(followeeId)
+## 🔗 Related Problems
 
-    function getNewsFeed(userId):
-        heap = []
-        candidates = following[userId] ∪ {userId}
-
-        for each uid in candidates:
-            if tweets[uid] is not empty:
-                idx = last index of tweets[uid]
-                t, tid = tweets[uid][idx]
-                heap.push((-t, tid, uid, idx))
-        heapify(heap)
-
-        result = []
-        while heap is not empty and len(result) < 10:
-            neg_t, tid, uid, idx = heap.pop()
-            result.append(tid)
-            if idx - 1 >= 0:
-                t2, tid2 = tweets[uid][idx - 1]
-                heap.push((-t2, tid2, uid, idx - 1))
-
-        return result
-```
-
-**Visual**:
-```
-User 1 tweets (oldest→newest): [(t=0, id=5), (t=3, id=9)]
-User 2 tweets (oldest→newest): [(t=1, id=6)]
-User 3 tweets (oldest→newest): [(t=2, id=7)]
-
-getNewsFeed(user1) — follows: {2, 3}
-Initial heap (max by timestamp):
-  [-3, id=9, u1, idx=1]
-  [-1, id=6, u2, idx=0]
-  [-2, id=7, u3, idx=0]
-
-Step 1: pop (-3, id=9, u1, idx=1) → result=[9]
-        push next from u1: (-0, id=5, u1, idx=0)
-        heap: [(-2,7,u3), (-1,6,u2), (0,5,u1)]
-
-Step 2: pop (-2, id=7, u3, idx=0) → result=[9,7]
-        no more tweets from u3
-
-Step 3: pop (-1, id=6, u2, idx=0) → result=[9,7,6]
-Step 4: pop ( 0, id=5, u1, idx=0) → result=[9,7,6,5]
-
-Final: [9, 7, 6, 5]
-```
-
-**Complexity**:
-- Time: O(N log K) for getNewsFeed — N = up to 10 pops, K = number of followed users; O(1) for post/follow/unfollow
-- Space: O(T + U) — T = total tweets stored, U = total follow relationships
-
----
-
-### Solution 2: Brute Force Collect + Sort — O(F·T log F·T) time, O(F·T) space
-
-**Idea**: Collect all tweets from the user and all followed users into one list, sort by timestamp descending, return the first 10.
-
-**Algorithm**:
-1. Gather all `(timestamp, tweetId)` pairs from all followed users + self.
-2. Sort descending by timestamp.
-3. Return first 10 tweetIds.
-
-**Complexity**:
-- Time: O(F·T log F·T) where F = following count, T = tweets per user
-- Space: O(F·T) for the collected list
-
----
-
-## Comparison / So sánh
-
-| Solution | Time (getNewsFeed) | Space | Notes |
-|----------|--------------------|-------|-------|
-| Heap Merge | O(10 log K) ≈ O(log K) | O(T + U) | Recommended — scales well |
-| Brute Sort | O(F·T log F·T) | O(F·T) | Simpler code, slow for large feeds |
-
----
-
-## Interview Tips / Mẹo phỏng vấn
-
-- **Key point**: The heap merge approach is the same pattern as "Merge K Sorted Lists" (LC 23) — always recognize this connection.
-- **Edge cases**: User follows themselves (handle by always including self); unfollow a user not currently followed (no-op); `getNewsFeed` when user has no tweets and follows no one (return empty list).
-- **Follow-up**: How would you scale this to millions of users? (Fan-out on write vs fan-out on read, caching, pre-computed feeds.)
-
----
-
-## Related Problems / Bài liên quan
-
-- LC 23 — Merge K Sorted Lists (core heap merge pattern)
-- LC 295 — Find Median from Data Stream (heap design)
-- LC 146 — LRU Cache (design with data structures)
+- [LC 23 — Merge K Sorted Lists](https://leetcode.com/problems/merge-k-sorted-lists/) — core k-way merge pattern
+- [LC 295 — Find Median from Data Stream](https://leetcode.com/problems/find-median-from-data-stream/) — heap-based design
+- [LC 146 — LRU Cache](https://leetcode.com/problems/lru-cache/) — OOP design with time-ordering
+- [LC 380 — Insert Delete GetRandom O(1)](https://leetcode.com/problems/insert-delete-getrandom-o1/) — multi-structure design

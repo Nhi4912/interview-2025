@@ -1,570 +1,115 @@
 ---
 layout: page
-title: "Move Zeroe"
+title: "Move Zeroes"
 difficulty: Easy
 category: Array
 tags: [Array, Two Pointers]
-leetcode_url: "https://leetcode.com/problems/move-zeroe/"
+leetcode_url: "https://leetcode.com/problems/move-zeroes/"
 ---
 
-# Move Zeroe
+# Move Zeroes / Dời Số 0 Về Cuối Mảng
 
-> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Two Pointers — Write Pointer
+> **Frequency**: 📘 Tier 2 — Câu warm-up rất phổ biến; thường được dùng để kiểm tra tư duy in-place
+> **See also**: [Table of Contents](../../../00-table-of-contents.md) | [Remove Element #27](https://leetcode.com/problems/remove-element/)
 
-**LeetCode Problem # * 283. Move Zeroes**
+## 🧠 Intuition / Tư Duy
+
+- **Analogy:** Hãy tưởng tượng bạn đang nhặt các viên bi màu từ một hàng có xen kẽ các vị trí trống (số 0). Bạn dùng tay trái để chỉ vị trí "sẽ đặt viên bi tiếp theo" và tay phải để quét qua. Mỗi khi tay phải gặp viên bi (khác 0), chuyển nó sang vị trí tay trái đang giữ. Cuối cùng, lấp đầy phần còn lại bằng 0.
+
+- **Pattern Recognition:**
+  - Phải **giữ nguyên thứ tự** các phần tử khác 0 → không thể dùng sort hay swap tuỳ tiện
+  - Cần di chuyển in-place → two pointers: `write` (vị trí ghi) và `read` (vị trí đọc)
+  - Số lần ghi = số phần tử khác 0 → sau đó fill phần còn lại bằng 0
+
+- **Visual — Write Pointer:**
+
+  ```
+  nums = [0, 1, 0, 3, 12]
+  write=0  read scans →
+
+  read=0: nums[0]=0  skip
+  read=1: nums[1]=1  write: nums[0]=1  write→1   → [1, 1, 0, 3, 12]
+  read=2: nums[2]=0  skip
+  read=3: nums[3]=3  write: nums[1]=3  write→2   → [1, 3, 0, 3, 12]
+  read=4: nums[4]=12 write: nums[2]=12 write→3   → [1, 3, 12, 3, 12]
+
+  fill zeros from write=3 to end              → [1, 3, 12, 0, 0] ✅
+  ```
 
 ## Problem Description
 
- * Given an integer array nums, move all 0's to the end of it while maintaining  * the relative order of the non-zero elements.  *  * Note that you must do this in-place without making a copy of the array.  * 
+Cho mảng `nums`, dời tất cả số `0` về cuối, **giữ nguyên thứ tự** các phần tử khác 0. Thực hiện **in-place** (không tạo bản sao).
+
+| Input          | Output         | Ghi chú                    |
+| -------------- | -------------- | -------------------------- |
+| `[0,1,0,3,12]` | `[1,3,12,0,0]` | Trường hợp cơ bản          |
+| `[0]`          | `[0]`          | Mảng toàn 0                |
+| `[1,2,3]`      | `[1,2,3]`      | Không có 0, không thay đổi |
+
+## 📝 Interview Tips
+
+- 🇻🇳 Hỏi: có cần tối thiểu hoá số lần ghi (write operations) không? / 🇬🇧 _Ask: is minimising write operations a constraint?_
+- 🇻🇳 Solution 1 (write pointer) tối thiểu hoá writes; Solution 2 (swap) ít ghi hơn khi mảng hầu hết là số khác 0 / 🇬🇧 _Swap variant has fewer total writes when zeros are rare_
+- 🇻🇳 **Không** được dùng array mới — đây là điều kiện in-place / 🇬🇧 _"Without making a copy" means no extra O(n) array_
+- 🇻🇳 Thứ tự các phần tử khác 0 **phải được giữ nguyên** → không dùng sort / 🇬🇧 _Relative order must be preserved — sorting would break this_
+- 🇻🇳 Kiểm tra edge case: mảng rỗng, toàn 0, không có 0 / 🇬🇧 _Cover: empty array, all-zeros, no-zeros_
 
 ## Solutions
 
 {% raw %}
-/**
- * 283. Move Zeroes
- *
- * Problem:
- * Given an integer array nums, move all 0's to the end of it while maintaining
- * the relative order of the non-zero elements.
- *
- * Note that you must do this in-place without making a copy of the array.
- *
- * Example:
- * Input: nums = [0,1,0,3,12]
- * Output: [1,3,12,0,0]
- *
- * Input: nums = [0]
- * Output: [0]
- *
- * LeetCode: https://leetcode.com/problems/move-zeroes/
- */
+/\*\*
 
-/**
- * Solution 1: Two Pointers (Optimal)
- *
- * Approach:
- * - Use two pointers: one for writing position, one for reading
- * - Move non-zero elements to front, fill remaining with zeros
- *
- * Time Complexity: O(n)
- * Space Complexity: O(1)
- */
-function moveZeroes(nums: number[]): void {
-  let writeIndex = 0;
+- Solution 1: Write Pointer — Optimal (tối thiểu số lần ghi)
+- Dùng `write` để ghi các phần tử khác 0 lên đầu, sau đó fill 0 vào phần còn lại.
+- Mỗi phần tử được ghi tối đa 1 lần → tối ưu về write operations.
+-
+- @time O(n) — một lần duyệt để di chuyển, một lần để fill zeros
+- @space O(1) — in-place hoàn toàn
+  \*/
+  function moveZeroes(nums: number[]): void {
+  let write = 0;
 
-  // Move all non-zero elements to the front
-  for (let i = 0; i < nums.length; i++) {
-    if (nums[i] !== 0) {
-      nums[writeIndex] = nums[i];
-      writeIndex++;
-    }
-  }
-
-  // Fill remaining positions with zeros
-  for (let i = writeIndex; i < nums.length; i++) {
-    nums[i] = 0;
-  }
+// Pass 1: copy all non-zero elements to front
+for (let i = 0; i < nums.length; i++) {
+if (nums[i] !== 0) nums[write++] = nums[i];
 }
 
-/**
- * Solution 2: Swap Approach
- *
- * Approach:
- * - Use two pointers and swap non-zero elements
- * - Maintain relative order by swapping
- *
- * Time Complexity: O(n)
- * Space Complexity: O(1)
- */
-function moveZeroesSwap(nums: number[]): void {
-  let nonZeroIndex = 0;
-
-  for (let i = 0; i < nums.length; i++) {
-    if (nums[i] !== 0) {
-      // Swap current element with element at nonZeroIndex
-      [nums[nonZeroIndex], nums[i]] = [nums[i], nums[nonZeroIndex]];
-      nonZeroIndex++;
-    }
-  }
+// Pass 2: fill remaining positions with zero
+while (write < nums.length) nums[write++] = 0;
 }
 
-/**
- * Solution 3: Using Filter and Fill
- *
- * Approach:
- * - Filter non-zero elements and fill remaining with zeros
- * - More functional approach
- *
- * Time Complexity: O(n)
- * Space Complexity: O(1)
- */
-function moveZeroesFilter(nums: number[]): void {
-  const nonZeros = nums.filter((num) => num !== 0);
-  const zeroCount = nums.length - nonZeros.length;
+// const a = [0,1,0,3,12]; moveZeroes(a); // a → [1,3,12,0,0]
+// const b = [0]; moveZeroes(b); // b → [0]
+// const c = [1,2,3]; moveZeroes(c); // c → [1,2,3]
+// const d = [0,0,1]; moveZeroes(d); // d → [1,0,0]
 
-  // Copy non-zero elements back
-  for (let i = 0; i < nonZeros.length; i++) {
-    nums[i] = nonZeros[i];
+/\*\*
+
+- Solution 2: Swap Variant — Minimal Total Operations
+- Swap phần tử khác 0 với vị trí `slow`. Ít swap hơn khi phần lớn là khác 0
+- vì không cần fill zeros ở cuối — zeros tự động "rơi xuống" qua swap.
+-
+- @time O(n) — một lần duyệt duy nhất
+- @space O(1) — in-place hoàn toàn
+  \*/
+  function moveZeroesSwap(nums: number[]): void {
+  let slow = 0;
+  for (let fast = 0; fast < nums.length; fast++) {
+  if (nums[fast] !== 0) {
+  [nums[slow], nums[fast]] = [nums[fast], nums[slow]];
+  slow++;
+  }
+  }
   }
 
-  // Fill with zeros
-  for (let i = nonZeros.length; i < nums.length; i++) {
-    nums[i] = 0;
-  }
-}
-
-/**
- * Solution 4: Using Reduce (Functional)
- *
- * Approach:
- * - Use reduce to collect non-zero elements
- * - Fill remaining positions with zeros
- *
- * Time Complexity: O(n)
- * Space Complexity: O(1)
- */
-function moveZeroesReduce(nums: number[]): void {
-  const nonZeros = nums.reduce((acc: number[], num: number) => {
-    if (num !== 0) acc.push(num);
-    return acc;
-  }, []);
-
-  // Copy non-zero elements back
-  for (let i = 0; i < nonZeros.length; i++) {
-    nums[i] = nonZeros[i];
-  }
-
-  // Fill with zeros
-  for (let i = nonZeros.length; i < nums.length; i++) {
-    nums[i] = 0;
-  }
-}
-
-/**
- * Solution 5: Using Generator (Memory efficient)
- *
- * Approach:
- * - Use generator to yield non-zero elements
- * - Memory efficient for large arrays
- *
- * Time Complexity: O(n)
- * Space Complexity: O(1)
- */
-function* nonZeroGenerator(nums: number[]): Generator<number> {
-  for (const num of nums) {
-    if (num !== 0) {
-      yield num;
-    }
-  }
-}
-
-function moveZeroesGenerator(nums: number[]): void {
-  const nonZeros = Array.from(nonZeroGenerator(nums));
-
-  // Copy non-zero elements back
-  for (let i = 0; i < nonZeros.length; i++) {
-    nums[i] = nonZeros[i];
-  }
-
-  // Fill with zeros
-  for (let i = nonZeros.length; i < nums.length; i++) {
-    nums[i] = 0;
-  }
-}
-
-/**
- * Solution 6: Using Array Methods (One-liner)
- *
- * Approach:
- * - Use array methods to achieve the result
- * - Simple but less efficient
- *
- * Time Complexity: O(n)
- * Space Complexity: O(n)
- */
-function moveZeroesArrayMethods(nums: number[]): void {
-  const nonZeros = nums.filter((num) => num !== 0);
-  const zeros = new Array(nums.length - nonZeros.length).fill(0);
-  const result = [...nonZeros, ...zeros];
-
-  // Copy back to original array
-  for (let i = 0; i < nums.length; i++) {
-    nums[i] = result[i];
-  }
-}
-
-/**
- * Solution 7: Using Queue (Educational)
- *
- * Approach:
- * - Use queue to store non-zero elements
- * - Dequeue and fill array
- *
- * Time Complexity: O(n)
- * Space Complexity: O(n)
- */
-function moveZeroesQueue(nums: number[]): void {
-  const queue: number[] = [];
-
-  // Enqueue non-zero elements
-  for (const num of nums) {
-    if (num !== 0) {
-      queue.push(num);
-    }
-  }
-
-  // Fill array with non-zero elements
-  for (let i = 0; i < queue.length; i++) {
-    nums[i] = queue[i];
-  }
-
-  // Fill remaining with zeros
-  for (let i = queue.length; i < nums.length; i++) {
-    nums[i] = 0;
-  }
-}
-
-/**
- * Solution 8: Using Class (Object-oriented)
- *
- * Approach:
- * - Create a ZeroMover class
- * - Encapsulate the logic
- *
- * Time Complexity: O(n)
- * Space Complexity: O(1)
- */
-class ZeroMover {
-  private nums: number[];
-
-  constructor(nums: number[]) {
-    this.nums = nums;
-  }
-
-  moveZeroes(): void {
-    let writeIndex = 0;
-
-    // Move all non-zero elements to the front
-    for (let i = 0; i < this.nums.length; i++) {
-      if (this.nums[i] !== 0) {
-        this.nums[writeIndex] = this.nums[i];
-        writeIndex++;
-      }
-    }
-
-    // Fill remaining positions with zeros
-    for (let i = writeIndex; i < this.nums.length; i++) {
-      this.nums[i] = 0;
-    }
-  }
-
-  getArray(): number[] {
-    return [...this.nums];
-  }
-}
-
-function moveZeroesClass(nums: number[]): void {
-  const mover = new ZeroMover(nums);
-  mover.moveZeroes();
-}
-
-/**
- * Solution 9: Using Bit Manipulation (Limited use case)
- *
- * Approach:
- * - Use bit operations to track non-zero positions
- * - Limited to small arrays due to integer size
- *
- * Time Complexity: O(n)
- * Space Complexity: O(1)
- */
-function moveZeroesBitwise(nums: number[]): void {
-  if (nums.length > 32) {
-    // Fallback to standard approach for large arrays
-    moveZeroes(nums);
-    return;
-  }
-
-  let nonZeroMask = 0;
-
-  // Create mask of non-zero positions
-  for (let i = 0; i < nums.length; i++) {
-    if (nums[i] !== 0) {
-      nonZeroMask |= 1 << i;
-    }
-  }
-
-  // Reconstruct array
-  let writeIndex = 0;
-  for (let i = 0; i < nums.length; i++) {
-    if (nonZeroMask & (1 << i)) {
-      nums[writeIndex] = nums[i];
-      writeIndex++;
-    }
-  }
-
-  // Fill with zeros
-  for (let i = writeIndex; i < nums.length; i++) {
-    nums[i] = 0;
-  }
-}
-
-// Test cases
-function testMoveZeroes() {
-  console.log("=== Testing Move Zeroes ===\n");
-
-  const testCases = [
-    {
-      input: [0, 1, 0, 3, 12],
-      expected: [1, 3, 12, 0, 0],
-      description: "Standard case with multiple zeros",
-    },
-    {
-      input: [0],
-      expected: [0],
-      description: "Single zero",
-    },
-    {
-      input: [1, 2, 3, 4, 5],
-      expected: [1, 2, 3, 4, 5],
-      description: "No zeros",
-    },
-    {
-      input: [0, 0, 0, 0],
-      expected: [0, 0, 0, 0],
-      description: "All zeros",
-    },
-    {
-      input: [1, 0, 0, 0, 2],
-      expected: [1, 2, 0, 0, 0],
-      description: "Zeros in middle",
-    },
-    {
-      input: [0, 0, 1, 2, 3],
-      expected: [1, 2, 3, 0, 0],
-      description: "Zeros at beginning",
-    },
-    {
-      input: [1, 2, 3, 0, 0],
-      expected: [1, 2, 3, 0, 0],
-      description: "Zeros at end",
-    },
-    {
-      input: [],
-      expected: [],
-      description: "Empty array",
-    },
-  ];
-
-  testCases.forEach((testCase, index) => {
-    console.log(`Test Case ${index + 1}: ${testCase.description}`);
-    console.log(`Input: [${testCase.input.join(", ")}]`);
-    console.log(`Expected: [${testCase.expected.join(", ")}]\n`);
-
-    // Test Solution 1 (Two Pointers)
-    const nums1 = [...testCase.input];
-    moveZeroes(nums1);
-    console.log(
-      `Solution 1 (Two Pointers): [${nums1.join(", ")}] ${
-        JSON.stringify(nums1) === JSON.stringify(testCase.expected)
-          ? "✅"
-          : "❌"
-      }`
-    );
-
-    // Test Solution 2 (Swap)
-    const nums2 = [...testCase.input];
-    moveZeroesSwap(nums2);
-    console.log(
-      `Solution 2 (Swap): [${nums2.join(", ")}] ${
-        JSON.stringify(nums2) === JSON.stringify(testCase.expected)
-          ? "✅"
-          : "❌"
-      }`
-    );
-
-    // Test Solution 3 (Filter)
-    const nums3 = [...testCase.input];
-    moveZeroesFilter(nums3);
-    console.log(
-      `Solution 3 (Filter): [${nums3.join(", ")}] ${
-        JSON.stringify(nums3) === JSON.stringify(testCase.expected)
-          ? "✅"
-          : "❌"
-      }`
-    );
-
-    // Test Solution 4 (Reduce)
-    const nums4 = [...testCase.input];
-    moveZeroesReduce(nums4);
-    console.log(
-      `Solution 4 (Reduce): [${nums4.join(", ")}] ${
-        JSON.stringify(nums4) === JSON.stringify(testCase.expected)
-          ? "✅"
-          : "❌"
-      }`
-    );
-
-    // Test Solution 5 (Generator)
-    const nums5 = [...testCase.input];
-    moveZeroesGenerator(nums5);
-    console.log(
-      `Solution 5 (Generator): [${nums5.join(", ")}] ${
-        JSON.stringify(nums5) === JSON.stringify(testCase.expected)
-          ? "✅"
-          : "❌"
-      }`
-    );
-
-    // Test Solution 6 (Array Methods)
-    const nums6 = [...testCase.input];
-    moveZeroesArrayMethods(nums6);
-    console.log(
-      `Solution 6 (Array Methods): [${nums6.join(", ")}] ${
-        JSON.stringify(nums6) === JSON.stringify(testCase.expected)
-          ? "✅"
-          : "❌"
-      }`
-    );
-
-    // Test Solution 7 (Queue)
-    const nums7 = [...testCase.input];
-    moveZeroesQueue(nums7);
-    console.log(
-      `Solution 7 (Queue): [${nums7.join(", ")}] ${
-        JSON.stringify(nums7) === JSON.stringify(testCase.expected)
-          ? "✅"
-          : "❌"
-      }`
-    );
-
-    // Test Solution 8 (Class)
-    const nums8 = [...testCase.input];
-    moveZeroesClass(nums8);
-    console.log(
-      `Solution 8 (Class): [${nums8.join(", ")}] ${
-        JSON.stringify(nums8) === JSON.stringify(testCase.expected)
-          ? "✅"
-          : "❌"
-      }`
-    );
-
-    // Test Solution 9 (Bitwise)
-    const nums9 = [...testCase.input];
-    moveZeroesBitwise(nums9);
-    console.log(
-      `Solution 9 (Bitwise): [${nums9.join(", ")}] ${
-        JSON.stringify(nums9) === JSON.stringify(testCase.expected)
-          ? "✅"
-          : "❌"
-      }`
-    );
-
-    console.log("\n---\n");
-  });
-}
-
-// Performance comparison
-function performanceComparison() {
-  console.log("=== Performance Comparison ===\n");
-
-  const testCases = [
-    { name: "Two Pointers", func: moveZeroes },
-    { name: "Swap", func: moveZeroesSwap },
-    { name: "Filter", func: moveZeroesFilter },
-    { name: "Reduce", func: moveZeroesReduce },
-    { name: "Generator", func: moveZeroesGenerator },
-    { name: "Array Methods", func: moveZeroesArrayMethods },
-    { name: "Queue", func: moveZeroesQueue },
-    { name: "Class", func: moveZeroesClass },
-    { name: "Bitwise", func: moveZeroesBitwise },
-  ];
-
-  // Create test arrays
-  const smallArray = [0, 1, 0, 3, 12];
-  const largeArray = Array.from({ length: 10000 }, (_, i) =>
-    i % 3 === 0 ? 0 : i
-  );
-  const allZerosArray = new Array(1000).fill(0);
-
-  const arrays = [
-    { name: "Small", array: smallArray },
-    { name: "Large", array: largeArray },
-    { name: "All Zeros", array: allZerosArray },
-  ];
-
-  arrays.forEach(({ name, array }) => {
-    console.log(`${name} Array:`);
-
-    testCases.forEach(({ name: funcName, func }) => {
-      const testArray = [...array];
-      const start = performance.now();
-      func(testArray);
-      const end = performance.now();
-
-      console.log(`  ${funcName}: ${(end - start).toFixed(2)}ms`);
-    });
-
-    console.log("");
-  });
-}
-
-// Zero distribution analysis
-function zeroDistributionAnalysis() {
-  console.log("=== Zero Distribution Analysis ===\n");
-
-  const testArrays = [
-    [0, 1, 0, 3, 12],
-    [1, 0, 0, 0, 2],
-    [0, 0, 1, 2, 3],
-    [1, 2, 3, 0, 0],
-    [0, 0, 0, 0],
-    [1, 2, 3, 4, 5],
-  ];
-
-  testArrays.forEach((arr, index) => {
-    console.log(`Array ${index + 1}: [${arr.join(", ")}]`);
-
-    const zeroCount = arr.filter((num) => num === 0).length;
-    const nonZeroCount = arr.length - zeroCount;
-
-    console.log(
-      `  Zeros: ${zeroCount} (${((zeroCount / arr.length) * 100).toFixed(1)}%)`
-    );
-    console.log(
-      `  Non-zeros: ${nonZeroCount} (${(
-        (nonZeroCount / arr.length) *
-        100
-      ).toFixed(1)}%)`
-    );
-
-    const result = [...arr];
-    moveZeroes(result);
-    console.log(`  Result: [${result.join(", ")}]`);
-    console.log("");
-  });
-}
-
-// Uncomment the following lines to run tests
-// testMoveZeroes();
-// performanceComparison();
-// zeroDistributionAnalysis();
-
-export {
-  moveZeroes,
-  moveZeroesSwap,
-  moveZeroesFilter,
-  moveZeroesReduce,
-  moveZeroesGenerator,
-  moveZeroesArrayMethods,
-  moveZeroesQueue,
-  moveZeroesClass,
-  moveZeroesBitwise,
-  ZeroMover,
-  nonZeroGenerator,
-  testMoveZeroes,
-  performanceComparison,
-  zeroDistributionAnalysis,
-};
+// const e = [0,1,0,3,12]; moveZeroesSwap(e); // e → [1,3,12,0,0]
+// const f = [4,2,4,0,0]; moveZeroesSwap(f); // f → [4,2,4,0,0]
 {% endraw %}
+
+## 🔗 Related Problems
+
+- [27. Remove Element](https://leetcode.com/problems/remove-element/) — cùng write pointer pattern, xoá phần tử cụ thể
+- [26. Remove Duplicates from Sorted Array](https://leetcode.com/problems/remove-duplicates-from-sorted-array/) — write pointer trên mảng đã sort
+- [283 follow-up: Sort Colors](https://leetcode.com/problems/sort-colors/) — 3-way partition (Dutch National Flag)
+- [75. Sort Colors](https://leetcode.com/problems/sort-colors/) — mở rộng: phân loại 3 nhóm in-place

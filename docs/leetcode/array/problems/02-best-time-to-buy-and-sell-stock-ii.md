@@ -1,344 +1,114 @@
 ---
 layout: page
 title: "Best Time to Buy and Sell Stock II"
-difficulty: Hard
+difficulty: Medium
 category: Array
-tags: [Array, Greedy]
+tags: [Array, Greedy, Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/best-time-to-buy-and-sell-stock-ii/"
 ---
 
-# Best Time to Buy and Sell Stock II
+# Best Time to Buy and Sell Stock II / Thời Điểm Tốt Nhất Để Mua Và Bán Cổ Phiếu II
 
-> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy  
+> **Frequency**: 📗 Tier 2 — Common in FAANG rounds, tests greedy thinking  
+> **See also**: [Table of Contents](../../../00-table-of-contents.md) | [Container With Most Water](18-container-with-most-water.md)
 
-**LeetCode Problem # * 122. Best Time to Buy and Sell Stock II**
+## 🧠 Intuition / Tư Duy
+
+- **Analogy:** Bạn là thương nhân ở chợ rau. Mỗi ngày bạn biết giá rau hôm đó. Bạn có thể mua và bán bao nhiêu lần tuỳ thích. Bí quyết: mỗi khi giá ngày mai cao hơn hôm nay, cứ mua hôm nay bán ngày mai. Tổng lãi bằng tổng tất cả các khoảng tăng giá liên tiếp.
+
+- **Pattern Recognition:**
+  - Unlimited transactions + maximize profit → **Greedy: collect every upward slope**
+  - `prices[i] > prices[i-1]` → take the difference (equivalent to buy low, sell high every step)
+  - DP thường quá phức tạp cho bài này — Greedy là đủ và tối ưu
+
+- **Visual — Collect Every Upslope:**
+
+```
+prices = [7, 1, 5, 3, 6, 4]
+              ↑       ↑
+         buy=1  sell=5   buy=3  sell=6
+         profit  +4       profit  +3   = 7 total
+
+Greedy view (consecutive diffs):
+Day: 0  1  2  3  4  5
+  p: 7  1  5  3  6  4
+diff:  -6 +4 -2 +3 -2
+          ↑      ↑       ← only collect positives → 4+3 = 7
+```
 
 ## Problem Description
 
- * You are given an integer array prices where prices[i] is the price of a given stock on the ith day.  * On each day, you may decide to buy and/or sell the stock. You can only hold at most one share of  * the stock at any time. However, you can buy it then immediately sell it on the same day.  *  * Find and return the maximum profit you can achieve. 
+Given `prices[i]` = stock price on day `i`, you may buy and sell on any days (hold at most 1 share at a time, but can transact multiple times). Return the **maximum profit**.
+
+```
+Input:  [7, 1, 5, 3, 6, 4]   → 7    (buy@1 sell@5, buy@3 sell@6)
+Input:  [1, 2, 3, 4, 5]      → 4    (buy@1 sell@5, or collect each +1)
+Input:  [7, 6, 4, 3, 1]      → 0    (always decreasing, never buy)
+```
+
+## 📝 Interview Tips
+
+1. **Nhận dạng pattern**: "Unlimited transactions" → Greedy / **Pattern signal**: unlimited trades = greedy, not DP
+2. **Giải thích Greedy**: Tổng lãi của một giao dịch dài = tổng các khoảng tăng ngắn bên trong / **Greedy proof**: `sell - buy = sum of all daily gains in between`
+3. **Sai lầm phổ biến**: Cố tìm đỉnh/đáy rõ ràng — không cần thiết, chỉ cần cộng diff dương / **Trap**: Finding local min/max explicitly — the consecutive-diff trick is simpler
+4. **Edge cases**: mảng rỗng, 1 phần tử, giá giảm đều → return 0
+5. **So sánh với Stock I**: Stock I = 1 transaction (find max `prices[j]-prices[i]`); Stock II = unlimited → greedy sum / **vs Stock I**: 1 transaction needs min-prefix tracking; unlimited = sum positive diffs
+6. **Follow-up**: "At most k transactions?" → DP with `dp[k][holding]` — escalate to interviewer
 
 ## Solutions
 
 {% raw %}
-/**
- * 122. Best Time to Buy and Sell Stock II
- *
- * Problem:
- * You are given an integer array prices where prices[i] is the price of a given stock on the ith day.
- * On each day, you may decide to buy and/or sell the stock. You can only hold at most one share of
- * the stock at any time. However, you can buy it then immediately sell it on the same day.
- *
- * Find and return the maximum profit you can achieve.
- *
- * Example:
- * Input: prices = [7,1,5,3,6,4]
- * Output: 7
- * Explanation: Buy on day 2 (price = 1) and sell on day 3 (price = 5), profit = 5-1 = 4.
- * Then buy on day 4 (price = 3) and sell on day 5 (price = 6), profit = 6-3 = 3.
- * Total profit is 4 + 3 = 7.
- *
- * Input: prices = [1,2,3,4,5]
- * Output: 4
- * Explanation: Buy on day 1 (price = 1) and sell on day 5 (price = 5), profit = 5-1 = 4.
- * Total profit is 4.
- *
- * LeetCode: https://leetcode.com/problems/best-time-to-buy-and-sell-stock-ii/
- */
+/\*\*
 
-/**
- * Solution 1: Peak Valley Approach (Optimal)
- *
- * Approach:
- * - Find all peaks and valleys in the price array
- * - Buy at valleys and sell at peaks
- * - Sum up all the profits from each transaction
- *
- * Time Complexity: O(n) - single pass through the array
- * Space Complexity: O(1) - constant extra space
- */
-function maxProfit(prices: number[]): number {
+- Solution 1: Greedy — Collect Every Positive Slope (Optimal)
+- Time: O(n) | Space: O(1)
+  \*/
+  function maxProfit(prices: number[]): number {
+  let profit = 0;
+
+for (let i = 1; i < prices.length; i++) {
+if (prices[i] > prices[i - 1]) {
+profit += prices[i] - prices[i - 1];
+}
+}
+
+return profit;
+}
+
+/\*\*
+
+- Solution 2: Space-Optimized DP (equivalent result, shows DP thinking)
+- dp[0] = max profit NOT holding stock
+- dp[1] = max profit HOLDING stock
+- Time: O(n) | Space: O(1)
+  \*/
+  function maxProfitDP(prices: number[]): number {
   if (prices.length <= 1) return 0;
 
-  let maxProfit = 0;
+let notHold = 0;
+let hold = -prices[0];
 
-  for (let i = 1; i < prices.length; i++) {
-    // If current price is higher than previous, add the difference to profit
-    if (prices[i] > prices[i - 1]) {
-      maxProfit += prices[i] - prices[i - 1];
-    }
-  }
-
-  return maxProfit;
+for (let i = 1; i < prices.length; i++) {
+notHold = Math.max(notHold, hold + prices[i]);
+hold = Math.max(hold, notHold - prices[i]);
 }
 
-/**
- * Solution 2: Dynamic Programming Approach
- *
- * Approach:
- * - Use DP to track maximum profit with and without holding stock
- * - dp[i][0] = max profit on day i without holding stock
- * - dp[i][1] = max profit on day i with holding stock
- *
- * Time Complexity: O(n)
- * Space Complexity: O(n) - DP array
- */
-function maxProfitDP(prices: number[]): number {
-  if (prices.length <= 1) return 0;
-
-  const n = prices.length;
-  const dp: number[][] = Array(n)
-    .fill(0)
-    .map(() => Array(2).fill(0));
-
-  // Base case: day 0
-  dp[0][0] = 0; // No stock held
-  dp[0][1] = -prices[0]; // Bought stock on day 0
-
-  for (let i = 1; i < n; i++) {
-    // Not holding stock: either keep not holding or sell today
-    dp[i][0] = Math.max(dp[i - 1][0], dp[i - 1][1] + prices[i]);
-
-    // Holding stock: either keep holding or buy today
-    dp[i][1] = Math.max(dp[i - 1][1], dp[i - 1][0] - prices[i]);
-  }
-
-  return dp[n - 1][0]; // Final state should be not holding stock
+return notHold;
 }
 
-/**
- * Solution 3: Optimized DP (Space Optimized)
- *
- * Approach:
- * - Same logic as DP but only keep track of previous state
- * - Reduces space complexity to O(1)
- *
- * Time Complexity: O(n)
- * Space Complexity: O(1)
- */
-function maxProfitDPOptimized(prices: number[]): number {
-  if (prices.length <= 1) return 0;
-
-  let notHold = 0; // Max profit without holding stock
-  let hold = -prices[0]; // Max profit with holding stock
-
-  for (let i = 1; i < prices.length; i++) {
-    const prevNotHold = notHold;
-    const prevHold = hold;
-
-    // Not holding stock: either keep not holding or sell today
-    notHold = Math.max(prevNotHold, prevHold + prices[i]);
-
-    // Holding stock: either keep holding or buy today
-    hold = Math.max(prevHold, prevNotHold - prices[i]);
-  }
-
-  return notHold; // Final state should be not holding stock
-}
-
-/**
- * Solution 4: Greedy with Local Minima and Maxima
- *
- * Approach:
- * - Find all local minima (buy points) and local maxima (sell points)
- * - Calculate profit for each buy-sell pair
- *
- * Time Complexity: O(n)
- * Space Complexity: O(1)
- */
-function maxProfitLocalExtrema(prices: number[]): number {
-  if (prices.length <= 1) return 0;
-
-  let maxProfit = 0;
-  let buyPrice = prices[0];
-
-  for (let i = 1; i < prices.length; i++) {
-    // If price is going down, update buy price
-    if (prices[i] < prices[i - 1]) {
-      // Sell at previous price if we have a profit
-      if (prices[i - 1] > buyPrice) {
-        maxProfit += prices[i - 1] - buyPrice;
-      }
-      buyPrice = prices[i];
-    }
-  }
-
-  // Check if we need to sell at the end
-  if (prices[prices.length - 1] > buyPrice) {
-    maxProfit += prices[prices.length - 1] - buyPrice;
-  }
-
-  return maxProfit;
-}
-
-/**
- * Solution 5: Brute Force (For comparison - not recommended)
- *
- * Approach:
- * - Try all possible combinations of buy and sell days
- * - Use recursion to explore all possibilities
- *
- * Time Complexity: O(2^n) - exponential
- * Space Complexity: O(n) - recursion stack
- */
-function maxProfitBruteForce(prices: number[]): number {
-  function calculateMaxProfit(index: number, holding: boolean): number {
-    if (index >= prices.length) return 0;
-
-    if (holding) {
-      // Can sell or hold
-      return Math.max(
-        prices[index] + calculateMaxProfit(index + 1, false), // Sell
-        calculateMaxProfit(index + 1, true) // Hold
-      );
-    } else {
-      // Can buy or skip
-      return Math.max(
-        -prices[index] + calculateMaxProfit(index + 1, true), // Buy
-        calculateMaxProfit(index + 1, false) // Skip
-      );
-    }
-  }
-
-  return calculateMaxProfit(0, false);
-}
-
-// Test cases
-function testMaxProfit() {
-  console.log("=== Testing Best Time to Buy and Sell Stock II ===\n");
-
-  const testCases = [
-    {
-      input: [7, 1, 5, 3, 6, 4],
-      expected: 7,
-      description: "Multiple buy-sell opportunities",
-    },
-    {
-      input: [1, 2, 3, 4, 5],
-      expected: 4,
-      description: "Consistently increasing prices",
-    },
-    {
-      input: [7, 6, 4, 3, 1],
-      expected: 0,
-      description: "Consistently decreasing prices",
-    },
-    {
-      input: [1, 2, 3, 2, 1],
-      expected: 2,
-      description: "Peak in the middle",
-    },
-    {
-      input: [1],
-      expected: 0,
-      description: "Single day",
-    },
-    {
-      input: [],
-      expected: 0,
-      description: "Empty array",
-    },
-    {
-      input: [3, 3, 3, 3, 3],
-      expected: 0,
-      description: "Same price every day",
-    },
-  ];
-
-  testCases.forEach((testCase, index) => {
-    console.log(`Test Case ${index + 1}: ${testCase.description}`);
-    console.log(`Input: [${testCase.input}]`);
-    console.log(`Expected: ${testCase.expected}\n`);
-
-    // Test Solution 1 (Peak Valley)
-    const result1 = maxProfit([...testCase.input]);
-    console.log(
-      `Solution 1 (Peak Valley): ${result1} ${
-        result1 === testCase.expected ? "✅" : "❌"
-      }`
-    );
-
-    // Test Solution 2 (DP)
-    const result2 = maxProfitDP([...testCase.input]);
-    console.log(
-      `Solution 2 (DP): ${result2} ${
-        result2 === testCase.expected ? "✅" : "❌"
-      }`
-    );
-
-    // Test Solution 3 (Optimized DP)
-    const result3 = maxProfitDPOptimized([...testCase.input]);
-    console.log(
-      `Solution 3 (Optimized DP): ${result3} ${
-        result3 === testCase.expected ? "✅" : "❌"
-      }`
-    );
-
-    // Test Solution 4 (Local Extrema)
-    const result4 = maxProfitLocalExtrema([...testCase.input]);
-    console.log(
-      `Solution 4 (Local Extrema): ${result4} ${
-        result4 === testCase.expected ? "✅" : "❌"
-      }`
-    );
-
-    // Test Solution 5 (Brute Force) - only for small arrays
-    if (testCase.input.length <= 10) {
-      const result5 = maxProfitBruteForce([...testCase.input]);
-      console.log(
-        `Solution 5 (Brute Force): ${result5} ${
-          result5 === testCase.expected ? "✅" : "❌"
-        }`
-      );
-    } else {
-      console.log(`Solution 5 (Brute Force): Skipped (array too large)`);
-    }
-
-    console.log("\n---\n");
-  });
-}
-
-// Performance comparison
-function performanceComparison() {
-  console.log("=== Performance Comparison ===\n");
-
-  // Create large price array
-  const largePrices = Array.from(
-    { length: 100000 },
-    (_, i) => Math.floor(Math.random() * 100) + 1
-  );
-
-  const testCases = [
-    { name: "Peak Valley", func: maxProfit },
-    { name: "DP", func: maxProfitDP },
-    { name: "Optimized DP", func: maxProfitDPOptimized },
-    { name: "Local Extrema", func: maxProfitLocalExtrema },
-  ];
-
-  testCases.forEach(({ name, func }) => {
-    const testPrices = [...largePrices];
-    const start = performance.now();
-    const result = func(testPrices);
-    const end = performance.now();
-
-    console.log(`${name}:`);
-    console.log(`  Time: ${(end - start).toFixed(2)}ms`);
-    console.log(`  Result: ${result} profit`);
-    console.log(`  Memory: ${name === "DP" ? "O(n)" : "O(1)"}\n`);
-  });
-}
-
-// Run tests
-if (require.main === module) {
-  testMaxProfit();
-  performanceComparison();
-}
-
-export {
-  maxProfit,
-  maxProfitDP,
-  maxProfitDPOptimized,
-  maxProfitLocalExtrema,
-  maxProfitBruteForce,
-};
+// Inline tests
+console.log(maxProfit([7, 1, 5, 3, 6, 4]) === 7); // true
+console.log(maxProfit([1, 2, 3, 4, 5]) === 4); // true
+console.log(maxProfit([7, 6, 4, 3, 1]) === 0); // true
+console.log(maxProfit([1]) === 0); // true
 {% endraw %}
+
+## 🔗 Related Problems
+
+| Problem                                                                | Relationship                                         |
+| ---------------------------------------------------------------------- | ---------------------------------------------------- |
+| [#18 Container With Most Water](18-container-with-most-water.md)       | Greedy two-pointer pattern on arrays                 |
+| [#20 Trapping Rain Water](20-trapping-rain-water.md)                   | Array traversal collecting values based on neighbors |
+| [#17 Product of Array Except Self](17-product-of-array-except-self.md) | Single-pass O(n) array computation                   |
+| [#04 Two Sum](04-two-sum.md)                                           | Array traversal with state tracking                  |

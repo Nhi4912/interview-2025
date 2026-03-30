@@ -1,529 +1,154 @@
 ---
 layout: page
 title: "Design Hit Counter"
-difficulty: Hard
+difficulty: Medium
 category: Design
-tags: [Design, Hash Table, Sliding Window]
+tags: [Array, Binary Search, Design, Queue]
 leetcode_url: "https://leetcode.com/problems/design-hit-counter/"
 ---
 
-# Design Hit Counter
+# Design Hit Counter / Thiết Kế Bộ Đếm Lượt Truy Cập
 
+> **Track**: Backend | **Difficulty**: 🟡 Medium | **Pattern**: Circular Buffer / Queue
+> **Frequency**: ⭐ Tier 2 — Gặp >40% interviews
+> **See also**: [LRU Cache](./01-lru-cache.md) | [Moving Average from Data Stream](https://leetcode.com/problems/moving-average-from-data-stream/)
 
+---
 
+## 🧠 Intuition / Tư Duy
 
-> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+**Analogy:** Hãy nghĩ đến máy đếm khách vào cửa hàng: bạn chỉ quan tâm lượt vào trong 5 phút gần nhất. Cách đơn giản nhất là xếp hàng (queue) — mỗi lượt vào là một số; khi hỏi "bao nhiêu người trong 5 phút qua?", bạn nhìn vào đầu hàng và đuổi những số hết hạn ra. Cách tối ưu hơn: chia 300 ô nhỏ (1 ô/giây), cứ đến giây mới thì ghi đè ô cũ — như kim đồng hồ quét vòng tròn.
+
+**Pattern Recognition:**
+
+- Signal: "count events in past N seconds", "timestamp monotonically increasing" → **Circular Buffer (N buckets)**
+- Queue approach: O(1) hit, O(k) getHits (k = expired entries) — simple, unlimited memory
+- Circular buffer: O(1) both; fixed O(300) space regardless of total hits — production-grade
+
+**Visual — Queue approach, ops: hit(1), hit(2), hit(3), hit(300), getHits(301):**
+
+```
+hit(1)       → queue: [1]
+hit(2)       → queue: [1, 2]
+hit(3)       → queue: [1, 2, 3]
+hit(300)     → queue: [1, 2, 3, 300]
+getHits(301): expire ts <= 301-300=1 → pop 1 → queue: [2, 3, 300] → return 3 ✅
+```
+
+**Visual — Circular buffer, slot = timestamp % 300:**
+
+```
+hit(1)   → slot[1 % 300 = 1]:   {ts:1,   count:1}
+hit(300) → slot[300 % 300 = 0]: {ts:300, count:1}
+hit(301) → slot[301 % 300 = 1]: ts(1) ≠ 301 → overwrite → {ts:301, count:1}
+getHits(301): sum slots where 301 - ts < 300
+  slot[0]: 301 - 300 = 1  < 300 ✅ → +1
+  slot[1]: 301 - 301 = 0  < 300 ✅ → +1
+  total = 2
+```
+
+---
 
 ## Problem Description
 
- *  * Design a hit counter which counts the number of hits received in the past 5 minutes (i.e., the past 300 seconds).  *  * Your system should accept a timestamp parameter (in seconds granularity), and you may assume that calls are being made to the system in chronological order (i.e., timestamp is monotonically increasing). You may also assume that the earliest timestamp starts at 1.  * 
+Design a hit counter that counts hits received in the **past 5 minutes (300 seconds)**. Timestamps are always increasing.
+
+```
+ops:   ["HitCounter","hit","hit","hit","getHits","hit","getHits","getHits"]
+args:  [[],          [1],  [2],  [3],  [4],      [300],[300],    [301]]
+out:   [null,        null, null, null, 3,         null, 4,        3]
+```
+
+Constraints:
+
+- `1 <= timestamp <= 2 * 10^9`
+- Calls are chronological (monotonically increasing timestamps)
+- At most 300 calls total to `hit` and `getHits`
+
+---
+
+## 📝 Interview Tips
+
+1. **Clarify**: Multiple hits at same timestamp? / Có thể có nhiều hit cùng 1 timestamp không?
+2. **Brute force**: Queue — push timestamp on `hit`; on `getHits`, trim expired entries, return `queue.length`. Simple, works perfectly for interview.
+3. **Optimize**: Circular buffer of 300 slots — O(1) time, O(300) fixed space. Better for high-throughput systems.
+4. **Edge cases**: `getHits` at timestamp = ts + 300 → that hit is expired (`ts <= timestamp - 300`). Off-by-one: `<=` not `<`.
+5. **Follow-up**: Timestamps out of order? Distributed counters across servers? → need different architecture (sliding window log, Redis).
+
+---
 
 ## Solutions
 
 {% raw %}
-/**
- * Design Hit Counter
- *
- * Problem: https://leetcode.com/problems/design-hit-counter/
- *
- * Design a hit counter which counts the number of hits received in the past 5 minutes (i.e., the past 300 seconds).
- *
- * Your system should accept a timestamp parameter (in seconds granularity), and you may assume that calls are being made to the system in chronological order (i.e., timestamp is monotonically increasing). You may also assume that the earliest timestamp starts at 1.
- *
- * Implement the HitCounter class:
- * - HitCounter() Initializes the object of the hit counter system.
- * - void hit(int timestamp) Records a hit that happened at timestamp (in seconds). Several hits may happen at the same timestamp.
- * - int getHits(int timestamp) Returns the number of hits in the past 5 minutes from timestamp (i.e., the past 300 seconds).
- *
- * Example 1:
- * Input: ["HitCounter", "hit", "hit", "hit", "getHits", "hit", "getHits", "getHits"]
- * [[], [1], [2], [3], [4], [300], [300], [301]]
- * Output: [null, null, null, null, 3, null, 4, 3]
- *
- * Explanation:
- * HitCounter hitCounter = new HitCounter();
- * hitCounter.hit(1);       // hit at timestamp 1.
- * hitCounter.hit(2);       // hit at timestamp 2.
- * hitCounter.hit(3);       // hit at timestamp 3.
- * hitCounter.getHits(4);   // get hits at timestamp 4, return 3.
- * hitCounter.hit(300);     // hit at timestamp 300.
- * hitCounter.getHits(300); // get hits at timestamp 300, return 4.
- * hitCounter.getHits(301); // get hits at timestamp 301, return 3.
- *
- * Constraints:
- * - 1 <= timestamp <= 2 * 10^9
- * - All the calls are being made to the system in chronological order (i.e., timestamp is monotonically increasing).
- * - At most 300 calls will be made to hit and getHits.
- *
- * Solution Approach:
- * 1. Use a queue to store timestamps
- * 2. Remove expired timestamps (older than 300 seconds) when getting hits
- * 3. Alternative: Use circular buffer for better performance
- * 4. Alternative: Use sliding window with buckets
- *
- * Time Complexity: O(1) average for hit, O(k) for getHits where k is expired hits
- * Space Complexity: O(n) where n is the number of hits in the window
- */
 
-/**
- * HitCounter class using Queue
- *
- * Lớp HitCounter sử dụng Queue
- */
-class HitCounter {
-  private queue: number[];
+/\*\*
 
-  constructor() {
-    this.queue = [];
-  }
+- Solution 1: Queue (Brute Force — clear interview starting point)
+- Time: O(1) hit, O(n) getHits amortized — each ts evicted at most once
+- Space: O(n) — stores every hit timestamp
+  \*/
+  class HitCounterQueue {
+  private queue: number[] = [];
 
-  /**
-   * Record a hit at the given timestamp
-   *
-   * Ghi lại một hit tại timestamp cho trước
-   *
-   * @param timestamp - Timestamp in seconds
-   */
-  hit(timestamp: number): void {
-    this.queue.push(timestamp);
-  }
-
-  /**
-   * Get number of hits in the past 5 minutes
-   *
-   * Lấy số lượng hits trong 5 phút qua
-   *
-   * @param timestamp - Current timestamp
-   * @returns Number of hits in the past 300 seconds
-   */
-  getHits(timestamp: number): number {
-    // Remove expired timestamps
-    while (this.queue.length > 0 && this.queue[0] <= timestamp - 300) {
-      this.queue.shift();
-    }
-
-    return this.queue.length;
-  }
-
-  /**
-   * Get all hits in the window
-   *
-   * Lấy tất cả hits trong cửa sổ
-   *
-   * @param timestamp - Current timestamp
-   * @returns Array of timestamps in the window
-   */
-  getHitsInWindow(timestamp: number): number[] {
-    // Remove expired timestamps
-    while (this.queue.length > 0 && this.queue[0] <= timestamp - 300) {
-      this.queue.shift();
-    }
-
-    return [...this.queue];
-  }
+hit(timestamp: number): void {
+this.queue.push(timestamp);
 }
 
-/**
- * Alternative Implementation: Using Circular Buffer
- *
- * Giải pháp thay thế: Sử dụng Circular Buffer
- */
-class HitCounterCircular {
-  private timestamps: number[];
-  private hits: number[];
-  private total: number;
-  private lastTimestamp: number;
-
-  constructor() {
-    this.timestamps = new Array(300).fill(0);
-    this.hits = new Array(300).fill(0);
-    this.total = 0;
-    this.lastTimestamp = 0;
-  }
-
-  hit(timestamp: number): void {
-    this.update(timestamp);
-    const index = timestamp % 300;
-
-    if (this.timestamps[index] === timestamp) {
-      this.hits[index]++;
-    } else {
-      this.timestamps[index] = timestamp;
-      this.hits[index] = 1;
-    }
-
-    this.total++;
-  }
-
-  getHits(timestamp: number): number {
-    this.update(timestamp);
-    return this.total;
-  }
-
-  private update(timestamp: number): void {
-    const diff = timestamp - this.lastTimestamp;
-
-    if (diff >= 300) {
-      // All previous hits are expired
-      this.timestamps.fill(0);
-      this.hits.fill(0);
-      this.total = 0;
-    } else {
-      // Remove expired hits
-      for (let i = 0; i < diff; i++) {
-        const index = (this.lastTimestamp - i) % 300;
-        if (this.timestamps[index] === this.lastTimestamp - i) {
-          this.total -= this.hits[index];
-          this.hits[index] = 0;
-        }
-      }
-    }
-
-    this.lastTimestamp = timestamp;
-  }
+getHits(timestamp: number): number {
+// Remove hits older than 300 seconds
+while (this.queue.length > 0 && this.queue[0] <= timestamp - 300) {
+this.queue.shift();
+}
+return this.queue.length;
+}
 }
 
-/**
- * Implementation with Statistics
- *
- * Giải pháp với thống kê
- */
-class HitCounterWithStats extends HitCounter {
-  private hitCount: number;
-  private getHitsCount: number;
-  private totalHits: number;
+/\*\*
 
-  constructor() {
-    super();
-    this.hitCount = 0;
-    this.getHitsCount = 0;
-    this.totalHits = 0;
-  }
+- Solution 2: Circular Buffer (Optimal)
+- Time: O(1) hit, O(300) = O(1) getHits — fixed loop
+- Space: O(300) = O(1) — independent of total hit count
+  \*/
+  class HitCounter {
+  private timestamps = new Array(300).fill(0);
+  private counts = new Array(300).fill(0);
 
-  hit(timestamp: number): void {
-    super.hit(timestamp);
-    this.hitCount++;
-    this.totalHits++;
-  }
-
-  getHits(timestamp: number): number {
-    this.getHitsCount++;
-    return super.getHits(timestamp);
-  }
-
-  /**
-   * Get statistics about the hit counter
-   *
-   * Lấy thống kê về hit counter
-   *
-   * @returns Object containing statistics
-   */
-  getStats(): {
-    totalHits: number;
-    hitCalls: number;
-    getHitsCalls: number;
-    currentWindowSize: number;
-  } {
-    return {
-      totalHits: this.totalHits,
-      hitCalls: this.hitCount,
-      getHitsCalls: this.getHitsCount,
-      currentWindowSize: this.getHitsInWindow(Date.now() / 1000).length,
-    };
-  }
-
-  /**
-   * Get hit distribution in the current window
-   *
-   * Lấy phân bố hits trong cửa sổ hiện tại
-   *
-   * @param timestamp - Current timestamp
-   * @returns Map of timestamp -> hit count
-   */
-  getHitDistribution(timestamp: number): Map<number, number> {
-    const hits = this.getHitsInWindow(timestamp);
-    const distribution = new Map<number, number>();
-
-    for (const hit of hits) {
-      distribution.set(hit, (distribution.get(hit) || 0) + 1);
-    }
-
-    return distribution;
-  }
+hit(timestamp: number): void {
+const slot = timestamp % 300;
+if (this.timestamps[slot] !== timestamp) {
+this.timestamps[slot] = timestamp; // new second: claim this slot
+this.counts[slot] = 1;
+} else {
+this.counts[slot]++; // same second: accumulate
+}
 }
 
-/**
- * Implementation with Sliding Window
- *
- * Giải pháp với cửa sổ trượt
- */
-class HitCounterSlidingWindow {
-  private window: number;
-  private hits: Map<number, number>;
-
-  constructor(windowSize: number = 300) {
-    this.window = windowSize;
-    this.hits = new Map();
-  }
-
-  hit(timestamp: number): void {
-    this.hits.set(timestamp, (this.hits.get(timestamp) || 0) + 1);
-  }
-
-  getHits(timestamp: number): number {
-    let count = 0;
-    const startTime = timestamp - this.window + 1;
-
-    // Remove expired entries and count hits
-    for (const [time, hitCount] of this.hits.entries()) {
-      if (time < startTime) {
-        this.hits.delete(time);
-      } else {
-        count += hitCount;
-      }
-    }
-
-    return count;
-  }
-
-  /**
-   * Get hits in a specific time range
-   *
-   * Lấy hits trong một khoảng thời gian cụ thể
-   *
-   * @param start - Start timestamp
-   * @param end - End timestamp
-   * @returns Number of hits in the range
-   */
-  getHitsInRange(start: number, end: number): number {
-    let count = 0;
-
-    for (const [time, hitCount] of this.hits.entries()) {
-      if (time >= start && time <= end) {
-        count += hitCount;
-      }
-    }
-
-    return count;
-  }
+getHits(timestamp: number): number {
+let total = 0;
+for (let i = 0; i < 300; i++) {
+if (timestamp - this.timestamps[i] < 300) {
+total += this.counts[i];
+}
+}
+return total;
+}
 }
 
-// Test cases / Các trường hợp kiểm thử
-function runTests() {
-  console.log("=== Design Hit Counter Tests ===");
-  console.log("=== Kiểm thử bài toán Thiết kế Hit Counter ===\n");
+// === Test Cases ===
+const hc = new HitCounter();
+hc.hit(1); hc.hit(2); hc.hit(3);
+console.log(hc.getHits(4)); // 3
+hc.hit(300);
+console.log(hc.getHits(300)); // 4
+console.log(hc.getHits(301)); // 3 (timestamp 1 is now expired)
 
-  const testCases = [
-    {
-      name: "Example 1: Standard case",
-      operations: [
-        { type: "hit", timestamp: 1 },
-        { type: "hit", timestamp: 2 },
-        { type: "hit", timestamp: 3 },
-        { type: "getHits", timestamp: 4, expected: 3 },
-        { type: "hit", timestamp: 300 },
-        { type: "getHits", timestamp: 300, expected: 4 },
-        { type: "getHits", timestamp: 301, expected: 3 },
-      ],
-      description: "Standard hit counter operations",
-    },
-    {
-      name: "Empty window",
-      operations: [
-        { type: "getHits", timestamp: 100, expected: 0 },
-        { type: "hit", timestamp: 100 },
-        { type: "getHits", timestamp: 100, expected: 1 },
-        { type: "getHits", timestamp: 400, expected: 0 },
-      ],
-      description: "Testing empty window and expiration",
-    },
-    {
-      name: "Multiple hits at same timestamp",
-      operations: [
-        { type: "hit", timestamp: 1 },
-        { type: "hit", timestamp: 1 },
-        { type: "hit", timestamp: 1 },
-        { type: "getHits", timestamp: 1, expected: 3 },
-        { type: "getHits", timestamp: 301, expected: 0 },
-      ],
-      description: "Multiple hits at the same timestamp",
-    },
-    {
-      name: "Large timestamps",
-      operations: [
-        { type: "hit", timestamp: 1000000 },
-        { type: "hit", timestamp: 1000001 },
-        { type: "getHits", timestamp: 1000300, expected: 0 },
-        { type: "getHits", timestamp: 1000002, expected: 2 },
-      ],
-      description: "Testing with large timestamp values",
-    },
-  ];
-
-  for (const testCase of testCases) {
-    console.log(`Test: ${testCase.name}`);
-    console.log(`Description: ${testCase.description}`);
-
-    const hitCounter = new HitCounterWithStats();
-    let testPassed = true;
-
-    for (let i = 0; i < testCase.operations.length; i++) {
-      const operation = testCase.operations[i];
-      let result: any;
-
-      switch (operation.type) {
-        case "hit":
-          hitCounter.hit(operation.timestamp);
-          console.log(`  ${i + 1}. hit(${operation.timestamp})`);
-          break;
-        case "getHits":
-          result = hitCounter.getHits(operation.timestamp);
-          const passed = result === operation.expected;
-          console.log(
-            `  ${i + 1}. getHits(${operation.timestamp}) -> ${result} ${
-              passed ? "✅" : "❌"
-            }`
-          );
-
-          if (!passed) {
-            testPassed = false;
-            console.log(`    Expected: ${operation.expected}, Got: ${result}`);
-          }
-          break;
-      }
-    }
-
-    console.log(`Test ${testPassed ? "PASSED" : "FAILED"}`);
-
-    // Show statistics
-    const stats = hitCounter.getStats();
-    console.log(
-      `Stats: Total hits: ${stats.totalHits}, Hit calls: ${stats.hitCalls}, GetHits calls: ${stats.getHitsCalls}`
-    );
-
-    console.log("---");
-  }
-
-  // Test different implementations
-  console.log("\n=== Implementation Comparison ===");
-  console.log("=== So sánh các giải pháp ===\n");
-
-  const testOperations = [
-    { type: "hit", timestamp: 1 },
-    { type: "hit", timestamp: 2 },
-    { type: "hit", timestamp: 3 },
-    { type: "getHits", timestamp: 4 },
-    { type: "hit", timestamp: 300 },
-    { type: "getHits", timestamp: 300 },
-    { type: "getHits", timestamp: 301 },
-  ];
-
-  const implementations = [
-    { name: "Queue", class: HitCounter },
-    { name: "Circular Buffer", class: HitCounterCircular },
-    { name: "Sliding Window", class: HitCounterSlidingWindow },
-  ];
-
-  for (const impl of implementations) {
-    console.log(`Testing ${impl.name} implementation:`);
-    const counter = new impl.class();
-
-    for (const operation of testOperations) {
-      if (operation.type === "hit") {
-        counter.hit(operation.timestamp);
-      } else {
-        const result = counter.getHits(operation.timestamp);
-        console.log(`  getHits(${operation.timestamp}) -> ${result}`);
-      }
-    }
-    console.log("");
-  }
-
-  // Performance comparison
-  console.log("\n=== Performance Comparison ===");
-  console.log("=== So sánh hiệu suất ===\n");
-
-  const largeTestSize = 10000;
-
-  console.log(`Testing with ${largeTestSize} operations...`);
-  console.log(`Kiểm thử với ${largeTestSize} thao tác...`);
-
-  // Test Queue implementation
-  const start1 = performance.now();
-  const queueCounter = new HitCounter();
-  for (let i = 0; i < largeTestSize; i++) {
-    if (i % 3 === 0) {
-      queueCounter.getHits(i);
-    } else {
-      queueCounter.hit(i);
-    }
-  }
-  const time1 = performance.now() - start1;
-
-  // Test Circular Buffer implementation
-  const start2 = performance.now();
-  const circularCounter = new HitCounterCircular();
-  for (let i = 0; i < largeTestSize; i++) {
-    if (i % 3 === 0) {
-      circularCounter.getHits(i);
-    } else {
-      circularCounter.hit(i);
-    }
-  }
-  const time2 = performance.now() - start2;
-
-  // Test Sliding Window implementation
-  const start3 = performance.now();
-  const slidingCounter = new HitCounterSlidingWindow();
-  for (let i = 0; i < largeTestSize; i++) {
-    if (i % 3 === 0) {
-      slidingCounter.getHits(i);
-    } else {
-      slidingCounter.hit(i);
-    }
-  }
-  const time3 = performance.now() - start3;
-
-  console.log(`Queue: ${time1.toFixed(4)}ms`);
-  console.log(`Circular Buffer: ${time2.toFixed(4)}ms`);
-  console.log(`Sliding Window: ${time3.toFixed(4)}ms`);
-
-  // Test hit distribution
-  console.log("\n=== Hit Distribution Analysis ===");
-  console.log("=== Phân tích phân bố hits ===\n");
-
-  const statsCounter = new HitCounterWithStats();
-
-  // Simulate some hits
-  for (let i = 1; i <= 10; i++) {
-    statsCounter.hit(i);
-    if (i % 3 === 0) {
-      statsCounter.hit(i); // Double hits at multiples of 3
-    }
-  }
-
-  const distribution = statsCounter.getHitDistribution(10);
-  console.log("Hit distribution in window [1-10]:");
-  for (const [timestamp, count] of distribution.entries()) {
-    console.log(`  Timestamp ${timestamp}: ${count} hits`);
-  }
-
-  const stats = statsCounter.getStats();
-  console.log(
-    `\nOverall stats: ${stats.totalHits} total hits, ${stats.hitCalls} hit calls, ${stats.getHitsCalls} getHits calls`
-  );
-}
-
-// Run tests if this file is executed directly
-if (require.main === module) {
-  runTests();
-}
-
-export {
-  HitCounter,
-  HitCounterCircular,
-  HitCounterWithStats,
-  HitCounterSlidingWindow,
-};
 {% endraw %}
+
+---
+
+## 🔗 Related Problems
+
+- [LRU Cache](./01-lru-cache.md) — classic design problem with eviction policy
+- [Moving Average from Data Stream](https://leetcode.com/problems/moving-average-from-data-stream/) — sliding window on stream
+- [Logger Rate Limiter](https://leetcode.com/problems/logger-rate-limiter/) — timestamp-based deduplication
+- [Time Based Key-Value Store](https://leetcode.com/problems/time-based-key-value-store/) — binary search on timestamps

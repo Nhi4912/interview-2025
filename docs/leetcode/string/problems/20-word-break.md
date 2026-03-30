@@ -1,191 +1,131 @@
-# Word Break / Phân tách từ
-
-> **Track**: Shared | **Difficulty**: 🟡 Medium
-> **LeetCode**: #139 | **Pattern**: Dynamic Programming / BFS
-> **Category**: String, DP, Graph
-
-## Problem / Đề bài
-
-**English**: Given a string `s` and a dictionary of strings `wordDict`, return `true` if `s` can be segmented into a space-separated sequence of one or more dictionary words. The same word in the dictionary may be reused multiple times.
-
-**Vietnamese**: Cho một chuỗi `s` và một danh sách từ điển `wordDict`, trả về `true` nếu `s` có thể được phân tách thành một chuỗi các từ trong từ điển (mỗi từ có thể dùng nhiều lần).
-
-**Example**:
-```
-Input: s = "leetcode", wordDict = ["leet","code"]
-Output: true
-Explanation: "leetcode" can be segmented as "leet code"
-
-Input: s = "applepenapple", wordDict = ["apple","pen"]
-Output: true
-Explanation: "apple pen apple" — "apple" is reused
-
-Input: s = "catsandog", wordDict = ["cats","dog","sand","and","cat"]
-Output: false
-```
-
-**Constraints**:
-- 1 <= s.length <= 300
-- 1 <= wordDict.length <= 1000
-- 1 <= wordDict[i].length <= 20
-- All strings consist of lowercase English letters
-- All words in wordDict are unique
-
+---
+layout: page
+title: "Word Break"
+difficulty: Medium
+category: String
+tags: [String, Dynamic Programming, BFS, Hash Table]
+leetcode_url: "https://leetcode.com/problems/word-break/"
 ---
 
-## Approach / Hướng giải
+# Word Break / Phân Tách Từ
 
-### Pattern nhận dạng / Pattern recognition
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: DP on String Positions
+> **Frequency**: ⭐ Tier 2 — Bài DP nền tảng, xuất hiện rộng rãi ở mọi vòng phỏng vấn
+> **See also**: [Table of Contents](../../../00-table-of-contents.md) | [Decode Ways](./21-decode-ways.md)
 
-Khi bạn thấy: "có thể phân tách / chia chuỗi thành các phần thỏa mãn điều kiện?" — đây là dấu hiệu của **DP on strings**. Subproblem tự nhiên là: "có thể phân tách substring `s[0..i]` không?" Mỗi quyết định (chọn từ nào kết thúc tại vị trí `i`) phụ thuộc vào kết quả của subproblem nhỏ hơn → DP.
+## 🧠 Intuition / Tư Duy
 
-Alternatively, bài này có thể mô hình hóa như **BFS trên graph** — mỗi index là một node, có edge từ `i` đến `j` nếu `s[i..j-1]` là từ trong dict.
+- **Analogy:** Tưởng tượng bạn đang cắt một cuộn vải dài (chuỗi `s`) thành các mảnh theo danh sách kích thước hợp lệ (từ điển). Mỗi lần bạn đặt kéo tại vị trí `i`, bạn kiểm tra: "đoạn vừa cắt có trong danh sách không?" và "đoạn trước đó đã cắt được không?" Nếu cả hai đều đúng — bạn đánh dấu `i` là hợp lệ.
 
-### Key Insight / Ý tưởng chính
+- **Pattern Recognition:**
+  - "Can string be segmented into valid parts?" → **DP on positions** (subproblem = prefix solvable)
+  - `dp[i]` = "can first `i` chars be segmented?" — depends only on smaller subproblems → DP
+  - Alternatively model as **BFS on graph**: nodes = indices, edge `i→j` if `s[i..j-1]` in dict
 
-Define `dp[i]` = "chuỗi con `s[0..i-1]` (độ dài `i`) có thể phân tách được không?"
-Base case: `dp[0] = true` (chuỗi rỗng luôn hợp lệ).
-Transition: `dp[i] = true` nếu tồn tại `j < i` sao cho `dp[j] == true` **VÀ** `s[j..i-1]` có trong từ điển.
+- **Visual — s="leetcode", wordDict=["leet","code"]:**
 
----
-
-## Solutions / Các cách giải
-
-### Solution 1: Bottom-Up DP — O(n² · m) time, O(n) space ✅ Recommended
-
-**Idea**: Build a boolean DP array where `dp[i]` represents whether the first `i` characters of `s` can be segmented using words from the dictionary.
-
-**Ý tưởng**: Xây dựng mảng DP boolean trong đó `dp[i]` biểu thị liệu `i` ký tự đầu của `s` có thể phân tách hợp lệ không. Duyệt từng vị trí, kiểm tra mọi từ trong dict kết thúc tại vị trí đó.
-
-**Algorithm**:
-1. Create boolean array `dp` of size `n+1`, set `dp[0] = true`
-2. For each index `i` from 1 to n:
-   a. For each word in `wordDict`:
-      - Let `w = len(word)`
-      - If `i >= w` and `dp[i - w] == true` and `s[i-w .. i-1] == word`: set `dp[i] = true`
-3. Return `dp[n]`
-
-**Pseudocode**:
 ```
-function wordBreak(s, wordDict):
-    n = length(s)
-    dp = array of (n+1) booleans, all false
-    dp[0] = true
-    wordSet = set(wordDict)
+dp index: 0    1    2    3    4    5    6    7    8
+          [T]  [F]  [F]  [F]  [?]  [F]  [F]  [F]  [?]
 
-    for i from 1 to n:
-        for each word in wordDict:
-            w = length(word)
-            if i >= w and dp[i - w] == true:
-                if s[i-w .. i-1] == word:
-                    dp[i] = true
-                    break   // no need to check more words for this i
+i=4: word="leet"(len=4): dp[4-4]=dp[0]=T, s[0..3]="leet" ✓ → dp[4]=T
 
-    return dp[n]
-```
+dp:       [T]  [F]  [F]  [F]  [T]  [F]  [F]  [F]  [?]
 
-**Visual**:
-```
-s = "leetcode",  wordDict = ["leet", "code"]
+i=8: word="code"(len=4): dp[8-4]=dp[4]=T, s[4..7]="code" ✓ → dp[8]=T
 
-Index:  0   1   2   3   4   5   6   7   8
-Char:       l   e   e   t   c   o   d   e
-
-dp:    [T] [F] [F] [F] [F] [F] [F] [F] [F]
-                               ^
-dp[0]=T, check i=4:
-  word="leet" (len=4): dp[4-4]=dp[0]=T, s[0..3]="leet" ✓ → dp[4]=T
-
-dp:    [T] [F] [F] [F] [T] [F] [F] [F] [F]
-
-check i=8:
-  word="code" (len=4): dp[8-4]=dp[4]=T, s[4..7]="code" ✓ → dp[8]=T
-
-dp:    [T] [F] [F] [F] [T] [F] [F] [F] [T]
+dp:       [T]  [F]  [F]  [F]  [T]  [F]  [F]  [F]  [T]
 
 Return dp[8] = true ✓
 ```
 
-**Complexity**:
-- Time: O(n · |wordDict| · m) — n positions × number of words × average word length for string comparison; often written O(n²) when word lengths are bounded
-- Space: O(n) — for the dp array
+## Problem Description
 
----
+Given string `s` and `wordDict`, return `true` if `s` can be segmented into one or more dictionary words (words may reuse).
 
-### Solution 2: BFS (Breadth-First Search) — O(n²) time, O(n) space
-
-**Idea**: Treat each index in `s` as a graph node. Start BFS from index 0. From each reachable index `i`, try all words in the dictionary — if `s[i .. i+len(word)-1]` matches, add `i + len(word)` to the BFS queue. If we reach index `n`, return true.
-
-**Algorithm**:
-1. Initialize queue with index 0, visited set = {0}
-2. While queue is not empty:
-   a. Dequeue index `start`
-   b. For each word in wordDict:
-      - `end = start + len(word)`
-      - If `end <= n` and `s[start..end-1] == word` and `end` not visited:
-        - If `end == n`: return true
-        - Add `end` to queue and visited
-3. Return false
-
-**Complexity**:
-- Time: O(n · |wordDict| · m) — similar to DP approach
-- Space: O(n) — queue and visited set
-
----
-
-### Solution 3: Top-Down DP with Memoization — O(n²) time, O(n) space
-
-**Idea**: Recursive solution — can we break `s[start..n-1]`? Try each word as prefix; recurse on remaining suffix. Cache results by `start` index to avoid recomputation.
-
-**Pseudocode**:
 ```
-memo = {}
-
-function canBreak(s, start, wordDict):
-    if start == length(s): return true
-    if start in memo: return memo[start]
-
-    for each word in wordDict:
-        end = start + length(word)
-        if end <= length(s) and s[start..end-1] == word:
-            if canBreak(s, end, wordDict):
-                memo[start] = true
-                return true
-
-    memo[start] = false
-    return false
+Input: s="leetcode",     wordDict=["leet","code"]           → true   ("leet code")
+Input: s="applepenapple",wordDict=["apple","pen"]           → true   ("apple pen apple")
+Input: s="catsandog",    wordDict=["cats","dog","sand","and","cat"] → false
 ```
 
-**Complexity**:
-- Time: O(n · |wordDict| · m)
-- Space: O(n) — recursion stack + memo
+## 📝 Interview Tips
 
----
+1. **Define dp[i] clearly** / **Định nghĩa dp[i] rõ ràng**: `dp[i]` = "có thể phân tách `s[0..i-1]` không?" — base case `dp[0]=true` (chuỗi rỗng luôn hợp lệ).
+2. **Iterate words not substrings** / **Duyệt từ trong dict**: với mỗi `i`, thử tất cả từ trong `wordDict`; nếu `dp[i-len(word)]` và `s[i-len..i-1]` khớp → `dp[i]=true`.
+3. **HashSet for O(1) lookup** / **HashSet tra O(1)**: khi dict nhỏ và `s` dài, chuyển sang duyệt mọi substring `s[j..i]` với `Set` — better when dict is large.
+4. **Break early** / **Thoát sớm**: khi `dp[i]` đã là `true`, không cần kiểm tra thêm từ nào cho vị trí `i`.
+5. **"catsandog" trap** / **Bẫy catsandog**: "cat"+"sand"+"og" — "og" không có trong dict; DP tự nhiên xử lý đúng, đừng lo.
+6. **Follow-up LC 140** / **Mở rộng LC 140**: Word Break II — tìm tất cả cách phân tách, dùng backtracking + memo; worst case O(2ⁿ) output.
 
-## Comparison / So sánh
+## Solutions
 
-| Solution | Time | Space | Notes |
-|----------|------|-------|-------|
-| Bottom-Up DP | O(n · W · m) | O(n) | Recommended — iterative, no stack overflow |
-| BFS | O(n · W · m) | O(n) | Intuitive as graph traversal |
-| Top-Down Memo | O(n · W · m) | O(n) | Good if you prefer recursion |
+{% raw %}
+/\*\*
 
-W = number of words, m = average word length
+- 139.  Word Break
+- BFS approach: treat indices as graph nodes, edges when s[start..end-1] is a word.
+- Intuitive model — each reachable index represents a valid partial segmentation.
+- Time O(n · |wordDict| · m), Space O(n)
+  \*/
+  function wordBreakBFS(s: string, wordDict: string[]): boolean {
+  const n = s.length;
+  const queue: number[] = [0];
+  const visited = new Set<number>([0]);
 
----
+      while (queue.length > 0) {
+          const start = queue.shift()!;
+          for (const word of wordDict) {
+              const end = start + word.length;
+              if (end <= n && !visited.has(end) && s.slice(start, end) === word) {
+                  if (end === n) return true;
+                  queue.push(end);
+                  visited.add(end);
+              }
+          }
+      }
 
-## Interview Tips / Mẹo phỏng vấn
+      return false;
 
-- **Key point**: The DP definition `dp[i]` = "can we segment first `i` characters" is the natural subproblem. Always start by defining what your DP state represents.
-- **Edge cases**: Empty string → return true. Word longer than `s` → skip safely. All words in dict but no valid segmentation (e.g., "catsandog") — DP handles this naturally.
-- **Follow-up**: LC 140 — Word Break II asks for **all** valid segmentations. Use backtracking + memoization. Much harder — O(2^n) worst case for output size alone.
-- **Optimization**: Convert `wordDict` to a hash set for O(1) lookups, then iterate over all possible substrings ending at `i` instead of iterating over all words. This is better when `s` is short and dict is large.
+  }
 
----
+/\*\*
 
-## Related Problems / Bài liên quan
+- Bottom-Up DP — recommended for interviews.
+- dp[i] = true if s[0..i-1] can be segmented using wordDict.
+- Transition: dp[i] = true if ∃ word such that dp[i-word.length] && s matches word.
+- Time O(n · |wordDict| · m), Space O(n)
+  \*/
+  function wordBreak(s: string, wordDict: string[]): boolean {
+  const n = s.length;
+  const dp = new Array(n + 1).fill(false);
+  dp[0] = true; // empty prefix is always valid
 
-- LC 140 — Word Break II (return all segmentations, backtracking)
-- LC 139 variants — different dictionary sizes, repeated words allowed/not
-- LC 322 — Coin Change (same DP pattern: can we reach exactly amount N?)
-- LC 91 — Decode Ways (similar DP on string positions)
+      for (let i = 1; i <= n; i++) {
+          for (const word of wordDict) {
+              const w = word.length;
+              if (i >= w && dp[i - w] && s.slice(i - w, i) === word) {
+                  dp[i] = true;
+                  break; // no need to check other words for this position
+              }
+          }
+      }
+
+      return dp[n];
+
+  }
+
+// Inline checks
+console.log(wordBreak("leetcode", ["leet", "code"])); // true
+console.log(wordBreak("applepenapple", ["apple", "pen"])); // true
+console.log(wordBreak("catsandog", ["cats", "dog", "sand", "and", "cat"])); // false
+console.log(wordBreakBFS("cars", ["car", "ca", "rs"])); // true
+{% endraw %}
+
+## 🔗 Related Problems
+
+- [140. Word Break II](https://leetcode.com/problems/word-break-ii/) — return all valid segmentations; backtracking + memo, much harder
+- [322. Coin Change](https://leetcode.com/problems/coin-change/) — same DP pattern: can we reach exactly amount N using denominations?
+- [91. Decode Ways](./21-decode-ways.md) — same DP structure; segmenting digit string with validity rules
+- [472. Concatenated Words](https://leetcode.com/problems/concatenated-words/) — word break applied to an entire dictionary
+- [139 variants](https://leetcode.com/problems/word-break/) — word reuse, no reuse, minimum words — all map to this DP skeleton

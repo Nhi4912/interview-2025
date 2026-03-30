@@ -3,625 +3,169 @@ layout: page
 title: "Alien Dictionary"
 difficulty: Hard
 category: Tree/Graph
-tags: [Tree/Graph, Hash Table, Sorting]
+tags: [Tree/Graph, Hash Table, Topological Sort, BFS, DFS]
 leetcode_url: "https://leetcode.com/problems/alien-dictionary/"
 ---
 
-# Alien Dictionary
+# Alien Dictionary / Từ Điển Ngôn Ngữ Ngoài Hành Tinh
 
-> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Topological Sort (DAG)
+> **Frequency**: 📘 Tier 1 — Top FAANG Hard, xuất hiện thường xuyên tại Google/Meta/Amazon vòng senior
+> **See also**: [Course Schedule](https://leetcode.com/problems/course-schedule/) | [Course Schedule II](https://leetcode.com/problems/course-schedule-ii/)
 
-**LeetCode Problem # * 269. Alien Dictionary**
+---
+
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** Giống như xếp lịch môn học có tiên quyết — từ danh sách từ đã sắp xếp ta suy ra quy tắc "chữ A phải đứng trước chữ B". Xây đồ thị có hướng từ các quy tắc đó, sau đó sắp xếp topo. Nếu có vòng tròn (A→B→A), thì không có thứ tự hợp lệ → trả về `""`.
+
+**Pattern Recognition:**
+
+- Signal: "dictionary sorted lexicographically in alien language" → **build DAG from adjacent word comparisons → topological sort**
+- So sánh từng cặp từ liền kề: tìm ký tự đầu tiên khác nhau → đó là cạnh có hướng `char1 → char2`
+- Invalid case: nếu `word1` là tiền tố của `word2` nhưng `word1.length > word2.length` → return `""`
+
+**Visual — Xây đồ thị từ ["wrt","wrf","er","ett","rftt"]:**
+
+```
+Compare adjacent words → find first differing char:
+  "wrt" vs "wrf" → t ≠ f  →  t → f
+  "wrf" vs "er"  → w ≠ e  →  w → e
+  "er"  vs "ett" → r ≠ t  →  r → t
+  "ett" vs "rftt"→ e ≠ r  →  e → r
+
+DAG:   t → f
+       w → e → r → t → f
+             ↑
+       (e → r already in chain)
+
+Topological order: w → e → r → t → f  →  "wertf" ✅
+```
+
+---
 
 ## Problem Description
 
-LeetCode problem solution with multiple approaches and explanations.
+Given a list of `words` sorted lexicographically by an unknown alien alphabet, return a string of unique letters in the alien alphabet in lexicographic order. Return `""` if no valid ordering exists (cycle), or if the input is invalid.
+
+```
+Example 1: words = ["wrt","wrf","er","ett","rftt"]  → "wertf"
+Example 2: words = ["z","x"]                         → "zx"
+Example 3: words = ["z","x","z"]                     → ""  (cycle: z→x→z)
+Example 4: words = ["abc","ab"]                      → ""  (invalid: longer word is prefix)
+```
+
+---
+
+## 📝 Interview Tips
+
+1. **Break into steps**: (1) extract ordering constraints, (2) build graph, (3) topo sort, (4) validate — announce each step before coding.
+2. **Invalid prefix check**: `if word1.startsWith(word2) && word1.length > word2.length → return ""` — easy miss under pressure.
+3. **Only first difference matters**: So sánh từng cặp từ chỉ lấy ký tự đầu tiên khác nhau, bỏ qua các ký tự sau.
+4. **Cycle detection**: DFS với 3 màu (WHITE/GRAY/BLACK) hoặc Kahn's: nếu kết quả chứa ít hơn `totalChars` ký tự → có cycle.
+5. **Kahn's vs DFS**: Kahn's (BFS) dễ giải thích hơn trong interview. DFS + color cần thêm bookkeeping nhưng intuitive.
+6. **Time/Space**: O(C) where C = total characters across all words — bounded by input size, not just unique chars.
+
+---
 
 ## Solutions
 
 {% raw %}
-/**
- * 269. Alien Dictionary
- * 
- * There is a new alien language that uses the English alphabet. However, the order among the letters is unknown to you.
- * You are given a list of strings words from the alien language's dictionary, where the strings in words are sorted lexicographically by the rules of this new language.
- * 
- * Return a string of the unique letters in the new alien language sorted in lexicographically increasing order by the new language's rules. 
- * If there is no solution, return "". If there are multiple solutions, return any of them.
- * 
- * A string s is lexicographically smaller than a string t if at the first position where s and t differ, the character in s comes before the character in t in the alien language. 
- * If the first min(s.length, t.length) characters are the same, then s is lexicographically smaller if and only if s.length < t.length.
- * 
- * Example 1:
- * Input: words = ["wrt","wrf","er","ett","rftt"]
- * Output: "wertf"
- * 
- * Example 2:
- * Input: words = ["z","x"]
- * Output: "zx"
- * 
- * Example 3:
- * Input: words = ["z","x","z"]
- * Output: ""
- * Explanation: The order is invalid, so return "".
- * 
- * Constraints:
- * - 1 <= words.length <= 100
- * - 1 <= words[i].length <= 100
- * - words[i] consists of only lowercase English letters.
- */
+// Solution 1: Kahn's Algorithm — BFS Topological Sort (Interview preferred)
+// Time: O(C) — C = total chars across all words (graph build + BFS)
+// Space: O(U + E) — U = unique chars, E = ordering edges
+function alienOrder(words: string[]): string {
+const graph = new Map<string, Set<string>>();
+const inDegree = new Map<string, number>();
 
-// Solution 1: Topological Sort with DFS
-// Time: O(V + E) where V = unique chars, E = relationships, Space: O(V + E)
-export function alienOrder1(words: string[]): string {
-    if (words.length === 0) return "";
-    
-    // Build adjacency list and in-degree count
-    const graph = new Map<string, Set<string>>();
-    const inDegree = new Map<string, number>();
-    
-    // Initialize all characters
-    for (const word of words) {
-        for (const char of word) {
-            if (!graph.has(char)) {
-                graph.set(char, new Set());
-                inDegree.set(char, 0);
-            }
-        }
-    }
-    
-    // Build graph by comparing adjacent words
-    for (let i = 0; i < words.length - 1; i++) {
-        const word1 = words[i];
-        const word2 = words[i + 1];
-        
-        // Check for invalid case: word1 is prefix of word2 but longer
-        if (word1.length > word2.length && word1.startsWith(word2)) {
-            return "";
-        }
-        
-        // Find first different character
-        for (let j = 0; j < Math.min(word1.length, word2.length); j++) {
-            const char1 = word1[j];
-            const char2 = word2[j];
-            
-            if (char1 !== char2) {
-                // Add edge from char1 to char2
-                if (!graph.get(char1)!.has(char2)) {
-                    graph.get(char1)!.add(char2);
-                    inDegree.set(char2, inDegree.get(char2)! + 1);
-                }
-                break; // Only first difference matters
-            }
-        }
-    }
-    
-    // Topological sort using DFS
-    const WHITE = 0, GRAY = 1, BLACK = 2;
-    const colors = new Map<string, number>();
-    const result: string[] = [];
-    
-    for (const char of graph.keys()) {
-        colors.set(char, WHITE);
-    }
-    
-    function dfs(char: string): boolean {
-        if (colors.get(char) === GRAY) return false; // Cycle detected
-        if (colors.get(char) === BLACK) return true; // Already processed
-        
-        colors.set(char, GRAY);
-        
-        // Visit all neighbors
-        for (const neighbor of graph.get(char)!) {
-            if (!dfs(neighbor)) return false;
-        }
-        
-        colors.set(char, BLACK);
-        result.push(char);
-        return true;
-    }
-    
-    // Process all characters
-    for (const char of graph.keys()) {
-        if (colors.get(char) === WHITE) {
-            if (!dfs(char)) return ""; // Cycle detected
-        }
-    }
-    
-    return result.reverse().join("");
+// Initialize all characters with in-degree 0
+for (const word of words) {
+for (const ch of word) {
+if (!graph.has(ch)) { graph.set(ch, new Set()); inDegree.set(ch, 0); }
+}
 }
 
-// Solution 2: Kahn's Algorithm (BFS Topological Sort)
-// Time: O(V + E), Space: O(V + E)
-export function alienOrder2(words: string[]): string {
-    if (words.length === 0) return "";
-    
-    const graph = new Map<string, Set<string>>();
-    const inDegree = new Map<string, number>();
-    
-    // Initialize characters
-    for (const word of words) {
-        for (const char of word) {
-            if (!graph.has(char)) {
-                graph.set(char, new Set());
-                inDegree.set(char, 0);
-            }
-        }
-    }
-    
-    // Build graph
-    for (let i = 0; i < words.length - 1; i++) {
-        const word1 = words[i];
-        const word2 = words[i + 1];
-        
-        // Check invalid case
-        if (word1.length > word2.length && word1.startsWith(word2)) {
-            return "";
-        }
-        
-        for (let j = 0; j < Math.min(word1.length, word2.length); j++) {
-            const char1 = word1[j];
-            const char2 = word2[j];
-            
-            if (char1 !== char2) {
-                if (!graph.get(char1)!.has(char2)) {
-                    graph.get(char1)!.add(char2);
-                    inDegree.set(char2, inDegree.get(char2)! + 1);
-                }
-                break;
-            }
-        }
-    }
-    
-    // Kahn's algorithm
-    const queue: string[] = [];
-    for (const [char, degree] of inDegree) {
-        if (degree === 0) {
-            queue.push(char);
-        }
-    }
-    
-    const result: string[] = [];
-    
-    while (queue.length > 0) {
-        const char = queue.shift()!;
-        result.push(char);
-        
-        for (const neighbor of graph.get(char)!) {
-            inDegree.set(neighbor, inDegree.get(neighbor)! - 1);
-            if (inDegree.get(neighbor) === 0) {
-                queue.push(neighbor);
-            }
-        }
-    }
-    
-    // Check if all characters are processed (no cycle)
-    return result.length === graph.size ? result.join("") : "";
+// Build directed graph from adjacent word comparisons
+for (let i = 0; i < words.length - 1; i++) {
+const w1 = words[i], w2 = words[i + 1];
+if (w1.length > w2.length && w1.startsWith(w2)) return ""; // invalid prefix
+for (let j = 0; j < Math.min(w1.length, w2.length); j++) {
+if (w1[j] !== w2[j]) {
+if (!graph.get(w1[j])!.has(w2[j])) {
+graph.get(w1[j])!.add(w2[j]);
+inDegree.set(w2[j], inDegree.get(w2[j])! + 1);
+}
+break; // only first difference matters
+}
+}
 }
 
-// Solution 3: Union-Find with Constraint Checking
-// Time: O(V + E), Space: O(V)
-export function alienOrder3(words: string[]): string {
-    if (words.length === 0) return "";
-    
-    class UnionFind {
-        parent: Map<string, string> = new Map();
-        rank: Map<string, number> = new Map();
-        
-        makeSet(x: string): void {
-            if (!this.parent.has(x)) {
-                this.parent.set(x, x);
-                this.rank.set(x, 0);
-            }
-        }
-        
-        find(x: string): string {
-            if (this.parent.get(x) !== x) {
-                this.parent.set(x, this.find(this.parent.get(x)!));
-            }
-            return this.parent.get(x)!;
-        }
-        
-        union(x: string, y: string): boolean {
-            const rootX = this.find(x);
-            const rootY = this.find(y);
-            
-            if (rootX === rootY) return false; // Would create cycle
-            
-            if (this.rank.get(rootX)! < this.rank.get(rootY)!) {
-                this.parent.set(rootX, rootY);
-            } else if (this.rank.get(rootX)! > this.rank.get(rootY)!) {
-                this.parent.set(rootY, rootX);
-            } else {
-                this.parent.set(rootY, rootX);
-                this.rank.set(rootX, this.rank.get(rootX)! + 1);
-            }
-            
-            return true;
-        }
-    }
-    
-    const uf = new UnionFind();
-    const edges: [string, string][] = [];
-    const chars = new Set<string>();
-    
-    // Collect all characters
-    for (const word of words) {
-        for (const char of word) {
-            chars.add(char);
-            uf.makeSet(char);
-        }
-    }
-    
-    // Collect ordering constraints
-    for (let i = 0; i < words.length - 1; i++) {
-        const word1 = words[i];
-        const word2 = words[i + 1];
-        
-        if (word1.length > word2.length && word1.startsWith(word2)) {
-            return "";
-        }
-        
-        for (let j = 0; j < Math.min(word1.length, word2.length); j++) {
-            if (word1[j] !== word2[j]) {
-                edges.push([word1[j], word2[j]]);
-                break;
-            }
-        }
-    }
-    
-    // This approach is complex for this problem, switching to DFS
-    return alienOrder1(words);
+// Kahn's BFS: start from nodes with in-degree 0
+const queue: string[] = [];
+for (const [ch, deg] of inDegree) if (deg === 0) queue.push(ch);
+const result: string[] = [];
+while (queue.length > 0) {
+const ch = queue.shift()!;
+result.push(ch);
+for (const neighbor of graph.get(ch)!) {
+inDegree.set(neighbor, inDegree.get(neighbor)! - 1);
+if (inDegree.get(neighbor) === 0) queue.push(neighbor);
+}
 }
 
-// Solution 4: Modified DFS with Path Reconstruction
-// Time: O(V + E), Space: O(V + E)
-export function alienOrder4(words: string[]): string {
-    const graph = new Map<string, string[]>();
-    const inDegree = new Map<string, number>();
-    
-    // Initialize
-    for (const word of words) {
-        for (const char of word) {
-            if (!graph.has(char)) {
-                graph.set(char, []);
-                inDegree.set(char, 0);
-            }
-        }
-    }
-    
-    // Build graph
-    for (let i = 0; i < words.length - 1; i++) {
-        const word1 = words[i];
-        const word2 = words[i + 1];
-        
-        if (word1.length > word2.length && word1.startsWith(word2)) {
-            return "";
-        }
-        
-        for (let j = 0; j < Math.min(word1.length, word2.length); j++) {
-            if (word1[j] !== word2[j]) {
-                graph.get(word1[j])!.push(word2[j]);
-                inDegree.set(word2[j], inDegree.get(word2[j])! + 1);
-                break;
-            }
-        }
-    }
-    
-    // Topological sort
-    const result: string[] = [];
-    const queue: string[] = [];
-    
-    for (const [char, degree] of inDegree) {
-        if (degree === 0) {
-            queue.push(char);
-        }
-    }
-    
-    while (queue.length > 0) {
-        const char = queue.shift()!;
-        result.push(char);
-        
-        for (const neighbor of graph.get(char)!) {
-            inDegree.set(neighbor, inDegree.get(neighbor)! - 1);
-            if (inDegree.get(neighbor) === 0) {
-                queue.push(neighbor);
-            }
-        }
-    }
-    
-    return result.length === graph.size ? result.join("") : "";
+return result.length === graph.size ? result.join("") : ""; // cycle if not all processed
 }
 
-// Solution 5: Priority Queue Based Topological Sort
-// Time: O(V log V + E), Space: O(V + E)
-export function alienOrder5(words: string[]): string {
-    class MinHeap {
-        heap: string[] = [];
-        
-        push(val: string): void {
-            this.heap.push(val);
-            this.heapifyUp(this.heap.length - 1);
-        }
-        
-        pop(): string | undefined {
-            if (this.heap.length === 0) return undefined;
-            
-            const min = this.heap[0];
-            const last = this.heap.pop()!;
-            
-            if (this.heap.length > 0) {
-                this.heap[0] = last;
-                this.heapifyDown(0);
-            }
-            
-            return min;
-        }
-        
-        isEmpty(): boolean {
-            return this.heap.length === 0;
-        }
-        
-        private heapifyUp(idx: number): void {
-            while (idx > 0) {
-                const parentIdx = Math.floor((idx - 1) / 2);
-                if (this.heap[parentIdx] <= this.heap[idx]) break;
-                
-                [this.heap[parentIdx], this.heap[idx]] = [this.heap[idx], this.heap[parentIdx]];
-                idx = parentIdx;
-            }
-        }
-        
-        private heapifyDown(idx: number): void {
-            while (true) {
-                let minIdx = idx;
-                const leftChild = 2 * idx + 1;
-                const rightChild = 2 * idx + 2;
-                
-                if (leftChild < this.heap.length && this.heap[leftChild] < this.heap[minIdx]) {
-                    minIdx = leftChild;
-                }
-                
-                if (rightChild < this.heap.length && this.heap[rightChild] < this.heap[minIdx]) {
-                    minIdx = rightChild;
-                }
-                
-                if (minIdx === idx) break;
-                
-                [this.heap[idx], this.heap[minIdx]] = [this.heap[minIdx], this.heap[idx]];
-                idx = minIdx;
-            }
-        }
-    }
-    
-    const graph = new Map<string, string[]>();
-    const inDegree = new Map<string, number>();
-    
-    // Initialize
-    for (const word of words) {
-        for (const char of word) {
-            if (!graph.has(char)) {
-                graph.set(char, []);
-                inDegree.set(char, 0);
-            }
-        }
-    }
-    
-    // Build graph
-    for (let i = 0; i < words.length - 1; i++) {
-        const word1 = words[i];
-        const word2 = words[i + 1];
-        
-        if (word1.length > word2.length && word1.startsWith(word2)) {
-            return "";
-        }
-        
-        for (let j = 0; j < Math.min(word1.length, word2.length); j++) {
-            if (word1[j] !== word2[j]) {
-                graph.get(word1[j])!.push(word2[j]);
-                inDegree.set(word2[j], inDegree.get(word2[j])! + 1);
-                break;
-            }
-        }
-    }
-    
-    // Use priority queue for lexicographic order
-    const pq = new MinHeap();
-    for (const [char, degree] of inDegree) {
-        if (degree === 0) {
-            pq.push(char);
-        }
-    }
-    
-    const result: string[] = [];
-    
-    while (!pq.isEmpty()) {
-        const char = pq.pop()!;
-        result.push(char);
-        
-        for (const neighbor of graph.get(char)!) {
-            inDegree.set(neighbor, inDegree.get(neighbor)! - 1);
-            if (inDegree.get(neighbor) === 0) {
-                pq.push(neighbor);
-            }
-        }
-    }
-    
-    return result.length === graph.size ? result.join("") : "";
+// Solution 2: DFS Topological Sort with 3-Color Cycle Detection
+// Time: O(C) — each node/edge visited once
+// Space: O(U + E) — graph + color map + recursion stack
+function alienOrderDFS(words: string[]): string {
+const graph = new Map<string, string[]>();
+const inDeg = new Map<string, number>();
+
+for (const word of words)
+for (const ch of word) if (!graph.has(ch)) { graph.set(ch, []); inDeg.set(ch, 0); }
+
+for (let i = 0; i < words.length - 1; i++) {
+const w1 = words[i], w2 = words[i + 1];
+if (w1.length > w2.length && w1.startsWith(w2)) return "";
+for (let j = 0; j < Math.min(w1.length, w2.length); j++) {
+if (w1[j] !== w2[j]) { graph.get(w1[j])!.push(w2[j]); break; }
+}
 }
 
-// Test cases
-export function testAlienOrder() {
-    console.log("Testing Alien Dictionary:");
-    
-    const testCases = [
-        {
-            input: ["wrt", "wrf", "er", "ett", "rftt"],
-            expected: "wertf"
-        },
-        {
-            input: ["z", "x"],
-            expected: "zx"
-        },
-        {
-            input: ["z", "x", "z"],
-            expected: ""
-        },
-        {
-            input: ["abc", "ab"],
-            expected: ""
-        },
-        {
-            input: ["a", "b", "ca", "cc"],
-            expected: "abc"
-        },
-        {
-            input: ["ac", "ab", "zc", "zb"],
-            expected: "acbz"
-        }
-    ];
-    
-    const solutions = [
-        { name: "DFS Topological Sort", fn: alienOrder1 },
-        { name: "Kahn's Algorithm", fn: alienOrder2 },
-        { name: "Union Find (fallback)", fn: alienOrder3 },
-        { name: "Modified DFS", fn: alienOrder4 },
-        { name: "Priority Queue", fn: alienOrder5 }
-    ];
-    
-    function isValidOrder(result: string, words: string[]): boolean {
-        if (result === "") return false;
-        
-        const charToIndex = new Map<string, number>();
-        for (let i = 0; i < result.length; i++) {
-            charToIndex.set(result[i], i);
-        }
-        
-        for (let i = 0; i < words.length - 1; i++) {
-            const word1 = words[i];
-            const word2 = words[i + 1];
-            
-            for (let j = 0; j < Math.min(word1.length, word2.length); j++) {
-                const char1 = word1[j];
-                const char2 = word2[j];
-                
-                if (char1 !== char2) {
-                    if (charToIndex.get(char1)! > charToIndex.get(char2)!) {
-                        return false;
-                    }
-                    break;
-                }
-            }
-        }
-        
-        return true;
-    }
-    
-    solutions.forEach(solution => {
-        console.log(`\n${solution.name}:`);
-        testCases.forEach((test, i) => {
-            const result = solution.fn([...test.input]);
-            let passed = false;
-            
-            if (test.expected === "") {
-                passed = result === "";
-            } else {
-                passed = result !== "" && isValidOrder(result, test.input);
-            }
-            
-            console.log(`  Test ${i + 1}: ${passed ? 'PASS' : 'FAIL'}`);
-            if (!passed) {
-                console.log(`    Input: ${JSON.stringify(test.input)}`);
-                console.log(`    Expected: "${test.expected}" (or valid order)`);
-                console.log(`    Got: "${result}"`);
-            }
-        });
-    });
+const WHITE = 0, GRAY = 1, BLACK = 2;
+const color = new Map<string, number>();
+for (const ch of graph.keys()) color.set(ch, WHITE);
+const result: string[] = [];
+
+function dfs(ch: string): boolean {
+if (color.get(ch) === GRAY) return false; // cycle!
+if (color.get(ch) === BLACK) return true;
+color.set(ch, GRAY);
+for (const nb of graph.get(ch)!) if (!dfs(nb)) return false;
+color.set(ch, BLACK);
+result.push(ch);
+return true;
 }
 
-/**
- * Key Insights:
- * 
- * 1. **Problem Recognition**:
- *    - Topological sorting problem
- *    - Build DAG from lexicographic ordering constraints
- *    - Detect cycles (invalid alien language)
- * 
- * 2. **Graph Construction**:
- *    - Compare adjacent words to find character relationships
- *    - Only first differing position creates ordering constraint
- *    - Handle invalid case: longer word is prefix of shorter
- * 
- * 3. **Topological Sort Approaches**:
- *    - DFS with cycle detection (using colors)
- *    - Kahn's algorithm (BFS with in-degree tracking)
- *    - Both have O(V + E) time complexity
- * 
- * 4. **Edge Case Handling**:
- *    - Invalid ordering: ["abc", "ab"] → impossible
- *    - Cycle detection: ["z", "x", "z"] → contradiction
- *    - Single characters: valid trivial cases
- * 
- * 5. **Algorithm Choice**:
- *    - DFS: More intuitive cycle detection
- *    - Kahn's: Easier to understand and implement
- *    - Priority Queue: Ensures lexicographic result order
- * 
- * 6. **Time Complexity**: O(V + E)
- *    - V = number of unique characters
- *    - E = number of ordering relationships
- *    - Linear in total input size
- * 
- * 7. **Space Complexity**: O(V + E)
- *    - Adjacency list storage
- *    - Additional data structures for sorting
- * 
- * 8. **Interview Strategy**:
- *    - Recognize as graph problem
- *    - Build graph from word comparisons
- *    - Apply topological sorting
- *    - Handle edge cases carefully
- * 
- * 9. **Common Mistakes**:
- *    - Not checking prefix invalidation
- *    - Comparing entire words instead of first difference
- *    - Incorrect cycle detection
- *    - Not handling disconnected components
- * 
- * 10. **Cycle Detection Importance**:
- *     - Contradictory ordering relationships
- *     - Must detect and return empty string
- *     - DFS colors or Kahn's count verification
- * 
- * 11. **Multiple Valid Solutions**:
- *     - Problem allows any valid topological order
- *     - Priority queue can ensure specific ordering
- *     - All solutions are equally correct
- * 
- * 12. **Big Tech Variations**:
- *     - Google: Multiple alien languages
- *     - Meta: Weighted character relationships
- *     - Amazon: Streaming word updates
- *     - Microsoft: Partial ordering verification
- * 
- * 13. **Follow-up Questions**:
- *     - Verify if given order is valid
- *     - Find all possible alien orderings
- *     - Handle streaming dictionary updates
- *     - Optimize for very large dictionaries
- * 
- * 14. **Real-world Applications**:
- *     - Compiler dependency resolution
- *     - Task scheduling with prerequisites
- *     - Package installation ordering
- *     - Course prerequisite planning
- *     - Build system dependency graphs
- * 
- * 15. **Pattern Recognition**:
- *     - Constraint satisfaction problem
- *     - DAG construction from implicit relationships
- *     - Topological ordering application
- *     - Cycle detection in directed graphs
- */
+for (const ch of graph.keys()) if (color.get(ch) === WHITE && !dfs(ch)) return "";
+return result.reverse().join("");
+}
+
+// === Test Cases ===
+console.log(alienOrder(["wrt","wrf","er","ett","rftt"])); // "wertf" ✅
+console.log(alienOrder(["z","x"])); // "zx" ✅
+console.log(alienOrder(["z","x","z"])); // "" ✅ (cycle)
+console.log(alienOrder(["abc","ab"])); // "" ✅ (invalid prefix)
 {% endraw %}
+
+---
+
+## 🔗 Related Problems
+
+- [Course Schedule](https://leetcode.com/problems/course-schedule/) — same Kahn's / DFS topo sort pattern, cycle detection in DAG
+- [Course Schedule II](https://leetcode.com/problems/course-schedule-ii/) — return topological order (same structure as alien dictionary)
+- [Sequence Reconstruction](https://leetcode.com/problems/sequence-reconstruction/) — verify unique topo order from sequences
+- [Minimum Height Trees](https://leetcode.com/problems/minimum-height-trees/) — graph + topological-style layer peeling from leaves
+- [Find All Possible Recipes from Given Supplies](https://leetcode.com/problems/find-all-possible-recipes-from-given-supplies/) — topological sort with multi-source dependencies

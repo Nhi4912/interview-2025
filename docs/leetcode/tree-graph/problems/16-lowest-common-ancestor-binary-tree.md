@@ -1,480 +1,151 @@
 ---
 layout: page
 title: "Lowest Common Ancestor of a Binary Tree"
-difficulty: Hard
+difficulty: Medium
 category: Tree/Graph
-tags: [Tree/Graph, Hash Table]
+tags: [Tree, Depth-First Search, Binary Tree]
 leetcode_url: "https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree/"
 ---
 
-# Lowest Common Ancestor of a Binary Tree
+# Lowest Common Ancestor of a Binary Tree / Tổ Tiên Chung Thấp Nhất của Cây Nhị Phân
 
-> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Post-order DFS (bottom-up)
+> **Frequency**: ⭐ Tier 2 — Gặp >40% interviews
+> **See also**: [Course Schedule II](./15-course-schedule-ii.md) | [LCA of BST](https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-search-tree/)
 
-**LeetCode Problem # * 236. Lowest Common Ancestor of a Binary Tree**
+---
+
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** Hãy tưởng tượng bạn đang tìm ông tổ chung của hai người trong gia phả. Bạn theo dõi dòng dõi từ mỗi người lên đến tổ tiên — người đầu tiên xuất hiện trong cả hai dòng dõi chính là ông tổ chung gần nhất. Trong cây nhị phân, ta "báo cáo lên" từ lá: nếu nhánh trái tìm thấy p và nhánh phải tìm thấy q, thì node hiện tại chính là LCA.
+
+**Pattern Recognition:**
+
+- Signal: "find deepest node that has both p and q as descendants" → **Post-order DFS**
+- Post-order vì ta cần kết quả từ hai con trước khi quyết định tại cha
+- If `left && right` both non-null → current node is the LCA (p and q split here)
+
+**Visual — LCA(5, 4) in tree [3,5,1,6,2,0,8,null,null,7,4]:**
+
+```
+         3
+        / \
+       5   1
+      / \ / \
+     6  2 0  8
+       / \
+      7   4
+
+dfs(3) → calls dfs(5) then dfs(1)
+  dfs(5): found node(5)=p → returns node(5) immediately ← p found here
+    dfs(2): calls dfs(7)→null, dfs(4)→node(4)=q ✅
+  dfs(5): left=null, right=node(4), but node(5)===p → returns node(5)
+  dfs(1): neither p nor q in subtree → returns null
+dfs(3): left=node(5), right=null → returns node(5) ✅ LCA
+```
+
+---
 
 ## Problem Description
 
-LeetCode problem solution with multiple approaches and explanations.
+Given a binary tree, find the lowest common ancestor (LCA) of two nodes p and q. The LCA is the deepest node that has both p and q as descendants (a node can be a descendant of itself).
+
+```
+Example 1: root=[3,5,1,6,2,0,8,null,null,7,4], p=5, q=1 → 3
+Example 2: root=[3,5,1,6,2,0,8,null,null,7,4], p=5, q=4 → 5
+Example 3: root=[1,2], p=1, q=2 → 1
+```
+
+Constraints:
+
+- 2 <= number of nodes <= 10^5
+- All Node.val are unique; p != q
+- Both p and q are guaranteed to exist in the tree
+
+---
+
+## 📝 Interview Tips
+
+1. **Clarify**: Are p and q guaranteed to exist? / VI: "Cả hai node có chắc chắn tồn tại trong cây không? Node có thể là tổ tiên của chính nó không?"
+2. **Brute force**: Path tracking — find root→p and root→q paths, return last common node / VI: Tìm đường từ root đến p và q, so sánh từng bước để tìm điểm rẽ
+3. **Optimize**: Single-pass post-order DFS — return node when found, if both children return non-null → LCA / VI: Một lần DFS: trả về non-null khi gặp p hoặc q; nếu cả hai con đều non-null thì node hiện tại là LCA
+4. **Edge cases**: One node is ancestor of the other (p=5, q=4 → LCA=5 because we return p immediately) / VI: Khi gặp p thì trả về ngay, không cần tìm tiếp vì q chắc chắn ở trong subtree của p
+5. **Follow-up**: What if it's a BST? / VI: Nếu là BST có thể dùng ordering property để đạt O(log n)
+
+---
 
 ## Solutions
 
 {% raw %}
-/**
- * 236. Lowest Common Ancestor of a Binary Tree
- * 
- * Given a binary tree, find the lowest common ancestor (LCA) of two given nodes in the tree.
- * 
- * According to the definition of LCA on Wikipedia: "The lowest common ancestor is defined 
- * between two nodes p and q as the lowest node in T that has both p and q as descendants 
- * (where we allow a node to be a descendant of itself)."
- * 
- * Example 1:
- * Input: root = [3,5,1,6,2,0,8,null,null,7,4], p = 5, q = 1
- * Output: 3
- * Explanation: The LCA of nodes 5 and 1 is 3.
- * 
- * Example 2:
- * Input: root = [3,5,1,6,2,0,8,null,null,7,4], p = 5, q = 4
- * Output: 5
- * Explanation: The LCA of nodes 5 and 4 is 5, since a node can be a descendant of itself.
- * 
- * Example 3:
- * Input: root = [1,2], p = 1, q = 2
- * Output: 1
- * 
- * Constraints:
- * - The number of nodes in the tree is in the range [2, 10^5].
- * - -10^9 <= Node.val <= 10^9
- * - All Node.val are unique.
- * - p != q
- * - p and q will exist in the tree.
- */
 
-// Definition for a binary tree node
 class TreeNode {
-    val: number;
-    left: TreeNode | null;
-    right: TreeNode | null;
-    
-    constructor(val?: number, left?: TreeNode | null, right?: TreeNode | null) {
-        this.val = (val === undefined ? 0 : val);
-        this.left = (left === undefined ? null : left);
-        this.right = (right === undefined ? null : right);
-    }
+val: number;
+left: TreeNode | null;
+right: TreeNode | null;
+constructor(val = 0, left: TreeNode | null = null, right: TreeNode | null = null) {
+this.val = val; this.left = left; this.right = right;
+}
 }
 
-// Solution 1: Recursive DFS (Most Common)
-// Time: O(n), Space: O(h) where h is height
-export function lowestCommonAncestor1(root: TreeNode | null, p: TreeNode | null, q: TreeNode | null): TreeNode | null {
-    if (!root || !p || !q) return null;
-    
-    function dfs(node: TreeNode | null): TreeNode | null {
-        if (!node) return null;
-        
-        // If current node is p or q, return it
-        if (node === p || node === q) return node;
-        
-        // Search in left and right subtrees
-        const left = dfs(node.left);
-        const right = dfs(node.right);
-        
-        // If both left and right return non-null, current node is LCA
-        if (left && right) return node;
-        
-        // Return the non-null child (or null if both are null)
-        return left || right;
-    }
-    
-    return dfs(root);
+/\*\*
+
+- Solution 1: Path Tracking (Brute Force)
+- Time: O(n) — two full traversals to find paths
+- Space: O(h) — path arrays, h = tree height
+  \*/
+  function lowestCommonAncestorBrute(root: TreeNode | null, p: TreeNode, q: TreeNode): TreeNode | null {
+  function findPath(node: TreeNode | null, target: TreeNode, path: TreeNode[]): boolean {
+  if (!node) return false;
+  path.push(node);
+  if (node === target) return true;
+  if (findPath(node.left, target, path) || findPath(node.right, target, path)) return true;
+  path.pop();
+  return false;
+  }
+
+const pathP: TreeNode[] = [], pathQ: TreeNode[] = [];
+findPath(root, p, pathP);
+findPath(root, q, pathQ);
+
+let lca: TreeNode | null = null;
+for (let i = 0; i < Math.min(pathP.length, pathQ.length); i++) {
+if (pathP[i] === pathQ[i]) lca = pathP[i];
+else break;
+}
+return lca;
 }
 
-// Solution 2: Parent Tracking with HashMap
-// Time: O(n), Space: O(n)
-export function lowestCommonAncestor2(root: TreeNode | null, p: TreeNode | null, q: TreeNode | null): TreeNode | null {
-    if (!root || !p || !q) return null;
-    
-    const parentMap = new Map<TreeNode, TreeNode | null>();
-    const queue: TreeNode[] = [root];
-    parentMap.set(root, null);
-    
-    // Build parent mapping using BFS
-    while (queue.length > 0 && (!parentMap.has(p) || !parentMap.has(q))) {
-        const node = queue.shift()!;
-        
-        if (node.left) {
-            parentMap.set(node.left, node);
-            queue.push(node.left);
-        }
-        
-        if (node.right) {
-            parentMap.set(node.right, node);
-            queue.push(node.right);
-        }
-    }
-    
-    // Get all ancestors of p
-    const ancestors = new Set<TreeNode>();
-    let current: TreeNode | null = p;
-    
-    while (current) {
-        ancestors.add(current);
-        current = parentMap.get(current)!;
-    }
-    
-    // Find first common ancestor starting from q
-    current = q;
-    while (current) {
-        if (ancestors.has(current)) {
-            return current;
-        }
-        current = parentMap.get(current)!;
-    }
-    
-    return null;
+/\*\*
+
+- Solution 2: Recursive Post-order DFS (Optimal)
+- Time: O(n) — single traversal, each node visited once
+- Space: O(h) — recursion stack depth equals tree height
+  \*/
+  function lowestCommonAncestor(root: TreeNode | null, p: TreeNode, q: TreeNode): TreeNode | null {
+  if (!root) return null;
+  if (root === p || root === q) return root; // found one target — return it up
+
+const left = lowestCommonAncestor(root.left, p, q);
+const right = lowestCommonAncestor(root.right, p, q);
+
+if (left && right) return root; // p in left subtree, q in right → root is LCA
+return left || right; // pass up whichever side found something
 }
 
-// Solution 3: Path Tracking
-// Time: O(n), Space: O(h)
-export function lowestCommonAncestor3(root: TreeNode | null, p: TreeNode | null, q: TreeNode | null): TreeNode | null {
-    if (!root || !p || !q) return null;
-    
-    function findPath(node: TreeNode | null, target: TreeNode, path: TreeNode[]): boolean {
-        if (!node) return false;
-        
-        path.push(node);
-        
-        if (node === target) return true;
-        
-        if (findPath(node.left, target, path) || findPath(node.right, target, path)) {
-            return true;
-        }
-        
-        path.pop();
-        return false;
-    }
-    
-    const pathToP: TreeNode[] = [];
-    const pathToQ: TreeNode[] = [];
-    
-    findPath(root, p, pathToP);
-    findPath(root, q, pathToQ);
-    
-    // Find last common node in both paths
-    let lca: TreeNode | null = null;
-    const minLength = Math.min(pathToP.length, pathToQ.length);
-    
-    for (let i = 0; i < minLength; i++) {
-        if (pathToP[i] === pathToQ[i]) {
-            lca = pathToP[i];
-        } else {
-            break;
-        }
-    }
-    
-    return lca;
-}
+// === Test Cases ===
+// Tree: [3,5,1,6,2,0,8,null,null,7,4]
+// lowestCommonAncestor(root, node(5), node(1)) → node(3)
+// lowestCommonAncestor(root, node(5), node(4)) → node(5)
+// lowestCommonAncestor(root, node(6), node(4)) → node(5)
+// lowestCommonAncestor(root, node(0), node(8)) → node(1)
 
-// Solution 4: Iterative with Stack
-// Time: O(n), Space: O(n)
-export function lowestCommonAncestor4(root: TreeNode | null, p: TreeNode | null, q: TreeNode | null): TreeNode | null {
-    if (!root || !p || !q) return null;
-    
-    const stack: TreeNode[] = [root];
-    const parentMap = new Map<TreeNode, TreeNode | null>();
-    parentMap.set(root, null);
-    
-    // Build parent mapping using DFS
-    while (!parentMap.has(p) || !parentMap.has(q)) {
-        const node = stack.pop()!;
-        
-        if (node.left) {
-            parentMap.set(node.left, node);
-            stack.push(node.left);
-        }
-        
-        if (node.right) {
-            parentMap.set(node.right, node);
-            stack.push(node.right);
-        }
-    }
-    
-    // Get ancestors of p
-    const ancestors = new Set<TreeNode>();
-    let current: TreeNode | null = p;
-    
-    while (current) {
-        ancestors.add(current);
-        current = parentMap.get(current)!;
-    }
-    
-    // Find LCA by traversing ancestors of q
-    current = q;
-    while (current && !ancestors.has(current)) {
-        current = parentMap.get(current)!;
-    }
-    
-    return current;
-}
-
-// Solution 5: Optimized Single Pass
-// Time: O(n), Space: O(h)
-export function lowestCommonAncestor5(root: TreeNode | null, p: TreeNode | null, q: TreeNode | null): TreeNode | null {
-    let result: TreeNode | null = null;
-    
-    function dfs(node: TreeNode | null): boolean {
-        if (!node) return false;
-        
-        // Check if current node is p or q
-        const mid = (node === p || node === q) ? 1 : 0;
-        
-        // Check left and right subtrees
-        const left = dfs(node.left) ? 1 : 0;
-        const right = dfs(node.right) ? 1 : 0;
-        
-        // If any two of the flags are set, we found LCA
-        if (mid + left + right >= 2) {
-            result = node;
-        }
-        
-        // Return true if any of the flags is set
-        return (mid + left + right) > 0;
-    }
-    
-    dfs(root);
-    return result;
-}
-
-// Solution 6: Level Order with Parent Tracking
-// Time: O(n), Space: O(n)
-export function lowestCommonAncestor6(root: TreeNode | null, p: TreeNode | null, q: TreeNode | null): TreeNode | null {
-    if (!root || !p || !q) return null;
-    
-    const queue: [TreeNode, TreeNode | null][] = [[root, null]];
-    const parentMap = new Map<TreeNode, TreeNode | null>();
-    
-    // Level-order traversal with parent tracking
-    while (queue.length > 0) {
-        const [node, parent] = queue.shift()!;
-        parentMap.set(node, parent);
-        
-        if (node.left) {
-            queue.push([node.left, node]);
-        }
-        
-        if (node.right) {
-            queue.push([node.right, node]);
-        }
-        
-        // Early termination when both nodes are found
-        if (parentMap.has(p) && parentMap.has(q)) {
-            break;
-        }
-    }
-    
-    // Build path from p to root
-    const pathFromP = new Set<TreeNode>();
-    let current: TreeNode | null = p;
-    
-    while (current) {
-        pathFromP.add(current);
-        current = parentMap.get(current)!;
-    }
-    
-    // Find first intersection from q to root
-    current = q;
-    while (current && !pathFromP.has(current)) {
-        current = parentMap.get(current)!;
-    }
-    
-    return current;
-}
-
-// Helper functions for testing
-function createTree(values: (number | null)[]): TreeNode | null {
-    if (values.length === 0 || values[0] === null) return null;
-    
-    const root = new TreeNode(values[0]);
-    const queue: TreeNode[] = [root];
-    let i = 1;
-    
-    while (queue.length > 0 && i < values.length) {
-        const node = queue.shift()!;
-        
-        if (i < values.length && values[i] !== null) {
-            node.left = new TreeNode(values[i]!);
-            queue.push(node.left);
-        }
-        i++;
-        
-        if (i < values.length && values[i] !== null) {
-            node.right = new TreeNode(values[i]!);
-            queue.push(node.right);
-        }
-        i++;
-    }
-    
-    return root;
-}
-
-function findNode(root: TreeNode | null, val: number): TreeNode | null {
-    if (!root) return null;
-    if (root.val === val) return root;
-    
-    return findNode(root.left, val) || findNode(root.right, val);
-}
-
-// Test cases
-export function testLowestCommonAncestor() {
-    console.log("Testing Lowest Common Ancestor of Binary Tree:");
-    
-    const testCases = [
-        {
-            tree: [3, 5, 1, 6, 2, 0, 8, null, null, 7, 4],
-            p: 5,
-            q: 1,
-            expected: 3
-        },
-        {
-            tree: [3, 5, 1, 6, 2, 0, 8, null, null, 7, 4],
-            p: 5,
-            q: 4,
-            expected: 5
-        },
-        {
-            tree: [1, 2],
-            p: 1,
-            q: 2,
-            expected: 1
-        },
-        {
-            tree: [1, 2, 3],
-            p: 2,
-            q: 3,
-            expected: 1
-        },
-        {
-            tree: [1, 2, 3, 4, 5],
-            p: 4,
-            q: 5,
-            expected: 2
-        }
-    ];
-    
-    const solutions = [
-        { name: "Recursive DFS", fn: lowestCommonAncestor1 },
-        { name: "Parent Tracking HashMap", fn: lowestCommonAncestor2 },
-        { name: "Path Tracking", fn: lowestCommonAncestor3 },
-        { name: "Iterative Stack", fn: lowestCommonAncestor4 },
-        { name: "Optimized Single Pass", fn: lowestCommonAncestor5 },
-        { name: "Level Order Parent Track", fn: lowestCommonAncestor6 }
-    ];
-    
-    solutions.forEach(solution => {
-        console.log(`\n${solution.name}:`);
-        testCases.forEach((test, i) => {
-            const root = createTree(test.tree);
-            const p = findNode(root, test.p);
-            const q = findNode(root, test.q);
-            const result = solution.fn(root, p, q);
-            
-            const passed = result?.val === test.expected;
-            console.log(`  Test ${i + 1}: ${passed ? 'PASS' : 'FAIL'}`);
-            if (!passed) {
-                console.log(`    Tree: ${JSON.stringify(test.tree)}`);
-                console.log(`    p: ${test.p}, q: ${test.q}`);
-                console.log(`    Expected: ${test.expected}`);
-                console.log(`    Got: ${result?.val || 'null'}`);
-            }
-        });
-    });
-}
-
-/**
- * Key Insights:
- * 
- * 1. **LCA Definition**:
- *    - Lowest node that has both p and q as descendants
- *    - A node can be a descendant of itself
- *    - Unique solution guaranteed for any two nodes
- * 
- * 2. **Recursive Approach**:
- *    - Base case: null node or found target node
- *    - If both subtrees return non-null, current node is LCA
- *    - Otherwise, return the non-null subtree result
- * 
- * 3. **Key Insight**:
- *    - LCA is the first node where paths to p and q diverge
- *    - Or one of p/q if one is ancestor of the other
- *    - Can be found in single tree traversal
- * 
- * 4. **Time Complexity**: O(n)
- *    - Must potentially visit all nodes
- *    - Each node visited at most once
- *    - Cannot be optimized further in general case
- * 
- * 5. **Space Complexity**:
- *    - Recursive: O(h) for recursion stack
- *    - Parent tracking: O(n) for parent map
- *    - Path tracking: O(h) for path storage
- * 
- * 6. **Algorithm Variations**:
- *    - Recursive DFS: Most elegant and common
- *    - Parent tracking: Good for multiple LCA queries
- *    - Path tracking: Intuitive but less efficient
- * 
- * 7. **Interview Strategy**:
- *    - Start with recursive DFS approach
- *    - Explain the logic clearly
- *    - Handle edge cases
- *    - Discuss alternative approaches
- * 
- * 8. **Edge Cases**:
- *    - One node is ancestor of another
- *    - Root is one of the target nodes
- *    - Nodes at different depths
- *    - Minimal tree (just two nodes)
- * 
- * 9. **Common Mistakes**:
- *    - Not handling case where node is ancestor of itself
- *    - Incorrect base case handling
- *    - Wrong interpretation of return values
- *    - Not considering null nodes properly
- * 
- * 10. **Optimization Considerations**:
- *     - Single pass vs multiple passes
- *     - Early termination strategies
- *     - Memory usage vs computation time
- * 
- * 11. **Follow-up Variations**:
- *     - LCA in BST (can use ordering property)
- *     - LCA of multiple nodes
- *     - LCA with parent pointers
- *     - Range LCA queries
- * 
- * 12. **Big Tech Variations**:
- *     - Google: LCA in graph with cycles
- *     - Meta: LCA with weighted edges
- *     - Amazon: LCA in forest of trees
- *     - Microsoft: LCA with node deletion
- * 
- * 13. **Real-world Applications**:
- *     - File system hierarchy navigation
- *     - Organizational structure queries
- *     - Taxonomy and classification systems
- *     - Network routing algorithms
- *     - Version control systems (git merge base)
- * 
- * 14. **Pattern Recognition**:
- *     - Tree traversal with information bubbling up
- *     - Divide and conquer on tree structure
- *     - Path tracking and intersection finding
- * 
- * 15. **Implementation Tips**:
- *     - Clear base cases for recursion
- *     - Proper handling of null returns
- *     - Efficient parent tracking if needed
- *     - Consider iterative approaches for large trees
- */
 {% endraw %}
+
+---
+
+## 🔗 Related Problems
+
+- [LCA of a BST](https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-search-tree/) — same problem with BST ordering, O(log n) possible
+- [Binary Tree Paths](https://leetcode.com/problems/binary-tree-paths/) — path tracking in tree, same DFS pattern
+- [Maximum Depth of Binary Tree](https://leetcode.com/problems/maximum-depth-of-binary-tree/) — post-order DFS returning info upward
+- [Course Schedule II](./15-course-schedule-ii.md) — graph DFS with state tracking

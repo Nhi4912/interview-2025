@@ -1,749 +1,148 @@
 ---
 layout: page
 title: "Remove Nth Node From End of List"
-difficulty: Hard
+difficulty: Medium
 category: Linked List
-tags: [Linked List, Two Pointers, Hash Table]
+tags: [Linked List, Two Pointers]
 leetcode_url: "https://leetcode.com/problems/remove-nth-node-from-end-of-list/"
 ---
 
-# Remove Nth Node From End of List
+# Remove Nth Node From End of List / Xóa Node Thứ N Từ Cuối Danh Sách
 
-> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Two Pointers (Fixed Gap)
+> **Frequency**: ⭐ Tier 2 — Gặp >40% interviews
+> **See also**: [Middle of Linked List](https://leetcode.com/problems/middle-of-the-linked-list/) | [Linked List Cycle](https://leetcode.com/problems/linked-list-cycle/)
 
-**LeetCode Problem # * 19. Remove Nth Node From End of List**
+---
+
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** Tưởng tượng hai người chạy trên đường đua, một người xuất phát trước N+1 bước. Khi người chạy nhanh về đích (cuối danh sách), người chạy chậm đang đứng đúng vị trí node trước node cần xóa. Khoảng cách cố định giữa hai con trỏ là chìa khóa — không cần biết tổng độ dài danh sách.
+
+**Pattern Recognition:**
+
+- Signal: "nth from end" without known length, single pass → **Two Pointers with fixed N+1 gap**
+- Fast đi trước N+1 bước (không phải N) để slow dừng ở node TRƯỚC node cần xóa
+- Dummy node xử lý edge case xóa head mà không cần điều kiện riêng
+
+**Visual — Remove 2nd from end: [1→2→3→4→5], n=2:**
+
+```
+Initial: dummy → 1 → 2 → 3 → 4 → 5 → null
+         S,F
+
+Step 1: Move F forward n+1=3 steps:
+         dummy → 1 → 2 → 3 → 4 → 5 → null
+         S            F
+
+Step 2: Move S and F together until F=null:
+         dummy → 1 → 2 → 3 → 4 → 5 → null
+                          S        F(=null)
+
+Step 3: S.next = S.next.next  (skip node 4)
+Result:  1 → 2 → 3 → 5 ✅
+```
+
+---
 
 ## Problem Description
 
- * Given the head of a linked list, remove the nth node from the end of the list  * and return its head.  *  * Input: head = [1,2,3,4,5], n = 2  * Output: [1,2,3,5] 
+Given the head of a linked list, remove the nth node from the end and return the modified head.
+
+```
+Example 1: head=[1,2,3,4,5], n=2 → [1,2,3,5]
+Example 2: head=[1], n=1         → []
+Example 3: head=[1,2], n=1       → [1]
+```
+
+Constraints:
+
+- 1 <= list length <= 30
+- 0 <= node.val <= 100
+- 1 <= n <= list length (n is always valid)
+
+---
+
+## 📝 Interview Tips
+
+1. **Clarify**: Is n guaranteed valid (1 ≤ n ≤ length)? Can we remove the head? / VI: "n có luôn hợp lệ không? n có thể bằng độ dài danh sách (tức là xóa head) không?"
+2. **Brute force**: Two-pass — first count length, then walk to position (length - n) / VI: Đi hai lần: lần đầu đếm độ dài L, lần hai đi đến vị trí L-n để xóa
+3. **Optimize**: One-pass two pointers with gap N+1 — fast pointer signals when slow is in position / VI: Dùng hai con trỏ cách nhau N+1 bước, chỉ cần đi một lần qua danh sách
+4. **Edge cases**: Removing head (n = length) → dummy node handles this without special-casing / VI: Dummy node giúp tránh xử lý riêng trường hợp xóa head, slow ở dummy khi fast đến cuối
+5. **Follow-up**: What if you had to remove the kth from the start in the same pass? / VI: Làm sao xóa cả node thứ k từ đầu và thứ n từ cuối trong một lần đi?
+
+---
 
 ## Solutions
 
 {% raw %}
-/**
- * 19. Remove Nth Node From End of List
- *
- * Problem:
- * Given the head of a linked list, remove the nth node from the end of the list
- * and return its head.
- *
- * Example:
- * Input: head = [1,2,3,4,5], n = 2
- * Output: [1,2,3,5]
- *
- * Input: head = [1], n = 1
- * Output: []
- *
- * Input: head = [1,2], n = 1
- * Output: [1]
- *
- * LeetCode: https://leetcode.com/problems/remove-nth-node-from-end-of-list/
- */
 
-// Definition for singly-linked list
 class ListNode {
-  val: number;
-  next: ListNode | null;
-
-  constructor(val?: number, next?: ListNode | null) {
-    this.val = val === undefined ? 0 : val;
-    this.next = next === undefined ? null : next;
-  }
+val: number;
+next: ListNode | null;
+constructor(val = 0, next: ListNode | null = null) {
+this.val = val; this.next = next;
+}
 }
 
-/**
- * Solution 1: Two Pointers (Optimal)
- *
- * Approach:
- * - Use two pointers with n+1 gap
- * - When fast reaches end, slow points to node before target
- *
- * Time Complexity: O(n)
- * Space Complexity: O(1)
- */
-function removeNthFromEnd(head: ListNode | null, n: number): ListNode | null {
-  if (!head) return null;
+/\*\*
 
-  const dummy = new ListNode(0, head);
-  let slow = dummy;
-  let fast = dummy;
-
-  // Move fast n+1 steps ahead
-  for (let i = 0; i <= n; i++) {
-    fast = fast.next!;
-  }
-
-  // Move both pointers until fast reaches end
-  while (fast) {
-    slow = slow.next!;
-    fast = fast.next!;
-  }
-
-  // Remove the nth node
-  slow.next = slow.next!.next;
-
-  return dummy.next;
-}
-
-/**
- * Solution 2: Two Pass (Length calculation)
- *
- * Approach:
- * - First pass: calculate length
- * - Second pass: remove nth node from end
- *
- * Time Complexity: O(n)
- * Space Complexity: O(1)
- */
-function removeNthFromEndTwoPass(
-  head: ListNode | null,
-  n: number
-): ListNode | null {
-  if (!head) return null;
-
-  // Calculate length
+- Solution 1: Two Pass — Count Length First (Brute Force)
+- Time: O(n) — two full passes through the list
+- Space: O(1) — only pointer variables
+  \*/
+  function removeNthFromEndTwoPass(head: ListNode | null, n: number): ListNode | null {
   let length = 0;
-  let current = head;
-  while (current) {
-    length++;
-    current = current.next;
-  }
+  let curr: ListNode | null = head;
+  while (curr) { length++; curr = curr.next; }
 
-  // Handle case where we need to remove head
-  if (n === length) {
-    return head.next;
-  }
-
-  // Find node before target
-  current = head;
-  for (let i = 0; i < length - n - 1; i++) {
-    current = current!.next;
-  }
-
-  // Remove the nth node
-  current!.next = current!.next!.next;
-
-  return head;
+const dummy = new ListNode(0, head);
+curr = dummy;
+// Walk to the node just before the target (length - n steps from dummy)
+for (let i = 0; i < length - n; i++) curr = curr!.next;
+curr!.next = curr!.next!.next; // skip the nth-from-end node
+return dummy.next;
 }
 
-/**
- * Solution 3: Using Stack
- *
- * Approach:
- * - Push all nodes to stack
- * - Pop n nodes and remove the nth
- *
- * Time Complexity: O(n)
- * Space Complexity: O(n)
- */
-function removeNthFromEndStack(
-  head: ListNode | null,
-  n: number
-): ListNode | null {
-  if (!head) return null;
+/\*\*
 
-  const stack: ListNode[] = [];
-  let current = head;
-
-  // Push all nodes to stack
-  while (current) {
-    stack.push(current);
-    current = current.next;
-  }
-
-  // Handle case where we need to remove head
-  if (n === stack.length) {
-    return head.next;
-  }
-
-  // Remove the nth node from end
-  const targetIndex = stack.length - n;
-  const prevNode = stack[targetIndex - 1];
-  prevNode.next = prevNode.next!.next;
-
-  return head;
-}
-
-/**
- * Solution 4: Using Array
- *
- * Approach:
- * - Store all nodes in array
- * - Remove nth node from end
- *
- * Time Complexity: O(n)
- * Space Complexity: O(n)
- */
-function removeNthFromEndArray(
-  head: ListNode | null,
-  n: number
-): ListNode | null {
-  if (!head) return null;
-
-  const nodes: ListNode[] = [];
-  let current = head;
-
-  // Store all nodes in array
-  while (current) {
-    nodes.push(current);
-    current = current.next;
-  }
-
-  // Handle case where we need to remove head
-  if (n === nodes.length) {
-    return head.next;
-  }
-
-  // Remove the nth node from end
-  const targetIndex = nodes.length - n;
-  const prevNode = nodes[targetIndex - 1];
-  prevNode.next = prevNode.next!.next;
-
-  return head;
-}
-
-/**
- * Solution 5: Using Map
- *
- * Approach:
- * - Store node positions in Map
- * - Remove nth node from end
- *
- * Time Complexity: O(n)
- * Space Complexity: O(n)
- */
-function removeNthFromEndMap(
-  head: ListNode | null,
-  n: number
-): ListNode | null {
-  if (!head) return null;
-
-  const nodeMap = new Map<number, ListNode>();
-  let current = head;
-  let index = 0;
-
-  // Store all nodes in Map
-  while (current) {
-    nodeMap.set(index, current);
-    current = current.next;
-    index++;
-  }
-
-  const length = index;
-
-  // Handle case where we need to remove head
-  if (n === length) {
-    return head.next;
-  }
-
-  // Remove the nth node from end
-  const targetIndex = length - n;
-  const prevNode = nodeMap.get(targetIndex - 1)!;
-  prevNode.next = prevNode.next!.next;
-
-  return head;
-}
-
-/**
- * Solution 6: Recursive Approach
- *
- * Approach:
- * - Use recursion to count from end
- * - Remove node when count reaches n
- *
- * Time Complexity: O(n)
- * Space Complexity: O(n) - recursion stack
- */
-function removeNthFromEndRecursive(
-  head: ListNode | null,
-  n: number
-): ListNode | null {
+- Solution 2: Two Pointers with N+1 Gap (Optimal — One Pass)
+- Time: O(n) — single traversal of the list
+- Space: O(1) — two pointer variables only
+  \*/
+  function removeNthFromEnd(head: ListNode | null, n: number): ListNode | null {
   const dummy = new ListNode(0, head);
-  let count = 0;
+  let slow: ListNode = dummy;
+  let fast: ListNode = dummy;
 
-  function removeHelper(node: ListNode | null): ListNode | null {
-    if (!node) return null;
+// Advance fast n+1 steps so the gap between slow and fast is n+1
+for (let i = 0; i <= n; i++) fast = fast.next!;
 
-    node.next = removeHelper(node.next);
-    count++;
-
-    if (count === n) {
-      return node.next;
-    }
-
-    return node;
-  }
-
-  removeHelper(dummy);
-  return dummy.next;
+// Move both pointers until fast reaches the end (null)
+while (fast) {
+slow = slow.next!;
+fast = fast.next!;
 }
 
-/**
- * Solution 7: Using Generator (Memory efficient)
- *
- * Approach:
- * - Use generator to yield nodes
- * - Memory efficient for large lists
- *
- * Time Complexity: O(n)
- * Space Complexity: O(1)
- */
-function* nodeGenerator(head: ListNode | null): Generator<ListNode> {
-  let current = head;
-  while (current) {
-    yield current;
-    current = current.next;
-  }
+// slow is now at the node just before the target
+slow.next = slow.next!.next;
+return dummy.next;
 }
 
-function removeNthFromEndGenerator(
-  head: ListNode | null,
-  n: number
-): ListNode | null {
-  if (!head) return null;
+// === Test Cases ===
+// Build helper: arrayToList([1,2,3,4,5]) → ListNode
+// removeNthFromEnd(list([1,2,3,4,5]), 2) → [1,2,3,5]
+// removeNthFromEnd(list([1]), 1) → []
+// removeNthFromEnd(list([1,2]), 1) → [1]
+// removeNthFromEnd(list([1,2,3,4,5]), 5) → [2,3,4,5] (remove head)
 
-  const nodes = Array.from(nodeGenerator(head));
-
-  // Handle case where we need to remove head
-  if (n === nodes.length) {
-    return head.next;
-  }
-
-  // Remove the nth node from end
-  const targetIndex = nodes.length - n;
-  const prevNode = nodes[targetIndex - 1];
-  prevNode.next = prevNode.next!.next;
-
-  return head;
-}
-
-/**
- * Solution 8: Using Class (Object-oriented)
- *
- * Approach:
- * - Create a LinkedList class
- * - Encapsulate removal logic
- *
- * Time Complexity: O(n)
- * Space Complexity: O(1)
- */
-class LinkedList {
-  head: ListNode | null;
-
-  constructor(head: ListNode | null = null) {
-    this.head = head;
-  }
-
-  removeNthFromEnd(n: number): ListNode | null {
-    if (!this.head) return null;
-
-    const dummy = new ListNode(0, this.head);
-    let slow = dummy;
-    let fast = dummy;
-
-    // Move fast n+1 steps ahead
-    for (let i = 0; i <= n; i++) {
-      fast = fast.next!;
-    }
-
-    // Move both pointers until fast reaches end
-    while (fast) {
-      slow = slow.next!;
-      fast = fast.next!;
-    }
-
-    // Remove the nth node
-    slow.next = slow.next!.next;
-
-    this.head = dummy.next;
-    return this.head;
-  }
-
-  toArray(): number[] {
-    const result: number[] = [];
-    let current = this.head;
-    while (current) {
-      result.push(current.val);
-      current = current.next;
-    }
-    return result;
-  }
-}
-
-function removeNthFromEndClass(
-  head: ListNode | null,
-  n: number
-): ListNode | null {
-  const list = new LinkedList(head);
-  return list.removeNthFromEnd(n);
-}
-
-/**
- * Solution 9: Using Functional Approach
- *
- * Approach:
- * - Use functional programming concepts
- * - More declarative style
- *
- * Time Complexity: O(n)
- * Space Complexity: O(n)
- */
-function removeNthFromEndFunctional(
-  head: ListNode | null,
-  n: number
-): ListNode | null {
-  if (!head) return null;
-
-  // Convert to array
-  const nodes: ListNode[] = [];
-  let current = head;
-  while (current) {
-    nodes.push(current);
-    current = current.next;
-  }
-
-  // Handle case where we need to remove head
-  if (n === nodes.length) {
-    return head.next;
-  }
-
-  // Remove the nth node from end
-  const targetIndex = nodes.length - n;
-  const prevNode = nodes[targetIndex - 1];
-  prevNode.next = prevNode.next!.next;
-
-  return head;
-}
-
-/**
- * Solution 10: Using Two Pointers with Count
- *
- * Approach:
- * - Use two pointers with explicit count
- * - More readable than Solution 1
- *
- * Time Complexity: O(n)
- * Space Complexity: O(1)
- */
-function removeNthFromEndWithCount(
-  head: ListNode | null,
-  n: number
-): ListNode | null {
-  if (!head) return null;
-
-  const dummy = new ListNode(0, head);
-  let slow = dummy;
-  let fast = dummy;
-  let count = 0;
-
-  // Move fast n steps ahead
-  while (count < n && fast.next) {
-    fast = fast.next;
-    count++;
-  }
-
-  // Move both pointers until fast reaches end
-  while (fast.next) {
-    slow = slow.next!;
-    fast = fast.next;
-  }
-
-  // Remove the nth node
-  slow.next = slow.next!.next;
-
-  return dummy.next;
-}
-
-// Helper functions
-function createLinkedList(arr: number[]): ListNode | null {
-  if (arr.length === 0) return null;
-
-  const head = new ListNode(arr[0]);
-  let current = head;
-
-  for (let i = 1; i < arr.length; i++) {
-    current.next = new ListNode(arr[i]);
-    current = current.next;
-  }
-
-  return head;
-}
-
-function linkedListToArray(head: ListNode | null): number[] {
-  const result: number[] = [];
-  let current = head;
-
-  while (current) {
-    result.push(current.val);
-    current = current.next;
-  }
-
-  return result;
-}
-
-// Test cases
-function testRemoveNthFromEnd() {
-  console.log("=== Testing Remove Nth Node From End of List ===\n");
-
-  const testCases = [
-    {
-      input: [1, 2, 3, 4, 5],
-      n: 2,
-      expected: [1, 2, 3, 5],
-      description: "Remove second from end",
-    },
-    {
-      input: [1],
-      n: 1,
-      expected: [],
-      description: "Remove only node",
-    },
-    {
-      input: [1, 2],
-      n: 1,
-      expected: [1],
-      description: "Remove last node",
-    },
-    {
-      input: [1, 2, 3, 4, 5],
-      n: 5,
-      expected: [2, 3, 4, 5],
-      description: "Remove first node",
-    },
-    {
-      input: [1, 2, 3],
-      n: 2,
-      expected: [1, 3],
-      description: "Remove middle node",
-    },
-    {
-      input: [],
-      n: 1,
-      expected: [],
-      description: "Empty list",
-    },
-  ];
-
-  testCases.forEach((testCase, index) => {
-    console.log(`Test Case ${index + 1}: ${testCase.description}`);
-    console.log(`Input: [${testCase.input.join(", ")}], n = ${testCase.n}`);
-    console.log(`Expected: [${testCase.expected.join(", ")}]\n`);
-
-    const head = createLinkedList(testCase.input);
-
-    // Test Solution 1 (Two Pointers)
-    const result1 = removeNthFromEnd(
-      createLinkedList(testCase.input),
-      testCase.n
-    );
-    const array1 = linkedListToArray(result1);
-    console.log(
-      `Solution 1 (Two Pointers): [${array1.join(", ")}] ${
-        JSON.stringify(array1) === JSON.stringify(testCase.expected)
-          ? "✅"
-          : "❌"
-      }`
-    );
-
-    // Test Solution 2 (Two Pass)
-    const result2 = removeNthFromEndTwoPass(
-      createLinkedList(testCase.input),
-      testCase.n
-    );
-    const array2 = linkedListToArray(result2);
-    console.log(
-      `Solution 2 (Two Pass): [${array2.join(", ")}] ${
-        JSON.stringify(array2) === JSON.stringify(testCase.expected)
-          ? "✅"
-          : "❌"
-      }`
-    );
-
-    // Test Solution 3 (Stack)
-    const result3 = removeNthFromEndStack(
-      createLinkedList(testCase.input),
-      testCase.n
-    );
-    const array3 = linkedListToArray(result3);
-    console.log(
-      `Solution 3 (Stack): [${array3.join(", ")}] ${
-        JSON.stringify(array3) === JSON.stringify(testCase.expected)
-          ? "✅"
-          : "❌"
-      }`
-    );
-
-    // Test Solution 4 (Array)
-    const result4 = removeNthFromEndArray(
-      createLinkedList(testCase.input),
-      testCase.n
-    );
-    const array4 = linkedListToArray(result4);
-    console.log(
-      `Solution 4 (Array): [${array4.join(", ")}] ${
-        JSON.stringify(array4) === JSON.stringify(testCase.expected)
-          ? "✅"
-          : "❌"
-      }`
-    );
-
-    // Test Solution 5 (Map)
-    const result5 = removeNthFromEndMap(
-      createLinkedList(testCase.input),
-      testCase.n
-    );
-    const array5 = linkedListToArray(result5);
-    console.log(
-      `Solution 5 (Map): [${array5.join(", ")}] ${
-        JSON.stringify(array5) === JSON.stringify(testCase.expected)
-          ? "✅"
-          : "❌"
-      }`
-    );
-
-    // Test Solution 6 (Recursive)
-    const result6 = removeNthFromEndRecursive(
-      createLinkedList(testCase.input),
-      testCase.n
-    );
-    const array6 = linkedListToArray(result6);
-    console.log(
-      `Solution 6 (Recursive): [${array6.join(", ")}] ${
-        JSON.stringify(array6) === JSON.stringify(testCase.expected)
-          ? "✅"
-          : "❌"
-      }`
-    );
-
-    // Test Solution 7 (Generator)
-    const result7 = removeNthFromEndGenerator(
-      createLinkedList(testCase.input),
-      testCase.n
-    );
-    const array7 = linkedListToArray(result7);
-    console.log(
-      `Solution 7 (Generator): [${array7.join(", ")}] ${
-        JSON.stringify(array7) === JSON.stringify(testCase.expected)
-          ? "✅"
-          : "❌"
-      }`
-    );
-
-    // Test Solution 8 (Class)
-    const result8 = removeNthFromEndClass(
-      createLinkedList(testCase.input),
-      testCase.n
-    );
-    const array8 = linkedListToArray(result8);
-    console.log(
-      `Solution 8 (Class): [${array8.join(", ")}] ${
-        JSON.stringify(array8) === JSON.stringify(testCase.expected)
-          ? "✅"
-          : "❌"
-      }`
-    );
-
-    // Test Solution 9 (Functional)
-    const result9 = removeNthFromEndFunctional(
-      createLinkedList(testCase.input),
-      testCase.n
-    );
-    const array9 = linkedListToArray(result9);
-    console.log(
-      `Solution 9 (Functional): [${array9.join(", ")}] ${
-        JSON.stringify(array9) === JSON.stringify(testCase.expected)
-          ? "✅"
-          : "❌"
-      }`
-    );
-
-    // Test Solution 10 (Two Pointers with Count)
-    const result10 = removeNthFromEndWithCount(
-      createLinkedList(testCase.input),
-      testCase.n
-    );
-    const array10 = linkedListToArray(result10);
-    console.log(
-      `Solution 10 (Two Pointers with Count): [${array10.join(", ")}] ${
-        JSON.stringify(array10) === JSON.stringify(testCase.expected)
-          ? "✅"
-          : "❌"
-      }`
-    );
-
-    console.log("\n---\n");
-  });
-}
-
-// Performance comparison
-function performanceComparison() {
-  console.log("=== Performance Comparison ===\n");
-
-  const testCases = [
-    { name: "Two Pointers", func: removeNthFromEnd },
-    { name: "Two Pass", func: removeNthFromEndTwoPass },
-    { name: "Stack", func: removeNthFromEndStack },
-    { name: "Array", func: removeNthFromEndArray },
-    { name: "Map", func: removeNthFromEndMap },
-    { name: "Recursive", func: removeNthFromEndRecursive },
-    { name: "Generator", func: removeNthFromEndGenerator },
-    { name: "Class", func: removeNthFromEndClass },
-    { name: "Functional", func: removeNthFromEndFunctional },
-    { name: "Two Pointers with Count", func: removeNthFromEndWithCount },
-  ];
-
-  // Create test cases
-  const smallList = createLinkedList(Array.from({ length: 100 }, (_, i) => i));
-  const mediumList = createLinkedList(
-    Array.from({ length: 1000 }, (_, i) => i)
-  );
-  const largeList = createLinkedList(
-    Array.from({ length: 10000 }, (_, i) => i)
-  );
-
-  const cases = [
-    { name: "Small", list: smallList, n: 50 },
-    { name: "Medium", list: mediumList, n: 500 },
-    { name: "Large", list: largeList, n: 5000 },
-  ];
-
-  cases.forEach(({ name, list, n }) => {
-    console.log(`${name} List:`);
-
-    testCases.forEach(({ name: funcName, func }) => {
-      const start = performance.now();
-      const result = func(createLinkedList(linkedListToArray(list)), n);
-      const end = performance.now();
-
-      console.log(`  ${funcName}: ${(end - start).toFixed(2)}ms`);
-    });
-
-    console.log("");
-  });
-}
-
-// Uncomment the following lines to run tests
-// testRemoveNthFromEnd();
-// performanceComparison();
-
-export {
-  removeNthFromEnd,
-  removeNthFromEndTwoPass,
-  removeNthFromEndStack,
-  removeNthFromEndArray,
-  removeNthFromEndMap,
-  removeNthFromEndRecursive,
-  removeNthFromEndGenerator,
-  removeNthFromEndClass,
-  removeNthFromEndFunctional,
-  removeNthFromEndWithCount,
-  ListNode,
-  LinkedList,
-  nodeGenerator,
-  createLinkedList,
-  linkedListToArray,
-  testRemoveNthFromEnd,
-  performanceComparison,
-};
 {% endraw %}
+
+---
+
+## 🔗 Related Problems
+
+- [Middle of the Linked List](https://leetcode.com/problems/middle-of-the-linked-list/) — same fast/slow pointer gap technique
+- [Linked List Cycle](https://leetcode.com/problems/linked-list-cycle/) — two pointer variant for cycle detection
+- [Reverse Linked List](https://leetcode.com/problems/reverse-linked-list/) — foundational linked list manipulation
+- [Delete Node in a Linked List](https://leetcode.com/problems/delete-node-in-a-linked-list/) — simpler node deletion variant

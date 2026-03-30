@@ -1,69 +1,90 @@
 # LeetCode Practice — Algorithm & Data Structure Problems
 
 > **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Study Guide](./00-study-guide.md) | [Patterns Index](./00-patterns-index.md) | [Algorithms Theory](../shared/01-cs-fundamentals/algorithms-theory.md)
+> **See also**: [Study Guide](./00-study-guide.md) | [Patterns Index](./00-patterns-index.md) | [Format Rules](./RULES.md) | [Algorithms Theory](../shared/01-cs-fundamentals/algorithms-theory.md)
 
 ---
 
 ## 🎯 Start Here / Bắt Đầu Từ Đây
 
-| Guide | Mục đích |
-|-------|----------|
-| **[Study Guide](./00-study-guide.md)** | ⭐ Interview priority tiers — biết ôn gì trước |
-| **[Patterns Index](./00-patterns-index.md)** | 12 patterns — nhận dạng pattern cho mọi bài |
-| **[Problem-Solving Meta Guide](../fe-track/13-coding-practice/00-problem-solving-meta-guide.md)** | UNPACK method — cách tiếp cận bài mới |
+| Guide                                                                                             | Mục đích                                       |
+| ------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| **[Study Guide](./00-study-guide.md)**                                                            | ⭐ Interview priority tiers — biết ôn gì trước |
+| **[Patterns Index](./00-patterns-index.md)**                                                      | 12 patterns — nhận dạng pattern cho mọi bài    |
+| **[Format Rules](./RULES.md)**                                                                    | 📐 Standard format for all problem files       |
+| **[Problem-Solving Meta Guide](../fe-track/13-coding-practice/00-problem-solving-meta-guide.md)** | UNPACK method — cách tiếp cận bài mới          |
 
 ---
 
 ## Problem Categories / Danh Mục Bài Tập
 
 ### [Array](array/) — 28 Problems
+
 Two pointers, sliding window, intervals, matrix, prefix sum
-- 🟢 Easy: 10 | 🟡 Medium: 14 | 🔴 Hard: 4
+
+- 🟢 Easy: 10 | 🟡 Medium: 16 | 🔴 Hard: 2
 
 ### [String](string/) — 21 Problems
+
 Pattern matching, palindrome, substring, anagram
+
 - 🟢 Easy: 8 | 🟡 Medium: 10 | 🔴 Hard: 3
 
-### [Tree & Graph](tree-graph/) — 18 Problems
+### [Tree & Graph](tree-graph/) — 19 Problems
+
 DFS, BFS, BST, topological sort, shortest path
-- 🟢 Easy: 5 | 🟡 Medium: 9 | 🔴 Hard: 4
+
+- 🟢 Easy: 4 | 🟡 Medium: 11 | 🔴 Hard: 4
 
 ### [Dynamic Programming](dp/) — 12 Problems
+
 Fibonacci, knapsack, LIS, LCS, grid DP
-- 🟢 Easy: 3 | 🟡 Medium: 5 | 🔴 Hard: 4
+
+- 🟢 Easy: 2 | 🟡 Medium: 8 | 🔴 Hard: 2
 
 ### [Backtracking](backtracking/) — 11 Problems
+
 Subsets, permutations, combinations, constraint satisfaction
-- 🟡 Medium: 7 | 🔴 Hard: 4
 
-### [Linked List](linked-list/) — 11 Problems
-Reversal, merge, cycle detection, two pointers
-- 🟢 Easy: 5 | 🟡 Medium: 4 | 🔴 Hard: 2
-
-### [Design](design/) — 11 Problems
-LRU Cache, data structure design, OOP design
 - 🟡 Medium: 8 | 🔴 Hard: 3
 
-### [Stack & Queue / Others](others/) — 10 Problems
+### [Linked List](linked-list/) — 11 Problems
+
+Reversal, merge, cycle detection, two pointers
+
+- 🟢 Easy: 5 | 🟡 Medium: 5 | 🔴 Hard: 1
+
+### [Design](design/) — 10 Problems
+
+LRU Cache, data structure design, OOP design
+
+- 🟢 Easy: 2 | 🟡 Medium: 8
+
+### [Stack & Queue / Others](others/) — 7 Problems
+
 Valid parentheses, monotonic stack, queue patterns
-- 🟢 Easy: 4 | 🟡 Medium: 4 | 🔴 Hard: 2
+
+- 🟢 Easy: 3 | 🟡 Medium: 4
 
 ### [Sorting & Searching](sorting-searching/) — 6 Problems
+
 Binary search, merge sort, quick select
-- 🟢 Easy: 2 | 🟡 Medium: 2 | 🔴 Hard: 2
+
+- 🟢 Easy: 2 | 🟡 Medium: 3 | 🔴 Hard: 1
 
 ### [Math](math/) — 5 Problems
+
 Number theory, bit manipulation
-- 🟢 Easy: 2 | 🟡 Medium: 2 | 🔴 Hard: 1
+
+- 🟢 Easy: 3 | 🟡 Medium: 2
 
 ---
 
 ## Statistics / Thống Kê
 
 ```
-Total: 133 problems
-By difficulty: 🟢 39 Easy | 🟡 65 Medium | 🔴 29 Hard
+Total: 130 problems
+By difficulty: 🟢 39 Easy | 🟡 75 Medium | 🔴 16 Hard
 
 Coverage by pattern:
 ├── Two Pointers:     9 problems  ✅
@@ -84,11 +105,11 @@ Coverage by pattern:
 
 ## Study Path by Level / Lộ Trình Theo Level
 
-| Level | Focus | Target | Guide |
-|-------|-------|--------|-------|
-| 🟢 L3 Junior | Easy + basic Medium | 30 problems | [Study Guide Tier 1](./00-study-guide.md) |
-| 🟡 L4 Mid | All Medium patterns | 50 problems | [Study Guide Tier 1+2](./00-study-guide.md) |
-| 🔴 L5 Senior | Hard + optimization | 80+ problems | [Full Study Guide](./00-study-guide.md) |
+| Level        | Focus               | Target       | Guide                                       |
+| ------------ | ------------------- | ------------ | ------------------------------------------- |
+| 🟢 L3 Junior | Easy + basic Medium | 30 problems  | [Study Guide Tier 1](./00-study-guide.md)   |
+| 🟡 L4 Mid    | All Medium patterns | 50 problems  | [Study Guide Tier 1+2](./00-study-guide.md) |
+| 🔴 L5 Senior | Hard + optimization | 80+ problems | [Full Study Guide](./00-study-guide.md)     |
 
 ---
 
