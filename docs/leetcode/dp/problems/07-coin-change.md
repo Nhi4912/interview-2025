@@ -7,17 +7,42 @@ tags: [Dynamic Programming, Hash Table, Greedy]
 leetcode_url: "https://leetcode.com/problems/coin-change/"
 ---
 
-# Coin Change
+# Coin Change / Đổi Tiền
 
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: DP — Unbounded Knapsack
+> **Frequency**: 🔥 Tier 1 — Classic DP, mọi danh sách must-know
+> **See also**: [Climbing Stairs](./01-climbing-stairs.md) | [House Robber](./04-house-robber.md)
 
+---
 
+## 🧠 Intuition / Tư Duy
 
-> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+**Analogy:** Đổi tiền tại ngân hàng — có mệnh giá [1, 5, 10] đồng, cần đổi 11 đồng với ÍT tờ nhất. Tự hỏi: "11 đồng = 1 tờ + cách tối ưu đổi (11-mệnh_giá)"
+
+**Pattern:** "minimum number of X to reach amount" → **DP bottom-up**
+- `dp[i]` = số xu ít nhất để đổi được `i` đồng
+- Transition: `dp[i] = min(dp[i], dp[i - coin] + 1)` với mỗi coin ≤ i
+
+**Visual — dp table for coins=[1,5,10], amount=11:**
+```
+dp[0] = 0  (base: 0 coins to make 0)
+dp[1] = min(dp[1-1]+1) = 1          → [1]
+dp[2] = min(dp[2-1]+1) = 2          → [1,1]
+dp[5] = min(dp[4]+1, dp[0]+1) = 1   → [5]
+dp[6] = min(dp[5]+1, dp[1]+1) = 2   → [5,1]
+dp[10]= min(dp[9]+1, dp[5]+1, dp[0]+1) = 1 → [10]
+dp[11]= min(dp[10]+1, dp[6]+1, dp[1]+1) = 2 → [10,1]
+
+Answer: dp[11] = 2
+```
+
+---
 
 ## Problem Description
 
- *  * You are given an integer array coins representing coins of different denominations  * and an integer amount representing a total amount of money.  *  * Return the fewest number of coins that you need to make up that amount. If that 
+**LeetCode #322.** Given coins of different denominations and an amount, return the fewest coins to make up amount. Return -1 if impossible.
+
+ * You are given an integer array coins representing coins of different denominations  * and an integer amount representing a total amount of money.  *  * Return the fewest number of coins that you need to make up that amount. If that 
 
 ## Solutions
 

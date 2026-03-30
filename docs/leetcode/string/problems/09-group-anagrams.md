@@ -7,16 +7,40 @@ tags: [String, Hash Table, Sorting]
 leetcode_url: "https://leetcode.com/problems/group-anagram/"
 ---
 
-# Group Anagram
+# Group Anagrams / Nhóm Các Anagram
 
-> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Hash Map
+> **Frequency**: 🔥 Tier 1 — Top 10 most asked
+> **See also**: [Valid Anagram](./04-valid-anagram.md) | [Find All Anagrams](./19-find-all-anagrams-in-string.md)
 
-**LeetCode Problem # * 49. Group Anagrams**
+---
+
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** Bạn có 100 thẻ từ, cần nhóm các từ "cùng bộ chữ cái" — "eat", "tea", "ate" đều dùng {a,e,t}. Sort chữ cái mỗi từ → cùng key = cùng nhóm.
+
+**Pattern:** group by equivalence → HashMap với canonical key
+
+**Visual:**
+```
+Input: ["eat","tea","tan","ate","nat","bat"]
+
+Sort each word → canonical key:
+  "eat"→"aet"  "tea"→"aet"  "tan"→"ant"
+  "ate"→"aet"  "nat"→"ant"  "bat"→"abt"
+
+HashMap:
+  "aet" → ["eat","tea","ate"]
+  "ant" → ["tan","nat"]
+  "abt" → ["bat"]
+```
+
+---
 
 ## Problem Description
 
- * Given an array of strings strs, group the anagrams together. You can return  * the answer in any order.  *  * An Anagram is a word or phrase formed by rearranging the letters of a different  * word or phrase, typically using all the original letters exactly once. 
+**LeetCode #49.** Given an array of strings `strs`, group the anagrams together. Return in any order.
+An Anagram uses all original letters exactly once.
 
 ## Solutions
 

@@ -7,16 +7,40 @@ tags: [Design, Hash Table]
 leetcode_url: "https://leetcode.com/problems/lru-cache/"
 ---
 
-# LRU Cache
+# LRU Cache / Bộ Nhớ Cache LRU
 
-> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: HashMap + Doubly Linked List
+> **Frequency**: 🔥 Tier 1 — Classic design problem, gặp ở mọi FAANG
+> **See also**: [Design Hit Counter](./07-design-hit-counter.md) | [Top K Frequent](../../array/problems/29-top-k-frequent-elements.md)
 
-**LeetCode Problem # * 146. LRU Cache**
+---
+
+## 🧠 Intuition / Tư Duy
+
+**Analogy:** Bàn làm việc có 5 chỗ. Mỗi lần lấy tài liệu → đặt lên đầu bàn (most recently used). Khi bàn đầy và cần chỗ mới → bỏ tài liệu cuối bàn (least recently used). **HashMap** = tìm tài liệu O(1). **Doubly Linked List** = di chuyển lên đầu/bỏ cuối O(1).
+
+**Pattern:** O(1) get + O(1) put → cần cả HashMap AND Doubly Linked List. Một mình HashMap không đủ (không track order). Một mình List không đủ (O(n) lookup).
+
+**Visual:**
+```
+Capacity = 3. Operations: put(1), put(2), put(3), get(1), put(4)
+
+After put(1,1): HEAD ↔ [1] ↔ TAIL
+After put(2,2): HEAD ↔ [2] ↔ [1] ↔ TAIL   (newest at head)
+After put(3,3): HEAD ↔ [3] ↔ [2] ↔ [1] ↔ TAIL
+After get(1):   HEAD ↔ [1] ↔ [3] ↔ [2] ↔ TAIL   (1 moved to front)
+After put(4,4): HEAD ↔ [4] ↔ [1] ↔ [3] ↔ TAIL   (2 evicted — LRU)
+                                              ↑ 2 removed (tail)
+```
+
+---
 
 ## Problem Description
 
-LeetCode problem solution with multiple approaches and explanations.
+**LeetCode #146.** Design a data structure that follows LRU (Least Recently Used) cache constraints.
+- `get(key)` → return value if exists, else -1. Mark as recently used.
+- `put(key, value)` → insert/update. If capacity exceeded, evict LRU key.
+- Both operations must be **O(1)**.
 
 ## Solutions
 

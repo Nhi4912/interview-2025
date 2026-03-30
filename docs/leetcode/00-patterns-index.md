@@ -87,6 +87,7 @@ Phỏng vấn không test bạn nhớ bài nào — mà test bạn **nhận ra p
 | 8 | [Serialize/Deserialize Binary Tree](./tree-graph/problems/14-serialize-deserialize-binary-tree.md) | 🔴 Hard | tree |
 | 9 | [Alien Dictionary](./tree-graph/problems/18-alien-dictionary.md) | 🔴 Hard | graph |
 | 10 | [Binary Tree Max Path Sum](./tree-graph/problems/17-binary-tree-maximum-path-sum.md) | 🔴 Hard | tree |
+| 11 | [Clone Graph](./tree-graph/problems/19-clone-graph.md) | 🟡 Medium | graph |
 
 **📚 Theory**: [Data Structures — Trees & Graphs](../shared/01-cs-fundamentals/data-structures-theory.md)
 
@@ -108,8 +109,9 @@ Phỏng vấn không test bạn nhớ bài nào — mà test bạn **nhận ra p
 | 7 | [Longest Increasing Subsequence](./dp/problems/08-longest-increasing-subsequence.md) | 🟡 Medium | dp |
 | 8 | [Longest Common Subsequence](./dp/problems/09-longest-common-subsequence.md) | 🟡 Medium | dp |
 | 9 | [Word Break](./string/problems/20-word-break.md) | 🟡 Medium | string/dp |
-| 10 | [Edit Distance](./dp/problems/10-edit-distance.md) | 🔴 Hard | dp |
-| 11 | [Regular Expression Matching](./dp/problems/11-regular-expression-matching.md) | 🔴 Hard | dp |
+| 10 | [Longest Palindromic Substring](./string/problems/23-longest-palindromic-substring.md) | 🟡 Medium | string/dp |
+| 11 | [Edit Distance](./dp/problems/10-edit-distance.md) | 🔴 Hard | dp |
+| 12 | [Regular Expression Matching](./dp/problems/11-regular-expression-matching.md) | 🔴 Hard | dp |
 
 **📚 Theory**: [Algorithms Theory — DP](../shared/01-cs-fundamentals/algorithms-theory.md)
 
@@ -151,7 +153,7 @@ Phỏng vấn không test bạn nhớ bài nào — mà test bạn **nhận ra p
 | 5 | [Remove Nth Node from End](./linked-list/problems/04-remove-nth-node-from-end-of-list.md) | 🟡 Medium | linked-list |
 | 6 | [Add Two Numbers](./linked-list/problems/07-add-two-numbers.md) | 🟡 Medium | linked-list |
 | 7 | [Copy List with Random Pointer](./linked-list/problems/11-copy-list-with-random-pointer.md) | 🟡 Medium | linked-list |
-| 8 | [Merge K Sorted Lists](./linked-list/problems/10-merge-k-sorted-lists.md) | 🔴 Hard | linked-list |
+| 8 | [Merge K Sorted Lists](./linked-list/problems/12-merge-k-sorted-lists.md) | 🔴 Hard | linked-list |
 
 **📚 Theory**: [Data Structures — Linked Lists](../shared/01-cs-fundamentals/data-structures-theory.md)
 
@@ -169,6 +171,7 @@ Phỏng vấn không test bạn nhớ bài nào — mà test bạn **nhận ra p
 | 3 | [Implement Queue Using Stacks](./others/problems/02-implement-queue-using-stacks.md) | 🟢 Easy | others |
 | 4 | [Implement Stack Using Queues](./others/problems/03-implement-stack-using-queues.md) | 🟢 Easy | others |
 | 5 | [Design Circular Queue](./others/problems/07-design-circular-queue.md) | 🟡 Medium | others |
+| 6 | [Daily Temperatures](./others/problems/11-daily-temperatures.md) | 🟡 Medium | others |
 
 **📚 Theory**: [Data Structures — Stacks & Queues](../shared/01-cs-fundamentals/data-structures-theory.md)
 
@@ -186,8 +189,9 @@ Phỏng vấn không test bạn nhớ bài nào — mà test bạn **nhận ra p
 | 3 | [Valid Anagram](./string/problems/04-valid-anagram.md) | 🟢 Easy | string |
 | 4 | [First Unique Character](./string/problems/03-first-unique-character-in-a-string.md) | 🟢 Easy | string |
 | 5 | [Group Anagrams](./string/problems/09-group-anagrams.md) | 🟡 Medium | string |
-| 6 | [Intersection of Two Arrays II](./array/problems/07-intersection-of-two-arrays-ii.md) | 🟢 Easy | array |
-| 7 | [Product of Array Except Self](./array/problems/17-product-of-array-except-self.md) | 🟡 Medium | array |
+| 6 | [Top K Frequent Elements](./array/problems/29-top-k-frequent-elements.md) | 🟡 Medium | array |
+| 7 | [Intersection of Two Arrays II](./array/problems/07-intersection-of-two-arrays-ii.md) | 🟢 Easy | array |
+| 8 | [Product of Array Except Self](./array/problems/17-product-of-array-except-self.md) | 🟡 Medium | array |
 
 **📚 Theory**: [Data Structures — Hash Tables](../shared/01-cs-fundamentals/data-structures-theory.md)
 

@@ -7,16 +7,56 @@ tags: [Array, Two Pointers, Hash Table, Sorting]
 leetcode_url: "https://leetcode.com/problems/two-sum/"
 ---
 
-# Two Sum
+# Two Sum / Tổng Hai Số
 
-> **Track**: Shared | **Difficulty**: 🟢 Junior → 🔴 Senior
-> **See also**: [Table of Contents](../../../00-table-of-contents.md)
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map
+> **Frequency**: 🔥 Tier 1 — Gặp >70% interviews
+> **See also**: [3Sum](../../array/problems/12-3sum.md) | [Two Pointers Sorted](../../array/problems/28-two-pointers-sorted.md)
 
-**LeetCode Problem # * 1. Two Sum**
+---
+
+## 🧠 Intuition / Tư Duy
+
+**Analogy / Liên tưởng:** Bạn có danh sách giá sản phẩm và cần tìm 2 sản phẩm có tổng giá đúng bằng budget. Cách ngu nhất: so sánh từng cặp (O(n²)). Cách thông minh: ghi nhớ "mình cần thêm bao nhiêu" vào sổ tay (HashMap) → khi gặp đúng số cần → xong.
+
+**Pattern Recognition / Nhận dạng:**
+- Signal: "two numbers that sum to target" → **Hash Map lookup**
+- Key insight: thay vì tìm cặp (a, b) sao cho a+b=target, ta tìm complement = target - a
+- Nếu array đã sorted → dùng **Two Pointers** (O(1) space). Nếu chưa sorted → **Hash Map** (O(n) time)
+
+**Visual / Trực quan:**
+```
+nums = [2, 7, 11, 15], target = 9
+
+Step 1: num=2, complement=9-2=7, map={} → 7 not in map → store {2:0}
+Step 2: num=7, complement=9-7=2, map={2:0} → 2 IS in map! → return [0, 1] ✅
+
+Map acts as "wish list": "I need 7" → later find 7 → match!
+```
+
+---
 
 ## Problem Description
 
- * Given an array of integers nums and an integer target, return indices of the two numbers  * such that they add up to target. You may assume that each input would have exactly one  * solution, and you may not use the same element twice.  *  * You can return the answer in any order. 
+Given an array of integers `nums` and an integer `target`, return indices of the two numbers such that they add up to `target`. You may assume that each input would have exactly one solution, and you may not use the same element twice.
+
+```
+Example 1: nums = [2,7,11,15], target = 9 → [0,1]
+Example 2: nums = [3,2,4], target = 6 → [1,2]
+Example 3: nums = [3,3], target = 6 → [0,1]
+```
+
+---
+
+## 📝 Interview Tips / Mẹo Phỏng Vấn
+
+1. **Hỏi constraints trước**: "Is the array sorted?" → nếu sorted, Two Pointers O(1) space
+2. **Nói approach trước khi code**: "I'll use a hash map to store complements"
+3. **Edge cases**: duplicate values `[3,3]`, negative numbers, single-pass vs two-pass
+4. **Follow-up thường gặp**: "Can you do it in one pass?" → Yes, check then store in same loop
+5. **Biến thể**: 3Sum, 4Sum, Two Sum II (sorted), Two Sum III (design class)
+
+---
 
 ## Solutions
 
