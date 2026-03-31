@@ -7,100 +7,141 @@ tags: [Two Pointers, String, Stack, Simulation]
 leetcode_url: "https://leetcode.com/problems/backspace-string-compare"
 ---
 
-# Backspace String Compare / Backspace String Compare
+# Backspace String Compare / So Sánh Chuỗi Có Ký Tự Xóa
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Two Pointers
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Two Pointers / Stack
 > **Frequency**: 📘 Tier 3 — Gặp ở 10 companies
-> **See also**: [Design a Text Editor](https://leetcode.com/problems/design-a-text-editor) | [Minimum Number of Swaps to Make the String Balanced](https://leetcode.com/problems/minimum-number-of-swaps-to-make-the-string-balanced)
+> **See also**: [Design a Text Editor](https://leetcode.com/problems/design-a-text-editor) | [Remove All Adjacent Duplicates In String](https://leetcode.com/problems/remove-all-adjacent-duplicates-in-string)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Hãy tưởng tượng hai người đi từ hai đầu con đường, tiến lại gần nhau. Mỗi bước, người nào ở vị trí "tốt hơn" sẽ đứng yên, người kia tiến. Khi họ gặp nhau, bài toán được giải.
+**Analogy (Vietnamese):** Giống hai người đang gõ bàn phím — mỗi khi gõ `#`, ký tự trước bị xóa. Cách đơn giản: dùng stack mô phỏng gõ từng ký tự. Cách tối ưu: đọc từ **cuối lên** — gặp `#` thì bỏ qua ký tự kế tiếp, gặp ký tự bình thường thì so sánh.
 
-**Pattern Recognition:**
-
-- Signal: "sorted array" + "find pair/triplet" → **Two Pointers**
-- Bài này thuộc dạng Two Pointers — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Backspace String Compare example:**
+**Pattern Recognition:** "Simulate typing with backspace" → Stack O(n) space; hoặc Two-pointer right-to-left O(1) space.
 
 ```
-arr = [... sorted ...]
- L                 R
+s = "ab#c"    t = "ad#c"
+Stack: a→[a], b→[a,b], #→[a], c→[a,c]   ⟹ "ac"
+Stack: a→[a], d→[a,d], #→[a], c→[a,c]   ⟹ "ac"
+"ac" == "ac" → true
 
-Step 1: check condition → move L or R
-Step 2: ...
-Step N: condition met ✅
+Two-pointer reverse:
+s: c ← # ← b(skip) ← a    → compare 'c','a'...
 ```
 
 ---
 
-## Problem Description
+## 📋 Problem / Bài Toán
 
-Backspace String Compare. ([LeetCode](https://leetcode.com/problems/backspace-string-compare))
+Given strings `s` and `t` where `#` means a backspace character, return `true` if they are equal after processing all backspaces.
 
-Difficulty: Easy | Acceptance: 49.5%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/backspace-string-compare) for full constraints
+- `s="ab#c", t="ad#c"` → `true` (both become "ac")
+- `s="ab##", t="c#d#"` → `true` (both become "")
+- `s="a#c",  t="b"` → `false` ("c" vs "b")
 
 ---
 
-## 📝 Interview Tips
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-1. **Clarify**: "Mảng đã sorted chưa? Có duplicate không?" / Ask if array is sorted and if duplicates exist
-2. **Brute force**: "Dùng 2 vòng for O(n²)" → optimize with two pointers O(n) / Start with nested loops, then optimize
-3. **Optimize**: "Vì mảng sorted, dùng 2 con trỏ L/R tiến vào giữa" / Since sorted, use L/R pointers moving inward
-4. **Edge cases**: "Mảng rỗng, một phần tử, tất cả giống nhau" / Empty array, single element, all same values
+- 🔑 **Stack is clearest**: Xử lý từng ký tự, `#` pop nếu stack không rỗng — code rất dễ viết và explain.
+- 🔑 **Nhận biết**: "Stack" khi cần undo/backtrack; "Two-pointer from end" khi yêu cầu O(1) space.
+- ⚡ **Follow-up O(1) space**: Scan từ cuối — đếm `skipCount` cho mỗi `#`; bỏ qua `skipCount` ký tự tiếp theo.
+- ⚡ **Reverse scan logic**: Duy trì `skipS` và `skipT`; advance pointer cho đến khi có ký tự hợp lệ để so sánh.
+- 🚨 **Multiple consecutive `#`**: `"abc###"` → cả 3 ký tự bị xóa, stack thành rỗng → hợp lệ.
+- 💡 **Extra `#` ở đầu**: `"#a"` → xóa trên stack rỗng không làm gì → kết quả "a".
 
 ---
 
 ## Solutions
 
+### Solution 1 — Stack Simulation · O(n+m) time · O(n+m) space
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Simulate typing: push chars, pop on '#' (if stack non-empty).
+ * Compare final stacks by joining to strings.
+ * Time: O(n + m) | Space: O(n + m)
  */
-function backspaceStringCompareBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function backspaceCompare_stack(s: string, t: string): boolean {
+  function process(str: string): string {
+    const stack: string[] = [];
+    for (const ch of str) {
+      if (ch === "#") {
+        if (stack.length) stack.pop();
+      } else stack.push(ch);
+    }
+    return stack.join("");
+  }
+  return process(s) === process(t);
 }
 
+console.log(backspaceCompare_stack("ab#c", "ad#c")); // true
+console.log(backspaceCompare_stack("ab##", "c#d#")); // true
+console.log(backspaceCompare_stack("a#c", "b")); // false
+console.log(backspaceCompare_stack("y#fo##f", "y#f#o##f")); // true
+```
+
+### Solution 2 — Reverse Two Pointers · O(n+m) time · O(1) space
+
+```typescript
 /**
- * Solution 2: Optimized — Two Pointers
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Scan both strings from right to left simultaneously.
+ * Count '#' as pending skips; skip that many real chars.
+ * Compare the next valid chars from each string.
+ * Time: O(n + m) | Space: O(1)
  */
-function backspaceStringCompare(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Two Pointers
-  // Hint: Use L/R pointers on sorted input, move based on comparison
-  throw new Error('Not implemented');
+function backspaceCompare(s: string, t: string): boolean {
+  let i = s.length - 1,
+    j = t.length - 1;
+  let skipS = 0,
+    skipT = 0;
+
+  while (i >= 0 || j >= 0) {
+    // advance i to next valid char in s
+    while (i >= 0) {
+      if (s[i] === "#") {
+        skipS++;
+        i--;
+      } else if (skipS > 0) {
+        skipS--;
+        i--;
+      } else break;
+    }
+    // advance j to next valid char in t
+    while (j >= 0) {
+      if (t[j] === "#") {
+        skipT++;
+        j--;
+      } else if (skipT > 0) {
+        skipT--;
+        j--;
+      } else break;
+    }
+    // compare valid chars (or exhaustion)
+    if (i >= 0 && j >= 0 && s[i] !== t[j]) return false;
+    if (i >= 0 !== j >= 0) return false; // one exhausted, other not
+    i--;
+    j--;
+  }
+  return true;
 }
 
-// === Test Cases ===
-// console.log(backspaceStringCompare(/* example 1 */)); // expected
-// console.log(backspaceStringCompare(/* example 2 */)); // expected
-// console.log(backspaceStringCompare(/* edge case */)); // expected
+console.log(backspaceCompare("ab#c", "ad#c")); // true
+console.log(backspaceCompare("ab##", "c#d#")); // true
+console.log(backspaceCompare("a#c", "b")); // false
+console.log(backspaceCompare("", "")); // true
+console.log(backspaceCompare("bbbextm", "bbb#extm")); // false
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Design a Text Editor](https://leetcode.com/problems/design-a-text-editor) — same pattern: Linked List
-- [Minimum Number of Swaps to Make the String Balanced](https://leetcode.com/problems/minimum-number-of-swaps-to-make-the-string-balanced) — same pattern: Two Pointers
-- [Remove All Occurrences of a Substring](https://leetcode.com/problems/remove-all-occurrences-of-a-substring) — same pattern: Stack
-- [Minimum String Length After Removing Substrings](https://leetcode.com/problems/minimum-string-length-after-removing-substrings) — same pattern: Stack
-- [Backspace String Compare — LeetCode](https://leetcode.com/problems/backspace-string-compare) — problem page
+| Problem                                                                                                            | Difficulty | Pattern             |
+| ------------------------------------------------------------------------------------------------------------------ | ---------- | ------------------- |
+| [Design a Text Editor](https://leetcode.com/problems/design-a-text-editor)                                         | 🔴 Hard    | Stack / Linked List |
+| [Remove All Adjacent Duplicates In String](https://leetcode.com/problems/remove-all-adjacent-duplicates-in-string) | 🟢 Easy    | Stack               |
+| [Remove All Occurrences of a Substring](https://leetcode.com/problems/remove-all-occurrences-of-a-substring)       | 🟡 Medium  | Stack               |
+| [Simplify Path](https://leetcode.com/problems/simplify-path)                                                       | 🟡 Medium  | Stack               |

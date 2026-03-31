@@ -7,100 +7,140 @@ tags: [Tree, Depth-First Search, Breadth-First Search, Binary Tree]
 leetcode_url: "https://leetcode.com/problems/same-tree"
 ---
 
-# Same Tree / Same Tree
+# Same Tree / Hai Cây Giống Nhau
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: BFS
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: DFS / BFS
 > **Frequency**: 📘 Tier 3 — Gặp ở 11 companies
-> **See also**: [Serialize and Deserialize Binary Tree](https://leetcode.com/problems/serialize-and-deserialize-binary-tree) | [Binary Tree Right Side View](https://leetcode.com/problems/binary-tree-right-side-view)
+> **See also**: [Symmetric Tree](https://leetcode.com/problems/symmetric-tree) | [Subtree of Another Tree](https://leetcode.com/problems/subtree-of-another-tree)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như ném đá xuống ao — sóng lan ra theo từng vòng đều đặn. Khám phá hết tất cả ở khoảng cách 1, rồi mới sang khoảng cách 2.
+**Analogy:** So sánh hai bản cây gia phả song song — bắt đầu từ gốc, kiểm tra từng thế hệ. Nếu cả hai trống thì giống nhau. Nếu một cái trống còn cái kia không — khác nhau. Nếu giá trị khác nhau — khác nhau. Còn lại: đệ quy kiểm tra cháu tiếp theo.
 
-**Pattern Recognition:**
-
-- Signal: "shortest path (unweighted)" + "level-order" → **BFS**
-- Bài này thuộc dạng BFS — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Same Tree example:**
+**Pattern:** Recursive DFS — cùng một lúc duyệt hai cây song song; BFS dùng queue để duyệt theo tầng.
 
 ```
-Level 0:     [root]
-Level 1:   [A, B]
-Level 2: [C, D, E]
+Tree p:       Tree q:
+    1             1
+   / \           / \
+  2   3         2   3
 
-BFS: process level by level using queue
+DFS check:
+  p(1) == q(1) ✅ → recurse left, recurse right
+  p(2) == q(2) ✅ → recurse left (null==null✅), right (null==null✅)
+  p(3) == q(3) ✅ → same
+  → return true ✅
 ```
 
 ---
 
-## Problem Description
+Cho hai cây nhị phân `p` và `q`, kiểm tra xem chúng có **giống nhau về cấu trúc lẫn giá trị** hay không.
 
-Same Tree. ([LeetCode](https://leetcode.com/problems/same-tree))
-
-Difficulty: Easy | Acceptance: 65.1%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/same-tree) for full constraints
+- `p = [1,2,3], q = [1,2,3]` → `true`
+- `p = [1,2], q = [1,null,2]` → `false` (cấu trúc khác)
+- `p = [1,2,1], q = [1,1,2]` → `false` (giá trị khác)
 
 ---
 
-## 📝 Interview Tips
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🇻🇳 **Ba base cases**: cả hai null (true), một null (false), giá trị khác nhau (false)
+- 🇺🇸 **Recursive DFS**: most concise; T = O(n), S = O(h) where h = tree height
+- 🇻🇳 **BFS với queue**: hữu ích khi interviewer hỏi iterative solution; process node pairs mỗi step
+- 🇺🇸 **Enqueue both trees in sync**: push `[pNode, qNode]` pairs; null nodes are valid entries
+- 🇻🇳 **Edge case**: cả hai null → true; một null → false — phải check trước khi truy cập `.val`
+- 🇺🇸 **Worst case O(n)**: must visit every node to confirm equality; no early partial match
 
 ---
 
 ## Solutions
 
+### Solution 1: Recursive DFS — O(n) time, O(h) space
+
+```typescript
+class TreeNode {
+  val: number;
+  left: TreeNode | null;
+  right: TreeNode | null;
+  constructor(val = 0, left: TreeNode | null = null, right: TreeNode | null = null) {
+    this.val = val;
+    this.left = left;
+    this.right = right;
+  }
+}
+
+/**
+ * Recursively compare nodes pair by pair in DFS order
+ * Time: O(n) | Space: O(h) call stack where h = tree height
+ */
+function isSameTree(p: TreeNode | null, q: TreeNode | null): boolean {
+  if (p === null && q === null) return true; // both empty → same
+  if (p === null || q === null) return false; // one empty, one not → different
+  if (p.val !== q.val) return false; // values differ → different
+
+  // Recurse on both children simultaneously
+  return isSameTree(p.left, q.left) && isSameTree(p.right, q.right);
+}
+
+// Build helper
+const node = (v: number, l: TreeNode | null = null, r: TreeNode | null = null) =>
+  new TreeNode(v, l, r);
+
+// Tests
+const p1 = node(1, node(2), node(3));
+const q1 = node(1, node(2), node(3));
+console.log(isSameTree(p1, q1)); // true
+
+const p2 = node(1, node(2));
+const q2 = node(1, null, node(2));
+console.log(isSameTree(p2, q2)); // false
+
+console.log(isSameTree(null, null)); // true
+console.log(isSameTree(node(1), null)); // false
+```
+
+### Solution 2: Iterative BFS with Queue — O(n) time, O(n) space
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Use a queue of node-pairs; process level by level, comparing each pair
+ * Time: O(n) | Space: O(n) for queue (worst: full last level)
  */
-function sameTreeBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function isSameTreeBFS(p: TreeNode | null, q: TreeNode | null): boolean {
+  const queue: Array<[TreeNode | null, TreeNode | null]> = [[p, q]];
+
+  while (queue.length > 0) {
+    const [nodeP, nodeQ] = queue.shift()!;
+
+    if (nodeP === null && nodeQ === null) continue; // both null → ok, skip
+    if (nodeP === null || nodeQ === null) return false;
+    if (nodeP.val !== nodeQ.val) return false;
+
+    // Enqueue children pairs in sync
+    queue.push([nodeP.left, nodeQ.left]);
+    queue.push([nodeP.right, nodeQ.right]);
+  }
+
+  return true;
 }
 
-/**
- * Solution 2: Optimized — BFS
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function sameTree(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using BFS
-  // Hint: Use queue, process level by level
-  throw new Error('Not implemented');
-}
+const p3 = node(1, node(2), node(3));
+const q3 = node(1, node(2), node(3));
+console.log(isSameTreeBFS(p3, q3)); // true
 
-// === Test Cases ===
-// console.log(sameTree(/* example 1 */)); // expected
-// console.log(sameTree(/* example 2 */)); // expected
-// console.log(sameTree(/* edge case */)); // expected
+const p4 = node(1, node(2), node(1));
+const q4 = node(1, node(1), node(2));
+console.log(isSameTreeBFS(p4, q4)); // false
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Serialize and Deserialize Binary Tree](https://leetcode.com/problems/serialize-and-deserialize-binary-tree) — same pattern: BFS
-- [Binary Tree Right Side View](https://leetcode.com/problems/binary-tree-right-side-view) — same pattern: BFS
-- [All Nodes Distance K in Binary Tree](https://leetcode.com/problems/all-nodes-distance-k-in-binary-tree) — same pattern: BFS
-- [Amount of Time for Binary Tree to Be Infected](https://leetcode.com/problems/amount-of-time-for-binary-tree-to-be-infected) — same pattern: BFS
-- [Same Tree — LeetCode](https://leetcode.com/problems/same-tree) — problem page
+| Problem                                                                                                      | Difficulty | Pattern                  |
+| ------------------------------------------------------------------------------------------------------------ | ---------- | ------------------------ |
+| [Symmetric Tree](https://leetcode.com/problems/symmetric-tree)                                               | 🟢 Easy    | Mirror comparison DFS    |
+| [Subtree of Another Tree](https://leetcode.com/problems/subtree-of-another-tree)                             | 🟢 Easy    | isSameTree as subroutine |
+| [Serialize and Deserialize Binary Tree](https://leetcode.com/problems/serialize-and-deserialize-binary-tree) | 🔴 Hard    | BFS level-order          |

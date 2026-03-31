@@ -7,62 +7,60 @@ tags: [Array, Dynamic Programming, Matrix]
 leetcode_url: "https://leetcode.com/problems/minimum-path-sum"
 ---
 
-# Minimum Path Sum / Minimum Path Sum
+# Minimum Path Sum / Tổng Đường Đi Nhỏ Nhất
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 15 companies
-> **See also**: [Maximal Square](https://leetcode.com/problems/maximal-square) | [Unique Paths II](https://leetcode.com/problems/unique-paths-ii)
+> **Track**: DP | **Difficulty**: 🟡 Medium | **Pattern**: 2D Dynamic Programming
+> **Frequency**: 📗 Tier 2 — Gặp ở 25+ companies (Amazon, Google, Facebook)
+> **See also**: [Unique Paths](https://leetcode.com/problems/unique-paths) | [Triangle](https://leetcode.com/problems/triangle)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**Analogy:** Hãy tưởng tượng bạn đang đi từ góc trên-trái đến góc dưới-phải của một bản đồ có chi phí di chuyển. Mỗi ô chỉ đến được từ ô trên hoặc ô trái — bạn chọn đường rẻ hơn. Đây là bài toán DP 2D cổ điển: `dp[i][j] = grid[i][j] + min(dp[i-1][j], dp[i][j-1])`.
 
 **Pattern Recognition:**
 
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "grid path", "only right or down", "minimum cost" → **2D DP**
+- `dp[i][j]` = min cost to reach cell (i,j) from (0,0)
+- Space optimization: in-place hoặc rolling 1D array
 
-**Visual — Minimum Path Sum example:**
+**Visual — dp table build-up:**
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+Grid:           dp table:
+1  3  1        1   4   5
+1  5  1   →    2   7   6
+4  2  1        6   8   7 ✅
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+dp[i][j] = grid[i][j] + min(dp[i-1][j], dp[i][j-1])
+Answer = dp[n-1][m-1] = 7
+Path: (0,0)→(0,1)→(0,2)→(1,2)→(2,2) = 1+3+1+1+1 = 7
 ```
 
 ---
 
 ## Problem Description
 
-Minimum Path Sum. ([LeetCode](https://leetcode.com/problems/minimum-path-sum))
-
-Difficulty: Medium | Acceptance: 66.5%
+Given an `m × n` grid filled with non-negative numbers, find a path from top-left to bottom-right that minimizes the sum of all numbers along the path. You can only move right or down at each step.
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+Example 1: grid=[[1,3,1],[1,5,1],[4,2,1]] → 7  (1→3→1→1→1)
+Example 2: grid=[[1,2,3],[4,5,6]] → 12  (1→2→3→6)
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-path-sum) for full constraints
+Constraints: `1 <= m, n <= 200`, `0 <= grid[i][j] <= 200`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+1. **Clarify**: "Chỉ đi phải/xuống? Grid có giá trị âm không?" / Confirm directions and value range.
+2. **State**: `dp[i][j]` = min cost to reach (i,j) — transition từ trên và trái.
+3. **Base cases**: First row accumulates horizontally; first column accumulates vertically.
+4. **In-place**: Modify grid directly to save O(mn) space — acceptable if input can be mutated.
+5. **1D rolling**: Chỉ cần 1 hàng trước đó → O(n) space — mention as follow-up optimization.
+6. **Edge**: 1×1 grid → return grid[0][0]; single row/column → linear sum.
 
 ---
 
@@ -70,39 +68,113 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: 2D DP with separate dp table
+ * Time: O(mn) — visit every cell once
+ * Space: O(mn) — full dp table
  */
-function minimumPathSumBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minPathSum1(grid: number[][]): number {
+  const n = grid.length,
+    m = grid[0].length;
+  const dp: number[][] = Array.from({ length: n }, () => new Array(m).fill(0));
+
+  dp[0][0] = grid[0][0];
+  for (let j = 1; j < m; j++) dp[0][j] = dp[0][j - 1] + grid[0][j];
+  for (let i = 1; i < n; i++) dp[i][0] = dp[i - 1][0] + grid[i][0];
+
+  for (let i = 1; i < n; i++) {
+    for (let j = 1; j < m; j++) {
+      dp[i][j] = grid[i][j] + Math.min(dp[i - 1][j], dp[i][j - 1]);
+    }
+  }
+  return dp[n - 1][m - 1];
 }
 
 /**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: In-place modification (O(1) extra space)
+ * Time: O(mn)
+ * Space: O(1) — mutates the input grid
+ *
+ * Same recurrence but writes directly into grid[i][j].
+ * Trade-off: destroys input — ask interviewer if that's acceptable.
  */
-function minimumPathSum(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function minPathSum2(grid: number[][]): number {
+  const n = grid.length,
+    m = grid[0].length;
+
+  for (let j = 1; j < m; j++) grid[0][j] += grid[0][j - 1];
+  for (let i = 1; i < n; i++) grid[i][0] += grid[i - 1][0];
+
+  for (let i = 1; i < n; i++) {
+    for (let j = 1; j < m; j++) {
+      grid[i][j] += Math.min(grid[i - 1][j], grid[i][j - 1]);
+    }
+  }
+  return grid[n - 1][m - 1];
+}
+
+/**
+ * Solution 3: 1D Rolling Array
+ * Time: O(mn)
+ * Space: O(n) — single array representing current row, updated column by column
+ *
+ * dp[j] after processing row i = min cost to reach (i, j).
+ * dp[j] = grid[i][j] + min(dp[j] /*from above*\/, dp[j-1] /*from left*\/)
+ */
+function minPathSum(grid: number[][]): number {
+  const n = grid.length,
+    m = grid[0].length;
+  const dp = new Array(m).fill(0);
+
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < m; j++) {
+      if (i === 0 && j === 0) dp[j] = grid[0][0];
+      else if (i === 0) dp[j] = dp[j - 1] + grid[i][j];
+      else if (j === 0) dp[j] = dp[j] + grid[i][j];
+      else dp[j] = grid[i][j] + Math.min(dp[j], dp[j - 1]);
+    }
+  }
+  return dp[m - 1];
 }
 
 // === Test Cases ===
-// console.log(minimumPathSum(/* example 1 */)); // expected
-// console.log(minimumPathSum(/* example 2 */)); // expected
-// console.log(minimumPathSum(/* edge case */)); // expected
+console.log(
+  minPathSum([
+    [1, 3, 1],
+    [1, 5, 1],
+    [4, 2, 1],
+  ]),
+); // 7
+console.log(
+  minPathSum([
+    [1, 2, 3],
+    [4, 5, 6],
+  ]),
+); // 12
+console.log(minPathSum([[1]])); // 1
+console.log(
+  minPathSum1([
+    [1, 3, 1],
+    [1, 5, 1],
+    [4, 2, 1],
+  ]),
+); // 7
+console.log(
+  minPathSum2([
+    [1, 3, 1],
+    [1, 5, 1],
+    [4, 2, 1],
+  ]),
+); // 7
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Maximal Square](https://leetcode.com/problems/maximal-square) — same pattern: Dynamic Programming
-- [Unique Paths II](https://leetcode.com/problems/unique-paths-ii) — same pattern: Dynamic Programming
-- [Maximal Rectangle](https://leetcode.com/problems/maximal-rectangle) — same pattern: Monotonic Stack
-- [Cherry Pickup](https://leetcode.com/problems/cherry-pickup) — same pattern: Dynamic Programming
-- [Minimum Path Sum — LeetCode](https://leetcode.com/problems/minimum-path-sum) — problem page
+| Problem                                                                                  | Relationship                           |
+| ---------------------------------------------------------------------------------------- | -------------------------------------- |
+| [62. Unique Paths](https://leetcode.com/problems/unique-paths/)                          | Same grid DP, count paths (no weights) |
+| [63. Unique Paths II](https://leetcode.com/problems/unique-paths-ii/)                    | Add obstacle constraint to grid DP     |
+| [64. Minimum Path Sum](https://leetcode.com/problems/minimum-path-sum/)                  | This problem                           |
+| [120. Triangle](https://leetcode.com/problems/triangle/)                                 | Same min-path DP on triangle shape     |
+| [931. Minimum Falling Path Sum](https://leetcode.com/problems/minimum-falling-path-sum/) | Diagonal moves allowed variant         |

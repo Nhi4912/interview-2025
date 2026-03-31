@@ -7,100 +7,120 @@ tags: [Array, Two Pointers]
 leetcode_url: "https://leetcode.com/problems/remove-element"
 ---
 
-# Remove Element / Remove Element
+# Remove Element / Xóa Phần Tử
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Two Pointers
 > **Frequency**: 📘 Tier 3 — Gặp ở 10 companies
-> **See also**: [Next Permutation](https://leetcode.com/problems/next-permutation) | [4Sum](https://leetcode.com/problems/4sum)
+> **See also**: [Remove Duplicates from Sorted Array](https://leetcode.com/problems/remove-duplicates-from-sorted-array) | [Move Zeroes](https://leetcode.com/problems/move-zeroes)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Hãy tưởng tượng hai người đi từ hai đầu con đường, tiến lại gần nhau. Mỗi bước, người nào ở vị trí "tốt hơn" sẽ đứng yên, người kia tiến. Khi họ gặp nhau, bài toán được giải.
+**Analogy (Vietnamese):** Tưởng tượng hàng người xếp hàng, bạn cần loại bỏ những người mặc áo đỏ. Dùng con trỏ `k` chỉ đến vị trí tiếp theo cho người "không đỏ". Mỗi lần gặp người không đỏ, cho họ vào vị trí `k` và tăng `k`.
 
-**Pattern Recognition:**
-
-- Signal: "sorted array" + "find pair/triplet" → **Two Pointers**
-- Bài này thuộc dạng Two Pointers — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Remove Element example:**
+**Pattern Recognition:** "Remove in-place without extra space" → Two Pointers: slow pointer (write head) + fast pointer (read head).
 
 ```
-arr = [... sorted ...]
- L                 R
-
-Step 1: check condition → move L or R
-Step 2: ...
-Step N: condition met ✅
+nums = [3, 2, 2, 3],  val = 3
+k=0  i=0: nums[0]=3 → skip
+k=0  i=1: nums[1]=2 → nums[0]=2, k=1
+k=1  i=2: nums[2]=2 → nums[1]=2, k=2
+k=2  i=3: nums[3]=3 → skip
+Result: nums[:2] = [2,2],  return k=2
 ```
 
 ---
 
-## Problem Description
+## 📋 Problem / Bài Toán
 
-Remove Element. ([LeetCode](https://leetcode.com/problems/remove-element))
+Given array `nums` and value `val`, remove all occurrences of `val` **in-place** and return the new length `k`. The first `k` elements of `nums` should contain the non-val elements (order doesn't matter).
 
-Difficulty: Easy | Acceptance: 60.0%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/remove-element) for full constraints
+- `nums=[3,2,2,3], val=3` → `k=2`, nums=`[2,2,_,_]`
+- `nums=[0,1,2,2,3,0,4,2], val=2` → `k=5`, nums=`[0,1,4,0,3,_,_,_]`
 
 ---
 
-## 📝 Interview Tips
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-1. **Clarify**: "Mảng đã sorted chưa? Có duplicate không?" / Ask if array is sorted and if duplicates exist
-2. **Brute force**: "Dùng 2 vòng for O(n²)" → optimize with two pointers O(n) / Start with nested loops, then optimize
-3. **Optimize**: "Vì mảng sorted, dùng 2 con trỏ L/R tiến vào giữa" / Since sorted, use L/R pointers moving inward
-4. **Edge cases**: "Mảng rỗng, một phần tử, tất cả giống nhau" / Empty array, single element, all same values
+- 🔑 **Write-pointer pattern**: `k` là số phần tử hợp lệ đã ghi; mỗi lần gặp non-val, `nums[k++] = nums[i]`.
+- 🔑 **Nhận biết**: "In-place removal" + "return new length" → two pointers slow/fast là chuẩn.
+- ⚡ **Swap-with-end variant**: Khi gặp `val`, swap với cuối mảng và giảm right pointer — ít ghi hơn khi val ít.
+- ⚡ **Order matters?**: Bài này không yêu cầu giữ order → swap-with-end tốt hơn; nếu cần order → dùng write pointer.
+- 🚨 **Don't return array**: LeetCode đo result qua `k` và `nums[0..k-1]`, không phải array mới.
+- 💡 **Generalize**: Pattern này dùng cho Remove Duplicates, Move Zeroes — nhận biết "write head" pattern.
 
 ---
 
 ## Solutions
 
+### Solution 1 — Two Pointers (Left Write Head) · O(n) time · O(1) space
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * k = write pointer (count of valid elements).
+ * For each element != val, write it at position k and advance k.
+ * Time: O(n) | Space: O(1)
  */
-function removeElementBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function removeElement_writeHead(nums: number[], val: number): number {
+  let k = 0;
+  for (let i = 0; i < nums.length; i++) {
+    if (nums[i] !== val) {
+      nums[k++] = nums[i];
+    }
+  }
+  return k;
 }
 
+const a1 = [3, 2, 2, 3];
+console.log(removeElement_writeHead(a1, 3), a1.slice(0, 2)); // 2 [2,2]
+
+const a2 = [0, 1, 2, 2, 3, 0, 4, 2];
+console.log(removeElement_writeHead(a2, 2), a2.slice(0, 5)); // 5 [0,1,3,0,4]
+```
+
+### Solution 2 — Swap with End (Fewer Writes) · O(n) time · O(1) space
+
+```typescript
 /**
- * Solution 2: Optimized — Two Pointers
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * When nums[i]==val, swap it with the last element and shrink array size.
+ * Avoids copying non-val elements; better when val is rare.
+ * Time: O(n) | Space: O(1)
  */
-function removeElement(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Two Pointers
-  // Hint: Use L/R pointers on sorted input, move based on comparison
-  throw new Error('Not implemented');
+function removeElement(nums: number[], val: number): number {
+  let i = 0,
+    right = nums.length;
+  while (i < right) {
+    if (nums[i] === val) {
+      nums[i] = nums[right - 1]; // overwrite with last element
+      right--; // shrink logical size
+    } else {
+      i++;
+    }
+  }
+  return right;
 }
 
-// === Test Cases ===
-// console.log(removeElement(/* example 1 */)); // expected
-// console.log(removeElement(/* example 2 */)); // expected
-// console.log(removeElement(/* edge case */)); // expected
+const b1 = [3, 2, 2, 3];
+console.log(removeElement(b1, 3)); // 2
+
+const b2 = [0, 1, 2, 2, 3, 0, 4, 2];
+console.log(removeElement(b2, 2)); // 5
+
+const b3: number[] = [];
+console.log(removeElement(b3, 1)); // 0
+
+const b4 = [4, 4, 4];
+console.log(removeElement(b4, 4)); // 0
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Next Permutation](https://leetcode.com/problems/next-permutation) — same pattern: Two Pointers
-- [4Sum](https://leetcode.com/problems/4sum) — same pattern: Two Pointers
-- [Intersection of Two Arrays](https://leetcode.com/problems/intersection-of-two-arrays) — same pattern: Two Pointers
-- [3Sum Closest](https://leetcode.com/problems/3sum-closest) — same pattern: Two Pointers
-- [Remove Element — LeetCode](https://leetcode.com/problems/remove-element) — problem page
+| Problem                                                                                                        | Difficulty | Pattern      |
+| -------------------------------------------------------------------------------------------------------------- | ---------- | ------------ |
+| [Remove Duplicates from Sorted Array](https://leetcode.com/problems/remove-duplicates-from-sorted-array)       | 🟢 Easy    | Two Pointers |
+| [Move Zeroes](https://leetcode.com/problems/move-zeroes)                                                       | 🟢 Easy    | Two Pointers |
+| [Remove Duplicates from Sorted Array II](https://leetcode.com/problems/remove-duplicates-from-sorted-array-ii) | 🟡 Medium  | Two Pointers |
+| [Sort Colors](https://leetcode.com/problems/sort-colors)                                                       | 🟡 Medium  | Two Pointers |

@@ -7,60 +7,67 @@ tags: [Array, Binary Search]
 leetcode_url: "https://leetcode.com/problems/find-minimum-in-rotated-sorted-array"
 ---
 
-# Find Minimum in Rotated Sorted Array / Find Minimum in Rotated Sorted Array
+# Find Minimum in Rotated Sorted Array / Tìm Phần Tử Nhỏ Nhất Trong Mảng Xoay
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Binary Search
-> **Frequency**: 📘 Tier 3 — Gặp ở 14 companies
-> **See also**: [Find First and Last Position of Element in Sorted Array](https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array) | [Koko Eating Bananas](https://leetcode.com/problems/koko-eating-bananas)
+> **Track**: Binary Search | **Difficulty**: 🟡 Medium | **Pattern**: Binary Search on Rotated Array
+> **Frequency**: 📗 Tier 2 — Gặp ở 20+ companies (Amazon, Microsoft, Google)
+> **See also**: [Search in Rotated Sorted Array](https://leetcode.com/problems/search-in-rotated-sorted-array) | [Find Peak Element](https://leetcode.com/problems/find-peak-element)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Tưởng tượng tìm một trang trong từ điển — bạn mở giữa, xem số trang, rồi chọn nửa phù hợp. Mỗi lần giảm một nửa phạm vi tìm kiếm.
+**Analogy:** Tưởng tượng bạn có một vòng số được cắt ra — phần tử nhỏ nhất là "điểm gãy" nơi giá trị nhảy xuống. Trong binary search, bạn so sánh `nums[mid]` với `nums[hi]`: nếu `nums[mid] > nums[hi]`, điểm gãy nằm bên phải (minimum ở right half); ngược lại, minimum ở left half (bao gồm mid).
 
 **Pattern Recognition:**
 
-- Signal: "sorted" + "find target/position" → **Binary Search**
-- Bài này thuộc dạng Binary Search — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "rotated sorted array", "find minimum" → **Binary Search trên vị trí pivot**
+- Invariant: so sánh `nums[mid]` với `nums[hi]` để xác định nửa nào chứa minimum
+- No duplicates → strict binary search; with duplicates → handle `nums[mid] === nums[hi]` separately
 
-**Visual — Find Minimum in Rotated Sorted Array example:**
+**Visual — nums=[4,5,6,7,0,1,2]:**
 
 ```
-[1, 3, 5, 7, 9, 11, 13]
- L        M            R
+     4  5  6  7  0  1  2
+lo=0            hi=6   mid=3
 
-Step 1: mid = (L+R)/2, check condition
-Step 2: condition true → move L = mid+1 (or R = mid-1)
-Step N: L meets R → answer found ✅
+nums[mid]=7 > nums[hi]=2 → minimum in RIGHT half → lo = mid+1 = 4
+
+     4  5  6  7  0  1  2
+               lo=4 hi=6  mid=5
+
+nums[mid]=1 < nums[hi]=2 → minimum in LEFT half (incl. mid) → hi = mid = 5
+
+               lo=4 hi=5  mid=4
+nums[mid]=0 < nums[hi]=1 → hi = mid = 4
+
+               lo=hi=4 → nums[4]=0 ✅
 ```
 
 ---
 
 ## Problem Description
 
-Find Minimum in Rotated Sorted Array. ([LeetCode](https://leetcode.com/problems/find-minimum-in-rotated-sorted-array))
-
-Difficulty: Medium | Acceptance: 52.6%
+Given a sorted array of unique integers that has been rotated between 1 and n times, find the minimum element. The original array was sorted in ascending order before rotation.
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+Example 1: nums=[3,4,5,1,2]   → 1
+Example 2: nums=[4,5,6,7,0,1,2] → 0
+Example 3: nums=[11,13,15,17]  → 11 (not rotated)
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/find-minimum-in-rotated-sorted-array) for full constraints
+Constraints: `n == nums.length`, `1 <= n <= 5000`, all integers are **unique**
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Input đã sorted? Cần tìm vị trí chính xác hay boundary?" / Is input sorted? Exact match or boundary?
-2. **Brute force**: "Linear scan O(n)" → optimize with binary search O(log n) / Start linear, suggest binary
-3. **Optimize**: "Chú ý lo/hi boundary: lo <= hi hay lo < hi? mid±1 hay mid?" / Watch boundary conditions carefully
-4. **Edge cases**: "Mảng rỗng, một phần tử, target không tồn tại, overflow mid" / Empty, single, not found, overflow
+1. **Clarify**: "Array có duplicate không?" / No duplicates here — follow-up problem 154 has duplicates.
+2. **Linear**: O(n) scan is obvious — interviewer wants O(log n) binary search.
+3. **Invariant**: Compare `nums[mid]` with `nums[hi]` (NOT `nums[lo]`) — avoids off-by-one issues.
+4. **Loop condition**: `lo < hi` (not `lo <= hi`) — terminates when lo===hi pointing at minimum.
+5. **Not rotated**: If `nums[lo] < nums[hi]`, entire range is sorted — minimum is `nums[lo]`.
+6. **Follow-up**: With duplicates (LC 154) → worst case O(n) because `nums[mid]===nums[hi]` is ambiguous.
 
 ---
 
@@ -68,39 +75,62 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Linear Scan
+ * Time: O(n) — scan entire array
+ * Space: O(1)
  */
-function findMinimumInRotatedSortedArrayBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function findMin1(nums: number[]): number {
+  let min = nums[0];
+  for (let i = 1; i < nums.length; i++) {
+    if (nums[i] < min) min = nums[i];
+  }
+  return min;
 }
 
 /**
- * Solution 2: Optimized — Binary Search
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Binary Search (Optimal)
+ * Time: O(log n) — halve search space each iteration
+ * Space: O(1)
+ *
+ * Key insight: Compare nums[mid] with nums[hi]:
+ * - nums[mid] > nums[hi] → rotation point is in right half → lo = mid + 1
+ * - nums[mid] < nums[hi] → minimum is in left half (inclusive) → hi = mid
+ * Loop terminates when lo === hi, pointing at the minimum.
  */
-function findMinimumInRotatedSortedArray(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Binary Search
-  // Hint: Define search space, determine which half to discard
-  throw new Error('Not implemented');
+function findMin(nums: number[]): number {
+  let lo = 0,
+    hi = nums.length - 1;
+
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (nums[mid] > nums[hi]) {
+      // Right half is unsorted — minimum is somewhere in [mid+1, hi]
+      lo = mid + 1;
+    } else {
+      // Left half is unsorted OR everything is sorted — minimum is in [lo, mid]
+      hi = mid;
+    }
+  }
+  return nums[lo];
 }
 
 // === Test Cases ===
-// console.log(findMinimumInRotatedSortedArray(/* example 1 */)); // expected
-// console.log(findMinimumInRotatedSortedArray(/* example 2 */)); // expected
-// console.log(findMinimumInRotatedSortedArray(/* edge case */)); // expected
+console.log(findMin([3, 4, 5, 1, 2])); // 1
+console.log(findMin([4, 5, 6, 7, 0, 1, 2])); // 0
+console.log(findMin([11, 13, 15, 17])); // 11 (not rotated)
+console.log(findMin([2, 1])); // 1
+console.log(findMin([1])); // 1
+console.log(findMin1([4, 5, 6, 7, 0, 1, 2])); // 0 (linear verify)
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Find First and Last Position of Element in Sorted Array](https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array) — same pattern: Binary Search
-- [Koko Eating Bananas](https://leetcode.com/problems/koko-eating-bananas) — same pattern: Binary Search
-- [Search a 2D Matrix](https://leetcode.com/problems/search-a-2d-matrix) — same pattern: Binary Search
-- [Find Peak Element](https://leetcode.com/problems/find-peak-element) — same pattern: Binary Search
-- [Find Minimum in Rotated Sorted Array — LeetCode](https://leetcode.com/problems/find-minimum-in-rotated-sorted-array) — problem page
+| Problem                                                                                                                | Relationship                                           |
+| ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| [153. Find Minimum in Rotated Sorted Array](https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/)       | This problem                                           |
+| [154. Find Minimum in Rotated Sorted Array II](https://leetcode.com/problems/find-minimum-in-rotated-sorted-array-ii/) | Same but with duplicates — O(n) worst case             |
+| [33. Search in Rotated Sorted Array](https://leetcode.com/problems/search-in-rotated-sorted-array/)                    | Search for target value (not minimum) in rotated array |
+| [162. Find Peak Element](https://leetcode.com/problems/find-peak-element/)                                             | Binary search on unsorted — find local maximum         |
+| [852. Peak Index in a Mountain Array](https://leetcode.com/problems/peak-index-in-a-mountain-array/)                   | Same binary search pattern on mountain array           |

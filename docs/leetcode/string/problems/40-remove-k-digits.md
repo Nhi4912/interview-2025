@@ -7,63 +7,61 @@ tags: [String, Stack, Greedy, Monotonic Stack]
 leetcode_url: "https://leetcode.com/problems/remove-k-digits"
 ---
 
-# Remove K Digits / Remove K Digits
+# Remove K Digits / Xóa K Chữ Số Để Tạo Số Nhỏ Nhất
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Monotonic Stack
-> **Frequency**: 📘 Tier 3 — Gặp ở 10 companies
-> **See also**: [Remove Duplicate Letters](https://leetcode.com/problems/remove-duplicate-letters) | [Smallest Subsequence of Distinct Characters](https://leetcode.com/problems/smallest-subsequence-of-distinct-characters)
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Monotonic Stack (Greedy)
+> **Frequency**: 📗 Tier 2 — Gặp ở 20+ companies (Amazon, Google)
+> **See also**: [Remove Duplicate Letters](https://leetcode.com/problems/remove-duplicate-letters) | [Create Maximum Number](https://leetcode.com/problems/create-maximum-number)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống dãy núi — giữ stack luôn đơn điệu (tăng hoặc giảm). Khi gặp phần tử phá vỡ tính đơn điệu, ta biết ngay đáp án cho các phần tử trước đó.
+**Analogy:** Xóa chữ số gây "đột biến tăng" — giống như làm phẳng dãy núi: nếu núi trước cao hơn núi sau, hãy xóa núi trước để dãy dốc xuống đều (tăng đơn điệu = nhỏ nhất).
 
 **Pattern Recognition:**
 
-- Signal: "next greater/smaller element" → **Monotonic Stack**
-- Bài này thuộc dạng Monotonic Stack — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "minimum number after removing k digits" → **Monotonic Stack tăng dần**
+- Greedy: xóa chữ số lớn hơn chữ số kế tiếp — luôn tối ưu
+- Sau khi xóa đủ k: nếu còn dư thì cắt đuôi; strip leading zeros
 
-**Visual — Remove K Digits example:**
+**Visual — `num="1432219", k=3`:**
 
 ```
-arr = [2, 1, 5, 6, 2, 3]
-stack (indices): []
+Build increasing monotone stack:
+  '1' → [1]
+  '4' → [1, 4]
+  '3' → 3<4, pop 4 (k=2), push 3 → [1, 3]
+  '2' → 2<3, pop 3 (k=1), push 2 → [1, 2]
+  '2' → equal, push     → [1, 2, 2]
+  '1' → 1<2, pop 2 (k=0), STOP  → [1, 2, 1]  (k=0, no more pops)
+  '9' → push             → [1, 2, 1, 9]
 
-i=0: push 0         stack=[0]          (vals: [2])
-i=1: 1<2 → push     stack=[0,1]        (vals: [2,1])
-i=2: 5>1 → pop, process; 5>2 → pop, process
-     push           stack=[2]          (vals: [5])
-...
+Result: "1219"  ✅
 ```
 
 ---
 
 ## Problem Description
 
-Remove K Digits. ([LeetCode](https://leetcode.com/problems/remove-k-digits))
+Given a non-negative integer string `num` and integer `k`, remove exactly `k` digits to produce the smallest possible number. Return the result as a string with no leading zeros (return `"0"` if the result is empty). ([LeetCode 402](https://leetcode.com/problems/remove-k-digits))
 
-Difficulty: Medium | Acceptance: 34.9%
+**Example 1:** `num="1432219", k=3` → `"1219"`
+**Example 2:** `num="10200", k=1` → `"200"` (remove 1, strip leading zero)
+**Example 3:** `num="10", k=2` → `"0"` (all digits removed)
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/remove-k-digits) for full constraints
+**Constraints:** `1 ≤ num.length ≤ 10⁵`, `0 ≤ k ≤ num.length`, no leading zeros in input
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify**: "num có thể là '0' không? k có thể bằng num.length?" / Can num be "0"? k equal to length?
+2. **Key greedy**: "Xóa chữ số lớn hơn chữ số kế tiếp — đây là lựa chọn tối ưu" / Removing a digit larger than its successor is always optimal
+3. **Monotone stack**: "Stack tăng → pop khi gặp nhỏ hơn top và k > 0" / Maintain increasing stack, pop when current < top
+4. **Leftover k**: "Nếu k > 0 sau khi duyệt hết → cắt k chữ số cuối" / If k > 0 after full scan, trim last k from stack
+5. **Leading zeros**: "Kết quả có thể có leading zeros sau khi xóa — cần strip" / Leading zeros appear after removal, must strip
+6. **Follow-up**: "Tạo số lớn nhất → dùng monotone stack giảm dần" / Maximum number uses decreasing monotone stack
 
 ---
 
@@ -71,39 +69,81 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Monotonic Stack (Optimal Greedy)
+ * Build an increasing stack: pop larger digits when a smaller arrives (while k > 0).
+ * After full scan, trim remaining k digits from tail. Strip leading zeros.
+ * Time: O(n) — each digit pushed and popped at most once
+ * Space: O(n) — stack holds at most n digits
  */
-function removeKDigitsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function removeKdigits(num: string, k: number): string {
+  const stack: string[] = [];
+
+  for (const digit of num) {
+    // Pop digits larger than current while we still have removals left
+    while (k > 0 && stack.length > 0 && stack[stack.length - 1] > digit) {
+      stack.pop();
+      k--;
+    }
+    stack.push(digit);
+  }
+
+  // Still have removals left → trim from the end (stack is now non-decreasing)
+  while (k > 0) {
+    stack.pop();
+    k--;
+  }
+
+  // Strip leading zeros
+  let start = 0;
+  while (start < stack.length - 1 && stack[start] === "0") start++;
+
+  const result = stack.slice(start).join("");
+  return result === "" ? "0" : result;
 }
 
 /**
- * Solution 2: Optimized — Monotonic Stack
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Greedy — find and remove leftmost "peak" each round
+ * In each of k rounds, scan left-to-right and remove the first digit
+ * that is greater than the digit after it (i.e., breaks monotone increase).
+ * Simple but O(n×k) — fine for small inputs, TLEs on large.
+ * Time: O(n × k) — k passes, each O(n)
+ * Space: O(n) — string slicing per round
  */
-function removeKDigits(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Monotonic Stack
-  // Hint: Maintain monotonic property, pop when new element breaks it
-  throw new Error('Not implemented');
+function removeKdigitsGreedy(num: string, k: number): string {
+  let s = num;
+  for (let i = 0; i < k; i++) {
+    let removed = false;
+    for (let j = 0; j < s.length - 1; j++) {
+      if (s[j] > s[j + 1]) {
+        s = s.slice(0, j) + s.slice(j + 1);
+        removed = true;
+        break;
+      }
+    }
+    // All digits non-decreasing → remove from the end
+    if (!removed) s = s.slice(0, s.length - 1);
+  }
+  const trimmed = s.replace(/^0+/, "");
+  return trimmed === "" ? "0" : trimmed;
 }
 
 // === Test Cases ===
-// console.log(removeKDigits(/* example 1 */)); // expected
-// console.log(removeKDigits(/* example 2 */)); // expected
-// console.log(removeKDigits(/* edge case */)); // expected
+console.log(removeKdigits("1432219", 3)); // "1219"
+console.log(removeKdigits("10200", 1)); // "200"
+console.log(removeKdigits("10", 2)); // "0"
+console.log(removeKdigits("9", 1)); // "0"
+console.log(removeKdigits("112", 1)); // "11"
+console.log(removeKdigitsGreedy("1432219", 3)); // "1219"
+console.log(removeKdigitsGreedy("10200", 1)); // "200"
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Remove Duplicate Letters](https://leetcode.com/problems/remove-duplicate-letters) — same pattern: Monotonic Stack
-- [Smallest Subsequence of Distinct Characters](https://leetcode.com/problems/smallest-subsequence-of-distinct-characters) — same pattern: Monotonic Stack
-- [Smallest K-Length Subsequence With Occurrences of a Letter](https://leetcode.com/problems/smallest-k-length-subsequence-with-occurrences-of-a-letter) — same pattern: Monotonic Stack
-- [Minimum Number of Swaps to Make the String Balanced](https://leetcode.com/problems/minimum-number-of-swaps-to-make-the-string-balanced) — same pattern: Two Pointers
-- [Remove K Digits — LeetCode](https://leetcode.com/problems/remove-k-digits) — problem page
+| Problem                                                                                        | Pattern               | Difficulty |
+| ---------------------------------------------------------------------------------------------- | --------------------- | ---------- |
+| [Remove Duplicate Letters](https://leetcode.com/problems/remove-duplicate-letters)             | Monotonic stack + set | 🟡 Medium  |
+| [Create Maximum Number](https://leetcode.com/problems/create-maximum-number)                   | Monotonic stack max   | 🔴 Hard    |
+| [Largest Rectangle in Histogram](https://leetcode.com/problems/largest-rectangle-in-histogram) | Monotonic stack       | 🔴 Hard    |
+| [Sum of Subarray Minimums](https://leetcode.com/problems/sum-of-subarray-minimums)             | Monotonic stack       | 🟡 Medium  |

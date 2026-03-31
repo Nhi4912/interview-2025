@@ -7,64 +7,56 @@ tags: [Array, Backtracking, Sorting]
 leetcode_url: "https://leetcode.com/problems/permutations-ii"
 ---
 
-# Permutations II / Permutations II
+# Permutations II / Hoán Vị Có Phần Tử Trùng
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Backtracking
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Backtracking + Dedup
 > **Frequency**: 📘 Tier 3 — Gặp ở 9 companies
-> **See also**: [The Number of Beautiful Subsets](https://leetcode.com/problems/the-number-of-beautiful-subsets) | [Kth Largest Element in an Array](https://leetcode.com/problems/kth-largest-element-in-an-array)
+> **See also**: [Permutations](https://leetcode.com/problems/permutations) | [Subsets II](https://leetcode.com/problems/subsets-ii)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống thử đồ — bạn thử từng lựa chọn, nếu không phù hợp thì cởi ra thử cái khác. Quan trọng là biết khi nào nên dừng thử (pruning).
+**Analogy:** Giống thử đồ — thử từng lựa chọn, nếu không phù hợp thì cởi ra thử cái khác. Với phần tử trùng: bỏ qua nếu cùng giá trị đã được thử ở vị trí này trong lần đệ quy hiện tại.
 
 **Pattern Recognition:**
 
-- Signal: "generate all valid combinations/permutations" → **Backtracking**
-- Bài này thuộc dạng Backtracking — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "all unique permutations" + "duplicates in input" → **Sort + skip same-value at same position**
+- Sort trước → các phần tử giống nhau liền kề → dễ detect và skip
+- Rule: `nums[i] === nums[i-1] && !used[i-1]` → skip (tránh hoán vị trùng)
 
-**Visual — Permutations II example:**
+**Visual — `nums=[1,1,2]` sort → `[1,1,2]`:**
 
 ```
-                    []
-            /       |       \
-          [a]      [b]      [c]
-         / \        |
-      [a,b] [a,c]  [b,c]
-       |
-    [a,b,c]
+Position 0:
+  try 1 (i=0) → recurse → [1,1,2], [1,2,1]
+  try 1 (i=1) → SKIP (same as i=0, and used[0]=false) ← dedup!
+  try 2 (i=2) → recurse → [2,1,1]
 
-Choose → Explore → Un-choose (backtrack)
-Prune branches that violate constraints
+Result: [[1,1,2],[1,2,1],[2,1,1]]  ✅ (3 unique, not 6)
 ```
 
 ---
 
 ## Problem Description
 
-Permutations II. ([LeetCode](https://leetcode.com/problems/permutations-ii))
+Given a collection of numbers `nums` that might contain duplicates, return all possible unique permutations in any order. ([LeetCode 47](https://leetcode.com/problems/permutations-ii))
 
-Difficulty: Medium | Acceptance: 61.6%
+**Example 1:** `nums = [1,1,2]` → `[[1,1,2],[1,2,1],[2,1,1]]`
+**Example 2:** `nums = [1,2,3]` → all 6 permutations (no duplicates)
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/permutations-ii) for full constraints
+**Constraints:** `1 ≤ nums.length ≤ 8`, `-10 ≤ nums[i] ≤ 10`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần all solutions hay count? Có duplicate input không?" / All results or count? Duplicate elements?
-2. **Template**: "Choose → Explore → Un-choose" / Follow the standard backtracking template
-3. **Pruning**: "Skip nếu biết sớm branch này invalid" / Prune early to avoid TLE
-4. **Edge cases**: "Input rỗng, n=0, kết quả có thể rỗng" / Empty input, n=0, possibly empty result set
+1. **Clarify**: "Có phần tử trùng trong input không?" / Confirm duplicates exist in input
+2. **Sort first**: "Sort để phần tử giống nhau liền kề — dễ skip" / Sorting clusters duplicates for easy detection
+3. **Dedup rule**: "`nums[i] === nums[i-1] && !used[i-1]` → skip — tránh cùng giá trị ở cùng slot" / Skip when same value at same position was already tried
+4. **Alternative**: "Dùng Map đếm tần suất — không cần sort, không cần `used` array" / Counter map avoids sorting and used array
+5. **Edge cases**: "Tất cả giống nhau `[1,1,1]` → chỉ 1 kết quả; n=1 → 1 kết quả" / All same → 1 result; n=1 → 1 result
+6. **Complexity**: "O(n! × n) total — n! permutations × O(n) to copy each" / Total work proportional to number of unique permutations
 
 ---
 
@@ -72,39 +64,93 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Sort + Skip Duplicates Backtracking
+ * Sort input. Use `used[]` to track which elements are in current permutation.
+ * Skip if same value was tried at this recursion level (but not currently used).
+ * Time: O(n! × n) — at most n! unique perms, O(n) copy each
+ * Space: O(n) — recursion depth + used array + current path
  */
-function permutationsIiBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function permuteUnique(nums: number[]): number[][] {
+  nums.sort((a, b) => a - b);
+  const result: number[][] = [];
+  const used = new Array(nums.length).fill(false);
+  const path: number[] = [];
+
+  const backtrack = () => {
+    if (path.length === nums.length) {
+      result.push([...path]);
+      return;
+    }
+    for (let i = 0; i < nums.length; i++) {
+      if (used[i]) continue;
+      // Skip duplicate: same value as previous, and previous was NOT used
+      // (meaning previous was already tried and backtracked at this level)
+      if (i > 0 && nums[i] === nums[i - 1] && !used[i - 1]) continue;
+      used[i] = true;
+      path.push(nums[i]);
+      backtrack();
+      path.pop();
+      used[i] = false;
+    }
+  };
+
+  backtrack();
+  return result;
 }
 
 /**
- * Solution 2: Optimized — Backtracking
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Counter Map Backtracking (no sort needed)
+ * Count frequency of each number. At each position, try each unique value
+ * with remaining count > 0. Naturally avoids duplicates by working on counts.
+ * Time: O(n! × n) — same asymptotic, but constant factor smaller in practice
+ * Space: O(k) counter map where k = unique values, O(n) recursion
  */
-function permutationsIi(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Backtracking
-  // Hint: Choose → Explore → Unchoose, prune invalid branches early
-  throw new Error('Not implemented');
+function permuteUniqueMap(nums: number[]): number[][] {
+  const count = new Map<number, number>();
+  for (const n of nums) count.set(n, (count.get(n) ?? 0) + 1);
+  const keys = [...count.keys()];
+  const result: number[][] = [];
+  const path: number[] = [];
+
+  const backtrack = () => {
+    if (path.length === nums.length) {
+      result.push([...path]);
+      return;
+    }
+    for (const k of keys) {
+      const c = count.get(k)!;
+      if (c === 0) continue;
+      count.set(k, c - 1);
+      path.push(k);
+      backtrack();
+      path.pop();
+      count.set(k, c);
+    }
+  };
+
+  backtrack();
+  return result;
 }
 
 // === Test Cases ===
-// console.log(permutationsIi(/* example 1 */)); // expected
-// console.log(permutationsIi(/* example 2 */)); // expected
-// console.log(permutationsIi(/* edge case */)); // expected
+console.log(permuteUnique([1, 1, 2]));
+// [[1,1,2],[1,2,1],[2,1,1]]
+
+console.log(permuteUnique([1, 2, 3]).length); // 6
+
+console.log(permuteUniqueMap([1, 1, 2]));
+// [[1,1,2],[1,2,1],[2,1,1]]
+
+console.log(permuteUniqueMap([1, 1, 1]).length); // 1
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [The Number of Beautiful Subsets](https://leetcode.com/problems/the-number-of-beautiful-subsets) — same pattern: Backtracking
-- [Kth Largest Element in an Array](https://leetcode.com/problems/kth-largest-element-in-an-array) — same pattern: Heap / Priority Queue
-- [4Sum](https://leetcode.com/problems/4sum) — same pattern: Two Pointers
-- [Majority Element](https://leetcode.com/problems/majority-element) — same pattern: Divide and Conquer
-- [Permutations II — LeetCode](https://leetcode.com/problems/permutations-ii) — problem page
+| Problem                                                                | Pattern                      | Difficulty |
+| ---------------------------------------------------------------------- | ---------------------------- | ---------- |
+| [Permutations](https://leetcode.com/problems/permutations)             | Backtracking no dedup        | 🟡 Medium  |
+| [Subsets II](https://leetcode.com/problems/subsets-ii)                 | Sort + skip duplicate        | 🟡 Medium  |
+| [Combination Sum II](https://leetcode.com/problems/combination-sum-ii) | Same dedup rule              | 🟡 Medium  |
+| [N-Queens](https://leetcode.com/problems/n-queens)                     | Backtracking with constraint | 🔴 Hard    |

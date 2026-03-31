@@ -7,97 +7,110 @@ tags: [String]
 leetcode_url: "https://leetcode.com/problems/length-of-last-word"
 ---
 
-# Length of Last Word / Length of Last Word
+# Length of Last Word / Độ Dài Từ Cuối Cùng
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: String Processing
 > **Frequency**: 📘 Tier 3 — Gặp ở 10 companies
-> **See also**: [Text Justification](https://leetcode.com/problems/text-justification) | [Decode String](https://leetcode.com/problems/decode-string)
+> **See also**: [Text Justification](https://leetcode.com/problems/text-justification) | [Reverse Words in a String](https://leetcode.com/problems/reverse-words-in-a-string)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Xử lý chuỗi ký tự — thường dùng hash table, two pointers, hoặc sliding window tuỳ bài toán.
+**Analogy (Vietnamese):** Giống đọc một tờ giấy từ cuối lên — bỏ qua khoảng trắng cuối, rồi đếm ký tự cho đến khi gặp khoảng trắng tiếp theo. Scan từ phải sang trái rất tự nhiên cho bài này.
 
-**Pattern Recognition:**
-
-- Signal: "string transformation/validation" → **String Processing**
-- Bài này thuộc dạng String Processing — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Length of Last Word example:**
+**Pattern Recognition:** "Last word" → skip trailing spaces, count backwards until space or start.
 
 ```
-// TODO: Add step-by-step visual for String Processing
-// Show one complete example with state at each step
+s = "   fly me   to   the moon   "
+                               ↑
+Scan right-to-left:
+1. Skip trailing spaces: "   "
+2. Count non-space: "moon" → 4
+Stop at space → return 4
+
+Alternative: trim().split(/\s+/).at(-1).length
 ```
 
 ---
 
-## Problem Description
+## 📋 Problem / Bài Toán
 
-Length of Last Word. ([LeetCode](https://leetcode.com/problems/length-of-last-word))
+Given a string `s` consisting of words and spaces, return the **length of the last word**. A word is a maximal substring with no spaces.
 
-Difficulty: Easy | Acceptance: 56.3%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/length-of-last-word) for full constraints
+- `s = "Hello World"` → `5`
+- `s = "   fly me   to   the moon  "` → `4`
+- `s = "luffy is still joyboy"` → `6`
 
 ---
 
-## 📝 Interview Tips
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🔑 **Trailing spaces trap**: `"hello   "` — không trim → đếm sai. Luôn skip trailing spaces trước.
+- 🔑 **Nhận biết**: Bài đơn giản nhưng dễ sai nếu không xử lý trailing/multiple spaces.
+- ⚡ **Built-in O(n)**: `s.trim().split(/\s+/).at(-1)!.length` — ngắn nhất, phù hợp interview nhanh.
+- ⚡ **Reverse scan O(n)**: Không tạo mảng tạm — tiết kiệm space, tốt khi chuỗi rất dài.
+- 🚨 **Guaranteed valid**: LeetCode đảm bảo có ít nhất 1 từ, nhưng nên hỏi interviewer về edge case chuỗi rỗng.
+- 💡 **Follow-up**: "Nếu cần nth-from-last word?" → cùng pattern, thêm counter cho số từ.
 
 ---
 
 ## Solutions
 
+### Solution 1 — Trim + Split · O(n) time · O(n) space
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Trim trailing/leading spaces, split by whitespace, take last element.
+ * Clean and readable — good for rapid interview communication.
+ * Time: O(n) | Space: O(n) for split array
  */
-function lengthOfLastWordBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function lengthOfLastWord_split(s: string): number {
+  const words = s.trim().split(/\s+/);
+  return words[words.length - 1].length;
 }
 
+console.log(lengthOfLastWord_split("Hello World")); // 5
+console.log(lengthOfLastWord_split("   fly me   to   the moon  ")); // 4
+console.log(lengthOfLastWord_split("luffy is still joyboy")); // 6
+console.log(lengthOfLastWord_split("a")); // 1
+```
+
+### Solution 2 — Reverse Scan · O(n) time · O(1) space
+
+```typescript
 /**
- * Solution 2: Optimized — String Processing
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Scan from right: skip trailing spaces, then count characters until
+ * next space or string start. No extra memory needed.
+ * Time: O(n) | Space: O(1)
  */
-function lengthOfLastWord(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using String Processing
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
+function lengthOfLastWord(s: string): number {
+  let i = s.length - 1;
+  // skip trailing spaces
+  while (i >= 0 && s[i] === " ") i--;
+  // count last word
+  let len = 0;
+  while (i >= 0 && s[i] !== " ") {
+    len++;
+    i--;
+  }
+  return len;
 }
 
-// === Test Cases ===
-// console.log(lengthOfLastWord(/* example 1 */)); // expected
-// console.log(lengthOfLastWord(/* example 2 */)); // expected
-// console.log(lengthOfLastWord(/* edge case */)); // expected
+console.log(lengthOfLastWord("Hello World")); // 5
+console.log(lengthOfLastWord("   fly me   to   the moon  ")); // 4
+console.log(lengthOfLastWord("luffy is still joyboy")); // 6
+console.log(lengthOfLastWord("a ")); // 1
+console.log(lengthOfLastWord("day")); // 3
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Decode String](https://leetcode.com/problems/decode-string) — same pattern: Stack
-- [Simplify Path](https://leetcode.com/problems/simplify-path) — same pattern: Stack
-- [Time Based Key-Value Store](https://leetcode.com/problems/time-based-key-value-store) — same pattern: Binary Search
-- [Length of Last Word — LeetCode](https://leetcode.com/problems/length-of-last-word) — problem page
+| Problem                                                                                      | Difficulty | Pattern           |
+| -------------------------------------------------------------------------------------------- | ---------- | ----------------- |
+| [Reverse Words in a String](https://leetcode.com/problems/reverse-words-in-a-string)         | 🟡 Medium  | String Processing |
+| [Reverse Words in a String III](https://leetcode.com/problems/reverse-words-in-a-string-iii) | 🟢 Easy    | String Processing |
+| [Text Justification](https://leetcode.com/problems/text-justification)                       | 🔴 Hard    | String Simulation |
+| [Valid Word](https://leetcode.com/problems/valid-word)                                       | 🟢 Easy    | String Parsing    |

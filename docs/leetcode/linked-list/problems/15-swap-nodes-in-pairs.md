@@ -7,9 +7,9 @@ tags: [Linked List, Recursion]
 leetcode_url: "https://leetcode.com/problems/swap-nodes-in-pairs"
 ---
 
-# Swap Nodes in Pairs / Swap Nodes in Pairs
+# Swap Nodes in Pairs / Hoán Đổi Từng Cặp Nút
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Linked List
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Linked List Pointer Manipulation
 > **Frequency**: 📘 Tier 3 — Gặp ở 11 companies
 > **See also**: [Reverse Nodes in k-Group](https://leetcode.com/problems/reverse-nodes-in-k-group) | [Reorder List](https://leetcode.com/problems/reorder-list)
 
@@ -17,89 +17,135 @@ leetcode_url: "https://leetcode.com/problems/swap-nodes-in-pairs"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống đoàn tàu — mỗi toa nối với toa sau. Muốn thay đổi thứ tự, bạn chỉ cần nối lại các khớp nối, không cần di chuyển cả toa.
+**Analogy:** Hãy nghĩ đến đoàn tàu với các toa đôi — bạn muốn đổi chỗ toa A-B thành B-A, rồi C-D thành D-C. Bạn không di chuyển cả toa, chỉ nối lại các khớp nối. Dùng dummy node ở đầu để xử lý cặp đầu tiên đồng nhất.
 
-**Pattern Recognition:**
-
-- Signal: "ListNode" + "in-place modification" → **Linked List**
-- Bài này thuộc dạng Linked List — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Swap Nodes in Pairs example:**
+**Pattern:** `prev → second → first → rest` — ba con trỏ để làm một lần swap.
 
 ```
-Before: 1 → 2 → 3 → 4 → null
-After:  ... (depends on operation)
+Before: dummy → 1 → 2 → 3 → 4 → null
+         prev   ^   ^
+               first second
 
-Use: slow/fast pointers, dummy head, prev tracking
+Step 1: dummy → 2 → 1 → 3 → 4
+                     ^   ^   ^
+                   prev  f   s
+
+Step 2: dummy → 2 → 1 → 4 → 3 → null ✅
 ```
 
 ---
 
-## Problem Description
+Cho danh sách liên kết, **hoán đổi mỗi cặp nút kề nhau** và trả về đầu danh sách. Chỉ được thay đổi con trỏ, không được thay đổi giá trị nút.
 
-Swap Nodes in Pairs. ([LeetCode](https://leetcode.com/problems/swap-nodes-in-pairs))
-
-Difficulty: Medium | Acceptance: 67.2%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/swap-nodes-in-pairs) for full constraints
+- `1 → 2 → 3 → 4` → `2 → 1 → 4 → 3`
+- `1 → 2 → 3` → `2 → 1 → 3` (nút lẻ cuối giữ nguyên)
+- `[]` → `[]`
 
 ---
 
-## 📝 Interview Tips
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🇻🇳 **Dummy node**: giúp xử lý head đồng nhất — không cần case đặc biệt cho cặp đầu tiên
+- 🇺🇸 **3 pointer pattern**: `prev`, `first`, `second` — update 3 links per swap cycle
+- 🇻🇳 **Sau swap**: `prev` di chuyển đến `first` (nay ở vị trí thứ hai); tiến thêm 2 bước
+- 🇺🇸 **Recursive solution**: cleaner code but O(n) stack space — prefer iterative in interviews
+- 🇻🇳 **Điều kiện vòng lặp**: `while (first && second)` — nút lẻ cuối tự giữ nguyên
+- 🇺🇸 **Space**: Iterative is O(1) extra; Recursive is O(n/2) call stack
 
 ---
 
 ## Solutions
 
+### Solution 1: Recursive — O(n) time, O(n) stack space
+
+```typescript
+class ListNode {
+  val: number;
+  next: ListNode | null;
+  constructor(val = 0, next: ListNode | null = null) {
+    this.val = val;
+    this.next = next;
+  }
+}
+
+/**
+ * Recursively swap head with head.next, then recurse on remainder
+ * Time: O(n) | Space: O(n/2) call stack
+ */
+function swapPairsRecursive(head: ListNode | null): ListNode | null {
+  if (!head || !head.next) return head; // 0 or 1 node: nothing to swap
+
+  const second = head.next;
+  // head becomes second position; recurse for nodes after second
+  head.next = swapPairsRecursive(second.next);
+  second.next = head;
+
+  return second; // second is new head of this pair
+}
+
+// Helpers
+const build = (vals: number[]): ListNode | null => {
+  const dummy = new ListNode(0);
+  let cur = dummy;
+  for (const v of vals) {
+    cur.next = new ListNode(v);
+    cur = cur.next;
+  }
+  return dummy.next;
+};
+const print = (h: ListNode | null): string => {
+  const r: number[] = [];
+  while (h) {
+    r.push(h.val);
+    h = h.next;
+  }
+  return r.join(" → ") || "[]";
+};
+
+console.log(print(swapPairsRecursive(build([1, 2, 3, 4])))); // 2 → 1 → 4 → 3
+console.log(print(swapPairsRecursive(build([1, 2, 3])))); // 2 → 1 → 3
+console.log(print(swapPairsRecursive(build([])))); // []
+```
+
+### Solution 2: Iterative with Dummy Node — O(n) time, O(1) space ✅ Optimal
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Use dummy head + prev pointer to swap pairs in-place iteratively
+ * Time: O(n) | Space: O(1)
  */
-function swapNodesInPairsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function swapPairs(head: ListNode | null): ListNode | null {
+  const dummy = new ListNode(0);
+  dummy.next = head;
+  let prev: ListNode = dummy;
+
+  while (prev.next && prev.next.next) {
+    const first = prev.next;
+    const second = prev.next.next;
+
+    // Re-wire: prev → second → first → (what was after second)
+    first.next = second.next;
+    second.next = first;
+    prev.next = second;
+
+    prev = first; // first is now in 2nd position; advance prev past the pair
+  }
+
+  return dummy.next;
 }
 
-/**
- * Solution 2: Optimized — Linked List
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function swapNodesInPairs(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Linked List
-  // Hint: Use dummy head, slow/fast pointers, or prev tracking
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(swapNodesInPairs(/* example 1 */)); // expected
-// console.log(swapNodesInPairs(/* example 2 */)); // expected
-// console.log(swapNodesInPairs(/* edge case */)); // expected
+console.log(print(swapPairs(build([1, 2, 3, 4])))); // 2 → 1 → 4 → 3
+console.log(print(swapPairs(build([1, 2, 3])))); // 2 → 1 → 3
+console.log(print(swapPairs(build([1])))); // 1
+console.log(print(swapPairs(build([])))); // []
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Reverse Nodes in k-Group](https://leetcode.com/problems/reverse-nodes-in-k-group) — same pattern: Linked List
-- [Reorder List](https://leetcode.com/problems/reorder-list) — same pattern: Two Pointers
-- [Remove Linked List Elements](https://leetcode.com/problems/remove-linked-list-elements) — same pattern: Linked List
-- [Decode String](https://leetcode.com/problems/decode-string) — same pattern: Stack
-- [Swap Nodes in Pairs — LeetCode](https://leetcode.com/problems/swap-nodes-in-pairs) — problem page
+| Problem                                                                            | Difficulty | Pattern                |
+| ---------------------------------------------------------------------------------- | ---------- | ---------------------- |
+| [Reverse Nodes in k-Group](https://leetcode.com/problems/reverse-nodes-in-k-group) | 🔴 Hard    | Generalized swap pairs |
+| [Reverse Linked List](https://leetcode.com/problems/reverse-linked-list)           | 🟢 Easy    | Foundation skill       |
+| [Reorder List](https://leetcode.com/problems/reorder-list)                         | 🟡 Medium  | Linked list pointer    |

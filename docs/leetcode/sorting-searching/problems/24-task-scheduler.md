@@ -7,104 +7,126 @@ tags: [Array, Hash Table, Greedy, Sorting, Heap (Priority Queue)]
 leetcode_url: "https://leetcode.com/problems/task-scheduler"
 ---
 
-# Task Scheduler / Task Scheduler
+# Task Scheduler / Lập Lịch Nhiệm Vụ
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Heap / Priority Queue
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy / Heap
 > **Frequency**: 📘 Tier 3 — Gặp ở 11 companies
-> **See also**: [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) | [Reorganize String](https://leetcode.com/problems/reorganize-string)
+> **See also**: [Reorganize String](https://leetcode.com/problems/reorganize-string) | [Rearrange String k Distance Apart](https://leetcode.com/problems/rearrange-string-k-distance-apart)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống phòng cấp cứu — bệnh nhân nặng nhất luôn được ưu tiên, bất kể ai đến trước. Heap giữ phần tử quan trọng nhất ở đầu.
+**Analogy (Vietnamese):** Giống lịch làm việc của bác sĩ — mỗi loại bệnh nhân cần nghỉ n ngày trước lần khám kế tiếp. Bác sĩ nên luôn gặp loại bệnh nhân **đông nhất còn lại** để tránh lãng phí thời gian idle. Greedy: luôn ưu tiên task có tần suất cao nhất.
 
-**Pattern Recognition:**
-
-- Signal: "k-th largest/smallest" + "top-k elements" → **Heap**
-- Bài này thuộc dạng Heap / Priority Queue — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Task Scheduler example:**
+**Pattern Recognition:** "Minimum time with cooldown" → đếm tần suất task nhiều nhất (`maxFreq`) + số task cùng tần suất đó (`maxCount`).
 
 ```
-Min Heap:
-        1
-       / \
-      3   2
-     / \
-    7   4
-
-Insert: add to end, bubble up
-Extract: remove root, bubble down
+tasks = [A,A,A,B,B,B], n = 2
+maxFreq = 3 (cả A lẫn B)
+Formula: max(len(tasks), (maxFreq-1)*(n+1) + maxCount)
+        = max(6,        (3-1)*(2+1)    + 2    )
+        = max(6, 8) = 8
+Sequence: A B _ A B _ A B  → 8 slots
 ```
 
 ---
 
-## Problem Description
+## 📋 Problem / Bài Toán
 
-Task Scheduler. ([LeetCode](https://leetcode.com/problems/task-scheduler))
+Given a list of CPU tasks (characters) and cooldown `n`, find the **minimum intervals** needed to finish all tasks. Between two same tasks, at least `n` intervals must pass (filled with other tasks or idle).
 
-Difficulty: Medium | Acceptance: 61.5%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/task-scheduler) for full constraints
+- `tasks=["A","A","A","B","B","B"], n=2` → `8`
+- `tasks=["A","A","A","B","B","B"], n=0` → `6`
+- `tasks=["A","A","A","A","A","A","B","C","D","E","F","G"], n=2` → `16`
 
 ---
 
-## 📝 Interview Tips
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🔑 **Formula insight**: Kết quả = `max(tasks.length, (maxFreq-1)*(n+1) + maxCount)`. Giải thích: tạo `(maxFreq-1)` "frames" kích thước `(n+1)`, tailing với `maxCount` tasks bằng maxFreq.
+- 🔑 **Nhận biết**: "Cooldown" + "minimum time" → thường là greedy math formula hoặc heap simulation.
+- ⚡ **Greedy math O(n)**: Đếm freq, tìm maxFreq và số task có maxFreq, áp công thức — không cần mô phỏng thực sự.
+- ⚡ **Max-heap simulation O(n log 26)**: Dùng priority queue để luôn chọn task phổ biến nhất còn cooldown.
+- 🚨 **n=0 edge case**: Không cần cooldown, kết quả đúng bằng `tasks.length`.
+- 💡 **Chứng minh formula**: Khi tasks đủ đa dạng để lấp đầy frames, không có idle → kết quả = `tasks.length`.
 
 ---
 
 ## Solutions
 
+### Solution 1 — Greedy Math Formula · O(n) time · O(1) space
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Key formula: result = max(n_tasks, (maxFreq-1)*(n+1) + maxCount)
+ * maxFreq  = highest task frequency
+ * maxCount = number of tasks sharing maxFreq
+ * Time: O(n) | Space: O(1) — only 26 task types
  */
-function taskSchedulerBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function leastInterval_greedy(tasks: string[], n: number): number {
+  const freq = new Array(26).fill(0);
+  for (const t of tasks) freq[t.charCodeAt(0) - 65]++;
+  freq.sort((a, b) => b - a);
+  const maxFreq = freq[0];
+  let maxCount = 0;
+  for (const f of freq) {
+    if (f === maxFreq) maxCount++;
+    else break;
+  }
+  return Math.max(tasks.length, (maxFreq - 1) * (n + 1) + maxCount);
 }
 
+console.log(leastInterval_greedy(["A", "A", "A", "B", "B", "B"], 2)); // 8
+console.log(leastInterval_greedy(["A", "A", "A", "B", "B", "B"], 0)); // 6
+console.log(leastInterval_greedy(["A", "A", "A", "A", "A", "A", "B", "C", "D", "E", "F", "G"], 2)); // 16
+```
+
+### Solution 2 — Max-Heap Simulation · O(n log 26) time · O(1) space
+
+```typescript
 /**
- * Solution 2: Optimized — Heap / Priority Queue
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Each round of n+1 slots: greedily pick the most frequent remaining tasks.
+ * Simulate cooldown rounds, decrement frequencies, accumulate time.
+ * Time: O(n log 26) ≈ O(n) | Space: O(1)
  */
-function taskScheduler(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Heap / Priority Queue
-  // Hint: Use min/max heap to efficiently track k-th element
-  throw new Error('Not implemented');
+function leastInterval(tasks: string[], n: number): number {
+  const freq = new Map<string, number>();
+  for (const t of tasks) freq.set(t, (freq.get(t) ?? 0) + 1);
+
+  // max-heap: sort desc by count each round (≤26 elements → fast)
+  let counts = [...freq.values()].sort((a, b) => b - a);
+  let time = 0;
+
+  while (counts.length > 0) {
+    const roundSize = n + 1;
+    const next: number[] = [];
+    let slots = 0;
+    // fill up to roundSize slots with highest-freq tasks
+    for (let i = 0; i < roundSize && i < counts.length; i++) {
+      slots++;
+      if (counts[i] - 1 > 0) next.push(counts[i] - 1);
+    }
+    next.sort((a, b) => b - a);
+    counts = next;
+    // if no tasks remain, use exactly slots; else use full round
+    time += counts.length === 0 ? slots : roundSize;
+  }
+  return time;
 }
 
-// === Test Cases ===
-// console.log(taskScheduler(/* example 1 */)); // expected
-// console.log(taskScheduler(/* example 2 */)); // expected
-// console.log(taskScheduler(/* edge case */)); // expected
+console.log(leastInterval(["A", "A", "A", "B", "B", "B"], 2)); // 8
+console.log(leastInterval(["A", "A", "A", "B", "B", "B"], 0)); // 6
+console.log(leastInterval(["A", "C", "A", "B", "D", "B"], 1)); // 6
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Reorganize String](https://leetcode.com/problems/reorganize-string) — same pattern: Heap / Priority Queue
-- [Smallest Range Covering Elements from K Lists](https://leetcode.com/problems/smallest-range-covering-elements-from-k-lists) — same pattern: Sliding Window
-- [Least Number of Unique Integers after K Removals](https://leetcode.com/problems/least-number-of-unique-integers-after-k-removals) — same pattern: Greedy
-- [Task Scheduler — LeetCode](https://leetcode.com/problems/task-scheduler) — problem page
+| Problem                                                                                                                            | Difficulty | Pattern            |
+| ---------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------ |
+| [Reorganize String](https://leetcode.com/problems/reorganize-string)                                                               | 🟡 Medium  | Greedy / Heap      |
+| [Top K Frequent Elements](https://leetcode.com/problems/top-k-frequent-elements)                                                   | 🟡 Medium  | Bucket Sort / Heap |
+| [Maximum Frequency Stack](https://leetcode.com/problems/maximum-frequency-stack)                                                   | 🔴 Hard    | Greedy / Heap      |
+| [Least Number of Unique Integers after K Removals](https://leetcode.com/problems/least-number-of-unique-integers-after-k-removals) | 🟡 Medium  | Greedy             |

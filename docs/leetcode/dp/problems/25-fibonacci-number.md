@@ -7,102 +7,126 @@ tags: [Math, Dynamic Programming, Recursion, Memoization]
 leetcode_url: "https://leetcode.com/problems/fibonacci-number"
 ---
 
-# Fibonacci Number / Fibonacci Number
+# Fibonacci Number / Số Fibonacci
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Dynamic Programming
 > **Frequency**: 📘 Tier 3 — Gặp ở 10 companies
-> **See also**: [Different Ways to Add Parentheses](https://leetcode.com/problems/different-ways-to-add-parentheses) | [N-th Tribonacci Number](https://leetcode.com/problems/n-th-tribonacci-number)
+> **See also**: [N-th Tribonacci Number](https://leetcode.com/problems/n-th-tribonacci-number) | [Climbing Stairs](https://leetcode.com/problems/climbing-stairs)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**Analogy (Vietnamese):** Như xếp gạch xây tường — mỗi viên gạch thứ n cần 2 viên bên dưới (n-1 và n-2). Bài toán nhỏ hơn đã được giải trước, ta dùng lại kết quả đó — đó là bản chất của **Dynamic Programming**.
 
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Fibonacci Number example:**
+**Pattern Recognition:** Overlapping subproblems + optimal substructure → DP. F(n) = F(n-1) + F(n-2) chỉ phụ thuộc 2 giá trị trước → tối ưu bằng 2 biến.
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
-
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+Recursive tree (overlapping):          DP table (reuse):
+        F(5)                           n:  0  1  2  3  4  5
+       /    \                          F:  0  1  1  2  3  5
+    F(4)   F(3)                        ↑ build bottom-up, O(n) time O(n) space
+    / \    / \
+  F(3)F(2)F(2)F(1)  ← F(3),F(2) repeat!   Two vars → O(1) space
 ```
 
 ---
 
-## Problem Description
+## 📋 Problem / Bài Toán
 
-Fibonacci Number. ([LeetCode](https://leetcode.com/problems/fibonacci-number))
+The Fibonacci numbers form the sequence: `F(0)=0, F(1)=1, F(n)=F(n-1)+F(n-2)`. Given `n`, return `F(n)`.
 
-Difficulty: Easy | Acceptance: 72.9%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/fibonacci-number) for full constraints
+- `F(2) = 1`, `F(3) = 2`, `F(4) = 3`, `F(10) = 55`, `F(30) = 832040`
 
 ---
 
-## 📝 Interview Tips
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+- 🔑 **Classic DP intro**: Bài này là template cho DP — recursion → memoization → bottom-up → space optimization.
+- 🔑 **Nhận biết**: "F(n) phụ thuộc F(n-1), F(n-2)" → chỉ cần 2 biến, không cần mảng.
+- ⚡ **Pure recursion O(2^n)**: Mỗi F(n) gọi 2 lần → exponential; tệ nhất, dùng để giải thích vấn đề.
+- ⚡ **Memo/DP O(n)**: Lưu kết quả đã tính → mỗi subproblem giải 1 lần.
+- ⚡ **Two-var O(1) space**: `prev, curr = curr, prev+curr` — tối ưu nhất cho interview.
+- 🚨 **Base cases**: `n===0 → 0`, `n===1 → 1` — luôn handle trước khi loop/recurse.
 
 ---
 
 ## Solutions
 
+### Solution 1 — Pure Recursion · O(2ⁿ) time · O(n) space (stack)
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Direct recursive definition. Exponential — shows the problem clearly
+ * but impractical for large n. Good for explaining overlapping subproblems.
+ * Time: O(2^n) | Space: O(n) call stack
  */
-function fibonacciNumberBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function fib_recursive(n: number): number {
+  if (n <= 1) return n;
+  return fib_recursive(n - 1) + fib_recursive(n - 2);
 }
 
+console.log(fib_recursive(0)); // 0
+console.log(fib_recursive(1)); // 1
+console.log(fib_recursive(10)); // 55
+```
+
+### Solution 2 — Memoization (Top-Down DP) · O(n) time · O(n) space
+
+```typescript
 /**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Cache computed values to avoid redundant calls.
+ * Converts exponential to linear by memoizing each subproblem.
+ * Time: O(n) | Space: O(n)
  */
-function fibonacciNumber(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function fib_memo(n: number): number {
+  const memo = new Map<number, number>();
+  function dp(k: number): number {
+    if (k <= 1) return k;
+    if (memo.has(k)) return memo.get(k)!;
+    const val = dp(k - 1) + dp(k - 2);
+    memo.set(k, val);
+    return val;
+  }
+  return dp(n);
 }
 
-// === Test Cases ===
-// console.log(fibonacciNumber(/* example 1 */)); // expected
-// console.log(fibonacciNumber(/* example 2 */)); // expected
-// console.log(fibonacciNumber(/* edge case */)); // expected
+console.log(fib_memo(10)); // 55
+console.log(fib_memo(30)); // 832040
+```
+
+### Solution 3 — Two Variables (Bottom-Up DP) · O(n) time · O(1) space
+
+```typescript
+/**
+ * Best solution: only need previous two values — no array needed.
+ * Iteratively build up from base cases F(0)=0, F(1)=1.
+ * Time: O(n) | Space: O(1)
+ */
+function fib(n: number): number {
+  if (n <= 1) return n;
+  let prev = 0,
+    curr = 1;
+  for (let i = 2; i <= n; i++) {
+    [prev, curr] = [curr, prev + curr];
+  }
+  return curr;
+}
+
+console.log(fib(0)); // 0
+console.log(fib(1)); // 1
+console.log(fib(2)); // 1
+console.log(fib(10)); // 55
+console.log(fib(30)); // 832040
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Different Ways to Add Parentheses](https://leetcode.com/problems/different-ways-to-add-parentheses) — same pattern: Dynamic Programming
-- [N-th Tribonacci Number](https://leetcode.com/problems/n-th-tribonacci-number) — same pattern: Dynamic Programming
-- [Predict the Winner](https://leetcode.com/problems/predict-the-winner) — same pattern: Dynamic Programming
-- [Number of Digit One](https://leetcode.com/problems/number-of-digit-one) — same pattern: Dynamic Programming
-- [Fibonacci Number — LeetCode](https://leetcode.com/problems/fibonacci-number) — problem page
+| Problem                                                                            | Difficulty | Pattern                |
+| ---------------------------------------------------------------------------------- | ---------- | ---------------------- |
+| [Climbing Stairs](https://leetcode.com/problems/climbing-stairs)                   | 🟢 Easy    | DP (Fibonacci variant) |
+| [N-th Tribonacci Number](https://leetcode.com/problems/n-th-tribonacci-number)     | 🟢 Easy    | DP (3-way Fibonacci)   |
+| [House Robber](https://leetcode.com/problems/house-robber)                         | 🟡 Medium  | DP                     |
+| [Min Cost Climbing Stairs](https://leetcode.com/problems/min-cost-climbing-stairs) | 🟢 Easy    | DP                     |

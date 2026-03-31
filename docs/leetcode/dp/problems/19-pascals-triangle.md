@@ -7,62 +7,60 @@ tags: [Array, Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/pascals-triangle"
 ---
 
-# Pascal's Triangle / Pascal's Triangle
+# Pascal's Triangle / Tam Giác Pascal
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Dynamic Programming
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Dynamic Programming (Row Construction)
 > **Frequency**: 📘 Tier 3 — Gặp ở 15 companies
-> **See also**: [Jump Game II](https://leetcode.com/problems/jump-game-ii) | [Maximal Square](https://leetcode.com/problems/maximal-square)
+> **See also**: [Pascal's Triangle II](https://leetcode.com/problems/pascals-triangle-ii) | [Unique Paths](https://leetcode.com/problems/unique-paths)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**Analogy:** Giống xây kim tự tháp — mỗi viên gạch mới là tổng của 2 viên phía trên. Dòng đầu là [1], mỗi dòng tiếp theo tính từ dòng trước → DP row-by-row.
 
 **Pattern Recognition:**
 
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "mỗi row phụ thuộc row trước", "triangle pattern" → **DP row construction**
+- Transition: `row[j] = prevRow[j-1] + prevRow[j]` cho j trong [1, len-2]
+- Math formula: `C(n, k) = C(n, k-1) * (n-k+1) / k` để tính trực tiếp
 
-**Visual — Pascal's Triangle example:**
+**Visual — numRows=5:**
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+Row 0:  [1]
+Row 1:  [1, 1]
+Row 2:  [1, 2, 1]          C(2,0)=1  C(2,1)=2  C(2,2)=1
+Row 3:  [1, 3, 3, 1]       C(3,0)=1  C(3,1)=3  C(3,2)=3  C(3,3)=1
+Row 4:  [1, 4, 6, 4, 1]    C(4,0)=1  C(4,1)=4  C(4,2)=6  ...
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+Each element: C(row, col) = row! / (col! × (row-col)!)
+Incremental:  C(n,k) = C(n,k-1) × (n-k+1) / k  (avoids large factorials)
 ```
 
 ---
 
 ## Problem Description
 
-Pascal's Triangle. ([LeetCode](https://leetcode.com/problems/pascals-triangle))
-
-Difficulty: Easy | Acceptance: 77.0%
+Given an integer `numRows`, return the first `numRows` rows of Pascal's triangle, where each row's element equals the sum of the two elements directly above it (edges are always 1).
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+Example 1: numRows=5 → [[1],[1,1],[1,2,1],[1,3,3,1],[1,4,6,4,1]]
+Example 2: numRows=1 → [[1]]
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/pascals-triangle) for full constraints
+Constraints: `1 <= numRows <= 30`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+1. **Clarify**: "numRows=1 chỉ trả về [[1]]?" / Confirm single row case.
+2. **Base cases**: Dòng 0 = [1]; mỗi dòng bắt đầu và kết thúc bằng 1.
+3. **DP transition**: `triangle[i][j] = triangle[i-1][j-1] + triangle[i-1][j]` — simple and clean.
+4. **Math approach**: Tính C(n,k) bằng incremental formula — elegant nhưng cần careful với float.
+5. **Space**: Với numRows<=30 không cần optimize; mention có thể dùng 1D array in-place.
+6. **Follow-up**: "Pascal's Triangle II — return only row k in O(k) space" — classic follow-up.
 
 ---
 
@@ -70,39 +68,78 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Row-by-Row Construction (DP)
+ * Time: O(numRows²) — build each of n rows; row i has i+1 elements
+ * Space: O(numRows²) — store all rows in output
+ *
+ * Each cell = sum of the two cells directly above it.
+ * Edges of each row are always 1.
  */
-function pascalsTriangleBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function generate1(numRows: number): number[][] {
+  const result: number[][] = [];
+  for (let i = 0; i < numRows; i++) {
+    const row = new Array(i + 1).fill(1); // fill 1s (handles edges automatically)
+    for (let j = 1; j < i; j++) {
+      row[j] = result[i - 1][j - 1] + result[i - 1][j]; // inner elements
+    }
+    result.push(row);
+  }
+  return result;
 }
 
 /**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Math Combination Formula C(n, k)
+ * Time: O(numRows²) — compute each element once via incremental formula
+ * Space: O(numRows²) — output storage only; O(1) extra computation
+ *
+ * Row n = [C(n,0), C(n,1), ..., C(n,n)]
+ * Incremental: C(n,k) = C(n,k-1) × (n-k+1) / k  — avoids computing factorials
  */
-function pascalsTriangle(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function generate(numRows: number): number[][] {
+  const result: number[][] = [];
+  for (let n = 0; n < numRows; n++) {
+    const row: number[] = [1]; // C(n, 0) = 1 always
+    for (let k = 1; k <= n; k++) {
+      // C(n, k) = C(n, k-1) * (n - k + 1) / k
+      row.push(Math.round((row[k - 1] * (n - k + 1)) / k));
+    }
+    result.push(row);
+  }
+  return result;
+}
+
+// Bonus: Pascal's Triangle II — return only row k using O(k) space
+// Modify in-place right-to-left to avoid overwriting values we still need
+function getRow(rowIndex: number): number[] {
+  const row = new Array(rowIndex + 1).fill(1);
+  for (let i = 2; i <= rowIndex; i++) {
+    // Traverse right-to-left so we don't overwrite values before using them
+    for (let j = i - 1; j >= 1; j--) {
+      row[j] = row[j] + row[j - 1];
+    }
+  }
+  return row;
 }
 
 // === Test Cases ===
-// console.log(pascalsTriangle(/* example 1 */)); // expected
-// console.log(pascalsTriangle(/* example 2 */)); // expected
-// console.log(pascalsTriangle(/* edge case */)); // expected
+console.log(JSON.stringify(generate(5)));
+// [[1],[1,1],[1,2,1],[1,3,3,1],[1,4,6,4,1]]
+console.log(JSON.stringify(generate(1)));
+// [[1]]
+console.log(JSON.stringify(generate1(5)));
+// same as above
+console.log(JSON.stringify(getRow(3))); // [1,3,3,1]
+console.log(JSON.stringify(getRow(0))); // [1]
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Jump Game II](https://leetcode.com/problems/jump-game-ii) — same pattern: Dynamic Programming
-- [Maximal Square](https://leetcode.com/problems/maximal-square) — same pattern: Dynamic Programming
-- [Unique Paths II](https://leetcode.com/problems/unique-paths-ii) — same pattern: Dynamic Programming
-- [Maximum Profit in Job Scheduling](https://leetcode.com/problems/maximum-profit-in-job-scheduling) — same pattern: Dynamic Programming
-- [Pascal's Triangle — LeetCode](https://leetcode.com/problems/pascals-triangle) — problem page
+| Problem                                                                               | Relationship                                  |
+| ------------------------------------------------------------------------------------- | --------------------------------------------- |
+| [118. Pascal's Triangle](https://leetcode.com/problems/pascals-triangle/)             | This problem                                  |
+| [119. Pascal's Triangle II](https://leetcode.com/problems/pascals-triangle-ii/)       | Return only row k in O(k) space               |
+| [62. Unique Paths](https://leetcode.com/problems/unique-paths/)                       | C(m+n-2, m-1) = element in Pascal's triangle  |
+| [70. Climbing Stairs](https://leetcode.com/problems/climbing-stairs/)                 | Fibonacci = diagonal sum of Pascal's triangle |
+| [1137. N-th Tribonacci Number](https://leetcode.com/problems/n-th-tribonacci-number/) | DP row dependency — same pattern              |

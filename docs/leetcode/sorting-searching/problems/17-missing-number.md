@@ -7,100 +7,119 @@ tags: [Array, Hash Table, Math, Binary Search, Bit Manipulation]
 leetcode_url: "https://leetcode.com/problems/missing-number"
 ---
 
-# Missing Number / Missing Number
+# Missing Number / Tìm Số Còn Thiếu
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Binary Search
-> **Frequency**: 📘 Tier 3 — Gặp ở 12 companies
-> **See also**: [Intersection of Two Arrays](https://leetcode.com/problems/intersection-of-two-arrays) | [Number of Flowers in Full Bloom](https://leetcode.com/problems/number-of-flowers-in-full-bloom)
-
----
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Math Sum / XOR / Sort
+> **Frequency**: 📘 Tier 2 — Gặp ở hầu hết công ty; bài test nhiều cách tiếp cận trong phỏng vấn
+> **See also**: [Find the Duplicate Number](https://leetcode.com/problems/find-the-duplicate-number) | [First Missing Positive](https://leetcode.com/problems/first-missing-positive)
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Tưởng tượng tìm một trang trong từ điển — bạn mở giữa, xem số trang, rồi chọn nửa phù hợp. Mỗi lần giảm một nửa phạm vi tìm kiếm.
+- **Analogy:** Hãy tưởng tượng bạn có dây chuyền 0..n và thiếu một hạt. Cách nhanh nhất: biết tổng dây chuyền đầy đủ là `n*(n+1)/2`, trừ đi tổng thực tế → ra số thiếu. Cách điệu hơn: XOR mọi số từ 0..n với mọi phần tử trong mảng → các số xuất hiện 2 lần sẽ triệt tiêu, còn lại là số thiếu.
 
-**Pattern Recognition:**
+- **Pattern Recognition:**
+  - Mảng chứa n phần tử phân biệt từ `[0..n]` → đúng 1 số bị thiếu
+  - **Math**: `expected_sum - actual_sum = missing`
+  - **XOR**: `0^1^..^n ^ nums[0]^..^nums[n-1]` = missing (số xuất hiện chẵn lần = 0)
+  - **Sort**: sắp xếp, tìm vị trí đầu tiên `nums[i] != i`
 
-- Signal: "sorted" + "find target/position" → **Binary Search**
-- Bài này thuộc dạng Binary Search — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- **Visual — Math approach với `[3,0,1]`:**
 
-**Visual — Missing Number example:**
+  ```
+  n = 3,  expected = 0+1+2+3 = 6
+  actual  = 3+0+1         = 4
+  missing = 6 - 4         = 2 ✅
 
-```
-[1, 3, 5, 7, 9, 11, 13]
- L        M            R
-
-Step 1: mid = (L+R)/2, check condition
-Step 2: condition true → move L = mid+1 (or R = mid-1)
-Step N: L meets R → answer found ✅
-```
-
----
+  XOR approach:
+  0^1^2^3 ^ 3^0^1  = (0^0)^(1^1)^(3^3)^2 = 2 ✅
+  ```
 
 ## Problem Description
 
-Missing Number. ([LeetCode](https://leetcode.com/problems/missing-number))
+Cho mảng `nums` chứa `n` số phân biệt trong khoảng `[0, n]`, trả về số duy nhất trong khoảng đó không xuất hiện trong mảng.
 
-Difficulty: Easy | Acceptance: 70.1%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/missing-number) for full constraints
-
----
+| Input                 | Output | Giải thích            |
+| --------------------- | ------ | --------------------- |
+| `[3, 0, 1]`           | `2`    | 2 không có trong mảng |
+| `[0, 1]`              | `2`    | n=2, thiếu 2          |
+| `[9,6,4,2,3,5,7,0,1]` | `8`    | 8 không xuất hiện     |
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Input đã sorted? Cần tìm vị trí chính xác hay boundary?" / Is input sorted? Exact match or boundary?
-2. **Brute force**: "Linear scan O(n)" → optimize with binary search O(log n) / Start linear, suggest binary
-3. **Optimize**: "Chú ý lo/hi boundary: lo <= hi hay lo < hi? mid±1 hay mid?" / Watch boundary conditions carefully
-4. **Edge cases**: "Mảng rỗng, một phần tử, target không tồn tại, overflow mid" / Empty, single, not found, overflow
-
----
+- 🇻🇳 Đây là bài "showcase 3 cách": Sort O(n log n), Math O(n), XOR O(n) — interviewer thường muốn nghe cả ba / 🇬🇧 _Showcase three approaches: Sort, Math sum, XOR — mention all, then code the best_
+- 🇻🇳 Math sum có thể overflow với n lớn (dùng BigInt hoặc tính từng bước); XOR không overflow / 🇬🇧 _Math sum can overflow for large n — XOR is safer and equally O(n) O(1) space_
+- 🇻🇳 XOR trick: `a ^ a = 0` và `a ^ 0 = a` → XOR hết `0..n` với hết `nums` → còn lại số thiếu / 🇬🇧 _XOR trick: a^a=0, a^0=a — XOR all expected + all actual, leftovers = missing_
+- 🇻🇳 Sort + scan: tìm `i` đầu tiên mà `nums[i] != i` sau sort; nếu không tìm được → thiếu `n` / 🇬🇧 _Sort approach: after sorting, first index where nums[i]≠i gives the missing number_
 
 ## Solutions
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Sort + Linear Scan
+ * Sắp xếp mảng rồi tìm vị trí đầu tiên mà nums[i] != i.
+ * Nếu mọi vị trí đều match → số thiếu là n.
+ *
+ * @time O(n log n) — dominated by sort
+ * @space O(1) — in-place sort (không kể stack)
  */
-function missingNumberBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function missingNumberSort(nums: number[]): number {
+  nums.sort((a, b) => a - b);
+  for (let i = 0; i < nums.length; i++) {
+    if (nums[i] !== i) return i;
+  }
+  return nums.length; // số n bị thiếu
 }
+
+console.log(missingNumberSort([3, 0, 1])); // 2
+console.log(missingNumberSort([0, 1])); // 2
+console.log(missingNumberSort([9, 6, 4, 2, 3, 5, 7, 0, 1])); // 8
 
 /**
- * Solution 2: Optimized — Binary Search
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Math Sum Formula — O(n) O(1)
+ * Tổng lý thuyết: n*(n+1)/2. Trừ đi tổng thực tế → số thiếu.
+ *
+ * @time O(n) — một lần duyệt để tính sum
+ * @space O(1) — chỉ dùng biến số học
  */
-function missingNumber(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Binary Search
-  // Hint: Define search space, determine which half to discard
-  throw new Error('Not implemented');
+function missingNumberMath(nums: number[]): number {
+  const n = nums.length;
+  const expected = (n * (n + 1)) / 2;
+  const actual = nums.reduce((acc, x) => acc + x, 0);
+  return expected - actual;
 }
 
-// === Test Cases ===
-// console.log(missingNumber(/* example 1 */)); // expected
-// console.log(missingNumber(/* example 2 */)); // expected
-// console.log(missingNumber(/* edge case */)); // expected
-```
+console.log(missingNumberMath([3, 0, 1])); // 2
+console.log(missingNumberMath([0, 1])); // 2
+console.log(missingNumberMath([9, 6, 4, 2, 3, 5, 7, 0, 1])); // 8
 
----
+/**
+ * Solution 3: XOR Bit Manipulation — O(n) O(1), overflow-safe
+ * XOR tất cả giá trị từ 0..n với tất cả phần tử nums.
+ * Số xuất hiện đúng 2 lần sẽ triệt tiêu (a^a=0).
+ * Số xuất hiện 1 lần (số thiếu) là kết quả.
+ *
+ * @time O(n) — một lần duyệt
+ * @space O(1) — không cần bộ nhớ phụ
+ */
+function missingNumber(nums: number[]): number {
+  let xor = nums.length; // bắt đầu với n
+  for (let i = 0; i < nums.length; i++) {
+    xor ^= i ^ nums[i]; // XOR cả index i (0..n-1) lẫn nums[i]
+  }
+  return xor;
+}
+
+console.log(missingNumber([3, 0, 1])); // 2
+console.log(missingNumber([0, 1])); // 2
+console.log(missingNumber([9, 6, 4, 2, 3, 5, 7, 0, 1])); // 8
+console.log(missingNumber([0])); // 1
+```
 
 ## 🔗 Related Problems
 
-- [Intersection of Two Arrays](https://leetcode.com/problems/intersection-of-two-arrays) — same pattern: Two Pointers
-- [Number of Flowers in Full Bloom](https://leetcode.com/problems/number-of-flowers-in-full-bloom) — same pattern: Prefix Sum
-- [Minimum Area Rectangle](https://leetcode.com/problems/minimum-area-rectangle) — same pattern: Sorting
-- [Maximum Total Damage With Spell Casting](https://leetcode.com/problems/maximum-total-damage-with-spell-casting) — same pattern: Two Pointers
-- [Missing Number — LeetCode](https://leetcode.com/problems/missing-number) — problem page
+| Problem                                                                                               | Pattern             | Difficulty |
+| ----------------------------------------------------------------------------------------------------- | ------------------- | ---------- |
+| [287. Find the Duplicate Number](https://leetcode.com/problems/find-the-duplicate-number)             | Floyd's Cycle / XOR | 🟡 Medium  |
+| [41. First Missing Positive](https://leetcode.com/problems/first-missing-positive)                    | Index as Hash       | 🔴 Hard    |
+| [136. Single Number](https://leetcode.com/problems/single-number)                                     | XOR                 | 🟢 Easy    |
+| [442. Find All Duplicates in an Array](https://leetcode.com/problems/find-all-duplicates-in-an-array) | Index marking       | 🟡 Medium  |

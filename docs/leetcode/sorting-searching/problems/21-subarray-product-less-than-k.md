@@ -7,7 +7,7 @@ tags: [Array, Binary Search, Sliding Window, Prefix Sum]
 leetcode_url: "https://leetcode.com/problems/subarray-product-less-than-k"
 ---
 
-# Subarray Product Less Than K / Subarray Product Less Than K
+# Subarray Product Less Than K / Số Mảng Con Có Tích Nhỏ Hơn K
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Sliding Window
 > **Frequency**: 📘 Tier 3 — Gặp ở 11 companies
@@ -17,90 +17,118 @@ leetcode_url: "https://leetcode.com/problems/subarray-product-less-than-k"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống như nhìn qua một khung cửa sổ di chuyển trên dãy nhà. Mỗi lần trượt, bạn thêm nhà mới bên phải, bỏ nhà cũ bên trái — luôn giữ đúng kích thước khung.
+**Analogy:** Giống như khung cửa sổ trượt qua dãy nhà — mở rộng phải khi tích vẫn < k, thu hẹp trái khi tích ≥ k. Mỗi khi cửa sổ hợp lệ (tích < k), số mảng con mới được thêm vào đúng bằng kích thước cửa sổ hiện tại.
 
-**Pattern Recognition:**
-
-- Signal: "contiguous subarray/substring" + "max/min length" → **Sliding Window**
-- Bài này thuộc dạng Sliding Window — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Subarray Product Less Than K example:**
+**Pattern:** Sliding window — `right - left + 1` là số mảng con kết thúc tại `right` và tích < k.
 
 ```
-[a, b, c, d, e, f, g]
- |--window--|
-    |--window--|     → slide right, update state
+nums = [10, 5, 2, 6], k = 100
 
-Track: current window state
-Update: add right, remove left when window exceeds constraint
+r=0: prod=10 < 100 → count += 1 (window [10])
+r=1: prod=50 < 100 → count += 2 (window [10,5] → subarrays: [10,5],[5])
+r=2: prod=100 ≥ 100 → shrink: l++, prod=10
+      prod=10 < 100 → count += 2 (window [5,2] → [5,2],[2])
+r=3: prod=60 < 100 → count += 3 (window [5,2,6] → [5,2,6],[2,6],[6])
+
+Total = 1+2+2+3 = 8 ✅
 ```
 
 ---
 
-## Problem Description
+Cho mảng số nguyên dương `nums` và số nguyên `k`, đếm số **mảng con liên tiếp** có **tích của tất cả phần tử nhỏ hơn `k`** (nghiêm ngặt).
 
-Subarray Product Less Than K. ([LeetCode](https://leetcode.com/problems/subarray-product-less-than-k))
-
-Difficulty: Medium | Acceptance: 52.9%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/subarray-product-less-than-k) for full constraints
+- `nums = [10,5,2,6], k = 100` → `8`
+- `nums = [1,2,3], k = 0` → `0`
 
 ---
 
-## 📝 Interview Tips
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-1. **Clarify**: "Cần contiguous subarray hay subsequence?" / Subarray (contiguous) vs subsequence (non-contiguous)
-2. **Brute force**: "Thử mọi subarray O(n²)" → optimize with sliding window O(n) / Try all subarrays then optimize
-3. **Optimize**: "Dùng window expand/shrink, track state bằng map/counter" / Use expand right, shrink left pattern
-4. **Edge cases**: "Chuỗi rỗng, k > array length, tất cả unique/duplicate" / Empty input, k exceeds length
+- 🇻🇳 **Key insight**: cửa sổ `[left..right]` hợp lệ → thêm `right - left + 1` mảng con mới
+- 🇺🇸 **Why that count?** All subarrays ending at `right` with start in `[left..right]` are valid
+- 🇻🇳 **Shrink khi tích ≥ k**: chia dần cho `nums[left++]` để thu nhỏ cửa sổ
+- 🇺🇸 **Edge case**: if `k <= 1`, no positive-integer product can be < 1 → return 0 immediately
+- 🇻🇳 **Khác với Minimum Size Subarray Sum**: đó tìm độ dài tối thiểu; đây đếm số lượng
+- 🇺🇸 **Overflow**: products can be large but since we shrink when >= k, product stays bounded
 
 ---
 
 ## Solutions
 
+### Solution 1: Brute Force — O(n²) time, O(1) space
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Check every subarray — count those whose product is < k
+ * Time: O(n²) | Space: O(1)
  */
-function subarrayProductLessThanKBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function numSubarrayProductLessThanKBrute(nums: number[], k: number): number {
+  if (k <= 1) return 0;
+  let count = 0;
+
+  for (let left = 0; left < nums.length; left++) {
+    let prod = 1;
+    for (let right = left; right < nums.length; right++) {
+      prod *= nums[right];
+      if (prod < k) count++;
+      else break; // all further extensions will only grow product
+    }
+  }
+
+  return count;
 }
 
+// Tests
+console.log(numSubarrayProductLessThanKBrute([10, 5, 2, 6], 100)); // 8
+console.log(numSubarrayProductLessThanKBrute([1, 2, 3], 0)); // 0
+console.log(numSubarrayProductLessThanKBrute([1, 1, 1], 2)); // 6
+```
+
+### Solution 2: Sliding Window — O(n) time, O(1) space ✅ Optimal
+
+```typescript
 /**
- * Solution 2: Optimized — Sliding Window
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Maintain a window [left..right] with product < k.
+ * For each valid right, all subarrays ending at right = (right - left + 1).
+ * Time: O(n) | Space: O(1)
  */
-function subarrayProductLessThanK(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Sliding Window
-  // Hint: Expand right pointer, shrink left when constraint violated
-  throw new Error('Not implemented');
+function numSubarrayProductLessThanK(nums: number[], k: number): number {
+  if (k <= 1) return 0; // no positive-integer product can be strictly < 1
+
+  let count = 0;
+  let prod = 1;
+  let left = 0;
+
+  for (let right = 0; right < nums.length; right++) {
+    prod *= nums[right]; // expand window to the right
+
+    // Shrink from the left until product < k again
+    while (prod >= k) {
+      prod /= nums[left++];
+    }
+
+    // All subarrays ending at 'right' with start in [left..right] are valid
+    count += right - left + 1;
+  }
+
+  return count;
 }
 
-// === Test Cases ===
-// console.log(subarrayProductLessThanK(/* example 1 */)); // expected
-// console.log(subarrayProductLessThanK(/* example 2 */)); // expected
-// console.log(subarrayProductLessThanK(/* edge case */)); // expected
+// Tests
+console.log(numSubarrayProductLessThanK([10, 5, 2, 6], 100)); // 8
+console.log(numSubarrayProductLessThanK([1, 2, 3], 0)); // 0
+console.log(numSubarrayProductLessThanK([1, 1, 1], 2)); // 6
+console.log(numSubarrayProductLessThanK([1, 2, 3], 6)); // 4
+console.log(numSubarrayProductLessThanK([10], 10)); // 0
+console.log(numSubarrayProductLessThanK([10], 11)); // 1
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Minimum Size Subarray Sum](https://leetcode.com/problems/minimum-size-subarray-sum) — same pattern: Sliding Window
-- [Max Consecutive Ones III](https://leetcode.com/problems/max-consecutive-ones-iii) — same pattern: Sliding Window
-- [Frequency of the Most Frequent Element](https://leetcode.com/problems/frequency-of-the-most-frequent-element) — same pattern: Sliding Window
-- [Apply Operations to Maximize Frequency Score](https://leetcode.com/problems/apply-operations-to-maximize-frequency-score) — same pattern: Sliding Window
-- [Subarray Product Less Than K — LeetCode](https://leetcode.com/problems/subarray-product-less-than-k) — problem page
+| Problem                                                                                                                              | Difficulty | Pattern                     |
+| ------------------------------------------------------------------------------------------------------------------------------------ | ---------- | --------------------------- |
+| [Minimum Size Subarray Sum](https://leetcode.com/problems/minimum-size-subarray-sum)                                                 | 🟡 Medium  | Sliding window (min length) |
+| [Max Consecutive Ones III](https://leetcode.com/problems/max-consecutive-ones-iii)                                                   | 🟡 Medium  | Sliding window (max length) |
+| [Longest Subarray of 1s After Deleting One Element](https://leetcode.com/problems/longest-subarray-of-1s-after-deleting-one-element) | 🟡 Medium  | Sliding window variant      |

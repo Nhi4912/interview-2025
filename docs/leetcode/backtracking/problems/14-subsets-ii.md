@@ -7,64 +7,60 @@ tags: [Array, Backtracking, Bit Manipulation]
 leetcode_url: "https://leetcode.com/problems/subsets-ii"
 ---
 
-# Subsets II / Subsets II
+# Subsets II / Tập Con Có Phần Tử Trùng
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Backtracking
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Backtracking + Dedup
 > **Frequency**: 📘 Tier 3 — Gặp ở 9 companies
-> **See also**: [Beautiful Arrangement](https://leetcode.com/problems/beautiful-arrangement) | [Optimal Account Balancing](https://leetcode.com/problems/optimal-account-balancing)
+> **See also**: [Subsets](https://leetcode.com/problems/subsets) | [Permutations II](https://leetcode.com/problems/permutations-ii)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống thử đồ — bạn thử từng lựa chọn, nếu không phù hợp thì cởi ra thử cái khác. Quan trọng là biết khi nào nên dừng thử (pruning).
+**Analogy:** Giống chọn đồ từ tủ — với những món giống nhau, ta không muốn chọn "chiếc áo đỏ đầu tiên" và "chiếc áo đỏ thứ hai" cho ra hai tập con khác nhau. Sort rồi skip nếu cùng giá trị với phần tử trước ở cùng level.
 
 **Pattern Recognition:**
 
-- Signal: "generate all valid combinations/permutations" → **Backtracking**
-- Bài này thuộc dạng Backtracking — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "all unique subsets" + "duplicates in input" → **Sort + skip same-value sibling**
+- Khác Permutations II: đây là combination (không quan tâm thứ tự), dùng `start` index
+- Dedup rule: `i > start && nums[i] === nums[i-1]` → skip at current recursion level
 
-**Visual — Subsets II example:**
+**Visual — `nums=[1,2,2]` sort → `[1,2,2]`:**
 
 ```
-                    []
-            /       |       \
-          [a]      [b]      [c]
-         / \        |
-      [a,b] [a,c]  [b,c]
-       |
-    [a,b,c]
+start=0: []
+  i=0 → [1], recurse(start=1)
+    i=1 → [1,2], recurse(start=2)
+      i=2 → [1,2,2], recurse(start=3) → add [1,2,2]
+    i=2 → SKIP (2==2 and i>start=1)
+  i=1 → [2], recurse(start=2)
+    i=2 → [2,2], recurse(start=3) → add [2,2]
+  i=2 → SKIP (2==2 and i>start=0)
 
-Choose → Explore → Un-choose (backtrack)
-Prune branches that violate constraints
+Results: [], [1], [1,2], [1,2,2], [2], [2,2]  ✅
 ```
 
 ---
 
 ## Problem Description
 
-Subsets II. ([LeetCode](https://leetcode.com/problems/subsets-ii))
+Given an integer array `nums` that may contain duplicates, return all possible unique subsets (the power set). The solution set must not contain duplicate subsets; return in any order. ([LeetCode 90](https://leetcode.com/problems/subsets-ii))
 
-Difficulty: Medium | Acceptance: 59.5%
+**Example 1:** `nums = [1,2,2]` → `[[],[1],[1,2],[1,2,2],[2],[2,2]]`
+**Example 2:** `nums = [0]` → `[[],[0]]`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/subsets-ii) for full constraints
+**Constraints:** `1 ≤ nums.length ≤ 10`, `-10 ≤ nums[i] ≤ 10`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần all solutions hay count? Có duplicate input không?" / All results or count? Duplicate elements?
-2. **Template**: "Choose → Explore → Un-choose" / Follow the standard backtracking template
-3. **Pruning**: "Skip nếu biết sớm branch này invalid" / Prune early to avoid TLE
-4. **Edge cases**: "Input rỗng, n=0, kết quả có thể rỗng" / Empty input, n=0, possibly empty result set
+1. **Clarify**: "Subsets không quan tâm thứ tự — [1,2] và [2,1] là cùng một tập" / Subsets are order-independent
+2. **Sort first**: "Sort để phần tử giống nhau liền kề — dễ detect và skip" / Sorting clusters duplicates
+3. **Dedup rule**: "`i > start && nums[i] === nums[i-1]` — khác với Permutations II (`!used[i-1]`)" / i > start (not i > 0) because start resets per level
+4. **vs Permutations II**: "Permutations dùng `used[]`, Subsets dùng `start` index — combinations không dùng lại element" / Key difference: combinations use start index
+5. **Iterative approach**: "Build tập con dần, với mỗi số trùng chỉ nhân những subset vừa thêm vào vòng lặp trước" / Iterative: only multiply newly-added subsets for duplicate values
+6. **Complexity**: "O(2ⁿ × n) — at most 2ⁿ subsets × O(n) copy each" / Exponential but bounded by 2^n
 
 ---
 
@@ -72,39 +68,84 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Sort + Skip Duplicates Backtracking
+ * Sort input. Use start index (not used array) — combinations don't reuse elements.
+ * Skip if current element equals previous AND i > start (same sibling level).
+ * Time: O(2ⁿ × n) — at most 2ⁿ subsets, O(n) copy each
+ * Space: O(n) — recursion depth + current path
  */
-function subsetsIiBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function subsetsWithDup(nums: number[]): number[][] {
+  nums.sort((a, b) => a - b);
+  const result: number[][] = [];
+  const path: number[] = [];
+
+  const backtrack = (start: number) => {
+    result.push([...path]); // add current subset (including empty set at start)
+
+    for (let i = start; i < nums.length; i++) {
+      // Skip duplicate at the same recursion level
+      if (i > start && nums[i] === nums[i - 1]) continue;
+      path.push(nums[i]);
+      backtrack(i + 1);
+      path.pop();
+    }
+  };
+
+  backtrack(0);
+  return result;
 }
 
 /**
- * Solution 2: Optimized — Backtracking
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Iterative Build + Handle Duplicates
+ * Start with [[]], then for each number extend existing subsets.
+ * For duplicates: only extend subsets added in the PREVIOUS round
+ * (not all subsets) to avoid generating duplicates.
+ * Time: O(2ⁿ × n) — same asymptotic as backtracking
+ * Space: O(2ⁿ × n) — store all subsets
  */
-function subsetsIi(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Backtracking
-  // Hint: Choose → Explore → Unchoose, prune invalid branches early
-  throw new Error('Not implemented');
+function subsetsWithDupIterative(nums: number[]): number[][] {
+  nums.sort((a, b) => a - b);
+  const result: number[][] = [[]];
+  let prevStart = 0; // start of subsets added in last round
+
+  for (let i = 0; i < nums.length; i++) {
+    const start = i > 0 && nums[i] === nums[i - 1] ? prevStart : 0;
+    const currentSize = result.length;
+    // Extend each subset from `start` by appending current number
+    for (let j = start; j < currentSize; j++) {
+      result.push([...result[j], nums[i]]);
+    }
+    prevStart = currentSize; // mark where new subsets started this round
+  }
+
+  return result;
 }
 
 // === Test Cases ===
-// console.log(subsetsIi(/* example 1 */)); // expected
-// console.log(subsetsIi(/* example 2 */)); // expected
-// console.log(subsetsIi(/* edge case */)); // expected
+const r1 = subsetsWithDup([1, 2, 2]);
+console.log(r1.map((s) => JSON.stringify(s)).sort());
+// [],[1],[1,2],[1,2,2],[2],[2,2] → 6 subsets
+
+const r2 = subsetsWithDup([1, 1, 2]);
+console.log(r2.length); // 6
+
+const r3 = subsetsWithDup([0]);
+console.log(r3); // [[], [0]]
+
+const r4 = subsetsWithDupIterative([1, 2, 2]);
+console.log(r4.map((s) => JSON.stringify(s)).sort());
+// same 6 subsets
+
+console.log(subsetsWithDup([1, 1, 1]).length); // 4: [], [1], [1,1], [1,1,1]
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Beautiful Arrangement](https://leetcode.com/problems/beautiful-arrangement) — same pattern: Backtracking
-- [Optimal Account Balancing](https://leetcode.com/problems/optimal-account-balancing) — same pattern: Backtracking
-- [Find Minimum Time to Finish All Jobs](https://leetcode.com/problems/find-minimum-time-to-finish-all-jobs) — same pattern: Backtracking
-- [Partition to K Equal Sum Subsets](https://leetcode.com/problems/partition-to-k-equal-sum-subsets) — same pattern: Backtracking
-- [Subsets II — LeetCode](https://leetcode.com/problems/subsets-ii) — problem page
+| Problem                                                                                                                | Pattern                   | Difficulty |
+| ---------------------------------------------------------------------------------------------------------------------- | ------------------------- | ---------- |
+| [Subsets](https://leetcode.com/problems/subsets)                                                                       | Backtracking no dedup     | 🟡 Medium  |
+| [Permutations II](https://leetcode.com/problems/permutations-ii)                                                       | Sort + dedup backtracking | 🟡 Medium  |
+| [Combination Sum II](https://leetcode.com/problems/combination-sum-ii)                                                 | Same dedup + target       | 🟡 Medium  |
+| [Count Number of Maximum Bitwise-OR Subsets](https://leetcode.com/problems/count-number-of-maximum-bitwise-or-subsets) | Subset enumeration        | 🟡 Medium  |
