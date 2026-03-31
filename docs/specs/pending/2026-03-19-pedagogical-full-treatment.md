@@ -1,14 +1,15 @@
 # Pedagogical Full Treatment — Progress Tracker (All Tracks)
 
 > **Purpose**: Track which fe-track, be-track, and shared files have Phase 1 (intro) and Phase 2 (deep content) pedagogical treatment.
-> **Updated**: 2026-03-28 (session 20 — ALL tiers complete: Tier 9-10 compliance fix, Tier 12+15-18 Phase 2 done)
+> **Updated**: 2026-03-30 (session 21 — compliance audit: corrected false ✅/❌, identified systemic B1/C3/D1 gaps)
 >
 > **Legend**:
 >
 > - ❌ Not started — no pedagogical sections
 > - 🔄 Intro only — has Real-World Scenario + What & Why, but no Phase 2 deep content
-> - ⚠️ Partial Phase 2 — has some Phase 2 elements but missing Layers 1-2-3 / table format / Self-Check format
+> - ⚠️ Partial Phase 2 — has some Phase 2 elements but missing key items (see notes)
 > - ✅ Full treatment — passes ALL Phase 2 checklist items below
+> - 🚨 FAIL — has critical violations (placeholders, duplicates)
 
 ---
 
@@ -97,46 +98,46 @@
 
 ### Tier 1: JavaScript Core (`fe-track/01-javascript/`)
 
-| File                                  | Phase 1 | Phase 2 | Notes          |
-| ------------------------------------- | ------- | ------- | -------------- |
-| `00-javascript-basics.md`             | ✅      | ✅      | Done session 7 |
-| `01-variables-data-types.md`          | ✅      | ✅      | Done session 7 |
-| `02-scope-hoisting.md`                | 🔄      | ❌      | Short version  |
-| `02-scope-hofisting-comprehensive.md` | ✅      | ✅      | Done session 1 |
-| `03-closures.md`                      | 🔄      | ❌      | Short version  |
-| `03-closures-comprehensive.md`        | ✅      | ✅      | Done session 1 |
-| `04-prototypes-inheritance.md`        | ✅      | ✅      | Done session 7 |
-| `05-this-keyword.md`                  | ✅      | ✅      | Done session 2 |
-| `06-event-loop-async.md`              | ✅      | ✅      | Done session 2 |
-| `07-es6-features.md`                  | ✅      | ✅      | Done session 3 |
-| `08-advanced-concepts.md`             | ✅      | ✅      | Done session 3 |
-| `09-async-comprehensive.md`           | ✅      | ✅      | Done session 1 |
-| `10-prototypes-inheritance-deep.md`   | ✅      | ✅      | Done session 2 |
-| `11-es6-features-deep.md`             | ✅      | ✅      | Done session 8 |
-| `12-functional-programming.md`        | ✅      | ✅      | Done session 3 |
-| `13-javascript-basics-theory.md`      | ✅      | ✅      | Done session 8 |
-| `14-javascript-type-system-theory.md` | ✅      | ✅      | Done session 8 |
-| `15-memory-management-advanced.md`    | ✅      | ✅      | Done session 8 |
-| `16-execution-context-theory.md`      | ✅      | ✅      | Done session 8 |
-| `17-advanced-patterns-theory.md`      | ✅      | ✅      | Done session 8 |
-| `18-metaprogramming-theory.md`        | ✅      | ✅      | Done session 8 |
-| `19-concurrency-models-theory.md`     | ✅      | ✅      | Done session 9 |
-| `20-module-systems-theory.md`         | ✅      | ✅      | Done session 9 |
-| `21-engine-internals-theory.md`       | ✅      | ✅      | Done session 9 |
-| `22-modern-javascript-features.md`    | ✅      | ✅      | Done session 9 |
+| File                                  | Phase 1 | Phase 2 | Notes                                                                  |
+| ------------------------------------- | ------- | ------- | ---------------------------------------------------------------------- |
+| `00-javascript-basics.md`             | ✅      | ✅      | Done session 7                                                         |
+| `01-variables-data-types.md`          | ✅      | ✅      | Done session 7                                                         |
+| `02-scope-hoisting.md`                | 🔄      | ❌      | Short version                                                          |
+| `02-scope-hofisting-comprehensive.md` | ✅      | ✅      | Done session 1                                                         |
+| `03-closures.md`                      | ✅      | ⚠️      | Has 12 Phase 2 markers (Layer 1/2/3, Self-Check) but may be incomplete |
+| `03-closures-comprehensive.md`        | ✅      | ✅      | Done session 1                                                         |
+| `04-prototypes-inheritance.md`        | ✅      | ✅      | Done session 7                                                         |
+| `05-this-keyword.md`                  | ✅      | ✅      | Done session 2                                                         |
+| `06-event-loop-async.md`              | ✅      | ✅      | Done session 2                                                         |
+| `07-es6-features.md`                  | ✅      | ✅      | Done session 3                                                         |
+| `08-advanced-concepts.md`             | ✅      | ✅      | Done session 3                                                         |
+| `09-async-comprehensive.md`           | ✅      | ✅      | Done session 1                                                         |
+| `10-prototypes-inheritance-deep.md`   | ✅      | ✅      | Done session 2                                                         |
+| `11-es6-features-deep.md`             | ✅      | ✅      | Done session 8                                                         |
+| `12-functional-programming.md`        | ✅      | ✅      | Done session 3                                                         |
+| `13-javascript-basics-theory.md`      | ✅      | ✅      | Done session 8                                                         |
+| `14-javascript-type-system-theory.md` | ✅      | ✅      | Done session 8                                                         |
+| `15-memory-management-advanced.md`    | ✅      | ✅      | Done session 8                                                         |
+| `16-execution-context-theory.md`      | ✅      | ✅      | Done session 8                                                         |
+| `17-advanced-patterns-theory.md`      | ✅      | ✅      | Done session 8                                                         |
+| `18-metaprogramming-theory.md`        | ✅      | ✅      | Done session 8                                                         |
+| `19-concurrency-models-theory.md`     | ✅      | ✅      | Done session 9                                                         |
+| `20-module-systems-theory.md`         | ✅      | ✅      | Done session 9                                                         |
+| `21-engine-internals-theory.md`       | ✅      | ✅      | Done session 9                                                         |
+| `22-modern-javascript-features.md`    | ✅      | ✅      | Done session 9                                                         |
 
 ### Tier 2: TypeScript (`fe-track/02-typescript/`)
 
-| File                               | Phase 1 | Phase 2 | Notes          |
-| ---------------------------------- | ------- | ------- | -------------- |
-| `01-typescript-basics.md`          | ✅      | ✅      | Done session 2 |
-| `01-type-system-basics.md`         | ✅      | ✅      | Done session 4 |
-| `02-advanced-types.md`             | ✅      | ✅      | Done session 4 |
-| `03-generics-deep-dive.md`         | ✅      | ✅      | Done session 4 |
-| `04-typescript-comprehensive.md`   | ✅      | ✅      | Done session 9 |
-| `05-react-typescript.md`           | ✅      | ✅      | Done session 9 |
-| `05-type-inference-theory.md`      | ✅      | ✅      | Done session 9 |
-| `06-typescript-modern-features.md` | ✅      | ✅      | Done session 9 |
+| File                               | Phase 1 | Phase 2 | Notes                                                                     |
+| ---------------------------------- | ------- | ------- | ------------------------------------------------------------------------- |
+| `01-typescript-basics.md`          | ✅      | ✅      | Done session 2                                                            |
+| `01-type-system-basics.md`         | ✅      | ⚠️      | Missing A3-A5 (uses "Feynman Layer" not Layer 1/2/3), missing C1 Overview |
+| `02-advanced-types.md`             | ✅      | ✅      | Done session 4                                                            |
+| `03-generics-deep-dive.md`         | ✅      | ✅      | Done session 4                                                            |
+| `04-typescript-comprehensive.md`   | ✅      | ✅      | Done session 9                                                            |
+| `05-react-typescript.md`           | ✅      | ✅      | Done session 9                                                            |
+| `05-type-inference-theory.md`      | ✅      | ✅      | Done session 9                                                            |
+| `06-typescript-modern-features.md` | ✅      | ✅      | Done session 9                                                            |
 
 ### Tier 3: React (`fe-track/03-react/`)
 
@@ -180,27 +181,27 @@
 
 ### Tier 6: Browser Performance (`fe-track/06-browser-performance/`)
 
-| File                                  | Phase 1 | Phase 2 | Notes           |
-| ------------------------------------- | ------- | ------- | --------------- |
-| `01-core-web-vitals.md`               | ✅      | ✅      | Done session 3  |
-| `02-react-performance.md`             | ✅      | ✅      | Done session 5  |
-| `03-bundle-optimization.md`           | ❌      | ❌      |                 |
-| `04-web-performance-comprehensive.md` | ✅      | ✅      | Done session 11 |
-| `05-rendering-optimization-theory.md` | ✅      | ✅      | Done session 8  |
+| File                                  | Phase 1 | Phase 2 | Notes                                                    |
+| ------------------------------------- | ------- | ------- | -------------------------------------------------------- |
+| `01-core-web-vitals.md`               | ✅      | ✅      | Done session 3                                           |
+| `02-react-performance.md`             | ✅      | ✅      | Done session 5                                           |
+| `03-bundle-optimization.md`           | ✅      | ⚠️      | Has Cold Call, Study Cases, Self-Check (partial Phase 2) |
+| `04-web-performance-comprehensive.md` | ✅      | ✅      | Done session 11                                          |
+| `05-rendering-optimization-theory.md` | ✅      | ✅      | Done session 8                                           |
 
 ### Tier 7: Web Security + FE System Design
 
-| File                                               | Phase 1 | Phase 2 | Notes           |
-| -------------------------------------------------- | ------- | ------- | --------------- |
-| `07-web-security/01-common-vulnerabilities.md`     | ✅      | ✅      | Done session 11 |
-| `07-web-security/02-authentication.md`             | ✅      | ✅      | Done session 11 |
-| `07-web-security/03-web-security-comprehensive.md` | ✅      | ✅      | Done session 11 |
-| `08-fe-system-design/01-architecture-patterns.md`  | ✅      | ✅      | Done session 8  |
-| `08-fe-system-design/02-scalability.md`            | ✅      | ✅      | Done session 11 |
-| `08-fe-system-design/03-caching.md`                | ❌      | ❌      |                 |
-| `08-fe-system-design/04-microservices.md`          | ❌      | ❌      |                 |
-| `08-fe-system-design/05-database-design.md`        | ❌      | ❌      |                 |
-| `08-fe-system-design/06-microservices-patterns.md` | ✅      | ✅      | Done session 11 |
+| File                                               | Phase 1 | Phase 2 | Notes                                                                                  |
+| -------------------------------------------------- | ------- | ------- | -------------------------------------------------------------------------------------- |
+| `07-web-security/01-common-vulnerabilities.md`     | ✅      | ✅      | Done session 11                                                                        |
+| `07-web-security/02-authentication.md`             | ✅      | ✅      | Done session 11                                                                        |
+| `07-web-security/03-web-security-comprehensive.md` | ✅      | ✅      | Done session 11                                                                        |
+| `08-fe-system-design/01-architecture-patterns.md`  | ✅      | ✅      | Done session 8                                                                         |
+| `08-fe-system-design/02-scalability.md`            | ✅      | ✅      | Done session 11                                                                        |
+| `08-fe-system-design/03-caching.md`                | ✅      | ⚠️      | Has 12+ Memory Hooks, Self-Check, Feynman, Cold Call, Spaced Rep — verify completeness |
+| `08-fe-system-design/04-microservices.md`          | ✅      | ⚠️      | Has 22+ Memory Hooks, Self-Check — missing Feynman, Cold Call, Spaced Rep, Connections |
+| `08-fe-system-design/05-database-design.md`        | ✅      | ⚠️      | Has 17+ Memory Hooks, most sections — needs full audit                                 |
+| `08-fe-system-design/06-microservices-patterns.md` | ✅      | ✅      | Done session 11                                                                        |
 
 ---
 
@@ -208,8 +209,12 @@
 
 ## be-track Files
 
-> **Audit note (2026-03-28)**: All 31 be-track files have Phase 1 (Real-World Scenario + What & Why).
+> **Audit note (2026-03-30)**: All 31 be-track files have Phase 1 (Real-World Scenario + What & Why).
 > All be-track files now have full Phase 2 compliance (session 20 completed Tier 9-10 fixes + Tier 12).
+>
+> **⚠️ Systemic gap (session 21 audit)**: B1 Interview Signal (✅ Strong/❌ Weak markers) present in only **3/28** files (11%).
+> Most Q&A answers lack explicit signal markers. This is the single biggest compliance gap in be-track.
+> D1 (3-Block Flow) also lacks explicit Block A/B/C labels — structure exists implicitly but isn't machine-checkable.
 
 ### Tier 8: Go Language (`be-track/01-golang/`)
 
@@ -270,9 +275,15 @@
 
 ## shared/ Files
 
-> **Audit note (2026-03-28)**: All 45 shared files have Phase 1 (Real-World Scenario + What & Why).
+> **Audit note (2026-03-30)**: All 45 shared files have Phase 1 (Real-World Scenario + What & Why).
 > Session 20 completed Phase 2 for Tier 15-18 (22 files). Combined with sessions 17-18 (Tier 13-14, 15 files),
-> all 37 shared theory files now have full Phase 2 compliance. Only company guides (Tier 19, 7 files) are N/A.
+> all 37 shared theory files now have Phase 2 treatment. Only company guides (Tier 19, 7 files) are N/A.
+>
+> **⚠️ Systemic gaps (session 21 audit)**:
+>
+> - **B1 Interview Signal**: Present in only **6/42** files (14%). Same gap as be-track.
+> - **C3 Cold Call**: Missing in security-fundamentals, solid-and-design-patterns, ml-fundamentals
+> - **🚨 01-security-fundamentals.md**: Has 70 placeholder drill Q&As with IDENTICAL answers (violates D3+D4)
 
 ### Tier 13: CS Fundamentals (`shared/01-cs-fundamentals/`)
 
@@ -310,18 +321,18 @@
 
 ### Tier 16: Security (`shared/04-security/`)
 
-| File                               | Phase 1 | Phase 2 | Notes                        |
-| ---------------------------------- | ------- | ------- | ---------------------------- |
-| `01-security-fundamentals.md`      | ✅      | ✅      | Session 20 — full compliance |
-| `02-cryptography-and-protocols.md` | ✅      | ✅      | Session 20 — full compliance |
-| `03-web-security-owasp.md`         | ✅      | ✅      | Session 20 — full compliance |
-| `04-modern-auth-patterns.md`       | ✅      | ✅      | Session 20 — full compliance |
+| File                               | Phase 1 | Phase 2 | Notes                                                                                    |
+| ---------------------------------- | ------- | ------- | ---------------------------------------------------------------------------------------- |
+| `01-security-fundamentals.md`      | ✅      | 🚨      | FAIL: 70 placeholder drills with identical answers (D3/D4 violation). Missing B1, C1, C3 |
+| `02-cryptography-and-protocols.md` | ✅      | ✅      | Session 20 — full compliance                                                             |
+| `03-web-security-owasp.md`         | ✅      | ✅      | Session 20 — full compliance                                                             |
+| `04-modern-auth-patterns.md`       | ✅      | ✅      | Session 20 — full compliance                                                             |
 
 ### Tier 17: Software Engineering (`shared/05-software-engineering/`)
 
 | File                              | Phase 1 | Phase 2 | Notes                        |
 | --------------------------------- | ------- | ------- | ---------------------------- |
-| `01-solid-and-design-patterns.md` | ✅      | ✅      | Session 20 — full compliance |
+| `01-solid-and-design-patterns.md` | ✅      | ⚠️      | Missing B1, C3 Cold Call     |
 | `02-architecture-styles.md`       | ✅      | ✅      | Session 20 — full compliance |
 | `03-sdlc-and-practices.md`        | ✅      | ✅      | Session 20 — full compliance |
 | `04-testing-theory.md`            | ✅      | ✅      | Session 20 — full compliance |
@@ -332,7 +343,7 @@
 
 | File                             | Phase 1 | Phase 2 | Notes                        |
 | -------------------------------- | ------- | ------- | ---------------------------- |
-| `01-ml-fundamentals.md`          | ✅      | ✅      | Session 20 — full compliance |
+| `01-ml-fundamentals.md`          | ✅      | ⚠️      | Missing B1, C3 Cold Call     |
 | `02-llm-and-transformers.md`     | ✅      | ✅      | Session 20 — full compliance |
 | `03-agent-patterns.md`           | ✅      | ✅      | Session 20 — full compliance |
 | `04-rag-and-embeddings.md`       | ✅      | ✅      | Session 20 — full compliance |
@@ -391,30 +402,97 @@
 
 ---
 
+## Session 21 Compliance Audit Findings (2026-03-30)
+
+> 10 files sampled across all tracks. Findings below affect overall compliance.
+
+### CRITICAL: Security Fundamentals Placeholder Violation
+
+**File**: `shared/04-security/01-security-fundamentals.md`
+**Issue**: 70 drill Q&As ("Security fundamentals drill #1-70") ALL have the IDENTICAL answer:
+
+> "Trả lời theo framework: xác định asset cần bảo vệ, trust boundary, threat, control kỹ thuật, control vận hành, và cách verify hiệu quả."
+
+This violates **D3** (no duplicate answers) and **D4** (no placeholders).
+**Action needed**: Replace all 70 with unique, concept-specific answers. Consider reducing to 15-20 high-quality drills.
+
+### HIGH: B1 Interview Signal Missing Across BE/Shared
+
+| Track    | Files with B1 | Total | Compliance |
+| -------- | ------------- | ----- | ---------- |
+| fe-track | 84            | 103   | **81%**    |
+| be-track | 3             | 28    | **11%**    |
+| shared   | 6             | 42    | **14%**    |
+
+**What's missing**: Q&A answers lack `✅ Strong answer` / `❌ Weak answer` markers or `💡 Interview Signal` annotations.
+**Impact**: Without these markers, drill answers don't teach interview differentiation.
+**Action needed**: Add B1 markers to all be-track + shared Q&A sections (~62 files).
+
+### MEDIUM: D1 (3-Block Flow) Labels Not Explicit
+
+Only ~10 files total have explicit "Block A" / "Block B" / "Block C" or "Study Cases" labels.
+Most files follow the spirit (Theory → Q&A → Cases) but use different section headings.
+**Recommendation**: Either standardize labels OR update D1 rule to accept implicit structure.
+
+### MEDIUM: C3 Cold Call Missing in Shared Tier 15-18
+
+Files missing ⚡ Cold Call section despite being marked ✅:
+
+- `shared/04-security/01-security-fundamentals.md`
+- `shared/05-software-engineering/01-solid-and-design-patterns.md`
+- `shared/06-ai-and-agents/01-ml-fundamentals.md`
+
+### LOW: A3-A5 Layer Naming Inconsistency
+
+`fe-track/02-typescript/01-type-system-basics.md` uses "Feynman Layer" instead of "Layer 1/Layer 2/Layer 3".
+Only 1 Feynman layer found (should be 3 layers per concept for spiral depth).
+
+### Files with Incorrect Status (corrected above)
+
+| File                                                             | Was | Now | Reason                                 |
+| ---------------------------------------------------------------- | --- | --- | -------------------------------------- |
+| `01-javascript/03-closures.md`                                   | 🔄  | ⚠️  | Has 12 Phase 2 markers                 |
+| `06-browser-performance/03-bundle-optimization.md`               | ❌  | ⚠️  | Has Cold Call, Study Cases, Self-Check |
+| `08-fe-system-design/03-caching.md`                              | ❌  | ⚠️  | Has 12+ Memory Hooks, most sections    |
+| `08-fe-system-design/04-microservices.md`                        | ❌  | ⚠️  | Has 22+ Memory Hooks, Self-Check       |
+| `08-fe-system-design/05-database-design.md`                      | ❌  | ⚠️  | Has 17+ Memory Hooks, most sections    |
+| `02-typescript/01-type-system-basics.md`                         | ✅  | ⚠️  | Missing A3-A5, C1                      |
+| `shared/04-security/01-security-fundamentals.md`                 | ✅  | 🚨  | 70 identical placeholder answers       |
+| `shared/05-software-engineering/01-solid-and-design-patterns.md` | ✅  | ⚠️  | Missing B1, C3                         |
+| `shared/06-ai-and-agents/01-ml-fundamentals.md`                  | ✅  | ⚠️  | Missing B1, C3                         |
+
+---
+
 ## Stats
 
 ### fe-track
 
 - Total fe-track theory files tracked: ~75
-- Phase 2 done (✅): **58** (02-scope-hoisting-comprehensive, 03-closures-comprehensive, 05-this-keyword, 06-event-loop-async, 07-es6-features, 08-advanced-concepts, 09-async-comprehensive, 10-prototypes-inheritance-deep, 12-functional-programming, 01-typescript-basics, 01-react-fundamentals, 02-react-19-features, 03-hooks-deep-dive, 05-state-management, 01-core-web-vitals, 09-performance-optimization, 01-app-router-server-components, 01-type-system-basics, 02-advanced-types, 03-generics-deep-dive, 04-advanced-patterns, 06-testing, 02-data-fetching, 07-hooks-comprehensive, 08-react-patterns-advanced, 02-react-performance, 10-modern-react-features, 03-nextjs-architecture, 04-nextjs-fundamentals-appRouter, 00-nextjs-fundamentals, 00-css-fundamentals, 00-html5-fundamentals, 01-grid-flexbox, 04-prototypes-inheritance, 01-variables-data-types, 00-javascript-basics, 04-css-architecture-comprehensive, 05-css-grid-flexbox-theory, 06-modern-css-features, 07-css-architecture-theory)
-- Remaining for Phase 2: **~17** (11 files marked ❌ + ~6 files marked 🔄 in Tier 5-7)
+- Phase 2 done (✅): **57** (reduced from 58 — type-system-basics downgraded to ⚠️)
+- Phase 2 partial (⚠️): **5** (closures, bundle-optimization, caching, microservices, database-design + type-system-basics)
+- Remaining for Phase 2: **~13** (files still 🔄 or ❌)
 
 ### be-track
 
 - Total be-track theory files tracked: **29** (excl. 2 roadmap/guide files)
-- Phase 2 full ✅: **29** (Tier 8: 8 golang — session 12+19, Tier 9: 9 backend — session 13+20, Tier 10: 4 database — session 14+20, Tier 11: 6 system-design — session 16, Tier 12: 1 devops — session 20)
-- Phase 2 partial ⚠️: **0**
+- Phase 2 full ✅: **29** (all pass A1-A8, C1-C7, D2-D4)
+- **⚠️ Systemic B1 gap**: 26/29 files lack Interview Signal markers in Q&A
 - Phase 2 not started ❌: **0**
 
 ### shared
 
-- Total shared theory files tracked: **37** (excl. 7 guide/index files + 1 company guides)
-- Phase 2 done (✅): **37** (Tier 13: 8 cs-fundamentals — sessions 17-18, Tier 14: 7 system-design — session 18, Tier 15: 4 database — session 20, Tier 16: 4 security — session 20, Tier 17: 6 software-engineering — session 20, Tier 18: 8 ai-and-agents — session 20)
-- Remaining for Phase 2: **0**
+- Total shared theory files tracked: **37** (excl. 7 guide/index files)
+- Phase 2 done (✅): **34** (reduced from 37 — 3 files downgraded)
+- Phase 2 partial (⚠️): **2** (solid-and-design-patterns, ml-fundamentals)
+- Phase 2 FAIL (🚨): **1** (security-fundamentals — placeholder violation)
+- **⚠️ Systemic B1 gap**: 31/37 files lack Interview Signal markers
+- Remaining for Phase 2: **0** (but 3 files need fixes)
 
 ### Overall
 
 - **Total files needing Phase 2**: ~142
-- **Phase 2 full ✅**: 124 (58 fe-track + 29 be-track + 37 shared)
-- **Phase 2 partial ⚠️**: 0
-- **Not started ❌**: ~18 (fe-track only: 11 ❌ + ~7 🔄 in Tier 1-7)
+- **Phase 2 full ✅**: 120 (57 fe-track + 29 be-track + 34 shared)
+- **Phase 2 partial ⚠️**: 7 (5 fe-track + 2 shared)
+- **Phase 2 FAIL 🚨**: 1 (security-fundamentals)
+- **Not started ❌**: ~13 (fe-track only)
+- **Systemic B1 gap**: ~57 files across be-track + shared need Interview Signal markers
