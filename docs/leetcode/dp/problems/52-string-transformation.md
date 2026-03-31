@@ -7,62 +7,60 @@ tags: [Math, String, Dynamic Programming, String Matching]
 leetcode_url: "https://leetcode.com/problems/string-transformation"
 ---
 
-# String Transformation / String Transformation
+# String Transformation / Biến Đổi Chuỗi
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Dynamic Programming
+> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Dynamic Programming + Z-function / KMP
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [Maximum Repeating Substring](https://leetcode.com/problems/maximum-repeating-substring) | [Count of Integers](https://leetcode.com/problems/count-of-integers)
+> **See also**: [Maximum Repeating Substring](https://leetcode.com/problems/maximum-repeating-substring) | [Word Break](https://leetcode.com/problems/word-break)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**Analogy (VN):** Như đếm số cách chia một bài diễn văn thành các đoạn, mỗi đoạn phải là phần đầu (prefix) của một câu chuẩn. Với bài diễn văn dài, dùng Z-function để biết tại mỗi vị trí, prefix dài nhất của str2 khớp với str1 — rồi DP đếm số cách phân hoạch.
 
 **Pattern Recognition:**
 
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "partition str1 into pieces, each piece is prefix of str2" → **DP + String Matching**
+- Z-function của `str2 + '#' + str1` cho biết tại mỗi vị trí i trong str1, khớp dài nhất với prefix của str2
+- Key insight: dp[i] = số cách split str1[0..i-1], transition dùng Z-values để duyệt valid lengths
 
-**Visual — String Transformation example:**
+**Visual — str1 = "aaaa", str2 = "aa":**
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+Z-concat: "aa#aaaa"
+Z-values:  [7,1,0,2,2,1,0]  (index 3..6 = positions in str1)
+str1 pos:           0 1 2 3
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+dp[0] = 1 (base)
+dp[2] += dp[0] → dp[2] = 1   (str1[0..1]="aa" is prefix of str2)
+dp[2] += dp[0] → dp[2] = 1   (len=2 only)
+dp[4] += dp[2] → dp[4] = 1
+dp[4] += dp[2] → dp[4] = 2   (two ways: "aa|aa" and... both splits)
+Answer: dp[4] = 2
 ```
 
 ---
 
 ## Problem Description
 
-String Transformation. ([LeetCode](https://leetcode.com/problems/string-transformation))
+Given strings `str1` and `str2`, count the number of ways to partition `str1` into contiguous non-empty substrings such that every substring is a **prefix** of `str2`. Return the count modulo `10^9 + 7`.
 
-Difficulty: Hard | Acceptance: 25.1%
+- Example 1: `str1 = "aab"`, `str2 = "aabab"` → `2` (splits: `"a|ab"`, `"aa|b"` wait, only prefixes of str2="aabab" count: "a","aa","aab","aaba","aabab")
+- Example 2: `str1 = "aa"`, `str2 = "a"` → `1` (only valid split: `"a|a"`)
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/string-transformation) for full constraints
+Constraints: `1 <= str1.length, str2.length <= 10^5`, lowercase English letters
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+1. **Clarify / Làm rõ**: "Mỗi phần phải là prefix của str2, không phải substring tùy ý" / Each piece must be a prefix, not any substring
+2. **Z-function**: Tính Z cho `str2 + '#' + str1` → Z[n2+1+i] = max prefix of str2 matching str1[i..]
+3. **DP transition**: Với mỗi vị trí i, tất cả len từ 1 đến min(Z[n2+1+i], n2) đều valid
+4. **Naive O(n²)** inner loop — for Hard problems this is often acceptable to show; optimize only if asked
+5. **Modular arithmetic**: Mọi phép cộng đều `% MOD` — dùng BigInt hoặc chú ý overflow
+6. **Edge case**: `str2.length < any piece needed` → some positions have Z=0 → dp stays 0 there
 
 ---
 
@@ -70,39 +68,89 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Z-function helper: Z[i] = length of longest common prefix of s and s[i..]
+ * Time: O(n)
  */
-function stringTransformationBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function zFunction(s: string): number[] {
+  const n = s.length;
+  const z = new Array(n).fill(0);
+  z[0] = n;
+  let l = 0,
+    r = 0;
+  for (let i = 1; i < n; i++) {
+    if (i < r) z[i] = Math.min(r - i, z[i - l]);
+    while (i + z[i] < n && s[z[i]] === s[i + z[i]]) z[i]++;
+    if (i + z[i] > r) {
+      l = i;
+      r = i + z[i];
+    }
+  }
+  return z;
 }
 
 /**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Brute Force DP — O(n1 * n2) per position
+ * Time: O(n1² · n2) worst case
+ * Space: O(n1)
  */
-function stringTransformation(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function stringTransformationBrute(str1: string, str2: string): number {
+  const MOD = 1_000_000_007;
+  const n1 = str1.length;
+  const dp = new Array(n1 + 1).fill(0);
+  dp[0] = 1;
+  for (let i = 0; i < n1; i++) {
+    if (!dp[i]) continue;
+    for (let len = 1; i + len <= n1; len++) {
+      if (str2.startsWith(str1.slice(i, i + len))) {
+        dp[i + len] = (dp[i + len] + dp[i]) % MOD;
+      } else break; // prefixes only — once mismatch, longer won't match
+    }
+  }
+  return dp[n1];
+}
+
+/**
+ * Solution 2: DP + Z-function (Optimal)
+ * Time: O((n1 + n2)) for Z-function + O(n1 * avg_match) for DP transitions
+ * Space: O(n1 + n2)
+ */
+function stringTransformation(str1: string, str2: string): number {
+  const MOD = 1_000_000_007;
+  const n1 = str1.length;
+  const n2 = str2.length;
+
+  // Build Z on combined string: str2 + '#' + str1
+  const combined = str2 + "#" + str1;
+  const z = zFunction(combined);
+
+  const dp = new Array(n1 + 1).fill(0);
+  dp[0] = 1;
+
+  for (let i = 0; i < n1; i++) {
+    if (!dp[i]) continue;
+    // z[n2+1+i] = how far str1[i..] matches prefix of str2
+    const matchLen = Math.min(z[n2 + 1 + i], n2);
+    for (let len = 1; len <= matchLen; len++) {
+      dp[i + len] = (dp[i + len] + dp[i]) % MOD;
+    }
+  }
+
+  return dp[n1];
 }
 
 // === Test Cases ===
-// console.log(stringTransformation(/* example 1 */)); // expected
-// console.log(stringTransformation(/* example 2 */)); // expected
-// console.log(stringTransformation(/* edge case */)); // expected
+console.log(stringTransformation("aab", "aabab")); // 2
+console.log(stringTransformation("aa", "a")); // 1
+console.log(stringTransformation("abc", "abcd")); // 1
+console.log(stringTransformation("aaa", "a")); // 1
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Maximum Repeating Substring](https://leetcode.com/problems/maximum-repeating-substring) — same pattern: Dynamic Programming
-- [Count of Integers](https://leetcode.com/problems/count-of-integers) — same pattern: Dynamic Programming
-- [Different Ways to Add Parentheses](https://leetcode.com/problems/different-ways-to-add-parentheses) — same pattern: Dynamic Programming
-- [Count the Number of Powerful Integers](https://leetcode.com/problems/count-the-number-of-powerful-integers) — same pattern: Dynamic Programming
-- [String Transformation — LeetCode](https://leetcode.com/problems/string-transformation) — problem page
+- [Word Break](https://leetcode.com/problems/word-break) — same DP structure, dictionary instead of single prefix string
+- [Maximum Repeating Substring](https://leetcode.com/problems/maximum-repeating-substring) — simpler string DP without Z-function
+- [Longest Happy Prefix](https://leetcode.com/problems/longest-happy-prefix) — KMP failure function foundation
+- [Find All Good Strings](https://leetcode.com/problems/find-all-good-strings) — string DP with automaton
+- [Count the Number of Powerful Integers](https://leetcode.com/problems/count-the-number-of-powerful-integers) — digit DP with string constraints

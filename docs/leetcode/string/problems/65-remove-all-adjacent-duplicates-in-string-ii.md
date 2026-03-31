@@ -7,99 +7,139 @@ tags: [String, Stack]
 leetcode_url: "https://leetcode.com/problems/remove-all-adjacent-duplicates-in-string-ii"
 ---
 
-# Remove All Adjacent Duplicates in String II / Remove All Adjacent Duplicates in String II
+# Remove All Adjacent Duplicates in String II / Xoá Nhóm Ký Tự Kề Trùng K Lần
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Stack
 > **Frequency**: 📘 Tier 3 — Gặp ở 4 companies
-> **See also**: [Decode String](https://leetcode.com/problems/decode-string) | [Simplify Path](https://leetcode.com/problems/simplify-path)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống chồng đĩa — đĩa nào đặt cuối cùng sẽ được lấy ra đầu tiên (LIFO). Nhiều bài toán về matching và nesting dùng stack.
+**Analogy (VN):** Giống chơi xếp gạch — khi k viên gạch cùng màu chồng nhau, chúng phát nổ biến mất. Stack lưu (ký tự, đếm liên tiếp) để xử lý O(n) thay vì quét nhiều lần.
 
 **Pattern Recognition:**
 
-- Signal: "matching/nesting" + "most recent element" → **Stack**
-- Bài này thuộc dạng Stack — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Remove All Adjacent Duplicates in String II example:**
+- Cần nhớ "ký tự trước + count liên tiếp" → Stack với `[char, count]`
+- Khi top stack trùng ký tự mới → tăng count; khi count == k → pop (explode)
+- Build kết quả từ stack bằng `char.repeat(count)`
 
 ```
-stack = []
+s = "deeedbbcccbdaa", k = 3
 
-push/pop from right →
-Process: scan left to right, stack maintains invariant
+d  → [(d,1)]
+e  → [(d,1),(e,1)]
+e  → [(d,1),(e,2)]
+e  → [(d,1),(e,3)] → POP → [(d,1)]
+d  → [(d,2)]
+b  → [(d,2),(b,1)]
+b  → [(d,2),(b,2)]
+c  → [(d,2),(b,2),(c,1)]
+c  → [(d,2),(b,2),(c,2)]
+c  → [(d,2),(b,2),(c,3)] → POP → [(d,2),(b,2)]
+b  → [(d,2),(b,3)] → POP → [(d,2)]
+d  → [(d,3)] → POP → []
+a  → [(a,1)]
+a  → [(a,2)]   Result: "aa" ✅
 ```
 
 ---
 
 ## Problem Description
 
-Remove All Adjacent Duplicates in String II. ([LeetCode](https://leetcode.com/problems/remove-all-adjacent-duplicates-in-string-ii))
+Given string `s` and integer `k`, repeatedly remove `k` adjacent identical characters until no more removals possible. Return the final string after all removals.
 
-Difficulty: Medium | Acceptance: 59.6%
+**Examples:**
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+- `s = "abcd", k = 2` → `"abcd"` (no k-adjacent duplicates)
+- `s = "deeedbbcccbdaa", k = 3` → `"aa"`
+- `s = "pbbcggttcbbsa", k = 2` → `"ps"`
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/remove-all-adjacent-duplicates-in-string-ii) for full constraints
+**Constraints:** `1 ≤ s.length ≤ 10^5`, lowercase letters only, `2 ≤ k ≤ 10^4`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🇻🇳 Dùng stack `[char, count]` — tránh quét lại O(n²) theo nhiều vòng
+- 🇺🇸 Single-pass O(n): each character pushed and popped at most once
+- 🇻🇳 Khi top.char == cur → tăng count; khi count == k → pop
+- 🇺🇸 Build result bottom-to-top: `stack.map(([c,n]) => c.repeat(n)).join('')`
+- 🇻🇳 Edge: k=1 → toàn bộ chuỗi bị xoá về `""`
+- 🇺🇸 Variation: k=2 is LeetCode 1047 (simpler, single char stack)
 
 ---
 
 ## Solutions
 
+### Solution 1 — Brute Force (simulate repeatedly)
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Brute force: scan and remove k-adjacent groups, repeat until stable
+ * Time: O(n²/k) — up to n/k passes, each O(n)
+ * Space: O(n)
  */
-function removeAllAdjacentDuplicatesInStringIiBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function removeDuplicatesBrute(s: string, k: number): string {
+  let changed = true;
+  while (changed) {
+    changed = false;
+    let result = "";
+    let i = 0;
+    while (i < s.length) {
+      let j = i;
+      while (j < s.length && s[j] === s[i]) j++;
+      const run = j - i;
+      const keep = run % k;
+      result += s[i].repeat(keep);
+      if (run >= k) changed = true;
+      i = j;
+    }
+    s = result;
+  }
+  return s;
 }
+```
 
+### Solution 2 — Stack (Optimal)
+
+```typescript
 /**
- * Solution 2: Optimized — Stack
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Stack with [char, count] pairs: single linear pass
+ * Time: O(n) — each char pushed/popped at most once
+ * Space: O(n)
  */
-function removeAllAdjacentDuplicatesInStringIi(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Stack
-  // Hint: Push/pop to maintain invariant, process when stack condition changes
-  throw new Error('Not implemented');
+function removeDuplicates(s: string, k: number): string {
+  // Stack stores [character, consecutive count]
+  const stack: [string, number][] = [];
+
+  for (const ch of s) {
+    if (stack.length > 0 && stack[stack.length - 1][0] === ch) {
+      stack[stack.length - 1][1]++;
+      if (stack[stack.length - 1][1] === k) {
+        stack.pop(); // k-adjacent group explodes
+      }
+    } else {
+      stack.push([ch, 1]);
+    }
+  }
+
+  return stack.map(([c, cnt]) => c.repeat(cnt)).join("");
 }
 
-// === Test Cases ===
-// console.log(removeAllAdjacentDuplicatesInStringIi(/* example 1 */)); // expected
-// console.log(removeAllAdjacentDuplicatesInStringIi(/* example 2 */)); // expected
-// console.log(removeAllAdjacentDuplicatesInStringIi(/* edge case */)); // expected
+// Test cases
+console.log(removeDuplicates("abcd", 2)); // "abcd"
+console.log(removeDuplicates("deeedbbcccbdaa", 3)); // "aa"
+console.log(removeDuplicates("pbbcggttcbbsa", 2)); // "ps"
+console.log(removeDuplicates("yfttttfbbbbnnnnffbgffffgbbbbgssssgthyyyy", 4)); // "ybth"
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Decode String](https://leetcode.com/problems/decode-string) — same pattern: Stack
-- [Simplify Path](https://leetcode.com/problems/simplify-path) — same pattern: Stack
-- [Basic Calculator II](https://leetcode.com/problems/basic-calculator-ii) — same pattern: Stack
-- [Longest Valid Parentheses](https://leetcode.com/problems/longest-valid-parentheses) — same pattern: Dynamic Programming
-- [Remove All Adjacent Duplicates in String II — LeetCode](https://leetcode.com/problems/remove-all-adjacent-duplicates-in-string-ii) — problem page
+- [1047 - Remove All Adjacent Duplicates In String](https://leetcode.com/problems/remove-all-adjacent-duplicates-in-string/) — k=2 simpler version
+- [394 - Decode String](https://leetcode.com/problems/decode-string/) — stack with char+count tracking
+- [71 - Simplify Path](https://leetcode.com/problems/simplify-path/) — stack-based string processing
+- [20 - Valid Parentheses](https://leetcode.com/problems/valid-parentheses/) — classic stack matching
+- [1249 - Minimum Remove to Make Valid Parentheses](https://leetcode.com/problems/minimum-remove-to-make-valid-parentheses/) — stack with indices

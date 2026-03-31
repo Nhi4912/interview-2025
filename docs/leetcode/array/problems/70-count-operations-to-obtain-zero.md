@@ -7,57 +7,57 @@ tags: [Math, Simulation]
 leetcode_url: "https://leetcode.com/problems/count-operations-to-obtain-zero"
 ---
 
-# Count Operations to Obtain Zero / Count Operations to Obtain Zero
+# Count Operations to Obtain Zero / Đếm Số Phép Toán Để Đưa Về Không
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Math
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Math (Euclidean)
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [Multiply Strings](https://leetcode.com/problems/multiply-strings) | [Add Binary](https://leetcode.com/problems/add-binary)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Bài toán cần công thức hoặc tính chất toán học — không cần brute force nếu nhận ra pattern.
+**Analogy:** Giống trò chơi chia tiền — nếu bạn có nhiều hơn, bạn trả bớt cho người kia một lần. Nhưng nếu khoảng cách rất lớn, bạn có thể trả nhiều lần cùng một lúc bằng phép chia. Đây chính là thuật toán Euclid đếm bước.
 
 **Pattern Recognition:**
 
-- Signal: "pattern/formula" + "number properties" → **Math**
-- Bài này thuộc dạng Math — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "repeatedly subtract smaller from larger", "until one reaches 0" → **Euclidean-style**
+- Brute simulate O(max(num1,num2)), nhưng dùng floor division để jump nhiều bước
+- Key insight: khi num1 >= num2, thay vì trừ từng lần, trừ `floor(num1/num2)` lần cùng lúc
 
-**Visual — Count Operations to Obtain Zero example:**
+**Visual — num1=2, num2=3:**
 
 ```
-// TODO: Add step-by-step visual for Math
-// Show one complete example with state at each step
+Step 1: num1(2) < num2(3) → num2 = 3-2 = 1,  ops=1
+Step 2: num1(2) > num2(1) → num1 = 2-1 = 1,  ops=2
+Step 3: num1(1) >= num2(1)→ num2 = 1-1 = 0,  ops=3
+Answer = 3 ✅
+
+Optimized (num1=10, num2=3):
+floor(10/3)=3 ops → num1 = 10%3 = 1, ops=3
+then num2(3) > num1(1): floor(3/1)=3 ops → num2=0, ops=6 ✅
 ```
 
 ---
 
 ## Problem Description
 
-Count Operations to Obtain Zero. ([LeetCode](https://leetcode.com/problems/count-operations-to-obtain-zero))
+Given two non-negative integers `num1` and `num2`. In one operation, if `num1 >= num2`, do `num1 = num1 - num2`; otherwise do `num2 = num2 - num1`. Return the number of operations to make either number 0.
 
-Difficulty: Easy | Acceptance: 74.9%
+- Example 1: `num1=2, num2=3` → `3`
+- Example 2: `num1=10, num2=10` → `1`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/count-operations-to-obtain-zero) for full constraints
+Constraints: `0 <= num1, num2 <= 10^5`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify**: "Nếu cả hai đều là 0 ngay từ đầu?" / If both are 0, return 0 — no operations needed
+2. **Brute force**: "Simulate từng bước, O(max(a,b)) — chậm với số lớn" / Direct simulation is O(max)
+3. **Optimize**: "Dùng floor division: num1 -= floor(num1/num2) \* num2 = num1 % num2" / Batch steps via modulo
+4. **Edge cases**: "num1=0 hoặc num2=0 ngay đầu → return 0" / Zero input means already done
+5. **Connection**: "Giống thuật toán GCD Euclid, nhưng đếm số bước" / This is essentially step-counting GCD
+6. **Follow-up**: "Nếu num1, num2 lên đến 10^18?" / Large numbers → optimized modulo version is essential
 
 ---
 
@@ -65,39 +65,55 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Brute Force Simulation
+ * Time: O(max(num1, num2)) — one step at a time
+ * Space: O(1)
  */
-function countOperationsToObtainZeroBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function countOperationsBrute(num1: number, num2: number): number {
+  let ops = 0;
+  while (num1 !== 0 && num2 !== 0) {
+    if (num1 >= num2) num1 -= num2;
+    else num2 -= num1;
+    ops++;
+  }
+  return ops;
 }
 
 /**
- * Solution 2: Optimized — Math
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Optimized — batch subtraction via floor division
+ * Time: O(log(min(num1, num2))) — same as Euclidean GCD
+ * Space: O(1)
+ *
+ * When num1 >= num2, we can do floor(num1/num2) subtractions at once.
+ * num1 becomes num1 % num2; ops += floor(num1/num2)
+ * (but if num1 % num2 == 0, we only need floor(num1/num2)-1 ops then stop)
  */
-function countOperationsToObtainZero(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Math
-  // Hint: Find mathematical pattern or formula
-  throw new Error('Not implemented');
+function countOperations(num1: number, num2: number): number {
+  let ops = 0;
+  while (num1 !== 0 && num2 !== 0) {
+    if (num1 >= num2) {
+      ops += Math.floor(num1 / num2);
+      num1 = num1 % num2;
+    } else {
+      ops += Math.floor(num2 / num1);
+      num2 = num2 % num1;
+    }
+  }
+  return ops;
 }
 
 // === Test Cases ===
-// console.log(countOperationsToObtainZero(/* example 1 */)); // expected
-// console.log(countOperationsToObtainZero(/* example 2 */)); // expected
-// console.log(countOperationsToObtainZero(/* edge case */)); // expected
+console.log(countOperations(2, 3)); // 3
+console.log(countOperations(10, 10)); // 1
+console.log(countOperations(0, 5)); // 0
+console.log(countOperations(100, 3)); // 34 (brute: 34)
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Multiply Strings](https://leetcode.com/problems/multiply-strings) — same pattern: Math
-- [Add Binary](https://leetcode.com/problems/add-binary) — same pattern: Bit Manipulation
-- [Find the Winner of the Circular Game](https://leetcode.com/problems/find-the-winner-of-the-circular-game) — same pattern: Queue
-- [Add Strings](https://leetcode.com/problems/add-strings) — same pattern: Math
-- [Count Operations to Obtain Zero — LeetCode](https://leetcode.com/problems/count-operations-to-obtain-zero) — problem page
+- [Add Binary](https://leetcode.com/problems/add-binary) — Math with binary numbers
+- [Subtract the Product and Sum of Digits of an Integer](https://leetcode.com/problems/subtract-the-product-and-sum-of-digits-of-an-integer) — digit math
+- [Greatest Common Divisor of Strings](https://leetcode.com/problems/greatest-common-divisor-of-strings) — uses GCD algorithm
+- [Find Greatest Common Divisor of Array](https://leetcode.com/problems/find-greatest-common-divisor-of-array) — direct GCD application

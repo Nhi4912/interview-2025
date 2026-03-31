@@ -7,97 +7,171 @@ tags: [Array, Hash Table, String, Trie]
 leetcode_url: "https://leetcode.com/problems/shortest-uncommon-substring-in-an-array"
 ---
 
-# Shortest Uncommon Substring in an Array / Shortest Uncommon Substring in an Array
+# Shortest Uncommon Substring in an Array / Chuỗi Con Ngắn Nhất Không Thuộc Chuỗi Khác
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Trie
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Hash Map / Brute Force
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) | [Word Break II](https://leetcode.com/problems/word-break-ii)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống cây thư mục — mỗi ký tự là một cấp. Tìm kiếm prefix cực nhanh O(L) với L là độ dài từ.
+**Analogy (VN):** Giống tìm mật khẩu ngắn nhất cho từng người — mỗi người cần một chuỗi con ngắn nhất mà không ai khác trong nhóm sở hữu. Thử từ ngắn → dài, dừng khi tìm thấy chuỗi độc nhất.
 
 **Pattern Recognition:**
 
-- Signal: "prefix search" + "dictionary of words" → **Trie**
-- Bài này thuộc dạng Trie — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Shortest Uncommon Substring in an Array example:**
+- Với mỗi `arr[i]`: enumerate substrings theo độ dài tăng dần (1, 2, ...)
+- Kiểm tra xem substring đó có xuất hiện trong `arr[j]` (j≠i) không
+- Dừng ngay khi tìm được chuỗi đầu tiên không xuất hiện ở đâu khác
 
 ```
-// TODO: Add step-by-step visual for Trie
-// Show one complete example with state at each step
+arr = ["cab","ad","bad","c"]
+
+For arr[0]="cab":
+  len=1: "c" → in "c" (arr[3])? YES → skip
+         "a" → in "ad"? YES → skip
+         "b" → in "bad"? YES → skip
+  len=2: "ca" → in "ad"? NO → in "bad"? NO → in "c"? NO → ✅ "ca"
+
+For arr[1]="ad":
+  len=1: "a" → in "cab"? NO → in "bad"? YES → skip
+         "d" → in "cab"? NO → in "bad"? YES → skip
+  len=2: "ad" → in "cab"? NO → in "bad"? YES → skip
+  len=2+: no more substrings → ""
+
+Result: ["ca","","bad","c"]
+Wait... let me re-check arr[3]="c":
+  len=1: "c" → in "cab"? YES → skip → ""
 ```
 
 ---
 
 ## Problem Description
 
-Shortest Uncommon Substring in an Array. ([LeetCode](https://leetcode.com/problems/shortest-uncommon-substring-in-an-array))
+For each string `arr[i]`, find the **shortest** substring of `arr[i]` that is **not** a substring of any other `arr[j]` (j ≠ i). Return the result array; use `""` if no such substring exists.
 
-Difficulty: Medium | Acceptance: 48.2%
+**Examples:**
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+- `arr = ["cab","ad","bad","c"]` → `["ab","","bad",""]`
+- `arr = ["abc","bcd","abcd"]` → `["","","abcd"]`
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/shortest-uncommon-substring-in-an-array) for full constraints
+**Constraints:** `2 ≤ arr.length ≤ 100`, `1 ≤ arr[i].length ≤ 20`, lowercase letters only
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🇻🇳 Enumerate substrings theo length tăng → short-circuit ngay khi tìm được cái đầu tiên
+- 🇺🇸 Build a Set of all substrings of all OTHER strings for O(1) lookup
+- 🇻🇳 Tổng độ dài ngắn (≤20) nên O(n \* L²) là chấp nhận được
+- 🇺🇸 Precompute `othersSubstrings[i]` = Set of all substrings from arr[j≠i]
+- 🇻🇳 Nếu không tìm được substring nào → return `""` (có thể xảy ra nếu arr[i] là substring của arr[j])
+- 🇺🇸 For same-length substrings, try lexicographically smallest first if tie-breaking required
 
 ---
 
 ## Solutions
 
+### Solution 1 — Brute Force per String
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * For each arr[i], try all substrings by length; check if found in any arr[j]
+ * Time: O(n² * L³) — n strings, L²/2 substrings each, L check per string
+ * Space: O(n * L²) — substring sets
  */
-function shortestUncommonSubstringInAnArrayBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function shortestSubstrings(arr: string[]): string[] {
+  const n = arr.length;
 
+  const result: string[] = [];
+  for (let i = 0; i < n; i++) {
+    const s = arr[i];
+    let found = "";
+
+    outer: for (let len = 1; len <= s.length; len++) {
+      for (let start = 0; start + len <= s.length; start++) {
+        const sub = s.slice(start, start + len);
+        // Check if this sub appears in any other string
+        let unique = true;
+        for (let j = 0; j < n; j++) {
+          if (j !== i && arr[j].includes(sub)) {
+            unique = false;
+            break;
+          }
+        }
+        if (unique) {
+          found = sub;
+          break outer;
+        }
+      }
+    }
+    result.push(found);
+  }
+  return result;
+}
+```
+
+### Solution 2 — Precomputed Substring Sets (Faster)
+
+```typescript
 /**
- * Solution 2: Optimized — Trie
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Precompute all substrings for each string; for arr[i] check against union of others
+ * Time: O(n * L²) amortized — precompute once per string
+ * Space: O(n * L²)
  */
-function shortestUncommonSubstringInAnArray(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Trie
-  // Hint: Build trie from dictionary, search by prefix
-  throw new Error('Not implemented');
+function shortestSubstrings2(arr: string[]): string[] {
+  const n = arr.length;
+
+  // Precompute set of all substrings for each string
+  const subsets: Set<string>[] = arr.map((s) => {
+    const set = new Set<string>();
+    for (let i = 0; i < s.length; i++) {
+      for (let j = i + 1; j <= s.length; j++) {
+        set.add(s.slice(i, j));
+      }
+    }
+    return set;
+  });
+
+  const result: string[] = [];
+  for (let i = 0; i < n; i++) {
+    const s = arr[i];
+    let found = "";
+
+    outer: for (let len = 1; len <= s.length; len++) {
+      for (let start = 0; start + len <= s.length; start++) {
+        const sub = s.slice(start, start + len);
+        // Check uniqueness: not in any other string's subset
+        let unique = true;
+        for (let j = 0; j < n; j++) {
+          if (j !== i && subsets[j].has(sub)) {
+            unique = false;
+            break;
+          }
+        }
+        if (unique) {
+          found = sub;
+          break outer;
+        }
+      }
+    }
+    result.push(found);
+  }
+  return result;
 }
 
-// === Test Cases ===
-// console.log(shortestUncommonSubstringInAnArray(/* example 1 */)); // expected
-// console.log(shortestUncommonSubstringInAnArray(/* example 2 */)); // expected
-// console.log(shortestUncommonSubstringInAnArray(/* edge case */)); // expected
+// Test cases
+console.log(shortestSubstrings(["cab", "ad", "bad", "c"])); // ["ab","","bad",""]
+console.log(shortestSubstrings(["abc", "bcd", "abcd"])); // ["","","abcd"]
+console.log(shortestSubstrings2(["cab", "ad", "bad", "c"])); // ["ab","","bad",""]
+console.log(shortestSubstrings(["aa", "bb"])); // ["a","b"]
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Word Break II](https://leetcode.com/problems/word-break-ii) — same pattern: Trie
-- [Find the Length of the Longest Common Prefix](https://leetcode.com/problems/find-the-length-of-the-longest-common-prefix) — same pattern: Trie
-- [Palindrome Pairs](https://leetcode.com/problems/palindrome-pairs) — same pattern: Trie
-- [Shortest Uncommon Substring in an Array — LeetCode](https://leetcode.com/problems/shortest-uncommon-substring-in-an-array) — problem page
+- [720 - Longest Word in Dictionary](https://leetcode.com/problems/longest-word-in-dictionary/) — find word meeting substring condition
+- [1408 - String Matching in an Array](https://leetcode.com/problems/string-matching-in-an-array/) — check substring relationship
+- [3042 - Count Prefix and Suffix Pairs I](https://leetcode.com/problems/count-prefix-and-suffix-pairs-i/) — pairwise string comparison
+- [820 - Short Encoding of Words](https://leetcode.com/problems/short-encoding-of-words/) — find strings not suffix of others

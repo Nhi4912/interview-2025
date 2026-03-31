@@ -7,7 +7,7 @@ tags: [Depth-First Search, Breadth-First Search, Union Find, Graph]
 leetcode_url: "https://leetcode.com/problems/number-of-operations-to-make-network-connected"
 ---
 
-# Number of Operations to Make Network Connected / Number of Operations to Make Network Connected
+# Number of Operations to Make Network Connected / Số Thao Tác Kết Nối Mạng
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Union Find
 > **Frequency**: 📘 Tier 3 — Gặp ở 5 companies
@@ -17,47 +17,51 @@ leetcode_url: "https://leetcode.com/problems/number-of-operations-to-make-networ
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống nhóm bạn — ban đầu ai cũng riêng, khi hai người kết bạn thì nhóm họ gộp lại. Union Find quản lý các nhóm này hiệu quả.
+**Analogy:** Như hệ thống đường ống nước — nếu có đường ống dư thừa (hai nơi đã thông nhau mà vẫn nối thêm), ta có thể dùng đường ống đó để nối hai khu vực chưa thông. Cần `components - 1` đường ống để nối tất cả.
 
 **Pattern Recognition:**
 
-- Signal: "group elements" + "connectivity queries" → **Union Find**
-- Bài này thuộc dạng Union Find — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "count connected components" + "spare/redundant edges" → **Union Find**
+- Key insight: If `edges < n-1` → impossible (-1). Otherwise: answer = components - 1
+- Redundant edges = edges that connect already-connected nodes → available to move
 
-**Visual — Number of Operations to Make Network Connected example:**
+**Visual — Network connection example:**
 
 ```
-// TODO: Add step-by-step visual for Union Find
-// Show one complete example with state at each step
+n=6, edges=[[0,1],[0,2],[0,3],[1,2],[1,3]]
+
+Union Find steps:
+  union(0,1): parent[1]=0   components=5
+  union(0,2): parent[2]=0   components=4
+  union(0,3): parent[3]=0   components=3
+  union(1,2): 0==0, REDUNDANT (+1 spare)
+  union(1,3): 0==0, REDUNDANT (+1 spare)
+
+Components: {0,1,2,3}, {4}, {5}  → 3 components
+Need 3-1=2 moves. Spare edges=2 >= 2 ✓ → Answer: 2
 ```
 
 ---
 
 ## Problem Description
 
-Number of Operations to Make Network Connected. ([LeetCode](https://leetcode.com/problems/number-of-operations-to-make-network-connected))
+Given `n` computers (labeled 0 to n-1) and a list of `connections` (cables between two computers), find the minimum number of cable moves needed to connect all computers. Return `-1` if impossible.
 
-Difficulty: Medium | Acceptance: 64.7%
+- Example 1: `n=4, connections=[[0,1],[0,2],[1,2]]` → `1` (move one redundant cable to connect node 3)
+- Example 2: `n=6, connections=[[0,1],[0,2],[0,3],[1,2]]` → `-1` (only 4 cables for 6 nodes, need 5)
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/number-of-operations-to-make-network-connected) for full constraints
+Constraints: `1 <= n <= 10^5`, `1 <= connections.length <= min(n*(n-1)/2, 10^5)`.
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify**: "Graph có thể có nhiều components, cần kiểm tra enough edges trước" / Check feasibility: if edges < n-1, return -1
+2. **Key insight**: "Cần n-1 cạnh để nối n nodes thành cây. Thiếu → -1" / Spanning tree needs exactly n-1 edges
+3. **Union Find**: "Đếm components + redundant edges. Answer = components - 1" / Count with UF; answer is components - 1
+4. **BFS/DFS alt**: "DFS đếm connected components, đồng thời đếm cạnh thừa" / DFS through adjacency list counting components
+5. **Edge cases**: "n=1 → 0 moves needed; tất cả đã connected → 0" / Already connected or single node → 0
+6. **Follow-up**: "Dynamic edges được thêm/xóa? Dùng dynamic connectivity (link-cut tree)" / Dynamic graph needs link-cut tree
 
 ---
 
@@ -65,39 +69,109 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: DFS — count connected components and extra edges
+ * Time: O(N + E) — traverse all nodes and edges
+ * Space: O(N + E) — adjacency list + visited
  */
-function numberOfOperationsToMakeNetworkConnectedBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function makeConnectedDFS(n: number, connections: number[][]): number {
+  if (connections.length < n - 1) return -1;
+
+  const adj: number[][] = Array.from({ length: n }, () => []);
+  for (const [a, b] of connections) {
+    adj[a].push(b);
+    adj[b].push(a);
+  }
+
+  const visited = new Array<boolean>(n).fill(false);
+  let components = 0;
+
+  function dfs(node: number): void {
+    visited[node] = true;
+    for (const neighbor of adj[node]) {
+      if (!visited[neighbor]) dfs(neighbor);
+    }
+  }
+
+  for (let i = 0; i < n; i++) {
+    if (!visited[i]) {
+      dfs(i);
+      components++;
+    }
+  }
+
+  return components - 1;
 }
 
 /**
- * Solution 2: Optimized — Union Find
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Union Find — optimal with path compression
+ * Time: O((N + E) * α(N)) ≈ O(N + E)
+ * Space: O(N) — parent array only
  */
-function numberOfOperationsToMakeNetworkConnected(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Union Find
-  // Hint: Use union-find with path compression and union by rank
-  throw new Error('Not implemented');
+function makeConnected(n: number, connections: number[][]): number {
+  if (connections.length < n - 1) return -1;
+
+  const parent: number[] = Array.from({ length: n }, (_, i) => i);
+  const rank: number[] = new Array(n).fill(0);
+
+  function find(x: number): number {
+    if (parent[x] !== x) parent[x] = find(parent[x]);
+    return parent[x];
+  }
+
+  function union(a: number, b: number): boolean {
+    const ra = find(a),
+      rb = find(b);
+    if (ra === rb) return false;
+    if (rank[ra] < rank[rb]) parent[ra] = rb;
+    else if (rank[ra] > rank[rb]) parent[rb] = ra;
+    else {
+      parent[rb] = ra;
+      rank[ra]++;
+    }
+    return true;
+  }
+
+  let components = n;
+  for (const [a, b] of connections) {
+    if (union(a, b)) components--;
+  }
+
+  return components - 1;
 }
 
 // === Test Cases ===
-// console.log(numberOfOperationsToMakeNetworkConnected(/* example 1 */)); // expected
-// console.log(numberOfOperationsToMakeNetworkConnected(/* example 2 */)); // expected
-// console.log(numberOfOperationsToMakeNetworkConnected(/* edge case */)); // expected
+console.log(
+  makeConnected(4, [
+    [0, 1],
+    [0, 2],
+    [1, 2],
+  ]),
+); // 1
+console.log(
+  makeConnected(6, [
+    [0, 1],
+    [0, 2],
+    [0, 3],
+    [1, 2],
+  ]),
+); // -1 (only 4 edges for 6 nodes)
+console.log(makeConnected(1, [])); // 0 (single node, already connected)
+console.log(
+  makeConnected(6, [
+    [0, 1],
+    [0, 2],
+    [0, 3],
+    [1, 2],
+    [1, 3],
+  ]),
+); // 2
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Evaluate Division](https://leetcode.com/problems/evaluate-division) — same pattern: Shortest Path (BFS/Dijkstra)
-- [Possible Bipartition](https://leetcode.com/problems/possible-bipartition) — same pattern: Union Find
-- [Graph Valid Tree](https://leetcode.com/problems/graph-valid-tree) — same pattern: Union Find
-- [Number of Provinces](https://leetcode.com/problems/number-of-provinces) — same pattern: Union Find
-- [Number of Operations to Make Network Connected — LeetCode](https://leetcode.com/problems/number-of-operations-to-make-network-connected) — problem page
+- [Number of Provinces](https://leetcode.com/problems/number-of-provinces) — count components with Union Find
+- [Graph Valid Tree](https://leetcode.com/problems/graph-valid-tree) — check if graph is connected with n-1 edges
+- [Possible Bipartition](https://leetcode.com/problems/possible-bipartition) — Union Find on conflict graph
+- [Redundant Connection](https://leetcode.com/problems/redundant-connection) — find the edge that creates a cycle

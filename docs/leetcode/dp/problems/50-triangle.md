@@ -7,62 +7,56 @@ tags: [Array, Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/triangle"
 ---
 
-# Triangle / Triangle
+# Triangle / Tam Giác
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dynamic Programming
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dynamic Programming (Interval → Bottom-up)
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [Jump Game II](https://leetcode.com/problems/jump-game-ii) | [Maximal Square](https://leetcode.com/problems/maximal-square)
+> **See also**: [Minimum Path Sum](https://leetcode.com/problems/minimum-path-sum) | [Maximal Square](https://leetcode.com/problems/maximal-square)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**Analogy (VN):** Như chọn đường đi xuống cầu thang tam giác — mỗi bậc chỉ được bước sang ô liền kề phía dưới. Thay vì thử mọi đường từ trên xuống, ta **leo ngược từ dưới lên**: mỗi ô giữ tổng nhỏ nhất có thể đạt được từ nó xuống đáy.
 
 **Pattern Recognition:**
 
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "minimum path" + "adjacent moves" + "triangle shape" → **Bottom-up DP on triangle**
+- Giải từ dưới lên (bottom-up) — tránh handle boundary conditions phức tạp
+- Key insight: dp[col] = triangle[row][col] + min(dp[col], dp[col+1]) — in-place rolling array
 
-**Visual — Triangle example:**
+**Visual — Bottom-up DP trên triangle [2],[3,4],[6,5,7],[4,1,8,3]:**
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
-
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+Row 3 (base):  [4, 1, 8, 3]   ← start here
+Row 2:  6+min(4,1)  5+min(1,8)  7+min(8,3)
+     =  [7,        6,           10]
+Row 1:  3+min(7,6)  4+min(6,10)
+     =  [9,         10]
+Row 0:  2+min(9,10) = [11]      ← answer
 ```
 
 ---
 
 ## Problem Description
 
-Triangle. ([LeetCode](https://leetcode.com/problems/triangle))
+Given a triangle array, return the minimum path sum from top to bottom. At each step you may move to an adjacent number in the row directly below (index `i` or `i+1`).
 
-Difficulty: Medium | Acceptance: 59.3%
+- Example 1: `triangle = [[2],[3,4],[6,5,7],[4,1,8,3]]` → `11` (path: 2→3→5→1)
+- Example 2: `triangle = [[-10]]` → `-10`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/triangle) for full constraints
+Constraints: `1 <= triangle.length <= 200`, `-10^4 <= triangle[i][j] <= 10^4`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+1. **Clarify / Làm rõ**: "Bottom-up hay top-down đều được, nhưng bottom-up tránh OOB checks" / Both directions work, bottom-up is cleaner
+2. **Brute force**: DFS O(2^n) → memoization O(n²) → bottom-up O(n²) rolling array
+3. **State**: `dp[col]` = min path sum from `(row, col)` to bottom — overwritten in-place each row
+4. **Transition**: `dp[col] = triangle[row][col] + min(dp[col], dp[col+1])` — process left to right
+5. **Space optimize**: Reuse last row as dp array → O(n) space, no extra allocation needed
+6. **Edge case**: `triangle.length === 1` → return `triangle[0][0]` immediately
 
 ---
 
@@ -70,39 +64,59 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Top-down Memoization
+ * Time: O(n²) — each (row, col) computed once
+ * Space: O(n²) — memo + recursion stack
  */
-function triangleBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minimumTotalMemo(triangle: number[][]): number {
+  const n = triangle.length;
+  const memo: Map<string, number> = new Map();
+
+  function dfs(row: number, col: number): number {
+    if (row === n) return 0;
+    const key = `${row},${col}`;
+    if (memo.has(key)) return memo.get(key)!;
+    const val = triangle[row][col] + Math.min(dfs(row + 1, col), dfs(row + 1, col + 1));
+    memo.set(key, val);
+    return val;
+  }
+
+  return dfs(0, 0);
 }
 
 /**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Bottom-up DP — Rolling Array (Optimal)
+ * Time: O(n²) — two nested loops over triangle
+ * Space: O(n) — single dp array reused each row
  */
-function triangle(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function minimumTotal(triangle: number[][]): number {
+  const n = triangle.length;
+  // Start with a copy of the last row
+  const dp = [...triangle[n - 1]];
+
+  // Walk up from second-to-last row
+  for (let row = n - 2; row >= 0; row--) {
+    for (let col = 0; col <= row; col++) {
+      dp[col] = triangle[row][col] + Math.min(dp[col], dp[col + 1]);
+    }
+  }
+
+  return dp[0];
 }
 
 // === Test Cases ===
-// console.log(triangle(/* example 1 */)); // expected
-// console.log(triangle(/* example 2 */)); // expected
-// console.log(triangle(/* edge case */)); // expected
+console.log(minimumTotal([[2], [3, 4], [6, 5, 7], [4, 1, 8, 3]])); // 11
+console.log(minimumTotal([[-10]])); // -10
+console.log(minimumTotal([[1], [2, 3]])); // 3
+console.log(minimumTotal([[-1], [2, 3], [1, -1, -3]])); // -1
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Jump Game II](https://leetcode.com/problems/jump-game-ii) — same pattern: Dynamic Programming
-- [Maximal Square](https://leetcode.com/problems/maximal-square) — same pattern: Dynamic Programming
-- [Unique Paths II](https://leetcode.com/problems/unique-paths-ii) — same pattern: Dynamic Programming
-- [Maximum Profit in Job Scheduling](https://leetcode.com/problems/maximum-profit-in-job-scheduling) — same pattern: Dynamic Programming
-- [Triangle — LeetCode](https://leetcode.com/problems/triangle) — problem page
+- [Minimum Path Sum](https://leetcode.com/problems/minimum-path-sum) — same bottom-up DP on 2D grid
+- [Maximal Square](https://leetcode.com/problems/maximal-square) — 2D DP with state at each cell
+- [Unique Paths II](https://leetcode.com/problems/unique-paths-ii) — grid DP with obstacles
+- [Dungeon Game](https://leetcode.com/problems/dungeon-game) — also solved bottom-up on a grid
+- [Pascal's Triangle](https://leetcode.com/problems/pascals-triangle) — triangle structure familiarity

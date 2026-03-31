@@ -7,100 +7,125 @@ tags: [Hash Table, String, Counting]
 leetcode_url: "https://leetcode.com/problems/ransom-note"
 ---
 
-# Ransom Note / Ransom Note
+# Ransom Note / Thư Tống Tiền
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map
 > **Frequency**: 📘 Tier 3 — Gặp ở 4 companies
-> **See also**: [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) | [Reorganize String](https://leetcode.com/problems/reorganize-string)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
+**Analogy (VN):** Giống cắt chữ từ báo để dán vào thư — mỗi chữ cái trong thư tống tiền phải có đủ số lượng trong tờ báo. Đếm tồn kho báo, rồi kiểm tra từng ký tự thư.
 
 **Pattern Recognition:**
 
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Ransom Note example:**
+- Bài toán "có đủ nguyên liệu không?" → đếm freq rồi so sánh
+- Count magazine chars → subtract ransomNote chars → nếu âm → return false
+- Chỉ 26 chữ cái → có thể dùng array[26] thay Map
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
+ransomNote = "aa"  magazine = "aab"
 
-Key insight: store complement for O(1) lookup
+magazine freq:  a→2, b→1
+ransomNote:
+  'a': need 1, have 2 → OK, mag a→1
+  'a': need 1, have 1 → OK, mag a→0
+  Result: true ✅
+
+ransomNote = "aa"  magazine = "ab"
+  'a': need 1, have 1 → OK, mag a→0
+  'a': need 1, have 0 → FAIL ✗
+  Result: false ✅
 ```
 
 ---
 
 ## Problem Description
 
-Ransom Note. ([LeetCode](https://leetcode.com/problems/ransom-note))
+Given two strings `ransomNote` and `magazine`, return `true` if `ransomNote` can be constructed using letters from `magazine` (each letter used at most once).
 
-Difficulty: Easy | Acceptance: 64.5%
+**Examples:**
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+- `ransomNote = "a", magazine = "b"` → `false`
+- `ransomNote = "aa", magazine = "ab"` → `false`
+- `ransomNote = "aa", magazine = "aab"` → `true`
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/ransom-note) for full constraints
+**Constraints:** `1 ≤ ransomNote.length, magazine.length ≤ 10^5`, lowercase English letters only
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🇻🇳 Đếm freq magazine trước, rồi trừ từng ký tự trong ransomNote — O(m+n)
+- 🇺🇸 Use `number[26]` array (26 lowercase letters) for O(1) space vs Map
+- 🇻🇳 Nếu bất kỳ `count < 0` → không đủ ký tự → return false ngay
+- 🇺🇸 Alternatively: count ransom, then verify each count ≤ magazine count
+- 🇻🇳 Follow-up: Unicode chars? → dùng Map thay vì array
+- 🇺🇸 Classic char-counting pattern — also used in "Valid Anagram", "Anagram Groups"
 
 ---
 
 ## Solutions
 
+### Solution 1 — Brute Force (indexOf + slice)
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * For each char in ransomNote, find and remove it from magazine string
+ * Time: O(m * n) — indexOf is O(n) per character
+ * Space: O(n) — magazine copy as array
  */
-function ransomNoteBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function canConstructBrute(ransomNote: string, magazine: string): boolean {
+  let mag = magazine.split("");
+  for (const ch of ransomNote) {
+    const idx = mag.indexOf(ch);
+    if (idx === -1) return false;
+    mag.splice(idx, 1);
+  }
+  return true;
 }
+```
 
+### Solution 2 — Hash Map / Array Counting (Optimal)
+
+```typescript
 /**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Count magazine freq, subtract ransomNote — O(m+n) single pass each
+ * Time: O(m + n) — m = magazine.length, n = ransomNote.length
+ * Space: O(1) — fixed 26-char frequency array
  */
-function ransomNote(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
+function canConstruct(ransomNote: string, magazine: string): boolean {
+  const count = new Array(26).fill(0);
+  const a = "a".charCodeAt(0);
+
+  // Count available letters in magazine
+  for (const ch of magazine) {
+    count[ch.charCodeAt(0) - a]++;
+  }
+
+  // Check if ransomNote can be satisfied
+  for (const ch of ransomNote) {
+    const idx = ch.charCodeAt(0) - a;
+    count[idx]--;
+    if (count[idx] < 0) return false; // not enough of this letter
+  }
+
+  return true;
 }
 
-// === Test Cases ===
-// console.log(ransomNote(/* example 1 */)); // expected
-// console.log(ransomNote(/* example 2 */)); // expected
-// console.log(ransomNote(/* edge case */)); // expected
+// Test cases
+console.log(canConstruct("a", "b")); // false
+console.log(canConstruct("aa", "ab")); // false
+console.log(canConstruct("aa", "aab")); // true
+console.log(canConstruct("bg", "efjbdfbdgfjhhaiigfhbaejahgfbbgbjagbddfgdiaigdadhcb")); // true
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Reorganize String](https://leetcode.com/problems/reorganize-string) — same pattern: Heap / Priority Queue
-- [Number of Divisible Substrings](https://leetcode.com/problems/number-of-divisible-substrings) — same pattern: Prefix Sum
-- [Minimum Number of Steps to Make Two Strings Anagram](https://leetcode.com/problems/minimum-number-of-steps-to-make-two-strings-anagram) — same pattern: Hash Map
-- [Ransom Note — LeetCode](https://leetcode.com/problems/ransom-note) — problem page
+- [242 - Valid Anagram](https://leetcode.com/problems/valid-anagram/) — same char-counting pattern
+- [49 - Group Anagrams](https://leetcode.com/problems/group-anagrams/) — freq map as key
+- [1347 - Minimum Steps to Make Two Strings Anagram](https://leetcode.com/problems/minimum-number-of-steps-to-make-two-strings-anagram/) — count difference
+- [451 - Sort Characters By Frequency](https://leetcode.com/problems/sort-characters-by-frequency/) — freq map + sort

@@ -7,57 +7,55 @@ tags: [Array]
 leetcode_url: "https://leetcode.com/problems/maximum-difference-between-increasing-elements"
 ---
 
-# Maximum Difference Between Increasing Elements / Maximum Difference Between Increasing Elements
+# Maximum Difference Between Increasing Elements / Hiệu Số Lớn Nhất Giữa Hai Phần Tử Tăng
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Array
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Prefix Minimum (Stock Profit variant)
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) | [First Missing Positive](https://leetcode.com/problems/first-missing-positive)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Phân tích bài "Maximum Difference Between Increasing Elements" — xác định pattern phù hợp dựa trên constraints và input/output.
+**Analogy:** Giống bài toán mua bán cổ phiếu — tìm ngày mua (giá thấp) trước ngày bán (giá cao) để lãi nhiều nhất. Nhưng điều kiện là phải mua trước bán (i < j) VÀ giá mua phải thực sự thấp hơn giá bán (nums[i] < nums[j]).
 
 **Pattern Recognition:**
 
-- Signal: "problem-specific signals" → **Array**
-- Bài này thuộc dạng Array — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "i < j", "nums[j] - nums[i]", "nums[i] < nums[j]" → **Track running minimum**
+- Duyệt từ trái sang phải, track `minSeen`. Với mỗi nums[j], diff = nums[j] - minSeen
+- Key insight: nếu nums[j] <= minSeen, cập nhật minSeen; nếu không, tính diff
 
-**Visual — Maximum Difference Between Increasing Elements example:**
+**Visual — nums=[7,1,5,4]:**
 
 ```
-// TODO: Add step-by-step visual for Array
-// Show one complete example with state at each step
+j=0: val=7, minSeen=7 (init), diff=-1 (7-7=0 but need strictly less)
+j=1: val=1, 1<7 → update minSeen=1, diff=-1
+j=2: val=5, 5>1 → diff=5-1=4, best=4, minSeen=1
+j=3: val=4, 4>1 → diff=4-1=3, best=4, minSeen=1
+Answer = 4 ✅ (indices 1→2)
 ```
 
 ---
 
 ## Problem Description
 
-Maximum Difference Between Increasing Elements. ([LeetCode](https://leetcode.com/problems/maximum-difference-between-increasing-elements))
+Given a **0-indexed** integer array `nums` of size `n`, find the **maximum difference** `nums[j] - nums[i]` where `0 <= i < j < n` and `nums[i] < nums[j]`. Return `-1` if no such pair exists.
 
-Difficulty: Easy | Acceptance: 66.1%
+- Example 1: `nums=[7,1,5,4]` → `4` (nums[2]-nums[1] = 5-1)
+- Example 2: `nums=[9,4,3,2]` → `-1` (strictly decreasing, no valid pair)
+- Example 3: `nums=[1,5,2,10]` → `9` (nums[3]-nums[0] = 10-1)
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/maximum-difference-between-increasing-elements) for full constraints
+Constraints: `n == nums.length`, `2 <= n <= 1000`, `1 <= nums[i] <= 10^9`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify**: "Cần i < j nghiêm ngặt, nums[i] < nums[j] nghiêm ngặt" / Strict ordering on both index and value
+2. **Brute force**: "Duyệt mọi cặp (i,j), check i<j and nums[i]<nums[j] — O(n²)" / All pairs O(n²)
+3. **Optimize**: "Track minSeen khi duyệt j — O(n) một lần duyệt" / Track running min for O(n)
+4. **Gotcha**: "Nếu nums[j] == minSeen → diff=0, không hợp lệ vì cần strictly less" / Equal values give diff=0, not valid
+5. **Return -1**: "Chỉ return -1 nếu không bao giờ tìm được nums[j] > minSeen" / Only if no increasing pair found
+6. **Similar**: "Best Time to Buy and Sell Stock là bài tương tự nhưng không cần strictly less" / Stock problem allows equal prices
 
 ---
 
@@ -65,39 +63,56 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Brute Force — all pairs
+ * Time: O(n²) — check every (i,j) pair
+ * Space: O(1)
  */
-function maximumDifferenceBetweenIncreasingElementsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function maximumDifferenceBrute(nums: number[]): number {
+  let best = -1;
+  for (let i = 0; i < nums.length; i++) {
+    for (let j = i + 1; j < nums.length; j++) {
+      if (nums[j] > nums[i]) {
+        best = Math.max(best, nums[j] - nums[i]);
+      }
+    }
+  }
+  return best;
 }
 
 /**
- * Solution 2: Optimized — Array
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Track prefix minimum — O(n)
+ * Time: O(n) — single pass
+ * Space: O(1) — only minSeen variable
+ *
+ * For each j, best diff ending at j = nums[j] - min(nums[0..j-1])
+ * Only update if nums[j] > minSeen (i.e., valid pair exists)
  */
-function maximumDifferenceBetweenIncreasingElements(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Array
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
+function maximumDifference(nums: number[]): number {
+  let minSeen = nums[0];
+  let best = -1;
+
+  for (let j = 1; j < nums.length; j++) {
+    if (nums[j] > minSeen) {
+      best = Math.max(best, nums[j] - minSeen);
+    } else {
+      minSeen = Math.min(minSeen, nums[j]);
+    }
+  }
+  return best;
 }
 
 // === Test Cases ===
-// console.log(maximumDifferenceBetweenIncreasingElements(/* example 1 */)); // expected
-// console.log(maximumDifferenceBetweenIncreasingElements(/* example 2 */)); // expected
-// console.log(maximumDifferenceBetweenIncreasingElements(/* edge case */)); // expected
+console.log(maximumDifference([7, 1, 5, 4])); // 4
+console.log(maximumDifference([9, 4, 3, 2])); // -1
+console.log(maximumDifference([1, 5, 2, 10])); // 9
+console.log(maximumDifference([3, 3])); // -1 (equal, not strictly less)
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) — same pattern: Matrix / Simulation
-- [First Missing Positive](https://leetcode.com/problems/first-missing-positive) — same pattern: Hash Map
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Kth Largest Element in an Array](https://leetcode.com/problems/kth-largest-element-in-an-array) — same pattern: Heap / Priority Queue
-- [Maximum Difference Between Increasing Elements — LeetCode](https://leetcode.com/problems/maximum-difference-between-increasing-elements) — problem page
+- [Best Time to Buy and Sell Stock](https://leetcode.com/problems/best-time-to-buy-and-sell-stock) — same pattern, allows equal values
+- [Maximum Subarray](https://leetcode.com/problems/maximum-subarray) — Kadane's for max subarray sum
+- [Minimum Value to Get Positive Step by Step Sum](https://leetcode.com/problems/minimum-value-to-get-positive-step-by-step-sum) — prefix min tracking
+- [Running Sum of 1d Array](https://leetcode.com/problems/running-sum-of-1d-array) — prefix accumulation pattern

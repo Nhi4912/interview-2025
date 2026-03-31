@@ -7,60 +7,60 @@ tags: [String, Binary Search, Enumeration]
 leetcode_url: "https://leetcode.com/problems/split-message-based-on-limit"
 ---
 
-# Split Message Based on Limit / Split Message Based on Limit
+# Split Message Based on Limit / Chia Tin Nhắn Theo Giới Hạn
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Binary Search
+> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Binary Search on Answer
 > **Frequency**: 📘 Tier 3 — Gặp ở 5 companies
-> **See also**: [Time Based Key-Value Store](https://leetcode.com/problems/time-based-key-value-store) | [Search Suggestions System](https://leetcode.com/problems/search-suggestions-system)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Tưởng tượng tìm một trang trong từ điển — bạn mở giữa, xem số trang, rồi chọn nửa phù hợp. Mỗi lần giảm một nửa phạm vi tìm kiếm.
+**Analogy:** Tưởng tượng bạn cần chia tin nhắn SMS dài thành các phần nhỏ. Mỗi phần có suffix `<k/n>`. Thay vì thử từng n từ nhỏ đến lớn, hãy **binary search** trên số phần n — nếu n đủ lớn thì luôn fit, nếu n quá nhỏ thì không fit.
 
 **Pattern Recognition:**
 
-- Signal: "sorted" + "find target/position" → **Binary Search**
-- Bài này thuộc dạng Binary Search — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "find minimum n such that condition holds" → **Binary Search on Answer**
+- Feasibility function: tổng dung lượng content của n phần >= message.length
+- Key insight: `suffix(i, n) = "<i/n>"` dài `digits(i) + digits(n) + 3`
 
-**Visual — Split Message Based on Limit example:**
+**Visual — Suffix overhead per part:**
 
 ```
-[1, 3, 5, 7, 9, 11, 13]
- L        M            R
+message = "hello world",  limit = 9,  n = 3 parts
 
-Step 1: mid = (L+R)/2, check condition
-Step 2: condition true → move L = mid+1 (or R = mid-1)
-Step N: L meets R → answer found ✅
+Part 1: "<1/3>" = 5 chars,  content space = 9-5 = 4  → "hell<1/3>"
+Part 2: "<2/3>" = 5 chars,  content space = 9-5 = 4  → "o wo<2/3>"
+Part 3: "<3/3>" = 5 chars,  content space = 9-5 = 4  → "rld<3/3>"
+
+Total capacity = 4+4+4 = 12 >= 11 = message.length  ✅
+
+Binary search: canFit(2)? → space=9-5=4 per part, 4+4=8 < 11 ❌
+              canFit(3)? ✅  → answer = 3
 ```
 
 ---
 
 ## Problem Description
 
-Split Message Based on Limit. ([LeetCode](https://leetcode.com/problems/split-message-based-on-limit))
+Chia chuỗi `message` thành các phần, mỗi phần có suffix `<k/n>` (k là số thứ tự, n là tổng số phần), và độ dài mỗi phần không vượt `limit`. Trả về mảng các phần hoặc `[]` nếu không thể. ([LeetCode 2468](https://leetcode.com/problems/split-message-based-on-limit))
 
-Difficulty: Hard | Acceptance: 42.6%
+- Example 1: `message="this is really a very awesome message", limit=9` → 14 parts
+- Example 2: `message="short", limit=15` → `["short<1/1>"]`
+- Example 3: `message="aaa", limit=2` → `[]`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/split-message-based-on-limit) for full constraints
+Constraints: `1 ≤ message.length ≤ 10⁴`, `1 ≤ limit ≤ 10⁴`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Input đã sorted? Cần tìm vị trí chính xác hay boundary?" / Is input sorted? Exact match or boundary?
-2. **Brute force**: "Linear scan O(n)" → optimize with binary search O(log n) / Start linear, suggest binary
-3. **Optimize**: "Chú ý lo/hi boundary: lo <= hi hay lo < hi? mid±1 hay mid?" / Watch boundary conditions carefully
-4. **Edge cases**: "Mảng rỗng, một phần tử, target không tồn tại, overflow mid" / Empty, single, not found, overflow
+1. **Clarify**: "Suffix format chính xác là gì? `<k/n>` hay định dạng khác?" / Confirm exact suffix format including brackets
+2. **Suffix length**: "suffix `<i/n>` dài = digits(i) + digits(n) + 3" / Don't forget `<`, `/`, `>`
+3. **Brute force**: "Thử n từ 1 tăng dần O(n²)" → binary search O(n log n) / Linear enumeration vs binary search
+4. **Feasibility**: "Content space mỗi phần = limit - len(suffix_i), tổng >= msg.length" / Sum of content spaces
+5. **Edge case**: "Nếu space <= 0 cho bất kỳ phần nào → không hợp lệ" / Any non-positive space = infeasible n
+6. **Construction**: "Sau khi tìm n tối thiểu, build từng phần theo offset" / Build left-to-right after finding n
 
 ---
 
@@ -68,39 +68,99 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Linear Enumeration (Brute Force)
+ * Time: O(n²) — try each n from 1 upward, check feasibility O(n) each
+ * Space: O(n) — result array
  */
-function splitMessageBasedOnLimitBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function splitMessageBruteForce(message: string, limit: number): string[] {
+  const dLen = (x: number) => String(x).length;
+
+  for (let n = 1; n <= message.length; n++) {
+    const nLen = dLen(n);
+    let capacity = 0,
+      valid = true;
+    for (let i = 1; i <= n; i++) {
+      const space = limit - dLen(i) - nLen - 3; // <i/n>
+      if (space <= 0) {
+        valid = false;
+        break;
+      }
+      capacity += space;
+    }
+    if (!valid) continue;
+    if (capacity >= message.length) {
+      const result: string[] = [];
+      let idx = 0;
+      for (let i = 1; i <= n && idx < message.length; i++) {
+        const suffix = `<${i}/${n}>`;
+        const space = limit - suffix.length;
+        result.push(message.slice(idx, idx + space) + suffix);
+        idx += space;
+      }
+      return result;
+    }
+  }
+  return [];
 }
 
 /**
- * Solution 2: Optimized — Binary Search
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Binary Search on Total Parts (Optimal)
+ * Time: O(n log n) — binary search O(log n), feasibility check O(n) each
+ * Space: O(n) — result array
  */
-function splitMessageBasedOnLimit(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Binary Search
-  // Hint: Define search space, determine which half to discard
-  throw new Error('Not implemented');
+function splitMessageBasedOnLimit(message: string, limit: number): string[] {
+  const dLen = (x: number) => String(x).length;
+
+  // Returns true if message fits in exactly n parts
+  function canFit(n: number): boolean {
+    const nLen = dLen(n);
+    let capacity = 0;
+    for (let i = 1; i <= n; i++) {
+      const space = limit - dLen(i) - nLen - 3;
+      if (space <= 0) return false;
+      capacity += space;
+      if (capacity >= message.length) return true;
+    }
+    return capacity >= message.length;
+  }
+
+  // Binary search for minimum feasible n
+  let lo = 1,
+    hi = message.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (canFit(mid)) hi = mid;
+    else lo = mid + 1;
+  }
+
+  if (!canFit(lo)) return [];
+
+  // Construct result with minimum n parts
+  const n = lo;
+  const result: string[] = [];
+  let idx = 0;
+  for (let i = 1; i <= n && idx < message.length; i++) {
+    const suffix = `<${i}/${n}>`;
+    const space = limit - suffix.length;
+    result.push(message.slice(idx, idx + space) + suffix);
+    idx += space;
+  }
+  return result;
 }
 
 // === Test Cases ===
-// console.log(splitMessageBasedOnLimit(/* example 1 */)); // expected
-// console.log(splitMessageBasedOnLimit(/* example 2 */)); // expected
-// console.log(splitMessageBasedOnLimit(/* edge case */)); // expected
+console.log(splitMessageBasedOnLimit("short", 15)); // ["short<1/1>"]
+console.log(splitMessageBasedOnLimit("aaa", 2)); // []
+console.log(splitMessageBasedOnLimit("ab", 5)); // ["ab<1/1>"]
+console.log(splitMessageBasedOnLimit("a".repeat(10), 5)).length; // multiple parts
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Time Based Key-Value Store](https://leetcode.com/problems/time-based-key-value-store) — same pattern: Binary Search
-- [Search Suggestions System](https://leetcode.com/problems/search-suggestions-system) — same pattern: Trie
-- [Minimize Result by Adding Parentheses to Expression](https://leetcode.com/problems/minimize-result-by-adding-parentheses-to-expression) — same pattern: String Processing
-- [Number of Matching Subsequences](https://leetcode.com/problems/number-of-matching-subsequences) — same pattern: Trie
+- [Time Based Key-Value Store](https://leetcode.com/problems/time-based-key-value-store) — binary search on sorted timestamps
+- [Minimize Result by Adding Parentheses to Expression](https://leetcode.com/problems/minimize-result-by-adding-parentheses-to-expression) — string enumeration
+- [Koko Eating Bananas](https://leetcode.com/problems/koko-eating-bananas) — binary search on answer with feasibility check
+- [Minimum Number of Days to Make m Bouquets](https://leetcode.com/problems/minimum-number-of-days-to-make-m-bouquets) — same binary search pattern
 - [Split Message Based on Limit — LeetCode](https://leetcode.com/problems/split-message-based-on-limit) — problem page

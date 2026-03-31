@@ -7,62 +7,58 @@ tags: [String, Dynamic Programming, String Matching]
 leetcode_url: "https://leetcode.com/problems/maximum-repeating-substring"
 ---
 
-# Maximum Repeating Substring / Maximum Repeating Substring
+# Maximum Repeating Substring / Chuỗi Lặp Lại Tối Đa
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Dynamic Programming
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Dynamic Programming (Linear DP)
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [String Transformation](https://leetcode.com/problems/string-transformation) | [Maximum Deletions on a String](https://leetcode.com/problems/maximum-deletions-on-a-string)
+> **See also**: [Repeated Substring Pattern](https://leetcode.com/problems/repeated-substring-pattern) | [Find the Index of the First Occurrence in a String](https://leetcode.com/problems/find-the-index-of-the-first-occurrence-in-a-string)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**Analogy (VN):** Như đếm xem câu "xin chào" được lặp lại liên tiếp bao nhiêu lần trong một bài diễn văn dài. Thay vì ghép từng lần và kiểm tra, ta dùng DP: mỗi vị trí lưu số lần lặp tối đa kết thúc tại đó.
 
 **Pattern Recognition:**
 
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "maximum k such that word^k is substring" → **Linear DP on string indices**
+- dp[i] = số lần `word` có thể được lặp liên tiếp, kết thúc tại vị trí `i` trong `sequence`
+- Key insight: nếu `sequence[i-m..i] == word` và `dp[i-m] = k` thì `dp[i] = k+1`
 
-**Visual — Maximum Repeating Substring example:**
+**Visual — sequence = "ababc", word = "ab":**
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+i:        0  1  2  3  4  5
+sequence: a  b  a  b  c
+dp:       0  0  1  0  2  0
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+i=2: seq[0..2)=="ab" && dp[0]=0 → dp[2] = 0+1 = 1
+i=4: seq[2..4)=="ab" && dp[2]=1 → dp[4] = 1+1 = 2
+Answer: max(dp) = 2
 ```
 
 ---
 
 ## Problem Description
 
-Maximum Repeating Substring. ([LeetCode](https://leetcode.com/problems/maximum-repeating-substring))
+Given strings `sequence` and `word`, return the maximum value `k` such that `word` repeated `k` times is a substring of `sequence`.
 
-Difficulty: Easy | Acceptance: 39.6%
+- Example 1: `sequence = "ababc"`, `word = "ab"` → `2` (`"abab"` is a substring)
+- Example 2: `sequence = "ababc"`, `word = "ba"` → `1` (`"ba"` is a substring, `"baba"` is not)
+- Example 3: `sequence = "ababc"`, `word = "ac"` → `0`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/maximum-repeating-substring) for full constraints
+Constraints: `1 <= sequence.length <= 100`, `1 <= word.length <= 100`, both lowercase English letters
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+1. **Clarify / Làm rõ**: "word lặp liên tiếp hay không liên tiếp?" / Must be contiguous repetitions in sequence
+2. **Brute force**: Ghép `word` từng lần, kiểm tra `includes()` — O(n²/m) time
+3. **DP approach**: `dp[i]` = max k với `word^k` kết thúc tại `i` → O(n·m) time, O(n) space
+4. **Transition**: `dp[i] = dp[i-m] + 1` nếu `sequence[i-m..i] === word`, else `0`
+5. **Space**: Chỉ cần mảng `dp` độ dài `n+1`, không cần bảng 2D
+6. **Edge case**: `word.length > sequence.length` → return `0` immediately
 
 ---
 
@@ -70,39 +66,53 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Brute Force — Grow and Check
+ * Time: O(n² / m) — each includes() call is O(n), done n/m times
+ * Space: O(n) — string concatenation
  */
-function maximumRepeatingSubstringBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function maximumRepeatingBrute(sequence: string, word: string): number {
+  let k = 0;
+  let repeated = word;
+  while (sequence.includes(repeated)) {
+    k++;
+    repeated += word;
+  }
+  return k;
 }
 
 /**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Dynamic Programming (Optimal)
+ * Time: O(n·m) — outer loop n, inner slice comparison O(m)
+ * Space: O(n) — dp array of length n+1
  */
-function maximumRepeatingSubstring(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function maximumRepeating(sequence: string, word: string): number {
+  const n = sequence.length;
+  const m = word.length;
+  // dp[i] = max times word repeats consecutively ending exactly at index i
+  const dp = new Array(n + 1).fill(0);
+
+  for (let i = m; i <= n; i++) {
+    if (sequence.slice(i - m, i) === word) {
+      dp[i] = dp[i - m] + 1;
+    }
+  }
+
+  return Math.max(...dp);
 }
 
 // === Test Cases ===
-// console.log(maximumRepeatingSubstring(/* example 1 */)); // expected
-// console.log(maximumRepeatingSubstring(/* example 2 */)); // expected
-// console.log(maximumRepeatingSubstring(/* edge case */)); // expected
+console.log(maximumRepeating("ababc", "ab")); // 2
+console.log(maximumRepeating("ababc", "ba")); // 1
+console.log(maximumRepeating("ababc", "ac")); // 0
+console.log(maximumRepeating("aaa", "a")); // 3
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [String Transformation](https://leetcode.com/problems/string-transformation) — same pattern: Dynamic Programming
-- [Maximum Deletions on a String](https://leetcode.com/problems/maximum-deletions-on-a-string) — same pattern: Dynamic Programming
-- [Find All Good Strings](https://leetcode.com/problems/find-all-good-strings) — same pattern: Dynamic Programming
-- [Find the Index of the First Occurrence in a String](https://leetcode.com/problems/find-the-index-of-the-first-occurrence-in-a-string) — same pattern: Two Pointers
-- [Maximum Repeating Substring — LeetCode](https://leetcode.com/problems/maximum-repeating-substring) — problem page
+- [Repeated Substring Pattern](https://leetcode.com/problems/repeated-substring-pattern) — detect if string is made of repeated pattern
+- [Find the Index of the First Occurrence in a String](https://leetcode.com/problems/find-the-index-of-the-first-occurrence-in-a-string) — KMP substring search foundation
+- [String Transformation](https://leetcode.com/problems/string-transformation) — harder string DP with KMP
+- [Maximum Deletions on a String](https://leetcode.com/problems/maximum-deletions-on-a-string) — DP on string indices with matching
+- [Longest Happy Prefix](https://leetcode.com/problems/longest-happy-prefix) — KMP failure function pattern

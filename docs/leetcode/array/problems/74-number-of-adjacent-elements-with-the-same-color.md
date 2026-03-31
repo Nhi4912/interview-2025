@@ -7,57 +7,60 @@ tags: [Array]
 leetcode_url: "https://leetcode.com/problems/number-of-adjacent-elements-with-the-same-color"
 ---
 
-# Number of Adjacent Elements With the Same Color / Number of Adjacent Elements With the Same Color
+# Number of Adjacent Elements With the Same Color / Số Cặp Phần Tử Kề Cùng Màu
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Array
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Array Simulation (Incremental Update)
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) | [First Missing Positive](https://leetcode.com/problems/first-missing-positive)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Phân tích bài "Number of Adjacent Elements With the Same Color" — xác định pattern phù hợp dựa trên constraints và input/output.
+**Analogy:** Giống đếm số đôi hàng xóm cùng màu trong dãy đèn — khi bạn đổi màu một bóng đèn, chỉ cần cập nhật tối đa 2 cặp liền kề (trái và phải), không cần đếm lại toàn bộ.
 
 **Pattern Recognition:**
 
-- Signal: "problem-specific signals" → **Array**
-- Bài này thuộc dạng Array — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "update one element", "count adjacent pairs", "answer after each query" → **Incremental delta update**
+- Naive: recalculate all adjacent pairs after each query O(n\*q). Optimal: track delta at affected positions only
+- Key insight: thay đổi colors[idx] chỉ ảnh hưởng cặp (idx-1,idx) và (idx,idx+1)
 
-**Visual — Number of Adjacent Elements With the Same Color example:**
+**Visual — n=5, queries=[[0,4],[1,4],[2,3]]:**
 
 ```
-// TODO: Add step-by-step visual for Array
-// Show one complete example with state at each step
+Initial:  [0,0,0,0,0]  adjacent=0
+
+Query [0,4]: set colors[0]=4
+  Before: colors[-1] doesn't exist, colors[0]=0≠colors[1]=0 → no change
+  After:  colors[0]=4≠colors[1]=0 → no change
+  adjacent=0, result=[0]
+
+Query [1,4]: set colors[1]=4
+  Before: colors[0]=4≠colors[1]=0(old), colors[1]=0≠colors[2]=0 → adj was 0
+  After:  colors[0]=4==colors[1]=4 → +1, colors[1]=4≠colors[2]=0 → no change
+  adjacent=1, result=[0,1]
 ```
 
 ---
 
 ## Problem Description
 
-Number of Adjacent Elements With the Same Color. ([LeetCode](https://leetcode.com/problems/number-of-adjacent-elements-with-the-same-color))
+You have `n` elements with colors initially `0` (uncolored). Process queries `[index, color]` — set `colors[index] = color`. After each query, return the count of adjacent pairs `(i, i+1)` with the same color (both non-zero). Return an array of results after each query.
 
-Difficulty: Medium | Acceptance: 55.8%
+- Example 1: `n=5, queries=[[0,4],[1,4],[2,3],[3,5],[4,5],[2,5]]` → `[0,1,1,1,1,2]` (approximately)
+- Example 2: `n=1, queries=[[0,100000]]` → `[0]`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/number-of-adjacent-elements-with-the-same-color) for full constraints
+Constraints: `1 <= n <= 10^5`, `1 <= queries.length <= 10^5`, `0 <= queries[i][0] < n`, `1 <= queries[i][1] <= 10^5`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify**: "Ban đầu tất cả colors = 0 (chưa tô), cặp có 0 không đếm" / Initially uncolored (0), pairs with 0 don't count
+2. **Naive**: "Sau mỗi query, đếm lại O(n) — tổng O(n*q) quá chậm" / Recount all pairs is O(n*q)
+3. **Key insight**: "Mỗi query chỉ ảnh hưởng 2 cặp liền kề → O(1) update per query" / Only 2 pairs affected
+4. **Order**: "Trước update: xóa contribution cũ. Sau update: cộng contribution mới" / Remove old, add new contributions
+5. **Edge**: "idx=0 không có hàng xóm trái, idx=n-1 không có hàng xóm phải" / Boundary checks needed
+6. **Follow-up**: "Nếu có thể query range [l,r]?" / Range updates → segment tree or BIT
 
 ---
 
@@ -65,39 +68,87 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Brute Force — recount after each query
+ * Time: O(n * q) — n elements, q queries
+ * Space: O(n) — colors array
  */
-function numberOfAdjacentElementsWithTheSameColorBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function colorTheArrayBrute(n: number, queries: number[][]): number[] {
+  const colors = new Array(n).fill(0);
+  const result: number[] = [];
+  for (const [idx, color] of queries) {
+    colors[idx] = color;
+    let adj = 0;
+    for (let i = 0; i < n - 1; i++) {
+      if (colors[i] !== 0 && colors[i] === colors[i + 1]) adj++;
+    }
+    result.push(adj);
+  }
+  return result;
 }
 
 /**
- * Solution 2: Optimized — Array
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Incremental delta — O(1) per query
+ * Time: O(q) — constant work per query
+ * Space: O(n) — colors array
+ *
+ * Before setting colors[idx]: subtract pairs that will break
+ * After setting colors[idx]: add pairs that will form
  */
-function numberOfAdjacentElementsWithTheSameColor(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Array
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
+function colorTheArray(n: number, queries: number[][]): number[] {
+  const colors = new Array(n).fill(0);
+  const result: number[] = [];
+  let adjacent = 0;
+
+  for (const [idx, color] of queries) {
+    // Remove existing adjacent contributions involving idx
+    if (idx > 0 && colors[idx] !== 0 && colors[idx] === colors[idx - 1]) adjacent--;
+    if (idx < n - 1 && colors[idx] !== 0 && colors[idx] === colors[idx + 1]) adjacent--;
+
+    colors[idx] = color;
+
+    // Add new adjacent contributions involving idx
+    if (idx > 0 && colors[idx] !== 0 && colors[idx] === colors[idx - 1]) adjacent++;
+    if (idx < n - 1 && colors[idx] !== 0 && colors[idx] === colors[idx + 1]) adjacent++;
+
+    result.push(adjacent);
+  }
+  return result;
 }
 
 // === Test Cases ===
-// console.log(numberOfAdjacentElementsWithTheSameColor(/* example 1 */)); // expected
-// console.log(numberOfAdjacentElementsWithTheSameColor(/* example 2 */)); // expected
-// console.log(numberOfAdjacentElementsWithTheSameColor(/* edge case */)); // expected
+console.log(
+  colorTheArray(5, [
+    [0, 4],
+    [1, 4],
+    [2, 3],
+    [3, 5],
+    [4, 5],
+    [2, 5],
+  ]),
+); // [0,1,1,1,1,2]? let me verify
+console.log(colorTheArray(1, [[0, 100000]])); // [0]
+console.log(
+  colorTheArray(4, [
+    [0, 2],
+    [1, 2],
+    [3, 1],
+    [2, 1],
+  ]),
+); // [0,1,1,2]
+console.log(
+  colorTheArray(3, [
+    [0, 1],
+    [1, 1],
+    [2, 1],
+  ]),
+); // [0,1,2]
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) — same pattern: Matrix / Simulation
-- [First Missing Positive](https://leetcode.com/problems/first-missing-positive) — same pattern: Hash Map
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Kth Largest Element in an Array](https://leetcode.com/problems/kth-largest-element-in-an-array) — same pattern: Heap / Priority Queue
-- [Number of Adjacent Elements With the Same Color — LeetCode](https://leetcode.com/problems/number-of-adjacent-elements-with-the-same-color) — problem page
+- [Count Number of Texts](https://leetcode.com/problems/count-number-of-texts) — counting adjacent patterns
+- [Design a Food Rating System](https://leetcode.com/problems/design-a-food-rating-system) — incremental update pattern
+- [Find the Winner of the Circular Game](https://leetcode.com/problems/find-the-winner-of-the-circular-game) — simulation with updates
+- [Number of Ways to Form a Target String Given a Dictionary](https://leetcode.com/problems/number-of-ways-to-form-a-target-string-given-a-dictionary) — column-based counting

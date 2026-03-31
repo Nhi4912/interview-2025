@@ -7,62 +7,64 @@ tags: [Array, Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/painting-the-walls"
 ---
 
-# Painting the Walls / Painting the Walls
+# Painting the Walls / Sơn Tường
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Dynamic Programming
+> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Dynamic Programming (0/1 Knapsack reframe)
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [Jump Game II](https://leetcode.com/problems/jump-game-ii) | [Maximal Square](https://leetcode.com/problems/maximal-square)
+> **See also**: [Partition Equal Subset Sum](https://leetcode.com/problems/partition-equal-subset-sum) | [Coin Change](https://leetcode.com/problems/coin-change)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**Analogy (VN):** Có hai thợ sơn — thợ trả tiền (paid) và thợ miễn phí (free). Khi thợ trả tiền sơn 1 tường mất `time[i]` giờ, thợ miễn phí đồng thời sơn được `time[i]` tường khác. Tổng số tường 2 thợ phủ = `1 + time[i]`. Bài toán thành: chọn tập tường cho thợ trả tiền sao cho tổng coverage >= n, tối thiểu chi phí.
 
 **Pattern Recognition:**
 
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "minimize cost, cover all n items, each paid item covers (1+time[i]) items" → **0/1 Knapsack**
+- dp[j] = chi phí tối thiểu để phủ j tường
+- Key insight: `dp[j] = min(dp[j], dp[max(0, j - 1 - time[i])] + cost[i])` — backward pass
 
-**Visual — Painting the Walls example:**
+**Visual — cost=[1,2,3,2], time=[1,2,3,2], n=4:**
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+dp = [0, INF, INF, INF, INF]  (cover 0..4 walls)
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+Wall 0 (cost=1, time=1, covers 2):
+  j=4: dp[max(0,4-2)]=dp[2]=INF → skip
+  j=3: dp[max(0,3-2)]=dp[1]=INF → skip
+  j=2: dp[max(0,0)]=dp[0]=0 → dp[2]=1
+  j=1: dp[max(0,0)]=dp[0]=0 → dp[1]=1
+  dp=[0,1,1,INF,INF]
+
+Wall 1 (cost=2, time=2, covers 3):
+  j=4: dp[max(0,4-3)]=dp[1]=1 → dp[4]=3
+  j=3: dp[max(0,0)]=dp[0]=0 → dp[3]=2
+  ... dp=[0,1,1,2,3]
+Answer: dp[4] = 3
 ```
 
 ---
 
 ## Problem Description
 
-Painting the Walls. ([LeetCode](https://leetcode.com/problems/painting-the-walls))
+You have `n` walls to paint. Paid painter paints wall `i` with `cost[i]` in `time[i]` units. Free painter simultaneously paints `time[i]` walls (for free) while paid painter works. Find minimum cost to paint all `n` walls.
 
-Difficulty: Hard | Acceptance: 48.5%
+- Example 1: `cost=[1,2,3,2]`, `time=[1,2,3,2]` → `3`
+- Example 2: `cost=[2,3,4,2]`, `time=[1,1,1,1]` → `4`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/painting-the-walls) for full constraints
+Constraints: `1 <= cost.length == time.length <= 500`, `1 <= cost[i] <= 10^6`, `1 <= time[i] <= 500`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+1. **Reframe the problem**: Paid painter for wall i → covers (1 + time[i]) walls total → standard knapsack item
+2. **Knapsack direction**: Coverage = weight, cost = value to minimize → `dp[j]` = min cost to cover j walls
+3. **Backward loop**: Process j from n down to 1 (0/1 knapsack — each wall assigned at most once)
+4. **Key formula**: `dp[j] = min(dp[j], dp[max(0, j-1-time[i])] + cost[i])` — `max(0,...)` handles overshoot
+5. **Init**: `dp[0]=0`, `dp[1..n]=Infinity` — fill min-cost from scratch
+6. **Why max(0,...)?** Covering more than n walls is fine — treat it as covering exactly n
 
 ---
 
@@ -70,39 +72,70 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Top-down Memoization
+ * Time: O(n²) — n walls × n remaining states
+ * Space: O(n²) — memo map
  */
-function paintingTheWallsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function paintWallsMemo(cost: number[], time: number[]): number {
+  const n = cost.length;
+  const memo: Map<string, number> = new Map();
+
+  function dp(i: number, remaining: number): number {
+    if (remaining <= 0) return 0; // all walls covered
+    if (i === n) return Infinity; // ran out of paid options
+    const key = `${i},${remaining}`;
+    if (memo.has(key)) return memo.get(key)!;
+
+    // Skip wall i (don't assign to paid painter)
+    const skip = dp(i + 1, remaining);
+    // Assign wall i to paid painter: covers 1 + time[i] walls
+    const take = cost[i] + dp(i + 1, remaining - 1 - time[i]);
+    const res = Math.min(skip, take);
+    memo.set(key, res);
+    return res;
+  }
+
+  return dp(0, n);
 }
 
 /**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: 0/1 Knapsack Bottom-up (Optimal)
+ * Time: O(n²) — n items × n capacity
+ * Space: O(n) — 1D dp array
  */
-function paintingTheWalls(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function paintWalls(cost: number[], time: number[]): number {
+  const n = cost.length;
+  // dp[j] = minimum cost to cover exactly j walls (using paid painter for subset)
+  const dp = new Array(n + 1).fill(Infinity);
+  dp[0] = 0;
+
+  for (let i = 0; i < n; i++) {
+    // Backward pass (0/1 knapsack — each wall used at most once as paid)
+    for (let j = n; j >= 1; j--) {
+      // Assigning wall i to paid painter covers (1 + time[i]) walls
+      const prevIdx = Math.max(0, j - 1 - time[i]);
+      if (dp[prevIdx] !== Infinity) {
+        dp[j] = Math.min(dp[j], dp[prevIdx] + cost[i]);
+      }
+    }
+  }
+
+  return dp[n];
 }
 
 // === Test Cases ===
-// console.log(paintingTheWalls(/* example 1 */)); // expected
-// console.log(paintingTheWalls(/* example 2 */)); // expected
-// console.log(paintingTheWalls(/* edge case */)); // expected
+console.log(paintWalls([1, 2, 3, 2], [1, 2, 3, 2])); // 3
+console.log(paintWalls([2, 3, 4, 2], [1, 1, 1, 1])); // 4
+console.log(paintWalls([1], [1])); // 1
+console.log(paintWalls([26, 53, 10], [1, 1, 1])); // 36
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Jump Game II](https://leetcode.com/problems/jump-game-ii) — same pattern: Dynamic Programming
-- [Maximal Square](https://leetcode.com/problems/maximal-square) — same pattern: Dynamic Programming
-- [Unique Paths II](https://leetcode.com/problems/unique-paths-ii) — same pattern: Dynamic Programming
-- [Maximum Profit in Job Scheduling](https://leetcode.com/problems/maximum-profit-in-job-scheduling) — same pattern: Dynamic Programming
-- [Painting the Walls — LeetCode](https://leetcode.com/problems/painting-the-walls) — problem page
+- [Partition Equal Subset Sum](https://leetcode.com/problems/partition-equal-subset-sum) — same 0/1 knapsack template
+- [Coin Change](https://leetcode.com/problems/coin-change) — minimize coins (unbounded knapsack)
+- [Maximum Profit From Trading Stocks](https://leetcode.com/problems/maximum-profit-from-trading-stocks) — maximize profit variant of knapsack
+- [Last Stone Weight II](https://leetcode.com/problems/last-stone-weight-ii) — knapsack with balance goal
+- [Ones and Zeroes](https://leetcode.com/problems/ones-and-zeroes) — 2D knapsack variant

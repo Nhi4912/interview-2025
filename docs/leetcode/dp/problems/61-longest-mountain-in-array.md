@@ -7,60 +7,60 @@ tags: [Array, Two Pointers, Dynamic Programming, Enumeration]
 leetcode_url: "https://leetcode.com/problems/longest-mountain-in-array"
 ---
 
-# Longest Mountain in Array / Longest Mountain in Array
+# Longest Mountain in Array / Dãy Núi Dài Nhất Trong Mảng
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Two Pointers
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Two Pointers / Linear DP
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [Longest String Chain](https://leetcode.com/problems/longest-string-chain) | [Partition Array Into Two Arrays to Minimize Sum Difference](https://leetcode.com/problems/partition-array-into-two-arrays-to-minimize-sum-difference)
+> **See also**: [Valid Mountain Array](https://leetcode.com/problems/valid-mountain-array) | [Longest Turbulent Subarray](https://leetcode.com/problems/longest-turbulent-subarray)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Hãy tưởng tượng hai người đi từ hai đầu con đường, tiến lại gần nhau. Mỗi bước, người nào ở vị trí "tốt hơn" sẽ đứng yên, người kia tiến. Khi họ gặp nhau, bài toán được giải.
+**Analogy (VN):** Như tìm ngọn núi dài nhất trên mặt cắt địa hình — một "núi" phải có phần dốc lên (strictly) rồi dốc xuống (strictly), đỉnh không ở đầu hay cuối. Với mỗi đỉnh tiềm năng, mở rộng sang hai bên trong khi còn dốc.
 
 **Pattern Recognition:**
 
-- Signal: "sorted array" + "find pair/triplet" → **Two Pointers**
-- Bài này thuộc dạng Two Pointers — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "strictly increasing then strictly decreasing" → **Enumerate peaks + expand**
+- Một đỉnh hợp lệ: `arr[i-1] < arr[i] > arr[i+1]`
+- Key insight: DP với `up[i]` = độ dài sườn lên kết thúc tại i, `down[i]` = sườn xuống bắt đầu tại i
 
-**Visual — Longest Mountain in Array example:**
+**Visual — arr = [2, 1, 4, 7, 3, 2, 5]:**
 
 ```
-arr = [... sorted ...]
- L                 R
+Index:  0  1  2  3  4  5  6
+arr:    2  1  4  7  3  2  5
 
-Step 1: check condition → move L or R
-Step 2: ...
-Step N: condition met ✅
+up[i]:  0  0  1  2  0  0  1   (len of strictly increasing run ending at i)
+down[i]:0  0  0  2  1  0  0   (len of strictly decreasing run starting at i)
+
+Mountain at peak i=3: up[3]=2, down[3]=2 → length = 2+2+1 = 5  [1,4,7,3,2]
+Mountain at peak i=2: up[2]=1, down[2]=0 → not a mountain (no descent)
+Answer: 5
 ```
 
 ---
 
 ## Problem Description
 
-Longest Mountain in Array. ([LeetCode](https://leetcode.com/problems/longest-mountain-in-array))
+Given an integer array `arr`, return the length of the longest subarray that forms a mountain. A mountain has at least 3 elements, strictly increases to a peak, then strictly decreases.
 
-Difficulty: Medium | Acceptance: 41.1%
+- Example 1: `arr = [2,1,4,7,3,2,5]` → `5` (subarray `[1,4,7,3,2]`)
+- Example 2: `arr = [2,2,2]` → `0` (no mountain — not strictly increasing/decreasing)
+- Example 3: `arr = [0,1,2,3,4,5,4,3,2,1,0]` → `11` (entire array)
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/longest-mountain-in-array) for full constraints
+Constraints: `1 <= arr.length <= 10^4`, `0 <= arr[i] <= 10^4`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Mảng đã sorted chưa? Có duplicate không?" / Ask if array is sorted and if duplicates exist
-2. **Brute force**: "Dùng 2 vòng for O(n²)" → optimize with two pointers O(n) / Start with nested loops, then optimize
-3. **Optimize**: "Vì mảng sorted, dùng 2 con trỏ L/R tiến vào giữa" / Since sorted, use L/R pointers moving inward
-4. **Edge cases**: "Mảng rỗng, một phần tử, tất cả giống nhau" / Empty array, single element, all same values
+1. **Clarify / Làm rõ**: "Strictly increasing AND decreasing — equal elements không tạo núi" / Strict inequalities required
+2. **Minimum length**: Mountain cần ít nhất 3 phần tử (lên + đỉnh + xuống)
+3. **Brute force**: Với mỗi đỉnh i (arr[i-1]<arr[i]>arr[i+1]), expand left và right — O(n²) worst case
+4. **DP approach**: `up[i]` + `down[i]` được tính trong 2 pass O(n), answer = max(up[i]+down[i]+1) where both >0
+5. **Two-pass DP**: Forward pass cho up[], backward pass cho down[]
+6. **Edge case**: n < 3 → return 0 immediately; flat sequences → up/down stay 0
 
 ---
 
@@ -68,39 +68,72 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Enumerate Peaks — Brute Force
+ * Time: O(n²) — for each of n peaks, expand up to n steps in each direction
+ * Space: O(1)
  */
-function longestMountainInArrayBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function longestMountainBrute(arr: number[]): number {
+  const n = arr.length;
+  if (n < 3) return 0;
+  let ans = 0;
+
+  for (let peak = 1; peak < n - 1; peak++) {
+    if (arr[peak] <= arr[peak - 1] || arr[peak] <= arr[peak + 1]) continue;
+    let lo = peak - 1,
+      hi = peak + 1;
+    while (lo > 0 && arr[lo - 1] < arr[lo]) lo--;
+    while (hi < n - 1 && arr[hi + 1] < arr[hi]) hi++;
+    ans = Math.max(ans, hi - lo + 1);
+  }
+
+  return ans;
 }
 
 /**
- * Solution 2: Optimized — Two Pointers
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Two-Pass Linear DP (Optimal)
+ * Time: O(n) — two linear passes to build up[] and down[]
+ * Space: O(n) — two auxiliary arrays
  */
-function longestMountainInArray(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Two Pointers
-  // Hint: Use L/R pointers on sorted input, move based on comparison
-  throw new Error('Not implemented');
+function longestMountain(arr: number[]): number {
+  const n = arr.length;
+  if (n < 3) return 0;
+
+  // up[i] = length of strictly increasing run ending at index i (from left)
+  const up = new Array(n).fill(0);
+  for (let i = 1; i < n; i++) {
+    up[i] = arr[i] > arr[i - 1] ? up[i - 1] + 1 : 0;
+  }
+
+  // down[i] = length of strictly decreasing run starting at index i (to right)
+  const down = new Array(n).fill(0);
+  for (let i = n - 2; i >= 0; i--) {
+    down[i] = arr[i] > arr[i + 1] ? down[i + 1] + 1 : 0;
+  }
+
+  let ans = 0;
+  for (let i = 1; i < n - 1; i++) {
+    // Valid mountain peak: must have ascent on left AND descent on right
+    if (up[i] > 0 && down[i] > 0) {
+      ans = Math.max(ans, up[i] + down[i] + 1);
+    }
+  }
+
+  return ans;
 }
 
 // === Test Cases ===
-// console.log(longestMountainInArray(/* example 1 */)); // expected
-// console.log(longestMountainInArray(/* example 2 */)); // expected
-// console.log(longestMountainInArray(/* edge case */)); // expected
+console.log(longestMountain([2, 1, 4, 7, 3, 2, 5])); // 5
+console.log(longestMountain([2, 2, 2])); // 0
+console.log(longestMountain([0, 1, 2, 3, 4, 5, 4, 3, 2, 1, 0])); // 11
+console.log(longestMountain([9, 8, 7, 6, 5])); // 0
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Longest String Chain](https://leetcode.com/problems/longest-string-chain) — same pattern: Two Pointers
-- [Partition Array Into Two Arrays to Minimize Sum Difference](https://leetcode.com/problems/partition-array-into-two-arrays-to-minimize-sum-difference) — same pattern: Two Pointers
-- [Maximum Total Damage With Spell Casting](https://leetcode.com/problems/maximum-total-damage-with-spell-casting) — same pattern: Two Pointers
-- [Get the Maximum Score](https://leetcode.com/problems/get-the-maximum-score) — same pattern: Two Pointers
-- [Longest Mountain in Array — LeetCode](https://leetcode.com/problems/longest-mountain-in-array) — problem page
+- [Valid Mountain Array](https://leetcode.com/problems/valid-mountain-array) — check if entire array is a mountain
+- [Longest Turbulent Subarray](https://leetcode.com/problems/longest-turbulent-subarray) — alternating up/down pattern, same DP idea
+- [Peak Index in a Mountain Array](https://leetcode.com/problems/peak-index-in-a-mountain-array) — find peak index in guaranteed mountain
+- [Find in Mountain Array](https://leetcode.com/problems/find-in-mountain-array) — binary search on mountain
+- [Minimum Number of Removals to Make Mountain Array](https://leetcode.com/problems/minimum-number-of-removals-to-make-mountain-array) — harder mountain DP

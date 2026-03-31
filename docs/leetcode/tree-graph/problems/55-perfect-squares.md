@@ -7,7 +7,7 @@ tags: [Math, Dynamic Programming, Breadth-First Search]
 leetcode_url: "https://leetcode.com/problems/perfect-squares"
 ---
 
-# Perfect Squares / Perfect Squares
+# Perfect Squares / Số Bình Phương Hoàn Hảo
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dynamic Programming
 > **Frequency**: 📘 Tier 3 — Gặp ở 5 companies
@@ -17,52 +17,49 @@ leetcode_url: "https://leetcode.com/problems/perfect-squares"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**Analogy:** Như trả tiền lẻ bằng ít tờ nhất — mỗi "tờ tiền" là số bình phương hoàn hảo (1, 4, 9, 16...). DP xây từ bài nhỏ (n=1) lên bài lớn, giống Coin Change nhưng coins là perfect squares.
 
 **Pattern Recognition:**
 
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "minimum count to reach n" + "fixed reusable set" → **DP (Coin Change variant)**
+- `dp[i]` = min perfect squares summing to `i`; transition: try each square `j*j ≤ i`
+- Key insight: `dp[i] = min over all j: dp[i - j*j] + 1`; Lagrange's theorem → answer ≤ 4
 
-**Visual — Perfect Squares example:**
+**Visual — dp for n=12:**
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+Squares available: 1, 4, 9
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+i:    0   1   2   3   4   5   6   7   8   9  10  11  12
+dp:   0   1   2   3   1   2   3   4   2   1   2   3   3
+
+dp[12]: try j=1 → dp[11]+1 = 4
+        try j=2 → dp[8]+1  = 3  ← min!
+        try j=3 → dp[3]+1  = 4
+Answer: 3 via (4 + 4 + 4)
 ```
 
 ---
 
 ## Problem Description
 
-Perfect Squares. ([LeetCode](https://leetcode.com/problems/perfect-squares))
+Given a positive integer `n`, return the minimum number of perfect square numbers (integers that are squares of integers: 1, 4, 9, 16...) that sum to `n`.
 
-Difficulty: Medium | Acceptance: 55.7%
+- Example 1: `n=12` → `3` (4+4+4)
+- Example 2: `n=13` → `2` (4+9)
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/perfect-squares) for full constraints
+Constraints: `1 <= n <= 10^4`.
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+1. **Clarify**: "n >= 1 nên luôn có kết quả (tệ nhất là n cái 1)" / n >= 1 guarantees an answer; worst case n ones
+2. **Brute force**: "Recursion O(n^(n/2)) → thêm memo → DP" / Recursive try-all, then memoize, then convert to bottom-up
+3. **State**: "dp[i] = min squares for i, transition dùng mọi square j\*j <= i" / Define state clearly, list transition formula
+4. **BFS alt**: "Coi như shortest path — node=target sum, edge=adding one square" / BFS finds answer = number of levels
+5. **Lagrange theorem**: "Mọi số nguyên dương biểu diễn bằng ≤ 4 bình phương" / Answer is always 1, 2, 3, or 4
+6. **Edge cases**: "n là perfect square → 1; n=3 → 3 (1+1+1)" / Perfect square n → answer 1; n mod 4 == 0, divide out 4s
 
 ---
 
@@ -70,39 +67,64 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: BFS — treat as unweighted shortest path
+ * Each level adds one perfect square; first time reaching n = answer
+ * Time: O(n * sqrt(n)) — n states × branching factor sqrt(n)
+ * Space: O(n) — visited set
  */
-function perfectSquaresBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function numSquaresBFS(n: number): number {
+  const visited = new Set<number>([0]);
+  let queue: number[] = [0];
+  let steps = 0;
+
+  while (queue.length > 0) {
+    steps++;
+    const next: number[] = [];
+    for (const curr of queue) {
+      for (let j = 1; j * j <= n; j++) {
+        const val = curr + j * j;
+        if (val === n) return steps;
+        if (val < n && !visited.has(val)) {
+          visited.add(val);
+          next.push(val);
+        }
+      }
+    }
+    queue = next;
+  }
+  return steps;
 }
 
 /**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Dynamic Programming — bottom-up, space-efficient
+ * Time: O(n * sqrt(n)) — fill n dp entries, each tries sqrt(n) squares
+ * Space: O(n) — dp array only
  */
-function perfectSquares(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function numSquares(n: number): number {
+  const dp = new Array<number>(n + 1).fill(Infinity);
+  dp[0] = 0;
+
+  for (let i = 1; i <= n; i++) {
+    for (let j = 1; j * j <= i; j++) {
+      dp[i] = Math.min(dp[i], dp[i - j * j] + 1);
+    }
+  }
+
+  return dp[n];
 }
 
 // === Test Cases ===
-// console.log(perfectSquares(/* example 1 */)); // expected
-// console.log(perfectSquares(/* example 2 */)); // expected
-// console.log(perfectSquares(/* edge case */)); // expected
+console.log(numSquares(12)); // 3  (4+4+4)
+console.log(numSquares(13)); // 2  (4+9)
+console.log(numSquares(1)); // 1  (1)
+console.log(numSquares(100)); // 1  (10^2)
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Unique Binary Search Trees](https://leetcode.com/problems/unique-binary-search-trees) — same pattern: Dynamic Programming
-- [Fibonacci Number](https://leetcode.com/problems/fibonacci-number) — same pattern: Dynamic Programming
-- [Cheapest Flights Within K Stops](https://leetcode.com/problems/cheapest-flights-within-k-stops) — same pattern: Shortest Path (BFS/Dijkstra)
-- [Longest Increasing Path in a Matrix](https://leetcode.com/problems/longest-increasing-path-in-a-matrix) — same pattern: Topological Sort
-- [Perfect Squares — LeetCode](https://leetcode.com/problems/perfect-squares) — problem page
+- [Coin Change](https://leetcode.com/problems/coin-change) — identical DP pattern: min coins to make amount
+- [Fibonacci Number](https://leetcode.com/problems/fibonacci-number) — simplest DP building on prior results
+- [Cheapest Flights Within K Stops](https://leetcode.com/problems/cheapest-flights-within-k-stops) — constrained shortest path DP
+- [Minimum Path Sum](https://leetcode.com/problems/minimum-path-sum) — 2D DP minimization variant

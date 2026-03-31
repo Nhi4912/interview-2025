@@ -7,57 +7,55 @@ tags: [Array]
 leetcode_url: "https://leetcode.com/problems/max-consecutive-ones"
 ---
 
-# Max Consecutive Ones / Max Consecutive Ones
+# Max Consecutive Ones / Số Lượng Số 1 Liên Tiếp Nhiều Nhất
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Array
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Linear Scan
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) | [First Missing Positive](https://leetcode.com/problems/first-missing-positive)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Phân tích bài "Max Consecutive Ones" — xác định pattern phù hợp dựa trên constraints và input/output.
+**Analogy:** Giống đếm chuỗi thắng liên tiếp trong bóng đá — bạn đang đếm bao nhiêu trận thắng (1) liên tiếp trước khi thua (0). Mỗi khi thua, bộ đếm reset về 0. Kết quả là chuỗi thắng dài nhất.
 
 **Pattern Recognition:**
 
-- Signal: "problem-specific signals" → **Array**
-- Bài này thuộc dạng Array — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "binary array", "consecutive", "reset on 0" → **Linear Scan with counter**
+- Chỉ cần một lần duyệt — track `current` streak, reset on 0, update `max`
+- Key insight: không cần lưu lại vị trí, chỉ cần 2 biến: `cur` và `max`
 
-**Visual — Max Consecutive Ones example:**
+**Visual — nums=[1,1,0,1,1,1]:**
 
 ```
-// TODO: Add step-by-step visual for Array
-// Show one complete example with state at each step
+idx:  0  1  2  3  4  5
+val:  1  1  0  1  1  1
+cur:  1  2  0  1  2  3
+max:  1  2  2  2  2  3
+
+Answer = 3 ✅
 ```
 
 ---
 
 ## Problem Description
 
-Max Consecutive Ones. ([LeetCode](https://leetcode.com/problems/max-consecutive-ones))
+Given a binary array `nums`, return the maximum number of consecutive `1`s in the array. The array only contains `0` and `1`.
 
-Difficulty: Easy | Acceptance: 62.5%
+- Example 1: `nums=[1,1,0,1,1,1]` → `3`
+- Example 2: `nums=[1,0,1,1,0,1]` → `2`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/max-consecutive-ones) for full constraints
+Constraints: `1 <= nums.length <= 10^5`, `nums[i]` is `0` or `1`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify**: "Mảng có phần tử khác 0/1 không? Mảng rỗng?" / Only 0s and 1s; non-empty per constraints
+2. **Brute force**: "Duyệt từng vị trí start, đếm streak — O(n²)" / O(n²) with nested loop for each start
+3. **Optimize**: "Một lần duyệt, reset counter khi gặp 0 — O(n)" / Single pass with running counter
+4. **Edge cases**: "Toàn 0 → return 0, toàn 1 → return n" / All zeros or all ones edge cases
+5. **Variant**: "Max Consecutive Ones III cho phép flip k zeros" / Sliding window variant allows k flips
+6. **Follow-up**: "Nếu được phép flip 1 số 0?" / Allow 1 flip → two-pointer sliding window
 
 ---
 
@@ -65,39 +63,49 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Linear Scan — running counter
+ * Time: O(n) — single pass
+ * Space: O(1) — two variables
  */
-function maxConsecutiveOnesBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function findMaxConsecutiveOnes(nums: number[]): number {
+  let max = 0,
+    cur = 0;
+  for (const n of nums) {
+    cur = n === 1 ? cur + 1 : 0;
+    max = Math.max(max, cur);
+  }
+  return max;
 }
 
 /**
- * Solution 2: Optimized — Array
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Functional — split on 0s
+ * Time: O(n) — single pass via split
+ * Space: O(n) — segments array
+ *
+ * Fun alternative: join array, split on '0', find longest '1' segment
  */
-function maxConsecutiveOnes(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Array
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
+function findMaxConsecutiveOnesFunctional(nums: number[]): number {
+  return Math.max(
+    0,
+    ...nums
+      .join("")
+      .split("0")
+      .map((s) => s.length),
+  );
 }
 
 // === Test Cases ===
-// console.log(maxConsecutiveOnes(/* example 1 */)); // expected
-// console.log(maxConsecutiveOnes(/* example 2 */)); // expected
-// console.log(maxConsecutiveOnes(/* edge case */)); // expected
+console.log(findMaxConsecutiveOnes([1, 1, 0, 1, 1, 1])); // 3
+console.log(findMaxConsecutiveOnes([1, 0, 1, 1, 0, 1])); // 2
+console.log(findMaxConsecutiveOnes([0, 0, 0])); // 0
+console.log(findMaxConsecutiveOnes([1, 1, 1, 1])); // 4
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) — same pattern: Matrix / Simulation
-- [First Missing Positive](https://leetcode.com/problems/first-missing-positive) — same pattern: Hash Map
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Kth Largest Element in an Array](https://leetcode.com/problems/kth-largest-element-in-an-array) — same pattern: Heap / Priority Queue
-- [Max Consecutive Ones — LeetCode](https://leetcode.com/problems/max-consecutive-ones) — problem page
+- [Max Consecutive Ones II](https://leetcode.com/problems/max-consecutive-ones-ii) — allow flipping 1 zero (sliding window)
+- [Max Consecutive Ones III](https://leetcode.com/problems/max-consecutive-ones-iii) — allow flipping k zeros (sliding window)
+- [Longest Subarray of 1s After Deleting One Element](https://leetcode.com/problems/longest-subarray-of-1s-after-deleting-one-element) — similar variant
+- [Consecutive Characters](https://leetcode.com/problems/consecutive-characters) — same pattern for any character

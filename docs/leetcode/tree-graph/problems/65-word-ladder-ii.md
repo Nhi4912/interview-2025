@@ -7,7 +7,7 @@ tags: [Hash Table, String, Backtracking, Breadth-First Search]
 leetcode_url: "https://leetcode.com/problems/word-ladder-ii"
 ---
 
-# Word Ladder II / Word Ladder II
+# Word Ladder II / Chuỗi Biến Đổi Từ II
 
 > **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Backtracking
 > **Frequency**: 📘 Tier 3 — Gặp ở 5 companies
@@ -17,54 +17,51 @@ leetcode_url: "https://leetcode.com/problems/word-ladder-ii"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống thử đồ — bạn thử từng lựa chọn, nếu không phù hợp thì cởi ra thử cái khác. Quan trọng là biết khi nào nên dừng thử (pruning).
+**Analogy:** Giống tìm tất cả tuyến đường ngắn nhất trên bản đồ — trước tiên BFS để biết khoảng cách tối thiểu, sau đó DFS/backtrack để liệt kê mọi con đường đi đúng khoảng cách đó.
 
 **Pattern Recognition:**
 
-- Signal: "generate all valid combinations/permutations" → **Backtracking**
-- Bài này thuộc dạng Backtracking — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "find ALL shortest transformation sequences" → **BFS (distance map) + DFS (path reconstruction)**
+- BFS builds `dist` map: word → min distance from `beginWord`
+- DFS backtracks from `endWord` to `beginWord` following decreasing distances
 
-**Visual — Word Ladder II example:**
+**Visual — BFS distance + DFS reconstruction:**
 
 ```
-                    []
-            /       |       \
-          [a]      [b]      [c]
-         / \        |
-      [a,b] [a,c]  [b,c]
-       |
-    [a,b,c]
+beginWord="hit", endWord="cog", wordList=["hot","dot","dog","lot","log","cog"]
 
-Choose → Explore → Un-choose (backtrack)
-Prune branches that violate constraints
+BFS distance map:
+  hit→0, hot→1, dot→2, lot→2, dog→3, log→3, cog→4
+
+Adjacency (differ by 1 char):
+  hit↔hot, hot↔dot, hot↔lot, dot↔dog, lot↔log, dog↔cog, log↔cog
+
+DFS from "hit" following dist+1 neighbors:
+  hit(0)→hot(1)→dot(2)→dog(3)→cog(4) ✓
+  hit(0)→hot(1)→lot(2)→log(3)→cog(4) ✓
 ```
 
 ---
 
 ## Problem Description
 
-Word Ladder II. ([LeetCode](https://leetcode.com/problems/word-ladder-ii))
+Given `beginWord`, `endWord`, and a `wordList`, find all shortest transformation sequences from `beginWord` to `endWord` where each step changes exactly one letter and every intermediate word must be in `wordList`. Return all such sequences as arrays of words; return empty if no path exists.
 
-Difficulty: Hard | Acceptance: 27.2%
+- Example 1: `begin="hit", end="cog", list=["hot","dot","dog","lot","log","cog"]` → `[["hit","hot","dot","dog","cog"],["hit","hot","lot","log","cog"]]`
+- Example 2: `begin="hit", end="cog", list=["hot","dot","dog","lot","log"]` → `[]` (cog not in list)
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/word-ladder-ii) for full constraints
+Constraints: `1 <= wordList.length <= 500`, word length `1..5`, all lowercase.
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần all solutions hay count? Có duplicate input không?" / All results or count? Duplicate elements?
-2. **Template**: "Choose → Explore → Un-choose" / Follow the standard backtracking template
-3. **Pruning**: "Skip nếu biết sớm branch này invalid" / Prune early to avoid TLE
-4. **Edge cases**: "Input rỗng, n=0, kết quả có thể rỗng" / Empty input, n=0, possibly empty result set
+1. **Clarify**: "endWord phải có trong wordList không? Có, theo LeetCode constraints" / endWord must be in wordList; if not, return []
+2. **Two phases**: "Phase 1: BFS tính dist mọi word từ beginWord. Phase 2: DFS reconstruct paths theo dist tăng dần" / BFS for distances, DFS for all paths
+3. **Adjacency**: "Thay từng ký tự a-z — O(26*L) per word. Tốt hơn duyệt wordList O(N*L)" / Generate neighbors by character substitution
+4. **Pruning**: "Trong DFS chỉ đi tới neighbor có dist = dist[current]+1 → đảm bảo shortest" / Only follow edges that advance toward endWord
+5. **Edge cases**: "beginWord = endWord → trả về [[beginWord]]. endWord không có → trả về []" / Handle when start equals end or target unreachable
+6. **Follow-up**: "Word Ladder I (just count)? BFS chỉ cần đếm level, không cần DFS" / Part I is simpler BFS count only
 
 ---
 
@@ -72,39 +69,93 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Word Ladder II: BFS for distances + DFS for all shortest paths
+ * Time: O(N * L * 26 + N * paths) — N words, L length, 26 chars
+ * Space: O(N * L) — dist map + adjacency
  */
-function wordLadderIiBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function findLadders(beginWord: string, endWord: string, wordList: string[]): string[][] {
+  const wordSet = new Set(wordList);
+  if (!wordSet.has(endWord)) return [];
 
-/**
- * Solution 2: Optimized — Backtracking
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function wordLadderIi(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Backtracking
-  // Hint: Choose → Explore → Unchoose, prune invalid branches early
-  throw new Error('Not implemented');
+  const L = beginWord.length;
+
+  // Build adjacency: generate all 1-char-diff neighbors in wordSet
+  function getNeighbors(word: string): string[] {
+    const neighbors: string[] = [];
+    const arr = word.split("");
+    for (let i = 0; i < L; i++) {
+      const orig = arr[i];
+      for (let c = 97; c <= 122; c++) {
+        arr[i] = String.fromCharCode(c);
+        const next = arr.join("");
+        if (next !== word && wordSet.has(next)) neighbors.push(next);
+      }
+      arr[i] = orig;
+    }
+    return neighbors;
+  }
+
+  // BFS: build distance map from beginWord
+  const dist = new Map<string, number>([[beginWord, 0]]);
+  let queue: string[] = [beginWord];
+
+  while (queue.length > 0) {
+    const next: string[] = [];
+    for (const word of queue) {
+      for (const neighbor of getNeighbors(word)) {
+        if (!dist.has(neighbor)) {
+          dist.set(neighbor, dist.get(word)! + 1);
+          next.push(neighbor);
+        }
+      }
+    }
+    queue = next;
+  }
+
+  if (!dist.has(endWord)) return [];
+
+  // DFS: reconstruct all shortest paths
+  const results: string[][] = [];
+  const path: string[] = [beginWord];
+
+  function dfs(word: string): void {
+    if (word === endWord) {
+      results.push([...path]);
+      return;
+    }
+    const d = dist.get(word)!;
+    for (const neighbor of getNeighbors(word)) {
+      if (dist.get(neighbor) === d + 1) {
+        path.push(neighbor);
+        dfs(neighbor);
+        path.pop();
+      }
+    }
+  }
+
+  dfs(beginWord);
+  return results;
 }
 
 // === Test Cases ===
-// console.log(wordLadderIi(/* example 1 */)); // expected
-// console.log(wordLadderIi(/* example 2 */)); // expected
-// console.log(wordLadderIi(/* edge case */)); // expected
+console.log(findLadders("hit", "cog", ["hot", "dot", "dog", "lot", "log", "cog"]));
+// [["hit","hot","dot","dog","cog"],["hit","hot","lot","log","cog"]]
+
+console.log(findLadders("hit", "cog", ["hot", "dot", "dog", "lot", "log"]));
+// [] — cog not in wordList
+
+console.log(findLadders("a", "c", ["a", "b", "c"]));
+// [["a","c"]]
+
+console.log(findLadders("hot", "dog", ["hot", "dog"]));
+// [] — hot→dog requires 2 changes
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Word Break II](https://leetcode.com/problems/word-break-ii) — same pattern: Trie
-- [Open the Lock](https://leetcode.com/problems/open-the-lock) — same pattern: BFS
-- [Accounts Merge](https://leetcode.com/problems/accounts-merge) — same pattern: Union Find
-- [Remove Invalid Parentheses](https://leetcode.com/problems/remove-invalid-parentheses) — same pattern: Backtracking
-- [Word Ladder II — LeetCode](https://leetcode.com/problems/word-ladder-ii) — problem page
+- [Word Ladder](https://leetcode.com/problems/word-ladder) — Part I: just count shortest path length (BFS only)
+- [Open the Lock](https://leetcode.com/problems/open-the-lock) — BFS on string state space with fixed transforms
+- [Remove Invalid Parentheses](https://leetcode.com/problems/remove-invalid-parentheses) — BFS + backtracking for all shortest valid strings
+- [Accounts Merge](https://leetcode.com/problems/accounts-merge) — Union Find on connected string components

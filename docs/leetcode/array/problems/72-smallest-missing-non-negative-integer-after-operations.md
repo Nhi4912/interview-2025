@@ -7,57 +7,57 @@ tags: [Array, Hash Table, Math, Greedy]
 leetcode_url: "https://leetcode.com/problems/smallest-missing-non-negative-integer-after-operations"
 ---
 
-# Smallest Missing Non-negative Integer After Operations / Smallest Missing Non-negative Integer After Operations
+# Smallest Missing Non-negative Integer After Operations / Số Nguyên Không Âm Nhỏ Nhất Bị Thiếu
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy + Modular Arithmetic
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [Rabbits in Forest](https://leetcode.com/problems/rabbits-in-forest) | [Missing Number](https://leetcode.com/problems/missing-number)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống ăn buffet — mỗi lần bạn chọn món ngon nhất hiện tại. Nếu chứng minh được rằng chọn tham lam từng bước vẫn tối ưu toàn cục, thì Greedy là đáp án.
+**Analogy:** Giống phân loại học sinh vào lớp theo số thứ tự — mỗi học sinh có thể đứng ở vị trí mod value của mình. Tham lam gán từ vị trí nhỏ nhất trước: nếu đủ người cho vị trí 0, 1, 2, ... thì MEX mới lớn hơn.
 
 **Pattern Recognition:**
 
-- Signal: "locally optimal → globally optimal" + "sorting + selection" → **Greedy**
-- Bài này thuộc dạng Greedy — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "add/subtract value repeatedly", "find MEX" → **Modular Arithmetic + Greedy**
+- nums[i] ± k\*value: phần dư `nums[i] % value` không đổi. Mỗi phần tử có thể đạt mọi số ≥ 0 có cùng remainder
+- Key insight: count[r] = số phần tử có remainder r. Duyệt target 0,1,2,...: target % value có đủ count không?
 
-**Visual — Smallest Missing Non-negative Integer After Operations example:**
+**Visual — nums=[1,-10,7,13,6], value=4:**
 
 ```
-// TODO: Add step-by-step visual for Greedy
-// Show one complete example with state at each step
+Remainders (mod 4, non-negative): 1%4=1, (-10+12)%4=2, 7%4=3, 13%4=1, 6%4=2
+count = {1:2, 2:2, 3:1}
+
+target=0: 0%4=0 → count[0]=0 → MEX=0? No wait count[0]=0 → can't cover 0
+Answer = 0
+
+Another: nums=[1,2,3,4], value=1 → all remainders=0 → count[0]=4
+target=0: 0%1=0, count[0]-- →3; target=1: 1%1=0, count[0]-- →2; ...→ MEX=4
 ```
 
 ---
 
 ## Problem Description
 
-Smallest Missing Non-negative Integer After Operations. ([LeetCode](https://leetcode.com/problems/smallest-missing-non-negative-integer-after-operations))
+Given an integer array `nums` and a positive integer `value`. In one operation, add or subtract `value` from any `nums[i]`. You can apply any number of operations to each element. Return the **smallest non-negative integer** not present in `nums` after operations.
 
-Difficulty: Medium | Acceptance: 39.9%
+- Example 1: `nums=[1,-10,7,13,6], value=4` → `4`
+- Example 2: `nums=[1,2,3,4], value=1` → `5`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/smallest-missing-non-negative-integer-after-operations) for full constraints
+Constraints: `1 <= nums.length <= 10^5`, `-10^9 <= nums[i] <= 10^9`, `1 <= value <= 10^9`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify**: "Số lần operation không giới hạn? Có thể âm?" / Unlimited ops, values can be negative
+2. **Key insight**: "nums[i] ± k\*value → remainder (mod value) không thay đổi!" / Remainder is invariant
+3. **Normalize**: "Remainder có thể âm trong JS/TS → dùng ((x % v) + v) % v" / Handle negative modulo
+4. **Greedy scan**: "Duyệt target 0,1,2,...: cần count[target%value] > 0, rồi giảm count đi 1" / Greedy MEX scan
+5. **Edge cases**: "value=1 → tất cả elements có thể là bất kỳ số nào → MEX = nums.length + số phủ" / All remainders 0
+6. **Follow-up**: "Nếu cần k MEX values?" / Find k-th missing — extend the greedy loop
 
 ---
 
@@ -65,39 +65,61 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Count remainders, greedy MEX scan
+ * Time: O(n + MEX) — MEX ≤ n so effectively O(n)
+ * Space: O(value) — count map bounded by value distinct remainders
  */
-function smallestMissingNonNegativeIntegerAfterOperationsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function findSmallestInteger(nums: number[], value: number): number {
+  // Count how many elements have each remainder (0..value-1)
+  const count = new Map<number, number>();
+  for (const x of nums) {
+    const r = ((x % value) + value) % value; // handle negative modulo
+    count.set(r, (count.get(r) ?? 0) + 1);
+  }
+
+  // Greedily assign targets 0, 1, 2, ... using available elements
+  let mex = 0;
+  while (true) {
+    const r = mex % value;
+    const cnt = count.get(r) ?? 0;
+    if (cnt === 0) break; // can't cover this target → it's the MEX
+    count.set(r, cnt - 1);
+    mex++;
+  }
+  return mex;
 }
 
 /**
- * Solution 2: Optimized — Greedy
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Array-based counting (faster for small value)
+ * Time: O(n) — fixed-size array for counting
+ * Space: O(value) — array of size value
  */
-function smallestMissingNonNegativeIntegerAfterOperations(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Greedy
-  // Hint: Sort by key metric, make locally optimal choice at each step
-  throw new Error('Not implemented');
+function findSmallestIntegerArray(nums: number[], value: number): number {
+  const count = new Array(value).fill(0);
+  for (const x of nums) {
+    count[((x % value) + value) % value]++;
+  }
+
+  let mex = 0;
+  while (count[mex % value] > 0) {
+    count[mex % value]--;
+    mex++;
+  }
+  return mex;
 }
 
 // === Test Cases ===
-// console.log(smallestMissingNonNegativeIntegerAfterOperations(/* example 1 */)); // expected
-// console.log(smallestMissingNonNegativeIntegerAfterOperations(/* example 2 */)); // expected
-// console.log(smallestMissingNonNegativeIntegerAfterOperations(/* edge case */)); // expected
+console.log(findSmallestInteger([1, -10, 7, 13, 6], 4)); // 4
+console.log(findSmallestInteger([1, 2, 3, 4], 1)); // 5
+console.log(findSmallestInteger([0], 1)); // 1
+console.log(findSmallestInteger([-5, -3, -1], 2)); // 2
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Rabbits in Forest](https://leetcode.com/problems/rabbits-in-forest) — same pattern: Greedy
-- [Missing Number](https://leetcode.com/problems/missing-number) — same pattern: Binary Search
-- [Task Scheduler](https://leetcode.com/problems/task-scheduler) — same pattern: Heap / Priority Queue
-- [Max Points on a Line](https://leetcode.com/problems/max-points-on-a-line) — same pattern: Math
-- [Smallest Missing Non-negative Integer After Operations — LeetCode](https://leetcode.com/problems/smallest-missing-non-negative-integer-after-operations) — problem page
+- [Missing Number](https://leetcode.com/problems/missing-number) — find smallest missing in [0..n]
+- [First Missing Positive](https://leetcode.com/problems/first-missing-positive) — MEX for positive integers
+- [Smallest Missing Non-negative Integer](https://leetcode.com/problems/smallest-missing-non-negative-integer) — direct MEX without operations
+- [Rabbits in Forest](https://leetcode.com/problems/rabbits-in-forest) — greedy grouping by remainder

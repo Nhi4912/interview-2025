@@ -7,62 +7,59 @@ tags: [Array, Dynamic Programming, Memoization]
 leetcode_url: "https://leetcode.com/problems/remove-boxes"
 ---
 
-# Remove Boxes / Remove Boxes
+# Remove Boxes / Xóa Hộp
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Dynamic Programming
+> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Dynamic Programming (3D Interval DP)
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [Word Break II](https://leetcode.com/problems/word-break-ii) | [Longest Increasing Path in a Matrix](https://leetcode.com/problems/longest-increasing-path-in-a-matrix)
+> **See also**: [Strange Printer](https://leetcode.com/problems/strange-printer) | [Zuma Game](https://leetcode.com/problems/zuma-game)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**Analogy (VN):** Như trò chơi phá gạch — bạn có thể gom nhiều gạch cùng màu lại rồi xóa cùng lúc để được điểm bình phương. Trick: khi gặp nhóm k hộp giống ở đầu, bạn có thể "chờ" gom thêm các hộp cùng màu ở phía sau vào cùng nhóm trước khi xóa.
 
 **Pattern Recognition:**
 
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "remove groups, score = size²" + "can reorder removes" → **3D DP dp[l][r][k]**
+- State `dp[l][r][k]`: điểm tối đa từ boxes[l..r] khi có thêm k hộp màu boxes[l] gắn vào trái
+- Key insight: k = số hộp cùng màu boxes[l] đã gom từ trước chưa xóa
 
-**Visual — Remove Boxes example:**
+**Visual — boxes = [1,3,2,2,2,3,4,3,1]:**
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+dp[l][r][k]: k hộp màu boxes[l] đã có sẵn bên trái
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+Option A: xóa cả nhóm boxes[l] luôn (k+1 hộp)
+  score = (k+1)² + dp[l+1][r][0]
+
+Option B: tìm m trong (l,r] có boxes[m]==boxes[l]
+  gộp: dp[l+1][m-1][0] + dp[m][r][k+1]
+       (xóa giữa, rồi xử lý phần còn lại với k+1 hộp màu boxes[l])
 ```
 
 ---
 
 ## Problem Description
 
-Remove Boxes. ([LeetCode](https://leetcode.com/problems/remove-boxes))
+Given boxes of different colors, each removal of k consecutive same-colored boxes earns `k*k` points. Return the maximum points achievable by removing all boxes optimally.
 
-Difficulty: Hard | Acceptance: 48.3%
+- Example 1: `boxes = [1,3,2,2,2,3,4,3,1]` → `23`
+- Example 2: `boxes = [1,1,1]` → `9` (remove all 3 at once: 3²=9)
+- Example 3: `boxes = [1]` → `1`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/remove-boxes) for full constraints
+Constraints: `1 <= boxes.length <= 100`, `1 <= boxes[i] <= 100`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+1. **Clarify / Làm rõ**: "k consecutive same-colored = score k²" / Consecutive, not arbitrary same-color
+2. **Why 3D?** 2D dp[l][r] không đủ — cần biết có bao nhiêu hộp màu boxes[l] đã gom ở ngoài dải
+3. **State**: dp[l][r][k] = max score từ boxes[l..r] với k hộp màu boxes[l] sẵn có bên trái
+4. **Transition 2 cases**: Xóa nhóm trái ngay, hoặc tìm hộp cùng màu ở phía sau để gộp
+5. **Memoization**: Dùng 3D array — n=100 → 100³=10^6 states, hoàn toàn chấp nhận được
+6. **Optimization**: Gom consecutive same-color tại đầu ngay vào k trước khi recurse
 
 ---
 
@@ -70,39 +67,86 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Naive Recursion (without memoization)
+ * Time: O(n^4) — exponential states without memo
+ * Space: O(n³) — recursion depth
  */
-function removeBoxesBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function removeBoxesNaive(boxes: number[]): number {
+  function solve(l: number, r: number, k: number): number {
+    if (l > r) return 0;
+    // Collect consecutive same-color at start
+    while (l < r && boxes[l + 1] === boxes[l]) {
+      l++;
+      k++;
+    }
+    // Option A: remove left group immediately
+    let res = (k + 1) * (k + 1) + solve(l + 1, r, 0);
+    // Option B: find matching color later
+    for (let m = l + 1; m <= r; m++) {
+      if (boxes[m] === boxes[l]) {
+        res = Math.max(res, solve(l + 1, m - 1, 0) + solve(m, r, k + 1));
+      }
+    }
+    return res;
+  }
+  return solve(0, boxes.length - 1, 0);
 }
 
 /**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: 3D DP with Memoization (Optimal)
+ * Time: O(n^4) — n³ states, each O(n) transition
+ * Space: O(n³) — 3D memo table
  */
-function removeBoxes(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function removeBoxes(boxes: number[]): number {
+  const n = boxes.length;
+  // dp[l][r][k]: max score from boxes[l..r] with k extra same-color boxes as boxes[l] on left
+  const dp: number[][][] = Array.from({ length: n }, () =>
+    Array.from({ length: n }, () => new Array(n).fill(-1)),
+  );
+
+  function solve(l: number, r: number, k: number): number {
+    if (l > r) return 0;
+    if (dp[l][r][k] !== -1) return dp[l][r][k];
+
+    // Optimization: merge consecutive same-color boxes at the left end into k
+    let ll = l,
+      kk = k;
+    while (ll + 1 <= r && boxes[ll + 1] === boxes[ll]) {
+      ll++;
+      kk++;
+    }
+
+    // Option A: remove the merged left group (kk+1 boxes) immediately
+    let res = (kk + 1) * (kk + 1) + solve(ll + 1, r, 0);
+
+    // Option B: find a box m in (ll, r] with same color as boxes[l], attach it
+    for (let m = ll + 1; m <= r; m++) {
+      if (boxes[m] === boxes[l]) {
+        // Clear boxes between ll and m, then handle m..r with one more matching box
+        res = Math.max(res, solve(ll + 1, m - 1, 0) + solve(m, r, kk + 1));
+      }
+    }
+
+    dp[l][r][k] = res;
+    return res;
+  }
+
+  return solve(0, n - 1, 0);
 }
 
 // === Test Cases ===
-// console.log(removeBoxes(/* example 1 */)); // expected
-// console.log(removeBoxes(/* example 2 */)); // expected
-// console.log(removeBoxes(/* edge case */)); // expected
+console.log(removeBoxes([1, 3, 2, 2, 2, 3, 4, 3, 1])); // 23
+console.log(removeBoxes([1, 1, 1])); // 9
+console.log(removeBoxes([1])); // 1
+console.log(removeBoxes([1, 2, 1])); // 5 (remove 2→1pt, then 1,1→4pt = 5)
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Word Break II](https://leetcode.com/problems/word-break-ii) — same pattern: Trie
-- [Longest Increasing Path in a Matrix](https://leetcode.com/problems/longest-increasing-path-in-a-matrix) — same pattern: Topological Sort
-- [Partition to K Equal Sum Subsets](https://leetcode.com/problems/partition-to-k-equal-sum-subsets) — same pattern: Backtracking
-- [Shopping Offers](https://leetcode.com/problems/shopping-offers) — same pattern: Backtracking
-- [Remove Boxes — LeetCode](https://leetcode.com/problems/remove-boxes) — problem page
+- [Strange Printer](https://leetcode.com/problems/strange-printer) — interval DP with similar grouping intuition
+- [Zuma Game](https://leetcode.com/problems/zuma-game) — same "group and burst" interval DP idea
+- [Burst Balloons](https://leetcode.com/problems/burst-balloons) — classic interval DP with score on last element
+- [Minimum Cost to Merge Stones](https://leetcode.com/problems/minimum-cost-to-merge-stones) — interval DP with grouping
+- [Stone Game](https://leetcode.com/problems/stone-game) — simpler game DP on intervals
