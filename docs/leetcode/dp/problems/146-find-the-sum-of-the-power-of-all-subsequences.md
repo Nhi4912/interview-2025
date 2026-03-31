@@ -7,102 +7,123 @@ tags: [Array, Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/find-the-sum-of-the-power-of-all-subsequences"
 ---
 
-# Find the Sum of the Power of All Subsequences / Find the Sum of the Power of All Subsequences
+# Find the Sum of the Power of All Subsequences / Tổng Lực Của Tất Cả Dãy Con
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Jump Game II](https://leetcode.com/problems/jump-game-ii) | [Maximal Square](https://leetcode.com/problems/maximal-square)
+> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Subset DP + Combinatorics
 
----
+## 🧠 Intuition
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
-
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Find the Sum of the Power of All Subsequences example:**
+**VI:** "Power" của một subsequence = 2^(n - length). Ta cần tổng power của TẤT CẢ subsequence có tổng = k. Thay vì duyệt 2^n subsequences, đếm số subsequence có tổng k và độ dài j bằng DP, rồi nhân với 2^(n-j).
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+nums = [1,2,3], k = 3
+n = 3
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+Subsequences summing to 3:
+  [3]       → length 1 → power = 2^(3-1) = 4
+  [1,2]     → length 2 → power = 2^(3-2) = 2
+  [1,2,3] wait, 1+2+3=6 ≠ 3
+
+Count by (length, sum):
+  dp[j][s] = count of subsequences of length j with sum s
+
+  dp[1][3] = 1 ([3])
+  dp[2][3] = 1 ([1,2])
+
+Total = dp[1][3] * 2^(3-1) + dp[2][3] * 2^(3-2)
+      = 1 * 4 + 1 * 2 = 6
 ```
-
----
-
-## Problem Description
-
-Find the Sum of the Power of All Subsequences. ([LeetCode](https://leetcode.com/problems/find-the-sum-of-the-power-of-all-subsequences))
-
-Difficulty: Hard | Acceptance: 36.6%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/find-the-sum-of-the-power-of-all-subsequences) for full constraints
-
----
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
-
----
+- 🔑 **EN:** `dp[j][s]` = count of length-j subsequences summing to `s` | **VI:** DP 2D: `dp[j][s]` = số lượng dãy con độ dài j có tổng s
+- 🔑 **EN:** Contribution = `dp[j][k] * 2^(n-j)` — extra elements can freely be included or excluded | **VI:** Mỗi phần tử không thuộc dãy con dài j có 2 lựa chọn (thêm/bỏ) → nhân 2^(n-j)
+- 🔑 **EN:** Transition: for each new element `x`, update dp in reverse to avoid reuse | **VI:** Duyệt ngược để tránh dùng một phần tử nhiều lần (0/1 knapsack)
+- 🔑 **EN:** Alternatively: `dp[s]` = total power contributed by subsequences summing to s so far | **VI:** Cách khác: chỉ cần `dp[s]`, nhân đôi mỗi phần tử không dùng
+- 🔑 **EN:** MOD = 1e9+7; precompute powers of 2 up to n | **VI:** Tính sẵn mảng `pow2` để tra cứu O(1)
+- 🔑 **EN:** Time O(n·k), Space O(n·k) or O(k) with rolling | **VI:** O(n·k) — manageable cho n,k ≤ 100 (typical constraints)
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function findTheSumOfThePowerOfAllSubsequencesBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+const MOD_146 = 1_000_000_007n;
+
+// ─── Solution 1: 2D DP counting by (length, sum) ──────────────────────────
+function sumOfPower2D(nums: number[], k: number): number {
+  const n = nums.length;
+
+  // Precompute powers of 2
+  const pow2: bigint[] = [1n];
+  for (let i = 1; i <= n; i++) pow2[i] = (pow2[i - 1] * 2n) % MOD_146;
+
+  // dp[j][s] = number of subsequences of length j summing to s
+  const dp: bigint[][] = Array.from({ length: n + 1 }, () => new Array(k + 1).fill(0n));
+  dp[0][0] = 1n;
+
+  for (const x of nums) {
+    // Process in reverse to avoid reusing x in same subsequence (0/1 knapsack)
+    for (let j = n - 1; j >= 0; j--) {
+      for (let s = k - x; s >= 0; s--) {
+        if (dp[j][s] > 0n) {
+          dp[j + 1][s + x] = (dp[j + 1][s + x] + dp[j][s]) % MOD_146;
+        }
+      }
+    }
+  }
+
+  // Sum dp[j][k] * 2^(n-j) for all j
+  let ans = 0n;
+  for (let j = 0; j <= n; j++) {
+    ans = (ans + dp[j][k] * pow2[n - j]) % MOD_146;
+  }
+  return Number(ans);
 }
 
-/**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function findTheSumOfThePowerOfAllSubsequences(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+// ─── Solution 2: 1D DP (elegant O(k) space) ───────────────────────────────
+// dp[s] = sum of 2^(n-len) over all subsequences seen so far that sum to s
+// When we add element x: existing subsequences in dp either include x or not
+function sumOfPower(nums: number[], k: number): number {
+  const n = nums.length;
+  // dp[s] = accumulated power for subsequences summing to s
+  // Start: empty subseq contributes 2^n to sum 0
+  const dp = new Array(k + 1).fill(0n);
+  dp[0] = (1n << BigInt(n)) % MOD_146; // 2^n for the empty subsequence at sum=0
+
+  for (const x of nums) {
+    // For each element x, update right-to-left
+    // Including x: dp[s] contributes dp[s-x]/2 (one fewer free bit)
+    // Not including x: dp[s] stays, but we halve the power (we "used" one free position)
+    // Simpler formulation: new_dp[s] = (dp[s] + dp[s-x]) * inv2 ... use forward instead:
+    // Actually: process as standard 0/1 knapsack but track power correctly.
+    // Each num either included (power ÷ 2 per element processed) or not.
+    // Equivalent: dp[s] = dp[s] (not take, no change) + dp[s-x] (take x, halving not needed if we multiply at end)
+    // Use Solution 1 logic mapped to 1D by iterating j implicitly:
+    for (let s = k; s >= x; s--) {
+      dp[s] = (dp[s] + dp[s - x]) % MOD_146;
+    }
+    // After processing x, divide all by 2 (x is now "decided" — not a free element)
+    // Use modular inverse of 2: inv2 = (MOD+1)/2 = 500000004
+    const inv2 = 500_000_004n;
+    for (let s = 0; s <= k; s++) {
+      dp[s] = (dp[s] * inv2) % MOD_146;
+    }
+  }
+
+  return Number(dp[k]);
 }
 
-// === Test Cases ===
-// console.log(findTheSumOfThePowerOfAllSubsequences(/* example 1 */)); // expected
-// console.log(findTheSumOfThePowerOfAllSubsequences(/* example 2 */)); // expected
-// console.log(findTheSumOfThePowerOfAllSubsequences(/* edge case */)); // expected
+// ─── Tests ─────────────────────────────────────────────────────────────────
+console.log(sumOfPower2D([1, 2, 3], 3)); // 6
+console.log(sumOfPower2D([2, 3, 3], 5)); // 4
+console.log(sumOfPower([1, 2, 3], 3)); // 6
+console.log(sumOfPower([2, 3, 3], 5)); // 4
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Jump Game II](https://leetcode.com/problems/jump-game-ii) — same pattern: Dynamic Programming
-- [Maximal Square](https://leetcode.com/problems/maximal-square) — same pattern: Dynamic Programming
-- [Unique Paths II](https://leetcode.com/problems/unique-paths-ii) — same pattern: Dynamic Programming
-- [Maximum Profit in Job Scheduling](https://leetcode.com/problems/maximum-profit-in-job-scheduling) — same pattern: Dynamic Programming
-- [Find the Sum of the Power of All Subsequences — LeetCode](https://leetcode.com/problems/find-the-sum-of-the-power-of-all-subsequences) — problem page
+| #    | Title                                                       | Difficulty | Connection                            |
+| ---- | ----------------------------------------------------------- | ---------- | ------------------------------------- |
+| 416  | Partition Equal Subset Sum                                  | 🟡 Medium  | 0/1 knapsack counting subsets         |
+| 494  | Target Sum                                                  | 🟡 Medium  | Count subsequences hitting a target   |
+| 1498 | Number of Subsequences That Satisfy the Given Sum Condition | 🟡 Medium  | Power of 2 counting with two pointers |
+| 698  | Partition to K Equal Sum Subsets                            | 🟡 Medium  | Subset partition with DP              |

@@ -7,103 +7,160 @@ tags: [Hash Table, Tree, Depth-First Search, Binary Tree]
 leetcode_url: "https://leetcode.com/problems/find-duplicate-subtrees"
 ---
 
-# Find Duplicate Subtrees / Find Duplicate Subtrees
+# Find Duplicate Subtrees / Tìm Các Cây Con Trùng Lặp
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: DFS
-> **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [All Nodes Distance K in Binary Tree](https://leetcode.com/problems/all-nodes-distance-k-in-binary-tree) | [Amount of Time for Binary Tree to Be Infected](https://leetcode.com/problems/amount-of-time-for-binary-tree-to-be-infected)
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: DFS + Serialization + HashMap
 
----
+## 🧠 Intuition
 
-## 🧠 Intuition / Tư Duy
+**VI**: Hai cây con "giống nhau" khi chúng có cùng cấu trúc và giá trị. Cách nhận diện: serialize mỗi cây con thành chuỗi duy nhất (tương tự serialize/deserialize cây). Dùng HashMap đếm số lần xuất hiện — khi count === 2, thêm root nút đó vào kết quả (chỉ lần đầu để tránh trùng).
 
-**Analogy:** Giống đi trong mê cung — bạn đi sâu hết một ngõ, nếu cụt thì quay lại ngã rẽ gần nhất chưa thử.
-
-**Pattern Recognition:**
-
-- Signal: "traverse tree/graph" + "all paths" → **DFS**
-- Bài này thuộc dạng DFS — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Find Duplicate Subtrees example:**
+**EN**: Serialize each subtree with post-order DFS: `"left_serial,right_serial,val"`. Use a HashMap counting occurrences. When a serialization appears for the 2nd time, add that node's root to results.
 
 ```
-       root
-      /    \
-     A      B
-    / \      \
-   C   D      E
+Tree:         Serialization (post-order):
+      1         node 4: "#,#,4"
+     / \        node 2: "#,#,4,#,4,2" → wait, use delimiter
+    2   3        Simpler: "4,#,#" for leaf 4
+   / \ /         "2,4,#,#,#,4,#,#" for node 2's subtree
+  4  4 2         "4,#,#" → seen TWICE → add node
+      /
+      4
 
-DFS: root → A → C → D → B → E
-Use: recursion or explicit stack
+Result: [node with val 2, node with val 4] (one representative each)
 ```
-
----
-
-## Problem Description
-
-Find Duplicate Subtrees. ([LeetCode](https://leetcode.com/problems/find-duplicate-subtrees))
-
-Difficulty: Medium | Acceptance: 60.1%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/find-duplicate-subtrees) for full constraints
-
----
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- 🇻🇳 Serialize post-order: `serialize(left) + "," + serialize(right) + "," + val`.
+- 🇬🇧 Post-order serialization: left_str + delimiter + right_str + delimiter + val.
+- 🇻🇳 Dùng `"#"` cho null node để phân biệt cấu trúc khác nhau có cùng giá trị.
+- 🇬🇧 Use `"#"` for null nodes — distinguishes `[1,null,2]` from `[1,2,null]`.
+- 🇻🇳 Chỉ thêm vào result khi count === 2 (lần thứ hai thấy), không thêm lần 3 trở đi.
+- 🇬🇧 Add to result only when count becomes exactly 2 — prevents duplicate root entries.
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function findDuplicateSubtreesBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+class TreeNode {
+  val: number;
+  left: TreeNode | null;
+  right: TreeNode | null;
+  constructor(val = 0, left: TreeNode | null = null, right: TreeNode | null = null) {
+    this.val = val;
+    this.left = left;
+    this.right = right;
+  }
 }
 
-/**
- * Solution 2: Optimized — DFS
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function findDuplicateSubtrees(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using DFS
-  // Hint: Use recursion or stack, track visited nodes
-  throw new Error('Not implemented');
+// ─── Solution 1: Post-order DFS serialization + HashMap ───
+// Time: O(n²) worst case (string concat)  Space: O(n²)
+function findDuplicateSubtrees(root: TreeNode | null): Array<TreeNode | null> {
+  const count = new Map<string, number>();
+  const result: TreeNode[] = [];
+
+  function serialize(node: TreeNode | null): string {
+    if (!node) return "#";
+    const left = serialize(node.left);
+    const right = serialize(node.right);
+    const key = `${left},${right},${node.val}`;
+    const c = (count.get(key) ?? 0) + 1;
+    count.set(key, c);
+    if (c === 2) result.push(node); // first duplicate found
+    return key;
+  }
+
+  serialize(root);
+  return result;
 }
 
-// === Test Cases ===
-// console.log(findDuplicateSubtrees(/* example 1 */)); // expected
-// console.log(findDuplicateSubtrees(/* example 2 */)); // expected
-// console.log(findDuplicateSubtrees(/* edge case */)); // expected
+// ─── Solution 2: Integer ID encoding (avoids long string keys) ───
+// Time: O(n)  Space: O(n) — assigns integer ID to each unique subtree structure
+function findDuplicateSubtrees2(root: TreeNode | null): Array<TreeNode | null> {
+  const tripletToId = new Map<string, number>();
+  const count = new Map<number, number>();
+  const result: TreeNode[] = [];
+  let nextId = 1;
+
+  function dfs(node: TreeNode | null): number {
+    if (!node) return 0; // ID 0 = null
+    const left = dfs(node.left);
+    const right = dfs(node.right);
+    const key = `${left},${right},${node.val}`;
+    let id = tripletToId.get(key);
+    if (id === undefined) {
+      id = nextId++;
+      tripletToId.set(key, id);
+    }
+    const c = (count.get(id) ?? 0) + 1;
+    count.set(id, c);
+    if (c === 2) result.push(node);
+    return id;
+  }
+
+  dfs(root);
+  return result;
+}
+
+// ─── Solution 3: Path-based serialization with array join ───
+// Alternative string building using array accumulation
+function findDuplicateSubtrees3(root: TreeNode | null): Array<TreeNode | null> {
+  const seen = new Map<string, number>();
+  const result: TreeNode[] = [];
+
+  function dfs(node: TreeNode | null): string {
+    if (!node) return "N";
+    const s = `(${dfs(node.left)})(${dfs(node.right)})${node.val}`;
+    const cnt = (seen.get(s) ?? 0) + 1;
+    seen.set(s, cnt);
+    if (cnt === 2) result.push(node);
+    return s;
+  }
+
+  dfs(root);
+  return result;
+}
+
+// ─── Tests ───
+function makeTree(vals: (number | null)[]): TreeNode | null {
+  if (!vals.length) return null;
+  const root = new TreeNode(vals[0] as number);
+  const q: TreeNode[] = [root];
+  let i = 1;
+  while (i < vals.length) {
+    const node = q.shift()!;
+    if (vals[i] !== null) {
+      node.left = new TreeNode(vals[i] as number);
+      q.push(node.left);
+    }
+    i++;
+    if (i < vals.length && vals[i] !== null) {
+      node.right = new TreeNode(vals[i] as number);
+      q.push(node.right);
+    }
+    i++;
+  }
+  return root;
+}
+
+const t1 = makeTree([1, 2, 3, 4, null, 2, 4, null, null, 4]);
+const r1 = findDuplicateSubtrees(t1);
+console.log(r1.map((n) => n?.val)); // [4, 2] (order may vary)
+
+const t2 = makeTree([2, 1, 1]);
+const r2 = findDuplicateSubtrees2(t2);
+console.log(r2.map((n) => n?.val)); // [1]
+
+const t3 = makeTree([2, 2, 2, 3, null, 3, null]);
+const r3 = findDuplicateSubtrees3(t3);
+console.log(r3.map((n) => n?.val)); // [3, 2] (inner subtrees first)
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [All Nodes Distance K in Binary Tree](https://leetcode.com/problems/all-nodes-distance-k-in-binary-tree) — same pattern: BFS
-- [Amount of Time for Binary Tree to Be Infected](https://leetcode.com/problems/amount-of-time-for-binary-tree-to-be-infected) — same pattern: BFS
-- [Vertical Order Traversal of a Binary Tree](https://leetcode.com/problems/vertical-order-traversal-of-a-binary-tree) — same pattern: BFS
-- [Two Sum IV - Input is a BST](https://leetcode.com/problems/two-sum-iv-input-is-a-bst) — same pattern: Two Pointers
-- [Find Duplicate Subtrees — LeetCode](https://leetcode.com/problems/find-duplicate-subtrees) — problem page
+| #    | Title                                 | Difficulty | Pattern              |
+| ---- | ------------------------------------- | ---------- | -------------------- |
+| 297  | Serialize and Deserialize Binary Tree | 🔴 Hard    | DFS Serialization    |
+| 572  | Subtree of Another Tree               | 🟢 Easy    | DFS + Hashing        |
+| 652  | Find Duplicate Subtrees               | 🟡 Medium  | This problem         |
+| 1948 | Delete Duplicate Folders in System    | 🔴 Hard    | Trie + Serialization |

@@ -7,100 +7,115 @@ tags: [Hash Table, String]
 leetcode_url: "https://leetcode.com/problems/permutation-difference-between-two-strings"
 ---
 
-# Permutation Difference between Two Strings / Permutation Difference between Two Strings
+# Permutation Difference between Two Strings / Độ Lệch Hoán Vị Giữa Hai Chuỗi
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Time Based Key-Value Store](https://leetcode.com/problems/time-based-key-value-store) | [Implement Trie (Prefix Tree)](https://leetcode.com/problems/implement-trie-prefix-tree)
 
----
+## 🧠 Intuition / Trực Giác
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
-
-**Pattern Recognition:**
-
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Permutation Difference between Two Strings example:**
+**Vietnamese analogy**: Mỗi ký tự có vị trí trong `s` và vị trí trong `t`. Độ lệch = tổng `|pos_s(c) - pos_t(c)|` cho mọi ký tự. Xây bảng vị trí từ cả hai chuỗi, rồi cộng hiệu tuyệt đối.
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
-
-Key insight: store complement for O(1) lookup
+s = "abc"   t = "bca"
+  a: pos_s=0, pos_t=2 → |0-2| = 2
+  b: pos_s=1, pos_t=0 → |1-0| = 1
+  c: pos_s=2, pos_t=1 → |2-1| = 1
+  Total = 2 + 1 + 1 = 4
 ```
 
----
+**Key insight**: Build two position maps (or arrays), then sum `|posS[c] - posT[c]|` for every distinct char.
 
-## Problem Description
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-Permutation Difference between Two Strings. ([LeetCode](https://leetcode.com/problems/permutation-difference-between-two-strings))
-
-Difficulty: Easy | Acceptance: 87.2%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/permutation-difference-between-two-strings) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🔑 **EN**: `s` and `t` contain the same set of distinct characters (guaranteed by problem)
+  **VI**: `s` và `t` chứa cùng tập ký tự phân biệt (đề đảm bảo)
+- 🔑 **EN**: Build maps in one pass each; then iterate over chars of `s` to sum differences
+  **VI**: Xây map mỗi chuỗi trong một lượt; rồi duyệt ký tự của `s` để cộng hiệu
+- 🔑 **EN**: Array of size 26 is faster than a Map for lowercase letters
+  **VI**: Mảng kích thước 26 nhanh hơn Map cho chữ thường
+- 🔑 **EN**: Can do in a single pass over `s`: build `posS`, then scan `t` for `posT`, then sum
+  **VI**: Có thể dùng một lượt trên `s`: xây `posS`, duyệt `t` lấy `posT`, rồi cộng
+- 🔑 **EN**: Time O(n), Space O(1) — only 26 possible characters
+  **VI**: Thời gian O(n), Không gian O(1) — chỉ 26 ký tự có thể có
+- 🔑 **EN**: Absolute difference, not signed — use `Math.abs`
+  **VI**: Hiệu tuyệt đối, không có dấu — dùng `Math.abs`
 
 ---
-
-## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function permutationDifferenceBetweenTwoStringsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// ─── Solution 1: Two Maps — O(n) time, O(1) space ────────────────────────────
+function findPermutationDifference(s: string, t: string): number {
+  const posS = new Map<string, number>();
+  const posT = new Map<string, number>();
+
+  for (let i = 0; i < s.length; i++) posS.set(s[i], i);
+  for (let i = 0; i < t.length; i++) posT.set(t[i], i);
+
+  let diff = 0;
+  for (const ch of s) {
+    diff += Math.abs(posS.get(ch)! - posT.get(ch)!);
+  }
+
+  return diff;
 }
 
-/**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function permutationDifferenceBetweenTwoStrings(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
+// Tests
+console.log(findPermutationDifference("abc", "bca")); // 4
+console.log(findPermutationDifference("abcd", "dcba")); // 8
+console.log(findPermutationDifference("a", "a")); // 0
+console.log(findPermutationDifference("ab", "ba")); // 2
+```
+
+```typescript
+// ─── Solution 2: Array (26 slots) — O(n) time, O(1) space ────────────────────
+function findPermutationDifference2(s: string, t: string): number {
+  const posS = new Array(26).fill(-1);
+  const posT = new Array(26).fill(-1);
+
+  for (let i = 0; i < s.length; i++) posS[s.charCodeAt(i) - 97] = i;
+  for (let i = 0; i < t.length; i++) posT[t.charCodeAt(i) - 97] = i;
+
+  let diff = 0;
+  for (let i = 0; i < s.length; i++) {
+    const c = s.charCodeAt(i) - 97;
+    diff += Math.abs(posS[c] - posT[c]);
+  }
+
+  return diff;
 }
 
-// === Test Cases ===
-// console.log(permutationDifferenceBetweenTwoStrings(/* example 1 */)); // expected
-// console.log(permutationDifferenceBetweenTwoStrings(/* example 2 */)); // expected
-// console.log(permutationDifferenceBetweenTwoStrings(/* edge case */)); // expected
+// Tests
+console.log(findPermutationDifference2("abc", "bca")); // 4
+console.log(findPermutationDifference2("abcd", "dcba")); // 8
+console.log(findPermutationDifference2("a", "a")); // 0
+```
+
+```typescript
+// ─── Solution 3: Single Map — O(n) time, O(1) space ──────────────────────────
+function findPermutationDifference3(s: string, t: string): number {
+  // Store s positions, then look up t positions inline
+  const posS = new Map<string, number>();
+  for (let i = 0; i < s.length; i++) posS.set(s[i], i);
+
+  let diff = 0;
+  for (let i = 0; i < t.length; i++) {
+    diff += Math.abs(posS.get(t[i])! - i);
+  }
+  return diff;
+}
+
+// Tests
+console.log(findPermutationDifference3("abc", "bca")); // 4
+console.log(findPermutationDifference3("abcd", "dcba")); // 8
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Time Based Key-Value Store](https://leetcode.com/problems/time-based-key-value-store) — same pattern: Binary Search
-- [Implement Trie (Prefix Tree)](https://leetcode.com/problems/implement-trie-prefix-tree) — same pattern: Trie
-- [Isomorphic Strings](https://leetcode.com/problems/isomorphic-strings) — same pattern: Hash Map
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Permutation Difference between Two Strings — LeetCode](https://leetcode.com/problems/permutation-difference-between-two-strings) — problem page
+| #    | Problem                                          | Difficulty | Pattern  |
+| ---- | ------------------------------------------------ | ---------- | -------- |
+| 242  | Valid Anagram                                    | 🟢 Easy    | Hash Map |
+| 387  | First Unique Character in a String               | 🟢 Easy    | Hash Map |
+| 1832 | Check if the Sentence Is Pangram                 | 🟢 Easy    | Hash Set |
+| 2006 | Count Number of Pairs With Absolute Difference K | 🟢 Easy    | Hash Map |

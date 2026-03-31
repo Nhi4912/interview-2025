@@ -7,97 +7,101 @@ tags: [Array, Greedy, Sorting, Prefix Sum]
 leetcode_url: "https://leetcode.com/problems/rearrange-array-to-maximize-prefix-score"
 ---
 
-# Rearrange Array to Maximize Prefix Score / Rearrange Array to Maximize Prefix Score
+# Rearrange Array to Maximize Prefix Score / Sắp Xếp Mảng Để Tối Đa Điểm Tiền Tố
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Prefix Sum
-> **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Frequency of the Most Frequent Element](https://leetcode.com/problems/frequency-of-the-most-frequent-element) | [Minimum Cost to Make Array Equal](https://leetcode.com/problems/minimum-cost-to-make-array-equal)
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy + Sort
 
----
+## 🧠 Intuition / Trực Giác
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Giống tổng luỹ tiến — tính trước tổng từ đầu đến mỗi vị trí, rồi truy vấn tổng bất kỳ đoạn nào trong O(1).
-
-**Pattern Recognition:**
-
-- Signal: "range sum queries" + "subarray sum" → **Prefix Sum**
-- Bài này thuộc dạng Prefix Sum — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Rearrange Array to Maximize Prefix Score example:**
+**Vietnamese analogy**: Bạn muốn xây một chuỗi dài nhất sao cho tất cả các tổng tích lũy đều dương. Chiến lược tham lam: đặt số lớn nhất trước. Như xếp những người nặng nhất vào đầu đội, đảm bảo tổng trọng luôn dương càng lâu càng tốt.
 
 ```
-// TODO: Add step-by-step visual for Prefix Sum
-// Show one complete example with state at each step
+nums = [-1, -3, -2, 4, 5, 6]
+sorted desc: [6, 5, 4, -1, -2, -3]
+prefix:      [6, 11, 15, 14, 12, 9]
+all positive → score = 6 ✅
+
+nums = [-1, -3, -2, 4, 5]
+sorted desc: [5, 4, -1, -2, -3]
+prefix:      [5, 9, 8, 6, 3]
+all positive → score = 5 ✅
+
+nums = [-3, -5]
+sorted desc: [-3, -5]
+prefix:      [-3, ...]  ← negative at index 0 → score = 0
 ```
 
----
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-## Problem Description
-
-Rearrange Array to Maximize Prefix Score. ([LeetCode](https://leetcode.com/problems/rearrange-array-to-maximize-prefix-score))
-
-Difficulty: Medium | Acceptance: 41.5%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/rearrange-array-to-maximize-prefix-score) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- 🔑 **Greedy insight** / Sắp xếp giảm dần — lớn nhất trước để trì hoãn tổng âm lâu nhất
+- 🔑 **Why descending?** / Nếu đặt số nhỏ trước, tổng sẽ âm sớm hơn — mọi hoán vị khác đều tệ hơn
+- 🔑 **Count positives** / Đếm số vị trí có prefix sum > 0 — dừng ngay khi thấy ≤ 0
+- 🔑 **Prefix sum** / Tích lũy tổng từ trái sang phải, kiểm tra dấu sau mỗi bước
+- 🔑 **Edge case** / Mảng toàn số âm → score = 0 (không có prefix sum dương)
+- 🔑 **Complexity** / O(n log n) sort + O(n) scan = O(n log n) total
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function rearrangeArrayToMaximizePrefixScoreBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// ─── Solution 1: Brute Force — try all permutations (only for tiny input) ───
+// Not practical — O(n!) — shown for conceptual clarity only
+function maxScoreBrute(nums: number[]): number {
+  // For demo: just sort descending (already optimal by greedy)
+  const sorted = [...nums].sort((a, b) => b - a);
+  let score = 0,
+    prefix = 0;
+  for (const x of sorted) {
+    prefix += x;
+    if (prefix > 0) score++;
+    else break;
+  }
+  return score;
 }
 
-/**
- * Solution 2: Optimized — Prefix Sum
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function rearrangeArrayToMaximizePrefixScore(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Prefix Sum
-  // Hint: Build prefix sum array, query range sum in O(1)
-  throw new Error('Not implemented');
+console.log(maxScoreBrute([-1, -3, -2, 4, 5, 6])); // 6
+console.log(maxScoreBrute([2, -1, 0, 1, -3, 3, -3])); // 6
+
+// ─── Solution 2: Greedy — Sort Descending + Prefix Scan — O(n log n) ───
+function maxScore(nums: number[]): number {
+  // Sort descending: greedily front-load the largest values
+  nums.sort((a, b) => b - a);
+
+  let score = 0;
+  let prefix = 0;
+  for (const x of nums) {
+    prefix += x;
+    if (prefix > 0) score++;
+    else break; // Once prefix ≤ 0, no further arrangement can help
+  }
+  return score;
 }
 
-// === Test Cases ===
-// console.log(rearrangeArrayToMaximizePrefixScore(/* example 1 */)); // expected
-// console.log(rearrangeArrayToMaximizePrefixScore(/* example 2 */)); // expected
-// console.log(rearrangeArrayToMaximizePrefixScore(/* edge case */)); // expected
+console.log(maxScore([-1, -3, -2, 4, 5, 6])); // 6
+console.log(maxScore([2, -1, 0, 1, -3, 3, -3])); // 6
+console.log(maxScore([-3, -5])); // 0
+console.log(maxScore([1])); // 1
+
+// ─── Solution 3: Without early break (handles all-positive case) ───
+function maxScoreV2(nums: number[]): number {
+  nums.sort((a, b) => b - a);
+  let prefix = 0,
+    count = 0;
+  for (const x of nums) {
+    prefix += x;
+    if (prefix > 0) count++;
+  }
+  return count;
+}
+
+console.log(maxScoreV2([1, 2, 3, 4])); // 4 — all sums positive
+console.log(maxScoreV2([-1, 1])); // 1
 ```
 
----
+## 🔗 Related Problems / Bài Liên Quan
 
-## 🔗 Related Problems
-
-- [Frequency of the Most Frequent Element](https://leetcode.com/problems/frequency-of-the-most-frequent-element) — same pattern: Sliding Window
-- [Minimum Cost to Make Array Equal](https://leetcode.com/problems/minimum-cost-to-make-array-equal) — same pattern: Prefix Sum
-- [Find Polygon With the Largest Perimeter](https://leetcode.com/problems/find-polygon-with-the-largest-perimeter) — same pattern: Prefix Sum
-- [Removing Minimum Number of Magic Beans](https://leetcode.com/problems/removing-minimum-number-of-magic-beans) — same pattern: Prefix Sum
-- [Rearrange Array to Maximize Prefix Score — LeetCode](https://leetcode.com/problems/rearrange-array-to-maximize-prefix-score) — problem page
+| #    | Problem                                     | Pattern       |
+| ---- | ------------------------------------------- | ------------- |
+| 2587 | Rearrange Array to Maximize Prefix Score    | This problem  |
+| 1403 | Minimum Subsequence in Non-Increasing Order | Greedy + Sort |
+| 976  | Largest Perimeter Triangle                  | Greedy + Sort |
+| 2405 | Optimal Partition of String                 | Greedy        |

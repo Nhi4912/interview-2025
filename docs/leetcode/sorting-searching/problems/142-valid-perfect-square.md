@@ -7,100 +7,107 @@ tags: [Math, Binary Search]
 leetcode_url: "https://leetcode.com/problems/valid-perfect-square"
 ---
 
-# Valid Perfect Square / Valid Perfect Square
+# Valid Perfect Square / Số Chính Phương Hợp Lệ
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Binary Search
-> **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Sqrt(x)](https://leetcode.com/problems/sqrtx) | [Random Pick with Weight](https://leetcode.com/problems/random-pick-with-weight)
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Binary Search / Math
 
----
+## 🧠 Intuition / Trực Giác
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Tưởng tượng tìm một trang trong từ điển — bạn mở giữa, xem số trang, rồi chọn nửa phù hợp. Mỗi lần giảm một nửa phạm vi tìm kiếm.
-
-**Pattern Recognition:**
-
-- Signal: "sorted" + "find target/position" → **Binary Search**
-- Bài này thuộc dạng Binary Search — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Valid Perfect Square example:**
+**Vietnamese analogy**: Cho số `num`, kiểm tra có tồn tại số nguyên `x` sao cho `x * x = num` không — **không dùng sqrt()**. Tìm nhị phân trên đoạn `[1, num]`: nếu `mid²` = num → true, < num → tìm nửa phải, > num → tìm nửa trái.
 
 ```
-[1, 3, 5, 7, 9, 11, 13]
- L        M            R
+num = 16
+lo=1, hi=16
+  mid=8:  8*8=64 > 16 → hi=7
+  mid=4:  4*4=16 = 16 → return true ✅
 
-Step 1: mid = (L+R)/2, check condition
-Step 2: condition true → move L = mid+1 (or R = mid-1)
-Step N: L meets R → answer found ✅
+num = 14
+lo=1, hi=14
+  mid=7:  7*7=49 > 14 → hi=6
+  mid=3:  3*3=9  < 14 → lo=4
+  mid=5:  5*5=25 > 14 → hi=4
+  mid=4:  4*4=16 > 14 → hi=3
+  lo>hi → return false ✅
 ```
 
----
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-## Problem Description
-
-Valid Perfect Square. ([LeetCode](https://leetcode.com/problems/valid-perfect-square))
-
-Difficulty: Easy | Acceptance: 44.2%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/valid-perfect-square) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Input đã sorted? Cần tìm vị trí chính xác hay boundary?" / Is input sorted? Exact match or boundary?
-2. **Brute force**: "Linear scan O(n)" → optimize with binary search O(log n) / Start linear, suggest binary
-3. **Optimize**: "Chú ý lo/hi boundary: lo <= hi hay lo < hi? mid±1 hay mid?" / Watch boundary conditions carefully
-4. **Edge cases**: "Mảng rỗng, một phần tử, target không tồn tại, overflow mid" / Empty, single, not found, overflow
-
----
+- 🔑 **No Math.sqrt** / Đề cấm dùng sqrt — phải binary search hoặc Newton's method
+- 🔑 **Search range** / Tìm trong [1, num] — giới hạn trên có thể là num/2+1 nếu num > 1
+- 🔑 **Overflow** / `mid * mid` có thể overflow 32-bit — dùng BigInt hoặc chú ý giới hạn số
+- 🔑 **Newton's method** / `x = (x + num/x) / 2` hội tụ nhanh — O(log log n)
+- 🔑 **Edge cases** / num = 1 → true (1² = 1); num = 2 → false
+- 🔑 **Odd square pattern** / 1=1, 4=1+3, 9=1+3+5 — cộng liên tiếp các số lẻ là O(√n)
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function validPerfectSquareBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// ─── Solution 1: Linear — O(√n) ───
+function isPerfectSquareBrute(num: number): boolean {
+  for (let i = 1; i * i <= num; i++) {
+    if (i * i === num) return true;
+  }
+  return false;
 }
 
-/**
- * Solution 2: Optimized — Binary Search
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function validPerfectSquare(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Binary Search
-  // Hint: Define search space, determine which half to discard
-  throw new Error('Not implemented');
+console.log(isPerfectSquareBrute(16)); // true
+console.log(isPerfectSquareBrute(14)); // false
+
+// ─── Solution 2: Binary Search — O(log n) ───
+function isPerfectSquare(num: number): boolean {
+  if (num < 1) return false;
+  let lo = 1,
+    hi = num;
+  while (lo <= hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    const sq = mid * mid;
+    if (sq === num) return true;
+    if (sq < num) lo = mid + 1;
+    else hi = mid - 1;
+  }
+  return false;
 }
 
-// === Test Cases ===
-// console.log(validPerfectSquare(/* example 1 */)); // expected
-// console.log(validPerfectSquare(/* example 2 */)); // expected
-// console.log(validPerfectSquare(/* edge case */)); // expected
+console.log(isPerfectSquare(1)); // true
+console.log(isPerfectSquare(16)); // true
+console.log(isPerfectSquare(14)); // false
+console.log(isPerfectSquare(2)); // false
+console.log(isPerfectSquare(4)); // true
+
+// ─── Solution 3: Newton's Method — O(log log n) ───
+function isPerfectSquareNewton(num: number): boolean {
+  let x = num;
+  // Newton's iteration: x_{n+1} = (x_n + num/x_n) / 2
+  while (x * x > num) {
+    x = Math.floor((x + Math.floor(num / x)) / 2);
+  }
+  return x * x === num;
+}
+
+console.log(isPerfectSquareNewton(16)); // true
+console.log(isPerfectSquareNewton(14)); // false
+console.log(isPerfectSquareNewton(2147483647)); // false (max int)
+
+// ─── Solution 4: Odd numbers sum trick — O(√n) ───
+function isPerfectSquareMath(num: number): boolean {
+  // A perfect square is sum of consecutive odd numbers: 1, 1+3, 1+3+5, ...
+  let odd = 1;
+  while (num > 0) {
+    num -= odd;
+    odd += 2;
+  }
+  return num === 0;
+}
+
+console.log(isPerfectSquareMath(9)); // true
+console.log(isPerfectSquareMath(14)); // false
 ```
 
----
+## 🔗 Related Problems / Bài Liên Quan
 
-## 🔗 Related Problems
-
-- [Sqrt(x)](https://leetcode.com/problems/sqrtx) — same pattern: Binary Search
-- [Random Pick with Weight](https://leetcode.com/problems/random-pick-with-weight) — same pattern: Prefix Sum
-- [Missing Number](https://leetcode.com/problems/missing-number) — same pattern: Binary Search
-- [Reach a Number](https://leetcode.com/problems/reach-a-number) — same pattern: Binary Search
-- [Valid Perfect Square — LeetCode](https://leetcode.com/problems/valid-perfect-square) — problem page
+| #   | Problem               | Pattern       |
+| --- | --------------------- | ------------- |
+| 367 | Valid Perfect Square  | This problem  |
+| 69  | Sqrt(x)               | Binary Search |
+| 633 | Sum of Square Numbers | Two Pointers  |
+| 268 | Missing Number        | Math          |

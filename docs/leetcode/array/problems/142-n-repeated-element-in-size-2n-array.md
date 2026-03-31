@@ -7,100 +7,106 @@ tags: [Array, Hash Table]
 leetcode_url: "https://leetcode.com/problems/n-repeated-element-in-size-2n-array"
 ---
 
-# N-Repeated Element in Size 2N Array / N-Repeated Element in Size 2N Array
+# N-Repeated Element in Size 2N Array / Phần Tử Lặp N Lần Trong Mảng Kích Thước 2N
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [First Missing Positive](https://leetcode.com/problems/first-missing-positive) | [Longest Consecutive Sequence](https://leetcode.com/problems/longest-consecutive-sequence)
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map / Pigeonhole
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition / Trực Giác
 
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
+**VI:** Mảng kích thước `2n` chứa `n+1` giá trị phân biệt, trong đó 1 giá trị lặp `n` lần và n giá trị còn lại xuất hiện 1 lần. Bằng nguyên lý pigeonhole, phần tử lặp phải xuất hiện trong mỗi 3 phần tử liên tiếp. Kiểm tra `arr[i] == arr[i+1]` hoặc `arr[i] == arr[i+2]` là đủ!
 
-**Pattern Recognition:**
-
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — N-Repeated Element in Size 2N Array example:**
+**EN:** Array of size `2n` with `n+1` distinct values, one repeated `n` times. By pigeonhole, the repeated element must appear among any 3 consecutive elements. Checking `arr[i]==arr[i+1]` or `arr[i]==arr[i+2]` catches all cases!
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
+n=4, arr=[5,1,5,2,5,3,5,4]  (size=8=2*4)
+Repeated element: 5 (appears 4 times)
 
-Key insight: store complement for O(1) lookup
+Pigeonhole: every 3 consecutive must contain 5
+Check pairs gap-1: [5,1],[1,5],[5,2],... → 5==5 at i=0,i+2=2 ✓
+Check pairs gap-2: [5,5],[1,2],[5,3],... → arr[0]==arr[2] ✓
 ```
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-N-Repeated Element in Size 2N Array. ([LeetCode](https://leetcode.com/problems/n-repeated-element-in-size-2n-array))
-
-Difficulty: Easy | Acceptance: 77.5%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/n-repeated-element-in-size-2n-array) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🟢 **EN:** HashSet approach: first duplicate found is the answer — O(n) time, O(n) space.
+  **VI:** Dùng HashSet: phần tử trùng đầu tiên là đáp án — O(n) thời gian, O(n) không gian.
+- 🟢 **EN:** Pigeonhole O(1) space: check arr[i]==arr[i+1] OR arr[i]==arr[i+2] for all i.
+  **VI:** Pigeonhole O(1) không gian: kiểm tra arr[i]==arr[i+1] HOẶC arr[i]==arr[i+2].
+- 🟢 **EN:** The pigeonhole trick: if element appears n times in 2n slots, within any window of 3 it must appear at least once with a match.
+  **VI:** Mẹo pigeonhole: n lần trong 2n vị trí → trong cửa sổ 3 phần tử bất kỳ phải có match.
+- 🟢 **EN:** Edge case: arr[n-2] == arr[n] wraps around — handle last pair separately if needed.
+  **VI:** Edge case: phần tử cuối — kiểm tra arr[n-2]==arr[n] ở cuối mảng.
+- 🟢 **EN:** Sorting approach: sort then check arr[i]==arr[i+1] — O(n log n) but simple.
+  **VI:** Sắp xếp: sort rồi kiểm tra arr[i]==arr[i+1] — O(n log n) nhưng đơn giản.
+- 🟢 **EN:** For interview: state HashSet first, then mention pigeonhole as O(1) space bonus.
+  **VI:** Trong phỏng vấn: đề xuất HashSet trước, rồi đề cập pigeonhole như bonus.
 
 ---
 
-## Solutions
+## Solutions / Giải Pháp
+
+### Solution 1: HashSet — O(n) Time, O(n) Space
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function nRepeatedElementInSize2nArrayBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function repeatedNTimes_hash(nums: number[]): number {
+  const seen = new Set<number>();
+  for (const n of nums) {
+    if (seen.has(n)) return n;
+    seen.add(n);
+  }
+  return -1; // unreachable per problem guarantee
 }
 
-/**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function nRepeatedElementInSize2nArray(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
+console.log(repeatedNTimes_hash([1, 2, 3, 3])); // 3
+console.log(repeatedNTimes_hash([2, 1, 2, 5, 3, 2])); // 2
+console.log(repeatedNTimes_hash([5, 1, 5, 2, 5, 3, 5, 4])); // 5
+```
+
+### Solution 2: Pigeonhole (Adjacent Check) — O(n) Time, O(1) Space ✅ Optimal
+
+```typescript
+function repeatedNTimes(nums: number[]): number {
+  const n = nums.length;
+  // By pigeonhole, the repeated element appears at distance 1 or 2 somewhere
+  for (let i = 0; i < n - 1; i++) {
+    if (nums[i] === nums[i + 1]) return nums[i];
+    if (i + 2 < n && nums[i] === nums[i + 2]) return nums[i];
+  }
+  // Last resort: last element equals second-to-last (already checked) or first
+  return nums[0] === nums[n - 2] ? nums[0] : nums[n - 1];
 }
 
-// === Test Cases ===
-// console.log(nRepeatedElementInSize2nArray(/* example 1 */)); // expected
-// console.log(nRepeatedElementInSize2nArray(/* example 2 */)); // expected
-// console.log(nRepeatedElementInSize2nArray(/* edge case */)); // expected
+// Test cases
+console.log(repeatedNTimes([1, 2, 3, 3])); // Expected: 3
+console.log(repeatedNTimes([2, 1, 2, 5, 3, 2])); // Expected: 2
+console.log(repeatedNTimes([5, 1, 5, 2, 5, 3, 5, 4])); // Expected: 5
+console.log(repeatedNTimes([9, 5, 6, 9])); // Expected: 9
+```
+
+### Solution 3: Sort — O(n log n) Time, O(1) Extra Space
+
+```typescript
+function repeatedNTimes_sort(nums: number[]): number {
+  nums.sort((a, b) => a - b);
+  for (let i = 0; i < nums.length - 1; i++) {
+    if (nums[i] === nums[i + 1]) return nums[i];
+  }
+  return -1;
+}
+
+console.log(repeatedNTimes_sort([1, 2, 3, 3])); // 3
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [First Missing Positive](https://leetcode.com/problems/first-missing-positive) — same pattern: Hash Map
-- [Longest Consecutive Sequence](https://leetcode.com/problems/longest-consecutive-sequence) — same pattern: Union Find
-- [Subarray Sum Equals K](https://leetcode.com/problems/subarray-sum-equals-k) — same pattern: Prefix Sum
-- [Majority Element](https://leetcode.com/problems/majority-element) — same pattern: Divide and Conquer
-- [N-Repeated Element in Size 2N Array — LeetCode](https://leetcode.com/problems/n-repeated-element-in-size-2n-array) — problem page
+| #   | Problem                   | Difficulty | Pattern            |
+| --- | ------------------------- | ---------- | ------------------ |
+| 169 | Majority Element          | 🟢 Easy    | Boyer-Moore / Hash |
+| 287 | Find the Duplicate Number | 🟡 Medium  | Floyd's Cycle      |
+| 136 | Single Number             | 🟢 Easy    | XOR                |

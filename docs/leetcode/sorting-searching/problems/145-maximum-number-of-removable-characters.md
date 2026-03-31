@@ -7,100 +7,115 @@ tags: [Array, Two Pointers, String, Binary Search]
 leetcode_url: "https://leetcode.com/problems/maximum-number-of-removable-characters"
 ---
 
-# Maximum Number of Removable Characters / Maximum Number of Removable Characters
+# Maximum Number of Removable Characters / Số Ký Tự Tối Đa Có Thể Xóa
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Two Pointers
-> **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Search Suggestions System](https://leetcode.com/problems/search-suggestions-system) | [Intersection of Two Arrays](https://leetcode.com/problems/intersection-of-two-arrays)
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Binary Search on Answer
 
----
+## 🧠 Intuition / Trực Giác
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Hãy tưởng tượng hai người đi từ hai đầu con đường, tiến lại gần nhau. Mỗi bước, người nào ở vị trí "tốt hơn" sẽ đứng yên, người kia tiến. Khi họ gặp nhau, bài toán được giải.
-
-**Pattern Recognition:**
-
-- Signal: "sorted array" + "find pair/triplet" → **Two Pointers**
-- Bài này thuộc dạng Two Pointers — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Maximum Number of Removable Characters example:**
+**Vietnamese analogy**: Bạn có chuỗi `s` và mẫu `p`. Có thể xóa tối đa bao nhiêu ký tự (theo mảng `removable`) sao cho `p` vẫn là subsequence của `s`? Tính chất đơn điệu: nếu k ký tự bị xóa mà p vẫn là subsequence, thì k-1 cũng được. Binary search trên k!
 
 ```
-arr = [... sorted ...]
- L                 R
+s = "abcacb", p = "ab", removable = [3,1,0]
 
-Step 1: check condition → move L or R
-Step 2: ...
-Step N: condition met ✅
+k=0: s="abcacb" → p="ab" ⊆ s? YES
+k=1: remove s[3]='a' → s="abc_cb" → p="ab" ⊆ "abccb"? YES
+k=2: remove s[3],s[1] → s="a_c_cb" → p="ab"? check: a→found at 0, b→found at 5? YES
+k=3: remove s[3],s[1],s[0] → p="ab"? a→not at 0,1,3, found at 4; b→found at 5? YES
+Answer: 3
+
+Binary search: lo=0, hi=3 → find max k where isSubseq(k)=true
 ```
 
----
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-## Problem Description
-
-Maximum Number of Removable Characters. ([LeetCode](https://leetcode.com/problems/maximum-number-of-removable-characters))
-
-Difficulty: Medium | Acceptance: 45.8%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/maximum-number-of-removable-characters) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Mảng đã sorted chưa? Có duplicate không?" / Ask if array is sorted and if duplicates exist
-2. **Brute force**: "Dùng 2 vòng for O(n²)" → optimize with two pointers O(n) / Start with nested loops, then optimize
-3. **Optimize**: "Vì mảng sorted, dùng 2 con trỏ L/R tiến vào giữa" / Since sorted, use L/R pointers moving inward
-4. **Edge cases**: "Mảng rỗng, một phần tử, tất cả giống nhau" / Empty array, single element, all same values
-
----
+- 🔑 **Monotone property** / Nếu k ký tự xóa vẫn OK → k-1 cũng OK → binary search hợp lệ
+- 🔑 **Binary search on answer** / Tìm max k trong [0, removable.length] — O(log n)
+- 🔑 **Subsequence check** / Two-pointer: O(|s|) — tổng O(|s| × log n)
+- 🔑 **Removed set** / Dùng Set để đánh dấu chỉ số bị xóa — O(1) lookup
+- 🔑 **isSubseq with removals** / Bỏ qua các vị trí trong removed set khi match p
+- 🔑 **Template** / Binary search: lo=0, hi=removable.length; mid = (lo+hi+1)/2 (upper bound)
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function maximumNumberOfRemovableCharactersBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// ─── Helper: check if p is subsequence of s with first k indices removed ───
+function isSubseq(s: string, p: string, removed: Set<number>): boolean {
+  let j = 0; // pointer for p
+  for (let i = 0; i < s.length && j < p.length; i++) {
+    if (!removed.has(i) && s[i] === p[j]) j++;
+  }
+  return j === p.length;
 }
 
-/**
- * Solution 2: Optimized — Two Pointers
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function maximumNumberOfRemovableCharacters(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Two Pointers
-  // Hint: Use L/R pointers on sorted input, move based on comparison
-  throw new Error('Not implemented');
+// ─── Solution 1: Linear scan — O(n × m) TLE for large input ───
+function maximumRemovalsLinear(s: string, p: string, removable: number[]): number {
+  let k = 0;
+  const removed = new Set<number>();
+  for (const idx of removable) {
+    removed.add(idx);
+    if (isSubseq(s, p, removed)) k++;
+    else {
+      removed.delete(idx);
+      break;
+    }
+  }
+  return k;
 }
 
-// === Test Cases ===
-// console.log(maximumNumberOfRemovableCharacters(/* example 1 */)); // expected
-// console.log(maximumNumberOfRemovableCharacters(/* example 2 */)); // expected
-// console.log(maximumNumberOfRemovableCharacters(/* edge case */)); // expected
+// ─── Solution 2: Binary Search on k — O(|s| × log n) ───
+function maximumRemovals(s: string, p: string, removable: number[]): number {
+  let lo = 0,
+    hi = removable.length;
+
+  while (lo < hi) {
+    // Use upper-bound template to find maximum valid k
+    const mid = Math.floor((lo + hi + 1) / 2);
+
+    // Build removed set for first mid indices
+    const removed = new Set(removable.slice(0, mid));
+
+    if (isSubseq(s, p, removed))
+      lo = mid; // mid is valid, try larger
+    else hi = mid - 1; // mid too large, try smaller
+  }
+  return lo;
+}
+
+console.log(maximumRemovals("abcacb", "ab", [3, 1, 0])); // 2
+console.log(maximumRemovals("abcbddddd", "abcd", [3, 2, 1, 4, 5, 6])); // 1
+console.log(maximumRemovals("abcab", "abc", [0, 1, 2, 3, 4])); // 0
+
+// ─── Solution 3: Binary search with array-based removed check ───
+function maximumRemovalsV2(s: string, p: string, removable: number[]): number {
+  const n = removable.length;
+  let lo = 0,
+    hi = n;
+
+  const check = (k: number): boolean => {
+    const removed = new Set(removable.slice(0, k));
+    let j = 0;
+    for (let i = 0; i < s.length && j < p.length; i++) {
+      if (!removed.has(i) && s[i] === p[j]) j++;
+    }
+    return j === p.length;
+  };
+
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    check(mid) ? (lo = mid) : (hi = mid - 1);
+  }
+  return lo;
+}
+
+console.log(maximumRemovalsV2("abcacb", "ab", [3, 1, 0])); // 2
 ```
 
----
+## 🔗 Related Problems / Bài Liên Quan
 
-## 🔗 Related Problems
-
-- [Search Suggestions System](https://leetcode.com/problems/search-suggestions-system) — same pattern: Trie
-- [Intersection of Two Arrays](https://leetcode.com/problems/intersection-of-two-arrays) — same pattern: Two Pointers
-- [Find the Duplicate Number](https://leetcode.com/problems/find-the-duplicate-number) — same pattern: Two Pointers
-- [Longest String Chain](https://leetcode.com/problems/longest-string-chain) — same pattern: Two Pointers
-- [Maximum Number of Removable Characters — LeetCode](https://leetcode.com/problems/maximum-number-of-removable-characters) — problem page
+| #    | Problem                                | Pattern                 |
+| ---- | -------------------------------------- | ----------------------- |
+| 1898 | Maximum Number of Removable Characters | This problem            |
+| 392  | Is Subsequence                         | Two Pointers            |
+| 792  | Number of Matching Subsequences        | String Matching         |
+| 1870 | Minimum Speed to Arrive on Time        | Binary Search on Answer |

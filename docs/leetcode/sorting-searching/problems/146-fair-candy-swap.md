@@ -7,100 +7,110 @@ tags: [Array, Hash Table, Binary Search, Sorting]
 leetcode_url: "https://leetcode.com/problems/fair-candy-swap"
 ---
 
-# Fair Candy Swap / Fair Candy Swap
+# Fair Candy Swap / Đổi Kẹo Công Bằng
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Binary Search
-> **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Missing Number](https://leetcode.com/problems/missing-number) | [Intersection of Two Arrays](https://leetcode.com/problems/intersection-of-two-arrays)
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Set / Math
 
----
+## 🧠 Intuition / Trực Giác
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Tưởng tượng tìm một trang trong từ điển — bạn mở giữa, xem số trang, rồi chọn nửa phù hợp. Mỗi lần giảm một nửa phạm vi tìm kiếm.
-
-**Pattern Recognition:**
-
-- Signal: "sorted" + "find target/position" → **Binary Search**
-- Bài này thuộc dạng Binary Search — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Fair Candy Swap example:**
+**Vietnamese analogy**: Alice và Bob mỗi người có một số hộp kẹo. Họ đổi đúng một hộp cho nhau để tổng kẹo bằng nhau. Với mỗi hộp `a` của Alice, hộp cần đổi từ Bob là `b = a - diff`, trong đó `diff = (sumA - sumB) / 2`.
 
 ```
-[1, 3, 5, 7, 9, 11, 13]
- L        M            R
+A = [1, 1],  B = [2, 2]
+sumA = 2, sumB = 4, diff = (2-4)/2 = -1
+For a=1: b = 1 - (-1) = 2  → 2 ∈ setB? YES
+Answer: [1, 2] ✅
 
-Step 1: mid = (L+R)/2, check condition
-Step 2: condition true → move L = mid+1 (or R = mid-1)
-Step N: L meets R → answer found ✅
+After swap: Alice = {1,2}=3, Bob = {2,1}=3 ✓
+
+A = [1, 2],  B = [2, 3]
+sumA=3, sumB=5, diff=(3-5)/2=-1
+a=1: b=1-(-1)=2 ∈ setB? YES → [1,2]
 ```
 
----
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-## Problem Description
-
-Fair Candy Swap. ([LeetCode](https://leetcode.com/problems/fair-candy-swap))
-
-Difficulty: Easy | Acceptance: 63.3%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/fair-candy-swap) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Input đã sorted? Cần tìm vị trí chính xác hay boundary?" / Is input sorted? Exact match or boundary?
-2. **Brute force**: "Linear scan O(n)" → optimize with binary search O(log n) / Start linear, suggest binary
-3. **Optimize**: "Chú ý lo/hi boundary: lo <= hi hay lo < hi? mid±1 hay mid?" / Watch boundary conditions carefully
-4. **Edge cases**: "Mảng rỗng, một phần tử, target không tồn tại, overflow mid" / Empty, single, not found, overflow
-
----
+- 🔑 **Math insight** / Sau swap: `sumA - a + b = sumB - b + a` → `b = a - (sumA-sumB)/2`
+- 🔑 **diff always integer** / `sumA - sumB` luôn chẵn vì tổng thay đổi cùng lượng
+- 🔑 **HashSet for O(1) lookup** / Đưa B vào Set để kiểm tra `b ∈ B` nhanh
+- 🔑 **Guaranteed solution** / Đề đảm bảo luôn có đáp án — không cần xử lý không tìm được
+- 🔑 **No need to sort** / HashSet đủ — sort + binary search cũng được nhưng phức tạp hơn
+- 🔑 **Complexity** / O(n + m) time, O(m) space cho setB
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function fairCandySwapBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// ─── Solution 1: Brute Force — O(n × m) ───
+function fairCandySwapBrute(aliceSizes: number[], bobSizes: number[]): number[] {
+  const sumA = aliceSizes.reduce((a, b) => a + b, 0);
+  const sumB = bobSizes.reduce((a, b) => a + b, 0);
+  const target = (sumA + sumB) / 2;
+
+  for (const a of aliceSizes) {
+    for (const b of bobSizes) {
+      if (sumA - a + b === target) return [a, b];
+    }
+  }
+  return [];
 }
 
-/**
- * Solution 2: Optimized — Binary Search
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function fairCandySwap(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Binary Search
-  // Hint: Define search space, determine which half to discard
-  throw new Error('Not implemented');
+// ─── Solution 2: Hash Set — O(n + m) ───
+function fairCandySwap(aliceSizes: number[], bobSizes: number[]): number[] {
+  const sumA = aliceSizes.reduce((acc, x) => acc + x, 0);
+  const sumB = bobSizes.reduce((acc, x) => acc + x, 0);
+  // After swap: (sumA - a + b) = (sumB - b + a)
+  // → 2b = 2a + sumB - sumA → b = a + (sumB - sumA) / 2
+  const diff = (sumA - sumB) / 2; // Alice needs to give this much more than she receives
+
+  const setB = new Set(bobSizes);
+  for (const a of aliceSizes) {
+    const b = a - diff; // the box Bob must give back
+    if (setB.has(b)) return [a, b];
+  }
+  return []; // guaranteed to find by problem statement
 }
 
-// === Test Cases ===
-// console.log(fairCandySwap(/* example 1 */)); // expected
-// console.log(fairCandySwap(/* example 2 */)); // expected
-// console.log(fairCandySwap(/* edge case */)); // expected
+console.log(fairCandySwap([1, 1], [2, 2])); // [1, 2]
+console.log(fairCandySwap([1, 2], [2, 3])); // [1, 2]
+console.log(fairCandySwap([2], [1, 3])); // [2, 3]
+console.log(fairCandySwap([1, 2, 5], [2, 4])); // [5, 4]
+
+// ─── Solution 3: Sort + Binary Search — O(n log n + m log m) ───
+function fairCandySwapBS(aliceSizes: number[], bobSizes: number[]): number[] {
+  const sumA = aliceSizes.reduce((a, b) => a + b, 0);
+  const sumB = bobSizes.reduce((a, b) => a + b, 0);
+  const diff = (sumA - sumB) / 2;
+
+  const sortedB = [...bobSizes].sort((a, b) => a - b);
+
+  const binarySearch = (target: number): boolean => {
+    let lo = 0,
+      hi = sortedB.length - 1;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      if (sortedB[mid] === target) return true;
+      if (sortedB[mid] < target) lo = mid + 1;
+      else hi = mid - 1;
+    }
+    return false;
+  };
+
+  for (const a of aliceSizes) {
+    const b = a - diff;
+    if (Number.isInteger(b) && binarySearch(b)) return [a, b];
+  }
+  return [];
+}
+
+console.log(fairCandySwapBS([1, 1], [2, 2])); // [1, 2]
+console.log(fairCandySwapBS([2], [1, 3])); // [2, 3]
 ```
 
----
+## 🔗 Related Problems / Bài Liên Quan
 
-## 🔗 Related Problems
-
-- [Missing Number](https://leetcode.com/problems/missing-number) — same pattern: Binary Search
-- [Intersection of Two Arrays](https://leetcode.com/problems/intersection-of-two-arrays) — same pattern: Two Pointers
-- [Number of Flowers in Full Bloom](https://leetcode.com/problems/number-of-flowers-in-full-bloom) — same pattern: Prefix Sum
-- [Maximum Total Damage With Spell Casting](https://leetcode.com/problems/maximum-total-damage-with-spell-casting) — same pattern: Two Pointers
-- [Fair Candy Swap — LeetCode](https://leetcode.com/problems/fair-candy-swap) — problem page
+| #   | Problem         | Pattern      |
+| --- | --------------- | ------------ |
+| 888 | Fair Candy Swap | This problem |
+| 1   | Two Sum         | Hash Map     |
+| 268 | Missing Number  | Math         |
+| 454 | 4Sum II         | Hash Map     |

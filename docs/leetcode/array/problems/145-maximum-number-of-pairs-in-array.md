@@ -7,100 +7,126 @@ tags: [Array, Hash Table, Counting]
 leetcode_url: "https://leetcode.com/problems/maximum-number-of-pairs-in-array"
 ---
 
-# Maximum Number of Pairs in Array / Maximum Number of Pairs in Array
+# Maximum Number of Pairs in Array / Số Cặp Tối Đa Trong Mảng
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Majority Element](https://leetcode.com/problems/majority-element) | [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words)
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map / Counting
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition / Trực Giác
 
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
+**VI:** Bài toán giống ghép đôi tất: đếm tần số từng số, số cặp = `tần_số // 2`, số còn dư = `tần_số % 2`. Tổng cặp = tổng tất cả `freq // 2`, tổng còn dư = tổng tất cả `freq % 2`.
 
-**Pattern Recognition:**
-
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Maximum Number of Pairs in Array example:**
+**EN:** Like pairing socks: count frequencies, pairs = `freq // 2`, leftover = `freq % 2`. Total pairs = sum of all `freq // 2`, leftover count = sum of all `freq % 2`.
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
+nums = [1, 3, 2, 1, 3, 2, 2]
+freq: {1:2, 3:2, 2:3}
 
-Key insight: store complement for O(1) lookup
+1 → 2//2=1 pair, 2%2=0 leftover
+3 → 2//2=1 pair, 2%2=0 leftover
+2 → 3//2=1 pair, 3%2=1 leftover
+
+Total: pairs=3, leftover=1 → [3, 1]
 ```
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-Maximum Number of Pairs in Array. ([LeetCode](https://leetcode.com/problems/maximum-number-of-pairs-in-array))
-
-Difficulty: Easy | Acceptance: 75.5%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/maximum-number-of-pairs-in-array) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🟢 **EN:** Core formula: pairs = Math.floor(freq / 2), leftover = freq % 2.
+  **VI:** Công thức cốt lõi: cặp = Math.floor(tần_số / 2), còn dư = tần_số % 2.
+- 🟢 **EN:** Use a Map or plain object to count frequencies in one pass.
+  **VI:** Dùng Map hoặc object để đếm tần số trong một lượt duyệt.
+- 🟢 **EN:** XOR trick: maintain a "seen" set — if num in set, form a pair; else add to set.
+  **VI:** Mẹo XOR: duy trì set "đã thấy" — nếu số có trong set thì tạo cặp; không thì thêm vào.
+- 🟢 **EN:** Result[0] = total pairs, result[1] = remaining unpaired elements.
+  **VI:** Kết quả[0] = tổng cặp, kết quả[1] = số phần tử chưa được ghép.
+- 🟢 **EN:** Note: result[0] + result[1] doesn't necessarily equal n; leftover ≠ n - 2\*pairs in all framings.
+  **VI:** Lưu ý: result[0] + result[1] không nhất thiết bằng n.
+- 🟢 **EN:** Time O(n), Space O(n) for frequency map; O(1) with the XOR/toggle set approach.
+  **VI:** Thời gian O(n), Không gian O(n) với map; O(1) với phương pháp toggle set.
 
 ---
 
-## Solutions
+## Solutions / Giải Pháp
+
+### Solution 1: Frequency Map — O(n) Time, O(n) Space ✅
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function maximumNumberOfPairsInArrayBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function numberOfPairs_freq(nums: number[]): number[] {
+  const freq = new Map<number, number>();
+  for (const n of nums) freq.set(n, (freq.get(n) ?? 0) + 1);
+
+  let pairs = 0,
+    leftover = 0;
+  for (const cnt of freq.values()) {
+    pairs += Math.floor(cnt / 2);
+    leftover += cnt % 2;
+  }
+  return [pairs, leftover];
 }
 
-/**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function maximumNumberOfPairsInArray(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
+console.log(numberOfPairs_freq([1, 3, 2, 1, 3, 2, 2])); // [3, 1]
+console.log(numberOfPairs_freq([1, 1])); // [1, 0]
+console.log(numberOfPairs_freq([0])); // [0, 1]
+```
+
+### Solution 2: Toggle Set (Simulated Matching) — O(n) Time, O(n) Space ✅ Optimal
+
+```typescript
+function numberOfPairs(nums: number[]): number[] {
+  const waiting = new Set<number>(); // elements waiting for a match
+  let pairs = 0;
+
+  for (const n of nums) {
+    if (waiting.has(n)) {
+      pairs++;
+      waiting.delete(n); // pair formed, remove from waiting
+    } else {
+      waiting.add(n);
+    }
+  }
+  return [pairs, waiting.size]; // waiting.size = leftover count
 }
 
-// === Test Cases ===
-// console.log(maximumNumberOfPairsInArray(/* example 1 */)); // expected
-// console.log(maximumNumberOfPairsInArray(/* example 2 */)); // expected
-// console.log(maximumNumberOfPairsInArray(/* edge case */)); // expected
+// Test cases
+console.log(numberOfPairs([1, 3, 2, 1, 3, 2, 2])); // Expected: [3, 1]
+console.log(numberOfPairs([1, 1])); // Expected: [1, 0]
+console.log(numberOfPairs([0])); // Expected: [0, 1]
+console.log(numberOfPairs([5, 5, 5, 5])); // Expected: [2, 0]
+console.log(numberOfPairs([1, 2, 3, 4])); // Expected: [0, 4]
+```
+
+### Solution 3: Sort + Count — O(n log n) Time, O(1) Extra Space
+
+```typescript
+function numberOfPairs_sort(nums: number[]): number[] {
+  nums.sort((a, b) => a - b);
+  let pairs = 0,
+    leftover = 0;
+  let i = 0;
+  while (i < nums.length) {
+    if (i + 1 < nums.length && nums[i] === nums[i + 1]) {
+      pairs++;
+      i += 2;
+    } else {
+      leftover++;
+      i++;
+    }
+  }
+  return [pairs, leftover];
+}
+
+console.log(numberOfPairs_sort([1, 3, 2, 1, 3, 2, 2])); // [3, 1]
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Majority Element](https://leetcode.com/problems/majority-element) — same pattern: Divide and Conquer
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Task Scheduler](https://leetcode.com/problems/task-scheduler) — same pattern: Heap / Priority Queue
-- [Pairs of Songs With Total Durations Divisible by 60](https://leetcode.com/problems/pairs-of-songs-with-total-durations-divisible-by-60) — same pattern: Hash Map
-- [Maximum Number of Pairs in Array — LeetCode](https://leetcode.com/problems/maximum-number-of-pairs-in-array) — problem page
+| #    | Problem                          | Difficulty | Pattern  |
+| ---- | -------------------------------- | ---------- | -------- |
+| 1512 | Number of Good Pairs             | 🟢 Easy    | Hash Map |
+| 2206 | Divide Array Into Equal Pairs    | 🟢 Easy    | Counting |
+| 2341 | Maximum Number of Pairs in Array | 🟢 Easy    | Hash Map |

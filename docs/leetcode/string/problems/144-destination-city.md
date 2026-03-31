@@ -7,100 +7,131 @@ tags: [Array, Hash Table, String]
 leetcode_url: "https://leetcode.com/problems/destination-city"
 ---
 
-# Destination City / Destination City
+# Destination City / Thành Phố Đích
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map
-> **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) | [Longest String Chain](https://leetcode.com/problems/longest-string-chain)
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Set
 
----
+## 🧠 Intuition / Trực Giác
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
-
-**Pattern Recognition:**
-
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Destination City example:**
+**Vietnamese analogy**: Trong mạng lưới đường một chiều, thành phố đích cuối cùng là thành phố không có chuyến đi nào khởi hành từ đó. Thu thập tất cả điểm xuất phát vào Set, rồi tìm điểm đến không nằm trong Set.
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
+paths = [["London","New York"],["New York","Lima"],["Lima","Sao Paulo"]]
 
-Key insight: store complement for O(1) lookup
+Sources = { "London", "New York", "Lima" }
+Destinations = { "New York", "Lima", "Sao Paulo" }
+
+"Sao Paulo" not in Sources → answer = "Sao Paulo"
 ```
 
----
+**Key insight**: Collect all `cityA` (sources) into a Set. Find the one `cityB` (destination) not in that set.
 
-## Problem Description
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-Destination City. ([LeetCode](https://leetcode.com/problems/destination-city))
-
-Difficulty: Easy | Acceptance: 79.4%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/destination-city) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🔑 **EN**: Only source cities go into the Set — destinations are not added
+  **VI**: Chỉ thêm thành phố xuất phát vào Set — thành phố đích không thêm vào
+- 🔑 **EN**: There is exactly one valid answer guaranteed — stop at first match
+  **VI**: Đề bảo đảm chính xác một đáp án — dừng ngay khi tìm thấy
+- 🔑 **EN**: Two-pass: first build set of sources, then scan destinations
+  **VI**: Hai lượt: lượt đầu xây Set nguồn, lượt hai duyệt đích
+- 🔑 **EN**: One-pass alternative: add all sources, return destination with Set.has check
+  **VI**: Cách một lượt: thêm mọi nguồn, trả về đích không có trong Set
+- 🔑 **EN**: Time O(n), Space O(n) — optimal
+  **VI**: Thời gian O(n), Không gian O(n) — tối ưu
+- 🔑 **EN**: Edge: paths has only one entry → source of it is not the answer, its dest is
+  **VI**: Trường hợp đặc biệt: paths chỉ có một phần tử → đích của nó là đáp án
 
 ---
-
-## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function destinationCityBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// ─── Solution 1: Hash Set — O(n) time, O(n) space ────────────────────────────
+function destCity(paths: string[][]): string {
+  const sources = new Set<string>();
+  for (const [from] of paths) sources.add(from);
+
+  for (const [, to] of paths) {
+    if (!sources.has(to)) return to;
+  }
+
+  return ""; // guaranteed to find an answer
 }
 
-/**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function destinationCity(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
+// Tests
+console.log(
+  destCity([
+    ["London", "New York"],
+    ["New York", "Lima"],
+    ["Lima", "Sao Paulo"],
+  ]),
+);
+// "Sao Paulo"
+console.log(
+  destCity([
+    ["B", "C"],
+    ["D", "B"],
+    ["C", "A"],
+  ]),
+);
+// "A"
+console.log(destCity([["A", "Z"]]));
+// "Z"
+```
+
+```typescript
+// ─── Solution 2: One-Pass with Set — O(n) time ───────────────────────────────
+function destCity2(paths: string[][]): string {
+  const sources = new Set(paths.map(([from]) => from));
+  // Find destination not in sources
+  return paths.find(([, to]) => !sources.has(to))![1];
 }
 
-// === Test Cases ===
-// console.log(destinationCity(/* example 1 */)); // expected
-// console.log(destinationCity(/* example 2 */)); // expected
-// console.log(destinationCity(/* edge case */)); // expected
+// Tests
+console.log(
+  destCity2([
+    ["London", "New York"],
+    ["New York", "Lima"],
+    ["Lima", "Sao Paulo"],
+  ]),
+);
+// "Sao Paulo"
+console.log(
+  destCity2([
+    ["B", "C"],
+    ["D", "B"],
+    ["C", "A"],
+  ]),
+);
+// "A"
+```
+
+```typescript
+// ─── Solution 3: Map degree approach (in-degree / out-degree) ────────────────
+function destCity3(paths: string[][]): string {
+  // out-degree: cities that have outgoing paths
+  // The destination city has out-degree = 0
+  const outgoing = new Set(paths.map((p) => p[0]));
+  const allDests = paths.map((p) => p[1]);
+  return allDests.find((city) => !outgoing.has(city))!;
+}
+
+// Tests
+console.log(
+  destCity3([
+    ["London", "New York"],
+    ["New York", "Lima"],
+    ["Lima", "Sao Paulo"],
+  ]),
+);
+// "Sao Paulo"
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Longest String Chain](https://leetcode.com/problems/longest-string-chain) — same pattern: Two Pointers
-- [Word Break II](https://leetcode.com/problems/word-break-ii) — same pattern: Trie
-- [Open the Lock](https://leetcode.com/problems/open-the-lock) — same pattern: BFS
-- [Destination City — LeetCode](https://leetcode.com/problems/destination-city) — problem page
+| #    | Problem                   | Difficulty | Pattern        |
+| ---- | ------------------------- | ---------- | -------------- |
+| 997  | Find the Town Judge       | 🟢 Easy    | Graph / Degree |
+| 1791 | Find Center of Star Graph | 🟢 Easy    | Graph          |
+| 277  | Find the Celebrity        | 🟡 Medium  | Graph          |
+| 2360 | Longest Cycle in a Graph  | 🔴 Hard    | DFS            |

@@ -7,100 +7,100 @@ tags: [Math, Two Pointers, Binary Search]
 leetcode_url: "https://leetcode.com/problems/sum-of-square-numbers"
 ---
 
-# Sum of Square Numbers / Sum of Square Numbers
+# Sum of Square Numbers / Tổng Hai Số Bình Phương
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Two Pointers
-> **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Happy Number](https://leetcode.com/problems/happy-number) | [Sqrt(x)](https://leetcode.com/problems/sqrtx)
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Two Pointers / Math
 
----
+## 🧠 Intuition / Trực Giác
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Hãy tưởng tượng hai người đi từ hai đầu con đường, tiến lại gần nhau. Mỗi bước, người nào ở vị trí "tốt hơn" sẽ đứng yên, người kia tiến. Khi họ gặp nhau, bài toán được giải.
-
-**Pattern Recognition:**
-
-- Signal: "sorted array" + "find pair/triplet" → **Two Pointers**
-- Bài này thuộc dạng Two Pointers — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Sum of Square Numbers example:**
+**Vietnamese analogy**: Kiểm tra xem số `c` có thể viết là `a² + b²` với `a, b ≥ 0` không. Dùng hai con trỏ: `a=0` và `b=√c`. Nếu `a² + b² = c` → true; nếu nhỏ hơn tăng `a`; nếu lớn hơn giảm `b`.
 
 ```
-arr = [... sorted ...]
- L                 R
+c = 5
+a=0, b=2: 0+4=4 < 5 → a++
+a=1, b=2: 1+4=5 = 5 → return true ✅ (1²+2²=5)
 
-Step 1: check condition → move L or R
-Step 2: ...
-Step N: condition met ✅
+c = 3
+a=0, b=1: 0+1=1 < 3 → a++
+a=1, b=1: 1+1=2 < 3 → a++
+a=2 > b=1 → return false ✅
 ```
 
----
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-## Problem Description
-
-Sum of Square Numbers. ([LeetCode](https://leetcode.com/problems/sum-of-square-numbers))
-
-Difficulty: Medium | Acceptance: 36.5%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/sum-of-square-numbers) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Mảng đã sorted chưa? Có duplicate không?" / Ask if array is sorted and if duplicates exist
-2. **Brute force**: "Dùng 2 vòng for O(n²)" → optimize with two pointers O(n) / Start with nested loops, then optimize
-3. **Optimize**: "Vì mảng sorted, dùng 2 con trỏ L/R tiến vào giữa" / Since sorted, use L/R pointers moving inward
-4. **Edge cases**: "Mảng rỗng, một phần tử, tất cả giống nhau" / Empty array, single element, all same values
-
----
+- 🔑 **Two pointers** / a=0, b=floor(√c): hội tụ vào giữa — O(√c) time
+- 🔑 **Why √c?** / b² ≤ c nên b ≤ √c — đây là giới hạn trên chặt
+- 🔑 **No overflow** / `a*a + b*b` với a,b ≤ √(2^31) ≈ 46340 — an toàn trong number
+- 🔑 **Binary search variant** / Với mỗi a, binary search tìm b² = c - a² — O(√c log c)
+- 🔑 **HashSet variant** / Tính mọi bình phương ≤ c vào set, kiểm tra (c - a²) ∈ set
+- 🔑 **Edge c=0** / 0 = 0² + 0² → true
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function sumOfSquareNumbersBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// ─── Solution 1: Brute Force — O(√c × log c) ───
+function judgeSquareSumBrute(c: number): boolean {
+  for (let a = 0; a * a <= c; a++) {
+    const rem = c - a * a;
+    // Binary search for b² = rem
+    let lo = 0,
+      hi = rem;
+    while (lo <= hi) {
+      const mid = Math.floor((lo + hi) / 2);
+      const sq = mid * mid;
+      if (sq === rem) return true;
+      if (sq < rem) lo = mid + 1;
+      else hi = mid - 1;
+    }
+  }
+  return false;
 }
 
-/**
- * Solution 2: Optimized — Two Pointers
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function sumOfSquareNumbers(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Two Pointers
-  // Hint: Use L/R pointers on sorted input, move based on comparison
-  throw new Error('Not implemented');
+console.log(judgeSquareSumBrute(5)); // true
+console.log(judgeSquareSumBrute(3)); // false
+
+// ─── Solution 2: Two Pointers — O(√c) ───
+function judgeSquareSum(c: number): boolean {
+  let a = 0;
+  let b = Math.floor(Math.sqrt(c));
+
+  while (a <= b) {
+    const sum = a * a + b * b;
+    if (sum === c) return true;
+    if (sum < c) a++;
+    else b--;
+  }
+  return false;
 }
 
-// === Test Cases ===
-// console.log(sumOfSquareNumbers(/* example 1 */)); // expected
-// console.log(sumOfSquareNumbers(/* example 2 */)); // expected
-// console.log(sumOfSquareNumbers(/* edge case */)); // expected
+console.log(judgeSquareSum(0)); // true  (0²+0²)
+console.log(judgeSquareSum(5)); // true  (1²+2²)
+console.log(judgeSquareSum(3)); // false
+console.log(judgeSquareSum(4)); // true  (0²+2²)
+console.log(judgeSquareSum(2)); // true  (1²+1²)
+console.log(judgeSquareSum(1)); // true  (0²+1²)
+
+// ─── Solution 3: HashSet — O(√c) space ───
+function judgeSquareSumSet(c: number): boolean {
+  const squares = new Set<number>();
+  for (let i = 0; i * i <= c; i++) squares.add(i * i);
+
+  for (const sq of squares) {
+    if (squares.has(c - sq)) return true;
+  }
+  return false;
+}
+
+console.log(judgeSquareSumSet(5)); // true
+console.log(judgeSquareSumSet(3)); // false
+console.log(judgeSquareSumSet(25)); // true (3²+4²)
 ```
 
----
+## 🔗 Related Problems / Bài Liên Quan
 
-## 🔗 Related Problems
-
-- [Happy Number](https://leetcode.com/problems/happy-number) — same pattern: Two Pointers
-- [Sqrt(x)](https://leetcode.com/problems/sqrtx) — same pattern: Binary Search
-- [Random Pick with Weight](https://leetcode.com/problems/random-pick-with-weight) — same pattern: Prefix Sum
-- [Missing Number](https://leetcode.com/problems/missing-number) — same pattern: Binary Search
-- [Sum of Square Numbers — LeetCode](https://leetcode.com/problems/sum-of-square-numbers) — problem page
+| #   | Problem               | Pattern                 |
+| --- | --------------------- | ----------------------- |
+| 633 | Sum of Square Numbers | This problem            |
+| 367 | Valid Perfect Square  | Binary Search           |
+| 1   | Two Sum               | Two Pointers / Hash Map |
+| 202 | Happy Number          | Math / Floyd Cycle      |

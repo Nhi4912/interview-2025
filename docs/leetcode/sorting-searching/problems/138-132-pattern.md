@@ -7,103 +7,93 @@ tags: [Array, Binary Search, Stack, Monotonic Stack, Ordered Set]
 leetcode_url: "https://leetcode.com/problems/132-pattern"
 ---
 
-# 132 Pattern / 132 Pattern
+# 132 Pattern / Mẫu 132
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Monotonic Stack
-> **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Shortest Subarray to be Removed to Make Array Sorted](https://leetcode.com/problems/shortest-subarray-to-be-removed-to-make-array-sorted) | [Find Building Where Alice and Bob Can Meet](https://leetcode.com/problems/find-building-where-alice-and-bob-can-meet)
 
----
+## 🧠 Intuition / Trực Giác
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Giống dãy núi — giữ stack luôn đơn điệu (tăng hoặc giảm). Khi gặp phần tử phá vỡ tính đơn điệu, ta biết ngay đáp án cho các phần tử trước đó.
-
-**Pattern Recognition:**
-
-- Signal: "next greater/smaller element" → **Monotonic Stack**
-- Bài này thuộc dạng Monotonic Stack — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — 132 Pattern example:**
+**Vietnamese analogy**: Tìm ba chỉ số i < j < k sao cho `nums[i] < nums[k] < nums[j]` (mẫu "1-3-2"). Đi từ phải sang trái: dùng stack đơn điệu để theo dõi ứng viên "3" (nums[j]), khi pop ra được giá trị lớn hơn min hiện tại ta giữ lại làm "2" (nums[k]). Nếu tìm được "1" < "2" thì thành công.
 
 ```
-arr = [2, 1, 5, 6, 2, 3]
-stack (indices): []
+nums = [3, 1, 4, 2]   ← answer: 1 < 2 < 4
 
-i=0: push 0         stack=[0]          (vals: [2])
-i=1: 1<2 → push     stack=[0,1]        (vals: [2,1])
-i=2: 5>1 → pop, process; 5>2 → pop, process
-     push           stack=[2]          (vals: [5])
-...
+Scan right-to-left:
+  i=3: stack=[], push 2.  stack=[2], k_max=-Inf
+  i=2: 4 > 2 → pop 2, k_max=2. push 4. stack=[4], k_max=2
+  i=1: nums[1]=1 < k_max=2 → FOUND 132 pattern! return true
+  Pattern: nums[1]=1 (1) < nums[3]=2 (2) < nums[2]=4 (3) ✅
 ```
 
----
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-## Problem Description
-
-132 Pattern. ([LeetCode](https://leetcode.com/problems/132-pattern))
-
-Difficulty: Medium | Acceptance: 34.1%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/132-pattern) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- 🔑 **Right-to-left scan** / Quét từ phải sang trái: stack giữ ứng viên "3", pop cho ứng viên "2"
+- 🔑 **Monotonic stack** / Stack giảm dần: khi gặp phần tử lớn hơn đỉnh stack thì pop
+- 🔑 **k_max tracks "2"** / `k_max` = max giá trị đã pop = ứng viên tốt nhất cho nums[k]
+- 🔑 **Early exit** / Nếu `nums[i] < k_max` → tìm thấy "1", trả về true ngay
+- 🔑 **Brute force** / O(n³) 3 vòng lồng nhau → O(n²) 2 vòng → O(n) monotonic stack
+- 🔑 **Edge** / Mảng < 3 phần tử → false; mảng tăng dần → false (k_max luôn = -Inf)
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function 132PatternBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// ─── Solution 1: Brute Force — O(n³) ───
+function find132patternBrute(nums: number[]): boolean {
+  const n = nums.length;
+  for (let i = 0; i < n - 2; i++)
+    for (let j = i + 1; j < n - 1; j++)
+      for (let k = j + 1; k < n; k++) if (nums[i] < nums[k] && nums[k] < nums[j]) return true;
+  return false;
 }
 
-/**
- * Solution 2: Optimized — Monotonic Stack
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function 132Pattern(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Monotonic Stack
-  // Hint: Maintain monotonic property, pop when new element breaks it
-  throw new Error('Not implemented');
+console.log(find132patternBrute([1, 2, 3, 4])); // false
+console.log(find132patternBrute([3, 1, 4, 2])); // true
+console.log(find132patternBrute([-1, 3, 2, 0])); // true
+
+// ─── Solution 2: O(n²) — track min prefix ───
+function find132patternN2(nums: number[]): boolean {
+  const n = nums.length;
+  let minLeft = nums[0];
+  for (let j = 1; j < n - 1; j++) {
+    for (let k = j + 1; k < n; k++) {
+      if (minLeft < nums[k] && nums[k] < nums[j]) return true;
+    }
+    minLeft = Math.min(minLeft, nums[j]);
+  }
+  return false;
 }
 
-// === Test Cases ===
-// console.log(132Pattern(/* example 1 */)); // expected
-// console.log(132Pattern(/* example 2 */)); // expected
-// console.log(132Pattern(/* edge case */)); // expected
+// ─── Solution 3: Monotonic Stack — O(n) ───
+function find132pattern(nums: number[]): boolean {
+  const n = nums.length;
+  const stack: number[] = []; // decreasing stack, holds "3" candidates
+  let kMax = -Infinity; // best "2" candidate (max popped value)
+
+  // Scan right → left
+  for (let i = n - 1; i >= 0; i--) {
+    // nums[i] is our "1" candidate
+    if (nums[i] < kMax) return true;
+
+    // Pop smaller elements — they become better "2" candidates
+    while (stack.length && stack[stack.length - 1] < nums[i]) {
+      kMax = Math.max(kMax, stack.pop()!);
+    }
+    stack.push(nums[i]);
+  }
+  return false;
+}
+
+console.log(find132pattern([1, 2, 3, 4])); // false
+console.log(find132pattern([3, 1, 4, 2])); // true
+console.log(find132pattern([-1, 3, 2, 0])); // true
+console.log(find132pattern([1, 0, 1, -4, -3])); // false
 ```
 
----
+## 🔗 Related Problems / Bài Liên Quan
 
-## 🔗 Related Problems
-
-- [Shortest Subarray to be Removed to Make Array Sorted](https://leetcode.com/problems/shortest-subarray-to-be-removed-to-make-array-sorted) — same pattern: Monotonic Stack
-- [Find Building Where Alice and Bob Can Meet](https://leetcode.com/problems/find-building-where-alice-and-bob-can-meet) — same pattern: Segment Tree
-- [Largest Rectangle in Histogram](https://leetcode.com/problems/largest-rectangle-in-histogram) — same pattern: Monotonic Stack
-- [Maximal Rectangle](https://leetcode.com/problems/maximal-rectangle) — same pattern: Monotonic Stack
-- [132 Pattern — LeetCode](https://leetcode.com/problems/132-pattern) — problem page
+| #   | Problem                        | Pattern         |
+| --- | ------------------------------ | --------------- |
+| 456 | 132 Pattern                    | This problem    |
+| 84  | Largest Rectangle in Histogram | Monotonic Stack |
+| 85  | Maximal Rectangle              | Monotonic Stack |
+| 901 | Online Stock Span              | Monotonic Stack |

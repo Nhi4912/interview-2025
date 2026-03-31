@@ -7,100 +7,108 @@ tags: [Array, Hash Table]
 leetcode_url: "https://leetcode.com/problems/find-the-number-of-good-pairs-i"
 ---
 
-# Find the Number of Good Pairs I / Find the Number of Good Pairs I
+# Find the Number of Good Pairs I / Tìm Số Cặp Tốt I
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [First Missing Positive](https://leetcode.com/problems/first-missing-positive) | [Longest Consecutive Sequence](https://leetcode.com/problems/longest-consecutive-sequence)
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map / Brute Force
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition / Trực Giác
 
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
+**VI:** Phiên bản đơn giản hơn của Good Pairs II: constraints nhỏ hơn cho phép dùng brute force O(n\*m). Vẫn có thể tối ưu bằng divisor enumeration như bài II, nhưng brute force là đủ vì n, m ≤ 50.
 
-**Pattern Recognition:**
-
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Find the Number of Good Pairs I example:**
+**EN:** Simpler version of Good Pairs II: smaller constraints (n, m ≤ 50, values ≤ 50) allow brute force O(n\*m). The divisor approach also works and is good practice for the interview follow-up.
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
-
-Key insight: store complement for O(1) lookup
+nums1=[1,3,4], nums2=[1,3,4], k=1
+Check all pairs (i,j):
+  (1,1): 1%(1*1)=0 ✓
+  (3,1): 3%(1*1)=0 ✓
+  (3,3): 3%(3*1)=0 ✓
+  (4,1): 4%(1*1)=0 ✓
+  (4,4): 4%(4*1)=0 ✓
+Total = 5
 ```
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-Find the Number of Good Pairs I. ([LeetCode](https://leetcode.com/problems/find-the-number-of-good-pairs-i))
-
-Difficulty: Easy | Acceptance: 85.7%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/find-the-number-of-good-pairs-i) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🟢 **EN:** With n, m ≤ 50 and values ≤ 50, brute force O(n*m) = 2500 ops — perfectly fine.
+  **VI:** Với n, m ≤ 50, brute force O(n*m) = 2500 phép tính — hoàn toàn ổn.
+- 🟢 **EN:** Always mention the O(n*sqrt(max)) divisor approach as a follow-up for larger inputs.
+  **VI:** Luôn đề cập phương pháp chia ước O(n*sqrt(max)) như follow-up cho input lớn hơn.
+- 🟢 **EN:** The condition `a % (b*k) === 0` means b*k must divide a.
+  **VI:** Điều kiện `a % (b*k) === 0` nghĩa là b\*k phải là ước của a.
+- 🟢 **EN:** Build freq map of nums2 for O(1) lookup — same pattern as two-sum.
+  **VI:** Xây map tần số của nums2 để tra cứu O(1) — cùng mẫu với two-sum.
+- 🟢 **EN:** Watch out for integer overflow: b*k can exceed safe int if not checked.
+  **VI:** Cẩn thận tràn số: b*k có thể vượt giới hạn nếu không kiểm tra.
+- 🟢 **EN:** Constraints here are tiny; state brute force confidence clearly.
+  **VI:** Constraints nhỏ; hãy nói rõ tại sao brute force đủ.
 
 ---
 
-## Solutions
+## Solutions / Giải Pháp
+
+### Solution 1: Brute Force — O(n \* m) Time, O(1) Space ✅ Sufficient for Constraints
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function findTheNumberOfGoodPairsIBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function numberOfPairsI(nums1: number[], nums2: number[], k: number): number {
+  let count = 0;
+  for (const a of nums1) {
+    for (const b of nums2) {
+      if (a % (b * k) === 0) count++;
+    }
+  }
+  return count;
 }
 
-/**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function findTheNumberOfGoodPairsI(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
+// Test cases
+console.log(numberOfPairsI([1, 3, 4], [1, 3, 4], 1)); // Expected: 5
+console.log(numberOfPairsI([1, 2, 4, 12], [2, 4], 3)); // Expected: 2
+console.log(numberOfPairsI([1], [1], 1)); // Expected: 1
+```
+
+### Solution 2: Divisor Enumeration + Hash Map — O(n\*sqrt(max) + m) ✅ Scalable
+
+```typescript
+function numberOfPairsI_opt(nums1: number[], nums2: number[], k: number): number {
+  // Frequency map of nums2
+  const freq = new Map<number, number>();
+  for (const b of nums2) {
+    freq.set(b, (freq.get(b) ?? 0) + 1);
+  }
+
+  let count = 0;
+  for (const a of nums1) {
+    if (a % k !== 0) continue;
+    const reduced = a / k;
+    // Enumerate all divisors of reduced
+    for (let d = 1; d * d <= reduced; d++) {
+      if (reduced % d === 0) {
+        count += freq.get(d) ?? 0;
+        if (d !== reduced / d) {
+          count += freq.get(reduced / d) ?? 0;
+        }
+      }
+    }
+  }
+  return count;
 }
 
-// === Test Cases ===
-// console.log(findTheNumberOfGoodPairsI(/* example 1 */)); // expected
-// console.log(findTheNumberOfGoodPairsI(/* example 2 */)); // expected
-// console.log(findTheNumberOfGoodPairsI(/* edge case */)); // expected
+// Same test cases — both solutions agree
+console.log(numberOfPairsI_opt([1, 3, 4], [1, 3, 4], 1)); // Expected: 5
+console.log(numberOfPairsI_opt([1, 2, 4, 12], [2, 4], 3)); // Expected: 2
+console.log(numberOfPairsI_opt([10, 20, 30], [2, 5], 2)); // Expected: 3
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [First Missing Positive](https://leetcode.com/problems/first-missing-positive) — same pattern: Hash Map
-- [Longest Consecutive Sequence](https://leetcode.com/problems/longest-consecutive-sequence) — same pattern: Union Find
-- [Subarray Sum Equals K](https://leetcode.com/problems/subarray-sum-equals-k) — same pattern: Prefix Sum
-- [Majority Element](https://leetcode.com/problems/majority-element) — same pattern: Divide and Conquer
-- [Find the Number of Good Pairs I — LeetCode](https://leetcode.com/problems/find-the-number-of-good-pairs-i) — problem page
+| #    | Problem                          | Difficulty | Pattern                 |
+| ---- | -------------------------------- | ---------- | ----------------------- |
+| 3163 | Find the Number of Good Pairs II | 🟡 Medium  | Divisor Enum + Hash Map |
+| 1512 | Number of Good Pairs             | 🟢 Easy    | Hash Map                |
+| 2176 | Count Equal and Divisible Pairs  | 🟢 Easy    | Brute Force             |

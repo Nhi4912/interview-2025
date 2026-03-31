@@ -7,97 +7,213 @@ tags: [Array, Binary Search, Breadth-First Search, Union Find, Heap (Priority Qu
 leetcode_url: "https://leetcode.com/problems/find-the-safest-path-in-a-grid"
 ---
 
-# Find the Safest Path in a Grid / Find the Safest Path in a Grid
+# Find the Safest Path in a Grid / Tìm Đường An Toàn Nhất Trong Lưới
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Union Find
-> **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Swim in Rising Water](https://leetcode.com/problems/swim-in-rising-water) | [Path With Minimum Effort](https://leetcode.com/problems/path-with-minimum-effort)
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Multi-source BFS + Binary Search
 
----
+## 🧠 Intuition
 
-## 🧠 Intuition / Tư Duy
+**VI**: Hãy tưởng tượng các tên trộm phát ra "sóng nguy hiểm" lan ra xung quanh — như ném đá xuống ao. Khoảng cách từ mỗi ô đến tên trộm gần nhất chính là "độ an toàn". BFS đa nguồn tính bản đồ này trong O(n²). Sau đó, binary search trên ngưỡng an toàn tối thiểu để tìm giá trị lớn nhất cho phép đi từ (0,0) đến (n-1,n-1).
 
-**Analogy:** Giống nhóm bạn — ban đầu ai cũng riêng, khi hai người kết bạn thì nhóm họ gộp lại. Union Find quản lý các nhóm này hiệu quả.
-
-**Pattern Recognition:**
-
-- Signal: "group elements" + "connectivity queries" → **Union Find**
-- Bài này thuộc dạng Union Find — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Find the Safest Path in a Grid example:**
+**EN**: Multi-source BFS from all thieves simultaneously computes `dist[r][c]` = distance to nearest thief. Binary search on threshold k; check reachability via BFS using only cells with `dist ≥ k`.
 
 ```
-// TODO: Add step-by-step visual for Union Find
-// Show one complete example with state at each step
+Thieves → dist grid (safeness):   Binary search answer:
+1 0 0      0 1 2                  threshold=2? path exists!
+0 0 0  →   1 1 1   →  (0,0)→(2,2) via right-right-down
+0 0 1      2 1 0                  min dist along path = 1
 ```
-
----
-
-## Problem Description
-
-Find the Safest Path in a Grid. ([LeetCode](https://leetcode.com/problems/find-the-safest-path-in-a-grid))
-
-Difficulty: Medium | Acceptance: 48.4%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/find-the-safest-path-in-a-grid) for full constraints
-
----
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- 🇻🇳 BFS đa nguồn: đẩy TẤT CẢ thief vào queue cùng lúc ở distance=0, không lặp riêng từng cái.
+- 🇬🇧 Multi-source BFS: initialize queue with ALL thieves at distance 0 simultaneously.
+- 🇻🇳 Binary search trên câu trả lời: nếu threshold k đi được thì mọi k' < k cũng được → tìm max k.
+- 🇬🇧 Binary search on answer: monotone property — if k is feasible, k-1 is too; find the maximum feasible k.
+- 🇻🇳 Kiểm tra tính khả thi bằng BFS/DFS chỉ qua ô có dist ≥ threshold, O(n²) mỗi lần.
+- 🇬🇧 Feasibility check is BFS/DFS restricted to dist ≥ threshold cells, O(n²) per check.
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function findTheSafestPathInAGridBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// ─── TreeNode helper (used across problems) ───
+class TreeNode {
+  val: number;
+  left: TreeNode | null;
+  right: TreeNode | null;
+  constructor(val = 0, left: TreeNode | null = null, right: TreeNode | null = null) {
+    this.val = val;
+    this.left = left;
+    this.right = right;
+  }
 }
 
-/**
- * Solution 2: Optimized — Union Find
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function findTheSafestPathInAGrid(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Union Find
-  // Hint: Use union-find with path compression and union by rank
-  throw new Error('Not implemented');
+// ─── Solution 1: Multi-source BFS distance map + Binary Search + BFS feasibility ───
+// Time: O(n² log n)  Space: O(n²)
+function maximumSafenessFactor(grid: number[][]): number {
+  const n = grid.length;
+  const dist: number[][] = Array.from({ length: n }, () => new Array(n).fill(-1));
+  const queue: number[] = []; // flat [r*n+c, ...]
+
+  for (let r = 0; r < n; r++)
+    for (let c = 0; c < n; c++)
+      if (grid[r][c] === 1) {
+        dist[r][c] = 0;
+        queue.push(r * n + c);
+      }
+
+  const dirs = [
+    [0, 1],
+    [0, -1],
+    [1, 0],
+    [-1, 0],
+  ];
+  let head = 0;
+  while (head < queue.length) {
+    const pos = queue[head++];
+    const r = (pos / n) | 0,
+      c = pos % n;
+    for (const [dr, dc] of dirs) {
+      const nr = r + dr,
+        nc = c + dc;
+      if (nr >= 0 && nr < n && nc >= 0 && nc < n && dist[nr][nc] === -1) {
+        dist[nr][nc] = dist[r][c] + 1;
+        queue.push(nr * n + nc);
+      }
+    }
+  }
+
+  const canReach = (threshold: number): boolean => {
+    if (dist[0][0] < threshold || dist[n - 1][n - 1] < threshold) return false;
+    const visited = Array.from({ length: n }, () => new Uint8Array(n));
+    const bq: number[] = [0];
+    visited[0][0] = 1;
+    let bh = 0;
+    while (bh < bq.length) {
+      const pos = bq[bh++];
+      const r = (pos / n) | 0,
+        c = pos % n;
+      if (r === n - 1 && c === n - 1) return true;
+      for (const [dr, dc] of dirs) {
+        const nr = r + dr,
+          nc = c + dc;
+        if (
+          nr >= 0 &&
+          nr < n &&
+          nc >= 0 &&
+          nc < n &&
+          !visited[nr][nc] &&
+          dist[nr][nc] >= threshold
+        ) {
+          visited[nr][nc] = 1;
+          bq.push(nr * n + nc);
+        }
+      }
+    }
+    return false;
+  };
+
+  let lo = 0,
+    hi = n * 2,
+    ans = 0;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (canReach(mid)) {
+      ans = mid;
+      lo = mid + 1;
+    } else hi = mid - 1;
+  }
+  return ans;
 }
 
-// === Test Cases ===
-// console.log(findTheSafestPathInAGrid(/* example 1 */)); // expected
-// console.log(findTheSafestPathInAGrid(/* example 2 */)); // expected
-// console.log(findTheSafestPathInAGrid(/* edge case */)); // expected
+// ─── Solution 2: Same BFS dist map + Dijkstra max-min path ───
+// Time: O(n² log n)  Space: O(n²)
+// Maximize the minimum dist along the path — classic Dijkstra variant
+function maximumSafenessFactor2(grid: number[][]): number {
+  const n = grid.length;
+  const dist: number[][] = Array.from({ length: n }, () => new Array(n).fill(-1));
+  const q: number[] = [];
+  for (let r = 0; r < n; r++)
+    for (let c = 0; c < n; c++)
+      if (grid[r][c] === 1) {
+        dist[r][c] = 0;
+        q.push(r * n + c);
+      }
+  const dirs = [
+    [0, 1],
+    [0, -1],
+    [1, 0],
+    [-1, 0],
+  ];
+  let head = 0;
+  while (head < q.length) {
+    const pos = q[head++];
+    const r = (pos / n) | 0,
+      c = pos % n;
+    for (const [dr, dc] of dirs) {
+      const nr = r + dr,
+        nc = c + dc;
+      if (nr >= 0 && nr < n && nc >= 0 && nc < n && dist[nr][nc] === -1) {
+        dist[nr][nc] = dist[r][c] + 1;
+        q.push(nr * n + nc);
+      }
+    }
+  }
+  // safe[r][c] = best (max-min) safeness to reach (r,c)
+  const safe: number[][] = Array.from({ length: n }, () => new Array(n).fill(-1));
+  safe[0][0] = dist[0][0];
+  // Simple max-heap via sorted list (interview-friendly)
+  const pq: [number, number, number][] = [[dist[0][0], 0, 0]];
+  while (pq.length) {
+    pq.sort((a, b) => b[0] - a[0]);
+    const [s, r, c] = pq.shift()!;
+    if (r === n - 1 && c === n - 1) return s;
+    if (s < safe[r][c]) continue;
+    for (const [dr, dc] of dirs) {
+      const nr = r + dr,
+        nc = c + dc;
+      if (nr >= 0 && nr < n && nc >= 0 && nc < n) {
+        const ns = Math.min(s, dist[nr][nc]);
+        if (ns > safe[nr][nc]) {
+          safe[nr][nc] = ns;
+          pq.push([ns, nr, nc]);
+        }
+      }
+    }
+  }
+  return 0;
+}
+
+// Tests
+console.log(
+  maximumSafenessFactor([
+    [1, 0, 0],
+    [0, 0, 0],
+    [0, 0, 1],
+  ]),
+); // 0
+console.log(
+  maximumSafenessFactor([
+    [0, 0, 1],
+    [0, 0, 0],
+    [0, 0, 0],
+  ]),
+); // 2
+console.log(
+  maximumSafenessFactor([
+    [0, 0, 0, 1],
+    [0, 0, 0, 0],
+    [0, 0, 0, 0],
+    [1, 0, 0, 0],
+  ]),
+); // 2
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Swim in Rising Water](https://leetcode.com/problems/swim-in-rising-water) — same pattern: Union Find
-- [Path With Minimum Effort](https://leetcode.com/problems/path-with-minimum-effort) — same pattern: Union Find
-- [Path With Maximum Minimum Value](https://leetcode.com/problems/path-with-maximum-minimum-value) — same pattern: Union Find
-- [Minimum Number of Visited Cells in a Grid](https://leetcode.com/problems/minimum-number-of-visited-cells-in-a-grid) — same pattern: Union Find
-- [Find the Safest Path in a Grid — LeetCode](https://leetcode.com/problems/find-the-safest-path-in-a-grid) — problem page
+| #    | Title                          | Difficulty | Pattern             |
+| ---- | ------------------------------ | ---------- | ------------------- |
+| 1091 | Shortest Path in Binary Matrix | 🟡 Medium  | BFS                 |
+| 778  | Swim in Rising Water           | 🔴 Hard    | Binary Search + BFS |
+| 1631 | Path With Minimum Effort       | 🟡 Medium  | Dijkstra            |
+| 2812 | Find the Safest Path in a Grid | 🟡 Medium  | Multi-source BFS    |

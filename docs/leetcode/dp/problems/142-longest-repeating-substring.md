@@ -7,102 +7,113 @@ tags: [String, Binary Search, Dynamic Programming, Rolling Hash, Suffix Array]
 leetcode_url: "https://leetcode.com/problems/longest-repeating-substring"
 ---
 
-# Longest Repeating Substring / Longest Repeating Substring
+# Longest Repeating Substring / Chuỗi Con Lặp Dài Nhất
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Longest Duplicate Substring](https://leetcode.com/problems/longest-duplicate-substring) | [Number of Distinct Substrings in a String](https://leetcode.com/problems/number-of-distinct-substrings-in-a-string)
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: DP Matrix / Binary Search + Rolling Hash
 
----
+## 🧠 Intuition
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
-
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Longest Repeating Substring example:**
+**VI:** Giống bài LCS nhưng so sánh chuỗi với chính nó (không so `s[i]` với `s[i]`). Dùng ma trận DP `dp[i][j]` = độ dài chuỗi con chung kết tại `s[i-1]` và `s[j-1]`, với điều kiện `i ≠ j`.
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+s = "abcabc"
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+dp[i][j] = length of longest common substring ending at s[i-1] and s[j-1], i≠j
+
+     ""  a   b   c   a   b   c
+""    0   0   0   0   0   0   0
+ a    0   0   0   0   1   0   0
+ b    0   0   0   0   0   2   0
+ c    0   0   0   0   0   0   3  ← ans = 3 ("abc")
+ a    0   1   0   0   0   0   0
+ b    0   0   2   0   1   0   0
+ c    0   0   0   3   0   2   0
+
+Only cells where i≠j contribute (diagonal i==j excluded)
 ```
-
----
-
-## Problem Description
-
-Longest Repeating Substring. ([LeetCode](https://leetcode.com/problems/longest-repeating-substring))
-
-Difficulty: Medium | Acceptance: 63.1%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/longest-repeating-substring) for full constraints
-
----
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
-
----
+- 🔑 **EN:** Key constraint: `i ≠ j` — same index positions must not overlap | **VI:** Điều kiện quan trọng: `i ≠ j` để tránh so sánh cùng vị trí trong chuỗi
+- 🔑 **EN:** Binary search + rolling hash is O(n log n) — better for large inputs | **VI:** Binary search + hash tốt hơn khi n lớn (O(n log n) vs O(n²))
+- 🔑 **EN:** DP approach: `dp[i][j] = dp[i-1][j-1] + 1` when `s[i-1]===s[j-1] && i≠j` | **VI:** Transition giống common subarray nhưng thêm ràng buộc `i≠j`
+- 🔑 **EN:** Binary search monotonicity: if length L exists, length L-1 also exists | **VI:** Tính đơn điệu: nếu L hợp lệ thì L-1 cũng hợp lệ → binary search được
+- 🔑 **EN:** Rolling hash: build set of hashes for length L, check duplicates | **VI:** Hash chuỗi con: dùng set để phát hiện chuỗi con trùng nhau
+- 🔑 **EN:** Suffix Array + LCP is O(n log n) optimal but complex for interviews | **VI:** Suffix Array là O(n log n) tối ưu nhưng phức tạp khi implement
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function longestRepeatingSubstringBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// ─── Solution 1: DP Matrix — O(n²) time, O(n²) space ─────────────────────
+function longestRepeatingSubstringDP(s: string): number {
+  const n = s.length;
+  // dp[i][j] = common substring length ending at s[i-1] and s[j-1]
+  // Only valid when i !== j (positions must differ)
+  const dp: number[][] = Array.from({ length: n + 1 }, () => new Array(n + 1).fill(0));
+  let ans = 0;
+
+  for (let i = 1; i <= n; i++) {
+    for (let j = i + 1; j <= n; j++) {
+      // j > i ensures non-overlapping prefix
+      if (s[i - 1] === s[j - 1]) {
+        dp[i][j] = dp[i - 1][j - 1] + 1;
+        ans = Math.max(ans, dp[i][j]);
+      }
+    }
+  }
+  return ans;
 }
 
-/**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function longestRepeatingSubstring(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+// ─── Solution 2: Binary Search + Rolling Hash — O(n log n) ────────────────
+function longestRepeatingSubstring(s: string): number {
+  const n = s.length;
+  const MOD = 1_000_000_007n,
+    BASE = 31n;
+
+  // Check if any substring of length `len` appears at least twice
+  function hasRepeat(len: number): boolean {
+    let h = 0n,
+      pow = 1n;
+    const codes = Array.from(s, (ch) => BigInt(ch.charCodeAt(0) - 96));
+
+    for (let i = 0; i < len; i++) {
+      h = (h * BASE + codes[i]) % MOD;
+      if (i > 0) pow = (pow * BASE) % MOD;
+    }
+    const seen = new Set<bigint>([h]);
+
+    for (let i = len; i < n; i++) {
+      h = (h - ((codes[i - len] * pow) % MOD) + MOD) % MOD;
+      h = (h * BASE + codes[i]) % MOD;
+      if (seen.has(h)) return true;
+      seen.add(h);
+    }
+    return false;
+  }
+
+  let lo = 0,
+    hi = n - 1;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    if (hasRepeat(mid)) lo = mid;
+    else hi = mid - 1;
+  }
+  return lo;
 }
 
-// === Test Cases ===
-// console.log(longestRepeatingSubstring(/* example 1 */)); // expected
-// console.log(longestRepeatingSubstring(/* example 2 */)); // expected
-// console.log(longestRepeatingSubstring(/* edge case */)); // expected
+// ─── Tests ─────────────────────────────────────────────────────────────────
+console.log(longestRepeatingSubstring("abcabc")); // 3  ("abc")
+console.log(longestRepeatingSubstring("aabcaabdaab")); // 3  ("aab")
+console.log(longestRepeatingSubstring("aaaaa")); // 4  ("aaaa")
+console.log(longestRepeatingSubstringDP("abcabc")); // 3
+console.log(longestRepeatingSubstringDP("aaaaa")); // 4
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Longest Duplicate Substring](https://leetcode.com/problems/longest-duplicate-substring) — same pattern: Sliding Window
-- [Number of Distinct Substrings in a String](https://leetcode.com/problems/number-of-distinct-substrings-in-a-string) — same pattern: Trie
-- [Find Beautiful Indices in the Given Array I](https://leetcode.com/problems/find-beautiful-indices-in-the-given-array-i) — same pattern: Two Pointers
-- [Find Beautiful Indices in the Given Array II](https://leetcode.com/problems/find-beautiful-indices-in-the-given-array-ii) — same pattern: Two Pointers
-- [Longest Repeating Substring — LeetCode](https://leetcode.com/problems/longest-repeating-substring) — problem page
+| #    | Title                               | Difficulty | Connection                             |
+| ---- | ----------------------------------- | ---------- | -------------------------------------- |
+| 1044 | Longest Duplicate Substring         | 🔴 Hard    | Same problem without length constraint |
+| 718  | Maximum Length of Repeated Subarray | 🟡 Medium  | Two separate arrays instead of one     |
+| 1143 | Longest Common Subsequence          | 🟡 Medium  | Subsequence variant (allows gaps)      |
+| 187  | Repeated DNA Sequences              | 🟡 Medium  | Fixed-length rolling hash for repeats  |

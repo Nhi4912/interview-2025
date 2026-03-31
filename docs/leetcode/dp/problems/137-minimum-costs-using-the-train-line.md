@@ -7,102 +7,103 @@ tags: [Array, Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/minimum-costs-using-the-train-line"
 ---
 
-# Minimum Costs Using the Train Line / Minimum Costs Using the Train Line
+# Minimum Costs Using the Train Line / Chi Phí Nhỏ Nhất Dùng Tuyến Tàu
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Jump Game II](https://leetcode.com/problems/jump-game-ii) | [Maximal Square](https://leetcode.com/problems/maximal-square)
+> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: State-Machine DP
 
----
+## 🧠 Intuition
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
-
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Minimum Costs Using the Train Line example:**
+**VI:** Hãy tưởng tượng bạn di chuyển giữa hai đường ray song song. Tại mỗi trạm bạn có thể ở lại đường ray hiện tại (miễn phí) hoặc chuyển sang đường ray kia (tốn phí). Bài toán tìm tổng chi phí nhỏ nhất để đến hết mọi trạm.
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+Stations:  1    2    3    4
+Line 0:   [r0]--[r0]--[r0]--[r0]   (running costs line 0)
+                 ↕    ↕    ↕        (changeCost at each station)
+Line 1:   [r1]--[r1]--[r1]--[r1]   (running costs line 1)
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+dp[i][0] = min cost to reach station i on line 0
+dp[i][1] = min cost to reach station i on line 1
+
+Transition:
+  dp[i][0] = min(dp[i-1][0] + r0[i],          // stay on line 0
+                 dp[i-1][1] + r1[i] + c[i-1])  // switch from line 1, pay changeCost
+  dp[i][1] = min(dp[i-1][1] + r1[i],
+                 dp[i-1][0] + r0[i] + c[i-1])
 ```
-
----
-
-## Problem Description
-
-Minimum Costs Using the Train Line. ([LeetCode](https://leetcode.com/problems/minimum-costs-using-the-train-line))
-
-Difficulty: Hard | Acceptance: 77.6%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-costs-using-the-train-line) for full constraints
-
----
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
-
----
+- 🔑 **EN:** State = (station, current_line); two states per station is classic state-machine DP | **VI:** 2 trạng thái tại mỗi trạm → state machine DP điển hình
+- 🔑 **EN:** Switching cost is charged at the **destination** station (read problem constraints carefully) | **VI:** Đọc kỹ: phí đổi ray tính tại trạm đến hay trạm đi?
+- 🔑 **EN:** Space-optimise to O(1): only need previous station's two values | **VI:** Chỉ cần lưu `prev0` và `prev1` từ trạm trước
+- 🔑 **EN:** Base case: `dp[0][0] = r0[0]`, `dp[0][1] = r1[0]` (no switch cost at first station) | **VI:** Trạm đầu tiên không có phí đổi ray
+- 🔑 **EN:** Answer is `min(dp[n-1][0], dp[n-1][1])` | **VI:** Đáp án là min của hai trạng thái tại trạm cuối
+- 🔑 **EN:** Similar to "Paint House" DP but with only 2 colors | **VI:** Giống bài Paint House nhưng chỉ 2 màu
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumCostsUsingTheTrainLineBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// ─── Solution 1: 2D DP — O(n) time, O(n) space ────────────────────────────
+function minimumCosts2D(regular: number[], express: number[], expressCost: number): number[] {
+  const n = regular.length;
+  // dp[i][0] = min cost reaching station i on regular line
+  // dp[i][1] = min cost reaching station i on express line
+  const dp: number[][] = Array.from({ length: n }, () => [0, 0]);
+  dp[0][0] = regular[0];
+  dp[0][1] = expressCost + express[0]; // must pay entry fee to board express
+
+  for (let i = 1; i < n; i++) {
+    dp[i][0] = Math.min(
+      dp[i - 1][0] + regular[i], // stay on regular
+      dp[i - 1][1] + regular[i], // switch from express (no extra fee to exit)
+    );
+    dp[i][1] = Math.min(
+      dp[i - 1][1] + express[i], // stay on express
+      dp[i - 1][0] + expressCost + express[i], // switch to express (pay entry fee)
+    );
+  }
+  // Answer at each station is the minimum of both lines
+  return dp.map((row) => Math.min(row[0], row[1]));
 }
 
-/**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumCostsUsingTheTrainLine(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+// ─── Solution 2: Space-Optimised — O(n) time, O(1) space ──────────────────
+function minimumCosts(regular: number[], express: number[], expressCost: number): number[] {
+  const n = regular.length;
+  const result: number[] = [];
+
+  let prevReg = regular[0];
+  let prevExp = expressCost + express[0];
+  result.push(Math.min(prevReg, prevExp));
+
+  for (let i = 1; i < n; i++) {
+    const curReg = Math.min(
+      prevReg + regular[i],
+      prevExp + regular[i], // exit express → regular (free)
+    );
+    const curExp = Math.min(
+      prevExp + express[i],
+      prevReg + expressCost + express[i], // board express (pay expressCost)
+    );
+    prevReg = curReg;
+    prevExp = curExp;
+    result.push(Math.min(curReg, curExp));
+  }
+  return result;
 }
 
-// === Test Cases ===
-// console.log(minimumCostsUsingTheTrainLine(/* example 1 */)); // expected
-// console.log(minimumCostsUsingTheTrainLine(/* example 2 */)); // expected
-// console.log(minimumCostsUsingTheTrainLine(/* edge case */)); // expected
+// ─── Tests ─────────────────────────────────────────────────────────────────
+// regular=[1,6,9,5], express=[5,2,3,10], expressCost=8
+// Expected: [1,7,14,19]  (we only switch when express line saves enough)
+console.log(minimumCosts([1, 6, 9, 5], [5, 2, 3, 10], 8)); // [1, 7, 14, 19]
+console.log(minimumCosts([11, 5, 13], [7, 10, 13], 20)); // [11, 16, 29]
+console.log(minimumCosts2D([1, 6, 9, 5], [5, 2, 3, 10], 8)); // [1, 7, 14, 19]
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Jump Game II](https://leetcode.com/problems/jump-game-ii) — same pattern: Dynamic Programming
-- [Maximal Square](https://leetcode.com/problems/maximal-square) — same pattern: Dynamic Programming
-- [Unique Paths II](https://leetcode.com/problems/unique-paths-ii) — same pattern: Dynamic Programming
-- [Maximum Profit in Job Scheduling](https://leetcode.com/problems/maximum-profit-in-job-scheduling) — same pattern: Dynamic Programming
-- [Minimum Costs Using the Train Line — LeetCode](https://leetcode.com/problems/minimum-costs-using-the-train-line) — problem page
+| #   | Title                              | Difficulty | Connection                      |
+| --- | ---------------------------------- | ---------- | ------------------------------- |
+| 256 | Paint House                        | 🟡 Medium  | Same 2-state machine DP pattern |
+| 265 | Paint House II                     | 🔴 Hard    | Generalised k-state machine     |
+| 714 | Best Time to Buy/Sell Stock w/ Fee | 🟡 Medium  | 2-state (hold/cash) DP          |
+| 188 | Best Time to Buy/Sell Stock IV     | 🔴 Hard    | Multi-state transaction DP      |

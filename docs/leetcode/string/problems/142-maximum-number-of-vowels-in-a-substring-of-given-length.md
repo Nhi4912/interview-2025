@@ -7,100 +7,130 @@ tags: [String, Sliding Window]
 leetcode_url: "https://leetcode.com/problems/maximum-number-of-vowels-in-a-substring-of-given-length"
 ---
 
-# Maximum Number of Vowels in a Substring of Given Length / Maximum Number of Vowels in a Substring of Given Length
+# Maximum Number of Vowels in a Substring of Given Length / Số Nguyên Âm Tối Đa Trong Chuỗi Con Dài K
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Sliding Window
-> **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Substring with Concatenation of All Words](https://leetcode.com/problems/substring-with-concatenation-of-all-words) | [Longest Repeating Character Replacement](https://leetcode.com/problems/longest-repeating-character-replacement)
 
----
+## 🧠 Intuition / Trực Giác
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Giống như nhìn qua một khung cửa sổ di chuyển trên dãy nhà. Mỗi lần trượt, bạn thêm nhà mới bên phải, bỏ nhà cũ bên trái — luôn giữ đúng kích thước khung.
-
-**Pattern Recognition:**
-
-- Signal: "contiguous subarray/substring" + "max/min length" → **Sliding Window**
-- Bài này thuộc dạng Sliding Window — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Maximum Number of Vowels in a Substring of Given Length example:**
+**Vietnamese analogy**: Cửa sổ trượt kích thước `k` qua chuỗi. Khi trượt sang phải một bước: cộng thêm 1 nếu ký tự mới là nguyên âm, trừ 1 nếu ký tự rời khỏi cửa sổ là nguyên âm.
 
 ```
-[a, b, c, d, e, f, g]
- |--window--|
-    |--window--|     → slide right, update state
-
-Track: current window state
-Update: add right, remove left when window exceeds constraint
+s = "abciiidef"  k = 3
+         ↓ window [0..2]="abc" → vowels=1 (a)
+         ↓ slide → [1..3]="bci" → vowels=0 (lost a, no new vowel)
+         ↓ slide → [2..4]="cii" → vowels=2
+         ↓ slide → [3..5]="iii" → vowels=3  ← max!
+         ↓ slide → [4..6]="iid" → vowels=2
+         ...
+Answer = 3
 ```
 
----
+**Key insight**: Maintain a running vowel count. Slide right: `+1` if `s[i]` is vowel, `-1` if `s[i-k]` is vowel. O(n) — no recount.
 
-## Problem Description
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-Maximum Number of Vowels in a Substring of Given Length. ([LeetCode](https://leetcode.com/problems/maximum-number-of-vowels-in-a-substring-of-given-length))
-
-Difficulty: Medium | Acceptance: 60.4%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/maximum-number-of-vowels-in-a-substring-of-given-length) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Cần contiguous subarray hay subsequence?" / Subarray (contiguous) vs subsequence (non-contiguous)
-2. **Brute force**: "Thử mọi subarray O(n²)" → optimize with sliding window O(n) / Try all subarrays then optimize
-3. **Optimize**: "Dùng window expand/shrink, track state bằng map/counter" / Use expand right, shrink left pattern
-4. **Edge cases**: "Chuỗi rỗng, k > array length, tất cả unique/duplicate" / Empty input, k exceeds length
+- 🔑 **EN**: Fixed-size window — expand to size k, then slide one step at a time
+  **VI**: Cửa sổ cố định — mở rộng đến kích thước k, rồi trượt từng bước
+- 🔑 **EN**: Use a Set `{a,e,i,o,u}` for O(1) vowel lookup
+  **VI**: Dùng Set `{a,e,i,o,u}` để tra cứu nguyên âm O(1)
+- 🔑 **EN**: On each slide: `count += isVowel(s[i]) - isVowel(s[i-k])`
+  **VI**: Mỗi bước trượt: `count += isVowel(s[i]) - isVowel(s[i-k])`
+- 🔑 **EN**: Early exit possible if `count === k` (all chars are vowels — can't do better)
+  **VI**: Có thể thoát sớm nếu `count === k` (tất cả là nguyên âm — không thể tốt hơn)
+- 🔑 **EN**: Brute O(n·k) vs Sliding Window O(n) — always prefer sliding window for fixed k
+  **VI**: Brute O(n·k) vs Sliding Window O(n) — luôn dùng sliding window cho k cố định
+- 🔑 **EN**: Track `maxVowels` at every slide step, not just after full traversal
+  **VI**: Cập nhật `maxVowels` ở mỗi bước trượt, không chỉ sau khi duyệt xong
 
 ---
-
-## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function maximumNumberOfVowelsInASubstringOfGivenLengthBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// ─── Solution 1: Brute Force — O(n·k) time, O(1) space ──────────────────────
+function maxVowelsBrute(s: string, k: number): number {
+  const vowels = new Set(["a", "e", "i", "o", "u"]);
+  let max = 0;
+
+  for (let i = 0; i <= s.length - k; i++) {
+    let count = 0;
+    for (let j = i; j < i + k; j++) {
+      if (vowels.has(s[j])) count++;
+    }
+    max = Math.max(max, count);
+    if (max === k) return k; // early exit
+  }
+
+  return max;
 }
 
-/**
- * Solution 2: Optimized — Sliding Window
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function maximumNumberOfVowelsInASubstringOfGivenLength(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Sliding Window
-  // Hint: Expand right pointer, shrink left when constraint violated
-  throw new Error('Not implemented');
+// Tests
+console.log(maxVowelsBrute("abciiidef", 3)); // 3
+console.log(maxVowelsBrute("aeiou", 2)); // 2
+console.log(maxVowelsBrute("leetcode", 3)); // 2
+```
+
+```typescript
+// ─── Solution 2: Sliding Window — O(n) time, O(1) space ──────────────────────
+function maxVowels(s: string, k: number): number {
+  const isVowel = (c: string): number => ("aeiou".includes(c) ? 1 : 0);
+
+  // Seed the first window
+  let count = 0;
+  for (let i = 0; i < k; i++) count += isVowel(s[i]);
+
+  let max = count;
+  if (max === k) return k;
+
+  // Slide
+  for (let i = k; i < s.length; i++) {
+    count += isVowel(s[i]) - isVowel(s[i - k]);
+    if (count > max) {
+      max = count;
+      if (max === k) return k; // early exit
+    }
+  }
+
+  return max;
 }
 
-// === Test Cases ===
-// console.log(maximumNumberOfVowelsInASubstringOfGivenLength(/* example 1 */)); // expected
-// console.log(maximumNumberOfVowelsInASubstringOfGivenLength(/* example 2 */)); // expected
-// console.log(maximumNumberOfVowelsInASubstringOfGivenLength(/* edge case */)); // expected
+// Tests
+console.log(maxVowels("abciiidef", 3)); // 3
+console.log(maxVowels("aeiou", 2)); // 2
+console.log(maxVowels("leetcode", 3)); // 2
+console.log(maxVowels("rhythms", 4)); // 0
+```
+
+```typescript
+// ─── Solution 3: Bitmask Vowel Check (micro-optimization) ────────────────────
+function maxVowels3(s: string, k: number): number {
+  // Encode vowels as bitmask on charCode for O(1) check without Set/includes
+  const VOWEL_MASK = 0b10000100000100010001; // a=1,e=5,i=9,o=15,u=21 bits
+  const isV = (c: string) => (VOWEL_MASK >> (c.charCodeAt(0) - 97)) & 1;
+
+  let count = 0;
+  for (let i = 0; i < k; i++) count += isV(s[i]);
+  let max = count;
+
+  for (let i = k; i < s.length; i++) {
+    count += isV(s[i]) - isV(s[i - k]);
+    if (count > max) max = count;
+  }
+
+  return max;
+}
+
+// Tests
+console.log(maxVowels3("abciiidef", 3)); // 3
+console.log(maxVowels3("aeiou", 2)); // 2
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Substring with Concatenation of All Words](https://leetcode.com/problems/substring-with-concatenation-of-all-words) — same pattern: Sliding Window
-- [Longest Repeating Character Replacement](https://leetcode.com/problems/longest-repeating-character-replacement) — same pattern: Sliding Window
-- [Find All Anagrams in a String](https://leetcode.com/problems/find-all-anagrams-in-a-string) — same pattern: Sliding Window
-- [Permutation in String](https://leetcode.com/problems/permutation-in-string) — same pattern: Sliding Window
-- [Maximum Number of Vowels in a Substring of Given Length — LeetCode](https://leetcode.com/problems/maximum-number-of-vowels-in-a-substring-of-given-length) — problem page
+| #    | Problem                                 | Difficulty | Pattern        |
+| ---- | --------------------------------------- | ---------- | -------------- |
+| 643  | Maximum Average Subarray I              | 🟢 Easy    | Sliding Window |
+| 1004 | Max Consecutive Ones III                | 🟡 Medium  | Sliding Window |
+| 567  | Permutation in String                   | 🟡 Medium  | Sliding Window |
+| 1456 | Maximum Number of Vowels in a Substring | 🟡 Medium  | Sliding Window |

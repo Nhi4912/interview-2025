@@ -7,97 +7,149 @@ tags: [Array, Bit Manipulation, Prefix Sum]
 leetcode_url: "https://leetcode.com/problems/xor-queries-of-a-subarray"
 ---
 
-# XOR Queries of a Subarray / XOR Queries of a Subarray
+# XOR Queries of a Subarray / Truy Vấn XOR Của Mảng Con
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Prefix Sum
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Range Product Queries of Powers](https://leetcode.com/problems/range-product-queries-of-powers) | [Maximum OR](https://leetcode.com/problems/maximum-or)
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Prefix XOR
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition / Trực Giác
 
-**Analogy:** Giống tổng luỹ tiến — tính trước tổng từ đầu đến mỗi vị trí, rồi truy vấn tổng bất kỳ đoạn nào trong O(1).
+**VI:** Giống prefix sum nhưng dùng XOR thay vì cộng. XOR có tính chất tự nghịch đảo: `a ^ a = 0`. Vì vậy `prefix[r+1] ^ prefix[l]` cho XOR của đoạn `[l, r]` — cùng lý do như `sum[r+1] - sum[l]` cho tổng đoạn.
 
-**Pattern Recognition:**
-
-- Signal: "range sum queries" + "subarray sum" → **Prefix Sum**
-- Bài này thuộc dạng Prefix Sum — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — XOR Queries of a Subarray example:**
+**EN:** Just like prefix sums but with XOR. XOR is self-inverse: `a ^ a = 0`. So `prefix[r+1] ^ prefix[l]` gives XOR of range `[l, r]` — same reasoning as range sum with prefix array.
 
 ```
-// TODO: Add step-by-step visual for Prefix Sum
-// Show one complete example with state at each step
+arr = [1, 3, 4, 8]
+prefix[0] = 0
+prefix[1] = 0^1 = 1
+prefix[2] = 1^3 = 2
+prefix[3] = 2^4 = 6
+prefix[4] = 6^8 = 14
+
+Query [0,1]: prefix[2] ^ prefix[0] = 2^0 = 2  ✓ (1^3=2)
+Query [1,2]: prefix[3] ^ prefix[1] = 6^1 = 7  ✓ (3^4=7)
+Query [0,3]: prefix[4] ^ prefix[0] = 14^0 = 14 ✓ (1^3^4^8=14)
 ```
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-XOR Queries of a Subarray. ([LeetCode](https://leetcode.com/problems/xor-queries-of-a-subarray))
-
-Difficulty: Medium | Acceptance: 78.4%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/xor-queries-of-a-subarray) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🟡 **EN:** XOR range query: `prefix[r+1] ^ prefix[l]` — memorize this formula.
+  **VI:** Truy vấn XOR đoạn: `prefix[r+1] ^ prefix[l]` — ghi nhớ công thức này.
+- 🟡 **EN:** XOR key properties: commutative, associative, self-inverse (a^a=0), identity (a^0=a).
+  **VI:** Tính chất XOR: giao hoán, kết hợp, tự nghịch đảo (a^a=0), đơn vị (a^0=a).
+- 🟡 **EN:** Build prefix array of size n+1 with prefix[0]=0 to avoid edge case at l=0.
+  **VI:** Xây mảng prefix kích thước n+1 với prefix[0]=0 để tránh edge case tại l=0.
+- 🟡 **EN:** Preprocessing O(n), each query O(1) — total O(n + q).
+  **VI:** Tiền xử lý O(n), mỗi truy vấn O(1) — tổng O(n + q).
+- 🟡 **EN:** Same pattern applies to range AND/OR queries.
+  **VI:** Cùng mẫu áp dụng cho truy vấn AND/OR theo đoạn.
+- 🟡 **EN:** Brute force is O(n*q) — mention it, then improve to O(n+q).
+  **VI:** Brute force O(n*q) — đề cập rồi cải thiện lên O(n+q).
 
 ---
 
-## Solutions
+## Solutions / Giải Pháp
+
+### Solution 1: Brute Force — O(n \* q) Time, O(1) Extra Space
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function xorQueriesOfASubarrayBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function xorQueries_brute(arr: number[], queries: number[][]): number[] {
+  return queries.map(([l, r]) => {
+    let xor = 0;
+    for (let i = l; i <= r; i++) xor ^= arr[i];
+    return xor;
+  });
 }
 
-/**
- * Solution 2: Optimized — Prefix Sum
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function xorQueriesOfASubarray(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Prefix Sum
-  // Hint: Build prefix sum array, query range sum in O(1)
-  throw new Error('Not implemented');
+console.log(
+  xorQueries_brute(
+    [1, 3, 4, 8],
+    [
+      [0, 1],
+      [1, 2],
+      [0, 3],
+      [3, 3],
+    ],
+  ),
+);
+// Expected: [2, 7, 14, 8]
+```
+
+### Solution 2: Prefix XOR — O(n + q) Time, O(n) Space ✅ Optimal
+
+```typescript
+function xorQueries(arr: number[], queries: number[][]): number[] {
+  const n = arr.length;
+  // Build prefix XOR array; prefix[i] = XOR of arr[0..i-1]
+  const prefix = new Array(n + 1).fill(0);
+  for (let i = 0; i < n; i++) {
+    prefix[i + 1] = prefix[i] ^ arr[i];
+  }
+  // Answer each query in O(1)
+  return queries.map(([l, r]) => prefix[r + 1] ^ prefix[l]);
 }
 
-// === Test Cases ===
-// console.log(xorQueriesOfASubarray(/* example 1 */)); // expected
-// console.log(xorQueriesOfASubarray(/* example 2 */)); // expected
-// console.log(xorQueriesOfASubarray(/* edge case */)); // expected
+// Test cases
+console.log(
+  xorQueries(
+    [1, 3, 4, 8],
+    [
+      [0, 1],
+      [1, 2],
+      [0, 3],
+      [3, 3],
+    ],
+  ),
+);
+// Expected: [2, 7, 14, 8]
+console.log(
+  xorQueries(
+    [4, 8, 2, 10],
+    [
+      [2, 3],
+      [1, 3],
+      [0, 0],
+      [0, 3],
+    ],
+  ),
+);
+// Expected: [8, 0, 4, 4]
+console.log(xorQueries([1], [[0, 0]]));
+// Expected: [1]
+```
+
+### Solution 3: In-Place Prefix XOR (Space O(1) Extra) ✅
+
+```typescript
+function xorQueriesInPlace(arr: number[], queries: number[][]): number[] {
+  // Modify arr to be prefix XOR in-place
+  for (let i = 1; i < arr.length; i++) arr[i] ^= arr[i - 1];
+  return queries.map(([l, r]) => (l === 0 ? arr[r] : arr[r] ^ arr[l - 1]));
+}
+
+console.log(
+  xorQueriesInPlace(
+    [1, 3, 4, 8],
+    [
+      [0, 1],
+      [1, 2],
+      [0, 3],
+      [3, 3],
+    ],
+  ),
+);
+// Expected: [2, 7, 14, 8]
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Range Product Queries of Powers](https://leetcode.com/problems/range-product-queries-of-powers) — same pattern: Prefix Sum
-- [Maximum OR](https://leetcode.com/problems/maximum-or) — same pattern: Prefix Sum
-- [Bitwise OR of All Subsequence Sums](https://leetcode.com/problems/bitwise-or-of-all-subsequence-sums) — same pattern: Prefix Sum
-- [Minimum Number of K Consecutive Bit Flips](https://leetcode.com/problems/minimum-number-of-k-consecutive-bit-flips) — same pattern: Sliding Window
-- [XOR Queries of a Subarray — LeetCode](https://leetcode.com/problems/xor-queries-of-a-subarray) — problem page
+| #    | Problem                                              | Difficulty | Pattern    |
+| ---- | ---------------------------------------------------- | ---------- | ---------- |
+| 303  | Range Sum Query - Immutable                          | 🟢 Easy    | Prefix Sum |
+| 1442 | Count Triplets That Can Form Two Arrays of Equal XOR | 🟡 Medium  | Prefix XOR |
+| 1310 | XOR Queries of a Subarray                            | 🟡 Medium  | Prefix XOR |

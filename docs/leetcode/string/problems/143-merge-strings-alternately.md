@@ -7,100 +7,113 @@ tags: [Two Pointers, String]
 leetcode_url: "https://leetcode.com/problems/merge-strings-alternately"
 ---
 
-# Merge Strings Alternately / Merge Strings Alternately
+# Merge Strings Alternately / Ghép Hai Chuỗi Xen Kẽ
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Two Pointers
-> **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Find the Index of the First Occurrence in a String](https://leetcode.com/problems/find-the-index-of-the-first-occurrence-in-a-string) | [String Compression](https://leetcode.com/problems/string-compression)
 
----
+## 🧠 Intuition / Trực Giác
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Hãy tưởng tượng hai người đi từ hai đầu con đường, tiến lại gần nhau. Mỗi bước, người nào ở vị trí "tốt hơn" sẽ đứng yên, người kia tiến. Khi họ gặp nhau, bài toán được giải.
-
-**Pattern Recognition:**
-
-- Signal: "sorted array" + "find pair/triplet" → **Two Pointers**
-- Bài này thuộc dạng Two Pointers — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Merge Strings Alternately example:**
+**Vietnamese analogy**: Như xáo bài — lấy một lá từ bộ bài trái, một lá từ bộ bài phải, xen kẽ nhau. Khi một bộ hết trước, ghép toàn bộ phần còn lại của bộ kia vào cuối.
 
 ```
-arr = [... sorted ...]
- L                 R
+word1 = "abc"   word2 = "pqr"
+  a p b q c r
+  ↑   ↑
+  i   j   (both advance together)
+Result: "apbqcr"
 
-Step 1: check condition → move L or R
-Step 2: ...
-Step N: condition met ✅
+word1 = "ab"    word2 = "pqrs"
+  a p b q . r . s
+  ↑   ↑
+  After i exhausts: append "rs"
+Result: "apbqrs"
 ```
 
----
+**Key insight**: Walk both strings simultaneously; after one runs out, append the rest of the longer one.
 
-## Problem Description
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-Merge Strings Alternately. ([LeetCode](https://leetcode.com/problems/merge-strings-alternately))
-
-Difficulty: Easy | Acceptance: 82.2%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/merge-strings-alternately) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Mảng đã sorted chưa? Có duplicate không?" / Ask if array is sorted and if duplicates exist
-2. **Brute force**: "Dùng 2 vòng for O(n²)" → optimize with two pointers O(n) / Start with nested loops, then optimize
-3. **Optimize**: "Vì mảng sorted, dùng 2 con trỏ L/R tiến vào giữa" / Since sorted, use L/R pointers moving inward
-4. **Edge cases**: "Mảng rỗng, một phần tử, tất cả giống nhau" / Empty array, single element, all same values
+- 🔑 **EN**: Single loop condition `i < word1.length || j < word2.length` handles unequal lengths
+  **VI**: Điều kiện vòng lặp `i < word1.length || j < word2.length` xử lý độ dài khác nhau
+- 🔑 **EN**: Use optional chaining or bounds check before appending each character
+  **VI**: Kiểm tra giới hạn trước khi thêm từng ký tự
+- 🔑 **EN**: Collect chars in array then `join("")` — more efficient than string concatenation
+  **VI**: Tích lũy ký tự vào mảng rồi `join("")` — hiệu quả hơn nối chuỗi
+- 🔑 **EN**: Alternative: interleave up to `min(len1, len2)`, then append remainder
+  **VI**: Cách khác: xen kẽ đến `min(len1, len2)`, rồi nối phần dư
+- 🔑 **EN**: Time O(m+n), Space O(m+n) — unavoidable since we must build the result
+  **VI**: Thời gian O(m+n), Không gian O(m+n) — không tránh được vì cần xây kết quả
+- 🔑 **EN**: Edge: one string empty → just return the other
+  **VI**: Trường hợp đặc biệt: một chuỗi rỗng → trả về chuỗi kia
 
 ---
-
-## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function mergeStringsAlternatelyBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// ─── Solution 1: Single Loop — O(m+n) time, O(m+n) space ────────────────────
+function mergeAlternately(word1: string, word2: string): string {
+  const result: string[] = [];
+  let i = 0,
+    j = 0;
+
+  while (i < word1.length || j < word2.length) {
+    if (i < word1.length) result.push(word1[i++]);
+    if (j < word2.length) result.push(word2[j++]);
+  }
+
+  return result.join("");
 }
 
-/**
- * Solution 2: Optimized — Two Pointers
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function mergeStringsAlternately(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Two Pointers
-  // Hint: Use L/R pointers on sorted input, move based on comparison
-  throw new Error('Not implemented');
+// Tests
+console.log(mergeAlternately("abc", "pqr")); // "apbqcr"
+console.log(mergeAlternately("ab", "pqrs")); // "apbqrs"
+console.log(mergeAlternately("abcd", "pq")); // "apbqcd"
+console.log(mergeAlternately("", "pq")); // "pq"
+```
+
+```typescript
+// ─── Solution 2: Interleave + Append Remainder — O(m+n) time ─────────────────
+function mergeAlternately2(word1: string, word2: string): string {
+  const minLen = Math.min(word1.length, word2.length);
+  let merged = "";
+
+  for (let i = 0; i < minLen; i++) {
+    merged += word1[i] + word2[i];
+  }
+
+  // Append the leftover of the longer string
+  merged += word1.slice(minLen) + word2.slice(minLen);
+
+  return merged;
 }
 
-// === Test Cases ===
-// console.log(mergeStringsAlternately(/* example 1 */)); // expected
-// console.log(mergeStringsAlternately(/* example 2 */)); // expected
-// console.log(mergeStringsAlternately(/* edge case */)); // expected
+// Tests
+console.log(mergeAlternately2("abc", "pqr")); // "apbqcr"
+console.log(mergeAlternately2("ab", "pqrs")); // "apbqrs"
+console.log(mergeAlternately2("abcd", "pq")); // "apbqcd"
+```
+
+```typescript
+// ─── Solution 3: Reduce / Functional style ───────────────────────────────────
+function mergeAlternately3(word1: string, word2: string): string {
+  const len = Math.max(word1.length, word2.length);
+  return Array.from(
+    { length: len },
+    (_, i) => (i < word1.length ? word1[i] : "") + (i < word2.length ? word2[i] : ""),
+  ).join("");
+}
+
+// Tests
+console.log(mergeAlternately3("abc", "pqr")); // "apbqcr"
+console.log(mergeAlternately3("ab", "pqrs")); // "apbqrs"
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Find the Index of the First Occurrence in a String](https://leetcode.com/problems/find-the-index-of-the-first-occurrence-in-a-string) — same pattern: Two Pointers
-- [String Compression](https://leetcode.com/problems/string-compression) — same pattern: Two Pointers
-- [Reverse Words in a String](https://leetcode.com/problems/reverse-words-in-a-string) — same pattern: Two Pointers
-- [Palindromic Substrings](https://leetcode.com/problems/palindromic-substrings) — same pattern: Two Pointers
-- [Merge Strings Alternately — LeetCode](https://leetcode.com/problems/merge-strings-alternately) — problem page
+| #    | Problem                                | Difficulty | Pattern      |
+| ---- | -------------------------------------- | ---------- | ------------ |
+| 21   | Merge Two Sorted Lists                 | 🟢 Easy    | Two Pointers |
+| 88   | Merge Sorted Array                     | 🟢 Easy    | Two Pointers |
+| 1768 | Merge Strings Alternately              | 🟢 Easy    | Two Pointers |
+| 2645 | Minimum Additions to Make Valid String | 🟡 Medium  | Greedy       |

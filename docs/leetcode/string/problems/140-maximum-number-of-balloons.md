@@ -7,100 +7,124 @@ tags: [Hash Table, String, Counting]
 leetcode_url: "https://leetcode.com/problems/maximum-number-of-balloons"
 ---
 
-# Maximum Number of Balloons / Maximum Number of Balloons
+# Maximum Number of Balloons / Số Lượng "Balloon" Tối Đa
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map
-> **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) | [Reorganize String](https://leetcode.com/problems/reorganize-string)
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map / Counting
 
----
+## 🧠 Intuition / Trực Giác
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
-
-**Pattern Recognition:**
-
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Maximum Number of Balloons example:**
+**Vietnamese analogy**: Từ "balloon" cần `b×1, a×1, l×2, o×2, n×1`. Đếm từng chữ trong chuỗi, rồi tính xem có thể ghép được bao nhiêu từ "balloon" — bị giới hạn bởi chữ xuất hiện ít nhất.
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
+text = "nlaebolko"
+Count: b=1, a=1, l=2, o=2, n=1
+"balloon" needs: b=1, a=1, l=2, o=2, n=1
 
-Key insight: store complement for O(1) lookup
+Instances = min(b/1, a/1, l/2, o/2, n/1)
+          = min( 1,   1,   1,   1,   1 ) = 1
 ```
 
----
+**Key insight**: Only 5 letters matter. `l` and `o` each appear twice in "balloon" → divide their counts by 2.
 
-## Problem Description
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-Maximum Number of Balloons. ([LeetCode](https://leetcode.com/problems/maximum-number-of-balloons))
-
-Difficulty: Easy | Acceptance: 59.7%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/maximum-number-of-balloons) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🔑 **EN**: Only count letters `b, a, l, o, n` — others are irrelevant
+  **VI**: Chỉ đếm chữ cái `b, a, l, o, n` — các chữ khác không quan trọng
+- 🔑 **EN**: `l` and `o` each appear twice in "balloon" → use `Math.floor(count/2)`
+  **VI**: `l` và `o` xuất hiện 2 lần trong "balloon" → dùng `Math.floor(count/2)`
+- 🔑 **EN**: Answer = minimum across all 5 required counts (the bottleneck letter)
+  **VI**: Đáp án = giá trị nhỏ nhất trong 5 chữ cái cần (chữ là nút cổ chai)
+- 🔑 **EN**: If any required letter is missing, answer is 0
+  **VI**: Nếu thiếu bất kỳ chữ nào, đáp án là 0
+- 🔑 **EN**: Can generalize: build freq map for any target word, then take min of floor(count/needed)
+  **VI**: Có thể tổng quát hóa: xây freq map cho bất kỳ từ nào, rồi lấy min(count/needed)
+- 🔑 **EN**: Time O(n) for counting + O(5) = O(n); Space O(1) with only 5 counters
+  **VI**: Thời gian O(n) đếm + O(5) = O(n); Không gian O(1) với 5 biến đếm
 
 ---
-
-## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function maximumNumberOfBalloonsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// ─── Solution 1: Direct Counting — O(n) time, O(1) space ────────────────────
+function maxNumberOfBalloons(text: string): number {
+  let b = 0,
+    a = 0,
+    l = 0,
+    o = 0,
+    n = 0;
+
+  for (const ch of text) {
+    if (ch === "b") b++;
+    else if (ch === "a") a++;
+    else if (ch === "l") l++;
+    else if (ch === "o") o++;
+    else if (ch === "n") n++;
+  }
+
+  // "balloon": b×1, a×1, l×2, o×2, n×1
+  return Math.min(b, a, Math.floor(l / 2), Math.floor(o / 2), n);
 }
 
-/**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function maximumNumberOfBalloons(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
+// Tests
+console.log(maxNumberOfBalloons("nlaebolko")); // 1
+console.log(maxNumberOfBalloons("loonbalxballpoon")); // 2
+console.log(maxNumberOfBalloons("leetcode")); // 0
+console.log(maxNumberOfBalloons("balloonballoon")); // 2
+```
+
+```typescript
+// ─── Solution 2: Generalized Map Approach — O(n) time, O(1) space ────────────
+function maxNumberOfBalloons2(text: string): number {
+  const target = "balloon";
+  const need = new Map<string, number>();
+  for (const ch of target) need.set(ch, (need.get(ch) ?? 0) + 1);
+
+  const have = new Map<string, number>();
+  for (const ch of text) {
+    if (need.has(ch)) have.set(ch, (have.get(ch) ?? 0) + 1);
+  }
+
+  let ans = Infinity;
+  for (const [ch, cnt] of need) {
+    ans = Math.min(ans, Math.floor((have.get(ch) ?? 0) / cnt));
+  }
+
+  return ans === Infinity ? 0 : ans;
 }
 
-// === Test Cases ===
-// console.log(maximumNumberOfBalloons(/* example 1 */)); // expected
-// console.log(maximumNumberOfBalloons(/* example 2 */)); // expected
-// console.log(maximumNumberOfBalloons(/* edge case */)); // expected
+// Tests
+console.log(maxNumberOfBalloons2("nlaebolko")); // 1
+console.log(maxNumberOfBalloons2("loonbalxballpoon")); // 2
+console.log(maxNumberOfBalloons2("leetcode")); // 0
+```
+
+```typescript
+// ─── Solution 3: Frequency Array (fastest) — O(n) time, O(26) space ─────────
+function maxNumberOfBalloons3(text: string): number {
+  const freq = new Array(26).fill(0);
+  for (const ch of text) freq[ch.charCodeAt(0) - 97]++;
+
+  // b=1, a=0, l=11, o=14, n=13  (a=0, b=1, l=11, n=13, o=14)
+  return Math.min(
+    freq[1], // b
+    freq[0], // a
+    Math.floor(freq[11] / 2), // l
+    Math.floor(freq[14] / 2), // o
+    freq[13], // n
+  );
+}
+
+// Tests
+console.log(maxNumberOfBalloons3("nlaebolko")); // 1
+console.log(maxNumberOfBalloons3("loonbalxballpoon")); // 2
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Reorganize String](https://leetcode.com/problems/reorganize-string) — same pattern: Heap / Priority Queue
-- [Number of Divisible Substrings](https://leetcode.com/problems/number-of-divisible-substrings) — same pattern: Prefix Sum
-- [Ransom Note](https://leetcode.com/problems/ransom-note) — same pattern: Hash Map
-- [Maximum Number of Balloons — LeetCode](https://leetcode.com/problems/maximum-number-of-balloons) — problem page
+| #    | Problem                                     | Difficulty | Pattern  |
+| ---- | ------------------------------------------- | ---------- | -------- |
+| 383  | Ransom Note                                 | 🟢 Easy    | Hash Map |
+| 242  | Valid Anagram                               | 🟢 Easy    | Hash Map |
+| 1160 | Find Words That Can Be Formed by Characters | 🟢 Easy    | Counting |
+| 2287 | Rearrange Characters to Make Target String  | 🟢 Easy    | Counting |

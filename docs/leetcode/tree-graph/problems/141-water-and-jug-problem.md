@@ -7,100 +7,137 @@ tags: [Math, Depth-First Search, Breadth-First Search]
 leetcode_url: "https://leetcode.com/problems/water-and-jug-problem"
 ---
 
-# Water and Jug Problem / Water and Jug Problem
+# Water and Jug Problem / Bài Toán Đong Nước
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: BFS
-> **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Detonate the Maximum Bombs](https://leetcode.com/problems/detonate-the-maximum-bombs) | [Course Schedule](https://leetcode.com/problems/course-schedule)
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Math (Bézout's Identity) / BFS
 
----
+## 🧠 Intuition
 
-## 🧠 Intuition / Tư Duy
+**VI**: Bài toán kinh điển về số học! Định lý Bézout: mọi số đạt được từ các phép cộng/trừ bội số của x và y đều là bội số của `gcd(x, y)`. Vậy ta có thể đong được `z` lít khi và chỉ khi `z` chia hết cho `gcd(x, y)` VÀ `z ≤ x + y`.
 
-**Analogy:** Như ném đá xuống ao — sóng lan ra theo từng vòng đều đặn. Khám phá hết tất cả ở khoảng cách 1, rồi mới sang khoảng cách 2.
-
-**Pattern Recognition:**
-
-- Signal: "shortest path (unweighted)" + "level-order" → **BFS**
-- Bài này thuộc dạng BFS — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Water and Jug Problem example:**
+**EN**: Bézout's identity: any integer representable as `ax + by` is a multiple of `gcd(x, y)`. So z is achievable iff `z % gcd(x, y) === 0` and `z <= x + y`.
 
 ```
-Level 0:     [root]
-Level 1:   [A, B]
-Level 2: [C, D, E]
+x=3, y=5, z=4:
+gcd(3,5) = 1 → z=4 divisible by 1 ✓
+z=4 ≤ 3+5=8 ✓  → true
 
-BFS: process level by level using queue
+Proof: 3*(-1) + 5*(1) = 2... 3*3 + 5*(-1) = 4 ✓
+
+BFS states: (jug_x, jug_y) current water amounts
+Start: (0,0)  Goal: x==z or y==z or x+y==z
 ```
-
----
-
-## Problem Description
-
-Water and Jug Problem. ([LeetCode](https://leetcode.com/problems/water-and-jug-problem))
-
-Difficulty: Medium | Acceptance: 43.1%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/water-and-jug-problem) for full constraints
-
----
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- 🇻🇳 Giải pháp O(1): `z % gcd(x,y) === 0 && z <= x + y` — luôn ưu tiên giải thích toán học.
+- 🇬🇧 O(1) math solution: `z % gcd(x,y) === 0 && z <= x + y` — explain Bézout to impress.
+- 🇻🇳 BFS giải thích trực quan: mỗi trạng thái là `(lượng nước trong x, lượng nước trong y)`.
+- 🇬🇧 BFS for intuition: state is `(water_in_x, water_in_y)`, 6 transitions per state.
+- 🇻🇳 6 hành động: đổ đầy x, đổ đầy y, đổ hết x, đổ hết y, rót x→y, rót y→x.
+- 🇬🇧 6 operations: fill x, fill y, empty x, empty y, pour x→y, pour y→x.
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function waterAndJugProblemBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// ─── Solution 1: Math — Bézout's Identity O(log(min(x,y))) ───
+// Time: O(log(min(x,y)))  Space: O(1)
+function canMeasureWater(x: number, y: number, z: number): boolean {
+  if (z > x + y) return false;
+  if (z === 0) return true;
+  if (x === 0) return z === y;
+  if (y === 0) return z === x;
+  return z % gcd(x, y) === 0;
 }
 
-/**
- * Solution 2: Optimized — BFS
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function waterAndJugProblem(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using BFS
-  // Hint: Use queue, process level by level
-  throw new Error('Not implemented');
+function gcd(a: number, b: number): number {
+  while (b) {
+    [a, b] = [b, a % b];
+  }
+  return a;
 }
 
-// === Test Cases ===
-// console.log(waterAndJugProblem(/* example 1 */)); // expected
-// console.log(waterAndJugProblem(/* example 2 */)); // expected
-// console.log(waterAndJugProblem(/* edge case */)); // expected
+// ─── Solution 2: BFS — enumerate all reachable states ───
+// Time: O(x*y)  Space: O(x*y)
+function canMeasureWaterBFS(x: number, y: number, z: number): boolean {
+  if (z > x + y) return false;
+  if (z === 0) return true;
+
+  const visited = new Set<number>();
+  const encode = (a: number, b: number) => a * (y + 1) + b;
+  const queue: [number, number][] = [[0, 0]];
+  visited.add(encode(0, 0));
+
+  while (queue.length) {
+    const [a, b] = queue.shift()!;
+    if (a === z || b === z || a + b === z) return true;
+
+    const next: [number, number][] = [
+      [x, b], // fill jug x
+      [a, y], // fill jug y
+      [0, b], // empty jug x
+      [a, 0], // empty jug y
+      // pour x → y
+      [Math.max(0, a - (y - b)), Math.min(y, a + b)],
+      // pour y → x
+      [Math.min(x, a + b), Math.max(0, b - (x - a))],
+    ];
+
+    for (const [na, nb] of next) {
+      const key = encode(na, nb);
+      if (!visited.has(key)) {
+        visited.add(key);
+        queue.push([na, nb]);
+      }
+    }
+  }
+  return false;
+}
+
+// ─── Solution 3: DFS iterative ───
+// Time: O(x*y)  Space: O(x*y)
+function canMeasureWaterDFS(x: number, y: number, z: number): boolean {
+  if (z > x + y) return false;
+  if (z === 0) return true;
+  const seen = new Set<number>();
+  const encode = (a: number, b: number) => a * (y + 1) + b;
+  const stack: [number, number][] = [[0, 0]];
+  seen.add(encode(0, 0));
+  while (stack.length) {
+    const [a, b] = stack.pop()!;
+    if (a === z || b === z || a + b === z) return true;
+    const moves: [number, number][] = [
+      [x, b],
+      [a, y],
+      [0, b],
+      [a, 0],
+      [Math.max(0, a - (y - b)), Math.min(y, a + b)],
+      [Math.min(x, a + b), Math.max(0, b - (x - a))],
+    ];
+    for (const [na, nb] of moves) {
+      const key = encode(na, nb);
+      if (!seen.has(key)) {
+        seen.add(key);
+        stack.push([na, nb]);
+      }
+    }
+  }
+  return false;
+}
+
+// Tests
+console.log(canMeasureWater(3, 5, 4)); // true
+console.log(canMeasureWater(2, 6, 5)); // false
+console.log(canMeasureWater(1, 2, 3)); // true
+console.log(canMeasureWaterBFS(3, 5, 4)); // true
+console.log(canMeasureWaterBFS(2, 6, 5)); // false
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Detonate the Maximum Bombs](https://leetcode.com/problems/detonate-the-maximum-bombs) — same pattern: BFS
-- [Course Schedule](https://leetcode.com/problems/course-schedule) — same pattern: Topological Sort
-- [Evaluate Division](https://leetcode.com/problems/evaluate-division) — same pattern: Shortest Path (BFS/Dijkstra)
-- [Same Tree](https://leetcode.com/problems/same-tree) — same pattern: BFS
-- [Water and Jug Problem — LeetCode](https://leetcode.com/problems/water-and-jug-problem) — problem page
+| #    | Title                 | Difficulty | Pattern              |
+| ---- | --------------------- | ---------- | -------------------- |
+| 365  | Water and Jug Problem | 🟡 Medium  | Math / BFS           |
+| 263  | Ugly Number           | 🟢 Easy    | Math                 |
+| 1201 | Ugly Number III       | 🟡 Medium  | Math + Binary Search |
+| 858  | Mirror Reflection     | 🟡 Medium  | Math / GCD           |

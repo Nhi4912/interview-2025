@@ -7,100 +7,123 @@ tags: [Array, Hash Table, String]
 leetcode_url: "https://leetcode.com/problems/verifying-an-alien-dictionary"
 ---
 
-# Verifying an Alien Dictionary / Verifying an Alien Dictionary
+# Verifying an Alien Dictionary / Xác Minh Từ Điển Ngoài Hành Tinh
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map
-> **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) | [Longest String Chain](https://leetcode.com/problems/longest-string-chain)
 
----
+## 🧠 Intuition / Trực Giác
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
-
-**Pattern Recognition:**
-
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Verifying an Alien Dictionary example:**
+**Vietnamese analogy**: Từ điển ngoài hành tinh có thứ tự chữ cái khác. Bạn xây bảng tra thứ tự, rồi so sánh từng cặp từ liền kề — như kiểm tra bảng chữ cái thông thường nhưng dùng thứ tự mới.
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
+order = "hlabcdefgijkmnopqrstuvwxyz"
+Build: h→0, l→1, a→2, b→3 ...
 
-Key insight: store complement for O(1) lookup
+words = ["hello","leetcode"]
+Compare "hello" vs "leetcode":
+  h(0) vs l(1) → 0 < 1 → OK ✅
+
+words = ["word","world","row"]
+Compare "word" vs "world":
+  w=w, o=o, r=r, d vs l → d(3) < l(?) → depends on order
+  If d comes before l in order → OK ✅
+Compare "world" vs "row":
+  w vs r → check order[w] vs order[r]
 ```
 
----
+**Key insight**: Build `Map<char, rank>` from `order`. Compare adjacent words: first mismatch decides order; if `w1` is prefix of `w2` but longer → invalid.
 
-## Problem Description
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-Verifying an Alien Dictionary. ([LeetCode](https://leetcode.com/problems/verifying-an-alien-dictionary))
-
-Difficulty: Easy | Acceptance: 55.6%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/verifying-an-alien-dictionary) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🔑 **EN**: Build rank map in O(26) — `order[i]` gets rank `i`
+  **VI**: Xây bảng thứ tự O(26) — `order[i]` được xếp hạng `i`
+- 🔑 **EN**: Compare adjacent words only — transitivity handles the rest
+  **VI**: Chỉ so sánh từng cặp liền kề — tính bắc cầu xử lý phần còn lại
+- 🔑 **EN**: Walk characters simultaneously; first diff determines order
+  **VI**: Duyệt ký tự song song; ký tự khác nhau đầu tiên quyết định thứ tự
+- 🔑 **EN**: If `words[i]` is a prefix of `words[i+1]` → OK; reverse is invalid
+  **VI**: Nếu `words[i]` là tiền tố của `words[i+1]` → OK; chiều ngược lại → không hợp lệ
+- 🔑 **EN**: Return `false` immediately upon any violation (early exit)
+  **VI**: Trả về `false` ngay khi vi phạm (thoát sớm)
+- 🔑 **EN**: Edge case: single word list is always sorted
+  **VI**: Trường hợp đặc biệt: danh sách một từ luôn đã sắp xếp
 
 ---
-
-## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function verifyingAnAlienDictionaryBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// ─── Solution 1: Hash Map + Adjacent Comparison — O(n·m) time, O(1) space ───
+function isAlienSorted(words: string[], order: string): boolean {
+  // Build rank lookup
+  const rank = new Map<string, number>();
+  for (let i = 0; i < order.length; i++) rank.set(order[i], i);
+
+  for (let i = 0; i < words.length - 1; i++) {
+    const w1 = words[i];
+    const w2 = words[i + 1];
+    const len = Math.min(w1.length, w2.length);
+    let foundDiff = false;
+
+    for (let j = 0; j < len; j++) {
+      const r1 = rank.get(w1[j])!;
+      const r2 = rank.get(w2[j])!;
+      if (r1 < r2) {
+        foundDiff = true;
+        break;
+      } // correct order
+      if (r1 > r2) return false; // wrong order
+    }
+
+    // If no diff found and w1 is longer than w2, invalid (e.g. "apple" > "app")
+    if (!foundDiff && w1.length > w2.length) return false;
+  }
+
+  return true;
 }
 
-/**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function verifyingAnAlienDictionary(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
+// Tests
+console.log(isAlienSorted(["hello", "leetcode"], "hlabcdefgijkmnopqrstuvwxyz")); // true
+console.log(isAlienSorted(["word", "world", "row"], "worldabcefghijkmnpqstuvxyz")); // false
+console.log(isAlienSorted(["apple", "app"], "abcdefghijklmnopqrstuvwxyz")); // false
+console.log(isAlienSorted(["app", "apple"], "abcdefghijklmnopqrstuvwxyz")); // true
+```
+
+```typescript
+// ─── Solution 2: Array Rank (faster lookup) — O(n·m) time, O(26) space ──────
+function isAlienSorted2(words: string[], order: string): boolean {
+  const rank = new Array(26).fill(0);
+  for (let i = 0; i < order.length; i++) {
+    rank[order.charCodeAt(i) - 97] = i;
+  }
+
+  const compare = (a: string, b: string): boolean => {
+    const len = Math.min(a.length, b.length);
+    for (let i = 0; i < len; i++) {
+      const ra = rank[a.charCodeAt(i) - 97];
+      const rb = rank[b.charCodeAt(i) - 97];
+      if (ra < rb) return true;
+      if (ra > rb) return false;
+    }
+    return a.length <= b.length; // prefix rule
+  };
+
+  for (let i = 0; i < words.length - 1; i++) {
+    if (!compare(words[i], words[i + 1])) return false;
+  }
+  return true;
 }
 
-// === Test Cases ===
-// console.log(verifyingAnAlienDictionary(/* example 1 */)); // expected
-// console.log(verifyingAnAlienDictionary(/* example 2 */)); // expected
-// console.log(verifyingAnAlienDictionary(/* edge case */)); // expected
+// Tests
+console.log(isAlienSorted2(["hello", "leetcode"], "hlabcdefgijkmnopqrstuvwxyz")); // true
+console.log(isAlienSorted2(["word", "world", "row"], "worldabcefghijkmnpqstuvxyz")); // false
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Longest String Chain](https://leetcode.com/problems/longest-string-chain) — same pattern: Two Pointers
-- [Word Break II](https://leetcode.com/problems/word-break-ii) — same pattern: Trie
-- [Open the Lock](https://leetcode.com/problems/open-the-lock) — same pattern: BFS
-- [Verifying an Alien Dictionary — LeetCode](https://leetcode.com/problems/verifying-an-alien-dictionary) — problem page
+| #    | Problem                               | Difficulty | Pattern     |
+| ---- | ------------------------------------- | ---------- | ----------- |
+| 242  | Valid Anagram                         | 🟢 Easy    | Hash Map    |
+| 953  | Verifying an Alien Dictionary         | 🟢 Easy    | Hash Map    |
+| 1051 | Height Checker                        | 🟢 Easy    | Sorting     |
+| 1356 | Sort Integers by The Number of 1 Bits | 🟢 Easy    | Custom Sort |

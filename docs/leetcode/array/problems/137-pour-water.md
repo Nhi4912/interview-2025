@@ -7,97 +7,139 @@ tags: [Array, Simulation]
 leetcode_url: "https://leetcode.com/problems/pour-water"
 ---
 
-# Pour Water / Pour Water
+# Pour Water / Đổ Nước
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Matrix / Simulation
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) | [Text Justification](https://leetcode.com/problems/text-justification)
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Simulation
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition / Trực Giác
 
-**Analogy:** Phân tích bài "Pour Water" — xác định pattern phù hợp dựa trên constraints và input/output.
+**VI:** Hãy tưởng tượng bạn đang đổ nước lên bản đồ độ cao: nước luôn chảy xuống. Với mỗi giọt nước thả tại vị trí `k`: trước tiên quét sang TRÁI tìm nơi thấp hơn, nếu không được thì quét sang PHẢI, nếu không được thì đứng tại chỗ.
 
-**Pattern Recognition:**
-
-- Signal: "problem-specific signals" → **Matrix / Simulation**
-- Bài này thuộc dạng Matrix / Simulation — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Pour Water example:**
+**EN:** Simulate gravity: each water drop at `k` first tries to flow LEFT to find a lower spot, then RIGHT, then stays put. Scan until you can't go lower anymore.
 
 ```
-// TODO: Add step-by-step visual for Matrix / Simulation
-// Show one complete example with state at each step
+heights:  [2, 1, 1, 2, 1, 2, 2]  k=3, 1 drop
+           0  1  2  3  4  5  6
+
+Step 1 — scan LEFT from k=3:
+  h[2]=1 < h[3]=2 → can move left
+  h[1]=1 = h[2]=1 → can't improve, stop at pos=2
+  Water settles at 2: [2,1,2,2,1,2,2]
+
+Step 2 — if left fails, scan RIGHT from k=3:
+  look for strictly lower position
 ```
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-Pour Water. ([LeetCode](https://leetcode.com/problems/pour-water))
-
-Difficulty: Medium | Acceptance: 47.9%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/pour-water) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🟡 **EN:** Priority order is strict: LEFT first, then RIGHT, then stay.
+  **VI:** Thứ tự ưu tiên: TRÁI trước, rồi PHẢI, rồi đứng tại chỗ.
+- 🟡 **EN:** When scanning, move only if strictly lower; stop when equal or higher.
+  **VI:** Khi quét, di chuyển chỉ khi thấp hơn thực sự; dừng khi bằng hoặc cao hơn.
+- 🟡 **EN:** Find the leftmost/rightmost minimum in each scan direction.
+  **VI:** Tìm vị trí thấp nhất ngoài cùng trái/phải trong mỗi hướng quét.
+- 🟡 **EN:** After dropping all `vol` drops, return the modified heights array.
+  **VI:** Sau khi thả hết `vol` giọt, trả về mảng độ cao đã thay đổi.
+- 🟡 **EN:** Time O(n*vol) per drop in worst case; Space O(1) extra.
+  **VI:** Thời gian O(n*vol) trong trường hợp tệ nhất; Không gian O(1) thêm.
+- 🟡 **EN:** Edge case: plateau at drop point — water stays at k.
+  **VI:** Trường hợp đặc biệt: bằng phẳng tại điểm thả — nước đứng tại k.
 
 ---
 
-## Solutions
+## Solutions / Giải Pháp
+
+### Solution 1: Direct Simulation — O(n \* vol) Time, O(1) Space ✅ Optimal
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function pourWaterBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function pourWater(heights: number[], volume: number, k: number): number[] {
+  for (let v = 0; v < volume; v++) {
+    let pos = k;
+
+    // Try to flow LEFT
+    let left = k;
+    while (left > 0 && heights[left - 1] <= heights[left]) {
+      left--;
+    }
+    // left is now the leftmost point we can reach going left
+    // Only settle there if it's strictly lower than k
+    if (heights[left] < heights[k]) {
+      heights[left]++;
+      continue;
+    }
+
+    // Try to flow RIGHT
+    let right = k;
+    while (right < heights.length - 1 && heights[right + 1] <= heights[right]) {
+      right++;
+    }
+    // right is the rightmost point going right
+    if (heights[right] < heights[k]) {
+      heights[right]++;
+      continue;
+    }
+
+    // Stay at k
+    heights[k]++;
+  }
+  return heights;
 }
 
-/**
- * Solution 2: Optimized — Matrix / Simulation
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function pourWater(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Matrix / Simulation
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
+// Test cases
+console.log(JSON.stringify(pourWater([2, 1, 1, 2, 1, 2, 2], 4, 3)));
+// Expected: [2,2,2,3,2,2,2]
+console.log(JSON.stringify(pourWater([1, 2, 3, 4], 2, 2)));
+// Expected: [2,3,3,4]  (water flows left)
+console.log(JSON.stringify(pourWater([3, 1, 3], 5, 1)));
+// Expected: [3,6,3]  (water stays in valley)
+```
+
+### Solution 2: Cleaner Simulation with Helper — O(n \* vol) Time, O(1) Space
+
+```typescript
+function pourWaterV2(heights: number[], volume: number, k: number): number[] {
+  const n = heights.length;
+
+  for (let v = 0; v < volume; v++) {
+    let drop = k;
+
+    // Scan left: find leftmost position that is strictly lower than current
+    for (let i = k - 1; i >= 0; i--) {
+      if (heights[i] > heights[drop]) break;
+      if (heights[i] < heights[drop]) drop = i;
+    }
+
+    if (drop !== k) {
+      heights[drop]++;
+      continue;
+    }
+
+    // Scan right: find rightmost position that is strictly lower
+    for (let i = k + 1; i < n; i++) {
+      if (heights[i] > heights[drop]) break;
+      if (heights[i] < heights[drop]) drop = i;
+    }
+
+    heights[drop]++;
+  }
+
+  return heights;
 }
 
-// === Test Cases ===
-// console.log(pourWater(/* example 1 */)); // expected
-// console.log(pourWater(/* example 2 */)); // expected
-// console.log(pourWater(/* edge case */)); // expected
+console.log(JSON.stringify(pourWaterV2([2, 1, 1, 2, 1, 2, 2], 4, 3)));
+// Expected: [2,2,2,3,2,2,2]
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) — same pattern: Matrix / Simulation
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Asteroid Collision](https://leetcode.com/problems/asteroid-collision) — same pattern: Stack
-- [Spiral Matrix II](https://leetcode.com/problems/spiral-matrix-ii) — same pattern: Matrix / Simulation
-- [Pour Water — LeetCode](https://leetcode.com/problems/pour-water) — problem page
+| #   | Problem                   | Difficulty | Pattern              |
+| --- | ------------------------- | ---------- | -------------------- |
+| 42  | Trapping Rain Water       | 🔴 Hard    | Two Pointers / Stack |
+| 407 | Trapping Rain Water II    | 🔴 Hard    | BFS / Heap           |
+| 11  | Container With Most Water | 🟡 Medium  | Two Pointers         |
