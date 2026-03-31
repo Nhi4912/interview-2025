@@ -17,52 +17,68 @@ leetcode_url: "https://leetcode.com/problems/2-keys-keyboard"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**Analogy:** Giống nhân bản tế bào — mỗi lần Copy-All ta nhân đôi (hoặc nhân k lần), rồi Paste nhiều lần. Số thao tác tối thiểu = tổng các ước nguyên tố của n (ví dụ n=12=2×2×3 → 2+2+3=7 thao tác).
 
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — 2 Keys Keyboard example:**
+**Visual — n=6:**
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+n=6, target: 'AAAAAA'
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+Option 1: CopyAll(1A) → Paste → Paste(2A) → CopyAll → Paste → Paste → Paste(6A)
+          1 + 2 + 3 = 6 operations (wrong count)
+
+Better:   Start with 'A'
+  CopyAll(1) + Paste = 2A  → 2 ops
+  CopyAll(2) + Paste = 4A  → 2 ops
+  ... doesn't reach 6 cleanly
+
+Best:     'A' → CopyAll + Paste + Paste = 'AAA' (3 ops)
+          'AAA' → CopyAll + Paste = 'AAAAAA' (2 ops)
+          Total = 5 ops
+
+n=6=2×3 → sum of prime factors = 2+3 = 5 ✓
+n=9=3×3 → sum = 3+3 = 6
+n=prime → answer = n itself (only way: copy 1, paste n-1 times)
 ```
 
 ---
 
 ## Problem Description
 
-2 Keys Keyboard. ([LeetCode](https://leetcode.com/problems/2-keys-keyboard))
+Start with one `'A'` on a blank notepad. You can perform two operations: **Copy All** (copies everything on screen) and **Paste** (pastes clipboard). Return the **minimum number of operations** to get exactly `n` `'A'`s. ([LeetCode](https://leetcode.com/problems/2-keys-keyboard))
 
 Difficulty: Medium | Acceptance: 59.1%
 
+**Example 1:**
+
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+Input: n = 3
+Output: 3
+Explanation: Copy All (1A), Paste (2A), Paste (3A) = 3 operations.
+```
+
+**Example 2:**
+
+```
+Input: n = 1
+Output: 0
+Explanation: Already have 1 'A', no operations needed.
 ```
 
 Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/2-keys-keyboard) for full constraints
+
+- `1 <= n <= 1000`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+1. **Math insight**: "Số thao tác = tổng các ước nguyên tố của n. n=12=2×2×3 → 2+2+3=7" / Sum of prime factors is the key insight.
+2. **DP approach**: "dp[i] = min operations to get i A's. dp[i] = min(dp[j] + i/j) cho mọi j chia hết i" / For each factor j of i, cost = dp[j] + (i/j).
+3. **Why prime factors?**: "Mỗi lần copy-paste j lần = j operations, tương ứng một nhân tử nguyên tố" / Each copy+pastes cycle corresponds to one prime factor.
+4. **Greedy**: "Luôn copy ở điểm tốt nhất (khi screen count là ước của n)" / Copy when current count divides target.
+5. **Edge cases**: "n=1 → 0 ops, n=prime p → p ops (copy + paste p-1 times)" / Prime n requires n operations.
+6. **Follow-up**: "3 Keys (Copy, Paste, Cut)? Thêm state cho clipboard" / Adding cut/delete complicates the state space.
 
 ---
 
@@ -70,39 +86,56 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: DP bottom-up
+ * Time: O(n²) — for each i, check all divisors j
+ * Space: O(n)
  */
-function 2KeysKeyboardBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minStepsDP(n: number): number {
+  if (n === 1) return 0;
+  const dp = new Array(n + 1).fill(Infinity);
+  dp[1] = 0;
+
+  for (let i = 2; i <= n; i++) {
+    for (let j = 1; j < i; j++) {
+      if (i % j === 0) {
+        // From j A's: Copy All (1 op) + Paste (i/j - 1) times
+        dp[i] = Math.min(dp[i], dp[j] + i / j);
+      }
+    }
+  }
+
+  return dp[n];
 }
 
 /**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Prime factorization (math insight)
+ * Time: O(√n) — trial division
+ * Space: O(1)
+ *
+ * Observation: optimal strategy = decompose n into prime factors p1 × p2 × ...
+ * Each prime factor p costs p operations (1 copy-all + p-1 pastes)
+ * Total = sum of all prime factors (with repetition)
  */
-function 2KeysKeyboard(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function minSteps(n: number): number {
+  let ans = 0;
+  let d = 2;
+  while (d * d <= n) {
+    while (n % d === 0) {
+      ans += d;
+      n = Math.floor(n / d);
+    }
+    d++;
+  }
+  if (n > 1) ans += n; // n itself is prime
+  return ans;
 }
 
 // === Test Cases ===
-// console.log(2KeysKeyboard(/* example 1 */)); // expected
-// console.log(2KeysKeyboard(/* example 2 */)); // expected
-// console.log(2KeysKeyboard(/* edge case */)); // expected
+console.log(minSteps(1)); // 0
+console.log(minSteps(2)); // 2
+console.log(minSteps(3)); // 3
+console.log(minSteps(6)); // 5 (2+3)
+console.log(minSteps(9)); // 6 (3+3)
+console.log(minSteps(12)); // 7 (2+2+3)
+console.log(minSteps(1000)); // 21 (2+2+2+5+5+5)
 ```
-
----
-
-## 🔗 Related Problems
-
-- [Unique Binary Search Trees](https://leetcode.com/problems/unique-binary-search-trees) — same pattern: Dynamic Programming
-- [Fibonacci Number](https://leetcode.com/problems/fibonacci-number) — same pattern: Dynamic Programming
-- [Perfect Squares](https://leetcode.com/problems/perfect-squares) — same pattern: Dynamic Programming
-- [N-th Tribonacci Number](https://leetcode.com/problems/n-th-tribonacci-number) — same pattern: Dynamic Programming
-- [2 Keys Keyboard — LeetCode](https://leetcode.com/problems/2-keys-keyboard) — problem page

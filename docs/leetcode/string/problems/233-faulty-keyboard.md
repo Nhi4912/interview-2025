@@ -9,55 +9,60 @@ leetcode_url: "https://leetcode.com/problems/faulty-keyboard"
 
 # Faulty Keyboard / Faulty Keyboard
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Matrix / Simulation
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Simulation
 > **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Text Justification](https://leetcode.com/problems/text-justification) | [Multiply Strings](https://leetcode.com/problems/multiply-strings)
+> **See also**: [Backspace String Compare](https://leetcode.com/problems/backspace-string-compare) | [Reverse String](https://leetcode.com/problems/reverse-string)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Phân tích bài "Faulty Keyboard" — xác định pattern phù hợp dựa trên constraints và input/output.
+**Analogy:** Như chiếc quạt trần có công tắc đảo chiều — mỗi lần nhấn 'i' là đảo chiều quay, nhưng thay vì thực sự quay lại, ta chỉ cần ghi nhớ "đang quay chiều nào" và thêm ký tự vào đầu hay cuối tương ứng.
 
-**Pattern Recognition:**
-
-- Signal: "problem-specific signals" → **Matrix / Simulation**
-- Bài này thuộc dạng Matrix / Simulation — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Faulty Keyboard example:**
+**Visual — Deque + direction flag:**
 
 ```
-// TODO: Add step-by-step visual for Matrix / Simulation
-// Show one complete example with state at each step
+s = "poiinter"
+
+Brute (O(n²)): actually reverse each time
+p→"p"  o→"po"  i→"op"  i→"po"  n→"pon"  t→"pont"  e→"ponte"  r→"ponter"
+
+Optimal (O(n)): deque + toRight flag
+char  toRight  action           deque
+ p      T      push_back    →   [p]
+ o      T      push_back    →   [p,o]
+ i      F      flip
+ i      T      flip
+ n      T      push_back    →   [p,o,n]
+ t      T      push_back    →   [p,o,n,t]
+ e      T      push_back    →   [p,o,n,t,e]
+ r      T      push_back    →   [p,o,n,t,e,r]
+toRight=T → join → "ponter" ✅
 ```
 
 ---
 
 ## Problem Description
 
-Faulty Keyboard. ([LeetCode](https://leetcode.com/problems/faulty-keyboard))
+Your laptop keyboard is faulty: whenever you type `'i'`, the **entire current string on screen is reversed**. All other characters are typed normally.
 
-Difficulty: Easy | Acceptance: 78.6%
+Given string `s` representing your key presses, return the final string on screen.
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+**Example 1:** `s = "poiinter"` → `"ponter"`
+**Example 2:** `s = "string"` → `"rtsng"`
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/faulty-keyboard) for full constraints
+Constraints: `1 <= s.length <= 100`, `s` consists of lowercase English letters.
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify**: "Khi nhấn 'i', chuỗi hiện tại bị đảo — chỉ màn hình, không phải input" / The reversal affects only what's on screen, not future input
+2. **Brute force**: "Thực sự đảo mỗi lần gặp 'i' — O(n²) trong trường hợp xấu nhất" / Simulate directly, O(n²) worst case due to repeated reversals
+3. **Optimize**: "Dùng deque + flag hướng, thêm vào đầu hay cuối tuỳ chiều" / Use deque + direction flag, append to correct end based on parity of reversals
+4. **Key insight**: "Số lần đảo chẵn = chưa đảo, lẻ = đảo 1 lần — chỉ cần 1 bit" / Parity of reversals → only 1 boolean needed
+5. **Edge cases**: "Toàn 'i' → chuỗi rỗng; 'i' đầu/cuối; không có 'i'" / All 'i' gives empty; 'i' at boundaries; no 'i' at all
+6. **Follow-up**: "Nếu có thêm lệnh đặc biệt khác? Dùng deque tổng quát hơn" / Multiple special commands → generalize the deque model
 
 ---
 
@@ -65,39 +70,57 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Brute Force — simulate with actual reversal
+ * Time: O(n²) — each 'i' reverses in O(n), potentially n reversals
+ * Space: O(n) — screen string
  */
-function faultyKeyboardBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function faultyKeyboardBrute(s: string): string {
+  let screen = '';
+  for (const c of s) {
+    if (c === 'i') screen = screen.split('').reverse().join('');
+    else screen += c;
+  }
+  return screen;
 }
 
 /**
- * Solution 2: Optimized — Matrix / Simulation
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Optimal — deque + direction flag
+ * Track which end to append to instead of reversing.
+ * 'i' flips the direction; at the end reverse deque if direction is inverted.
+ * Time: O(n) — each character processed exactly once
+ * Space: O(n) — deque storing result
  */
-function faultyKeyboard(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Matrix / Simulation
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
+function faultyKeyboard(s: string): string {
+  const deque: string[] = [];
+  let toRight = true; // append to right when true, left when false
+
+  for (const c of s) {
+    if (c === 'i') {
+      toRight = !toRight;
+    } else {
+      if (toRight) deque.push(c);
+      else deque.unshift(c);
+    }
+  }
+
+  return toRight ? deque.join('') : deque.reverse().join('');
 }
 
 // === Test Cases ===
-// console.log(faultyKeyboard(/* example 1 */)); // expected
-// console.log(faultyKeyboard(/* example 2 */)); // expected
-// console.log(faultyKeyboard(/* edge case */)); // expected
+console.log(faultyKeyboard('poiinter'));  // "ponter"
+console.log(faultyKeyboard('string'));    // "rtsng"
+console.log(faultyKeyboard('abcde'));     // "abcde"  (no 'i')
+console.log(faultyKeyboard('iiiii'));     // ""        (all 'i', no other chars)
+console.log(faultyKeyboard('iabc'));      // "cba"    ('i' then abc → screen empty then cba reversed)
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Multiply Strings](https://leetcode.com/problems/multiply-strings) — same pattern: Math
-- [Add Binary](https://leetcode.com/problems/add-binary) — same pattern: Bit Manipulation
-- [Backspace String Compare](https://leetcode.com/problems/backspace-string-compare) — same pattern: Two Pointers
-- [Faulty Keyboard — LeetCode](https://leetcode.com/problems/faulty-keyboard) — problem page
+| Problem | Pattern | Difficulty |
+|---------|---------|-----------|
+| [Backspace String Compare](https://leetcode.com/problems/backspace-string-compare) | Simulation | Easy |
+| [Reverse String](https://leetcode.com/problems/reverse-string) | Two Pointers | Easy |
+| [Reverse Words in a String](https://leetcode.com/problems/reverse-words-in-a-string) | Two Pointers | Medium |
+| [Text Justification](https://leetcode.com/problems/text-justification) | Simulation | Hard |

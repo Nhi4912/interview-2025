@@ -17,52 +17,70 @@ leetcode_url: "https://leetcode.com/problems/find-x-value-of-array-i"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**Analogy:** Giống đếm số cách chia đội trong một dãy người — với mỗi vị trí chia, ta cần biết tích phần trước mod k và tích phần sau mod k, ghép lại để check điều kiện.
 
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Find X Value of Array I example:**
+**Visual — nums=[1,2,3,4,5], k=3, x=1:**
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+Count subarrays [l..r] where product % k == x
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+Prefix products mod k:
+idx:  0  1  2  3  4
+val:  1  2  3  4  5
+prod: 1  2  6  24 120
+mod3: 1  2  0  0  0
+
+For each r, count l where prod[l-1]^{-1} * prod[r] ≡ x (mod k)
+i.e., we need prefix[l] such that prefix[r] / prefix[l-1] ≡ x (mod k)
+
+dp[r][rem] = number of subarrays ending at r with product ≡ rem (mod k)
+dp[r][rem] = dp[r-1][rem * nums[r] % k] ... (track backwards)
+
+Answer: sum of dp[r][x] for all r
 ```
 
 ---
 
 ## Problem Description
 
-Find X Value of Array I. ([LeetCode](https://leetcode.com/problems/find-x-value-of-array-i))
+You are given an integer array `nums` and two positive integers `k` and `x`. Return the number of subarrays of `nums` where the **product of all elements** is **divisible by k with remainder x** (i.e., `product % k == x`). ([LeetCode](https://leetcode.com/problems/find-x-value-of-array-i))
 
 Difficulty: Medium | Acceptance: 33.2%
 
+**Example 1:**
+
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+Input: nums = [1,2,3,4,5], k = 3, x = 0
+Output: 6
+Explanation: Subarrays with product divisible by 3:
+[3],[1,2,3],[2,3],[3,4],[2,3,4],[1,2,3,4] → 6 subarrays
+```
+
+**Example 2:**
+
+```
+Input: nums = [1,2,4,8], k = 4, x = 0
+Output: 3
+Explanation: [4],[2,4],[1,2,4] have products divisible by 4.
 ```
 
 Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/find-x-value-of-array-i) for full constraints
+
+- `1 <= nums.length <= 1000`
+- `1 <= nums[i] <= 1000`
+- `1 <= k <= 31`
+- `0 <= x < k`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+1. **Clarify**: "x có thể là 0 không (chia hết)? k có thể lớn không?" / Confirm x range [0, k-1] and constraints on k.
+2. **Brute force**: "O(n²): duyệt mọi cặp (l,r), nhân tích và mod k" / All O(n²) pairs with running product.
+3. **DP insight**: "dp[rem] = số subarray kết thúc tại vị trí hiện tại có product ≡ rem (mod k)" / Track counts by remainder.
+4. **Transition**: "Khi thêm nums[i]: dp_new[rem] = dp_old[(rem \* modinv(nums[i])) % k]... hoặc đơn giản rebuild" / Multiply all remainders by nums[i] mod k.
+5. **Edge cases**: "nums[i] có thể chia hết k → product reset về 0 mod k" / Large products mod k behave correctly.
+6. **Follow-up**: "Array II có n lên đến 10^5 — cần segment tree / sparse table" / Part II requires more efficient structure.
 
 ---
 
@@ -70,31 +88,58 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Brute Force O(n²)
+ * Time: O(n²) — enumerate all subarrays
+ * Space: O(1) — no extra space
  */
-function findXValueOfArrayIBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function findXValueBrute(nums: number[], k: number, x: number): number {
+  const n = nums.length;
+  let count = 0;
+  for (let l = 0; l < n; l++) {
+    let product = 1;
+    for (let r = l; r < n; r++) {
+      product = (product * nums[r]) % k;
+      if (product === x) count++;
+    }
+  }
+  return count;
 }
 
 /**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: DP with remainder tracking O(n·k)
+ * Time: O(n·k) — for each element, update k remainder buckets
+ * Space: O(k) — dp array of size k
+ *
+ * dp[rem] = count of subarrays ending at current index with product ≡ rem (mod k)
  */
-function findXValueOfArrayI(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function findXValueOfArrayI(nums: number[], k: number, x: number): number {
+  // dp[rem] = number of subarrays ending here with product % k == rem
+  let dp = new Array(k).fill(0);
+  let result = 0;
+
+  for (const num of nums) {
+    const ndp = new Array(k).fill(0);
+    // Each existing subarray extended by num
+    for (let rem = 0; rem < k; rem++) {
+      if (dp[rem] > 0) {
+        const newRem = (rem * num) % k;
+        ndp[newRem] += dp[rem];
+      }
+    }
+    // New subarray starting at this element
+    ndp[num % k] += 1;
+    dp = ndp;
+    result += dp[x];
+  }
+
+  return result;
 }
 
 // === Test Cases ===
-// console.log(findXValueOfArrayI(/* example 1 */)); // expected
-// console.log(findXValueOfArrayI(/* example 2 */)); // expected
-// console.log(findXValueOfArrayI(/* edge case */)); // expected
+console.log(findXValueOfArrayI([1, 2, 3, 4, 5], 3, 0)); // 6
+console.log(findXValueOfArrayI([1, 2, 4, 8], 4, 0)); // 3
+console.log(findXValueOfArrayI([1, 2, 3], 1, 0)); // 6 (everything mod 1 == 0)
+console.log(findXValueOfArrayI([5], 3, 2)); // 1 (5%3==2)
 ```
 
 ---
@@ -103,6 +148,6 @@ function findXValueOfArrayI(/* TODO: params */): unknown {
 
 - [Predict the Winner](https://leetcode.com/problems/predict-the-winner) — same pattern: Dynamic Programming
 - [Count Strictly Increasing Subarrays](https://leetcode.com/problems/count-strictly-increasing-subarrays) — same pattern: Dynamic Programming
-- [The Number of Good Subsets](https://leetcode.com/problems/the-number-of-good-subsets) — same pattern: Dynamic Programming
+- [The Number of Good Subsets](https://leetcode.com/problems/the-number-of-good-subsets) — DP with bitmask
 - [Find the Count of Monotonic Pairs I](https://leetcode.com/problems/find-the-count-of-monotonic-pairs-i) — same pattern: Prefix Sum
 - [Find X Value of Array I — LeetCode](https://leetcode.com/problems/find-x-value-of-array-i) — problem page

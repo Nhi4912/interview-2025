@@ -17,52 +17,67 @@ leetcode_url: "https://leetcode.com/problems/vowels-of-all-substrings"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**Analogy:** Giống đếm số lần mỗi người xuất hiện trong tất cả các cuộc họp — thay vì liệt kê mọi cuộc họp, hỏi "người này tham gia bao nhiêu cuộc?" Với ký tự nguyên âm ở vị trí i: nó thuộc (i+1) × (n-i) substrings.
 
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Vowels of All Substrings example:**
+**Visual — word = "aba", n=3:**
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+All substrings: "a","ab","aba","b","ba","a"
+Vowels contribution:
+  idx 0 ('a'): appears in substrings starting at 0, ending at 0,1,2
+               = (0+1) × (3-0) = 1 × 3 = 3 substrings
+  idx 1 ('b'): consonant, skip
+  idx 2 ('a'): appears in substrings starting at 0,1,2, ending at 2
+               = (2+1) × (3-2) = 3 × 1 = 3 substrings
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+Total = 3 + 3 = 6
+
+Verify by brute force:
+  "a"→1, "ab"→1, "aba"→2, "b"→0, "ba"→1, "a"→1 = 6 ✓
+
+Formula: for vowel at index i (0-based):
+  contribution = (i + 1) * (n - i)
 ```
 
 ---
 
 ## Problem Description
 
-Vowels of All Substrings. ([LeetCode](https://leetcode.com/problems/vowels-of-all-substrings))
+Given a string `word`, return the **sum of the number of vowels** ('a', 'e', 'i', 'o', 'u') in every **substring** of `word`. ([LeetCode](https://leetcode.com/problems/vowels-of-all-substrings))
 
 Difficulty: Medium | Acceptance: 54.7%
 
+**Example 1:**
+
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+Input: word = "aba"
+Output: 6
+Explanation: All substrings: "a"(1), "ab"(1), "aba"(2), "b"(0), "ba"(1), "a"(1) = 6
+```
+
+**Example 2:**
+
+```
+Input: word = "abc"
+Output: 3
+Explanation: "a"(1), "ab"(1), "abc"(1), "b"(0), "bc"(0), "c"(0) = 3
 ```
 
 Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/vowels-of-all-substrings) for full constraints
+
+- `1 <= word.length <= 10^5`
+- `word` consists of lowercase English letters
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+1. **Key insight**: "Mỗi nguyên âm ở vị trí i (0-indexed) đóng góp vào (i+1)×(n-i) substrings" / Each vowel contributes to exactly (i+1)\*(n-i) substrings.
+2. **Why?**: "(i+1) cách chọn điểm bắt đầu (0..i) × (n-i) cách chọn điểm kết thúc (i..n-1)" / Start can be anywhere 0..i, end anywhere i..n-1.
+3. **O(n) solution**: "Duyệt một lần, cộng đóng góp của mỗi nguyên âm" / Single pass, O(1) per character.
+4. **No DP needed**: "Bài này thực ra là toán tổ hợp, không cần DP table" / Pure math, though often categorized as DP.
+5. **Edge cases**: "Không có nguyên âm → 0. Tất cả nguyên âm → sum of (i+1)\*(n-i)" / All vowels or no vowels.
+6. **Overflow**: "n lên đến 10^5: (i+1)\*(n-i) tối đa ~2.5×10^9, cần number hoặc BigInt" / Max contribution ~2.5B, use number carefully (within safe integer).
 
 ---
 
@@ -70,39 +85,61 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Brute Force O(n²)
+ * Time: O(n²) — enumerate all substrings
+ * Space: O(1)
  */
-function vowelsOfAllSubstringsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function countVowelsBrute(word: string): number {
+  const vowels = new Set(["a", "e", "i", "o", "u"]);
+  let total = 0;
+  const n = word.length;
+  for (let i = 0; i < n; i++) {
+    for (let j = i; j < n; j++) {
+      for (let k = i; k <= j; k++) {
+        if (vowels.has(word[k])) total++;
+      }
+    }
+  }
+  return total;
 }
 
 /**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Combinatorics O(n)
+ * Time: O(n) — single pass
+ * Space: O(1)
+ *
+ * For vowel at index i (0-based):
+ *   - Number of substrings containing it = (i+1) * (n-i)
+ *   - (i+1) choices for start (indices 0..i)
+ *   - (n-i) choices for end (indices i..n-1)
  */
-function vowelsOfAllSubstrings(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function countVowels(word: string): number {
+  const vowels = new Set(["a", "e", "i", "o", "u"]);
+  const n = word.length;
+  let total = 0;
+
+  for (let i = 0; i < n; i++) {
+    if (vowels.has(word[i])) {
+      total += (i + 1) * (n - i);
+    }
+  }
+
+  return total;
+}
+
+/**
+ * Solution 3: One-liner
+ * Time: O(n) | Space: O(1)
+ */
+function countVowelsOneLiner(word: string): number {
+  const n = word.length;
+  return [...word].reduce((sum, ch, i) => sum + ("aeiou".includes(ch) ? (i + 1) * (n - i) : 0), 0);
 }
 
 // === Test Cases ===
-// console.log(vowelsOfAllSubstrings(/* example 1 */)); // expected
-// console.log(vowelsOfAllSubstrings(/* example 2 */)); // expected
-// console.log(vowelsOfAllSubstrings(/* edge case */)); // expected
+console.log(countVowels("aba")); // 6
+console.log(countVowels("abc")); // 3
+console.log(countVowels("aeiou")); // 5+8+9+8+5 = 35... check: 1*5 + 2*4 + 3*3 + 4*2 + 5*1 = 5+8+9+8+5=35
+console.log(countVowels("a")); // 1
+console.log(countVowels("xyz")); // 0
 ```
-
----
-
-## 🔗 Related Problems
-
-- [Count the Number of Good Subsequences](https://leetcode.com/problems/count-the-number-of-good-subsequences) — same pattern: Math
-- [String Transformation](https://leetcode.com/problems/string-transformation) — same pattern: Dynamic Programming
-- [Count All Valid Pickup and Delivery Options](https://leetcode.com/problems/count-all-valid-pickup-and-delivery-options) — same pattern: Dynamic Programming
-- [Count of Integers](https://leetcode.com/problems/count-of-integers) — same pattern: Dynamic Programming
-- [Vowels of All Substrings — LeetCode](https://leetcode.com/problems/vowels-of-all-substrings) — problem page

@@ -9,7 +9,7 @@ leetcode_url: "https://leetcode.com/problems/ternary-expression-parser"
 
 # Ternary Expression Parser / Ternary Expression Parser
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Stack
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Stack / Recursion
 > **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
 > **See also**: [Decode String](https://leetcode.com/problems/decode-string) | [Basic Calculator](https://leetcode.com/problems/basic-calculator)
 
@@ -17,49 +17,54 @@ leetcode_url: "https://leetcode.com/problems/ternary-expression-parser"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống chồng đĩa — đĩa nào đặt cuối cùng sẽ được lấy ra đầu tiên (LIFO). Nhiều bài toán về matching và nesting dùng stack.
+**Analogy:** Như đọc hướng dẫn if-else lồng nhau từ trong ra ngoài — điều kiện sâu nhất (bên phải nhất) được quyết định trước, rồi kết quả đó được dùng cho tầng ngoài. Stack hoặc đệ quy xử lý tự nhiên cấu trúc lồng này.
 
-**Pattern Recognition:**
-
-- Signal: "matching/nesting" + "most recent element" → **Stack**
-- Bài này thuộc dạng Stack — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Ternary Expression Parser example:**
+**Visual — Recursive parse or right-to-left stack:**
 
 ```
-stack = []
+Expression: "F?1:T?4:5"
+             0123456789
 
-push/pop from right →
-Process: scan left to right, stack maintains invariant
+Recursive (left-to-right):
+  parse(i=0): val='F', s[1]='?' → recurse
+    trueVal = parse(i=2): val='1', s[3]≠'?' → return '1'
+    skip ':', i=4
+    falseVal = parse(i=4): val='T', s[5]='?' → recurse
+      trueVal = parse(i=6): val='4', s[7]≠'?' → return '4'
+      skip ':', i=8
+      falseVal = parse(i=8): val='5' → return '5'
+      cond='T' → return '4'
+    cond='F' → return '4'
+  Result: "4" ✅
+
+Stack (right-to-left):
+Push: 5 → [:] → 4 → [?] → T → [:] → 1 → [?] → F
+When we see '?': pop cond, pop '?', pop true, pop ':', pop false
+  T?4:5 → '4' (push '4')
+  F?1:4 → '4' (push '4')
 ```
 
 ---
 
 ## Problem Description
 
-Ternary Expression Parser. ([LeetCode](https://leetcode.com/problems/ternary-expression-parser))
+Given a valid ternary expression string (format: `cond?trueExpr:falseExpr`, where `cond` is `'T'` or `'F'`, and expressions can be nested), evaluate and return the result as a single character.
 
-Difficulty: Medium | Acceptance: 62.0%
+**Example 1:** `"T?2:3"` → `"2"`
+**Example 2:** `"F?1:T?4:5"` → `"4"` (inner `T?4:5` evaluates to `"4"`, outer `F` picks falseExpr)
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/ternary-expression-parser) for full constraints
+Constraints: `5 <= expression.length <= 10^4`, valid input guaranteed, each value/condition is a single character.
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify**: "Mỗi toán hạng là 1 ký tự (digit hoặc T/F), lồng nhau tùy ý" / Each operand is a single char; nesting depth is arbitrary
+2. **Recursion**: "Đệ quy tự nhiên cho cấu trúc lồng — mỗi lần gặp '?' tạo ra một nhánh" / Recursion is natural: each '?' spawns a branch
+3. **Stack right-to-left**: "Đọc từ phải sang trái, khi gặp '?' xử lý top 3 phần tử stack" / Process right-to-left; on '?', evaluate top of stack
+4. **Complexity**: "O(n) thời gian và không gian — mỗi ký tự xử lý đúng 1 lần" / O(n) time and space — each char processed exactly once
+5. **Edge cases**: "Biểu thức đơn giản không có '?'; lồng sâu nhiều tầng" / Simple expression with no nesting; deeply nested expression
+6. **Follow-up**: "Nếu toán hạng là số nhiều chữ số? → cần parse number, stack vẫn dùng được" / Multi-digit numbers → parse them; stack approach still works
 
 ---
 
@@ -67,39 +72,72 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Recursive descent parser
+ * Consume the expression left-to-right with a shared index.
+ * If next char is '?', recursively evaluate true and false branches.
+ * Time: O(n) — each character visited once
+ * Space: O(n) — recursion stack depth proportional to nesting depth
  */
-function ternaryExpressionParserBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function parseTernaryRecursive(expression: string): string {
+  let i = 0;
+
+  function parse(): string {
+    const val = expression[i++];
+    if (i < expression.length && expression[i] === '?') {
+      i++; // skip '?'
+      const trueVal = parse();
+      i++; // skip ':'
+      const falseVal = parse();
+      return val === 'T' ? trueVal : falseVal;
+    }
+    return val;
+  }
+
+  return parse();
 }
 
 /**
- * Solution 2: Optimized — Stack
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Stack — process right-to-left
+ * Push chars onto stack. When encountering a condition char followed by '?',
+ * pop true and false branches and push result.
+ * Time: O(n) — one pass right-to-left
+ * Space: O(n) — stack
  */
-function ternaryExpressionParser(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Stack
-  // Hint: Push/pop to maintain invariant, process when stack condition changes
-  throw new Error('Not implemented');
+function parseTernary(expression: string): string {
+  const stack: string[] = [];
+
+  for (let i = expression.length - 1; i >= 0; i--) {
+    const c = expression[i];
+
+    if (stack.length > 0 && stack[stack.length - 1] === '?') {
+      stack.pop(); // remove '?'
+      const trueVal = stack.pop()!;
+      stack.pop(); // remove ':'
+      const falseVal = stack.pop()!;
+      stack.push(c === 'T' ? trueVal : falseVal);
+    } else {
+      stack.push(c);
+    }
+  }
+
+  return stack[0];
 }
 
 // === Test Cases ===
-// console.log(ternaryExpressionParser(/* example 1 */)); // expected
-// console.log(ternaryExpressionParser(/* example 2 */)); // expected
-// console.log(ternaryExpressionParser(/* edge case */)); // expected
+console.log(parseTernary('T?2:3'));             // "2"
+console.log(parseTernary('F?1:T?4:5'));         // "4"
+console.log(parseTernary('T?T?F:5:3'));         // "F"  (T → inner T?F:5 → F)
+console.log(parseTernary('F?F?1:2:T?3:4'));     // "3"
+console.log(parseTernary('T?1:2'));             // "1"
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Decode String](https://leetcode.com/problems/decode-string) — same pattern: Stack
-- [Basic Calculator](https://leetcode.com/problems/basic-calculator) — same pattern: Stack
-- [Basic Calculator III](https://leetcode.com/problems/basic-calculator-iii) — same pattern: Stack
-- [Parse Lisp Expression](https://leetcode.com/problems/parse-lisp-expression) — same pattern: Stack
-- [Ternary Expression Parser — LeetCode](https://leetcode.com/problems/ternary-expression-parser) — problem page
+| Problem | Pattern | Difficulty |
+|---------|---------|-----------|
+| [Decode String](https://leetcode.com/problems/decode-string) | Stack | Medium |
+| [Basic Calculator](https://leetcode.com/problems/basic-calculator) | Stack | Hard |
+| [Basic Calculator III](https://leetcode.com/problems/basic-calculator-iii) | Stack | Hard |
+| [Parse Lisp Expression](https://leetcode.com/problems/parse-lisp-expression) | Recursion | Hard |

@@ -7,7 +7,7 @@ tags: [Tree, Depth-First Search, Binary Tree]
 leetcode_url: "https://leetcode.com/problems/binary-tree-tilt"
 ---
 
-# Binary Tree Tilt / Binary Tree Tilt
+# Binary Tree Tilt / Độ Nghiêng Cây Nhị Phân
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: DFS
 > **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
@@ -17,93 +17,142 @@ leetcode_url: "https://leetcode.com/problems/binary-tree-tilt"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống đi trong mê cung — bạn đi sâu hết một ngõ, nếu cụt thì quay lại ngã rẽ gần nhất chưa thử.
+**Analogy:** Như cân thăng bằng — mỗi nút là một chiếc cân, độ nghiêng là hiệu tuyệt đối giữa tổng bên trái và tổng bên phải. DFS postorder trả về tổng cây con và tích lũy tổng độ nghiêng trong một lần duyệt.
 
-**Pattern Recognition:**
-
-- Signal: "traverse tree/graph" + "all paths" → **DFS**
-- Bài này thuộc dạng DFS — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Binary Tree Tilt example:**
+**Visual — postorder DFS accumulates tilt:**
 
 ```
-       root
-      /    \
-     A      B
-    / \      \
-   C   D      E
+Tree:     4
+         / \
+        2   9
+       / \    \
+      3   5    7
 
-DFS: root → A → C → D → B → E
-Use: recursion or explicit stack
+DFS(3): L=0 R=0 → tilt+=|0-0|=0, returns 3
+DFS(5): L=0 R=0 → tilt+=|0-0|=0, returns 5
+DFS(2): L=3 R=5 → tilt+=|3-5|=2, returns 10
+DFS(7): L=0 R=0 → tilt+=|0-0|=0, returns 7
+DFS(9): L=0 R=7 → tilt+=|0-7|=7, returns 16
+DFS(4): L=10 R=16→ tilt+=|10-16|=6, returns 30
+
+Total tilt = 0+0+2+0+7+6 = 15 ✓
 ```
 
 ---
 
 ## Problem Description
 
-Binary Tree Tilt. ([LeetCode](https://leetcode.com/problems/binary-tree-tilt))
+Given the root of a binary tree, return the **sum of every tree node's tilt**. The tilt of a node is the **absolute difference** between the sum of its left subtree values and the sum of its right subtree values. Missing subtrees have sum 0. ([LeetCode 563](https://leetcode.com/problems/binary-tree-tilt))
 
-Difficulty: Easy | Acceptance: 64.1%
+**Example 1:** root = [1,2,3] → **1** (node 1 tilt = |2−3| = 1)
+**Example 2:** root = [4,2,9,3,5,null,7] → **15**
+**Example 3:** root = [21,7,14,1,1,2,2,3,3] → **9**
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/binary-tree-tilt) for full constraints
+**Constraints:** 0–10⁴ nodes, −1000 ≤ val ≤ 1000, answer fits 32-bit integer.
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify**: "Tilt là giá trị tuyệt đối đúng không?" / Tilt is always ≥ 0 (absolute difference).
+2. **Nhận dạng**: Cần subtree sum → postorder DFS: tính con trước, cha sau / Leaves first = postorder.
+3. **Trick**: Dùng closure `totalTilt` bên ngoài thay vì trả về tuple / Closure keeps return value simple.
+4. **Brute force trap**: Gọi subtreeSum riêng từng node → O(n²). One-pass DFS → O(n).
+5. **Edge case**: Null root → 0; single node → 0 (both subtrees empty).
+6. **Follow-up**: "Tìm node có tilt lớn nhất?" / Track max during the same DFS pass.
 
 ---
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function binaryTreeTiltBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+class TreeNode {
+  val: number;
+  left: TreeNode | null = null;
+  right: TreeNode | null = null;
+  constructor(val = 0, left: TreeNode | null = null, right: TreeNode | null = null) {
+    this.val = val;
+    this.left = left;
+    this.right = right;
+  }
 }
 
 /**
- * Solution 2: Optimized — DFS
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Brute Force — recompute subtree sum for every node
+ * Time: O(n²) — subtreeSum is O(n), called for each of n nodes
+ * Space: O(h) — recursion stack
  */
-function binaryTreeTilt(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using DFS
-  // Hint: Use recursion or stack, track visited nodes
-  throw new Error('Not implemented');
+function findTiltBrute(root: TreeNode | null): number {
+  const subtreeSum = (node: TreeNode | null): number => {
+    if (!node) return 0;
+    return node.val + subtreeSum(node.left) + subtreeSum(node.right);
+  };
+  const tilt = (node: TreeNode | null): number => {
+    if (!node) return 0;
+    return (
+      Math.abs(subtreeSum(node.left) - subtreeSum(node.right)) + tilt(node.left) + tilt(node.right)
+    );
+  };
+  return tilt(root);
+}
+
+/**
+ * Solution 2: Optimal — single postorder DFS pass
+ * Time: O(n) — each node visited once
+ * Space: O(h) — O(log n) balanced, O(n) skewed
+ */
+function findTilt(root: TreeNode | null): number {
+  let totalTilt = 0;
+
+  // Returns subtree sum; accumulates tilt as side effect
+  const dfs = (node: TreeNode | null): number => {
+    if (!node) return 0;
+    const leftSum = dfs(node.left);
+    const rightSum = dfs(node.right);
+    totalTilt += Math.abs(leftSum - rightSum);
+    return node.val + leftSum + rightSum;
+  };
+
+  dfs(root);
+  return totalTilt;
 }
 
 // === Test Cases ===
-// console.log(binaryTreeTilt(/* example 1 */)); // expected
-// console.log(binaryTreeTilt(/* example 2 */)); // expected
-// console.log(binaryTreeTilt(/* edge case */)); // expected
+const buildTree = (vals: (number | null)[]): TreeNode | null => {
+  if (!vals.length || vals[0] === null) return null;
+  const root = new TreeNode(vals[0]!);
+  const q: TreeNode[] = [root];
+  let i = 1;
+  while (i < vals.length) {
+    const node = q.shift()!;
+    if (vals[i] != null) {
+      node.left = new TreeNode(vals[i]!);
+      q.push(node.left);
+    }
+    i++;
+    if (i < vals.length && vals[i] != null) {
+      node.right = new TreeNode(vals[i]!);
+      q.push(node.right);
+    }
+    i++;
+  }
+  return root;
+};
+
+console.log(findTilt(buildTree([1, 2, 3]))); // 1
+console.log(findTilt(buildTree([4, 2, 9, 3, 5, null, 7]))); // 15
+console.log(findTilt(buildTree([21, 7, 14, 1, 1, 2, 2, 3, 3]))); // 9
+console.log(findTilt(null)); // 0
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Lowest Common Ancestor of a Binary Tree](https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree) — same pattern: DFS
-- [Same Tree](https://leetcode.com/problems/same-tree) — same pattern: BFS
-- [Serialize and Deserialize Binary Tree](https://leetcode.com/problems/serialize-and-deserialize-binary-tree) — same pattern: BFS
-- [Binary Tree Right Side View](https://leetcode.com/problems/binary-tree-right-side-view) — same pattern: BFS
-- [Binary Tree Tilt — LeetCode](https://leetcode.com/problems/binary-tree-tilt) — problem page
+| Problem                                                                                                          | Pattern       | Difficulty |
+| ---------------------------------------------------------------------------------------------------------------- | ------------- | ---------- |
+| [Diameter of Binary Tree](https://leetcode.com/problems/diameter-of-binary-tree)                                 | DFS + closure | Easy       |
+| [Path Sum III](https://leetcode.com/problems/path-sum-iii)                                                       | DFS postorder | Medium     |
+| [Lowest Common Ancestor of a Binary Tree](https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree) | DFS           | Medium     |
+| [Same Tree](https://leetcode.com/problems/same-tree)                                                             | DFS           | Easy       |
+| [Binary Tree Tilt — LeetCode](https://leetcode.com/problems/binary-tree-tilt)                                    | —             | Easy       |

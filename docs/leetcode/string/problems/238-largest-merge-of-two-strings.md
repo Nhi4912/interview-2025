@@ -9,58 +9,61 @@ leetcode_url: "https://leetcode.com/problems/largest-merge-of-two-strings"
 
 # Largest Merge Of Two Strings / Largest Merge Of Two Strings
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Two Pointers
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy
 > **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Minimum Number of Swaps to Make the String Balanced](https://leetcode.com/problems/minimum-number-of-swaps-to-make-the-string-balanced) | [Maximum Number of Non-overlapping Palindrome Substrings](https://leetcode.com/problems/maximum-number-of-non-overlapping-palindrome-substrings)
+> **See also**: [Partition Labels](https://leetcode.com/problems/partition-labels) | [Lexicographically Smallest Palindrome](https://leetcode.com/problems/lexicographically-smallest-palindrome)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Hãy tưởng tượng hai người đi từ hai đầu con đường, tiến lại gần nhau. Mỗi bước, người nào ở vị trí "tốt hơn" sẽ đứng yên, người kia tiến. Khi họ gặp nhau, bài toán được giải.
+**Analogy:** Như hai hàng người chờ ghép vào đội hình — mỗi lượt chọn người đứng đầu hàng nào có "tên" từ điển lớn hơn bước vào trước. Nhưng nếu hai đầu hàng bằng nhau, phải nhìn xa hơn để quyết định hàng nào nên đi trước.
 
-**Pattern Recognition:**
-
-- Signal: "sorted array" + "find pair/triplet" → **Two Pointers**
-- Bài này thuộc dạng Two Pointers — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Largest Merge Of Two Strings example:**
+**Visual — Greedy comparison of remaining suffixes:**
 
 ```
-arr = [... sorted ...]
- L                 R
+word1 = "cabaa"   word2 = "bcaaa"
+i=0              j=0
 
-Step 1: check condition → move L or R
-Step 2: ...
-Step N: condition met ✅
+Step 1: word1[0:]="cabaa" vs word2[0:]="bcaaa"
+        'c' > 'b' → take from word1 → merge="c", i=1
+
+Step 2: word1[1:]="abaa" vs word2[0:]="bcaaa"
+        'a' < 'b' → take from word2 → merge="cb", j=1
+
+Step 3: word1[1:]="abaa" vs word2[1:]="caaa"
+        'a' < 'c' → take from word2 → merge="cbc", j=2
+
+Step 4: word1[1:]="abaa" vs word2[2:]="aaa"
+        "abaa" > "aaa" → take from word1 → merge="cbca", i=2
+...
+Final: "cbcabaaaaa"
+
+Critical: when s[i]==s[j], compare full remaining strings!
+"ab" vs "a" → "ab">"a" (tie-breaking by looking deeper)
 ```
 
 ---
 
 ## Problem Description
 
-Largest Merge Of Two Strings. ([LeetCode](https://leetcode.com/problems/largest-merge-of-two-strings))
+Given two strings `word1` and `word2`, build a **merge** string by repeatedly taking the first character of whichever remaining string is **lexicographically larger**. If equal, take from either. Return the largest possible merge.
 
-Difficulty: Medium | Acceptance: 51.3%
+**Example 1:** `word1 = "cabaa"`, `word2 = "bcaaa"` → `"cbcabaaaaa"`
+**Example 2:** `word1 = "abcabc"`, `word2 = "abdcaba"` → `"abdcabcabcaba"`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/largest-merge-of-two-strings) for full constraints
+Constraints: `1 <= word1.length, word2.length <= 3000`.
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Mảng đã sorted chưa? Có duplicate không?" / Ask if array is sorted and if duplicates exist
-2. **Brute force**: "Dùng 2 vòng for O(n²)" → optimize with two pointers O(n) / Start with nested loops, then optimize
-3. **Optimize**: "Vì mảng sorted, dùng 2 con trỏ L/R tiến vào giữa" / Since sorted, use L/R pointers moving inward
-4. **Edge cases**: "Mảng rỗng, một phần tử, tất cả giống nhau" / Empty array, single element, all same values
+1. **Greedy proof**: "Luôn lấy đầu của chuỗi lớn hơn — chứng minh bằng phản chứng: lấy chuỗi nhỏ hơn không bao giờ tốt hơn" / Always take from larger string — proved by contradiction
+2. **Tie-breaking**: "Khi s[i]==s[j], phải so sánh toàn bộ phần còn lại — không phải chỉ một ký tự" / When chars are equal, compare full remaining suffixes, not just current char
+3. **Complexity**: "O(n²) do so sánh chuỗi — chấp nhận với n≤3000; dùng suffix array để O(n log n)" / O(n²) due to string comparison; acceptable for n≤3000
+4. **Corner cases**: "Một chuỗi hết trước — ghép phần còn lại của chuỗi kia" / When one string exhausted, append remainder of other
+5. **Wrong approach**: "KHÔNG so sánh chỉ word1[i] với word2[j] khi bằng nhau — cần so full suffix" / DON'T just compare single chars when equal; must compare full suffixes
+6. **Follow-up**: "Dùng suffix array hoặc Z-function để tie-break O(1)" / Use suffix array for O(1) tie-breaking → O(n log n) total
 
 ---
 
@@ -68,39 +71,74 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Greedy with direct string comparison (O(n²) but clean)
+ * At each step, compare remaining suffixes of word1 and word2.
+ * Take the first character from whichever suffix is larger.
+ * Time: O(n²) — each comparison is O(n), done O(n) times
+ * Space: O(n) — result array
  */
-function largestMergeOfTwoStringsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function largestMerge(word1: string, word2: string): string {
+  let i = 0, j = 0;
+  const result: string[] = [];
+
+  while (i < word1.length || j < word2.length) {
+    // Take from word1 if its remaining suffix >= word2's remaining suffix
+    if (i < word1.length && (j >= word2.length || word1.slice(i) >= word2.slice(j))) {
+      result.push(word1[i++]);
+    } else {
+      result.push(word2[j++]);
+    }
+  }
+
+  return result.join('');
 }
 
 /**
- * Solution 2: Optimized — Two Pointers
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Greedy with manual character-by-character suffix comparison
+ * Avoids JS substring allocations by comparing in-place.
+ * Time: O(n²) worst case — same complexity but fewer allocations
+ * Space: O(n) — result array
  */
-function largestMergeOfTwoStrings(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Two Pointers
-  // Hint: Use L/R pointers on sorted input, move based on comparison
-  throw new Error('Not implemented');
+function largestMergeOpt(word1: string, word2: string): string {
+  const compareSuffixes = (w1: string, i: number, w2: string, j: number): number => {
+    // Returns positive if w1[i:] > w2[j:], negative if less, 0 if equal
+    while (i < w1.length && j < w2.length) {
+      if (w1[i] > w2[j]) return 1;
+      if (w1[i] < w2[j]) return -1;
+      i++; j++;
+    }
+    return (w1.length - i) - (w2.length - j);
+  };
+
+  let i = 0, j = 0;
+  const result: string[] = [];
+
+  while (i < word1.length || j < word2.length) {
+    if (i < word1.length && (j >= word2.length || compareSuffixes(word1, i, word2, j) >= 0)) {
+      result.push(word1[i++]);
+    } else {
+      result.push(word2[j++]);
+    }
+  }
+
+  return result.join('');
 }
 
 // === Test Cases ===
-// console.log(largestMergeOfTwoStrings(/* example 1 */)); // expected
-// console.log(largestMergeOfTwoStrings(/* example 2 */)); // expected
-// console.log(largestMergeOfTwoStrings(/* edge case */)); // expected
+console.log(largestMerge('cabaa', 'bcaaa'));       // "cbcabaaaaa"
+console.log(largestMerge('abcabc', 'abdcaba'));    // "abdcabcabcaba"
+console.log(largestMerge('a', 'b'));               // "ba"
+console.log(largestMerge('abc', 'abc'));            // "aabbcc" (equal strings, interleave)
+console.log(largestMerge('z', ''));                // "z"
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Minimum Number of Swaps to Make the String Balanced](https://leetcode.com/problems/minimum-number-of-swaps-to-make-the-string-balanced) — same pattern: Two Pointers
-- [Maximum Number of Non-overlapping Palindrome Substrings](https://leetcode.com/problems/maximum-number-of-non-overlapping-palindrome-substrings) — same pattern: Two Pointers
-- [Partition Labels](https://leetcode.com/problems/partition-labels) — same pattern: Two Pointers
-- [Lexicographically Smallest Palindrome](https://leetcode.com/problems/lexicographically-smallest-palindrome) — same pattern: Two Pointers
-- [Largest Merge Of Two Strings — LeetCode](https://leetcode.com/problems/largest-merge-of-two-strings) — problem page
+| Problem | Pattern | Difficulty |
+|---------|---------|-----------|
+| [Partition Labels](https://leetcode.com/problems/partition-labels) | Greedy | Medium |
+| [Lexicographically Smallest Palindrome](https://leetcode.com/problems/lexicographically-smallest-palindrome) | Greedy | Easy |
+| [Smallest String With Swaps](https://leetcode.com/problems/smallest-string-with-swaps) | Union Find | Medium |
+| [Maximum Number of Non-overlapping Palindrome Substrings](https://leetcode.com/problems/maximum-number-of-non-overlapping-palindrome-substrings) | Greedy | Hard |

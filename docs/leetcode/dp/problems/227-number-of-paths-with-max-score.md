@@ -17,52 +17,65 @@ leetcode_url: "https://leetcode.com/problems/number-of-paths-with-max-score"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**Analogy:** Giống tìm đường đi từ góc phải dưới lên góc trái trên của mê cung — vừa muốn tổng điểm cao nhất vừa muốn đếm số đường đi đạt điểm đó. Cần theo dõi cả (maxScore, count) song song.
 
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Number of Paths with Max Score example:**
+**Visual — board = ["E23","2X2","12S"]:**
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+Grid (bottom-right = 'S' = start, top-left = 'E' = end):
+E  2  3      row 0: E=end, 2, 3
+2  X  2      row 1: 2, X=blocked, 2
+1  2  S      row 2: 1, 2, S=start(0)
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+Move: from (i,j) can go UP(i-1,j), LEFT(i,j-1), DIAG(i-1,j-1)
+Start at bottom-right (2,2)=S with score 0
+End at top-left (0,0)=E
+
+dp[i][j] = [maxScore, pathCount] reaching (i,j) from S
+dp[2][2] = [0, 1]  (start)
+dp[2][1] = [2, 1]  (from S, score 2)
+dp[2][0] = [1+2, 1] = [3, 1]...
+...work backwards to (0,0)
 ```
 
 ---
 
 ## Problem Description
 
-Number of Paths with Max Score. ([LeetCode](https://leetcode.com/problems/number-of-paths-with-max-score))
+You are given a square array of characters `board` where `'S'` is the starting position (bottom-right), `'E'` is the ending position (top-left), `'X'` blocks the path, and digits `'1'-'9'` give scores. Move only **up, left, or diagonally up-left**. Return `[maxScore, numberOfPaths]` where `numberOfPaths` is the count of paths achieving `maxScore`, modulo `10^9 + 7`. If no path exists, return `[0, 0]`. ([LeetCode](https://leetcode.com/problems/number-of-paths-with-max-score))
 
 Difficulty: Hard | Acceptance: 41.0%
 
+**Example 1:**
+
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+Input: board = ["E23","2X2","12S"]
+Output: [7, 1]
+```
+
+**Example 2:**
+
+```
+Input: board = ["E12","1X1","21S"]
+Output: [4, 2]
 ```
 
 Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/number-of-paths-with-max-score) for full constraints
+
+- `2 <= n <= 100`
+- `board[i].length == n`
+- `board[i][j]` is a digit, `'S'`, `'E'`, or `'X'`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+1. **Direction**: "Đi từ S (bottom-right) đến E (top-left) — chỉ đi lên, trái, chéo trên-trái" / Movement is restricted to 3 directions.
+2. **State**: "dp[i][j] = [maxScore, count] — theo dõi cả điểm và số đường" / Track both score and count simultaneously.
+3. **Transition**: "Với mỗi ô (i,j): lấy max từ 3 ô liền kề (i+1,j), (i,j+1), (i+1,j+1)" / Source cells are down, right, diagonal-down-right.
+4. **Count update**: "Nếu new score > current max: cập nhật max và reset count. Nếu bằng nhau: cộng thêm count" / Two cases for count aggregation.
+5. **Blocked**: "X là blocked, dp[i][j]=(−∞, 0)" / Mark blocked cells as unreachable.
+6. **Modular**: "Count phải mod 10^9+7 tại mỗi bước cộng" / Apply modulo to count at each step.
 
 ---
 
@@ -70,39 +83,61 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution: DP from bottom-right to top-left
+ * Time: O(n²) — each cell processed once
+ * Space: O(n²) — dp table
  */
-function numberOfPathsWithMaxScoreBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function pathsWithMaxScore(board: string[]): number[] {
+  const MOD = 1_000_000_007;
+  const n = board.length;
+  const NEG_INF = -Infinity;
 
-/**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function numberOfPathsWithMaxScore(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+  // dp[i][j] = [maxScore, pathCount] reaching (i,j) from S
+  const score: number[][] = Array.from({ length: n }, () => new Array(n).fill(NEG_INF));
+  const count: number[][] = Array.from({ length: n }, () => new Array(n).fill(0));
+
+  // Start: bottom-right corner 'S'
+  score[n - 1][n - 1] = 0;
+  count[n - 1][n - 1] = 1;
+
+  function update(i: number, j: number, fromI: number, fromJ: number): void {
+    if (fromI < 0 || fromJ < 0 || fromI >= n || fromJ >= n) return;
+    if (count[fromI][fromJ] === 0) return; // unreachable source
+    const cellVal =
+      board[i][j] === "E" || board[i][j] === "X"
+        ? 0
+        : board[i][j] === "S"
+          ? 0
+          : parseInt(board[i][j]);
+    const newScore = score[fromI][fromJ] + cellVal;
+    if (newScore > score[i][j]) {
+      score[i][j] = newScore;
+      count[i][j] = count[fromI][fromJ];
+    } else if (newScore === score[i][j]) {
+      count[i][j] = (count[i][j] + count[fromI][fromJ]) % MOD;
+    }
+  }
+
+  // Process cells from bottom-right to top-left
+  for (let i = n - 1; i >= 0; i--) {
+    for (let j = n - 1; j >= 0; j--) {
+      if (board[i][j] === "X") continue;
+      if (i === n - 1 && j === n - 1) continue; // already initialized
+
+      // Can come from: down (i+1,j), right (i,j+1), diagonal (i+1,j+1)
+      update(i, j, i + 1, j);
+      update(i, j, i, j + 1);
+      update(i, j, i + 1, j + 1);
+    }
+  }
+
+  if (count[0][0] === 0) return [0, 0];
+  return [score[0][0], count[0][0]];
 }
 
 // === Test Cases ===
-// console.log(numberOfPathsWithMaxScore(/* example 1 */)); // expected
-// console.log(numberOfPathsWithMaxScore(/* example 2 */)); // expected
-// console.log(numberOfPathsWithMaxScore(/* edge case */)); // expected
+console.log(pathsWithMaxScore(["E23", "2X2", "12S"])); // [7, 1]
+console.log(pathsWithMaxScore(["E12", "1X1", "21S"])); // [4, 2]
+console.log(pathsWithMaxScore(["EX", "XS"])); // [0, 0]
+console.log(pathsWithMaxScore(["ES"])); // [0, 1]
 ```
-
----
-
-## 🔗 Related Problems
-
-- [Maximal Square](https://leetcode.com/problems/maximal-square) — same pattern: Dynamic Programming
-- [Unique Paths II](https://leetcode.com/problems/unique-paths-ii) — same pattern: Dynamic Programming
-- [Maximal Rectangle](https://leetcode.com/problems/maximal-rectangle) — same pattern: Monotonic Stack
-- [Minimum Path Sum](https://leetcode.com/problems/minimum-path-sum) — same pattern: Dynamic Programming
-- [Number of Paths with Max Score — LeetCode](https://leetcode.com/problems/number-of-paths-with-max-score) — problem page
