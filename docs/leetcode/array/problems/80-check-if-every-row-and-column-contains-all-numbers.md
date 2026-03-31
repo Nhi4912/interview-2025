@@ -7,60 +7,47 @@ tags: [Array, Hash Table, Matrix]
 leetcode_url: "https://leetcode.com/problems/check-if-every-row-and-column-contains-all-numbers"
 ---
 
-# Check if Every Row and Column Contains All Numbers / Check if Every Row and Column Contains All Numbers
+# Check if Every Row and Column Contains All Numbers / Kiểm Tra Mỗi Hàng và Cột Chứa Đủ Số
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [Design Excel Sum Formula](https://leetcode.com/problems/design-excel-sum-formula) | [Minimum Operations to Write the Letter Y on a Grid](https://leetcode.com/problems/minimum-operations-to-write-the-letter-y-on-a-grid)
+> **See also**: [Valid Sudoku](https://leetcode.com/problems/valid-sudoku) | [Find Winner on a Tic Tac Toe Game](https://leetcode.com/problems/find-winner-on-a-tic-tac-toe-game)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
-
-**Pattern Recognition:**
-
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Check if Every Row and Column Contains All Numbers example:**
+**Analogy:** Giống kiểm tra bảng Sudoku đơn giản — mỗi hàng và mỗi cột phải chứa đủ các số từ 1 đến n, không trùng lặp. Dùng Set để phát hiện trùng lặp trong O(1).
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
-
-Key insight: store complement for O(1) lookup
+n=3, matrix:
+  1 2 3     Row 0: {1,2,3} ✅
+  3 1 2  →  Row 1: {3,1,2} ✅
+  2 3 1     Row 2: {2,3,1} ✅
+            Col 0: {1,3,2} ✅  Col 1: {2,1,3} ✅  Col 2: {3,2,1} ✅
 ```
 
 ---
 
 ## Problem Description
 
-Check if Every Row and Column Contains All Numbers. ([LeetCode](https://leetcode.com/problems/check-if-every-row-and-column-contains-all-numbers))
+An `n x n` matrix is **valid** if every row and every column contains all integers from `1` to `n` (inclusive). Given an `n x n` integer matrix `matrix`, return `true` if the matrix is valid, otherwise `false`.
 
-Difficulty: Easy | Acceptance: 52.8%
+- Example 1: `matrix = [[1,2,3],[3,1,2],[2,3,1]]` → `true`
+- Example 2: `matrix = [[1,1,1],[1,2,3],[1,2,3]]` → `false`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/check-if-every-row-and-column-contains-all-numbers) for full constraints
+Constraints: `n == matrix.length == matrix[i].length`, `1 <= n <= 100`, `1 <= matrix[i][j] <= n`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify / Làm rõ**: "Ma trận luôn là n×n không? Giá trị trong [1..n] không?" / Confirm square matrix and value range.
+2. **Approach / Hướng tiếp cận**: "Dùng Set cho mỗi hàng và cột — nếu size < n thì có trùng lặp" / A Set smaller than n means duplicates exist.
+3. **Alternative / Cách khác**: "Cũng có thể sort mỗi hàng/cột rồi so sánh với [1..n]" / Sorting works but O(n²logn) vs O(n²).
+4. **Edge case / Trường hợp đặc biệt**: "n=1: ma trận [[1]] luôn valid" / 1×1 matrix with value 1 is always valid.
+5. **Complexity / Độ phức tạp**: "O(n²) time, O(n) space cho Set mỗi lần kiểm tra" / Two nested sweeps for rows then columns.
+6. **Optimize / Tối ưu**: "Có thể kiểm tra hàng và cột song song trong một vòng lặp" / Check row i and col i simultaneously to halve iterations.
 
 ---
 
@@ -68,39 +55,81 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Two-Pass with Sets (rows then columns)
+ * Time: O(n²) — check all rows then all columns
+ * Space: O(n) — Set holds at most n elements at a time
  */
-function checkIfEveryRowAndColumnContainsAllNumbersBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function checkValid(matrix: number[][]): boolean {
+  const n = matrix.length;
+
+  // Check each row
+  for (let r = 0; r < n; r++) {
+    const seen = new Set(matrix[r]);
+    if (seen.size !== n) return false;
+  }
+
+  // Check each column
+  for (let c = 0; c < n; c++) {
+    const seen = new Set<number>();
+    for (let r = 0; r < n; r++) seen.add(matrix[r][c]);
+    if (seen.size !== n) return false;
+  }
+
+  return true;
 }
 
 /**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Single-Pass — check row[i] and col[i] together
+ * Time: O(n²) — same asymptotic, half iterations
+ * Space: O(n) — two Sets per iteration
  */
-function checkIfEveryRowAndColumnContainsAllNumbers(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
+function checkValidOptimized(matrix: number[][]): boolean {
+  const n = matrix.length;
+
+  for (let i = 0; i < n; i++) {
+    const rowSet = new Set<number>();
+    const colSet = new Set<number>();
+    for (let j = 0; j < n; j++) {
+      rowSet.add(matrix[i][j]);
+      colSet.add(matrix[j][i]);
+    }
+    if (rowSet.size !== n || colSet.size !== n) return false;
+  }
+
+  return true;
 }
 
 // === Test Cases ===
-// console.log(checkIfEveryRowAndColumnContainsAllNumbers(/* example 1 */)); // expected
-// console.log(checkIfEveryRowAndColumnContainsAllNumbers(/* example 2 */)); // expected
-// console.log(checkIfEveryRowAndColumnContainsAllNumbers(/* edge case */)); // expected
+console.log(
+  checkValid([
+    [1, 2, 3],
+    [3, 1, 2],
+    [2, 3, 1],
+  ]),
+); // true
+console.log(
+  checkValid([
+    [1, 1, 1],
+    [1, 2, 3],
+    [1, 2, 3],
+  ]),
+); // false
+console.log(
+  checkValidOptimized([
+    [1, 2, 3],
+    [3, 1, 2],
+    [2, 3, 1],
+  ]),
+); // true
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Design Excel Sum Formula](https://leetcode.com/problems/design-excel-sum-formula) — same pattern: Topological Sort
-- [Minimum Operations to Write the Letter Y on a Grid](https://leetcode.com/problems/minimum-operations-to-write-the-letter-y-on-a-grid) — same pattern: Hash Map
-- [Find Winner on a Tic Tac Toe Game](https://leetcode.com/problems/find-winner-on-a-tic-tac-toe-game) — same pattern: Hash Map
-- [Sparse Matrix Multiplication](https://leetcode.com/problems/sparse-matrix-multiplication) — same pattern: Hash Map
-- [Check if Every Row and Column Contains All Numbers — LeetCode](https://leetcode.com/problems/check-if-every-row-and-column-contains-all-numbers) — problem page
+| Problem                                                                                              | Pattern            | Difficulty |
+| ---------------------------------------------------------------------------------------------------- | ------------------ | ---------- |
+| [Valid Sudoku](https://leetcode.com/problems/valid-sudoku)                                           | Hash Set on matrix | 🟡 Medium  |
+| [Find Winner on a Tic Tac Toe Game](https://leetcode.com/problems/find-winner-on-a-tic-tac-toe-game) | Matrix simulation  | 🟢 Easy    |
+| [Equal Row and Column Pairs](https://leetcode.com/problems/equal-row-and-column-pairs)               | Hash Map on matrix | 🟡 Medium  |
+| [Sudoku Solver](https://leetcode.com/problems/sudoku-solver)                                         | Backtracking + Set | 🔴 Hard    |

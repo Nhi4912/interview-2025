@@ -7,62 +7,59 @@ tags: [Array, Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-cooldown"
 ---
 
-# Best Time to Buy and Sell Stock with Cooldown / Best Time to Buy and Sell Stock with Cooldown
+# Best Time to Buy and Sell Stock with Cooldown / Mua Bán Cổ Phiếu Với Cooldown
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dynamic Programming
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dynamic Programming (State Machine)
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [Jump Game II](https://leetcode.com/problems/jump-game-ii) | [Maximal Square](https://leetcode.com/problems/maximal-square)
+> **See also**: [Best Time to Buy and Sell Stock II](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-ii) | [Best Time to Buy and Sell Stock with Transaction Fee](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-transaction-fee)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**Analogy:** Hãy tưởng tượng bạn có 3 trạng thái như một cỗ máy: **đang giữ cổ phiếu**, **vừa bán xong** (đang cooldown), **nghỉ xong có thể mua lại**. Mỗi ngày bạn chuyển trạng thái theo giá thị trường.
 
 **Pattern Recognition:**
 
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- 3 states: `hold` (đang cầm), `sold` (vừa bán), `rest` (cooldown xong)
+- Transition: `hold → sold → rest → hold`
+- Key insight: sau khi bán phải chờ 1 ngày (cooldown), không thể mua ngay
 
-**Visual — Best Time to Buy and Sell Stock with Cooldown example:**
+**Visual — State Machine:**
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+         buy           sell
+  rest -------> hold -------> sold
+   ↑                            |
+   └────────────────────────────┘
+              (cooldown 1 day)
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+rest[i]  = max(rest[i-1], sold[i-1])      ← relax or continue resting
+hold[i]  = max(hold[i-1], rest[i-1] - p)  ← keep or buy today
+sold[i]  = hold[i-1] + p                  ← sell today
 ```
 
 ---
 
 ## Problem Description
 
-Best Time to Buy and Sell Stock with Cooldown. ([LeetCode](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-cooldown))
+You have an array `prices` where `prices[i]` is the stock price on day `i`. You may complete as many transactions as you like, but after selling you must wait one cooldown day before buying again. Find the maximum profit. ([LeetCode #309](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-cooldown))
 
-Difficulty: Medium | Acceptance: 60.4%
+**Example 1:** `prices = [1,2,3,0,2]` → `3` (buy@1, sell@2, cooldown, buy@0, sell@2)
+**Example 2:** `prices = [1]` → `0` (can't make any transaction)
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-cooldown) for full constraints
+Constraints: `1 <= prices.length <= 5000`, `0 <= prices[i] <= 1000`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+1. **Clarify**: "Cooldown là 1 ngày — sau bán không mua ngay hôm sau được" / Cooldown is exactly 1 day after selling
+2. **State machine**: "Vẽ 3 states và transitions trước khi code / Draw the state diagram first"
+3. **Brute force**: "Recursion + memo dp(i, state) O(n) time O(n) space / Memoized DFS is clean"
+4. **Optimize**: "Chỉ cần biến prev, không cần mảng vì chỉ dùng i-1 / Only need O(1) space with 3 vars"
+5. **Edge cases**: "prices.length=1 → 0, all same → 0, strictly decreasing → 0 / No profit if can't sell high"
+6. **Follow-up**: "k ngày cooldown? Cần thêm state hoặc deque / Generalize with k-day cooldown"
 
 ---
 
@@ -70,39 +67,65 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: State Machine DP with Arrays
+ * Time: O(n) — single pass through prices
+ * Space: O(n) — three dp arrays
  */
-function bestTimeToBuyAndSellStockWithCooldownBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function maxProfitDP(prices: number[]): number {
+  const n = prices.length;
+  const hold = new Array(n).fill(0);
+  const sold = new Array(n).fill(0);
+  const rest = new Array(n).fill(0);
+
+  hold[0] = -prices[0]; // buy on day 0
+  sold[0] = 0;
+  rest[0] = 0;
+
+  for (let i = 1; i < n; i++) {
+    hold[i] = Math.max(hold[i - 1], rest[i - 1] - prices[i]);
+    sold[i] = hold[i - 1] + prices[i];
+    rest[i] = Math.max(rest[i - 1], sold[i - 1]);
+  }
+  return Math.max(sold[n - 1], rest[n - 1]);
 }
 
 /**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: State Machine DP — Space Optimized (Optimal)
+ * Time: O(n) — single pass
+ * Space: O(1) — three variables only
  */
-function bestTimeToBuyAndSellStockWithCooldown(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function maxProfit(prices: number[]): number {
+  let hold = -prices[0]; // max profit while holding stock
+  let sold = 0; // max profit right after selling
+  let rest = 0; // max profit during cooldown/rest
+
+  for (let i = 1; i < prices.length; i++) {
+    const prevHold = hold;
+    const prevSold = sold;
+    const prevRest = rest;
+
+    hold = Math.max(prevHold, prevRest - prices[i]);
+    sold = prevHold + prices[i];
+    rest = Math.max(prevRest, prevSold);
+  }
+  return Math.max(sold, rest);
 }
 
 // === Test Cases ===
-// console.log(bestTimeToBuyAndSellStockWithCooldown(/* example 1 */)); // expected
-// console.log(bestTimeToBuyAndSellStockWithCooldown(/* example 2 */)); // expected
-// console.log(bestTimeToBuyAndSellStockWithCooldown(/* edge case */)); // expected
+console.log(maxProfit([1, 2, 3, 0, 2])); // 3
+console.log(maxProfit([1])); // 0
+console.log(maxProfit([2, 1])); // 0 (can't profit)
+console.log(maxProfit([1, 3, 1, 3, 1, 3])); // 4
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Jump Game II](https://leetcode.com/problems/jump-game-ii) — same pattern: Dynamic Programming
-- [Maximal Square](https://leetcode.com/problems/maximal-square) — same pattern: Dynamic Programming
-- [Unique Paths II](https://leetcode.com/problems/unique-paths-ii) — same pattern: Dynamic Programming
-- [Maximum Profit in Job Scheduling](https://leetcode.com/problems/maximum-profit-in-job-scheduling) — same pattern: Dynamic Programming
-- [Best Time to Buy and Sell Stock with Cooldown — LeetCode](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-cooldown) — problem page
+| Problem                                                                                                                                    | Pattern            | Difficulty |
+| ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------ | ---------- |
+| [Best Time to Buy and Sell Stock II](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-ii)                                     | Greedy             | Medium     |
+| [Best Time to Buy and Sell Stock with Transaction Fee](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-transaction-fee) | State Machine DP   | Medium     |
+| [Best Time to Buy and Sell Stock III](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-iii)                                   | DP                 | Hard       |
+| [Jump Game II](https://leetcode.com/problems/jump-game-ii)                                                                                 | Greedy / DP        | Medium     |
+| [Maximum Profit in Job Scheduling](https://leetcode.com/problems/maximum-profit-in-job-scheduling)                                         | DP + Binary Search | Hard       |

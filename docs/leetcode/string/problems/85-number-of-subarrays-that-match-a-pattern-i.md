@@ -7,97 +7,132 @@ tags: [Array, Rolling Hash, String Matching, Hash Function]
 leetcode_url: "https://leetcode.com/problems/number-of-subarrays-that-match-a-pattern-i"
 ---
 
-# Number of Subarrays That Match a Pattern I / Number of Subarrays That Match a Pattern I
+# Number of Subarrays That Match a Pattern I / Số Mảng Con Khớp Với Mẫu
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: String Matching
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Pattern Matching on Encoded Array
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [Count Prefix and Suffix Pairs II](https://leetcode.com/problems/count-prefix-and-suffix-pairs-ii) | [Number of Subarrays That Match a Pattern II](https://leetcode.com/problems/number-of-subarrays-that-match-a-pattern-ii)
+> **See also**: [Number of Subarrays That Match a Pattern II](https://leetcode.com/problems/number-of-subarrays-that-match-a-pattern-ii) | [Shortest Palindrome](https://leetcode.com/problems/shortest-palindrome)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Tìm pattern trong text — KMP, Rabin-Karp, hoặc Z-algorithm cho O(n+m) thay vì O(n*m) brute force.
+**Analogy:** Giống tìm chuỗi nhịp điệu trong âm nhạc — trước tiên encode mỗi cặp phần tử liên tiếp thành ký hiệu (tăng/giảm/bằng), sau đó tìm pattern trong chuỗi đã encode.
 
 **Pattern Recognition:**
 
-- Signal: "find pattern in text" → **String Matching (KMP/Rabin-Karp)**
-- Bài này thuộc dạng String Matching — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "count subarrays matching a pattern of comparisons" → **Encode then match**
+- Key insight: encode `nums` thành `encoded[i] = sign(nums[i+1] - nums[i])`, rồi tìm `pattern` trong `encoded`
 
-**Visual — Number of Subarrays That Match a Pattern I example:**
+**Visual — Encode and match:**
 
 ```
-// TODO: Add step-by-step visual for String Matching
-// Show one complete example with state at each step
+nums    = [1,2,1,2,3,1,1,3]
+pattern = [1,1]   (both increasing)
+
+encoded: sign(2-1)=1, sign(1-2)=-1, sign(2-1)=1, sign(3-2)=1,
+         sign(1-3)=-1, sign(1-1)=0, sign(3-1)=1
+encoded = [1,-1,1,1,-1,0,1]
+
+Find [1,1] in encoded:
+i=0: [1,-1] ≠ [1,1]
+i=2: [1,1]  = [1,1] ✅
+i=5: [0,1]  ≠ [1,1]
+
+count = 1
 ```
 
 ---
 
 ## Problem Description
 
-Number of Subarrays That Match a Pattern I. ([LeetCode](https://leetcode.com/problems/number-of-subarrays-that-match-a-pattern-i))
+Given a 0-indexed integer array `nums` of size `n` and a 0-indexed integer array `pattern` of size `m` (values: 1=increasing, -1=decreasing, 0=equal), count subarrays of length `m+1` that match the pattern. ([LeetCode 3034](https://leetcode.com/problems/number-of-subarrays-that-match-a-pattern-i))
 
-Difficulty: Medium | Acceptance: 66.8%
+**Example 1:** `nums=[1,2,1,2,3], pattern=[1,1]` → `2` (subarrays [1,2,3] appears at index 2 & [1,2,3])
+**Example 2:** `nums=[1,4,4,1,3,5,5,3], pattern=[1,0,-1]` → `2`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/number-of-subarrays-that-match-a-pattern-i) for full constraints
+Constraints: `2 <= nums.length <= 100`, `1 <= pattern.length < nums.length`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify**: "pattern[i]=1 nghĩa là tăng nghiêm ngặt? hay tăng không nghiêm ngặt?" / 1=strictly greater, 0=equal, -1=strictly less
+2. **Brute force**: "O(n·m) — với mỗi vị trí i, kiểm tra m phần tử → OK vì n ≤ 100" / Brute force is fine here
+3. **Optimize**: "Encode array O(n) rồi dùng KMP O(n+m) → tổng O(n+m)" / KMP after encoding for Pattern II
+4. **Edge cases**: "nums.length = m+1 → chỉ một subarray cần check; tất cả bằng nhau + pattern=[0,0,...]" / Single window
+5. **Follow-up**: "Pattern II có n,m up to 10^6 → cần KMP" / This variant (n≤100) allows brute force
+6. **Complexity**: "O(n·m) brute — n=100, m<100 → ≤10000 ops → fast enough" / O(n·m) acceptable here
 
 ---
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function numberOfSubarraysThatMatchAPatternIBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+/** Encode comparison: 1 if a>b, -1 if a<b, 0 if equal */
+function cmp(a: number, b: number): number {
+  return a > b ? 1 : a < b ? -1 : 0;
 }
 
 /**
- * Solution 2: Optimized — String Matching
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Brute force O(n·m)
+ * Time: O(n · m) — for each starting position check m comparisons
+ * Space: O(1) extra
  */
-function numberOfSubarraysThatMatchAPatternI(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using String Matching
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
+function countMatchingSubarrays(nums: number[], pattern: number[]): number {
+  const n = nums.length;
+  const m = pattern.length;
+  let count = 0;
+
+  for (let i = 0; i <= n - m - 1; i++) {
+    let match = true;
+    for (let j = 0; j < m; j++) {
+      if (cmp(nums[i + j + 1], nums[i + j]) !== pattern[j]) {
+        match = false;
+        break;
+      }
+    }
+    if (match) count++;
+  }
+
+  return count;
+}
+
+/**
+ * Solution 2: Encode then KMP (optimal for large n)
+ * Time: O(n + m) — encode O(n), KMP search O(n+m)
+ * Space: O(n + m) — encoded array + failure function
+ */
+function countMatchingSubarraysKMP(nums: number[], pattern: number[]): number {
+  // Encode nums to comparison array
+  const encoded: number[] = [];
+  for (let i = 1; i < nums.length; i++) encoded.push(cmp(nums[i], nums[i - 1]));
+
+  const m = pattern.length;
+  // Build KMP failure function for pattern
+  const fail = new Array(m).fill(0);
+  for (let i = 1, j = 0; i < m; i++) {
+    while (j > 0 && pattern[i] !== pattern[j]) j = fail[j - 1];
+    if (pattern[i] === pattern[j]) j++;
+    fail[i] = j;
+  }
+
+  // KMP search
+  let count = 0;
+  for (let i = 0, j = 0; i < encoded.length; i++) {
+    while (j > 0 && encoded[i] !== pattern[j]) j = fail[j - 1];
+    if (encoded[i] === pattern[j]) j++;
+    if (j === m) {
+      count++;
+      j = fail[j - 1];
+    }
+  }
+
+  return count;
 }
 
 // === Test Cases ===
-// console.log(numberOfSubarraysThatMatchAPatternI(/* example 1 */)); // expected
-// console.log(numberOfSubarraysThatMatchAPatternI(/* example 2 */)); // expected
-// console.log(numberOfSubarraysThatMatchAPatternI(/* edge case */)); // expected
+console.log(countMatchingSubarrays([1, 2, 1, 2, 3], [1, 1])); // → 2
+console.log(countMatchingSubarrays([1, 4, 4, 1, 3, 5, 5, 3], [1, 0, -1])); // → 2
+console.log(countMatchingSubarraysKMP([1, 2, 1, 2, 3], [1, 1])); // → 2
 ```
-
----
-
-## 🔗 Related Problems
-
-- [Count Prefix and Suffix Pairs II](https://leetcode.com/problems/count-prefix-and-suffix-pairs-ii) — same pattern: Trie
-- [Number of Subarrays That Match a Pattern II](https://leetcode.com/problems/number-of-subarrays-that-match-a-pattern-ii) — same pattern: String Matching
-- [Count Prefix and Suffix Pairs I](https://leetcode.com/problems/count-prefix-and-suffix-pairs-i) — same pattern: Trie
-- [Shortest Palindrome](https://leetcode.com/problems/shortest-palindrome) — same pattern: String Matching
-- [Number of Subarrays That Match a Pattern I — LeetCode](https://leetcode.com/problems/number-of-subarrays-that-match-a-pattern-i) — problem page

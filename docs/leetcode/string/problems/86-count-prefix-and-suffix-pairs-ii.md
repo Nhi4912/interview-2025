@@ -7,9 +7,9 @@ tags: [Array, String, Trie, Rolling Hash, String Matching]
 leetcode_url: "https://leetcode.com/problems/count-prefix-and-suffix-pairs-ii"
 ---
 
-# Count Prefix and Suffix Pairs II / Count Prefix and Suffix Pairs II
+# Count Prefix and Suffix Pairs II / Đếm Cặp Tiền Tố Và Hậu Tố II
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Trie
+> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Trie on Zipped Pairs
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
 > **See also**: [Count Prefix and Suffix Pairs I](https://leetcode.com/problems/count-prefix-and-suffix-pairs-i) | [Shortest Palindrome](https://leetcode.com/problems/shortest-palindrome)
 
@@ -17,47 +17,50 @@ leetcode_url: "https://leetcode.com/problems/count-prefix-and-suffix-pairs-ii"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống cây thư mục — mỗi ký tự là một cấp. Tìm kiếm prefix cực nhanh O(L) với L là độ dài từ.
+**Analogy:** Giống kiểm tra từ có thể đứng đầu và đuôi của từ khác — ví dụ "ab" là prefix và suffix của "abab". Để xét đồng thời prefix và suffix, ta zip cặp (s[0],s[-1]), (s[1],s[-2]),... thành ký tự kép và xây Trie từ đó.
 
 **Pattern Recognition:**
 
-- Signal: "prefix search" + "dictionary of words" → **Trie**
-- Bài này thuộc dạng Trie — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "is word[i] both prefix AND suffix of word[j]?" → **Trie on character pairs**
+- Key insight: word `w` is prefix+suffix of `s` iff the pair-sequence `zip(w, reverse(w))` is a prefix of `zip(s, reverse(s))`
 
-**Visual — Count Prefix and Suffix Pairs II example:**
+**Visual — Pair-Trie:**
 
 ```
-// TODO: Add step-by-step visual for Trie
-// Show one complete example with state at each step
+words = ["a","aba","ababa","aa"]
+
+For "ababa": zip with reverse("ababa")="ababa"
+  pairs: (a,a),(b,b),(a,a),(b,b),(a,a)
+
+For "aba" as prefix+suffix check against "ababa":
+  zip "aba" with reverse("aba")="aba" → pairs: (a,a),(b,b),(a,a)
+  These pairs are a prefix of "ababa" pairs → YES ✅
+
+Build trie as we process each word j from left to right.
+For each j, count how many previous words form a valid prefix+suffix in O(|words[j]|).
 ```
 
 ---
 
 ## Problem Description
 
-Count Prefix and Suffix Pairs II. ([LeetCode](https://leetcode.com/problems/count-prefix-and-suffix-pairs-ii))
+Given a 0-indexed string array `words`, count all pairs `(i, j)` where `i < j` and `words[i]` is both a **prefix** and a **suffix** of `words[j]`. ([LeetCode 3045](https://leetcode.com/problems/count-prefix-and-suffix-pairs-ii))
 
-Difficulty: Hard | Acceptance: 27.2%
+**Example 1:** `words=["a","aba","ababa","aa"]` → `4`
+**Example 2:** `words=["pa","papa","ma","mama"]` → `2`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/count-prefix-and-suffix-pairs-ii) for full constraints
+Constraints: `1 <= words.length <= 10^5`, `1 <= words[i].length <= 10^5`, total length ≤ `5 × 10^5`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify**: "i < j nghiêm ngặt, không có cặp (i,i)" / Strictly i < j, no self-pairs
+2. **Brute force**: "O(n²·L) — kiểm tra mọi cặp → TLE với n=10^5" / O(n²·L) too slow
+3. **Key insight**: "Zip (s[k], s[n-1-k]) thành pair → prefix+suffix check trở thành prefix-only check trên Trie" / Reduce to prefix problem via pairing
+4. **Optimize**: "Xây Trie từ trái sang phải; khi thêm words[j] tra Trie → count các từ trước đó khớp" / Insert left-to-right, query before inserting
+5. **Edge cases**: "words[i].length > words[j].length → không thể là prefix+suffix" / Filter by length automatically in Trie
+6. **Complexity**: "O(total_chars) time and space — mỗi ký tự xử lý một lần trong Trie" / Linear in total characters
 
 ---
 
@@ -65,39 +68,61 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Brute Force O(n² · L) — correct but TLE for large input
+ * Time: O(n² · L)
+ * Space: O(1) extra
  */
-function countPrefixAndSuffixPairsIiBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function countPrefixSuffixPairsIIBrute(words: string[]): number {
+  let count = 0;
+  for (let j = 1; j < words.length; j++) {
+    for (let i = 0; i < j; i++) {
+      const wi = words[i],
+        wj = words[j];
+      if (wj.startsWith(wi) && wj.endsWith(wi)) count++;
+    }
+  }
+  return count;
 }
 
 /**
- * Solution 2: Optimized — Trie
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Trie on character pairs (optimal)
+ * Key: zip s with reverse(s) → (s[k], s[n-1-k]) pairs as trie keys
+ * Time: O(total length of all words)
+ * Space: O(total length of all words)
  */
-function countPrefixAndSuffixPairsIi(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Trie
-  // Hint: Build trie from dictionary, search by prefix
-  throw new Error('Not implemented');
+function countPrefixSuffixPairs(words: string[]): number {
+  // Trie node: children keyed by pair string, count of words ending here
+  const root: Map<string, any> = new Map();
+
+  let result = 0;
+
+  for (const word of words) {
+    const n = word.length;
+    // Query: count words in trie that are prefix+suffix of current word
+    let node = root;
+    for (let k = 0; k < n; k++) {
+      const key = `${word[k]},${word[n - 1 - k]}`;
+      if (!node.has(key)) break;
+      node = node.get(key);
+      result += node.get("$") ?? 0;
+    }
+
+    // Insert current word into trie
+    let cur = root;
+    for (let k = 0; k < n; k++) {
+      const key = `${word[k]},${word[n - 1 - k]}`;
+      if (!cur.has(key)) cur.set(key, new Map());
+      cur = cur.get(key);
+    }
+    cur.set("$", (cur.get("$") ?? 0) + 1);
+  }
+
+  return result;
 }
 
 // === Test Cases ===
-// console.log(countPrefixAndSuffixPairsIi(/* example 1 */)); // expected
-// console.log(countPrefixAndSuffixPairsIi(/* example 2 */)); // expected
-// console.log(countPrefixAndSuffixPairsIi(/* edge case */)); // expected
+console.log(countPrefixSuffixPairs(["a", "aba", "ababa", "aa"])); // → 4
+console.log(countPrefixSuffixPairs(["pa", "papa", "ma", "mama"])); // → 2
+console.log(countPrefixSuffixPairs(["abab", "ab"])); // → 0 (j must be > i)
+console.log(countPrefixSuffixPairsBrute(["a", "aba", "ababa", "aa"])); // → 4 (verify brute)
 ```
-
----
-
-## 🔗 Related Problems
-
-- [Count Prefix and Suffix Pairs I](https://leetcode.com/problems/count-prefix-and-suffix-pairs-i) — same pattern: Trie
-- [Shortest Palindrome](https://leetcode.com/problems/shortest-palindrome) — same pattern: String Matching
-- [Number of Subarrays That Match a Pattern I](https://leetcode.com/problems/number-of-subarrays-that-match-a-pattern-i) — same pattern: String Matching
-- [Number of Distinct Substrings in a String](https://leetcode.com/problems/number-of-distinct-substrings-in-a-string) — same pattern: Trie
-- [Count Prefix and Suffix Pairs II — LeetCode](https://leetcode.com/problems/count-prefix-and-suffix-pairs-ii) — problem page

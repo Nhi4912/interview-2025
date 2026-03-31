@@ -7,9 +7,9 @@ tags: [Depth-First Search, Breadth-First Search, Graph]
 leetcode_url: "https://leetcode.com/problems/keys-and-rooms"
 ---
 
-# Keys and Rooms / Keys and Rooms
+# Keys and Rooms / Chìa Khóa và Phòng
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: BFS
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: DFS/BFS Graph Traversal
 > **Frequency**: 📘 Tier 3 — Gặp ở 5 companies
 > **See also**: [Course Schedule](https://leetcode.com/problems/course-schedule) | [Evaluate Division](https://leetcode.com/problems/evaluate-division)
 
@@ -17,50 +17,49 @@ leetcode_url: "https://leetcode.com/problems/keys-and-rooms"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như ném đá xuống ao — sóng lan ra theo từng vòng đều đặn. Khám phá hết tất cả ở khoảng cách 1, rồi mới sang khoảng cách 2.
+**Analogy:** Như trò chơi phiêu lưu — bạn bắt đầu ở phòng 0 (không khóa). Mỗi phòng chứa các chìa khóa mở phòng khác. Hỏi: bạn có thể vào được tất cả các phòng không? Đây là bài toán kiểm tra tính liên thông của đồ thị có hướng.
 
 **Pattern Recognition:**
 
-- Signal: "shortest path (unweighted)" + "level-order" → **BFS**
-- Bài này thuộc dạng BFS — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "can visit all nodes" + "start from node 0" → **DFS/BFS reachability**
+- Khởi đầu từ room 0, dùng DFS/BFS theo các chìa khóa tìm được
+- Cuối cùng kiểm tra `visited.size === n`
 
-**Visual — Keys and Rooms example:**
+**Visual:**
 
 ```
-Level 0:     [root]
-Level 1:   [A, B]
-Level 2: [C, D, E]
+rooms = [[1],[2],[3],[]]
+Room 0: keys=[1]  →  Room 1: keys=[2]  →  Room 2: keys=[3]  →  Room 3: keys=[]
+  Start here          Unlocked by 1        Unlocked by 2        Unlocked by 3
+visited: {0,1,2,3} == 4 rooms → true ✓
 
-BFS: process level by level using queue
+rooms = [[1,3],[3,0,1],[2],[0]]
+Start: room 0, get key 1 and 3
+DFS: room 1 → room 3 → room 0 (visited)
+Never reach room 2 → false ✗
 ```
 
 ---
 
 ## Problem Description
 
-Keys and Rooms. ([LeetCode](https://leetcode.com/problems/keys-and-rooms))
+There are `n` rooms labeled `0` to `n-1`. All rooms are locked except room 0. Each room `i` contains a list of keys `rooms[i]` that unlock other rooms. Return `true` if you can visit all rooms, otherwise return `false`.
 
-Difficulty: Medium | Acceptance: 74.7%
+**Example 1:** `rooms = [[1],[2],[3],[]]` → `true` (0→1→2→3)
+**Example 2:** `rooms = [[1,3],[3,0,1],[2],[0]]` → `false` (room 2 unreachable)
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/keys-and-rooms) for full constraints
+Constraints: `2 <= n <= 1000`, `0 <= rooms[i].length <= 1000`, all values in `rooms[i]` are unique.
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify**: "Room 0 luôn mở? Chìa khóa có thể trùng không?" / Room 0 always unlocked; keys may be duplicated
+2. **Model**: "Bài này là graph reachability — phòng là node, chìa là directed edge" / Rooms = nodes, keys = directed edges
+3. **DFS vs BFS**: "Cả hai đều O(N+K) — DFS ngắn hơn với recursion" / Both work; DFS simpler to write
+4. **Edge cases**: "n=1 → chỉ có room 0, trả về true luôn" / Single room: trivially true
+5. **Visited**: "Dùng Set hoặc boolean array, không dùng lại key đã thăm" / Track visited to avoid infinite loops
+6. **Follow-up**: "Tìm số phòng tối thiểu cần thêm chìa để vào hết?" / Count unreachable rooms and find minimum keys to add
 
 ---
 
@@ -68,39 +67,60 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: DFS with recursion
+ * Time: O(N + K) — N rooms, K total keys
+ * Space: O(N) — visited set + recursion stack
  */
-function keysAndRoomsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function canVisitAllRoomsDFS(rooms: number[][]): boolean {
+  const visited = new Set<number>();
+
+  function dfs(room: number): void {
+    if (visited.has(room)) return;
+    visited.add(room);
+    for (const key of rooms[room]) dfs(key);
+  }
+
+  dfs(0);
+  return visited.size === rooms.length;
 }
 
 /**
- * Solution 2: Optimized — BFS
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: BFS (iterative — safer for large inputs, no stack overflow)
+ * Time: O(N + K) — N rooms, K total keys
+ * Space: O(N) — visited set + queue
  */
-function keysAndRooms(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using BFS
-  // Hint: Use queue, process level by level
-  throw new Error('Not implemented');
+function canVisitAllRooms(rooms: number[][]): boolean {
+  const n = rooms.length;
+  const visited = new Set<number>([0]);
+  const queue = [0];
+
+  while (queue.length > 0) {
+    const room = queue.shift()!;
+    for (const key of rooms[room]) {
+      if (!visited.has(key)) {
+        visited.add(key);
+        queue.push(key);
+      }
+    }
+  }
+  return visited.size === n;
 }
 
 // === Test Cases ===
-// console.log(keysAndRooms(/* example 1 */)); // expected
-// console.log(keysAndRooms(/* example 2 */)); // expected
-// console.log(keysAndRooms(/* edge case */)); // expected
+console.log(canVisitAllRooms([[1], [2], [3], []])); // true
+console.log(canVisitAllRooms([[1, 3], [3, 0, 1], [2], [0]])); // false
+console.log(canVisitAllRooms([[]])); // true (only room 0, always accessible)
+console.log(canVisitAllRooms([[1], []])); // true
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Course Schedule](https://leetcode.com/problems/course-schedule) — same pattern: Topological Sort
-- [Evaluate Division](https://leetcode.com/problems/evaluate-division) — same pattern: Shortest Path (BFS/Dijkstra)
-- [Cheapest Flights Within K Stops](https://leetcode.com/problems/cheapest-flights-within-k-stops) — same pattern: Shortest Path (BFS/Dijkstra)
-- [Longest Increasing Path in a Matrix](https://leetcode.com/problems/longest-increasing-path-in-a-matrix) — same pattern: Topological Sort
-- [Keys and Rooms — LeetCode](https://leetcode.com/problems/keys-and-rooms) — problem page
+| Problem                                                                                          | Pattern             | Difficulty |
+| ------------------------------------------------------------------------------------------------ | ------------------- | ---------- |
+| [Course Schedule](https://leetcode.com/problems/course-schedule)                                 | Topological Sort    | 🟡 Medium  |
+| [Number of Provinces](https://leetcode.com/problems/number-of-provinces)                         | DFS components      | 🟡 Medium  |
+| [Clone Graph](https://leetcode.com/problems/clone-graph)                                         | BFS graph traversal | 🟡 Medium  |
+| [Evaluate Division](https://leetcode.com/problems/evaluate-division)                             | BFS weighted graph  | 🟡 Medium  |
+| [All Paths From Source to Target](https://leetcode.com/problems/all-paths-from-source-to-target) | DFS all paths       | 🟡 Medium  |

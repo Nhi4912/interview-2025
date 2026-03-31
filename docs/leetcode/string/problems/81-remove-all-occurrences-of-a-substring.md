@@ -7,59 +7,62 @@ tags: [String, Stack, Simulation]
 leetcode_url: "https://leetcode.com/problems/remove-all-occurrences-of-a-substring"
 ---
 
-# Remove All Occurrences of a Substring / Remove All Occurrences of a Substring
+# Remove All Occurrences of a Substring / Xoá Tất Cả Lần Xuất Hiện Của Chuỗi Con
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Stack
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Stack / String Builder
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [Backspace String Compare](https://leetcode.com/problems/backspace-string-compare) | [Design a Text Editor](https://leetcode.com/problems/design-a-text-editor)
+> **See also**: [Backspace String Compare](https://leetcode.com/problems/backspace-string-compare) | [Minimum String Length After Removing Substrings](https://leetcode.com/problems/minimum-string-length-after-removing-substrings)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống chồng đĩa — đĩa nào đặt cuối cùng sẽ được lấy ra đầu tiên (LIFO). Nhiều bài toán về matching và nesting dùng stack.
+**Analogy:** Giống xoá domino — khi bạn đẩy một quân, nó có thể tạo ra hiệu ứng dây chuyền xoá tiếp những quân kế bên. Xây dựng chuỗi từng ký tự; khi đuôi chuỗi kết thúc bằng `part`, cắt đi và tiếp tục.
 
 **Pattern Recognition:**
 
-- Signal: "matching/nesting" + "most recent element" → **Stack**
-- Bài này thuộc dạng Stack — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "remove substring, check again after each removal" → **Stack / String Builder**
+- Key insight: xây kết quả như stack ký tự; sau mỗi lần thêm ký tự, kiểm tra đuôi
 
-**Visual — Remove All Occurrences of a Substring example:**
+**Visual — Stack approach:**
 
 ```
-stack = []
+s = "daabcbaabcbc", part = "abc"
 
-push/pop from right →
-Process: scan left to right, stack maintains invariant
+Process char by char:
+stack: d a a b c          → endsWith "abc"? no
+stack: d a a b c b        → no
+stack: d a a b c b a      → no
+stack: d a a b c b a b    → no
+stack: d a a b c b a b c  → endsWith "abc"? YES → pop 3 → "daabcb"
+                                                        → endsWith "abc"? YES → pop 3 → "da"
+stack: d a b              → "dab"
+stack: d a b c            → endsWith "abc"? YES → pop 3 → "d"
+
+Result: "d" ✅
 ```
 
 ---
 
 ## Problem Description
 
-Remove All Occurrences of a Substring. ([LeetCode](https://leetcode.com/problems/remove-all-occurrences-of-a-substring))
+Given strings `s` and `part`, repeatedly remove the **leftmost occurrence** of `part` in `s` until no more exist, then return the resulting string. ([LeetCode 1910](https://leetcode.com/problems/remove-all-occurrences-of-a-substring))
 
-Difficulty: Medium | Acceptance: 78.1%
+**Example 1:** `s = "daabcbaabcbc", part = "abc"` → `"dab"` (remove "abc" at index 2, then at index 3, then at index 1)
+**Example 2:** `s = "axxxxyyyyb", part = "xy"` → `"ab"`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/remove-all-occurrences-of-a-substring) for full constraints
+Constraints: `1 <= s.length <= 1000`, `1 <= part.length <= 1000`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify**: "Có luôn tìm lần xuất hiện đầu tiên (leftmost) không?" / Always leftmost — but stack approach handles this naturally
+2. **Brute force**: "Dùng `s.indexOf(part)` lặp lại trong while loop → O(n²)" / Simple loop with indexOf — OK for n=1000
+3. **Optimize**: "Dùng stack (string builder) + endsWith check sau mỗi ký tự → O(n·m)" / Build char by char, check suffix
+4. **Edge cases**: "part không xuất hiện → trả về s gốc; s rỗng → trả về ''" / No match → return s unchanged
+5. **Follow-up**: "KMP failure function để check suffix trong O(1) amortized" / KMP for O(n) total time
+6. **Complexity**: "Stack approach O(n·m) time — n chars, m = part length for each endsWith check" / Better than O(n²) indexOf loop
 
 ---
 
@@ -67,39 +70,60 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Simple loop with indexOf
+ * Time: O(n² / m) — at most n/m removals, each indexOf O(n)
+ * Space: O(n) — string intermediate storage
  */
-function removeAllOccurrencesOfASubstringBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function removeOccurrencesSimple(s: string, part: string): string {
+  while (s.includes(part)) {
+    const idx = s.indexOf(part);
+    s = s.slice(0, idx) + s.slice(idx + part.length);
+  }
+  return s;
 }
 
 /**
- * Solution 2: Optimized — Stack
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Stack / String Builder (optimal)
+ * Time: O(n · m) — push each char, check suffix in O(m)
+ * Space: O(n) — stack storage
  */
-function removeAllOccurrencesOfASubstring(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Stack
-  // Hint: Push/pop to maintain invariant, process when stack condition changes
-  throw new Error('Not implemented');
+function removeOccurrences(s: string, part: string): string {
+  const stack: string[] = [];
+  const m = part.length;
+
+  for (const c of s) {
+    stack.push(c);
+    // Check if stack tail matches 'part'
+    if (stack.length >= m && stack.slice(-m).join("") === part) {
+      stack.splice(stack.length - m, m);
+    }
+  }
+
+  return stack.join("");
+}
+
+/**
+ * Solution 3: Stack with string (faster join avoidance)
+ * Time: O(n · m)
+ * Space: O(n)
+ */
+function removeOccurrencesStr(s: string, part: string): string {
+  let result = "";
+  const m = part.length;
+
+  for (const c of s) {
+    result += c;
+    if (result.endsWith(part)) {
+      result = result.slice(0, result.length - m);
+    }
+  }
+
+  return result;
 }
 
 // === Test Cases ===
-// console.log(removeAllOccurrencesOfASubstring(/* example 1 */)); // expected
-// console.log(removeAllOccurrencesOfASubstring(/* example 2 */)); // expected
-// console.log(removeAllOccurrencesOfASubstring(/* edge case */)); // expected
+console.log(removeOccurrences("daabcbaabcbc", "abc")); // → "dab"
+console.log(removeOccurrences("axxxxyyyyb", "xy")); // → "ab"
+console.log(removeOccurrences("aaaa", "aa")); // → ""
+console.log(removeOccurrencesStr("daabcbaabcbc", "abc")); // → "dab"
 ```
-
----
-
-## 🔗 Related Problems
-
-- [Backspace String Compare](https://leetcode.com/problems/backspace-string-compare) — same pattern: Two Pointers
-- [Design a Text Editor](https://leetcode.com/problems/design-a-text-editor) — same pattern: Linked List
-- [Minimum String Length After Removing Substrings](https://leetcode.com/problems/minimum-string-length-after-removing-substrings) — same pattern: Stack
-- [Count Collisions on a Road](https://leetcode.com/problems/count-collisions-on-a-road) — same pattern: Stack
-- [Remove All Occurrences of a Substring — LeetCode](https://leetcode.com/problems/remove-all-occurrences-of-a-substring) — problem page

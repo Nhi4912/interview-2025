@@ -7,60 +7,50 @@ tags: [Array, Hash Table]
 leetcode_url: "https://leetcode.com/problems/brick-wall"
 ---
 
-# Brick Wall / Brick Wall
+# Brick Wall / Tường Gạch
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Hash Map
 > **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [First Missing Positive](https://leetcode.com/problems/first-missing-positive) | [Longest Consecutive Sequence](https://leetcode.com/problems/longest-consecutive-sequence)
+> **See also**: [Subarray Sum Equals K](https://leetcode.com/problems/subarray-sum-equals-k) | [Longest Consecutive Sequence](https://leetcode.com/problems/longest-consecutive-sequence)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
-
-**Pattern Recognition:**
-
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Brick Wall example:**
+**Analogy:** Giống cắt tường gạch bằng dao thẳng đứng — muốn cắt ít gạch nhất thì cần cắt qua nhiều khe hở nhất. Đếm tần số của các vị trí khe hở (prefix sum của mỗi hàng).
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
+wall = [[1,2,2,1],[3,1,2],[1,3,2]]
+Row 0 edges: 1, 3, 5   (không tính biên phải = 6)
+Row 1 edges: 3, 4
+Row 2 edges: 1, 4
 
-Key insight: store complement for O(1) lookup
+edgeCount: {1:2, 3:2, 5:1, 4:2}
+Max edge count = 2 (at positions 1, 3, or 4)
+Answer = total_rows - max_edges = 3 - 2 = 1 brick crossed
 ```
 
 ---
 
 ## Problem Description
 
-Brick Wall. ([LeetCode](https://leetcode.com/problems/brick-wall))
+Given a rectangular brick wall represented as `wall[i]` (list of brick widths in row `i`), draw a vertical line from top to bottom cutting through **fewest bricks** (cutting through an edge counts as 0). Return the minimum number of bricks the line must cross.
 
-Difficulty: Medium | Acceptance: 55.9%
+- Example 1: `wall=[[1,2,2,1],[3,1,2],[1,3,2]]` → `2`
+- Example 2: `wall=[[1],[1],[1]]` → `3`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/brick-wall) for full constraints
+Constraints: `1 <= wall.length <= 10^4`, `1 <= wall[i].length <= 3*10^4`, total bricks ≤ `2*10^4`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Reframe / Đổi góc nhìn**: "Thay vì đếm gạch bị cắt, tìm đường đi qua nhiều khe nhất" / Flip the problem: maximize edges crossed, then subtract from row count.
+2. **Key insight / Chìa khóa**: "Vị trí khe = prefix sum của độ rộng gạch (không tính cạnh phải)" / Edge positions are cumulative widths, excluding the rightmost edge.
+3. **Data structure / Cấu trúc dữ liệu**: "HashMap đếm tần số vị trí khe — O(1) per insertion" / Count edge position frequency with a Map.
+4. **Edge case / Trường hợp đặc biệt**: "Gạch nguyên hàng (không có khe trong) → cắt hết mọi hàng" / A wall with all single bricks per row: answer = wall.length.
+5. **Complexity / Độ phức tạp**: "O(n) total bricks — mỗi viên gạch duyệt đúng một lần" / Total iterations = total number of bricks across all rows.
+6. **Communicate / Giao tiếp**: "Tôi bỏ qua edge cuối cùng vì cắt ở biên không tính là cắt gạch" / Explain why rightmost edge is excluded from counting.
 
 ---
 
@@ -68,39 +58,73 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Hash Map edge-position counting
+ * Time: O(n) — n = total number of bricks
+ * Space: O(w) — w = wall width (unique edge positions)
  */
-function brickWallBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function leastBricks(wall: number[][]): number {
+  const edgeCount = new Map<number, number>();
+  let maxEdges = 0;
+
+  for (const row of wall) {
+    let pos = 0;
+    // Sum up brick widths — skip the last one (wall edge)
+    for (let i = 0; i < row.length - 1; i++) {
+      pos += row[i];
+      const count = (edgeCount.get(pos) ?? 0) + 1;
+      edgeCount.set(pos, count);
+      maxEdges = Math.max(maxEdges, count);
+    }
+  }
+
+  return wall.length - maxEdges;
 }
 
 /**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Using reduce for prefix sum (functional style)
+ * Time: O(n) — same complexity
+ * Space: O(w) — same space
  */
-function brickWall(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
+function leastBricksAlt(wall: number[][]): number {
+  const freq = new Map<number, number>();
+
+  for (const row of wall) {
+    row.slice(0, -1).reduce((prefix, width) => {
+      const pos = prefix + width;
+      freq.set(pos, (freq.get(pos) ?? 0) + 1);
+      return pos;
+    }, 0);
+  }
+
+  const maxEdges = freq.size > 0 ? Math.max(...freq.values()) : 0;
+  return wall.length - maxEdges;
 }
 
 // === Test Cases ===
-// console.log(brickWall(/* example 1 */)); // expected
-// console.log(brickWall(/* example 2 */)); // expected
-// console.log(brickWall(/* edge case */)); // expected
+console.log(
+  leastBricks([
+    [1, 2, 2, 1],
+    [3, 1, 2],
+    [1, 3, 2],
+  ]),
+); // 2
+console.log(leastBricks([[1], [1], [1]])); // 3
+console.log(
+  leastBricksAlt([
+    [1, 2, 2, 1],
+    [3, 1, 2],
+    [1, 3, 2],
+  ]),
+); // 2
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [First Missing Positive](https://leetcode.com/problems/first-missing-positive) — same pattern: Hash Map
-- [Longest Consecutive Sequence](https://leetcode.com/problems/longest-consecutive-sequence) — same pattern: Union Find
-- [Subarray Sum Equals K](https://leetcode.com/problems/subarray-sum-equals-k) — same pattern: Prefix Sum
-- [Majority Element](https://leetcode.com/problems/majority-element) — same pattern: Divide and Conquer
-- [Brick Wall — LeetCode](https://leetcode.com/problems/brick-wall) — problem page
+| Problem                                                                                                                                                    | Pattern              | Difficulty |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ---------- |
+| [Subarray Sum Equals K](https://leetcode.com/problems/subarray-sum-equals-k)                                                                               | Prefix sum + HashMap | 🟡 Medium  |
+| [Longest Consecutive Sequence](https://leetcode.com/problems/longest-consecutive-sequence)                                                                 | HashSet frequency    | 🟡 Medium  |
+| [Maximum Frequency of an Element After Performing Operations](https://leetcode.com/problems/maximum-frequency-of-an-element-after-performing-operations-i) | Frequency counting   | 🟡 Medium  |
+| [Most Common Word](https://leetcode.com/problems/most-common-word)                                                                                         | Frequency map        | 🟢 Easy    |

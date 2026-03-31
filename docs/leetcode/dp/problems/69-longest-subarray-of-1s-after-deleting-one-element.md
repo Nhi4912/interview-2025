@@ -7,60 +7,61 @@ tags: [Array, Dynamic Programming, Sliding Window]
 leetcode_url: "https://leetcode.com/problems/longest-subarray-of-1s-after-deleting-one-element"
 ---
 
-# Longest Subarray of 1's After Deleting One Element / Longest Subarray of 1's After Deleting One Element
+# Longest Subarray of 1's After Deleting One Element / Subarray 1s Dài Nhất Sau Khi Xóa Một Phần Tử
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Sliding Window
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [Constrained Subsequence Sum](https://leetcode.com/problems/constrained-subsequence-sum) | [Arithmetic Slices](https://leetcode.com/problems/arithmetic-slices)
+> **See also**: [Max Consecutive Ones III](https://leetcode.com/problems/max-consecutive-ones-iii) | [Longest Subarray With at Most K Zeros](https://leetcode.com/problems/longest-subarray-of-1s-after-deleting-one-element)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống như nhìn qua một khung cửa sổ di chuyển trên dãy nhà. Mỗi lần trượt, bạn thêm nhà mới bên phải, bỏ nhà cũ bên trái — luôn giữ đúng kích thước khung.
+**Analogy:** Giống nhìn qua cửa sổ trượt — bạn được phép có tối đa **1 số 0** trong cửa sổ (là phần tử bị xóa). Mỗi khi cửa sổ có hơn 1 số 0, thu hẹp từ bên trái. Đáp án là kích thước cửa sổ lớn nhất **trừ 1** (vì phải xóa đúng 1 phần tử).
 
 **Pattern Recognition:**
 
-- Signal: "contiguous subarray/substring" + "max/min length" → **Sliding Window**
-- Bài này thuộc dạng Sliding Window — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Sliding window với constraint: `zeros ≤ 1`
+- Tương đương với bài "Max Consecutive Ones III" với `k=1`
+- Key insight: **bắt buộc xóa 1 phần tử** nên kết quả là `window_size - 1`
 
-**Visual — Longest Subarray of 1's After Deleting One Element example:**
+**Visual — Sliding Window:**
 
 ```
-[a, b, c, d, e, f, g]
- |--window--|
-    |--window--|     → slide right, update state
+nums = [1,1,0,1]
+        L       R
 
-Track: current window state
-Update: add right, remove left when window exceeds constraint
+R=0: [1]        zeros=0, window=1
+R=1: [1,1]      zeros=0, window=2
+R=2: [1,1,0]    zeros=1, window=3
+R=3: [1,1,0,1]  zeros=1, window=4 → ans = 4-1 = 3 ✓
+
+nums = [0,1,1,1,0,1,1,0,1]
+When zeros>1: move L until zeros<=1
+Max window = 6 (indices 1..6) → ans = 5
 ```
 
 ---
 
 ## Problem Description
 
-Longest Subarray of 1's After Deleting One Element. ([LeetCode](https://leetcode.com/problems/longest-subarray-of-1s-after-deleting-one-element))
+Given a binary array `nums`, delete **exactly one** element from it, then return the size of the longest non-empty subarray containing only 1s. If no such subarray exists, return 0. ([LeetCode #1493](https://leetcode.com/problems/longest-subarray-of-1s-after-deleting-one-element))
 
-Difficulty: Medium | Acceptance: 69.2%
+**Example 1:** `nums = [1,1,0,1]` → `3` (delete the 0, get [1,1,1])
+**Example 2:** `nums = [0,1,1,1,0,1,1,0,1]` → `5`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/longest-subarray-of-1s-after-deleting-one-element) for full constraints
+Constraints: `1 <= nums.length <= 10^5`, `nums[i]` is 0 or 1
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần contiguous subarray hay subsequence?" / Subarray (contiguous) vs subsequence (non-contiguous)
-2. **Brute force**: "Thử mọi subarray O(n²)" → optimize with sliding window O(n) / Try all subarrays then optimize
-3. **Optimize**: "Dùng window expand/shrink, track state bằng map/counter" / Use expand right, shrink left pattern
-4. **Edge cases**: "Chuỗi rỗng, k > array length, tất cả unique/duplicate" / Empty input, k exceeds length
+1. **Clarify**: "Xóa đúng 1 phần tử, không phải tối đa 1 / Must delete EXACTLY one element, not at most one"
+2. **Reframe**: "Cho phép tối đa 1 số 0 trong window → Max Consecutive Ones III với k=1 / Same as k=1 flip"
+3. **Window size**: "Kết quả = max_window_size - 1 (trừ phần tử bị xóa) / Subtract 1 for the deletion"
+4. **Edge cases**: "Toàn 1s → phải xóa 1 phần tử → ans = n-1 / All 1s means answer is n-1"
+5. **DP alt**: "dp0[i] = ones ending at i with 0 deletions, dp1[i] = ones with 1 deletion / Two-state DP"
+6. **Space**: "Sliding window O(1) extra space vs DP O(n) / Sliding window is optimal"
 
 ---
 
@@ -68,39 +69,73 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Sliding Window (Optimal)
+ * Time: O(n) — single pass
+ * Space: O(1) — two pointers + counter
+ *
+ * Allow at most 1 zero in the window. Answer = max_window - 1.
  */
-function longestSubarrayOf1sAfterDeletingOneElementBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function longestSubarray(nums: number[]): number {
+  let left = 0;
+  let zeros = 0;
+  let ans = 0;
+
+  for (let right = 0; right < nums.length; right++) {
+    if (nums[right] === 0) zeros++;
+
+    while (zeros > 1) {
+      if (nums[left] === 0) zeros--;
+      left++;
+    }
+    // Window size - 1 because we must delete exactly one element
+    ans = Math.max(ans, right - left); // right - left + 1 - 1 = right - left
+  }
+  return ans;
 }
 
 /**
- * Solution 2: Optimized — Sliding Window
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: DP with Two States
+ * Time: O(n)
+ * Space: O(1) — rolling variables
+ *
+ * dp0 = length of current run of 1s ending here (no deletion used)
+ * dp1 = length of current run ending here with exactly one deletion used
  */
-function longestSubarrayOf1sAfterDeletingOneElement(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Sliding Window
-  // Hint: Expand right pointer, shrink left when constraint violated
-  throw new Error('Not implemented');
+function longestSubarrayDP(nums: number[]): number {
+  let dp0 = 0; // consecutive 1s without any deletion
+  let dp1 = 0; // consecutive 1s using exactly one deletion
+  let ans = 0;
+
+  for (const num of nums) {
+    if (num === 1) {
+      dp1 = dp1 + 1;
+      dp0 = dp0 + 1;
+    } else {
+      // num === 0: the "deleted" element is this zero
+      dp1 = dp0; // extend prev run of 1s by "deleting" this zero
+      dp0 = 0; // reset no-deletion streak
+    }
+    ans = Math.max(ans, dp1);
+  }
+  // If we never used a deletion, we still must delete one element
+  return ans === nums.length ? ans - 1 : ans;
 }
 
 // === Test Cases ===
-// console.log(longestSubarrayOf1sAfterDeletingOneElement(/* example 1 */)); // expected
-// console.log(longestSubarrayOf1sAfterDeletingOneElement(/* example 2 */)); // expected
-// console.log(longestSubarrayOf1sAfterDeletingOneElement(/* edge case */)); // expected
+console.log(longestSubarray([1, 1, 0, 1])); // 3
+console.log(longestSubarray([0, 1, 1, 1, 0, 1, 1, 0, 1])); // 5
+console.log(longestSubarray([1, 1, 1])); // 2 (must delete one)
+console.log(longestSubarray([0, 0, 0])); // 0
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Constrained Subsequence Sum](https://leetcode.com/problems/constrained-subsequence-sum) — same pattern: Monotonic Queue
-- [Arithmetic Slices](https://leetcode.com/problems/arithmetic-slices) — same pattern: Sliding Window
-- [Maximum Length of Repeated Subarray](https://leetcode.com/problems/maximum-length-of-repeated-subarray) — same pattern: Sliding Window
-- [Max Consecutive Ones II](https://leetcode.com/problems/max-consecutive-ones-ii) — same pattern: Sliding Window
-- [Longest Subarray of 1's After Deleting One Element — LeetCode](https://leetcode.com/problems/longest-subarray-of-1s-after-deleting-one-element) — problem page
+| Problem                                                                                                  | Pattern         | Difficulty |
+| -------------------------------------------------------------------------------------------------------- | --------------- | ---------- |
+| [Max Consecutive Ones III](https://leetcode.com/problems/max-consecutive-ones-iii)                       | Sliding Window  | Medium     |
+| [Arithmetic Slices](https://leetcode.com/problems/arithmetic-slices)                                     | Sliding Window  | Medium     |
+| [Maximum Length of Repeated Subarray](https://leetcode.com/problems/maximum-length-of-repeated-subarray) | DP              | Medium     |
+| [Max Consecutive Ones II](https://leetcode.com/problems/max-consecutive-ones-ii)                         | Sliding Window  | Medium     |
+| [Constrained Subsequence Sum](https://leetcode.com/problems/constrained-subsequence-sum)                 | Monotonic Queue | Hard       |

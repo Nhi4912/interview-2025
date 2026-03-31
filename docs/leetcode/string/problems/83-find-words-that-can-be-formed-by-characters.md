@@ -7,60 +7,58 @@ tags: [Array, Hash Table, String, Counting]
 leetcode_url: "https://leetcode.com/problems/find-words-that-can-be-formed-by-characters"
 ---
 
-# Find Words That Can Be Formed by Characters / Find Words That Can Be Formed by Characters
+# Find Words That Can Be Formed by Characters / Tìm Các Từ Có Thể Tạo Từ Ký Tự Cho Trước
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Frequency Count
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) | [Subdomain Visit Count](https://leetcode.com/problems/subdomain-visit-count)
+> **See also**: [Ransom Note](https://leetcode.com/problems/ransom-note) | [Check if the Sentence is Pangram](https://leetcode.com/problems/check-if-the-sentence-is-pangram)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
+**Analogy:** Giống kiểm tra xem trong hộp chữ cái có đủ để ghép thành từ không — đếm số lượng mỗi chữ cái trong hộp (chars), rồi với mỗi từ kiểm tra xem từ đó cần bao nhiêu chữ cái và hộp có đủ không.
 
 **Pattern Recognition:**
 
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "can word be formed using available characters (each used once)" → **Frequency array comparison**
+- Key insight: build frequency array for `chars`, then for each word compare frequencies
 
-**Visual — Find Words That Can Be Formed by Characters example:**
+**Visual — Frequency comparison:**
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
+chars = "atach"  → freq: {a:2, t:1, c:1, h:1}
+words = ["cat", "bt", "hat", "tree"]
 
-Key insight: store complement for O(1) lookup
+"cat": need c=1,a=1,t=1 → all ≤ freq → ✅ length 3
+"bt":  need b=1 → b not in freq → ❌
+"hat": need h=1,a=1,t=1 → all ≤ freq → ✅ length 3
+"tree": need t=1,r=1 → r not in freq → ❌
+
+total = 3 + 3 = 6
 ```
 
 ---
 
 ## Problem Description
 
-Find Words That Can Be Formed by Characters. ([LeetCode](https://leetcode.com/problems/find-words-that-can-be-formed-by-characters))
+Given an array of strings `words` and a string `chars`, return the **sum of lengths** of all words that can be formed using characters from `chars` (each character in `chars` can only be used once per word). ([LeetCode 1160](https://leetcode.com/problems/find-words-that-can-be-formed-by-characters))
 
-Difficulty: Easy | Acceptance: 71.1%
+**Example 1:** `words=["cat","bt","hat","tree"], chars="atach"` → `6` (cat + hat)
+**Example 2:** `words=["hello","world","leetcode"], chars="welldonehoneyr"` → `10` (hello + world)
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/find-words-that-can-be-formed-by-characters) for full constraints
+Constraints: All strings consist of lowercase English letters; `1 <= chars.length <= 100`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify**: "Mỗi ký tự trong chars chỉ dùng một lần cho mỗi từ, không phải cho tất cả từ" / chars reusable across words, not within one word
+2. **Brute force**: "Sort cả hai rồi so sánh — cũng được vì constraints nhỏ" / Sorting works for small constraints
+3. **Optimize**: "Precompute freq array của chars một lần; mỗi từ build freq rồi compare → O(n·L)" / Precompute once
+4. **Edge cases**: "chars rỗng → không từ nào hợp lệ; từ rỗng → length 0 cộng vào kết quả" / Empty chars → 0
+5. **Follow-up**: "Nếu chars thay đổi thường xuyên?" → không cần precompute, rebuild mỗi lần (small n)
+6. **Complexity**: "O(n·L + |chars|) time, O(1) space — chỉ dùng array 26 phần tử" / O(n·L) with O(1) auxiliary space
 
 ---
 
@@ -68,39 +66,61 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Frequency array comparison
+ * Time: O(|chars| + sum of word lengths) — build char freq once
+ * Space: O(1) — fixed 26-length arrays
  */
-function findWordsThatCanBeFormedByCharactersBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function countCharacters(words: string[], chars: string): number {
+  const charFreq = new Array(26).fill(0);
+  const a = "a".charCodeAt(0);
+  for (const c of chars) charFreq[c.charCodeAt(0) - a]++;
+
+  let total = 0;
+
+  for (const word of words) {
+    const wordFreq = new Array(26).fill(0);
+    for (const c of word) wordFreq[c.charCodeAt(0) - a]++;
+
+    let canForm = true;
+    for (let i = 0; i < 26; i++) {
+      if (wordFreq[i] > charFreq[i]) {
+        canForm = false;
+        break;
+      }
+    }
+
+    if (canForm) total += word.length;
+  }
+
+  return total;
 }
 
 /**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Map-based (more readable)
+ * Time: O(|chars| + sum of word lengths)
+ * Space: O(26) ≈ O(1)
  */
-function findWordsThatCanBeFormedByCharacters(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
+function countCharactersMap(words: string[], chars: string): number {
+  const buildFreq = (s: string): Map<string, number> => {
+    const m = new Map<string, number>();
+    for (const c of s) m.set(c, (m.get(c) ?? 0) + 1);
+    return m;
+  };
+
+  const charFreq = buildFreq(chars);
+  let total = 0;
+
+  for (const word of words) {
+    const wordFreq = buildFreq(word);
+    const canForm = [...wordFreq.entries()].every(([c, cnt]) => (charFreq.get(c) ?? 0) >= cnt);
+    if (canForm) total += word.length;
+  }
+
+  return total;
 }
 
 // === Test Cases ===
-// console.log(findWordsThatCanBeFormedByCharacters(/* example 1 */)); // expected
-// console.log(findWordsThatCanBeFormedByCharacters(/* example 2 */)); // expected
-// console.log(findWordsThatCanBeFormedByCharacters(/* edge case */)); // expected
+console.log(countCharacters(["cat", "bt", "hat", "tree"], "atach")); // → 6
+console.log(countCharacters(["hello", "world", "leetcode"], "welldonehoneyr")); // → 10
+console.log(countCharacters(["a"], "b")); // → 0
 ```
-
----
-
-## 🔗 Related Problems
-
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Subdomain Visit Count](https://leetcode.com/problems/subdomain-visit-count) — same pattern: Hash Map
-- [Rank Teams by Votes](https://leetcode.com/problems/rank-teams-by-votes) — same pattern: Sorting
-- [Maximum Palindromes After Operations](https://leetcode.com/problems/maximum-palindromes-after-operations) — same pattern: Greedy
-- [Find Words That Can Be Formed by Characters — LeetCode](https://leetcode.com/problems/find-words-that-can-be-formed-by-characters) — problem page

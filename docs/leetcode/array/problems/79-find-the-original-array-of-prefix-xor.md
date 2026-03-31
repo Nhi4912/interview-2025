@@ -7,57 +7,49 @@ tags: [Array, Bit Manipulation]
 leetcode_url: "https://leetcode.com/problems/find-the-original-array-of-prefix-xor"
 ---
 
-# Find The Original Array of Prefix Xor / Find The Original Array of Prefix Xor
+# Find The Original Array of Prefix Xor / Tìm Mảng Gốc Từ Mảng XOR Tiền Tố
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Bit Manipulation
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [Missing Number](https://leetcode.com/problems/missing-number) | [Find the Duplicate Number](https://leetcode.com/problems/find-the-duplicate-number)
+> **See also**: [Single Number](https://leetcode.com/problems/single-number) | [XOR Queries of a Subarray](https://leetcode.com/problems/xor-queries-of-a-subarray)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Làm việc trực tiếp với bit (0/1) — nhanh hơn phép toán thông thường. XOR, AND, OR, shift là các công cụ chính.
-
-**Pattern Recognition:**
-
-- Signal: "binary representation" + "XOR/AND/OR properties" → **Bit Manipulation**
-- Bài này thuộc dạng Bit Manipulation — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Find The Original Array of Prefix Xor example:**
+**Analogy:** Giống mã hóa / giải mã — nếu bạn biết cách "cộng" (XOR) để tạo ra mảng tiền tố, thì "trừ" (XOR lại) sẽ cho bạn mảng gốc. XOR là phép toán tự nghịch: `a XOR a = 0`, `a XOR 0 = a`.
 
 ```
-// TODO: Add step-by-step visual for Bit Manipulation
-// Show one complete example with state at each step
+Tạo prefix XOR (forward):      Khôi phục arr (backward):
+arr = [5, 7, 2, 3, 2]          pref = [5, 2, 0, 3, 1]
+pref[0] = 5                    arr[0] = pref[0]          = 5
+pref[1] = 5^7 = 2              arr[1] = pref[1]^pref[0]  = 2^5  = 7
+pref[2] = 2^2 = 0              arr[2] = pref[2]^pref[1]  = 0^2  = 2
+pref[3] = 0^3 = 3              arr[3] = pref[3]^pref[2]  = 3^0  = 3
+pref[4] = 3^2 = 1              arr[4] = pref[4]^pref[3]  = 1^3  = 2
 ```
 
 ---
 
 ## Problem Description
 
-Find The Original Array of Prefix Xor. ([LeetCode](https://leetcode.com/problems/find-the-original-array-of-prefix-xor))
+Given an integer array `pref` of size `n`, find and return the array `arr` of size `n` such that `pref[i] = arr[0] XOR arr[1] XOR ... XOR arr[i]`. It is guaranteed a valid answer always exists.
 
-Difficulty: Medium | Acceptance: 88.1%
+- Example 1: `pref = [5,2,0,3,1]` → `[5,7,2,3,2]`
+- Example 2: `pref = [13]` → `[13]`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/find-the-original-array-of-prefix-xor) for full constraints
+Constraints: `1 <= pref.length <= 10^5`, `0 <= pref[i] <= 10^6`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify / Làm rõ**: "XOR prefix có nghĩa là `pref[i] = arr[0]^...^arr[i]`?" / Confirm the prefix XOR definition before coding.
+2. **Key insight / Chìa khóa**: "XOR là tự nghịch: `pref[i] XOR pref[i-1]` cho ra `arr[i]`" / `a^a=0` so XOR-ing adjacent prefix values recovers the original.
+3. **Base case / Trường hợp cơ sở**: "`arr[0] = pref[0]` — xử lý riêng trước vòng lặp" / Index 0 is always the same as `pref[0]` since there's no previous element.
+4. **Edge case / Trường hợp đặc biệt**: "Mảng 1 phần tử: trả về `[pref[0]]`" / Single-element array is trivially `[pref[0]]`.
+5. **Complexity / Độ phức tạp**: "O(n) time, O(n) space cho output — tối ưu, không thể làm tốt hơn" / Must visit every element at least once; output array is required.
+6. **Follow-up / Câu hỏi tiếp theo**: "Nếu cho `arr`, tính `pref` như thế nào? O(n) running XOR" / Forward: running XOR scan. Inverse problem is symmetric — same complexity.
 
 ---
 
@@ -65,39 +57,65 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Single Pass with index arithmetic
+ * Time: O(n) — one pass through pref array
+ * Space: O(n) — output array of same size
  */
-function findTheOriginalArrayOfPrefixXorBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function findArray(pref: number[]): number[] {
+  const arr: number[] = [pref[0]];
+  for (let i = 1; i < pref.length; i++) {
+    arr.push(pref[i] ^ pref[i - 1]);
+  }
+  return arr;
 }
 
 /**
- * Solution 2: Optimized — Bit Manipulation
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Functional style with Array.map
+ * Time: O(n) — map creates one new array
+ * Space: O(n) — output array
  */
-function findTheOriginalArrayOfPrefixXor(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Bit Manipulation
-  // Hint: Use XOR, AND, OR, shift operations on bits
-  throw new Error('Not implemented');
+function findArrayMap(pref: number[]): number[] {
+  return pref.map((val, i) => (i === 0 ? val : val ^ pref[i - 1]));
+}
+
+/**
+ * Solution 3: In-place mutation (modifies pref — only if mutation is allowed)
+ * Time: O(n) — single right-to-left pass
+ * Space: O(1) — modifies input in place
+ */
+function findArrayInPlace(pref: number[]): number[] {
+  for (let i = pref.length - 1; i > 0; i--) {
+    pref[i] ^= pref[i - 1];
+  }
+  return pref;
 }
 
 // === Test Cases ===
-// console.log(findTheOriginalArrayOfPrefixXor(/* example 1 */)); // expected
-// console.log(findTheOriginalArrayOfPrefixXor(/* example 2 */)); // expected
-// console.log(findTheOriginalArrayOfPrefixXor(/* edge case */)); // expected
+console.log(findArray([5, 2, 0, 3, 1])); // [5, 7, 2, 3, 2]
+console.log(findArray([13])); // [13]
+console.log(findArray([0])); // [0]
+console.log(findArray([1, 1])); // [1, 0]   (1 XOR 1 = 0)
+console.log(findArrayMap([5, 2, 0, 3, 1])); // [5, 7, 2, 3, 2]
+console.log(findArrayInPlace([5, 2, 0, 3, 1])); // [5, 7, 2, 3, 2]
+
+// Verify round-trip: apply prefix XOR to result → should get back original pref
+function prefixXor(arr: number[]): number[] {
+  const pref = [arr[0]];
+  for (let i = 1; i < arr.length; i++) pref.push(pref[i - 1] ^ arr[i]);
+  return pref;
+}
+const original = [5, 2, 0, 3, 1];
+const recovered = findArray(original);
+console.log(JSON.stringify(prefixXor(recovered)) === JSON.stringify(original)); // true
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Missing Number](https://leetcode.com/problems/missing-number) — same pattern: Binary Search
-- [Find the Duplicate Number](https://leetcode.com/problems/find-the-duplicate-number) — same pattern: Two Pointers
-- [Subsets II](https://leetcode.com/problems/subsets-ii) — same pattern: Backtracking
-- [Partition Array Into Two Arrays to Minimize Sum Difference](https://leetcode.com/problems/partition-array-into-two-arrays-to-minimize-sum-difference) — same pattern: Two Pointers
-- [Find The Original Array of Prefix Xor — LeetCode](https://leetcode.com/problems/find-the-original-array-of-prefix-xor) — problem page
+| Problem                                                                              | Pattern                | Difficulty |
+| ------------------------------------------------------------------------------------ | ---------------------- | ---------- |
+| [Single Number](https://leetcode.com/problems/single-number)                         | XOR cancellation       | 🟢 Easy    |
+| [Single Number II](https://leetcode.com/problems/single-number-ii)                   | Bit counting mod 3     | 🟡 Medium  |
+| [Missing Number](https://leetcode.com/problems/missing-number)                       | XOR with index         | 🟢 Easy    |
+| [XOR Queries of a Subarray](https://leetcode.com/problems/xor-queries-of-a-subarray) | Prefix XOR range query | 🟡 Medium  |

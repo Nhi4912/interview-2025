@@ -7,100 +7,137 @@ tags: [Tree, Depth-First Search, Breadth-First Search, Binary Tree]
 leetcode_url: "https://leetcode.com/problems/minimum-depth-of-binary-tree"
 ---
 
-# Minimum Depth of Binary Tree / Minimum Depth of Binary Tree
+# Minimum Depth of Binary Tree / Độ Sâu Nhỏ Nhất Cây Nhị Phân
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: BFS
 > **Frequency**: 📘 Tier 3 — Gặp ở 4 companies
-> **See also**: [Same Tree](https://leetcode.com/problems/same-tree) | [Serialize and Deserialize Binary Tree](https://leetcode.com/problems/serialize-and-deserialize-binary-tree)
+> **See also**: [Maximum Depth of Binary Tree](https://leetcode.com/problems/maximum-depth-of-binary-tree) | [Binary Tree Level Order Traversal](https://leetcode.com/problems/binary-tree-level-order-traversal)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như ném đá xuống ao — sóng lan ra theo từng vòng đều đặn. Khám phá hết tất cả ở khoảng cách 1, rồi mới sang khoảng cách 2.
+**Analogy:** Như tìm tầng thấp nhất trong tòa nhà có cửa ra vào — BFS duyệt từng tầng từ dưới lên, dừng ngay khi gặp tầng đầu tiên có "cửa ra" (leaf node). BFS tốt hơn DFS ở đây vì dừng sớm hơn khi cây lệch.
 
 **Pattern Recognition:**
 
-- Signal: "shortest path (unweighted)" + "level-order" → **BFS**
-- Bài này thuộc dạng BFS — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "minimum depth" + "binary tree" → **BFS level-order** (stop at first leaf)
+- DFS works but visits entire tree; BFS short-circuits on first leaf found
+- Gotcha: node chỉ có 1 con KHÔNG phải leaf — phải check cả hai con null
 
-**Visual — Minimum Depth of Binary Tree example:**
+**Visual:**
 
 ```
-Level 0:     [root]
-Level 1:   [A, B]
-Level 2: [C, D, E]
+        3
+       / \
+      9  20
+        /  \
+       15   7
 
-BFS: process level by level using queue
+BFS Level 1: [3]       — not leaf (has children)
+BFS Level 2: [9, 20]   — node 9 is leaf! return depth=2
+
+DFS would also visit 15, 7 unnecessarily
 ```
 
 ---
 
 ## Problem Description
 
-Minimum Depth of Binary Tree. ([LeetCode](https://leetcode.com/problems/minimum-depth-of-binary-tree))
+Given a binary tree, find the **minimum depth** — the number of nodes along the shortest path from the root to the nearest leaf node. A leaf is a node with no children.
 
-Difficulty: Easy | Acceptance: 50.7%
+**Example 1:** Tree `[3,9,20,null,null,15,7]` → `2` (path: 3→9)
+**Example 2:** Tree `[2,null,3,null,4,null,5,null,6]` → `5` (single chain)
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-depth-of-binary-tree) for full constraints
+Constraints: `0 <= number of nodes <= 10⁵`, `-1000 <= Node.val <= 1000`.
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify**: "Leaf là node không có con trái VÀ phải — node chỉ có 1 con không phải leaf" / Leaf = both children null
+2. **BFS advantage**: "BFS dừng sớm ở leaf đầu tiên — tốt hơn DFS khi cây sâu lệch" / BFS finds first leaf faster
+3. **DFS gotcha**: "Nếu dùng DFS, node chỉ có 1 con → đừng return min(left,right) — phải skip subtree rỗng" / DFS must skip null subtrees
+4. **Edge cases**: "root=null → 0; single node → 1" / Handle null root and single-node tree
+5. **One child node**: "Node có chỉ 1 con → depth từ con null = 0, không tính → bắt buộc đi theo con có tồn tại" / Must go down existing child
+6. **Follow-up**: "Maximum depth thì sao?" / Swap min→max and remove early exit in BFS
 
 ---
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumDepthOfBinaryTreeBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+class TreeNode {
+  val: number;
+  left: TreeNode | null;
+  right: TreeNode | null;
+  constructor(val = 0, left: TreeNode | null = null, right: TreeNode | null = null) {
+    this.val = val;
+    this.left = left;
+    this.right = right;
+  }
 }
 
 /**
- * Solution 2: Optimized — BFS
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: BFS level-order (early exit at first leaf)
+ * Time: O(N) worst case, O(N/2) average for balanced tree
+ * Space: O(N) — queue holds up to one full level
  */
-function minimumDepthOfBinaryTree(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using BFS
-  // Hint: Use queue, process level by level
-  throw new Error('Not implemented');
+function minDepth(root: TreeNode | null): number {
+  if (!root) return 0;
+  const queue: TreeNode[] = [root];
+  let depth = 1;
+
+  while (queue.length > 0) {
+    const size = queue.length;
+    for (let i = 0; i < size; i++) {
+      const node = queue.shift()!;
+      if (!node.left && !node.right) return depth; // first leaf found
+      if (node.left) queue.push(node.left);
+      if (node.right) queue.push(node.right);
+    }
+    depth++;
+  }
+  return depth;
+}
+
+/**
+ * Solution 2: DFS recursive (careful with one-child nodes)
+ * Time: O(N) — visits all nodes
+ * Space: O(H) — recursion stack, H = height
+ */
+function minDepthDFS(root: TreeNode | null): number {
+  if (!root) return 0;
+  // If only one child exists, must go down that child (not count empty branch)
+  if (!root.left) return 1 + minDepthDFS(root.right);
+  if (!root.right) return 1 + minDepthDFS(root.left);
+  return 1 + Math.min(minDepthDFS(root.left), minDepthDFS(root.right));
 }
 
 // === Test Cases ===
-// console.log(minimumDepthOfBinaryTree(/* example 1 */)); // expected
-// console.log(minimumDepthOfBinaryTree(/* example 2 */)); // expected
-// console.log(minimumDepthOfBinaryTree(/* edge case */)); // expected
+// Build: [3,9,20,null,null,15,7]
+const t1 = new TreeNode(3, new TreeNode(9), new TreeNode(20, new TreeNode(15), new TreeNode(7)));
+console.log(minDepth(t1)); // 2
+console.log(minDepthDFS(t1)); // 2
+
+// Build: [2,null,3,null,4,null,5,null,6] — right-skewed chain
+const t2 = new TreeNode(
+  2,
+  null,
+  new TreeNode(3, null, new TreeNode(4, null, new TreeNode(5, null, new TreeNode(6)))),
+);
+console.log(minDepth(t2)); // 5
+console.log(minDepth(null)); // 0
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Same Tree](https://leetcode.com/problems/same-tree) — same pattern: BFS
-- [Serialize and Deserialize Binary Tree](https://leetcode.com/problems/serialize-and-deserialize-binary-tree) — same pattern: BFS
-- [Binary Tree Right Side View](https://leetcode.com/problems/binary-tree-right-side-view) — same pattern: BFS
-- [All Nodes Distance K in Binary Tree](https://leetcode.com/problems/all-nodes-distance-k-in-binary-tree) — same pattern: BFS
-- [Minimum Depth of Binary Tree — LeetCode](https://leetcode.com/problems/minimum-depth-of-binary-tree) — problem page
+| Problem                                                                                              | Pattern             | Difficulty |
+| ---------------------------------------------------------------------------------------------------- | ------------------- | ---------- |
+| [Maximum Depth of Binary Tree](https://leetcode.com/problems/maximum-depth-of-binary-tree)           | DFS/BFS depth       | 🟢 Easy    |
+| [Binary Tree Level Order Traversal](https://leetcode.com/problems/binary-tree-level-order-traversal) | BFS level-order     | 🟡 Medium  |
+| [Same Tree](https://leetcode.com/problems/same-tree)                                                 | DFS structure check | 🟢 Easy    |
+| [Path Sum](https://leetcode.com/problems/path-sum)                                                   | DFS root-to-leaf    | 🟢 Easy    |
+| [Binary Tree Right Side View](https://leetcode.com/problems/binary-tree-right-side-view)             | BFS last-per-level  | 🟡 Medium  |
