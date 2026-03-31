@@ -7,62 +7,65 @@ tags: [Array, Dynamic Programming, Greedy, Sorting]
 leetcode_url: "https://leetcode.com/problems/non-overlapping-intervals"
 ---
 
-# Non-overlapping Intervals / Non-overlapping Intervals
+# Non-overlapping Intervals / Khoảng Không Chồng Lấp
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dynamic Programming
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy (Interval Scheduling)
 > **Frequency**: 📘 Tier 3 — Gặp ở 7 companies
-> **See also**: [Minimize the Maximum Difference of Pairs](https://leetcode.com/problems/minimize-the-maximum-difference-of-pairs) | [Find the Maximum Sum of Node Values](https://leetcode.com/problems/find-the-maximum-sum-of-node-values)
+> **See also**: [Minimum Number of Arrows to Burst Balloons](https://leetcode.com/problems/minimum-number-of-arrows-to-burst-balloons) | [Meeting Rooms II](https://leetcode.com/problems/meeting-rooms-ii)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**Analogy:** Hãy tưởng tượng bạn là người quản lý phòng họp. Nhiều cuộc họp cùng xin đặt phòng, bạn muốn loại bỏ ít cuộc họp nhất để không cuộc nào bị trùng giờ. Bí quyết: ưu tiên giữ những cuộc họp kết thúc sớm nhất — chúng "chiếm" phòng ít nhất, để lại nhiều chỗ cho các cuộc họp sau.
 
 **Pattern Recognition:**
 
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "remove minimum intervals to make non-overlapping" → **Greedy: sort by end time**
+- Keep max non-overlapping intervals → remove = total - kept
+- Key insight: luôn chọn interval kết thúc sớm nhất để tối đa hóa chỗ trống
 
-**Visual — Non-overlapping Intervals example:**
+**Visual — intervals = [[1,2],[2,3],[3,4],[1,3]]:**
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+Sort by end: [[1,2],[2,3],[1,3],[3,4]]
+             end=2   end=3   end=3  end=4
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+Step 1: Keep [1,2], lastEnd=2, kept=1
+Step 2: [2,3] starts at 2 ≥ lastEnd=2 → Keep [2,3], lastEnd=3, kept=2
+Step 3: [1,3] starts at 1 < lastEnd=3 → REMOVE (overlap), removals=1
+Step 4: [3,4] starts at 3 ≥ lastEnd=3 → Keep [3,4], lastEnd=4, kept=3
+
+Kept = 3, Removed = 4-3 = 1 ✅
 ```
 
 ---
 
 ## Problem Description
 
-Non-overlapping Intervals. ([LeetCode](https://leetcode.com/problems/non-overlapping-intervals))
+Given an array of intervals `[start, end]`, find the minimum number of intervals to remove to make the rest non-overlapping. ([LeetCode 435](https://leetcode.com/problems/non-overlapping-intervals))
 
 Difficulty: Medium | Acceptance: 55.5%
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+- **Example 1**: intervals = [[1,2],[2,3],[3,4],[1,3]] → **1** (remove [1,3])
+- **Example 2**: intervals = [[1,2],[1,2],[1,2]] → **2** (remove 2 overlapping copies)
 
 Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/non-overlapping-intervals) for full constraints
+
+- `1 <= intervals.length <= 10^5`
+- `intervals[i].length == 2`
+- `-5 * 10^4 <= start < end <= 5 * 10^4`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+1. **Clarify**: "Touching intervals (end==start) có overlap không?" / Do touching intervals count as overlapping?
+2. **Insight**: "Giữ tối đa interval = bài Interval Scheduling Maximization" / This is the classic ISM problem
+3. **Sort key**: "Sort theo end time, không phải start time" / Critical: sort by END not start
+4. **Greedy**: "Luôn giữ interval kết thúc sớm nhất trong số không overlap" / Always keep earliest-ending valid interval
+5. **Answer**: "Xóa = tổng - giữ được" / removals = total - kept intervals count
+6. **Edge cases**: "0 hoặc 1 interval → 0; tất cả overlap → n-1" / Boundary cases
 
 ---
 
@@ -70,39 +73,85 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: DP (LIS-style) — O(n²)
+ * Time: O(n²) — for each interval find best non-overlapping predecessor
+ * Space: O(n) — dp array
  */
-function nonOverlappingIntervalsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function eraseOverlapIntervalsDP(intervals: number[][]): number {
+  if (intervals.length === 0) return 0;
+  intervals.sort((a, b) => a[0] - b[0]);
+  const n = intervals.length;
+
+  // dp[i] = max non-overlapping intervals ending at i
+  const dp = new Array(n).fill(1);
+  for (let i = 1; i < n; i++) {
+    for (let j = 0; j < i; j++) {
+      // intervals[j] and intervals[i] are non-overlapping if j's end <= i's start
+      if (intervals[j][1] <= intervals[i][0]) {
+        dp[i] = Math.max(dp[i], dp[j] + 1);
+      }
+    }
+  }
+  const maxKept = Math.max(...dp);
+  return n - maxKept;
 }
 
 /**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Greedy (Optimal) — O(n log n)
+ * Time: O(n log n) — sorting dominates
+ * Space: O(1) — constant extra space (ignoring sort)
  */
-function nonOverlappingIntervals(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function eraseOverlapIntervals(intervals: number[][]): number {
+  if (intervals.length === 0) return 0;
+
+  // Sort by end time — greedy: keep intervals ending earliest
+  intervals.sort((a, b) => a[1] - b[1]);
+
+  let removals = 0;
+  let lastEnd = -Infinity;
+
+  for (const [start, end] of intervals) {
+    if (start >= lastEnd) {
+      // Non-overlapping: keep this interval
+      lastEnd = end;
+    } else {
+      // Overlapping: remove it (greedy keeps the one with smaller end, already sorted)
+      removals++;
+    }
+  }
+
+  return removals;
 }
 
 // === Test Cases ===
-// console.log(nonOverlappingIntervals(/* example 1 */)); // expected
-// console.log(nonOverlappingIntervals(/* example 2 */)); // expected
-// console.log(nonOverlappingIntervals(/* edge case */)); // expected
+console.log(
+  eraseOverlapIntervals([
+    [1, 2],
+    [2, 3],
+    [3, 4],
+    [1, 3],
+  ]),
+); // 1
+console.log(
+  eraseOverlapIntervals([
+    [1, 2],
+    [1, 2],
+    [1, 2],
+  ]),
+); // 2
+console.log(
+  eraseOverlapIntervals([
+    [1, 2],
+    [2, 3],
+  ]),
+); // 0
+console.log(
+  eraseOverlapIntervals([
+    [1, 100],
+    [11, 22],
+    [1, 11],
+    [2, 12],
+  ]),
+); // 2
+console.log(eraseOverlapIntervals([])); // 0
 ```
-
----
-
-## 🔗 Related Problems
-
-- [Minimize the Maximum Difference of Pairs](https://leetcode.com/problems/minimize-the-maximum-difference-of-pairs) — same pattern: Dynamic Programming
-- [Find the Maximum Sum of Node Values](https://leetcode.com/problems/find-the-maximum-sum-of-node-values) — same pattern: Dynamic Programming
-- [Greatest Sum Divisible by Three](https://leetcode.com/problems/greatest-sum-divisible-by-three) — same pattern: Dynamic Programming
-- [Reducing Dishes](https://leetcode.com/problems/reducing-dishes) — same pattern: Dynamic Programming
-- [Non-overlapping Intervals — LeetCode](https://leetcode.com/problems/non-overlapping-intervals) — problem page

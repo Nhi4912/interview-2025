@@ -7,62 +7,63 @@ tags: [Array, Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/best-time-to-buy-and-sell-stock-iii"
 ---
 
-# Best Time to Buy and Sell Stock III / Best Time to Buy and Sell Stock III
+# Best Time to Buy and Sell Stock III / Mua Bán Cổ Phiếu III
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Dynamic Programming
+> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: State Machine DP
 > **Frequency**: 📘 Tier 3 — Gặp ở 9 companies
-> **See also**: [Jump Game II](https://leetcode.com/problems/jump-game-ii) | [Maximal Square](https://leetcode.com/problems/maximal-square)
+> **See also**: [Best Time to Buy and Sell Stock IV](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-iv) | [Best Time to Buy and Sell Stock with Cooldown](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-cooldown)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**Analogy:** Hãy tưởng tượng bạn là nhà đầu tư có thể thực hiện tối đa 2 giao dịch mua-bán cổ phiếu. Mỗi ngày bạn đang ở một trong 4 trạng thái: "đang giữ cổ phiếu lần 1", "vừa bán lần 1", "đang giữ cổ phiếu lần 2", "vừa bán lần 2". Như một người chơi cờ — theo dõi trạng thái hiện tại, chọn nước đi tốt nhất.
 
 **Pattern Recognition:**
 
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "at most 2 transactions" + "maximize profit" → **State Machine DP**
+- Track 4 variables: buy1, sell1, buy2, sell2
+- Key insight: mỗi state phụ thuộc state trước đó, không cần mảng DP
 
-**Visual — Best Time to Buy and Sell Stock III example:**
+**Visual — prices = [3,3,5,0,0,3,1,4]:**
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+Day:    0    1    2    3    4    5    6    7
+Price:  3    3    5    0    0    3    1    4
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+buy1:  -3   -3   -3    0    0    0    0    0   (max profit after 1st buy)
+sell1:  0    0    2    2    2    3    3    3   (max profit after 1st sell)
+buy2:  -3   -3   -1    2    2    2    2    2   (max profit after 2nd buy)
+sell2:  0    0    2    2    2    5    5    6   (max profit after 2nd sell)
+                                           ↑ Answer = 6
 ```
 
 ---
 
 ## Problem Description
 
-Best Time to Buy and Sell Stock III. ([LeetCode](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-iii))
+Given an array `prices` where `prices[i]` is the price of a stock on day `i`, find the maximum profit from **at most 2 transactions**. You must sell before buying again. ([LeetCode 123](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-iii))
 
 Difficulty: Hard | Acceptance: 51.1%
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+- **Example 1**: prices = [3,3,5,0,0,3,1,4] → **6** (buy day 3, sell day 5 = +3; buy day 6, sell day 7 = +3)
+- **Example 2**: prices = [1,2,3,4,5] → **4** (one transaction: buy day 0, sell day 4)
 
 Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-iii) for full constraints
+
+- `1 <= prices.length <= 10^5`
+- `0 <= prices[i] <= 10^5`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+1. **Clarify**: "Tối đa 2 giao dịch, không phải đúng 2?" / At most 2 transactions, not exactly 2?
+2. **Brute force**: "Thử mọi cặp (buy1,sell1,buy2,sell2) → O(n⁴)" / Four nested loops, very slow
+3. **State machine**: "4 trạng thái: buy1→sell1→buy2→sell2, cập nhật mỗi ngày" / Track 4 state variables
+4. **Key transition**: "buy1 = max(buy1, -price); sell1 = max(sell1, buy1+price)" / State machine transitions
+5. **Space optimize**: "Chỉ cần 4 biến, không cần mảng" / O(1) space, no dp array needed
+6. **Edge cases**: "prices giảm liên tục → profit = 0; một phần tử → 0" / Decreasing prices, single element
 
 ---
 
@@ -70,39 +71,70 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: DP with state table
+ * Time: O(n) — single pass through prices
+ * Space: O(n) — store all states
  */
-function bestTimeToBuyAndSellStockIiiBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function maxProfitIIIDP(prices: number[]): number {
+  const n = prices.length;
+  // states[i] = [buy1, sell1, buy2, sell2] after processing prices[0..i]
+  const buy1 = new Array(n).fill(0);
+  const sell1 = new Array(n).fill(0);
+  const buy2 = new Array(n).fill(0);
+  const sell2 = new Array(n).fill(0);
+
+  buy1[0] = -prices[0];
+  sell1[0] = 0;
+  buy2[0] = -prices[0];
+  sell2[0] = 0;
+
+  for (let i = 1; i < n; i++) {
+    buy1[i] = Math.max(buy1[i - 1], -prices[i]);
+    sell1[i] = Math.max(sell1[i - 1], buy1[i - 1] + prices[i]);
+    buy2[i] = Math.max(buy2[i - 1], sell1[i - 1] - prices[i]);
+    sell2[i] = Math.max(sell2[i - 1], buy2[i - 1] + prices[i]);
+  }
+  return sell2[n - 1];
 }
 
 /**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: State Machine with O(1) Space (Optimal)
+ * Time: O(n) — single pass
+ * Space: O(1) — only 4 variables
  */
-function bestTimeToBuyAndSellStockIii(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function maxProfitIII(prices: number[]): number {
+  // State: max profit after each state
+  let buy1 = -Infinity; // max profit after first buy
+  let sell1 = 0; // max profit after first sell
+  let buy2 = -Infinity; // max profit after second buy
+  let sell2 = 0; // max profit after second sell
+
+  for (const price of prices) {
+    // Each state is the max of: staying in prev state OR making this day's move
+    buy1 = Math.max(buy1, -price); // buy on this day
+    sell1 = Math.max(sell1, buy1 + price); // sell on this day
+    buy2 = Math.max(buy2, sell1 - price); // buy again on this day
+    sell2 = Math.max(sell2, buy2 + price); // sell final on this day
+  }
+
+  return sell2;
 }
 
 // === Test Cases ===
-// console.log(bestTimeToBuyAndSellStockIii(/* example 1 */)); // expected
-// console.log(bestTimeToBuyAndSellStockIii(/* example 2 */)); // expected
-// console.log(bestTimeToBuyAndSellStockIii(/* edge case */)); // expected
+console.log(maxProfitIII([3, 3, 5, 0, 0, 3, 1, 4])); // 6
+console.log(maxProfitIII([1, 2, 3, 4, 5])); // 4
+console.log(maxProfitIII([7, 6, 4, 3, 1])); // 0 (no profit possible)
+console.log(maxProfitIII([1])); // 0
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Jump Game II](https://leetcode.com/problems/jump-game-ii) — same pattern: Dynamic Programming
-- [Maximal Square](https://leetcode.com/problems/maximal-square) — same pattern: Dynamic Programming
-- [Unique Paths II](https://leetcode.com/problems/unique-paths-ii) — same pattern: Dynamic Programming
-- [Maximum Profit in Job Scheduling](https://leetcode.com/problems/maximum-profit-in-job-scheduling) — same pattern: Dynamic Programming
-- [Best Time to Buy and Sell Stock III — LeetCode](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-iii) — problem page
+| Problem                                                                                                                                    | Difficulty | Pattern                  |
+| ------------------------------------------------------------------------------------------------------------------------------------------ | ---------- | ------------------------ |
+| [Best Time to Buy and Sell Stock](https://leetcode.com/problems/best-time-to-buy-and-sell-stock)                                           | 🟢 Easy    | 1 transaction            |
+| [Best Time to Buy and Sell Stock II](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-ii)                                     | 🟡 Medium  | Unlimited transactions   |
+| [Best Time to Buy and Sell Stock IV](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-iv)                                     | 🔴 Hard    | k transactions           |
+| [Best Time to Buy and Sell Stock with Cooldown](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-cooldown)               | 🟡 Medium  | State machine + cooldown |
+| [Best Time to Buy and Sell Stock with Transaction Fee](https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-transaction-fee) | 🟡 Medium  | State machine + fee      |

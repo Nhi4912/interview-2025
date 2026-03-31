@@ -7,7 +7,7 @@ tags: [Array, Prefix Sum]
 leetcode_url: "https://leetcode.com/problems/find-pivot-index"
 ---
 
-# Find Pivot Index / Find Pivot Index
+# Find Pivot Index / Tìm Chỉ Số Trục
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Prefix Sum
 > **Frequency**: 📘 Tier 3 — Gặp ở 7 companies
@@ -17,47 +17,51 @@ leetcode_url: "https://leetcode.com/problems/find-pivot-index"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống tổng luỹ tiến — tính trước tổng từ đầu đến mỗi vị trí, rồi truy vấn tổng bất kỳ đoạn nào trong O(1).
+**Analogy:** Hãy tưởng tượng bạn đang cân bằng một chiếc bập bênh — đặt ngón tay tại vị trí nào để hai bên nặng bằng nhau? Bạn đi từ trái sang phải, tại mỗi điểm biết tổng bên trái (đã tích lũy) và tính ngay tổng bên phải bằng: `totalSum - leftSum - nums[i]`. Đây là prefix sum thực tế!
 
 **Pattern Recognition:**
 
-- Signal: "range sum queries" + "subarray sum" → **Prefix Sum**
-- Bài này thuộc dạng Prefix Sum — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "sum of elements to left equals sum to right" → **Prefix Sum**
+- Key formula: `rightSum = totalSum - leftSum - nums[i]`
+- One pass — no extra array needed, just accumulate `leftSum`
 
-**Visual — Find Pivot Index example:**
+**Visual — `nums = [1, 7, 3, 6, 5, 6]`:**
 
 ```
-// TODO: Add step-by-step visual for Prefix Sum
-// Show one complete example with state at each step
+totalSum = 28
+i=0: left=0,  right=28-0-1=27   → 0≠27
+i=1: left=1,  right=28-1-7=20   → 1≠20
+i=2: left=8,  right=28-8-3=17   → 8≠17
+i=3: left=11, right=28-11-6=11  → 11=11 ✅  return 3
+
+leftSum accumulates: 0→1→8→11→...
 ```
 
 ---
 
 ## Problem Description
 
-Find Pivot Index. ([LeetCode](https://leetcode.com/problems/find-pivot-index))
+Given an array `nums`, return the **leftmost pivot index** — the index where the sum of all elements to the left equals the sum of all elements to the right. Return `-1` if no such index exists. Elements at the pivot index are excluded from both sums.
 
-Difficulty: Easy | Acceptance: 60.6%
+**Example 1:** `nums = [1,7,3,6,5,6]` → `3` (left sum = 1+7+3 = 11, right sum = 5+6 = 11)
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+**Example 2:** `nums = [1,2,3]` → `-1` (no valid pivot)
 
 Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/find-pivot-index) for full constraints
+
+- `1 <= nums.length <= 10^4`
+- `-1000 <= nums[i] <= 1000`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify**: "Pivot không tính vào cả hai bên — xác nhận lại" / Pivot element excluded from both left and right sums
+2. **Brute force**: "Tính lại tổng hai bên mỗi index — O(n²)" / Recompute sums at every index; optimize to O(n) with prefix
+3. **Optimize**: "Chỉ cần tổng toàn bộ + leftSum tích lũy — O(n) 1 pass" / Total sum + running left sum avoids the prefix array
+4. **Edge cases**: "Index 0 → leftSum=0; index n-1 → rightSum=0" / Boundary indices: left or right side can be empty (sum=0)
+5. **Follow-up**: "Nếu cần tất cả pivot indices?" / Return all pivot indices instead of just the first
+6. **Complexity**: "O(n) time, O(1) extra space — không cần mảng prefix" / Constant space; no prefix array needed
 
 ---
 
@@ -65,39 +69,44 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Brute Force — recompute sums at each index
+ * Time: O(n²) — nested iteration to sum left and right sides
+ * Space: O(1)
  */
-function findPivotIndexBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function pivotIndexBrute(nums: number[]): number {
+  for (let i = 0; i < nums.length; i++) {
+    let leftSum = 0,
+      rightSum = 0;
+    for (let l = 0; l < i; l++) leftSum += nums[l];
+    for (let r = i + 1; r < nums.length; r++) rightSum += nums[r];
+    if (leftSum === rightSum) return i;
+  }
+  return -1;
 }
 
 /**
- * Solution 2: Optimized — Prefix Sum
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Optimized — single pass with running left sum
+ * Key insight: rightSum = totalSum - leftSum - nums[i]
+ * No prefix array needed — just accumulate leftSum as we go.
+ * Time: O(n) — one pass for total sum, one pass for pivot check
+ * Space: O(1) — only two variables
  */
-function findPivotIndex(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Prefix Sum
-  // Hint: Build prefix sum array, query range sum in O(1)
-  throw new Error('Not implemented');
+function findPivotIndex(nums: number[]): number {
+  const totalSum = nums.reduce((sum, v) => sum + v, 0);
+  let leftSum = 0;
+
+  for (let i = 0; i < nums.length; i++) {
+    const rightSum = totalSum - leftSum - nums[i];
+    if (leftSum === rightSum) return i;
+    leftSum += nums[i];
+  }
+  return -1;
 }
 
 // === Test Cases ===
-// console.log(findPivotIndex(/* example 1 */)); // expected
-// console.log(findPivotIndex(/* example 2 */)); // expected
-// console.log(findPivotIndex(/* edge case */)); // expected
+console.log(findPivotIndex([1, 7, 3, 6, 5, 6])); // 3
+console.log(findPivotIndex([1, 2, 3])); // -1
+console.log(findPivotIndex([2, 1, -1])); // 0  (leftSum=0, rightSum=0)
+console.log(findPivotIndex([-1, -1, -1, -1, -1, 0])); // 2
+console.log(findPivotIndex([1])); // 0  (single element)
 ```
-
----
-
-## 🔗 Related Problems
-
-- [Subarray Sum Equals K](https://leetcode.com/problems/subarray-sum-equals-k) — same pattern: Prefix Sum
-- [Random Pick with Weight](https://leetcode.com/problems/random-pick-with-weight) — same pattern: Prefix Sum
-- [Subarray Product Less Than K](https://leetcode.com/problems/subarray-product-less-than-k) — same pattern: Sliding Window
-- [Split Array Largest Sum](https://leetcode.com/problems/split-array-largest-sum) — same pattern: Prefix Sum
-- [Find Pivot Index — LeetCode](https://leetcode.com/problems/find-pivot-index) — problem page

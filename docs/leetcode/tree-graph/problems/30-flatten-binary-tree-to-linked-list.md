@@ -7,103 +7,193 @@ tags: [Linked List, Stack, Tree, Depth-First Search, Binary Tree]
 leetcode_url: "https://leetcode.com/problems/flatten-binary-tree-to-linked-list"
 ---
 
-# Flatten Binary Tree to Linked List / Flatten Binary Tree to Linked List
+# Flatten Binary Tree to Linked List / Duỗi Cây Nhị Phân Thành Danh Sách Liên Kết
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: DFS
-> **Frequency**: 📘 Tier 3 — Gặp ở 9 companies
-> **See also**: [Convert Binary Search Tree to Sorted Doubly Linked List](https://leetcode.com/problems/convert-binary-search-tree-to-sorted-doubly-linked-list) | [Populating Next Right Pointers in Each Node II](https://leetcode.com/problems/populating-next-right-pointers-in-each-node-ii)
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: DFS / Morris Traversal
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống đi trong mê cung — bạn đi sâu hết một ngõ, nếu cụt thì quay lại ngã rẽ gần nhất chưa thử.
+**Analogy:** Giống như bạn đang cuộn một tờ giấy gấp origami phức tạp thành một dải thẳng — bạn mở từng nếp gấp theo thứ tự pre-order (gốc → trái → phải), sau đó nối chúng lại bằng liên kết phải. Không cần tạo node mới, chỉ cần kéo thẳng những gì đã có.
 
 **Pattern Recognition:**
 
-- Signal: "traverse tree/graph" + "all paths" → **DFS**
-- Bài này thuộc dạng DFS — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "flatten tree in-place" + "pre-order traversal" → **DFS / Morris Traversal**
+- Cây nhị phân → danh sách liên kết = pre-order: node → left subtree → right subtree
+- Key insight: Với mỗi node, nối đuôi subtree trái vào đầu subtree phải, rồi đặt subtree trái vào phải
 
-**Visual — Flatten Binary Tree to Linked List example:**
+**Visual — Flatten step-by-step:**
 
 ```
-       root
-      /    \
-     A      B
-    / \      \
-   C   D      E
-
-DFS: root → A → C → D → B → E
-Use: recursion or explicit stack
+Input:        1             Step 1: node=1, find rightmost of left (=3)
+             / \            Connect right(3)->right subtree(4,5,6)
+            2   5    →      2
+           / \ / \         / \
+          3  4 6           3   4
+                               \
+                                5
+                               / \
+                              6
+Step 2: move left(2) to right, null left
+    1
+     \
+      2
+       \
+        3
+         \
+          4
+           \
+            5
+             \
+              6   ✓ pre-order: 1→2→3→4→5→6
 ```
 
 ---
 
 ## Problem Description
 
-Flatten Binary Tree to Linked List. ([LeetCode](https://leetcode.com/problems/flatten-binary-tree-to-linked-list))
+Given the `root` of a binary tree, flatten it to a linked list **in-place**. The linked list should use the same `TreeNode` class where `right` pointer points to the next node and `left` is always `null`. The order must match a **pre-order traversal**.
 
-Difficulty: Medium | Acceptance: 68.5%
+**Example 1:**
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+- Input: `root = [1,2,5,3,4,null,6]` → Output: `[1,null,2,null,3,null,4,null,5,null,6]`
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/flatten-binary-tree-to-linked-list) for full constraints
+**Example 2:**
+
+- Input: `root = []` → Output: `[]`
+
+**Constraints:**
+
+- Number of nodes in tree: `[0, 2000]`
+- `-100 <= Node.val <= 100`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify**: "Có được dùng extra space không?" / Can we use extra space (stack/array) or must it be O(1)?
+2. **Brute force**: "Thu thập pre-order vào mảng, rồi nối lại" / Collect pre-order into array, relink nodes
+3. **Optimize**: "Morris traversal: với mỗi node, tìm rightmost của left, nối right vào đó" / Morris: find tail of left subtree, attach right there
+4. **Edge cases**: "Root null, chỉ có right children, chỉ có left children" / Null root, only-right or only-left chains
+5. **Follow-up**: "Làm thế nào để unflatten lại?" / How would you restore the original tree?
+6. **Complexity**: "O(n) time, O(1) space với Morris — tốt hơn O(n) space của stack approach" / Morris is O(n)/O(1) vs stack O(n)/O(n)
 
 ---
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function flattenBinaryTreeToLinkedListBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+class TreeNode {
+  val: number;
+  left: TreeNode | null;
+  right: TreeNode | null;
+  constructor(val = 0, left: TreeNode | null = null, right: TreeNode | null = null) {
+    this.val = val;
+    this.left = left;
+    this.right = right;
+  }
 }
 
 /**
- * Solution 2: Optimized — DFS
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Recursive DFS (collect then relink)
+ * Time: O(n) — visit each node once
+ * Space: O(n) — store all nodes in array + O(h) call stack
  */
-function flattenBinaryTreeToLinkedList(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using DFS
-  // Hint: Use recursion or stack, track visited nodes
-  throw new Error('Not implemented');
+function flattenBruteForce(root: TreeNode | null): void {
+  const nodes: TreeNode[] = [];
+  function preorder(node: TreeNode | null): void {
+    if (!node) return;
+    nodes.push(node);
+    preorder(node.left);
+    preorder(node.right);
+  }
+  preorder(root);
+  for (let i = 0; i < nodes.length - 1; i++) {
+    nodes[i].left = null;
+    nodes[i].right = nodes[i + 1];
+  }
+  if (nodes.length > 0) nodes[nodes.length - 1].left = null;
+}
+
+/**
+ * Solution 2: Morris Traversal (in-place, O(1) space)
+ * Time: O(n) — each node visited at most twice
+ * Space: O(1) — no extra space beyond pointers
+ *
+ * Key idea: For each node with a left child,
+ *   1. Find the rightmost node of its left subtree
+ *   2. Connect that rightmost node's right → current node's right subtree
+ *   3. Move left subtree to right, set left = null
+ */
+function flatten(root: TreeNode | null): void {
+  let curr = root;
+  while (curr) {
+    if (curr.left) {
+      // Find rightmost node of left subtree
+      let rightmost = curr.left;
+      while (rightmost.right) rightmost = rightmost.right;
+      // Connect rightmost's right to curr's right subtree
+      rightmost.right = curr.right;
+      // Move left subtree to right position
+      curr.right = curr.left;
+      curr.left = null;
+    }
+    curr = curr.right;
+  }
 }
 
 // === Test Cases ===
-// console.log(flattenBinaryTreeToLinkedList(/* example 1 */)); // expected
-// console.log(flattenBinaryTreeToLinkedList(/* example 2 */)); // expected
-// console.log(flattenBinaryTreeToLinkedList(/* edge case */)); // expected
+function buildTree(vals: (number | null)[]): TreeNode | null {
+  if (!vals.length || vals[0] === null) return null;
+  const root = new TreeNode(vals[0]!);
+  const queue = [root];
+  let i = 1;
+  while (i < vals.length) {
+    const node = queue.shift()!;
+    if (vals[i] !== null) {
+      node.left = new TreeNode(vals[i]!);
+      queue.push(node.left);
+    }
+    i++;
+    if (i < vals.length && vals[i] !== null) {
+      node.right = new TreeNode(vals[i]!);
+      queue.push(node.right);
+    }
+    i++;
+  }
+  return root;
+}
+function toList(root: TreeNode | null): number[] {
+  const res: number[] = [];
+  while (root) {
+    res.push(root.val);
+    root = root.right;
+  }
+  return res;
+}
+
+const t1 = buildTree([1, 2, 5, 3, 4, null, 6]);
+flatten(t1);
+console.log(toList(t1)); // [1, 2, 3, 4, 5, 6]
+
+const t2 = buildTree([]);
+flatten(t2);
+console.log(toList(t2)); // []
+
+const t3 = buildTree([1, null, 2, null, 3]);
+flatten(t3);
+console.log(toList(t3)); // [1, 2, 3]
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Convert Binary Search Tree to Sorted Doubly Linked List](https://leetcode.com/problems/convert-binary-search-tree-to-sorted-doubly-linked-list) — same pattern: Binary Search
-- [Populating Next Right Pointers in Each Node II](https://leetcode.com/problems/populating-next-right-pointers-in-each-node-ii) — same pattern: BFS
-- [Closest Binary Search Tree Value II](https://leetcode.com/problems/closest-binary-search-tree-value-ii) — same pattern: Two Pointers
-- [Linked List in Binary Tree](https://leetcode.com/problems/linked-list-in-binary-tree) — same pattern: DFS
-- [Flatten Binary Tree to Linked List — LeetCode](https://leetcode.com/problems/flatten-binary-tree-to-linked-list) — problem page
+| Problem                                                                                                                           | Pattern         | Difficulty |
+| --------------------------------------------------------------------------------------------------------------------------------- | --------------- | ---------- |
+| [Convert BST to Sorted Doubly Linked List](https://leetcode.com/problems/convert-binary-search-tree-to-sorted-doubly-linked-list) | In-order DFS    | Medium     |
+| [Populating Next Right Pointers in Each Node II](https://leetcode.com/problems/populating-next-right-pointers-in-each-node-ii)    | BFS / Morris    | Medium     |
+| [Linked List in Binary Tree](https://leetcode.com/problems/linked-list-in-binary-tree)                                            | DFS             | Medium     |
+| [Binary Tree Preorder Traversal](https://leetcode.com/problems/binary-tree-preorder-traversal)                                    | DFS / Iterative | Easy       |
+| [House Robber III](https://leetcode.com/problems/house-robber-iii)                                                                | Tree DP         | Medium     |

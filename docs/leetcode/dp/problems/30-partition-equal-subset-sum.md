@@ -7,62 +7,64 @@ tags: [Array, Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/partition-equal-subset-sum"
 ---
 
-# Partition Equal Subset Sum / Partition Equal Subset Sum
+# Partition Equal Subset Sum / Chia Mảng Thành Hai Phần Bằng Nhau
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dynamic Programming
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: 0/1 Knapsack DP
 > **Frequency**: 📘 Tier 3 — Gặp ở 9 companies
-> **See also**: [Jump Game II](https://leetcode.com/problems/jump-game-ii) | [Maximal Square](https://leetcode.com/problems/maximal-square)
+> **See also**: [Target Sum](https://leetcode.com/problems/target-sum) | [Last Stone Weight II](https://leetcode.com/problems/last-stone-weight-ii)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**Analogy:** Hãy tưởng tượng bạn có một túi đồ với tổng trọng lượng chẵn. Câu hỏi: có thể chọn một nửa số đồ vật sao cho tổng trọng lượng đúng bằng một nửa tổng không? Đây là bài toán 0/1 knapsack kinh điển — mỗi vật chỉ dùng một lần, chọn hay không chọn.
 
 **Pattern Recognition:**
 
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "partition into equal subsets" → **0/1 Knapsack — can we reach target sum?**
+- Target = total_sum / 2; if odd sum → impossible
+- Key insight: dp[j] = true nếu có thể chọn các phần tử tạo tổng j
 
-**Visual — Partition Equal Subset Sum example:**
+**Visual — nums = [1,5,11,5], target = 11:**
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+Initial dp: [T, F, F, F, F, F, F, F, F, F, F, F]  (size 12)
+            [0  1  2  3  4  5  6  7  8  9  10 11]
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+Add num=1:  [T, T, F, F, F, F, F, F, F, F, F, F]
+Add num=5:  [T, T, F, F, F, T, T, F, F, F, F, F]
+Add num=11: [T, T, F, F, F, T, T, F, F, F, F, T] ← dp[11]=true ✅
+Add num=5:  (already found answer)
+
+dp[11] = true → can partition!
 ```
 
 ---
 
 ## Problem Description
 
-Partition Equal Subset Sum. ([LeetCode](https://leetcode.com/problems/partition-equal-subset-sum))
+Given a non-empty array `nums` of positive integers, determine if it can be partitioned into two subsets with equal sums. ([LeetCode 416](https://leetcode.com/problems/partition-equal-subset-sum))
 
 Difficulty: Medium | Acceptance: 48.4%
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+- **Example 1**: nums = [1,5,11,5] → **true** (subsets [1,5,5] and [11])
+- **Example 2**: nums = [1,2,3,5] → **false** (no way to split equally)
 
 Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/partition-equal-subset-sum) for full constraints
+
+- `1 <= nums.length <= 200`
+- `1 <= nums[i] <= 100`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+1. **Clarify**: "Phần tử có thể dùng lại không? (Không — 0/1 knapsack)" / Each element used at most once
+2. **First check**: "Nếu tổng lẻ → impossible ngay" / If total sum is odd, return false immediately
+3. **Reduce**: "Bài toán = tìm subset có tổng = total/2" / Reduce to subset sum problem
+4. **Iterate**: "Duyệt từ target về 0 để tránh dùng phần tử 2 lần" / Iterate target backwards (0/1 knapsack)
+5. **Early exit**: "Nếu phần tử > target → impossible" / Single element exceeds target
+6. **Space**: "1D dp array O(target) thay vì 2D O(n×target)" / Optimize to 1D rolling array
 
 ---
 
@@ -70,39 +72,70 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Recursive with Memoization
+ * Time: O(n × target) — memoized subproblems
+ * Space: O(n × target) — memo table
  */
-function partitionEqualSubsetSumBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function canPartitionMemo(nums: number[]): boolean {
+  const total = nums.reduce((a, b) => a + b, 0);
+  if (total % 2 !== 0) return false;
+  const target = total / 2;
+  const memo = new Map<string, boolean>();
+
+  function dfs(i: number, remaining: number): boolean {
+    if (remaining === 0) return true;
+    if (i >= nums.length || remaining < 0) return false;
+    const key = `${i},${remaining}`;
+    if (memo.has(key)) return memo.get(key)!;
+    const result = dfs(i + 1, remaining - nums[i]) || dfs(i + 1, remaining);
+    memo.set(key, result);
+    return result;
+  }
+
+  return dfs(0, target);
 }
 
 /**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Bottom-Up 0/1 Knapsack DP (Optimal)
+ * Time: O(n × target) — fill dp array for each num
+ * Space: O(target) — 1D boolean array
  */
-function partitionEqualSubsetSum(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function canPartition(nums: number[]): boolean {
+  const total = nums.reduce((a, b) => a + b, 0);
+  if (total % 2 !== 0) return false;
+  const target = total / 2;
+
+  // dp[j] = true if subset with sum j is achievable
+  const dp = new Array(target + 1).fill(false);
+  dp[0] = true; // empty subset = sum 0
+
+  for (const num of nums) {
+    // Iterate backwards to avoid using same element twice (0/1 knapsack)
+    for (let j = target; j >= num; j--) {
+      dp[j] = dp[j] || dp[j - num];
+    }
+    if (dp[target]) return true; // early exit
+  }
+
+  return dp[target];
 }
 
 // === Test Cases ===
-// console.log(partitionEqualSubsetSum(/* example 1 */)); // expected
-// console.log(partitionEqualSubsetSum(/* example 2 */)); // expected
-// console.log(partitionEqualSubsetSum(/* edge case */)); // expected
+console.log(canPartition([1, 5, 11, 5])); // true
+console.log(canPartition([1, 2, 3, 5])); // false
+console.log(canPartition([3, 3, 3, 4, 5])); // true ([3,3,3] = [4,5])
+console.log(canPartition([1])); // false
+console.log(canPartition([1, 1])); // true
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Jump Game II](https://leetcode.com/problems/jump-game-ii) — same pattern: Dynamic Programming
-- [Maximal Square](https://leetcode.com/problems/maximal-square) — same pattern: Dynamic Programming
-- [Unique Paths II](https://leetcode.com/problems/unique-paths-ii) — same pattern: Dynamic Programming
-- [Maximum Profit in Job Scheduling](https://leetcode.com/problems/maximum-profit-in-job-scheduling) — same pattern: Dynamic Programming
-- [Partition Equal Subset Sum — LeetCode](https://leetcode.com/problems/partition-equal-subset-sum) — problem page
+| Problem                                                                    | Difficulty | Pattern                 |
+| -------------------------------------------------------------------------- | ---------- | ----------------------- |
+| [Target Sum](https://leetcode.com/problems/target-sum)                     | 🟡 Medium  | 0/1 Knapsack / DFS+Memo |
+| [Last Stone Weight II](https://leetcode.com/problems/last-stone-weight-ii) | 🟡 Medium  | 0/1 Knapsack            |
+| [Subset Sum](https://leetcode.com/problems/partition-equal-subset-sum)     | 🟡 Medium  | DP                      |
+| [Coin Change](https://leetcode.com/problems/coin-change)                   | 🟡 Medium  | Unbounded Knapsack      |
+| [Ones and Zeroes](https://leetcode.com/problems/ones-and-zeroes)           | 🟡 Medium  | 2D Knapsack             |

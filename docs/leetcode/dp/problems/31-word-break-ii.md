@@ -7,57 +7,65 @@ tags: [Array, Hash Table, String, Dynamic Programming, Backtracking]
 leetcode_url: "https://leetcode.com/problems/word-break-ii"
 ---
 
-# Word Break II / Word Break II
+# Word Break II / Tách Từ II
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Trie
+> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: DFS + Memoization (Backtracking + DP)
 > **Frequency**: 📘 Tier 3 — Gặp ở 9 companies
-> **See also**: [Stickers to Spell Word](https://leetcode.com/problems/stickers-to-spell-word) | [Number of Matching Subsequences](https://leetcode.com/problems/number-of-matching-subsequences)
+> **See also**: [Word Break](https://leetcode.com/problems/word-break) | [Concatenated Words](https://leetcode.com/problems/concatenated-words)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống cây thư mục — mỗi ký tự là một cấp. Tìm kiếm prefix cực nhanh O(L) với L là độ dài từ.
+**Analogy:** Hãy tưởng tượng bạn đang đọc một dải băng chữ liên tục không có khoảng trắng: "catsanddog". Bạn thử đọc từng từ từ đầu — "cat" ✅ → tiếp tục từ "sanddog" → "sand" ✅ → "dog" ✅. Giống như phân tích câu trong tiếng Anh: thử tất cả cách tách, ghi nhớ kết quả từng vị trí để tránh tính lại.
 
 **Pattern Recognition:**
 
-- Signal: "prefix search" + "dictionary of words" → **Trie**
-- Bài này thuộc dạng Trie — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "enumerate all sentences from string + dictionary" → **DFS + Memoization**
+- memo[i] = all valid sentences starting at index i
+- Key insight: mỗi vị trí i chỉ cần tính một lần, tái sử dụng kết quả
 
-**Visual — Word Break II example:**
+**Visual — s = "catsanddog", wordDict = ["cat","cats","and","sand","dog"]:**
 
 ```
-// TODO: Add step-by-step visual for Trie
-// Show one complete example with state at each step
+dfs(0):
+  "cat"  ✅ → dfs(3): "sand"✅ → dfs(7): "dog"✅ → dfs(10): "" → ["dog"]
+                               → ["sand dog"]
+             "and" ✅ → dfs(6): "dog"✅ → ["and dog"]
+                               → ["and dog"]
+             → ["sand dog", "and dog"]  → ["cat sand dog", "cat and dog"]
+  "cats" ✅ → dfs(4): "and"✅ → dfs(7): "dog"✅ → ["cats and dog"]
+
+Answer: ["cats and dog", "cat sand dog", "cat and dog"]
 ```
 
 ---
 
 ## Problem Description
 
-Word Break II. ([LeetCode](https://leetcode.com/problems/word-break-ii))
+Given a string `s` and a dictionary `wordDict`, add spaces to construct a sentence where each word is a valid dictionary word. Return all such possible sentences in any order. ([LeetCode 140](https://leetcode.com/problems/word-break-ii))
 
 Difficulty: Hard | Acceptance: 53.6%
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+- **Example 1**: s = "catsanddog", wordDict = ["cat","cats","and","sand","dog"] → `["cats and dog","cat sand dog"]`
+- **Example 2**: s = "pineapplepenapple", wordDict = ["apple","pen","applepen","pine","pineapple"] → `["pine apple pen apple","pineapple pen apple","pine applepen apple"]`
 
 Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/word-break-ii) for full constraints
+
+- `1 <= s.length <= 20`
+- `1 <= wordDict.length <= 1000`
+- All strings are lowercase English letters
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify**: "Kết quả có cần sort không? Có từ trùng trong dict không?" / Result order? Duplicate words?
+2. **Brute force**: "Pure backtracking — không memo → exponential O(2^n)" / Without memo, may TLE
+3. **Memoization key**: "memo[i] = list of sentences from s[i..end]" / Cache by starting index
+4. **Word lookup**: "Dùng Set<string> để O(1) lookup thay vì O(n)" / HashSet for O(1) dictionary lookup
+5. **Combine**: "Nối kết quả: word + ' ' + each sentence from rest" / Concatenate carefully
+6. **Edge**: "s không thể tách được → return []" / Return empty array if no valid split
 
 ---
 
@@ -65,39 +73,75 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Pure Backtracking (no memo)
+ * Time: O(2^n × n) — exponential without memo
+ * Space: O(n) — recursion stack
  */
-function wordBreakIiBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function wordBreakIIBacktrack(s: string, wordDict: string[]): string[] {
+  const wordSet = new Set(wordDict);
+  const results: string[] = [];
+
+  function backtrack(start: number, path: string[]): void {
+    if (start === s.length) {
+      results.push(path.join(" "));
+      return;
+    }
+    for (let end = start + 1; end <= s.length; end++) {
+      const word = s.slice(start, end);
+      if (wordSet.has(word)) {
+        path.push(word);
+        backtrack(end, path);
+        path.pop();
+      }
+    }
+  }
+
+  backtrack(0, []);
+  return results;
 }
 
 /**
- * Solution 2: Optimized — Trie
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: DFS + Memoization (Optimal)
+ * Time: O(n² × 2^n) — n² to build substrings, 2^n for output in worst case
+ * Space: O(n × 2^n) — memo stores all sentences per position
  */
-function wordBreakIi(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Trie
-  // Hint: Build trie from dictionary, search by prefix
-  throw new Error('Not implemented');
+function wordBreakII(s: string, wordDict: string[]): string[] {
+  const wordSet = new Set(wordDict);
+  // memo[i] = all valid sentences constructable from s[i..end]
+  const memo = new Map<number, string[]>();
+
+  function dfs(start: number): string[] {
+    if (memo.has(start)) return memo.get(start)!;
+    if (start === s.length) return [""]; // base: empty string at end
+
+    const sentences: string[] = [];
+    for (let end = start + 1; end <= s.length; end++) {
+      const word = s.slice(start, end);
+      if (wordSet.has(word)) {
+        const rest = dfs(end);
+        for (const sentence of rest) {
+          // Join: if sentence is empty (last word), no space needed
+          sentences.push(sentence === "" ? word : `${word} ${sentence}`);
+        }
+      }
+    }
+
+    memo.set(start, sentences);
+    return sentences;
+  }
+
+  return dfs(0);
 }
 
 // === Test Cases ===
-// console.log(wordBreakIi(/* example 1 */)); // expected
-// console.log(wordBreakIi(/* example 2 */)); // expected
-// console.log(wordBreakIi(/* edge case */)); // expected
+console.log(wordBreakII("catsanddog", ["cat", "cats", "and", "sand", "dog"]));
+// ["cat sand dog","cat and dog","cats and dog"] (order may vary)
+
+console.log(wordBreakII("pineapplepenapple", ["apple", "pen", "applepen", "pine", "pineapple"]));
+// ["pine apple pen apple","pine applepen apple","pineapple pen apple"]
+
+console.log(wordBreakII("catsandog", ["cats", "cat", "san", "sand", "and", "dog"]));
+// ["cat sand og"... no, only valid splits]
+
+console.log(wordBreakII("a", ["b"])); // []
 ```
-
----
-
-## 🔗 Related Problems
-
-- [Stickers to Spell Word](https://leetcode.com/problems/stickers-to-spell-word) — same pattern: Backtracking
-- [Number of Matching Subsequences](https://leetcode.com/problems/number-of-matching-subsequences) — same pattern: Trie
-- [Extra Characters in a String](https://leetcode.com/problems/extra-characters-in-a-string) — same pattern: Trie
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Word Break II — LeetCode](https://leetcode.com/problems/word-break-ii) — problem page

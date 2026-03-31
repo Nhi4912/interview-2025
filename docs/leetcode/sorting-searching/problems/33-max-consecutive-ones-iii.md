@@ -7,60 +7,63 @@ tags: [Array, Binary Search, Sliding Window, Prefix Sum]
 leetcode_url: "https://leetcode.com/problems/max-consecutive-ones-iii"
 ---
 
-# Max Consecutive Ones III / Max Consecutive Ones III
+# Max Consecutive Ones III / Số Lượng Số 1 Liên Tiếp Tối Đa III
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Sliding Window
 > **Frequency**: 📘 Tier 3 — Gặp ở 8 companies
-> **See also**: [Subarray Product Less Than K](https://leetcode.com/problems/subarray-product-less-than-k) | [Minimum Size Subarray Sum](https://leetcode.com/problems/minimum-size-subarray-sum)
+> **See also**: [Longest Subarray of 1's After Deleting One Element](https://leetcode.com/problems/longest-subarray-of-1s-after-deleting-one-element) | [Minimum Size Subarray Sum](https://leetcode.com/problems/minimum-size-subarray-sum)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống như nhìn qua một khung cửa sổ di chuyển trên dãy nhà. Mỗi lần trượt, bạn thêm nhà mới bên phải, bỏ nhà cũ bên trái — luôn giữ đúng kích thước khung.
+**Analogy:** Bạn đang sơn một hàng rào toàn màu trắng (số 1) nhưng có một số ô màu đen (số 0). Bạn có đúng `k` lọ sơn trắng để đổi các ô đen. Hỏi có thể sơn liên tiếp nhiều nhất bao nhiêu ô trắng liền nhau? Trượt khung cửa sổ và đếm số 0 trong khung — nếu vượt quá `k` thì thu hẹp từ trái.
 
 **Pattern Recognition:**
 
-- Signal: "contiguous subarray/substring" + "max/min length" → **Sliding Window**
-- Bài này thuộc dạng Sliding Window — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "binary array" + "flip at most k zeros" + "longest subarray of 1s" → **Sliding Window**
+- Reframe: tìm window dài nhất có số 0 ≤ k → có thể "lấp" hết bằng k lần flip
+- Shrink khi `zeros > k`: dịch L sang phải cho đến khi `zeros == k`
 
-**Visual — Max Consecutive Ones III example:**
+**Visual — Sliding Window with k=2 flips:**
 
 ```
-[a, b, c, d, e, f, g]
- |--window--|
-    |--window--|     → slide right, update state
+nums=[1,1,1,0,0,0,1,1,1,1,0], k=2
 
-Track: current window state
-Update: add right, remove left when window exceeds constraint
+R adds:    [1,1,1,0] zeros=1 ≤ 2 → len=4
+           [1,1,1,0,0] zeros=2 ≤ 2 → len=5
+           [1,1,1,0,0,0] zeros=3 > 2 → shrink L
+L removes:  [1,1,0,0,0] zeros=3>2 → shrink L
+             [1,0,0,0] zeros=3>2 → shrink L
+              [0,0,0] zeros=3>2 → shrink L
+               [0,0] zeros=2 ≤ 2 → continue R
+           [0,0,1,1,1,1] zeros=2 → len=6
+           [0,0,1,1,1,1,0] zeros=3 > 2 → shrink L
+           ...
+Final max = 6 ✅
 ```
 
 ---
 
 ## Problem Description
 
-Max Consecutive Ones III. ([LeetCode](https://leetcode.com/problems/max-consecutive-ones-iii))
+Given a binary array `nums` and an integer `k`, return the maximum number of consecutive `1`s in the array if you can flip at most `k` `0`s. ([LeetCode 1004](https://leetcode.com/problems/max-consecutive-ones-iii))
 
-Difficulty: Medium | Acceptance: 65.9%
+**Example 1:** `nums = [1,1,1,0,0,0,1,1,1,1,0], k = 2` → `6`
+**Example 2:** `nums = [0,0,1,1,0,0,1,1,1,0,1,1,0,0,0,1,1,1,1,0], k = 3` → `10`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/max-consecutive-ones-iii) for full constraints
+**Constraints:** `1 <= nums.length <= 10⁵`, `nums[i]` is `0` or `1`, `0 <= k <= nums.length`.
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần contiguous subarray hay subsequence?" / Subarray (contiguous) vs subsequence (non-contiguous)
-2. **Brute force**: "Thử mọi subarray O(n²)" → optimize with sliding window O(n) / Try all subarrays then optimize
-3. **Optimize**: "Dùng window expand/shrink, track state bằng map/counter" / Use expand right, shrink left pattern
-4. **Edge cases**: "Chuỗi rỗng, k > array length, tất cả unique/duplicate" / Empty input, k exceeds length
+1. **Clarify** / Làm rõ: "Flip nghĩa là thay đổi vĩnh viễn hay tạm thời?" / Flip in-place or just conceptually?
+2. **Reframe** / Diễn giải lại: "Tìm subarray dài nhất có tối đa k số 0" — đơn giản hơn "flip k zeros"
+3. **Shrink condition** / Điều kiện thu hẹp: Khi `zeros > k` → shrink L; khi `nums[L] == 0` → `zeros--`
+4. **k=0 edge** / Biên k=0: Chỉ được dãy 1 thuần — window sẽ shrink mỗi khi gặp số 0
+5. **All zeros** / Toàn 0: `k >= n` → cả mảng là đáp án
+6. **Variant** / Biến thể: "Longest Subarray of 1s After Deleting One Element" = bài này với k=1, bỏ đi element đó
 
 ---
 
@@ -68,39 +71,94 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Brute Force — Check All Subarrays
+ * Time: O(n²) — all starting positions × expanding
+ * Space: O(1)
  */
-function maxConsecutiveOnesIiiBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function longestOnesBrute(nums: number[], k: number): number {
+  let maxLen = 0;
+  for (let i = 0; i < nums.length; i++) {
+    let zeros = 0;
+    for (let j = i; j < nums.length; j++) {
+      if (nums[j] === 0) zeros++;
+      if (zeros > k) break;
+      maxLen = Math.max(maxLen, j - i + 1);
+    }
+  }
+  return maxLen;
 }
 
 /**
- * Solution 2: Optimized — Sliding Window
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Sliding Window — Variable Size (Optimal)
+ * Time: O(n) — each element added and removed at most once
+ * Space: O(1)
+ *
+ * Maintain window [left, right] with at most k zeros.
+ * When zeros exceeds k, shrink left until zeros == k again.
  */
-function maxConsecutiveOnesIii(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Sliding Window
-  // Hint: Expand right pointer, shrink left when constraint violated
-  throw new Error('Not implemented');
+function longestOnes(nums: number[], k: number): number {
+  let left = 0;
+  let zeros = 0;
+  let maxLen = 0;
+
+  for (let right = 0; right < nums.length; right++) {
+    if (nums[right] === 0) zeros++;
+
+    // Shrink window from left until we have at most k zeros
+    while (zeros > k) {
+      if (nums[left] === 0) zeros--;
+      left++;
+    }
+
+    // Current window [left..right] has at most k zeros
+    maxLen = Math.max(maxLen, right - left + 1);
+  }
+
+  return maxLen;
+}
+
+/**
+ * Solution 3: Sliding Window — Fixed Size Optimization
+ * Time: O(n) — window only moves forward, never shrinks
+ * Space: O(1)
+ *
+ * Trick: never shrink the window below current maxLen.
+ * We only grow the window when we can (zeros still ≤ k).
+ * This gives constant-size window advance for cleaner logic.
+ */
+function longestOnesFixed(nums: number[], k: number): number {
+  let left = 0;
+  let zeros = 0;
+
+  for (let right = 0; right < nums.length; right++) {
+    if (nums[right] === 0) zeros++;
+    // If invalid, move left forward by exactly 1 (window slides, not shrinks)
+    if (zeros > k) {
+      if (nums[left] === 0) zeros--;
+      left++;
+    }
+  }
+
+  // Window size = nums.length - left = right - left + 1 at end
+  return nums.length - left;
 }
 
 // === Test Cases ===
-// console.log(maxConsecutiveOnesIii(/* example 1 */)); // expected
-// console.log(maxConsecutiveOnesIii(/* example 2 */)); // expected
-// console.log(maxConsecutiveOnesIii(/* edge case */)); // expected
+console.log(longestOnes([1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0], 2)); // 6
+console.log(longestOnes([0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0], 3)); // 10
+console.log(longestOnes([0, 0, 0], 0)); // 0
+console.log(longestOnes([1, 1, 1], 0)); // 3
+console.log(longestOnes([0, 0, 0], 3)); // 3
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Subarray Product Less Than K](https://leetcode.com/problems/subarray-product-less-than-k) — same pattern: Sliding Window
-- [Minimum Size Subarray Sum](https://leetcode.com/problems/minimum-size-subarray-sum) — same pattern: Sliding Window
-- [Frequency of the Most Frequent Element](https://leetcode.com/problems/frequency-of-the-most-frequent-element) — same pattern: Sliding Window
-- [Apply Operations to Maximize Frequency Score](https://leetcode.com/problems/apply-operations-to-maximize-frequency-score) — same pattern: Sliding Window
-- [Max Consecutive Ones III — LeetCode](https://leetcode.com/problems/max-consecutive-ones-iii) — problem page
+| Problem                                                                                                                              | Pattern        | Difficulty |
+| ------------------------------------------------------------------------------------------------------------------------------------ | -------------- | ---------- |
+| [Longest Subarray of 1s After Deleting One Element](https://leetcode.com/problems/longest-subarray-of-1s-after-deleting-one-element) | Sliding Window | 🟡 Medium  |
+| [Minimum Size Subarray Sum](https://leetcode.com/problems/minimum-size-subarray-sum)                                                 | Sliding Window | 🟡 Medium  |
+| [Subarray Product Less Than K](https://leetcode.com/problems/subarray-product-less-than-k)                                           | Sliding Window | 🟡 Medium  |
+| [Max Consecutive Ones](https://leetcode.com/problems/max-consecutive-ones)                                                           | Sliding Window | 🟢 Easy    |
+| [Longest Repeating Character Replacement](https://leetcode.com/problems/longest-repeating-character-replacement)                     | Sliding Window | 🟡 Medium  |
