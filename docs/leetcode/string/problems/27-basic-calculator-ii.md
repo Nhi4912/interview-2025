@@ -7,59 +7,81 @@ tags: [Math, String, Stack]
 leetcode_url: "https://leetcode.com/problems/basic-calculator-ii"
 ---
 
-# Basic Calculator II / Basic Calculator II
+# Basic Calculator II / Máy Tính Cơ Bản II
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Stack
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Stack with Operator Precedence
 > **Frequency**: ⭐ Tier 2 — Gặp ở 20+ companies
-> **See also**: [Basic Calculator](https://leetcode.com/problems/basic-calculator) | [Basic Calculator III](https://leetcode.com/problems/basic-calculator-iii)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống chồng đĩa — đĩa nào đặt cuối cùng sẽ được lấy ra đầu tiên (LIFO). Nhiều bài toán về matching và nesting dùng stack.
+**Analogy (Vietnamese):** Giống như tính tiền mua hàng — nhân/chia được tính trước, rồi mới cộng/trừ. Khi gặp phép nhân/chia, tính ngay với số trước. Khi gặp cộng/trừ, đẩy vào "hàng chờ" (stack). Cuối cùng cộng tất cả trong hàng chờ lại.
 
 **Pattern Recognition:**
 
-- Signal: "matching/nesting" + "most recent element" → **Stack**
-- Bài này thuộc dạng Stack — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "evaluate expression" + "operator precedence" → **Stack**
+- Track `prevOp` (toán tử trước số hiện tại)
+- `+`: push `+num` vào stack
+- `-`: push `-num` vào stack
+- `*`: pop × current num, push result (xử lý ngay)
+- `/`: pop ÷ current num, push result (xử lý ngay — truncate toward zero)
 
-**Visual — Basic Calculator II example:**
+**Visual — s = "3+2\*2":**
 
 ```
-stack = []
+Scan:  3   +   2   *   2   (end)
+num:   3       2       2
+op:    +   +   +   *   *   *
 
-push/pop from right →
-Process: scan left to right, stack maintains invariant
+At '+'  (op=+): push +3     stack=[3]
+At '*'  (op=+): push +2     stack=[3, 2]
+At end  (op=*): pop 2, 2*2=4, push 4  stack=[3, 4]
+
+Sum stack: 3 + 4 = 7 ✅
+```
+
+**Visual — s = " 3/2 ":**
+
+```
+num=3, op=+  → end: push +3    stack=[3]
+              Wait, next is /
+num=3, op=+; see '/' → next num=2
+At end (op=/): pop 3, 3/2=1 (truncate), push 1  stack=[1]
+Sum = 1 ✅
 ```
 
 ---
 
 ## Problem Description
 
-Basic Calculator II. ([LeetCode](https://leetcode.com/problems/basic-calculator-ii))
+Cho chuỗi biểu thức `s` chứa số nguyên không âm và toán tử `+`, `-`, `*`, `/` (không có dấu ngoặc). Tính kết quả và trả về số nguyên (chia truncate về 0). ([LeetCode 227](https://leetcode.com/problems/basic-calculator-ii))
 
 Difficulty: Medium | Acceptance: 45.8%
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+Example 1: s = "3+2*2"   → 7
+Example 2: s = " 3/2 "   → 1
+Example 3: s = " 3+5 / 2" → 5
 ```
 
 Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/basic-calculator-ii) for full constraints
+
+- `1 <= s.length <= 3 * 10^5`
+- `s` gồm các chữ số, `+`, `-`, `*`, `/`, dấu cách
+- Số nguyên trong `s` nằm trong `[0, 2^31 - 1]`
+- Biểu thức hợp lệ (không chia cho 0)
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify**: "Có dấu ngoặc không? Có số âm (unary minus) không?" / Parentheses? Unary minus?
+2. **Key trick**: "Không xử lý operator khi gặp — xử lý operator TRƯỚC khi đọc số tiếp theo" / Don't process op when you see it — process previous op when you see next number
+3. **Truncate**: "JavaScript `/` cho float — dùng `Math.trunc()` hoặc `| 0`" / JS division is float — use Math.trunc() for truncation toward zero
+4. **Spaces**: "Filter spaces khi đọc number — `isDigit` check thôi" / Skip spaces naturally when reading digits
+5. **End of string**: "Xử lý num cuối cùng sau loop (trigger bởi end-of-string)" / Process last number after the loop ends
+6. **Follow-up**: "Thêm dấu ngoặc → LeetCode 224 (Basic Calculator)" / Add parentheses → LC 224
 
 ---
 
@@ -67,39 +89,92 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Two-pass (tokenize then evaluate)
+ * Name: Tokenize + Evaluate
+ * Time: O(n)
+ * Space: O(n) — token list + stack
  */
-function basicCalculatorIiBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function calculateTwoPass(s: string): number {
+  // Tokenize
+  const tokens: (number | string)[] = [];
+  let i = 0;
+  while (i < s.length) {
+    if (s[i] === " ") {
+      i++;
+      continue;
+    }
+    if ("+-*/".includes(s[i])) {
+      tokens.push(s[i]);
+      i++;
+      continue;
+    }
+    let num = 0;
+    while (i < s.length && s[i] >= "0" && s[i] <= "9") num = num * 10 + +s[i++];
+    tokens.push(num);
+  }
+  // Handle * and / first
+  const stack: number[] = [];
+  let op = "+";
+  for (const t of tokens) {
+    if (typeof t === "number") {
+      if (op === "+") stack.push(t);
+      else if (op === "-") stack.push(-t);
+      else if (op === "*") stack.push(stack.pop()! * t);
+      else stack.push(Math.trunc(stack.pop()! / t));
+    } else op = t as string;
+  }
+  return stack.reduce((a, b) => a + b, 0);
 }
 
 /**
- * Solution 2: Optimized — Stack
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Single Pass  ← OPTIMAL
+ * Name: One-pass Stack with prevOp
+ * Time: O(n) — single scan
+ * Space: O(n) — stack
  */
-function basicCalculatorIi(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Stack
-  // Hint: Push/pop to maintain invariant, process when stack condition changes
-  throw new Error('Not implemented');
+function calculate(s: string): number {
+  const stack: number[] = [];
+  let num = 0;
+  let prevOp = "+"; // operator before current number
+
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+
+    if (ch >= "0" && ch <= "9") {
+      num = num * 10 + (ch.charCodeAt(0) - 48);
+    }
+
+    // Process when we hit an operator or end of string
+    if (ch === "+" || ch === "-" || ch === "*" || ch === "/" || i === s.length - 1) {
+      if (prevOp === "+") stack.push(num);
+      else if (prevOp === "-") stack.push(-num);
+      else if (prevOp === "*") stack.push(stack.pop()! * num);
+      else if (prevOp === "/") stack.push(Math.trunc(stack.pop()! / num));
+
+      prevOp = ch;
+      num = 0;
+    }
+  }
+
+  return stack.reduce((a, b) => a + b, 0);
 }
 
 // === Test Cases ===
-// console.log(basicCalculatorIi(/* example 1 */)); // expected
-// console.log(basicCalculatorIi(/* example 2 */)); // expected
-// console.log(basicCalculatorIi(/* edge case */)); // expected
+console.log(calculate("3+2*2")); // 7
+console.log(calculate(" 3/2 ")); // 1
+console.log(calculate(" 3+5 / 2")); // 5
+console.log(calculate("14-3/2")); // 13
+console.log(calculate("100")); // 100
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Basic Calculator](https://leetcode.com/problems/basic-calculator) — same pattern: Stack
-- [Basic Calculator III](https://leetcode.com/problems/basic-calculator-iii) — same pattern: Stack
-- [Basic Calculator IV](https://leetcode.com/problems/basic-calculator-iv) — same pattern: Stack
-- [The Score of Students Solving Math Expression](https://leetcode.com/problems/the-score-of-students-solving-math-expression) — same pattern: Dynamic Programming
-- [Basic Calculator II — LeetCode](https://leetcode.com/problems/basic-calculator-ii) — problem page
+| Problem                                                                                            | Relationship                      |
+| -------------------------------------------------------------------------------------------------- | --------------------------------- |
+| [Basic Calculator](https://leetcode.com/problems/basic-calculator)                                 | With parentheses — harder         |
+| [Basic Calculator III](https://leetcode.com/problems/basic-calculator-iii)                         | With both parentheses and all ops |
+| [Simplify Path](https://leetcode.com/problems/simplify-path)                                       | Stack-based string processing     |
+| [Evaluate Reverse Polish Notation](https://leetcode.com/problems/evaluate-reverse-polish-notation) | Postfix — stack evaluation        |
+| [Expression Add Operators](https://leetcode.com/problems/expression-add-operators)                 | DFS + same operator logic         |

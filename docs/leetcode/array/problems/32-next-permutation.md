@@ -7,60 +7,72 @@ tags: [Array, Two Pointers]
 leetcode_url: "https://leetcode.com/problems/next-permutation"
 ---
 
-# Next Permutation / Next Permutation
+# Next Permutation / Hoán Vị Tiếp Theo
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Two Pointers
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Rightmost Ascending Pair + Reverse Suffix
 > **Frequency**: ⭐ Tier 2 — Gặp ở 31+ companies
-> **See also**: [4Sum](https://leetcode.com/problems/4sum) | [Intersection of Two Arrays](https://leetcode.com/problems/intersection-of-two-arrays)
+> **See also**: [Permutations](https://leetcode.com/problems/permutations) | [Permutation Sequence](https://leetcode.com/problems/permutation-sequence)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Hãy tưởng tượng hai người đi từ hai đầu con đường, tiến lại gần nhau. Mỗi bước, người nào ở vị trí "tốt hơn" sẽ đứng yên, người kia tiến. Khi họ gặp nhau, bài toán được giải.
+- **Analogy:** Tưởng tượng số 1 3 5 4 2 trên đồng hồ số. Bạn muốn tăng lên giá trị nhỏ nhất có thể. Tìm **chữ số thấp nhất từ phải** mà còn nhỏ hơn chữ số bên phải nó — đó là điểm "yếu nhất" cần tăng. Đổi nó với số nhỏ nhất lớn hơn nó ở phần đuôi, rồi **sort lại phần đuôi** (đảo ngược vì đuôi đang giảm dần).
 
-**Pattern Recognition:**
+- **Pattern Recognition:**
+  - Signal: "next lexicographic permutation" → **Find pivot + swap + reverse suffix**
+  - Đuôi giảm dần = đã là lớn nhất có thể → cần tăng pivot ngay trước đuôi
+  - 4 bước: tìm pivot i, tìm j > i với nums[j] > nums[i], swap, reverse [i+1..]
 
-- Signal: "sorted array" + "find pair/triplet" → **Two Pointers**
-- Bài này thuộc dạng Two Pointers — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Next Permutation example:**
+- **Visual — nums = [1, 3, 5, 4, 2]:**
 
 ```
-arr = [... sorted ...]
- L                 R
+Array:  1   3   5   4   2
+        0   1   2   3   4
 
-Step 1: check condition → move L or R
-Step 2: ...
-Step N: condition met ✅
+Step 1: Scan right→left for nums[i] < nums[i+1]
+        i=3: 4 > 2 → no
+        i=2: 5 > 4 → no
+        i=1: 3 < 5 → FOUND pivot at i=1
+
+Step 2: Find rightmost j > i where nums[j] > nums[i]=3
+        j=4: nums[4]=2 < 3 → no
+        j=3: nums[3]=4 > 3 → FOUND j=3
+
+Step 3: Swap nums[1] and nums[3]:
+        [1, 4, 5, 3, 2]
+
+Step 4: Reverse suffix [i+1..end] = [2..4]:
+        [1, 4, 2, 3, 5]  ✓
+
+Edge: [3,2,1] (fully descending) → no pivot found → reverse all → [1,2,3]
 ```
 
 ---
 
 ## Problem Description
 
-Next Permutation. ([LeetCode](https://leetcode.com/problems/next-permutation))
-
-Difficulty: Medium | Acceptance: 43.1%
+Given an array of integers `nums`, rearrange it into the **next lexicographically greater permutation**.
+If no such arrangement exists (already the largest), rearrange to the **lowest possible order** (sorted ascending). Must be done **in-place**.
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+Input:  [1,2,3]   → [1,3,2]
+Input:  [3,2,1]   → [1,2,3]
+Input:  [1,1,5]   → [1,5,1]
+Input:  [1,3,5,4,2] → [1,4,2,3,5]
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/next-permutation) for full constraints
+Constraints: `1 ≤ nums.length ≤ 100`, `0 ≤ nums[i] ≤ 100`.
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Mảng đã sorted chưa? Có duplicate không?" / Ask if array is sorted and if duplicates exist
-2. **Brute force**: "Dùng 2 vòng for O(n²)" → optimize with two pointers O(n) / Start with nested loops, then optimize
-3. **Optimize**: "Vì mảng sorted, dùng 2 con trỏ L/R tiến vào giữa" / Since sorted, use L/R pointers moving inward
-4. **Edge cases**: "Mảng rỗng, một phần tử, tất cả giống nhau" / Empty array, single element, all same values
+1. **4 bước rõ ràng**: Tìm pivot → tìm swap target → swap → reverse suffix / **State the 4 steps** before coding — examiners love clear plans
+2. **Quét từ phải sang trái**: Pivot là phần tử đầu tiên (từ phải) nhỏ hơn phần tử bên phải / **Scan right-to-left** for the first descent
+3. **Đuôi luôn giảm dần**: Sau pivot, phần đuôi đã là descending — reverse là O(n) thay vì sort O(n log n) / **Suffix is always descending** so reverse (not sort) it
+4. **No pivot found**: Toàn bộ mảng descending → reverse toàn bộ / **Edge: fully descending** → reverse all = smallest permutation
+5. **In-place**: Không dùng array mới, swap trực tiếp / **In-place requirement**: no extra arrays
 
 ---
 
@@ -68,39 +80,60 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution: O(n) in-place — 4-step algorithm
+ * Time: O(n) | Space: O(1)
  */
-function nextPermutationBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function nextPermutation(nums: number[]): void {
+  const n = nums.length;
 
-/**
- * Solution 2: Optimized — Two Pointers
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function nextPermutation(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Two Pointers
-  // Hint: Use L/R pointers on sorted input, move based on comparison
-  throw new Error('Not implemented');
+  // Step 1: Find rightmost i where nums[i] < nums[i+1]
+  let i = n - 2;
+  while (i >= 0 && nums[i] >= nums[i + 1]) i--;
+
+  if (i >= 0) {
+    // Step 2: Find rightmost j > i where nums[j] > nums[i]
+    let j = n - 1;
+    while (nums[j] <= nums[i]) j--;
+
+    // Step 3: Swap pivot with successor
+    [nums[i], nums[j]] = [nums[j], nums[i]];
+  }
+
+  // Step 4: Reverse the suffix [i+1 .. n-1]
+  let left = i + 1,
+    right = n - 1;
+  while (left < right) {
+    [nums[left], nums[right]] = [nums[right], nums[left]];
+    left++;
+    right--;
+  }
 }
 
 // === Test Cases ===
-// console.log(nextPermutation(/* example 1 */)); // expected
-// console.log(nextPermutation(/* example 2 */)); // expected
-// console.log(nextPermutation(/* edge case */)); // expected
+const t1 = [1, 2, 3];
+nextPermutation(t1);
+console.log(JSON.stringify(t1)); // [1,3,2]
+const t2 = [3, 2, 1];
+nextPermutation(t2);
+console.log(JSON.stringify(t2)); // [1,2,3]
+const t3 = [1, 1, 5];
+nextPermutation(t3);
+console.log(JSON.stringify(t3)); // [1,5,1]
+const t4 = [1, 3, 5, 4, 2];
+nextPermutation(t4);
+console.log(JSON.stringify(t4)); // [1,4,2,3,5]
+const t5 = [1];
+nextPermutation(t5);
+console.log(JSON.stringify(t5)); // [1]
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [4Sum](https://leetcode.com/problems/4sum) — same pattern: Two Pointers
-- [Intersection of Two Arrays](https://leetcode.com/problems/intersection-of-two-arrays) — same pattern: Two Pointers
-- [3Sum Closest](https://leetcode.com/problems/3sum-closest) — same pattern: Two Pointers
-- [Remove Element](https://leetcode.com/problems/remove-element) — same pattern: Two Pointers
-- [Next Permutation — LeetCode](https://leetcode.com/problems/next-permutation) — problem page
+| Problem                                                                                                                                          | Relationship                                                    |
+| ------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| [Permutations](https://leetcode.com/problems/permutations)                                                                                       | Generate all permutations; next permutation is one step forward |
+| [Permutation Sequence](https://leetcode.com/problems/permutation-sequence)                                                                       | Find k-th permutation using similar digit logic                 |
+| [Previous Permutation With One Swap](https://leetcode.com/problems/previous-permutation-with-one-swap)                                           | Symmetric problem: find previous permutation                    |
+| [Minimum Adjacent Swaps to Reach the Kth Smallest Number](https://leetcode.com/problems/minimum-adjacent-swaps-to-reach-the-kth-smallest-number) | Apply next permutation k times, count swaps                     |

@@ -7,60 +7,75 @@ tags: [Two Pointers, String]
 leetcode_url: "https://leetcode.com/problems/reverse-words-in-a-string"
 ---
 
-# Reverse Words in a String / Reverse Words in a String
+# Reverse Words in a String / Đảo Ngược Thứ Tự Từ
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Two Pointers
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Split + Reverse / In-Place Double Reverse
 > **Frequency**: 📘 Tier 3 — Gặp ở 18 companies
-> **See also**: [Find the Index of the First Occurrence in a String](https://leetcode.com/problems/find-the-index-of-the-first-occurrence-in-a-string) | [String Compression](https://leetcode.com/problems/string-compression)
+> **See also**: [Reverse Words in a String III](https://leetcode.com/problems/reverse-words-in-a-string-iii) | [Rotate Array](https://leetcode.com/problems/rotate-array)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Hãy tưởng tượng hai người đi từ hai đầu con đường, tiến lại gần nhau. Mỗi bước, người nào ở vị trí "tốt hơn" sẽ đứng yên, người kia tiến. Khi họ gặp nhau, bài toán được giải.
+**Analogy (Vietnamese):** Khi đọc bảng tin quảng cáo theo chiều ngược lại — câu "Hôm nay trời đẹp" đọc ngược thành "đẹp trời nay Hôm". Cách đơn giản nhất: cắt câu thành từng từ, lấy từ cuối trước. Cách thông minh hơn (interview-worthy): lật toàn bộ câu rồi lật lại từng từ — như lật ngược cuốn sách rồi lật từng chương.
 
 **Pattern Recognition:**
 
-- Signal: "sorted array" + "find pair/triplet" → **Two Pointers**
-- Bài này thuộc dạng Two Pointers — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "reverse order of words" + "trim spaces" → **Split + Filter + Reverse + Join**
+- In-place O(1) space approach (for char array input): **Double Reverse**
+  1. Reverse the entire string
+  2. Reverse each individual word
+  3. Trim leading/trailing spaces
 
-**Visual — Reverse Words in a String example:**
+**Visual — Double Reverse on " the sky is blue ":**
 
 ```
-arr = [... sorted ...]
- L                 R
+Original:  "  the sky is blue  "
 
-Step 1: check condition → move L or R
-Step 2: ...
-Step N: condition met ✅
+Step 1: Trim + reverse entire string
+         "eulb si yks eht"
+
+Step 2: Reverse each word
+         "eulb" → "blue"
+         "si"   → "is"
+         "yks"  → "sky"
+         "eht"  → "the"
+         Result: "blue is sky the"
+
+That's the answer! ✅
+
+Clean split approach (simpler, extra space):
+"  the sky is blue  "
+  .split(' ')     → ["", "", "the", "sky", "is", "blue", "", ""]
+  .filter(Boolean)→ ["the", "sky", "is", "blue"]
+  .reverse()      → ["blue", "is", "sky", "the"]
+  .join(' ')      → "blue is sky the" ✅
 ```
 
 ---
 
 ## Problem Description
 
-Reverse Words in a String. ([LeetCode](https://leetcode.com/problems/reverse-words-in-a-string))
-
-Difficulty: Medium | Acceptance: 51.9%
+Given a string `s`, reverse the order of the words. A word is defined as a sequence of non-space characters. The input may contain leading/trailing spaces or multiple spaces between words — the output must have **single spaces** and no leading/trailing spaces. ([LeetCode 151](https://leetcode.com/problems/reverse-words-in-a-string))
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+Input: s = "the sky is blue"   → Output: "blue is sky the"
+Input: s = "  hello world  "   → Output: "world hello"
+Input: s = "a good   example"  → Output: "example good a"
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/reverse-words-in-a-string) for full constraints
+Constraints: `1 <= s.length <= 10⁴`, `s` contains English letters, digits, and spaces
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Mảng đã sorted chưa? Có duplicate không?" / Ask if array is sorted and if duplicates exist
-2. **Brute force**: "Dùng 2 vòng for O(n²)" → optimize with two pointers O(n) / Start with nested loops, then optimize
-3. **Optimize**: "Vì mảng sorted, dùng 2 con trỏ L/R tiến vào giữa" / Since sorted, use L/R pointers moving inward
-4. **Edge cases**: "Mảng rỗng, một phần tử, tất cả giống nhau" / Empty array, single element, all same values
+1. **Clarify**: "Output có cần loại bỏ multiple spaces không? / Should output normalize multiple spaces?" — Yes, single space only
+2. **Split trick**: "`.split(' ')` để lại chuỗi rỗng từ khoảng trắng thừa — cần `.filter(Boolean)`" / `.split(' ')` leaves empty strings, filter them
+3. **In-place**: "Nếu input là char array (C++/Java), dùng double reverse O(1) space" / For mutable char arrays use double-reverse trick
+4. **Two pointers in-place**: "Collect words from right to left using two pointers" / Scan right-to-left, extract word-by-word
+5. **Edge cases**: "Chỉ có spaces, một từ, many consecutive spaces" / All spaces, single word, many consecutive spaces
+6. **Follow-up**: "Reverse words in-place with O(1) space? → reverse entire, then reverse each word" / Double-reverse trick
 
 ---
 
@@ -68,39 +83,71 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Split + Filter + Reverse + Join (Clean & Simple)
+ * Name: Split and Reverse
+ * Time: O(n) — split, filter, reverse, join are all O(n)
+ * Space: O(n) — stores all words
  */
-function reverseWordsInAStringBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function reverseWordsSplit(s: string): string {
+  return s
+    .split(" ") // split on single space (may produce empty strings)
+    .filter(Boolean) // remove empty strings from multiple spaces
+    .reverse() // reverse the array of words
+    .join(" "); // join with single space
 }
 
 /**
- * Solution 2: Optimized — Two Pointers
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Regex Split (Handles all whitespace)
+ * Name: Regex Split
+ * Time: O(n)
+ * Space: O(n)
  */
-function reverseWordsInAString(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Two Pointers
-  // Hint: Use L/R pointers on sorted input, move based on comparison
-  throw new Error('Not implemented');
+function reverseWords(s: string): string {
+  return s.trim().split(/\s+/).reverse().join(" ");
+  // \s+ matches one or more whitespace chars — handles tabs, multiple spaces
+}
+
+/**
+ * Solution 3: Two Pointers (no built-in reverse)
+ * Name: Two Pointer Right-to-Left
+ * Time: O(n) — two passes maximum
+ * Space: O(n) — result array
+ */
+function reverseWordsTwoPointers(s: string): string {
+  const words: string[] = [];
+  let i = s.length - 1;
+
+  while (i >= 0) {
+    // skip trailing spaces
+    while (i >= 0 && s[i] === " ") i--;
+    if (i < 0) break;
+
+    // find start of word
+    const end = i;
+    while (i >= 0 && s[i] !== " ") i--;
+
+    words.push(s.slice(i + 1, end + 1)); // extract word
+  }
+
+  return words.join(" ");
 }
 
 // === Test Cases ===
-// console.log(reverseWordsInAString(/* example 1 */)); // expected
-// console.log(reverseWordsInAString(/* example 2 */)); // expected
-// console.log(reverseWordsInAString(/* edge case */)); // expected
+console.log(reverseWords("the sky is blue")); // "blue is sky the"
+console.log(reverseWords("  hello world  ")); // "world hello"
+console.log(reverseWords("a good   example")); // "example good a"
+console.log(reverseWordsTwoPointers("  Bob    Loves  Alice   ")); // "Alice Loves Bob"
+console.log(reverseWordsSplit("Alice does not even like bob")); // "bob like even not does Alice"
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Find the Index of the First Occurrence in a String](https://leetcode.com/problems/find-the-index-of-the-first-occurrence-in-a-string) — same pattern: Two Pointers
-- [String Compression](https://leetcode.com/problems/string-compression) — same pattern: Two Pointers
-- [Palindromic Substrings](https://leetcode.com/problems/palindromic-substrings) — same pattern: Two Pointers
-- [Is Subsequence](https://leetcode.com/problems/is-subsequence) — same pattern: Two Pointers
-- [Reverse Words in a String — LeetCode](https://leetcode.com/problems/reverse-words-in-a-string) — problem page
+| Problem | Relationship |
+|---|---|
+| [Reverse Words in a String III](https://leetcode.com/problems/reverse-words-in-a-string-iii) | Simpler: no leading/trailing spaces, reverse chars in each word |
+| [Rotate Array](https://leetcode.com/problems/rotate-array) | In-place reversal trick generalizes to array rotation |
+| [Reverse String](https://leetcode.com/problems/reverse-string) | Same two-pointer reversal at char level |
+| [String Compression](https://leetcode.com/problems/string-compression) | In-place read/write two-pointer manipulation |
+| [Valid Palindrome](https://leetcode.com/problems/valid-palindrome) | Two-pointer left/right traversal on string |

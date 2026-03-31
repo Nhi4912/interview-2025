@@ -7,60 +7,65 @@ tags: [Array, Binary Search]
 leetcode_url: "https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array"
 ---
 
-# Find First and Last Position of Element in Sorted Array / Find First and Last Position of Element in Sorted Array
+# Find First and Last Position of Element in Sorted Array / Tìm Vị Trí Đầu và Cuối Trong Mảng Đã Sắp Xếp
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Binary Search
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dual Binary Search (leftmost + rightmost)
 > **Frequency**: ⭐ Tier 2 — Gặp ở 30+ companies
-> **See also**: [Koko Eating Bananas](https://leetcode.com/problems/koko-eating-bananas) | [Search a 2D Matrix](https://leetcode.com/problems/search-a-2d-matrix)
+> **See also**: [Search Insert Position](https://leetcode.com/problems/search-insert-position) | [Count of Range Sum](https://leetcode.com/problems/count-of-range-sum)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Tưởng tượng tìm một trang trong từ điển — bạn mở giữa, xem số trang, rồi chọn nửa phù hợp. Mỗi lần giảm một nửa phạm vi tìm kiếm.
+- **Analogy:** Tìm tên "Nguyễn Văn A" trong danh bạ điện thoại đã sắp thứ tự. Bạn mở tới trang "Nguyễn", rồi **tiếp tục sang trái** để tìm trang đầu tiên có tên đó, và **tiếp tục sang phải** để tìm trang cuối cùng — hai lần tìm kiếm nhị phân riêng biệt.
 
-**Pattern Recognition:**
+- **Pattern Recognition:**
+  - Signal: "sorted array" + "find range/boundary" → **Two binary searches**
+  - Lần 1: Tìm leftmost — khi tìm thấy target, tiếp tục tìm sang trái (`right = mid - 1`)
+  - Lần 2: Tìm rightmost — khi tìm thấy target, tiếp tục tìm sang phải (`left = mid + 1`)
 
-- Signal: "sorted" + "find target/position" → **Binary Search**
-- Bài này thuộc dạng Binary Search — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Find First and Last Position of Element in Sorted Array example:**
+- **Visual — nums = [5, 7, 7, 8, 8, 10], target = 8:**
 
 ```
-[1, 3, 5, 7, 9, 11, 13]
- L        M            R
+Find LEFT boundary:
+  lo=0 hi=5 → mid=2, nums[2]=7 < 8 → lo=3
+  lo=3 hi=5 → mid=4, nums[4]=8 = 8 → result=4, hi=3
+  lo=3 hi=3 → mid=3, nums[3]=8 = 8 → result=3, hi=2
+  lo=3 > hi=2 → stop. Left = 3
 
-Step 1: mid = (L+R)/2, check condition
-Step 2: condition true → move L = mid+1 (or R = mid-1)
-Step N: L meets R → answer found ✅
+Find RIGHT boundary:
+  lo=0 hi=5 → mid=2, nums[2]=7 < 8 → lo=3
+  lo=3 hi=5 → mid=4, nums[4]=8 = 8 → result=4, lo=5
+  lo=5 hi=5 → mid=5, nums[5]=10 > 8 → hi=4
+  lo=5 > hi=4 → stop. Right = 4
+
+Answer: [3, 4] ✓
 ```
 
 ---
 
 ## Problem Description
 
-Find First and Last Position of Element in Sorted Array. ([LeetCode](https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array))
-
-Difficulty: Medium | Acceptance: 46.8%
+Given a sorted array of integers `nums` and a `target`, find the **starting and ending positions** of `target`.
+If not found, return `[-1, -1]`. Must run in O(log n).
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+Input:  nums=[5,7,7,8,8,10], target=8  → [3,4]
+Input:  nums=[5,7,7,8,8,10], target=6  → [-1,-1]
+Input:  nums=[], target=0              → [-1,-1]
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array) for full constraints
+Constraints: `0 ≤ nums.length ≤ 10^5`, values fit in 32-bit int.
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Input đã sorted? Cần tìm vị trí chính xác hay boundary?" / Is input sorted? Exact match or boundary?
-2. **Brute force**: "Linear scan O(n)" → optimize with binary search O(log n) / Start linear, suggest binary
-3. **Optimize**: "Chú ý lo/hi boundary: lo <= hi hay lo < hi? mid±1 hay mid?" / Watch boundary conditions carefully
-4. **Edge cases**: "Mảng rỗng, một phần tử, target không tồn tại, overflow mid" / Empty, single, not found, overflow
+1. **Hai binary search riêng biệt**: Một cho left bound, một cho right bound — code ngắn gọn hơn dùng flag / **Two separate searches**: cleaner than one search with a flag
+2. **Left bound**: Khi `nums[mid] === target`, lưu lại và tiếp tục `hi = mid - 1` / **Left search**: on match, record and keep searching left
+3. **Right bound**: Khi `nums[mid] === target`, lưu lại và tiếp tục `lo = mid + 1` / **Right search**: on match, record and keep searching right
+4. **Trả về [-1,-1] nếu không tìm thấy**: Check sau khi tìm left / **Early exit**: check left result before running right search
+5. **Overflow**: Dùng `lo + Math.floor((hi - lo) / 2)` thay vì `(lo + hi) / 2` / **Overflow safe**: use `lo + (hi - lo >> 1)` for mid calculation
 
 ---
 
@@ -68,39 +73,66 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Linear Scan (Brute Force)
+ * Time: O(n) | Space: O(1)
  */
-function findFirstAndLastPositionOfElementInSortedArrayBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function searchRangeBrute(nums: number[], target: number): number[] {
+  let left = -1,
+    right = -1;
+  for (let i = 0; i < nums.length; i++) {
+    if (nums[i] === target) {
+      if (left === -1) left = i;
+      right = i;
+    }
+  }
+  return [left, right];
 }
 
 /**
- * Solution 2: Optimized — Binary Search
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Dual Binary Search (Optimal)
+ * Time: O(log n) | Space: O(1)
  */
-function findFirstAndLastPositionOfElementInSortedArray(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Binary Search
-  // Hint: Define search space, determine which half to discard
-  throw new Error('Not implemented');
+function searchRange(nums: number[], target: number): number[] {
+  function findBound(isLeft: boolean): number {
+    let lo = 0,
+      hi = nums.length - 1,
+      bound = -1;
+    while (lo <= hi) {
+      const mid = lo + Math.floor((hi - lo) / 2);
+      if (nums[mid] === target) {
+        bound = mid;
+        if (isLeft)
+          hi = mid - 1; // keep searching left
+        else lo = mid + 1; // keep searching right
+      } else if (nums[mid] < target) {
+        lo = mid + 1;
+      } else {
+        hi = mid - 1;
+      }
+    }
+    return bound;
+  }
+
+  const left = findBound(true);
+  if (left === -1) return [-1, -1]; // target not in array
+  return [left, findBound(false)];
 }
 
 // === Test Cases ===
-// console.log(findFirstAndLastPositionOfElementInSortedArray(/* example 1 */)); // expected
-// console.log(findFirstAndLastPositionOfElementInSortedArray(/* example 2 */)); // expected
-// console.log(findFirstAndLastPositionOfElementInSortedArray(/* edge case */)); // expected
+console.log(JSON.stringify(searchRange([5, 7, 7, 8, 8, 10], 8))); // [3,4]
+console.log(JSON.stringify(searchRange([5, 7, 7, 8, 8, 10], 6))); // [-1,-1]
+console.log(JSON.stringify(searchRange([], 0))); // [-1,-1]
+console.log(JSON.stringify(searchRange([1], 1))); // [0,0]
+console.log(JSON.stringify(searchRange([2, 2], 2))); // [0,1]
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Koko Eating Bananas](https://leetcode.com/problems/koko-eating-bananas) — same pattern: Binary Search
-- [Search a 2D Matrix](https://leetcode.com/problems/search-a-2d-matrix) — same pattern: Binary Search
-- [Find Peak Element](https://leetcode.com/problems/find-peak-element) — same pattern: Binary Search
-- [Maximum Profit in Job Scheduling](https://leetcode.com/problems/maximum-profit-in-job-scheduling) — same pattern: Dynamic Programming
-- [Find First and Last Position of Element in Sorted Array — LeetCode](https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array) — problem page
+| Problem                                                                                                  | Relationship                                    |
+| -------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| [Search Insert Position](https://leetcode.com/problems/search-insert-position)                           | Single binary search for leftmost position      |
+| [Find Peak Element](https://leetcode.com/problems/find-peak-element)                                     | Binary search on unsorted but unimodal array    |
+| [Koko Eating Bananas](https://leetcode.com/problems/koko-eating-bananas)                                 | Binary search on answer space, not direct array |
+| [Count of Smaller Numbers After Self](https://leetcode.com/problems/count-of-smaller-numbers-after-self) | Uses lower/upper bound concepts                 |
