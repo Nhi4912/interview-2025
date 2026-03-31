@@ -7,7 +7,7 @@ tags: [Array, Hash Table, Sliding Window, Counting]
 leetcode_url: "https://leetcode.com/problems/subarrays-with-k-different-integers"
 ---
 
-# Subarrays with K Different Integers / Subarrays with K Different Integers
+# Subarrays with K Different Integers / Mảng Con Có Đúng K Số Nguyên Khác Nhau
 
 > **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Sliding Window
 > **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
@@ -17,90 +17,102 @@ leetcode_url: "https://leetcode.com/problems/subarrays-with-k-different-integers
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống như nhìn qua một khung cửa sổ di chuyển trên dãy nhà. Mỗi lần trượt, bạn thêm nhà mới bên phải, bỏ nhà cũ bên trái — luôn giữ đúng kích thước khung.
-
-**Pattern Recognition:**
-
-- Signal: "contiguous subarray/substring" + "max/min length" → **Sliding Window**
-- Bài này thuộc dạng Sliding Window — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Subarrays with K Different Integers example:**
+**Analogy:** "Đúng K khác nhau" rất khó đếm trực tiếp. Nhưng: **Đúng K = AtMost(K) − AtMost(K−1)**. Giống đếm số người cao đúng 1m70 = số người cao ≤ 1m70 trừ số người cao ≤ 1m69.
 
 ```
-[a, b, c, d, e, f, g]
- |--window--|
-    |--window--|     → slide right, update state
-
-Track: current window state
-Update: add right, remove left when window exceeds constraint
+nums = [1,2,1,2,3], k = 2
+atMost(2): count subarrays with ≤2 distinct
+  [1],[2],[1],[2],[3],[1,2],[2,1],[1,2],[2,3],[1,2,1],[1,2,1,2] → 10 (but not [2,3,X])
+  Actually: right-left+1 summed = 10
+atMost(1): subarrays with ≤1 distinct → 5
+exactly(2) = 10 - 5 = 7? Let me verify: [1,2],[2,1],[1,2],[2,3],[1,2,1],[2,1,2],[1,2,1,2]... = 7 ✅
 ```
 
 ---
 
-## Problem Description
+## Problem Description / Mô Tả Bài Toán
 
-Subarrays with K Different Integers. ([LeetCode](https://leetcode.com/problems/subarrays-with-k-different-integers))
+Cho mảng số nguyên `nums` và số nguyên `k`. Trả về số **mảng con** có **đúng `k` số nguyên phân biệt**.
 
-Difficulty: Hard | Acceptance: 65.9%
+- **Input:** `nums=[1,2,1,2,3], k=2` → **Output:** `7`
+- **Input:** `nums=[1,2,1,3,4], k=3` → **Output:** `3`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/subarrays-with-k-different-integers) for full constraints
+**Constraints:** `1 <= nums.length <= 2×10^4`, `1 <= nums[i] <= nums.length`, `1 <= k <= nums.length`
 
 ---
 
-## 📝 Interview Tips
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-1. **Clarify**: "Cần contiguous subarray hay subsequence?" / Subarray (contiguous) vs subsequence (non-contiguous)
-2. **Brute force**: "Thử mọi subarray O(n²)" → optimize with sliding window O(n) / Try all subarrays then optimize
-3. **Optimize**: "Dùng window expand/shrink, track state bằng map/counter" / Use expand right, shrink left pattern
-4. **Edge cases**: "Chuỗi rỗng, k > array length, tất cả unique/duplicate" / Empty input, k exceeds length
+1. **EN:** Key transformation: exactly(k) = atMost(k) - atMost(k-1). **VI:** Biến đổi chính: đúng K = atMost(K) − atMost(K−1).
+2. **EN:** atMost(k): expand right always, shrink left when distinct count > k. **VI:** atMost(k): luôn mở rộng phải, thu trái khi distinct > k.
+3. **EN:** Count subarrays ending at right = right - left + 1 (all valid). **VI:** Số subarray kết thúc tại right = right − left + 1.
+4. **EN:** Delete key from map when frequency drops to 0 to keep size accurate. **VI:** Xóa key khỏi map khi freq về 0 để size chính xác.
+5. **EN:** Time O(n), Space O(k) for frequency map (k ≤ n). **VI:** O(n) thời gian, O(k) không gian.
+6. **EN:** This technique generalizes to all "exactly k" window counting problems. **VI:** Kỹ thuật này áp dụng mọi bài "đúng k" với window.
 
 ---
 
-## Solutions
+## Solutions / Giải Pháp
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function subarraysWithKDifferentIntegersBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// ─── Helper: count subarrays with AT MOST k distinct integers  O(n) ──────────
+function atMost(nums: number[], k: number): number {
+  const freq = new Map<number, number>();
+  let count = 0;
+  let left = 0;
+
+  for (let right = 0; right < nums.length; right++) {
+    // Add right element to window
+    freq.set(nums[right], (freq.get(nums[right]) ?? 0) + 1);
+
+    // Shrink left until we have ≤ k distinct values
+    while (freq.size > k) {
+      const leftVal = nums[left++];
+      const f = freq.get(leftVal)! - 1;
+      if (f === 0) freq.delete(leftVal);
+      else freq.set(leftVal, f);
+    }
+
+    // All subarrays [left..right], [left+1..right], ... [right..right] are valid
+    count += right - left + 1;
+  }
+
+  return count;
 }
 
-/**
- * Solution 2: Optimized — Sliding Window
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function subarraysWithKDifferentIntegers(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Sliding Window
-  // Hint: Expand right pointer, shrink left when constraint violated
-  throw new Error('Not implemented');
+// ─── Solution 1: atMost(k) - atMost(k-1)  O(n) time, O(n) space ─────────────
+function subarraysWithKDistinct(nums: number[], k: number): number {
+  return atMost(nums, k) - atMost(nums, k - 1);
 }
 
-// === Test Cases ===
-// console.log(subarraysWithKDifferentIntegers(/* example 1 */)); // expected
-// console.log(subarraysWithKDifferentIntegers(/* example 2 */)); // expected
-// console.log(subarraysWithKDifferentIntegers(/* edge case */)); // expected
+// ─── Solution 2: Brute Force  O(n²) time — for verification ──────────────────
+function subarraysWithKDistinctBrute(nums: number[], k: number): number {
+  let count = 0;
+  for (let i = 0; i < nums.length; i++) {
+    const seen = new Set<number>();
+    for (let j = i; j < nums.length; j++) {
+      seen.add(nums[j]);
+      if (seen.size === k) count++;
+      if (seen.size > k) break;
+    }
+  }
+  return count;
+}
+
+// ─── Tests ───────────────────────────────────────────────────────────────────
+console.log(subarraysWithKDistinct([1, 2, 1, 2, 3], 2)); // 7
+console.log(subarraysWithKDistinct([1, 2, 1, 3, 4], 3)); // 3
+console.log(subarraysWithKDistinct([1], 1)); // 1
+console.log(subarraysWithKDistinctBrute([1, 2, 1, 2, 3], 2)); // 7
+console.log(subarraysWithKDistinctBrute([1, 2, 1, 3, 4], 3)); // 3
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Longest Harmonious Subsequence](https://leetcode.com/problems/longest-harmonious-subsequence) — same pattern: Sliding Window
-- [Majority Element](https://leetcode.com/problems/majority-element) — same pattern: Divide and Conquer
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Task Scheduler](https://leetcode.com/problems/task-scheduler) — same pattern: Heap / Priority Queue
-- [Subarrays with K Different Integers — LeetCode](https://leetcode.com/problems/subarrays-with-k-different-integers) — problem page
+| #   | Problem                                                                                                                                        | Difficulty | Pattern        |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | -------------- |
+| 3   | [Longest Substring Without Repeating Characters](https://leetcode.com/problems/longest-substring-without-repeating-characters)                 | 🟡 Medium  | Sliding Window |
+| 159 | [Longest Substring with At Most Two Distinct Characters](https://leetcode.com/problems/longest-substring-with-at-most-two-distinct-characters) | 🟡 Medium  | Sliding Window |
+| 340 | [Longest Substring with At Most K Distinct Characters](https://leetcode.com/problems/longest-substring-with-at-most-k-distinct-characters)     | 🟡 Medium  | Sliding Window |

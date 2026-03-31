@@ -7,9 +7,9 @@ tags: [Array, Greedy, Sorting, Matrix]
 leetcode_url: "https://leetcode.com/problems/largest-submatrix-with-rearrangements"
 ---
 
-# Largest Submatrix With Rearrangements / Largest Submatrix With Rearrangements
+# Largest Submatrix With Rearrangements / Ma Trận Con Lớn Nhất Với Sắp Xếp Lại
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy + Column Heights
 > **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
 > **See also**: [Maximum Spending After Buying Items](https://leetcode.com/problems/maximum-spending-after-buying-items) | [Largest Number](https://leetcode.com/problems/largest-number)
 
@@ -17,47 +17,49 @@ leetcode_url: "https://leetcode.com/problems/largest-submatrix-with-rearrangemen
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống ăn buffet — mỗi lần bạn chọn món ngon nhất hiện tại. Nếu chứng minh được rằng chọn tham lam từng bước vẫn tối ưu toàn cục, thì Greedy là đáp án.
+**Analogy:** Giống bài toán "skyline" — với mỗi cột, tính chiều cao cột 1s liên tiếp từ trên xuống. Khi được phép xếp lại cột, ta sort từng dòng theo chiều cao giảm dần: vị trí j (0-indexed) có thể tạo diện tích `height[j] * (j+1)`.
 
 **Pattern Recognition:**
 
-- Signal: "locally optimal → globally optimal" + "sorting + selection" → **Greedy**
-- Bài này thuộc dạng Greedy — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "binary matrix, rearrange columns, maximize all-1 submatrix" → **Column Heights + Row Sort**
+- For each row, compute column heights (consecutive 1s ending at this row)
+- Sort heights in each row descending; area at position j = heights[j] \* (j+1)
 
-**Visual — Largest Submatrix With Rearrangements example:**
+**Visual — matrix=[[0,0,1],[1,1,1],[1,0,1]]:**
 
 ```
-// TODO: Add step-by-step visual for Greedy
-// Show one complete example with state at each step
+Row 0 heights: [0, 0, 1]  sorted desc: [1, 0, 0]  max area: 1*1=1
+Row 1 heights: [1, 1, 2]  sorted desc: [2, 1, 1]  max area: max(2*1, 1*2, 1*3) = 3
+Row 2 heights: [2, 0, 3]  sorted desc: [3, 2, 0]  max area: max(3*1, 2*2) = 4 ✓
+Answer = 4
 ```
 
 ---
 
 ## Problem Description
 
-Largest Submatrix With Rearrangements. ([LeetCode](https://leetcode.com/problems/largest-submatrix-with-rearrangements))
+Given binary matrix `matrix` (0s and 1s). You can **rearrange columns** in any order. Return the **largest area** of a submatrix containing only 1s. ([LeetCode 1727](https://leetcode.com/problems/largest-submatrix-with-rearrangements))
 
 Difficulty: Medium | Acceptance: 75.2%
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+Example 1: matrix=[[0,0,1],[1,1,1],[1,0,1]]  → 4
+Example 2: matrix=[[1,0,1,0,1]]              → 3
+Example 3: matrix=[[1,1,0],[1,0,0]]          → 2
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/largest-submatrix-with-rearrangements) for full constraints
+Constraints: `1 ≤ m, n ≤ 10^5`, `m * n ≤ 10^5`, values in {0, 1}
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Column heights / Chiều cao cột**: "heights[r][c] = số ô 1 liên tiếp kết thúc tại row r, col c"
+2. **Sort each row / Sort từng dòng**: Sắp xếp heights của mỗi dòng theo thứ tự giảm dần → columns được "xếp lại"
+3. **Area formula / Công thức diện tích**: Tại vị trí j trong sorted row: area = heights[j] \* (j+1) vì có j+1 cột liền kề
+4. **Why sort? / Tại sao sort?**: Khi heights[j] là nhỏ nhất trong j+1 cột đầu (sau sort), diện tích = heights[j]\*(j+1) chính xác
+5. **Modify in-place / Sửa tại chỗ**: Cập nhật heights trực tiếp trên matrix để tiết kiệm bộ nhớ
+6. **Complexity / Độ phức tạp**: O(m*n*log(n)) — n log n per row for sorting
 
 ---
 
@@ -65,39 +67,122 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Brute Force — try all column subsets, find max all-1 height
+ * Time: O(m * n^2 * 2^n) — exponential, only for tiny inputs
+ * Space: O(1)
  */
-function largestSubmatrixWithRearrangementsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function largestSubmatrixBrute(matrix: number[][]): number {
+  const m = matrix.length,
+    n = matrix[0].length;
+  // Compute column heights
+  const heights = Array.from({ length: m }, () => new Array(n).fill(0));
+  for (let c = 0; c < n; c++) {
+    for (let r = 0; r < m; r++) {
+      heights[r][c] = matrix[r][c] === 0 ? 0 : r > 0 ? heights[r - 1][c] + 1 : 1;
+    }
+  }
+  let ans = 0;
+  // For each row, try all pairs of column ranges (after conceptual sort)
+  for (let r = 0; r < m; r++) {
+    const row = [...heights[r]].sort((a, b) => b - a);
+    for (let j = 0; j < n; j++) {
+      if (row[j] > 0) ans = Math.max(ans, row[j] * (j + 1));
+    }
+  }
+  return ans;
 }
 
 /**
- * Solution 2: Optimized — Greedy
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Greedy + Column Heights + Sort (Optimal)
+ * Time: O(m * n * log(n))  Space: O(n) for heights row
+ *
+ * For each row r:
+ * 1. Update heights[c] = matrix[r][c] == 1 ? heights[c] + 1 : 0
+ * 2. Sort heights descending (conceptually: rearrange columns optimally)
+ * 3. For each position j in sorted order: area = heights[j] * (j+1)
+ * 4. Track global maximum
  */
-function largestSubmatrixWithRearrangements(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Greedy
-  // Hint: Sort by key metric, make locally optimal choice at each step
-  throw new Error('Not implemented');
+function largestSubmatrix(matrix: number[][]): number {
+  const m = matrix.length,
+    n = matrix[0].length;
+  const heights = new Array(n).fill(0);
+  let ans = 0;
+
+  for (let r = 0; r < m; r++) {
+    // Update column heights for current row
+    for (let c = 0; c < n; c++) {
+      heights[c] = matrix[r][c] === 0 ? 0 : heights[c] + 1;
+    }
+    // Sort heights descending (copy for this row)
+    const sorted = [...heights].sort((a, b) => b - a);
+    for (let j = 0; j < n; j++) {
+      if (sorted[j] === 0) break; // remaining are 0, no contribution
+      ans = Math.max(ans, sorted[j] * (j + 1));
+    }
+  }
+  return ans;
 }
 
-// === Test Cases ===
-// console.log(largestSubmatrixWithRearrangements(/* example 1 */)); // expected
-// console.log(largestSubmatrixWithRearrangements(/* example 2 */)); // expected
-// console.log(largestSubmatrixWithRearrangements(/* edge case */)); // expected
+/**
+ * Solution 3: Optimized — avoid sort by tracking previous row heights
+ * Time: O(m * n * log(n))  Space: O(n)
+ * Same complexity but with cleaner implementation using index sorting
+ */
+function largestSubmatrixOpt(matrix: number[][]): number {
+  const m = matrix.length,
+    n = matrix[0].length;
+  // heights[c] = consecutive 1s ending at current row in column c
+  let heights = new Array(n).fill(0);
+  let ans = 0;
+
+  for (let r = 0; r < m; r++) {
+    for (let c = 0; c < n; c++) {
+      heights[c] = matrix[r][c] === 0 ? 0 : heights[c] + 1;
+    }
+    // Sort indices by height descending
+    const indices = Array.from({ length: n }, (_, i) => i).sort((a, b) => heights[b] - heights[a]);
+    for (let j = 0; j < n; j++) {
+      if (heights[indices[j]] === 0) break;
+      ans = Math.max(ans, heights[indices[j]] * (j + 1));
+    }
+  }
+  return ans;
+}
+
+// === Tests ===
+console.log(
+  largestSubmatrix([
+    [0, 0, 1],
+    [1, 1, 1],
+    [1, 0, 1],
+  ]),
+); // 4
+console.log(largestSubmatrix([[1, 0, 1, 0, 1]])); // 3
+console.log(
+  largestSubmatrix([
+    [1, 1, 0],
+    [1, 0, 0],
+  ]),
+); // 2
+console.log(largestSubmatrix([[1]])); // 1
+console.log(
+  largestSubmatrixBrute([
+    [0, 0, 1],
+    [1, 1, 1],
+    [1, 0, 1],
+  ]),
+); // 4
+console.log(largestSubmatrixOpt([[1, 0, 1, 0, 1]])); // 3
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Maximum Spending After Buying Items](https://leetcode.com/problems/maximum-spending-after-buying-items) — same pattern: Heap / Priority Queue
-- [Largest Number](https://leetcode.com/problems/largest-number) — same pattern: Greedy
-- [Task Scheduler](https://leetcode.com/problems/task-scheduler) — same pattern: Heap / Priority Queue
-- [Non-overlapping Intervals](https://leetcode.com/problems/non-overlapping-intervals) — same pattern: Dynamic Programming
-- [Largest Submatrix With Rearrangements — LeetCode](https://leetcode.com/problems/largest-submatrix-with-rearrangements) — problem page
+| Problem                                                                                                                  | Relationship                              |
+| ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------- |
+| [1727. Largest Submatrix With Rearrangements](https://leetcode.com/problems/largest-submatrix-with-rearrangements)       | This problem                              |
+| [85. Maximal Rectangle](https://leetcode.com/problems/maximal-rectangle)                                                 | Same column heights idea, monotonic stack |
+| [84. Largest Rectangle in Histogram](https://leetcode.com/problems/largest-rectangle-in-histogram)                       | Column heights histogram problem          |
+| [221. Maximal Square](https://leetcode.com/problems/maximal-square)                                                      | DP on binary matrix                       |
+| [1074. Number of Submatrices That Sum to Target](https://leetcode.com/problems/number-of-submatrices-that-sum-to-target) | 2D prefix sum on matrix                   |

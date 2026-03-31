@@ -7,7 +7,7 @@ tags: [Array]
 leetcode_url: "https://leetcode.com/problems/1-bit-and-2-bit-characters"
 ---
 
-# 1-bit and 2-bit Characters / 1-bit and 2-bit Characters
+# 1-bit and 2-bit Characters / Ký Tự 1-bit và 2-bit
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Array
 > **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
@@ -17,87 +17,90 @@ leetcode_url: "https://leetcode.com/problems/1-bit-and-2-bit-characters"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Phân tích bài "1-bit and 2-bit Characters" — xác định pattern phù hợp dựa trên constraints và input/output.
-
-**Pattern Recognition:**
-
-- Signal: "problem-specific signals" → **Array**
-- Bài này thuộc dạng Array — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — 1-bit and 2-bit Characters example:**
+**Analogy:** Giống **đọc mã Morse** — ký tự 1-bit chiếm `[0]`, ký tự 2-bit chiếm `[1,0]` hoặc `[1,1]`. Quét từ trái: gặp `1` → nhảy 2 bước (2-bit char), gặp `0` → nhảy 1 bước (1-bit char). Nếu con trỏ **dừng đúng ở chỉ số cuối** → ký tự cuối là 1-bit.
 
 ```
-// TODO: Add step-by-step visual for Array
-// Show one complete example with state at each step
+bits = [1, 0, 0]
+i=0: bits[0]=1 → 2-bit char → i=2
+i=2: bits[2]=0 → 1-bit char → i=3 (= length)
+Stopped at index 2 (last) before consuming → YES ✅
+
+bits = [1, 1, 1, 0]
+i=0 → i=2 (2-bit)
+i=2 → i=4 (overshoot, last char was part of 2-bit) → NO ❌
 ```
 
 ---
 
-## Problem Description
+## Problem Description / Mô Tả Bài Toán
 
-1-bit and 2-bit Characters. ([LeetCode](https://leetcode.com/problems/1-bit-and-2-bit-characters))
+Hai loại ký tự: **1-bit** = `[0]`, **2-bit** = `[1,0]` hoặc `[1,1]`. Mảng `bits` luôn kết thúc bằng `0`. Kiểm tra xem ký tự **cuối cùng** có thể là **ký tự 1-bit** không.
 
-Difficulty: Easy | Acceptance: 45.1%
+- **Input:** `bits = [1,0,0]` → **Output:** `true`
+- **Input:** `bits = [1,1,1,0]` → **Output:** `false`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/1-bit-and-2-bit-characters) for full constraints
+**Constraints:** `1 <= bits.length <= 1000`, `bits[i] ∈ {0,1}`, `bits[last] === 0`
 
 ---
 
-## 📝 Interview Tips
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **EN:** Greedy left-to-right: bits[i]=1 → skip 2, bits[i]=0 → skip 1. **VI:** Quét tham lam trái-phải: 1 → nhảy 2, 0 → nhảy 1.
+2. **EN:** Stop loop before last element; check if pointer lands exactly there. **VI:** Dừng vòng lặp trước phần tử cuối; kiểm tra con trỏ có dừng đúng đó không.
+3. **EN:** Math insight: last 0 is standalone iff count of consecutive 1s before it is even. **VI:** Toán học: 0 cuối là 1-bit iff số 1 liên tiếp trước nó là chẵn.
+4. **EN:** No ambiguity: a 1 always starts a 2-bit char (first bit of two-bit codes is always 1). **VI:** Không nhập nhằng: `1` luôn bắt đầu char 2-bit.
+5. **EN:** Edge case: bits=[0] → single 1-bit char → return true. **VI:** bits=[0] → true.
+6. **EN:** Time O(n), Space O(1). **VI:** O(n) thời gian, O(1) không gian.
 
 ---
 
-## Solutions
+## Solutions / Giải Pháp
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function 1BitAnd2BitCharactersBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// ─── Solution 1: Greedy Scan  O(n) time, O(1) space ─────────────────────────
+function isOneBitCharacter(bits: number[]): boolean {
+  let i = 0;
+  // Stop at last element (bits.length - 1); we want to see if we land on it
+  while (i < bits.length - 1) {
+    i += bits[i] === 1 ? 2 : 1;
+  }
+  return i === bits.length - 1; // landed exactly on last 0 → 1-bit char
 }
 
-/**
- * Solution 2: Optimized — Array
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function 1BitAnd2BitCharacters(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Array
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
+// ─── Solution 2: Count Trailing 1s (Math)  O(n) time, O(1) space ─────────────
+// Last 0 is standalone iff the number of consecutive 1s before it is even.
+function isOneBitCharacterMath(bits: number[]): boolean {
+  let count = 0;
+  let i = bits.length - 2; // start just before the guaranteed last 0
+  while (i >= 0 && bits[i] === 1) {
+    count++;
+    i--;
+  }
+  return count % 2 === 0; // even # of preceding 1s → last 0 is 1-bit
 }
 
-// === Test Cases ===
-// console.log(1BitAnd2BitCharacters(/* example 1 */)); // expected
-// console.log(1BitAnd2BitCharacters(/* example 2 */)); // expected
-// console.log(1BitAnd2BitCharacters(/* edge case */)); // expected
+// ─── Solution 3: Recursive  O(n) time (educational) ─────────────────────────
+function isOneBitCharacterRec(bits: number[], i = 0): boolean {
+  if (i === bits.length - 1) return true;
+  if (i >= bits.length) return false;
+  return isOneBitCharacterRec(bits, i + (bits[i] === 1 ? 2 : 1));
+}
+
+// ─── Tests ───────────────────────────────────────────────────────────────────
+console.log(isOneBitCharacter([1, 0, 0])); // true
+console.log(isOneBitCharacter([1, 1, 1, 0])); // false
+console.log(isOneBitCharacter([0])); // true
+console.log(isOneBitCharacterMath([1, 0, 0])); // true
+console.log(isOneBitCharacterMath([1, 1, 1, 0])); // false
+console.log(isOneBitCharacterRec([1, 0, 0])); // true
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) — same pattern: Matrix / Simulation
-- [First Missing Positive](https://leetcode.com/problems/first-missing-positive) — same pattern: Hash Map
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Kth Largest Element in an Array](https://leetcode.com/problems/kth-largest-element-in-an-array) — same pattern: Heap / Priority Queue
-- [1-bit and 2-bit Characters — LeetCode](https://leetcode.com/problems/1-bit-and-2-bit-characters) — problem page
+| #   | Problem                                                        | Difficulty | Pattern          |
+| --- | -------------------------------------------------------------- | ---------- | ---------------- |
+| 91  | [Decode Ways](https://leetcode.com/problems/decode-ways)       | 🟡 Medium  | DP               |
+| 639 | [Decode Ways II](https://leetcode.com/problems/decode-ways-ii) | 🔴 Hard    | DP               |
+| 89  | [Gray Code](https://leetcode.com/problems/gray-code)           | 🟡 Medium  | Bit Manipulation |

@@ -7,100 +7,195 @@ tags: [Hash Table, Two Pointers, Tree, Depth-First Search, Breadth-First Search]
 leetcode_url: "https://leetcode.com/problems/two-sum-iv-input-is-a-bst"
 ---
 
-# Two Sum IV - Input is a BST / Two Sum IV - Input is a BST
+# Two Sum IV - Input is a BST / Tổng Hai Phần Tử IV - BST
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Two Pointers
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: HashSet DFS / Two Pointers on BST
 > **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [All Nodes Distance K in Binary Tree](https://leetcode.com/problems/all-nodes-distance-k-in-binary-tree) | [Amount of Time for Binary Tree to Be Infected](https://leetcode.com/problems/amount-of-time-for-binary-tree-to-be-infected)
+> **See also**: [Two Sum](https://leetcode.com/problems/two-sum) | [Two Sum III - Data structure design](https://leetcode.com/problems/two-sum-iii-data-structure-design)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Hãy tưởng tượng hai người đi từ hai đầu con đường, tiến lại gần nhau. Mỗi bước, người nào ở vị trí "tốt hơn" sẽ đứng yên, người kia tiến. Khi họ gặp nhau, bài toán được giải.
+**Analogy:** Bài này giống Two Sum cổ điển nhưng input là BST thay vì mảng. Có 3 cách:
+
+1. **HashSet + DFS**: duyệt cây, kiểm tra `k - node.val` có trong set chưa → O(n) đơn giản nhất
+2. **In-order + Two Pointers**: BST in-order cho mảng sorted → dùng two-pointer L/R → O(n) space
+3. **BST Iterator**: dùng two BST iterators (forward + backward) như two-pointer trên BST
 
 **Pattern Recognition:**
 
-- Signal: "sorted array" + "find pair/triplet" → **Two Pointers**
-- Bài này thuộc dạng Two Pointers — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- "Find two elements summing to k in BST" → HashSet DFS hoặc sorted array + two pointers
+- BST property: in-order traversal cho sorted sequence → two-pointer apply được
 
-**Visual — Two Sum IV - Input is a BST example:**
+**Visual — HashSet DFS vs Two Pointers:**
 
 ```
-arr = [... sorted ...]
- L                 R
+BST:      5
+         / \
+        3   6
+       / \   \
+      2   4   7
+k = 9
 
-Step 1: check condition → move L or R
-Step 2: ...
-Step N: condition met ✅
+HashSet DFS:
+  Visit 5: seen={}, 9-5=4 not in seen → add 5, seen={5}
+  Visit 3: 9-3=6 not in seen → add 3, seen={5,3}
+  Visit 2: 9-2=7 not in seen → add 2
+  Visit 4: 9-4=5 ∈ seen → return true ✓
+
+Two Pointers (in-order = [2,3,4,5,6,7]):
+  L=0(2), R=5(7): 2+7=9 == k → true ✓
 ```
 
 ---
 
 ## Problem Description
 
-Two Sum IV - Input is a BST. ([LeetCode](https://leetcode.com/problems/two-sum-iv-input-is-a-bst))
+Given the root of a Binary Search Tree and an integer `k`, return `true` if there exist **two different nodes** in the BST such that their values sum to `k`, `false` otherwise.
 
-Difficulty: Easy | Acceptance: 62.2%
+- `1 ≤ n ≤ 10^4`, `-10^4 ≤ Node.val ≤ 10^4`, `-10^5 ≤ k ≤ 10^5`
+- The BST may contain duplicates
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+Example 1: root=[5,3,6,2,4,null,7], k=9 → true  (2+7=9 or 4+5=9)
+Example 2: root=[5,3,6,2,4,null,7], k=28 → false  (max sum = 6+7=13)
+Example 3: root=[2,1,3], k=4 → true  (1+3=4)
 ```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/two-sum-iv-input-is-a-bst) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Mảng đã sorted chưa? Có duplicate không?" / Ask if array is sorted and if duplicates exist
-2. **Brute force**: "Dùng 2 vòng for O(n²)" → optimize with two pointers O(n) / Start with nested loops, then optimize
-3. **Optimize**: "Vì mảng sorted, dùng 2 con trỏ L/R tiến vào giữa" / Since sorted, use L/R pointers moving inward
-4. **Edge cases**: "Mảng rỗng, một phần tử, tất cả giống nhau" / Empty array, single element, all same values
+1. **BST không cần đặc biệt cho HashSet** — Cách 1 hoạt động với bất kỳ binary tree nào / _HashSet approach works for any binary tree — BST property not required_
+2. **BST property cho Two Pointers** — In-order BST = sorted array → classic two-pointer O(n) time O(n) space / _BST in-order is sorted → enables O(n) two-pointer after collecting values_
+3. **Same node warning** — Không được dùng cùng node hai lần: two-pointer tự tránh (L≠R); HashSet cần cẩn thận nếu có duplicate values (not values ≠ same node) / _Two-pointer naturally avoids same-node; HashSet is safe here since we check complement before adding_
+4. **Space trade-off** — HashSet O(n) space; Two Pointers O(n) space for sorted array / _Both O(n) space; BFS iterator approach can achieve O(log n) space for balanced BST_
+5. **Follow-up BST iterator** — Dùng stack để iterate BST forward/backward đồng thời: O(log n) space / _BST iterator with stack achieves O(log n) space for balanced BST_
+6. **Edge case** — Single node tree → cannot have two different nodes → always false / _n=1 → false; k=2×only_value → still false (need two DIFFERENT nodes)_
 
 ---
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function twoSumIvInputIsABstBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+class TreeNode {
+  val: number;
+  left: TreeNode | null;
+  right: TreeNode | null;
+  constructor(val = 0, left: TreeNode | null = null, right: TreeNode | null = null) {
+    this.val = val;
+    this.left = left;
+    this.right = right;
+  }
 }
 
 /**
- * Solution 2: Optimized — Two Pointers
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: HashSet + DFS
+ * Time: O(n) — visit each node once
+ * Space: O(n) — set + recursion stack
+ * Works for any binary tree, not just BST.
  */
-function twoSumIvInputIsABst(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Two Pointers
-  // Hint: Use L/R pointers on sorted input, move based on comparison
-  throw new Error('Not implemented');
+function findTargetHashSet(root: TreeNode | null, k: number): boolean {
+  const seen = new Set<number>();
+
+  function dfs(node: TreeNode | null): boolean {
+    if (!node) return false;
+    if (seen.has(k - node.val)) return true; // complement found!
+    seen.add(node.val);
+    return dfs(node.left) || dfs(node.right);
+  }
+
+  return dfs(root);
+}
+
+/**
+ * Solution 2: In-order Traversal + Two Pointers
+ * Time: O(n) — collect + scan
+ * Space: O(n) — sorted array
+ * Leverages BST property: in-order gives sorted sequence.
+ */
+function findTarget(root: TreeNode | null, k: number): boolean {
+  // Step 1: collect BST values via in-order (produces sorted array)
+  const vals: number[] = [];
+  function inorder(node: TreeNode | null): void {
+    if (!node) return;
+    inorder(node.left);
+    vals.push(node.val);
+    inorder(node.right);
+  }
+  inorder(root);
+
+  // Step 2: classic two-pointer on sorted array
+  let l = 0,
+    r = vals.length - 1;
+  while (l < r) {
+    const sum = vals[l] + vals[r];
+    if (sum === k) return true;
+    if (sum < k) l++;
+    else r--;
+  }
+  return false;
+}
+
+/**
+ * Solution 3: BFS + HashSet (iterative, avoids recursion stack overflow)
+ * Time: O(n), Space: O(n)
+ */
+function findTargetBFS(root: TreeNode | null, k: number): boolean {
+  if (!root) return false;
+  const seen = new Set<number>();
+  const queue: TreeNode[] = [root];
+
+  while (queue.length > 0) {
+    const node = queue.shift()!;
+    if (seen.has(k - node.val)) return true;
+    seen.add(node.val);
+    if (node.left) queue.push(node.left);
+    if (node.right) queue.push(node.right);
+  }
+  return false;
 }
 
 // === Test Cases ===
-// console.log(twoSumIvInputIsABst(/* example 1 */)); // expected
-// console.log(twoSumIvInputIsABst(/* example 2 */)); // expected
-// console.log(twoSumIvInputIsABst(/* edge case */)); // expected
+function makeTree(vals: (number | null)[]): TreeNode | null {
+  if (!vals.length || vals[0] === null) return null;
+  const root = new TreeNode(vals[0]!);
+  const q = [root];
+  let i = 1;
+  while (q.length && i < vals.length) {
+    const n = q.shift()!;
+    if (i < vals.length && vals[i] !== null) {
+      n.left = new TreeNode(vals[i]!);
+      q.push(n.left);
+    }
+    i++;
+    if (i < vals.length && vals[i] !== null) {
+      n.right = new TreeNode(vals[i]!);
+      q.push(n.right);
+    }
+    i++;
+  }
+  return root;
+}
+
+const bst = makeTree([5, 3, 6, 2, 4, null, 7]);
+console.log(findTarget(bst, 9)); // true  (2+7 or 4+5)
+console.log(findTarget(bst, 28)); // false
+console.log(findTarget(makeTree([2, 1, 3]), 4)); // true  (1+3)
+console.log(findTarget(makeTree([2, 1, 3]), 1)); // false
+
+console.log(findTargetHashSet(bst, 9)); // true
+console.log(findTargetBFS(bst, 9)); // true
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [All Nodes Distance K in Binary Tree](https://leetcode.com/problems/all-nodes-distance-k-in-binary-tree) — same pattern: BFS
-- [Amount of Time for Binary Tree to Be Infected](https://leetcode.com/problems/amount-of-time-for-binary-tree-to-be-infected) — same pattern: BFS
-- [Vertical Order Traversal of a Binary Tree](https://leetcode.com/problems/vertical-order-traversal-of-a-binary-tree) — same pattern: BFS
-- [Binary Tree Vertical Order Traversal](https://leetcode.com/problems/binary-tree-vertical-order-traversal) — same pattern: BFS
-- [Two Sum IV - Input is a BST — LeetCode](https://leetcode.com/problems/two-sum-iv-input-is-a-bst) — problem page
+| Problem                                                                                                       | Pattern       | Difficulty |
+| ------------------------------------------------------------------------------------------------------------- | ------------- | ---------- |
+| [Two Sum](https://leetcode.com/problems/two-sum)                                                              | Hash Map      | Easy       |
+| [Two Sum II - Input Array Is Sorted](https://leetcode.com/problems/two-sum-ii-input-array-is-sorted)          | Two Pointers  | Medium     |
+| [Count BST Nodes with Value in Given Range](https://leetcode.com/problems/count-nodes-with-the-highest-score) | BST traversal | Medium     |
+| [Kth Smallest Element in a BST](https://leetcode.com/problems/kth-smallest-element-in-a-bst)                  | BST in-order  | Medium     |

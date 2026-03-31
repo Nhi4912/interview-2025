@@ -7,7 +7,7 @@ tags: [Array, Hash Table, Matrix]
 leetcode_url: "https://leetcode.com/problems/sparse-matrix-multiplication"
 ---
 
-# Sparse Matrix Multiplication / Sparse Matrix Multiplication
+# Sparse Matrix Multiplication / Nhân Ma Trận Thưa
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Hash Map
 > **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
@@ -17,90 +17,131 @@ leetcode_url: "https://leetcode.com/problems/sparse-matrix-multiplication"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
+**Analogy:** Giống **sách thưa trang trống** — hầu hết ô đều là 0. Nhân thông thường lãng phí tính `0 × x = 0`. Chỉ tính khi **cả hai nhân tử ≠ 0**.
 
-**Pattern Recognition:**
-
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Sparse Matrix Multiplication example:**
+**Key:** `C[i][j] = Σ_k A[i][k] × B[k][j]`. Skip khi A[i][k]=0, tiết kiệm phần lớn phép tính trong ma trận thưa.
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
-
-Key insight: store complement for O(1) lookup
+A = [[1,0,0],     B = [[7,0,0],
+     [-1,0,3]]         [0,0,0],
+                        [0,0,1]]
+i=0,k=0: A[0][0]=1≠0 → j=0: B[0][0]=7 → C[0][0]+=7
+         k=1: A[0][1]=0 → skip
+         k=2: A[0][2]=0 → skip
+i=1,k=0: A[1][0]=-1≠0 → C[1][0]+=-7
+         k=2: A[1][2]=3≠0 → C[1][2]+=3
+Result: [[7,0,0],[-7,0,3]]
 ```
 
 ---
 
-## Problem Description
+## Problem Description / Mô Tả Bài Toán
 
-Sparse Matrix Multiplication. ([LeetCode](https://leetcode.com/problems/sparse-matrix-multiplication))
+Cho hai ma trận `mat1` (m×k) và `mat2` (k×n), phần lớn phần tử là 0. Trả về tích `mat1 × mat2` (m×n), bỏ qua phép tính với số 0.
 
-Difficulty: Medium | Acceptance: 68.9%
+- **Input:** `mat1=[[1,0,0],[-1,0,3]], mat2=[[7,0,0],[0,0,0],[0,0,1]]` → **Output:** `[[7,0,0],[-7,0,3]]`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/sparse-matrix-multiplication) for full constraints
+**Constraints:** `1 <= m, n, k <= 100`, `-100 <= mat[i][j] <= 100`
 
 ---
 
-## 📝 Interview Tips
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **EN:** Skip inner loop when mat1[i][k] == 0 — biggest win for sparse matrices. **VI:** Bỏ qua vòng lặp trong khi mat1[i][k]=0 — tiết kiệm nhiều nhất.
+2. **EN:** Standard matrix multiply O(m×k×n); sparse version is the same worst case but much faster in practice. **VI:** Worst case vẫn O(m×k×n) nhưng nhanh hơn nhiều trong thực tế.
+3. **EN:** Precompute non-zero indices of mat1 per row for cleaner code. **VI:** Tính trước vị trí khác 0 của mat1 theo hàng.
+4. **EN:** For very large sparse matrices: store as list of (row, col, val) triples. **VI:** Ma trận thưa rất lớn → lưu dạng (row, col, val).
+5. **EN:** The result matrix is not necessarily sparse. **VI:** Ma trận kết quả không nhất thiết thưa.
+6. **EN:** Mention CSR (Compressed Sparse Row) as a follow-up format. **VI:** Đề cập CSR trong câu mở rộng.
 
 ---
 
-## Solutions
+## Solutions / Giải Pháp
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function sparseMatrixMultiplicationBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// ─── Solution 1: Skip Zeros (Optimized)  O(m*k*n) worst, fast in practice ────
+function multiply(mat1: number[][], mat2: number[][]): number[][] {
+  const m = mat1.length,
+    k = mat1[0].length,
+    n = mat2[0].length;
+  const result: number[][] = Array.from({ length: m }, () => new Array(n).fill(0));
+
+  for (let i = 0; i < m; i++) {
+    for (let p = 0; p < k; p++) {
+      if (mat1[i][p] === 0) continue; // skip zero row element in mat1
+      for (let j = 0; j < n; j++) {
+        if (mat2[p][j] === 0) continue; // skip zero column element in mat2
+        result[i][j] += mat1[i][p] * mat2[p][j];
+      }
+    }
+  }
+
+  return result;
 }
 
-/**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function sparseMatrixMultiplication(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
+// ─── Solution 2: Hashmap Precomputation (scales well for very sparse) ─────────
+function multiplyHashmap(mat1: number[][], mat2: number[][]): number[][] {
+  const m = mat1.length,
+    k = mat1[0].length,
+    n = mat2[0].length;
+  const result: number[][] = Array.from({ length: m }, () => new Array(n).fill(0));
+
+  // Build mat2 lookup: row p → list of [col j, value]
+  const mat2ByRow = new Map<number, Array<[number, number]>>();
+  for (let p = 0; p < k; p++) {
+    for (let j = 0; j < n; j++) {
+      if (mat2[p][j] !== 0) {
+        if (!mat2ByRow.has(p)) mat2ByRow.set(p, []);
+        mat2ByRow.get(p)!.push([j, mat2[p][j]]);
+      }
+    }
+  }
+
+  // Multiply using non-zero entries only
+  for (let i = 0; i < m; i++) {
+    for (let p = 0; p < k; p++) {
+      if (mat1[i][p] === 0) continue;
+      for (const [j, v2] of mat2ByRow.get(p) ?? []) {
+        result[i][j] += mat1[i][p] * v2;
+      }
+    }
+  }
+
+  return result;
 }
 
-// === Test Cases ===
-// console.log(sparseMatrixMultiplication(/* example 1 */)); // expected
-// console.log(sparseMatrixMultiplication(/* example 2 */)); // expected
-// console.log(sparseMatrixMultiplication(/* edge case */)); // expected
+// ─── Tests ───────────────────────────────────────────────────────────────────
+const A = [
+  [1, 0, 0],
+  [-1, 0, 3],
+];
+const B = [
+  [7, 0, 0],
+  [0, 0, 0],
+  [0, 0, 1],
+];
+console.log(multiply(A, B)); // [[7,0,0],[-7,0,3]]
+console.log(
+  multiply(
+    [
+      [1, 0],
+      [0, 0],
+    ],
+    [
+      [0, 0],
+      [0, 0],
+    ],
+  ),
+); // [[0,0],[0,0]]
+console.log(multiplyHashmap(A, B)); // [[7,0,0],[-7,0,3]]
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Design Excel Sum Formula](https://leetcode.com/problems/design-excel-sum-formula) — same pattern: Topological Sort
-- [Minimum Operations to Write the Letter Y on a Grid](https://leetcode.com/problems/minimum-operations-to-write-the-letter-y-on-a-grid) — same pattern: Hash Map
-- [Check if Every Row and Column Contains All Numbers](https://leetcode.com/problems/check-if-every-row-and-column-contains-all-numbers) — same pattern: Hash Map
-- [Find Winner on a Tic Tac Toe Game](https://leetcode.com/problems/find-winner-on-a-tic-tac-toe-game) — same pattern: Hash Map
-- [Sparse Matrix Multiplication — LeetCode](https://leetcode.com/problems/sparse-matrix-multiplication) — problem page
+| #    | Problem                                                                        | Difficulty | Pattern |
+| ---- | ------------------------------------------------------------------------------ | ---------- | ------- |
+| 74   | [Search a 2D Matrix](https://leetcode.com/problems/search-a-2d-matrix)         | 🟡 Medium  | Matrix  |
+| 54   | [Spiral Matrix](https://leetcode.com/problems/spiral-matrix)                   | 🟡 Medium  | Matrix  |
+| 1901 | [Find a Peak Element II](https://leetcode.com/problems/find-a-peak-element-ii) | 🟡 Medium  | Matrix  |

@@ -7,9 +7,9 @@ tags: [Math, Binary Search]
 leetcode_url: "https://leetcode.com/problems/reach-a-number"
 ---
 
-# Reach a Number / Reach a Number
+# Reach a Number / Đến Một Con Số
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Binary Search
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Math + Greedy
 > **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
 > **See also**: [Sqrt(x)](https://leetcode.com/problems/sqrtx) | [Random Pick with Weight](https://leetcode.com/problems/random-pick-with-weight)
 
@@ -17,50 +17,55 @@ leetcode_url: "https://leetcode.com/problems/reach-a-number"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Tưởng tượng tìm một trang trong từ điển — bạn mở giữa, xem số trang, rồi chọn nửa phù hợp. Mỗi lần giảm một nửa phạm vi tìm kiếm.
+**Analogy:** Giống trò chơi nhảy ô — bước 1 nhảy 1 ô, bước 2 nhảy 2 ô... Bạn có thể nhảy trái hoặc phải. Câu hỏi: ít nhất mấy bước để đến đích? Thay vì simulate, hãy nhận ra rằng tổng sau n bước là `S = n(n+1)/2`, và ta cần `S - target` chia hết cho 2 (vì "lật" một bước i từ + thành - thay đổi S đúng 2i).
 
 **Pattern Recognition:**
 
-- Signal: "sorted" + "find target/position" → **Binary Search**
-- Bài này thuộc dạng Binary Search — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "minimum steps to reach target on number line" + "step size = step number" → **Math**
+- Bài toán đối xứng: `target < 0` thì làm với `-target` (lấy absolute value)
+- Key insight: tìm n nhỏ nhất sao cho `S = n(n+1)/2 ≥ target` VÀ `(S - target) % 2 == 0`
 
-**Visual — Reach a Number example:**
+**Visual — target = 3:**
 
 ```
-[1, 3, 5, 7, 9, 11, 13]
- L        M            R
+Step 1: +1 → pos=1,  S=1
+Step 2: +2 → pos=3 ✓ (hit target in 2 steps!)
 
-Step 1: mid = (L+R)/2, check condition
-Step 2: condition true → move L = mid+1 (or R = mid-1)
-Step N: L meets R → answer found ✅
+target = 5:
+Step 1: S=1 < 5
+Step 2: S=3 < 5
+Step 3: S=6 ≥ 5, (6-5)=1 odd → keep going
+Step 4: S=10 ≥ 5, (10-5)=5 odd → keep going
+Step 5: S=15 ≥ 5, (15-5)=10 even ✓ → answer = 5
+(flip step 5: -5+1+2+3+4 = 5 ✓)
 ```
 
 ---
 
 ## Problem Description
 
-Reach a Number. ([LeetCode](https://leetcode.com/problems/reach-a-number))
+You are at position 0 on the number line. At step `i` (1-indexed) you can move `+i` or `-i`. Return the **minimum number of steps** to reach integer `target`. ([LeetCode 754](https://leetcode.com/problems/reach-a-number))
 
 Difficulty: Medium | Acceptance: 43.9%
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+Example 1: target = 3   → 2  (steps: +1, +2 = 3)
+Example 2: target = 2   → 3  (steps: +1, +2, -3 = 0? No. +1, -2, +3 = 2 ✓)
+Example 3: target = -3  → 2  (symmetric, same as target=3)
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/reach-a-number) for full constraints
+Constraints: `-10^9 ≤ target ≤ 10^9`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Input đã sorted? Cần tìm vị trí chính xác hay boundary?" / Is input sorted? Exact match or boundary?
-2. **Brute force**: "Linear scan O(n)" → optimize with binary search O(log n) / Start linear, suggest binary
-3. **Optimize**: "Chú ý lo/hi boundary: lo <= hi hay lo < hi? mid±1 hay mid?" / Watch boundary conditions carefully
-4. **Edge cases**: "Mảng rỗng, một phần tử, target không tồn tại, overflow mid" / Empty, single, not found, overflow
+1. **Symmetry / Đối xứng**: "target âm thì làm với |target| — bài toán hoàn toàn symmetric"
+2. **Condition 1 / Điều kiện 1**: S = n(n+1)/2 ≥ target (tổng phải đủ lớn để "vươn tới")
+3. **Condition 2 / Điều kiện 2**: (S - target) % 2 == 0 (phần dư chẵn mới flip được một bước)
+4. **Why parity? / Tại sao chẵn?**: Flip bước i từ +i thành -i làm S giảm 2i → chỉ thay đổi chẵn
+5. **Loop at most 3 steps / Không quá 3 bước**: Khi S ≥ target, check parity; nếu lẻ thì n++ và kiểm tra lại (tối đa 2-3 lần)
+6. **Complexity / Độ phức tạp**: O(√target) để tìm n từ S = n(n+1)/2 ≈ target
 
 ---
 
@@ -68,39 +73,87 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Simulation — increment step by step
+ * Time: O(√target)  Space: O(1)
  */
-function reachANumberBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function reachNumberSimulation(target: number): number {
+  target = Math.abs(target);
+  let sum = 0,
+    step = 0;
+  while (sum < target || (sum - target) % 2 !== 0) {
+    step++;
+    sum += step;
+  }
+  return step;
 }
 
 /**
- * Solution 2: Optimized — Binary Search
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Math (Optimal) — find n via quadratic formula, adjust parity
+ * Time: O(1) amortized (at most 3 increments after initial estimate)  Space: O(1)
+ *
+ * S = n(n+1)/2 ≥ target  ⟹  n ≥ (-1 + sqrt(1 + 8*target)) / 2
+ * Then increment n until (S - target) % 2 == 0.
+ * Note: at most 2 increments needed (parity cycles every 2 steps).
  */
-function reachANumber(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Binary Search
-  // Hint: Define search space, determine which half to discard
-  throw new Error('Not implemented');
+function reachNumber(target: number): number {
+  target = Math.abs(target);
+  // Start with minimum n where n(n+1)/2 >= target
+  let n = Math.ceil((-1 + Math.sqrt(1 + 8 * target)) / 2);
+  let sum = (n * (n + 1)) / 2;
+  // Ensure sum >= target (floating point safety)
+  while (sum < target) {
+    n++;
+    sum += n;
+  }
+  // Now adjust for parity: need (sum - target) even
+  while ((sum - target) % 2 !== 0) {
+    n++;
+    sum += n;
+  }
+  return n;
 }
 
-// === Test Cases ===
-// console.log(reachANumber(/* example 1 */)); // expected
-// console.log(reachANumber(/* example 2 */)); // expected
-// console.log(reachANumber(/* edge case */)); // expected
+/**
+ * Solution 3: Binary Search variant — binary search on n, then fix parity
+ * Time: O(log(target))  Space: O(1)
+ */
+function reachNumberBS(target: number): number {
+  target = Math.abs(target);
+  let lo = 1,
+    hi = 2 * target + 2;
+  // Find minimum n where n(n+1)/2 >= target
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if ((mid * (mid + 1)) / 2 >= target) hi = mid;
+    else lo = mid + 1;
+  }
+  let n = lo;
+  let sum = (n * (n + 1)) / 2;
+  while ((sum - target) % 2 !== 0) {
+    n++;
+    sum += n;
+  }
+  return n;
+}
+
+// === Tests ===
+console.log(reachNumber(3)); // 2
+console.log(reachNumber(2)); // 3
+console.log(reachNumber(-3)); // 2
+console.log(reachNumber(5)); // 5
+console.log(reachNumber(0)); // 0
+console.log(reachNumberSimulation(3)); // 2
+console.log(reachNumberBS(5)); // 5
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Sqrt(x)](https://leetcode.com/problems/sqrtx) — same pattern: Binary Search
-- [Random Pick with Weight](https://leetcode.com/problems/random-pick-with-weight) — same pattern: Prefix Sum
-- [Missing Number](https://leetcode.com/problems/missing-number) — same pattern: Binary Search
-- [Sell Diminishing-Valued Colored Balls](https://leetcode.com/problems/sell-diminishing-valued-colored-balls) — same pattern: Binary Search
-- [Reach a Number — LeetCode](https://leetcode.com/problems/reach-a-number) — problem page
+| Problem                                                               | Relationship                           |
+| --------------------------------------------------------------------- | -------------------------------------- |
+| [754. Reach a Number](https://leetcode.com/problems/reach-a-number)   | This problem                           |
+| [69. Sqrt(x)](https://leetcode.com/problems/sqrtx)                    | Math + binary search on integer answer |
+| [263. Ugly Number](https://leetcode.com/problems/ugly-number)         | Math-based number theory               |
+| [1. Two Sum](https://leetcode.com/problems/two-sum)                   | Classic pairing problem                |
+| [780. Reaching Points](https://leetcode.com/problems/reaching-points) | Similar reachability on number plane   |

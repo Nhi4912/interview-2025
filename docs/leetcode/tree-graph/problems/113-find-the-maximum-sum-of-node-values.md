@@ -7,9 +7,9 @@ tags: [Array, Dynamic Programming, Greedy, Bit Manipulation, Tree]
 leetcode_url: "https://leetcode.com/problems/find-the-maximum-sum-of-node-values"
 ---
 
-# Find the Maximum Sum of Node Values / Find the Maximum Sum of Node Values
+# Find the Maximum Sum of Node Values / Tổng Giá Trị Node Tối Đa
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Dynamic Programming
+> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Greedy + XOR Parity
 > **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
 > **See also**: [Non-overlapping Intervals](https://leetcode.com/problems/non-overlapping-intervals) | [Closest Subsequence Sum](https://leetcode.com/problems/closest-subsequence-sum)
 
@@ -17,52 +17,76 @@ leetcode_url: "https://leetcode.com/problems/find-the-maximum-sum-of-node-values
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**Analogy:** Bạn có thể hoán đổi trạng thái hai node trên cùng một cạnh bằng cách XOR cả hai với k. Điểm mấu chốt: khi áp dụng XOR dọc một đường đi từ u đến v, tất cả node trung gian bị XOR hai lần (= không đổi). Kết quả là: **mỗi thao tác chỉ XOR đúng 2 node bất kỳ** trong cây. Vì vậy ta chỉ cần tìm tập con kích thước **chẵn** của các node sao cho tổng `gain[i] = (nums[i] ^ k) - nums[i]` lớn nhất.
 
 **Pattern Recognition:**
 
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "XOR on tree edges, maximize sum" → **Greedy với XOR parity**
+- Key insight: XOR dọc path triệt tiêu trung gian → chọn bất kỳ số chẵn node
+- Sắp xếp gains giảm dần, lấy các cặp dương là xong
 
-**Visual — Find the Maximum Sum of Node Values example:**
+**Visual — XOR Parity on Tree:**
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+nums=[1,2,1], k=3, edges=[[0,1],[0,2]]
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+gains = [(1^3)-1, (2^3)-2, (1^3)-1]
+       = [3-1,    1-2,     3-1    ]
+       = [2,      -1,       2     ]
+
+sorted desc: [2, 2, -1]
+Take pair (2,2): sum=4 > 0 ✓
+Skip -1 (odd, can't take alone)
+
+result = (1+2+1) + 4 = 8? Wait: 1+2+1=4, gains_taken=4, answer=4+4=8
+Hmm: XOR nodes 0 and 2 → [1^3, 2, 1^3] = [2, 2, 2] → sum=6 ✓
+
+Wait let me recheck: gains=[2,-1,2], take pair (2,2)=4
+result = original_sum + taken_gains = 4 + 4 = 8? But max sum = 6.
+Ah: gain means DELTA. original_sum=4, taking gains 2+2=4 → new_sum=4+4=8?
+But nums after XOR = [2,2,2]=6. Something off.
+
+Actually: gain[i]=(nums[i]^k)-nums[i]. gain[0]=(1^3)-1=2, gain[2]=(1^3)-1=2
+new_sum = 1+2+(1^3)=1+2+2=5? No: we XOR nodes 0 AND 2.
+new nums = [1^3, 2, 1^3] = [2,2,2], sum=6.
+original=4, delta=+2, but gains[0]+gains[2]=2+2=4. 4+4=8 ≠ 6.
+
+BUG IN MY EXAMPLE — let me recheck gains:
+nums[0]=1, k=3: 1^3 = 1 XOR 3 = 01 XOR 11 = 10 = 2. gain[0]=2-1=1.
+nums[1]=2, k=3: 2^3 = 10 XOR 11 = 01 = 1. gain[1]=1-2=-1.
+nums[2]=1, k=3: same as nums[0]. gain[2]=1.
+gains=[1,-1,1], sorted=[1,1,-1].
+Take pair(1,1)=2>0. result=4+2=6 ✓ Correct!
 ```
 
 ---
 
 ## Problem Description
 
-Find the Maximum Sum of Node Values. ([LeetCode](https://leetcode.com/problems/find-the-maximum-sum-of-node-values))
+Tree with `n` nodes and values `nums`. Integer `k`. Operation: pick any edge `(u,v)`, XOR both `nums[u]` and `nums[v]` with `k`. Perform **any number of operations** to **maximize the total sum** of all node values.
 
-Difficulty: Hard | Acceptance: 69.8%
+- `2 ≤ n ≤ 2×10^4`, `1 ≤ nums[i] ≤ 10^9`, `1 ≤ k ≤ 10^9`
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+Example 1: nums=[1,2,1], k=3, edges=[[0,1],[0,2]] → 6
+  XOR nodes 0 and 2 → [2,2,2], sum=6
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/find-the-maximum-sum-of-node-values) for full constraints
+Example 2: nums=[2,3], k=7, edges=[[0,1]] → 9
+  gains=[3,4], take pair → 2+3+3+4=12? No: 2^7=5,3^7=4 → 5+4=9 ✓
+
+Example 3: nums=[7,7,7,7,7], k=3 → 35  (all gains negative, keep original)
+```
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+1. **Key XOR insight** — "XOR dọc path → 2 đầu bị ảnh hưởng" → chọn bất kỳ 2 node, không cần edge trực tiếp / _XOR along path affects only 2 endpoints — pick ANY pair of nodes_
+2. **Parity constraint** — Phải XOR số chẵn node; nếu số positive gains lẻ, bỏ gain nhỏ nhất / _Must XOR even count — if odd count of positive gains, skip the smallest_
+3. **Greedy correctness** — Sắp gains giảm dần, lấy cặp liên tiếp khi cặp đó > 0 là tối ưu / _Sorting and taking pairs in order is globally optimal (exchange argument)_
+4. **DP alternative** — `dp[parity]` = max sum khi đã XOR lẻ/chẵn nodes: `dp0, dp1` cập nhật qua từng node / _DP with parity state also works in O(n)_
+5. **Watch overflow** — Giá trị lên đến 10^9 × 2×10^4 = 2×10^13, dùng `number` JS đủ (safe integer) / _Values up to ~2×10^13, within JS safe integer range_
+6. **Edge case** — Tất cả gains âm → không XOR gì, trả original sum / _All gains negative → return original sum unchanged_
 
 ---
 
@@ -70,39 +94,71 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Greedy — Sort Gains, Take Even-Count Positive Pairs
+ * Time: O(n log n) — sorting dominates
+ * Space: O(n) — gains array
+ *
+ * Core insight: applying XOR on any path affects exactly 2 endpoint nodes.
+ * So we can effectively XOR any even-sized subset of nodes.
+ * gain[i] = (nums[i] ^ k) - nums[i]. Take max even-count gains.
  */
-function findTheMaximumSumOfNodeValuesBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function maximumValueSum(nums: number[], k: number, _edges: number[][]): number {
+  const gains = nums.map((v) => (v ^ k) - v).sort((a, b) => b - a);
+  let result = nums.reduce((s, v) => s + v, 0);
+
+  for (let i = 0; i + 1 < gains.length; i += 2) {
+    const pairGain = gains[i] + gains[i + 1];
+    if (pairGain <= 0) break; // remaining pairs only worse
+    result += pairGain;
+  }
+  return result;
 }
 
 /**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: DP with Parity State (O(n) time)
+ * Time: O(n) — single pass
+ * Space: O(1) — two rolling variables
+ *
+ * dp0 = max sum when we've XOR'd an EVEN count of nodes so far
+ * dp1 = max sum when we've XOR'd an ODD count of nodes so far
+ * For each node: choose to keep (v) or XOR (v^k), update both states.
  */
-function findTheMaximumSumOfNodeValues(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function maximumValueSumDP(nums: number[], k: number, _edges: number[][]): number {
+  let dp0 = 0; // even XOR count (start: 0 nodes processed, even = 0)
+  let dp1 = -Infinity; // odd XOR count (impossible initially)
+
+  for (const v of nums) {
+    const xv = v ^ k;
+    const next0 = Math.max(dp0 + v, dp1 + xv); // keep v (even stays even) or XOR (odd becomes even)
+    const next1 = Math.max(dp1 + v, dp0 + xv); // keep v (odd stays odd) or XOR (even becomes odd)
+    dp0 = next0;
+    dp1 = next1;
+  }
+  return dp0; // must end with even count of XOR'd nodes
 }
 
 // === Test Cases ===
-// console.log(findTheMaximumSumOfNodeValues(/* example 1 */)); // expected
-// console.log(findTheMaximumSumOfNodeValues(/* example 2 */)); // expected
-// console.log(findTheMaximumSumOfNodeValues(/* edge case */)); // expected
+const e1 = [
+  [0, 1],
+  [0, 2],
+];
+console.log(maximumValueSum([1, 2, 1], 3, e1)); // 6
+console.log(maximumValueSum([2, 3], 7, [[0, 1]])); // 9
+console.log(maximumValueSum([7, 7, 7, 7, 7], 3, [])); // 35 (no XOR helps)
+console.log(maximumValueSum([24, 78, 1, 97, 44], 6, [])); // 260
+
+console.log(maximumValueSumDP([1, 2, 1], 3, e1)); // 6
+console.log(maximumValueSumDP([2, 3], 7, [[0, 1]])); // 9
+console.log(maximumValueSumDP([7, 7, 7, 7, 7], 3, [])); // 35
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Non-overlapping Intervals](https://leetcode.com/problems/non-overlapping-intervals) — same pattern: Dynamic Programming
-- [Closest Subsequence Sum](https://leetcode.com/problems/closest-subsequence-sum) — same pattern: Two Pointers
-- [Minimize the Maximum Difference of Pairs](https://leetcode.com/problems/minimize-the-maximum-difference-of-pairs) — same pattern: Dynamic Programming
-- [Greatest Sum Divisible by Three](https://leetcode.com/problems/greatest-sum-divisible-by-three) — same pattern: Dynamic Programming
-- [Find the Maximum Sum of Node Values — LeetCode](https://leetcode.com/problems/find-the-maximum-sum-of-node-values) — problem page
+| Problem                                                                                                          | Pattern              | Difficulty |
+| ---------------------------------------------------------------------------------------------------------------- | -------------------- | ---------- |
+| [Greatest Sum Divisible by Three](https://leetcode.com/problems/greatest-sum-divisible-by-three)                 | DP with modulo state | Medium     |
+| [Maximize Sum Of Array After K Negations](https://leetcode.com/problems/maximize-sum-of-array-after-k-negations) | Greedy               | Easy       |
+| [Non-overlapping Intervals](https://leetcode.com/problems/non-overlapping-intervals)                             | Greedy Sort          | Medium     |
+| [Closest Subsequence Sum](https://leetcode.com/problems/closest-subsequence-sum)                                 | Meet in the Middle   | Hard       |

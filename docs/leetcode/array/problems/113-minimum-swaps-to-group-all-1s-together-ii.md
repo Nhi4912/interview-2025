@@ -7,7 +7,7 @@ tags: [Array, Sliding Window]
 leetcode_url: "https://leetcode.com/problems/minimum-swaps-to-group-all-1s-together-ii"
 ---
 
-# Minimum Swaps to Group All 1's Together II / Minimum Swaps to Group All 1's Together II
+# Minimum Swaps to Group All 1's Together II / Số Hoán Vị Tối Thiểu Để Gom Tất Cả Số 1
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Sliding Window
 > **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
@@ -17,90 +17,97 @@ leetcode_url: "https://leetcode.com/problems/minimum-swaps-to-group-all-1s-toget
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống như nhìn qua một khung cửa sổ di chuyển trên dãy nhà. Mỗi lần trượt, bạn thêm nhà mới bên phải, bỏ nhà cũ bên trái — luôn giữ đúng kích thước khung.
-
-**Pattern Recognition:**
-
-- Signal: "contiguous subarray/substring" + "max/min length" → **Sliding Window**
-- Bài này thuộc dạng Sliding Window — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Minimum Swaps to Group All 1's Together II example:**
+**Analogy:** Mảng **vòng tròn** — nghĩ như vòng lính đứng thành vòng, một số cầm cờ (1). Muốn gom tất cả lính cầm cờ đứng liền nhau với ít hoán đổi nhất. Số hoán vị = số lính **không cầm cờ** đang nằm trong vùng k cần chiếm = `k - max_ones_in_window`.
 
 ```
-[a, b, c, d, e, f, g]
- |--window--|
-    |--window--|     → slide right, update state
-
-Track: current window state
-Update: add right, remove left when window exceeds constraint
+nums = [0,1,0,1,1,0,0], total_ones = k = 3
+Circular windows of size 3:
+[0,1,0]→1 one  [1,0,1]→2 ones  [0,1,1]→2 ones
+[1,1,0]→2 ones  [1,0,0]→1 one  ...
+Max ones in window = 2 → answer = 3 - 2 = 1
 ```
 
 ---
 
-## Problem Description
+## Problem Description / Mô Tả Bài Toán
 
-Minimum Swaps to Group All 1's Together II. ([LeetCode](https://leetcode.com/problems/minimum-swaps-to-group-all-1s-together-ii))
+Cho mảng nhị phân `nums` (coi như **vòng tròn**). Một lần hoán vị là đổi hai phần tử bất kỳ. Trả về **số hoán vị tối thiểu** để gom tất cả số `1` về liền nhau.
 
-Difficulty: Medium | Acceptance: 65.5%
+- **Input:** `nums = [0,1,0,1,1,0,0]` → **Output:** `1`
+- **Input:** `nums = [0,1,1,1,0,0,1,1,0]` → **Output:** `2`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-swaps-to-group-all-1s-together-ii) for full constraints
+**Constraints:** `1 <= nums.length <= 10^5`, `nums[i]` là `0` hoặc `1`
 
 ---
 
-## 📝 Interview Tips
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-1. **Clarify**: "Cần contiguous subarray hay subsequence?" / Subarray (contiguous) vs subsequence (non-contiguous)
-2. **Brute force**: "Thử mọi subarray O(n²)" → optimize with sliding window O(n) / Try all subarrays then optimize
-3. **Optimize**: "Dùng window expand/shrink, track state bằng map/counter" / Use expand right, shrink left pattern
-4. **Edge cases**: "Chuỗi rỗng, k > array length, tất cả unique/duplicate" / Empty input, k exceeds length
+1. **EN:** Key insight: total ones = window size k; answer = k − max ones in any window. **VI:** Tổng số 1 = k; đáp án = k − max_ones_in_window.
+2. **EN:** Circular array → use `(i + k - 1) % n` for right edge, no array doubling needed. **VI:** Mảng vòng → dùng mod, không cần nhân đôi mảng.
+3. **EN:** Slide window of size k, track ones count with +1/-1 at boundaries. **VI:** Trượt cửa sổ k, cập nhật số 1 khi thêm/bỏ phần tử.
+4. **EN:** If no ones in array → return 0 (k=0 window). **VI:** Không có số 1 → trả 0.
+5. **EN:** Time O(n), Space O(1). **VI:** O(n) thời gian, O(1) không gian.
+6. **EN:** This is a circular array pattern — think mod or array doubling. **VI:** Mảng vòng → xem xét mod hoặc nhân đôi.
 
 ---
 
-## Solutions
+## Solutions / Giải Pháp
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumSwapsToGroupAll1sTogetherIiBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// ─── Solution 1: Circular Sliding Window with Modulo  O(n) time, O(1) space ──
+function minSwaps(nums: number[]): number {
+  const n = nums.length;
+  const k = nums.reduce((s, x) => s + x, 0); // total ones = window size
+  if (k === 0) return 0;
+
+  // Build initial window [0..k-1]
+  let onesInWindow = 0;
+  for (let i = 0; i < k; i++) onesInWindow += nums[i];
+
+  let maxOnes = onesInWindow;
+
+  // Slide window circularly
+  for (let i = 1; i < n; i++) {
+    onesInWindow += nums[(i + k - 1) % n]; // add new right
+    onesInWindow -= nums[i - 1]; // remove old left
+    maxOnes = Math.max(maxOnes, onesInWindow);
+  }
+
+  return k - maxOnes; // zeros inside best window = swaps needed
 }
 
-/**
- * Solution 2: Optimized — Sliding Window
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumSwapsToGroupAll1sTogetherIi(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Sliding Window
-  // Hint: Expand right pointer, shrink left when constraint violated
-  throw new Error('Not implemented');
+// ─── Solution 2: Array Doubling  O(n) time, O(n) space ───────────────────────
+function minSwapsDoubling(nums: number[]): number {
+  const n = nums.length;
+  const k = nums.reduce((s, x) => s + x, 0);
+  if (k === 0) return 0;
+
+  const doubled = [...nums, ...nums];
+  let windowOnes = doubled.slice(0, k).reduce((s, x) => s + x, 0);
+  let maxOnes = windowOnes;
+
+  for (let r = k; r < doubled.length; r++) {
+    windowOnes += doubled[r] - doubled[r - k];
+    maxOnes = Math.max(maxOnes, windowOnes);
+  }
+
+  return k - maxOnes;
 }
 
-// === Test Cases ===
-// console.log(minimumSwapsToGroupAll1sTogetherIi(/* example 1 */)); // expected
-// console.log(minimumSwapsToGroupAll1sTogetherIi(/* example 2 */)); // expected
-// console.log(minimumSwapsToGroupAll1sTogetherIi(/* edge case */)); // expected
+// ─── Tests ───────────────────────────────────────────────────────────────────
+console.log(minSwaps([0, 1, 0, 1, 1, 0, 0])); // 1
+console.log(minSwaps([0, 1, 1, 1, 0, 0, 1, 1, 0])); // 2
+console.log(minSwaps([1, 1, 0, 0, 1])); // 0 (already grouped circularly at pos 4→0→1)
+console.log(minSwapsDoubling([0, 1, 0, 1, 1, 0, 0])); // 1
+console.log(minSwapsDoubling([1, 1, 0, 0, 1])); // 0
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Subarray Product Less Than K](https://leetcode.com/problems/subarray-product-less-than-k) — same pattern: Sliding Window
-- [Minimum Size Subarray Sum](https://leetcode.com/problems/minimum-size-subarray-sum) — same pattern: Sliding Window
-- [Max Consecutive Ones III](https://leetcode.com/problems/max-consecutive-ones-iii) — same pattern: Sliding Window
-- [Longest Continuous Subarray With Absolute Diff Less Than or Equal to Limit](https://leetcode.com/problems/longest-continuous-subarray-with-absolute-diff-less-than-or-equal-to-limit) — same pattern: Monotonic Queue
-- [Minimum Swaps to Group All 1's Together II — LeetCode](https://leetcode.com/problems/minimum-swaps-to-group-all-1s-together-ii) — problem page
+| #    | Problem                                                                                                         | Difficulty | Pattern        |
+| ---- | --------------------------------------------------------------------------------------------------------------- | ---------- | -------------- |
+| 1151 | [Minimum Swaps to Group All 1's Together](https://leetcode.com/problems/minimum-swaps-to-group-all-1s-together) | 🟡 Medium  | Sliding Window |
+| 1004 | [Max Consecutive Ones III](https://leetcode.com/problems/max-consecutive-ones-iii)                              | 🟡 Medium  | Sliding Window |
+| 239  | [Sliding Window Maximum](https://leetcode.com/problems/sliding-window-maximum)                                  | 🔴 Hard    | Sliding Window |
