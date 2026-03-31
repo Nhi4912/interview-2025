@@ -7,100 +7,136 @@ tags: [Array, Two Pointers, Binary Search, Sorting]
 leetcode_url: "https://leetcode.com/problems/3sum-smaller"
 ---
 
-# 3Sum Smaller / 3Sum Smaller
+# 3Sum Smaller / Tổng Ba Số Nhỏ Hơn
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Two Pointers
-> **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Intersection of Two Arrays](https://leetcode.com/problems/intersection-of-two-arrays) | [Heaters](https://leetcode.com/problems/heaters)
-
----
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Sort + Two Pointers
+> **Frequency**: 📘 Tier 3 | **Company tags**: Google
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Hãy tưởng tượng hai người đi từ hai đầu con đường, tiến lại gần nhau. Mỗi bước, người nào ở vị trí "tốt hơn" sẽ đứng yên, người kia tiến. Khi họ gặp nhau, bài toán được giải.
+**Giống đặt 3 người vào thang máy có trọng tải giới hạn:** sort rồi fix người nặng nhất, dùng hai con trỏ để đếm bao nhiêu combo 3 người có tổng < target — khi L+R < target thì mọi pair (L, L+1..R) đều hợp lệ.
 
 **Pattern Recognition:**
 
-- Signal: "sorted array" + "find pair/triplet" → **Two Pointers**
-- Bài này thuộc dạng Two Pointers — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "count triplets with sum < target + unsorted array" → **Sort + Fix One + Two Pointers**
+- Sort → nums[i]≤nums[j]≤nums[k]: chỉ cần check nums[i]+nums[j]+nums[k] < target
+- Khi nums[i]+nums[j]+nums[k] < target: mọi k' < k cũng hợp lệ → count += k-j, j++
 
-**Visual — 3Sum Smaller example:**
+**Visual:**
 
 ```
-arr = [... sorted ...]
- L                 R
+nums=[-2,0,1,3], target=2 → sorted: [-2,0,1,3]
 
-Step 1: check condition → move L or R
-Step 2: ...
-Step N: condition met ✅
+Fix i=0 (-2): j=1(0), k=3(3)
+  -2+0+3=1 < 2 → count += k-j = 2, pairs:(j=1,k=2),(j=1,k=3)... j++
+  j=2(1), k=3(3): -2+1+3=2 not < 2 → k--
+  j=2==k=2: inner loop ends. i=0 count=2
+
+Fix i=1 (0): j=2(1), k=3(3)
+  0+1+3=4 ≥ 2 → k--
+  k=2==j=2: inner loop ends. count still 2
+
+Fix i=2: j=3, loop doesn't run.
+Total: 2 ✅
 ```
-
----
 
 ## Problem Description
 
-3Sum Smaller. ([LeetCode](https://leetcode.com/problems/3sum-smaller))
+Given an array `nums` of `n` integers and `target`, find the count of triplets `(i,j,k)` with `i < j < k` and `nums[i] + nums[j] + nums[k] < target`.
 
-Difficulty: Medium | Acceptance: 51.0%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/3sum-smaller) for full constraints
-
----
+- Example 1: `nums=[-2,0,1,3], target=2` → `2`
+- Example 2: `nums=[], target=0` → `0`
+- Example 3: `nums=[0], target=0` → `0`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Mảng đã sorted chưa? Có duplicate không?" / Ask if array is sorted and if duplicates exist
-2. **Brute force**: "Dùng 2 vòng for O(n²)" → optimize with two pointers O(n) / Start with nested loops, then optimize
-3. **Optimize**: "Vì mảng sorted, dùng 2 con trỏ L/R tiến vào giữa" / Since sorted, use L/R pointers moving inward
-4. **Edge cases**: "Mảng rỗng, một phần tử, tất cả giống nhau" / Empty array, single element, all same values
-
----
+1. **Clarify**: Triplets có thể duplicate không? / Can triplets have duplicate values? Yes (different indices)
+2. **Approach**: Sort + fix i + two pointers / When sum < target, count += right-left (all left..right-1 pairs work)
+3. **Edge cases**: n < 3 → 0 / Array smaller than 3 elements returns 0
+4. **Optimize**: O(n³) brute → O(n²) with two pointers / key insight: when sum < target, multiple pairs valid at once
+5. **Follow-up**: 3Sum Closest? 3Sum Larger? / Variants use same framework
+6. **Complexity**: Time O(n²), Space O(log n) for sort / O(n²) optimal
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 1: Brute Force – Check All Triplets
+ * Time: O(n³) | Space: O(1)
  */
-function 3sumSmallerBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function threeSumSmallerBrute(nums: number[], target: number): number {
+  let count = 0;
+  const n = nums.length;
+  for (let i = 0; i < n - 2; i++)
+    for (let j = i + 1; j < n - 1; j++)
+      for (let k = j + 1; k < n; k++) if (nums[i] + nums[j] + nums[k] < target) count++;
+  return count;
 }
 
-/**
- * Solution 2: Optimized — Two Pointers
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 2: Sort + Binary Search for Each Pair
+ * Time: O(n² log n) | Space: O(log n)
  */
-function 3sumSmaller(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Two Pointers
-  // Hint: Use L/R pointers on sorted input, move based on comparison
-  throw new Error('Not implemented');
+function threeSumSmallerBS(nums: number[], target: number): number {
+  nums.sort((a, b) => a - b);
+  const n = nums.length;
+  let count = 0;
+
+  for (let i = 0; i < n - 2; i++) {
+    for (let j = i + 1; j < n - 1; j++) {
+      const remain = target - nums[i] - nums[j] - 1; // largest k can be
+      // Binary search for rightmost nums[k] <= remain
+      let lo = j + 1,
+        hi = n - 1,
+        pos = j;
+      while (lo <= hi) {
+        const mid = (lo + hi) >> 1;
+        if (nums[mid] <= remain) {
+          pos = mid;
+          lo = mid + 1;
+        } else hi = mid - 1;
+      }
+      count += pos - j;
+    }
+  }
+  return count;
 }
 
-// === Test Cases ===
-// console.log(3sumSmaller(/* example 1 */)); // expected
-// console.log(3sumSmaller(/* example 2 */)); // expected
-// console.log(3sumSmaller(/* edge case */)); // expected
+/** Solution 3: Sort + Two Pointers (Optimal)
+ * Time: O(n²) | Space: O(log n)
+ */
+function threeSumSmaller(nums: number[], target: number): number {
+  nums.sort((a, b) => a - b);
+  const n = nums.length;
+  let count = 0;
+
+  for (let i = 0; i < n - 2; i++) {
+    let j = i + 1,
+      k = n - 1;
+    while (j < k) {
+      if (nums[i] + nums[j] + nums[k] < target) {
+        // All triplets (i, j, j+1..k) are valid
+        count += k - j;
+        j++;
+      } else {
+        k--;
+      }
+    }
+  }
+  return count;
+}
+
+// Tests
+console.log(threeSumSmaller([-2, 0, 1, 3], 2)); // 2
+console.log(threeSumSmaller([], 0)); // 0
+console.log(threeSumSmaller([0, 0, 0], 1)); // 1
+console.log(threeSumSmaller([-1, 1, -1, -1], -1)); // 1
+console.log(threeSumSmallerBrute([-2, 0, 1, 3], 2)); // 2
+console.log(threeSumSmallerBS([-2, 0, 1, 3], 2)); // 2
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Intersection of Two Arrays](https://leetcode.com/problems/intersection-of-two-arrays) — same pattern: Two Pointers
-- [Heaters](https://leetcode.com/problems/heaters) — same pattern: Two Pointers
-- [Find K Closest Elements](https://leetcode.com/problems/find-k-closest-elements) — same pattern: Sliding Window
-- [Maximum Number of Tasks You Can Assign](https://leetcode.com/problems/maximum-number-of-tasks-you-can-assign) — same pattern: Monotonic Queue
-- [3Sum Smaller — LeetCode](https://leetcode.com/problems/3sum-smaller) — problem page
+| Problem                                                                      | Relationship                      |
+| ---------------------------------------------------------------------------- | --------------------------------- |
+| [3Sum](https://leetcode.com/problems/3sum)                                   | Same sort + two-pointer framework |
+| [Valid Triangle Number](https://leetcode.com/problems/valid-triangle-number) | Count triplets with a+b>c         |
+| [Two Sum Less Than K](https://leetcode.com/problems/two-sum-less-than-k)     | Same idea, two elements           |

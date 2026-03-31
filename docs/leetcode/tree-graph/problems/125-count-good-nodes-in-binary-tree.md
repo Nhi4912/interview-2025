@@ -7,100 +7,154 @@ tags: [Tree, Depth-First Search, Breadth-First Search, Binary Tree]
 leetcode_url: "https://leetcode.com/problems/count-good-nodes-in-binary-tree"
 ---
 
-# Count Good Nodes in Binary Tree / Count Good Nodes in Binary Tree
+# Count Good Nodes in Binary Tree / Đếm Nút Tốt Trong Cây Nhị Phân
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: BFS
-> **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Same Tree](https://leetcode.com/problems/same-tree) | [Serialize and Deserialize Binary Tree](https://leetcode.com/problems/serialize-and-deserialize-binary-tree)
-
----
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: DFS
+> **Frequency**: 📘 Tier 3 | **Company tags**: various
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như ném đá xuống ao — sóng lan ra theo từng vòng đều đặn. Khám phá hết tất cả ở khoảng cách 1, rồi mới sang khoảng cách 2.
+**Vietnamese analogy:** Như leo núi và ghi nhận "đỉnh cá nhân" — bạn chỉ đánh dấu một điểm là "tốt" khi nó cao hơn hoặc bằng mọi điểm đã qua trên đường lên. Mỗi lần leo thêm một bậc, bạn cập nhật kỷ lục cao nhất đã thấy.
 
 **Pattern Recognition:**
 
-- Signal: "shortest path (unweighted)" + "level-order" → **BFS**
-- Bài này thuộc dạng BFS — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "path from root" + "max so far" → **DFS tracking state along path**
+- A node X is "good" if no ancestor has a value strictly greater than X
+- Pass `maxOnPath` down the recursion; increment count when `node.val >= maxOnPath`
 
-**Visual — Count Good Nodes in Binary Tree example:**
+**Visual:**
 
 ```
-Level 0:     [root]
-Level 1:   [A, B]
-Level 2: [C, D, E]
+Tree: [3, 1, 4, 3, null, 1, 5]
 
-BFS: process level by level using queue
+        3  ← good (no ancestors, max=3)
+       / \
+      1   4  ← 1 < 3 NOT good | 4 >= 3 GOOD (max=4)
+     /   / \
+    3   1   5  ← 3>=3 GOOD | 1<4 NOT | 5>=4 GOOD
+   max=3  max=4
+
+Good nodes: [3, 4, 3, 5] → count = 4
 ```
-
----
 
 ## Problem Description
 
-Count Good Nodes in Binary Tree. ([LeetCode](https://leetcode.com/problems/count-good-nodes-in-binary-tree))
+Given the root of a binary tree, a node X is **good** if in the path from the root to X there are no nodes with values greater than X's value. Return the number of good nodes. The root is always good.
 
-Difficulty: Medium | Acceptance: 73.5%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/count-good-nodes-in-binary-tree) for full constraints
-
----
+Example 1: `root=[3,1,4,3,null,1,5]` → `4`
+Example 2: `root=[3,3,null,4,2]` → `3`
+Example 3: `root=[1]` → `1`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Clarify**: "Node tốt là node không có ancestor nào lớn hơn nó" / Good = no strictly-greater ancestor
+2. **Approach**: "DFS truyền maxSoFar xuống — nếu node.val >= max thì đếm và cập nhật max" / Pass max down DFS
+3. **Edge cases**: "Root luôn là good (không có ancestor)" / Root is always good
+4. **BFS alt**: "BFS cũng được nhưng DFS tự nhiên hơn vì cần track path" / DFS more natural for path tracking
+5. **Follow-up**: "Nếu cần tìm các good nodes thay vì đếm? → Thêm danh sách kết quả" / Collect nodes instead
+6. **Complexity**: "Time O(n) | Space O(h) call stack, O(n) worst case skewed tree"
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function countGoodNodesInBinaryTreeBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+class TreeNode {
+  val: number;
+  left: TreeNode | null = null;
+  right: TreeNode | null = null;
+  constructor(val = 0, left: TreeNode | null = null, right: TreeNode | null = null) {
+    this.val = val;
+    this.left = left;
+    this.right = right;
+  }
 }
 
-/**
- * Solution 2: Optimized — BFS
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 1: Recursive DFS — pass max value along path
+ * Time: O(n) | Space: O(h)
  */
-function countGoodNodesInBinaryTree(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using BFS
-  // Hint: Use queue, process level by level
-  throw new Error('Not implemented');
+function goodNodes(root: TreeNode | null): number {
+  function dfs(node: TreeNode | null, maxVal: number): number {
+    if (!node) return 0;
+    const isGood = node.val >= maxVal ? 1 : 0;
+    const newMax = Math.max(maxVal, node.val);
+    return isGood + dfs(node.left, newMax) + dfs(node.right, newMax);
+  }
+  return dfs(root, -Infinity);
 }
 
-// === Test Cases ===
-// console.log(countGoodNodesInBinaryTree(/* example 1 */)); // expected
-// console.log(countGoodNodesInBinaryTree(/* example 2 */)); // expected
-// console.log(countGoodNodesInBinaryTree(/* edge case */)); // expected
+/** Solution 2: Iterative DFS with explicit stack
+ * Time: O(n) | Space: O(h)
+ */
+function goodNodesIterative(root: TreeNode | null): number {
+  if (!root) return 0;
+  let count = 0;
+  // Stack stores [node, maxOnPathSoFar]
+  const stack: [TreeNode, number][] = [[root, -Infinity]];
+
+  while (stack.length > 0) {
+    const [node, maxVal] = stack.pop()!;
+    if (node.val >= maxVal) count++;
+    const newMax = Math.max(maxVal, node.val);
+    if (node.left) stack.push([node.left, newMax]);
+    if (node.right) stack.push([node.right, newMax]);
+  }
+
+  return count;
+}
+
+/** Solution 3: BFS with queue — level-order with max tracking
+ * Time: O(n) | Space: O(n)
+ */
+function goodNodesBFS(root: TreeNode | null): number {
+  if (!root) return 0;
+  let count = 0;
+  const queue: [TreeNode, number][] = [[root, -Infinity]];
+
+  while (queue.length > 0) {
+    const [node, maxVal] = queue.shift()!;
+    if (node.val >= maxVal) count++;
+    const newMax = Math.max(maxVal, node.val);
+    if (node.left) queue.push([node.left, newMax]);
+    if (node.right) queue.push([node.right, newMax]);
+  }
+
+  return count;
+}
+
+// Helper to build tree from array
+function buildTree(vals: (number | null)[]): TreeNode | null {
+  if (!vals.length || vals[0] === null) return null;
+  const root = new TreeNode(vals[0]!);
+  const queue = [root];
+  let i = 1;
+  while (i < vals.length) {
+    const node = queue.shift()!;
+    if (vals[i] !== null) {
+      node.left = new TreeNode(vals[i]!);
+      queue.push(node.left);
+    }
+    i++;
+    if (i < vals.length && vals[i] !== null) {
+      node.right = new TreeNode(vals[i]!);
+      queue.push(node.right);
+    }
+    i++;
+  }
+  return root;
+}
+
+// Tests
+console.log(goodNodes(buildTree([3, 1, 4, 3, null, 1, 5]))); // 4
+console.log(goodNodes(buildTree([3, 3, null, 4, 2]))); // 3
+console.log(goodNodes(buildTree([1]))); // 1
+console.log(goodNodesIterative(buildTree([3, 1, 4, 3, null, 1, 5]))); // 4
+console.log(goodNodesBFS(buildTree([3, 3, null, 4, 2]))); // 3
+console.log(goodNodes(buildTree([2, null, 4, 10, 8, null, null, 4]))); // 4
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Same Tree](https://leetcode.com/problems/same-tree) — same pattern: BFS
-- [Serialize and Deserialize Binary Tree](https://leetcode.com/problems/serialize-and-deserialize-binary-tree) — same pattern: BFS
-- [Binary Tree Right Side View](https://leetcode.com/problems/binary-tree-right-side-view) — same pattern: BFS
-- [All Nodes Distance K in Binary Tree](https://leetcode.com/problems/all-nodes-distance-k-in-binary-tree) — same pattern: BFS
-- [Count Good Nodes in Binary Tree — LeetCode](https://leetcode.com/problems/count-good-nodes-in-binary-tree) — problem page
+| Problem                                                                                    | Relationship                              |
+| ------------------------------------------------------------------------------------------ | ----------------------------------------- |
+| [Path Sum](https://leetcode.com/problems/path-sum)                                         | DFS tracking accumulated value along path |
+| [Binary Tree Maximum Path Sum](https://leetcode.com/problems/binary-tree-maximum-path-sum) | Max tracking in tree paths                |
+| [Validate Binary Search Tree](https://leetcode.com/problems/validate-binary-search-tree)   | DFS with bounds propagation               |

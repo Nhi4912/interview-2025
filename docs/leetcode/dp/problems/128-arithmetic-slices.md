@@ -7,100 +7,122 @@ tags: [Array, Dynamic Programming, Sliding Window]
 leetcode_url: "https://leetcode.com/problems/arithmetic-slices"
 ---
 
-# Arithmetic Slices / Arithmetic Slices
+# Arithmetic Slices / Đoạn Con Cấp Số Cộng
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Sliding Window
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Longest Subarray of 1's After Deleting One Element](https://leetcode.com/problems/longest-subarray-of-1s-after-deleting-one-element) | [Constrained Subsequence Sum](https://leetcode.com/problems/constrained-subsequence-sum)
-
----
+> **Frequency**: 📘 Tier 3 | **Company tags**: Yelp, Google
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống như nhìn qua một khung cửa sổ di chuyển trên dãy nhà. Mỗi lần trượt, bạn thêm nhà mới bên phải, bỏ nhà cũ bên trái — luôn giữ đúng kích thước khung.
+**Analogy:** Như đoàn tàu có thể kéo dài — mỗi khi thêm một toa mới với khoảng cách đúng, tất cả đoàn tàu hiện tại đều được kéo dài thêm một toa, tạo thêm đúng dp[i-1]+1 đoàn tàu mới hợp lệ.
 
 **Pattern Recognition:**
 
-- Signal: "contiguous subarray/substring" + "max/min length" → **Sliding Window**
-- Bài này thuộc dạng Sliding Window — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- "Count subarrays of length ≥ 3 with constant difference" → DP on extension count
+- dp[i] = number of new arithmetic slices ending at i; dp[i] = dp[i-1]+1 when diff matches
+- Accumulate dp[i] into total: each slice ending at i is a new unique slice
 
-**Visual — Arithmetic Slices example:**
+**Visual:**
 
 ```
-[a, b, c, d, e, f, g]
- |--window--|
-    |--window--|     → slide right, update state
+nums = [1, 2, 3, 4]
+       diff=1  diff=1  diff=1
 
-Track: current window state
-Update: add right, remove left when window exceeds constraint
+i=2: diff(1,2)=diff(2,3)=1 → dp[2]=1  new slices: {[1,2,3]}          total=1
+i=3: diff(2,3)=diff(3,4)=1 → dp[3]=2  new slices: {[2,3,4],[1,2,3,4]} total=3
+Answer = 1 + 2 = 3
 ```
-
----
 
 ## Problem Description
 
-Arithmetic Slices. ([LeetCode](https://leetcode.com/problems/arithmetic-slices))
+Given an integer array `nums`, return the number of arithmetic subarrays of at least 3 elements (contiguous, constant difference).
 
-Difficulty: Medium | Acceptance: 64.8%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/arithmetic-slices) for full constraints
-
----
+Examples: [1,2,3,4] → 3; [1] → 0; [1,2,3,8,9,10] → 2.
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần contiguous subarray hay subsequence?" / Subarray (contiguous) vs subsequence (non-contiguous)
-2. **Brute force**: "Thử mọi subarray O(n²)" → optimize with sliding window O(n) / Try all subarrays then optimize
-3. **Optimize**: "Dùng window expand/shrink, track state bằng map/counter" / Use expand right, shrink left pattern
-4. **Edge cases**: "Chuỗi rỗng, k > array length, tất cả unique/duplicate" / Empty input, k exceeds length
-
----
+1. **Clarify**: Subarray (liên tiếp) chứ không phải subsequence / confirm contiguous subarray not subsequence.
+2. **Approach**: dp[i] = new slices ending at i; khi diff match thì dp[i]=dp[i-1]+1, else dp[i]=0; tổng dp[i] là đáp án.
+3. **Edge cases**: n < 3 → return 0; mảng toàn cùng giá trị → d=0 cũng là cấp số cộng hợp lệ.
+4. **Optimize**: Không cần lưu mảng dp — biến `cur` theo dõi streak hiện tại đủ rồi / O(1) space.
+5. **Follow-up**: Arithmetic Slices II (LC 446) = count arithmetic subsequences — khó hơn nhiều, dùng HashMap DP.
+6. **Complexity**: Time O(n), Space O(1).
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 1: DP array
+ * Time: O(n) | Space: O(n)
  */
-function arithmeticSlicesBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function numberOfArithmeticSlices(nums: number[]): number {
+  const n = nums.length;
+  if (n < 3) return 0;
+  const dp = new Array<number>(n).fill(0);
+  let total = 0;
+  for (let i = 2; i < n; i++) {
+    if (nums[i] - nums[i - 1] === nums[i - 1] - nums[i - 2]) {
+      dp[i] = dp[i - 1] + 1;
+      total += dp[i];
+    }
+  }
+  return total;
 }
 
-/**
- * Solution 2: Optimized — Sliding Window
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 2: O(1) space with rolling counter
+ * Time: O(n) | Space: O(1)
  */
-function arithmeticSlices(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Sliding Window
-  // Hint: Expand right pointer, shrink left when constraint violated
-  throw new Error('Not implemented');
+function numberOfArithmeticSlices2(nums: number[]): number {
+  const n = nums.length;
+  if (n < 3) return 0;
+  let cur = 0,
+    total = 0;
+  for (let i = 2; i < n; i++) {
+    if (nums[i] - nums[i - 1] === nums[i - 1] - nums[i - 2]) {
+      cur++;
+      total += cur;
+    } else {
+      cur = 0;
+    }
+  }
+  return total;
 }
 
-// === Test Cases ===
-// console.log(arithmeticSlices(/* example 1 */)); // expected
-// console.log(arithmeticSlices(/* example 2 */)); // expected
-// console.log(arithmeticSlices(/* edge case */)); // expected
+/** Solution 3: Identify runs — count by run length
+ * For a maximal arithmetic run of length L: total slices = (L-2)*(L-1)/2
+ * Time: O(n) | Space: O(1)
+ */
+function numberOfArithmeticSlices3(nums: number[]): number {
+  const n = nums.length;
+  if (n < 3) return 0;
+  let total = 0;
+  let runLen = 2; // current run length (at least 2 elements)
+  for (let i = 2; i < n; i++) {
+    if (nums[i] - nums[i - 1] === nums[i - 1] - nums[i - 2]) {
+      runLen++;
+    } else {
+      const ext = runLen - 2; // how many extra elements beyond length 2
+      total += (ext * (ext + 1)) / 2;
+      runLen = 2;
+    }
+  }
+  const ext = runLen - 2;
+  total += (ext * (ext + 1)) / 2;
+  return total;
+}
+
+// Tests
+console.log(numberOfArithmeticSlices([1, 2, 3, 4])); // 3
+console.log(numberOfArithmeticSlices([1])); // 0
+console.log(numberOfArithmeticSlices([1, 2, 3, 8, 9, 10])); // 2
+console.log(numberOfArithmeticSlices2([1, 2, 3, 4])); // 3
+console.log(numberOfArithmeticSlices3([1, 2, 3, 4, 5])); // 6
+console.log(numberOfArithmeticSlices([1, 1, 1, 1])); // 3
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Longest Subarray of 1's After Deleting One Element](https://leetcode.com/problems/longest-subarray-of-1s-after-deleting-one-element) — same pattern: Sliding Window
-- [Constrained Subsequence Sum](https://leetcode.com/problems/constrained-subsequence-sum) — same pattern: Monotonic Queue
-- [Maximum Length of Repeated Subarray](https://leetcode.com/problems/maximum-length-of-repeated-subarray) — same pattern: Sliding Window
-- [Max Consecutive Ones II](https://leetcode.com/problems/max-consecutive-ones-ii) — same pattern: Sliding Window
-- [Arithmetic Slices — LeetCode](https://leetcode.com/problems/arithmetic-slices) — problem page
+| Problem                                                                                                                | Relationship                           |
+| ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| [Arithmetic Slices II – Subsequence](https://leetcode.com/problems/arithmetic-slices-ii-subsequence)                   | Count arithmetic subsequences — harder |
+| [Longest Arithmetic Subsequence](https://leetcode.com/problems/longest-arithmetic-subsequence)                         | Find the longest, not count all        |
+| [Maximum Sum of 3 Non-Overlapping Subarrays](https://leetcode.com/problems/maximum-sum-of-3-non-overlapping-subarrays) | Subarray DP with accumulation          |

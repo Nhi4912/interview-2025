@@ -7,97 +7,119 @@ tags: [Array, Bit Manipulation]
 leetcode_url: "https://leetcode.com/problems/sum-of-values-at-indices-with-k-set-bits"
 ---
 
-# Sum of Values at Indices With K Set Bits / Sum of Values at Indices With K Set Bits
+# Sum of Values at Indices With K Set Bits / Tổng Các Giá Trị Tại Chỉ Số Có K Bit Bằng 1
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Bit Manipulation
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Missing Number](https://leetcode.com/problems/missing-number) | [Find the Duplicate Number](https://leetcode.com/problems/find-the-duplicate-number)
-
----
+> **Frequency**: 📘 Tier 3 | **Company tags**: various
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Làm việc trực tiếp với bit (0/1) — nhanh hơn phép toán thông thường. XOR, AND, OR, shift là các công cụ chính.
+**Analogy:** Tưởng tượng mỗi chỉ số trong mảng có một "mã vạch nhị phân". Bạn chỉ muốn lấy sản phẩm từ kệ có đúng `k` vạch đen trong mã vạch. Chỉ cần đếm số bit 1 trong biểu diễn nhị phân của từng chỉ số — bằng `popcount` — rồi cộng dồn giá trị tương ứng.
 
 **Pattern Recognition:**
 
-- Signal: "binary representation" + "XOR/AND/OR properties" → **Bit Manipulation**
-- Bài này thuộc dạng Bit Manipulation — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- "Binary representation of index" → Bit counting with `popcount`
+- "Count set bits" → `n.toString(2).split('0').join('').length` or bit tricks
+- Simple filter + accumulate → single O(n) pass
 
-**Visual — Sum of Values at Indices With K Set Bits example:**
+**Visual:**
 
 ```
-// TODO: Add step-by-step visual for Bit Manipulation
-// Show one complete example with state at each step
-```
+nums = [5, 10, 1, 5, 2], k = 1
+Index binary & popcount:
+ 0 → 000 → 0 bits  skip
+ 1 → 001 → 1 bit   ✓ add nums[1]=10
+ 2 → 010 → 1 bit   ✓ add nums[2]=1
+ 3 → 011 → 2 bits  skip
+ 4 → 100 → 1 bit   ✓ add nums[4]=2
 
----
+sum = 10 + 1 + 2 = 13
+```
 
 ## Problem Description
 
-Sum of Values at Indices With K Set Bits. ([LeetCode](https://leetcode.com/problems/sum-of-values-at-indices-with-k-set-bits))
+Given `nums` and integer `k`, return the **sum** of `nums[i]` for all indices `i` whose binary representation has exactly `k` set bits (1s).
 
-Difficulty: Easy | Acceptance: 85.7%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/sum-of-values-at-indices-with-k-set-bits) for full constraints
-
----
+- `nums=[5,10,1,5,2], k=1` → `13` (indices 1,2,4 have exactly 1 set bit)
+- `nums=[4,3,2,1], k=2` → `1` (only index 3 = `011` has 2 set bits)
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Clarify**: k can be 0 — index 0 has 0 set bits / k có thể bằng 0 (index 0)
+2. **Approach**: Iterate indices, count bits, accumulate / lặp qua chỉ số, đếm bit, cộng dồn
+3. **Edge cases**: k=0 → only index 0 qualifies / k=0 chỉ có chỉ số 0 thỏa mãn
+4. **Optimize**: Brian Kernighan's algorithm or JS built-in / thuật toán đếm bit hiệu quả
+5. **Follow-up**: What if we need XOR instead of sum? → Same filter, different reduce
+6. **Complexity**: Time O(n log n) — log n to count bits per index / thời gian O(n log n)
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 1: String method — convert to binary string and count '1's
+ * Time: O(n log n) | Space: O(log n) for string
  */
-function sumOfValuesAtIndicesWithKSetBitsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function sumIndicesWithKSetBitsString(nums: number[], k: number): number {
+  let sum = 0;
+  for (let i = 0; i < nums.length; i++) {
+    const bits = i
+      .toString(2)
+      .split("")
+      .filter((b) => b === "1").length;
+    if (bits === k) sum += nums[i];
+  }
+  return sum;
 }
 
-/**
- * Solution 2: Optimized — Bit Manipulation
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 2: Bit manipulation — Brian Kernighan popcount
+ * Time: O(n * popcount(i)) ≈ O(n log n) | Space: O(1)
  */
-function sumOfValuesAtIndicesWithKSetBits(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Bit Manipulation
-  // Hint: Use XOR, AND, OR, shift operations on bits
-  throw new Error('Not implemented');
+function sumIndicesWithKSetBits(nums: number[], k: number): number {
+  const popcount = (n: number): number => {
+    let count = 0;
+    while (n > 0) {
+      n &= n - 1; // clear lowest set bit
+      count++;
+    }
+    return count;
+  };
+
+  let sum = 0;
+  for (let i = 0; i < nums.length; i++) {
+    if (popcount(i) === k) sum += nums[i];
+  }
+  return sum;
 }
 
-// === Test Cases ===
-// console.log(sumOfValuesAtIndicesWithKSetBits(/* example 1 */)); // expected
-// console.log(sumOfValuesAtIndicesWithKSetBits(/* example 2 */)); // expected
-// console.log(sumOfValuesAtIndicesWithKSetBits(/* edge case */)); // expected
+/** Solution 3: Precomputed popcount table for repeated calls
+ * Time: O(n) | Space: O(n)
+ */
+function sumIndicesWithKSetBitsFast(nums: number[], k: number): number {
+  // dp popcount: bits[i] = bits[i >> 1] + (i & 1)
+  const bits = new Array(nums.length).fill(0);
+  for (let i = 1; i < nums.length; i++) {
+    bits[i] = bits[i >> 1] + (i & 1);
+  }
+
+  let sum = 0;
+  for (let i = 0; i < nums.length; i++) {
+    if (bits[i] === k) sum += nums[i];
+  }
+  return sum;
+}
+
+// Test cases
+console.log(sumIndicesWithKSetBits([5, 10, 1, 5, 2], 1)); // 13
+console.log(sumIndicesWithKSetBits([4, 3, 2, 1], 2)); // 1
+console.log(sumIndicesWithKSetBits([1, 2, 3, 4, 5, 6, 7, 8], 0)); // 1 (only index 0)
+console.log(sumIndicesWithKSetBitsString([5, 10, 1, 5, 2], 1)); // 13
+console.log(sumIndicesWithKSetBitsFast([4, 3, 2, 1], 2)); // 1
+console.log(sumIndicesWithKSetBits([10], 0)); // 10 (index 0 has 0 set bits)
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Missing Number](https://leetcode.com/problems/missing-number) — same pattern: Binary Search
-- [Find the Duplicate Number](https://leetcode.com/problems/find-the-duplicate-number) — same pattern: Two Pointers
-- [Subsets II](https://leetcode.com/problems/subsets-ii) — same pattern: Backtracking
-- [Partition Array Into Two Arrays to Minimize Sum Difference](https://leetcode.com/problems/partition-array-into-two-arrays-to-minimize-sum-difference) — same pattern: Two Pointers
-- [Sum of Values at Indices With K Set Bits — LeetCode](https://leetcode.com/problems/sum-of-values-at-indices-with-k-set-bits) — problem page
+| Problem                                                                                    | Relationship                             |
+| ------------------------------------------------------------------------------------------ | ---------------------------------------- |
+| [Number of 1 Bits](https://leetcode.com/problems/number-of-1-bits)                         | Core popcount / hamming weight operation |
+| [Counting Bits](https://leetcode.com/problems/counting-bits)                               | Precompute popcount for all 0..n with DP |
+| [Sum of All Subset XOR Totals](https://leetcode.com/problems/sum-of-all-subset-xor-totals) | Similar filter-and-sum on bit properties |

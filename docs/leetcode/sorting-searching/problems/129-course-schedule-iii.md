@@ -7,104 +7,183 @@ tags: [Array, Greedy, Sorting, Heap (Priority Queue)]
 leetcode_url: "https://leetcode.com/problems/course-schedule-iii"
 ---
 
-# Course Schedule III / Course Schedule III
+# Course Schedule III / Lịch Học III
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Heap / Priority Queue
-> **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Task Scheduler](https://leetcode.com/problems/task-scheduler) | [IPO](https://leetcode.com/problems/ipo)
-
----
+> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Greedy + Max-Heap
+> **Frequency**: 📘 Tier 3 | **Company tags**: various
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống phòng cấp cứu — bệnh nhân nặng nhất luôn được ưu tiên, bất kể ai đến trước. Heap giữ phần tử quan trọng nhất ở đầu.
+**Giống đặt lịch du lịch với deadline cố định:** sort các chuyến theo ngày phải trở về. Nếu chuyến hiện tại vượt deadline, thay bằng chuyến ngắn nhất đã lên kế hoạch (giải phóng thời gian nhiều nhất).
 
 **Pattern Recognition:**
 
-- Signal: "k-th largest/smallest" + "top-k elements" → **Heap**
-- Bài này thuộc dạng Heap / Priority Queue — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "max courses + deadlines + minimize time used" → **Sort by deadline + Greedy with Max-Heap**
+- Sort by lastDay: xử lý deadline sớm trước để tối ưu slot thời gian
+- Max-heap of durations: nếu khoá mới không vừa, swap với khoá dài nhất (giảm total time)
 
-**Visual — Course Schedule III example:**
+**Visual:**
 
 ```
-Min Heap:
-        1
-       / \
-      3   2
-     / \
-    7   4
+courses=[[100,200],[200,1300],[1000,1250],[2000,3200]]
+After sort by lastDay: same order
 
-Insert: add to end, bubble up
-Extract: remove root, bubble down
+time=0: add [100] → heap=[100], time=100
+time=100: add [200] → heap=[200,100], time=300
+time=300: add [1000]? 300+1000=1300>1250 ❌
+  Swap longest(1000→not in heap yet, compare)? 200 > nothing
+  Actually: 300+1000=1300>1250, heap.max=200 < 1000 → don't swap
+time=300: add [2000] → 300+2000=2300≤3200 ✅ → heap=[2000,200,100], time=2300
+Answer: 3 courses ✅
 ```
-
----
 
 ## Problem Description
 
-Course Schedule III. ([LeetCode](https://leetcode.com/problems/course-schedule-iii))
+Given `courses[i] = [duration_i, lastDay_i]`, find the **maximum number of courses** you can take. Each course must be completed by `lastDay_i` (start any time, continuous, no overlap needed).
 
-Difficulty: Hard | Acceptance: 40.7%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/course-schedule-iii) for full constraints
-
----
+- Example 1: `[[100,200],[200,1300],[1000,1250],[2000,3200]]` → `3`
+- Example 2: `[[1,2]]` → `1`
+- Example 3: `[[3,2],[4,3]]` → `0`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Clarify**: Khoá học có thể chồng không? / Can courses overlap? No, must be sequential
+2. **Approach**: Sort by lastDay, greedy swap với max-heap / Sort + max-heap swap strategy
+3. **Edge cases**: duration > lastDay → khoá không thể học / Course impossible if duration > lastDay
+4. **Optimize**: Tại sao swap? Nếu khoá dài hơn max-in-heap thì swap → cùng số khoá nhưng time nhỏ hơn / Swap maintains count, reduces time
+5. **Follow-up**: Nếu mỗi khoá có credit? / If each course has credit/weight? → weighted version harder
+6. **Complexity**: Time O(n log n), Space O(n) / Sort + n heap operations
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 1: Greedy Without Heap (slower but intuitive)
+ * Time: O(n² log n) | Space: O(n)
  */
-function courseScheduleIiiBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function scheduleCourseIIIBrute(courses: number[][]): number {
+  courses.sort((a, b) => a[1] - b[1]);
+  const taken: number[] = [];
+  let time = 0;
+
+  for (const [dur, last] of courses) {
+    if (time + dur <= last) {
+      taken.push(dur);
+      time += dur;
+    } else {
+      // Replace longest taken course if current is shorter
+      let maxIdx = -1;
+      for (let i = 0; i < taken.length; i++)
+        if (maxIdx === -1 || taken[i] > taken[maxIdx]) maxIdx = i;
+      if (maxIdx !== -1 && taken[maxIdx] > dur) {
+        time -= taken[maxIdx];
+        taken.splice(maxIdx, 1);
+        taken.push(dur);
+        time += dur;
+      }
+    }
+  }
+  return taken.length;
 }
 
-/**
- * Solution 2: Optimized — Heap / Priority Queue
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 2: Sort by Deadline + Max-Heap
+ * Time: O(n log n) | Space: O(n)
  */
-function courseScheduleIii(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Heap / Priority Queue
-  // Hint: Use min/max heap to efficiently track k-th element
-  throw new Error('Not implemented');
+function scheduleCourseIII(courses: number[][]): number {
+  courses.sort((a, b) => a[1] - b[1]);
+
+  // Max-heap on duration
+  const heap: number[] = [];
+  const pushMax = (x: number) => {
+    heap.push(x);
+    let i = heap.length - 1;
+    while (i > 0) {
+      const p = (i - 1) >> 1;
+      if (heap[p] < heap[i]) {
+        [heap[p], heap[i]] = [heap[i], heap[p]];
+        i = p;
+      } else break;
+    }
+  };
+  const popMax = (): number => {
+    const top = heap[0];
+    const last = heap.pop()!;
+    if (heap.length > 0) {
+      heap[0] = last;
+      let i = 0;
+      while (true) {
+        let s = i,
+          l = 2 * i + 1,
+          r = 2 * i + 2;
+        if (l < heap.length && heap[l] > heap[s]) s = l;
+        if (r < heap.length && heap[r] > heap[s]) s = r;
+        if (s === i) break;
+        [heap[i], heap[s]] = [heap[s], heap[i]];
+        i = s;
+      }
+    }
+    return top;
+  };
+  const peekMax = () => heap[0];
+
+  let time = 0;
+  for (const [dur, last] of courses) {
+    if (time + dur <= last) {
+      pushMax(dur);
+      time += dur;
+    } else if (heap.length > 0 && peekMax() > dur) {
+      // Swap: remove longest, add current → save time, same count
+      time -= popMax();
+      pushMax(dur);
+      time += dur;
+    }
+    // else: skip this course entirely
+  }
+  return heap.length;
 }
 
-// === Test Cases ===
-// console.log(courseScheduleIii(/* example 1 */)); // expected
-// console.log(courseScheduleIii(/* example 2 */)); // expected
-// console.log(courseScheduleIii(/* edge case */)); // expected
+// Tests
+console.log(
+  scheduleCourseIII([
+    [100, 200],
+    [200, 1300],
+    [1000, 1250],
+    [2000, 3200],
+  ]),
+); // 3
+console.log(scheduleCourseIII([[1, 2]])); // 1
+console.log(
+  scheduleCourseIII([
+    [3, 2],
+    [4, 3],
+  ]),
+); // 0
+console.log(
+  scheduleCourseIII([
+    [5, 5],
+    [4, 6],
+    [2, 6],
+  ]),
+); // 2
+console.log(
+  scheduleCourseIIIBrute([
+    [100, 200],
+    [200, 1300],
+    [1000, 1250],
+    [2000, 3200],
+  ]),
+); // 3
+console.log(
+  scheduleCourseIII([
+    [1, 2],
+    [2, 3],
+  ]),
+); // 2
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Task Scheduler](https://leetcode.com/problems/task-scheduler) — same pattern: Heap / Priority Queue
-- [IPO](https://leetcode.com/problems/ipo) — same pattern: Heap / Priority Queue
-- [Smallest Range Covering Elements from K Lists](https://leetcode.com/problems/smallest-range-covering-elements-from-k-lists) — same pattern: Sliding Window
-- [Maximum Performance of a Team](https://leetcode.com/problems/maximum-performance-of-a-team) — same pattern: Heap / Priority Queue
-- [Course Schedule III — LeetCode](https://leetcode.com/problems/course-schedule-iii) — problem page
+| Problem                                                                                      | Relationship                       |
+| -------------------------------------------------------------------------------------------- | ---------------------------------- |
+| [Task Scheduler](https://leetcode.com/problems/task-scheduler)                               | Greedy scheduling with constraints |
+| [IPO](https://leetcode.com/problems/ipo)                                                     | Sort + two-heap greedy selection   |
+| [Maximum Performance of a Team](https://leetcode.com/problems/maximum-performance-of-a-team) | Sort + min-heap eviction           |

@@ -7,99 +7,120 @@ tags: [String, Stack, Simulation]
 leetcode_url: "https://leetcode.com/problems/minimum-string-length-after-removing-substrings"
 ---
 
-# Minimum String Length After Removing Substrings / Minimum String Length After Removing Substrings
+# Minimum String Length After Removing Substrings / Độ Dài Chuỗi Tối Thiểu Sau Khi Xóa Substrings
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Stack
-> **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Backspace String Compare](https://leetcode.com/problems/backspace-string-compare) | [Design a Text Editor](https://leetcode.com/problems/design-a-text-editor)
-
----
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Stack / Simulation
+> **Frequency**: 📘 Tier 3 | **Company tags**: various
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống chồng đĩa — đĩa nào đặt cuối cùng sẽ được lấy ra đầu tiên (LIFO). Nhiều bài toán về matching và nesting dùng stack.
+**Ví dụ thực tế:** Giống như chơi trò xếp hình Tetris — mỗi khi xếp xong một hàng (xuất hiện "AB" hoặc "CD") thì hàng đó biến mất. Stack giúp ta nhìn vào ký tự vừa xếp và ký tự trước đó để phát hiện pair ngay lập tức.
 
 **Pattern Recognition:**
 
-- Signal: "matching/nesting" + "most recent element" → **Stack**
-- Bài này thuộc dạng Stack — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- `"remove adjacent pairs repeatedly"` → Stack: push char, check top pair, pop nếu khớp
+- Pairs cần xóa: `"AB"` và `"CD"` → top='A' và cur='B' → pop; top='C' và cur='D' → pop
+- Kết quả = độ dài stack sau khi xử lý hết chuỗi
 
-**Visual — Minimum String Length After Removing Substrings example:**
+**Visual:**
 
 ```
-stack = []
+s = "ABFCACDB"
 
-push/pop from right →
-Process: scan left to right, stack maintains invariant
+i=0 'A': stack=[A]
+i=1 'B': top='A' + cur='B' → match "AB" → pop → stack=[]
+i=2 'F': stack=[F]
+i=3 'C': stack=[F,C]
+i=4 'A': stack=[F,C,A]
+i=5 'C': top='A' ≠ pair → stack=[F,C,A,C]
+i=6 'D': top='C' + cur='D' → match "CD" → pop → stack=[F,C,A]
+i=7 'B': top='A' + cur='B' → match "AB" → pop → stack=[F,C]
+
+Result length = 2 ✅
 ```
-
----
 
 ## Problem Description
 
-Minimum String Length After Removing Substrings. ([LeetCode](https://leetcode.com/problems/minimum-string-length-after-removing-substrings))
+Given string `s` of only uppercase letters, repeatedly remove occurrences of `"AB"` or `"CD"` (in any order). Return the **minimum possible length** of the resulting string.
 
-Difficulty: Easy | Acceptance: 77.1%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-string-length-after-removing-substrings) for full constraints
-
----
+Examples: `"ABFCACDB"` → 2 | `"ACBBD"` → 5 (no removable pairs) | `"ABCD"` → 0.
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Clarify**: Chỉ xóa "AB" và "CD" hay các cặp khác? / Only "AB" and "CD" exactly
+2. **Approach**: Stack: push char; check if stack top + cur = "AB"/"CD" → pop / One pass with stack
+3. **Edge cases**: Empty string → 0; no pairs at all → original length / Handle empty input
+4. **Optimize**: Stack approach is already O(n) / No further optimization needed
+5. **Follow-up**: Nếu có thêm cặp cần xóa? → Thêm vào bộ kiểm tra / Generalize with a Set of pairs
+6. **Complexity**: O(n) time, O(n) space for stack / Linear in both
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 1: Stack (Optimal)
+ * Time: O(n) | Space: O(n)
  */
-function minimumStringLengthAfterRemovingSubstringsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minLength(s: string): number {
+  const stack: string[] = [];
+
+  for (const ch of s) {
+    const top = stack[stack.length - 1];
+    if ((top === "A" && ch === "B") || (top === "C" && ch === "D")) {
+      stack.pop();
+    } else {
+      stack.push(ch);
+    }
+  }
+
+  return stack.length;
 }
 
-/**
- * Solution 2: Optimized — Stack
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 2: Repeated String Replace (Brute Force)
+ * Time: O(n^2) | Space: O(n)
  */
-function minimumStringLengthAfterRemovingSubstrings(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Stack
-  // Hint: Push/pop to maintain invariant, process when stack condition changes
-  throw new Error('Not implemented');
+function minLengthBrute(s: string): number {
+  let str = s;
+  let prev = "";
+  while (str !== prev) {
+    prev = str;
+    str = str.replace(/AB|CD/g, "");
+  }
+  return str.length;
 }
 
-// === Test Cases ===
-// console.log(minimumStringLengthAfterRemovingSubstrings(/* example 1 */)); // expected
-// console.log(minimumStringLengthAfterRemovingSubstrings(/* example 2 */)); // expected
-// console.log(minimumStringLengthAfterRemovingSubstrings(/* edge case */)); // expected
+/** Solution 3: Two-pointer / In-place Stack
+ * Time: O(n) | Space: O(n)
+ * Write-pointer acts as virtual stack top
+ */
+function minLengthInPlace(s: string): number {
+  const arr = [...s];
+  let write = 0;
+
+  for (let read = 0; read < arr.length; read++) {
+    arr[write] = arr[read];
+    write++;
+    if (write >= 2) {
+      const pair = arr[write - 2] + arr[write - 1];
+      if (pair === "AB" || pair === "CD") write -= 2;
+    }
+  }
+
+  return write;
+}
+
+// Tests
+console.log(minLength("ABFCACDB")); // 2
+console.log(minLength("ACBBD")); // 5
+console.log(minLength("ABCD")); // 0
+console.log(minLength("")); // 0
+console.log(minLengthBrute("ABFCACDB")); // 2
+console.log(minLengthInPlace("ABCD")); // 0
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Backspace String Compare](https://leetcode.com/problems/backspace-string-compare) — same pattern: Two Pointers
-- [Design a Text Editor](https://leetcode.com/problems/design-a-text-editor) — same pattern: Linked List
-- [Remove All Occurrences of a Substring](https://leetcode.com/problems/remove-all-occurrences-of-a-substring) — same pattern: Stack
-- [Count Collisions on a Road](https://leetcode.com/problems/count-collisions-on-a-road) — same pattern: Stack
-- [Minimum String Length After Removing Substrings — LeetCode](https://leetcode.com/problems/minimum-string-length-after-removing-substrings) — problem page
+| Problem                                                                                                            | Relationship                       |
+| ------------------------------------------------------------------------------------------------------------------ | ---------------------------------- |
+| [Backspace String Compare](https://leetcode.com/problems/backspace-string-compare)                                 | Stack-based character removal      |
+| [Remove All Adjacent Duplicates in String](https://leetcode.com/problems/remove-all-adjacent-duplicates-in-string) | Same stack pop pattern for pairs   |
+| [Valid Parentheses](https://leetcode.com/problems/valid-parentheses)                                               | Stack matching open/close brackets |

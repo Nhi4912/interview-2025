@@ -7,99 +7,147 @@ tags: [String, Stack]
 leetcode_url: "https://leetcode.com/problems/score-of-parentheses"
 ---
 
-# Score of Parentheses / Score of Parentheses
+# Score of Parentheses / Điểm Số Của Dấu Ngoặc
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Stack
-> **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Decode String](https://leetcode.com/problems/decode-string) | [Simplify Path](https://leetcode.com/problems/simplify-path)
-
----
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Stack / Bit Counting
+> **Frequency**: 📘 Tier 3 | **Company tags**: various
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống chồng đĩa — đĩa nào đặt cuối cùng sẽ được lấy ra đầu tiên (LIFO). Nhiều bài toán về matching và nesting dùng stack.
+**Ví dụ thực tế:** Giống như hệ thống điểm thưởng theo cấp bậc — mỗi cặp ngoặc sâu hơn thì được nhân đôi. Ví dụ: nhân viên thường được 1 điểm, nhân viên có thể quản lý trên quản lý được nhân đôi rồi nhân đôi nữa. Stack giúp theo dõi "level" đang ở đâu.
 
 **Pattern Recognition:**
 
-- Signal: "matching/nesting" + "most recent element" → **Stack**
-- Bài này thuộc dạng Stack — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- `"()" = 1`, `"(A)" = 2*A`, `"AB" = A+B` → Stack accumulates score per level
+- Khi gặp `(` → push 0 (new level); khi gặp `)` → pop, nếu = 0 thì +1 (leaf), else × 2 rồi cộng vào level trên
+- Alt: bit-counting insight: each `()` contributes `2^depth` to total
 
-**Visual — Score of Parentheses example:**
+**Visual:**
 
 ```
-stack = []
+s = "(()(()))"
 
-push/pop from right →
-Process: scan left to right, stack maintains invariant
+stack = [0]
+'(' → push 0 → stack=[0,0]
+'(' → push 0 → stack=[0,0,0]
+')' → pop v=0 → leaf → top += 1 → stack=[0,0,1]
+'(' → push 0 → stack=[0,0,1,0]
+'(' → push 0 → stack=[0,0,1,0,0]
+')' → pop v=0 → leaf → top+=1 → stack=[0,0,1,0,1]
+')' → pop v=1 → *2=2  → top+=2 → stack=[0,0,1,2]
+                        merged = 1+2=3 → stack=[0,0,3]
+')' → pop v=3 → *2=6  → top+=6 → stack=[0,6]
+')' → pop v=6 → *2=12 → top+=12→ stack=[12]
+
+Hmm let me recalc: "(()(()))"
+( → [0,0]
+( → [0,0,0]
+) → pop 0, leaf: [0,0+1]=[0,1]
+( → [0,1,0]
+( → [0,1,0,0]
+) → pop 0, leaf: [0,1,0+1]=[0,1,1]
+) → pop 1, *2=2: [0,1+2]=[0,3]
+) → pop 3, *2=6: [0+6]=[6]
+
+Result = 6 ✅
 ```
-
----
 
 ## Problem Description
 
-Score of Parentheses. ([LeetCode](https://leetcode.com/problems/score-of-parentheses))
+Given a balanced parentheses string `s`, compute its score: `"()"` = 1; `"AB"` = score(A)+score(B); `"(A)"` = 2×score(A).
 
-Difficulty: Medium | Acceptance: 63.7%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/score-of-parentheses) for full constraints
-
----
+Examples: `"()"` → 1 | `"(())"` → 2 | `"()()"` → 2 | `"(()(()))"` → 6.
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Clarify**: Chuỗi đã balanced chắc chắn chưa? / Always balanced, guaranteed by constraints
+2. **Approach**: Stack: push 0 for `(`, on `)` pop and double/leaf to update top / Stack of accumulated scores
+3. **Edge cases**: `"()"` → 1 (simplest); deeply nested → powers of 2 / Leaf `()` = 1
+4. **Optimize**: Bit insight: each `()` at depth d contributes 2^d / O(1) space possible
+5. **Follow-up**: Nếu chuỗi rất dài? → Bit approach O(1) space / Depth counter replaces stack
+6. **Complexity**: Stack: O(n) time, O(n) space; Bit: O(n) time, O(1) space
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 1: Stack (Intuitive)
+ * Time: O(n) | Space: O(n)
  */
-function scoreOfParenthesesBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function scoreOfParentheses(s: string): number {
+  const stack: number[] = [0]; // start with score 0 at bottom
+
+  for (const ch of s) {
+    if (ch === "(") {
+      stack.push(0); // open new scope
+    } else {
+      const v = stack.pop()!;
+      const top = stack.pop()!;
+      // if v=0 it's a "()" leaf = 1, else it's "(A)" = 2*v
+      stack.push(top + (v === 0 ? 1 : 2 * v));
+    }
+  }
+
+  return stack[0];
 }
 
-/**
- * Solution 2: Optimized — Stack
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 2: Bit Counting / Depth Insight (O(1) Space)
+ * Time: O(n) | Space: O(1)
+ * Each "()" at depth d contributes 2^d to the total
  */
-function scoreOfParentheses(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Stack
-  // Hint: Push/pop to maintain invariant, process when stack condition changes
-  throw new Error('Not implemented');
+function scoreOfParenthesesBit(s: string): number {
+  let score = 0;
+  let depth = 0;
+
+  for (let i = 0; i < s.length; i++) {
+    if (s[i] === "(") {
+      depth++;
+    } else {
+      depth--;
+      // If previous char is '(', this is a leaf "()"
+      if (s[i - 1] === "(") {
+        score += 1 << depth; // 2^depth
+      }
+    }
+  }
+
+  return score;
 }
 
-// === Test Cases ===
-// console.log(scoreOfParentheses(/* example 1 */)); // expected
-// console.log(scoreOfParentheses(/* example 2 */)); // expected
-// console.log(scoreOfParentheses(/* edge case */)); // expected
+/** Solution 3: Recursive (for clarity)
+ * Time: O(n) | Space: O(n) stack frames
+ */
+function scoreOfParenthesesRec(s: string): number {
+  let pos = 0;
+
+  function parse(): number {
+    let score = 0;
+    while (pos < s.length && s[pos] !== ")") {
+      if (s[pos] === "(") {
+        pos++; // skip '('
+        const inner = parse();
+        pos++; // skip ')'
+        score += inner === 0 ? 1 : 2 * inner;
+      }
+    }
+    return score;
+  }
+
+  return parse();
+}
+
+// Tests
+console.log(scoreOfParentheses("()")); // 1
+console.log(scoreOfParentheses("(())")); // 2
+console.log(scoreOfParentheses("()()")); // 2
+console.log(scoreOfParentheses("(()(()))")); // 6
+console.log(scoreOfParenthesesBit("(()(()))")); // 6
+console.log(scoreOfParenthesesRec("()()")); // 2
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Decode String](https://leetcode.com/problems/decode-string) — same pattern: Stack
-- [Simplify Path](https://leetcode.com/problems/simplify-path) — same pattern: Stack
-- [Basic Calculator II](https://leetcode.com/problems/basic-calculator-ii) — same pattern: Stack
-- [Longest Valid Parentheses](https://leetcode.com/problems/longest-valid-parentheses) — same pattern: Dynamic Programming
-- [Score of Parentheses — LeetCode](https://leetcode.com/problems/score-of-parentheses) — problem page
+| Problem                                                                                                      | Relationship                         |
+| ------------------------------------------------------------------------------------------------------------ | ------------------------------------ |
+| [Valid Parentheses](https://leetcode.com/problems/valid-parentheses)                                         | Stack-based parentheses matching     |
+| [Longest Valid Parentheses](https://leetcode.com/problems/longest-valid-parentheses)                         | Stack tracking parentheses structure |
+| [Minimum Add to Make Parentheses Valid](https://leetcode.com/problems/minimum-add-to-make-parentheses-valid) | Counting unmatched parentheses       |

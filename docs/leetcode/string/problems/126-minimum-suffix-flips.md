@@ -7,97 +7,117 @@ tags: [String, Greedy]
 leetcode_url: "https://leetcode.com/problems/minimum-suffix-flips"
 ---
 
-# Minimum Suffix Flips / Minimum Suffix Flips
+# Minimum Suffix Flips / Số Lần Lật Suffix Tối Thiểu
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy
-> **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Wildcard Matching](https://leetcode.com/problems/wildcard-matching) | [Largest Number](https://leetcode.com/problems/largest-number)
-
----
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy / String Traversal
+> **Frequency**: 📘 Tier 3 | **Company tags**: various
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống ăn buffet — mỗi lần bạn chọn món ngon nhất hiện tại. Nếu chứng minh được rằng chọn tham lam từng bước vẫn tối ưu toàn cục, thì Greedy là đáp án.
+**Ví dụ thực tế:** Hãy tưởng tượng bạn đang kẻ vạch sơn trên một hàng đèn (ban đầu tắt hết). Mỗi lần bạn chỉ được bật/tắt từ vị trí i đến cuối. Greedy: đi từ trái sang phải, hễ thấy đèn không đúng trạng thái thì lật một lần tại chỗ đó.
 
 **Pattern Recognition:**
 
-- Signal: "locally optimal → globally optimal" + "sorting + selection" → **Greedy**
-- Bài này thuộc dạng Greedy — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Mỗi flip ở vị trí i ảnh hưởng suffix `[i..n-1]` → flip sau có thể cancel flip trước
+- Chỉ cần flip khi `target[i] != current_state` → greedy, mỗi vị trí tối đa 1 flip
+- Đếm số lần trạng thái thay đổi khi đi qua `target`
 
-**Visual — Minimum Suffix Flips example:**
+**Visual:**
 
 ```
-// TODO: Add step-by-step visual for Greedy
-// Show one complete example with state at each step
-```
+target = "10111"  (start = "00000")
 
----
+i=0: target='1', cur=0 → mismatch → FLIP [0..] → cur=1, ops=1
+     state: "11111"
+i=1: target='0', cur=1 → mismatch → FLIP [1..] → cur=0, ops=2
+     state: "10000"
+i=2: target='1', cur=0 → mismatch → FLIP [2..] → cur=1, ops=3
+     state: "10111" ✓
+i=3: target='1', cur=1 → match    → no flip
+i=4: target='1', cur=1 → match    → no flip
+
+Answer = 3 ops
+```
 
 ## Problem Description
 
-Minimum Suffix Flips. ([LeetCode](https://leetcode.com/problems/minimum-suffix-flips))
+You have a binary string of `n` zeros. In one operation choose index `k`, flip all characters from `k` to end. Given a `target` string, return the **minimum number of operations** to reach it.
 
-Difficulty: Medium | Acceptance: 73.5%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-suffix-flips) for full constraints
-
----
+Examples: `"10111"` → 3 | `"101"` → 3 | `"00000"` → 0 | `"1"` → 1.
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Clarify**: Chuỗi target chỉ gồm '0' và '1'? / Only binary characters, always valid
+2. **Approach**: Greedy — chỉ flip khi cần, đi từ trái sang phải / Scan left-to-right, flip on mismatch
+3. **Edge cases**: Target toàn '0' → 0 ops; target[0]='1' → at least 1 op / All zeros = no ops needed
+4. **Optimize**: Đếm số lần target[i] != target[i-1] + check target[0] / Count transitions in target
+5. **Follow-up**: Nếu flip bất kỳ range [i..j]? → Different problem (harder) / General range flips is harder
+6. **Complexity**: O(n) time, O(1) space / Linear scan, constant space
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 1: Greedy Scan (Optimal)
+ * Time: O(n) | Space: O(1)
  */
-function minimumSuffixFlipsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minFlips(target: string): number {
+  let ops = 0;
+  let cur = 0; // current state of all positions (0 or 1)
+
+  for (let i = 0; i < target.length; i++) {
+    const t = parseInt(target[i]);
+    if (t !== cur) {
+      ops++;
+      cur = t; // after flip at i, suffix becomes t
+    }
+  }
+  return ops;
 }
 
-/**
- * Solution 2: Optimized — Greedy
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 2: Count Transitions
+ * Time: O(n) | Space: O(1)
+ * Key insight: answer = number of 0→1 or 1→0 transitions + (target[0]=='1' ? 1 : 0)
  */
-function minimumSuffixFlips(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Greedy
-  // Hint: Sort by key metric, make locally optimal choice at each step
-  throw new Error('Not implemented');
+function minFlipsTransitions(target: string): number {
+  let ops = target[0] === "1" ? 1 : 0;
+  for (let i = 1; i < target.length; i++) {
+    if (target[i] !== target[i - 1]) ops++;
+  }
+  return ops;
 }
 
-// === Test Cases ===
-// console.log(minimumSuffixFlips(/* example 1 */)); // expected
-// console.log(minimumSuffixFlips(/* example 2 */)); // expected
-// console.log(minimumSuffixFlips(/* edge case */)); // expected
+/** Solution 3: Simulation with Array (Illustrative)
+ * Time: O(n^2) | Space: O(n)
+ */
+function minFlipsSim(target: string): number {
+  const arr = new Array(target.length).fill(0);
+  let ops = 0;
+
+  for (let i = 0; i < target.length; i++) {
+    if (arr[i] !== parseInt(target[i])) {
+      // Flip suffix starting at i
+      for (let j = i; j < arr.length; j++) {
+        arr[j] ^= 1;
+      }
+      ops++;
+    }
+  }
+  return ops;
+}
+
+// Tests
+console.log(minFlips("10111")); // 3
+console.log(minFlips("101")); // 3
+console.log(minFlips("00000")); // 0
+console.log(minFlips("1")); // 1
+console.log(minFlipsTransitions("10111")); // 3
+console.log(minFlipsSim("101")); // 3
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Wildcard Matching](https://leetcode.com/problems/wildcard-matching) — same pattern: Dynamic Programming
-- [Largest Number](https://leetcode.com/problems/largest-number) — same pattern: Greedy
-- [Remove K Digits](https://leetcode.com/problems/remove-k-digits) — same pattern: Monotonic Stack
-- [Reorganize String](https://leetcode.com/problems/reorganize-string) — same pattern: Heap / Priority Queue
-- [Minimum Suffix Flips — LeetCode](https://leetcode.com/problems/minimum-suffix-flips) — problem page
+| Problem                                                                                                                            | Relationship                  |
+| ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| [Flip String to Monotone Increasing](https://leetcode.com/problems/flip-string-to-monotone-increasing)                             | Greedy on binary string flips |
+| [Minimum Number of Flips to Convert Binary Matrix](https://leetcode.com/problems/minimum-number-of-flips-to-convert-binary-matrix) | Greedy flip operations        |
+| [Bulb Switcher](https://leetcode.com/problems/bulb-switcher)                                                                       | Toggle / flip state problems  |

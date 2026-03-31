@@ -7,97 +7,150 @@ tags: [Array, String]
 leetcode_url: "https://leetcode.com/problems/shortest-word-distance-iii"
 ---
 
-# Shortest Word Distance III / Shortest Word Distance III
+# Shortest Word Distance III / Khoảng Cách Từ Ngắn Nhất III
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: String Processing
-> **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Text Justification](https://leetcode.com/problems/text-justification) | [Largest Number](https://leetcode.com/problems/largest-number)
-
----
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Single-Pass Index Tracking
+> **Frequency**: 📘 Tier 3 | **Company tags**: various
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Xử lý chuỗi ký tự — thường dùng hash table, two pointers, hoặc sliding window tuỳ bài toán.
+**Ví dụ thực tế:** Bạn đang tìm hai người bạn trong đám đông xếp hàng — có thể cùng tên. Bạn chỉ cần theo dõi vị trí gần nhất của mỗi người và liên tục cập nhật khoảng cách tối thiểu. Trường hợp đặc biệt: hai người cùng tên → theo dõi hai vị trí gần nhất của cùng một người.
 
 **Pattern Recognition:**
 
-- Signal: "string transformation/validation" → **String Processing**
-- Bài này thuộc dạng String Processing — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- `word1 == word2` → cần hai occurrences của cùng word, track `prev` index
+- `word1 != word2` → classic: track last seen index của cả hai, compute distance mỗi khi gặp
+- One pass, update min distance on each match
 
-**Visual — Shortest Word Distance III example:**
+**Visual:**
 
 ```
-// TODO: Add step-by-step visual for String Processing
-// Show one complete example with state at each step
-```
+words = ["practice","makes","perfect","coding","makes"]
+word1 = "makes", word2 = "coding"  (different)
 
----
+i=0 "practice": skip
+i=1 "makes":    idx1=1
+i=2 "perfect":  skip
+i=3 "coding":   idx2=3 → dist=|3-1|=2, min=2
+i=4 "makes":    idx1=4 → dist=|4-3|=1, min=1
+Result = 1
+
+Same word case: word1=word2="makes"
+i=1 "makes": prev=-1 → prev=1
+i=4 "makes": prev=1  → dist=|4-1|=3, prev=4
+Result = 3
+```
 
 ## Problem Description
 
-Shortest Word Distance III. ([LeetCode](https://leetcode.com/problems/shortest-word-distance-iii))
+Given a list of words and two words `word1` and `word2` (**which may be the same**), return the **shortest distance** between them in the list. If they are the same word, find the shortest distance between two different occurrences.
 
-Difficulty: Medium | Acceptance: 59.1%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/shortest-word-distance-iii) for full constraints
-
----
+Examples: `(["practice","makes","perfect","coding","makes"], "makes", "coding")` → 1 | same word `"makes"` → 3.
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Clarify**: word1 và word2 có thể bằng nhau không? / Yes, this is the key difference from version I
+2. **Approach**: Nếu same word: track prev; nếu khác: track idx1, idx2 / Branch on equality
+3. **Edge cases**: Chỉ có 2 occurrences of same word → distance between them / Always at least 2 if same
+4. **Optimize**: Single pass O(n), no extra space / Already optimal with just two index vars
+5. **Follow-up**: Nếu gọi nhiều lần với cùng words array? → Precompute HashMap<word, indices[]> / Precompute for repeated queries
+6. **Complexity**: O(n) time, O(1) space / Linear single pass
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 1: Single Pass with Conditional Logic (Optimal)
+ * Time: O(n) | Space: O(1)
  */
-function shortestWordDistanceIiiBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function shortestWordDistance(wordsDict: string[], word1: string, word2: string): number {
+  let min = Infinity;
+  let idx1 = -1;
+  let idx2 = -1;
+  const same = word1 === word2;
+
+  for (let i = 0; i < wordsDict.length; i++) {
+    if (wordsDict[i] === word1) {
+      if (same) {
+        // When same word: idx1 becomes previous occurrence
+        if (idx1 !== -1) min = Math.min(min, i - idx1);
+        idx1 = i;
+      } else {
+        idx1 = i;
+        if (idx2 !== -1) min = Math.min(min, Math.abs(idx1 - idx2));
+      }
+    } else if (!same && wordsDict[i] === word2) {
+      idx2 = i;
+      if (idx1 !== -1) min = Math.min(min, Math.abs(idx1 - idx2));
+    }
+  }
+
+  return min;
 }
 
-/**
- * Solution 2: Optimized — String Processing
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 2: Collect Indices then Compare (Cleaner but more space)
+ * Time: O(n * m) | Space: O(n)
  */
-function shortestWordDistanceIii(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using String Processing
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
+function shortestWordDistanceIndices(wordsDict: string[], word1: string, word2: string): number {
+  const pos1: number[] = [];
+  const pos2: number[] = [];
+
+  for (let i = 0; i < wordsDict.length; i++) {
+    if (wordsDict[i] === word1) pos1.push(i);
+    if (wordsDict[i] === word2) pos2.push(i);
+  }
+
+  let min = Infinity;
+  let i = 0,
+    j = 0;
+
+  // Two-pointer on sorted index lists
+  while (i < pos1.length && j < pos2.length) {
+    if (pos1[i] === pos2[j]) {
+      // Same word: skip comparing same occurrence
+      j++;
+      continue;
+    }
+    min = Math.min(min, Math.abs(pos1[i] - pos2[j]));
+    if (pos1[i] < pos2[j]) i++;
+    else j++;
+  }
+
+  return min;
 }
 
-// === Test Cases ===
-// console.log(shortestWordDistanceIii(/* example 1 */)); // expected
-// console.log(shortestWordDistanceIii(/* example 2 */)); // expected
-// console.log(shortestWordDistanceIii(/* edge case */)); // expected
+/** Solution 3: Unified tracker (elegant)
+ * Time: O(n) | Space: O(1)
+ */
+function shortestWordDistanceUnified(wordsDict: string[], word1: string, word2: string): number {
+  let prev = -1;
+  let min = Infinity;
+
+  for (let i = 0; i < wordsDict.length; i++) {
+    if (wordsDict[i] === word1 || wordsDict[i] === word2) {
+      if (prev !== -1 && (word1 === word2 || wordsDict[i] !== wordsDict[prev])) {
+        min = Math.min(min, i - prev);
+      }
+      prev = i;
+    }
+  }
+
+  return min;
+}
+
+// Tests
+const words = ["practice", "makes", "perfect", "coding", "makes"];
+console.log(shortestWordDistance(words, "makes", "coding")); // 1
+console.log(shortestWordDistance(words, "makes", "makes")); // 3
+console.log(shortestWordDistance(words, "coding", "practice")); // 3
+console.log(shortestWordDistanceIndices(words, "makes", "coding")); // 1
+console.log(shortestWordDistanceUnified(words, "makes", "makes")); // 3
+console.log(shortestWordDistanceUnified(["a", "b", "a"], "a", "a")); // 2
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Largest Number](https://leetcode.com/problems/largest-number) — same pattern: Greedy
-- [Evaluate Division](https://leetcode.com/problems/evaluate-division) — same pattern: Shortest Path (BFS/Dijkstra)
-- [Search Suggestions System](https://leetcode.com/problems/search-suggestions-system) — same pattern: Trie
-- [Shortest Word Distance III — LeetCode](https://leetcode.com/problems/shortest-word-distance-iii) — problem page
+| Problem                                                                                  | Relationship                          |
+| ---------------------------------------------------------------------------------------- | ------------------------------------- |
+| [Shortest Word Distance](https://leetcode.com/problems/shortest-word-distance)           | Same problem without same-word case   |
+| [Shortest Word Distance II](https://leetcode.com/problems/shortest-word-distance-ii)     | Precompute for multiple queries       |
+| [Find Closest Number to Zero](https://leetcode.com/problems/find-closest-number-to-zero) | Tracking closest/min index difference |

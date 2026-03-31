@@ -7,100 +7,125 @@ tags: [Array, Binary Search]
 leetcode_url: "https://leetcode.com/problems/minimum-limit-of-balls-in-a-bag"
 ---
 
-# Minimum Limit of Balls in a Bag / Minimum Limit of Balls in a Bag
+# Minimum Limit of Balls in a Bag / Giới Hạn Tối Thiểu Số Bóng Trong Túi
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Binary Search
-> **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Find First and Last Position of Element in Sorted Array](https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array) | [Koko Eating Bananas](https://leetcode.com/problems/koko-eating-bananas)
-
----
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Binary Search on Answer
+> **Frequency**: 📘 Tier 3 | **Company tags**: various
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Tưởng tượng tìm một trang trong từ điển — bạn mở giữa, xem số trang, rồi chọn nửa phù hợp. Mỗi lần giảm một nửa phạm vi tìm kiếm.
+**Giống chia đều đồ ăn vào hộp:** bạn muốn không hộp nào quá đầy. Binary search câu hỏi "với giới hạn m, cần bao nhiêu lần chia?" — tăng m thì ít thao tác hơn.
 
 **Pattern Recognition:**
 
-- Signal: "sorted" + "find target/position" → **Binary Search**
-- Bài này thuộc dạng Binary Search — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "minimize maximum + at most k operations" → **Binary Search on Answer**
+- Monotone: nếu limit=m khả thi, limit=m+1 cũng khả thi → search space là monotone
+- Cost function: túi n bóng, giới hạn m → cần `ceil(n/m)-1 = floor((n-1)/m)` lần chia
 
-**Visual — Minimum Limit of Balls in a Bag example:**
+**Visual:**
 
 ```
-[1, 3, 5, 7, 9, 11, 13]
- L        M            R
+nums=[9,7,5], maxOps=3
+Binary search limit m in [1, max(nums)=9]:
 
-Step 1: mid = (L+R)/2, check condition
-Step 2: condition true → move L = mid+1 (or R = mid-1)
-Step N: L meets R → answer found ✅
+m=5: ops = ceil(9/5)-1 + ceil(7/5)-1 + ceil(5/5)-1
+        = 1 + 1 + 0 = 2 ≤ 3 ✅ → try smaller
+m=3: ops = ceil(9/3)-1 + ceil(7/3)-1 + ceil(5/3)-1
+        = 2 + 2 + 1 = 5 > 3 ❌ → try larger
+m=4: ops = ceil(9/4)-1 + ceil(7/4)-1 + ceil(5/4)-1
+        = 2 + 1 + 1 = 4 > 3 ❌
+m=5 is minimum → Answer: 5 ✅
 ```
-
----
 
 ## Problem Description
 
-Minimum Limit of Balls in a Bag. ([LeetCode](https://leetcode.com/problems/minimum-limit-of-balls-in-a-bag))
+You have bags of balls. `nums[i]` is the number of balls in the i-th bag. You can split any bag into two in one operation. After at most `maxOperations` splits, return the **minimum possible maximum** bag size.
 
-Difficulty: Medium | Acceptance: 67.3%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-limit-of-balls-in-a-bag) for full constraints
-
----
+- Example 1: `nums=[9], maxOperations=2` → `3`
+- Example 2: `nums=[2,4,8,2], maxOperations=4` → `2`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Input đã sorted? Cần tìm vị trí chính xác hay boundary?" / Is input sorted? Exact match or boundary?
-2. **Brute force**: "Linear scan O(n)" → optimize with binary search O(log n) / Start linear, suggest binary
-3. **Optimize**: "Chú ý lo/hi boundary: lo <= hi hay lo < hi? mid±1 hay mid?" / Watch boundary conditions carefully
-4. **Edge cases**: "Mảng rỗng, một phần tử, target không tồn tại, overflow mid" / Empty, single, not found, overflow
-
----
+1. **Clarify**: maxOperations có thể = 0 không? / Can maxOperations be 0? Yes, return max(nums)
+2. **Approach**: Binary search on answer m, check ops needed / Identify monotone property first
+3. **Edge cases**: nums=[1] → answer is 1 regardless / Single ball bags can't be split further
+4. **Optimize**: Check function O(n), binary search O(log(max)) → O(n log max) / Linear check inside log search
+5. **Follow-up**: Nếu muốn minimize total bags? / Minimize total bags instead? → different objective
+6. **Complexity**: Time O(n log(max(nums))), Space O(1) / Very efficient
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 1: Linear Scan (brute force on answer)
+ * Time: O(n * max(nums)) | Space: O(1)
  */
-function minimumLimitOfBallsInABagBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minimumSizeBrute(nums: number[], maxOperations: number): number {
+  const maxVal = Math.max(...nums);
+  for (let m = 1; m <= maxVal; m++) {
+    let ops = 0;
+    for (const n of nums) ops += Math.ceil(n / m) - 1;
+    if (ops <= maxOperations) return m;
+  }
+  return maxVal;
 }
 
-/**
- * Solution 2: Optimized — Binary Search
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 2: Binary Search on Answer
+ * Time: O(n log(max(nums))) | Space: O(1)
  */
-function minimumLimitOfBallsInABag(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Binary Search
-  // Hint: Define search space, determine which half to discard
-  throw new Error('Not implemented');
+function minimumSize(nums: number[], maxOperations: number): number {
+  // Check: can we achieve limit m with ≤ maxOperations splits?
+  const canAchieve = (m: number): boolean => {
+    let ops = 0;
+    for (const n of nums) {
+      ops += Math.floor((n - 1) / m); // = ceil(n/m) - 1
+      if (ops > maxOperations) return false; // early exit
+    }
+    return true;
+  };
+
+  let lo = 1,
+    hi = Math.max(...nums);
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (canAchieve(mid))
+      hi = mid; // mid works, try smaller
+    else lo = mid + 1; // mid too small, try larger
+  }
+  return lo;
 }
 
-// === Test Cases ===
-// console.log(minimumLimitOfBallsInABag(/* example 1 */)); // expected
-// console.log(minimumLimitOfBallsInABag(/* example 2 */)); // expected
-// console.log(minimumLimitOfBallsInABag(/* edge case */)); // expected
+/** Solution 3: Binary Search (explicit bounds)
+ * Time: O(n log(max(nums))) | Space: O(1)
+ */
+function minimumSizeV2(nums: number[], maxOperations: number): number {
+  let lo = 1,
+    hi = Math.max(...nums),
+    ans = hi;
+  while (lo <= hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    let ops = 0;
+    for (const n of nums) ops += Math.floor((n - 1) / mid);
+    if (ops <= maxOperations) {
+      ans = mid;
+      hi = mid - 1;
+    } else lo = mid + 1;
+  }
+  return ans;
+}
+
+// Tests
+console.log(minimumSize([9], 2)); // 3
+console.log(minimumSize([2, 4, 8, 2], 4)); // 2
+console.log(minimumSize([7, 17], 2)); // 7
+console.log(minimumSize([1], 0)); // 1
+console.log(minimumSizeBrute([9], 2)); // 3
+console.log(minimumSizeV2([2, 4, 8, 2], 4)); // 2
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Find First and Last Position of Element in Sorted Array](https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array) — same pattern: Binary Search
-- [Koko Eating Bananas](https://leetcode.com/problems/koko-eating-bananas) — same pattern: Binary Search
-- [Search a 2D Matrix](https://leetcode.com/problems/search-a-2d-matrix) — same pattern: Binary Search
-- [Find Peak Element](https://leetcode.com/problems/find-peak-element) — same pattern: Binary Search
-- [Minimum Limit of Balls in a Bag — LeetCode](https://leetcode.com/problems/minimum-limit-of-balls-in-a-bag) — problem page
+| Problem                                                                                                          | Relationship                          |
+| ---------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| [Koko Eating Bananas](https://leetcode.com/problems/koko-eating-bananas)                                         | Same pattern: binary search on answer |
+| [Capacity To Ship Packages Within D Days](https://leetcode.com/problems/capacity-to-ship-packages-within-d-days) | Binary search on capacity             |
+| [Find K-th Smallest Pair Distance](https://leetcode.com/problems/find-k-th-smallest-pair-distance)               | Binary search + counting              |

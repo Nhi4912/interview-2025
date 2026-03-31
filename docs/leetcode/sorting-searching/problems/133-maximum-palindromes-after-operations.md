@@ -7,97 +7,144 @@ tags: [Array, Hash Table, String, Greedy, Sorting]
 leetcode_url: "https://leetcode.com/problems/maximum-palindromes-after-operations"
 ---
 
-# Maximum Palindromes After Operations / Maximum Palindromes After Operations
+# Maximum Palindromes After Operations / Tối Đa Palindrome Sau Phép Hoán Đổi
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy
-> **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) | [Task Scheduler](https://leetcode.com/problems/task-scheduler)
-
----
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy + Sort
+> **Frequency**: 📘 Tier 3 | **Company tags**: various
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống ăn buffet — mỗi lần bạn chọn món ngon nhất hiện tại. Nếu chứng minh được rằng chọn tham lam từng bước vẫn tối ưu toàn cục, thì Greedy là đáp án.
+**Giống ghép đôi tất → mọi ký tự từ mọi từ đều có thể hoán đổi tự do:** đếm tổng số cặp ký tự, rồi phân phối cặp cho từng từ (ưu tiên từ ngắn nhất trước để tối đa số palindrome).
 
 **Pattern Recognition:**
 
-- Signal: "locally optimal → globally optimal" + "sorting + selection" → **Greedy**
-- Bài này thuộc dạng Greedy — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "swap chars across any position globally + maximize palindromes" → **Pool chars globally + Greedy by length**
+- Vì swap tự do, chỉ cần đếm tổng pairs của 26 ký tự
+- Từ ngắn cần ít cặp hơn → sort by length, fill từ ngắn trước
 
-**Visual — Maximum Palindromes After Operations example:**
+**Visual:**
 
 ```
-// TODO: Add step-by-step visual for Greedy
-// Show one complete example with state at each step
-```
+words = ["abba","winsl","oss"]
+All chars: a×2,b×2,w×1,i×1,n×1,s×2,l×1,o×1
+Pairs: a=1, b=1, s=1 → total pairs = 3
 
----
+Sort by length: ["oss"(3), "abba"(4), "winsl"(5)]
+"oss" (len=3): needs floor(3/2)=1 pair → use 1, left=2 ✅ count=1
+"abba" (len=4): needs 2 pairs → use 2, left=0 ✅ count=2
+"winsl" (len=5): needs 2 pairs → 0 left ❌
+Result: 2 ✅
+```
 
 ## Problem Description
 
-Maximum Palindromes After Operations. ([LeetCode](https://leetcode.com/problems/maximum-palindromes-after-operations))
+Given `words[]`, you can swap any character from any position in any word with any other. Return the **maximum number of palindromes** possible after any number of operations.
 
-Difficulty: Medium | Acceptance: 43.1%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/maximum-palindromes-after-operations) for full constraints
-
----
+- Example 1: `["abba","winsl","oss"]` → `2`
+- Example 2: `["xxyyzz"]` → `1`
+- Example 3: `["a","ab"]` → `1`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Clarify**: Swap có giới hạn số lần không? / Any limit on swaps? No limit, effectively redistribute freely
+2. **Approach**: Count global char pairs, sort words by length, greedily assign pairs / All chars are in a pool
+3. **Edge cases**: Single char word → needs 0 pairs (odd-length palindrome uses 1 center) / Works if pairs=0
+4. **Optimize**: O(n \* L + n log n) for char counting + sort / L = total string length
+5. **Follow-up**: Maximize total length of palindromes? / Different objective → different greedy
+6. **Complexity**: Time O(n\*L + n log n), Space O(26) / Constant extra space for char counts
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 1: Brute force – Try all char assignments (small input only)
+ * Time: O(n * L * 26) | Space: O(26)
  */
-function maximumPalindromesAfterOperationsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function maxPalindromesBrute(words: string[]): number {
+  // Count total char frequencies
+  const freq = new Array(26).fill(0);
+  for (const w of words) for (const c of w) freq[c.charCodeAt(0) - 97]++;
+
+  // Total available pairs
+  let pairs = 0;
+  for (const f of freq) pairs += Math.floor(f / 2);
+
+  // Sort by length, assign pairs greedily
+  const lens = words.map((w) => w.length).sort((a, b) => a - b);
+  let count = 0;
+  for (const len of lens) {
+    const need = Math.floor(len / 2);
+    if (pairs >= need) {
+      pairs -= need;
+      count++;
+    }
+  }
+  return count;
 }
 
-/**
- * Solution 2: Optimized — Greedy
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+/** Solution 2: Greedy – Global Char Pool + Sort by Length
+ * Time: O(n*L + n log n) | Space: O(26)
  */
-function maximumPalindromesAfterOperations(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Greedy
-  // Hint: Sort by key metric, make locally optimal choice at each step
-  throw new Error('Not implemented');
+function maxPalindromes(words: string[]): number {
+  // Step 1: Count all characters globally
+  const freq = new Array(26).fill(0);
+  let totalLen = 0;
+  for (const w of words) {
+    totalLen += w.length;
+    for (const c of w) freq[c.charCodeAt(0) - 97]++;
+  }
+
+  // Step 2: Total pairs available (each pair can fill 2 slots in a palindrome)
+  let availPairs = 0;
+  for (const f of freq) availPairs += Math.floor(f / 2);
+
+  // Step 3: Sort words by length (fill shortest palindromes first)
+  const lengths = words.map((w) => w.length).sort((a, b) => a - b);
+
+  // Step 4: Greedily assign pairs to each word
+  let palindromes = 0;
+  for (const len of lengths) {
+    const pairsNeeded = Math.floor(len / 2); // each pair fills 2 symmetric positions
+    if (availPairs >= pairsNeeded) {
+      availPairs -= pairsNeeded;
+      palindromes++;
+    }
+    // Odd-length word can always use a center char (1 unpaired char) — already accounted for
+  }
+  return palindromes;
 }
 
-// === Test Cases ===
-// console.log(maximumPalindromesAfterOperations(/* example 1 */)); // expected
-// console.log(maximumPalindromesAfterOperations(/* example 2 */)); // expected
-// console.log(maximumPalindromesAfterOperations(/* edge case */)); // expected
+/** Solution 3: Same with early exit optimization
+ * Time: O(n*L + n log n) | Space: O(26)
+ */
+function maxPalindromesOpt(words: string[]): number {
+  const freq = new Array(26).fill(0);
+  for (const w of words) for (const c of w) freq[c.charCodeAt(0) - 97]++;
+  let pairs = freq.reduce((s, f) => s + Math.floor(f / 2), 0);
+
+  const lens = words.map((w) => w.length).sort((a, b) => a - b);
+  let ans = 0;
+  for (const len of lens) {
+    const need = Math.floor(len / 2);
+    if (pairs < need) continue; // can't form this palindrome
+    pairs -= need;
+    ans++;
+  }
+  return ans;
+}
+
+// Tests
+console.log(maxPalindromes(["abba", "winsl", "oss"])); // 2
+console.log(maxPalindromes(["xxyyzz"])); // 1
+console.log(maxPalindromes(["a", "ab"])); // 1
+console.log(maxPalindromes(["aabbcc", "ddeeff"])); // 2
+console.log(maxPalindromesBrute(["abba", "winsl", "oss"])); // 2
+console.log(maxPalindromesOpt(["leetcode"])); // 1
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Task Scheduler](https://leetcode.com/problems/task-scheduler) — same pattern: Heap / Priority Queue
-- [Reorganize String](https://leetcode.com/problems/reorganize-string) — same pattern: Heap / Priority Queue
-- [Rank Teams by Votes](https://leetcode.com/problems/rank-teams-by-votes) — same pattern: Sorting
-- [Maximum Palindromes After Operations — LeetCode](https://leetcode.com/problems/maximum-palindromes-after-operations) — problem page
+| Problem                                                                | Relationship                      |
+| ---------------------------------------------------------------------- | --------------------------------- |
+| [Reorganize String](https://leetcode.com/problems/reorganize-string)   | Char frequency + greedy placement |
+| [Longest Palindrome](https://leetcode.com/problems/longest-palindrome) | Count char pairs for palindrome   |
+| [Task Scheduler](https://leetcode.com/problems/task-scheduler)         | Frequency-based greedy scheduling |
