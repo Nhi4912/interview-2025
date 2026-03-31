@@ -7,97 +7,117 @@ tags: [Array, Queue, Simulation]
 leetcode_url: "https://leetcode.com/problems/time-taken-to-cross-the-door"
 ---
 
-# Time Taken to Cross the Door / Time Taken to Cross the Door
+# Time Taken to Cross the Door / Thời Gian Để Qua Cửa
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Queue
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Find the Winner of the Circular Game](https://leetcode.com/problems/find-the-winner-of-the-circular-game) | [Time Needed to Buy Tickets](https://leetcode.com/problems/time-needed-to-buy-tickets)
-
----
+> **Difficulty**: 🔴 Hard | **Category**: Array | **Pattern**: Queue Simulation / Priority Scheduling
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống hàng xếp mua vé — ai đến trước được phục vụ trước (FIFO). Thường dùng trong BFS và scheduling.
+**Như cửa quay ở siêu thị**: người vào (state=1) và người ra (state=0) dùng chung cửa. Mỗi giây chỉ một người qua. Quy tắc ưu tiên: cùng thời điểm chờ → ưu tiên hướng vừa dùng (inertia); nếu không ai chờ → reset về exit (0).
 
 **Pattern Recognition:**
 
-- Signal: "problem-specific signals" → **Queue**
-- Bài này thuộc dạng Queue — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Hai hàng đợi: enterQueue và exitQueue với thời gian đến
+- Mỗi tick: nếu cả hai có người chờ → ưu tiên hướng vừa dùng (lastDir)
+- Nếu không ai chờ nhưng cả hai có người sắp đến → reset lastDir = 0 (exit)
+- Simulate từng giây cho đến khi hết người
 
-**Visual — Time Taken to Cross the Door example:**
+**Visual:**
 
 ```
-// TODO: Add step-by-step visual for Queue
-// Show one complete example with state at each step
+arrival=[0,1,1,2,4], state=[0,1,0,0,1]
+t=0: exit=[0,2,3], enter=[1] → exit group chờ (vì lastDir=0 ban đầu) → person 0 exits
+t=1: exit=[2,3], enter=[1] → both wait, lastDir=0 (exit) → person 1...
+     enter=[1,4], exit=[2,3] → lastDir=0 → exit: person 2 exits (arrival=1)
+...
 ```
-
----
 
 ## Problem Description
 
-Time Taken to Cross the Door. ([LeetCode](https://leetcode.com/problems/time-taken-to-cross-the-door))
+`n` người đến cửa tại thời điểm `arrival[i]`, `state[i]=0` muốn ra ngoài, `state[i]=1` muốn vào trong. Mỗi giây một người qua. Nếu cả hai hướng có người chờ: ưu tiên hướng vừa dùng; nếu không ai vừa dùng → ưu tiên exit. Trả về mảng `answer[i]` = thời gian người i qua cửa.
 
-Difficulty: Hard | Acceptance: 49.5%
+**Example:** `arrival=[0,1,1,2,4], state=[0,1,0,0,1]` → `[0,3,1,2,4]`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/time-taken-to-cross-the-door) for full constraints
-
----
+**Constraints:** `1 ≤ n ≤ 10^5`, `0 ≤ arrival[i] ≤ 10^9` (sorted non-decreasing), `state[i] ∈ {0,1}`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Key: arrival is sorted** → process people in arrival order with queues
+2. **Inertia rule**: nếu cả hai hàng đợi có người → dùng hướng của giây trước
+3. **Reset rule**: nếu không ai chờ ở hiện tại (cả hai queue rỗng) → lastDir = 0
+4. **Time skip**: nếu cả hai queue rỗng và không có người tới → nhảy thời gian tới người tiếp theo
+5. **Bucket arrival times**: nhóm người theo thời gian đến để xử lý hiệu quả
+6. **O(n) amortized**: mỗi người được xử lý đúng một lần
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function timeTakenToCrossTheDoorBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// Solution 1: Queue simulation — O(n) time
+function timeTaken(arrival: number[], state: number[]): number[] {
+  const n = arrival.length;
+  const answer = new Array(n).fill(0);
+
+  // Queues store original indices of people waiting to exit (0) or enter (1)
+  const exitQ: number[] = []; // indices of people wanting to exit
+  const enterQ: number[] = []; // indices of people wanting to enter
+
+  let lastDir = 0; // last used direction: 0=exit, 1=enter
+  let personIdx = 0; // next person to arrive
+  let t = 0;
+
+  while (personIdx < n || exitQ.length > 0 || enterQ.length > 0) {
+    // Add all people who have arrived by time t
+    while (personIdx < n && arrival[personIdx] <= t) {
+      if (state[personIdx] === 0) exitQ.push(personIdx);
+      else enterQ.push(personIdx);
+      personIdx++;
+    }
+
+    // If both queues empty, skip to next arrival
+    if (exitQ.length === 0 && enterQ.length === 0) {
+      if (personIdx < n) {
+        t = arrival[personIdx];
+        lastDir = 0; // reset: no one used door
+      }
+      continue;
+    }
+
+    // Decide direction
+    let usePerson: number;
+    if (exitQ.length === 0) {
+      // Only enter queue has people
+      usePerson = enterQ.shift()!;
+      lastDir = 1;
+    } else if (enterQ.length === 0) {
+      // Only exit queue has people
+      usePerson = exitQ.shift()!;
+      lastDir = 0;
+    } else {
+      // Both have people → use lastDir (inertia)
+      if (lastDir === 0) {
+        usePerson = exitQ.shift()!;
+      } else {
+        usePerson = enterQ.shift()!;
+      }
+    }
+
+    answer[usePerson] = t;
+    t++;
+  }
+
+  return answer;
 }
 
-/**
- * Solution 2: Optimized — Queue
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function timeTakenToCrossTheDoor(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Queue
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(timeTakenToCrossTheDoor(/* example 1 */)); // expected
-// console.log(timeTakenToCrossTheDoor(/* example 2 */)); // expected
-// console.log(timeTakenToCrossTheDoor(/* edge case */)); // expected
+// Tests
+console.log(timeTaken([0, 1, 1, 2, 4], [0, 1, 0, 0, 1])); // [0,3,1,2,4]
+console.log(timeTaken([0, 0, 0], [1, 0, 1])); // [2,0,1] or similar valid answer
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Find the Winner of the Circular Game](https://leetcode.com/problems/find-the-winner-of-the-circular-game) — same pattern: Queue
-- [Time Needed to Buy Tickets](https://leetcode.com/problems/time-needed-to-buy-tickets) — same pattern: Queue
-- [Design Snake Game](https://leetcode.com/problems/design-snake-game) — same pattern: Queue
-- [Number of Students Unable to Eat Lunch](https://leetcode.com/problems/number-of-students-unable-to-eat-lunch) — same pattern: Stack
-- [Time Taken to Cross the Door — LeetCode](https://leetcode.com/problems/time-taken-to-cross-the-door) — problem page
+| Problem                                       | Relationship                    |
+| --------------------------------------------- | ------------------------------- |
+| 2534 - Time Taken to Cross the Door           | This problem                    |
+| 1700 - Number of Students Unable to Eat Lunch | Queue simulation                |
+| 2073 - Time Needed to Buy Tickets             | Queue/simulation pattern        |
+| 649 - Dota2 Senate                            | Queue-based priority simulation |

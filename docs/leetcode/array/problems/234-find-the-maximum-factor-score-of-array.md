@@ -7,97 +7,142 @@ tags: [Array, Math, Number Theory]
 leetcode_url: "https://leetcode.com/problems/find-the-maximum-factor-score-of-array"
 ---
 
-# Find the Maximum Factor Score of Array / Find the Maximum Factor Score of Array
+# Find the Maximum Factor Score of Array / Tìm Điểm Nhân Tố Tối Đa Của Mảng
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Math
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Check If It Is a Good Array](https://leetcode.com/problems/check-if-it-is-a-good-array) | [Minimize Length of Array Using Operations](https://leetcode.com/problems/minimize-length-of-array-using-operations)
-
----
+> **Difficulty**: 🟡 Medium | **Category**: Array | **Pattern**: Math / GCD-LCM + Prefix-Suffix
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Bài toán cần công thức hoặc tính chất toán học — không cần brute force nếu nhận ra pattern.
+**Như tìm nhân tử tối ưu khi bỏ một phần tử**: Factor Score = LCM \* GCD của mảng. Xóa một phần tử có thể tăng score. Dùng prefix/suffix GCD và LCM để tính nhanh "GCD/LCM của mảng trừ nums[i]".
 
 **Pattern Recognition:**
 
-- Signal: "pattern/formula" + "number properties" → **Math**
-- Bài này thuộc dạng Math — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Factor Score(arr) = lcm(arr) \* gcd(arr)
+- Với mỗi i: tính gcd(prefix[i-1], suffix[i+1]) và lcm tương tự
+- Prefix GCD/LCM và Suffix GCD/LCM → O(n log n) total
 
-**Visual — Find the Maximum Factor Score of Array example:**
+**Visual:**
 
 ```
-// TODO: Add step-by-step visual for Math
-// Show one complete example with state at each step
+nums = [2, 4, 8, 16]
+All: gcd=2, lcm=16, score=32
+Remove 2: [4,8,16] → gcd=4, lcm=16, score=64 ← max
+Remove 4: [2,8,16] → gcd=2, lcm=16, score=32
+...
+Answer = 64
 ```
-
----
 
 ## Problem Description
 
-Find the Maximum Factor Score of Array. ([LeetCode](https://leetcode.com/problems/find-the-maximum-factor-score-of-array))
+Cho mảng `nums`. **Factor score** = `lcm(nums) * gcd(nums)`. Có thể xóa **tối đa một** phần tử. Trả về **factor score tối đa** có thể đạt được sau khi xóa (hoặc không xóa).
 
-Difficulty: Medium | Acceptance: 40.4%
+**Example 1:** `nums = [2,4,8,16]` → `64`
+**Example 2:** `nums = [1,2,3,4,5]` → `60`
+**Example 3:** `nums = [3]` → `9`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/find-the-maximum-factor-score-of-array) for full constraints
-
----
+**Constraints:** `1 ≤ nums.length ≤ 10^5`, `1 ≤ nums[i] ≤ 10^6`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **GCD/LCM basics**: gcd(a,b) chuẩn Euclid; lcm(a,b) = a\*b/gcd(a,b)
+2. **Prefix-suffix pattern**: tính prefixGcd[i], prefixLcm[i] và suffixGcd[i], suffixLcm[i]
+3. **Combine**: khi bỏ i, gcd_remaining = gcd(prefixGcd[i-1], suffixGcd[i+1])
+4. **Edge: n=1**: khi bỏ phần tử duy nhất → score = 0; factor score của mảng = nums[0]²
+5. **LCM overflow**: dùng BigInt hoặc chú ý range — nums[i] ≤ 10^6, lcm có thể rất lớn
+6. **Chú ý**: gcd với 0 = số kia; lcm với 0 = 0
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function findTheMaximumFactorScoreOfArrayBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function gcd(a: number, b: number): number {
+  while (b) {
+    [a, b] = [b, a % b];
+  }
+  return a;
 }
 
-/**
- * Solution 2: Optimized — Math
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function findTheMaximumFactorScoreOfArray(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Math
-  // Hint: Find mathematical pattern or formula
-  throw new Error('Not implemented');
+function lcm(a: number, b: number): number {
+  if (a === 0 || b === 0) return 0;
+  return (a / gcd(a, b)) * b; // avoid overflow: divide first
 }
 
-// === Test Cases ===
-// console.log(findTheMaximumFactorScoreOfArray(/* example 1 */)); // expected
-// console.log(findTheMaximumFactorScoreOfArray(/* example 2 */)); // expected
-// console.log(findTheMaximumFactorScoreOfArray(/* edge case */)); // expected
+// Solution 1: Prefix/Suffix GCD+LCM — O(n log M) time, O(n) space
+function maxScore(nums: number[]): number {
+  const n = nums.length;
+
+  // Handle n=1 edge case
+  if (n === 1) return nums[0] * nums[0]; // can choose not to remove
+
+  const prefGcd = new Array(n).fill(0);
+  const prefLcm = new Array(n).fill(0);
+  const sufGcd = new Array(n).fill(0);
+  const sufLcm = new Array(n).fill(0);
+
+  prefGcd[0] = nums[0];
+  prefLcm[0] = nums[0];
+  for (let i = 1; i < n; i++) {
+    prefGcd[i] = gcd(prefGcd[i - 1], nums[i]);
+    prefLcm[i] = lcm(prefLcm[i - 1], nums[i]);
+  }
+
+  sufGcd[n - 1] = nums[n - 1];
+  sufLcm[n - 1] = nums[n - 1];
+  for (let i = n - 2; i >= 0; i--) {
+    sufGcd[i] = gcd(sufGcd[i + 1], nums[i]);
+    sufLcm[i] = lcm(sufLcm[i + 1], nums[i]);
+  }
+
+  // Base: no removal
+  let ans = prefLcm[n - 1] * prefGcd[n - 1];
+
+  // Try removing each element i
+  for (let i = 0; i < n; i++) {
+    let g: number, l: number;
+    if (i === 0) {
+      g = sufGcd[1];
+      l = sufLcm[1];
+    } else if (i === n - 1) {
+      g = prefGcd[n - 2];
+      l = prefLcm[n - 2];
+    } else {
+      g = gcd(prefGcd[i - 1], sufGcd[i + 1]);
+      l = lcm(prefLcm[i - 1], sufLcm[i + 1]);
+    }
+    ans = Math.max(ans, l * g);
+  }
+  return ans;
+}
+
+// Solution 2: Brute force O(n² log M) — for verification with small inputs
+function maxScoreBrute(nums: number[]): number {
+  const n = nums.length;
+  const arrGcd = (a: number[]) => a.reduce(gcd);
+  const arrLcm = (a: number[]) => a.reduce(lcm);
+  let ans = arrLcm(nums) * arrGcd(nums);
+  for (let i = 0; i < n; i++) {
+    if (n === 1) {
+      ans = Math.max(ans, 0);
+      continue;
+    }
+    const rest = [...nums.slice(0, i), ...nums.slice(i + 1)];
+    ans = Math.max(ans, arrLcm(rest) * arrGcd(rest));
+  }
+  return ans;
+}
+
+// Tests
+console.log(maxScore([2, 4, 8, 16])); // 64
+console.log(maxScore([1, 2, 3, 4, 5])); // 60
+console.log(maxScore([3])); // 9
+console.log(maxScoreBrute([2, 4, 8, 16])); // 64
+console.log(maxScoreBrute([1, 2, 3, 4, 5])); // 60
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Check If It Is a Good Array](https://leetcode.com/problems/check-if-it-is-a-good-array) — same pattern: Math
-- [Minimize Length of Array Using Operations](https://leetcode.com/problems/minimize-length-of-array-using-operations) — same pattern: Greedy
-- [Number of Different Subsequences GCDs](https://leetcode.com/problems/number-of-different-subsequences-gcds) — same pattern: Math
-- [Prime In Diagonal](https://leetcode.com/problems/prime-in-diagonal) — same pattern: Math
-- [Find the Maximum Factor Score of Array — LeetCode](https://leetcode.com/problems/find-the-maximum-factor-score-of-array) — problem page
+| Problem                                           | Relationship         |
+| ------------------------------------------------- | -------------------- |
+| 2447 - Number of Subarrays With GCD Equal to K    | GCD in subarrays     |
+| 2654 - Minimum Number of Operations to Make Array | GCD/LCM manipulation |
+| 1979 - Find Greatest Common Divisor of Array      | Basic GCD            |
+| 365 - Water and Jug Problem                       | GCD application      |

@@ -7,97 +7,113 @@ tags: [Array, Math]
 leetcode_url: "https://leetcode.com/problems/range-addition-ii"
 ---
 
-# Range Addition II / Range Addition II
+# Range Addition II / Cộng Dải II
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Math
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Random Pick with Weight](https://leetcode.com/problems/random-pick-with-weight) | [Missing Number](https://leetcode.com/problems/missing-number)
-
----
+> **Difficulty**: 🟢 Easy | **Category**: Array | **Pattern**: Math / Greedy Observation
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Bài toán cần công thức hoặc tính chất toán học — không cần brute force nếu nhận ra pattern.
+**Như tìm giao nhau của nhiều hình chữ nhật**: mỗi phép cộng tác động lên vùng từ (0,0) đến (row-1, col-1). Giá trị lớn nhất luôn nằm trong phần giao nhau của tất cả các vùng đó.
 
 **Pattern Recognition:**
 
-- Signal: "pattern/formula" + "number properties" → **Math**
-- Bài này thuộc dạng Math — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Mỗi operation [r, c] tăng tất cả ô trong [0..r-1][0..c-1]
+- Vùng được cộng nhiều nhất = giao của tất cả các hình chữ nhật = intersection
+- Intersection = [0..minRow-1][0..minCol-1] → diện tích = minRow \* minCol
 
-**Visual — Range Addition II example:**
+**Visual:**
 
 ```
-// TODO: Add step-by-step visual for Math
-// Show one complete example with state at each step
+m=3, n=3, ops=[[2,2],[3,3]]
+Op1: adds to [0..1][0..1] (2×2 region)
+Op2: adds to [0..2][0..2] (3×3 region)
+Intersection: [0..1][0..1] = 2×2 = 4 cells all have max value
+Answer = 2*2 = 4
 ```
-
----
 
 ## Problem Description
 
-Range Addition II. ([LeetCode](https://leetcode.com/problems/range-addition-ii))
+Ma trận `m×n` khởi tạo bằng 0. Với mỗi `ops[i] = [ai, bi]`: cộng 1 vào tất cả ô trong `[0..ai-1][0..bi-1]`. Trả về **số lượng ô có giá trị lớn nhất**.
 
-Difficulty: Easy | Acceptance: 57.3%
+**Example 1:** `m=3, n=3, ops=[[2,2],[3,3]]` → `4`
+**Example 2:** `m=3, n=3, ops=[[2,2],[3,3],[3,3],[3,3],[2,2],[3,3],[3,3],[3,3],[2,2],[3,3],[3,3],[3,3]]` → `4`
+**Example 3:** `m=3, n=3, ops=[]` → `9`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/range-addition-ii) for full constraints
-
----
+**Constraints:** `1 ≤ m,n ≤ 4×10^4`, `0 ≤ ops.length ≤ 10^4`, `1 ≤ ops[i][0] ≤ m`, `1 ≤ ops[i][1] ≤ n`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Key insight**: giá trị max ở (0,0) chắc chắn, và vùng max là giao của tất cả hình chữ nhật
+2. **If ops empty**: toàn bộ ma trận = 0 → answer = m\*n
+3. **No need to simulate**: chỉ tìm min row và min col trong tất cả operations
+4. **O(k)**: k = số operations, không cần xây dựng ma trận
+5. **Chú ý**: ops[i] là inclusive (length), không phải index
+6. **Phân biệt với Range Addition I**: bài I yêu cầu diff array, bài này chỉ cần math
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function rangeAdditionIiBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// Solution 1: Find intersection — O(k) time, O(1) space
+function maxCount(m: number, n: number, ops: number[][]): number {
+  if (ops.length === 0) return m * n;
+  let minRow = m,
+    minCol = n;
+  for (const [r, c] of ops) {
+    minRow = Math.min(minRow, r);
+    minCol = Math.min(minCol, c);
+  }
+  return minRow * minCol;
 }
 
-/**
- * Solution 2: Optimized — Math
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function rangeAdditionIi(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Math
-  // Hint: Find mathematical pattern or formula
-  throw new Error('Not implemented');
+// Solution 2: Explicit reduce (functional style)
+function maxCountV2(m: number, n: number, ops: number[][]): number {
+  if (!ops.length) return m * n;
+  const minRow = ops.reduce((acc, op) => Math.min(acc, op[0]), m);
+  const minCol = ops.reduce((acc, op) => Math.min(acc, op[1]), n);
+  return minRow * minCol;
 }
 
-// === Test Cases ===
-// console.log(rangeAdditionIi(/* example 1 */)); // expected
-// console.log(rangeAdditionIi(/* example 2 */)); // expected
-// console.log(rangeAdditionIi(/* edge case */)); // expected
+// Solution 3: Destructuring + single-pass reduce
+function maxCountV3(m: number, n: number, ops: number[][]): number {
+  return ops
+    .reduce(([mr, mc], [r, c]) => [Math.min(mr, r), Math.min(mc, c)], [m, n])
+    .reduce((a, b) => a * b);
+}
+
+// Tests
+console.log(
+  maxCount(3, 3, [
+    [2, 2],
+    [3, 3],
+  ]),
+); // 4
+console.log(maxCount(3, 3, [])); // 9
+console.log(
+  maxCount(3, 3, [
+    [2, 2],
+    [3, 3],
+    [2, 2],
+  ]),
+); // 4
+console.log(
+  maxCountV2(3, 3, [
+    [2, 2],
+    [3, 3],
+  ]),
+); // 4
+console.log(
+  maxCountV3(3, 3, [
+    [2, 2],
+    [3, 3],
+  ]),
+); // 4
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Random Pick with Weight](https://leetcode.com/problems/random-pick-with-weight) — same pattern: Prefix Sum
-- [Missing Number](https://leetcode.com/problems/missing-number) — same pattern: Binary Search
-- [Evaluate Reverse Polish Notation](https://leetcode.com/problems/evaluate-reverse-polish-notation) — same pattern: Stack
-- [Max Points on a Line](https://leetcode.com/problems/max-points-on-a-line) — same pattern: Math
-- [Range Addition II — LeetCode](https://leetcode.com/problems/range-addition-ii) — problem page
+| Problem                    | Relationship                       |
+| -------------------------- | ---------------------------------- |
+| 370 - Range Addition       | Range update with difference array |
+| 598 - Range Addition II    | This problem                       |
+| 2381 - Shifting Letters II | Range update simulation            |
+| 731 - My Calendar II       | Interval intersection counting     |

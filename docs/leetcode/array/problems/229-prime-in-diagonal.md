@@ -7,97 +7,145 @@ tags: [Array, Math, Matrix, Number Theory]
 leetcode_url: "https://leetcode.com/problems/prime-in-diagonal"
 ---
 
-# Prime In Diagonal / Prime In Diagonal
+# Prime In Diagonal / Số Nguyên Tố Trên Đường Chéo
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Math
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Best Meeting Point](https://leetcode.com/problems/best-meeting-point) | [Check If It Is a Good Array](https://leetcode.com/problems/check-if-it-is-a-good-array)
-
----
+> **Difficulty**: 🟢 Easy | **Category**: Array | **Pattern**: Matrix Diagonal Traversal + Math
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Bài toán cần công thức hoặc tính chất toán học — không cần brute force nếu nhận ra pattern.
+**Như đọc hai đường chéo của bảng cờ vua**: đường chéo chính (i,i) và đường chéo phụ (i, n-1-i). Duyệt qua chúng, kiểm tra số nguyên tố, lấy giá trị lớn nhất.
 
 **Pattern Recognition:**
 
-- Signal: "pattern/formula" + "number properties" → **Math**
-- Bài này thuộc dạng Math — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Hai đường chéo của ma trận vuông n×n: mat[i][i] và mat[i][n-1-i]
+- Kiểm tra nguyên tố với trial division lên đến √n
+- Theo dõi max prime tìm được
 
-**Visual — Prime In Diagonal example:**
+**Visual:**
 
 ```
-// TODO: Add step-by-step visual for Math
-// Show one complete example with state at each step
+mat = [[1,2,3],
+       [5,6,7],
+       [4,8,9]]
+Main diagonal:   mat[0][0]=1, mat[1][1]=6, mat[2][2]=9
+Anti-diagonal:   mat[0][2]=3, mat[1][1]=6, mat[2][0]=4
+Primes found: 3 → answer = 3
 ```
-
----
 
 ## Problem Description
 
-Prime In Diagonal. ([LeetCode](https://leetcode.com/problems/prime-in-diagonal))
+Cho ma trận vuông `mat` n×n. Trả về số nguyên tố **lớn nhất** xuất hiện trên đường chéo chính hoặc đường chéo phụ. Nếu không có số nguyên tố → trả về `0`.
 
-Difficulty: Easy | Acceptance: 36.2%
+**Example 1:** `mat = [[1,2,3],[5,6,7],[4,8,9]]` → `3`
+**Example 2:** `mat = [[1,1,1],[1,1,1],[1,1,1]]` → `0`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/prime-in-diagonal) for full constraints
-
----
+**Constraints:** `1 ≤ n ≤ 300`, `1 ≤ mat[i][j] ≤ 10^6`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Hai đường chéo**: chính là (i,i), phụ là (i, n-1-i); có thể trùng ở giữa khi n lẻ
+2. **isPrime check**: O(√n) — trial division đủ với n ≤ 10^6 → √n ≤ 1000
+3. **Memoize isPrime**: cache kết quả để tránh kiểm tra lặp nếu giá trị trùng nhau
+4. **Trường hợp đặc biệt**: 1 không phải số nguyên tố, 2 là số nguyên tố chẵn duy nhất
+5. **Tối ưu**: Sieve of Eratosthenes nếu n rất lớn và nhiều queries
+6. **Lỗi thường gặp**: quên xử lý mat[i][n-1-i] trùng với mat[i][i] khi n lẻ
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function primeInDiagonalBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function isPrime(n: number): boolean {
+  if (n < 2) return false;
+  if (n === 2) return true;
+  if (n % 2 === 0) return false;
+  for (let i = 3; i * i <= n; i += 2) {
+    if (n % i === 0) return false;
+  }
+  return true;
 }
 
-/**
- * Solution 2: Optimized — Math
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function primeInDiagonal(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Math
-  // Hint: Find mathematical pattern or formula
-  throw new Error('Not implemented');
+// Solution 1: Traverse both diagonals — O(n √maxVal) time
+function diagonalPrime(mat: number[][]): number {
+  const n = mat.length;
+  let ans = 0;
+  for (let i = 0; i < n; i++) {
+    // Main diagonal
+    if (isPrime(mat[i][i])) ans = Math.max(ans, mat[i][i]);
+    // Anti-diagonal (avoid double-counting center for odd n)
+    const j = n - 1 - i;
+    if (j !== i && isPrime(mat[i][j])) ans = Math.max(ans, mat[i][j]);
+    else if (j === i && isPrime(mat[i][j])) ans = Math.max(ans, mat[i][j]);
+  }
+  return ans;
 }
 
-// === Test Cases ===
-// console.log(primeInDiagonal(/* example 1 */)); // expected
-// console.log(primeInDiagonal(/* example 2 */)); // expected
-// console.log(primeInDiagonal(/* edge case */)); // expected
+// Solution 2: Collect diagonal values then filter — cleaner
+function diagonalPrimeV2(mat: number[][]): number {
+  const n = mat.length;
+  const candidates = new Set<number>();
+  for (let i = 0; i < n; i++) {
+    candidates.add(mat[i][i]);
+    candidates.add(mat[i][n - 1 - i]);
+  }
+  let ans = 0;
+  for (const val of candidates) {
+    if (isPrime(val)) ans = Math.max(ans, val);
+  }
+  return ans;
+}
+
+// Solution 3: Sieve approach (precompute all primes ≤ 10^6)
+function diagonalPrimeV3(mat: number[][]): number {
+  const MAX = 1_000_001;
+  const sieve = new Uint8Array(MAX).fill(1);
+  sieve[0] = sieve[1] = 0;
+  for (let i = 2; i * i < MAX; i++) {
+    if (sieve[i]) for (let j = i * i; j < MAX; j += i) sieve[j] = 0;
+  }
+  const n = mat.length;
+  let ans = 0;
+  for (let i = 0; i < n; i++) {
+    if (sieve[mat[i][i]]) ans = Math.max(ans, mat[i][i]);
+    if (sieve[mat[i][n - 1 - i]]) ans = Math.max(ans, mat[i][n - 1 - i]);
+  }
+  return ans;
+}
+
+// Tests
+console.log(
+  diagonalPrime([
+    [1, 2, 3],
+    [5, 6, 7],
+    [4, 8, 9],
+  ]),
+); // 3
+console.log(
+  diagonalPrime([
+    [1, 1, 1],
+    [1, 1, 1],
+    [1, 1, 1],
+  ]),
+); // 0
+console.log(
+  diagonalPrimeV2([
+    [1, 2, 3],
+    [5, 6, 7],
+    [4, 8, 9],
+  ]),
+); // 3
+console.log(
+  diagonalPrimeV3([
+    [1, 2, 3],
+    [5, 6, 7],
+    [4, 8, 9],
+  ]),
+); // 3
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Best Meeting Point](https://leetcode.com/problems/best-meeting-point) — same pattern: Sorting
-- [Check If It Is a Good Array](https://leetcode.com/problems/check-if-it-is-a-good-array) — same pattern: Math
-- [Minimize Length of Array Using Operations](https://leetcode.com/problems/minimize-length-of-array-using-operations) — same pattern: Greedy
-- [Get Biggest Three Rhombus Sums in a Grid](https://leetcode.com/problems/get-biggest-three-rhombus-sums-in-a-grid) — same pattern: Prefix Sum
-- [Prime In Diagonal — LeetCode](https://leetcode.com/problems/prime-in-diagonal) — problem page
+| Problem                       | Relationship                   |
+| ----------------------------- | ------------------------------ |
+| 1diagonal - Diagonal Traverse | Matrix diagonal access pattern |
+| 2614 - Prime In Diagonal      | This problem                   |
+| 866 - Prime Palindrome        | Prime checking + optimization  |
+| 204 - Count Primes            | Sieve of Eratosthenes          |

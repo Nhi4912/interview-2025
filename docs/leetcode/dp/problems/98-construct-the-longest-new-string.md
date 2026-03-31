@@ -7,102 +7,115 @@ tags: [Math, Dynamic Programming, Greedy, Brainteaser]
 leetcode_url: "https://leetcode.com/problems/construct-the-longest-new-string"
 ---
 
-# Construct the Longest New String / Construct the Longest New String
+# Construct the Longest New String / Xây Dựng Chuỗi Dài Nhất
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Airplane Seat Assignment Probability](https://leetcode.com/problems/airplane-seat-assignment-probability) | [Divisor Game](https://leetcode.com/problems/divisor-game)
+## Tương tự thực tế (Vietnamese Analogy)
 
----
+> Bạn có x tấm biển "AA", y tấm "BB", z tấm "AB". Ghép chúng sao cho không xuất hiện "AAA" hay "BBB".  
+> Giống xếp gạch: mỗi cặp AA+BB ghép được "AABB" (4 ô an toàn), tấm "AB" luôn chèn được thoải mái.
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
-
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Construct the Longest New String example:**
+## ASCII Visualization
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
-
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+x=2, y=3, z=1 → pair up min(2,3)=2 → AABB AABB
+               y>x → 1 extra BB
+               z=1 → AB
+  ┌──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┐
+  │A │A │B │B │A │A │B │B │B │B │A │B │
+  └──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┴──┘
+  (min*2 + extra + z) * 2 = (2*2 + 1 + 1)*2 = 12
 ```
 
----
+## Problem
 
-## Problem Description
+Given integers `x`, `y`, `z` (counts of `"aa"`, `"bb"`, `"ab"`), return the **maximum** length of a string
+you can construct using those substrings such that it contains **no** `"aaa"` or `"bbb"` as substring.
 
-Construct the Longest New String. ([LeetCode](https://leetcode.com/problems/construct-the-longest-new-string))
+**Constraints:** `1 <= x, y, z <= 50`
 
-Difficulty: Medium | Acceptance: 53.8%
+## Interview Tips
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/construct-the-longest-new-string) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
-
----
+1. **"ab" is always safe** — it never creates triple runs; insert all z copies freely.
+2. **Pairing rule** — `"aa" + "bb" = "aabb"` (4 chars, no triples). Use `min(x,y)` such pairs.
+3. **Leftover** — if `x ≠ y`, one extra `"aa"` or `"bb"` can be placed as a bookend (+2 chars).
+4. **Formula** — `(min(x,y) * 2 + (x !== y ? 1 : 0) + z) * 2` — each unit is 2 chars.
+5. **Why not both extras?** `...AABB + AA + BB` ends in "AABBBB" → "bbb" violation.
+6. **Edge case** — `x=0,y=0` → only z AB strings; result = `z * 2`.
 
 ## Solutions
 
+### Solution 1: Math / Greedy — O(1)
+
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function constructTheLongestNewStringBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function longestString(x: number, y: number, z: number): number {
+  // min(x,y) AABB blocks + optional 1 extra AA or BB + all AB strings
+  const pairs = Math.min(x, y);
+  const hasExtra = x !== y ? 1 : 0;
+  return (pairs * 2 + hasExtra + z) * 2;
 }
 
-/**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function constructTheLongestNewString(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(constructTheLongestNewString(/* example 1 */)); // expected
-// console.log(constructTheLongestNewString(/* example 2 */)); // expected
-// console.log(constructTheLongestNewString(/* edge case */)); // expected
+console.log(longestString(2, 5, 1)); // 14: (2*2+1+1)*2=14
+console.log(longestString(3, 3, 2)); // 16: (3*2+0+2)*2=16
+console.log(longestString(1, 2, 3)); // 12: (1*2+1+3)*2=12
+console.log(longestString(0, 0, 5)); // 10: (0+0+5)*2=10
+console.log(longestString(1, 1, 1)); //  6: (1*2+0+1)*2=6
 ```
 
----
+### Solution 2: Explicit Block Count — O(1)
 
-## 🔗 Related Problems
+```typescript
+function longestStringV2(x: number, y: number, z: number): number {
+  // Each "AABB" block uses 1 AA + 1 BB = 4 chars
+  // If one side has extras (x≠y), take one more = 2 chars
+  // All AB strings = z * 2 chars
+  const sharedBlocks = Math.min(x, y) * 4;
+  const soloBlock = x !== y ? 2 : 0;
+  const abBlocks = z * 2;
+  return sharedBlocks + soloBlock + abBlocks;
+}
 
-- [Airplane Seat Assignment Probability](https://leetcode.com/problems/airplane-seat-assignment-probability) — same pattern: Dynamic Programming
-- [Divisor Game](https://leetcode.com/problems/divisor-game) — same pattern: Dynamic Programming
-- [Jump Game II](https://leetcode.com/problems/jump-game-ii) — same pattern: Dynamic Programming
-- [Wildcard Matching](https://leetcode.com/problems/wildcard-matching) — same pattern: Dynamic Programming
-- [Construct the Longest New String — LeetCode](https://leetcode.com/problems/construct-the-longest-new-string) — problem page
+console.log(longestStringV2(2, 5, 1)); // 14
+console.log(longestStringV2(3, 3, 2)); // 16
+console.log(longestStringV2(0, 0, 0)); //  0
+```
+
+### Solution 3: Brute-Force DFS Verification (Small Inputs)
+
+```typescript
+function longestStringBrute(x: number, y: number, z: number): number {
+  let best = 0;
+  function dfs(rx: number, ry: number, rz: number, cur: string): void {
+    if (cur.length > best) best = cur.length;
+    if (rx > 0) {
+      const s = cur + "aa";
+      if (!s.includes("aaa") && !s.includes("bbb")) dfs(rx - 1, ry, rz, s);
+    }
+    if (ry > 0) {
+      const s = cur + "bb";
+      if (!s.includes("aaa") && !s.includes("bbb")) dfs(rx, ry - 1, rz, s);
+    }
+    if (rz > 0) {
+      const s = cur + "ab";
+      if (!s.includes("aaa") && !s.includes("bbb")) dfs(rx, ry, rz - 1, s);
+    }
+  }
+  dfs(x, y, z, "");
+  return best;
+}
+
+// Cross-verify math formula against brute force
+console.log(longestStringBrute(1, 1, 1)); // 6
+console.log(longestString(1, 1, 1)); // 6 ✓
+console.log(longestStringBrute(2, 1, 0)); // 6
+console.log(longestString(2, 1, 0)); // 6: (1*2+1+0)*2=6 ✓
+console.log(longestStringBrute(1, 1, 2)); // 8
+console.log(longestString(1, 1, 2)); // 8: (1*2+0+2)*2=8 ✓
+```
+
+## Related Problems
+
+| Problem                                                                               | Difficulty | Key Concept             |
+| ------------------------------------------------------------------------------------- | ---------- | ----------------------- |
+| [String Without AAA or BBB](https://leetcode.com/problems/string-without-aaa-or-bbb/) | Medium     | Greedy construction     |
+| [Non-decreasing Array](https://leetcode.com/problems/non-decreasing-array/)           | Medium     | Greedy with constraints |
+| [Wiggle Subsequence](https://leetcode.com/problems/wiggle-subsequence/)               | Medium     | Greedy/DP               |

@@ -7,60 +7,58 @@ tags: [Array, Two Pointers, Binary Search, Sorting]
 leetcode_url: "https://leetcode.com/problems/successful-pairs-of-spells-and-potions"
 ---
 
-# Successful Pairs of Spells and Potions / Successful Pairs of Spells and Potions
+# Successful Pairs of Spells and Potions / Các Cặp Bùa Chú Và Thuốc Thành Công
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Two Pointers
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Intersection of Two Arrays](https://leetcode.com/problems/intersection-of-two-arrays) | [Heaters](https://leetcode.com/problems/heaters)
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Two Pointers / Binary Search
+> **Frequency**: ⭐ Tier 2 — Hay gặp ở Amazon, Meta
+> **See also**: [Two Sum Less Than K](https://leetcode.com/problems/two-sum-less-than-k) | [Find K Closest Elements](https://leetcode.com/problems/find-k-closest-elements)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Hãy tưởng tượng hai người đi từ hai đầu con đường, tiến lại gần nhau. Mỗi bước, người nào ở vị trí "tốt hơn" sẽ đứng yên, người kia tiến. Khi họ gặp nhau, bài toán được giải.
+**Analogy:** Mỗi bùa chú (spell) cần một lọ thuốc (potion) đủ mạnh để cặp đôi thành công (spell * potion >= success). Sort potions, và với mỗi spell, tìm lọ thuốc nhỏ nhất thỏa điều kiện bằng binary search. Số lọ thành công = potions.length - index tìm được.
 
 **Pattern Recognition:**
 
-- Signal: "sorted array" + "find pair/triplet" → **Two Pointers**
-- Bài này thuộc dạng Two Pointers — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "count pairs where product >= threshold" → **Sort potions + Binary Search per spell**
+- minPotion = ceil(success / spell) → binary search leftmost index trong sorted potions
+- count = n - firstValidIndex
 
-**Visual — Successful Pairs of Spells and Potions example:**
+**Visual — spells=[5,1,3], potions=[1,2,3,4,5], success=7:**
 
 ```
-arr = [... sorted ...]
- L                 R
+Sort potions: [1,2,3,4,5]
+n=5
 
-Step 1: check condition → move L or R
-Step 2: ...
-Step N: condition met ✅
+spell=5: minPotion=ceil(7/5)=2 -> binary search -> idx=1 -> count=5-1=4
+spell=1: minPotion=ceil(7/1)=7 -> idx=5 (not found) -> count=0
+spell=3: minPotion=ceil(7/3)=3 -> idx=2 -> count=5-2=3
+
+Output: [4,0,3] ✅
 ```
 
 ---
 
 ## Problem Description
 
-Successful Pairs of Spells and Potions. ([LeetCode](https://leetcode.com/problems/successful-pairs-of-spells-and-potions))
-
-Difficulty: Medium | Acceptance: 45.5%
+Given `spells` and `potions` arrays and `success` threshold. A pair (spell, potion) is successful if `spell * potion >= success`. Return array where `pairs[i]` = number of potions that form a successful pair with `spells[i]`.
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+Example 1: spells=[5,1,3], potions=[1,2,3,4,5], success=7  -> [4,0,3]
+Example 2: spells=[3,1,2], potions=[8,5,8], success=16     -> [2,0,2]
 ```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/successful-pairs-of-spells-and-potions) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Mảng đã sorted chưa? Có duplicate không?" / Ask if array is sorted and if duplicates exist
-2. **Brute force**: "Dùng 2 vòng for O(n²)" → optimize with two pointers O(n) / Start with nested loops, then optimize
-3. **Optimize**: "Vì mảng sorted, dùng 2 con trỏ L/R tiến vào giữa" / Since sorted, use L/R pointers moving inward
-4. **Edge cases**: "Mảng rỗng, một phần tử, tất cả giống nhau" / Empty array, single element, all same values
+1. **Sort potions once**: Sort O(m log m) once, binary search O(log m) per spell
+2. **minPotion calculation**: spell * p >= success → p >= success/spell → Math.ceil
+3. **Binary search for lower bound**: Tìm index đầu tiên >= minPotion
+4. **Two pointer approach**: Sort spells too, use two pointers — O((n+m) log(n+m))
+5. **Overflow nguy hiểm**: spell * potion có thể lớn → dùng comparison thay vì product
+6. **Complexity**: Time O((n+m) log m), Space O(n) for result
 
 ---
 
@@ -68,39 +66,79 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Sort Potions + Binary Search per Spell (Optimal)
+ * Time O(m log m + n log m), Space O(n)
+ *
+ * For each spell, find the first potion >= ceil(success/spell).
+ * Count of valid potions = n - firstValidIndex.
  */
-function successfulPairsOfSpellsAndPotionsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function successfulPairs(spells: number[], potions: number[], success: number): number[] {
+  potions.sort((a, b) => a - b);
+  const m = potions.length;
+
+  // Lower bound: first index where potions[idx] >= target
+  const lowerBound = (target: number): number => {
+    let lo = 0, hi = m;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (potions[mid] >= target) hi = mid;
+      else lo = mid + 1;
+    }
+    return lo;
+  };
+
+  return spells.map(spell => {
+    // Need spell * potion >= success, i.e., potion >= success/spell
+    const minPotion = Math.ceil(success / spell);
+    return m - lowerBound(minPotion);
+  });
 }
 
 /**
- * Solution 2: Optimized — Two Pointers
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Sort Both + Two Pointers
+ * Time O(n log n + m log m + n + m), Space O(n)
+ *
+ * Sort spells (with original indices), sort potions.
+ * Two pointers: as spells increase, minPotion threshold decreases.
  */
-function successfulPairsOfSpellsAndPotions(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Two Pointers
-  // Hint: Use L/R pointers on sorted input, move based on comparison
-  throw new Error('Not implemented');
+function successfulPairs2(spells: number[], potions: number[], success: number): number[] {
+  const m = potions.length;
+  potions.sort((a, b) => a - b);
+
+  // Sort spells with their original indices
+  const indexed = spells.map((s, i) => [s, i]).sort((a, b) => a[0] - b[0]);
+  const result = new Array(spells.length);
+
+  let ptr = m - 1; // pointer in potions (start from largest)
+
+  for (const [spell, origIdx] of indexed) {
+    // Advance ptr while potions[ptr] * spell >= success
+    // Actually: for increasing spells, threshold decreases, so ptr moves left
+    while (ptr >= 0 && (potions[ptr] * spell >= success)) {
+      ptr--;
+    }
+    result[origIdx] = m - (ptr + 1);
+  }
+
+  return result;
 }
 
-// === Test Cases ===
-// console.log(successfulPairsOfSpellsAndPotions(/* example 1 */)); // expected
-// console.log(successfulPairsOfSpellsAndPotions(/* example 2 */)); // expected
-// console.log(successfulPairsOfSpellsAndPotions(/* edge case */)); // expected
+// --- Quick inline tests ---
+console.log(JSON.stringify(successfulPairs([5,1,3], [1,2,3,4,5], 7)));  // [4,0,3]
+console.log(JSON.stringify(successfulPairs([3,1,2], [8,5,8], 16)));      // [2,0,2]
+console.log(JSON.stringify(successfulPairs([1], [1], 1)));                // [1]
+console.log(JSON.stringify(successfulPairs2([5,1,3], [1,2,3,4,5], 7))); // [4,0,3]
+console.log(JSON.stringify(successfulPairs2([3,1,2], [8,5,8], 16)));     // [2,0,2]
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Intersection of Two Arrays](https://leetcode.com/problems/intersection-of-two-arrays) — same pattern: Two Pointers
-- [Heaters](https://leetcode.com/problems/heaters) — same pattern: Two Pointers
-- [Find K Closest Elements](https://leetcode.com/problems/find-k-closest-elements) — same pattern: Sliding Window
-- [Maximum Number of Tasks You Can Assign](https://leetcode.com/problems/maximum-number-of-tasks-you-can-assign) — same pattern: Monotonic Queue
-- [Successful Pairs of Spells and Potions — LeetCode](https://leetcode.com/problems/successful-pairs-of-spells-and-potions) — problem page
+| Problem | Relationship |
+| ------- | ------------ |
+| [2300. Successful Pairs of Spells and Potions](https://leetcode.com/problems/successful-pairs-of-spells-and-potions/) | This problem |
+| [167. Two Sum II - Input Array Is Sorted](https://leetcode.com/problems/two-sum-ii-input-array-is-sorted/) | Two pointers on sorted array |
+| [875. Koko Eating Bananas](https://leetcode.com/problems/koko-eating-bananas/) | Binary search on threshold |
+| [1385. Find the Distance Value Between Two Arrays](https://leetcode.com/problems/find-the-distance-value-between-two-arrays/) | Sort + binary search count |
+| [2410. Maximum Matching of Players With Trainers](https://leetcode.com/problems/maximum-matching-of-players-with-trainers/) | Sort + greedy matching |

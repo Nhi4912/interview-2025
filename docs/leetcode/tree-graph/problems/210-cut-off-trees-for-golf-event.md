@@ -7,104 +7,174 @@ tags: [Array, Breadth-First Search, Heap (Priority Queue), Matrix]
 leetcode_url: "https://leetcode.com/problems/cut-off-trees-for-golf-event"
 ---
 
-# Cut Off Trees for Golf Event / Cut Off Trees for Golf Event
+# Cut Off Trees for Golf Event / Chặt Cây Theo Thứ Tự Chiều Cao
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Heap / Priority Queue
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Trapping Rain Water II](https://leetcode.com/problems/trapping-rain-water-ii) | [Swim in Rising Water](https://leetcode.com/problems/swim-in-rising-water)
+## Analogy / Tương Tự
 
----
+> Bạn là người chặt cây trên sân golf. Quy tắc: phải chặt cây theo thứ tự **từ thấp đến cao**. Từ vị trí hiện tại, tìm đường ngắn nhất đến cây tiếp theo, tránh các vật cản (ô = 0). Nếu không thể đến được, trả về -1.
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Giống phòng cấp cứu — bệnh nhân nặng nhất luôn được ưu tiên, bất kể ai đến trước. Heap giữ phần tử quan trọng nhất ở đầu.
-
-**Pattern Recognition:**
-
-- Signal: "k-th largest/smallest" + "top-k elements" → **Heap**
-- Bài này thuộc dạng Heap / Priority Queue — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Cut Off Trees for Golf Event example:**
+## ASCII Visual
 
 ```
-Min Heap:
-        1
-       / \
-      3   2
-     / \
-    7   4
-
-Insert: add to end, bubble up
-Extract: remove root, bubble down
+Grid:            Sorted trees (height):
+[54,  0, 36]     (2,2,1) h=1 → skip (already low)
+[26,  0, 18]     BFS: (0,0)→(2,0) = 4 steps
+[12, 26,  1]     BFS: (2,0)→(1,2) = 3 steps
+                  Total = 7 steps
 ```
 
----
+## Problem
 
-## Problem Description
+Given an `m x n` matrix `forest` where `forest[i][j]` represents a tree height (0=obstacle, 1=flat ground, >1=tree). Starting at `(0,0)`, cut all trees in ascending order of height. Return the minimum total steps, or -1 if impossible.
 
-Cut Off Trees for Golf Event. ([LeetCode](https://leetcode.com/problems/cut-off-trees-for-golf-event))
+## Interview Tips
 
-Difficulty: Hard | Acceptance: 35.3%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/cut-off-trees-for-golf-event) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Sort first** — collect all trees with height > 1, sort by height ascending
+2. **BFS for each leg** — find shortest path between consecutive positions
+3. **Early exit** — if any BFS returns -1, immediately return -1
+4. **Start position** — begin at (0,0), move to each tree in order
+5. **BFS handles obstacles** — cells with 0 block movement
+6. **Time complexity** — O((m·n)² ) worst case: O(m·n) trees × O(m·n) BFS each
 
 ## Solutions
 
+### Solution 1: BFS Between Consecutive Trees
+
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function cutOffTreesForGolfEventBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function cutOffTree(forest: number[][]): number {
+  const m = forest.length,
+    n = forest[0].length;
+
+  // Collect all trees (height > 1) sorted by height
+  const trees: [number, number, number][] = [];
+  for (let i = 0; i < m; i++)
+    for (let j = 0; j < n; j++) if (forest[i][j] > 1) trees.push([forest[i][j], i, j]);
+  trees.sort((a, b) => a[0] - b[0]);
+
+  // BFS to find min distance between two points
+  function bfs(sr: number, sc: number, tr: number, tc: number): number {
+    if (sr === tr && sc === tc) return 0;
+    const dirs = [
+      [0, 1],
+      [0, -1],
+      [1, 0],
+      [-1, 0],
+    ];
+    const visited = Array.from({ length: m }, () => new Array(n).fill(false));
+    const queue: [number, number, number][] = [[sr, sc, 0]];
+    visited[sr][sc] = true;
+    while (queue.length) {
+      const [r, c, dist] = queue.shift()!;
+      for (const [dr, dc] of dirs) {
+        const nr = r + dr,
+          nc = c + dc;
+        if (nr < 0 || nr >= m || nc < 0 || nc >= n) continue;
+        if (visited[nr][nc] || forest[nr][nc] === 0) continue;
+        if (nr === tr && nc === tc) return dist + 1;
+        visited[nr][nc] = true;
+        queue.push([nr, nc, dist + 1]);
+      }
+    }
+    return -1;
+  }
+
+  let total = 0,
+    cr = 0,
+    cc = 0;
+  for (const [, tr, tc] of trees) {
+    const steps = bfs(cr, cc, tr, tc);
+    if (steps === -1) return -1;
+    total += steps;
+    cr = tr;
+    cc = tc;
+  }
+  return total;
 }
 
-/**
- * Solution 2: Optimized — Heap / Priority Queue
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function cutOffTreesForGolfEvent(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Heap / Priority Queue
-  // Hint: Use min/max heap to efficiently track k-th element
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(cutOffTreesForGolfEvent(/* example 1 */)); // expected
-// console.log(cutOffTreesForGolfEvent(/* example 2 */)); // expected
-// console.log(cutOffTreesForGolfEvent(/* edge case */)); // expected
+// Tests
+console.log(
+  cutOffTree([
+    [1, 2, 3],
+    [0, 0, 4],
+    [7, 6, 5],
+  ]),
+); // 6
+console.log(
+  cutOffTree([
+    [2, 3, 4],
+    [0, 0, 5],
+    [8, 7, 6],
+  ]),
+); // 6
+console.log(cutOffTree([[0]])); // -1
 ```
 
----
+### Solution 2: Hadlock's Algorithm (Fewer Detours, Faster)
 
-## 🔗 Related Problems
+```typescript
+function cutOffTreeHadlock(forest: number[][]): number {
+  const m = forest.length,
+    n = forest[0].length;
+  const trees: [number, number, number][] = [];
+  for (let i = 0; i < m; i++)
+    for (let j = 0; j < n; j++) if (forest[i][j] > 1) trees.push([forest[i][j], i, j]);
+  trees.sort((a, b) => a[0] - b[0]);
 
-- [Trapping Rain Water II](https://leetcode.com/problems/trapping-rain-water-ii) — same pattern: Heap / Priority Queue
-- [Swim in Rising Water](https://leetcode.com/problems/swim-in-rising-water) — same pattern: Union Find
-- [Minimum Number of Visited Cells in a Grid](https://leetcode.com/problems/minimum-number-of-visited-cells-in-a-grid) — same pattern: Union Find
-- [Path With Minimum Effort](https://leetcode.com/problems/path-with-minimum-effort) — same pattern: Union Find
-- [Cut Off Trees for Golf Event — LeetCode](https://leetcode.com/problems/cut-off-trees-for-golf-event) — problem page
+  // A* style BFS with Manhattan heuristic
+  function minSteps(sr: number, sc: number, tr: number, tc: number): number {
+    if (sr === tr && sc === tc) return 0;
+    const dirs = [
+      [0, 1],
+      [0, -1],
+      [1, 0],
+      [-1, 0],
+    ];
+    const dist = Array.from({ length: m }, () => new Array(n).fill(Infinity));
+    dist[sr][sc] = 0;
+    // Simple BFS (Dijkstra not needed - equal weights)
+    const queue: [number, number][] = [[sr, sc]];
+    let head = 0;
+    while (head < queue.length) {
+      const [r, c] = queue[head++];
+      for (const [dr, dc] of dirs) {
+        const nr = r + dr,
+          nc = c + dc;
+        if (nr < 0 || nr >= m || nc < 0 || nc >= n) continue;
+        if (forest[nr][nc] === 0 || dist[nr][nc] <= dist[r][c] + 1) continue;
+        dist[nr][nc] = dist[r][c] + 1;
+        queue.push([nr, nc]);
+      }
+    }
+    return dist[tr][tc] === Infinity ? -1 : dist[tr][tc];
+  }
+
+  let total = 0,
+    cr = 0,
+    cc = 0;
+  for (const [, tr, tc] of trees) {
+    const steps = minSteps(cr, cc, tr, tc);
+    if (steps === -1) return -1;
+    total += steps;
+    cr = tr;
+    cc = tc;
+  }
+  return total;
+}
+
+console.log(
+  cutOffTreeHadlock([
+    [1, 2, 3],
+    [0, 0, 4],
+    [7, 6, 5],
+  ]),
+); // 6
+```
+
+## Related Problems
+
+| #    | Problem                                 | Difficulty | Tags        |
+| ---- | --------------------------------------- | ---------- | ----------- |
+| 675  | Cut Off Trees for Golf Event (original) | Hard       | BFS, Matrix |
+| 1091 | Shortest Path in Binary Matrix          | Medium     | BFS         |
+| 286  | Walls and Gates                         | Medium     | BFS         |
+| 994  | Rotting Oranges                         | Medium     | BFS, Matrix |

@@ -7,97 +7,139 @@ tags: [Array, Simulation]
 leetcode_url: "https://leetcode.com/problems/sum-of-even-numbers-after-queries"
 ---
 
-# Sum of Even Numbers After Queries / Sum of Even Numbers After Queries
+# Sum of Even Numbers After Queries / Tổng Số Chẵn Sau Mỗi Truy Vấn
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Matrix / Simulation
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) | [Text Justification](https://leetcode.com/problems/text-justification)
-
----
+> **Difficulty**: 🟡 Medium | **Category**: Array | **Pattern**: Running Sum / Incremental Update
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Phân tích bài "Sum of Even Numbers After Queries" — xác định pattern phù hợp dựa trên constraints và input/output.
+**Như theo dõi ngân sách chẵn**: thay vì tính lại tổng số chẵn từ đầu sau mỗi lần cập nhật, chỉ cần điều chỉnh tổng hiện tại dựa trên ảnh hưởng của phép cộng lên một phần tử.
 
 **Pattern Recognition:**
 
-- Signal: "problem-specific signals" → **Matrix / Simulation**
-- Bài này thuộc dạng Matrix / Simulation — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Duy trì `evenSum` running = tổng tất cả số chẵn hiện tại
+- Khi cập nhật nums[index] += val: xử lý 4 trường hợp parity
+- Sau mỗi query: ghi lại evenSum vào kết quả
 
-**Visual — Sum of Even Numbers After Queries example:**
+**Visual:**
 
 ```
-// TODO: Add step-by-step visual for Matrix / Simulation
-// Show one complete example with state at each step
+nums=[0,1,2,3,4], queries=[[1,0],[-3,1],[-4,0],[2,3]]
+evenSum = 0+2+4 = 6
+q=[1,0]: nums[0]=0+1=1. Was 0(even)→subtract 0. Now 1(odd)→don't add. evenSum=6-0=6
+q=[-3,1]: nums[1]=1-3=-2. Was 1(odd)→ok. Now -2(even)→add -2. evenSum=6+(-2)=4
+q=[-4,0]: nums[0]=1-4=-3. Was 1(odd)→ok. Now -3(odd)→ok. evenSum=4
+q=[2,3]: nums[3]=3+2=5. Was 3(odd)→ok. Now 5(odd)→ok. evenSum=4
+Answers: [6,4,4,4] ✓
 ```
-
----
 
 ## Problem Description
 
-Sum of Even Numbers After Queries. ([LeetCode](https://leetcode.com/problems/sum-of-even-numbers-after-queries))
+Mảng `nums`, mảng `queries[i]=[val, index]`. Sau mỗi query: `nums[index] += val`. Trả về mảng `answer` với `answer[i]` = tổng tất cả số chẵn trong `nums` sau query i.
 
-Difficulty: Medium | Acceptance: 68.5%
+**Example:** `nums=[0,1,2,3,4], queries=[[1,0],[-3,1],[-4,0],[2,3]]` → `[8,6,2,4]`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/sum-of-even-numbers-after-queries) for full constraints
-
----
+**Constraints:** `1 ≤ nums.length ≤ 10^4`, `1 ≤ queries.length ≤ 10^4`, `-10^4 ≤ val ≤ 10^4`, `0 ≤ index < nums.length`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Brute force**: O(n\*q) — tính lại tổng sau mỗi query; có thể chậm với n=q=10^4
+2. **Optimized**: O(n+q) — maintain running evenSum, chỉ adjust khi needed
+3. **4 cases**: (even+val)→even, (even+val)→odd, (odd+val)→even, (odd+val)→odd
+4. **Simplified 2 steps**: (1) nếu cũ là chẵn → trừ khỏi sum, (2) cộng val, (3) nếu mới là chẵn → cộng vào sum
+5. **Even check**: n % 2 === 0, nhớ rằng âm chẵn cũng là chẵn (-4 % 2 === 0)
+6. **Không cần mảng prefix**: chỉ cần một biến evenSum duy nhất
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function sumOfEvenNumbersAfterQueriesBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// Solution 1: Incremental update — O(n + q) time, O(q) for answer
+function sumEvenAfterQueries(nums: number[], queries: number[][]): number[] {
+  // Initial even sum
+  let evenSum = 0;
+  for (const x of nums) {
+    if (x % 2 === 0) evenSum += x;
+  }
+
+  const answer: number[] = [];
+  for (const [val, idx] of queries) {
+    // Step 1: if current is even, remove from sum
+    if (nums[idx] % 2 === 0) evenSum -= nums[idx];
+    // Step 2: apply update
+    nums[idx] += val;
+    // Step 3: if new value is even, add to sum
+    if (nums[idx] % 2 === 0) evenSum += nums[idx];
+    answer.push(evenSum);
+  }
+  return answer;
 }
 
-/**
- * Solution 2: Optimized — Matrix / Simulation
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function sumOfEvenNumbersAfterQueries(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Matrix / Simulation
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
+// Solution 2: Brute force — O(n*q) — for clarity / baseline
+function sumEvenAfterQueriesBrute(nums: number[], queries: number[][]): number[] {
+  const answer: number[] = [];
+  for (const [val, idx] of queries) {
+    nums[idx] += val;
+    let s = 0;
+    for (const x of nums) if (x % 2 === 0) s += x;
+    answer.push(s);
+  }
+  return answer;
 }
 
-// === Test Cases ===
-// console.log(sumOfEvenNumbersAfterQueries(/* example 1 */)); // expected
-// console.log(sumOfEvenNumbersAfterQueries(/* example 2 */)); // expected
-// console.log(sumOfEvenNumbersAfterQueries(/* edge case */)); // expected
+// Solution 3: Same as v1 but with explicit parity checks
+function sumEvenAfterQueriesV3(nums: number[], queries: number[][]): number[] {
+  const isEven = (x: number) => x % 2 === 0;
+  let evenSum = nums.reduce((s, x) => s + (isEven(x) ? x : 0), 0);
+
+  return queries.map(([val, idx]) => {
+    if (isEven(nums[idx])) evenSum -= nums[idx];
+    nums[idx] += val;
+    if (isEven(nums[idx])) evenSum += nums[idx];
+    return evenSum;
+  });
+}
+
+// Tests
+console.log(
+  sumEvenAfterQueries(
+    [0, 1, 2, 3, 4],
+    [
+      [1, 0],
+      [-3, 1],
+      [-4, 0],
+      [2, 3],
+    ],
+  ),
+); // [8,6,2,4]
+console.log(
+  sumEvenAfterQueriesBrute(
+    [0, 1, 2, 3, 4],
+    [
+      [1, 0],
+      [-3, 1],
+      [-4, 0],
+      [2, 3],
+    ],
+  ),
+); // [8,6,2,4]
+console.log(
+  sumEvenAfterQueriesV3(
+    [0, 1, 2, 3, 4],
+    [
+      [1, 0],
+      [-3, 1],
+      [-4, 0],
+      [2, 3],
+    ],
+  ),
+); // [8,6,2,4]
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) — same pattern: Matrix / Simulation
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Asteroid Collision](https://leetcode.com/problems/asteroid-collision) — same pattern: Stack
-- [Spiral Matrix II](https://leetcode.com/problems/spiral-matrix-ii) — same pattern: Matrix / Simulation
-- [Sum of Even Numbers After Queries — LeetCode](https://leetcode.com/problems/sum-of-even-numbers-after-queries) — problem page
+| Problem                                 | Relationship                 |
+| --------------------------------------- | ---------------------------- |
+| 1314 - Matrix Block Sum                 | Running sum with queries     |
+| 985 - Sum of Even Numbers After Queries | This problem                 |
+| 1395 - Count Number of Teams            | Incremental counting         |
+| 303 - Range Sum Query - Immutable       | Prefix sum for range queries |

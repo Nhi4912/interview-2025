@@ -7,97 +7,125 @@ tags: [Array, String, Counting]
 leetcode_url: "https://leetcode.com/problems/count-the-number-of-vowel-strings-in-range"
 ---
 
-# Count the Number of Vowel Strings in Range / Count the Number of Vowel Strings in Range
+# Count the Number of Vowel Strings in Range / Đếm Số Chuỗi Nguyên Âm Trong Phạm Vi
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: String Processing
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) | [Subdomain Visit Count](https://leetcode.com/problems/subdomain-visit-count)
+## Tóm tắt bằng tiếng Việt
 
----
+Cho mảng `words` và hai chỉ số `left`, `right`. Đếm số chuỗi trong `words[left..right]` mà vừa bắt đầu vừa kết thúc bằng nguyên âm (`a, e, i, o, u`).
 
-## 🧠 Intuition / Tư Duy
+**Ví dụ:** `words = ["are","amy","u"]`, `left = 0`, `right = 2` → `"are"` (a...e ✓), `"amy"` (a...y ✗), `"u"` (u...u ✓) → kết quả `2`.
 
-**Analogy:** Xử lý chuỗi ký tự — thường dùng hash table, two pointers, hoặc sliding window tuỳ bài toán.
+## Tương tự thực tế
 
-**Pattern Recognition:**
+> Như kiểm tra danh sách sinh viên: chỉ đếm những em có họ và tên đều bắt đầu bằng nguyên âm. Chỉ xét trong khoảng từ vị trí `left` đến `right`.
 
-- Signal: "string transformation/validation" → **String Processing**
-- Bài này thuộc dạng String Processing — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Count the Number of Vowel Strings in Range example:**
+## Minh họa ASCII
 
 ```
-// TODO: Add step-by-step visual for String Processing
-// Show one complete example with state at each step
+words = ["are", "amy", "u", "omit", "hello"]
+          a..e   a..y   u    o..t   h..o
+          ✓ ✓    ✓ ✗    ✓ ✓  ✓ ✗    ✗ ✗
+
+left=0, right=4
+Count vowel-start AND vowel-end:
+"are" → 'a' ✓ and 'e' ✓ → COUNT
+"amy" → 'a' ✓ but 'y' ✗ → skip
+"u"   → 'u' ✓ and 'u' ✓ → COUNT
+"omit"→ 'o' ✓ but 't' ✗ → skip
+"hello"→'h' ✗           → skip
+Answer = 2
 ```
 
----
+## Mô tả bài toán
 
-## Problem Description
+- Cho `words` mảng chuỗi và `left`, `right` chỉ số.
+- Trả về số chuỗi `words[i]` với `left <= i <= right` mà bắt đầu **và** kết thúc bằng nguyên âm.
 
-Count the Number of Vowel Strings in Range. ([LeetCode](https://leetcode.com/problems/count-the-number-of-vowel-strings-in-range))
+**Constraints:** `1 <= words.length <= 1000`, `1 <= words[i].length <= 10`, `0 <= left <= right < words.length`.
 
-Difficulty: Easy | Acceptance: 73.5%
+## Tips phỏng vấn
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+1. **Vowel set** — dùng `Set` hoặc string `.includes()` để check nguyên âm.
+2. **Check cả 2 đầu** — `isVowel(first) && isVowel(last)`.
+3. **Single char** — nếu chuỗi có 1 ký tự, `first === last`, chỉ cần check 1 lần.
+4. **Slice trước** — `words.slice(left, right+1)` rồi filter cũng được.
+5. **For loop vs filter** — for loop tiết kiệm memory hơn khi array lớn.
+6. **Phân biệt nguyên âm** — chỉ `a, e, i, o, u` (không bao gồm `y`).
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/count-the-number-of-vowel-strings-in-range) for full constraints
+## Giải pháp
 
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
-
-## Solutions
+### Giải pháp 1: For Loop với Helper Function
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function countTheNumberOfVowelStringsInRangeBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function vowelStrings(words: string[], left: number, right: number): number {
+  const vowels = new Set(["a", "e", "i", "o", "u"]);
+
+  const isVowel = (ch: string): boolean => vowels.has(ch);
+
+  let count = 0;
+  for (let i = left; i <= right; i++) {
+    const word = words[i];
+    if (isVowel(word[0]) && isVowel(word[word.length - 1])) {
+      count++;
+    }
+  }
+  return count;
 }
 
-/**
- * Solution 2: Optimized — String Processing
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function countTheNumberOfVowelStringsInRange(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using String Processing
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(countTheNumberOfVowelStringsInRange(/* example 1 */)); // expected
-// console.log(countTheNumberOfVowelStringsInRange(/* example 2 */)); // expected
-// console.log(countTheNumberOfVowelStringsInRange(/* edge case */)); // expected
+// Test cases
+console.log(vowelStrings(["are", "amy", "u"], 0, 2)); // 2
+console.log(vowelStrings(["hey", "aeo", "mu", "ooo", "artsy"], 0, 4)); // 2
+console.log(vowelStrings(["e", "o", "u"], 0, 2)); // 3
+console.log(vowelStrings(["apple", "orange", "banana"], 0, 2)); // 2
+console.log(vowelStrings(["abc"], 0, 0)); // 0
 ```
 
----
+### Giải pháp 2: filter + reduce (Functional style)
 
-## 🔗 Related Problems
+```typescript
+function vowelStringsFunc(words: string[], left: number, right: number): number {
+  const VOWELS = "aeiou";
 
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Subdomain Visit Count](https://leetcode.com/problems/subdomain-visit-count) — same pattern: Hash Map
-- [Rank Teams by Votes](https://leetcode.com/problems/rank-teams-by-votes) — same pattern: Sorting
-- [Find Words That Can Be Formed by Characters](https://leetcode.com/problems/find-words-that-can-be-formed-by-characters) — same pattern: Hash Map
-- [Count the Number of Vowel Strings in Range — LeetCode](https://leetcode.com/problems/count-the-number-of-vowel-strings-in-range) — problem page
+  return words
+    .slice(left, right + 1)
+    .filter((w) => VOWELS.includes(w[0]) && VOWELS.includes(w[w.length - 1])).length;
+}
+
+console.log(vowelStringsFunc(["are", "amy", "u"], 0, 2)); // 2
+console.log(vowelStringsFunc(["hey", "aeo", "mu", "ooo", "artsy"], 0, 4)); // 2
+console.log(vowelStringsFunc(["e", "o", "u"], 0, 2)); // 3
+```
+
+### Giải pháp 3: Regex approach
+
+```typescript
+function vowelStringsRegex(words: string[], left: number, right: number): number {
+  // Word must start and end with a vowel
+  const pattern = /^[aeiou].*[aeiou]$|^[aeiou]$/;
+  let count = 0;
+  for (let i = left; i <= right; i++) {
+    if (pattern.test(words[i])) count++;
+  }
+  return count;
+}
+
+console.log(vowelStringsRegex(["are", "amy", "u"], 0, 2)); // 2
+console.log(vowelStringsRegex(["e", "o", "u"], 0, 2)); // 3
+console.log(vowelStringsRegex(["abc"], 0, 0)); // 0
+```
+
+## Bảng so sánh
+
+| Giải pháp      | Thời gian | Không gian | Ghi chú                  |
+| -------------- | --------- | ---------- | ------------------------ |
+| For Loop       | O(n)      | O(1)       | Tối ưu nhất              |
+| filter + slice | O(n)      | O(n)       | Functional, tạo mảng mới |
+| Regex          | O(n·m)    | O(1)       | m = word length          |
+
+## Bài liên quan
+
+| #    | Tên                                        | Độ khó | Tags   |
+| ---- | ------------------------------------------ | ------ | ------ |
+| 1119 | Remove Vowels from a String                | Easy   | String |
+| 2586 | Count the Number of Vowel Strings in Range | Easy   | Array  |
+| 1704 | Determine if String Halves Are Alike       | Easy   | String |

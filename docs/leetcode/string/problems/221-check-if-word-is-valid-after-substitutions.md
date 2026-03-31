@@ -7,99 +7,151 @@ tags: [String, Stack]
 leetcode_url: "https://leetcode.com/problems/check-if-word-is-valid-after-substitutions"
 ---
 
-# Check If Word Is Valid After Substitutions / Check If Word Is Valid After Substitutions
+# Check If Word Is Valid After Substitutions / Kiểm Tra Từ Hợp Lệ Sau Các Thay Thế
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Stack
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Decode String](https://leetcode.com/problems/decode-string) | [Simplify Path](https://leetcode.com/problems/simplify-path)
+## Tóm tắt bằng tiếng Việt
 
----
+Một từ hợp lệ được tạo ra từ chuỗi rỗng bằng cách liên tục chèn "abc" vào bất kỳ vị trí nào. Kiểm tra xem chuỗi `s` có phải là từ hợp lệ không.
 
-## 🧠 Intuition / Tư Duy
+**Ví dụ:** "aabcbc" → hợp lệ vì "" → "abc" → "aabcbc" (chèn "abc" vào giữa "a" và "bc").
 
-**Analogy:** Giống chồng đĩa — đĩa nào đặt cuối cùng sẽ được lấy ra đầu tiên (LIFO). Nhiều bài toán về matching và nesting dùng stack.
+## Tương tự thực tế
 
-**Pattern Recognition:**
+> Như xếp bánh sandwich 3 lớp: bao giờ cũng phải có đủ bộ (bánh-nhân-bánh) theo thứ tự. Mỗi khi gặp lớp cuối "c", phải có "b" rồi "a" ngay bên dưới trong stack!
 
-- Signal: "matching/nesting" + "most recent element" → **Stack**
-- Bài này thuộc dạng Stack — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Check If Word Is Valid After Substitutions example:**
+## Minh họa ASCII
 
 ```
-stack = []
+s = "aabcbc"
+Stack processing:
+'a' → [a]
+'a' → [a,a]
+'b' → [a,a,b]
+'c' → pop 'b','a' → [a]  ✓
+'b' → [a,b]
+'c' → pop 'b','a' → []   ✓
+End: stack empty → VALID ✓
 
-push/pop from right →
-Process: scan left to right, stack maintains invariant
+s = "abccba"
+'a'→[a] 'b'→[a,b] 'c'→pop→[] 'c'→need b,a but empty → INVALID ✗
 ```
 
----
+## Mô tả bài toán
 
-## Problem Description
+- Từ hợp lệ được tạo bằng cách bắt đầu từ `""` và chèn `"abc"` vào bất kỳ vị trí nào bất kỳ số lần.
+- Cho chuỗi `s`, trả về `true` nếu `s` là từ hợp lệ.
 
-Check If Word Is Valid After Substitutions. ([LeetCode](https://leetcode.com/problems/check-if-word-is-valid-after-substitutions))
+**Constraints:** `1 <= s.length <= 3 * 10^4`, chỉ chứa `'a'`, `'b'`, `'c'`.
 
-Difficulty: Medium | Acceptance: 60.2%
+## Tips phỏng vấn
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+1. **Stack là chìa khóa** — khi gặp `'c'` phải tìm `'b'` rồi `'a'` ngay bên dưới.
+2. **Greedy pop** — gặp `'c'`, ngay lập tức kiểm tra 2 phần tử trên cùng stack.
+3. **Độ dài chia hết 3** — nếu `s.length % 3 !== 0`, trả về `false` ngay.
+4. **Edge case** — stack rỗng khi cần pop → invalid.
+5. **Chỉ `'c'` mới trigger pop** — `'a'` và `'b'` luôn push vào stack.
+6. **Stack cuối phải rỗng** — nếu còn phần tử, tức là chưa hoàn chỉnh.
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/check-if-word-is-valid-after-substitutions) for full constraints
+## Giải pháp
 
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
-
-## Solutions
+### Giải pháp 1: Stack (Tối ưu)
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function checkIfWordIsValidAfterSubstitutionsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function isValid(s: string): boolean {
+  // Quick check: length must be divisible by 3
+  if (s.length % 3 !== 0) return false;
+
+  const stack: string[] = [];
+
+  for (const ch of s) {
+    if (ch === "c") {
+      // Must have 'b' then 'a' beneath
+      if (stack.length < 2) return false;
+      if (stack[stack.length - 1] !== "b") return false;
+      if (stack[stack.length - 2] !== "a") return false;
+      stack.pop();
+      stack.pop();
+    } else {
+      stack.push(ch);
+    }
+  }
+
+  return stack.length === 0;
 }
 
-/**
- * Solution 2: Optimized — Stack
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function checkIfWordIsValidAfterSubstitutions(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Stack
-  // Hint: Push/pop to maintain invariant, process when stack condition changes
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(checkIfWordIsValidAfterSubstitutions(/* example 1 */)); // expected
-// console.log(checkIfWordIsValidAfterSubstitutions(/* example 2 */)); // expected
-// console.log(checkIfWordIsValidAfterSubstitutions(/* edge case */)); // expected
+// Test cases
+console.log(isValid("aabcbc")); // true
+console.log(isValid("abcabcababcc")); // true
+console.log(isValid("aabccbc")); // false
+console.log(isValid("cababc")); // false
+console.log(isValid("abc")); // true
+console.log(isValid("")); // true (empty is valid base)
 ```
 
----
+### Giải pháp 2: Đệ quy thay thế (Trực quan, kém hiệu quả hơn)
 
-## 🔗 Related Problems
+```typescript
+function isValidRecursive(s: string): boolean {
+  // Repeatedly remove "abc" until no more found or stuck
+  let prev = s;
+  while (prev.includes("abc")) {
+    prev = prev.replace(/abc/g, "");
+  }
+  return prev.length === 0;
+}
 
-- [Decode String](https://leetcode.com/problems/decode-string) — same pattern: Stack
-- [Simplify Path](https://leetcode.com/problems/simplify-path) — same pattern: Stack
-- [Basic Calculator II](https://leetcode.com/problems/basic-calculator-ii) — same pattern: Stack
-- [Longest Valid Parentheses](https://leetcode.com/problems/longest-valid-parentheses) — same pattern: Dynamic Programming
-- [Check If Word Is Valid After Substitutions — LeetCode](https://leetcode.com/problems/check-if-word-is-valid-after-substitutions) — problem page
+console.log(isValidRecursive("aabcbc")); // true
+console.log(isValidRecursive("abcabcababcc")); // true
+console.log(isValidRecursive("aabccbc")); // false
+```
+
+### Giải pháp 3: Stack với kiểm tra ký tự hợp lệ
+
+```typescript
+function isValidStrict(s: string): boolean {
+  if (s.length % 3 !== 0) return false;
+
+  const stack: number[] = []; // 0='a', 1='b'
+
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (ch === "a") {
+      stack.push(0);
+    } else if (ch === "b") {
+      // 'b' must follow 'a'
+      if (stack.length === 0 || stack[stack.length - 1] !== 0) return false;
+      stack.push(1);
+    } else if (ch === "c") {
+      // 'c' must follow 'b' which follows 'a'
+      if (stack.length < 2) return false;
+      if (stack[stack.length - 1] !== 1) return false;
+      if (stack[stack.length - 2] !== 0) return false;
+      stack.pop();
+      stack.pop();
+    } else {
+      return false; // invalid character
+    }
+  }
+
+  return stack.length === 0;
+}
+
+console.log(isValidStrict("aabcbc")); // true
+console.log(isValidStrict("cababc")); // false
+```
+
+## Bảng so sánh
+
+| Giải pháp     | Thời gian | Không gian | Ghi chú                   |
+| ------------- | --------- | ---------- | ------------------------- |
+| Stack         | O(n)      | O(n)       | Tối ưu, 1 lần duyệt       |
+| Regex replace | O(n²)     | O(n)       | Trực quan nhưng chậm      |
+| Stack strict  | O(n)      | O(n)       | Kiểm tra thêm 'b' sau 'a' |
+
+## Bài liên quan
+
+| #    | Tên                            | Độ khó | Tags  |
+| ---- | ------------------------------ | ------ | ----- |
+| 20   | Valid Parentheses              | Easy   | Stack |
+| 856  | Score of Parentheses           | Medium | Stack |
+| 1047 | Remove All Adjacent Duplicates | Easy   | Stack |

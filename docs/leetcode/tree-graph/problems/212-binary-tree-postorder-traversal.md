@@ -7,103 +7,130 @@ tags: [Stack, Tree, Depth-First Search, Binary Tree]
 leetcode_url: "https://leetcode.com/problems/binary-tree-postorder-traversal"
 ---
 
-# Binary Tree Postorder Traversal / Binary Tree Postorder Traversal
+# Binary Tree Postorder Traversal / Duyệt Cây Nhị Phân Theo Thứ Tự Hậu Tố
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: DFS
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Flatten Binary Tree to Linked List](https://leetcode.com/problems/flatten-binary-tree-to-linked-list) | [Closest Binary Search Tree Value II](https://leetcode.com/problems/closest-binary-search-tree-value-ii)
+## Analogy / Tương Tự
 
----
+> Khi dọn nhà, bạn dọn phòng con cái trước, rồi phòng của bạn sau. **Postorder = con trái → con phải → cha**. Cha luôn được xử lý **sau** các con của nó.
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Giống đi trong mê cung — bạn đi sâu hết một ngõ, nếu cụt thì quay lại ngã rẽ gần nhất chưa thử.
-
-**Pattern Recognition:**
-
-- Signal: "traverse tree/graph" + "all paths" → **DFS**
-- Bài này thuộc dạng DFS — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Binary Tree Postorder Traversal example:**
+## ASCII Visual
 
 ```
-       root
-      /    \
-     A      B
-    / \      \
-   C   D      E
+      1
+     / \
+    2   3
+   / \
+  4   5
 
-DFS: root → A → C → D → B → E
-Use: recursion or explicit stack
+Postorder: 4 → 5 → 2 → 3 → 1
+(left subtree first, then right, finally root)
 ```
 
----
+## Problem
 
-## Problem Description
+Given the `root` of a binary tree, return the **postorder traversal** of its nodes' values (left → right → root).
 
-Binary Tree Postorder Traversal. ([LeetCode](https://leetcode.com/problems/binary-tree-postorder-traversal))
+## Interview Tips
 
-Difficulty: Easy | Acceptance: 75.7%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/binary-tree-postorder-traversal) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Recursive is trivial** — but interviewer likely wants iterative
+2. **Iterative trick** — reverse of modified preorder (root→right→left reversed = left→right→root)
+3. **Two-stack approach** — stack1 processes root→right→left, stack2 reverses it
+4. **Morris traversal** — O(1) space but complex; mention only if pressed
+5. **Null checks** — always handle null root
+6. **Order matters** — postorder is used in: tree deletion, expression evaluation, dependency resolution
 
 ## Solutions
 
+### Solution 1: Recursive
+
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function binaryTreePostorderTraversalBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+class TreeNode {
+  val: number;
+  left: TreeNode | null;
+  right: TreeNode | null;
+  constructor(val = 0, left: TreeNode | null = null, right: TreeNode | null = null) {
+    this.val = val;
+    this.left = left;
+    this.right = right;
+  }
 }
 
-/**
- * Solution 2: Optimized — DFS
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function binaryTreePostorderTraversal(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using DFS
-  // Hint: Use recursion or stack, track visited nodes
-  throw new Error('Not implemented');
+function postorderTraversalRecursive(root: TreeNode | null): number[] {
+  const result: number[] = [];
+  function dfs(node: TreeNode | null): void {
+    if (!node) return;
+    dfs(node.left);
+    dfs(node.right);
+    result.push(node.val);
+  }
+  dfs(root);
+  return result;
 }
 
-// === Test Cases ===
-// console.log(binaryTreePostorderTraversal(/* example 1 */)); // expected
-// console.log(binaryTreePostorderTraversal(/* example 2 */)); // expected
-// console.log(binaryTreePostorderTraversal(/* edge case */)); // expected
+// Build tree: [1,null,2,3]
+const root1 = new TreeNode(1, null, new TreeNode(2, new TreeNode(3), null));
+console.log(postorderTraversalRecursive(root1)); // [3, 2, 1]
+console.log(postorderTraversalRecursive(null)); // []
 ```
 
----
+### Solution 2: Iterative (Reverse Preorder)
 
-## 🔗 Related Problems
+```typescript
+function postorderTraversal(root: TreeNode | null): number[] {
+  if (!root) return [];
+  const result: number[] = [];
+  const stack: TreeNode[] = [root];
 
-- [Flatten Binary Tree to Linked List](https://leetcode.com/problems/flatten-binary-tree-to-linked-list) — same pattern: DFS
-- [Closest Binary Search Tree Value II](https://leetcode.com/problems/closest-binary-search-tree-value-ii) — same pattern: Two Pointers
-- [Convert Binary Search Tree to Sorted Doubly Linked List](https://leetcode.com/problems/convert-binary-search-tree-to-sorted-doubly-linked-list) — same pattern: Binary Search
-- [Binary Tree Preorder Traversal](https://leetcode.com/problems/binary-tree-preorder-traversal) — same pattern: DFS
-- [Binary Tree Postorder Traversal — LeetCode](https://leetcode.com/problems/binary-tree-postorder-traversal) — problem page
+  // Modified preorder: root → right → left, then reverse
+  while (stack.length) {
+    const node = stack.pop()!;
+    result.push(node.val);
+    if (node.left) stack.push(node.left); // left pushed second → processed last
+    if (node.right) stack.push(node.right); // right pushed first → processed first
+  }
+
+  return result.reverse(); // reverses root→right→left to left→right→root
+}
+
+const root2 = new TreeNode(1, new TreeNode(2, new TreeNode(4), new TreeNode(5)), new TreeNode(3));
+console.log(postorderTraversal(root2)); // [4, 5, 2, 3, 1]
+```
+
+### Solution 3: Iterative with Explicit State
+
+```typescript
+function postorderTraversalStack(root: TreeNode | null): number[] {
+  const result: number[] = [];
+  const stack: TreeNode[] = [];
+  let curr: TreeNode | null = root;
+  let lastVisited: TreeNode | null = null;
+
+  while (curr || stack.length) {
+    if (curr) {
+      stack.push(curr);
+      curr = curr.left;
+    } else {
+      const peek = stack[stack.length - 1];
+      // If right child exists and not yet visited, go right
+      if (peek.right && lastVisited !== peek.right) {
+        curr = peek.right;
+      } else {
+        result.push(peek.val);
+        lastVisited = stack.pop()!;
+      }
+    }
+  }
+  return result;
+}
+
+console.log(postorderTraversalStack(root2)); // [4, 5, 2, 3, 1]
+```
+
+## Related Problems
+
+| #   | Problem                         | Difficulty | Tags       |
+| --- | ------------------------------- | ---------- | ---------- |
+| 94  | Binary Tree Inorder Traversal   | Easy       | Stack, DFS |
+| 144 | Binary Tree Preorder Traversal  | Easy       | Stack, DFS |
+| 145 | Binary Tree Postorder Traversal | Easy       | Stack, DFS |
+| 590 | N-ary Tree Postorder Traversal  | Easy       | Stack, DFS |

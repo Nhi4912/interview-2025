@@ -7,100 +7,112 @@ tags: [Array, Two Pointers, Simulation]
 leetcode_url: "https://leetcode.com/problems/find-the-array-concatenation-value"
 ---
 
-# Find the Array Concatenation Value / Find the Array Concatenation Value
+# Find the Array Concatenation Value / Tìm Giá Trị Ghép Nối Mảng
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Two Pointers
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Candy Crush](https://leetcode.com/problems/candy-crush) | [Total Cost to Hire K Workers](https://leetcode.com/problems/total-cost-to-hire-k-workers)
-
----
+> **Difficulty**: 🟢 Easy | **Category**: Array | **Pattern**: Two Pointers / Simulation
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Hãy tưởng tượng hai người đi từ hai đầu con đường, tiến lại gần nhau. Mỗi bước, người nào ở vị trí "tốt hơn" sẽ đứng yên, người kia tiến. Khi họ gặp nhau, bài toán được giải.
+**Giống như đọc sách từ hai đầu**: cầm hai đầu của mảng, ghép số đầu với số cuối thành một số, cộng vào tổng, rồi di chuyển vào trong cho đến khi gặp nhau.
 
 **Pattern Recognition:**
 
-- Signal: "sorted array" + "find pair/triplet" → **Two Pointers**
-- Bài này thuộc dạng Two Pointers — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Two pointers (left, right) hội tụ vào giữa
+- Khi left < right: ghép str(nums[left]) + str(nums[right]) → số → cộng vào ans
+- Khi left == right (lẻ phần tử): cộng phần tử giữa trực tiếp
 
-**Visual — Find the Array Concatenation Value example:**
+**Visual:**
 
 ```
-arr = [... sorted ...]
- L                 R
-
-Step 1: check condition → move L or R
-Step 2: ...
-Step N: condition met ✅
+nums = [7, 52, 2, 4]
+l=0,r=3: "7"+"4"="74" → 74
+l=1,r=2: "52"+"2"="522" → 522
+ans = 74 + 522 = 596
 ```
-
----
 
 ## Problem Description
 
-Find the Array Concatenation Value. ([LeetCode](https://leetcode.com/problems/find-the-array-concatenation-value))
+Cho mảng `nums`. Lặp: lấy phần tử đầu và cuối, ghép chúng (số đầu là tiền tố), cộng kết quả vào `ans`. Nếu chỉ còn một phần tử, cộng nó vào `ans`. Trả về `ans`.
 
-Difficulty: Easy | Acceptance: 71.0%
+**Example 1:** `nums = [7,52,2,4]` → `596` (74 + 522)
+**Example 2:** `nums = [5,14,13,8,12]` → `673` (512 + 148 + 13)
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/find-the-array-concatenation-value) for full constraints
-
----
+**Constraints:** `1 ≤ nums.length ≤ 1000`, `1 ≤ nums[i] ≤ 10^4`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Mảng đã sorted chưa? Có duplicate không?" / Ask if array is sorted and if duplicates exist
-2. **Brute force**: "Dùng 2 vòng for O(n²)" → optimize with two pointers O(n) / Start with nested loops, then optimize
-3. **Optimize**: "Vì mảng sorted, dùng 2 con trỏ L/R tiến vào giữa" / Since sorted, use L/R pointers moving inward
-4. **Edge cases**: "Mảng rỗng, một phần tử, tất cả giống nhau" / Empty array, single element, all same values
-
----
+1. **String concatenation vs arithmetic**: dùng string để ghép số, sau đó parseInt
+2. **Two pointers pattern**: xử lý từ hai đầu vào giữa
+3. **Odd length check**: khi left === right, chỉ cộng một phần tử
+4. **BigInt không cần**: giá trị max = 10^4 + 10^4 = 8 chữ số → safe với number
+5. **Loop condition**: while (left <= right) bao phủ cả trường hợp lẻ
+6. **Viết rõ hơn**: tách trường hợp left < right và left === right trong loop
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function findTheArrayConcatenationValueBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// Solution 1: Two pointers with string concatenation — O(n log n) time
+function findTheArrayConcVal(nums: number[]): number {
+  let left = 0,
+    right = nums.length - 1;
+  let ans = 0;
+  while (left < right) {
+    ans += parseInt(`${nums[left]}${nums[right]}`);
+    left++;
+    right--;
+  }
+  if (left === right) ans += nums[left]; // middle element (odd length)
+  return ans;
 }
 
-/**
- * Solution 2: Optimized — Two Pointers
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function findTheArrayConcatenationValue(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Two Pointers
-  // Hint: Use L/R pointers on sorted input, move based on comparison
-  throw new Error('Not implemented');
+// Solution 2: Using Number() and template literals
+function findTheArrayConcValV2(nums: number[]): number {
+  let ans = 0;
+  let l = 0,
+    r = nums.length - 1;
+  while (l <= r) {
+    if (l === r) {
+      ans += nums[l];
+    } else {
+      ans += Number(`${nums[l]}${nums[r]}`);
+    }
+    l++;
+    r--;
+  }
+  return ans;
 }
 
-// === Test Cases ===
-// console.log(findTheArrayConcatenationValue(/* example 1 */)); // expected
-// console.log(findTheArrayConcatenationValue(/* example 2 */)); // expected
-// console.log(findTheArrayConcatenationValue(/* edge case */)); // expected
+// Solution 3: Mathematical concatenation (no string)
+function findTheArrayConcValV3(nums: number[]): number {
+  // concat(a, b) = a * 10^(digits of b) + b
+  function concatNums(a: number, b: number): number {
+    let digits = b === 0 ? 1 : Math.floor(Math.log10(b)) + 1;
+    return a * Math.pow(10, digits) + b;
+  }
+  let ans = 0;
+  let l = 0,
+    r = nums.length - 1;
+  while (l < r) {
+    ans += concatNums(nums[l], nums[r]);
+    l++;
+    r--;
+  }
+  if (l === r) ans += nums[l];
+  return ans;
+}
+
+// Tests
+console.log(findTheArrayConcVal([7, 52, 2, 4])); // 596
+console.log(findTheArrayConcVal([5, 14, 13, 8, 12])); // 673
+console.log(findTheArrayConcValV2([7, 52, 2, 4])); // 596
+console.log(findTheArrayConcValV3([7, 52, 2, 4])); // 596
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Candy Crush](https://leetcode.com/problems/candy-crush) — same pattern: Two Pointers
-- [Total Cost to Hire K Workers](https://leetcode.com/problems/total-cost-to-hire-k-workers) — same pattern: Two Pointers
-- [Flipping an Image](https://leetcode.com/problems/flipping-an-image) — same pattern: Two Pointers
-- [Rearrange Array Elements by Sign](https://leetcode.com/problems/rearrange-array-elements-by-sign) — same pattern: Two Pointers
-- [Find the Array Concatenation Value — LeetCode](https://leetcode.com/problems/find-the-array-concatenation-value) — problem page
+| Problem                             | Relationship                |
+| ----------------------------------- | --------------------------- |
+| 344 - Reverse String                | Two pointers from both ends |
+| 2000 - Reverse Prefix of Word       | String manipulation         |
+| 1768 - Merge Strings Alternately    | String interleaving         |
+| 557 - Reverse Words in a String III | Two pointers on strings     |

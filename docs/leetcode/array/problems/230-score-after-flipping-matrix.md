@@ -7,97 +7,126 @@ tags: [Array, Greedy, Bit Manipulation, Matrix]
 leetcode_url: "https://leetcode.com/problems/score-after-flipping-matrix"
 ---
 
-# Score After Flipping Matrix / Score After Flipping Matrix
+# Score After Flipping Matrix / Điểm Sau Khi Lật Ma Trận
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Shortest Path to Get All Keys](https://leetcode.com/problems/shortest-path-to-get-all-keys) | [Reconstruct a 2-Row Binary Matrix](https://leetcode.com/problems/reconstruct-a-2-row-binary-matrix)
-
----
+> **Difficulty**: 🟡 Medium | **Category**: Array | **Pattern**: Greedy / Bit Manipulation
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống ăn buffet — mỗi lần bạn chọn món ngon nhất hiện tại. Nếu chứng minh được rằng chọn tham lam từng bước vẫn tối ưu toàn cục, thì Greedy là đáp án.
+**Như tối ưu hóa điểm nhị phân**: mỗi hàng là một số nhị phân. Bit cao nhất (cột 0) quan trọng nhất — luôn phải là 1. Sau đó tối đa hóa từng cột còn lại bằng cách đếm xem flip cột có lợi không.
 
 **Pattern Recognition:**
 
-- Signal: "locally optimal → globally optimal" + "sorting + selection" → **Greedy**
-- Bài này thuộc dạng Greedy — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Greedy: luôn flip hàng sao cho cột 0 = 1 (MSB tối đa)
+- Sau đó, với mỗi cột j: đếm số 1; nếu count < n/2 → flip cột đó
+- Tính score: mỗi cột j đóng góp max(count1, n-count1) \* 2^(n-1-j)
 
-**Visual — Score After Flipping Matrix example:**
+**Visual:**
 
 ```
-// TODO: Add step-by-step visual for Greedy
-// Show one complete example with state at each step
+grid = [[0,0,1,1],[1,0,1,0],[1,1,0,0]]
+Step 1 - flip rows where col[0]=0: row[0] → [1,1,0,0]
+After: [[1,1,0,0],[1,0,1,0],[1,1,0,0]]
+Step 2 - check each column:
+  col1: 1,0,1 → 2 ones, n=3 → 2>1 → keep
+  col2: 0,1,0 → 1 one  → 1<2 → flip → 1,0,1
+  col3: 0,0,0 → 0 ones → 0<2 → flip → 1,1,1
+Final: 1110+1001+1011 = 14+9+11 = 39
 ```
-
----
 
 ## Problem Description
 
-Score After Flipping Matrix. ([LeetCode](https://leetcode.com/problems/score-after-flipping-matrix))
+Cho ma trận nhị phân `grid` m×n. Có thể flip bất kỳ hàng hoặc cột nào bất kỳ số lần. Score = tổng giá trị nhị phân của mỗi hàng. Tìm score **tối đa** có thể đạt được.
 
-Difficulty: Medium | Acceptance: 80.2%
+**Example 1:** `grid = [[0,0,1,1],[1,0,1,0],[1,1,0,0]]` → `39`
+**Example 2:** `grid = [[0]]` → `1`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/score-after-flipping-matrix) for full constraints
-
----
+**Constraints:** `m == grid.length`, `n == grid[i].length`, `1 ≤ m,n ≤ 20`, `grid[i][j] ∈ {0,1}`
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Greedy key**: col[0] phải là 1 vì 2^(n-1) > sum(2^0..2^(n-2))
+2. **Không cần thực sự flip**: chỉ cần tính contribution mỗi cột
+3. **Row flip effect**: nếu row[0]=0, row sẽ bị flip → tất cả bit đảo
+4. **Column j contribution**: max(count_ones_in_col_j, m - count_ones_in_col_j) \* 2^(n-1-j)
+5. **Account for row flips**: khi đếm col j, xét hàng đã flip hay chưa (xem grid[i][0])
+6. **O(mn) time**: duyệt một lần để tính tất cả
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function scoreAfterFlippingMatrixBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// Solution 1: Greedy calculation (no actual flipping) — O(mn)
+function matrixScore(grid: number[][]): number {
+  const m = grid.length,
+    n = grid[0].length;
+  let ans = 0;
+
+  for (let j = 0; j < n; j++) {
+    let countOnes = 0;
+    for (let i = 0; i < m; i++) {
+      // If grid[i][0] === 0, this row was flipped → XOR bit with 1
+      const bit = grid[i][j] ^ (grid[i][0] === 0 ? 1 : 0);
+      countOnes += bit;
+    }
+    ans += Math.max(countOnes, m - countOnes) * (1 << (n - 1 - j));
+  }
+  return ans;
 }
 
-/**
- * Solution 2: Optimized — Greedy
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function scoreAfterFlippingMatrix(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Greedy
-  // Hint: Sort by key metric, make locally optimal choice at each step
-  throw new Error('Not implemented');
+// Solution 2: Actually perform greedy flips, then compute
+function matrixScoreV2(grid: number[][]): number {
+  const m = grid.length,
+    n = grid[0].length;
+  // Step 1: flip rows to make col[0] = 1
+  for (let i = 0; i < m; i++) {
+    if (grid[i][0] === 0) {
+      for (let j = 0; j < n; j++) grid[i][j] ^= 1;
+    }
+  }
+  // Step 2: for each col j > 0, flip if more 0s than 1s
+  for (let j = 1; j < n; j++) {
+    let countOnes = 0;
+    for (let i = 0; i < m; i++) countOnes += grid[i][j];
+    if (countOnes < m - countOnes) {
+      // more zeros
+      for (let i = 0; i < m; i++) grid[i][j] ^= 1;
+    }
+  }
+  // Step 3: compute score
+  let ans = 0;
+  for (let i = 0; i < m; i++) {
+    let rowVal = 0;
+    for (let j = 0; j < n; j++) {
+      rowVal = rowVal * 2 + grid[i][j];
+    }
+    ans += rowVal;
+  }
+  return ans;
 }
 
-// === Test Cases ===
-// console.log(scoreAfterFlippingMatrix(/* example 1 */)); // expected
-// console.log(scoreAfterFlippingMatrix(/* example 2 */)); // expected
-// console.log(scoreAfterFlippingMatrix(/* edge case */)); // expected
+// Tests
+console.log(
+  matrixScore([
+    [0, 0, 1, 1],
+    [1, 0, 1, 0],
+    [1, 1, 0, 0],
+  ]),
+); // 39
+console.log(matrixScore([[0]])); // 1
+console.log(
+  matrixScoreV2([
+    [0, 0, 1, 1],
+    [1, 0, 1, 0],
+    [1, 1, 0, 0],
+  ]),
+); // 39
 ```
-
----
 
 ## 🔗 Related Problems
 
-- [Shortest Path to Get All Keys](https://leetcode.com/problems/shortest-path-to-get-all-keys) — same pattern: BFS
-- [Reconstruct a 2-Row Binary Matrix](https://leetcode.com/problems/reconstruct-a-2-row-binary-matrix) — same pattern: Greedy
-- [Cinema Seat Allocation](https://leetcode.com/problems/cinema-seat-allocation) — same pattern: Greedy
-- [Find the Maximum Sum of Node Values](https://leetcode.com/problems/find-the-maximum-sum-of-node-values) — same pattern: Dynamic Programming
-- [Score After Flipping Matrix — LeetCode](https://leetcode.com/problems/score-after-flipping-matrix) — problem page
+| Problem                                                 | Relationship           |
+| ------------------------------------------------------- | ---------------------- |
+| 1284 - Minimum Number of Flips to Convert Binary Matrix | Matrix flip operations |
+| 2128 - Remove All Ones With Row and Column Flips        | Row/col flip pattern   |
+| 861 - Score After Flipping Matrix                       | This problem           |
+| 1529 - Minimum Suffix Flips                             | Greedy bit flip        |

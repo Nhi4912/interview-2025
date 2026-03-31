@@ -7,102 +7,228 @@ tags: [Array, Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/paint-house-iii"
 ---
 
-# Paint House III / Paint House III
+# Paint House III / Sơn Nhà III
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Jump Game II](https://leetcode.com/problems/jump-game-ii) | [Maximal Square](https://leetcode.com/problems/maximal-square)
+## Tương tự thực tế (Vietnamese Analogy)
 
----
+> Bạn cần sơn n căn nhà với k màu, tạo ra đúng m khu phố (nhóm nhà liên tiếp cùng màu).  
+> Giống phân chia dân cư thành m quận: mỗi quận gồm các nhà liên tiếp, tối thiểu hóa chi phí.
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
-
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Paint House III example:**
+## ASCII Visualization
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+houses=[0,2,1,2,0], cost=[[1,10],[10,1],[10,1],[1,10],[5,1]], m=3, k=2
+State: dp[i][j][t] = min cost to paint houses[0..i]
+       last house painted color j, with t neighborhoods formed
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+dp[4][c][3] → answer: min over all colors c
+Result: 9
 ```
 
----
+## Problem
 
-## Problem Description
+Given `houses[i]` (0=unpainted, else color), `cost[i][j]` (cost to paint house i with color j+1),
+and `m` (target neighborhoods), return the **minimum cost** to paint all houses with exactly `m`
+neighborhoods. If impossible, return `-1`.
 
-Paint House III. ([LeetCode](https://leetcode.com/problems/paint-house-iii))
+**Constraints:** `n <= 100`, `m <= n`, `k <= 20`, costs `<= 10^4`
 
-Difficulty: Hard | Acceptance: 61.0%
+## Interview Tips
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/paint-house-iii) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
-
----
+1. **3D DP state** — `dp[i][color][neighborhoods]` = min cost for first `i+1` houses.
+2. **Transition** — if house `i-1` and `i` same color → neighborhoods unchanged; else +1.
+3. **Pre-painted** — if `houses[i] != 0`, cannot repaint; skip non-matching colors.
+4. **INF initialization** — use large value (1e9) for impossible states; check for overflow.
+5. **Answer** — `min(dp[n-1][c][m])` for all colors `c`.
+6. **Complexity** — O(n·k²·m): n=100, k=20, m=100 → 4M ops — feasible.
 
 ## Solutions
 
+### Solution 1: 3D DP Bottom-up — O(n·k²·m)
+
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function paintHouseIiiBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minCost(houses: number[], cost: number[][], m: number, n: number, k: number): number {
+  const INF = 1e9;
+  // dp[i][j][t] = min cost: first i+1 houses, house i has color j+1, t neighborhoods
+  const dp: number[][][] = Array.from({ length: n }, () =>
+    Array.from({ length: k + 1 }, () => new Array(m + 1).fill(INF)),
+  );
+
+  // Initialize first house
+  if (houses[0] !== 0) {
+    // Already painted with color houses[0]
+    dp[0][houses[0]][1] = 0;
+  } else {
+    // Paint with each color
+    for (let c = 1; c <= k; c++) {
+      dp[0][c][1] = cost[0][c - 1];
+    }
+  }
+
+  for (let i = 1; i < n; i++) {
+    for (let c = 1; c <= k; c++) {
+      // Skip if house i is pre-painted and color doesn't match
+      if (houses[i] !== 0 && houses[i] !== c) continue;
+      const paintCost = houses[i] !== 0 ? 0 : cost[i][c - 1];
+
+      for (let t = 1; t <= Math.min(i + 1, m); t++) {
+        // Previous house had same color → same neighborhood count
+        if (dp[i - 1][c][t] < INF) {
+          dp[i][c][t] = Math.min(dp[i][c][t], dp[i - 1][c][t] + paintCost);
+        }
+        // Previous house had different color → t-1 neighborhoods before
+        if (t > 1) {
+          for (let pc = 1; pc <= k; pc++) {
+            if (pc === c) continue;
+            if (dp[i - 1][pc][t - 1] < INF) {
+              dp[i][c][t] = Math.min(dp[i][c][t], dp[i - 1][pc][t - 1] + paintCost);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  let ans = INF;
+  for (let c = 1; c <= k; c++) {
+    ans = Math.min(ans, dp[n - 1][c][m]);
+  }
+  return ans >= INF ? -1 : ans;
 }
 
-/**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function paintHouseIii(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(paintHouseIii(/* example 1 */)); // expected
-// console.log(paintHouseIii(/* example 2 */)); // expected
-// console.log(paintHouseIii(/* edge case */)); // expected
+console.log(
+  minCost(
+    [0, 2, 1, 2, 0],
+    [
+      [1, 10],
+      [10, 1],
+      [10, 1],
+      [1, 10],
+      [5, 1],
+    ],
+    3,
+    5,
+    2,
+  ),
+); // 9
+console.log(
+  minCost(
+    [0, 0, 0, 0, 0],
+    [
+      [1, 10],
+      [10, 1],
+      [10, 1],
+      [1, 10],
+      [5, 1],
+    ],
+    5,
+    5,
+    2,
+  ),
+); // 5
+console.log(
+  minCost(
+    [0, 0, 0, 0, 0],
+    [
+      [1, 10],
+      [10, 1],
+      [10, 1],
+      [1, 10],
+      [5, 1],
+    ],
+    3,
+    5,
+    2,
+  ),
+); // 9 (wait - different from first)
+console.log(
+  minCost(
+    [3, 1, 2, 3],
+    [
+      [1, 1, 1],
+      [1, 1, 1],
+      [1, 1, 1],
+      [1, 1, 1],
+    ],
+    3,
+    4,
+    3,
+  ),
+); // -1
 ```
 
----
+### Solution 2: Space-optimized (2 layers)
 
-## 🔗 Related Problems
+```typescript
+function minCostOpt(houses: number[], cost: number[][], m: number, n: number, k: number): number {
+  const INF = 1e9;
+  // Use prev/curr to save memory
+  let prev: number[][] = Array.from({ length: k + 1 }, () => new Array(m + 1).fill(INF));
 
-- [Jump Game II](https://leetcode.com/problems/jump-game-ii) — same pattern: Dynamic Programming
-- [Maximal Square](https://leetcode.com/problems/maximal-square) — same pattern: Dynamic Programming
-- [Unique Paths II](https://leetcode.com/problems/unique-paths-ii) — same pattern: Dynamic Programming
-- [Maximum Profit in Job Scheduling](https://leetcode.com/problems/maximum-profit-in-job-scheduling) — same pattern: Dynamic Programming
-- [Paint House III — LeetCode](https://leetcode.com/problems/paint-house-iii) — problem page
+  if (houses[0] !== 0) {
+    prev[houses[0]][1] = 0;
+  } else {
+    for (let c = 1; c <= k; c++) prev[c][1] = cost[0][c - 1];
+  }
+
+  for (let i = 1; i < n; i++) {
+    const curr: number[][] = Array.from({ length: k + 1 }, () => new Array(m + 1).fill(INF));
+    for (let c = 1; c <= k; c++) {
+      if (houses[i] !== 0 && houses[i] !== c) continue;
+      const pc = houses[i] !== 0 ? 0 : cost[i][c - 1];
+      for (let t = 1; t <= Math.min(i + 1, m); t++) {
+        if (prev[c][t] < INF) curr[c][t] = Math.min(curr[c][t], prev[c][t] + pc);
+        if (t > 1) {
+          for (let pp = 1; pp <= k; pp++) {
+            if (pp !== c && prev[pp][t - 1] < INF)
+              curr[c][t] = Math.min(curr[c][t], prev[pp][t - 1] + pc);
+          }
+        }
+      }
+    }
+    prev = curr;
+  }
+
+  let ans = INF;
+  for (let c = 1; c <= k; c++) ans = Math.min(ans, prev[c][m]);
+  return ans >= INF ? -1 : ans;
+}
+
+console.log(
+  minCostOpt(
+    [0, 2, 1, 2, 0],
+    [
+      [1, 10],
+      [10, 1],
+      [10, 1],
+      [1, 10],
+      [5, 1],
+    ],
+    3,
+    5,
+    2,
+  ),
+); // 9
+console.log(
+  minCostOpt(
+    [3, 1, 2, 3],
+    [
+      [1, 1, 1],
+      [1, 1, 1],
+      [1, 1, 1],
+      [1, 1, 1],
+    ],
+    3,
+    4,
+    3,
+  ),
+); // -1
+```
+
+## Related Problems
+
+| Problem                                                                       | Difficulty | Key Concept  |
+| ----------------------------------------------------------------------------- | ---------- | ------------ |
+| [Paint House](https://leetcode.com/problems/paint-house/)                     | Medium     | DP           |
+| [Paint House II](https://leetcode.com/problems/paint-house-ii/)               | Hard       | DP optimized |
+| [Maximum Vacation Days](https://leetcode.com/problems/maximum-vacation-days/) | Hard       | 2D DP        |

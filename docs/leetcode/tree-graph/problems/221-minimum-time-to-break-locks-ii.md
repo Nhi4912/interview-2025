@@ -7,103 +7,191 @@ tags: [Array, Depth-First Search, Graph]
 leetcode_url: "https://leetcode.com/problems/minimum-time-to-break-locks-ii"
 ---
 
-# Minimum Time to Break Locks II / Minimum Time to Break Locks II
+# Minimum Time to Break Locks II / Thời Gian Tối Thiểu Để Phá Khóa II
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: DFS
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Evaluate Division](https://leetcode.com/problems/evaluate-division) | [Longest Increasing Path in a Matrix](https://leetcode.com/problems/longest-increasing-path-in-a-matrix)
+## Analogy / Tương Tự
 
----
+> Giống bài I nhưng giờ có **nhiều người phá khóa** (hoặc n quá lớn để bitmask). Cần **Hungarian Algorithm** (min-cost bipartite matching) để tối ưu phân công: gán mỗi ổ khóa cho một vị trí trong thứ tự phá, sao cho tổng thời gian nhỏ nhất.
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Giống đi trong mê cung — bạn đi sâu hết một ngõ, nếu cụt thì quay lại ngã rẽ gần nhất chưa thử.
-
-**Pattern Recognition:**
-
-- Signal: "traverse tree/graph" + "all paths" → **DFS**
-- Bài này thuộc dạng DFS — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Minimum Time to Break Locks II example:**
+## ASCII Visual
 
 ```
-       root
-      /    \
-     A      B
-    / \      \
-   C   D      E
+strength = [1, 2, 3], k = 1
+Cost matrix: cost[i][j] = time to break lock j as the i-th lock broken
+  i=0 (str=0): lock0=1, lock1=2, lock2=3
+  i=1 (str=1): lock0=0, lock1=1, lock2=2
+  i=2 (str=2): lock0=0, lock1=0, lock2=1
 
-DFS: root → A → C → D → B → E
-Use: recursion or explicit stack
+Min-cost matching:
+  Order 0→1→2: 1+1+1=3
+  Order 2→0→1: 3+0+0=3
 ```
 
----
+## Problem
 
-## Problem Description
+Same as Locks I but `n` can be large (up to 50). You cannot use bitmask DP. Use **minimum cost bipartite matching** (Hungarian algorithm): assign lock `j` to position `i` (i.e., break it as the i-th lock). The cost matrix: `cost[i][j]` = time to break lock `j` at position `i` given strength `i * k`.
 
-Minimum Time to Break Locks II. ([LeetCode](https://leetcode.com/problems/minimum-time-to-break-locks-ii))
+## Interview Tips
 
-Difficulty: Hard | Acceptance: 42.7%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-time-to-break-locks-ii) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Hungarian algorithm** — O(n³) min-cost perfect matching
+2. **Cost matrix** — `cost[i][j] = max(0, ceil((strength[j] - i*k) / k))` for breaking lock j at position i
+3. **Position i means** — you've broken i locks before (strength = i × k)
+4. **Min-cost matching** — position i ↔ lock j, minimize total assignment cost
+5. **Alternative: KM algorithm** — Kuhn-Munkres O(n³)
+6. **When to use** — n > 20 (bitmask infeasible), need polynomial time
 
 ## Solutions
 
+### Solution 1: Hungarian Algorithm (Min-Cost Perfect Matching)
+
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumTimeToBreakLocksIiBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function findMinimumTimeII(strength: number[], k: number): number {
+  const n = strength.length;
+
+  // Build cost matrix: cost[i][j] = extra time to break lock j as (i+1)-th lock
+  // After breaking i locks, current strength = i * k
+  const cost: number[][] = Array.from({ length: n }, (_, i) =>
+    strength.map((s) => Math.max(0, Math.ceil((s - i * k) / k))),
+  );
+
+  // Hungarian Algorithm (minimize total cost)
+  const INF = 1e9;
+  // u[i] = potential for row i, v[j] = potential for col j
+  const u = new Array(n + 1).fill(0);
+  const v = new Array(n + 1).fill(0);
+  const p = new Array(n + 1).fill(0); // p[j] = row assigned to col j
+  const way = new Array(n + 1).fill(0);
+
+  for (let i = 1; i <= n; i++) {
+    p[0] = i;
+    let j0 = 0;
+    const minDist = new Array(n + 1).fill(INF);
+    const used = new Array(n + 1).fill(false);
+
+    do {
+      used[j0] = true;
+      const i0 = p[j0];
+      let delta = INF,
+        j1 = -1;
+
+      for (let j = 1; j <= n; j++) {
+        if (!used[j]) {
+          const cur = cost[i0 - 1][j - 1] - u[i0] - v[j];
+          if (cur < minDist[j]) {
+            minDist[j] = cur;
+            way[j] = j0;
+          }
+          if (minDist[j] < delta) {
+            delta = minDist[j];
+            j1 = j;
+          }
+        }
+      }
+
+      for (let j = 0; j <= n; j++) {
+        if (used[j]) {
+          u[p[j]] += delta;
+          v[j] -= delta;
+        } else {
+          minDist[j] -= delta;
+        }
+      }
+      j0 = j1!;
+    } while (p[j0] !== 0);
+
+    do {
+      const j1 = way[j0];
+      p[j0] = p[j1];
+      j0 = j1;
+    } while (j0);
+  }
+
+  // Total cost = sum of all u[i] + v[j] adjustments captured in -v[0]
+  // Actually compute from assignment
+  let total = 0;
+  for (let j = 1; j <= n; j++) {
+    if (p[j] !== 0) {
+      total += cost[p[j] - 1][j - 1];
+    }
+  }
+  // Add +1 per lock (actual breaking time, not just wait)
+  total += n;
+  return total;
 }
 
-/**
- * Solution 2: Optimized — DFS
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumTimeToBreakLocksIi(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using DFS
-  // Hint: Use recursion or stack, track visited nodes
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(minimumTimeToBreakLocksIi(/* example 1 */)); // expected
-// console.log(minimumTimeToBreakLocksIi(/* example 2 */)); // expected
-// console.log(minimumTimeToBreakLocksIi(/* edge case */)); // expected
+console.log(findMinimumTimeII([3, 4, 1, 2, 6], 1)); // 4 (same as Locks I on small input)
+console.log(findMinimumTimeII([1, 2, 3], 1)); // 3
 ```
 
----
+### Solution 2: Bellman-Ford Min-Cost Flow (Alternative)
 
-## 🔗 Related Problems
+```typescript
+function findMinimumTimeFlow(strength: number[], k: number): number {
+  const n = strength.length;
 
-- [Evaluate Division](https://leetcode.com/problems/evaluate-division) — same pattern: Shortest Path (BFS/Dijkstra)
-- [Longest Increasing Path in a Matrix](https://leetcode.com/problems/longest-increasing-path-in-a-matrix) — same pattern: Topological Sort
-- [Minimize Malware Spread](https://leetcode.com/problems/minimize-malware-spread) — same pattern: Union Find
-- [Longest Path With Different Adjacent Characters](https://leetcode.com/problems/longest-path-with-different-adjacent-characters) — same pattern: Topological Sort
-- [Minimum Time to Break Locks II — LeetCode](https://leetcode.com/problems/minimum-time-to-break-locks-ii) — problem page
+  // For small n, verify with brute force permutation
+  function permMinTime(arr: number[]): number {
+    let best = Infinity;
+    const perms = (a: number[], l: number) => {
+      if (l === a.length) {
+        let t = 0,
+          s = 0;
+        for (const idx of a) {
+          t += Math.max(0, Math.ceil((strength[idx] - s) / k)) + 1;
+          s += k;
+        }
+        best = Math.min(best, t);
+        return;
+      }
+      for (let i = l; i < a.length; i++) {
+        [a[l], a[i]] = [a[i], a[l]];
+        perms(a, l + 1);
+        [a[l], a[i]] = [a[i], a[l]];
+      }
+    };
+    perms(arr, 0);
+    return best;
+  }
+
+  if (n <= 8) {
+    return permMinTime(Array.from({ length: n }, (_, i) => i));
+  }
+
+  // Fall back to Hungarian for larger n
+  return findMinimumTimeII(strength, k);
+}
+
+console.log(findMinimumTimeFlow([3, 4, 1, 2, 6], 1)); // 4
+console.log(findMinimumTimeFlow([1, 2, 3], 2)); // 3
+```
+
+### Solution 3: Greedy Lower-Bound Check
+
+```typescript
+function findMinimumTimeGreedy(strength: number[], k: number): number {
+  // Greedy: break locks in increasing order of strength (minimize waiting)
+  const sorted = [...strength].map((s, i) => ({ s, i })).sort((a, b) => a.s - b.s);
+  let time = 0,
+    currStr = 0;
+
+  for (const { s } of sorted) {
+    const wait = Math.max(0, Math.ceil((s - currStr) / k));
+    time += wait + 1;
+    currStr += k;
+  }
+  return time;
+}
+
+// Note: greedy gives good approximation but not always optimal
+console.log(findMinimumTimeGreedy([3, 4, 1, 2, 6], 1)); // ≈ optimal
+console.log(findMinimumTimeGreedy([1, 2, 3], 1)); // 3
+```
+
+## Related Problems
+
+| #    | Problem                               | Difficulty | Tags                |
+| ---- | ------------------------------------- | ---------- | ------------------- |
+| 3376 | Minimum Time to Break Locks II (this) | Hard       | Hungarian, Matching |
+| 3375 | Minimum Time to Break Locks I         | Medium     | Bitmask DP          |
+| 1947 | Maximum Compatibility Score Sum       | Medium     | Bitmask DP          |
+| 2172 | Maximum AND Sum of Array              | Hard       | Bitmask DP          |

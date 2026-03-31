@@ -7,100 +7,136 @@ tags: [Hash Table, String]
 leetcode_url: "https://leetcode.com/problems/maximum-number-of-words-you-can-type"
 ---
 
-# Maximum Number of Words You Can Type / Maximum Number of Words You Can Type
+# Maximum Number of Words You Can Type / Số Từ Tối Đa Bạn Có Thể Gõ
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Time Based Key-Value Store](https://leetcode.com/problems/time-based-key-value-store) | [Implement Trie (Prefix Tree)](https://leetcode.com/problems/implement-trie-prefix-tree)
+## Tóm tắt bằng tiếng Việt
 
----
+Bàn phím bị hỏng một số phím. Cho chuỗi `text` (gồm nhiều từ cách nhau bởi dấu cách) và chuỗi `brokenLetters` (các phím hỏng). Đếm số từ có thể gõ được, tức là không chứa bất kỳ ký tự nào trong `brokenLetters`.
 
-## 🧠 Intuition / Tư Duy
+**Ví dụ:** `text = "hello world"`, `brokenLetters = "ad"` → `"hello"` ✓ (không có `a,d`), `"world"` ✓ → kết quả `2`.
 
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
+## Tương tự thực tế
 
-**Pattern Recognition:**
+> Như kiểm tra kho hàng: bạn có danh sách nguyên liệu hỏng. Với mỗi món ăn (từ), nếu cần bất kỳ nguyên liệu hỏng nào thì không làm được. Đếm số món có thể làm.
 
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Maximum Number of Words You Can Type example:**
+## Minh họa ASCII
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
+text = "leet code"
+brokenLetters = "lt"
 
-Key insight: store complement for O(1) lookup
+Broken set: {l, t}
+
+"leet": 'l' → ✗ BROKEN → can't type
+"code": 'c' ✓, 'o' ✓, 'd' ✓, 'e' ✓ → CAN TYPE
+
+Answer = 1
+
+text = "hello world"
+brokenLetters = "ad"
+Broken: {a, d}
+"hello": h✓e✓l✓l✓o✓ → COUNT
+"world": w✓o✓r✓l✓d✗ → SKIP
+Answer = 1 (not 2!)
 ```
 
----
+## Mô tả bài toán
 
-## Problem Description
+- Cho `text` và `brokenLetters`.
+- Trả về số từ trong `text` không chứa ký tự nào trong `brokenLetters`.
 
-Maximum Number of Words You Can Type. ([LeetCode](https://leetcode.com/problems/maximum-number-of-words-you-can-type))
+**Constraints:** `1 <= text.length <= 10^4`, `0 <= brokenLetters.length <= 26`.
 
-Difficulty: Easy | Acceptance: 74.7%
+## Tips phỏng vấn
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+1. **Set cho O(1) lookup** — tạo `Set` từ `brokenLetters` để check nhanh.
+2. **Split text** — `text.split(' ')` để lấy từng từ.
+3. **every()** — `word.split('').every(ch => !broken.has(ch))`.
+4. **Early exit** — khi gặp ký tự hỏng trong từ, dừng kiểm tra từ đó ngay.
+5. **Empty brokenLetters** — mọi từ đều gõ được.
+6. **Case sensitivity** — bài này chỉ lowercase, không cần lo hoa/thường.
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/maximum-number-of-words-you-can-type) for full constraints
+## Giải pháp
 
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
-
-## Solutions
+### Giải pháp 1: Set + every (Ngắn gọn)
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function maximumNumberOfWordsYouCanTypeBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function canBeTypedWords(text: string, brokenLetters: string): number {
+  const broken = new Set(brokenLetters.split(""));
+
+  return text.split(" ").filter((word) => word.split("").every((ch) => !broken.has(ch))).length;
 }
 
-/**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function maximumNumberOfWordsYouCanType(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(maximumNumberOfWordsYouCanType(/* example 1 */)); // expected
-// console.log(maximumNumberOfWordsYouCanType(/* example 2 */)); // expected
-// console.log(maximumNumberOfWordsYouCanType(/* edge case */)); // expected
+// Test cases
+console.log(canBeTypedWords("hello world", "ad")); // 1
+console.log(canBeTypedWords("leet code", "lt")); // 1
+console.log(canBeTypedWords("leet code", "e")); // 0
+console.log(canBeTypedWords("hello world", "")); // 2
+console.log(canBeTypedWords("a b c", "b")); // 2
 ```
 
----
+### Giải pháp 2: For Loop với early exit (Tối ưu)
 
-## 🔗 Related Problems
+```typescript
+function canBeTypedWordsLoop(text: string, brokenLetters: string): number {
+  const broken = new Set(brokenLetters);
+  const words = text.split(" ");
+  let count = 0;
 
-- [Time Based Key-Value Store](https://leetcode.com/problems/time-based-key-value-store) — same pattern: Binary Search
-- [Implement Trie (Prefix Tree)](https://leetcode.com/problems/implement-trie-prefix-tree) — same pattern: Trie
-- [Isomorphic Strings](https://leetcode.com/problems/isomorphic-strings) — same pattern: Hash Map
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Maximum Number of Words You Can Type — LeetCode](https://leetcode.com/problems/maximum-number-of-words-you-can-type) — problem page
+  for (const word of words) {
+    let canType = true;
+    for (const ch of word) {
+      if (broken.has(ch)) {
+        canType = false;
+        break; // early exit for this word
+      }
+    }
+    if (canType) count++;
+  }
+
+  return count;
+}
+
+console.log(canBeTypedWordsLoop("hello world", "ad")); // 1
+console.log(canBeTypedWordsLoop("leet code", "lt")); // 1
+console.log(canBeTypedWordsLoop("leet code", "e")); // 0
+console.log(canBeTypedWordsLoop("hello world", "")); // 2
+```
+
+### Giải pháp 3: Regex approach
+
+```typescript
+function canBeTypedWordsRegex(text: string, brokenLetters: string): number {
+  if (brokenLetters.length === 0) {
+    return text.split(" ").length;
+  }
+
+  // Escape special regex characters in brokenLetters
+  const escaped = brokenLetters.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(`[${escaped}]`);
+
+  return text.split(" ").filter((word) => !pattern.test(word)).length;
+}
+
+console.log(canBeTypedWordsRegex("hello world", "ad")); // 1
+console.log(canBeTypedWordsRegex("leet code", "lt")); // 1
+console.log(canBeTypedWordsRegex("hello world", "")); // 2
+```
+
+## Bảng so sánh
+
+| Giải pháp   | Thời gian | Không gian | Ghi chú               |
+| ----------- | --------- | ---------- | --------------------- |
+| Set + every | O(n·m)    | O(k)       | Ngắn gọn, functional  |
+| For Loop    | O(n·m)    | O(k)       | Early exit, rõ ràng   |
+| Regex       | O(n·m)    | O(k)       | Linh hoạt với pattern |
+
+n = text length, m = avg word length, k = brokenLetters length
+
+## Bài liên quan
+
+| #    | Tên                              | Độ khó | Tags       |
+| ---- | -------------------------------- | ------ | ---------- |
+| 859  | Buddy Strings                    | Easy   | Hash Table |
+| 1832 | Check if the Sentence Is Pangram | Easy   | Hash Table |
+| 2264 | Largest 3-Same-Digit Number      | Easy   | String     |

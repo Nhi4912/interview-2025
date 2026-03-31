@@ -7,100 +7,126 @@ tags: [Tree, Depth-First Search, Breadth-First Search, Binary Tree]
 leetcode_url: "https://leetcode.com/problems/sum-of-left-leaves"
 ---
 
-# Sum of Left Leaves / Sum of Left Leaves
+# Sum of Left Leaves / Tổng Các Lá Bên Trái
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: BFS
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Same Tree](https://leetcode.com/problems/same-tree) | [Serialize and Deserialize Binary Tree](https://leetcode.com/problems/serialize-and-deserialize-binary-tree)
+## Analogy / Tương Tự
 
----
+> Trong một gia phả, "lá bên trái" là người **con trưởng không có con** (là con trái và không có con cái). Hãy tính tổng "số điểm" của tất cả những người như vậy.
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Như ném đá xuống ao — sóng lan ra theo từng vòng đều đặn. Khám phá hết tất cả ở khoảng cách 1, rồi mới sang khoảng cách 2.
-
-**Pattern Recognition:**
-
-- Signal: "shortest path (unweighted)" + "level-order" → **BFS**
-- Bài này thuộc dạng BFS — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Sum of Left Leaves example:**
+## ASCII Visual
 
 ```
-Level 0:     [root]
-Level 1:   [A, B]
-Level 2: [C, D, E]
+        3
+       / \
+      9   20
+         /  \
+        15   7
 
-BFS: process level by level using queue
+Left leaves: 9 (left child of 3, no children)
+             15 (left child of 20, no children)
+Sum = 9 + 15 = 24
+
+Note: 7 is a RIGHT leaf → NOT counted
 ```
 
----
+## Problem
 
-## Problem Description
+Given the `root` of a binary tree, return the **sum of all left leaves**. A left leaf is a leaf node that is the left child of its parent.
 
-Sum of Left Leaves. ([LeetCode](https://leetcode.com/problems/sum-of-left-leaves))
+## Interview Tips
 
-Difficulty: Easy | Acceptance: 61.7%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/sum-of-left-leaves) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **Track direction** — pass a boolean `isLeft` to know if current node is a left child
+2. **Leaf check** — a leaf has no left AND no right child
+3. **Only left leaves count** — right leaves are ignored even if they're leaves
+4. **BFS alternative** — use queue, tag each item with direction
+5. **Base cases** — null node returns 0; leaf returns val only if isLeft=true
+6. **Edge case** — single node tree: root is not a left leaf, return 0
 
 ## Solutions
 
+### Solution 1: DFS Recursive
+
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function sumOfLeftLeavesBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+class TreeNode {
+  val: number;
+  left: TreeNode | null;
+  right: TreeNode | null;
+  constructor(val = 0, left: TreeNode | null = null, right: TreeNode | null = null) {
+    this.val = val;
+    this.left = left;
+    this.right = right;
+  }
 }
 
-/**
- * Solution 2: Optimized — BFS
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function sumOfLeftLeaves(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using BFS
-  // Hint: Use queue, process level by level
-  throw new Error('Not implemented');
+function sumOfLeftLeaves(root: TreeNode | null): number {
+  function dfs(node: TreeNode | null, isLeft: boolean): number {
+    if (!node) return 0;
+    // It's a left leaf
+    if (!node.left && !node.right && isLeft) return node.val;
+    return dfs(node.left, true) + dfs(node.right, false);
+  }
+  return dfs(root, false);
 }
 
-// === Test Cases ===
-// console.log(sumOfLeftLeaves(/* example 1 */)); // expected
-// console.log(sumOfLeftLeaves(/* example 2 */)); // expected
-// console.log(sumOfLeftLeaves(/* edge case */)); // expected
+// Build: [3,9,20,null,null,15,7]
+const root1 = new TreeNode(3, new TreeNode(9), new TreeNode(20, new TreeNode(15), new TreeNode(7)));
+console.log(sumOfLeftLeaves(root1)); // 24
+console.log(sumOfLeftLeaves(new TreeNode(1))); // 0
 ```
 
----
+### Solution 2: BFS Iterative
 
-## 🔗 Related Problems
+```typescript
+function sumOfLeftLeavesBFS(root: TreeNode | null): number {
+  if (!root) return 0;
+  let sum = 0;
+  // Queue stores [node, isLeft]
+  const queue: [TreeNode, boolean][] = [[root, false]];
 
-- [Same Tree](https://leetcode.com/problems/same-tree) — same pattern: BFS
-- [Serialize and Deserialize Binary Tree](https://leetcode.com/problems/serialize-and-deserialize-binary-tree) — same pattern: BFS
-- [Binary Tree Right Side View](https://leetcode.com/problems/binary-tree-right-side-view) — same pattern: BFS
-- [All Nodes Distance K in Binary Tree](https://leetcode.com/problems/all-nodes-distance-k-in-binary-tree) — same pattern: BFS
-- [Sum of Left Leaves — LeetCode](https://leetcode.com/problems/sum-of-left-leaves) — problem page
+  while (queue.length) {
+    const [node, isLeft] = queue.shift()!;
+    if (!node.left && !node.right) {
+      if (isLeft) sum += node.val;
+      continue;
+    }
+    if (node.left) queue.push([node.left, true]);
+    if (node.right) queue.push([node.right, false]);
+  }
+  return sum;
+}
+
+console.log(sumOfLeftLeavesBFS(root1)); // 24
+```
+
+### Solution 3: Iterative DFS with Stack
+
+```typescript
+function sumOfLeftLeavesStack(root: TreeNode | null): number {
+  if (!root) return 0;
+  let sum = 0;
+  const stack: [TreeNode, boolean][] = [[root, false]];
+
+  while (stack.length) {
+    const [node, isLeft] = stack.pop()!;
+    if (!node.left && !node.right) {
+      if (isLeft) sum += node.val;
+      continue;
+    }
+    if (node.right) stack.push([node.right, false]);
+    if (node.left) stack.push([node.left, true]);
+  }
+  return sum;
+}
+
+const root2 = new TreeNode(1, new TreeNode(2, new TreeNode(4), new TreeNode(5)), new TreeNode(3));
+console.log(sumOfLeftLeavesStack(root2)); // 4 (only node 4 is a left leaf)
+```
+
+## Related Problems
+
+| #    | Problem                            | Difficulty | Tags      |
+| ---- | ---------------------------------- | ---------- | --------- |
+| 112  | Path Sum                           | Easy       | DFS, Tree |
+| 257  | Binary Tree Paths                  | Easy       | DFS, Tree |
+| 1022 | Sum of Root To Leaf Binary Numbers | Easy       | DFS       |
+| 1448 | Count Good Nodes in Binary Tree    | Medium     | DFS       |

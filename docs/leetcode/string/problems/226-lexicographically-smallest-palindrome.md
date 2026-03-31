@@ -7,100 +7,148 @@ tags: [Two Pointers, String, Greedy]
 leetcode_url: "https://leetcode.com/problems/lexicographically-smallest-palindrome"
 ---
 
-# Lexicographically Smallest Palindrome / Lexicographically Smallest Palindrome
+# Lexicographically Smallest Palindrome / Palindrome Nhỏ Nhất Theo Thứ Tự Từ Điển
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Two Pointers
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Minimum Number of Swaps to Make the String Balanced](https://leetcode.com/problems/minimum-number-of-swaps-to-make-the-string-balanced) | [Maximum Number of Non-overlapping Palindrome Substrings](https://leetcode.com/problems/maximum-number-of-non-overlapping-palindrome-substrings)
+## Tóm tắt bằng tiếng Việt
 
----
+Cho chuỗi `s`, bạn có thể thay thế bất kỳ ký tự nào bằng ký tự chữ thường bất kỳ. Tìm palindrome nhỏ nhất theo thứ tự từ điển mà có thể tạo ra.
 
-## 🧠 Intuition / Tư Duy
+**Ví dụ:** `s = "egcfe"` → cặp `(0,4): e,e` ok; `(1,3): g,f` → thay cả hai bằng `min('g','f')='f'` → `"efcfe"`.
 
-**Analogy:** Hãy tưởng tượng hai người đi từ hai đầu con đường, tiến lại gần nhau. Mỗi bước, người nào ở vị trí "tốt hơn" sẽ đứng yên, người kia tiến. Khi họ gặp nhau, bài toán được giải.
+## Tương tự thực tế
 
-**Pattern Recognition:**
+> Như chỉnh sửa gương chiếu: hai vị trí đối xứng phải giống nhau. Để nhỏ nhất theo từ điển, lấy ký tự bé hơn trong hai vị trí đối xứng.
 
-- Signal: "sorted array" + "find pair/triplet" → **Two Pointers**
-- Bài này thuộc dạng Two Pointers — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Lexicographically Smallest Palindrome example:**
+## Minh họa ASCII
 
 ```
-arr = [... sorted ...]
- L                 R
+s = "egcfe"
+     01234
 
-Step 1: check condition → move L or R
-Step 2: ...
-Step N: condition met ✅
+Pairs: (0,4)='e','e' → same → keep 'e','e'
+       (1,3)='g','f' → different → both = min('g','f')='f'
+       (2) middle → keep 'c'
+
+Result: "efcfe"
+
+s = "abcd"
+     0123
+
+Pairs: (0,3)='a','d' → min='a' → 'a','a'
+       (1,2)='b','c' → min='b' → 'b','b'
+
+Result: "abba"
 ```
 
----
+## Mô tả bài toán
 
-## Problem Description
+- Thay thế bất kỳ ký tự nào (0 hoặc nhiều lần) để tạo palindrome.
+- Trả về palindrome nhỏ nhất theo thứ tự từ điển.
 
-Lexicographically Smallest Palindrome. ([LeetCode](https://leetcode.com/problems/lexicographically-smallest-palindrome))
+**Constraints:** `1 <= s.length <= 1000`, chỉ chứa chữ thường.
 
-Difficulty: Easy | Acceptance: 79.4%
+## Tips phỏng vấn
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+1. **Greedy từ ngoài vào** — xử lý từng cặp đối xứng từ ngoài vào giữa.
+2. **Nếu bằng nhau** — không cần thay, giữ nguyên.
+3. **Nếu khác nhau** — thay cả hai bằng `min(s[i], s[n-1-i])` để nhỏ nhất.
+4. **Ký tự giữa** — nếu n lẻ, ký tự ở giữa không cần thay đổi.
+5. **Palindrome đảm bảo** — vì cả hai ký tự trong cặp đều được set bằng nhau.
+6. **Không cần sort** — chỉ cần một lần duyệt O(n/2).
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/lexicographically-smallest-palindrome) for full constraints
+## Giải pháp
 
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Mảng đã sorted chưa? Có duplicate không?" / Ask if array is sorted and if duplicates exist
-2. **Brute force**: "Dùng 2 vòng for O(n²)" → optimize with two pointers O(n) / Start with nested loops, then optimize
-3. **Optimize**: "Vì mảng sorted, dùng 2 con trỏ L/R tiến vào giữa" / Since sorted, use L/R pointers moving inward
-4. **Edge cases**: "Mảng rỗng, một phần tử, tất cả giống nhau" / Empty array, single element, all same values
-
----
-
-## Solutions
+### Giải pháp 1: Two Pointers (Tối ưu)
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function lexicographicallySmallestPalindromeBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function makeSmallestPalindrome(s: string): string {
+  const arr = s.split("");
+  let left = 0;
+  let right = arr.length - 1;
+
+  while (left < right) {
+    if (arr[left] !== arr[right]) {
+      // Set both to the smaller character
+      const smaller = arr[left] < arr[right] ? arr[left] : arr[right];
+      arr[left] = smaller;
+      arr[right] = smaller;
+    }
+    left++;
+    right--;
+  }
+
+  return arr.join("");
 }
 
-/**
- * Solution 2: Optimized — Two Pointers
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function lexicographicallySmallestPalindrome(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Two Pointers
-  // Hint: Use L/R pointers on sorted input, move based on comparison
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(lexicographicallySmallestPalindrome(/* example 1 */)); // expected
-// console.log(lexicographicallySmallestPalindrome(/* example 2 */)); // expected
-// console.log(lexicographicallySmallestPalindrome(/* edge case */)); // expected
+// Test cases
+console.log(makeSmallestPalindrome("egcfe")); // "efcfe"
+console.log(makeSmallestPalindrome("abcd")); // "abba"
+console.log(makeSmallestPalindrome("seven")); // "neven"
+console.log(makeSmallestPalindrome("a")); // "a"
+console.log(makeSmallestPalindrome("aa")); // "aa"
+console.log(makeSmallestPalindrome("zzz")); // "zzz"
 ```
 
----
+### Giải pháp 2: Array map với index mirroring
 
-## 🔗 Related Problems
+```typescript
+function makeSmallestPalindromeMap(s: string): string {
+  const n = s.length;
+  const arr = s.split("");
 
-- [Minimum Number of Swaps to Make the String Balanced](https://leetcode.com/problems/minimum-number-of-swaps-to-make-the-string-balanced) — same pattern: Two Pointers
-- [Maximum Number of Non-overlapping Palindrome Substrings](https://leetcode.com/problems/maximum-number-of-non-overlapping-palindrome-substrings) — same pattern: Two Pointers
-- [Partition Labels](https://leetcode.com/problems/partition-labels) — same pattern: Two Pointers
-- [Largest Merge Of Two Strings](https://leetcode.com/problems/largest-merge-of-two-strings) — same pattern: Two Pointers
-- [Lexicographically Smallest Palindrome — LeetCode](https://leetcode.com/problems/lexicographically-smallest-palindrome) — problem page
+  for (let i = 0; i < Math.floor(n / 2); i++) {
+    const j = n - 1 - i;
+    const smaller = s[i] < s[j] ? s[i] : s[j];
+    arr[i] = smaller;
+    arr[j] = smaller;
+  }
+  // Middle character (if odd length) remains unchanged
+
+  return arr.join("");
+}
+
+console.log(makeSmallestPalindromeMap("egcfe")); // "efcfe"
+console.log(makeSmallestPalindromeMap("abcd")); // "abba"
+console.log(makeSmallestPalindromeMap("seven")); // "neven"
+```
+
+### Giải pháp 3: Functional với charCodeAt
+
+```typescript
+function makeSmallestPalindromeFn(s: string): string {
+  const n = s.length;
+
+  return Array.from({ length: n }, (_, i) => {
+    const j = n - 1 - i;
+    // Use min char code for symmetry
+    return String.fromCharCode(Math.min(s.charCodeAt(i), s.charCodeAt(j)));
+  }).join("");
+}
+
+console.log(makeSmallestPalindromeFn("egcfe")); // "efcfe"
+console.log(makeSmallestPalindromeFn("abcd")); // "abba"
+
+// Verify it's a palindrome
+function isPalindrome(s: string): boolean {
+  const r = s.split("").reverse().join("");
+  return s === r;
+}
+console.log(isPalindrome(makeSmallestPalindromeFn("egcfe"))); // true
+console.log(isPalindrome(makeSmallestPalindromeFn("seven"))); // true
+```
+
+## Bảng so sánh
+
+| Giải pháp    | Thời gian | Không gian | Ghi chú          |
+| ------------ | --------- | ---------- | ---------------- |
+| Two Pointers | O(n)      | O(n)       | Tối ưu, rõ ràng  |
+| Array map    | O(n)      | O(n)       | Tương đương      |
+| Functional   | O(n)      | O(n)       | Functional style |
+
+## Bài liên quan
+
+| #    | Tên                                                 | Độ khó | Tags         |
+| ---- | --------------------------------------------------- | ------ | ------------ |
+| 125  | Valid Palindrome                                    | Easy   | Two Pointers |
+| 680  | Valid Palindrome II                                 | Easy   | Two Pointers |
+| 1312 | Minimum Insertion Steps to Make a String Palindrome | Hard   | DP           |

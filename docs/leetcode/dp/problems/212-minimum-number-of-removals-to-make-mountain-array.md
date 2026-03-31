@@ -7,102 +7,129 @@ tags: [Array, Binary Search, Dynamic Programming, Greedy]
 leetcode_url: "https://leetcode.com/problems/minimum-number-of-removals-to-make-mountain-array"
 ---
 
-# Minimum Number of Removals to Make Mountain Array / Minimum Number of Removals to Make Mountain Array
+# Minimum Number of Removals to Make Mountain Array / Xóa Ít Nhất Để Tạo Mảng Núi
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Split Array Largest Sum](https://leetcode.com/problems/split-array-largest-sum) | [House Robber IV](https://leetcode.com/problems/house-robber-iv)
+## Tương tự thực tế (Vietnamese Analogy)
 
----
+> Bạn có một dãy số, muốn tạo "hình núi" (tăng rồi giảm, đỉnh không ở đầu/cuối).  
+> Đếm LIS từ trái vào và LIS từ phải vào, tìm đỉnh tối ưu. Xóa = n - max_mountain_length.
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
-
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Minimum Number of Removals to Make Mountain Array example:**
+## ASCII Visualization
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+nums = [2, 1, 1, 5, 6, 2, 3, 1]
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+LIS ending at i:   [1, 1, 1, 2, 3, 2, 3, 2]  (lis)
+LIS starting at i: [3, 2, 2, 3, 2, 2, 2, 1]  (lds)
+
+Mountain at peak i=4: lis[4]+lds[4]-1 = 3+2-1 = 4
+ (need lis[i]>=2 AND lds[i]>=2 for valid mountain)
+Best = 4, removals = 8 - 4 = 4
 ```
 
----
+## Problem
 
-## Problem Description
+Given integer array `nums`, return the **minimum** number of elements to remove so the remaining
+array is a **mountain array**: strictly increasing then strictly decreasing, peak not at endpoints.
 
-Minimum Number of Removals to Make Mountain Array. ([LeetCode](https://leetcode.com/problems/minimum-number-of-removals-to-make-mountain-array))
+**Constraints:** `3 <= nums.length <= 1000`, `1 <= nums[i] <= 10^9`
 
-Difficulty: Hard | Acceptance: 54.9%
+## Interview Tips
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-number-of-removals-to-make-mountain-array) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
-
----
+1. **Mountain = LIS + LDS at peak** — compute LIS ending at each i, LDS starting at each i.
+2. **Valid peak** — must have `lis[i] >= 2` AND `lds[i] >= 2` (at least one element on each side).
+3. **Max mountain** — for valid peaks, maximize `lis[i] + lds[i] - 1` (peak counted once).
+4. **Answer** — `n - maxMountainLen`.
+5. **LIS computation** — O(n²) DP or O(n log n) binary search; O(n²) sufficient here (n≤1000).
+6. **Edge case** — if no valid peak exists, impossible (but constraints guarantee one exists).
 
 ## Solutions
 
+### Solution 1: LIS + LDS DP — O(n²)
+
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumNumberOfRemovalsToMakeMountainArrayBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minimumMountainRemovals(nums: number[]): number {
+  const n = nums.length;
+
+  // lis[i] = length of LIS ending at index i (strictly increasing)
+  const lis = new Array<number>(n).fill(1);
+  for (let i = 1; i < n; i++) {
+    for (let j = 0; j < i; j++) {
+      if (nums[j] < nums[i]) lis[i] = Math.max(lis[i], lis[j] + 1);
+    }
+  }
+
+  // lds[i] = length of LIS starting at index i going right (strictly decreasing from i)
+  const lds = new Array<number>(n).fill(1);
+  for (let i = n - 2; i >= 0; i--) {
+    for (let j = i + 1; j < n; j++) {
+      if (nums[j] < nums[i]) lds[i] = Math.max(lds[i], lds[j] + 1);
+    }
+  }
+
+  // Find maximum mountain length (peak must not be at endpoints)
+  let maxLen = 0;
+  for (let i = 1; i < n - 1; i++) {
+    if (lis[i] >= 2 && lds[i] >= 2) {
+      maxLen = Math.max(maxLen, lis[i] + lds[i] - 1);
+    }
+  }
+
+  return n - maxLen;
 }
 
-/**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumNumberOfRemovalsToMakeMountainArray(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(minimumNumberOfRemovalsToMakeMountainArray(/* example 1 */)); // expected
-// console.log(minimumNumberOfRemovalsToMakeMountainArray(/* example 2 */)); // expected
-// console.log(minimumNumberOfRemovalsToMakeMountainArray(/* edge case */)); // expected
+console.log(minimumMountainRemovals([1, 3, 1])); // 0
+console.log(minimumMountainRemovals([2, 1, 1, 5, 6, 2, 3, 1])); // 3
+console.log(minimumMountainRemovals([4, 3, 2, 1, 1, 2, 3, 1])); // 4
+console.log(minimumMountainRemovals([1, 2, 3, 4, 4, 3, 2, 1])); // 1
 ```
 
----
+### Solution 2: O(n log n) LIS with Binary Search
 
-## 🔗 Related Problems
+```typescript
+function minimumMountainRemovalsOpt(nums: number[]): number {
+  const n = nums.length;
 
-- [Split Array Largest Sum](https://leetcode.com/problems/split-array-largest-sum) — same pattern: Prefix Sum
-- [House Robber IV](https://leetcode.com/problems/house-robber-iv) — same pattern: Dynamic Programming
-- [Minimize the Maximum Difference of Pairs](https://leetcode.com/problems/minimize-the-maximum-difference-of-pairs) — same pattern: Dynamic Programming
-- [Minimize Maximum of Array](https://leetcode.com/problems/minimize-maximum-of-array) — same pattern: Prefix Sum
-- [Minimum Number of Removals to Make Mountain Array — LeetCode](https://leetcode.com/problems/minimum-number-of-removals-to-make-mountain-array) — problem page
+  function lisLengths(arr: number[]): number[] {
+    const dp = new Array<number>(arr.length).fill(1);
+    const tails: number[] = [];
+    for (let i = 0; i < arr.length; i++) {
+      let lo = 0,
+        hi = tails.length;
+      while (lo < hi) {
+        const mid = (lo + hi) >> 1;
+        if (tails[mid] < arr[i]) lo = mid + 1;
+        else hi = mid;
+      }
+      tails[lo] = arr[i];
+      dp[i] = lo + 1;
+    }
+    return dp;
+  }
+
+  const lis = lisLengths(nums);
+  // For LDS, reverse the array to get LIS from right
+  const lds = lisLengths([...nums].reverse()).reverse();
+
+  let maxLen = 0;
+  for (let i = 1; i < n - 1; i++) {
+    if (lis[i] >= 2 && lds[i] >= 2) {
+      maxLen = Math.max(maxLen, lis[i] + lds[i] - 1);
+    }
+  }
+
+  return n - maxLen;
+}
+
+console.log(minimumMountainRemovalsOpt([1, 3, 1])); // 0
+console.log(minimumMountainRemovalsOpt([2, 1, 1, 5, 6, 2, 3, 1])); // 3
+console.log(minimumMountainRemovalsOpt([4, 3, 2, 1, 1, 2, 3, 1])); // 4
+```
+
+## Related Problems
+
+| Problem                                                                                         | Difficulty | Key Concept |
+| ----------------------------------------------------------------------------------------------- | ---------- | ----------- |
+| [Longest Increasing Subsequence](https://leetcode.com/problems/longest-increasing-subsequence/) | Medium     | LIS DP      |
+| [Longest Mountain in Array](https://leetcode.com/problems/longest-mountain-in-array/)           | Medium     | Two-pass    |
+| [Valid Mountain Array](https://leetcode.com/problems/valid-mountain-array/)                     | Easy       | Linear scan |

@@ -7,104 +7,141 @@ tags: [Array, Dynamic Programming, Backtracking, Bit Manipulation, Depth-First S
 leetcode_url: "https://leetcode.com/problems/minimum-time-to-break-locks-i"
 ---
 
-# Minimum Time to Break Locks I / Minimum Time to Break Locks I
+# Minimum Time to Break Locks I / Thời Gian Tối Thiểu Để Phá Khóa I
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Backtracking
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Beautiful Arrangement](https://leetcode.com/problems/beautiful-arrangement) | [Optimal Account Balancing](https://leetcode.com/problems/optimal-account-balancing)
+## Analogy / Tương Tự
 
----
+> Bạn có nhiều ổ khóa cần phá. Bạn có một chiếc búa với **năng lượng ban đầu** (strength=0). Khi phá khóa `i`, năng lượng tăng thêm `strength[i]`. Phá khóa i sau khi sức mạnh hiện tại ≥ `strength[i]`. Thứ tự phá có thể tùy ý — tìm thứ tự để **tổng thời gian chờ nhỏ nhất**.
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Giống thử đồ — bạn thử từng lựa chọn, nếu không phù hợp thì cởi ra thử cái khác. Quan trọng là biết khi nào nên dừng thử (pruning).
-
-**Pattern Recognition:**
-
-- Signal: "generate all valid combinations/permutations" → **Backtracking**
-- Bài này thuộc dạng Backtracking — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Minimum Time to Break Locks I example:**
+## ASCII Visual
 
 ```
-                    []
-            /       |       \
-          [a]      [b]      [c]
-         / \        |
-      [a,b] [a,c]  [b,c]
-       |
-    [a,b,c]
+locks = [3, 4, 1, 2, 6], k = 2 (strength grows by k each turn)
+Order: 1→2→3→4→6
+  strength=0, need 1 → wait 0 (1≤0? no, wait ceil((1-0)/2)=1 turn)
+  Actually: at each step, time = max(0, ceil((lock - curr_strength) / k))
 
-Choose → Explore → Un-choose (backtrack)
-Prune branches that violate constraints
+Bitmask DP: dp[mask] = min time to break all locks in mask
 ```
 
----
+## Problem
 
-## Problem Description
+You have `n` locks with strengths. Your initial strength is 0. To break lock `i`, your strength must be ≥ `strength[i]`. After each broken lock, your strength increases by `k`. You need exactly `(i+1) * k` strength to break the i-th lock in sequence, where you can choose the order. Return minimum total time.
 
-Minimum Time to Break Locks I. ([LeetCode](https://leetcode.com/problems/minimum-time-to-break-locks-i))
+**Note:** Time to break lock `j` when current strength is `s`: `max(0, ceil((strength[j] - s) / k))`
 
-Difficulty: Medium | Acceptance: 30.3%
+## Interview Tips
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-time-to-break-locks-i) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Cần all solutions hay count? Có duplicate input không?" / All results or count? Duplicate elements?
-2. **Template**: "Choose → Explore → Un-choose" / Follow the standard backtracking template
-3. **Pruning**: "Skip nếu biết sớm branch này invalid" / Prune early to avoid TLE
-4. **Edge cases**: "Input rỗng, n=0, kết quả có thể rỗng" / Empty input, n=0, possibly empty result set
-
----
+1. **Bitmask DP** — with n ≤ 8 locks, 2^n states are feasible
+2. **State** — `dp[mask]` = min time to break locks in `mask`
+3. **Transition** — for each unset bit i, try adding it to mask
+4. **Current strength** — equals number of bits set in current mask times k (in simpler formulations)
+5. **Wait time** — `max(0, Math.ceil((strength[i] - currStrength) / k))`
+6. **Time complexity** — O(2^n × n) which is fine for n ≤ 8
 
 ## Solutions
 
+### Solution 1: Bitmask DP
+
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumTimeToBreakLocksIBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function findMinimumTime(strength: number[], k: number): number {
+  const n = strength.length;
+  const INF = Infinity;
+  // dp[mask] = {minTime, currentStrength} when locks in mask are broken
+  const dp = new Array(1 << n).fill(null).map(() => ({ time: INF, str: 0 }));
+  dp[0] = { time: 0, str: 0 };
+
+  for (let mask = 0; mask < 1 << n; mask++) {
+    if (dp[mask].time === INF) continue;
+    const { time, str } = dp[mask];
+
+    for (let i = 0; i < n; i++) {
+      if (mask & (1 << i)) continue; // already broken
+
+      const wait = Math.max(0, Math.ceil((strength[i] - str) / k));
+      const newMask = mask | (1 << i);
+      const newTime = time + wait + 1; // +1 to actually break the lock
+      const newStr = str + k; // strength increases by k
+
+      if (newTime < dp[newMask].time) {
+        dp[newMask] = { time: newTime, str: newStr };
+      }
+    }
+  }
+
+  return dp[(1 << n) - 1].time;
 }
 
-/**
- * Solution 2: Optimized — Backtracking
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumTimeToBreakLocksI(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Backtracking
-  // Hint: Choose → Explore → Unchoose, prune invalid branches early
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(minimumTimeToBreakLocksI(/* example 1 */)); // expected
-// console.log(minimumTimeToBreakLocksI(/* example 2 */)); // expected
-// console.log(minimumTimeToBreakLocksI(/* edge case */)); // expected
+console.log(findMinimumTime([3, 4, 1, 2, 6], 1)); // 4
+console.log(findMinimumTime([1, 2, 3], 2)); // 3
+console.log(findMinimumTime([8], 1)); // 8
 ```
 
----
+### Solution 2: DFS with Pruning (Backtracking)
 
-## 🔗 Related Problems
+```typescript
+function findMinimumTimeDFS(strength: number[], k: number): number {
+  const n = strength.length;
+  let minTime = Infinity;
 
-- [Beautiful Arrangement](https://leetcode.com/problems/beautiful-arrangement) — same pattern: Backtracking
-- [Optimal Account Balancing](https://leetcode.com/problems/optimal-account-balancing) — same pattern: Backtracking
-- [Find Minimum Time to Finish All Jobs](https://leetcode.com/problems/find-minimum-time-to-finish-all-jobs) — same pattern: Backtracking
-- [Partition to K Equal Sum Subsets](https://leetcode.com/problems/partition-to-k-equal-sum-subsets) — same pattern: Backtracking
-- [Minimum Time to Break Locks I — LeetCode](https://leetcode.com/problems/minimum-time-to-break-locks-i) — problem page
+  function dfs(mask: number, currStr: number, time: number): void {
+    if (time >= minTime) return; // prune
+    if (mask === (1 << n) - 1) {
+      minTime = Math.min(minTime, time);
+      return;
+    }
+
+    for (let i = 0; i < n; i++) {
+      if (mask & (1 << i)) continue;
+      const wait = Math.max(0, Math.ceil((strength[i] - currStr) / k));
+      dfs(mask | (1 << i), currStr + k, time + wait + 1);
+    }
+  }
+
+  dfs(0, 0, 0);
+  return minTime;
+}
+
+console.log(findMinimumTimeDFS([3, 4, 1, 2, 6], 1)); // 4
+console.log(findMinimumTimeDFS([1, 2, 3], 2)); // 3
+```
+
+### Solution 3: Bitmask DP (Flat Array, Optimized)
+
+```typescript
+function findMinimumTimeOpt(strength: number[], k: number): number {
+  const n = strength.length;
+  const total = 1 << n;
+  const dpTime = new Array(total).fill(Infinity);
+  const dpStr = new Array(total).fill(0);
+  dpTime[0] = 0;
+
+  for (let mask = 0; mask < total; mask++) {
+    if (dpTime[mask] === Infinity) continue;
+    for (let i = 0; i < n; i++) {
+      if ((mask >> i) & 1) continue;
+      const wait = Math.max(0, Math.ceil((strength[i] - dpStr[mask]) / k));
+      const nm = mask | (1 << i);
+      const nt = dpTime[mask] + wait + 1;
+      if (nt < dpTime[nm]) {
+        dpTime[nm] = nt;
+        dpStr[nm] = dpStr[mask] + k;
+      }
+    }
+  }
+
+  return dpTime[total - 1];
+}
+
+console.log(findMinimumTimeOpt([3, 4, 1, 2, 6], 1)); // 4
+console.log(findMinimumTimeOpt([1, 2, 3], 2)); // 3
+```
+
+## Related Problems
+
+| #    | Problem                          | Difficulty | Tags              |
+| ---- | -------------------------------- | ---------- | ----------------- |
+| 847  | Shortest Path Visiting All Nodes | Hard       | BFS, Bitmask      |
+| 1125 | Smallest Sufficient Team         | Hard       | Bitmask DP        |
+| 2305 | Fair Distribution of Cookies     | Medium     | Backtracking      |
+| 3376 | Minimum Time to Break Locks II   | Hard       | Min-Cost Matching |

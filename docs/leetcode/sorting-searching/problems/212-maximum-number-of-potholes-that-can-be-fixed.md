@@ -7,57 +7,61 @@ tags: [String, Greedy, Sorting]
 leetcode_url: "https://leetcode.com/problems/maximum-number-of-potholes-that-can-be-fixed"
 ---
 
-# Maximum Number of Potholes That Can Be Fixed / Maximum Number of Potholes That Can Be Fixed
+# Maximum Number of Potholes That Can Be Fixed / Số Ổ Gà Tối Đa Có Thể Vá
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Largest Number](https://leetcode.com/problems/largest-number) | [Reorganize String](https://leetcode.com/problems/reorganize-string)
+> **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
+> **See also**: [Minimum Number of Coins to be Added](./211-minimum-number-of-coins-to-be-added.md) | [Jump Game](https://leetcode.com/problems/jump-game)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống ăn buffet — mỗi lần bạn chọn món ngon nhất hiện tại. Nếu chứng minh được rằng chọn tham lam từng bước vẫn tối ưu toàn cục, thì Greedy là đáp án.
+**Analogy:** Con đường có các đoạn ổ gà liên tiếp (`x`). Mỗi lần vá một đoạn dài L tốn L+1 ngân sách (L để vá ổ gà + 1 cho ký tự đường tiếp theo). Chiến lược tham lam: vá đoạn dài nhất trước — mỗi đơn vị ngân sách sinh ra nhiều ổ gà được vá nhất. Sort các đoạn giảm dần, vá từng đoạn cho đến khi hết budget.
 
 **Pattern Recognition:**
 
-- Signal: "locally optimal → globally optimal" + "sorting + selection" → **Greedy**
-- Bài này thuộc dạng Greedy — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "maximize potholes fixed" + "fixed cost per segment" → **Count runs + Sort + Greedy**
+- Mỗi run `x...x` độ dài L tốn L+1 budget → hiệu quả nhất khi L lớn
+- Nếu budget chưa đủ cho cả run → vá L = budget-1 ổ gà trong run đó
 
-**Visual — Maximum Number of Potholes That Can Be Fixed example:**
+**Visual — road="..xxxxx..xx.x", budget=6:**
 
 ```
-// TODO: Add step-by-step visual for Greedy
-// Show one complete example with state at each step
+Runs: [5, 2, 1]  (lengths of consecutive 'x' groups)
+Sort desc: [5, 2, 1]
+
+Run 5: cost=6, budget=6 >= 6 -> fix 5 potholes, budget=0
+budget=0 -> stop
+Total fixed = 5 ✅
+
+road="xxx.x", budget=4:
+Runs: [3, 1], sort: [3, 1]
+Run 3: cost=4, budget=4 >= 4 -> fix 3, budget=0 -> Total=3
 ```
 
 ---
 
 ## Problem Description
 
-Maximum Number of Potholes That Can Be Fixed. ([LeetCode](https://leetcode.com/problems/maximum-number-of-potholes-that-can-be-fixed))
-
-Difficulty: Medium | Acceptance: 53.2%
+Given string `road` ('x' = pothole, '.' = smooth) and integer `budget`. Fixing a contiguous segment of `L` potholes costs `L+1` budget. Maximize total potholes fixed.
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+Example 1: road="..xxxxx..xx.x", budget=14 -> 9
+Example 2: road="xxx.x", budget=4           -> 3
+Example 3: road="x.x", budget=2             -> 1
 ```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/maximum-number-of-potholes-that-can-be-fixed) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Tại sao +1?** Để fix một đoạn L ổ gà, cần dùng L+1 budget (gồm 1 char đường sau)
+2. **Greedy by run length**: Dài nhất → hiệu quả nhất (cost/potholes ratio nhỏ nhất)
+3. **Khi budget không đủ cho cả run**: Vá budget-1 ổ gà trong run đó (dùng hết budget)
+4. **Edge case**: budget=1 → không thể vá gì (cần ít nhất 2: 1 ổ gà + 1 đường)
+5. **Hỏi follow-up**: "Nếu chi phí là function khác của L?" → Vẫn sort + greedy nếu monotone
+6. **Complexity**: Time O(n + k log k) với k = số runs, Space O(k)
 
 ---
 
@@ -65,39 +69,91 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Count Runs + Sort Descending + Greedy (Optimal)
+ * Time O(n + k log k), Space O(k)   k = number of pothole runs
+ *
+ * Parse all contiguous 'x' runs, sort by length descending,
+ * greedily fix as many as possible within budget.
  */
-function maximumNumberOfPotholesThatCanBeFixedBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function maxPotholes(road: string, budget: number): number {
+  // Parse runs of consecutive 'x'
+  const runs: number[] = [];
+  let i = 0;
+  while (i < road.length) {
+    if (road[i] === 'x') {
+      let len = 0;
+      while (i < road.length && road[i] === 'x') { len++; i++; }
+      runs.push(len);
+    } else {
+      i++;
+    }
+  }
+
+  // Greedily fix longest runs first (each costs len+1)
+  runs.sort((a, b) => b - a);
+  let fixed = 0;
+
+  for (const run of runs) {
+    if (budget <= 0) break;
+    const cost = run + 1;
+    if (budget >= cost) {
+      fixed += run;
+      budget -= cost;
+    } else {
+      // Can fix at most budget-1 potholes with remaining budget
+      fixed += Math.max(0, budget - 1);
+      break;
+    }
+  }
+
+  return fixed;
 }
 
 /**
- * Solution 2: Optimized — Greedy
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: One-pass with sorting (same logic, cleaner loop)
+ * Time O(n + k log k), Space O(k)
  */
-function maximumNumberOfPotholesThatCanBeFixed(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Greedy
-  // Hint: Sort by key metric, make locally optimal choice at each step
-  throw new Error('Not implemented');
+function maxPotholes2(road: string, budget: number): number {
+  const runs: number[] = [];
+  let count = 0;
+  for (let i = 0; i <= road.length; i++) {
+    if (i < road.length && road[i] === 'x') {
+      count++;
+    } else if (count > 0) {
+      runs.push(count);
+      count = 0;
+    }
+  }
+
+  runs.sort((a, b) => b - a);
+  let ans = 0;
+
+  for (const r of runs) {
+    if (budget < 2) break; // minimum cost is 2 (1 pothole + 1 road)
+    const canFix = Math.min(r, budget - 1);
+    ans += canFix;
+    budget -= canFix + 1;
+  }
+  return ans;
 }
 
-// === Test Cases ===
-// console.log(maximumNumberOfPotholesThatCanBeFixed(/* example 1 */)); // expected
-// console.log(maximumNumberOfPotholesThatCanBeFixed(/* example 2 */)); // expected
-// console.log(maximumNumberOfPotholesThatCanBeFixed(/* edge case */)); // expected
+// --- Quick inline tests ---
+console.log(maxPotholes('..xxxxx..xx.x', 14)); // 9
+console.log(maxPotholes('xxx.x', 4));           // 3
+console.log(maxPotholes('x.x', 2));             // 1
+console.log(maxPotholes('....', 5));            // 0
+console.log(maxPotholes2('..xxxxx..xx.x', 14)); // 9
+console.log(maxPotholes2('x', 1));              // 0 (need budget >= 2)
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Largest Number](https://leetcode.com/problems/largest-number) — same pattern: Greedy
-- [Reorganize String](https://leetcode.com/problems/reorganize-string) — same pattern: Heap / Priority Queue
-- [Minimum Deletions to Make Character Frequencies Unique](https://leetcode.com/problems/minimum-deletions-to-make-character-frequencies-unique) — same pattern: Greedy
-- [Word Abbreviation](https://leetcode.com/problems/word-abbreviation) — same pattern: Trie
-- [Maximum Number of Potholes That Can Be Fixed — LeetCode](https://leetcode.com/problems/maximum-number-of-potholes-that-can-be-fixed) — problem page
+| Problem | Relationship |
+| ------- | ------------ |
+| [3119. Maximum Number of Potholes That Can Be Fixed](https://leetcode.com/problems/maximum-number-of-potholes-that-can-be-fixed/) | This problem |
+| [2952. Minimum Number of Coins to be Added](https://leetcode.com/problems/minimum-number-of-coins-to-be-added/) | Greedy coverage with budget |
+| [45. Jump Game II](https://leetcode.com/problems/jump-game-ii/) | Greedy budget allocation |
+| [1326. Minimum Taps to Water Garden](https://leetcode.com/problems/minimum-number-of-taps-to-open-to-water-a-garden/) | Greedy interval coverage |
+| [1642. Furthest Building You Can Reach](https://leetcode.com/problems/furthest-building-you-can-reach/) | Greedy resource allocation |

@@ -7,100 +7,159 @@ tags: [Tree, Breadth-First Search, Binary Tree]
 leetcode_url: "https://leetcode.com/problems/minimum-number-of-operations-to-sort-a-binary-tree-by-level"
 ---
 
-# Minimum Number of Operations to Sort a Binary Tree by Level / Minimum Number of Operations to Sort a Binary Tree by Level
+# Minimum Number of Operations to Sort a Binary Tree by Level / Số Thao Tác Tối Thiểu Để Sắp Xếp Cây Nhị Phân Theo Cấp
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: BFS
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Same Tree](https://leetcode.com/problems/same-tree) | [Serialize and Deserialize Binary Tree](https://leetcode.com/problems/serialize-and-deserialize-binary-tree)
+## Analogy / Tương Tự
 
----
+> Mỗi tầng của tòa nhà (level của cây) có các căn phòng đánh số lộn xộn. Bạn muốn sắp xếp số phòng tăng dần từ trái sang phải. Mỗi thao tác là **hoán vị 2 phòng bất kỳ** trong cùng tầng. Tìm số hoán vị tối thiểu.
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Như ném đá xuống ao — sóng lan ra theo từng vòng đều đặn. Khám phá hết tất cả ở khoảng cách 1, rồi mới sang khoảng cách 2.
-
-**Pattern Recognition:**
-
-- Signal: "shortest path (unweighted)" + "level-order" → **BFS**
-- Bài này thuộc dạng BFS — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Minimum Number of Operations to Sort a Binary Tree by Level example:**
+## ASCII Visual
 
 ```
-Level 0:     [root]
-Level 1:   [A, B]
-Level 2: [C, D, E]
-
-BFS: process level by level using queue
+Level 1:  [1]          (sorted, 0 swaps)
+Level 2:  [3, 2]       → [2, 3]: 1 swap
+Level 3:  [7, 6, 5, 4] → [4, 5, 6, 7]: 2 swaps
+           7↔4 → [4,6,5,7], 6↔5 → [4,5,6,7]
+Total = 0 + 1 + 2 = 3 swaps
 ```
 
----
+## Problem
 
-## Problem Description
+Given the `root` of a binary tree with **unique** values. In one operation, you can swap any two children of the same parent. Return the minimum number of operations needed to make values at each level sorted in strictly increasing order from left to right.
 
-Minimum Number of Operations to Sort a Binary Tree by Level. ([LeetCode](https://leetcode.com/problems/minimum-number-of-operations-to-sort-a-binary-tree-by-level))
+## Interview Tips
 
-Difficulty: Medium | Acceptance: 74.3%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-number-of-operations-to-sort-a-binary-tree-by-level) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+1. **BFS for levels** — collect each level's values, compute swaps independently
+2. **Minimum swaps to sort** — classic problem: find cycles in permutation, answer = n - numCycles
+3. **Coordinate compression** — map values to indices [0..n-1] using sorted rank
+4. **Cycle detection** — follow permutation cycles; each cycle of length k needs k-1 swaps
+5. **Unique values** — guaranteed, so no duplicates to handle
+6. **Total ops** — sum minimum swaps across all levels
 
 ## Solutions
 
+### Solution 1: BFS + Cycle-Based Minimum Swaps
+
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumNumberOfOperationsToSortABinaryTreeByLevelBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+class TreeNode {
+  val: number;
+  left: TreeNode | null;
+  right: TreeNode | null;
+  constructor(val = 0, left: TreeNode | null = null, right: TreeNode | null = null) {
+    this.val = val;
+    this.left = left;
+    this.right = right;
+  }
 }
 
-/**
- * Solution 2: Optimized — BFS
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumNumberOfOperationsToSortABinaryTreeByLevel(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using BFS
-  // Hint: Use queue, process level by level
-  throw new Error('Not implemented');
+function minimumOperations(root: TreeNode | null): number {
+  if (!root) return 0;
+
+  // Minimum swaps to sort array using cycle decomposition
+  function minSwapsToSort(arr: number[]): number {
+    const sorted = [...arr].sort((a, b) => a - b);
+    // Map value → its target index
+    const indexMap = new Map<number, number>();
+    sorted.forEach((val, i) => indexMap.set(val, i));
+
+    const n = arr.length;
+    const visited = new Array(n).fill(false);
+    let swaps = 0;
+
+    for (let i = 0; i < n; i++) {
+      if (visited[i] || indexMap.get(arr[i]) === i) continue;
+      // Follow this cycle
+      let cycleLen = 0;
+      let j = i;
+      while (!visited[j]) {
+        visited[j] = true;
+        j = indexMap.get(arr[j])!;
+        cycleLen++;
+      }
+      swaps += cycleLen - 1;
+    }
+    return swaps;
+  }
+
+  let total = 0;
+  const queue: TreeNode[] = [root];
+
+  while (queue.length) {
+    const levelSize = queue.length;
+    const levelVals: number[] = [];
+
+    for (let i = 0; i < levelSize; i++) {
+      const node = queue.shift()!;
+      levelVals.push(node.val);
+      if (node.left) queue.push(node.left);
+      if (node.right) queue.push(node.right);
+    }
+
+    total += minSwapsToSort(levelVals);
+  }
+
+  return total;
 }
 
-// === Test Cases ===
-// console.log(minimumNumberOfOperationsToSortABinaryTreeByLevel(/* example 1 */)); // expected
-// console.log(minimumNumberOfOperationsToSortABinaryTreeByLevel(/* example 2 */)); // expected
-// console.log(minimumNumberOfOperationsToSortABinaryTreeByLevel(/* edge case */)); // expected
+// Build tree: [1,4,3,7,6,8,5,null,null,null,null,9,null,10]
+const root1 = new TreeNode(
+  1,
+  new TreeNode(4, new TreeNode(7), new TreeNode(6)),
+  new TreeNode(3, new TreeNode(8), new TreeNode(5)),
+);
+console.log(minimumOperations(root1)); // 3
 ```
 
----
+### Solution 2: BFS + Index-Based Swap Count
 
-## 🔗 Related Problems
+```typescript
+function minimumOperationsV2(root: TreeNode | null): number {
+  if (!root) return 0;
 
-- [Same Tree](https://leetcode.com/problems/same-tree) — same pattern: BFS
-- [Serialize and Deserialize Binary Tree](https://leetcode.com/problems/serialize-and-deserialize-binary-tree) — same pattern: BFS
-- [Binary Tree Right Side View](https://leetcode.com/problems/binary-tree-right-side-view) — same pattern: BFS
-- [All Nodes Distance K in Binary Tree](https://leetcode.com/problems/all-nodes-distance-k-in-binary-tree) — same pattern: BFS
-- [Minimum Number of Operations to Sort a Binary Tree by Level — LeetCode](https://leetcode.com/problems/minimum-number-of-operations-to-sort-a-binary-tree-by-level) — problem page
+  function countSwaps(arr: number[]): number {
+    const n = arr.length;
+    const pos = new Map(arr.map((v, i) => [v, i]));
+    const sorted = [...arr].sort((a, b) => a - b);
+    let swaps = 0;
+
+    for (let i = 0; i < n; i++) {
+      if (arr[i] !== sorted[i]) {
+        swaps++;
+        const j = pos.get(sorted[i])!;
+        pos.set(arr[i], j);
+        pos.set(sorted[i], i);
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+    }
+    return swaps;
+  }
+
+  let total = 0;
+  const queue: TreeNode[] = [root];
+  while (queue.length) {
+    const size = queue.length;
+    const vals: number[] = [];
+    for (let i = 0; i < size; i++) {
+      const node = queue.shift()!;
+      vals.push(node.val);
+      if (node.left) queue.push(node.left);
+      if (node.right) queue.push(node.right);
+    }
+    total += countSwaps(vals);
+  }
+  return total;
+}
+
+console.log(minimumOperationsV2(root1)); // 3
+const root2 = new TreeNode(1, new TreeNode(3, new TreeNode(7), new TreeNode(6)), new TreeNode(2));
+console.log(minimumOperationsV2(root2)); // 3
+```
+
+## Related Problems
+
+| #    | Problem                                     | Difficulty | Tags         |
+| ---- | ------------------------------------------- | ---------- | ------------ |
+| 2471 | Minimum Number of Operations to Sort (this) | Medium     | BFS, Sorting |
+| 102  | Binary Tree Level Order Traversal           | Medium     | BFS          |
+| 1769 | Minimum Number of Operations to Move...     | Medium     | Array        |
+| 268  | Minimum Swaps to Sort (cycle method)        | Classic    | Array        |

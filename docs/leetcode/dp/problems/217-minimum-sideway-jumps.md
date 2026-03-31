@@ -7,102 +7,159 @@ tags: [Array, Dynamic Programming, Greedy]
 leetcode_url: "https://leetcode.com/problems/minimum-sideway-jumps"
 ---
 
-# Minimum Sideway Jumps / Minimum Sideway Jumps
+# Minimum Sideway Jumps / Số Lần Nhảy Ngang Tối Thiểu
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Jump Game II](https://leetcode.com/problems/jump-game-ii) | [Split Array Largest Sum](https://leetcode.com/problems/split-array-largest-sum)
+## Tương tự thực tế (Vietnamese Analogy)
 
----
+> Ếch đi trên đường có 3 làn, gặp chướng ngại vật phải nhảy sang làn khác (tốn 1 lần nhảy ngang).  
+> Giống đổi làn trên cao tốc: đổi làn ít nhất để đến đích, tránh các điểm chắn đường.
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
-
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Minimum Sideway Jumps example:**
+## ASCII Visualization
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+obstacles = [0, 1, 2, 3, 0]  (frog starts lane 2, point 0)
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+Point:  0   1   2   3   4
+Lane 1: .   X   .   .   .
+Lane 2: .   .   X   .   .    ← frog starts here
+Lane 3: .   .   .   X   .
+
+dp = [Inf, 0, Inf] at point 0 (lane 2 = index 1 = 0 jumps)
+After point 1 (obs lane 1): lane 1 blocked → dp=[Inf,0,1] then minimize
+After point 2 (obs lane 2): dp=[1,Inf,1]
+After point 3 (obs lane 3): dp=[1,2,Inf]
+At point 4: min=1, answer=1
 ```
 
----
+## Problem
 
-## Problem Description
+A frog starts at lane 2, point 0. Road has `n` points (0 to n), 3 lanes.
+`obstacles[i]` = blocked lane at point `i` (0 = none).
+A **sideway jump** moves to another lane at the same point (+1 jump).
+Return the **minimum** number of sideway jumps to reach any lane at point `n`.
 
-Minimum Sideway Jumps. ([LeetCode](https://leetcode.com/problems/minimum-sideway-jumps))
+**Constraints:** `2 <= obstacles.length <= 5 * 10^5`, `0 <= obstacles[i] <= 3`
 
-Difficulty: Medium | Acceptance: 50.8%
+## Interview Tips
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-sideway-jumps) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
-
----
+1. **DP state** — `dp[lane]` = min jumps to reach current point in that lane (1-indexed lanes).
+2. **At each point** — block the obstacle lane (set to INF), then propagate min (jumping costs 1).
+3. **Propagation** — `dp[l] = min(dp[l], min(dp) + 1)` for unblocked lanes.
+4. **Greedy works** — at each step, the frog jumps to minimize cost; no future info needed.
+5. **Initialization** — `dp = [1, 0, 1]` (lane 1: 1 jump, lane 2: 0 jumps, lane 3: 1 jump) since frog is at lane 2.
+6. **Answer** — `min(dp[0..2])` after processing all points.
 
 ## Solutions
 
+### Solution 1: Greedy DP — O(n) time, O(1) space
+
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumSidewayJumpsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minSideJumps(obstacles: number[]): number {
+  const INF = Infinity;
+  // dp[0..2] for lanes 1,2,3 (0-indexed)
+  let dp = [1, 0, 1]; // frog starts at lane 2 (index 1)
+
+  for (let i = 1; i < obstacles.length; i++) {
+    const obs = obstacles[i];
+
+    // Block the obstacle lane
+    if (obs > 0) dp[obs - 1] = INF;
+
+    // Propagate minimum to unblocked lanes (cost 1 to jump)
+    const minJumps = Math.min(dp[0], dp[1], dp[2]);
+    for (let lane = 0; lane < 3; lane++) {
+      if (obs - 1 !== lane && dp[lane] > minJumps) {
+        dp[lane] = minJumps + 1;
+      }
+    }
+  }
+
+  return Math.min(dp[0], dp[1], dp[2]);
 }
 
-/**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumSidewayJumps(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(minimumSidewayJumps(/* example 1 */)); // expected
-// console.log(minimumSidewayJumps(/* example 2 */)); // expected
-// console.log(minimumSidewayJumps(/* edge case */)); // expected
+console.log(minSideJumps([0, 1, 2, 3, 0])); // 2
+console.log(minSideJumps([0, 1, 1, 3, 3, 0])); // 1
+console.log(minSideJumps([0, 2, 1, 0, 3, 0])); // 0
+console.log(minSideJumps([0, 0])); // 0 (no obstacles)
 ```
 
----
+### Solution 2: Step-by-step explicit — O(n)
 
-## 🔗 Related Problems
+```typescript
+function minSideJumpsV2(obstacles: number[]): number {
+  // dp[i] = min jumps to be in lane i+1 at current point
+  let dp = [1, 0, 1];
 
-- [Jump Game II](https://leetcode.com/problems/jump-game-ii) — same pattern: Dynamic Programming
-- [Split Array Largest Sum](https://leetcode.com/problems/split-array-largest-sum) — same pattern: Prefix Sum
-- [Non-overlapping Intervals](https://leetcode.com/problems/non-overlapping-intervals) — same pattern: Dynamic Programming
-- [Minimum Number of Taps to Open to Water a Garden](https://leetcode.com/problems/minimum-number-of-taps-to-open-to-water-a-garden) — same pattern: Dynamic Programming
-- [Minimum Sideway Jumps — LeetCode](https://leetcode.com/problems/minimum-sideway-jumps) — problem page
+  for (let p = 1; p < obstacles.length; p++) {
+    const block = obstacles[p] - 1; // 0-indexed blocked lane (-1 if none)
+
+    // Step 1: carry forward (no jump needed if lane not blocked)
+    const next = [...dp];
+    if (block >= 0) next[block] = Infinity; // can't be in blocked lane
+
+    // Step 2: allow lateral jumps — find min across unblocked and +1
+    const minCost = Math.min(...next);
+    for (let lane = 0; lane < 3; lane++) {
+      if (lane !== block) {
+        next[lane] = Math.min(next[lane], minCost + 1);
+      }
+    }
+    // Re-block obstacle (can't jump into it)
+    if (block >= 0) next[block] = Infinity;
+
+    dp = next;
+  }
+
+  return Math.min(...dp);
+}
+
+console.log(minSideJumpsV2([0, 1, 2, 3, 0])); // 2
+console.log(minSideJumpsV2([0, 1, 1, 3, 3, 0])); // 1
+console.log(minSideJumpsV2([0, 2, 1, 0, 3, 0])); // 0
+```
+
+### Solution 3: BFS/Dijkstra (conceptual verification)
+
+```typescript
+function minSideJumpsBFS(obstacles: number[]): number {
+  // Validate using BFS on state (point, lane)
+  const n = obstacles.length - 1;
+  // dist[point][lane] = min jumps
+  const dist = Array.from({ length: n + 1 }, () => [Infinity, Infinity, Infinity]);
+  dist[0][1] = 0; // start: point 0, lane 2 (index 1)
+  dist[0][0] = 1; // lateral jump to lane 1
+  dist[0][2] = 1; // lateral jump to lane 3
+
+  for (let p = 0; p < n; p++) {
+    for (let lane = 0; lane < 3; lane++) {
+      if (dist[p][lane] === Infinity) continue;
+      const nextP = p + 1;
+      const obs = obstacles[nextP] - 1;
+      // Move forward
+      if (obs !== lane) {
+        dist[nextP][lane] = Math.min(dist[nextP][lane], dist[p][lane]);
+        // Jump to other lanes
+        for (let other = 0; other < 3; other++) {
+          if (other !== lane && other !== obs) {
+            dist[nextP][other] = Math.min(dist[nextP][other], dist[p][lane] + 1);
+          }
+        }
+      }
+    }
+  }
+
+  return Math.min(...dist[n]);
+}
+
+console.log(minSideJumpsBFS([0, 1, 2, 3, 0])); // 2
+console.log(minSideJumpsBFS([0, 1, 1, 3, 3, 0])); // 1
+console.log(minSideJumpsBFS([0, 2, 1, 0, 3, 0])); // 0
+```
+
+## Related Problems
+
+| Problem                                                     | Difficulty | Key Concept  |
+| ----------------------------------------------------------- | ---------- | ------------ |
+| [Jump Game](https://leetcode.com/problems/jump-game/)       | Medium     | Greedy       |
+| [Jump Game II](https://leetcode.com/problems/jump-game-ii/) | Medium     | Greedy       |
+| [Frog Jump](https://leetcode.com/problems/frog-jump/)       | Hard       | DP on states |

@@ -7,100 +7,184 @@ tags: [Array, Hash Table, String]
 leetcode_url: "https://leetcode.com/problems/evaluate-the-bracket-pairs-of-a-string"
 ---
 
-# Evaluate the Bracket Pairs of a String / Evaluate the Bracket Pairs of a String
+# Evaluate the Bracket Pairs of a String / Tính Giá Trị Các Cặp Ngoặc Trong Chuỗi
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Hash Map
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) | [Longest String Chain](https://leetcode.com/problems/longest-string-chain)
+## Tóm tắt bằng tiếng Việt
 
----
+Cho chuỗi `s` chứa các cặp ngoặc `(key)` và mảng `knowledge` là danh sách `[key, value]`. Thay thế mỗi `(key)` trong `s` bằng giá trị tương ứng. Nếu không tìm thấy `key`, thay bằng `"?"`.
 
-## 🧠 Intuition / Tư Duy
+**Ví dụ:** `s = "(name)is(age)yearsold"`, `knowledge = [["name","bob"],["age","two"]]` → `"bobistwoyearsold"`.
 
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
+## Tương tự thực tế
 
-**Pattern Recognition:**
+> Như điền vào mẫu đơn: có mẫu với chỗ trống `(tên)`, `(tuổi)` và một bảng tra cứu. Tra từng chỗ trống và điền giá trị. Nếu không có trong bảng, ghi `"?"`.
 
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Evaluate the Bracket Pairs of a String example:**
+## Minhှo ASCII
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
+s = "(a)bc(d)ef(g)"
+knowledge = {a: "1", d: "4"}
 
-Key insight: store complement for O(1) lookup
+Parsing:
+'(' → start collecting key
+'a' → key buffer: "a"
+')' → lookup "a" → "1" → append "1"
+'b','c' → append directly
+'(' → start key
+'d' → key buffer: "d"
+')' → lookup "d" → "4" → append "4"
+'e','f' → append directly
+'(' → start key
+'g' → key buffer: "g"
+')' → lookup "g" → not found → append "?"
+
+Result: "1bc4ef?"
 ```
 
----
+## Mô tả bài toán
 
-## Problem Description
+- `s` chứa chữ thường và các cặp `(key)`.
+- `knowledge[i] = [key_i, value_i]`.
+- Thay mỗi `(key)` bằng `value` hoặc `"?"` nếu không có.
 
-Evaluate the Bracket Pairs of a String. ([LeetCode](https://leetcode.com/problems/evaluate-the-bracket-pairs-of-a-string))
+**Constraints:** `1 <= s.length <= 10^5`, `0 <= knowledge.length <= 10^5`.
 
-Difficulty: Medium | Acceptance: 68.2%
+## Tips phỏng vấn
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+1. **HashMap trước** — convert `knowledge` sang `Map` để O(1) lookup.
+2. **State machine** — dùng flag `inBracket` và buffer để thu thập key.
+3. **Không lồng ngoặc** — bài đảm bảo cặp ngoặc hợp lệ, không cần xử lý lồng.
+4. **StringBuilder** — dùng array rồi `join('')` thay vì nối string liên tục.
+5. **Fallback `"?"`** — nếu Map không có key, push `"?"`.
+6. **Độ phức tạp** — O(n + m) với n = |s|, m = |knowledge|.
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/evaluate-the-bracket-pairs-of-a-string) for full constraints
+## Giải pháp
 
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
-
-## Solutions
+### Giải pháp 1: State Machine với Map (Tối ưu)
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function evaluateTheBracketPairsOfAStringBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function evaluate(s: string, knowledge: string[][]): string {
+  // Build lookup map
+  const map = new Map<string, string>();
+  for (const [key, val] of knowledge) {
+    map.set(key, val);
+  }
+
+  const result: string[] = [];
+  let i = 0;
+
+  while (i < s.length) {
+    if (s[i] === "(") {
+      // Collect key until ')'
+      let j = i + 1;
+      while (j < s.length && s[j] !== ")") j++;
+      const key = s.slice(i + 1, j);
+      result.push(map.get(key) ?? "?");
+      i = j + 1; // skip past ')'
+    } else {
+      result.push(s[i]);
+      i++;
+    }
+  }
+
+  return result.join("");
 }
 
-/**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function evaluateTheBracketPairsOfAString(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(evaluateTheBracketPairsOfAString(/* example 1 */)); // expected
-// console.log(evaluateTheBracketPairsOfAString(/* example 2 */)); // expected
-// console.log(evaluateTheBracketPairsOfAString(/* edge case */)); // expected
+// Test cases
+console.log(
+  evaluate("(name)is(age)yearsold", [
+    ["name", "bob"],
+    ["age", "two"],
+  ]),
+);
+// "bobistwoyearsold"
+console.log(evaluate("hi(name)", [["a", "b"]]));
+// "hi?"
+console.log(evaluate("(a)(a)(a)aaa", [["a", "yes"]]));
+// "yesyesyesaaa"
+console.log(
+  evaluate("(a)bc(d)", [
+    ["a", "1"],
+    ["d", "4"],
+  ]),
+);
+// "1bc4"
 ```
 
----
+### Giải pháp 2: Regex replace
 
-## 🔗 Related Problems
+```typescript
+function evaluateRegex(s: string, knowledge: string[][]): string {
+  const map = new Map<string, string>(knowledge.map(([k, v]) => [k, v]));
 
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Longest String Chain](https://leetcode.com/problems/longest-string-chain) — same pattern: Two Pointers
-- [Word Break II](https://leetcode.com/problems/word-break-ii) — same pattern: Trie
-- [Open the Lock](https://leetcode.com/problems/open-the-lock) — same pattern: BFS
-- [Evaluate the Bracket Pairs of a String — LeetCode](https://leetcode.com/problems/evaluate-the-bracket-pairs-of-a-string) — problem page
+  // Replace each (key) with its value or '?'
+  return s.replace(/\(([^)]+)\)/g, (_, key) => map.get(key) ?? "?");
+}
+
+console.log(
+  evaluateRegex("(name)is(age)yearsold", [
+    ["name", "bob"],
+    ["age", "two"],
+  ]),
+);
+// "bobistwoyearsold"
+console.log(evaluateRegex("hi(name)", [["a", "b"]]));
+// "hi?"
+console.log(evaluateRegex("(a)(a)(a)aaa", [["a", "yes"]]));
+// "yesyesyesaaa"
+```
+
+### Giải pháp 3: Character-by-character với inBracket flag
+
+```typescript
+function evaluateCharByChar(s: string, knowledge: string[][]): string {
+  const map = new Map<string, string>();
+  for (const [k, v] of knowledge) map.set(k, v);
+
+  const result: string[] = [];
+  let inBracket = false;
+  let keyBuf = "";
+
+  for (const ch of s) {
+    if (ch === "(") {
+      inBracket = true;
+      keyBuf = "";
+    } else if (ch === ")") {
+      result.push(map.get(keyBuf) ?? "?");
+      inBracket = false;
+    } else if (inBracket) {
+      keyBuf += ch;
+    } else {
+      result.push(ch);
+    }
+  }
+
+  return result.join("");
+}
+
+console.log(
+  evaluateCharByChar("(name)is(age)yearsold", [
+    ["name", "bob"],
+    ["age", "two"],
+  ]),
+);
+// "bobistwoyearsold"
+console.log(evaluateCharByChar("(missing)", []));
+// "?"
+```
+
+## Bảng so sánh
+
+| Giải pháp     | Thời gian | Không gian | Ghi chú         |
+| ------------- | --------- | ---------- | --------------- |
+| State Machine | O(n + m)  | O(n + m)   | Tối ưu, rõ ràng |
+| Regex replace | O(n + m)  | O(n + m)   | Ngắn gọn        |
+| Char by char  | O(n + m)  | O(n + m)   | Trực quan nhất  |
+
+## Bài liên quan
+
+| #    | Tên                        | Độ khó | Tags               |
+| ---- | -------------------------- | ------ | ------------------ |
+| 20   | Valid Parentheses          | Easy   | Stack              |
+| 726  | Number of Atoms            | Hard   | Hash Table, String |
+| 1807 | Evaluate the Bracket Pairs | Medium | Hash Table         |

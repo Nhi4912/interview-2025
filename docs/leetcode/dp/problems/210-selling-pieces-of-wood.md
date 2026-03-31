@@ -7,102 +7,189 @@ tags: [Array, Dynamic Programming, Memoization]
 leetcode_url: "https://leetcode.com/problems/selling-pieces-of-wood"
 ---
 
-# Selling Pieces of Wood / Selling Pieces of Wood
+# Selling Pieces of Wood / Bán Gỗ Theo Mảnh
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Word Break II](https://leetcode.com/problems/word-break-ii) | [Longest Increasing Path in a Matrix](https://leetcode.com/problems/longest-increasing-path-in-a-matrix)
+## Tương tự thực tế (Vietnamese Analogy)
 
----
+> Bạn có tấm gỗ m×n. Khách mua các miếng nhỏ với giá cố định. Bạn có thể cắt dọc hoặc ngang bao nhiêu lần tùy ý.  
+> Giống cắt pizza: mỗi lần cắt tạo 2 phần, tối ưu hóa doanh thu từng phần.
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
-
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Selling Pieces of Wood example:**
+## ASCII Visualization
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+m=3, n=5, prices=[[1,4,2],[2,2,7],[2,1,3]]
+dp[h][w] = max profit for piece of height h, width w
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+dp[1][4] = 2  (from prices)
+dp[2][2] = 7  (from prices)
+dp[3][5]:
+  try cut row at h=1: dp[1][5] + dp[2][5]
+  try cut row at h=2: dp[2][5] + dp[1][5]
+  try cut col at w=1: dp[3][1] + dp[3][4]
+  try cut col at w=2: dp[3][2] + dp[3][3]
+  ...
+  Best = 19
 ```
 
----
+## Problem
 
-## Problem Description
+Given an `m × n` board and `prices[i] = [hi, wi, pricei]`, you can make horizontal/vertical cuts to
+split the board into pieces and sell each piece. Return the **maximum** total money you can earn.
 
-Selling Pieces of Wood. ([LeetCode](https://leetcode.com/problems/selling-pieces-of-wood))
+**Constraints:** `1 <= m, n <= 200`, `1 <= prices.length <= 10000`
 
-Difficulty: Hard | Acceptance: 51.5%
+## Interview Tips
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/selling-pieces-of-wood) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
-
----
+1. **DP state** — `dp[h][w]` = max profit for a `h × w` piece; transition tries all cuts.
+2. **Base case** — initialize `dp[h][w]` from price list directly.
+3. **Horizontal cut** — for cut at row `i`: `dp[h][w] = max(dp[i][w] + dp[h-i][w])` for `1 <= i < h`.
+4. **Vertical cut** — for cut at col `j`: `dp[h][w] = max(dp[h][j] + dp[h][w-j])` for `1 <= j < w`.
+5. **Order matters** — build dp from small pieces to large (bottom-up).
+6. **Complexity** — O(m*n*(m+n)) which is O(200*200*400) ≈ 16M ops — fast enough.
 
 ## Solutions
 
+### Solution 1: Bottom-up 2D DP — O(m·n·(m+n))
+
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function sellingPiecesOfWoodBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function sellingWood(m: number, n: number, prices: number[][]): number {
+  // dp[h][w] = max profit for h×w piece
+  const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+
+  // Initialize from given prices
+  for (const [h, w, price] of prices) {
+    dp[h][w] = Math.max(dp[h][w], price);
+  }
+
+  // Fill bottom-up
+  for (let h = 1; h <= m; h++) {
+    for (let w = 1; w <= n; w++) {
+      // Horizontal cuts: split at row i
+      for (let i = 1; i < h; i++) {
+        dp[h][w] = Math.max(dp[h][w], dp[i][w] + dp[h - i][w]);
+      }
+      // Vertical cuts: split at col j
+      for (let j = 1; j < w; j++) {
+        dp[h][w] = Math.max(dp[h][w], dp[h][j] + dp[h][w - j]);
+      }
+    }
+  }
+
+  return dp[m][n];
 }
 
-/**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function sellingPiecesOfWood(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(sellingPiecesOfWood(/* example 1 */)); // expected
-// console.log(sellingPiecesOfWood(/* example 2 */)); // expected
-// console.log(sellingPiecesOfWood(/* edge case */)); // expected
+console.log(
+  sellingWood(3, 5, [
+    [1, 4, 2],
+    [2, 2, 7],
+    [2, 1, 3],
+  ]),
+); // 19
+console.log(
+  sellingWood(4, 6, [
+    [3, 2, 10],
+    [1, 4, 2],
+    [4, 1, 3],
+  ]),
+); // 32
+console.log(sellingWood(1, 1, [[1, 1, 5]])); // 5
 ```
 
----
+### Solution 2: Top-down Memoization — O(m·n·(m+n))
 
-## 🔗 Related Problems
+```typescript
+function sellingWoodMemo(m: number, n: number, prices: number[][]): number {
+  const priceMap = new Map<string, number>();
+  for (const [h, w, price] of prices) {
+    const key = `${h},${w}`;
+    priceMap.set(key, Math.max(priceMap.get(key) ?? 0, price));
+  }
 
-- [Word Break II](https://leetcode.com/problems/word-break-ii) — same pattern: Trie
-- [Longest Increasing Path in a Matrix](https://leetcode.com/problems/longest-increasing-path-in-a-matrix) — same pattern: Topological Sort
-- [Remove Boxes](https://leetcode.com/problems/remove-boxes) — same pattern: Dynamic Programming
-- [Partition to K Equal Sum Subsets](https://leetcode.com/problems/partition-to-k-equal-sum-subsets) — same pattern: Backtracking
-- [Selling Pieces of Wood — LeetCode](https://leetcode.com/problems/selling-pieces-of-wood) — problem page
+  const memo = new Map<string, number>();
+
+  function dp(h: number, w: number): number {
+    const key = `${h},${w}`;
+    if (memo.has(key)) return memo.get(key)!;
+
+    let best = priceMap.get(key) ?? 0;
+
+    // Try horizontal cuts
+    for (let i = 1; i < h; i++) {
+      best = Math.max(best, dp(i, w) + dp(h - i, w));
+    }
+    // Try vertical cuts
+    for (let j = 1; j < w; j++) {
+      best = Math.max(best, dp(h, j) + dp(h, w - j));
+    }
+
+    memo.set(key, best);
+    return best;
+  }
+
+  return dp(m, n);
+}
+
+console.log(
+  sellingWoodMemo(3, 5, [
+    [1, 4, 2],
+    [2, 2, 7],
+    [2, 1, 3],
+  ]),
+); // 19
+console.log(
+  sellingWoodMemo(4, 6, [
+    [3, 2, 10],
+    [1, 4, 2],
+    [4, 1, 3],
+  ]),
+); // 32
+```
+
+### Solution 3: Optimized — Only half cuts (symmetry)
+
+```typescript
+function sellingWoodOpt(m: number, n: number, prices: number[][]): number {
+  const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (const [h, w, price] of prices) dp[h][w] = Math.max(dp[h][w], price);
+
+  for (let h = 1; h <= m; h++) {
+    for (let w = 1; w <= n; w++) {
+      // Horizontal: only need i <= h/2 (symmetric)
+      for (let i = 1; i * 2 <= h; i++) {
+        dp[h][w] = Math.max(dp[h][w], dp[i][w] + dp[h - i][w]);
+      }
+      // If h is odd, need the middle cut too
+      if (h % 2 !== 0) {
+        const i = Math.floor(h / 2) + 1;
+        if (i < h) dp[h][w] = Math.max(dp[h][w], dp[i][w] + dp[h - i][w]);
+      }
+      // Vertical
+      for (let j = 1; j * 2 <= w; j++) {
+        dp[h][w] = Math.max(dp[h][w], dp[h][j] + dp[h][w - j]);
+      }
+      if (w % 2 !== 0) {
+        const j = Math.floor(w / 2) + 1;
+        if (j < w) dp[h][w] = Math.max(dp[h][w], dp[h][j] + dp[h][w - j]);
+      }
+    }
+  }
+  return dp[m][n];
+}
+
+// Note: Solution 1 is cleaner; use it in interviews
+console.log(
+  sellingWoodOpt(3, 5, [
+    [1, 4, 2],
+    [2, 2, 7],
+    [2, 1, 3],
+  ]),
+); // 19
+```
+
+## Related Problems
+
+| Problem                                                                                   | Difficulty | Key Concept |
+| ----------------------------------------------------------------------------------------- | ---------- | ----------- |
+| [Burst Balloons](https://leetcode.com/problems/burst-balloons/)                           | Hard       | Interval DP |
+| [Strange Printer](https://leetcode.com/problems/strange-printer/)                         | Hard       | Interval DP |
+| [Minimum Cost to Cut a Stick](https://leetcode.com/problems/minimum-cost-to-cut-a-stick/) | Hard       | Interval DP |

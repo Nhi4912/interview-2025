@@ -7,102 +7,162 @@ tags: [String, Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/decode-ways-ii"
 ---
 
-# Decode Ways II / Decode Ways II
+# Decode Ways II / Giải Mã Thông Điệp II
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Wildcard Matching](https://leetcode.com/problems/wildcard-matching) | [Longest Valid Parentheses](https://leetcode.com/problems/longest-valid-parentheses)
+## Tương tự thực tế (Vietnamese Analogy)
 
----
+> Dãy số được mã hóa thành chữ cái (1→A ... 26→Z). Ký tự `*` có thể là bất kỳ chữ số 1-9.  
+> Giống giải mã điện tín bị mờ: mỗi dấu `*` tạo nhiều nhánh giải mã khác nhau.
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
-
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Decode Ways II example:**
+## ASCII Visualization
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+s = "1*"
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+dp[0] = 1 (empty)
+dp[1] = ways("1") = 1
+dp[2]:
+  single "1*": * can be 1-9 → 9 ways
+  double "1*": 11-19 → 9 ways
+  total = 9 + 9 = 18
+
+s = "*"
+  single "*": 1-9 → 9 ways
+  dp[1] = 9
 ```
 
----
+## Problem
 
-## Problem Description
+A message is encoded: `'A'→1, 'B'→2, ..., 'Z'→26`. The string may contain `'*'` which can represent
+any digit `'1'` to `'9'`. Return the **number of ways** to decode string `s`, modulo `10^9 + 7`.
 
-Decode Ways II. ([LeetCode](https://leetcode.com/problems/decode-ways-ii))
+**Constraints:** `1 <= s.length <= 10^5`, `s[i]` is `'0'-'9'` or `'*'`
 
-Difficulty: Hard | Acceptance: 31.2%
+## Interview Tips
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/decode-ways-ii) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
-
----
+1. **Build on Decode Ways I** — same DP, but `'*'` multiplies options.
+2. **Single char** — `'*'` → 9 ways, `'1'-'9'` → 1 way, `'0'` → 0 ways.
+3. **Two chars** — handling all `(prev, curr)` combinations with `'*'` carefully.
+4. **Two-char cases** — `**`: 15 ways (11-19 + 21-26), `1*`: 9 ways (11-19), `2*`: 6 ways (21-26), `*d`: depends on d.
+5. **Space optimize** — only need `dp[i-1]` and `dp[i-2]` at each step.
+6. **Modular arithmetic** — use BigInt or keep numbers in safe range with % MOD after each op.
 
 ## Solutions
 
+### Solution 1: Space-optimized DP — O(n) time, O(1) space
+
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function decodeWaysIiBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function numDecodings(s: string): number {
+  const MOD = 1_000_000_007n;
+  const n = s.length;
+
+  // dp2 = dp[i-2], dp1 = dp[i-1] (ways to decode s[0..i-1])
+  let dp2 = 1n; // dp[0]: empty string = 1 way
+  let dp1 = s[0] === "*" ? 9n : s[0] === "0" ? 0n : 1n; // dp[1]
+
+  for (let i = 1; i < n; i++) {
+    const curr = s[i];
+    const prev = s[i - 1];
+    let dp = 0n;
+
+    // Single character decode
+    if (curr === "*") {
+      dp = (dp1 * 9n) % MOD; // '*' can be 1-9
+    } else if (curr !== "0") {
+      dp = dp1; // any non-zero digit
+    }
+    // curr === '0': dp += 0 (must be combined with prev)
+
+    // Two character decode (prev + curr)
+    if (prev === "*" && curr === "*") {
+      // 11-19 (9) + 21-26 (6) = 15
+      dp = (dp + dp2 * 15n) % MOD;
+    } else if (prev === "*") {
+      const d = parseInt(curr);
+      // '1' + d (d=0..9): 9 options → 1 way each
+      // '2' + d (d=0..6): 1 way
+      let twoWays = 0n;
+      if (d <= 9) twoWays += 1n; // 1d always valid (10-19)
+      if (d <= 6) twoWays += 1n; // 2d valid for d in 0..6
+      dp = (dp + dp2 * twoWays) % MOD;
+    } else if (curr === "*") {
+      const p = parseInt(prev);
+      if (p === 1) {
+        dp = (dp + dp2 * 9n) % MOD; // 11-19
+      } else if (p === 2) {
+        dp = (dp + dp2 * 6n) % MOD; // 21-26
+      }
+      // p === 0 or p >= 3: no valid two-char combo
+    } else {
+      const twoDigit = parseInt(prev + curr);
+      if (twoDigit >= 10 && twoDigit <= 26) {
+        dp = (dp + dp2) % MOD;
+      }
+    }
+
+    dp2 = dp1;
+    dp1 = dp;
+  }
+
+  return Number(dp1);
 }
 
-/**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function decodeWaysIi(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(decodeWaysIi(/* example 1 */)); // expected
-// console.log(decodeWaysIi(/* example 2 */)); // expected
-// console.log(decodeWaysIi(/* edge case */)); // expected
+console.log(numDecodings("*")); // 9
+console.log(numDecodings("1*")); // 18
+console.log(numDecodings("**")); // 96
+console.log(numDecodings("*0")); // 2
+console.log(numDecodings("0")); // 0
+console.log(numDecodings("1")); // 1
 ```
 
----
+### Solution 2: Full DP Array — O(n) time, O(n) space (easier to trace)
 
-## 🔗 Related Problems
+```typescript
+function numDecodingsDP(s: string): number {
+  const MOD = 1_000_000_007;
+  const n = s.length;
+  const dp = new Array<number>(n + 1).fill(0);
+  dp[0] = 1;
+  dp[1] = s[0] === "*" ? 9 : s[0] === "0" ? 0 : 1;
 
-- [Wildcard Matching](https://leetcode.com/problems/wildcard-matching) — same pattern: Dynamic Programming
-- [Longest Valid Parentheses](https://leetcode.com/problems/longest-valid-parentheses) — same pattern: Dynamic Programming
-- [Palindromic Substrings](https://leetcode.com/problems/palindromic-substrings) — same pattern: Two Pointers
-- [Interleaving String](https://leetcode.com/problems/interleaving-string) — same pattern: Dynamic Programming
-- [Decode Ways II — LeetCode](https://leetcode.com/problems/decode-ways-ii) — problem page
+  for (let i = 2; i <= n; i++) {
+    const c = s[i - 1],
+      p = s[i - 2];
+
+    // Single-char decode of c
+    if (c === "*") dp[i] = (dp[i] + dp[i - 1] * 9) % MOD;
+    else if (c !== "0") dp[i] = (dp[i] + dp[i - 1]) % MOD;
+
+    // Two-char decode of p+c
+    if (p === "*" && c === "*") {
+      dp[i] = (dp[i] + dp[i - 2] * 15) % MOD;
+    } else if (p === "*") {
+      const d = parseInt(c);
+      dp[i] = (dp[i] + dp[i - 2] * (d <= 9 ? 1 : 0)) % MOD; // 1d
+      dp[i] = (dp[i] + dp[i - 2] * (d <= 6 ? 1 : 0)) % MOD; // 2d
+    } else if (c === "*") {
+      const pv = parseInt(p);
+      if (pv === 1) dp[i] = (dp[i] + dp[i - 2] * 9) % MOD;
+      else if (pv === 2) dp[i] = (dp[i] + dp[i - 2] * 6) % MOD;
+    } else {
+      const two = parseInt(p + c);
+      if (two >= 10 && two <= 26) dp[i] = (dp[i] + dp[i - 2]) % MOD;
+    }
+  }
+
+  return dp[n];
+}
+
+console.log(numDecodingsDP("*")); // 9
+console.log(numDecodingsDP("1*")); // 18
+console.log(numDecodingsDP("**")); // 96
+console.log(numDecodingsDP("*0")); // 2
+```
+
+## Related Problems
+
+| Problem                                                             | Difficulty | Key Concept         |
+| ------------------------------------------------------------------- | ---------- | ------------------- |
+| [Decode Ways](https://leetcode.com/problems/decode-ways/)           | Medium     | DP without wildcard |
+| [Fibonacci Number](https://leetcode.com/problems/fibonacci-number/) | Easy       | Base DP pattern     |
+| [Climbing Stairs](https://leetcode.com/problems/climbing-stairs/)   | Easy       | 1D DP               |

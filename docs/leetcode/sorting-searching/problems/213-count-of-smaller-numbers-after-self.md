@@ -7,57 +7,60 @@ tags: [Array, Binary Search, Divide and Conquer, Binary Indexed Tree, Segment Tr
 leetcode_url: "https://leetcode.com/problems/count-of-smaller-numbers-after-self"
 ---
 
-# Count of Smaller Numbers After Self / Count of Smaller Numbers After Self
+# Count of Smaller Numbers After Self / Đếm Số Nhỏ Hơn Phía Sau
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Segment Tree
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Create Sorted Array through Instructions](https://leetcode.com/problems/create-sorted-array-through-instructions) | [Count of Range Sum](https://leetcode.com/problems/count-of-range-sum)
+> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Binary Indexed Tree (Fenwick Tree)
+> **Frequency**: ⭐ Tier 1 — Kinh điển FAANG Hard, hay gặp ở Google, Amazon
+> **See also**: [Count of Range Sum](https://leetcode.com/problems/count-of-range-sum) | [Reverse Pairs](https://leetcode.com/problems/reverse-pairs)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Cấu trúc dữ liệu cho range queries — cập nhật và truy vấn đoạn trong O(log n).
+**Analogy:** Đứng ở một cột trong hàng người theo chiều cao — muốn biết bao nhiêu người thấp hơn bạn đứng phía sau. BIT (Binary Indexed Tree) như một bảng đếm siêu nhanh: thêm một người vào bảng, truy vấn "bao nhiêu người thấp hơn X" trong O(log n). Duyệt từ phải sang trái: query trước, update sau.
 
 **Pattern Recognition:**
 
-- Signal: "problem-specific signals" → **Segment Tree**
-- Bài này thuộc dạng Segment Tree — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "count elements to the right smaller than current" → **BIT/Fenwick Tree** hoặc **Merge Sort**
+- Coordinate compress values → map to [1..k] range cho BIT
+- Duyệt từ phải sang trái: với nums[i], query BIT for sum[1..rank(nums[i])-1]
 
-**Visual — Count of Smaller Numbers After Self example:**
+**Visual — nums=[5,2,6,1]:**
 
 ```
-// TODO: Add step-by-step visual for Segment Tree
-// Show one complete example with state at each step
+Compressed ranks: {1:1, 2:2, 5:3, 6:4}
+Process right to left:
+
+i=3, nums=1, rank=1: query(0)=0,  update(1) → result[3]=0, BIT={1:1}
+i=2, nums=6, rank=4: query(3)=1,  update(4) → result[2]=1, BIT={1:1,4:1}
+i=1, nums=2, rank=2: query(1)=1,  update(2) → result[1]=1, BIT={1:1,2:1,4:1}
+i=0, nums=5, rank=3: query(2)=2,  update(3) → result[0]=2, BIT full
+
+Output: [2,1,1,0] ✅
 ```
 
 ---
 
 ## Problem Description
 
-Count of Smaller Numbers After Self. ([LeetCode](https://leetcode.com/problems/count-of-smaller-numbers-after-self))
-
-Difficulty: Hard | Acceptance: 42.9%
+Given integer array `nums`, return an array `counts` where `counts[i]` = the number of smaller elements to the right of `nums[i]`.
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+Example 1: nums=[5,2,6,1]  -> [2,1,1,0]
+Example 2: nums=[-1]       -> [0]
+Example 3: nums=[-1,-1]    -> [1,0]
 ```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/count-of-smaller-numbers-after-self) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Coordinate Compression**: Values có thể âm/rất lớn → map sang [1..k] cho BIT
+2. **BIT query(i)**: Trả về prefix sum [1..i] = số phần tử <= i đã insert
+3. **Thứ tự**: Duyệt phải → trái, query TRƯỚC rồi update để không count chính mình
+4. **Giải thích BIT**: "BIT là mảng tổng đoạn với bit manipulation để update/query O(log n)"
+5. **Hỏi follow-up**: "Count larger elements?" → Cùng logic, query khác
+6. **Complexity**: Time O(n log n), Space O(n) — tốt nhất có thể cho bài này
 
 ---
 
@@ -65,39 +68,97 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Binary Indexed Tree (Fenwick Tree) + Coordinate Compression
+ * Time O(n log n), Space O(n)
+ *
+ * Coordinate compress to [1..k], process right-to-left.
+ * For each element: query how many smaller already inserted, then insert.
  */
-function countOfSmallerNumbersAfterSelfBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function countSmaller(nums: number[]): number[] {
+  // Coordinate compression
+  const sorted = [...new Set(nums)].sort((a, b) => a - b);
+  const rank = new Map<number, number>();
+  sorted.forEach((v, i) => rank.set(v, i + 1));
+  const m = sorted.length;
+
+  // Binary Indexed Tree (1-indexed)
+  const tree = new Array(m + 1).fill(0);
+
+  function update(i: number): void {
+    for (; i <= m; i += i & (-i)) tree[i]++;
+  }
+
+  function query(i: number): number {
+    let sum = 0;
+    for (; i > 0; i -= i & (-i)) sum += tree[i];
+    return sum;
+  }
+
+  const n = nums.length;
+  const result = new Array(n);
+
+  for (let i = n - 1; i >= 0; i--) {
+    const r = rank.get(nums[i])!;
+    result[i] = query(r - 1); // count elements with rank < r (i.e., value < nums[i])
+    update(r);
+  }
+
+  return result;
 }
 
 /**
- * Solution 2: Optimized — Segment Tree
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Merge Sort (Divide & Conquer)
+ * Time O(n log n), Space O(n)
+ *
+ * During merge, when right element is placed before left elements,
+ * all remaining left elements have a "smaller on right" count increment.
  */
-function countOfSmallerNumbersAfterSelf(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Segment Tree
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
+function countSmaller2(nums: number[]): number[] {
+  const n = nums.length;
+  const result = new Array(n).fill(0);
+  // indexed array for tracking original positions
+  let indices = Array.from({ length: n }, (_, i) => i);
+
+  function mergeSort(arr: number[]): number[] {
+    if (arr.length <= 1) return arr;
+    const mid = arr.length >> 1;
+    const left = mergeSort(arr.slice(0, mid));
+    const right = mergeSort(arr.slice(mid));
+    const merged: number[] = [];
+    let l = 0, r = 0;
+    while (l < left.length && r < right.length) {
+      if (nums[left[l]] <= nums[right[r]]) {
+        result[left[l]] += r; // r right elements already placed are smaller
+        merged.push(left[l++]);
+      } else {
+        merged.push(right[r++]);
+      }
+    }
+    while (l < left.length) { result[left[l]] += r; merged.push(left[l++]); }
+    while (r < right.length) merged.push(right[r++]);
+    return merged;
+  }
+
+  mergeSort(indices);
+  return result;
 }
 
-// === Test Cases ===
-// console.log(countOfSmallerNumbersAfterSelf(/* example 1 */)); // expected
-// console.log(countOfSmallerNumbersAfterSelf(/* example 2 */)); // expected
-// console.log(countOfSmallerNumbersAfterSelf(/* edge case */)); // expected
+// --- Quick inline tests ---
+console.log(JSON.stringify(countSmaller([5, 2, 6, 1])));  // [2,1,1,0]
+console.log(JSON.stringify(countSmaller([-1])));           // [0]
+console.log(JSON.stringify(countSmaller([-1, -1])));       // [1,0]
+console.log(JSON.stringify(countSmaller([1, 2, 3])));      // [0,0,0]
+console.log(JSON.stringify(countSmaller2([5, 2, 6, 1]))); // [2,1,1,0]
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Create Sorted Array through Instructions](https://leetcode.com/problems/create-sorted-array-through-instructions) — same pattern: Segment Tree
-- [Count of Range Sum](https://leetcode.com/problems/count-of-range-sum) — same pattern: Segment Tree
-- [Count Good Triplets in an Array](https://leetcode.com/problems/count-good-triplets-in-an-array) — same pattern: Segment Tree
-- [The Skyline Problem](https://leetcode.com/problems/the-skyline-problem) — same pattern: Segment Tree
-- [Count of Smaller Numbers After Self — LeetCode](https://leetcode.com/problems/count-of-smaller-numbers-after-self) — problem page
+| Problem | Relationship |
+| ------- | ------------ |
+| [315. Count of Smaller Numbers After Self](https://leetcode.com/problems/count-of-smaller-numbers-after-self/) | This problem |
+| [327. Count of Range Sum](https://leetcode.com/problems/count-of-range-sum/) | BIT / merge sort on range sums |
+| [493. Reverse Pairs](https://leetcode.com/problems/reverse-pairs/) | Harder version: count pairs with ratio condition |
+| [307. Range Sum Query - Mutable](https://leetcode.com/problems/range-sum-query-mutable/) | Core BIT operations |
+| [1649. Create Sorted Array through Instructions](https://leetcode.com/problems/create-sorted-array-through-instructions/) | BIT for insertion cost counting |

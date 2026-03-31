@@ -7,97 +7,133 @@ tags: [String, Greedy]
 leetcode_url: "https://leetcode.com/problems/partitioning-into-minimum-number-of-deci-binary-numbers"
 ---
 
-# Partitioning Into Minimum Number Of Deci-Binary Numbers / Partitioning Into Minimum Number Of Deci-Binary Numbers
+# Partitioning Into Minimum Number Of Deci-Binary Numbers / Phân Chia Thành Số Lượng Tối Thiểu Số Deci-Binary
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Wildcard Matching](https://leetcode.com/problems/wildcard-matching) | [Largest Number](https://leetcode.com/problems/largest-number)
+## Tóm tắt bằng tiếng Việt
 
----
+Số deci-binary là số nguyên không âm chỉ chứa các chữ số 0 và 1 (không có leading zeros). Cho chuỗi `n` là số nguyên dương, tìm số lượng tối thiểu số deci-binary cần cộng lại để được `n`.
 
-## 🧠 Intuition / Tư Duy
+**Ví dụ:** `n = "32"` → cần ít nhất `3` số (`11 + 11 + 10 = 32`).
 
-**Analogy:** Giống ăn buffet — mỗi lần bạn chọn món ngon nhất hiện tại. Nếu chứng minh được rằng chọn tham lam từng bước vẫn tối ưu toàn cục, thì Greedy là đáp án.
+## Tương tự thực tế
 
-**Pattern Recognition:**
+> Như xây tháp bằng gạch 1 tầng: mỗi vị trí hàng chục/đơn vị cần bao nhiêu gạch? Số gạch cần = chữ số lớn nhất vì mỗi lần chỉ đặt được tối đa 1 gạch mỗi vị trí!
 
-- Signal: "locally optimal → globally optimal" + "sorting + selection" → **Greedy**
-- Bài này thuộc dạng Greedy — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Partitioning Into Minimum Number Of Deci-Binary Numbers example:**
+## Minh họa ASCII
 
 ```
-// TODO: Add step-by-step visual for Greedy
-// Show one complete example with state at each step
+n = "82213"
+Columns: [8, 2, 2, 1, 3]
+Each deci-binary adds at most 1 to each column.
+Max digit = 8 → need 8 numbers
+
+Round 1: 1 1 1 1 1
+Round 2: 1 1 1 0 1
+Round 3: 1 0 0 0 1
+...
+Round 8: 1 0 0 0 0
+         ─────────
+         8 2 2 1 3 ✓
+Answer = max digit = 8
 ```
 
----
+## Mô tả bài toán
 
-## Problem Description
+- **Deci-binary number**: số nguyên dương chỉ dùng chữ số `0` và `1`.
+- Cho chuỗi `n` biểu diễn số nguyên dương, trả về số lượng tối thiểu số deci-binary cần tổng để bằng `n`.
 
-Partitioning Into Minimum Number Of Deci-Binary Numbers. ([LeetCode](https://leetcode.com/problems/partitioning-into-minimum-number-of-deci-binary-numbers))
+**Constraints:** `1 <= n.length <= 10^5`, `n` không có leading zeros, chỉ chứa chữ số.
 
-Difficulty: Medium | Acceptance: 88.6%
+## Tips phỏng vấn
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+1. **Insight chính** — mỗi số deci-binary đóng góp tối đa `1` vào mỗi vị trí chữ số.
+2. **Tham lam** — chữ số lớn nhất trong `n` chính là số lượng tối thiểu.
+3. **Không cần xây dựng số** — chỉ cần `Math.max` của các chữ số.
+4. **Tại sao max?** — vị trí có chữ số `d` cần đúng `d` số deci-binary đóng góp `1` vào đó.
+5. **One-liner** — `+Math.max(...n.split('').map(Number))` đủ để pass.
+6. **String vs Number** — so sánh ký tự `'9'` > `'0'` cũng work vì ASCII ordering.
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/partitioning-into-minimum-number-of-deci-binary-numbers) for full constraints
+## Giải pháp
 
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
-
-## Solutions
+### Giải pháp 1: Tìm chữ số lớn nhất (Tối ưu)
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function partitioningIntoMinimumNumberOfDeciBinaryNumbersBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minPartitions(n: string): number {
+  // The answer is simply the maximum digit in n
+  // Each position with digit d requires exactly d deci-binary numbers
+  let maxDigit = 0;
+  for (const ch of n) {
+    const digit = ch.charCodeAt(0) - 48; // '0'.charCodeAt(0) = 48
+    if (digit > maxDigit) maxDigit = digit;
+    if (maxDigit === 9) break; // Can't get higher, early exit
+  }
+  return maxDigit;
 }
 
-/**
- * Solution 2: Optimized — Greedy
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function partitioningIntoMinimumNumberOfDeciBinaryNumbers(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Greedy
-  // Hint: Sort by key metric, make locally optimal choice at each step
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(partitioningIntoMinimumNumberOfDeciBinaryNumbers(/* example 1 */)); // expected
-// console.log(partitioningIntoMinimumNumberOfDeciBinaryNumbers(/* example 2 */)); // expected
-// console.log(partitioningIntoMinimumNumberOfDeciBinaryNumbers(/* edge case */)); // expected
+// Test cases
+console.log(minPartitions("32")); // 3
+console.log(minPartitions("82213")); // 8
+console.log(minPartitions("27346209830709182346")); // 9
+console.log(minPartitions("1")); // 1
+console.log(minPartitions("10")); // 1
 ```
 
----
+### Giải pháp 2: Spread + Math.max (Ngắn gọn)
 
-## 🔗 Related Problems
+```typescript
+function minPartitionsShort(n: string): number {
+  // Compare characters directly (works because '0'-'9' are ordered in ASCII)
+  return parseInt(n.split("").reduce((max, ch) => (ch > max ? ch : max), "0"));
+}
 
-- [Wildcard Matching](https://leetcode.com/problems/wildcard-matching) — same pattern: Dynamic Programming
-- [Largest Number](https://leetcode.com/problems/largest-number) — same pattern: Greedy
-- [Remove K Digits](https://leetcode.com/problems/remove-k-digits) — same pattern: Monotonic Stack
-- [Reorganize String](https://leetcode.com/problems/reorganize-string) — same pattern: Heap / Priority Queue
-- [Partitioning Into Minimum Number Of Deci-Binary Numbers — LeetCode](https://leetcode.com/problems/partitioning-into-minimum-number-of-deci-binary-numbers) — problem page
+// Test cases
+console.log(minPartitionsShort("32")); // 3
+console.log(minPartitionsShort("82213")); // 8
+console.log(minPartitionsShort("1")); // 1
+```
+
+### Giải pháp 3: Minh chứng bằng xây dựng thực tế
+
+```typescript
+function minPartitionsVerify(n: string): number {
+  // Find max digit — this IS the minimum number of deci-binary numbers
+  const maxD = Math.max(...n.split("").map(Number));
+
+  // Verification: construct the actual deci-binary numbers (for demo)
+  const nums: string[] = [];
+  const digits = n.split("").map(Number);
+
+  for (let round = 0; round < maxD; round++) {
+    let num = "";
+    for (let i = 0; i < digits.length; i++) {
+      // Place a 1 if this digit still needs contribution
+      num += digits[i] > round ? "1" : "0";
+    }
+    nums.push(num);
+  }
+
+  // Verify sum equals n (remove leading zeros and compute)
+  // Each position: count of 1s = original digit ✓
+  console.log(`  Deci-binary numbers: ${nums.join(", ")}`);
+  return maxD;
+}
+
+console.log(minPartitionsVerify("32")); // 3, shows: "11", "11", "10"
+console.log(minPartitionsVerify("82213")); // 8
+```
+
+## Bảng so sánh
+
+| Giải pháp        | Thời gian | Không gian | Ghi chú             |
+| ---------------- | --------- | ---------- | ------------------- |
+| Duyệt tìm max    | O(n)      | O(1)       | Tối ưu nhất         |
+| Spread + reduce  | O(n)      | O(n)       | Ngắn gọn, tạo array |
+| Xây dựng thực tế | O(n²)     | O(n²)      | Chỉ để hiểu bài     |
+
+## Bài liên quan
+
+| #    | Tên                              | Độ khó | Tags          |
+| ---- | -------------------------------- | ------ | ------------- |
+| 2279 | Maximum Bags With Full Capacity  | Medium | Greedy        |
+| 1689 | Partitioning Into Minimum Number | Medium | Greedy        |
+| 410  | Split Array Largest Sum          | Hard   | Binary Search |
