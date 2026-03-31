@@ -7,100 +7,139 @@ tags: [Array, Binary Search, Greedy, Sorting]
 leetcode_url: "https://leetcode.com/problems/maximum-tastiness-of-candy-basket"
 ---
 
-# Maximum Tastiness of Candy Basket / Maximum Tastiness of Candy Basket
+# Maximum Tastiness of Candy Basket / Độ Ngon Tối Đa Của Giỏ Kẹo
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Binary Search
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Binary Search on Answer
 > **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Frequency of the Most Frequent Element](https://leetcode.com/problems/frequency-of-the-most-frequent-element) | [Minimum Cost to Make Array Equal](https://leetcode.com/problems/minimum-cost-to-make-array-equal)
+> **See also**: [Magnetic Force Between Two Balls](https://leetcode.com/problems/magnetic-force-between-two-balls) | [Minimum Cost to Make Array Equal](https://leetcode.com/problems/minimum-cost-to-make-array-equal)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Tưởng tượng tìm một trang trong từ điển — bạn mở giữa, xem số trang, rồi chọn nửa phù hợp. Mỗi lần giảm một nửa phạm vi tìm kiếm.
-
-**Pattern Recognition:**
-
-- Signal: "sorted" + "find target/position" → **Binary Search**
-- Bài này thuộc dạng Binary Search — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Maximum Tastiness of Candy Basket example:**
+**Analogy:** Bạn muốn chọn k loại kẹo sao cho kẹo rẻ nhất và đắt nhất trong rổ chênh lệch _tối thiểu_ là d. Thay vì tìm d trực tiếp, ta binary search trên d: "Liệu ta có thể chọn được k kẹo với mọi cặp giá chênh ít nhất d không?" Greedy kiểm tra bằng cách sort và chọn tham lam.
 
 ```
-[1, 3, 5, 7, 9, 11, 13]
- L        M            R
+price = [13,5,1,8,21,2], k = 3
+Sort: [1, 2, 5, 8, 13, 21]
 
-Step 1: mid = (L+R)/2, check condition
-Step 2: condition true → move L = mid+1 (or R = mid-1)
-Step N: L meets R → answer found ✅
+Binary search on d in [0, (21-1)//(3-1)] = [0, 10]
+
+Check d=5: pick 1 → next ≥ 6 → pick 8 → next ≥ 13 → pick 13 ✓ (3 picked)
+Check d=8: pick 1 → next ≥ 9 → pick 13 → next ≥ 21 → pick 21 ✓ (3 picked)
+Check d=11: pick 1 → next ≥ 12 → pick 13 → next ≥ 24 → none ✗
+
+Answer: 8
 ```
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-Maximum Tastiness of Candy Basket. ([LeetCode](https://leetcode.com/problems/maximum-tastiness-of-candy-basket))
-
-Difficulty: Medium | Acceptance: 66.1%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/maximum-tastiness-of-candy-basket) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Input đã sorted? Cần tìm vị trí chính xác hay boundary?" / Is input sorted? Exact match or boundary?
-2. **Brute force**: "Linear scan O(n)" → optimize with binary search O(log n) / Start linear, suggest binary
-3. **Optimize**: "Chú ý lo/hi boundary: lo <= hi hay lo < hi? mid±1 hay mid?" / Watch boundary conditions carefully
-4. **Edge cases**: "Mảng rỗng, một phần tử, target không tồn tại, overflow mid" / Empty, single, not found, overflow
+- 🇻🇳 **Binary search on answer** — khi answer là monotone (feasible cho d nhỏ → feasible cho d lớn hơn chưa chắc), search trên khoảng / binary search works when feasibility is monotone
+- 🇻🇳 **Greedy feasibility check** — sort rồi greedy chọn phần tử đầu tiên thỏa mãn khoảng cách / greedy: pick first valid element at each step
+- 🇻🇳 **Search range** — lo=0, hi=(max-min)/(k-1) vì tối đa có k-1 khoảng / search range is [0, (max-min)/(k-1)]
+- 🇻🇳 **"Minimum of maximum gap"** — dạng bài tìm min-gap lớn nhất, pattern phổ biến / maximize-minimum-gap is a classic binary search pattern
+- 🇻🇳 **k=1 edge case** — một kẹo thì tastiness = 0 (không có cặp) / k=1 means no pair, tastiness = 0
+- 🇻🇳 **Greedy O(n) mỗi check** — tổng O(n log(max)) / each feasibility check is O(n), total O(n log(max))
 
 ---
 
 ## Solutions
 
+### Solution 1: Binary Search on Tastiness — O(n log n + n log(max))
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Binary search on minimum gap d, greedy feasibility check
+ * Time: O(n log n + n log(maxVal))  Space: O(1)
  */
-function maximumTastinessOfCandyBasketBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function maximumTastiness(price: number[], k: number): number {
+  price.sort((a, b) => a - b);
+  const n = price.length;
+
+  function canAchieve(minGap: number): boolean {
+    let count = 1;
+    let last = price[0];
+    for (let i = 1; i < n; i++) {
+      if (price[i] - last >= minGap) {
+        count++;
+        last = price[i];
+        if (count >= k) return true;
+      }
+    }
+    return count >= k;
+  }
+
+  let lo = 0,
+    hi = price[n - 1] - price[0];
+  // If k=1, no pairs, tastiness = 0
+  if (k === 1) return 0;
+
+  let ans = 0;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (canAchieve(mid)) {
+      ans = mid;
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
+    }
+  }
+  return ans;
 }
 
+console.log(maximumTastiness([13, 5, 1, 8, 21, 2], 3)); // 8
+console.log(maximumTastiness([1, 3, 1], 2)); // 2
+console.log(maximumTastiness([7, 7, 7, 7], 2)); // 0
+```
+
+### Solution 2: Binary Search with Tighter Bounds — O(n log n + n log((max-min)/(k-1)))
+
+```typescript
 /**
- * Solution 2: Optimized — Binary Search
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Tighter upper bound: (max-min)/(k-1) since k-1 gaps among k items
+ * Time: O(n log n + n log((max-min)/(k-1)))  Space: O(1)
  */
-function maximumTastinessOfCandyBasket(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Binary Search
-  // Hint: Define search space, determine which half to discard
-  throw new Error('Not implemented');
+function maximumTastiness2(price: number[], k: number): number {
+  if (k === 1) return 0;
+  price.sort((a, b) => a - b);
+  const n = price.length;
+
+  function feasible(gap: number): boolean {
+    let chosen = 1,
+      prev = price[0];
+    for (let i = 1; i < n && chosen < k; i++) {
+      if (price[i] - prev >= gap) {
+        chosen++;
+        prev = price[i];
+      }
+    }
+    return chosen >= k;
+  }
+
+  let lo = 0,
+    hi = Math.floor((price[n - 1] - price[0]) / (k - 1));
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1; // upper mid to avoid infinite loop
+    if (feasible(mid)) lo = mid;
+    else hi = mid - 1;
+  }
+  return lo;
 }
 
-// === Test Cases ===
-// console.log(maximumTastinessOfCandyBasket(/* example 1 */)); // expected
-// console.log(maximumTastinessOfCandyBasket(/* example 2 */)); // expected
-// console.log(maximumTastinessOfCandyBasket(/* edge case */)); // expected
+console.log(maximumTastiness2([13, 5, 1, 8, 21, 2], 3)); // 8
+console.log(maximumTastiness2([1, 3, 1], 2)); // 2
+console.log(maximumTastiness2([7, 7, 7, 7], 2)); // 0
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Frequency of the Most Frequent Element](https://leetcode.com/problems/frequency-of-the-most-frequent-element) — same pattern: Sliding Window
-- [Minimum Cost to Make Array Equal](https://leetcode.com/problems/minimum-cost-to-make-array-equal) — same pattern: Prefix Sum
-- [Maximum Number of Tasks You Can Assign](https://leetcode.com/problems/maximum-number-of-tasks-you-can-assign) — same pattern: Monotonic Queue
-- [Minimize the Maximum Difference of Pairs](https://leetcode.com/problems/minimize-the-maximum-difference-of-pairs) — same pattern: Dynamic Programming
-- [Maximum Tastiness of Candy Basket — LeetCode](https://leetcode.com/problems/maximum-tastiness-of-candy-basket) — problem page
+| Problem                                                                                                    | Difficulty | Pattern                 |
+| ---------------------------------------------------------------------------------------------------------- | ---------- | ----------------------- |
+| [Magnetic Force Between Two Balls](https://leetcode.com/problems/magnetic-force-between-two-balls)         | 🟡 Medium  | Binary Search on Answer |
+| [Koko Eating Bananas](https://leetcode.com/problems/koko-eating-bananas)                                   | 🟡 Medium  | Binary Search on Answer |
+| [Minimize Max Distance to Gas Station](https://leetcode.com/problems/minimize-max-distance-to-gas-station) | 🔴 Hard    | Binary Search on Answer |
+| [Capacity To Ship Packages](https://leetcode.com/problems/capacity-to-ship-packages-within-d-days)         | 🟡 Medium  | Binary Search on Answer |

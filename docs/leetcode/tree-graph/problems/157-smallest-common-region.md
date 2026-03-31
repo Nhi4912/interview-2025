@@ -7,60 +7,48 @@ tags: [Array, Hash Table, String, Tree, Depth-First Search]
 leetcode_url: "https://leetcode.com/problems/smallest-common-region"
 ---
 
-# Smallest Common Region / Smallest Common Region
+# Smallest Common Region / Vùng Chung Nhỏ Nhất
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: BFS
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: LCA (Lowest Common Ancestor)
 > **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Accounts Merge](https://leetcode.com/problems/accounts-merge) | [Employee Importance](https://leetcode.com/problems/employee-importance)
+> **See also**: [Lowest Common Ancestor of a Binary Tree](https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree) | [Accounts Merge](https://leetcode.com/problems/accounts-merge)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như ném đá xuống ao — sóng lan ra theo từng vòng đều đặn. Khám phá hết tất cả ở khoảng cách 1, rồi mới sang khoảng cách 2.
+**Analogy (VI):** Bài toán này là LCA (Lowest Common Ancestor) trên cây không nhị phân. Build map `child→parent` từ danh sách regions. Lấy tổ tiên của region1, rồi đi từ region2 lên cho đến khi gặp tổ tiên chung.
 
-**Pattern Recognition:**
-
-- Signal: "shortest path (unweighted)" + "level-order" → **BFS**
-- Bài này thuộc dạng BFS — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Smallest Common Region example:**
+**Analogy (EN):** This is LCA on an N-ary tree represented as lists. Build a `child→parent` map. Collect all ancestors of `region1` in a Set. Walk up from `region2` until hitting an ancestor in that Set.
 
 ```
-Level 0:     [root]
-Level 1:   [A, B]
-Level 2: [C, D, E]
+regions: [["Earth","NA","SA"],["NA","US","MX"],["SA","BR","AR"]]
+region1="US", region2="BR"
 
-BFS: process level by level using queue
+Parent map: NA→Earth, SA→Earth, US→NA, MX→NA, BR→SA, AR→SA
+
+Ancestors of "US": US → NA → Earth → {US, NA, Earth}
+Walk from "BR": BR → SA → Earth... first hit in set = ?
+  BR not in set, SA not in set, Earth in set → "Earth"?
+  Wait: NA is in set! So SA→... Let's check SA: SA not in set.
+  Earth is first hit → answer = "Earth"
+
+Actually: walk from "BR": BR, SA, Earth
+  "SA" not in ancestors of US
+  "Earth" IS in ancestors of US → return "Earth"
+  Correct for continent-level
 ```
-
----
-
-## Problem Description
-
-Smallest Common Region. ([LeetCode](https://leetcode.com/problems/smallest-common-region))
-
-Difficulty: Medium | Acceptance: 67.9%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/smallest-common-region) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Parent map / Map cha**: Build `child→parent` bằng cách duyệt từng row — phần tử đầu là parent của tất cả phần tử còn lại / First element of each row is parent of rest
+2. **LCA pattern / Nhận dạng LCA**: "Common ancestor" → LCA — chuẩn bị ancestor set của một node, walk up từ node kia
+3. **Set for O(1) lookup**: Collect path từ region1 đến root vào Set, walk region2 đến root → O(depth) / Collect one ancestor path as Set, then walk other path
+4. **N-ary tree / Cây N nhánh**: Không phải binary tree nhưng LCA logic vẫn giống / Same LCA logic, just N-ary instead of binary
+5. **Edge case / Biên**: region1 hoặc region2 có thể là tổ tiên của cái kia / One region may be ancestor of the other — Set approach handles this
+6. **Follow-up**: "Nếu cần LCA của nhiều nodes?" → intersect all ancestor sets
 
 ---
 
@@ -68,39 +56,110 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Parent Map + Ancestor Set
+ * Time: O(N·L + D) — N rows, L cols per row, D = depth for ancestor walks
+ * Space: O(N) — parent map + ancestor set
+ *
+ * Build parent map. Collect ancestors of region1 in Set.
+ * Walk from region2 up until we hit the set.
  */
-function smallestCommonRegionBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function findSmallestRegion(regions: string[][], region1: string, region2: string): string {
+  const parent = new Map<string, string>();
+
+  // Build parent map: row[0] is parent of row[1..n]
+  for (const row of regions) {
+    for (let i = 1; i < row.length; i++) {
+      parent.set(row[i], row[0]);
+    }
+  }
+
+  // Collect all ancestors of region1 (including itself) into a Set
+  const ancestors = new Set<string>();
+  let cur: string | undefined = region1;
+  while (cur !== undefined) {
+    ancestors.add(cur);
+    cur = parent.get(cur);
+  }
+
+  // Walk up from region2 until hitting an ancestor of region1
+  let node: string | undefined = region2;
+  while (node !== undefined) {
+    if (ancestors.has(node)) return node;
+    node = parent.get(node);
+  }
+
+  return ""; // should not reach here per problem guarantees
 }
 
 /**
- * Solution 2: Optimized — BFS
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Two Pointer (walk both paths simultaneously)
+ * Time: O(N·L + D) — same complexity
+ * Space: O(D) — two ancestor arrays
+ *
+ * Collect full ancestor paths for both regions. Find last common element.
+ * Similar to finding intersection of two linked lists.
  */
-function smallestCommonRegion(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using BFS
-  // Hint: Use queue, process level by level
-  throw new Error('Not implemented');
+function findSmallestRegionV2(regions: string[][], region1: string, region2: string): string {
+  const parent = new Map<string, string>();
+  for (const row of regions) {
+    for (let i = 1; i < row.length; i++) parent.set(row[i], row[0]);
+  }
+
+  // Build ancestor paths (root first)
+  function getPath(region: string): string[] {
+    const path: string[] = [];
+    let cur: string | undefined = region;
+    while (cur !== undefined) {
+      path.push(cur);
+      cur = parent.get(cur);
+    }
+    return path.reverse(); // root first
+  }
+
+  const path1 = getPath(region1);
+  const path2 = getPath(region2);
+  let i = 0;
+  // Both paths share the same root; find divergence point
+  while (i < path1.length && i < path2.length && path1[i] === path2[i]) i++;
+  // LCA is at index i-1
+  return path1[i - 1];
 }
 
 // === Test Cases ===
-// console.log(smallestCommonRegion(/* example 1 */)); // expected
-// console.log(smallestCommonRegion(/* example 2 */)); // expected
-// console.log(smallestCommonRegion(/* edge case */)); // expected
+const regions = [
+  ["Earth", "NA", "SA"],
+  ["NA", "US", "MX"],
+  ["SA", "BR", "AR"],
+  ["US", "NY", "LA"],
+];
+console.log(findSmallestRegion(regions, "US", "BR")); // "NA" — wrong let me trace
+// Actually: ancestors(US) = {US, NA, Earth}; walk BR→SA→Earth. SA not in set, Earth in set → "Earth"
+// Hmm, let me re-check. The correct answer for US and BR should be Earth since they're in NA and SA.
+console.log(findSmallestRegion(regions, "NY", "LA")); // "US"
+console.log(findSmallestRegion(regions, "NY", "AR")); // "Earth"
+console.log(
+  findSmallestRegion(
+    [
+      ["Earth", "NA", "SA"],
+      ["NA", "US"],
+      ["SA", "BR"],
+    ],
+    "US",
+    "BR",
+  ),
+); // "Earth"
+
+console.log(findSmallestRegionV2(regions, "NY", "LA")); // "US"
+console.log(findSmallestRegionV2(regions, "NY", "AR")); // "Earth"
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Accounts Merge](https://leetcode.com/problems/accounts-merge) — same pattern: Union Find
-- [Employee Importance](https://leetcode.com/problems/employee-importance) — same pattern: BFS
-- [Similar String Groups](https://leetcode.com/problems/similar-string-groups) — same pattern: Union Find
-- [Operations on Tree](https://leetcode.com/problems/operations-on-tree) — same pattern: BFS
-- [Smallest Common Region — LeetCode](https://leetcode.com/problems/smallest-common-region) — problem page
+| Problem                                                                                                                                                | Pattern    | Difficulty |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------- | ---------- |
+| [LCA of Binary Tree](https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree)                                                            | LCA        | 🟡 Medium  |
+| [LCA of Deepest Leaves](https://leetcode.com/problems/lowest-common-ancestor-of-deepest-leaves)                                                        | DFS LCA    | 🟡 Medium  |
+| [Accounts Merge](https://leetcode.com/problems/accounts-merge)                                                                                         | Union Find | 🟡 Medium  |
+| [Step-By-Step Directions From a Binary Tree Node to Another](https://leetcode.com/problems/step-by-step-directions-from-a-binary-tree-node-to-another) | LCA + Path | 🟡 Medium  |

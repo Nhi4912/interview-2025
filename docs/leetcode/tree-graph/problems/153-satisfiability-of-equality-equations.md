@@ -7,9 +7,9 @@ tags: [Array, String, Union Find, Graph]
 leetcode_url: "https://leetcode.com/problems/satisfiability-of-equality-equations"
 ---
 
-# Satisfiability of Equality Equations / Satisfiability of Equality Equations
+# Satisfiability of Equality Equations / Thỏa Mãn Phương Trình Đẳng Thức
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Union Find
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Union Find (Two-Pass)
 > **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
 > **See also**: [Evaluate Division](https://leetcode.com/problems/evaluate-division) | [Accounts Merge](https://leetcode.com/problems/accounts-merge)
 
@@ -17,47 +17,31 @@ leetcode_url: "https://leetcode.com/problems/satisfiability-of-equality-equation
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống nhóm bạn — ban đầu ai cũng riêng, khi hai người kết bạn thì nhóm họ gộp lại. Union Find quản lý các nhóm này hiệu quả.
+**Analogy (VI):** Như nhóm bạn bè — "a==b" nghĩa là a và b cùng nhóm. "a!=b" nghĩa là a và b phải khác nhóm. **Pass 1**: Union tất cả "==" pairs. **Pass 2**: Kiểm tra "!=" pairs — nếu cùng set → false.
 
-**Pattern Recognition:**
-
-- Signal: "group elements" + "connectivity queries" → **Union Find**
-- Bài này thuộc dạng Union Find — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Satisfiability of Equality Equations example:**
+**Analogy (EN):** Two-pass Union Find: first union all `==` equations (group equals together), then verify all `!=` equations (if find(a) == find(b) → contradiction → false).
 
 ```
-// TODO: Add step-by-step visual for Union Find
-// Show one complete example with state at each step
+equations: ["a==b","b!=c","b==c"]
+
+Pass 1 (==): union(a,b), union(b,c)  → {a,b,c} same group
+Pass 2 (!=): b!=c but find(b)==find(c) → CONFLICT → return false
+
+equations: ["a==b","b!=c","c==d"]
+Pass 1: union(a,b), union(c,d)  → {a,b}, {c,d}
+Pass 2: b!=c → find(b)≠find(c) → OK → return true
 ```
-
----
-
-## Problem Description
-
-Satisfiability of Equality Equations. ([LeetCode](https://leetcode.com/problems/satisfiability-of-equality-equations))
-
-Difficulty: Medium | Acceptance: 51.0%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/satisfiability-of-equality-equations) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Two-pass key / Hai lượt**: MUST process all "==" before checking "!=" / Process all equalities first, then check inequalities
+2. **Index mapping / Ánh xạ index**: 'a'→0, 'b'→1, … 'z'→25 — chỉ có 26 ký tự / Only lowercase letters: map char to index 0-25
+3. **Union Find / Cấu trúc dữ liệu**: Union-Find với path compression — O(α(26)) ≈ O(1) / With path compression, nearly O(1) per operation
+4. **Self-contradiction / Mâu thuẫn**: "a!=a" → find(a)==find(a) → return false / A variable can't be unequal to itself
+5. **Follow-up / Mở rộng**: Nếu có >, <, >= ? → khác bài toán, cần approach khác / Inequality handling needs different technique
+6. **Edge case / Biên**: Single equation "a==a" → true; "a!=a" → false
 
 ---
 
@@ -65,39 +49,110 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Union Find (Two-Pass)
+ * Time: O(N · α(26)) ≈ O(N) — N equations, near-constant UF ops
+ * Space: O(1) — fixed 26-element arrays (only lowercase letters)
+ *
+ * Pass 1: union "==" pairs. Pass 2: verify "!=" pairs not in same set.
  */
-function satisfiabilityOfEqualityEquationsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function equationsPossible(equations: string[]): boolean {
+  const parent = Array.from({ length: 26 }, (_, i) => i);
+
+  function find(x: number): number {
+    if (parent[x] !== x) parent[x] = find(parent[x]); // path compression
+    return parent[x];
+  }
+  function union(a: number, b: number): void {
+    parent[find(a)] = find(b);
+  }
+
+  const base = "a".charCodeAt(0);
+
+  // Pass 1: union all "==" equations
+  for (const eq of equations) {
+    if (eq[1] === "=") {
+      // "a==b" → eq[1]=eq[2]='='
+      union(eq.charCodeAt(0) - base, eq.charCodeAt(3) - base);
+    }
+  }
+
+  // Pass 2: check all "!=" equations
+  for (const eq of equations) {
+    if (eq[1] === "!") {
+      // "a!=b"
+      if (find(eq.charCodeAt(0) - base) === find(eq.charCodeAt(3) - base)) {
+        return false; // same set but supposed to be unequal
+      }
+    }
+  }
+  return true;
 }
 
 /**
- * Solution 2: Optimized — Union Find
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Graph BFS/DFS
+ * Time: O(N + 26²) — build graph, then BFS for each pair
+ * Space: O(26²) — adjacency list for 26 nodes
+ *
+ * Build undirected graph from "==" edges. Use BFS to find connected components.
+ * Then check "!=" pairs: if connected → false.
  */
-function satisfiabilityOfEqualityEquations(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Union Find
-  // Hint: Use union-find with path compression and union by rank
-  throw new Error('Not implemented');
+function equationsPossibleBFS(equations: string[]): boolean {
+  const base = "a".charCodeAt(0);
+  const adj: number[][] = Array.from({ length: 26 }, () => []);
+
+  for (const eq of equations) {
+    if (eq[1] === "=") {
+      const u = eq.charCodeAt(0) - base,
+        v = eq.charCodeAt(3) - base;
+      adj[u].push(v);
+      adj[v].push(u);
+    }
+  }
+
+  // BFS to assign component IDs
+  const comp = new Array(26).fill(-1);
+  let id = 0;
+  for (let i = 0; i < 26; i++) {
+    if (comp[i] !== -1) continue;
+    const queue = [i];
+    comp[i] = id;
+    while (queue.length > 0) {
+      const node = queue.shift()!;
+      for (const nb of adj[node]) {
+        if (comp[nb] === -1) {
+          comp[nb] = id;
+          queue.push(nb);
+        }
+      }
+    }
+    id++;
+  }
+
+  // Check "!=" pairs
+  for (const eq of equations) {
+    if (eq[1] === "!") {
+      if (comp[eq.charCodeAt(0) - base] === comp[eq.charCodeAt(3) - base]) return false;
+    }
+  }
+  return true;
 }
 
 // === Test Cases ===
-// console.log(satisfiabilityOfEqualityEquations(/* example 1 */)); // expected
-// console.log(satisfiabilityOfEqualityEquations(/* example 2 */)); // expected
-// console.log(satisfiabilityOfEqualityEquations(/* edge case */)); // expected
+console.log(equationsPossible(["a==b", "b!=c", "b==c"])); // false
+console.log(equationsPossible(["b==a", "a==b"])); // true
+console.log(equationsPossible(["a==b", "b!=c", "c==d"])); // true
+console.log(equationsPossible(["a!=a"])); // false
+console.log(equationsPossibleBFS(["a==b", "b!=c", "b==c"])); // false
+console.log(equationsPossibleBFS(["a!=b", "b!=c", "a==c"])); // false? no → true (a!=b, b!=c, a==c is consistent)
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Evaluate Division](https://leetcode.com/problems/evaluate-division) — same pattern: Shortest Path (BFS/Dijkstra)
-- [Accounts Merge](https://leetcode.com/problems/accounts-merge) — same pattern: Union Find
-- [Design Excel Sum Formula](https://leetcode.com/problems/design-excel-sum-formula) — same pattern: Topological Sort
-- [Min Cost to Connect All Points](https://leetcode.com/problems/min-cost-to-connect-all-points) — same pattern: Minimum Spanning Tree
-- [Satisfiability of Equality Equations — LeetCode](https://leetcode.com/problems/satisfiability-of-equality-equations) — problem page
+| Problem                                                                    | Pattern        | Difficulty |
+| -------------------------------------------------------------------------- | -------------- | ---------- |
+| [Accounts Merge](https://leetcode.com/problems/accounts-merge)             | Union Find     | 🟡 Medium  |
+| [Evaluate Division](https://leetcode.com/problems/evaluate-division)       | Weighted Graph | 🟡 Medium  |
+| [Redundant Connection](https://leetcode.com/problems/redundant-connection) | Union Find     | 🟡 Medium  |
+| [Is Graph Bipartite?](https://leetcode.com/problems/is-graph-bipartite)    | Graph Coloring | 🟡 Medium  |

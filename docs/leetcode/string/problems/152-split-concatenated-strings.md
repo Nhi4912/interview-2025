@@ -7,7 +7,7 @@ tags: [Array, String, Greedy]
 leetcode_url: "https://leetcode.com/problems/split-concatenated-strings"
 ---
 
-# Split Concatenated Strings / Split Concatenated Strings
+# Split Concatenated Strings / Tách chuỗi nối ghép
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy
 > **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
@@ -17,87 +17,120 @@ leetcode_url: "https://leetcode.com/problems/split-concatenated-strings"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống ăn buffet — mỗi lần bạn chọn món ngon nhất hiện tại. Nếu chứng minh được rằng chọn tham lam từng bước vẫn tối ưu toàn cục, thì Greedy là đáp án.
-
-**Pattern Recognition:**
-
-- Signal: "locally optimal → globally optimal" + "sorting + selection" → **Greedy**
-- Bài này thuộc dạng Greedy — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Split Concatenated Strings example:**
+**Analogy:** Giống làm vòng tròn bằng dây thừng — chọn mỗi đoạn dây theo hướng nào (xuôi hay ngược), rồi thử cắt tại mọi vị trí trong từng đoạn. Greedy: với mỗi đoạn i, chọn max(strs[i], rev(strs[i])), sau đó thử mọi điểm cắt trong đoạn i.
 
 ```
-// TODO: Add step-by-step visual for Greedy
-// Show one complete example with state at each step
+strs = ["abc","xyz"]
+Normalize each: pick max(s, rev(s))
+  "abc" vs "cba" → "cba"
+  "xyz" vs "zyx" → "zyx"
+
+Full circle: "cbazyx"
+
+Try each string i as the split point:
+  i=0 ("cba"): try split at each char → "a"+"zyx"+"cb", "b"+"zyx"+"c", "c"+"zyx" + rest...
+  i=1 ("zyx"): try split at each char
+
+Track lexicographically largest result.
 ```
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Ghi Nhớ Khi Phỏng Vấn
 
-Split Concatenated Strings. ([LeetCode](https://leetcode.com/problems/split-concatenated-strings))
-
-Difficulty: Medium | Acceptance: 43.3%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/split-concatenated-strings) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🔑 **Normalize direction / Chuẩn hóa chiều**: Chọn `max(s, reverse(s))` cho mỗi chuỗi
+- 🔑 **Try each i as split string / Thử cắt từng chuỗi**: Vòng lặp ngoài theo chỉ số chuỗi
+- 🔑 **Try each pos in that string / Thử mọi vị trí**: Vòng lặp trong theo vị trí ký tự
+- 🔑 **Construct: suffix + rest + prefix / Xây chuỗi**: `s[j+1..] + middle + s[..j]`
+- 🔑 **Preserve split string orientation / Giữ chiều chuỗi đang cắt**: Chuỗi i có thể dùng bản gốc hoặc đảo
+- 🔑 **O(n²) total / Tổng O(n²)**: n chuỗi × n ký tự mỗi chuỗi
 
 ---
 
 ## Solutions
 
+### Solution 1: Greedy — Try Every Split Point
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * For each string, pick max(s, rev(s)) as its "best orientation".
+ * Then for each string i (using either orientation), try every cut position.
+ * Build candidate = s[j+1..] + concat(others normalized) + s[..j], track max.
+ *
+ * Time:  O(n * L) where n = number of strings, L = total length
+ * Space: O(L)
  */
-function splitConcatenatedStringsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function splitLoopedString(strs: string[]): string {
+  // Normalize: each string picks the lexicographically larger orientation
+  const norm = strs.map((s) => {
+    const r = s.split("").reverse().join("");
+    return r > s ? r : s;
+  });
+
+  let best = "";
+
+  for (let i = 0; i < strs.length; i++) {
+    // middle = all OTHER strings normalized, concatenated
+    const middle = norm.slice(0, i).join("") + norm.slice(i + 1).join("");
+
+    // Try both orientations of strs[i]
+    for (const cur of [strs[i], strs[i].split("").reverse().join("")]) {
+      // Try every split position within cur
+      for (let j = 0; j < cur.length; j++) {
+        const candidate = cur.slice(j) + middle + cur.slice(0, j);
+        if (candidate > best) best = candidate;
+      }
+    }
+  }
+
+  return best;
 }
 
+console.log(splitLoopedString(["abc", "xyz"])); // "zyxcba"
+console.log(splitLoopedString(["abc"])); // "cba"
+console.log(splitLoopedString(["aa", "ab"])); // "baa"  (or "aba" depending on orientation)
+```
+
+### Solution 2: Same Logic — Cleaner Variable Names
+
+```typescript
 /**
- * Solution 2: Optimized — Greedy
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Explicit per-string orientation loop to make logic clearer.
+ * Time:  O(n * L)
+ * Space: O(L)
  */
-function splitConcatenatedStrings(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Greedy
-  // Hint: Sort by key metric, make locally optimal choice at each step
-  throw new Error('Not implemented');
+function splitLoopedString2(strs: string[]): string {
+  const rev = (s: string) => s.split("").reverse().join("");
+  const norm = strs.map((s) => (rev(s) > s ? rev(s) : s));
+
+  let ans = "";
+
+  for (let i = 0; i < strs.length; i++) {
+    const prefix = norm.slice(0, i).join("");
+    const suffix = norm.slice(i + 1).join("");
+
+    for (const s of [strs[i], rev(strs[i])]) {
+      for (let j = 0; j < s.length; j++) {
+        const cand = s[j] + suffix + prefix + s.slice(0, j);
+        if (cand > ans) ans = cand;
+      }
+    }
+  }
+
+  return ans;
 }
 
-// === Test Cases ===
-// console.log(splitConcatenatedStrings(/* example 1 */)); // expected
-// console.log(splitConcatenatedStrings(/* example 2 */)); // expected
-// console.log(splitConcatenatedStrings(/* edge case */)); // expected
+console.log(splitLoopedString2(["abc", "xyz"])); // "zyxcba"
+console.log(splitLoopedString2(["abc"])); // "cba"
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Largest Number](https://leetcode.com/problems/largest-number) — same pattern: Greedy
-- [Longest Unequal Adjacent Groups Subsequence I](https://leetcode.com/problems/longest-unequal-adjacent-groups-subsequence-i) — same pattern: Dynamic Programming
-- [Word Abbreviation](https://leetcode.com/problems/word-abbreviation) — same pattern: Trie
-- [Maximum Palindromes After Operations](https://leetcode.com/problems/maximum-palindromes-after-operations) — same pattern: Greedy
-- [Split Concatenated Strings — LeetCode](https://leetcode.com/problems/split-concatenated-strings) — problem page
+| #    | Problem                                                                                                      | Difficulty | Pattern              |
+| ---- | ------------------------------------------------------------------------------------------------------------ | ---------- | -------------------- |
+| 179  | [Largest Number](https://leetcode.com/problems/largest-number)                                               | 🟡 Medium  | Greedy + Custom sort |
+| 2781 | [Length of the Longest Valid Substring](https://leetcode.com/problems/length-of-the-longest-valid-substring) | 🟡 Medium  | Sliding window       |
+| 2350 | [Shortest Impossible Sequence of Rolls](https://leetcode.com/problems/shortest-impossible-sequence-of-rolls) | 🔴 Hard    | Greedy               |
+| 680  | [Valid Palindrome II](https://leetcode.com/problems/valid-palindrome-ii)                                     | 🟢 Easy    | Greedy               |

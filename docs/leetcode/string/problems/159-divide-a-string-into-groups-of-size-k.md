@@ -7,7 +7,7 @@ tags: [String, Simulation]
 leetcode_url: "https://leetcode.com/problems/divide-a-string-into-groups-of-size-k"
 ---
 
-# Divide a String Into Groups of Size k / Divide a String Into Groups of Size k
+# Divide a String Into Groups of Size k / Chia chuỗi thành các nhóm kích thước k
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Matrix / Simulation
 > **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
@@ -17,87 +17,112 @@ leetcode_url: "https://leetcode.com/problems/divide-a-string-into-groups-of-size
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Phân tích bài "Divide a String Into Groups of Size k" — xác định pattern phù hợp dựa trên constraints và input/output.
-
-**Pattern Recognition:**
-
-- Signal: "problem-specific signals" → **Matrix / Simulation**
-- Bài này thuộc dạng Matrix / Simulation — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Divide a String Into Groups of Size k example:**
+**Analogy:** Giống cắt bánh thành từng miếng bằng nhau — nếu chiếc bánh không chia hết, độn thêm kem (fill char) vào miếng cuối cho đủ. Sau đó slice đều nhau.
 
 ```
-// TODO: Add step-by-step visual for Matrix / Simulation
-// Show one complete example with state at each step
+s = "abcdefghi", k = 3, fill = 'x'
+len = 9, 9 % 3 = 0 → no padding needed
+Groups: ["abc", "def", "ghi"]
+
+s = "abcdefghij", k = 3, fill = 'x'
+len = 10, 10 % 3 = 1 → pad with 2 'x' → "abcdefghijxx"
+Groups: ["abc", "def", "ghi", "jxx"]
+
+s = "a", k = 1, fill = 'z'
+len = 1, 1 % 1 = 0 → no padding
+Groups: ["a"]
 ```
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Ghi Nhớ Khi Phỏng Vấn
 
-Divide a String Into Groups of Size k. ([LeetCode](https://leetcode.com/problems/divide-a-string-into-groups-of-size-k))
-
-Difficulty: Easy | Acceptance: 67.5%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/divide-a-string-into-groups-of-size-k) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🔑 **Pad to multiple of k / Đệm đến bội của k**: `need = (k - len % k) % k` ký tự đệm
+- 🔑 **Modulo trick / Thủ thuật modulo**: `(k - len % k) % k` tránh đệm thừa khi đã chia hết
+- 🔑 **Slice in steps of k / Cắt từng bước k**: `for i = 0; i < padded.length; i += k`
+- 🔑 **fill is single char / fill là một ký tự**: Chỉ cần `fill.repeat(pad)`
+- 🔑 **Result length = ceil(n/k) / Độ dài kết quả**: Luôn là `Math.ceil(n/k)` phần tử
+- 🔑 **Immutable string / Chuỗi bất biến**: Dùng `+=` hay array rồi join đều được
 
 ---
 
 ## Solutions
 
+### Solution 1: Pad + Slice (Clearest)
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Pad s with fill char until length is multiple of k, then slice into groups.
+ *
+ * Time:  O(n) — padding + slicing both linear
+ * Space: O(n) — output array
  */
-function divideAStringIntoGroupsOfSizeKBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function divideString(s: string, k: number, fill: string): string[] {
+  const pad = (k - (s.length % k)) % k;
+  const padded = s + fill.repeat(pad);
+  const result: string[] = [];
+
+  for (let i = 0; i < padded.length; i += k) {
+    result.push(padded.slice(i, i + k));
+  }
+
+  return result;
 }
 
+console.log(divideString("abcdefghi", 3, "x")); // ["abc","def","ghi"]
+console.log(divideString("abcdefghij", 3, "x")); // ["abc","def","ghi","jxx"]
+console.log(divideString("a", 1, "z")); // ["a"]
+console.log(divideString("ab", 4, "z")); // ["abzz"]
+```
+
+### Solution 2: Functional (Array.from)
+
+```typescript
 /**
- * Solution 2: Optimized — Matrix / Simulation
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Use Array.from to build groups directly — no explicit padding string.
+ * Time:  O(n)
+ * Space: O(n)
  */
-function divideAStringIntoGroupsOfSizeK(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Matrix / Simulation
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
+function divideString2(s: string, k: number, fill: string): string[] {
+  const n = s.length;
+  const total = Math.ceil(n / k);
+  return Array.from({ length: total }, (_, i) => {
+    let group = s.slice(i * k, i * k + k);
+    // Pad the last group if needed
+    while (group.length < k) group += fill;
+    return group;
+  });
 }
 
-// === Test Cases ===
-// console.log(divideAStringIntoGroupsOfSizeK(/* example 1 */)); // expected
-// console.log(divideAStringIntoGroupsOfSizeK(/* example 2 */)); // expected
-// console.log(divideAStringIntoGroupsOfSizeK(/* edge case */)); // expected
+console.log(divideString2("abcdefghi", 3, "x")); // ["abc","def","ghi"]
+console.log(divideString2("abcdefghij", 3, "x")); // ["abc","def","ghi","jxx"]
+```
+
+### Solution 3: match regex (Fun approach)
+
+```typescript
+/**
+ * Pad then use regex to split into chunks of k.
+ * Time:  O(n)
+ * Space: O(n)
+ */
+function divideString3(s: string, k: number, fill: string): string[] {
+  const pad = (k - (s.length % k)) % k;
+  const padded = s + fill.repeat(pad);
+  return padded.match(new RegExp(`.{${k}}`, "g"))!;
+}
+
+console.log(divideString3("abcdefghij", 3, "x")); // ["abc","def","ghi","jxx"]
+console.log(divideString3("a", 1, "z")); // ["a"]
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Multiply Strings](https://leetcode.com/problems/multiply-strings) — same pattern: Math
-- [Add Binary](https://leetcode.com/problems/add-binary) — same pattern: Bit Manipulation
-- [Backspace String Compare](https://leetcode.com/problems/backspace-string-compare) — same pattern: Two Pointers
-- [Divide a String Into Groups of Size k — LeetCode](https://leetcode.com/problems/divide-a-string-into-groups-of-size-k) — problem page
+| #    | Problem                                                                                                      | Difficulty | Pattern         |
+| ---- | ------------------------------------------------------------------------------------------------------------ | ---------- | --------------- |
+| 68   | [Text Justification](https://leetcode.com/problems/text-justification)                                       | 🔴 Hard    | String chunking |
+| 443  | [String Compression](https://leetcode.com/problems/string-compression)                                       | 🟡 Medium  | Two pointers    |
+| 1446 | [Consecutive Characters](https://leetcode.com/problems/consecutive-characters)                               | 🟢 Easy    | Sliding window  |
+| 2138 | [Divide a String Into Groups of Size k](https://leetcode.com/problems/divide-a-string-into-groups-of-size-k) | 🟢 Easy    | String chunking |

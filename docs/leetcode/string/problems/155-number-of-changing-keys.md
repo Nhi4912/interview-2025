@@ -7,7 +7,7 @@ tags: [String]
 leetcode_url: "https://leetcode.com/problems/number-of-changing-keys"
 ---
 
-# Number of Changing Keys / Number of Changing Keys
+# Number of Changing Keys / Số lần đổi phím
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: String Processing
 > **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
@@ -17,87 +17,104 @@ leetcode_url: "https://leetcode.com/problems/number-of-changing-keys"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Xử lý chuỗi ký tự — thường dùng hash table, two pointers, hoặc sliding window tuỳ bài toán.
-
-**Pattern Recognition:**
-
-- Signal: "string transformation/validation" → **String Processing**
-- Bài này thuộc dạng String Processing — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Number of Changing Keys example:**
+**Analogy:** Giống theo dõi người dùng gõ bàn phím — mỗi khi họ chuyển từ phím này sang phím khác (bỏ qua Shift/CapsLock) là một lần "đổi phím". So sánh từng ký tự liền kề sau khi lowercase.
 
 ```
-// TODO: Add step-by-step visual for String Processing
-// Show one complete example with state at each step
+s = "aAbBcC"
+lowercase: "aabbcc"
+Pairs: (a,a)=same, (a,b)=CHANGE, (b,b)=same, (b,c)=CHANGE, (c,c)=same
+Changes: 2
+
+s = "AaAaAaaA"
+lowercase: "aaaaaaaa"
+All same → 0 changes
+
+s = "aB"
+lowercase: "ab"
+(a,b) = 1 change
 ```
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Ghi Nhớ Khi Phỏng Vấn
 
-Number of Changing Keys. ([LeetCode](https://leetcode.com/problems/number-of-changing-keys))
-
-Difficulty: Easy | Acceptance: 79.7%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/number-of-changing-keys) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🔑 **Case insensitive / Không phân biệt hoa thường**: lowercase cả hai trước khi so sánh
+- 🔑 **Adjacent pairs / Cặp liền kề**: Chỉ so sánh `s[i]` và `s[i-1]`
+- 🔑 **Start from index 1 / Bắt đầu từ 1**: `i=1` đến `n-1`, không phải 0
+- 🔑 **Single pass O(n) / Một lượt O(n)**: Không cần preprocessing ngoài toLowerCase
+- 🔑 **Shift does not count / Shift không tính**: CapsLock/Shift bỏ qua → lowercase
+- 🔑 **Empty string edge / Chuỗi rỗng**: `s.length ≤ 1` → 0 changes
 
 ---
 
 ## Solutions
 
+### Solution 1: Linear Scan (Optimal)
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Compare consecutive chars case-insensitively.
+ * Count transitions where lowercased chars differ.
+ *
+ * Time:  O(n)
+ * Space: O(1) — toLowerCase is O(n) but constant extra
  */
-function numberOfChangingKeysBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function countKeyChanges(s: string): number {
+  const low = s.toLowerCase();
+  let changes = 0;
+  for (let i = 1; i < low.length; i++) {
+    if (low[i] !== low[i - 1]) changes++;
+  }
+  return changes;
 }
 
+console.log(countKeyChanges("aAbBcC")); // 2
+console.log(countKeyChanges("AaAaAaaA")); // 0
+console.log(countKeyChanges("aB")); // 1
+console.log(countKeyChanges("a")); // 0
+```
+
+### Solution 2: filter + map (Functional)
+
+```typescript
 /**
- * Solution 2: Optimized — String Processing
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Convert to lowercase array, compare adjacent with filter.
+ * Time:  O(n)
+ * Space: O(n) — intermediate arrays
  */
-function numberOfChangingKeys(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using String Processing
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
+function countKeyChanges2(s: string): number {
+  const chars = [...s.toLowerCase()];
+  return chars.slice(1).filter((c, i) => c !== chars[i]).length;
 }
 
-// === Test Cases ===
-// console.log(numberOfChangingKeys(/* example 1 */)); // expected
-// console.log(numberOfChangingKeys(/* example 2 */)); // expected
-// console.log(numberOfChangingKeys(/* edge case */)); // expected
+console.log(countKeyChanges2("aAbBcC")); // 2
+console.log(countKeyChanges2("AaAaAaaA")); // 0
+```
+
+### Solution 3: reduce (One-liner)
+
+```typescript
+/**
+ * reduce over chars, accumulate count when prev !== current (lowercased).
+ * Time:  O(n)
+ * Space: O(n)
+ */
+function countKeyChanges3(s: string): number {
+  const low = [...s.toLowerCase()];
+  return low.reduce((acc, c, i) => acc + (i > 0 && c !== low[i - 1] ? 1 : 0), 0);
+}
+
+console.log(countKeyChanges3("aAbBcC")); // 2
+console.log(countKeyChanges3("aB")); // 1
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Decode String](https://leetcode.com/problems/decode-string) — same pattern: Stack
-- [Simplify Path](https://leetcode.com/problems/simplify-path) — same pattern: Stack
-- [Time Based Key-Value Store](https://leetcode.com/problems/time-based-key-value-store) — same pattern: Binary Search
-- [Number of Changing Keys — LeetCode](https://leetcode.com/problems/number-of-changing-keys) — problem page
+| #    | Problem                                                                                                        | Difficulty | Pattern      |
+| ---- | -------------------------------------------------------------------------------------------------------------- | ---------- | ------------ |
+| 1768 | [Merge Strings Alternately](https://leetcode.com/problems/merge-strings-alternately)                           | 🟢 Easy    | Two pointers |
+| 1684 | [Count the Number of Consistent Strings](https://leetcode.com/problems/count-the-number-of-consistent-strings) | 🟢 Easy    | Counting     |
+| 2351 | [First Letter to Appear Twice](https://leetcode.com/problems/first-letter-to-appear-twice)                     | 🟢 Easy    | Hash set     |
+| 443  | [String Compression](https://leetcode.com/problems/string-compression)                                         | 🟡 Medium  | Two pointers |

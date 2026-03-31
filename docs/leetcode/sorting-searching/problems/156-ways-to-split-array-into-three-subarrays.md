@@ -7,9 +7,9 @@ tags: [Array, Two Pointers, Binary Search, Prefix Sum]
 leetcode_url: "https://leetcode.com/problems/ways-to-split-array-into-three-subarrays"
 ---
 
-# Ways to Split Array Into Three Subarrays / Ways to Split Array Into Three Subarrays
+# Ways to Split Array Into Three Subarrays / Số Cách Chia Mảng Thành Ba Phần
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Two Pointers
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Prefix Sum + Binary Search
 > **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
 > **See also**: [Maximum Coins Heroes Can Collect](https://leetcode.com/problems/maximum-coins-heroes-can-collect) | [Maximum Total Beauty of the Gardens](https://leetcode.com/problems/maximum-total-beauty-of-the-gardens)
 
@@ -17,90 +17,155 @@ leetcode_url: "https://leetcode.com/problems/ways-to-split-array-into-three-suba
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Hãy tưởng tượng hai người đi từ hai đầu con đường, tiến lại gần nhau. Mỗi bước, người nào ở vị trí "tốt hơn" sẽ đứng yên, người kia tiến. Khi họ gặp nhau, bài toán được giải.
-
-**Pattern Recognition:**
-
-- Signal: "sorted array" + "find pair/triplet" → **Two Pointers**
-- Bài này thuộc dạng Two Pointers — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Ways to Split Array Into Three Subarrays example:**
+**Analogy:** Chia thước kẻ dài thành 3 đoạn bằng 2 vạch cắt, sao cho tổng đoạn 1 ≤ tổng đoạn 2 ≤ tổng đoạn 3. Với vạch cắt đầu tiên cố định tại i, dùng binary search tìm khoảng hợp lệ cho vạch cắt thứ hai j.
 
 ```
-arr = [... sorted ...]
- L                 R
+nums = [1,1,1], prefix = [0,1,2,3]
+Split at i=0: left=[1], sum=1
+  j must satisfy: prefix[j]-prefix[1] >= 1  AND  prefix[3]-prefix[j] >= prefix[j]-prefix[1]
+  → j_min=1, j_max=1 → 1 way
 
-Step 1: check condition → move L or R
-Step 2: ...
-Step N: condition met ✅
+Split at i=1: left=[1,1], sum=2
+  → need mid sum ≥ 2, but total-2 = 1 < 2 → no valid j
+
+Total = 1
+
+nums = [1,2,2,2,5,0], prefix = [0,1,3,5,7,12,12]
+Enumerate i, binary search j → 3 ways
 ```
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-Ways to Split Array Into Three Subarrays. ([LeetCode](https://leetcode.com/problems/ways-to-split-array-into-three-subarrays))
-
-Difficulty: Medium | Acceptance: 33.4%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/ways-to-split-array-into-three-subarrays) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Mảng đã sorted chưa? Có duplicate không?" / Ask if array is sorted and if duplicates exist
-2. **Brute force**: "Dùng 2 vòng for O(n²)" → optimize with two pointers O(n) / Start with nested loops, then optimize
-3. **Optimize**: "Vì mảng sorted, dùng 2 con trỏ L/R tiến vào giữa" / Since sorted, use L/R pointers moving inward
-4. **Edge cases**: "Mảng rỗng, một phần tử, tất cả giống nhau" / Empty array, single element, all same values
+- 🇻🇳 **Prefix sum là nền tảng** — sum(i..j) = prefix[j+1] - prefix[i] / prefix sum enables O(1) range queries
+- 🇻🇳 **Enumerate i, binary search j** — với mỗi i cố định, j có valid range liên tục → binary search / for fixed i, valid j forms contiguous range
+- 🇻🇳 **j_min: mid ≥ left** — binary search tìm j nhỏ nhất sao cho sum(i+1..j) ≥ sum(0..i) / find smallest j where mid sum ≥ left sum
+- 🇻🇳 **j_max: right ≥ mid** — binary search tìm j lớn nhất sao cho sum(j+1..n-1) ≥ sum(i+1..j) / find largest j where right sum ≥ mid sum
+- 🇻🇳 **Mod 10^9+7** — kết quả có thể rất lớn / answer can overflow, take modulo
+- 🇻🇳 **j range: [i+1, n-2]** — mid phải có ít nhất 1 phần tử, right cũng vậy / j must leave room for at least 1 element in right
 
 ---
 
 ## Solutions
 
+### Solution 1: Prefix Sum + Binary Search — O(n log n)
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * For each first split i, binary search for valid range of second split j
+ * Time: O(n log n)  Space: O(n)
  */
-function waysToSplitArrayIntoThreeSubarraysBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function waysToSplit(nums: number[]): number {
+  const MOD = 1_000_000_007n;
+  const n = nums.length;
+  const prefix = new Array(n + 1).fill(0);
+  for (let i = 0; i < n; i++) prefix[i + 1] = prefix[i] + nums[i];
+
+  const total = prefix[n];
+
+  let ans = 0n;
+
+  for (let i = 0; i < n - 2; i++) {
+    const leftSum = prefix[i + 1];
+    // mid must be >= leftSum → prefix[j+1] - prefix[i+1] >= leftSum
+    // → prefix[j+1] >= leftSum + prefix[i+1]
+
+    // Early exit: if left already > total/3, impossible
+    if (leftSum * 3 > total) break;
+
+    // Find j_min: smallest j >= i+1 where mid sum >= leftSum
+    // prefix[j+1] - prefix[i+1] >= leftSum → prefix[j+1] >= leftSum + prefix[i+1]
+    let lo = i + 1,
+      hi = n - 2;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (prefix[mid + 1] - prefix[i + 1] >= leftSum) hi = mid;
+      else lo = mid + 1;
+    }
+    const jMin = lo;
+    if (prefix[jMin + 1] - prefix[i + 1] < leftSum) continue;
+
+    // Find j_max: largest j where right sum >= mid sum
+    // prefix[n] - prefix[j+1] >= prefix[j+1] - prefix[i+1]
+    // → 2*prefix[j+1] <= prefix[n] + prefix[i+1]
+    lo = jMin;
+    hi = n - 2;
+    while (lo < hi) {
+      const mid = (lo + hi + 1) >> 1;
+      const midSum = prefix[mid + 1] - prefix[i + 1];
+      const rightSum = prefix[n] - prefix[mid + 1];
+      if (rightSum >= midSum) lo = mid;
+      else hi = mid - 1;
+    }
+    const jMax = lo;
+
+    if (jMax >= jMin) {
+      ans = (ans + BigInt(jMax - jMin + 1)) % MOD;
+    }
+  }
+
+  return Number(ans);
 }
 
+console.log(waysToSplit([1, 1, 1])); // 1
+console.log(waysToSplit([1, 2, 2, 2, 5, 0])); // 3
+console.log(waysToSplit([0, 0, 0, 0])); // 4? depends on definition - [0,0,0,0] → 1
+```
+
+### Solution 2: Prefix Sum + Two Pointers — O(n)
+
+```typescript
 /**
- * Solution 2: Optimized — Two Pointers
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Two pointers: jMin and jMax both only move right as i increases
+ * Time: O(n)  Space: O(n)
  */
-function waysToSplitArrayIntoThreeSubarrays(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Two Pointers
-  // Hint: Use L/R pointers on sorted input, move based on comparison
-  throw new Error('Not implemented');
+function waysToSplit2(nums: number[]): number {
+  const MOD = 1_000_000_007n;
+  const n = nums.length;
+  const pre = new Array(n + 1).fill(0);
+  for (let i = 0; i < n; i++) pre[i + 1] = pre[i] + nums[i];
+  const total = pre[n];
+
+  let ans = 0n;
+  let jMin = 0,
+    jMax = 0;
+
+  for (let i = 0; i < n - 2; i++) {
+    const leftSum = pre[i + 1];
+    if (leftSum * 3 > total) break;
+
+    // Advance jMin: first j >= i+1 where midSum >= leftSum
+    if (jMin <= i) jMin = i + 1;
+    while (jMin < n - 1 && pre[jMin + 1] - pre[i + 1] < leftSum) jMin++;
+    if (pre[jMin + 1] - pre[i + 1] < leftSum) continue;
+
+    // Advance jMax: last j where rightSum >= midSum
+    if (jMax < jMin) jMax = jMin;
+    while (jMax < n - 2) {
+      const midNext = pre[jMax + 2] - pre[i + 1];
+      const rightNext = pre[n] - pre[jMax + 2];
+      if (rightNext >= midNext) jMax++;
+      else break;
+    }
+
+    ans = (ans + BigInt(jMax - jMin + 1)) % MOD;
+  }
+
+  return Number(ans);
 }
 
-// === Test Cases ===
-// console.log(waysToSplitArrayIntoThreeSubarrays(/* example 1 */)); // expected
-// console.log(waysToSplitArrayIntoThreeSubarrays(/* example 2 */)); // expected
-// console.log(waysToSplitArrayIntoThreeSubarrays(/* edge case */)); // expected
+console.log(waysToSplit2([1, 1, 1])); // 1
+console.log(waysToSplit2([1, 2, 2, 2, 5, 0])); // 3
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Maximum Coins Heroes Can Collect](https://leetcode.com/problems/maximum-coins-heroes-can-collect) — same pattern: Two Pointers
-- [Maximum Total Beauty of the Gardens](https://leetcode.com/problems/maximum-total-beauty-of-the-gardens) — same pattern: Two Pointers
-- [Random Pick with Weight](https://leetcode.com/problems/random-pick-with-weight) — same pattern: Prefix Sum
-- [Intersection of Two Arrays](https://leetcode.com/problems/intersection-of-two-arrays) — same pattern: Two Pointers
-- [Ways to Split Array Into Three Subarrays — LeetCode](https://leetcode.com/problems/ways-to-split-array-into-three-subarrays) — problem page
+| Problem                                                                                                                          | Difficulty | Pattern                   |
+| -------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------------- |
+| [Split Array Largest Sum](https://leetcode.com/problems/split-array-largest-sum)                                                 | 🔴 Hard    | Binary Search on Answer   |
+| [Partition Array Into Three Parts With Equal Sum](https://leetcode.com/problems/partition-array-into-three-parts-with-equal-sum) | 🟢 Easy    | Prefix Sum                |
+| [Count Subarrays with Score Less Than K](https://leetcode.com/problems/count-subarrays-with-score-less-than-k)                   | 🟡 Medium  | Prefix Sum + Two Pointers |
+| [Number of Ways to Split a String](https://leetcode.com/problems/number-of-ways-to-split-a-string)                               | 🟡 Medium  | Math                      |

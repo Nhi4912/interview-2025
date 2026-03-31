@@ -7,104 +7,140 @@ tags: [Array, Hash Table, Divide and Conquer, Tree, Binary Tree]
 leetcode_url: "https://leetcode.com/problems/construct-binary-tree-from-inorder-and-postorder-traversal"
 ---
 
-# Construct Binary Tree from Inorder and Postorder Traversal / Construct Binary Tree from Inorder and Postorder Traversal
+# Construct Binary Tree from Inorder and Postorder Traversal / Xây Dựng Cây Nhị Phân Từ Duyệt Trung Và Hậu Tự
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Tree Traversal
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Divide & Conquer with Index Map
 > **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Create Binary Tree From Descriptions](https://leetcode.com/problems/create-binary-tree-from-descriptions) | [Path Sum IV](https://leetcode.com/problems/path-sum-iv)
+> **See also**: [Construct Binary Tree from Preorder and Inorder](https://leetcode.com/problems/construct-binary-tree-from-preorder-and-inorder-traversal) | [Verify Preorder Sequence in BST](https://leetcode.com/problems/verify-preorder-sequence-in-binary-search-tree)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Tưởng tượng khám phá cây gia phả — bạn có thể đi từ gốc xuống lá (top-down) hoặc từ lá lên gốc (bottom-up), tuỳ câu hỏi cần trả lời.
+**Analogy (VI):** Phần tử cuối của postorder là **root**. Tìm root trong inorder → chia left/right subtrees. Số phần tử bên trái inorder = kích thước left subtree → chia postorder tương ứng.
 
-**Pattern Recognition:**
-
-- Signal: "binary tree" + "traverse/collect values" → **Tree Traversal**
-- Bài này thuộc dạng Tree Traversal — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Construct Binary Tree from Inorder and Postorder Traversal example:**
+**Analogy (EN):** Last element of `postorder` = root. Find root index `k` in `inorder` → left subtree has `k` nodes. Recurse: left subtree uses `inorder[0..k-1]` and `postorder[0..k-1]`; right uses the rest.
 
 ```
-        1
-       / \
-      2   3
-     / \
-    4   5
+inorder:   [9, 3, 15, 20, 7]
+postorder: [9, 15, 7, 20, 3]
 
-Inorder:   4, 2, 5, 1, 3
-Preorder:  1, 2, 4, 5, 3
-Postorder: 4, 5, 2, 3, 1
+postorder.last = 3 → root = 3
+inorder: k=1 (index of 3)
+  left  inorder=[9],        postorder=[9]       → node(9)
+  right inorder=[15,20,7],  postorder=[15,7,20] → recurse
+    postorder.last=20 → root=20
+    left=[15], right=[7]
+
+Result:
+    3
+   / \
+  9   20
+     /  \
+    15    7
 ```
-
----
-
-## Problem Description
-
-Construct Binary Tree from Inorder and Postorder Traversal. ([LeetCode](https://leetcode.com/problems/construct-binary-tree-from-inorder-and-postorder-traversal))
-
-Difficulty: Medium | Acceptance: 66.1%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/construct-binary-tree-from-inorder-and-postorder-traversal) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Postorder last = root**: Luôn nhớ phần tử cuối postorder là root / Last of postorder is always the current subtree root
+2. **HashMap for O(1) lookup**: Xây map `value→index` trong inorder để tìm root nhanh / Build inorder index map upfront for O(1) root lookup
+3. **Split sizes**: `leftSize = k` → left postorder = `[pStart, pStart+k-1]`; right = `[pStart+k, pEnd-1]` / Track boundary indices carefully
+4. **Naive vs optimized**: Naive O(N²) dùng indexOf; optimal O(N) dùng HashMap / Use HashMap to avoid O(N) indexOf per call
+5. **Edge case / Biên**: Empty arrays → return null; single element → leaf node
+6. **Sister problem**: Preorder + Inorder is similar — first of preorder is root / Same pattern, just use first element of preorder
 
 ---
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function constructBinaryTreeFromInorderAndPostorderTraversalBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+class TreeNode {
+  val: number;
+  left: TreeNode | null;
+  right: TreeNode | null;
+  constructor(val = 0, left: TreeNode | null = null, right: TreeNode | null = null) {
+    this.val = val;
+    this.left = left;
+    this.right = right;
+  }
 }
 
 /**
- * Solution 2: Optimized — Tree Traversal
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Recursive with HashMap (Optimal)
+ * Time: O(N) — each node processed once; O(1) root lookup via map
+ * Space: O(N) — hashmap + recursion stack O(H)
+ *
+ * Build inorder index map. Slice postorder by subtree size.
  */
-function constructBinaryTreeFromInorderAndPostorderTraversal(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Tree Traversal
-  // Hint: Choose traversal order based on what info you need
-  throw new Error('Not implemented');
+function buildTree(inorder: number[], postorder: number[]): TreeNode | null {
+  const indexMap = new Map<number, number>();
+  inorder.forEach((val, i) => indexMap.set(val, i));
+
+  function build(
+    inLeft: number,
+    inRight: number,
+    postLeft: number,
+    postRight: number,
+  ): TreeNode | null {
+    if (inLeft > inRight) return null;
+
+    const rootVal = postorder[postRight];
+    const root = new TreeNode(rootVal);
+    const k = indexMap.get(rootVal)! - inLeft; // size of left subtree
+
+    root.left = build(inLeft, inLeft + k - 1, postLeft, postLeft + k - 1);
+    root.right = build(inLeft + k + 1, inRight, postLeft + k, postRight - 1);
+    return root;
+  }
+
+  return build(0, inorder.length - 1, 0, postorder.length - 1);
+}
+
+/**
+ * Solution 2: Recursive with Array Slicing (Simpler, O(N²))
+ * Time: O(N²) — indexOf is O(N) per call
+ * Space: O(N²) — creating subarrays at each level
+ *
+ * Simpler to reason about — good for explaining in interview before optimizing.
+ */
+function buildTreeNaive(inorder: number[], postorder: number[]): TreeNode | null {
+  if (postorder.length === 0) return null;
+
+  const rootVal = postorder[postorder.length - 1];
+  const root = new TreeNode(rootVal);
+  const mid = inorder.indexOf(rootVal);
+
+  root.left = buildTreeNaive(inorder.slice(0, mid), postorder.slice(0, mid));
+  root.right = buildTreeNaive(inorder.slice(mid + 1), postorder.slice(mid, postorder.length - 1));
+  return root;
+}
+
+// Helper to serialize tree for testing
+function serialize(root: TreeNode | null): string {
+  if (!root) return "null";
+  return `${root.val}(${serialize(root.left)},${serialize(root.right)})`;
 }
 
 // === Test Cases ===
-// console.log(constructBinaryTreeFromInorderAndPostorderTraversal(/* example 1 */)); // expected
-// console.log(constructBinaryTreeFromInorderAndPostorderTraversal(/* example 2 */)); // expected
-// console.log(constructBinaryTreeFromInorderAndPostorderTraversal(/* edge case */)); // expected
+const t1 = buildTree([9, 3, 15, 20, 7], [9, 15, 7, 20, 3]);
+console.log(serialize(t1)); // 3(9(null,null),20(15(null,null),7(null,null)))
+
+const t2 = buildTree([-1], [-1]);
+console.log(serialize(t2)); // -1(null,null)
+
+const t3 = buildTreeNaive([9, 3, 15, 20, 7], [9, 15, 7, 20, 3]);
+console.log(serialize(t3)); // same as t1
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Create Binary Tree From Descriptions](https://leetcode.com/problems/create-binary-tree-from-descriptions) — same pattern: Tree Traversal
-- [Path Sum IV](https://leetcode.com/problems/path-sum-iv) — same pattern: DFS
-- [Number of Ways to Reorder Array to Get Same BST](https://leetcode.com/problems/number-of-ways-to-reorder-array-to-get-same-bst) — same pattern: Union Find
-- [Majority Element](https://leetcode.com/problems/majority-element) — same pattern: Divide and Conquer
-- [Construct Binary Tree from Inorder and Postorder Traversal — LeetCode](https://leetcode.com/problems/construct-binary-tree-from-inorder-and-postorder-traversal) — problem page
+| Problem                                                                                                                                    | Pattern           | Difficulty |
+| ------------------------------------------------------------------------------------------------------------------------------------------ | ----------------- | ---------- |
+| [Construct Binary Tree from Preorder and Inorder](https://leetcode.com/problems/construct-binary-tree-from-preorder-and-inorder-traversal) | Divide & Conquer  | 🟡 Medium  |
+| [Create Binary Tree From Descriptions](https://leetcode.com/problems/create-binary-tree-from-descriptions)                                 | Tree Construction | 🟡 Medium  |
+| [Maximum Binary Tree](https://leetcode.com/problems/maximum-binary-tree)                                                                   | Divide & Conquer  | 🟡 Medium  |
+| [Recover a Tree From Preorder Traversal](https://leetcode.com/problems/recover-a-tree-from-preorder-traversal)                             | DFS Parse         | 🔴 Hard    |

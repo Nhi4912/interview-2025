@@ -7,7 +7,7 @@ tags: [String, Counting]
 leetcode_url: "https://leetcode.com/problems/furthest-point-from-origin"
 ---
 
-# Furthest Point From Origin / Furthest Point From Origin
+# Furthest Point From Origin / Điểm xa nhất từ gốc tọa độ
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: String Processing
 > **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
@@ -17,87 +17,115 @@ leetcode_url: "https://leetcode.com/problems/furthest-point-from-origin"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Xử lý chuỗi ký tự — thường dùng hash table, two pointers, hoặc sliding window tuỳ bài toán.
-
-**Pattern Recognition:**
-
-- Signal: "string transformation/validation" → **String Processing**
-- Bài này thuộc dạng String Processing — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Furthest Point From Origin example:**
+**Analogy:** Giống kéo co trên trục số — mỗi 'L' kéo trái một bước, mỗi 'R' kéo phải một bước, '\_' (wildcard) có thể đi theo hướng nào thắng thế hơn. Kết quả = |countL - countR| + countUnderscore.
 
 ```
-// TODO: Add step-by-step visual for String Processing
-// Show one complete example with state at each step
+moves = "L_RL__R"
+countL = 2, countR = 2, count_ = 3
+net = |2 - 2| = 0
+Best: assign all '_' to whichever side → 0 + 3 = 3
+
+moves = "LLRR"
+countL = 2, countR = 2, count_ = 0
+Answer = |2 - 2| + 0 = 0
+
+moves = "LLL"
+countL = 3, countR = 0, count_ = 0
+Answer = |3 - 0| + 0 = 3
+
+moves = "_R__"
+countL = 0, countR = 1, count_ = 3
+Answer = |0 - 1| + 3 = 1 + 3 = 4
 ```
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Ghi Nhớ Khi Phỏng Vấn
 
-Furthest Point From Origin. ([LeetCode](https://leetcode.com/problems/furthest-point-from-origin))
-
-Difficulty: Easy | Acceptance: 64.4%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/furthest-point-from-origin) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🔑 **Wildcards always help / Wildcard luôn có ích**: '\_' luôn cộng vào khoảng cách tối đa
+- 🔑 **Net displacement / Độ dịch chuyển ròng**: `|L - R|` là khoảng cách cơ bản
+- 🔑 **Add wildcards to winner / Cộng wildcard vào bên thắng**: Mọi '\_' nên đi cùng chiều đa số
+- 🔑 **Formula: |L-R| + wildcards / Công thức**: Một dòng đơn giản
+- 🔑 **No simulation needed / Không cần mô phỏng**: Phân tích toán học > mô phỏng
+- 🔑 **Edge: all underscores / Toàn dấu gạch**: Trả về n (đi toàn một hướng)
 
 ---
 
 ## Solutions
 
+### Solution 1: Count + Formula (Optimal)
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Count L, R, and underscore. Max distance = |L - R| + underscores.
+ * All wildcards are optimally assigned to the dominant direction.
+ *
+ * Time:  O(n)
+ * Space: O(1)
  */
-function furthestPointFromOriginBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function furthestDistanceFromOrigin(moves: string): number {
+  let L = 0,
+    R = 0,
+    wild = 0;
+  for (const m of moves) {
+    if (m === "L") L++;
+    else if (m === "R") R++;
+    else wild++;
+  }
+  return Math.abs(L - R) + wild;
 }
 
+console.log(furthestDistanceFromOrigin("L_RL__R")); // 3
+console.log(furthestDistanceFromOrigin("LLRR")); // 0
+console.log(furthestDistanceFromOrigin("_R__")); // 4
+console.log(furthestDistanceFromOrigin("LLL")); // 3
+console.log(furthestDistanceFromOrigin("___")); // 3
+```
+
+### Solution 2: reduce (Functional)
+
+```typescript
 /**
- * Solution 2: Optimized — String Processing
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Same formula using reduce for counting.
+ * Time:  O(n)
+ * Space: O(1)
  */
-function furthestPointFromOrigin(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using String Processing
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
+function furthestDistanceFromOrigin2(moves: string): number {
+  const [L, R, wild] = [...moves].reduce(
+    ([l, r, w], m) => (m === "L" ? [l + 1, r, w] : m === "R" ? [l, r + 1, w] : [l, r, w + 1]),
+    [0, 0, 0],
+  );
+  return Math.abs(L - R) + wild;
 }
 
-// === Test Cases ===
-// console.log(furthestPointFromOrigin(/* example 1 */)); // expected
-// console.log(furthestPointFromOrigin(/* example 2 */)); // expected
-// console.log(furthestPointFromOrigin(/* edge case */)); // expected
+console.log(furthestDistanceFromOrigin2("L_RL__R")); // 3
+console.log(furthestDistanceFromOrigin2("LLRR")); // 0
+```
+
+### Solution 3: split + length (One-liner)
+
+```typescript
+/**
+ * Use regex match to count each character type.
+ * Time:  O(n)
+ * Space: O(n) — match arrays
+ */
+function furthestDistanceFromOrigin3(moves: string): number {
+  const count = (c: string) => (moves.match(new RegExp(c, "g")) || []).length;
+  return Math.abs(count("L") - count("R")) + count("_");
+}
+
+console.log(furthestDistanceFromOrigin3("L_RL__R")); // 3
+console.log(furthestDistanceFromOrigin3("___")); // 3
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Reorganize String](https://leetcode.com/problems/reorganize-string) — same pattern: Heap / Priority Queue
-- [Number of Divisible Substrings](https://leetcode.com/problems/number-of-divisible-substrings) — same pattern: Prefix Sum
-- [Ransom Note](https://leetcode.com/problems/ransom-note) — same pattern: Hash Map
-- [Furthest Point From Origin — LeetCode](https://leetcode.com/problems/furthest-point-from-origin) — problem page
+| #    | Problem                                                                                                                                  | Difficulty | Pattern        |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------------------- | ---------- | -------------- |
+| 1822 | [Sign of the Product of an Array](https://leetcode.com/problems/sign-of-the-product-of-an-array)                                         | 🟢 Easy    | Counting       |
+| 2011 | [Final Value of Variable After Performing Operations](https://leetcode.com/problems/final-value-of-variable-after-performing-operations) | 🟢 Easy    | Simulation     |
+| 1859 | [Sorting the Sentence](https://leetcode.com/problems/sorting-the-sentence)                                                               | 🟢 Easy    | String parsing |
+| 645  | [Set Mismatch](https://leetcode.com/problems/set-mismatch)                                                                               | 🟢 Easy    | Counting       |

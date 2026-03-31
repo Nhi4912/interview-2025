@@ -7,7 +7,7 @@ tags: [Array, Hash Table, String, Bit Manipulation, Prefix Sum]
 leetcode_url: "https://leetcode.com/problems/can-make-palindrome-from-substring"
 ---
 
-# Can Make Palindrome from Substring / Can Make Palindrome from Substring
+# Can Make Palindrome from Substring / Có thể tạo palindrome từ chuỗi con
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Prefix Sum
 > **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
@@ -17,87 +17,142 @@ leetcode_url: "https://leetcode.com/problems/can-make-palindrome-from-substring"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống tổng luỹ tiến — tính trước tổng từ đầu đến mỗi vị trí, rồi truy vấn tổng bất kỳ đoạn nào trong O(1).
-
-**Pattern Recognition:**
-
-- Signal: "range sum queries" + "subarray sum" → **Prefix Sum**
-- Bài này thuộc dạng Prefix Sum — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Can Make Palindrome from Substring example:**
+**Analogy:** Mỗi ký tự là một đèn bật/tắt — XOR prefix tích lũy bit-mask tần số. Ký tự có tần số lẻ là "đèn đang bật". Palindrome cần ≤ 1 đèn bật (ký tự ở giữa), hoặc có thể hoán vị → dùng k lần đổi để tắt bớt đèn.
 
 ```
-// TODO: Add step-by-step visual for Prefix Sum
-// Show one complete example with state at each step
+s = "abcda", query [1,3,1] (l=1,r=3,k=1)
+Substring: s[1..3] = "bcd"
+Char counts: b=1, c=1, d=1  → 3 odd-frequency chars
+
+Prefix XOR masks (bit i = parity of char i):
+prefix[0] = 0
+prefix[1] = 001 (a)
+prefix[2] = 011 (a,b)
+prefix[3] = 111 (a,b,c)
+prefix[4] = 1111 ← wait, only 26 bits
+
+Range s[1..3]: mask = prefix[4] ^ prefix[1] = ...
+oddCount = popcount(mask)
+Can make palindrome if floor(oddCount/2) <= k
 ```
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Ghi Nhớ Khi Phỏng Vấn
 
-Can Make Palindrome from Substring. ([LeetCode](https://leetcode.com/problems/can-make-palindrome-from-substring))
-
-Difficulty: Medium | Acceptance: 40.2%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/can-make-palindrome-from-substring) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🔑 **XOR prefix / XOR tiền tố**: `prefix[i] ^ prefix[j]` cho biết parity tần số đoạn [i,j-1]
+- 🔑 **Bit = parity / Bit = tính chẵn lẻ**: Bit thứ i bật → ký tự 'a'+i xuất hiện số lẻ lần
+- 🔑 **Palindrome condition / Điều kiện palindrome**: Số ký tự tần số lẻ ≤ 1 (có thể đặt ở giữa)
+- 🔑 **k swaps fix pairs / k lần đổi sửa cặp**: Mỗi swap có thể sửa 2 ký tự lẻ → cần `ceil(oddCount/2)` ≤ k, tức `floor(oddCount/2) ≤ k`
+- 🔑 **popcount / đếm bit**: Dùng loop bit hay built-in để đếm số bit 1 trong mask
+- 🔑 **prefix size n+1 / kích thước n+1**: prefix[0]=0, prefix[i] là mask cho s[0..i-1]
 
 ---
 
 ## Solutions
 
+### Solution 1: Prefix XOR Bitmask (Optimal)
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Build prefix XOR bitmask (bit i = parity of char 'a'+i count).
+ * For query [l, r, k]: range mask = prefix[r+1] ^ prefix[l].
+ * Odd chars = popcount(mask). Can palindrome if floor(oddCount/2) <= k.
+ *
+ * Time:  O(n + q) — O(n) build, O(1) per query
+ * Space: O(n)     — prefix array
  */
-function canMakePalindromeFromSubstringBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function canMakePaliQueries(s: string, queries: number[][]): boolean[] {
+  const n = s.length;
+  const prefix = new Int32Array(n + 1);
+
+  for (let i = 0; i < n; i++) {
+    prefix[i + 1] = prefix[i] ^ (1 << (s.charCodeAt(i) - 97));
+  }
+
+  return queries.map(([l, r, k]) => {
+    const mask = prefix[r + 1] ^ prefix[l];
+    const oddCount = popcount(mask);
+    return Math.floor(oddCount / 2) <= k;
+  });
 }
 
+function popcount(x: number): number {
+  let count = 0;
+  while (x) {
+    count += x & 1;
+    x >>= 1;
+  }
+  return count;
+}
+
+console.log(
+  canMakePaliQueries("abcda", [
+    [3, 3, 0],
+    [1, 2, 0],
+    [0, 3, 1],
+    [0, 3, 2],
+  ]),
+);
+// [true, false, false, true]
+console.log(
+  canMakePaliQueries("lyb", [
+    [0, 1, 0],
+    [2, 2, 1],
+  ]),
+);
+// [false, true]
+```
+
+### Solution 2: Bit Trick popcount (Kernighan)
+
+```typescript
 /**
- * Solution 2: Optimized — Prefix Sum
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Same prefix XOR approach, but uses Kernighan's bit-count trick.
+ * Time:  O(n + q * 26) = O(n + q)
+ * Space: O(n)
  */
-function canMakePalindromeFromSubstring(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Prefix Sum
-  // Hint: Build prefix sum array, query range sum in O(1)
-  throw new Error('Not implemented');
+function canMakePaliQueries2(s: string, queries: number[][]): boolean[] {
+  const n = s.length;
+  const prefix = new Int32Array(n + 1);
+
+  for (let i = 0; i < n; i++) {
+    prefix[i + 1] = prefix[i] ^ (1 << (s.charCodeAt(i) - 97));
+  }
+
+  const kernighan = (x: number): number => {
+    let c = 0;
+    while (x) {
+      x &= x - 1;
+      c++;
+    }
+    return c;
+  };
+
+  return queries.map(([l, r, k]) => {
+    const odd = kernighan(prefix[r + 1] ^ prefix[l]);
+    return odd >> 1 <= k; // floor(odd/2) <= k
+  });
 }
 
-// === Test Cases ===
-// console.log(canMakePalindromeFromSubstring(/* example 1 */)); // expected
-// console.log(canMakePalindromeFromSubstring(/* example 2 */)); // expected
-// console.log(canMakePalindromeFromSubstring(/* edge case */)); // expected
+console.log(
+  canMakePaliQueries2("abcda", [
+    [3, 3, 0],
+    [1, 2, 0],
+    [0, 3, 1],
+    [0, 3, 2],
+  ]),
+);
+// [true, false, false, true]
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Number of Valid Words for Each Puzzle](https://leetcode.com/problems/number-of-valid-words-for-each-puzzle) — same pattern: Trie
-- [Count Pairs Of Similar Strings](https://leetcode.com/problems/count-pairs-of-similar-strings) — same pattern: Bit Manipulation
-- [Count the Number of Consistent Strings](https://leetcode.com/problems/count-the-number-of-consistent-strings) — same pattern: Bit Manipulation
-- [Number of Same-End Substrings](https://leetcode.com/problems/number-of-same-end-substrings) — same pattern: Prefix Sum
-- [Can Make Palindrome from Substring — LeetCode](https://leetcode.com/problems/can-make-palindrome-from-substring) — problem page
+| #    | Problem                                                                                                                                            | Difficulty | Pattern     |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ----------- |
+| 1177 | [Can Make Palindrome from Substring](https://leetcode.com/problems/can-make-palindrome-from-substring)                                             | 🟡 Medium  | Prefix XOR  |
+| 1371 | [Find the Longest Substring with Vowels in Even Counts](https://leetcode.com/problems/find-the-longest-substring-containing-vowels-in-even-counts) | 🟡 Medium  | Prefix XOR  |
+| 1915 | [Number of Wonderful Substrings](https://leetcode.com/problems/number-of-wonderful-substrings)                                                     | 🟡 Medium  | Prefix XOR  |
+| 5    | [Longest Palindromic Substring](https://leetcode.com/problems/longest-palindromic-substring)                                                       | 🟡 Medium  | DP / Expand |

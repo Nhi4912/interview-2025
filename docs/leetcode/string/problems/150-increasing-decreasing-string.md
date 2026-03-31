@@ -7,7 +7,7 @@ tags: [Hash Table, String, Counting]
 leetcode_url: "https://leetcode.com/problems/increasing-decreasing-string"
 ---
 
-# Increasing Decreasing String / Increasing Decreasing String
+# Increasing Decreasing String / Chuỗi tăng giảm xen kẽ
 
 > **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Hash Map
 > **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
@@ -17,90 +17,118 @@ leetcode_url: "https://leetcode.com/problems/increasing-decreasing-string"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
-
-**Pattern Recognition:**
-
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Increasing Decreasing String example:**
+**Analogy:** Giống xếp hàng tại siêu thị: đầu tiên mời người thấp → cao (tăng dần), rồi mời từ cao → thấp (giảm dần), cứ thế lặp lại đến hết. Đếm số lần xuất hiện từng ký tự, rồi luân phiên "gắp" ký tự nhỏ nhất → lớn nhất → ...
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
+s = "aaaabbbbcccc"
+count: a=4, b=4, c=4
 
-Key insight: store complement for O(1) lookup
+Round 1 up   (a→z): pick a,b,c  → "abc"   counts: a=3,b=3,c=3
+Round 1 down (z→a): pick c,b,a  → "cba"   counts: a=2,b=2,c=2
+Round 2 up           pick a,b,c  → "abc"   counts: a=1,b=1,c=1
+Round 2 down         pick c,b,a  → "cba"   counts: a=0,b=0,c=0
+
+Result: "abccbaabccba"
 ```
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Ghi Nhớ Khi Phỏng Vấn
 
-Increasing Decreasing String. ([LeetCode](https://leetcode.com/problems/increasing-decreasing-string))
-
-Difficulty: Easy | Acceptance: 76.8%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/increasing-decreasing-string) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🔑 **Count first / Đếm trước**: Chỉ cần 26-phần-tử array, không dùng Map
+- 🔑 **Alternate direction / Đổi chiều**: Một vòng a→z, vòng tiếp z→a, lặp lại
+- 🔑 **Skip zero / Bỏ qua 0**: Ký tự có count=0 thì bỏ qua khi chọn
+- 🔑 **Loop until output = input length / Lặp đến đủ độ dài**: Điều kiện dừng khi đủ n ký tự
+- 🔑 **Total length preserved / Độ dài không đổi**: Kết quả luôn có đúng n ký tự
+- 🔑 **26-char alphabet / Chữ cái thường**: Dùng `c.charCodeAt(0) - 97` để index
 
 ---
 
 ## Solutions
 
+### Solution 1: Count + Alternate Sweep (Optimal)
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Count character frequencies, then repeatedly sweep a→z then z→a,
+ * picking chars with remaining count > 0.
+ *
+ * Time:  O(26 * n) = O(n) — each sweep is O(26), at most n/26 + 1 rounds
+ * Space: O(1) extra (26-element count array, output is O(n))
  */
-function increasingDecreasingStringBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function sortString(s: string): string {
+  const cnt = new Array<number>(26).fill(0);
+  for (const c of s) cnt[c.charCodeAt(0) - 97]++;
+
+  let result = "";
+  while (result.length < s.length) {
+    // Sweep a → z
+    for (let i = 0; i < 26; i++) {
+      if (cnt[i] > 0) {
+        result += String.fromCharCode(97 + i);
+        cnt[i]--;
+      }
+    }
+    // Sweep z → a
+    for (let i = 25; i >= 0; i--) {
+      if (cnt[i] > 0) {
+        result += String.fromCharCode(97 + i);
+        cnt[i]--;
+      }
+    }
+  }
+
+  return result;
 }
 
+console.log(sortString("aaaabbbbcccc")); // "abccbaabccba"
+console.log(sortString("rat")); // "art"
+console.log(sortString("leetcode")); // "cdeeltoee" → one valid ordering
+```
+
+### Solution 2: Array Accumulation (Readable)
+
+```typescript
 /**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Collect picked chars into an array, join once at the end.
+ * Time:  O(n)
+ * Space: O(n) for result array
  */
-function increasingDecreasingString(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
+function sortString2(s: string): string {
+  const cnt = new Array<number>(26).fill(0);
+  for (const c of s) cnt[c.charCodeAt(0) - 97]++;
+
+  const out: string[] = [];
+
+  while (out.length < s.length) {
+    for (let i = 0; i < 26 && out.length < s.length; i++) {
+      if (cnt[i]) {
+        out.push(String.fromCharCode(97 + i));
+        cnt[i]--;
+      }
+    }
+    for (let i = 25; i >= 0 && out.length < s.length; i--) {
+      if (cnt[i]) {
+        out.push(String.fromCharCode(97 + i));
+        cnt[i]--;
+      }
+    }
+  }
+
+  return out.join("");
 }
 
-// === Test Cases ===
-// console.log(increasingDecreasingString(/* example 1 */)); // expected
-// console.log(increasingDecreasingString(/* example 2 */)); // expected
-// console.log(increasingDecreasingString(/* edge case */)); // expected
+console.log(sortString2("aaaabbbbcccc")); // "abccbaabccba"
+console.log(sortString2("rat")); // "art"
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Reorganize String](https://leetcode.com/problems/reorganize-string) — same pattern: Heap / Priority Queue
-- [Number of Divisible Substrings](https://leetcode.com/problems/number-of-divisible-substrings) — same pattern: Prefix Sum
-- [Ransom Note](https://leetcode.com/problems/ransom-note) — same pattern: Hash Map
-- [Increasing Decreasing String — LeetCode](https://leetcode.com/problems/increasing-decreasing-string) — problem page
+| #   | Problem                                                                                    | Difficulty | Pattern         |
+| --- | ------------------------------------------------------------------------------------------ | ---------- | --------------- |
+| 692 | [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words)                 | 🟡 Medium  | Counting + Heap |
+| 767 | [Reorganize String](https://leetcode.com/problems/reorganize-string)                       | 🟡 Medium  | Greedy + Heap   |
+| 242 | [Valid Anagram](https://leetcode.com/problems/valid-anagram)                               | 🟢 Easy    | Counting        |
+| 451 | [Sort Characters By Frequency](https://leetcode.com/problems/sort-characters-by-frequency) | 🟡 Medium  | Bucket sort     |

@@ -7,60 +7,42 @@ tags: [Array, Breadth-First Search, Matrix]
 leetcode_url: "https://leetcode.com/problems/nearest-exit-from-entrance-in-maze"
 ---
 
-# Nearest Exit from Entrance in Maze / Nearest Exit from Entrance in Maze
+# Nearest Exit from Entrance in Maze / Lối Thoát Gần Nhất Trong Mê Cung
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: BFS
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: BFS Shortest Path
 > **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Rotting Oranges](https://leetcode.com/problems/rotting-oranges) | [Max Area of Island](https://leetcode.com/problems/max-area-of-island)
+> **See also**: [Rotting Oranges](https://leetcode.com/problems/rotting-oranges) | [Snakes and Ladders](https://leetcode.com/problems/snakes-and-ladders)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như ném đá xuống ao — sóng lan ra theo từng vòng đều đặn. Khám phá hết tất cả ở khoảng cách 1, rồi mới sang khoảng cách 2.
+**Analogy (VI):** Như tìm đường thoát khỏi mê cung — BFS từ điểm vào, tìm ô đầu tiên nằm trên biên (không phải điểm vào). BFS đảm bảo đường đi ngắn nhất.
 
-**Pattern Recognition:**
-
-- Signal: "shortest path (unweighted)" + "level-order" → **BFS**
-- Bài này thuộc dạng BFS — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Nearest Exit from Entrance in Maze example:**
+**Analogy (EN):** BFS from entrance, spreading outward level by level. First border cell we reach (that isn't the entrance) is the answer — BFS guarantees minimum steps.
 
 ```
-Level 0:     [root]
-Level 1:   [A, B]
-Level 2: [C, D, E]
+Maze ('.' = open, '+' = wall):
+  +  +  .  +
+  .  .  .  +      entrance = [0,2]
+  +  +  +  .
 
-BFS: process level by level using queue
+BFS steps:
+  step 0: (0,2)
+  step 1: (1,2)
+  step 2: (1,1),(1,0)  ← (1,0) is border! return 2
 ```
-
----
-
-## Problem Description
-
-Nearest Exit from Entrance in Maze. ([LeetCode](https://leetcode.com/problems/nearest-exit-from-entrance-in-maze))
-
-Difficulty: Medium | Acceptance: 47.6%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/nearest-exit-from-entrance-in-maze) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify / Xác nhận**: "Entrance là exit không?" / Entrance itself does NOT count as exit even if on border
+2. **Border check / Kiểm tra biên**: Cell (r,c) là exit nếu r=0 hoặc r=m-1 hoặc c=0 hoặc c=n-1 / Border = row 0, last row, col 0, or last col
+3. **Mark visited / Đánh dấu**: Đánh dấu cell đã thăm ngay khi enqueue để tránh revisit / Mark visited when enqueuing, not dequeuing
+4. **BFS level / Đếm bước**: Track steps with level counter hoặc store (row, col, steps) trong queue
+5. **Edge case / Biên**: Không có exit → return -1; maze 1x1 → return -1
+6. **Follow-up**: "Nếu có nhiều entrance?" → Multi-source BFS, enqueue all entrances initially
 
 ---
 
@@ -68,39 +50,127 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: BFS with Step Counter
+ * Time: O(M × N) — visit each cell at most once
+ * Space: O(M × N) — queue + visited set
+ *
+ * BFS từ entrance, đếm số bước. Cell trên biên (không phải entrance) → trả về steps.
  */
-function nearestExitFromEntranceInMazeBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function nearestExit(maze: string[][], entrance: number[]): number {
+  const m = maze.length,
+    n = maze[0].length;
+  const [er, ec] = entrance;
+  const dirs = [
+    [0, 1],
+    [0, -1],
+    [1, 0],
+    [-1, 0],
+  ];
+
+  // Mark entrance as visited (walls '+' naturally blocked)
+  const visited: boolean[][] = Array.from({ length: m }, () => new Array(n).fill(false));
+  visited[er][ec] = true;
+
+  const queue: [number, number, number][] = [[er, ec, 0]]; // [row, col, steps]
+
+  while (queue.length > 0) {
+    const [r, c, steps] = queue.shift()!;
+    for (const [dr, dc] of dirs) {
+      const nr = r + dr,
+        nc = c + dc;
+      if (nr < 0 || nr >= m || nc < 0 || nc >= n) continue;
+      if (visited[nr][nc] || maze[nr][nc] === "+") continue;
+      // Border cell that is not the entrance = exit
+      if (nr === 0 || nr === m - 1 || nc === 0 || nc === n - 1) return steps + 1;
+      visited[nr][nc] = true;
+      queue.push([nr, nc, steps + 1]);
+    }
+  }
+  return -1;
 }
 
 /**
- * Solution 2: Optimized — BFS
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: BFS with Level Processing
+ * Time: O(M × N) — visit each cell at most once
+ * Space: O(M × N) — queue
+ *
+ * Process queue level by level — cleaner step counting.
+ * Modify maze in-place as visited marker to save space.
  */
-function nearestExitFromEntranceInMaze(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using BFS
-  // Hint: Use queue, process level by level
-  throw new Error('Not implemented');
+function nearestExitV2(maze: string[][], entrance: number[]): number {
+  const m = maze.length,
+    n = maze[0].length;
+  const [er, ec] = entrance;
+  const dirs = [
+    [0, 1],
+    [0, -1],
+    [1, 0],
+    [-1, 0],
+  ];
+
+  const queue: [number, number][] = [[er, ec]];
+  maze[er][ec] = "+"; // mark entrance as visited
+  let steps = 0;
+
+  while (queue.length > 0) {
+    steps++;
+    const size = queue.length;
+    for (let i = 0; i < size; i++) {
+      const [r, c] = queue.shift()!;
+      for (const [dr, dc] of dirs) {
+        const nr = r + dr,
+          nc = c + dc;
+        if (nr < 0 || nr >= m || nc < 0 || nc >= n || maze[nr][nc] === "+") continue;
+        if (nr === 0 || nr === m - 1 || nc === 0 || nc === n - 1) return steps;
+        maze[nr][nc] = "+"; // mark visited
+        queue.push([nr, nc]);
+      }
+    }
+  }
+  return -1;
 }
 
 // === Test Cases ===
-// console.log(nearestExitFromEntranceInMaze(/* example 1 */)); // expected
-// console.log(nearestExitFromEntranceInMaze(/* example 2 */)); // expected
-// console.log(nearestExitFromEntranceInMaze(/* edge case */)); // expected
+console.log(
+  nearestExit(
+    [
+      ["+", "+", ".", "+"],
+      [".", ".", ".", "+"],
+      ["+", "+", "+", "."],
+    ],
+    [0, 2],
+  ),
+); // 1
+console.log(
+  nearestExit(
+    [
+      ["+", "+", "+"],
+      [".", ".", "."],
+      ["+", "+", "+"],
+    ],
+    [1, 0],
+  ),
+); // 2
+console.log(nearestExit([[".", "+"]], [0, 0])); // -1 (no other exit)
+console.log(
+  nearestExitV2(
+    [
+      ["+", "+", ".", "+"],
+      [".", ".", ".", "+"],
+      ["+", "+", "+", "."],
+    ],
+    [0, 2],
+  ),
+); // 1
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Rotting Oranges](https://leetcode.com/problems/rotting-oranges) — same pattern: BFS
-- [Max Area of Island](https://leetcode.com/problems/max-area-of-island) — same pattern: Union Find
-- [Making A Large Island](https://leetcode.com/problems/making-a-large-island) — same pattern: Union Find
-- [Snakes and Ladders](https://leetcode.com/problems/snakes-and-ladders) — same pattern: BFS
-- [Nearest Exit from Entrance in Maze — LeetCode](https://leetcode.com/problems/nearest-exit-from-entrance-in-maze) — problem page
+| Problem                                                                | Pattern           | Difficulty |
+| ---------------------------------------------------------------------- | ----------------- | ---------- |
+| [Rotting Oranges](https://leetcode.com/problems/rotting-oranges)       | Multi-source BFS  | 🟡 Medium  |
+| [Snakes and Ladders](https://leetcode.com/problems/snakes-and-ladders) | BFS Shortest Path | 🟡 Medium  |
+| [01 Matrix](https://leetcode.com/problems/01-matrix)                   | Multi-source BFS  | 🟡 Medium  |
+| [Max Area of Island](https://leetcode.com/problems/max-area-of-island) | BFS/DFS Grid      | 🟡 Medium  |

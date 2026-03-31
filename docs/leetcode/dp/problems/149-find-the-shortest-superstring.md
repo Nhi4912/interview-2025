@@ -7,7 +7,7 @@ tags: [Array, String, Dynamic Programming, Bit Manipulation, Bitmask]
 leetcode_url: "https://leetcode.com/problems/find-the-shortest-superstring"
 ---
 
-# Find the Shortest Superstring / Find the Shortest Superstring
+# Find the Shortest Superstring / Tìm Chuỗi Siêu Ngắn Nhất
 
 > **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Dynamic Programming
 > **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
@@ -17,92 +17,182 @@ leetcode_url: "https://leetcode.com/problems/find-the-shortest-superstring"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
-
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Find the Shortest Superstring example:**
+**Analogy / Tương tự:** Như bài toán người du lịch (TSP) — bạn cần thăm mọi thành phố (chuỗi) đúng 1 lần với chi phí di chuyển nhỏ nhất. Chi phí = phần không chồng lấp khi nối 2 chuỗi.
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+words = ["alex","loves","leetcode"]
+overlap("alex","loves")    = 0  → cost = len("loves") = 5
+overlap("loves","leetcode")= 0  → cost = len("leetcode") = 8
+overlap("alex","leetcode") = 0
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+dp[mask][i] = max overlap achieved using words in mask, ending at word i
+mask=0b111, best ending → reconstruct path → "alexlovesleetcode"
 ```
+
+**Key insight:** Precompute `overlap[i][j]` = chars of `words[j]` saved when appended after `words[i]`. Then TSP bitmask DP: `dp[mask][j] = max(dp[mask ^ (1<<j)][i] + overlap[i][j])`.
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-Find the Shortest Superstring. ([LeetCode](https://leetcode.com/problems/find-the-shortest-superstring))
-
-Difficulty: Hard | Acceptance: 44.3%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/find-the-shortest-superstring) for full constraints
+- 🔑 **Overlap[i][j]**: Length of longest suffix of `words[i]` that is prefix of `words[j]` / hậu tố của i trùng tiền tố của j
+- 🔑 **State**: `dp[mask][i]` = max total overlap using exactly the words in `mask`, last word is `i` / tổng chồng lấp tối đa
+- 🔑 **Transition**: `dp[mask][j] = max over i: dp[mask^(1<<j)][i] + overlap[i][j]` / chuyển từ trạng thái trước
+- 🔑 **Parent array**: Track `parent[mask][j]` to reconstruct the actual string order / lưu vết để khôi phục
+- 🔑 **n ≤ 12**: 2^12 × 12 × 12 = ~590K states — feasible / ràng buộc nhỏ cho phép bitmask
+- 🔑 **Build result**: Follow parent chain, then append non-overlapping suffix of each word / xây chuỗi từ path
 
 ---
 
-## 📝 Interview Tips
+## Solutions / Giải Pháp
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
-
----
-
-## Solutions
+### Solution 1: TSP Bitmask DP (O(n² × 2ⁿ) time, O(n × 2ⁿ) space)
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Find the Shortest Superstring — TSP Bitmask DP
+ *
+ * 1. Precompute overlap[i][j] = suffix of words[i] matching prefix of words[j].
+ * 2. dp[mask][i] = max overlap when using words in mask, ending at i.
+ * 3. Reconstruct path via parent array, then build superstring.
+ *
+ * Time:  O(n² × 2ⁿ)  — n=12 words max
+ * Space: O(n × 2ⁿ)   — dp and parent tables
  */
-function findTheShortestSuperstringBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function shortestSuperstring(words: string[]): string {
+  const n = words.length;
+
+  // Precompute overlaps
+  const overlap = Array.from({ length: n }, () => new Array(n).fill(0));
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      if (i === j) continue;
+      const maxLen = Math.min(words[i].length, words[j].length);
+      for (let k = maxLen; k >= 1; k--) {
+        if (words[i].endsWith(words[j].slice(0, k))) {
+          overlap[i][j] = k;
+          break;
+        }
+      }
+    }
+  }
+
+  const full = 1 << n;
+  // dp[mask][i] = max overlap achievable
+  const dp: number[][] = Array.from({ length: full }, () => new Array(n).fill(0));
+  const parent: number[][] = Array.from({ length: full }, () => new Array(n).fill(-1));
+
+  for (let mask = 1; mask < full; mask++) {
+    for (let last = 0; last < n; last++) {
+      if (!(mask & (1 << last))) continue;
+      const prev = mask ^ (1 << last);
+      if (prev === 0) continue;
+      for (let i = 0; i < n; i++) {
+        if (!(prev & (1 << i))) continue;
+        const candidate = dp[prev][i] + overlap[i][last];
+        if (candidate > dp[mask][last]) {
+          dp[mask][last] = candidate;
+          parent[mask][last] = i;
+        }
+      }
+    }
+  }
+
+  // Find the last word with maximum overlap
+  let last = 0;
+  for (let i = 1; i < n; i++) {
+    if (dp[full - 1][i] > dp[full - 1][last]) last = i;
+  }
+
+  // Reconstruct path
+  const path: number[] = [];
+  let mask = full - 1;
+  while (last !== -1) {
+    path.push(last);
+    const prev = parent[mask][last];
+    mask ^= 1 << last;
+    last = prev;
+  }
+  path.reverse();
+
+  // Build superstring
+  let result = words[path[0]];
+  for (let k = 1; k < path.length; k++) {
+    const ov = overlap[path[k - 1]][path[k]];
+    result += words[path[k]].slice(ov);
+  }
+  return result;
 }
 
+console.log(shortestSuperstring(["alex", "loves", "leetcode"])); // "alexlovesleetcode"
+console.log(shortestSuperstring(["catg", "ctaagt", "gcta", "ttca", "atgcatc"])); // "gctaagttcatgcatc"
+console.log(shortestSuperstring(["ab", "ba"])); // "aba" or "bab"
+```
+
+### Solution 2: Memoized Top-Down TSP
+
+```typescript
 /**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Find the Shortest Superstring — Top-down Memoization
+ *
+ * Same TSP logic but using recursion + memoization.
+ * Returns minimum total length (for verification).
+ *
+ * Time:  O(n² × 2ⁿ)
+ * Space: O(n × 2ⁿ)
  */
-function findTheShortestSuperstring(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function shortestSuperstringLen(words: string[]): number {
+  const n = words.length;
+  const overlap = Array.from({ length: n }, () => new Array(n).fill(0));
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      if (i === j) continue;
+      const maxOv = Math.min(words[i].length, words[j].length);
+      for (let k = maxOv; k >= 1; k--) {
+        if (words[i].endsWith(words[j].slice(0, k))) {
+          overlap[i][j] = k;
+          break;
+        }
+      }
+    }
+  }
+
+  const totalLen = words.reduce((s, w) => s + w.length, 0);
+  const full = (1 << n) - 1;
+  const memo = new Map<string, number>();
+
+  function dfs(mask: number, last: number): number {
+    if (mask === full) return 0;
+    const key = `${mask},${last}`;
+    if (memo.has(key)) return memo.get(key)!;
+    let best = Infinity;
+    for (let next = 0; next < n; next++) {
+      if (mask & (1 << next)) continue;
+      const cost = words[next].length - overlap[last][next] + dfs(mask | (1 << next), next);
+      best = Math.min(best, cost);
+    }
+    memo.set(key, best);
+    return best;
+  }
+
+  let ans = Infinity;
+  for (let start = 0; start < n; start++) {
+    ans = Math.min(ans, words[start].length + dfs(1 << start, start));
+  }
+  return ans;
 }
 
-// === Test Cases ===
-// console.log(findTheShortestSuperstring(/* example 1 */)); // expected
-// console.log(findTheShortestSuperstring(/* example 2 */)); // expected
-// console.log(findTheShortestSuperstring(/* edge case */)); // expected
+console.log(shortestSuperstringLen(["alex", "loves", "leetcode"])); // 16
+console.log(shortestSuperstringLen(["ab", "ba"])); // 3
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Stickers to Spell Word](https://leetcode.com/problems/stickers-to-spell-word) — same pattern: Backtracking
-- [Maximum Score Words Formed by Letters](https://leetcode.com/problems/maximum-score-words-formed-by-letters) — same pattern: Backtracking
-- [Partition Array Into Two Arrays to Minimize Sum Difference](https://leetcode.com/problems/partition-array-into-two-arrays-to-minimize-sum-difference) — same pattern: Two Pointers
-- [Beautiful Arrangement](https://leetcode.com/problems/beautiful-arrangement) — same pattern: Backtracking
-- [Find the Shortest Superstring — LeetCode](https://leetcode.com/problems/find-the-shortest-superstring) — problem page
+| Problem                                                                                        | Difficulty | Pattern        |
+| ---------------------------------------------------------------------------------------------- | ---------- | -------------- |
+| [Travelling Salesman (classic)](https://leetcode.com/problems/find-the-shortest-superstring)   | 🔴 Hard    | TSP Bitmask DP |
+| [Stickers to Spell Word](https://leetcode.com/problems/stickers-to-spell-word)                 | 🔴 Hard    | Bitmask DP     |
+| [Beautiful Arrangement](https://leetcode.com/problems/beautiful-arrangement)                   | 🟡 Medium  | Bitmask DP     |
+| [Minimum Cost to Connect Sticks](https://leetcode.com/problems/minimum-cost-to-connect-sticks) | 🟡 Medium  | Greedy / Heap  |

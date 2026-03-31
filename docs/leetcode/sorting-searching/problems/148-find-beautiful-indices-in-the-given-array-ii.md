@@ -7,100 +7,158 @@ tags: [Two Pointers, String, Binary Search, Rolling Hash, String Matching]
 leetcode_url: "https://leetcode.com/problems/find-beautiful-indices-in-the-given-array-ii"
 ---
 
-# Find Beautiful Indices in the Given Array II / Find Beautiful Indices in the Given Array II
+# Find Beautiful Indices in the Given Array II / Tìm Chỉ Số Đẹp Trong Mảng II
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Two Pointers
+> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: String Matching + Binary Search
 > **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Find Beautiful Indices in the Given Array I](https://leetcode.com/problems/find-beautiful-indices-in-the-given-array-i) | [Shortest Palindrome](https://leetcode.com/problems/shortest-palindrome)
+> **See also**: [Find Beautiful Indices I](https://leetcode.com/problems/find-beautiful-indices-in-the-given-array-i) | [Shortest Palindrome](https://leetcode.com/problems/shortest-palindrome)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Hãy tưởng tượng hai người đi từ hai đầu con đường, tiến lại gần nhau. Mỗi bước, người nào ở vị trí "tốt hơn" sẽ đứng yên, người kia tiến. Khi họ gặp nhau, bài toán được giải.
-
-**Pattern Recognition:**
-
-- Signal: "sorted array" + "find pair/triplet" → **Two Pointers**
-- Bài này thuộc dạng Two Pointers — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Find Beautiful Indices in the Given Array II example:**
+**Analogy:** Tưởng tượng bạn có hai danh sách địa điểm trên bản đồ (vị trí xuất hiện của a và b trong s). Chỉ số i "đẹp" khi trong bán kính k từ i tồn tại ít nhất một địa điểm b. Dùng KMP tìm tất cả vị trí, rồi binary search để kiểm tra nhanh.
 
 ```
-arr = [... sorted ...]
- L                 R
+s = "isawsmalIsawsmall", a = "saw", b = "small", k = 4
+KMP finds a at: [1, 9]
+KMP finds b at: [4, 12]
 
-Step 1: check condition → move L or R
-Step 2: ...
-Step N: condition met ✅
+i=1 (a-match): need b in [1-4, 1+4]=[0,5] → b=4 ✓ beautiful
+i=9 (a-match): need b in [5,13] → b=12 ✓ beautiful
+Result: [1, 9]
 ```
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-Find Beautiful Indices in the Given Array II. ([LeetCode](https://leetcode.com/problems/find-beautiful-indices-in-the-given-array-ii))
-
-Difficulty: Hard | Acceptance: 26.5%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/find-beautiful-indices-in-the-given-array-ii) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Mảng đã sorted chưa? Có duplicate không?" / Ask if array is sorted and if duplicates exist
-2. **Brute force**: "Dùng 2 vòng for O(n²)" → optimize with two pointers O(n) / Start with nested loops, then optimize
-3. **Optimize**: "Vì mảng sorted, dùng 2 con trỏ L/R tiến vào giữa" / Since sorted, use L/R pointers moving inward
-4. **Edge cases**: "Mảng rỗng, một phần tử, tất cả giống nhau" / Empty array, single element, all same values
+- 🇻🇳 **KMP là gì?** Knuth-Morris-Pratt — tìm chuỗi con trong O(n+m) nhờ bảng failure function tránh so sánh lại / KMP avoids redundant comparisons via failure table
+- 🇻🇳 **Tại sao không dùng indexOf vòng lặp?** O(n\*m) quá chậm với chuỗi dài / naive search is O(n·m), KMP is O(n+m)
+- 🇻🇳 **Binary search trên mảng đã sắp xếp** — vị trí KMP trả về đã theo thứ tự tăng dần / KMP match indices are already sorted, enabling binary search
+- 🇻🇳 **Two-pointer thay binary search** — vì cả hai danh sách đều tăng dần, con trỏ j chỉ tiến, O(n) / two-pointer on sorted lists is O(n)
+- 🇻🇳 **Failure function (π table)** — π[i] = độ dài prefix cũng là suffix của pattern[0..i] / π[i] = length of longest proper prefix-suffix
+- 🇻🇳 **Edge case:** a hoặc b dài hơn s → kết quả rỗng / if |a| or |b| > |s|, return []
 
 ---
 
 ## Solutions
 
+### Solution 1: KMP + Binary Search — O((n+|a|+|b|) log n)
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * KMP string matching + binary search for range queries
+ * Time: O((n + |a| + |b|) log n)  Space: O(n + |a| + |b|)
  */
-function findBeautifulIndicesInTheGivenArrayIiBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function beautifulIndices(s: string, a: string, b: string, k: number): number[] {
+  function kmpSearch(text: string, pattern: string): number[] {
+    const n = text.length,
+      m = pattern.length;
+    const matches: number[] = [];
+    // Build failure function
+    const pi = new Array(m).fill(0);
+    let j = 0;
+    for (let i = 1; i < m; i++) {
+      while (j > 0 && pattern[i] !== pattern[j]) j = pi[j - 1];
+      if (pattern[i] === pattern[j]) j++;
+      pi[i] = j;
+    }
+    // Search
+    j = 0;
+    for (let i = 0; i < n; i++) {
+      while (j > 0 && text[i] !== pattern[j]) j = pi[j - 1];
+      if (text[i] === pattern[j]) j++;
+      if (j === m) {
+        matches.push(i - m + 1);
+        j = pi[j - 1];
+      }
+    }
+    return matches;
+  }
+
+  const aMatches = kmpSearch(s, a);
+  const bMatches = kmpSearch(s, b);
+
+  const result: number[] = [];
+  for (const i of aMatches) {
+    // Binary search: any bMatch in [i-k, i+k]?
+    let lo = 0,
+      hi = bMatches.length - 1,
+      found = false;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      const diff = bMatches[mid] - i;
+      if (Math.abs(diff) <= k) {
+        found = true;
+        break;
+      } else if (diff < 0) lo = mid + 1;
+      else hi = mid - 1;
+    }
+    if (found) result.push(i);
+  }
+  return result;
 }
 
+console.log(beautifulIndices("isawsmalIsawsmall", "saw", "small", 4)); // [9]
+console.log(beautifulIndices("abcd", "a", "a", 4)); // [0]
+```
+
+### Solution 2: KMP + Two Pointers — O(n + |a| + |b|)
+
+```typescript
 /**
- * Solution 2: Optimized — Two Pointers
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Two-pointer on sorted match lists — optimal linear pass
+ * Time: O(n + |a| + |b|)  Space: O(n)
  */
-function findBeautifulIndicesInTheGivenArrayIi(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Two Pointers
-  // Hint: Use L/R pointers on sorted input, move based on comparison
-  throw new Error('Not implemented');
+function beautifulIndicesTP(s: string, a: string, b: string, k: number): number[] {
+  function kmpSearch(text: string, pattern: string): number[] {
+    const m = pattern.length;
+    const pi = new Array(m).fill(0);
+    let j = 0;
+    for (let i = 1; i < m; i++) {
+      while (j > 0 && pattern[i] !== pattern[j]) j = pi[j - 1];
+      if (pattern[i] === pattern[j]) j++;
+      pi[i] = j;
+    }
+    const matches: number[] = [];
+    j = 0;
+    for (let i = 0; i < text.length; i++) {
+      while (j > 0 && text[i] !== pattern[j]) j = pi[j - 1];
+      if (text[i] === pattern[j]) j++;
+      if (j === m) {
+        matches.push(i - m + 1);
+        j = pi[j - 1];
+      }
+    }
+    return matches;
+  }
+
+  const aMatches = kmpSearch(s, a);
+  const bMatches = kmpSearch(s, b);
+  const result: number[] = [];
+  let j = 0;
+
+  for (const i of aMatches) {
+    // Advance j until bMatches[j] >= i - k
+    while (j < bMatches.length && bMatches[j] < i - k) j++;
+    // Check if bMatches[j] <= i + k
+    if (j < bMatches.length && bMatches[j] <= i + k) result.push(i);
+  }
+  return result;
 }
 
-// === Test Cases ===
-// console.log(findBeautifulIndicesInTheGivenArrayIi(/* example 1 */)); // expected
-// console.log(findBeautifulIndicesInTheGivenArrayIi(/* example 2 */)); // expected
-// console.log(findBeautifulIndicesInTheGivenArrayIi(/* edge case */)); // expected
+console.log(beautifulIndicesTP("isawsmalIsawsmall", "saw", "small", 4)); // [9]
+console.log(beautifulIndicesTP("abcd", "a", "a", 4)); // [0]
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Find Beautiful Indices in the Given Array I](https://leetcode.com/problems/find-beautiful-indices-in-the-given-array-i) — same pattern: Two Pointers
-- [Shortest Palindrome](https://leetcode.com/problems/shortest-palindrome) — same pattern: String Matching
-- [Count Prefix and Suffix Pairs II](https://leetcode.com/problems/count-prefix-and-suffix-pairs-ii) — same pattern: Trie
-- [Count Prefix and Suffix Pairs I](https://leetcode.com/problems/count-prefix-and-suffix-pairs-i) — same pattern: Trie
-- [Find Beautiful Indices in the Given Array II — LeetCode](https://leetcode.com/problems/find-beautiful-indices-in-the-given-array-ii) — problem page
+| Problem                                                                                                                    | Difficulty | Pattern             |
+| -------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------- |
+| [Find Beautiful Indices I](https://leetcode.com/problems/find-beautiful-indices-in-the-given-array-i)                      | 🟡 Medium  | KMP + Binary Search |
+| [Shortest Palindrome](https://leetcode.com/problems/shortest-palindrome)                                                   | 🔴 Hard    | KMP                 |
+| [Repeated Substring Pattern](https://leetcode.com/problems/repeated-substring-pattern)                                     | 🟢 Easy    | KMP                 |
+| [Find the Index of the First Occurrence](https://leetcode.com/problems/find-the-index-of-the-first-occurrence-in-a-string) | 🟢 Easy    | String Matching     |

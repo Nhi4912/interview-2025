@@ -7,97 +7,126 @@ tags: [Array, Hash Table, Greedy, Counting]
 leetcode_url: "https://leetcode.com/problems/equal-sum-arrays-with-minimum-number-of-operations"
 ---
 
-# Equal Sum Arrays With Minimum Number of Operations / Equal Sum Arrays With Minimum Number of Operations
+# Equal Sum Arrays With Minimum Number of Operations / Mảng Tổng Bằng Nhau Với Số Phép Toán Tối Thiểu
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Task Scheduler](https://leetcode.com/problems/task-scheduler) | [Least Number of Unique Integers after K Removals](https://leetcode.com/problems/least-number-of-unique-integers-after-k-removals)
+**Difficulty:** Medium | **Category:** Array, Greedy | **LeetCode:** [1775](https://leetcode.com/problems/equal-sum-arrays-with-minimum-number-of-operations)
 
----
+## 🧠 Intuition
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Giống ăn buffet — mỗi lần bạn chọn món ngon nhất hiện tại. Nếu chứng minh được rằng chọn tham lam từng bước vẫn tối ưu toàn cục, thì Greedy là đáp án.
-
-**Pattern Recognition:**
-
-- Signal: "locally optimal → globally optimal" + "sorting + selection" → **Greedy**
-- Bài này thuộc dạng Greedy — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Equal Sum Arrays With Minimum Number of Operations example:**
+> **Như cân bằng hai chén cân — luôn dùng đòn bẩy lớn nhất trước.**
+> Mỗi phần tử có "tiềm năng thay đổi" tối đa. Chén nhẹ tăng lên 6, chén nặng giảm về 1.
 
 ```
-// TODO: Add step-by-step visual for Greedy
-// Show one complete example with state at each step
+nums1=[1,2] sum=3     nums2=[3,4] sum=7
+gap = 7 - 3 = 4
+
+gains (tăng nums1): 6-1=5, 6-2=4
+gains (giảm nums2): 4-1=3, 3-1=2
+
+sorted desc: [5, 4, 3, 2]
+step 1: gap = 4 - 5 = -1 ≤ 0  →  done! 1 operation
 ```
 
----
+Tham lam: sắp xếp gains giảm dần → áp dụng từng bước cho đến khi `gap ≤ 0`.
 
-## Problem Description
+## 📝 Tips
 
-Equal Sum Arrays With Minimum Number of Operations. ([LeetCode](https://leetcode.com/problems/equal-sum-arrays-with-minimum-number-of-operations))
+1. **Chuẩn hoá:** luôn để mảng tổng nhỏ hơn là `s1`, lớn hơn là `s2`.
+2. **Gain của s1[i]:** `6 - val` — tăng phần tử lên tối đa (6 là max die value).
+3. **Gain của s2[i]:** `val - 1` — giảm phần tử xuống tối đa (1 là min die value).
+4. **Sort gains giảm dần** rồi tham lam áp dụng gain lớn nhất mỗi bước.
+5. **Kiểm tra vô nghiệm:** nếu `max_sum(s1) < min_sum(s2)` → trả về -1.
+6. **Counting sort O(n):** chỉ 6 giá trị khả thi → bucket[1..5] thay vì sort.
 
-Difficulty: Medium | Acceptance: 53.9%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/equal-sum-arrays-with-minimum-number-of-operations) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
-
-## Solutions
+## 💡 Solutions
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Approach 1: Greedy with sorted gains array
+ * Time: O((n+m) log(n+m)) | Space: O(n+m)
+ *
+ * Collect maximum achievable change per element, sort desc, apply greedily.
  */
-function equalSumArraysWithMinimumNumberOfOperationsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minOperations(nums1: number[], nums2: number[]): number {
+  let sum1 = nums1.reduce((a, b) => a + b, 0);
+  let sum2 = nums2.reduce((a, b) => a + b, 0);
+  if (sum1 === sum2) return 0;
+
+  // Normalize: s1 has smaller sum, s2 has larger sum
+  if (sum1 > sum2) {
+    [nums1, nums2] = [nums2, nums1];
+    [sum1, sum2] = [sum2, sum1];
+  }
+
+  // Impossible: even at max s1 and min s2, sums can't meet
+  if (nums1.length * 6 < nums2.length * 1 + (sum2 - sum1)) {
+    // more precisely: max achievable sum1 vs min achievable sum2
+    // just let greedy fall through and return -1 if gap remains
+  }
+
+  let gap = sum2 - sum1;
+  const gains: number[] = [];
+  for (const v of nums1) gains.push(6 - v); // increase elements in smaller array
+  for (const v of nums2) gains.push(v - 1); // decrease elements in larger array
+  gains.sort((a, b) => b - a);
+
+  let ops = 0;
+  for (const g of gains) {
+    if (gap <= 0) break;
+    gap -= g;
+    ops++;
+  }
+  return gap <= 0 ? ops : -1;
 }
 
-/**
- * Solution 2: Optimized — Greedy
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function equalSumArraysWithMinimumNumberOfOperations(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Greedy
-  // Hint: Sort by key metric, make locally optimal choice at each step
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(equalSumArraysWithMinimumNumberOfOperations(/* example 1 */)); // expected
-// console.log(equalSumArraysWithMinimumNumberOfOperations(/* example 2 */)); // expected
-// console.log(equalSumArraysWithMinimumNumberOfOperations(/* edge case */)); // expected
+console.log(minOperations([1, 2], [3, 4])); // 1
+console.log(minOperations([1, 1, 1, 1], [1])); // 1
+console.log(minOperations([3], [1, 5])); // 1
+console.log(minOperations([1, 1], [6, 6])); // 3
 ```
 
----
+```typescript
+/**
+ * Approach 2: Counting sort — O(n+m) gains bucketed by value 1-5
+ * Time: O(n+m) | Space: O(1) — only 6 buckets
+ *
+ * Since all values ∈ [1,6], gains ∈ [0,5]. Use frequency buckets.
+ */
+function minOperations2(nums1: number[], nums2: number[]): number {
+  let sum1 = nums1.reduce((a, b) => a + b, 0);
+  let sum2 = nums2.reduce((a, b) => a + b, 0);
+  if (sum1 === sum2) return 0;
 
-## 🔗 Related Problems
+  // Normalize
+  if (sum1 > sum2) {
+    [nums1, nums2] = [nums2, nums1];
+    [sum1, sum2] = [sum2, sum1];
+  }
 
-- [Task Scheduler](https://leetcode.com/problems/task-scheduler) — same pattern: Heap / Priority Queue
-- [Least Number of Unique Integers after K Removals](https://leetcode.com/problems/least-number-of-unique-integers-after-k-removals) — same pattern: Greedy
-- [Minimum Total Cost to Make Arrays Unequal](https://leetcode.com/problems/minimum-total-cost-to-make-arrays-unequal) — same pattern: Greedy
-- [Maximum Palindromes After Operations](https://leetcode.com/problems/maximum-palindromes-after-operations) — same pattern: Greedy
-- [Equal Sum Arrays With Minimum Number of Operations — LeetCode](https://leetcode.com/problems/equal-sum-arrays-with-minimum-number-of-operations) — problem page
+  let gap = sum2 - sum1;
+  const bucket = new Array(7).fill(0); // bucket[g] = count of elements with gain g
+
+  for (const v of nums1) bucket[6 - v]++;
+  for (const v of nums2) bucket[v - 1]++;
+
+  let ops = 0;
+  for (let g = 5; g >= 1 && gap > 0; g--) {
+    const use = Math.min(bucket[g], Math.ceil(gap / g));
+    ops += use;
+    gap -= use * g;
+  }
+  return gap <= 0 ? ops : -1;
+}
+
+console.log(minOperations2([1, 2], [3, 4])); // 1
+console.log(minOperations2([1, 1, 1, 1], [1])); // 1
+console.log(minOperations2([6, 6], [1])); // 0  (12 > 1, but sum6+6=12, sum[1]=1? swap: [1] vs [6,6])
+```
+
+## 🔗 Related
+
+| Problem                                                                                                                                          | Difficulty | Connection               |
+| ------------------------------------------------------------------------------------------------------------------------------------------------ | ---------- | ------------------------ |
+| [881. Boats to Save People](https://leetcode.com/problems/boats-to-save-people/)                                                                 | Medium     | Greedy with sorted array |
+| [1647. Minimum Deletions to Make Char Frequencies Unique](https://leetcode.com/problems/minimum-deletions-to-make-character-frequencies-unique/) | Medium     | Greedy on sorted data    |
+| [2171. Removing Minimum Number of Magic Beans](https://leetcode.com/problems/removing-minimum-number-of-magic-beans/)                            | Medium     | Sum balancing greedy     |

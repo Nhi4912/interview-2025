@@ -7,9 +7,9 @@ tags: [Array, Hash Table, Tree, Depth-First Search, Breadth-First Search]
 leetcode_url: "https://leetcode.com/problems/employee-importance"
 ---
 
-# Employee Importance / Employee Importance
+# Employee Importance / Tầm Quan Trọng Nhân Viên
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: BFS
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: BFS/DFS on Tree
 > **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
 > **See also**: [Smallest Common Region](https://leetcode.com/problems/smallest-common-region) | [Operations on Tree](https://leetcode.com/problems/operations-on-tree)
 
@@ -17,90 +17,133 @@ leetcode_url: "https://leetcode.com/problems/employee-importance"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như ném đá xuống ao — sóng lan ra theo từng vòng đều đặn. Khám phá hết tất cả ở khoảng cách 1, rồi mới sang khoảng cách 2.
+**Analogy (VI):** Như tính tổng lương của một manager và tất cả cấp dưới của họ. Build map id→employee trước, rồi BFS/DFS từ target để cộng dồn importance.
 
-**Pattern Recognition:**
-
-- Signal: "shortest path (unweighted)" + "level-order" → **BFS**
-- Bài này thuộc dạng BFS — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Employee Importance example:**
+**Analogy (EN):** Build an id→Employee map for O(1) lookup, then BFS/DFS from the target employee summing importance values, enqueuing all subordinates.
 
 ```
-Level 0:     [root]
-Level 1:   [A, B]
-Level 2: [C, D, E]
+employees: [{id:1, imp:5, sub:[2,3]}, {id:2, imp:3, sub:[]}, {id:3, imp:3, sub:[]}]
+target: 1
 
-BFS: process level by level using queue
+BFS from id=1:
+  queue=[1]  sum=0
+  pop 1 → sum=5, enqueue [2,3]
+  pop 2 → sum=8, enqueue []
+  pop 3 → sum=11, enqueue []
+  → return 11
 ```
-
----
-
-## Problem Description
-
-Employee Importance. ([LeetCode](https://leetcode.com/problems/employee-importance))
-
-Difficulty: Medium | Acceptance: 68.4%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/employee-importance) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify / Xác nhận**: "subordinates có thể rỗng không?" / Subordinates list may be empty — handle gracefully
+2. **Map first / Xây map trước**: Build id→Employee map để lookup O(1) thay vì O(n) mỗi lần / Always build lookup map first
+3. **BFS vs DFS**: Cả hai O(n) — BFS dùng queue, DFS dùng recursion / Both equivalent; pick what feels natural
+4. **Edge case / Biên**: Employee không có subordinates → chỉ cộng importance của bản thân / Leaf employee: just add its own importance
+5. **Follow-up**: "Nếu muốn tính importance của một subtree cụ thể?" → same approach với different root
+6. **Space / Bộ nhớ**: Map + queue/stack O(n) — acceptable cho n ≤ 2000
 
 ---
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function employeeImportanceBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// Definition for Employee (from LeetCode)
+class Employee {
+  id: number;
+  importance: number;
+  subordinates: number[];
+  constructor(id: number, importance: number, subordinates: number[]) {
+    this.id = id;
+    this.importance = importance;
+    this.subordinates = subordinates;
+  }
 }
 
 /**
- * Solution 2: Optimized — BFS
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: BFS with HashMap
+ * Time: O(N) — visit every employee once
+ * Space: O(N) — map + queue
+ *
+ * Build map rồi BFS từ target, cộng dồn importance.
  */
-function employeeImportance(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using BFS
-  // Hint: Use queue, process level by level
-  throw new Error('Not implemented');
+function getImportanceBFS(employees: Employee[], id: number): number {
+  const map = new Map<number, Employee>();
+  for (const emp of employees) map.set(emp.id, emp);
+
+  let total = 0;
+  const queue: number[] = [id];
+
+  while (queue.length > 0) {
+    const cur = queue.shift()!;
+    const emp = map.get(cur)!;
+    total += emp.importance;
+    for (const sub of emp.subordinates) queue.push(sub);
+  }
+  return total;
+}
+
+/**
+ * Solution 2: DFS Recursive with HashMap
+ * Time: O(N) — visit every employee once
+ * Space: O(N) — map + recursion stack depth
+ *
+ * DFS đệ quy — cộng importance của node hiện tại + tổng importance của tất cả sub.
+ */
+function getImportance(employees: Employee[], id: number): number {
+  const map = new Map<number, Employee>();
+  for (const emp of employees) map.set(emp.id, emp);
+
+  function dfs(empId: number): number {
+    const emp = map.get(empId)!;
+    return emp.importance + emp.subordinates.reduce((s, sub) => s + dfs(sub), 0);
+  }
+
+  return dfs(id);
+}
+
+/**
+ * Solution 3: Iterative DFS with Stack
+ * Time: O(N) — visit every employee once
+ * Space: O(N) — map + explicit stack
+ *
+ * Stack-based DFS — tránh recursion stack overflow cho cây sâu.
+ */
+function getImportanceStack(employees: Employee[], id: number): number {
+  const map = new Map<number, Employee>();
+  for (const emp of employees) map.set(emp.id, emp);
+
+  let total = 0;
+  const stack: number[] = [id];
+
+  while (stack.length > 0) {
+    const cur = stack.pop()!;
+    const emp = map.get(cur)!;
+    total += emp.importance;
+    for (const sub of emp.subordinates) stack.push(sub);
+  }
+  return total;
 }
 
 // === Test Cases ===
-// console.log(employeeImportance(/* example 1 */)); // expected
-// console.log(employeeImportance(/* example 2 */)); // expected
-// console.log(employeeImportance(/* edge case */)); // expected
+const e1 = [new Employee(1, 5, [2, 3]), new Employee(2, 3, []), new Employee(3, 3, [])];
+console.log(getImportance(e1, 1)); // 11
+console.log(getImportanceBFS(e1, 1)); // 11
+console.log(getImportanceStack(e1, 2)); // 3
+
+const e2 = [new Employee(1, 2, [5]), new Employee(5, -3, [])];
+console.log(getImportance(e2, 5)); // -3
+console.log(getImportance(e2, 1)); // -1
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Smallest Common Region](https://leetcode.com/problems/smallest-common-region) — same pattern: BFS
-- [Operations on Tree](https://leetcode.com/problems/operations-on-tree) — same pattern: BFS
-- [Reachable Nodes With Restrictions](https://leetcode.com/problems/reachable-nodes-with-restrictions) — same pattern: Union Find
-- [All Nodes Distance K in Binary Tree](https://leetcode.com/problems/all-nodes-distance-k-in-binary-tree) — same pattern: BFS
-- [Employee Importance — LeetCode](https://leetcode.com/problems/employee-importance) — problem page
+| Problem                                                                                                  | Pattern     | Difficulty |
+| -------------------------------------------------------------------------------------------------------- | ----------- | ---------- |
+| [All Nodes Distance K in Binary Tree](https://leetcode.com/problems/all-nodes-distance-k-in-binary-tree) | BFS on Tree | 🟡 Medium  |
+| [Operations on Tree](https://leetcode.com/problems/operations-on-tree)                                   | BFS/DFS     | 🟡 Medium  |
+| [Smallest Common Region](https://leetcode.com/problems/smallest-common-region)                           | LCA         | 🟡 Medium  |
+| [Reachable Nodes With Restrictions](https://leetcode.com/problems/reachable-nodes-with-restrictions)     | BFS         | 🟡 Medium  |

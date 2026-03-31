@@ -7,62 +7,40 @@ tags: [Array, Dynamic Programming, Breadth-First Search, Matrix]
 leetcode_url: "https://leetcode.com/problems/as-far-from-land-as-possible"
 ---
 
-# As Far from Land as Possible / As Far from Land as Possible
+# As Far from Land as Possible / Xa Đất Liền Nhất Có Thể
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dynamic Programming
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Multi-Source BFS
 > **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Longest Increasing Path in a Matrix](https://leetcode.com/problems/longest-increasing-path-in-a-matrix) | [01 Matrix](https://leetcode.com/problems/01-matrix)
+> **See also**: [01 Matrix](https://leetcode.com/problems/01-matrix) | [Rotting Oranges](https://leetcode.com/problems/rotting-oranges)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+**Analogy (VI):** Như lũ từ tất cả đất liền cùng lan ra một lúc — BFS multi-source. Ô nước cuối cùng bị "ngập" chính là ô xa đất nhất. Khoảng cách của nó là đáp án.
 
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — As Far from Land as Possible example:**
+**Analogy (EN):** Multi-source BFS: enqueue all land cells (value 1) simultaneously. BFS spreads outward — the last water cell reached has the maximum distance to any land.
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+Grid:        After BFS:
+1  0  1      1   1   1
+0  0  0  →   1   2   1    ← distance from nearest land
+1  0  1      1   1   1
+Max = 2  (center cell)
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+All 0 or all 1 → return -1 (no land or no water)
 ```
-
----
-
-## Problem Description
-
-As Far from Land as Possible. ([LeetCode](https://leetcode.com/problems/as-far-from-land-as-possible))
-
-Difficulty: Medium | Acceptance: 51.8%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/as-far-from-land-as-possible) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
+1. **Multi-source BFS / BFS đa nguồn**: Enqueue ALL land cells first, BFS simultaneously — same as 01 Matrix / Start from all land cells at once
+2. **Last cell / Ô cuối**: Ô cuối cùng BFS chạm tới = xa nhất. Lưu dist của nó / Track distance of the last dequeued water cell
+3. **Edge case / Biên**: Nếu không có water cell → return -1; nếu không có land cell → return -1
+4. **In-place / Chỉnh sửa tại chỗ**: Có thể modify grid để đánh dấu visited, tiết kiệm bộ nhớ / Modify grid values to mark visited (saves separate boolean array)
+5. **DP alternative / Cách DP**: DP 2 lượt (top-left → bottom-right rồi ngược lại) cũng ra kết quả đúng / Two-pass DP also works
+6. **Follow-up**: "Nếu grid không phải vuông?" → same algorithm, just use m and n separately
 
 ---
 
@@ -70,39 +48,146 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Multi-Source BFS (Optimal)
+ * Time: O(M × N) — each cell enqueued/dequeued at most once
+ * Space: O(M × N) — queue in worst case
+ *
+ * Enqueue tất cả land (1) cells. BFS ra ngoài. Ô cuối cùng là xa nhất.
  */
-function asFarFromLandAsPossibleBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function maxDistance(grid: number[][]): number {
+  const n = grid.length;
+  const queue: [number, number][] = [];
+
+  // Enqueue all land cells
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      if (grid[r][c] === 1) queue.push([r, c]);
+    }
+  }
+
+  // Edge: all land or all water
+  if (queue.length === 0 || queue.length === n * n) return -1;
+
+  const dirs = [
+    [0, 1],
+    [0, -1],
+    [1, 0],
+    [-1, 0],
+  ];
+  let maxDist = -1;
+  let dist = 0;
+
+  while (queue.length > 0) {
+    dist++;
+    const size = queue.length;
+    for (let i = 0; i < size; i++) {
+      const [r, c] = queue.shift()!;
+      for (const [dr, dc] of dirs) {
+        const nr = r + dr,
+          nc = c + dc;
+        if (nr < 0 || nr >= n || nc < 0 || nc >= n || grid[nr][nc] !== 0) continue;
+        grid[nr][nc] = dist + 1; // mark visited with distance+1 (avoid 0/1 confusion)
+        maxDist = dist;
+        queue.push([nr, nc]);
+      }
+    }
+  }
+  return maxDist;
 }
 
 /**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Two-Pass Dynamic Programming
+ * Time: O(M × N) — two linear passes
+ * Space: O(M × N) — dp array
+ *
+ * Pass 1 (top-left→bottom-right): dp[r][c] = min dist from top-left land.
+ * Pass 2 (bottom-right→top-left): dp[r][c] = min of both directions.
+ * Answer = max(dp) where grid==0.
  */
-function asFarFromLandAsPossible(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function maxDistanceDP(grid: number[][]): number {
+  const n = grid.length;
+  const INF = n * n + 1;
+  const dp: number[][] = Array.from({ length: n }, () => new Array(n).fill(INF));
+
+  // Initialize land cells with distance 0
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (grid[r][c] === 1) dp[r][c] = 0;
+
+  // Pass 1: top → bottom, left → right
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      if (r > 0) dp[r][c] = Math.min(dp[r][c], dp[r - 1][c] + 1);
+      if (c > 0) dp[r][c] = Math.min(dp[r][c], dp[r][c - 1] + 1);
+    }
+  }
+
+  // Pass 2: bottom → top, right → left
+  for (let r = n - 1; r >= 0; r--) {
+    for (let c = n - 1; c >= 0; c--) {
+      if (r < n - 1) dp[r][c] = Math.min(dp[r][c], dp[r + 1][c] + 1);
+      if (c < n - 1) dp[r][c] = Math.min(dp[r][c], dp[r][c + 1] + 1);
+    }
+  }
+
+  let ans = -1;
+  for (let r = 0; r < n; r++)
+    for (let c = 0; c < n; c++) if (grid[r][c] === 0) ans = Math.max(ans, dp[r][c]);
+
+  return ans === INF ? -1 : ans;
 }
 
 // === Test Cases ===
-// console.log(asFarFromLandAsPossible(/* example 1 */)); // expected
-// console.log(asFarFromLandAsPossible(/* example 2 */)); // expected
-// console.log(asFarFromLandAsPossible(/* edge case */)); // expected
+console.log(
+  maxDistance([
+    [1, 0, 1],
+    [0, 0, 0],
+    [1, 0, 1],
+  ]),
+); // 2
+console.log(
+  maxDistance([
+    [1, 0, 0],
+    [0, 0, 0],
+    [0, 0, 0],
+  ]),
+); // 4
+console.log(
+  maxDistance([
+    [1, 1, 1],
+    [1, 1, 1],
+    [1, 1, 1],
+  ]),
+); // -1 (no water)
+console.log(
+  maxDistance([
+    [0, 0, 0],
+    [0, 0, 0],
+    [0, 0, 0],
+  ]),
+); // -1 (no land)
+
+console.log(
+  maxDistanceDP([
+    [1, 0, 1],
+    [0, 0, 0],
+    [1, 0, 1],
+  ]),
+); // 2
+console.log(
+  maxDistanceDP([
+    [1, 0, 0],
+    [0, 0, 0],
+    [0, 0, 0],
+  ]),
+); // 4
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Longest Increasing Path in a Matrix](https://leetcode.com/problems/longest-increasing-path-in-a-matrix) — same pattern: Topological Sort
-- [01 Matrix](https://leetcode.com/problems/01-matrix) — same pattern: Dynamic Programming
-- [Minimum Number of Visited Cells in a Grid](https://leetcode.com/problems/minimum-number-of-visited-cells-in-a-grid) — same pattern: Union Find
-- [Sliding Puzzle](https://leetcode.com/problems/sliding-puzzle) — same pattern: Backtracking
-- [As Far from Land as Possible — LeetCode](https://leetcode.com/problems/as-far-from-land-as-possible) — problem page
+| Problem                                                                                                  | Pattern          | Difficulty |
+| -------------------------------------------------------------------------------------------------------- | ---------------- | ---------- |
+| [01 Matrix](https://leetcode.com/problems/01-matrix)                                                     | Multi-source BFS | 🟡 Medium  |
+| [Rotting Oranges](https://leetcode.com/problems/rotting-oranges)                                         | Multi-source BFS | 🟡 Medium  |
+| [Nearest Exit from Entrance in Maze](https://leetcode.com/problems/nearest-exit-from-entrance-in-maze)   | BFS              | 🟡 Medium  |
+| [Longest Increasing Path in a Matrix](https://leetcode.com/problems/longest-increasing-path-in-a-matrix) | DFS + Memo       | 🔴 Hard    |

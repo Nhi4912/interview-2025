@@ -7,7 +7,7 @@ tags: [String, Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/shortest-common-supersequence"
 ---
 
-# Shortest Common Supersequence / Shortest Common Supersequence
+# Shortest Common Supersequence / Chuỗi Siêu Ngắn Nhất Chung
 
 > **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Dynamic Programming
 > **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
@@ -17,92 +17,155 @@ leetcode_url: "https://leetcode.com/problems/shortest-common-supersequence"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
-
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Shortest Common Supersequence example:**
+**Analogy / Tương tự:** Như hợp nhất hai hàng đợi — giữ nguyên thứ tự của cả hai. Các ký tự chung (LCS) chỉ xuất hiện một lần; các ký tự không chung xen kẽ.
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+str1 = "abac", str2 = "cab"
+LCS  = "ab"  (length 2)
+SCS  = "cabac" (length 5 = 4+3-2)
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+Reconstruction via LCS table:
+     ""  c  a  b
+  ""  0  1  2  3
+  a   1  1  1  2
+  b   2  2  2  1*  ← matched 'b'
+  a   3  3  2  2
+  c   4  3  3  3
+
+Walk back: 'b' matched → keep once, 'a' matched → keep once,
+           remaining 'c' from str2, 'a','c' from str1
+→ "cabac"
 ```
+
+**Key insight:** `|SCS| = |str1| + |str2| - |LCS|`. Build LCS DP table, then reconstruct SCS by tracing back: when chars match, include once; otherwise include the char from the string with larger remaining LCS.
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-Shortest Common Supersequence. ([LeetCode](https://leetcode.com/problems/shortest-common-supersequence))
-
-Difficulty: Hard | Acceptance: 61.3%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/shortest-common-supersequence) for full constraints
+- 🔑 **SCS length formula**: `len(str1) + len(str2) - len(LCS)` / độ dài = tổng trừ LCS
+- 🔑 **LCS DP**: `dp[i][j]` = LCS length of `str1[0..i)` and `str2[0..j)` / DP tiêu chuẩn LCS
+- 🔑 **Reconstruction**: Walk `dp` from `[m][n]` back to `[0][0]` — match → include once, else include mismatched char / truy vết lùi
+- 🔑 **When str1[i]==str2[j]**: Add char once and move both `i`, `j` back / ký tự chung thêm 1 lần
+- 🔑 **When different**: Move in direction of larger `dp` value, prepend that char / đi theo hướng LCS lớn hơn
+- 🔑 **Don't forget remaining**: After reaching `i=0` or `j=0`, append rest of other string / thêm phần còn lại
 
 ---
 
-## 📝 Interview Tips
+## Solutions / Giải Pháp
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
-
----
-
-## Solutions
+### Solution 1: LCS DP + Reconstruction (O(mn) time and space)
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Shortest Common Supersequence — LCS-based DP
+ *
+ * 1. Compute LCS dp table (standard O(mn)).
+ * 2. Reconstruct SCS by tracing back dp table:
+ *    - If chars match: include once, move diagonally.
+ *    - Else: include char from larger dp side, move that pointer back.
+ * 3. Prepend any remaining characters from either string.
+ *
+ * Time:  O(m × n)
+ * Space: O(m × n)
  */
-function shortestCommonSupersequenceBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function shortestCommonSupersequence(str1: string, str2: string): string {
+  const m = str1.length,
+    n = str2.length;
+
+  // Build LCS dp table
+  const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (str1[i - 1] === str2[j - 1]) {
+        dp[i][j] = dp[i - 1][j - 1] + 1;
+      } else {
+        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+      }
+    }
+  }
+
+  // Reconstruct SCS by tracing back
+  const result: string[] = [];
+  let i = m,
+    j = n;
+  while (i > 0 && j > 0) {
+    if (str1[i - 1] === str2[j - 1]) {
+      result.push(str1[i - 1]); // Common char: include once
+      i--;
+      j--;
+    } else if (dp[i - 1][j] > dp[i][j - 1]) {
+      result.push(str1[i - 1]); // Take from str1
+      i--;
+    } else {
+      result.push(str2[j - 1]); // Take from str2
+      j--;
+    }
+  }
+  // Append remaining characters
+  while (i > 0) {
+    result.push(str1[i - 1]);
+    i--;
+  }
+  while (j > 0) {
+    result.push(str2[j - 1]);
+    j--;
+  }
+
+  return result.reverse().join("");
 }
 
+console.log(shortestCommonSupersequence("abac", "cab")); // "cabac" (length 5)
+console.log(shortestCommonSupersequence("aces", "abcde")); // "abcdes" (length 6)
+console.log(shortestCommonSupersequence("abc", "abc")); // "abc" (length 3)
+console.log(shortestCommonSupersequence("a", "b")); // "ab" (length 2)
+```
+
+### Solution 2: Length Only (O(mn) time, O(n) space)
+
+```typescript
 /**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Shortest Common Supersequence — Length Only
+ *
+ * If only the length is needed: |SCS| = m + n - |LCS|.
+ * Space-optimized LCS with rolling array.
+ *
+ * Time:  O(m × n)
+ * Space: O(n)
  */
-function shortestCommonSupersequence(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
+function shortestCommonSupersequenceLen(str1: string, str2: string): number {
+  const m = str1.length,
+    n = str2.length;
+  let prev = new Array(n + 1).fill(0);
+
+  for (let i = 1; i <= m; i++) {
+    const curr = new Array(n + 1).fill(0);
+    for (let j = 1; j <= n; j++) {
+      if (str1[i - 1] === str2[j - 1]) {
+        curr[j] = prev[j - 1] + 1;
+      } else {
+        curr[j] = Math.max(prev[j], curr[j - 1]);
+      }
+    }
+    prev = curr;
+  }
+
+  const lcsLen = prev[n];
+  return m + n - lcsLen;
 }
 
-// === Test Cases ===
-// console.log(shortestCommonSupersequence(/* example 1 */)); // expected
-// console.log(shortestCommonSupersequence(/* example 2 */)); // expected
-// console.log(shortestCommonSupersequence(/* edge case */)); // expected
+console.log(shortestCommonSupersequenceLen("abac", "cab")); // 5
+console.log(shortestCommonSupersequenceLen("aces", "abcde")); // 6
+console.log(shortestCommonSupersequenceLen("abc", "abc")); // 3
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Wildcard Matching](https://leetcode.com/problems/wildcard-matching) — same pattern: Dynamic Programming
-- [Longest Valid Parentheses](https://leetcode.com/problems/longest-valid-parentheses) — same pattern: Dynamic Programming
-- [Palindromic Substrings](https://leetcode.com/problems/palindromic-substrings) — same pattern: Two Pointers
-- [Interleaving String](https://leetcode.com/problems/interleaving-string) — same pattern: Dynamic Programming
-- [Shortest Common Supersequence — LeetCode](https://leetcode.com/problems/shortest-common-supersequence) — problem page
+| Problem                                                                                            | Difficulty | Pattern |
+| -------------------------------------------------------------------------------------------------- | ---------- | ------- |
+| [Longest Common Subsequence](https://leetcode.com/problems/longest-common-subsequence)             | 🟡 Medium  | 2D DP   |
+| [Edit Distance](https://leetcode.com/problems/edit-distance)                                       | 🟡 Medium  | 2D DP   |
+| [Interleaving String](https://leetcode.com/problems/interleaving-string)                           | 🟡 Medium  | 2D DP   |
+| [Delete Operation for Two Strings](https://leetcode.com/problems/delete-operation-for-two-strings) | 🟡 Medium  | LCS     |

@@ -7,100 +7,143 @@ tags: [Array, Two Pointers, Binary Search, Sorting]
 leetcode_url: "https://leetcode.com/problems/count-pairs-in-two-arrays"
 ---
 
-# Count Pairs in Two Arrays / Count Pairs in Two Arrays
+# Count Pairs in Two Arrays / Đếm Cặp Trong Hai Mảng
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Two Pointers
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Sort + Two Pointers
 > **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Intersection of Two Arrays](https://leetcode.com/problems/intersection-of-two-arrays) | [Heaters](https://leetcode.com/problems/heaters)
+> **See also**: [Count the Number of Fair Pairs](https://leetcode.com/problems/count-the-number-of-fair-pairs) | [Two Sum II](https://leetcode.com/problems/two-sum-ii-input-array-is-sorted)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Hãy tưởng tượng hai người đi từ hai đầu con đường, tiến lại gần nhau. Mỗi bước, người nào ở vị trí "tốt hơn" sẽ đứng yên, người kia tiến. Khi họ gặp nhau, bài toán được giải.
-
-**Pattern Recognition:**
-
-- Signal: "sorted array" + "find pair/triplet" → **Two Pointers**
-- Bài này thuộc dạng Two Pointers — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Count Pairs in Two Arrays example:**
+**Analogy:** Điều kiện nums1[i]+nums1[j] > nums2[i]+nums2[j] tương đương (nums1[i]-nums2[i]) + (nums1[j]-nums2[j]) > 0. Đặt diff[i] = nums1[i]-nums2[i], bài toán thành: đếm cặp (i<j) với diff[i]+diff[j] > 0. Sort diff, dùng two pointers.
 
 ```
-arr = [... sorted ...]
- L                 R
+nums1 = [2,1,2,1], nums2 = [1,2,1,2]
+diff  = [1,-1,1,-1]
+Sort diff: [-1,-1,1,1]
 
-Step 1: check condition → move L or R
-Step 2: ...
-Step N: condition met ✅
+Two pointers: l=0, r=3
+  diff[0]+diff[3] = -1+1 = 0 ≤ 0 → l++
+  diff[1]+diff[3] = -1+1 = 0 ≤ 0 → l++
+  diff[2]+diff[3] = 1+1 = 2 > 0 → count += r-l = 1, r--
+  l=r=2, stop
+
+Count = 1 ✓
 ```
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-Count Pairs in Two Arrays. ([LeetCode](https://leetcode.com/problems/count-pairs-in-two-arrays))
-
-Difficulty: Medium | Acceptance: 60.2%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/count-pairs-in-two-arrays) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Mảng đã sorted chưa? Có duplicate không?" / Ask if array is sorted and if duplicates exist
-2. **Brute force**: "Dùng 2 vòng for O(n²)" → optimize with two pointers O(n) / Start with nested loops, then optimize
-3. **Optimize**: "Vì mảng sorted, dùng 2 con trỏ L/R tiến vào giữa" / Since sorted, use L/R pointers moving inward
-4. **Edge cases**: "Mảng rỗng, một phần tử, tất cả giống nhau" / Empty array, single element, all same values
+- 🇻🇳 **Transform phép so sánh** — nums1[i]+nums1[j] > nums2[i]+nums2[j] ⟺ diff[i]+diff[j] > 0 / algebraic transformation reduces to single-array problem
+- 🇻🇳 **Sort + two pointers** — sau sort diff, nếu diff[l]+diff[r] > 0 thì tất cả l' trong [l,r-1] cũng cho sum > 0 / if diff[l]+diff[r] > 0, all pairs (l'<r) with l'≥l are valid
+- 🇻🇳 **Count += r-l** — khi diff[l]+diff[r] > 0, có r-l cặp hợp lệ kết thúc tại r / r-l pairs all end at r and start anywhere in [l,r-1]
+- 🇻🇳 **Khi sum ≤ 0 → l++** — cần phần tử lớn hơn ở bên trái / need larger left element
+- 🇻🇳 **Large answer** — kết quả có thể lên đến n²/2, dùng number (JS safe ~9e15) / answer fits in JS number for reasonable n
+- 🇻🇳 **i ≠ j, i < j** — không đếm cặp lặp; two pointers tự đảm bảo i<j vì l<r / two pointers guarantee l < r naturally
 
 ---
 
 ## Solutions
 
+### Solution 1: Transform + Sort + Two Pointers — O(n log n)
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Reduce to: count pairs where diff[i]+diff[j] > 0
+ * Sort diff, two-pointer from both ends
+ * Time: O(n log n)  Space: O(n)
  */
-function countPairsInTwoArraysBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function countPairs(nums1: number[], nums2: number[]): number {
+  const n = nums1.length;
+  const diff = nums1.map((v, i) => v - nums2[i]);
+  diff.sort((a, b) => a - b);
+
+  let count = 0;
+  let l = 0,
+    r = n - 1;
+
+  while (l < r) {
+    if (diff[l] + diff[r] > 0) {
+      // diff[l..r-1] + diff[r] all > 0
+      count += r - l;
+      r--;
+    } else {
+      l++;
+    }
+  }
+  return count;
 }
 
+console.log(countPairs([2, 1, 2, 1], [1, 2, 1, 2])); // 1
+console.log(countPairs([1, 10, 6, 2], [1, 4, 1, 2])); // 5
+console.log(countPairs([1, 2, 3, 4], [4, 3, 2, 1])); // 6
+```
+
+### Solution 2: Transform + Sort + Binary Search — O(n log n)
+
+```typescript
 /**
- * Solution 2: Optimized — Two Pointers
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * For each i from left, binary search for first j > i where diff[i]+diff[j] > 0
+ * Time: O(n log n)  Space: O(n)
  */
-function countPairsInTwoArrays(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Two Pointers
-  // Hint: Use L/R pointers on sorted input, move based on comparison
-  throw new Error('Not implemented');
+function countPairs2(nums1: number[], nums2: number[]): number {
+  const n = nums1.length;
+  const diff = nums1.map((v, i) => v - nums2[i]);
+  diff.sort((a, b) => a - b);
+
+  let count = 0;
+  for (let i = 0; i < n - 1; i++) {
+    // Find first j > i where diff[j] > -diff[i]
+    // i.e., first j where diff[j] >= -diff[i] + 1
+    const target = -diff[i]; // need diff[j] > target
+    let lo = i + 1,
+      hi = n;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (diff[mid] > target) hi = mid;
+      else lo = mid + 1;
+    }
+    count += n - lo;
+  }
+  return count;
 }
 
-// === Test Cases ===
-// console.log(countPairsInTwoArrays(/* example 1 */)); // expected
-// console.log(countPairsInTwoArrays(/* example 2 */)); // expected
-// console.log(countPairsInTwoArrays(/* edge case */)); // expected
+console.log(countPairs2([2, 1, 2, 1], [1, 2, 1, 2])); // 1
+console.log(countPairs2([1, 10, 6, 2], [1, 4, 1, 2])); // 5
+```
+
+### Solution 3: Brute Force (for validation) — O(n²)
+
+```typescript
+/**
+ * O(n²) brute force — use for small inputs or verification
+ * Time: O(n²)  Space: O(1)
+ */
+function countPairsBrute(nums1: number[], nums2: number[]): number {
+  const n = nums1.length;
+  let count = 0;
+  for (let i = 0; i < n - 1; i++) {
+    for (let j = i + 1; j < n; j++) {
+      if (nums1[i] + nums1[j] > nums2[i] + nums2[j]) count++;
+    }
+  }
+  return count;
+}
+
+console.log(countPairsBrute([2, 1, 2, 1], [1, 2, 1, 2])); // 1
+console.log(countPairsBrute([1, 10, 6, 2], [1, 4, 1, 2])); // 5
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Intersection of Two Arrays](https://leetcode.com/problems/intersection-of-two-arrays) — same pattern: Two Pointers
-- [Heaters](https://leetcode.com/problems/heaters) — same pattern: Two Pointers
-- [Find K Closest Elements](https://leetcode.com/problems/find-k-closest-elements) — same pattern: Sliding Window
-- [Maximum Number of Tasks You Can Assign](https://leetcode.com/problems/maximum-number-of-tasks-you-can-assign) — same pattern: Monotonic Queue
-- [Count Pairs in Two Arrays — LeetCode](https://leetcode.com/problems/count-pairs-in-two-arrays) — problem page
+| Problem                                                                                                              | Difficulty | Pattern             |
+| -------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------- |
+| [Count the Number of Fair Pairs](https://leetcode.com/problems/count-the-number-of-fair-pairs)                       | 🟡 Medium  | Sort + Two Pointers |
+| [Two Sum II](https://leetcode.com/problems/two-sum-ii-input-array-is-sorted)                                         | 🟢 Easy    | Two Pointers        |
+| [3Sum](https://leetcode.com/problems/3sum)                                                                           | 🟡 Medium  | Sort + Two Pointers |
+| [Count Pairs Whose Sum is Less Than Target](https://leetcode.com/problems/count-pairs-whose-sum-is-less-than-target) | 🟢 Easy    | Sort + Two Pointers |

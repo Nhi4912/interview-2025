@@ -7,57 +7,41 @@ tags: [Array, String, Depth-First Search, Trie]
 leetcode_url: "https://leetcode.com/problems/remove-sub-folders-from-the-filesystem"
 ---
 
-# Remove Sub-Folders from the Filesystem / Remove Sub-Folders from the Filesystem
+# Remove Sub-Folders from the Filesystem / Xóa Thư Mục Con Khỏi Hệ Thống File
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Trie
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Sort + Prefix Check / Trie
 > **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Concatenated Words](https://leetcode.com/problems/concatenated-words) | [Evaluate Division](https://leetcode.com/problems/evaluate-division)
+> **See also**: [Search Suggestions System](https://leetcode.com/problems/search-suggestions-system) | [Implement Trie](https://leetcode.com/problems/implement-trie-prefix-tree)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống cây thư mục — mỗi ký tự là một cấp. Tìm kiếm prefix cực nhanh O(L) với L là độ dài từ.
+**Analogy (VI):** Sắp xếp thư mục theo alphabet. Nếu folder hiện tại bắt đầu bằng `prev + "/"` → nó là subfolder, bỏ qua. Ngược lại, thêm vào kết quả và cập nhật `prev`.
 
-**Pattern Recognition:**
-
-- Signal: "prefix search" + "dictionary of words" → **Trie**
-- Bài này thuộc dạng Trie — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Remove Sub-Folders from the Filesystem example:**
+**Analogy (EN):** Sort lexicographically. A folder is a sub-folder of another iff it starts with `parent + "/"`. After sorting, each folder's parent (if any) will immediately precede it.
 
 ```
-// TODO: Add step-by-step visual for Trie
-// Show one complete example with state at each step
+Input: ["/a","/a/b","/c/d","/c/d/e","/c/f"]
+Sorted: ["/a", "/a/b", "/c/d", "/c/d/e", "/c/f"]
+
+"/a"    → new root, result=["/a"],          prev="/a"
+"/a/b"  → starts with "/a/" → subfolder, skip
+"/c/d"  → new root, result=["/a","/c/d"],   prev="/c/d"
+"/c/d/e"→ starts with "/c/d/" → skip
+"/c/f"  → does NOT start with "/c/d/", new root → add
 ```
-
----
-
-## Problem Description
-
-Remove Sub-Folders from the Filesystem. ([LeetCode](https://leetcode.com/problems/remove-sub-folders-from-the-filesystem))
-
-Difficulty: Medium | Acceptance: 75.7%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/remove-sub-folders-from-the-filesystem) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Key insight / Mấu chốt**: Sau khi sort, sub-folder luôn xuất hiện ngay sau parent của nó / After sort, a sub-folder always follows its parent immediately
+2. **Prefix trick / Mẹo prefix**: Phải check `prev + "/"` chứ không phải `prev` alone — "/ab" không phải sub-folder của "/a" / Must append "/" to avoid false matches like "/ab" under "/a"
+3. **Sort complexity / Độ phức tạp sort**: O(N·L·log N) với L là độ dài trung bình / O(N·L·logN) for sort step
+4. **Trie alt / Dùng Trie**: Trie hiệu quả hơn nếu query nhiều lần / Trie is better for repeated prefix queries
+5. **Edge case / Biên**: Input đã sorted? → solution vẫn đúng / Algorithm works even if pre-sorted
+6. **Follow-up**: "Nếu muốn biết folder nào là sub-folder?" → Trie approach tracks this naturally
 
 ---
 
@@ -65,39 +49,91 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Sort + Prefix Check
+ * Time: O(N·L·log N) — sort dominates; L = avg folder length
+ * Space: O(N·L) — output array
+ *
+ * Sort rồi duyệt tuyến tính: skip nếu bắt đầu bằng prev + "/".
  */
-function removeSubFoldersFromTheFilesystemBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function removeSubfolders(folder: string[]): string[] {
+  folder.sort(); // lexicographic sort
+  const result: string[] = [];
+  let prev = "";
+
+  for (const f of folder) {
+    // f is NOT a sub-folder if it doesn't start with prev + "/"
+    if (prev === "" || !f.startsWith(prev + "/")) {
+      result.push(f);
+      prev = f;
+    }
+    // else: f starts with prev + "/" → subfolder, skip
+  }
+  return result;
 }
 
 /**
- * Solution 2: Optimized — Trie
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Trie
+ * Time: O(N·L) — insert + search each folder
+ * Space: O(N·L) — trie nodes
+ *
+ * Build trie splitting on '/'. Mark end-of-folder nodes.
+ * During DFS: if we hit an end node, stop (all descendants are sub-folders).
  */
-function removeSubFoldersFromTheFilesystem(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Trie
-  // Hint: Build trie from dictionary, search by prefix
-  throw new Error('Not implemented');
+function removeSubfolderssTrie(folder: string[]): string[] {
+  interface TrieNode {
+    children: Map<string, TrieNode>;
+    isEnd: boolean;
+  }
+  const newNode = (): TrieNode => ({ children: new Map(), isEnd: false });
+  const root = newNode();
+
+  // Insert all folders into trie
+  for (const f of folder) {
+    const parts = f.split("/").filter((p) => p !== ""); // split and remove empty ""
+    let node = root;
+    for (const part of parts) {
+      if (!node.children.has(part)) node.children.set(part, newNode());
+      node = node.children.get(part)!;
+    }
+    node.isEnd = true;
+  }
+
+  // DFS to collect root folders (stop when isEnd is true)
+  const result: string[] = [];
+  function dfs(node: TrieNode, path: string): void {
+    if (node.isEnd) {
+      result.push(path);
+      return; // skip all sub-folders below this node
+    }
+    for (const [part, child] of node.children) {
+      dfs(child, path + "/" + part);
+    }
+  }
+  dfs(root, "");
+  return result;
 }
 
 // === Test Cases ===
-// console.log(removeSubFoldersFromTheFilesystem(/* example 1 */)); // expected
-// console.log(removeSubFoldersFromTheFilesystem(/* example 2 */)); // expected
-// console.log(removeSubFoldersFromTheFilesystem(/* edge case */)); // expected
+console.log(removeSubfolders(["/a", "/a/b", "/c/d", "/c/d/e", "/c/f"]));
+// ["/a","/c/d","/c/f"]
+
+console.log(removeSubfolders(["/a", "/a/b/c", "/a/b/d"]));
+// ["/a"]
+
+console.log(removeSubfolders(["/a/b/c", "/a/b/ca", "/a/b/d"]));
+// ["/a/b/c","/a/b/ca","/a/b/d"]  ← "/a/b/ca" is NOT sub of "/a/b/c"
+
+console.log(removeSubfolderssTrie(["/a", "/a/b", "/c/d", "/c/d/e", "/c/f"]));
+// ["/a","/c/d","/c/f"] (order may vary)
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Concatenated Words](https://leetcode.com/problems/concatenated-words) — same pattern: Trie
-- [Evaluate Division](https://leetcode.com/problems/evaluate-division) — same pattern: Shortest Path (BFS/Dijkstra)
-- [Search Suggestions System](https://leetcode.com/problems/search-suggestions-system) — same pattern: Trie
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Remove Sub-Folders from the Filesystem — LeetCode](https://leetcode.com/problems/remove-sub-folders-from-the-filesystem) — problem page
+| Problem                                                                              | Pattern     | Difficulty |
+| ------------------------------------------------------------------------------------ | ----------- | ---------- |
+| [Implement Trie](https://leetcode.com/problems/implement-trie-prefix-tree)           | Trie        | 🟡 Medium  |
+| [Search Suggestions System](https://leetcode.com/problems/search-suggestions-system) | Trie        | 🟡 Medium  |
+| [Replace Words](https://leetcode.com/problems/replace-words)                         | Trie Prefix | 🟡 Medium  |
+| [Concatenated Words](https://leetcode.com/problems/concatenated-words)               | Trie + DFS  | 🔴 Hard    |

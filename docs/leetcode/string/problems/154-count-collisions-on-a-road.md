@@ -7,7 +7,7 @@ tags: [String, Stack, Simulation]
 leetcode_url: "https://leetcode.com/problems/count-collisions-on-a-road"
 ---
 
-# Count Collisions on a Road / Count Collisions on a Road
+# Count Collisions on a Road / Đếm va chạm trên đường
 
 > **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Stack
 > **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
@@ -17,89 +17,130 @@ leetcode_url: "https://leetcode.com/problems/count-collisions-on-a-road"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống chồng đĩa — đĩa nào đặt cuối cùng sẽ được lấy ra đầu tiên (LIFO). Nhiều bài toán về matching và nesting dùng stack.
-
-**Pattern Recognition:**
-
-- Signal: "matching/nesting" + "most recent element" → **Stack**
-- Bài này thuộc dạng Stack — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Count Collisions on a Road example:**
+**Analogy:** Giống những chiếc xe trên đường một chiều — xe `L` (trái) ở đầu không bao giờ va chạm (thoát tự do), xe `R` (phải) ở cuối cũng vậy. Chỉ những xe bên trong mới va chạm. Mỗi ký tự không phải 'S' sau khi bỏ viền = 1 đơn vị va chạm.
 
 ```
-stack = []
+directions = "RLRSLL"
+Strip leading L's:  nothing (R is first)
+Strip trailing R's: "RLRSL" (remove last nothing — last is L)
 
-push/pop from right →
-Process: scan left to right, stack maintains invariant
+Actually:
+Leading L's  = none   (first char is R)
+Trailing R's = none   (last char is L)
+
+Middle: "RLRSLL"
+Non-S count: R,L,R,L,L = 5 collisions
+
+Key insight: every car that is NOT already 'S' in the trimmed region
+will eventually collide and stop.
 ```
 
 ---
 
-## Problem Description
+## 📝 Interview Tips / Ghi Nhớ Khi Phỏng Vấn
 
-Count Collisions on a Road. ([LeetCode](https://leetcode.com/problems/count-collisions-on-a-road))
-
-Difficulty: Medium | Acceptance: 44.4%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/count-collisions-on-a-road) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🔑 **Trim free-movers / Bỏ xe chạy tự do**: Leading 'L's và trailing 'R's thoát không va chạm
+- 🔑 **Remaining non-S = collisions / Còn lại không phải S = va chạm**: Mỗi xe L/R sẽ dừng lại
+- 🔑 **O(n) greedy / O(n) tham lam**: Không cần mô phỏng từng bước
+- 🔑 **Stack approach / Cách dùng stack**: Cũng đúng nhưng phức tạp hơn cần thiết
+- 🔑 **'S' cars stay / Xe 'S' đứng yên**: Không đóng góp va chạm mới
+- 🔑 **Count energy not events / Đếm năng lượng không phải sự kiện**: Mỗi xe L/R = 1 đơn vị
 
 ---
 
 ## Solutions
 
+### Solution 1: Trim + Count (Optimal O(n))
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Leading 'L's escape left (never collide), trailing 'R's escape right.
+ * Every remaining non-'S' car will collide → count them.
+ *
+ * Time:  O(n)
+ * Space: O(1)
  */
-function countCollisionsOnARoadBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function countCollisions(directions: string): number {
+  let l = 0;
+  let r = directions.length - 1;
+
+  // Skip leading 'L's — they escape leftward
+  while (l <= r && directions[l] === "L") l++;
+  // Skip trailing 'R's — they escape rightward
+  while (r >= l && directions[r] === "R") r--;
+
+  // Every non-'S' in [l, r] contributes to collisions
+  let collisions = 0;
+  for (let i = l; i <= r; i++) {
+    if (directions[i] !== "S") collisions++;
+  }
+
+  return collisions;
 }
 
+console.log(countCollisions("RLRSLL")); // 5
+console.log(countCollisions("LLRR")); // 0  (LL escape left, RR escape right — wait)
+// "LLRR": L,L escape; R,R escape → 0
+console.log(countCollisions("SSRSSRLLRSLLRSRSSRLRRRRLLRRLSSSS")); // 20
+```
+
+### Solution 2: Stack Simulation (Explicit)
+
+```typescript
 /**
- * Solution 2: Optimized — Stack
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Stack-based simulation: process each car, resolve collisions immediately.
+ *
+ * Time:  O(n)
+ * Space: O(n) — stack
  */
-function countCollisionsOnARoad(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Stack
-  // Hint: Push/pop to maintain invariant, process when stack condition changes
-  throw new Error('Not implemented');
+function countCollisions2(directions: string): number {
+  const stack: string[] = [];
+  let collisions = 0;
+
+  for (const d of directions) {
+    if (d === "R") {
+      stack.push("R");
+    } else if (d === "S") {
+      // All 'R's on stack crash into this stationary car
+      while (stack.length && stack[stack.length - 1] === "R") {
+        stack.pop();
+        collisions++;
+      }
+      stack.push("S");
+    } else {
+      // d === "L"
+      if (!stack.length || stack[stack.length - 1] === "L") {
+        stack.push("L"); // escapes left
+      } else if (stack[stack.length - 1] === "S") {
+        collisions++; // L hits stationary
+      } else {
+        // top is "R" — R and L collide, both stop
+        collisions += 2;
+        stack.pop(); // remove the R
+        // drain any remaining R's that now hit the resulting S
+        while (stack.length && stack[stack.length - 1] === "R") {
+          stack.pop();
+          collisions++;
+        }
+        stack.push("S");
+      }
+    }
+  }
+
+  return collisions;
 }
 
-// === Test Cases ===
-// console.log(countCollisionsOnARoad(/* example 1 */)); // expected
-// console.log(countCollisionsOnARoad(/* example 2 */)); // expected
-// console.log(countCollisionsOnARoad(/* edge case */)); // expected
+console.log(countCollisions2("RLRSLL")); // 5
+console.log(countCollisions2("LLRR")); // 0
 ```
 
 ---
 
-## 🔗 Related Problems
+## 🔗 Related Problems / Bài Liên Quan
 
-- [Backspace String Compare](https://leetcode.com/problems/backspace-string-compare) — same pattern: Two Pointers
-- [Design a Text Editor](https://leetcode.com/problems/design-a-text-editor) — same pattern: Linked List
-- [Remove All Occurrences of a Substring](https://leetcode.com/problems/remove-all-occurrences-of-a-substring) — same pattern: Stack
-- [Minimum String Length After Removing Substrings](https://leetcode.com/problems/minimum-string-length-after-removing-substrings) — same pattern: Stack
-- [Count Collisions on a Road — LeetCode](https://leetcode.com/problems/count-collisions-on-a-road) — problem page
+| #    | Problem                                                                                                            | Difficulty | Pattern              |
+| ---- | ------------------------------------------------------------------------------------------------------------------ | ---------- | -------------------- |
+| 844  | [Backspace String Compare](https://leetcode.com/problems/backspace-string-compare)                                 | 🟢 Easy    | Stack / Two pointers |
+| 735  | [Asteroid Collision](https://leetcode.com/problems/asteroid-collision)                                             | 🟡 Medium  | Stack simulation     |
+| 2751 | [Robot Collisions](https://leetcode.com/problems/robot-collisions)                                                 | 🔴 Hard    | Stack simulation     |
+| 1047 | [Remove All Adjacent Duplicates In String](https://leetcode.com/problems/remove-all-adjacent-duplicates-in-string) | 🟢 Easy    | Stack                |

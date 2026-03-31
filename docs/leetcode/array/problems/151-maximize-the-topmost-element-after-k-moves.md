@@ -7,97 +7,122 @@ tags: [Array, Greedy]
 leetcode_url: "https://leetcode.com/problems/maximize-the-topmost-element-after-k-moves"
 ---
 
-# Maximize the Topmost Element After K Moves / Maximize the Topmost Element After K Moves
+# Maximize the Topmost Element After K Moves / Tối Đa Phần Tử Đỉnh Sau K Bước
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Jump Game II](https://leetcode.com/problems/jump-game-ii) | [Largest Number](https://leetcode.com/problems/largest-number)
+**Difficulty:** Medium | **Category:** Array, Greedy | **LeetCode:** [2202](https://leetcode.com/problems/maximize-the-topmost-element-after-k-moves)
 
----
+## 🧠 Intuition
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Giống ăn buffet — mỗi lần bạn chọn món ngon nhất hiện tại. Nếu chứng minh được rằng chọn tham lam từng bước vẫn tối ưu toàn cục, thì Greedy là đáp án.
-
-**Pattern Recognition:**
-
-- Signal: "locally optimal → globally optimal" + "sorting + selection" → **Greedy**
-- Bài này thuộc dạng Greedy — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Maximize the Topmost Element After K Moves example:**
+> **Như cây bài úp — mỗi bước hoặc lấy đỉnh ra hoặc đặt lại vào.**
+> Sau K bước, phần tử nào có thể ngồi trên cùng? Chỉ những phần tử trong tầm với.
 
 ```
-// TODO: Add step-by-step visual for Greedy
-// Show one complete example with state at each step
+nums = [5, 2, 2, 4, 0, 6],  k = 4
+
+Có thể remove k lần → sau đó đỉnh mới là nums[k]=nums[4]=0
+Hoặc: remove k-1 phần tử → rồi put-back 1 → đỉnh là bất kỳ nums[0..k-2]
+Hoặc k=0 → đỉnh vẫn là nums[0]
+
+Candidates: max(nums[0..min(k,n)-1] loại bỏ nums[k-1] nếu k<n,  + nums[k] nếu k<n)
+Thực ra: max(nums[0..k-1 ngoại trừ chỉ nums[k-1]? Không!)
+
+Đơn giản hơn:
+- max của nums[0..k-1] (remove i rồi put-back top = có thể giữ nums[i] làm đỉnh)
+  → trừ khi k==1, ta bắt buộc phải remove nums[0] và không có gì để put-back
+- nums[k] nếu k < n (remove đúng k lần)
 ```
 
----
+## 📝 Tips
 
-## Problem Description
+1. **Edge case n=1:** nếu k lẻ → stack rỗng → trả -1; k chẵn → nums[0] không đổi.
+2. **Edge case k=0:** không làm gì → trả nums[0].
+3. **Remove k lần liên tục:** nếu k < n, đỉnh mới là `nums[k]`.
+4. **Remove i lần (i < k) rồi put-back:** đỉnh có thể là bất kỳ `nums[0..i-1]`.
+   - Với i ∈ [0, k-1]: khi i=0 push nums[0], khi i>0 push nums[i-1] wait...
+   - Thực ra: remove 0..k-1 phần tử, mỗi lần ta có thể put-back. Để nums[j] làm đỉnh sau k bước: cần remove j+1 bước rồi push 1 bước = j+2 bước? Không đơn giản vậy.
+   - **Đơn giản hóa:** candidate là `max(nums[0..min(k,n)-1])` (không kể `nums[k-1]` khi k<n vì bước cuối là remove nó) + `nums[k]` nếu k<n.
+   - Thực ra window `[0..min(k-1,n-1)]` minus `nums[k-1]` phức tạp. Dùng công thức đơn giản dưới.
+5. **Công thức đơn giản:** `max(nums[0..k-2])` union `nums[k]` nếu tồn tại.
+6. Với k >= n: chỉ xét max(nums[0..n-1]) nhưng k phải đủ chẵn lẻ để kết thúc với phần tử trên đỉnh.
 
-Maximize the Topmost Element After K Moves. ([LeetCode](https://leetcode.com/problems/maximize-the-topmost-element-after-k-moves))
-
-Difficulty: Medium | Acceptance: 23.5%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/maximize-the-topmost-element-after-k-moves) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
-
-## Solutions
+## 💡 Solutions
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Approach 1: Case analysis with window max
+ * Time: O(min(k, n)) | Space: O(1)
+ *
+ * Key insight: after k moves, the topmost element must come from:
+ *   1. nums[k] if k < n (remove exactly k elements)
+ *   2. nums[j] for j in [0, k-2] if k-1-j moves remain for push-back cycling
+ *      Simplified: any of nums[0..k-2] (remove j+1, push back, use remaining)
  */
-function maximizeTheTopmostElementAfterKMovesBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function maximumTop(nums: number[], k: number): number {
+  const n = nums.length;
+
+  // Edge: empty pile after operations
+  if (n === 1 && k % 2 === 1) return -1; // forced to remove the only element
+  if (k === 0) return nums[0];
+
+  let best = -1;
+
+  // Option A: remove exactly k elements, top = nums[k]
+  if (k < n) best = Math.max(best, nums[k]);
+
+  // Option B: remove i elements (0 ≤ i ≤ k-1), push one back,
+  //           leaving i-th element on top after cycling remaining k-1-i steps.
+  //           Simplified: nums[0..k-2] are all reachable (indices < k-1 with n elements)
+  const limit = Math.min(k - 1, n - 1);
+  for (let i = 0; i <= limit; i++) {
+    best = Math.max(best, nums[i]);
+  }
+
+  return best;
 }
 
-/**
- * Solution 2: Optimized — Greedy
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function maximizeTheTopmostElementAfterKMoves(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Greedy
-  // Hint: Sort by key metric, make locally optimal choice at each step
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(maximizeTheTopmostElementAfterKMoves(/* example 1 */)); // expected
-// console.log(maximizeTheTopmostElementAfterKMoves(/* example 2 */)); // expected
-// console.log(maximizeTheTopmostElementAfterKMoves(/* edge case */)); // expected
+console.log(maximumTop([5, 2, 2, 4, 0, 6], 4)); // 5
+console.log(maximumTop([2], 1)); // -1  (only element, k odd)
+console.log(maximumTop([2], 2)); // 2   (remove then push back)
+console.log(maximumTop([1, 2, 3], 0)); // 1   (no moves)
+console.log(maximumTop([1], 4)); // 1   (k even, net zero)
 ```
 
----
+```typescript
+/**
+ * Approach 2: Clean formula — max of first min(k,n) excluding nums[k-1] + nums[k]
+ * Time: O(min(k,n)) | Space: O(1)
+ *
+ * Equivalent reformulation: candidates are nums[0..k-1] (window of k from top).
+ * But nums[k-1] is ONLY reachable if there's something after it to push back.
+ * So take max(nums[0..k-2], nums[k]) where each exists.
+ */
+function maximumTop2(nums: number[], k: number): number {
+  const n = nums.length;
+  if (n === 1 && k % 2 === 1) return -1;
+  if (k === 0) return nums[0];
 
-## 🔗 Related Problems
+  let best = -Infinity;
 
-- [Jump Game II](https://leetcode.com/problems/jump-game-ii) — same pattern: Dynamic Programming
-- [Largest Number](https://leetcode.com/problems/largest-number) — same pattern: Greedy
-- [Gas Station](https://leetcode.com/problems/gas-station) — same pattern: Greedy
-- [Candy](https://leetcode.com/problems/candy) — same pattern: Greedy
-- [Maximize the Topmost Element After K Moves — LeetCode](https://leetcode.com/problems/maximize-the-topmost-element-after-k-moves) — problem page
+  // Candidates: nums[0..k-2] (we skip nums[k-1] — last removed, nothing to push)
+  for (let i = 0; i < k - 1 && i < n; i++) {
+    best = Math.max(best, nums[i]);
+  }
+  // Candidate: nums[k] (remove exactly k, this is new top)
+  if (k < n) best = Math.max(best, nums[k]);
+
+  return best === -Infinity ? -1 : best;
+}
+
+console.log(maximumTop2([5, 2, 2, 4, 0, 6], 4)); // 5
+console.log(maximumTop2([2], 1)); // -1
+console.log(maximumTop2([10, 20], 2)); // 10  (remove 2 → stack empty, push 10? or nums[0..0]=10, nums[2]=undef)
+console.log(maximumTop2([3, 5, 1], 3)); // 5
+```
+
+## 🔗 Related
+
+| Problem                                                                                                               | Difficulty | Connection                  |
+| --------------------------------------------------------------------------------------------------------------------- | ---------- | --------------------------- |
+| [1700. Number of Students Unable to Eat Lunch](https://leetcode.com/problems/number-of-students-unable-to-eat-lunch/) | Easy       | Stack/queue simulation      |
+| [735. Asteroid Collision](https://leetcode.com/problems/asteroid-collision/)                                          | Medium     | Stack element survival      |
+| [456. 132 Pattern](https://leetcode.com/problems/132-pattern/)                                                        | Medium     | Window max in stack context |

@@ -7,100 +7,177 @@ tags: [Array, Hash Table, Enumeration]
 leetcode_url: "https://leetcode.com/problems/maximum-square-area-by-removing-fences-from-a-field"
 ---
 
-# Maximum Square Area by Removing Fences From a Field / Maximum Square Area by Removing Fences From a Field
+# Maximum Square Area by Removing Fences From a Field / Diện Tích Hình Vuông Lớn Nhất Sau Khi Bỏ Hàng Rào
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Hash Map
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Number of Black Blocks](https://leetcode.com/problems/number-of-black-blocks) | [Count Lattice Points Inside a Circle](https://leetcode.com/problems/count-lattice-points-inside-a-circle)
+**Difficulty:** Medium | **Category:** Array, Hash Table, Enumeration | **LeetCode:** [3261](https://leetcode.com/problems/maximum-square-area-by-removing-fences-from-a-field)
 
----
+## 🧠 Intuition
 
-## 🧠 Intuition / Tư Duy
-
-**Analogy:** Giống từ điển — tra cứu tức thì O(1). Đổi space lấy time, lưu thông tin đã thấy để tránh tìm lại.
-
-**Pattern Recognition:**
-
-- Signal: "find complement/match in O(1)" → **Hash Map**
-- Bài này thuộc dạng Hash Map — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Maximum Square Area by Removing Fences From a Field example:**
+**Phép so sánh tiếng Việt:** Bạn có một cánh đồng được chia bởi các hàng rào ngang và dọc. Bạn có thể bỏ hàng rào đi (nhưng phải giữ biên). Mục tiêu: tạo ra ô vuông lớn nhất. Bí quyết: liệt kê tất cả "khoảng cách hàng rào" theo chiều ngang và dọc, tìm khoảng cách chung — đó chính là cạnh hình vuông.
 
 ```
-Scan array:
-i=0: num=2, need=target-2=7 → not in map → map={2:0}
-i=1: num=7, need=target-7=2 → found in map! → return [map[2], 1] ✅
+m=4, n=4, hFences=[2], vFences=[2]
+Hàng rào ngang: [0, 2, 4-1=3] → khoảng cách: {2,3,1}
+                  thực ra: boundaries = [0] + hFences + [m-1] = [0,2,3]
+Hàng rào dọc:   [0] + vFences + [n-1] = [0,2,3]
 
-Key insight: store complement for O(1) lookup
+Khoảng cách ngang: 2-0=2, 3-0=3, 3-2=1
+Khoảng cách dọc:   2-0=2, 3-0=3, 3-2=1
+
+Giao: {1,2,3}  → max = 3 → area = 3*3 = 9
 ```
 
----
+## 📝 Tips
 
-## Problem Description
+1. **Thêm biên**: Nhớ thêm `0` và `m-1` (hoặc `n-1`) vào danh sách hàng rào trước khi tính khoảng cách.
+2. **Khoảng cách, không phải tọa độ**: Enumerate tất cả pair (i, j) với i < j, khoảng cách = fences[j] - fences[i].
+3. **Hash Set cho intersection**: Lưu tất cả khoảng cách theo một chiều vào Set, kiểm tra chiều kia.
+4. **Sort trước**: Sau khi thêm biên, sort array để duyệt cặp có thứ tự.
+5. **MOD 1e9+7**: Kết quả có thể rất lớn. Áp dụng modulo khi trả về.
+6. **Trả về -1 nếu không tìm được**: Nếu không có khoảng cách chung → return -1.
 
-Maximum Square Area by Removing Fences From a Field. ([LeetCode](https://leetcode.com/problems/maximum-square-area-by-removing-fences-from-a-field))
-
-Difficulty: Medium | Acceptance: 24.1%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/maximum-square-area-by-removing-fences-from-a-field) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
-
-## Solutions
+## 💡 Solutions
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Approach 1: Enumerate all gaps, find intersection
+ * Time: O(H² + V²)  Space: O(H² + V²)
+ * H = hFences.length + 2, V = vFences.length + 2
  */
-function maximumSquareAreaByRemovingFencesFromAFieldBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function maximizeSquareArea(m: number, n: number, hFences: number[], vFences: number[]): number {
+  const MOD = 1_000_000_007n;
+
+  function allGaps(fences: number[], maxBound: number): Set<number> {
+    const sorted = [0, ...fences, maxBound - 1].sort((a, b) => a - b);
+    const gaps = new Set<number>();
+    for (let i = 0; i < sorted.length; i++) {
+      for (let j = i + 1; j < sorted.length; j++) {
+        gaps.add(sorted[j] - sorted[i]);
+      }
+    }
+    return gaps;
+  }
+
+  const hGaps = allGaps(hFences, m);
+  const vGaps = allGaps(vFences, n);
+
+  let maxSide = -1;
+  for (const gap of hGaps) {
+    if (vGaps.has(gap)) {
+      maxSide = Math.max(maxSide, gap);
+    }
+  }
+
+  if (maxSide === -1) return -1;
+
+  return Number((BigInt(maxSide) * BigInt(maxSide)) % MOD);
 }
 
-/**
- * Solution 2: Optimized — Hash Map
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function maximumSquareAreaByRemovingFencesFromAField(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Hash Map
-  // Hint: Store seen values for O(1) lookup of complement/match
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(maximumSquareAreaByRemovingFencesFromAField(/* example 1 */)); // expected
-// console.log(maximumSquareAreaByRemovingFencesFromAField(/* example 2 */)); // expected
-// console.log(maximumSquareAreaByRemovingFencesFromAField(/* edge case */)); // expected
+// Tests
+console.log(maximizeSquareArea(4, 3, [2], [2])); // 4
+console.log(maximizeSquareArea(6, 7, [2], [4])); // -1 (no common gap)
+console.log(maximizeSquareArea(3, 3, [], [])); // 4
 ```
 
----
+```typescript
+/**
+ * Approach 2: Tối ưu — dùng sorted array, chỉ track max common gap
+ * Time: O(H² + V² + H²logH)  Space: O(H + V)
+ *
+ * Thay vì lưu toàn bộ gaps, chỉ cần check intersection
+ */
+function maximizeSquareAreaOpt(m: number, n: number, hFences: number[], vFences: number[]): number {
+  const MOD = 1_000_000_007n;
 
-## 🔗 Related Problems
+  function getGapSet(fences: number[], limit: number): Set<number> {
+    const sorted = [0, ...fences, limit - 1].sort((a, b) => a - b);
+    const set = new Set<number>();
+    const len = sorted.length;
+    for (let i = 0; i < len - 1; i++) {
+      for (let j = i + 1; j < len; j++) {
+        set.add(sorted[j] - sorted[i]);
+      }
+    }
+    return set;
+  }
 
-- [Number of Black Blocks](https://leetcode.com/problems/number-of-black-blocks) — same pattern: Hash Map
-- [Count Lattice Points Inside a Circle](https://leetcode.com/problems/count-lattice-points-inside-a-circle) — same pattern: Math
-- [Form Smallest Number From Two Digit Arrays](https://leetcode.com/problems/form-smallest-number-from-two-digit-arrays) — same pattern: Hash Map
-- [Count Almost Equal Pairs I](https://leetcode.com/problems/count-almost-equal-pairs-i) — same pattern: Sorting
-- [Maximum Square Area by Removing Fences From a Field — LeetCode](https://leetcode.com/problems/maximum-square-area-by-removing-fences-from-a-field) — problem page
+  const hSet = getGapSet(hFences, m);
+  const vSet = getGapSet(vFences, n);
+
+  // Chỉ iterate qua set nhỏ hơn để tối ưu
+  const [smallSet, largeSet] = hSet.size <= vSet.size ? [hSet, vSet] : [vSet, hSet];
+
+  let maxSide = -1;
+  for (const gap of smallSet) {
+    if (largeSet.has(gap) && gap > maxSide) {
+      maxSide = gap;
+    }
+  }
+
+  if (maxSide === -1) return -1;
+  return Number((BigInt(maxSide) * BigInt(maxSide)) % MOD);
+}
+
+// Tests
+console.log(maximizeSquareAreaOpt(4, 3, [2], [2])); // 4
+console.log(maximizeSquareAreaOpt(6, 7, [2], [4])); // -1
+console.log(maximizeSquareAreaOpt(100, 100, [50], [50])); // 2500 (50*50 mod 1e9+7)
+```
+
+```typescript
+/**
+ * Approach 3: Tách biệt logic, thêm comment tường minh
+ * Time: O(H² + V²)  Space: O(H² + V²)
+ */
+function maximizeSquareAreaClear(
+  m: number,
+  n: number,
+  hFences: number[],
+  vFences: number[],
+): number {
+  const MOD = 1_000_000_007n;
+
+  /** Tính tất cả khoảng cách có thể giữa các cặp hàng rào */
+  function computeGaps(fences: number[], boundary: number): Set<number> {
+    // Thêm biên vào: ô đầu tiên = 0, ô cuối = boundary - 1
+    const walls = [0, ...fences, boundary - 1].sort((a, b) => a - b);
+    const gaps = new Set<number>();
+
+    for (let i = 0; i < walls.length; i++) {
+      for (let j = i + 1; j < walls.length; j++) {
+        gaps.add(walls[j] - walls[i]); // gap = số ô giữa hai hàng rào
+      }
+    }
+    return gaps;
+  }
+
+  const rowGaps = computeGaps(hFences, m); // khoảng ngang (chiều dọc grid)
+  const colGaps = computeGaps(vFences, n); // khoảng dọc (chiều ngang grid)
+
+  // Tìm khoảng cách lớn nhất xuất hiện ở cả hai chiều
+  let best = -1;
+  for (const gap of rowGaps) {
+    if (colGaps.has(gap)) best = Math.max(best, gap);
+  }
+
+  if (best === -1) return -1;
+
+  // Diện tích = cạnh^2, apply modulo
+  const side = BigInt(best);
+  return Number((side * side) % MOD);
+}
+
+// Tests
+console.log(maximizeSquareAreaClear(4, 3, [2], [2])); // 4
+console.log(maximizeSquareAreaClear(6, 7, [2], [4])); // -1
+console.log(maximizeSquareAreaClear(3, 3, [], [])); // 4 (cạnh=2: 0→2)
+console.log(maximizeSquareAreaClear(1000000000, 1000000000, [2], [2])); // 4
+```
+
+## 🔗 Related
+
+| Problem                                                                                                        | Difficulty | Pattern               |
+| -------------------------------------------------------------------------------------------------------------- | ---------- | --------------------- |
+| [Count Square Submatrices with All Ones](https://leetcode.com/problems/count-square-submatrices-with-all-ones) | Medium     | DP on 2D              |
+| [Maximal Square](https://leetcode.com/problems/maximal-square)                                                 | Medium     | DP                    |
+| [Minimum Area Rectangle](https://leetcode.com/problems/minimum-area-rectangle)                                 | Medium     | Hash Set, Enumeration |
