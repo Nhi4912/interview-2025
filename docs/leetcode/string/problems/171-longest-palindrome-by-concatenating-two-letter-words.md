@@ -7,97 +7,150 @@ tags: [Array, Hash Table, String, Greedy, Counting]
 leetcode_url: "https://leetcode.com/problems/longest-palindrome-by-concatenating-two-letter-words"
 ---
 
-# Longest Palindrome by Concatenating Two Letter Words / Longest Palindrome by Concatenating Two Letter Words
+# Longest Palindrome by Concatenating Two Letter Words / Chuỗi Đối Xứng Dài Nhất Bằng Cách Ghép Các Từ Hai Chữ
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Maximum Palindromes After Operations](https://leetcode.com/problems/maximum-palindromes-after-operations) | [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words)
+🟡 Medium | 🏷️ Array, Hash Table, String, Greedy, Counting
 
----
+## 🧠 Intuition
 
-## 🧠 Intuition / Tư Duy
+**VI:** Để tạo palindrome từ các từ 2 ký tự: **Nhóm 1** — ghép `"ab"` với `"ba"` (reverse của nhau): mỗi cặp đóng góp 4 ký tự. **Nhóm 2** — từ tự đối xứng `"aa"`, `"bb"`: mỗi cặp đóng góp 4 ký tự, và 1 từ thừa có thể đặt chính giữa (+2). Tổng = `4 * pairs + 4 * selfPairs + (2 nếu có từ self-palindrome lẻ)`.
 
-**Analogy:** Giống ăn buffet — mỗi lần bạn chọn món ngon nhất hiện tại. Nếu chứng minh được rằng chọn tham lam từng bước vẫn tối ưu toàn cục, thì Greedy là đáp án.
-
-**Pattern Recognition:**
-
-- Signal: "locally optimal → globally optimal" + "sorting + selection" → **Greedy**
-- Bài này thuộc dạng Greedy — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Longest Palindrome by Concatenating Two Letter Words example:**
+**EN:** Two categories: (1) non-palindrome pairs `"ab"+"ba"` add 4 chars each. (2) self-palindromes `"aa"` can pair with each other for 4 chars, and one leftover can sit in the middle for +2.
 
 ```
-// TODO: Add step-by-step visual for Greedy
-// Show one complete example with state at each step
+words = ["lc","cl","gg"]
+"lc"↔"cl": 1 pair → 4 chars
+"gg"↔"gg": but only 1 "gg", so 1 leftover → center → 2 chars
+Total = 4 + 2 = 6 → "lc" + "gg" + "cl"
+
+words = ["ab","ty","yt","lc","cl","ab"]
+"ty"+"yt" → 4, "lc"+"cl" → 4, "ab"→1 leftover (no "ba"), no center
+Total = 8
 ```
-
----
-
-## Problem Description
-
-Longest Palindrome by Concatenating Two Letter Words. ([LeetCode](https://leetcode.com/problems/longest-palindrome-by-concatenating-two-letter-words))
-
-Difficulty: Medium | Acceptance: 53.7%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/longest-palindrome-by-concatenating-two-letter-words) for full constraints
-
----
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- 🇻🇳 **Hai loại từ:** từ không đối xứng (cần reverse của nó) và từ tự đối xứng (`"aa"`)
+- 🇬🇧 **Two categories:** asymmetric words need their reverse; symmetric words pair with themselves
+- 🇻🇳 **Đếm cặp:** `min(count["ab"], count["ba"])` cặp — mỗi cặp = 4 ký tự
+- 🇬🇧 **Pair count:** `Math.min(freq[w], freq[reverse(w)])` pairs per asymmetric pair
+- 🇻🇳 **Từ tự palindrome:** đếm floor(count/2) cặp — 1 thừa → có thể làm trung tâm
+- 🇬🇧 **Self-palindromes:** `Math.floor(freq["aa"] / 2)` full pairs + check if any odd count remains
+- 🇻🇳 **Tránh đếm 2 lần:** chỉ xét `"ab"` khi `a <= b` để không đếm cả `"ab"` lẫn `"ba"`
+- 🇬🇧 **Avoid double counting:** iterate asymmetric pairs once by checking `w[0] <= w[1]`
 
 ## Solutions
 
+### Solution 1: Frequency map with two categories
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Count pairs from asymmetric words and self-palindromes separately.
+ * Time: O(n) | Space: O(n)
  */
-function longestPalindromeByConcatenatingTwoLetterWordsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function longestPalindrome(words: string[]): number {
+  const freq = new Map<string, number>();
+  for (const w of words) freq.set(w, (freq.get(w) ?? 0) + 1);
+
+  let length = 0;
+  let hasOddSelfPalin = false;
+
+  for (const [w, cnt] of freq) {
+    const rev = w[1] + w[0];
+    if (w === rev) {
+      // Self-palindrome: "aa", "bb", etc.
+      length += Math.floor(cnt / 2) * 4;
+      if (cnt % 2 === 1) hasOddSelfPalin = true;
+    } else if (w < rev) {
+      // Asymmetric pair — process once (w < rev avoids double counting)
+      const pairs = Math.min(cnt, freq.get(rev) ?? 0);
+      length += pairs * 4;
+    }
+  }
+
+  if (hasOddSelfPalin) length += 2;
+  return length;
 }
 
-/**
- * Solution 2: Optimized — Greedy
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function longestPalindromeByConcatenatingTwoLetterWords(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Greedy
-  // Hint: Sort by key metric, make locally optimal choice at each step
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(longestPalindromeByConcatenatingTwoLetterWords(/* example 1 */)); // expected
-// console.log(longestPalindromeByConcatenatingTwoLetterWords(/* example 2 */)); // expected
-// console.log(longestPalindromeByConcatenatingTwoLetterWords(/* edge case */)); // expected
+console.log(longestPalindrome(["lc", "cl", "gg"])); // 6
+console.log(longestPalindrome(["ab", "ty", "yt", "lc", "cl", "ab"])); // 8
+console.log(longestPalindrome(["cc", "ll", "xx"])); // 2
+console.log(longestPalindrome(["aa", "aa"])); // 8
+console.log(longestPalindrome(["aa", "bb"])); // 2
 ```
 
----
+### Solution 2: Array-based frequency (faster)
+
+```typescript
+/**
+ * Same logic using a 26x26 frequency array for O(1) lookup.
+ * Time: O(n) | Space: O(26*26) = O(1)
+ */
+function longestPalindrome2(words: string[]): number {
+  const freq: number[][] = Array.from({ length: 26 }, () => new Array(26).fill(0));
+  for (const w of words) {
+    freq[w.charCodeAt(0) - 97][w.charCodeAt(1) - 97]++;
+  }
+
+  let length = 0;
+  let centerUsed = false;
+
+  for (let i = 0; i < 26; i++) {
+    // Self-palindromes: i == j
+    const sc = freq[i][i];
+    length += Math.floor(sc / 2) * 4;
+    if (sc % 2 === 1) centerUsed = true;
+
+    // Asymmetric pairs: (i, j) with i < j
+    for (let j = i + 1; j < 26; j++) {
+      const pairs = Math.min(freq[i][j], freq[j][i]);
+      length += pairs * 4;
+    }
+  }
+
+  if (centerUsed) length += 2;
+  return length;
+}
+
+console.log(longestPalindrome2(["lc", "cl", "gg"])); // 6
+console.log(longestPalindrome2(["ab", "ty", "yt", "lc", "cl", "ab"])); // 8
+console.log(longestPalindrome2(["cc", "ll", "xx"])); // 2
+```
+
+### Solution 3: Greedy simulation
+
+```typescript
+/**
+ * Greedily consume pairs: remove matched pairs from freq map.
+ * Time: O(n) | Space: O(n)
+ */
+function longestPalindrome3(words: string[]): number {
+  const freq = new Map<string, number>();
+  for (const w of words) freq.set(w, (freq.get(w) ?? 0) + 1);
+
+  let len = 0,
+    center = 0;
+  for (const [w, cnt] of freq) {
+    const rev = w[1] + w[0];
+    if (w === rev) {
+      len += Math.floor(cnt / 2) * 4;
+      if (cnt % 2 === 1) center = 2;
+    } else {
+      const mirror = freq.get(rev) ?? 0;
+      len += Math.min(cnt, mirror) * 4;
+    }
+  }
+  return len + center;
+}
+
+console.log(longestPalindrome3(["lc", "cl", "gg"])); // 6
+console.log(longestPalindrome3(["aa", "aa"])); // 8
+```
 
 ## 🔗 Related Problems
 
-- [Maximum Palindromes After Operations](https://leetcode.com/problems/maximum-palindromes-after-operations) — same pattern: Greedy
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Task Scheduler](https://leetcode.com/problems/task-scheduler) — same pattern: Heap / Priority Queue
-- [Reorganize String](https://leetcode.com/problems/reorganize-string) — same pattern: Heap / Priority Queue
-- [Longest Palindrome by Concatenating Two Letter Words — LeetCode](https://leetcode.com/problems/longest-palindrome-by-concatenating-two-letter-words) — problem page
+| #   | Problem                       | Difficulty | Key Idea                      |
+| --- | ----------------------------- | ---------- | ----------------------------- |
+| 409 | Longest Palindrome            | 🟢 Easy    | Count odd-frequency chars     |
+| 336 | Palindrome Pairs              | 🔴 Hard    | Pair all words for palindrome |
+| 5   | Longest Palindromic Substring | 🟡 Medium  | Expand around center          |

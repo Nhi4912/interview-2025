@@ -7,97 +7,125 @@ tags: [Array, Hash Table, Greedy]
 leetcode_url: "https://leetcode.com/problems/minimum-number-of-groups-to-create-a-valid-assignment"
 ---
 
-# Minimum Number of Groups to Create a Valid Assignment / Minimum Number of Groups to Create a Valid Assignment
+# Minimum Number of Groups to Create a Valid Assignment / Số Nhóm Tối Thiểu Để Phân Công Hợp Lệ
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Task Scheduler](https://leetcode.com/problems/task-scheduler) | [Smallest Range Covering Elements from K Lists](https://leetcode.com/problems/smallest-range-covering-elements-from-k-lists)
+🟡 Medium | 🏷️ Array, Hash Table, Greedy | 🔗 [LeetCode](https://leetcode.com/problems/minimum-number-of-groups-to-create-a-valid-assignment)
 
----
+## 🧠 Intuition / Trực Giác
 
-## 🧠 Intuition / Tư Duy
+**Tiếng Việt:** Đếm tần suất xuất hiện của mỗi nhãn. Thử kích thước nhóm k từ min_freq xuống 1. Với mỗi k, kiểm tra xem có thể chia tất cả tần suất thành các nhóm kích thước k hoặc k+1 không. Kích thước k lớn hơn = ít nhóm hơn.
 
-**Analogy:** Giống ăn buffet — mỗi lần bạn chọn món ngon nhất hiện tại. Nếu chứng minh được rằng chọn tham lam từng bước vẫn tối ưu toàn cục, thì Greedy là đáp án.
-
-**Pattern Recognition:**
-
-- Signal: "locally optimal → globally optimal" + "sorting + selection" → **Greedy**
-- Bài này thuộc dạng Greedy — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Minimum Number of Groups to Create a Valid Assignment example:**
+**English:** Count frequency of each label. Try group size k from minFreq down to 1. A frequency f can be split into groups of size k or k+1 iff ceil(f/(k+1))\*k ≤ f. Return minimum total groups.
 
 ```
-// TODO: Add step-by-step visual for Greedy
-// Show one complete example with state at each step
+nums = [1,1,1,2,2,3]  →  freq = {1:3, 2:2, 3:1}
+minFreq = 1
+
+Try k=1: each freq splits into groups of 1 or 2
+  freq=3: ceil(3/2)=2 groups, 2*1=2≤3 ✓
+  freq=2: ceil(2/2)=1 group,  1*1=1≤2 ✓
+  freq=1: ceil(1/2)=1 group,  1*1=1≤1 ✓
+  total = 2+1+1 = 4 groups ← answer
 ```
 
----
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-## Problem Description
-
-Minimum Number of Groups to Create a Valid Assignment. ([LeetCode](https://leetcode.com/problems/minimum-number-of-groups-to-create-a-valid-assignment))
-
-Difficulty: Medium | Acceptance: 24.0%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-number-of-groups-to-create-a-valid-assignment) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- 🔑 **EN:** Iterate k from minFreq downward — larger k gives fewer groups | **VI:** Duyệt k từ minFreq xuống — k lớn hơn cho ít nhóm hơn
+- 🔑 **EN:** Feasibility check: ceil(f/(k+1)) _ k ≤ f for every frequency | **VI:** Kiểm tra tính khả thi: ceil(f/(k+1)) _ k ≤ f với mọi tần suất
+- 🔑 **EN:** Minimum groups for freq f with size k = ceil(f/(k+1)) | **VI:** Số nhóm tối thiểu cho tần suất f với kích thước k = ceil(f/(k+1))
+- 🔑 **EN:** The first valid k (largest) found gives the optimal answer | **VI:** k hợp lệ đầu tiên (lớn nhất) tìm được chính là đáp án tối ưu
+- 🔑 **EN:** Edge case: if all elements distinct, minFreq=1, answer = n | **VI:** Trường hợp biên: nếu tất cả phần tử khác nhau, minFreq=1, đáp án = n
+- 🔑 **EN:** O(n + minFreq _ distinct) ≈ O(n) time overall | **VI:** O(n + minFreq _ distinct) ≈ O(n) thời gian tổng cộng
 
 ## Solutions
 
+### Solution 1: Greedy — Try Group Sizes from minFreq Down
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Minimum Number of Groups to Create a Valid Assignment
+ * Time: O(n + minFreq * D) where D = number of distinct values
+ * Space: O(D) — frequency map
  */
-function minimumNumberOfGroupsToCreateAValidAssignmentBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minGroupsForValidAssignment(nums: number[]): number {
+  // Count frequencies
+  const freq = new Map<number, number>();
+  for (const n of nums) freq.set(n, (freq.get(n) ?? 0) + 1);
+  const counts = [...freq.values()];
+  const minFreq = Math.min(...counts);
+
+  // Try group sizes from largest (minFreq) down to 1
+  for (let k = minFreq; k >= 1; k--) {
+    let totalGroups = 0;
+    let valid = true;
+
+    for (const f of counts) {
+      // Minimum groups needed: ceil(f / (k+1))
+      const groups = Math.ceil(f / (k + 1));
+      // Check feasibility: groups * k <= f (we can fill each group to at least k)
+      if (groups * k > f) {
+        valid = false;
+        break;
+      }
+      totalGroups += groups;
+    }
+
+    if (valid) return totalGroups;
+  }
+
+  return nums.length; // k=1: each element its own group (fallback)
 }
 
-/**
- * Solution 2: Optimized — Greedy
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumNumberOfGroupsToCreateAValidAssignment(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Greedy
-  // Hint: Sort by key metric, make locally optimal choice at each step
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(minimumNumberOfGroupsToCreateAValidAssignment(/* example 1 */)); // expected
-// console.log(minimumNumberOfGroupsToCreateAValidAssignment(/* example 2 */)); // expected
-// console.log(minimumNumberOfGroupsToCreateAValidAssignment(/* edge case */)); // expected
+console.log(minGroupsForValidAssignment([1, 1, 1, 2, 2, 3])); // 4
+console.log(minGroupsForValidAssignment([3, 2, 3, 2, 3])); // 2
+console.log(minGroupsForValidAssignment([10, 10, 10, 3, 1, 1])); // 4
 ```
 
----
+### Solution 2: Explicit Feasibility with Modulo
+
+```typescript
+/**
+ * Alternative: check if f % k <= floor(f / k)
+ * This is equivalent to ceil(f/(k+1))*k <= f
+ * Time: O(n + minFreq * D) | Space: O(D)
+ */
+function minGroupsForValidAssignment2(nums: number[]): number {
+  const freq = new Map<number, number>();
+  for (const n of nums) freq.set(n, (freq.get(n) ?? 0) + 1);
+  const counts = [...freq.values()];
+  const minFreq = Math.min(...counts);
+
+  const canSplit = (f: number, k: number): number | null => {
+    // Split f into groups of k or k+1; return group count or null if impossible
+    const g = Math.ceil(f / (k + 1));
+    return g * k <= f ? g : null;
+  };
+
+  for (let k = minFreq; k >= 1; k--) {
+    let total = 0;
+    let valid = true;
+    for (const f of counts) {
+      const g = canSplit(f, k);
+      if (g === null) {
+        valid = false;
+        break;
+      }
+      total += g;
+    }
+    if (valid) return total;
+  }
+
+  return nums.length;
+}
+
+console.log(minGroupsForValidAssignment2([1, 1, 1, 2, 2, 3])); // 4
+console.log(minGroupsForValidAssignment2([3, 2, 3, 2, 3])); // 2
+```
 
 ## 🔗 Related Problems
 
-- [Task Scheduler](https://leetcode.com/problems/task-scheduler) — same pattern: Heap / Priority Queue
-- [Smallest Range Covering Elements from K Lists](https://leetcode.com/problems/smallest-range-covering-elements-from-k-lists) — same pattern: Sliding Window
-- [Rabbits in Forest](https://leetcode.com/problems/rabbits-in-forest) — same pattern: Greedy
-- [Smallest Missing Non-negative Integer After Operations](https://leetcode.com/problems/smallest-missing-non-negative-integer-after-operations) — same pattern: Greedy
-- [Minimum Number of Groups to Create a Valid Assignment — LeetCode](https://leetcode.com/problems/minimum-number-of-groups-to-create-a-valid-assignment) — problem page
+| Problem                                                                                                                       | Difficulty | Pattern            |
+| ----------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------ |
+| [Divide Array in Sets of K Consecutive Numbers](https://leetcode.com/problems/divide-array-in-sets-of-k-consecutive-numbers/) | 🟡 Medium  | Greedy             |
+| [Task Scheduler](https://leetcode.com/problems/task-scheduler/)                                                               | 🟡 Medium  | Greedy + Frequency |
+| [Rearrange String k Distance Apart](https://leetcode.com/problems/rearrange-string-k-distance-apart/)                         | 🔴 Hard    | Greedy             |

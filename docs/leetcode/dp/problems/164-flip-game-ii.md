@@ -7,104 +7,114 @@ tags: [Math, Dynamic Programming, Backtracking, Memoization, Game Theory]
 leetcode_url: "https://leetcode.com/problems/flip-game-ii"
 ---
 
-# Flip Game II / Flip Game II
+# Flip Game II / Trò Chơi Lật Dấu II
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Backtracking
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Can I Win](https://leetcode.com/problems/can-i-win) | [Fibonacci Number](https://leetcode.com/problems/fibonacci-number)
+🟡 Medium | Game theory with memoization (Sprague-Grundy)
 
----
+## 🧠 Intuition
 
-## 🧠 Intuition / Tư Duy
+**VI:** Trò chơi công bằng: người hiện tại thắng nếu tồn tại ít nhất một nước đi
+khiến đối thủ thua. Dùng memoisation để tránh tính lại trạng thái đã gặp.
 
-**Analogy:** Giống thử đồ — bạn thử từng lựa chọn, nếu không phù hợp thì cởi ra thử cái khác. Quan trọng là biết khi nào nên dừng thử (pruning).
-
-**Pattern Recognition:**
-
-- Signal: "generate all valid combinations/permutations" → **Backtracking**
-- Bài này thuộc dạng Backtracking — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Flip Game II example:**
+**EN:** Current player wins if there exists at least one move that puts the opponent in a
+losing state. Memoize by string state to avoid recomputation.
 
 ```
-                    []
-            /       |       \
-          [a]      [b]      [c]
-         / \        |
-      [a,b] [a,c]  [b,c]
-       |
-    [a,b,c]
-
-Choose → Explore → Un-choose (backtrack)
-Prune branches that violate constraints
+currentState = "+++++"
+Try flipping each "++" → "+--++", "++--+", "+++--"
+canWin("+--++") → opponent can flip → canWin recursive
+If ANY resulting state makes opponent lose → return true
 ```
-
----
-
-## Problem Description
-
-Flip Game II. ([LeetCode](https://leetcode.com/problems/flip-game-ii))
-
-Difficulty: Medium | Acceptance: 52.2%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/flip-game-ii) for full constraints
-
----
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần all solutions hay count? Có duplicate input không?" / All results or count? Duplicate elements?
-2. **Template**: "Choose → Explore → Un-choose" / Follow the standard backtracking template
-3. **Pruning**: "Skip nếu biết sớm branch này invalid" / Prune early to avoid TLE
-4. **Edge cases**: "Input rỗng, n=0, kết quả có thể rỗng" / Empty input, n=0, possibly empty result set
-
----
+- 🔑 **EN:** Classic minimax: return true if any move leads to opponent returning false.
+  **VI:** Minimax cổ điển: trả true nếu có nước đi nào khiến đối thủ trả false.
+- 🔑 **EN:** Memoize by the string state — exponential states but many repeated.
+  **VI:** Ghi nhớ theo chuỗi trạng thái — trạng thái mũ nhưng nhiều lần lặp.
+- 🔑 **EN:** Sprague-Grundy: game decomposes into independent runs of "+". Nim-value of run length L is floor(L/2).
+  **VI:** Sprague-Grundy: trò chơi phân rã thành các đoạn "+" độc lập. Nim-value = floor(L/2).
+- 🔑 **EN:** XOR of all Grundy values determines win/loss. XOR=0 → lose, XOR≠0 → win.
+  **VI:** XOR tất cả Grundy values → XOR=0 thua, XOR≠0 thắng.
+- 🔑 **EN:** Memoized DFS is simpler to implement; Grundy approach is O(n).
+  **VI:** DFS có memo dễ cài hơn; phương pháp Grundy O(n).
+- 🔑 **EN:** Each move converts "++" to "--"; game ends when no "++" remains.
+  **VI:** Mỗi nước chuyển "++" thành "--"; trò chơi kết thúc khi không còn "++".
 
 ## Solutions
 
+### Solution 1: Memoised Backtracking
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Flip Game II — memoised DFS
+ * canWin(s) = true if current player can win from state s
+ * Time: O(n! / 2^k) worst case  Space: O(states)
  */
-function flipGameIiBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function canWin(currentState: string): boolean {
+  const memo = new Map<string, boolean>();
+
+  function dfs(s: string): boolean {
+    if (memo.has(s)) return memo.get(s)!;
+    for (let i = 0; i < s.length - 1; i++) {
+      if (s[i] === "+" && s[i + 1] === "+") {
+        const next = s.slice(0, i) + "--" + s.slice(i + 2);
+        if (!dfs(next)) {
+          memo.set(s, true);
+          return true;
+        }
+      }
+    }
+    memo.set(s, false);
+    return false;
+  }
+
+  return dfs(currentState);
 }
 
-/**
- * Solution 2: Optimized — Backtracking
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function flipGameIi(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Backtracking
-  // Hint: Choose → Explore → Unchoose, prune invalid branches early
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(flipGameIi(/* example 1 */)); // expected
-// console.log(flipGameIi(/* example 2 */)); // expected
-// console.log(flipGameIi(/* edge case */)); // expected
+console.log(canWin("++++")); // true
+console.log(canWin("+")); // false
+console.log(canWin("++--++")); // true
 ```
 
----
+### Solution 2: Sprague-Grundy (O(n))
+
+```typescript
+/**
+ * Sprague-Grundy theorem:
+ * Split string by '-', each contiguous run of '+' of length L
+ * has Grundy value floor(L/2).
+ * XOR all Grundy values: non-zero → first player wins.
+ * Time: O(n)  Space: O(n)
+ */
+function canWinGrundy(currentState: string): boolean {
+  let xorSum = 0;
+  let runLen = 0;
+
+  for (const ch of currentState) {
+    if (ch === "+") {
+      runLen++;
+    } else {
+      xorSum ^= Math.floor(runLen / 2);
+      runLen = 0;
+    }
+  }
+  xorSum ^= Math.floor(runLen / 2);
+
+  return xorSum !== 0;
+}
+
+console.log(canWinGrundy("++++")); // true
+console.log(canWinGrundy("+")); // false
+console.log(canWinGrundy("++--++")); // true
+console.log(canWinGrundy("++")); // true
+```
 
 ## 🔗 Related Problems
 
-- [Can I Win](https://leetcode.com/problems/can-i-win) — same pattern: Dynamic Programming
-- [Fibonacci Number](https://leetcode.com/problems/fibonacci-number) — same pattern: Dynamic Programming
-- [Word Break II](https://leetcode.com/problems/word-break-ii) — same pattern: Trie
-- [N-th Tribonacci Number](https://leetcode.com/problems/n-th-tribonacci-number) — same pattern: Dynamic Programming
-- [Flip Game II — LeetCode](https://leetcode.com/problems/flip-game-ii) — problem page
+| Problem                                                                                                | Difficulty | Key Idea                 |
+| ------------------------------------------------------------------------------------------------------ | ---------- | ------------------------ |
+| [292. Nim Game](https://leetcode.com/problems/nim-game/)                                               | 🟢 Easy    | Mathematical game theory |
+| [294. Flip Game II](https://leetcode.com/problems/flip-game-ii/)                                       | 🟡 Medium  | This problem             |
+| [375. Guess Number Higher or Lower II](https://leetcode.com/problems/guess-number-higher-or-lower-ii/) | 🟡 Medium  | Minimax DP               |
+| [486. Predict the Winner](https://leetcode.com/problems/predict-the-winner/)                           | 🟡 Medium  | Minimax game DP          |

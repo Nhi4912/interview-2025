@@ -7,97 +7,135 @@ tags: [Hash Table, String, Bit Manipulation, Prefix Sum]
 leetcode_url: "https://leetcode.com/problems/number-of-wonderful-substrings"
 ---
 
-# Number of Wonderful Substrings / Number of Wonderful Substrings
+# Number of Wonderful Substrings / Số Chuỗi Con Kỳ Diệu
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Prefix Sum
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Can Make Palindrome from Substring](https://leetcode.com/problems/can-make-palindrome-from-substring) | [Number of Divisible Substrings](https://leetcode.com/problems/number-of-divisible-substrings)
+🟡 Medium | 🏷️ Hash Table, String, Bit Manipulation, Prefix Sum
 
----
+## 🧠 Intuition
 
-## 🧠 Intuition / Tư Duy
+**VI:** Chuỗi "kỳ diệu" có **tối đa 1 ký tự với tần số lẻ**. Dùng **bitmask XOR prefix**: bit thứ `i` = 1 nếu ký tự `'a'+i` xuất hiện số lẻ lần. Chuỗi con `[i+1..j]` kỳ diệu khi `prefix[j] XOR prefix[i]` có 0 hoặc 1 bit được set. Đếm các cặp prefix trước đó có mask phù hợp.
 
-**Analogy:** Giống tổng luỹ tiến — tính trước tổng từ đầu đến mỗi vị trí, rồi truy vấn tổng bất kỳ đoạn nào trong O(1).
-
-**Pattern Recognition:**
-
-- Signal: "range sum queries" + "subarray sum" → **Prefix Sum**
-- Bài này thuộc dạng Prefix Sum — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Number of Wonderful Substrings example:**
+**EN:** Track parity of each char's frequency with a 10-bit mask (bits a–j). A substring is wonderful if its XOR has at most 1 bit set. For prefix at index j, count prior prefixes with mask `== prefix[j]` (0 bits differ) or `prefix[j] ^ (1<<k)` (exactly 1 bit differs).
 
 ```
-// TODO: Add step-by-step visual for Prefix Sum
-// Show one complete example with state at each step
+word = "aba"
+Prefixes:  ""   "a"  "ab"  "aba"
+Mask:      00  01   11    00
+                           ^same as prefix 0 → substring "aba" is wonderful
+           pairs with 0-bit diff: (0,3) → "aba" ✅
+           pairs with 1-bit diff: (0,1),(1,2),(2,3) check...
 ```
-
----
-
-## Problem Description
-
-Number of Wonderful Substrings. ([LeetCode](https://leetcode.com/problems/number-of-wonderful-substrings))
-
-Difficulty: Medium | Acceptance: 66.6%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/number-of-wonderful-substrings) for full constraints
-
----
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- 🇻🇳 **10 ký tự:** chỉ `a-j` — cần 10 bit, tổng 1024 trạng thái mask
+- 🇬🇧 **10-bit space:** only 'a' to 'j' — 2^10 = 1024 possible prefix masks
+- 🇻🇳 **XOR prefix:** `prefix[j] XOR prefix[i]` = mask của chuỗi con `[i+1..j]`
+- 🇬🇧 **XOR trick:** substring parity = XOR of two prefixes; count matching prefixes
+- 🇻🇳 **0 bit lẻ:** tìm prefix trước đó có cùng mask → `count[mask]`
+- 🇻🇳 **1 bit lẻ:** flip từng bit trong 10 bit → cộng thêm `count[mask ^ (1<<k)]` với k=0..9
+- 🇬🇧 **O(10n) time:** for each position check 11 masks (current + 10 single-bit flips)
 
 ## Solutions
 
+### Solution 1: Bitmask prefix XOR with count array
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Count prefix XOR masks, for each position check 11 candidate masks.
+ * Time: O(10 * n) = O(n) | Space: O(2^10) = O(1)
  */
-function numberOfWonderfulSubstringsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function wonderfulSubstrings(word: string): number {
+  const count = new Array(1 << 10).fill(0);
+  count[0] = 1; // empty prefix
+  let mask = 0;
+  let result = 0;
+
+  for (const ch of word) {
+    mask ^= 1 << (ch.charCodeAt(0) - 97);
+
+    // Case 1: all characters have even frequency (0 odd-freq chars)
+    result += count[mask];
+
+    // Case 2: exactly 1 character has odd frequency
+    for (let k = 0; k < 10; k++) {
+      result += count[mask ^ (1 << k)];
+    }
+
+    count[mask]++;
+  }
+  return result;
 }
 
-/**
- * Solution 2: Optimized — Prefix Sum
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function numberOfWonderfulSubstrings(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Prefix Sum
-  // Hint: Build prefix sum array, query range sum in O(1)
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(numberOfWonderfulSubstrings(/* example 1 */)); // expected
-// console.log(numberOfWonderfulSubstrings(/* example 2 */)); // expected
-// console.log(numberOfWonderfulSubstrings(/* edge case */)); // expected
+console.log(wonderfulSubstrings("aba")); // 4
+console.log(wonderfulSubstrings("aabb")); // 9
+console.log(wonderfulSubstrings("he")); // 2
+console.log(wonderfulSubstrings("abcd")); // 4 (each single char)
 ```
 
----
+### Solution 2: Same with explicit mask tracking
+
+```typescript
+/**
+ * Equivalent approach with more verbose comments for clarity.
+ * Time: O(10n) | Space: O(1024)
+ */
+function wonderfulSubstrings2(word: string): number {
+  const freq = new Map<number, number>([[0, 1]]);
+  let prefixMask = 0;
+  let ans = 0;
+
+  for (const c of word) {
+    prefixMask ^= 1 << (c.charCodeAt(0) - 97);
+
+    // All-even: prefix[j] == prefix[i]
+    ans += freq.get(prefixMask) ?? 0;
+
+    // Exactly-one-odd: prefix[j] ^ (1<<k) == prefix[i]
+    for (let bit = 0; bit < 10; bit++) {
+      ans += freq.get(prefixMask ^ (1 << bit)) ?? 0;
+    }
+
+    freq.set(prefixMask, (freq.get(prefixMask) ?? 0) + 1);
+  }
+  return ans;
+}
+
+console.log(wonderfulSubstrings2("aba")); // 4
+console.log(wonderfulSubstrings2("aabb")); // 9
+```
+
+### Solution 3: Counting directly with prefix sum pattern
+
+```typescript
+/**
+ * Highlight the prefix-sum analogy clearly.
+ * For prefix mask at j: wonderful substrings ending at j =
+ *   count of i < j where mask[i..j] has ≤ 1 set bit.
+ * Time: O(10n) | Space: O(1024)
+ */
+function wonderfulSubstrings3(word: string): number {
+  const seen = new Int32Array(1024);
+  seen[0] = 1;
+  let cur = 0,
+    res = 0;
+  for (const c of word) {
+    cur ^= 1 << (c.charCodeAt(0) - 97);
+    res += seen[cur]; // 0 odd-freq chars
+    for (let b = 0; b < 10; b++) res += seen[cur ^ (1 << b)]; // 1 odd-freq char
+    seen[cur]++;
+  }
+  return res;
+}
+
+console.log(wonderfulSubstrings3("aba")); // 4
+console.log(wonderfulSubstrings3("aabb")); // 9
+```
 
 ## 🔗 Related Problems
 
-- [Can Make Palindrome from Substring](https://leetcode.com/problems/can-make-palindrome-from-substring) — same pattern: Prefix Sum
-- [Number of Divisible Substrings](https://leetcode.com/problems/number-of-divisible-substrings) — same pattern: Prefix Sum
-- [Palindrome Permutation](https://leetcode.com/problems/palindrome-permutation) — same pattern: Bit Manipulation
-- [Repeated DNA Sequences](https://leetcode.com/problems/repeated-dna-sequences) — same pattern: Sliding Window
-- [Number of Wonderful Substrings — LeetCode](https://leetcode.com/problems/number-of-wonderful-substrings) — problem page
+| #    | Problem                                                     | Difficulty | Key Idea              |
+| ---- | ----------------------------------------------------------- | ---------- | --------------------- |
+| 1371 | Find the Longest Substring Containing Vowels in Even Counts | 🟡 Medium  | Bitmask prefix XOR    |
+| 1542 | Find Longest Awesome Substring                              | 🔴 Hard    | Same bitmask pattern  |
+| 560  | Subarray Sum Equals K                                       | 🟡 Medium  | Prefix sum + hash map |

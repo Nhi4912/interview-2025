@@ -7,97 +7,99 @@ tags: [String]
 leetcode_url: "https://leetcode.com/problems/check-if-binary-string-has-at-most-one-segment-of-ones"
 ---
 
-# Check if Binary String Has at Most One Segment of Ones / Check if Binary String Has at Most One Segment of Ones
+# Check if Binary String Has at Most One Segment of Ones / Kiểm Tra Chuỗi Nhị Phân Có Nhiều Nhất Một Đoạn 1
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: String Processing
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Text Justification](https://leetcode.com/problems/text-justification) | [Decode String](https://leetcode.com/problems/decode-string)
+🟢 Easy | 🏷️ String
 
----
+## 🧠 Intuition
 
-## 🧠 Intuition / Tư Duy
+**VI:** Nếu chuỗi có **nhiều hơn một đoạn 1**, nghĩa là có ít nhất một '0' xuất hiện **sau** một '1'. Khi đó sẽ tồn tại mẫu `"10"` trong chuỗi — nghĩa là sau đoạn 1 đầu tiên có '0', và sau đó lại có '1'. Điều kiện đủ và cần: không chứa `"01"` (sau khi đã có đoạn 1 rồi gặp 0, rồi lại gặp 1).
 
-**Analogy:** Xử lý chuỗi ký tự — thường dùng hash table, two pointers, hoặc sliding window tuỳ bài toán.
-
-**Pattern Recognition:**
-
-- Signal: "string transformation/validation" → **String Processing**
-- Bài này thuộc dạng String Processing — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Check if Binary String Has at Most One Segment of Ones example:**
+**EN:** The string starts with '1' (guaranteed). A second segment of ones exists iff there's a '0' followed later by a '1' — i.e., the pattern `"01"` exists.
 
 ```
-// TODO: Add step-by-step visual for String Processing
-// Show one complete example with state at each step
+"1101"  → contains "01" → TWO segments → false
+ 11 0 1
+    ^^ found "01" pattern!
+
+"111"   → no "01" → ONE segment → true
+"1100"  → no "01" after 0s → true (just trailing zeros)
+"10101" → "01" at index 1 → false
 ```
-
----
-
-## Problem Description
-
-Check if Binary String Has at Most One Segment of Ones. ([LeetCode](https://leetcode.com/problems/check-if-binary-string-has-at-most-one-segment-of-ones))
-
-Difficulty: Easy | Acceptance: 39.0%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/check-if-binary-string-has-at-most-one-segment-of-ones) for full constraints
-
----
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- 🇻🇳 **Trick ngắn gọn:** `!s.includes("01")` — đủ để giải quyết toàn bộ bài toán
+- 🇬🇧 **Key insight:** string always starts with '1', so "01" means a new segment started after a gap
+- 🇻🇳 **Tại sao không phải "10"?** `"10"` chỉ kết thúc đoạn, `"01"` mới là bắt đầu đoạn mới
+- 🇬🇧 **Why not check "10"?** "10" ends a segment; "01" begins a NEW one after a zero gap
+- 🇻🇳 **Cách khác:** đếm số đoạn `1` bằng cách đếm transitions `0→1`
+- 🇬🇧 **Alternative:** count `0→1` transitions; at most one means answer is true
 
 ## Solutions
 
+### Solution 1: Check for "01" substring
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * If "01" exists, a second block of ones started after zeros.
+ * Time: O(n) | Space: O(1)
  */
-function checkIfBinaryStringHasAtMostOneSegmentOfOnesBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function checkOnesSegment(s: string): boolean {
+  return !s.includes("01");
 }
 
-/**
- * Solution 2: Optimized — String Processing
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function checkIfBinaryStringHasAtMostOneSegmentOfOnes(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using String Processing
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(checkIfBinaryStringHasAtMostOneSegmentOfOnes(/* example 1 */)); // expected
-// console.log(checkIfBinaryStringHasAtMostOneSegmentOfOnes(/* example 2 */)); // expected
-// console.log(checkIfBinaryStringHasAtMostOneSegmentOfOnes(/* edge case */)); // expected
+console.log(checkOnesSegment("1001")); // false — "01" found
+console.log(checkOnesSegment("110")); // true  — no "01"
+console.log(checkOnesSegment("1")); // true
+console.log(checkOnesSegment("10101")); // false
+console.log(checkOnesSegment("11100")); // true
 ```
 
----
+### Solution 2: Count 0→1 transitions
+
+```typescript
+/**
+ * Count the number of times we go from '0' to '1'.
+ * At most one such transition means at most one segment.
+ * Time: O(n) | Space: O(1)
+ */
+function checkOnesSegment2(s: string): boolean {
+  let transitions = 0;
+  for (let i = 1; i < s.length; i++) {
+    if (s[i - 1] === "0" && s[i] === "1") {
+      transitions++;
+    }
+  }
+  return transitions === 0;
+}
+
+console.log(checkOnesSegment2("1001")); // false (one 0→1 at index 3)
+console.log(checkOnesSegment2("110")); // true  (no 0→1)
+console.log(checkOnesSegment2("10101")); // false (two 0→1 transitions)
+```
+
+### Solution 3: Regex segment count
+
+```typescript
+/**
+ * Split by '0+' and count non-empty '1' segments.
+ * Time: O(n) | Space: O(n)
+ */
+function checkOnesSegment3(s: string): boolean {
+  const segments = s.split(/0+/).filter((seg) => seg.length > 0);
+  return segments.length <= 1;
+}
+
+console.log(checkOnesSegment3("1001")); // false (2 segments)
+console.log(checkOnesSegment3("1110000")); // true  (1 segment)
+console.log(checkOnesSegment3("0")); // true  (0 segments)
+```
 
 ## 🔗 Related Problems
 
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Decode String](https://leetcode.com/problems/decode-string) — same pattern: Stack
-- [Simplify Path](https://leetcode.com/problems/simplify-path) — same pattern: Stack
-- [Time Based Key-Value Store](https://leetcode.com/problems/time-based-key-value-store) — same pattern: Binary Search
-- [Check if Binary String Has at Most One Segment of Ones — LeetCode](https://leetcode.com/problems/check-if-binary-string-has-at-most-one-segment-of-ones) — problem page
+| #    | Problem                                                | Difficulty | Key Idea                |
+| ---- | ------------------------------------------------------ | ---------- | ----------------------- |
+| 1784 | Check if Binary String Has at Most One Segment of Ones | 🟢 Easy    | This problem            |
+| 1869 | Longer Contiguous Segments of Ones                     | 🟢 Easy    | Compare segment lengths |
+| 926  | Flip String to Monotone Increasing                     | 🟡 Medium  | Segment transitions DP  |

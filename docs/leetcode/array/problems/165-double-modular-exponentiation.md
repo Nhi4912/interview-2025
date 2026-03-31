@@ -7,97 +7,169 @@ tags: [Array, Math, Simulation]
 leetcode_url: "https://leetcode.com/problems/double-modular-exponentiation"
 ---
 
-# Double Modular Exponentiation / Double Modular Exponentiation
+# Double Modular Exponentiation / Lũy Thừa Mô-đun Kép
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Math
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Find the Winner of the Circular Game](https://leetcode.com/problems/find-the-winner-of-the-circular-game) | [Find Triangular Sum of an Array](https://leetcode.com/problems/find-triangular-sum-of-an-array)
+🟡 Medium | 🏷️ Array, Math, Simulation | 🔗 [LeetCode](https://leetcode.com/problems/double-modular-exponentiation)
 
----
+## 🧠 Intuition / Trực Giác
 
-## 🧠 Intuition / Tư Duy
+**Tiếng Việt:** Với mỗi biến [a, b, c, m], tính (a^b % 10)^c % m bằng cách áp dụng mô-đun hai lần. Dùng fast modular exponentiation để tránh tràn số. Kiểm tra kết quả có bằng target không.
 
-**Analogy:** Bài toán cần công thức hoặc tính chất toán học — không cần brute force nếu nhận ra pattern.
-
-**Pattern Recognition:**
-
-- Signal: "pattern/formula" + "number properties" → **Math**
-- Bài này thuộc dạng Math — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Double Modular Exponentiation example:**
+**English:** For each [a, b, c, m] in variables, compute (a^b % 10)^c % m using fast modpow. Two levels of modular exponentiation — hence "double". Return indices where result equals target.
 
 ```
-// TODO: Add step-by-step visual for Math
-// Show one complete example with state at each step
+variables = [[2,3,3,10],[3,3,3,1],[6,1,1,4]]  target=2
+
+i=0: base = 2^3 % 10 = 8, result = 8^3 % 10 = 512 % 10 = 2 ✓
+i=1: base = 3^3 % 10 = 7, result = 7^3 % 1 = 0  ✗
+i=2: base = 6^1 % 10 = 6, result = 6^1 % 4 = 2  ✓
+
+Answer: [0, 2]
 ```
 
----
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-## Problem Description
-
-Double Modular Exponentiation. ([LeetCode](https://leetcode.com/problems/double-modular-exponentiation))
-
-Difficulty: Medium | Acceptance: 47.1%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/double-modular-exponentiation) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- 🔑 **EN:** Use fast modular exponentiation (binary exponentiation) for large powers | **VI:** Dùng lũy thừa mô-đun nhanh (bình phương liên tiếp) cho số mũ lớn
+- 🔑 **EN:** First mod is always 10 (last digit); second mod is m | **VI:** Mô-đun đầu tiên luôn là 10 (chữ số cuối); mô-đun thứ hai là m
+- 🔑 **EN:** modpow(base, exp, mod): handles base=0 and mod=1 edge cases | **VI:** modpow xử lý trường hợp biên base=0 và mod=1
+- 🔑 **EN:** Intermediate result after step 1 is in [0,9] — small enough to use directly | **VI:** Kết quả trung gian sau bước 1 thuộc [0,9] — đủ nhỏ để dùng trực tiếp
+- 🔑 **EN:** Collect indices (not values) where final result equals target | **VI:** Thu thập chỉ số (không phải giá trị) khi kết quả cuối bằng target
+- 🔑 **EN:** O(n log maxExp) total time | **VI:** Tổng thời gian O(n log maxExp)
 
 ## Solutions
 
+### Solution 1: Fast Modular Exponentiation (Optimal)
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Double Modular Exponentiation
+ * Time: O(n * log(max(b,c))) — modpow per variable
+ * Space: O(1) extra (O(k) for result)
  */
-function doubleModularExponentiationBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function getGoodIndices(variables: number[][], target: number): number[] {
+  const modpow = (base: number, exp: number, mod: number): number => {
+    if (mod === 1) return 0;
+    let result = 1;
+    base %= mod;
+    while (exp > 0) {
+      if (exp & 1) result = (result * base) % mod;
+      base = (base * base) % mod;
+      exp >>= 1;
+    }
+    return result;
+  };
+
+  const goodIndices: number[] = [];
+
+  for (let i = 0; i < variables.length; i++) {
+    const [a, b, c, m] = variables[i];
+    // Step 1: compute a^b % 10 (last digit of a^b)
+    const inner = modpow(a, b, 10);
+    // Step 2: compute inner^c % m
+    const result = modpow(inner, c, m);
+    if (result === target) goodIndices.push(i);
+  }
+
+  return goodIndices;
 }
 
-/**
- * Solution 2: Optimized — Math
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function doubleModularExponentiation(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Math
-  // Hint: Find mathematical pattern or formula
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(doubleModularExponentiation(/* example 1 */)); // expected
-// console.log(doubleModularExponentiation(/* example 2 */)); // expected
-// console.log(doubleModularExponentiation(/* edge case */)); // expected
+console.log(
+  getGoodIndices(
+    [
+      [2, 3, 3, 10],
+      [3, 3, 3, 1],
+      [6, 1, 1, 4],
+    ],
+    2,
+  ),
+); // [0,2]
+console.log(getGoodIndices([[39, 3, 1000, 1000]], 17)); // []
+console.log(getGoodIndices([[1, 1, 1, 2]], 1)); // [0]
 ```
 
----
+### Solution 2: Iterative (No Recursion)
+
+```typescript
+/**
+ * Same logic, explicit iterative loop style
+ * Time: O(n log maxExp) | Space: O(1)
+ */
+function getGoodIndices2(variables: number[][], target: number): number[] {
+  function modExp(b: number, e: number, m: number): number {
+    if (m === 1) return 0;
+    let res = 1;
+    b = b % m;
+    for (; e > 0; e = Math.floor(e / 2)) {
+      if (e % 2 === 1) res = (res * b) % m;
+      b = (b * b) % m;
+    }
+    return res;
+  }
+
+  return variables
+    .map(([a, b, c, m], i) => ({ i, val: modExp(modExp(a, b, 10), c, m) }))
+    .filter(({ val }) => val === target)
+    .map(({ i }) => i);
+}
+
+console.log(
+  getGoodIndices2(
+    [
+      [2, 3, 3, 10],
+      [3, 3, 3, 1],
+      [6, 1, 1, 4],
+    ],
+    2,
+  ),
+); // [0,2]
+```
+
+### Solution 3: Built-in BigInt (Safe for very large numbers)
+
+```typescript
+/**
+ * Use BigInt for guaranteed overflow safety
+ * Time: O(n log maxExp) | Space: O(1)
+ */
+function getGoodIndices3(variables: number[][], target: number): number[] {
+  const modpow = (base: bigint, exp: bigint, mod: bigint): bigint => {
+    if (mod === 1n) return 0n;
+    let result = 1n;
+    base = base % mod;
+    while (exp > 0n) {
+      if (exp & 1n) result = (result * base) % mod;
+      base = (base * base) % mod;
+      exp >>= 1n;
+    }
+    return result;
+  };
+
+  const result: number[] = [];
+  for (let i = 0; i < variables.length; i++) {
+    const [a, b, c, m] = variables[i].map(BigInt);
+    const inner = modpow(a, b, 10n);
+    const val = modpow(inner, c, m);
+    if (Number(val) === target) result.push(i);
+  }
+  return result;
+}
+
+console.log(
+  getGoodIndices3(
+    [
+      [2, 3, 3, 10],
+      [3, 3, 3, 1],
+      [6, 1, 1, 4],
+    ],
+    2,
+  ),
+); // [0,2]
+```
 
 ## 🔗 Related Problems
 
-- [Find the Winner of the Circular Game](https://leetcode.com/problems/find-the-winner-of-the-circular-game) — same pattern: Queue
-- [Find Triangular Sum of an Array](https://leetcode.com/problems/find-triangular-sum-of-an-array) — same pattern: Math
-- [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) — same pattern: Matrix / Simulation
-- [Text Justification](https://leetcode.com/problems/text-justification) — same pattern: Matrix / Simulation
-- [Double Modular Exponentiation — LeetCode](https://leetcode.com/problems/double-modular-exponentiation) — problem page
+| Problem                                                                         | Difficulty | Pattern                |
+| ------------------------------------------------------------------------------- | ---------- | ---------------------- |
+| [Pow(x, n)](https://leetcode.com/problems/powx-n/)                              | 🟡 Medium  | Fast Exponentiation    |
+| [Super Pow](https://leetcode.com/problems/super-pow/)                           | 🟡 Medium  | Modular Exponentiation |
+| [Find the Pivot Integer](https://leetcode.com/problems/find-the-pivot-integer/) | 🟢 Easy    | Math                   |

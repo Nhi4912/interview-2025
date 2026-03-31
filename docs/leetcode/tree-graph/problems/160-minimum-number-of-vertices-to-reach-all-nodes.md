@@ -7,97 +7,128 @@ tags: [Graph]
 leetcode_url: "https://leetcode.com/problems/minimum-number-of-vertices-to-reach-all-nodes"
 ---
 
-# Minimum Number of Vertices to Reach All Nodes / Minimum Number of Vertices to Reach All Nodes
+# Minimum Number of Vertices to Reach All Nodes / Số đỉnh tối thiểu để đến tất cả các nút
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Graph
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Course Schedule](https://leetcode.com/problems/course-schedule) | [Evaluate Division](https://leetcode.com/problems/evaluate-division)
+🟡 Medium | Graph | In-degree
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition
 
-**Analogy:** Giống mạng lưới đường phố — mỗi ngã tư là một node, mỗi con đường là edge. Bài toán đặt ra: tìm đường ngắn nhất, kiểm tra có chu trình, hoặc đếm thành phần liên thông.
+**Vietnamese:** Giống một nhà máy với nhiều phòng — nếu phòng nào có cửa từ phòng khác dẫn vào, bạn không cần xuất phát từ đó. Chỉ xuất phát từ những phòng **không ai dẫn đến** (in-degree = 0).
 
-**Pattern Recognition:**
-
-- Signal: "nodes and edges" + "connectivity/reachability" → **Graph**
-- Bài này thuộc dạng Graph — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Minimum Number of Vertices to Reach All Nodes example:**
+**English:** In a DAG, any node with an incoming edge is reachable from another. Only nodes with **in-degree 0** must be explicit starting points — they can never be reached otherwise.
 
 ```
-// TODO: Add step-by-step visual for Graph
-// Show one complete example with state at each step
+Graph: 0 → 1 → 3
+       0 → 2 → 3   in-degree: [0]=0, [1]=1, [2]=1, [3]=2
+       3 → 4       in-degree: [4]=1
+
+Answer: [0]  ← only node 0 has no parent
 ```
-
----
-
-## Problem Description
-
-Minimum Number of Vertices to Reach All Nodes. ([LeetCode](https://leetcode.com/problems/minimum-number-of-vertices-to-reach-all-nodes))
-
-Difficulty: Medium | Acceptance: 81.2%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-number-of-vertices-to-reach-all-nodes) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🔑 **Key insight / Nhận xét chính:** Nodes with in-degree 0 have no parent — they can ONLY be reached if chosen as starting points.
+- 📊 **Why set / Tại sao dùng Set:** Collect all "destination" nodes from edges in O(E); anything not in that set is an answer.
+- ⚡ **One-pass trick / Mẹo 1 vòng:** Iterate edges once to build the set, then iterate 0..n-1 to filter.
+- 🎯 **No graph traversal needed / Không cần duyệt đồ thị:** The structural property is enough — no BFS/DFS required.
+- 🧩 **Edge case / Trường hợp đặc biệt:** If edges is empty, every node has in-degree 0 → return all nodes.
+- 📏 **Complexity / Độ phức tạp:** O(E + n) time, O(n) space — optimal for this problem.
 
 ---
 
 ## Solutions
 
+### Solution 1 — Set of Destinations (Optimal)
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Collect all nodes that appear as a destination (in-degree >= 1).
+ * Return all nodes NOT in that set — they have in-degree 0.
+ *
+ * Time:  O(E + n)
+ * Space: O(n)
  */
-function minimumNumberOfVerticesToReachAllNodesBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function findSmallestSetOfVertices(n: number, edges: number[][]): number[] {
+  const hasIncoming = new Set<number>();
+  for (const [, dst] of edges) {
+    hasIncoming.add(dst);
+  }
+  const result: number[] = [];
+  for (let i = 0; i < n; i++) {
+    if (!hasIncoming.has(i)) result.push(i);
+  }
+  return result;
 }
 
+console.log(
+  findSmallestSetOfVertices(6, [
+    [0, 1],
+    [0, 2],
+    [2, 5],
+    [3, 4],
+    [4, 2],
+  ]),
+); // [0,3]
+console.log(
+  findSmallestSetOfVertices(5, [
+    [0, 1],
+    [2, 1],
+    [3, 1],
+    [1, 4],
+    [2, 4],
+  ]),
+); // [0,2,3]
+console.log(findSmallestSetOfVertices(3, [])); // [0,1,2]
+```
+
+### Solution 2 — In-degree Array
+
+```typescript
 /**
- * Solution 2: Optimized — Graph
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Explicitly count in-degree per node; collect all nodes with degree 0.
+ *
+ * Time:  O(E + n)
+ * Space: O(n)
  */
-function minimumNumberOfVerticesToReachAllNodes(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Graph
-  // Hint: Build adjacency list, choose BFS/DFS based on requirement
-  throw new Error('Not implemented');
+function findSmallestSetOfVertices2(n: number, edges: number[][]): number[] {
+  const inDeg = new Array<number>(n).fill(0);
+  for (const [, dst] of edges) inDeg[dst]++;
+  return inDeg.reduce<number[]>((acc, d, i) => {
+    if (d === 0) acc.push(i);
+    return acc;
+  }, []);
 }
 
-// === Test Cases ===
-// console.log(minimumNumberOfVerticesToReachAllNodes(/* example 1 */)); // expected
-// console.log(minimumNumberOfVerticesToReachAllNodes(/* example 2 */)); // expected
-// console.log(minimumNumberOfVerticesToReachAllNodes(/* edge case */)); // expected
+console.log(
+  findSmallestSetOfVertices2(6, [
+    [0, 1],
+    [0, 2],
+    [2, 5],
+    [3, 4],
+    [4, 2],
+  ]),
+); // [0,3]
+console.log(
+  findSmallestSetOfVertices2(5, [
+    [0, 1],
+    [2, 1],
+    [3, 1],
+    [1, 4],
+    [2, 4],
+  ]),
+); // [0,2,3]
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Course Schedule](https://leetcode.com/problems/course-schedule) — same pattern: Topological Sort
-- [Evaluate Division](https://leetcode.com/problems/evaluate-division) — same pattern: Shortest Path (BFS/Dijkstra)
-- [Cheapest Flights Within K Stops](https://leetcode.com/problems/cheapest-flights-within-k-stops) — same pattern: Shortest Path (BFS/Dijkstra)
-- [Reconstruct Itinerary](https://leetcode.com/problems/reconstruct-itinerary) — same pattern: DFS
-- [Minimum Number of Vertices to Reach All Nodes — LeetCode](https://leetcode.com/problems/minimum-number-of-vertices-to-reach-all-nodes) — problem page
+| #   | Problem              | Difficulty | Pattern                      |
+| --- | -------------------- | ---------- | ---------------------------- |
+| 207 | Course Schedule      | Medium     | Topological Sort             |
+| 210 | Course Schedule II   | Medium     | Topological Sort / In-degree |
+| 310 | Minimum Height Trees | Medium     | Topological Trim             |

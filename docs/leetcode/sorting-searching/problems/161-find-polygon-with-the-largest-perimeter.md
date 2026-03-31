@@ -7,97 +7,114 @@ tags: [Array, Greedy, Sorting, Prefix Sum]
 leetcode_url: "https://leetcode.com/problems/find-polygon-with-the-largest-perimeter"
 ---
 
-# Find Polygon With the Largest Perimeter / Find Polygon With the Largest Perimeter
+# Find Polygon With the Largest Perimeter / Tìm Đa Giác Có Chu Vi Lớn Nhất
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Prefix Sum
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Frequency of the Most Frequent Element](https://leetcode.com/problems/frequency-of-the-most-frequent-element) | [Minimum Cost to Make Array Equal](https://leetcode.com/problems/minimum-cost-to-make-array-equal)
+🟡 Medium | 🏷️ Array, Greedy, Sorting, Prefix Sum | [LeetCode](https://leetcode.com/problems/find-polygon-with-the-largest-perimeter)
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition
 
-**Analogy:** Giống tổng luỹ tiến — tính trước tổng từ đầu đến mỗi vị trí, rồi truy vấn tổng bất kỳ đoạn nào trong O(1).
+**Vietnamese:** Một đa giác hợp lệ cần: cạnh lớn nhất < tổng các cạnh còn lại. Sau khi sắp xếp tăng dần, với mỗi phần tử `nums[i]` làm cạnh lớn nhất, điều kiện là `prefixSum[i-1] > nums[i]`. Để có chu vi lớn nhất, duyệt từ phải sang trái và dừng ở phần tử đầu tiên thỏa mãn.
 
-**Pattern Recognition:**
-
-- Signal: "range sum queries" + "subarray sum" → **Prefix Sum**
-- Bài này thuộc dạng Prefix Sum — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Find Polygon With the Largest Perimeter example:**
+**Analogy:** Bạn dựng lều bằng những cây gậy — cây dài nhất phải ngắn hơn tổng tất cả cây còn lại, nếu không lều sẽ không khép kín.
 
 ```
-// TODO: Add step-by-step visual for Prefix Sum
-// Show one complete example with state at each step
+nums = [5, 5, 5]  sorted → [5,5,5]
+prefix = [5, 10, 15]
+
+i=2: nums[2]=5 < prefix[1]=10 ✅ → perimeter = prefix[2] = 15
+
+nums = [1, 12, 1, 2, 5, 3]  sorted → [1,1,2,3,5,12]
+prefix = [1, 2, 4, 7, 12, 24]
+
+i=5: nums[5]=12 < prefix[4]=12? NO ❌
+i=4: nums[4]=5  < prefix[3]=7? YES ✅ → perimeter = prefix[4] = 12
 ```
-
----
-
-## Problem Description
-
-Find Polygon With the Largest Perimeter. ([LeetCode](https://leetcode.com/problems/find-polygon-with-the-largest-perimeter))
-
-Difficulty: Medium | Acceptance: 65.3%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/find-polygon-with-the-largest-perimeter) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- **EN:** A polygon with k sides is valid if longest side < sum of all others / **VI:** Đa giác hợp lệ: cạnh dài nhất < tổng các cạnh còn lại
+- **EN:** Sort ascending; prefix sums enable O(1) check per index / **VI:** Sắp xếp, dùng prefix sum kiểm tra O(1) mỗi index
+- **EN:** Scan from right: first index where `prefix[i-1] > nums[i]` gives answer / **VI:** Duyệt từ phải sang trái, index đầu tiên thỏa điều kiện là đáp án
+- **EN:** Perimeter = prefix[i] (sum of all sides in polygon) / **VI:** Chu vi = prefix[i] = tổng tất cả cạnh đã chọn
+- **EN:** Minimum polygon is a triangle (3 sides), so i must be ≥ 2 / **VI:** Đa giác tối thiểu 3 cạnh, nên i ≥ 2
+- **EN:** If no valid polygon found, return -1 / **VI:** Nếu không tìm được đa giác hợp lệ, trả -1
 
 ---
 
 ## Solutions
 
+### Solution 1: Sort + Prefix Sum + Right Scan
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Sort, build prefix sums, scan right-to-left for largest valid polygon.
+ * Time: O(n log n)  Space: O(n)
  */
-function findPolygonWithTheLargestPerimeterBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function largestPerimeter(nums: number[]): number {
+  nums.sort((a, b) => a - b);
+  const n = nums.length;
+
+  // prefix[i] = sum of nums[0..i]
+  const prefix = new Array(n).fill(0);
+  prefix[0] = nums[0];
+  for (let i = 1; i < n; i++) prefix[i] = prefix[i - 1] + nums[i];
+
+  // Scan from right: largest side = nums[i], other sides sum = prefix[i-1]
+  for (let i = n - 1; i >= 2; i--) {
+    if (prefix[i - 1] > nums[i]) {
+      return prefix[i]; // perimeter = sum of all chosen sides
+    }
+  }
+  return -1;
 }
 
+// Tests
+console.log(largestPerimeter([5, 5, 5])); // 15
+console.log(largestPerimeter([1, 12, 1, 2, 5, 3])); // 12
+console.log(largestPerimeter([1, 2, 3])); // 6  (1+2>3? no, 2<3, but 3-sided: 1+2=3 not >3) → -1? Actually 1+2=3 not strictly > 3 → -1
+console.log(largestPerimeter([3, 6, 2, 3])); // 12
+```
+
+### Solution 2: Running Prefix Sum (Space Optimized)
+
+```typescript
 /**
- * Solution 2: Optimized — Prefix Sum
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * No extra array — maintain running prefix as we scan.
+ * Time: O(n log n)  Space: O(1) extra
  */
-function findPolygonWithTheLargestPerimeter(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Prefix Sum
-  // Hint: Build prefix sum array, query range sum in O(1)
-  throw new Error('Not implemented');
+function largestPerimeter2(nums: number[]): number {
+  nums.sort((a, b) => a - b);
+  const n = nums.length;
+
+  let total = nums.reduce((s, v) => s + v, 0);
+
+  // From right to left: remove current element from total to get prefix[i-1]
+  for (let i = n - 1; i >= 2; i--) {
+    total -= nums[i]; // total is now sum of nums[0..i-1]
+    if (total > nums[i]) {
+      return total + nums[i]; // prefix[i]
+    }
+  }
+  return -1;
 }
 
-// === Test Cases ===
-// console.log(findPolygonWithTheLargestPerimeter(/* example 1 */)); // expected
-// console.log(findPolygonWithTheLargestPerimeter(/* example 2 */)); // expected
-// console.log(findPolygonWithTheLargestPerimeter(/* edge case */)); // expected
+// Tests
+console.log(largestPerimeter2([5, 5, 5])); // 15
+console.log(largestPerimeter2([1, 12, 1, 2, 5, 3])); // 12
+console.log(largestPerimeter2([3, 6, 2, 3])); // 12
+console.log(largestPerimeter2([1, 1, 1])); // 3
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Frequency of the Most Frequent Element](https://leetcode.com/problems/frequency-of-the-most-frequent-element) — same pattern: Sliding Window
-- [Minimum Cost to Make Array Equal](https://leetcode.com/problems/minimum-cost-to-make-array-equal) — same pattern: Prefix Sum
-- [Rearrange Array to Maximize Prefix Score](https://leetcode.com/problems/rearrange-array-to-maximize-prefix-score) — same pattern: Prefix Sum
-- [Removing Minimum Number of Magic Beans](https://leetcode.com/problems/removing-minimum-number-of-magic-beans) — same pattern: Prefix Sum
-- [Find Polygon With the Largest Perimeter — LeetCode](https://leetcode.com/problems/find-polygon-with-the-largest-perimeter) — problem page
+| Problem                                                                                                            | Difficulty | Connection               |
+| ------------------------------------------------------------------------------------------------------------------ | ---------- | ------------------------ |
+| [Largest Perimeter Triangle](https://leetcode.com/problems/largest-perimeter-triangle)                             | 🟢 Easy    | Same idea, triangle only |
+| [Rearrange Array to Maximize Prefix Score](https://leetcode.com/problems/rearrange-array-to-maximize-prefix-score) | 🟡 Medium  | Prefix sum after sort    |
+| [Minimum Cost to Make Array Equal](https://leetcode.com/problems/minimum-cost-to-make-array-equal)                 | 🔴 Hard    | Prefix sum optimization  |

@@ -7,100 +7,128 @@ tags: [Tree, Binary Search Tree, Binary Tree]
 leetcode_url: "https://leetcode.com/problems/inorder-successor-in-bst-ii"
 ---
 
-# Inorder Successor in BST II / Inorder Successor in BST II
+# Inorder Successor in BST II / Phần tử kế tiếp inorder trong BST II
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Binary Search
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Unique Binary Search Trees](https://leetcode.com/problems/unique-binary-search-trees) | [Unique Binary Search Trees II](https://leetcode.com/problems/unique-binary-search-trees-ii)
+🟡 Medium | BST | Parent Pointer | Tree Traversal
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition
 
-**Analogy:** Tưởng tượng tìm một trang trong từ điển — bạn mở giữa, xem số trang, rồi chọn nửa phù hợp. Mỗi lần giảm một nửa phạm vi tìm kiếm.
+**Vietnamese:** Successor inorder trong BST là phần tử nhỏ nhất lớn hơn `node.val`. Có hai trường hợp:
 
-**Pattern Recognition:**
+1. **Có con phải:** Successor là nút nhỏ nhất trong cây con phải (đi phải rồi cứ đi trái).
+2. **Không có con phải:** Đi lên qua con trỏ `parent` cho đến khi ta đến từ nhánh trái — cha đó là successor.
 
-- Signal: "sorted" + "find target/position" → **Binary Search**
-- Bài này thuộc dạng Binary Search — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+**English:** The inorder successor is the smallest node greater than `node.val`.
 
-**Visual — Inorder Successor in BST II example:**
-
-```
-[1, 3, 5, 7, 9, 11, 13]
- L        M            R
-
-Step 1: mid = (L+R)/2, check condition
-Step 2: condition true → move L = mid+1 (or R = mid-1)
-Step N: L meets R → answer found ✅
-```
-
----
-
-## Problem Description
-
-Inorder Successor in BST II. ([LeetCode](https://leetcode.com/problems/inorder-successor-in-bst-ii))
-
-Difficulty: Medium | Acceptance: 61.0%
+- If `node.right` exists: go right once, then keep going left → smallest in right subtree.
+- Else: climb via parent until you arrive as a **left** child — that parent is the successor.
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+BST:        5
+           / \
+          3   6
+         / \
+        2   4
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/inorder-successor-in-bst-ii) for full constraints
+Successor of 3: has right child 4 → go to 4, no left → successor = 4
+Successor of 4: no right child → go up (4 is right child of 3, keep climbing)
+                → 4 is right of 3, climb; 3 is left of 5 → successor = 5
+Successor of 6: no right child, 6 is right of 5, no parent → null (largest)
+```
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Input đã sorted? Cần tìm vị trí chính xác hay boundary?" / Is input sorted? Exact match or boundary?
-2. **Brute force**: "Linear scan O(n)" → optimize with binary search O(log n) / Start linear, suggest binary
-3. **Optimize**: "Chú ý lo/hi boundary: lo <= hi hay lo < hi? mid±1 hay mid?" / Watch boundary conditions carefully
-4. **Edge cases**: "Mảng rỗng, một phần tử, target không tồn tại, overflow mid" / Empty, single, not found, overflow
+- 🔑 **Key insight / Nhận xét chính:** Two distinct cases — right subtree exists vs. must climb via parent pointer.
+- 📊 **Case 1 rule / Quy tắc ca 1:** `go right once, then always left` to find minimum of right subtree.
+- ⚡ **Case 2 rule / Quy tắc ca 2:** `climb parent while node is a right child` — the first parent you arrive as left child is the answer.
+- 🎯 **No BST search needed / Không cần tìm kiếm BST:** Having `parent` pointers removes the need for root access.
+- 🧩 **Edge case / Trường hợp đặc biệt:** Node is the rightmost (largest) — climbing will eventually reach null parent → return null.
+- 📏 **Complexity / Độ phức tạp:** O(h) time where h is tree height; O(1) extra space.
 
 ---
 
 ## Solutions
 
+### Solution 1 — Parent Pointer Navigation
+
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function inorderSuccessorInBstIiBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+class Node {
+  val: number;
+  left: Node | null;
+  right: Node | null;
+  parent: Node | null;
+  constructor(v: number) {
+    this.val = v;
+    this.left = null;
+    this.right = null;
+    this.parent = null;
+  }
 }
 
 /**
- * Solution 2: Optimized — Binary Search
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Case 1: node has right child → find leftmost in right subtree.
+ * Case 2: no right child → climb until arriving as left child.
+ *
+ * Time:  O(h)
+ * Space: O(1)
  */
-function inorderSuccessorInBstIi(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Binary Search
-  // Hint: Define search space, determine which half to discard
-  throw new Error('Not implemented');
+function inorderSuccessor(node: Node): Node | null {
+  // Case 1: right subtree exists
+  if (node.right) {
+    let cur: Node = node.right;
+    while (cur.left) cur = cur.left;
+    return cur;
+  }
+  // Case 2: climb until we come from a left branch
+  let cur: Node | null = node;
+  while (cur.parent && cur === cur.parent.right) {
+    cur = cur.parent;
+  }
+  return cur.parent; // null if node was the largest
 }
 
-// === Test Cases ===
-// console.log(inorderSuccessorInBstIi(/* example 1 */)); // expected
-// console.log(inorderSuccessorInBstIi(/* example 2 */)); // expected
-// console.log(inorderSuccessorInBstIi(/* edge case */)); // expected
+// Manual tree construction for testing
+function buildBST(vals: number[]): Node | null {
+  if (!vals.length) return null;
+  const nodes = vals.map((v) => new Node(v));
+  // For test: build a simple BST by insertion
+  function insert(root: Node | null, n: Node, par: Node | null): Node {
+    if (!root) {
+      n.parent = par;
+      return n;
+    }
+    if (n.val < root.val) root.left = insert(root.left, n, root);
+    else root.right = insert(root.right, n, root);
+    return root;
+  }
+  let root: Node | null = null;
+  for (const node of nodes) root = insert(root, node, null);
+  return root;
+}
+
+function findNode(root: Node | null, val: number): Node | null {
+  if (!root) return null;
+  if (root.val === val) return root;
+  return val < root.val ? findNode(root.left, val) : findNode(root.right, val);
+}
+
+const root = buildBST([5, 3, 6, 2, 4]);
+console.log(inorderSuccessor(findNode(root, 3)!)?.val); // 4
+console.log(inorderSuccessor(findNode(root, 4)!)?.val); // 5
+console.log(inorderSuccessor(findNode(root, 6)!)); // null
+console.log(inorderSuccessor(findNode(root, 2)!)?.val); // 3
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Unique Binary Search Trees](https://leetcode.com/problems/unique-binary-search-trees) — same pattern: Dynamic Programming
-- [Unique Binary Search Trees II](https://leetcode.com/problems/unique-binary-search-trees-ii) — same pattern: Backtracking
-- [Recover Binary Search Tree](https://leetcode.com/problems/recover-binary-search-tree) — same pattern: Binary Search
-- [Lowest Common Ancestor of a Binary Search Tree](https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-search-tree) — same pattern: Binary Search
-- [Inorder Successor in BST II — LeetCode](https://leetcode.com/problems/inorder-successor-in-bst-ii) — problem page
+| #   | Problem                            | Difficulty | Pattern           |
+| --- | ---------------------------------- | ---------- | ----------------- |
+| 285 | Inorder Successor in BST           | Medium     | BST Traversal     |
+| 510 | Inorder Successor in BST II (this) | Medium     | Parent Pointer    |
+| 173 | Binary Search Tree Iterator        | Medium     | Inorder Traversal |

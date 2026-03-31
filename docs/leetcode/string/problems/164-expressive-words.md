@@ -7,100 +7,115 @@ tags: [Array, Two Pointers, String]
 leetcode_url: "https://leetcode.com/problems/expressive-words"
 ---
 
-# Expressive Words / Expressive Words
+# Expressive Words / Từ Ngữ Điệu
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Two Pointers
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Longest String Chain](https://leetcode.com/problems/longest-string-chain) | [Shortest Word Distance II](https://leetcode.com/problems/shortest-word-distance-ii)
+🟡 Medium | 🏷️ Array, Two Pointers, String
 
----
+## 🧠 Intuition
 
-## 🧠 Intuition / Tư Duy
+**VI:** Một từ gốc có thể "kéo dài" thành `s` bằng cách lặp ký tự. Quy tắc: nếu `s` có đoạn `k` ký tự giống nhau liên tiếp thì đoạn tương ứng trong `word` phải có `j` ký tự sao cho `j == k` (không kéo) hoặc `k >= 3` (đoạn trong `s` đủ dài để kéo). Dùng **run-length encoding** để so sánh.
 
-**Analogy:** Hãy tưởng tượng hai người đi từ hai đầu con đường, tiến lại gần nhau. Mỗi bước, người nào ở vị trí "tốt hơn" sẽ đứng yên, người kia tiến. Khi họ gặp nhau, bài toán được giải.
-
-**Pattern Recognition:**
-
-- Signal: "sorted array" + "find pair/triplet" → **Two Pointers**
-- Bài này thuộc dạng Two Pointers — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Expressive Words example:**
+**EN:** Convert both strings to run-length encoding (char, count). A run in `word` can "stretch" to a run in `s` if `s`'s count `>= 3` and `word`'s count `<= s`'s count; otherwise counts must match exactly.
 
 ```
-arr = [... sorted ...]
- L                 R
+s    = "heeellooo"  →  [h,1][e,3][l,2][o,3]
+word = "hello"      →  [h,1][e,2][l,2][o,1]
+       h:1==1 ✅  e:2≤3,3≥3 ✅  l:2==2 ✅  o:1≤3,3≥3 ✅  → STRETCHY!
 
-Step 1: check condition → move L or R
-Step 2: ...
-Step N: condition met ✅
+word = "helo"       →  [h,1][e,1][l,1][o,1]
+       e:1≤3,3≥3 ✅  l:1≤2,but 2<3 ❌  → NOT stretchy
 ```
-
----
-
-## Problem Description
-
-Expressive Words. ([LeetCode](https://leetcode.com/problems/expressive-words))
-
-Difficulty: Medium | Acceptance: 46.4%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/expressive-words) for full constraints
-
----
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Mảng đã sorted chưa? Có duplicate không?" / Ask if array is sorted and if duplicates exist
-2. **Brute force**: "Dùng 2 vòng for O(n²)" → optimize with two pointers O(n) / Start with nested loops, then optimize
-3. **Optimize**: "Vì mảng sorted, dùng 2 con trỏ L/R tiến vào giữa" / Since sorted, use L/R pointers moving inward
-4. **Edge cases**: "Mảng rỗng, một phần tử, tất cả giống nhau" / Empty array, single element, all same values
-
----
+- 🇻🇳 **Run-length encoding:** nhóm các ký tự liên tiếp giống nhau thành `(char, count)` pairs
+- 🇬🇧 **RLE first:** convert both s and word to RLE, then compare run by run
+- 🇻🇳 **Điều kiện kéo dài:** đoạn trong `s` phải `>= 3` VÀ đoạn trong `word` phải `<= s`
+- 🇬🇧 **Stretch rule:** `sCount >= 3 && wordCount <= sCount`, OR exact match `sCount == wordCount`
+- 🇻🇳 **Fail fast:** số đoạn RLE khác nhau → ngay lập tức sai
+- 🇬🇧 **Same char check:** chars at each run must match, else immediately false
 
 ## Solutions
 
+### Solution 1: Run-length encoding comparison
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Build RLE for s once, then check each word against it.
+ * Time: O(n + m * L) where n=|s|, m=|words|, L=avg word length
+ * Space: O(n) for s's RLE
  */
-function expressiveWordsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function expressiveWords(s: string, words: string[]): number {
+  function getRLE(str: string): [string, number][] {
+    const rle: [string, number][] = [];
+    let i = 0;
+    while (i < str.length) {
+      let j = i;
+      while (j < str.length && str[j] === str[i]) j++;
+      rle.push([str[i], j - i]);
+      i = j;
+    }
+    return rle;
+  }
+
+  function isStretchy(word: string): boolean {
+    const sRLE = getRLE(s);
+    const wRLE = getRLE(word);
+    if (sRLE.length !== wRLE.length) return false;
+    for (let i = 0; i < sRLE.length; i++) {
+      const [sc, sk] = sRLE[i];
+      const [wc, wk] = wRLE[i];
+      if (sc !== wc) return false;
+      if (sk === wk) continue; // exact match: OK
+      if (sk >= 3 && wk <= sk) continue; // stretchy: OK
+      return false;
+    }
+    return true;
+  }
+
+  return words.filter(isStretchy).length;
 }
 
-/**
- * Solution 2: Optimized — Two Pointers
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function expressiveWords(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Two Pointers
-  // Hint: Use L/R pointers on sorted input, move based on comparison
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(expressiveWords(/* example 1 */)); // expected
-// console.log(expressiveWords(/* example 2 */)); // expected
-// console.log(expressiveWords(/* edge case */)); // expected
+console.log(expressiveWords("heeellooo", ["hello", "hi", "helo"])); // 1
+console.log(expressiveWords("zzzzzyyyyy", ["zzyy", "zy", "zyy"])); // 3
 ```
 
----
+### Solution 2: Two-pointer without RLE array
+
+```typescript
+/**
+ * Direct two-pointer on raw strings.
+ * Time: O(n + m * L) | Space: O(1) extra per word
+ */
+function expressiveWords2(s: string, words: string[]): number {
+  function isStretchy(word: string): boolean {
+    let i = 0,
+      j = 0;
+    while (i < s.length && j < word.length) {
+      if (s[i] !== word[j]) return false;
+      let si = i,
+        wj = j;
+      while (i < s.length && s[i] === s[si]) i++;
+      while (j < word.length && word[j] === word[wj]) j++;
+      const sk = i - si,
+        wk = j - wj;
+      if (sk !== wk && (sk < 3 || wk > sk)) return false;
+    }
+    return i === s.length && j === word.length;
+  }
+
+  return words.filter(isStretchy).length;
+}
+
+console.log(expressiveWords2("heeellooo", ["hello", "hi", "helo"])); // 1
+console.log(expressiveWords2("aaa", ["aaaa"])); // 0
+console.log(expressiveWords2("aaa", ["a", "aa", "aaa"])); // 3
+```
 
 ## 🔗 Related Problems
 
-- [Longest String Chain](https://leetcode.com/problems/longest-string-chain) — same pattern: Two Pointers
-- [Shortest Word Distance II](https://leetcode.com/problems/shortest-word-distance-ii) — same pattern: Two Pointers
-- [Maximum Number of Removable Characters](https://leetcode.com/problems/maximum-number-of-removable-characters) — same pattern: Two Pointers
-- [Camelcase Matching](https://leetcode.com/problems/camelcase-matching) — same pattern: Trie
-- [Expressive Words — LeetCode](https://leetcode.com/problems/expressive-words) — problem page
+| #    | Problem                                 | Difficulty | Key Idea                    |
+| ---- | --------------------------------------- | ---------- | --------------------------- |
+| 443  | String Compression                      | 🟡 Medium  | Run-length encoding         |
+| 1163 | Last Substring in Lexicographical Order | 🔴 Hard    | Two-pointer on strings      |
+| 844  | Backspace String Compare                | 🟢 Easy    | Two-pointer string matching |

@@ -7,104 +7,138 @@ tags: [Array, Tree, Binary Tree]
 leetcode_url: "https://leetcode.com/problems/cycle-length-queries-in-a-tree"
 ---
 
-# Cycle Length Queries in a Tree / Cycle Length Queries in a Tree
+# Cycle Length Queries in a Tree / Truy vấn độ dài chu trình trong cây
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Tree Traversal
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Create Binary Tree From Descriptions](https://leetcode.com/problems/create-binary-tree-from-descriptions) | [Count Nodes With the Highest Score](https://leetcode.com/problems/count-nodes-with-the-highest-score)
+🔴 Hard | Complete Binary Tree | LCA | Bit Manipulation
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition
 
-**Analogy:** Tưởng tượng khám phá cây gia phả — bạn có thể đi từ gốc xuống lá (top-down) hoặc từ lá lên gốc (bottom-up), tuỳ câu hỏi cần trả lời.
+**Vietnamese:** Trong cây nhị phân hoàn chỉnh (đánh số 1..2^n-1), cha của nút `x` luôn là `x >> 1`. Để tìm LCA của hai nút, chia đôi nút lớn hơn cho đến khi chúng bằng nhau. Độ dài chu trình = (khoảng cách từ a đến LCA) + (khoảng cách từ b đến LCA) + 1.
 
-**Pattern Recognition:**
-
-- Signal: "binary tree" + "traverse/collect values" → **Tree Traversal**
-- Bài này thuộc dạng Tree Traversal — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Cycle Length Queries in a Tree example:**
+**English:** In a 1-indexed complete binary tree, `parent(x) = x >> 1`. To find LCA of (a,b): repeatedly halve the larger node until a == b. The cycle length = steps taken to reach LCA from both sides + 1 (for the added edge).
 
 ```
+n=3 tree (7 nodes): 1-indexed
         1
-       / \
-      2   3
-     / \
-    4   5
+      /   \
+     2     3
+    / \   / \
+   4   5 6   7
 
-Inorder:   4, 2, 5, 1, 3
-Preorder:  1, 2, 4, 5, 3
-Postorder: 4, 5, 2, 3, 1
+Query (4, 7):
+  a=4, b=7:  b>a → b=7>>1=3
+  a=4, b=3:  a>b → a=4>>1=2, steps=2
+  a=2, b=3:  b>a → b=3>>1=1, steps=3
+  a=2, b=1:  a>b → a=2>>1=1, steps=4
+  a=1==b=1   LCA found in 4 steps → cycle length = 4+1 = 5
 ```
-
----
-
-## Problem Description
-
-Cycle Length Queries in a Tree. ([LeetCode](https://leetcode.com/problems/cycle-length-queries-in-a-tree))
-
-Difficulty: Hard | Acceptance: 58.3%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/cycle-length-queries-in-a-tree) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🔑 **Key insight / Nhận xét chính:** `parent(x) = x >> 1` in a complete binary tree. LCA is found when both nodes are equal.
+- 📊 **Count steps / Đếm bước:** Each halving = moving up one level. Total steps across both nodes = path length; add 1 for the virtual edge.
+- ⚡ **No extra space / Không cần thêm bộ nhớ:** Process each query in O(log n) with just two pointers.
+- 🎯 **Cycle length formula / Công thức:** `distance(a, LCA) + distance(b, LCA) + 1`.
+- 🧩 **a == b edge case / a = b:** LCA is the node itself; cycle length = 1 (self-loop by adding edge a-b).
+- 📏 **Complexity / Độ phức tạp:** O(q × n) time where n is tree height (O(log(2^n))=n), O(1) extra space per query.
 
 ---
 
 ## Solutions
 
+### Solution 1 — LCA via Parent Halving
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * For each query [a,b], find LCA by repeatedly halving the larger node.
+ * Cycle length = total steps to reach LCA from both + 1.
+ *
+ * Time:  O(q * n)  where n is number of levels
+ * Space: O(q) for output
  */
-function cycleLengthQueriesInATreeBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function cycleLengthQueries(n: number, queries: number[][]): number[] {
+  return queries.map(([a, b]) => {
+    let steps = 1; // +1 for the added edge a-b
+    while (a !== b) {
+      if (a > b) a >>= 1;
+      else b >>= 1;
+      steps++;
+    }
+    return steps;
+  });
 }
 
+console.log(
+  cycleLengthQueries(3, [
+    [5, 3],
+    [4, 7],
+    [2, 3],
+  ]),
+);
+// [4, 5, 3]
+console.log(cycleLengthQueries(2, [[1, 2]]));
+// [2]  (1 → 2, add edge → cycle length 2)
+console.log(cycleLengthQueries(4, [[7, 11]]));
+// [5]
+```
+
+### Solution 2 — Collect Ancestors Set (Explicit)
+
+```typescript
 /**
- * Solution 2: Optimized — Tree Traversal
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Collect ancestors of a into a Set, then walk b up until hitting a known ancestor.
+ * More explicit but uses O(n) space per query.
+ *
+ * Time:  O(q * n)
+ * Space: O(n) per query
  */
-function cycleLengthQueriesInATree(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Tree Traversal
-  // Hint: Choose traversal order based on what info you need
-  throw new Error('Not implemented');
+function cycleLengthQueries2(n: number, queries: number[][]): number[] {
+  return queries.map(([a, b]) => {
+    const ancestorsA = new Set<number>();
+    let x = a;
+    while (x >= 1) {
+      ancestorsA.add(x);
+      x >>= 1;
+    }
+
+    let steps = 0;
+    let depthB = 0;
+    let y = b;
+    while (!ancestorsA.has(y)) {
+      y >>= 1;
+      depthB++;
+    }
+    // depthB = distance from b to LCA
+    // now compute distance from a to LCA
+    let depthA = 0;
+    let z = a;
+    while (z !== y) {
+      z >>= 1;
+      depthA++;
+    }
+    return depthA + depthB + 1;
+  });
 }
 
-// === Test Cases ===
-// console.log(cycleLengthQueriesInATree(/* example 1 */)); // expected
-// console.log(cycleLengthQueriesInATree(/* example 2 */)); // expected
-// console.log(cycleLengthQueriesInATree(/* edge case */)); // expected
+console.log(
+  cycleLengthQueries2(3, [
+    [5, 3],
+    [4, 7],
+    [2, 3],
+  ]),
+); // [4, 5, 3]
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Create Binary Tree From Descriptions](https://leetcode.com/problems/create-binary-tree-from-descriptions) — same pattern: Tree Traversal
-- [Count Nodes With the Highest Score](https://leetcode.com/problems/count-nodes-with-the-highest-score) — same pattern: DFS
-- [Verify Preorder Sequence in Binary Search Tree](https://leetcode.com/problems/verify-preorder-sequence-in-binary-search-tree) — same pattern: Monotonic Stack
-- [Construct Binary Tree from Inorder and Postorder Traversal](https://leetcode.com/problems/construct-binary-tree-from-inorder-and-postorder-traversal) — same pattern: Tree Traversal
-- [Cycle Length Queries in a Tree — LeetCode](https://leetcode.com/problems/cycle-length-queries-in-a-tree) — problem page
+| #    | Problem                                  | Difficulty | Pattern            |
+| ---- | ---------------------------------------- | ---------- | ------------------ |
+| 236  | Lowest Common Ancestor of Binary Tree    | Medium     | DFS / LCA          |
+| 1123 | Lowest Common Ancestor of Deepest Leaves | Medium     | LCA                |
+| 2509 | Cycle Length Queries (this)              | Hard       | LCA in Complete BT |

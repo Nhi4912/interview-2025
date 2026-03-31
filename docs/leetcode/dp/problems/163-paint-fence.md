@@ -7,102 +7,134 @@ tags: [Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/paint-fence"
 ---
 
-# Paint Fence / Paint Fence
+# Paint Fence / Sơn Hàng Rào
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Jump Game II](https://leetcode.com/problems/jump-game-ii) | [Maximal Square](https://leetcode.com/problems/maximal-square)
+🟡 Medium | DP: same/diff recurrence prevents 3 consecutive same colours
 
----
+## 🧠 Intuition
 
-## 🧠 Intuition / Tư Duy
+**VI:** Không được sơn 3 cột liên tiếp cùng màu. Chia trạng thái thành:
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
+- `same[i]`: cột i và i-1 cùng màu (có k cách)
+- `diff[i]`: cột i khác màu so với i-1 (có k-1 cách mỗi trạng thái trước)
 
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Paint Fence example:**
+**EN:** Track two states: last two posts same colour (`same`) vs different (`diff`).
+Constraint: no three consecutive same → can't extend `same` again.
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+n=3, k=2
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+       post1   post2    post3
+same:   —      1 way    diff[2] ways  (post3 = post2)
+diff:   —      1 way    (same[2]+diff[2])*(k-1) ways
+
+same[i] = diff[i-1]                  (post i copies post i-1, only legal if i-1 was diff)
+diff[i] = (same[i-1] + diff[i-1]) * (k-1)   (post i picks any other colour)
+total[i] = same[i] + diff[i]
 ```
-
----
-
-## Problem Description
-
-Paint Fence. ([LeetCode](https://leetcode.com/problems/paint-fence))
-
-Difficulty: Medium | Acceptance: 47.7%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/paint-fence) for full constraints
-
----
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
-
----
+- 🔑 **EN:** `same[i] = diff[i-1]` — can only match previous if previous pair was different.
+  **VI:** `same[i] = diff[i-1]` — chỉ khớp màu trước nếu cặp trước đã khác nhau.
+- 🔑 **EN:** `diff[i] = (same[i-1] + diff[i-1]) * (k-1)` — choose any of k-1 other colours.
+  **VI:** `diff[i] = (same[i-1] + diff[i-1]) * (k-1)` — chọn 1 trong k-1 màu còn lại.
+- 🔑 **EN:** Base case: `same[1]=0, diff[1]=k` (first post can be any colour, "diff" by default).
+  **VI:** Cơ sở: `same[1]=0, diff[1]=k` (cột đầu tự do, gán vào diff).
+- 🔑 **EN:** Only two variables needed — O(1) space.
+  **VI:** Chỉ cần hai biến — không gian O(1).
+- 🔑 **EN:** For n=1 return k; for n=2 return k*k.
+  **VI:** Với n=1 trả k; n=2 trả k*k.
+- 🔑 **EN:** Alternative: total[i] = (total[i-1]) _ (k-1) + (k-1) _ diff[i-2] — simplifies to k*(k-1)^(n-1).
+  **VI:** Rút gọn thành công thức: k*(k-1)^(n-1) — kiểm tra lại bằng DP.
 
 ## Solutions
 
+### Solution 1: DP with same/diff states
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Paint Fence
+ * same[i] = diff[i-1]
+ * diff[i] = (same[i-1] + diff[i-1]) * (k-1)
+ * Time: O(n)  Space: O(1)
  */
-function paintFenceBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function numWays(n: number, k: number): number {
+  if (n === 0) return 0;
+  if (n === 1) return k;
+
+  let same = 0; // last two posts same colour
+  let diff = k; // first post: k choices, treat as "diff" base
+
+  for (let i = 2; i <= n; i++) {
+    const newSame = diff;
+    const newDiff = (same + diff) * (k - 1);
+    same = newSame;
+    diff = newDiff;
+  }
+
+  return same + diff;
 }
 
-/**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function paintFence(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(paintFence(/* example 1 */)); // expected
-// console.log(paintFence(/* example 2 */)); // expected
-// console.log(paintFence(/* edge case */)); // expected
+console.log(numWays(3, 2)); // 6
+console.log(numWays(1, 1)); // 1
+console.log(numWays(7, 2)); // 42
+console.log(numWays(2, 4)); // 16
 ```
 
----
+### Solution 2: Total recurrence (collapsed)
+
+```typescript
+/**
+ * total[i] = (k-1) * (total[i-1] + total[i-2])
+ * Derived by substituting same/diff recurrence.
+ * Time: O(n)  Space: O(1)
+ */
+function numWays2(n: number, k: number): number {
+  if (n === 0) return 0;
+  if (n === 1) return k;
+  if (n === 2) return k * k;
+
+  let prev2 = k; // total[1]
+  let prev1 = k * k; // total[2]
+
+  for (let i = 3; i <= n; i++) {
+    const cur = (k - 1) * (prev1 + prev2);
+    prev2 = prev1;
+    prev1 = cur;
+  }
+
+  return prev1;
+}
+
+console.log(numWays2(3, 2)); // 6
+console.log(numWays2(1, 1)); // 1
+console.log(numWays2(7, 2)); // 42
+```
+
+### Solution 3: Closed-form verification
+
+```typescript
+/**
+ * Mathematical: k * (k-1)^(n-1)
+ * Valid because at each fence post after the first,
+ * there are exactly (k-1) valid colour choices.
+ * Time: O(n)  Space: O(1)  [or O(log n) with fast exponentiation]
+ */
+function numWays3(n: number, k: number): number {
+  if (n === 0) return 0;
+  return k * Math.pow(k - 1, n - 1);
+}
+
+console.log(numWays3(3, 2)); // 6
+console.log(numWays3(7, 2)); // 42 — matches DP
+```
 
 ## 🔗 Related Problems
 
-- [Jump Game II](https://leetcode.com/problems/jump-game-ii) — same pattern: Dynamic Programming
-- [Maximal Square](https://leetcode.com/problems/maximal-square) — same pattern: Dynamic Programming
-- [Wildcard Matching](https://leetcode.com/problems/wildcard-matching) — same pattern: Dynamic Programming
-- [Longest Valid Parentheses](https://leetcode.com/problems/longest-valid-parentheses) — same pattern: Dynamic Programming
-- [Paint Fence — LeetCode](https://leetcode.com/problems/paint-fence) — problem page
+| Problem                                                                                  | Difficulty | Key Idea               |
+| ---------------------------------------------------------------------------------------- | ---------- | ---------------------- |
+| [256. Paint House](https://leetcode.com/problems/paint-house/)                           | 🟡 Medium  | Row colour DP          |
+| [198. House Robber](https://leetcode.com/problems/house-robber/)                         | 🟡 Medium  | Adjacent constraint DP |
+| [70. Climbing Stairs](https://leetcode.com/problems/climbing-stairs/)                    | 🟢 Easy    | Fibonacci DP           |
+| [746. Min Cost Climbing Stairs](https://leetcode.com/problems/min-cost-climbing-stairs/) | 🟢 Easy    | Linear DP              |

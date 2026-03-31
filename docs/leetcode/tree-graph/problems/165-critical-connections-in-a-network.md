@@ -7,103 +7,166 @@ tags: [Depth-First Search, Graph, Biconnected Component]
 leetcode_url: "https://leetcode.com/problems/critical-connections-in-a-network"
 ---
 
-# Critical Connections in a Network / Critical Connections in a Network
+# Critical Connections in a Network / Các kết nối quan trọng trong mạng
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: DFS
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Course Schedule](https://leetcode.com/problems/course-schedule) | [Evaluate Division](https://leetcode.com/problems/evaluate-division)
+🔴 Hard | Graph | Tarjan's Bridge Algorithm | DFS
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition
 
-**Analogy:** Giống đi trong mê cung — bạn đi sâu hết một ngõ, nếu cụt thì quay lại ngã rẽ gần nhất chưa thử.
+**Vietnamese:** Một cạnh là "cầu" (bridge) nếu xóa nó sẽ chia đồ thị thành 2 phần không liên thông. Dùng thuật toán Tarjan: mỗi đỉnh có `disc` (thời điểm khám phá) và `low` (đỉnh sớm nhất có thể đến được qua nhánh DFS). Nếu `low[v] > disc[u]`, cạnh `u-v` là cầu.
 
-**Pattern Recognition:**
-
-- Signal: "traverse tree/graph" + "all paths" → **DFS**
-- Bài này thuộc dạng DFS — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Critical Connections in a Network example:**
+**English:** A **bridge** is an edge whose removal disconnects the graph. Tarjan's algorithm tracks discovery time `disc` and `low` (earliest reachable ancestor). Edge `(u,v)` is a bridge when `low[v] > disc[u]` — `v`'s subtree cannot back-reach `u` or earlier.
 
 ```
-       root
-      /    \
-     A      B
-    / \      \
-   C   D      E
+0 -- 1 -- 2
+     |
+     3
 
-DFS: root → A → C → D → B → E
-Use: recursion or explicit stack
+DFS from 0: disc=[0,1,2,3], low=[0,0,2,3]
+Edge (1,2): low[2]=2 > disc[1]=1 → BRIDGE
+Edge (1,3): low[3]=3 > disc[1]=1 → BRIDGE
+Edge (0,1): low[1]=0 = disc[0]=0 → not bridge (back-edge via cycle)
 ```
-
----
-
-## Problem Description
-
-Critical Connections in a Network. ([LeetCode](https://leetcode.com/problems/critical-connections-in-a-network))
-
-Difficulty: Hard | Acceptance: 57.8%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/critical-connections-in-a-network) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🔑 **Key insight / Nhận xét chính:** Bridge detection requires `low[v] > disc[u]` (strictly greater), not `>=`.
+- 📊 **Avoid parent edge / Tránh cạnh cha:** Pass `parent` node into DFS so you don't traverse back via the same undirected edge.
+- ⚡ **low update rule / Cập nhật low:** `low[u] = min(low[u], low[v])` for tree edges; `low[u] = min(low[u], disc[v])` for back-edges.
+- 🎯 **Directed vs undirected / Có hướng vs vô hướng:** This is undirected — skip the direct parent edge, but allow other back-edges.
+- 🧩 **Multiple edges / Nhiều cạnh song song:** Two edges between same pair → neither is a bridge. Track by index, not node ID.
+- 📏 **Complexity / Độ phức tạp:** O(V + E) — single DFS pass.
 
 ---
 
 ## Solutions
 
+### Solution 1 — Tarjan's Bridge Algorithm
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Tarjan's bridge-finding DFS.
+ * disc[u] = discovery time; low[u] = min discovery time reachable from subtree.
+ * Edge (u,v) is bridge if low[v] > disc[u].
+ *
+ * Time:  O(V + E)
+ * Space: O(V + E)
  */
-function criticalConnectionsInANetworkBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function criticalConnections(n: number, connections: number[][]): number[][] {
+  const adj: number[][] = Array.from({ length: n }, () => []);
+  for (const [u, v] of connections) {
+    adj[u].push(v);
+    adj[v].push(u);
+  }
+
+  const disc = new Array<number>(n).fill(-1);
+  const low = new Array<number>(n).fill(-1);
+  const bridges: number[][] = [];
+  let timer = 0;
+
+  function dfs(u: number, parent: number): void {
+    disc[u] = low[u] = timer++;
+    for (const v of adj[u]) {
+      if (v === parent) continue;
+      if (disc[v] === -1) {
+        dfs(v, u);
+        low[u] = Math.min(low[u], low[v]);
+        if (low[v] > disc[u]) bridges.push([u, v]);
+      } else {
+        low[u] = Math.min(low[u], disc[v]);
+      }
+    }
+  }
+
+  for (let i = 0; i < n; i++) if (disc[i] === -1) dfs(i, -1);
+  return bridges;
 }
 
+console.log(
+  criticalConnections(4, [
+    [0, 1],
+    [1, 2],
+    [2, 0],
+    [1, 3],
+  ]),
+);
+// [[1,3]]
+console.log(criticalConnections(2, [[0, 1]]));
+// [[0,1]]
+```
+
+### Solution 2 — Iterative DFS (Stack-based, avoids recursion limit)
+
+```typescript
 /**
- * Solution 2: Optimized — DFS
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Iterative version using explicit stack to avoid call-stack overflow on large inputs.
+ *
+ * Time:  O(V + E)
+ * Space: O(V + E)
  */
-function criticalConnectionsInANetwork(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using DFS
-  // Hint: Use recursion or stack, track visited nodes
-  throw new Error('Not implemented');
+function criticalConnections2(n: number, connections: number[][]): number[][] {
+  const adj: number[][] = Array.from({ length: n }, () => []);
+  for (const [u, v] of connections) {
+    adj[u].push(v);
+    adj[v].push(u);
+  }
+  const disc = new Array<number>(n).fill(-1);
+  const low = new Array<number>(n).fill(-1);
+  const parent = new Array<number>(n).fill(-1);
+  const bridges: number[][] = [];
+  let timer = 0;
+
+  // stack stores [node, neighborIndex]
+  const stack: [number, number][] = [];
+  for (let start = 0; start < n; start++) {
+    if (disc[start] !== -1) continue;
+    stack.push([start, 0]);
+    disc[start] = low[start] = timer++;
+    while (stack.length) {
+      const [u, i] = stack[stack.length - 1];
+      if (i < adj[u].length) {
+        stack[stack.length - 1][1]++;
+        const v = adj[u][i];
+        if (v === parent[u]) continue;
+        if (disc[v] === -1) {
+          parent[v] = u;
+          disc[v] = low[v] = timer++;
+          stack.push([v, 0]);
+        } else {
+          low[u] = Math.min(low[u], disc[v]);
+        }
+      } else {
+        stack.pop();
+        if (parent[u] !== -1) {
+          low[parent[u]] = Math.min(low[parent[u]], low[u]);
+          if (low[u] > disc[parent[u]]) bridges.push([parent[u], u]);
+        }
+      }
+    }
+  }
+  return bridges;
 }
 
-// === Test Cases ===
-// console.log(criticalConnectionsInANetwork(/* example 1 */)); // expected
-// console.log(criticalConnectionsInANetwork(/* example 2 */)); // expected
-// console.log(criticalConnectionsInANetwork(/* edge case */)); // expected
+console.log(
+  criticalConnections2(4, [
+    [0, 1],
+    [1, 2],
+    [2, 0],
+    [1, 3],
+  ]),
+); // [[1,3]]
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Course Schedule](https://leetcode.com/problems/course-schedule) — same pattern: Topological Sort
-- [Evaluate Division](https://leetcode.com/problems/evaluate-division) — same pattern: Shortest Path (BFS/Dijkstra)
-- [Cheapest Flights Within K Stops](https://leetcode.com/problems/cheapest-flights-within-k-stops) — same pattern: Shortest Path (BFS/Dijkstra)
-- [Reconstruct Itinerary](https://leetcode.com/problems/reconstruct-itinerary) — same pattern: DFS
-- [Critical Connections in a Network — LeetCode](https://leetcode.com/problems/critical-connections-in-a-network) — problem page
+| #    | Problem                                     | Difficulty | Pattern          |
+| ---- | ------------------------------------------- | ---------- | ---------------- |
+| 1192 | Critical Connections (this)                 | Hard       | Tarjan's Bridge  |
+| 1568 | Minimum Number of Days to Disconnect Island | Hard       | Bridge Detection |
+| 323  | Number of Connected Components              | Medium     | DFS / Union Find |

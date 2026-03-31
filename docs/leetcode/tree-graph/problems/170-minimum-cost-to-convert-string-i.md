@@ -7,97 +7,109 @@ tags: [Array, String, Graph, Shortest Path]
 leetcode_url: "https://leetcode.com/problems/minimum-cost-to-convert-string-i"
 ---
 
-# Minimum Cost to Convert String I / Minimum Cost to Convert String I
+# Minimum Cost to Convert String I / Chi phí tối thiểu để chuyển đổi chuỗi I
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Shortest Path (BFS/Dijkstra)
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Evaluate Division](https://leetcode.com/problems/evaluate-division) | [Minimum Cost to Convert String II](https://leetcode.com/problems/minimum-cost-to-convert-string-ii)
+🟡 Medium | Graph | Floyd-Warshall | All-Pairs Shortest Path
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition
 
-**Analogy:** Giống tìm đường đi ngắn nhất trên Google Maps — BFS cho đồ thị không trọng số, Dijkstra cho có trọng số dương.
+**Vietnamese:** Mỗi chữ cái là 1 nút trong đồ thị 26 nút. Mỗi phép biến đổi `original[i] → changed[i]` với chi phí `cost[i]` là 1 cạnh có trọng số. Dùng Floyd-Warshall để tính khoảng cách ngắn nhất giữa tất cả cặp chữ cái. Sau đó với mỗi vị trí trong `source`, tra bảng để tính tổng chi phí.
 
-**Pattern Recognition:**
-
-- Signal: "shortest/minimum path with weights" → **Dijkstra/BFS**
-- Bài này thuộc dạng Shortest Path (BFS/Dijkstra) — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Minimum Cost to Convert String I example:**
+**English:** Model 26 letters as nodes in a weighted directed graph. Run **Floyd-Warshall** to precompute all-pairs shortest paths. Then for each position, look up `cost[source[i]][target[i]]` — if unreachable, return -1.
 
 ```
-// TODO: Add step-by-step visual for Shortest Path (BFS/Dijkstra)
-// Show one complete example with state at each step
+original=['a','b','c'], changed=['b','c','a'], cost=[1,2,5]
+Graph: a→b(1), b→c(2), c→a(5)
+Floyd: dist[a][c] = dist[a][b]+dist[b][c] = 1+2 = 3  (cheaper than c→a which goes backward)
+
+source="abcd", target="bcda"
+  a→b: 1, b→c: 2, c→d: INF → return -1 (no path c→d)
 ```
-
----
-
-## Problem Description
-
-Minimum Cost to Convert String I. ([LeetCode](https://leetcode.com/problems/minimum-cost-to-convert-string-i))
-
-Difficulty: Medium | Acceptance: 57.6%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-cost-to-convert-string-i) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🔑 **Key insight / Nhận xét chính:** Only 26 possible letters → Floyd-Warshall on 26×26 matrix is O(26³) = O(1) effectively.
+- 📊 **Same char shortcut / Phím tắt cùng ký tự:** If `source[i] == target[i]`, cost is 0 — skip.
+- ⚡ **INF handling / Xử lý vô cực:** Use a large finite value (e.g., 1e15) to avoid overflow in addition.
+- 🎯 **Multiple edges / Nhiều cạnh:** Keep the minimum cost edge between two letters (may appear multiple times in input).
+- 🧩 **Unreachable check / Kiểm tra không đến được:** If `dist[s][t] === Infinity`, return -1 immediately.
+- 📏 **Complexity / Độ phức tạp:** O(26³ + n) time — Floyd-Warshall dominates for small alphabets.
 
 ---
 
 ## Solutions
 
+### Solution 1 — Floyd-Warshall All-Pairs Shortest Path
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Build 26-node graph from transformation rules.
+ * Run Floyd-Warshall to get all-pairs shortest paths.
+ * Sum up costs for each position in source → target.
+ *
+ * Time:  O(26^3 + E + n)
+ * Space: O(26^2)
  */
-function minimumCostToConvertStringIBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minimumCost(
+  source: string,
+  target: string,
+  original: string[],
+  changed: string[],
+  cost: number[],
+): number {
+  const INF = 1e15;
+  const dist: number[][] = Array.from({ length: 26 }, (_, i) =>
+    Array.from({ length: 26 }, (__, j) => (i === j ? 0 : INF)),
+  );
+
+  // Build graph: keep minimum cost between same pair
+  for (let i = 0; i < original.length; i++) {
+    const u = original[i].charCodeAt(0) - 97;
+    const v = changed[i].charCodeAt(0) - 97;
+    dist[u][v] = Math.min(dist[u][v], cost[i]);
+  }
+
+  // Floyd-Warshall
+  for (let k = 0; k < 26; k++)
+    for (let i = 0; i < 26; i++)
+      for (let j = 0; j < 26; j++)
+        if (dist[i][k] + dist[k][j] < dist[i][j]) dist[i][j] = dist[i][k] + dist[k][j];
+
+  // Compute total cost
+  let total = 0;
+  for (let i = 0; i < source.length; i++) {
+    if (source[i] === target[i]) continue;
+    const s = source.charCodeAt(i) - 97;
+    const t = target.charCodeAt(i) - 97;
+    if (dist[s][t] === INF) return -1;
+    total += dist[s][t];
+  }
+  return total;
 }
 
-/**
- * Solution 2: Optimized — Shortest Path (BFS/Dijkstra)
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumCostToConvertStringI(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Shortest Path (BFS/Dijkstra)
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(minimumCostToConvertStringI(/* example 1 */)); // expected
-// console.log(minimumCostToConvertStringI(/* example 2 */)); // expected
-// console.log(minimumCostToConvertStringI(/* edge case */)); // expected
+console.log(
+  minimumCost(
+    "abcd",
+    "acbe",
+    ["a", "b", "c", "c", "e", "d"],
+    ["b", "c", "b", "e", "b", "e"],
+    [2, 5, 5, 1, 2, 20],
+  ),
+); // 28
+console.log(minimumCost("aaaa", "bbbb", ["a", "c"], ["c", "b"], [1, 2])); // 12
+console.log(minimumCost("abcd", "abce", ["a"], ["e"], [10000])); // -1 (d→e unreachable)
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Evaluate Division](https://leetcode.com/problems/evaluate-division) — same pattern: Shortest Path (BFS/Dijkstra)
-- [Minimum Cost to Convert String II](https://leetcode.com/problems/minimum-cost-to-convert-string-ii) — same pattern: Shortest Path (BFS/Dijkstra)
-- [Design Excel Sum Formula](https://leetcode.com/problems/design-excel-sum-formula) — same pattern: Topological Sort
-- [Find All Possible Recipes from Given Supplies](https://leetcode.com/problems/find-all-possible-recipes-from-given-supplies) — same pattern: Topological Sort
-- [Minimum Cost to Convert String I — LeetCode](https://leetcode.com/problems/minimum-cost-to-convert-string-i) — problem page
+| #    | Problem                          | Difficulty | Pattern        |
+| ---- | -------------------------------- | ---------- | -------------- |
+| 2976 | Min Cost Convert String I (this) | Medium     | Floyd-Warshall |
+| 2977 | Min Cost Convert String II       | Hard       | Trie + DP      |
+| 743  | Network Delay Time               | Medium     | Dijkstra       |

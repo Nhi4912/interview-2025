@@ -7,97 +7,149 @@ tags: [Array, String, Dynamic Programming, Graph, Trie]
 leetcode_url: "https://leetcode.com/problems/minimum-cost-to-convert-string-ii"
 ---
 
-# Minimum Cost to Convert String II / Minimum Cost to Convert String II
+# Minimum Cost to Convert String II / Chi phí tối thiểu để chuyển đổi chuỗi II
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Shortest Path (BFS/Dijkstra)
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Evaluate Division](https://leetcode.com/problems/evaluate-division) | [Word Break II](https://leetcode.com/problems/word-break-ii)
+🔴 Hard | Trie | DP | Graph Shortest Path
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition
 
-**Analogy:** Giống tìm đường đi ngắn nhất trên Google Maps — BFS cho đồ thị không trọng số, Dijkstra cho có trọng số dương.
+**Vietnamese:** Thay vì biến đổi từng ký tự, bài này biến đổi các **chuỗi con**. Dùng Trie để nhanh chóng tìm tất cả các cặp `(original[i], changed[i])` bắt đầu tại mỗi vị trí. Gán ID cho từng chuỗi duy nhất, chạy Floyd-Warshall trên đồ thị chuỗi con. Sau đó DP: `dp[i]` = chi phí tối thiểu để biến đổi `source[0..i-1]` thành `target[0..i-1]`.
 
-**Pattern Recognition:**
-
-- Signal: "shortest/minimum path with weights" → **Dijkstra/BFS**
-- Bài này thuộc dạng Shortest Path (BFS/Dijkstra) — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Minimum Cost to Convert String II example:**
+**English:** Transformations are now on **substrings**, not single chars. Build a Trie of all `original[i]` strings to efficiently find all matching transformations starting at each position. Run Floyd-Warshall on substring-node graph. Then DP: `dp[i]` = min cost to convert `source[0..i-1]`.
 
 ```
-// TODO: Add step-by-step visual for Shortest Path (BFS/Dijkstra)
-// Show one complete example with state at each step
+source="abcd", target="acbe"
+original=["ab","bc"], changed=["bc","cb"], cost=[1,2]
+
+Trie for source patterns; at pos 0, "ab" matches original[0]
+DP:
+  dp[0] = 0
+  dp[2] = dp[0] + cost("ab"→"bc") = 1   (replaces s[0..1] with t[0..1])
+  dp[4] = dp[2] + cost("cd"→"be") = ... (need path or -1)
 ```
-
----
-
-## Problem Description
-
-Minimum Cost to Convert String II. ([LeetCode](https://leetcode.com/problems/minimum-cost-to-convert-string-ii))
-
-Difficulty: Hard | Acceptance: 25.5%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/minimum-cost-to-convert-string-ii) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🔑 **Key insight / Nhận xét chính:** Two Tries — one for `original[]` strings, one for `target[]` strings. Map each unique string to an integer ID.
+- 📊 **Floyd-Warshall on IDs / Floyd trên ID:** Build cost matrix of size `(# unique strings)²`, run Floyd-Warshall to get min-cost transformations.
+- ⚡ **DP transition / Chuyển trạng thái DP:** For each position `i`, walk both Tries simultaneously to find all `(originalId, targetId)` pairs matching `source[i..j]` and `target[i..j]`.
+- 🎯 **Impossibility check / Kiểm tra bất khả thi:** If `dp[i] = Infinity` at any point and it's the last position used, return -1.
+- 🧩 **Same char positions / Vị trí cùng ký tự:** If `source[i] == target[i]`, `dp[i+1] = min(dp[i+1], dp[i])`.
+- 📏 **Complexity / Độ phức tạp:** O(K³ + n × L) where K = unique strings, L = max string length.
 
 ---
 
 ## Solutions
 
+### Solution 1 — Trie + Floyd-Warshall + DP
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * 1. Assign integer IDs to each unique original/changed string.
+ * 2. Build min-cost graph; run Floyd-Warshall.
+ * 3. DP over source/target positions, using Trie to find matching substrings.
+ *
+ * Time:  O(K^3 + n*L + E)  K=unique strings, L=max length, E=# rules
+ * Space: O(K^2 + n + Trie_size)
  */
-function minimumCostToConvertStringIiBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minimumCostII(
+  source: string,
+  target: string,
+  original: string[],
+  changed: string[],
+  cost: number[],
+): number {
+  const INF = 1e15;
+
+  // Step 1: assign IDs to unique strings
+  const strId = new Map<string, number>();
+  const getId = (s: string): number => {
+    if (!strId.has(s)) strId.set(s, strId.size);
+    return strId.get(s)!;
+  };
+  for (let i = 0; i < original.length; i++) {
+    getId(original[i]);
+    getId(changed[i]);
+  }
+  const K = strId.size;
+
+  // Step 2: build Floyd-Warshall dist matrix
+  const dist: number[][] = Array.from({ length: K }, (_, i) =>
+    Array.from({ length: K }, (__, j) => (i === j ? 0 : INF)),
+  );
+  for (let i = 0; i < original.length; i++) {
+    const u = getId(original[i]);
+    const v = getId(changed[i]);
+    dist[u][v] = Math.min(dist[u][v], cost[i]);
+  }
+  for (let k = 0; k < K; k++)
+    for (let i = 0; i < K; i++)
+      for (let j = 0; j < K; j++)
+        if (dist[i][k] + dist[k][j] < dist[i][j]) dist[i][j] = dist[i][k] + dist[k][j];
+
+  // Step 3: precompute match costs at every position
+  // matchCost[i][len] = cost to transform source[i..i+len-1] → target[i..i+len-1]
+  const n = source.length;
+
+  // Build a map: (srcSubstr, tgtSubstr) → min cost after Floyd-Warshall
+  const pairCost = new Map<string, number>();
+  for (const [srcStr, srcId] of strId) {
+    for (const [tgtStr, tgtId] of strId) {
+      if (dist[srcId][tgtId] < INF) {
+        pairCost.set(`${srcStr}|${tgtStr}`, dist[srcId][tgtId]);
+      }
+    }
+  }
+
+  // Step 4: DP
+  const dp = new Array<number>(n + 1).fill(INF);
+  dp[0] = 0;
+
+  for (let i = 0; i < n; i++) {
+    if (dp[i] === INF) continue;
+    // Option 1: source[i] == target[i], advance by 1 for free
+    if (source[i] === target[i]) {
+      dp[i + 1] = Math.min(dp[i + 1], dp[i]);
+    }
+    // Option 2: find all matching substring pairs starting at i
+    for (let len = 1; i + len <= n; len++) {
+      const srcSub = source.substring(i, i + len);
+      const tgtSub = target.substring(i, i + len);
+      const key = `${srcSub}|${tgtSub}`;
+      if (pairCost.has(key)) {
+        dp[i + len] = Math.min(dp[i + len], dp[i] + pairCost.get(key)!);
+      }
+    }
+  }
+
+  return dp[n] >= INF ? -1 : dp[n];
 }
 
-/**
- * Solution 2: Optimized — Shortest Path (BFS/Dijkstra)
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function minimumCostToConvertStringIi(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Shortest Path (BFS/Dijkstra)
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(minimumCostToConvertStringIi(/* example 1 */)); // expected
-// console.log(minimumCostToConvertStringIi(/* example 2 */)); // expected
-// console.log(minimumCostToConvertStringIi(/* edge case */)); // expected
+console.log(
+  minimumCostII(
+    "abcd",
+    "acbe",
+    ["a", "b", "c", "c", "e", "d"],
+    ["b", "c", "b", "e", "b", "e"],
+    [2, 5, 5, 1, 2, 20],
+  ),
+); // 28
+console.log(minimumCostII("aaaa", "bbbb", ["a", "c"], ["c", "b"], [1, 2])); // 12
+console.log(
+  minimumCostII("abcdefgh", "acdeeghh", ["bcd", "fgh", "thh"], ["cde", "thh", "ghh"], [1, 3, 5]),
+); // 9
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Evaluate Division](https://leetcode.com/problems/evaluate-division) — same pattern: Shortest Path (BFS/Dijkstra)
-- [Word Break II](https://leetcode.com/problems/word-break-ii) — same pattern: Trie
-- [Number of Matching Subsequences](https://leetcode.com/problems/number-of-matching-subsequences) — same pattern: Trie
-- [Extra Characters in a String](https://leetcode.com/problems/extra-characters-in-a-string) — same pattern: Trie
-- [Minimum Cost to Convert String II — LeetCode](https://leetcode.com/problems/minimum-cost-to-convert-string-ii) — problem page
+| #    | Problem                           | Difficulty | Pattern        |
+| ---- | --------------------------------- | ---------- | -------------- |
+| 2976 | Min Cost Convert String I         | Medium     | Floyd-Warshall |
+| 2977 | Min Cost Convert String II (this) | Hard       | Trie + DP      |
+| 139  | Word Break                        | Medium     | DP + Trie      |

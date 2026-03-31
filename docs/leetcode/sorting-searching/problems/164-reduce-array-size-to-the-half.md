@@ -7,104 +7,117 @@ tags: [Array, Hash Table, Greedy, Sorting, Heap (Priority Queue)]
 leetcode_url: "https://leetcode.com/problems/reduce-array-size-to-the-half"
 ---
 
-# Reduce Array Size to The Half / Reduce Array Size to The Half
+# Reduce Array Size to The Half / Giảm Kích Thước Mảng Xuống Một Nửa
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Heap / Priority Queue
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Task Scheduler](https://leetcode.com/problems/task-scheduler) | [Smallest Range Covering Elements from K Lists](https://leetcode.com/problems/smallest-range-covering-elements-from-k-lists)
+🟡 Medium | 🏷️ Array, Hash Table, Greedy, Sorting | [LeetCode](https://leetcode.com/problems/reduce-array-size-to-the-half)
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition
 
-**Analogy:** Giống phòng cấp cứu — bệnh nhân nặng nhất luôn được ưu tiên, bất kể ai đến trước. Heap giữ phần tử quan trọng nhất ở đầu.
+**Vietnamese:** Mục tiêu xóa ít nhất ⌈n/2⌉ phần tử. Greedy: luôn xóa những giá trị xuất hiện nhiều nhất trước — mỗi giá trị duy nhất xóa được càng nhiều phần tử cùng lúc, số loại giá trị cần xóa càng ít.
 
-**Pattern Recognition:**
-
-- Signal: "k-th largest/smallest" + "top-k elements" → **Heap**
-- Bài này thuộc dạng Heap / Priority Queue — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Reduce Array Size to The Half example:**
+**Analogy:** Dọn kho lạc hậu — thùng hàng nào nhiều nhất thì vứt trước, ít lần vứt nhất mà giải phóng được nhiều chỗ nhất.
 
 ```
-Min Heap:
-        1
-       / \
-      3   2
-     / \
-    7   4
+arr = [3,3,3,3,5,5,5,2,2,7]  n=10, target=5
+freq: {3:4, 5:3, 2:2, 7:1}
+sort desc: [4, 3, 2, 1]
 
-Insert: add to end, bubble up
-Extract: remove root, bubble down
+Pick 3 (count=4): removed=4 ≥ 5? No
+Pick 5 (count=3): removed=7 ≥ 5? Yes → answer = 2 sets
 ```
-
----
-
-## Problem Description
-
-Reduce Array Size to The Half. ([LeetCode](https://leetcode.com/problems/reduce-array-size-to-the-half))
-
-Difficulty: Medium | Acceptance: 69.1%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/reduce-array-size-to-the-half) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- **EN:** Count frequency of each value with a HashMap / **VI:** Đếm tần suất mỗi giá trị bằng HashMap
+- **EN:** Sort frequencies descending; greedily pick highest frequency first / **VI:** Sắp xếp tần suất giảm dần, tham lam chọn cao nhất trước
+- **EN:** Stop when removed elements ≥ n/2; return number of distinct values chosen / **VI:** Dừng khi đã xóa ≥ n/2 phần tử, trả về số loại đã chọn
+- **EN:** Target = Math.ceil(n/2) = Math.floor((n+1)/2) / **VI:** Mục tiêu xóa = ⌈n/2⌉
+- **EN:** Time dominated by sort O(k log k) where k = unique values ≤ n / **VI:** Độ phức tạp dominated bởi sort O(k log k)
+- **EN:** Edge: if one value covers entire array, answer = 1 / **VI:** Nếu một giá trị chiếm cả mảng, đáp án = 1
 
 ---
 
 ## Solutions
 
+### Solution 1: Frequency Sort Greedy
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Count frequencies, sort descending, greedily remove most frequent.
+ * Time: O(n log n)  Space: O(n)
  */
-function reduceArraySizeToTheHalfBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minSetSize(arr: number[]): number {
+  const freq = new Map<number, number>();
+  for (const v of arr) freq.set(v, (freq.get(v) ?? 0) + 1);
+
+  const counts = Array.from(freq.values()).sort((a, b) => b - a);
+
+  const target = Math.ceil(arr.length / 2);
+  let removed = 0;
+  let sets = 0;
+
+  for (const cnt of counts) {
+    removed += cnt;
+    sets++;
+    if (removed >= target) break;
+  }
+  return sets;
 }
 
+// Tests
+console.log(minSetSize([3, 3, 3, 3, 5, 5, 5, 2, 2, 7])); // 2
+console.log(minSetSize([7, 7, 7, 7, 7, 7])); // 1
+console.log(minSetSize([1, 9])); // 1
+console.log(minSetSize([1000, 1000, 3, 7])); // 1
+```
+
+### Solution 2: Bucket Sort for O(n) frequency counting
+
+```typescript
 /**
- * Solution 2: Optimized — Heap / Priority Queue
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Use bucket sort on frequencies (max freq ≤ n) → O(n) time.
+ * Time: O(n)  Space: O(n)
  */
-function reduceArraySizeToTheHalf(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Heap / Priority Queue
-  // Hint: Use min/max heap to efficiently track k-th element
-  throw new Error('Not implemented');
+function minSetSize2(arr: number[]): number {
+  const n = arr.length;
+  const freq = new Map<number, number>();
+  for (const v of arr) freq.set(v, (freq.get(v) ?? 0) + 1);
+
+  // Bucket: buckets[f] = count of distinct values with frequency f
+  const buckets = new Array(n + 1).fill(0);
+  for (const f of freq.values()) buckets[f]++;
+
+  const target = Math.ceil(n / 2);
+  let removed = 0;
+  let sets = 0;
+
+  for (let f = n; f >= 1 && removed < target; f--) {
+    const available = buckets[f];
+    if (available === 0) continue;
+    // Use as many of this frequency bucket as needed
+    const take = Math.min(available, Math.ceil((target - removed) / f));
+    sets += take;
+    removed += take * f;
+  }
+  return sets;
 }
 
-// === Test Cases ===
-// console.log(reduceArraySizeToTheHalf(/* example 1 */)); // expected
-// console.log(reduceArraySizeToTheHalf(/* example 2 */)); // expected
-// console.log(reduceArraySizeToTheHalf(/* edge case */)); // expected
+// Tests
+console.log(minSetSize2([3, 3, 3, 3, 5, 5, 5, 2, 2, 7])); // 2
+console.log(minSetSize2([7, 7, 7, 7, 7, 7])); // 1
+console.log(minSetSize2([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])); // 5
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Task Scheduler](https://leetcode.com/problems/task-scheduler) — same pattern: Heap / Priority Queue
-- [Smallest Range Covering Elements from K Lists](https://leetcode.com/problems/smallest-range-covering-elements-from-k-lists) — same pattern: Sliding Window
-- [Top K Frequent Words](https://leetcode.com/problems/top-k-frequent-words) — same pattern: Trie
-- [Reorganize String](https://leetcode.com/problems/reorganize-string) — same pattern: Heap / Priority Queue
-- [Reduce Array Size to The Half — LeetCode](https://leetcode.com/problems/reduce-array-size-to-the-half) — problem page
+| Problem                                                                          | Difficulty | Connection             |
+| -------------------------------------------------------------------------------- | ---------- | ---------------------- |
+| [Top K Frequent Elements](https://leetcode.com/problems/top-k-frequent-elements) | 🟡 Medium  | Frequency sort greedy  |
+| [Task Scheduler](https://leetcode.com/problems/task-scheduler)                   | 🟡 Medium  | Frequency-based greedy |
+| [Reorganize String](https://leetcode.com/problems/reorganize-string)             | 🟡 Medium  | Most frequent first    |

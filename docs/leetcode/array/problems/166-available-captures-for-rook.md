@@ -7,97 +7,161 @@ tags: [Array, Matrix, Simulation]
 leetcode_url: "https://leetcode.com/problems/available-captures-for-rook"
 ---
 
-# Available Captures for Rook / Available Captures for Rook
+# Available Captures for Rook / Quân Xe Có Thể Ăn Bao Nhiêu Quân
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Matrix / Simulation
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) | [Spiral Matrix II](https://leetcode.com/problems/spiral-matrix-ii)
+🟢 Easy | 🏷️ Array, Matrix, Simulation | 🔗 [LeetCode](https://leetcode.com/problems/available-captures-for-rook)
 
----
+## 🧠 Intuition / Trực Giác
 
-## 🧠 Intuition / Tư Duy
+**Tiếng Việt:** Tìm vị trí quân Xe (R). Quét 4 hướng: Trên, Dưới, Trái, Phải. Đếm số quân Tốt (p) gặp được trước khi bị chặn bởi quân Tượng (B) hoặc hết bàn cờ.
 
-**Analogy:** Phân tích bài "Available Captures for Rook" — xác định pattern phù hợp dựa trên constraints và input/output.
-
-**Pattern Recognition:**
-
-- Signal: "problem-specific signals" → **Matrix / Simulation**
-- Bài này thuộc dạng Matrix / Simulation — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Available Captures for Rook example:**
+**English:** Find the Rook 'R'. Scan all 4 directions. In each direction: stop at bishop 'B' (blocked), count a pawn 'p' (capture available), or stop at board edge.
 
 ```
-// TODO: Add step-by-step visual for Matrix / Simulation
-// Show one complete example with state at each step
+Board (8x8):
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . p . . . . .
+. . R . . B . .   ← Rook at (4,2)
+. . . . . . . .
+. . . . p . . .
+. . . . . . . .
+
+Up: (3,2)='p' → capture! count=1
+Down: (5,2)='.', (6,2)='.', (7,2)='.' → 0
+Left: (4,1)='.', (4,0)='.' → 0
+Right: (4,3)='.', (4,4)='.', (4,5)='B' → blocked, 0
+
+Answer: 1
 ```
 
----
+## 📝 Interview Tips / Mẹo Phỏng Vấn
 
-## Problem Description
-
-Available Captures for Rook. ([LeetCode](https://leetcode.com/problems/available-captures-for-rook))
-
-Difficulty: Easy | Acceptance: 70.4%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/available-captures-for-rook) for full constraints
-
----
-
-## 📝 Interview Tips
-
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
-
----
+- 🔑 **EN:** Find 'R' first — guaranteed exactly one rook on the board | **VI:** Tìm 'R' trước — đề đảm bảo đúng một quân Xe trên bàn cờ
+- 🔑 **EN:** Scan each direction independently until boundary or 'B' | **VI:** Quét mỗi hướng độc lập cho đến khi gặp biên hoặc 'B'
+- 🔑 **EN:** 'B' blocks the rook — stop without counting | **VI:** 'B' chặn quân Xe — dừng lại không đếm
+- 🔑 **EN:** 'p' is a capture — count and stop (rook captures only one per direction) | **VI:** 'p' là quân bị ăn — đếm rồi dừng (xe chỉ ăn một quân mỗi hướng)
+- 🔑 **EN:** '.' means empty square — continue scanning | **VI:** '.' là ô trống — tiếp tục quét
+- 🔑 **EN:** O(8²) = O(1) since board is always 8×8 | **VI:** O(8²) = O(1) vì bàn cờ luôn là 8×8
 
 ## Solutions
 
+### Solution 1: Direction Vectors (Concise)
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Available Captures for Rook using 4-direction scan
+ * Time: O(1) — board is always 8x8
+ * Space: O(1)
  */
-function availableCapturesForRookBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function numRookCaptures(board: string[][]): number {
+  const N = 8;
+  let rr = 0, rc = 0;
+
+  // Find the rook
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      if (board[r][c] === 'R') { rr = r; rc = c; }
+    }
+  }
+
+  const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+  let captures = 0;
+
+  for (const [dr, dc] of dirs) {
+    let r = rr + dr;
+    let c = rc + dc;
+    while (r >= 0 && r < N && c >= 0 && c < N) {
+      if (board[r][c] === 'B') break;       // blocked by bishop
+      if (board[r][c] === 'p') { captures++; break; } // capture pawn
+      r += dr;
+      c += dc;
+    }
+  }
+
+  return captures;
 }
 
-/**
- * Solution 2: Optimized — Matrix / Simulation
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function availableCapturesForRook(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Matrix / Simulation
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(availableCapturesForRook(/* example 1 */)); // expected
-// console.log(availableCapturesForRook(/* example 2 */)); // expected
-// console.log(availableCapturesForRook(/* edge case */)); // expected
+const board1 = [
+  ['.','.','.','.','.','.','.','.'],['.','.','.','p','.','.','.','.'],['.','.','.','R','.','.','.','p'],
+  ['.','.','.','.','.','.','.','.'],['.','.','.','.','.','.','.','.'],['.','.','.','p','.','.','.','.'],['.','.','.','.','.','.','.','.'],['.','.','.','.','.','.','.','.']]
+];
+console.log(numRookCaptures(board1)); // 3
 ```
 
----
+### Solution 2: Explicit Four Directional Loops
+
+```typescript
+/**
+ * Scan each direction with explicit loops — easier to read
+ * Time: O(1) | Space: O(1)
+ */
+function numRookCaptures2(board: string[][]): number {
+  let rr = 0,
+    rc = 0;
+  for (let r = 0; r < 8; r++)
+    for (let c = 0; c < 8; c++)
+      if (board[r][c] === "R") {
+        rr = r;
+        rc = c;
+      }
+
+  let count = 0;
+
+  // Up
+  for (let r = rr - 1; r >= 0; r--) {
+    if (board[r][rc] === "B") break;
+    if (board[r][rc] === "p") {
+      count++;
+      break;
+    }
+  }
+  // Down
+  for (let r = rr + 1; r < 8; r++) {
+    if (board[r][rc] === "B") break;
+    if (board[r][rc] === "p") {
+      count++;
+      break;
+    }
+  }
+  // Left
+  for (let c = rc - 1; c >= 0; c--) {
+    if (board[rr][c] === "B") break;
+    if (board[rr][c] === "p") {
+      count++;
+      break;
+    }
+  }
+  // Right
+  for (let c = rc + 1; c < 8; c++) {
+    if (board[rr][c] === "B") break;
+    if (board[rr][c] === "p") {
+      count++;
+      break;
+    }
+  }
+
+  return count;
+}
+
+const board2 = [
+  [".", ".", ".", ".", ".", ".", ".", "."],
+  [".", ".", ".", ".", ".", ".", ".", "."],
+  [".", ".", ".", "p", ".", ".", ".", "."],
+  [".", ".", ".", ".", ".", ".", ".", "."],
+  [".", ".", "R", ".", ".", ".", ".", "."],
+  [".", ".", ".", ".", ".", ".", ".", "."],
+  [".", ".", ".", ".", "p", ".", ".", "."],
+  [".", ".", ".", ".", ".", ".", ".", "."],
+];
+console.log(numRookCaptures2(board2)); // 1
+```
 
 ## 🔗 Related Problems
 
-- [Spiral Matrix](https://leetcode.com/problems/spiral-matrix) — same pattern: Matrix / Simulation
-- [Spiral Matrix II](https://leetcode.com/problems/spiral-matrix-ii) — same pattern: Matrix / Simulation
-- [Game of Life](https://leetcode.com/problems/game-of-life) — same pattern: Matrix / Simulation
-- [Candy Crush](https://leetcode.com/problems/candy-crush) — same pattern: Two Pointers
-- [Available Captures for Rook — LeetCode](https://leetcode.com/problems/available-captures-for-rook) — problem page
+| Problem                                                                                           | Difficulty | Pattern          |
+| ------------------------------------------------------------------------------------------------- | ---------- | ---------------- |
+| [Queens That Can Attack the King](https://leetcode.com/problems/queens-that-can-attack-the-king/) | 🟡 Medium  | 8-direction scan |
+| [Battleships in a Board](https://leetcode.com/problems/battleships-in-a-board/)                   | 🟡 Medium  | Matrix           |
+| [Robot Return to Origin](https://leetcode.com/problems/robot-return-to-origin/)                   | 🟢 Easy    | Simulation       |

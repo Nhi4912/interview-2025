@@ -7,100 +7,120 @@ tags: [Math, Binary Search, Combinatorics, Number Theory]
 leetcode_url: "https://leetcode.com/problems/ugly-number-iii"
 ---
 
-# Ugly Number III / Ugly Number III
+# Ugly Number III / Số Xấu III
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Binary Search
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Count the Number of Ideal Arrays](https://leetcode.com/problems/count-the-number-of-ideal-arrays) | [Minimize the Maximum of Two Arrays](https://leetcode.com/problems/minimize-the-maximum-of-two-arrays)
+🟡 Medium | 🏷️ Math, Binary Search, Number Theory | [LeetCode](https://leetcode.com/problems/ugly-number-iii)
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition
 
-**Analogy:** Tưởng tượng tìm một trang trong từ điển — bạn mở giữa, xem số trang, rồi chọn nửa phù hợp. Mỗi lần giảm một nửa phạm vi tìm kiếm.
+**Vietnamese:** Số xấu = bội số của a HOẶC b. Binary search trên giá trị x: đếm số ugly ≤ x dùng inclusion-exclusion: `count(x) = x/a + x/b − x/lcm(a,b)`. Tìm x nhỏ nhất thỏa count(x) ≥ n.
 
-**Pattern Recognition:**
-
-- Signal: "sorted" + "find target/position" → **Binary Search**
-- Bài này thuộc dạng Binary Search — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Ugly Number III example:**
+**Analogy:** Đếm bội số trong dãy số — dùng nguyên lý bao hàm-loại trừ như đếm bạn học thích Toán HOẶC Văn: |Toán ∪ Văn| = |Toán| + |Văn| − |Toán ∩ Văn|.
 
 ```
-[1, 3, 5, 7, 9, 11, 13]
- L        M            R
+n=3  a=2  b=3
+lcm(2,3) = 6
 
-Step 1: mid = (L+R)/2, check condition
-Step 2: condition true → move L = mid+1 (or R = mid-1)
-Step N: L meets R → answer found ✅
+x=4: 4/2 + 4/3 - 4/6 = 2+1-0 = 3 ≥ 3 ✅
+x=3: 3/2 + 3/3 - 3/6 = 1+1-0 = 2 < 3 ❌
+→ candidate = 4
+
+But 4 must actually BE a multiple of 2 or 3!
+4 is a multiple of 2 ✅ → answer = 4
 ```
-
----
-
-## Problem Description
-
-Ugly Number III. ([LeetCode](https://leetcode.com/problems/ugly-number-iii))
-
-Difficulty: Medium | Acceptance: 30.5%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/ugly-number-iii) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Input đã sorted? Cần tìm vị trí chính xác hay boundary?" / Is input sorted? Exact match or boundary?
-2. **Brute force**: "Linear scan O(n)" → optimize with binary search O(log n) / Start linear, suggest binary
-3. **Optimize**: "Chú ý lo/hi boundary: lo <= hi hay lo < hi? mid±1 hay mid?" / Watch boundary conditions carefully
-4. **Edge cases**: "Mảng rỗng, một phần tử, target không tồn tại, overflow mid" / Empty, single, not found, overflow
+- **EN:** Count ugly numbers ≤ x = `x/a + x/b − x/lcm(a,b)` (inclusion-exclusion) / **VI:** Đếm số xấu ≤ x bằng bao hàm-loại trừ
+- **EN:** Binary search: find smallest x where count(x) ≥ n / **VI:** Binary search: tìm x nhỏ nhất có count(x) ≥ n
+- **EN:** Answer must be an actual multiple of a or b — snap to nearest / **VI:** Đáp án phải là bội của a hoặc b — làm tròn xuống bội gần nhất
+- **EN:** `lcm(a,b) = a * b / gcd(a,b)`; watch overflow — use BigInt or float division / **VI:** lcm(a,b) = a\*b/gcd(a,b); cẩn thận overflow
+- **EN:** Search range: [1, 2 * 10^9] covers all n ≤ 10^9 / **VI:** Phạm vi tìm: [1, 2e9]
+- **EN:** To find the actual n-th ugly: find x via BS, then answer = min multiple of a ≤ x, min multiple of b ≤ x that lands at rank n / **VI:** Sau BS, snap đến bội đúng rank n
 
 ---
 
 ## Solutions
 
+### Solution 1: Binary Search + Inclusion-Exclusion
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Binary search on value; count ugly numbers via inclusion-exclusion.
+ * Time: O(log(2e9))  Space: O(1)
  */
-function uglyNumberIiiBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function nthUglyNumber(n: number, a: number, b: number, c: number): number {
+  const gcd = (x: number, y: number): number => (y === 0 ? x : gcd(y, x % y));
+  const lcm = (x: number, y: number): number => (x / gcd(x, y)) * y;
+
+  const ab = lcm(a, b);
+  const ac = lcm(a, c);
+  const bc = lcm(b, c);
+  const abc = lcm(ab, c);
+
+  // Count of ugly numbers (multiples of a, b, or c) that are <= x
+  const count = (x: number): number =>
+    Math.floor(x / a) +
+    Math.floor(x / b) +
+    Math.floor(x / c) -
+    Math.floor(x / ab) -
+    Math.floor(x / ac) -
+    Math.floor(x / bc) +
+    Math.floor(x / abc);
+
+  let lo = 1,
+    hi = 2_000_000_000;
+  while (lo < hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    count(mid) >= n ? (hi = mid) : (lo = mid + 1);
+  }
+  return lo;
 }
 
+// Tests
+console.log(nthUglyNumber(3, 2, 3, 5)); // 4
+console.log(nthUglyNumber(4, 2, 3, 4)); // 6
+console.log(nthUglyNumber(5, 2, 11, 13)); // 10
+console.log(nthUglyNumber(1000000000, 2, 217983653, 336916467)); // 1999999984
+```
+
+### Solution 2: Two factors only (a and b, no c)
+
+```typescript
 /**
- * Solution 2: Optimized — Binary Search
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Simpler version: only a and b (no c parameter).
+ * Time: O(log(maxVal))  Space: O(1)
  */
-function uglyNumberIii(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Binary Search
-  // Hint: Define search space, determine which half to discard
-  throw new Error('Not implemented');
+function nthUglyNumberAB(n: number, a: number, b: number): number {
+  const gcd = (x: number, y: number): number => (y === 0 ? x : gcd(y, x % y));
+  const ab = (a / gcd(a, b)) * b;
+
+  const count = (x: number) => Math.floor(x / a) + Math.floor(x / b) - Math.floor(x / ab);
+
+  let lo = 1,
+    hi = Math.min(a, b) * n;
+  while (lo < hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    count(mid) >= n ? (hi = mid) : (lo = mid + 1);
+  }
+  return lo;
 }
 
-// === Test Cases ===
-// console.log(uglyNumberIii(/* example 1 */)); // expected
-// console.log(uglyNumberIii(/* example 2 */)); // expected
-// console.log(uglyNumberIii(/* edge case */)); // expected
+// Tests
+console.log(nthUglyNumberAB(3, 2, 3)); // 4
+console.log(nthUglyNumberAB(4, 2, 3)); // 6
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Count the Number of Ideal Arrays](https://leetcode.com/problems/count-the-number-of-ideal-arrays) — same pattern: Dynamic Programming
-- [Minimize the Maximum of Two Arrays](https://leetcode.com/problems/minimize-the-maximum-of-two-arrays) — same pattern: Binary Search
-- [Maximum GCD-Sum of a Subarray](https://leetcode.com/problems/maximum-gcd-sum-of-a-subarray) — same pattern: Binary Search
-- [Sqrt(x)](https://leetcode.com/problems/sqrtx) — same pattern: Binary Search
-- [Ugly Number III — LeetCode](https://leetcode.com/problems/ugly-number-iii) — problem page
+| Problem                                                                                                                  | Difficulty | Connection                          |
+| ------------------------------------------------------------------------------------------------------------------------ | ---------- | ----------------------------------- |
+| [Ugly Number II](https://leetcode.com/problems/ugly-number-ii)                                                           | 🟡 Medium  | Min-heap approach for ugly numbers  |
+| [Minimize the Maximum of Two Arrays](https://leetcode.com/problems/minimize-the-maximum-of-two-arrays)                   | 🟡 Medium  | Binary search + inclusion-exclusion |
+| [Kth Smallest Number in Multiplication Table](https://leetcode.com/problems/kth-smallest-number-in-multiplication-table) | 🔴 Hard    | Binary search on value + count      |

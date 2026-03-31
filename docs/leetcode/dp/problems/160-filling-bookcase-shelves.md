@@ -7,102 +7,159 @@ tags: [Array, Dynamic Programming]
 leetcode_url: "https://leetcode.com/problems/filling-bookcase-shelves"
 ---
 
-# Filling Bookcase Shelves / Filling Bookcase Shelves
+# Filling Bookcase Shelves / Xếp Sách Lên Kệ
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Dynamic Programming
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Jump Game II](https://leetcode.com/problems/jump-game-ii) | [Maximal Square](https://leetcode.com/problems/maximal-square)
+🟡 Medium | DP on prefix, greedy shelf packing
 
----
+## 🧠 Intuition
 
-## 🧠 Intuition / Tư Duy
+**VI:** Như xếp sách lên kệ thật — với mỗi cuốn sách mới, thử bắt đầu kệ mới hoặc
+gộp vào kệ hiện tại nếu vừa chiều rộng. Chiều cao của kệ = cuốn sách cao nhất.
 
-**Analogy:** Như xếp gạch xây tường — mỗi viên gạch mới dựa trên viên phía dưới. Bạn giải bài toán nhỏ trước, dùng kết quả đó để giải bài lớn hơn.
-
-**Pattern Recognition:**
-
-- Signal: "min/max result" + "overlapping subproblems" + "optimal substructure" → **Dynamic Programming**
-- Bài này thuộc dạng Dynamic Programming — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Filling Bookcase Shelves example:**
+**EN:** For each book, decide: start a new shelf, or squeeze onto the current shelf.
+`dp[i]` = minimum total height using the first `i` books.
 
 ```
-dp table:
-i:     0    1    2    3    4    ...
-dp[i]: base  ?    ?    ?    ?
+books = [[1,1],[2,3],[2,3],[1,1],[1,1],[1,1],[1,2]], shelfWidth=4
 
-Transition: dp[i] = f(dp[i-1], dp[i-2], ...)
-Base case:  dp[0] = ...
-Answer:     dp[n] or max(dp)
+dp[0]=0
+Book1 w=1 h=1: new shelf → dp[1]=1
+Book2 w=2 h=3: new shelf → dp[2]=1+3=4; join book1? w=3≤4 h=3 → 0+3=3 ✓
+Book3 w=2 h=3: new shelf → 3+3=6; join book2? w=4≤4 h=3 → 1+3=4 ✓
+...
 ```
-
----
-
-## Problem Description
-
-Filling Bookcase Shelves. ([LeetCode](https://leetcode.com/problems/filling-bookcase-shelves))
-
-Difficulty: Medium | Acceptance: 68.7%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/filling-bookcase-shelves) for full constraints
-
----
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần giá trị tối ưu hay cần reconstruct solution?" / Need optimal value or actual solution path?
-2. **Brute force**: "Recursion O(2^n)" → add memoization → bottom-up DP / Start recursive, add memo, convert to iterative
-3. **State definition**: "Xác định dp[i] nghĩa là gì, transition từ đâu" / Define state clearly before coding
-4. **Edge cases**: "Base cases, n=0/1, negative values, overflow" / Check base cases and boundary values
-5. **Space optimize**: "Nếu dp[i] chỉ phụ thuộc dp[i-1] → dùng 2 biến thay vì mảng" / Roll variables if possible
-
----
+- 🔑 **EN:** `dp[i]` represents minimum height for first `i` books — think prefix DP.
+  **VI:** `dp[i]` là chiều cao tối thiểu cho `i` cuốn sách đầu — DP trên tiền tố.
+- 🔑 **EN:** Outer loop: for each book `i`; inner loop: extend current shelf backwards.
+  **VI:** Vòng ngoài: từng cuốn sách; vòng trong: mở rộng kệ về phía trước.
+- 🔑 **EN:** Track cumulative width and max height of books on current shelf.
+  **VI:** Theo dõi tổng chiều rộng và chiều cao tối đa của kệ hiện tại.
+- 🔑 **EN:** Start each inner loop fresh: `width = 0, height = 0`.
+  **VI:** Khởi tạo lại `width=0, height=0` cho mỗi kệ thử nghiệm.
+- 🔑 **EN:** Break inner loop when width exceeds `shelfWidth`.
+  **VI:** Dừng vòng trong khi chiều rộng vượt quá `shelfWidth`.
+- 🔑 **EN:** Answer is `dp[n]`, initialized with Infinity except `dp[0]=0`.
+  **VI:** Kết quả là `dp[n]`, khởi tạo Infinity trừ `dp[0]=0`.
 
 ## Solutions
 
+### Solution 1: Bottom-Up DP
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Filling Bookcase Shelves — DP on prefix
+ * @param books [width, height][] list of books
+ * @param shelfWidth maximum shelf width
+ * @returns minimum total bookcase height
+ * Time: O(n^2)  Space: O(n)
  */
-function fillingBookcaseShelvesBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function minHeightShelves(books: number[][], shelfWidth: number): number {
+  const n = books.length;
+  const dp = new Array(n + 1).fill(Infinity);
+  dp[0] = 0;
+
+  for (let i = 1; i <= n; i++) {
+    let width = 0;
+    let maxHeight = 0;
+    // try putting books[j-1..i-1] on the same shelf
+    for (let j = i; j >= 1; j--) {
+      const [w, h] = books[j - 1];
+      width += w;
+      if (width > shelfWidth) break;
+      maxHeight = Math.max(maxHeight, h);
+      dp[i] = Math.min(dp[i], dp[j - 1] + maxHeight);
+    }
+  }
+
+  return dp[n];
 }
 
-/**
- * Solution 2: Optimized — Dynamic Programming
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function fillingBookcaseShelves(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Dynamic Programming
-  // Hint: Define dp state, find transition, optimize space if possible
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(fillingBookcaseShelves(/* example 1 */)); // expected
-// console.log(fillingBookcaseShelves(/* example 2 */)); // expected
-// console.log(fillingBookcaseShelves(/* edge case */)); // expected
+console.log(
+  minHeightShelves(
+    [
+      [1, 1],
+      [2, 3],
+      [2, 3],
+      [1, 1],
+      [1, 1],
+      [1, 1],
+      [1, 2],
+    ],
+    4,
+  ),
+); // 6
+console.log(
+  minHeightShelves(
+    [
+      [1, 3],
+      [2, 4],
+      [3, 2],
+    ],
+    6,
+  ),
+); // 4
 ```
 
----
+### Solution 2: Space-Optimised with Early Break
+
+```typescript
+/**
+ * Same DP — explicit early-exit when accumulated width overflows
+ * Time: O(n^2)  Space: O(n)
+ */
+function minHeightShelves2(books: number[][], shelfWidth: number): number {
+  const n = books.length;
+  const dp = new Array(n + 1).fill(Infinity);
+  dp[0] = 0;
+
+  for (let i = 0; i < n; i++) {
+    let width = 0;
+    let maxH = 0;
+    for (let j = i; j >= 0; j--) {
+      width += books[j][0];
+      if (width > shelfWidth) break;
+      maxH = Math.max(maxH, books[j][1]);
+      dp[i + 1] = Math.min(dp[i + 1], dp[j] + maxH);
+    }
+  }
+
+  return dp[n];
+}
+
+console.log(
+  minHeightShelves2(
+    [
+      [1, 1],
+      [2, 3],
+      [2, 3],
+      [1, 1],
+      [1, 1],
+      [1, 1],
+      [1, 2],
+    ],
+    4,
+  ),
+); // 6
+console.log(
+  minHeightShelves2(
+    [
+      [1, 3],
+      [2, 4],
+      [3, 2],
+    ],
+    6,
+  ),
+); // 4
+```
 
 ## 🔗 Related Problems
 
-- [Jump Game II](https://leetcode.com/problems/jump-game-ii) — same pattern: Dynamic Programming
-- [Maximal Square](https://leetcode.com/problems/maximal-square) — same pattern: Dynamic Programming
-- [Unique Paths II](https://leetcode.com/problems/unique-paths-ii) — same pattern: Dynamic Programming
-- [Maximum Profit in Job Scheduling](https://leetcode.com/problems/maximum-profit-in-job-scheduling) — same pattern: Dynamic Programming
-- [Filling Bookcase Shelves — LeetCode](https://leetcode.com/problems/filling-bookcase-shelves) — problem page
+| Problem                                                                                             | Difficulty | Key Idea           |
+| --------------------------------------------------------------------------------------------------- | ---------- | ------------------ |
+| [322. Coin Change](https://leetcode.com/problems/coin-change/)                                      | 🟡 Medium  | Prefix DP minimise |
+| [1043. Partition Array for Max Sum](https://leetcode.com/problems/partition-array-for-maximum-sum/) | 🟡 Medium  | Partition DP       |
+| [1105. Filling Bookcase Shelves](https://leetcode.com/problems/filling-bookcase-shelves/)           | 🟡 Medium  | This problem       |
+| [813. Largest Sum of Averages](https://leetcode.com/problems/largest-sum-of-averages/)              | 🟡 Medium  | Group partition DP |

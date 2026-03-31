@@ -7,103 +7,138 @@ tags: [Array, Stack, Tree, Binary Search Tree, Monotonic Stack]
 leetcode_url: "https://leetcode.com/problems/construct-binary-search-tree-from-preorder-traversal"
 ---
 
-# Construct Binary Search Tree from Preorder Traversal / Construct Binary Search Tree from Preorder Traversal
+# Construct Binary Search Tree from Preorder Traversal / Xây dựng BST từ duyệt preorder
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Monotonic Stack
-> **Frequency**: 📘 Tier 3 — Gặp ở 1 companies
-> **See also**: [Verify Preorder Sequence in Binary Search Tree](https://leetcode.com/problems/verify-preorder-sequence-in-binary-search-tree) | [Closest Binary Search Tree Value II](https://leetcode.com/problems/closest-binary-search-tree-value-ii)
+🟡 Medium | BST | Monotonic Stack | Bound Recursion
 
 ---
 
-## 🧠 Intuition / Tư Duy
+## 🧠 Intuition
 
-**Analogy:** Giống dãy núi — giữ stack luôn đơn điệu (tăng hoặc giảm). Khi gặp phần tử phá vỡ tính đơn điệu, ta biết ngay đáp án cho các phần tử trước đó.
+**Vietnamese:** Mỗi phần tử trong preorder là gốc của cây con. Dùng stack đơn điệu giảm dần — khi gặp giá trị lớn hơn đỉnh stack, đó là con phải; nếu nhỏ hơn, là con trái.
 
-**Pattern Recognition:**
-
-- Signal: "next greater/smaller element" → **Monotonic Stack**
-- Bài này thuộc dạng Monotonic Stack — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Construct Binary Search Tree from Preorder Traversal example:**
+**English:** Preorder visits root before children. Use a **monotonic decreasing stack** — if the new value is larger than the stack top, it's the right child of the last popped node; otherwise it's the left child of the stack top.
 
 ```
-arr = [2, 1, 5, 6, 2, 3]
-stack (indices): []
+preorder = [8, 5, 1, 7, 10, 12]
 
-i=0: push 0         stack=[0]          (vals: [2])
-i=1: 1<2 → push     stack=[0,1]        (vals: [2,1])
-i=2: 5>1 → pop, process; 5>2 → pop, process
-     push           stack=[2]          (vals: [5])
-...
+stack: [8]
+  5 < 8  → left child of 8;  stack: [8,5]
+  1 < 5  → left child of 5;  stack: [8,5,1]
+  7 > 1, pop 1; 7 < 5, stop → right child of 1? No: right child of 5
+         ...build:    8
+                     / \
+                    5   10
+                   / \    \
+                  1   7    12
 ```
-
----
-
-## Problem Description
-
-Construct Binary Search Tree from Preorder Traversal. ([LeetCode](https://leetcode.com/problems/construct-binary-search-tree-from-preorder-traversal))
-
-Difficulty: Medium | Acceptance: 83.3%
-
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/construct-binary-search-tree-from-preorder-traversal) for full constraints
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+- 🔑 **Key insight / Nhận xét chính:** Preorder = root, left subtree, right subtree. BST property: left < root < right.
+- 📊 **Bound recursion / Đệ quy với giới hạn:** Pass (min, max) bounds; insert when `min < val < max`.
+- ⚡ **Monotonic stack O(n) / Stack đơn điệu:** Each node pushed/popped once → O(n) total.
+- 🎯 **Common mistake / Lỗi thường gặp:** Forgetting that all values in a BST are unique — no need for duplicate handling.
+- 🧩 **Edge case / Trường hợp đặc biệt:** Single-element array → single node, no children.
+- 📏 **Complexity / Độ phức tạp:** Recursive O(n log n) avg, O(n²) worst; monotonic stack O(n).
 
 ---
 
 ## Solutions
 
+### Solution 1 — Recursive with Bound (Simple)
+
+```typescript
+class TreeNode {
+  val: number;
+  left: TreeNode | null;
+  right: TreeNode | null;
+  constructor(v: number) {
+    this.val = v;
+    this.left = null;
+    this.right = null;
+  }
+}
+
+/**
+ * Recursively insert each preorder value into a BST.
+ * Guided by upper-bound to split left/right subtrees.
+ *
+ * Time:  O(n log n) avg, O(n²) worst (sorted input)
+ * Space: O(n)
+ */
+function bstFromPreorder(preorder: number[]): TreeNode | null {
+  let idx = 0;
+  function build(min: number, max: number): TreeNode | null {
+    if (idx >= preorder.length || preorder[idx] < min || preorder[idx] > max) return null;
+    const node = new TreeNode(preorder[idx++]);
+    node.left = build(min, node.val);
+    node.right = build(node.val, max);
+    return node;
+  }
+  return build(-Infinity, Infinity);
+}
+
+// Helper to serialize for testing
+function serialize(root: TreeNode | null): (number | null)[] {
+  if (!root) return [];
+  const res: (number | null)[] = [];
+  const q: (TreeNode | null)[] = [root];
+  while (q.length) {
+    const n = q.shift()!;
+    res.push(n ? n.val : null);
+    if (n) {
+      q.push(n.left);
+      q.push(n.right);
+    }
+  }
+  while (res[res.length - 1] === null) res.pop();
+  return res;
+}
+
+console.log(serialize(bstFromPreorder([8, 5, 1, 7, 10, 12]))); // [8,5,10,1,7,null,12]
+console.log(serialize(bstFromPreorder([1, 3]))); // [1,null,3]
+```
+
+### Solution 2 — Monotonic Stack O(n)
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Maintain a decreasing stack. For each value:
+ *   - Pop while stack top < current → last popped is parent (right child).
+ *   - Stack top (if any) >= current → it is parent (left child).
+ *
+ * Time:  O(n)
+ * Space: O(n)
  */
-function constructBinarySearchTreeFromPreorderTraversalBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function bstFromPreorder2(preorder: number[]): TreeNode | null {
+  if (!preorder.length) return null;
+  const root = new TreeNode(preorder[0]);
+  const stack: TreeNode[] = [root];
+  for (let i = 1; i < preorder.length; i++) {
+    const node = new TreeNode(preorder[i]);
+    let parent = stack[stack.length - 1];
+    while (stack.length && stack[stack.length - 1].val < preorder[i]) {
+      parent = stack.pop()!;
+    }
+    if (parent.val < preorder[i]) parent.right = node;
+    else parent.left = node;
+    stack.push(node);
+  }
+  return root;
 }
 
-/**
- * Solution 2: Optimized — Monotonic Stack
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function constructBinarySearchTreeFromPreorderTraversal(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Monotonic Stack
-  // Hint: Maintain monotonic property, pop when new element breaks it
-  throw new Error('Not implemented');
-}
-
-// === Test Cases ===
-// console.log(constructBinarySearchTreeFromPreorderTraversal(/* example 1 */)); // expected
-// console.log(constructBinarySearchTreeFromPreorderTraversal(/* example 2 */)); // expected
-// console.log(constructBinarySearchTreeFromPreorderTraversal(/* edge case */)); // expected
+console.log(serialize(bstFromPreorder2([8, 5, 1, 7, 10, 12]))); // [8,5,10,1,7,null,12]
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Verify Preorder Sequence in Binary Search Tree](https://leetcode.com/problems/verify-preorder-sequence-in-binary-search-tree) — same pattern: Monotonic Stack
-- [Closest Binary Search Tree Value II](https://leetcode.com/problems/closest-binary-search-tree-value-ii) — same pattern: Two Pointers
-- [Binary Search Tree Iterator](https://leetcode.com/problems/binary-search-tree-iterator) — same pattern: Binary Search
-- [Number of Ways to Reorder Array to Get Same BST](https://leetcode.com/problems/number-of-ways-to-reorder-array-to-get-same-bst) — same pattern: Union Find
-- [Construct Binary Search Tree from Preorder Traversal — LeetCode](https://leetcode.com/problems/construct-binary-search-tree-from-preorder-traversal) — problem page
+| #    | Problem                                       | Difficulty | Pattern          |
+| ---- | --------------------------------------------- | ---------- | ---------------- |
+| 105  | Construct Binary Tree from Preorder & Inorder | Medium     | Divide & Conquer |
+| 1008 | Construct BST from Preorder (this)            | Medium     | Monotonic Stack  |
+| 255  | Verify Preorder Sequence in BST               | Medium     | Monotonic Stack  |
