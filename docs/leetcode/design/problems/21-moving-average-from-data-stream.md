@@ -7,9 +7,9 @@ tags: [Array, Design, Queue, Data Stream]
 leetcode_url: "https://leetcode.com/problems/moving-average-from-data-stream"
 ---
 
-# Moving Average from Data Stream / Moving Average from Data Stream
+# Moving Average from Data Stream / Trung Bình Trượt Từ Luồng Dữ Liệu
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Queue
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Queue / Sliding Window
 > **Frequency**: 📘 Tier 3 — Gặp ở 6 companies
 > **See also**: [Design Front Middle Back Queue](https://leetcode.com/problems/design-front-middle-back-queue) | [Number of Recent Calls](https://leetcode.com/problems/number-of-recent-calls)
 
@@ -17,47 +17,60 @@ leetcode_url: "https://leetcode.com/problems/moving-average-from-data-stream"
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống hàng xếp mua vé — ai đến trước được phục vụ trước (FIFO). Thường dùng trong BFS và scheduling.
+**Analogy:** Giống băng chuyền sân bay có giới hạn `size` chỗ — khi thêm vali mới, nếu đầy thì vali cũ nhất bị đẩy ra. Tổng khối lượng luôn chỉ tính `size` vali gần nhất.
 
 **Pattern Recognition:**
 
-- Signal: "problem-specific signals" → **Queue**
-- Bài này thuộc dạng Queue — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "average of last k elements" + "data stream" → **Circular Queue / Sliding Window**
+- Key insight: dùng queue có giới hạn size; khi full, dequeue phần tử cũ nhất và cập nhật running sum
+- Tránh tính lại toàn bộ sum mỗi lần — dùng `windowSum += val - removed`
 
-**Visual — Moving Average from Data Stream example:**
+**Visual — MovingAverage(size=3):**
 
 ```
-// TODO: Add step-by-step visual for Queue
-// Show one complete example with state at each step
+Stream:  1   10   3   5
+Queue:  [1] [1,10] [1,10,3]  [10,3,5]  ← oldest falls off
+Sum:     1    11     14        18
+Avg:    1.0  5.5   4.667      6.0
+
+next(5): queue full → remove 1, add 5
+  sum = 14 - 1 + 5 = 18
+  avg = 18 / 3 = 6.0
 ```
 
 ---
 
 ## Problem Description
 
-Moving Average from Data Stream. ([LeetCode](https://leetcode.com/problems/moving-average-from-data-stream))
+Compute moving average of last `size` values from a data stream. ([LeetCode #346](https://leetcode.com/problems/moving-average-from-data-stream))
 
 Difficulty: Easy | Acceptance: 79.9%
 
+- `MovingAverage(size)` — init window of given size
+- `next(val)` → average of last `size` values (or fewer if not enough yet)
+
+**Example:**
+
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+m = MovingAverage(3)
+m.next(1)  → 1.0       window=[1]
+m.next(10) → 5.5       window=[1,10]
+m.next(3)  → 4.667     window=[1,10,3]
+m.next(5)  → 6.0       window=[10,3,5]  (1 removed)
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/moving-average-from-data-stream) for full constraints
+Constraints: `1 ≤ size ≤ 1000`, `−10^5 ≤ val ≤ 10^5`, up to `10^4` calls
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify**: "Cần average của đúng `size` phần tử hay tất cả phần tử đã nhận?" / Only last `size` elements
+2. **Running sum**: "Đừng tính lại sum từ đầu mỗi lần — cập nhật incremental" / Maintain running sum, O(1) per call
+3. **Queue eviction**: "Khi queue đầy, trừ phần tử cũ nhất khỏi sum trước khi thêm mới" / Dequeue oldest, update sum
+4. **Circular buffer**: "Circular array với head/tail index hiệu quả hơn JS array shift()" / Array shift is O(n); circular is O(1)
+5. **Edge case**: "Khi chưa đủ `size` phần tử, chia cho số phần tử thực tế" / Use `Math.min(count, size)` as divisor
+6. **Follow-up**: "Weighted moving average? → thêm weight array và tính tổng có trọng số" / Weight each position differently
 
 ---
 
@@ -65,39 +78,95 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Queue with array shift (simple but O(n) shift)
+ * Time: O(n) per next() due to array shift
+ * Space: O(size)
  */
-function movingAverageFromDataStreamBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+class MovingAverageSimple {
+  private window: number[] = [];
+  private sum = 0;
+
+  constructor(private size: number) {}
+
+  next(val: number): number {
+    this.window.push(val);
+    this.sum += val;
+    if (this.window.length > this.size) {
+      this.sum -= this.window.shift()!; // O(n) shift
+    }
+    return this.sum / this.window.length;
+  }
 }
 
 /**
- * Solution 2: Optimized — Queue
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Circular Buffer (Optimal)
+ * Time: O(1) per next() — fixed-size array, no shifting
+ * Space: O(size) — circular array
  */
-function movingAverageFromDataStream(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Queue
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
+class MovingAverage {
+  private buf: number[];
+  private head = 0;
+  private count = 0;
+  private sum = 0;
+
+  constructor(private size: number) {
+    this.buf = new Array(size).fill(0);
+  }
+
+  next(val: number): number {
+    // Evict oldest element if window is full
+    if (this.count === this.size) {
+      this.sum -= this.buf[this.head]; // remove oldest
+    } else {
+      this.count++;
+    }
+
+    this.buf[this.head] = val;
+    this.sum += val;
+    this.head = (this.head + 1) % this.size; // advance circular pointer
+
+    return this.sum / this.count;
+  }
 }
 
 // === Test Cases ===
-// console.log(movingAverageFromDataStream(/* example 1 */)); // expected
-// console.log(movingAverageFromDataStream(/* example 2 */)); // expected
-// console.log(movingAverageFromDataStream(/* edge case */)); // expected
+const m = new MovingAverage(3);
+console.log(m.next(1)); // 1.0
+console.log(m.next(10)); // 5.5
+console.log(m.next(3)); // 4.6666...
+console.log(m.next(5)); // 6.0
+
+const m2 = new MovingAverage(1);
+console.log(m2.next(4)); // 4.0
+console.log(m2.next(7)); // 7.0  (window size 1, only last val)
+
+/**
+ * Solution 3: Running sum with count (cleaner, array-based)
+ * Time: O(1) per next()
+ * Space: O(size)
+ */
+class MovingAverage3 {
+  private q: number[] = [];
+  private windowSum = 0;
+
+  constructor(private size: number) {}
+
+  next(val: number): number {
+    this.q.push(val);
+    this.windowSum += val;
+    if (this.q.length > this.size) this.windowSum -= this.q[this.q.length - 1 - this.size];
+    const len = Math.min(this.q.length, this.size);
+    return this.windowSum / len;
+  }
+}
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Design Front Middle Back Queue](https://leetcode.com/problems/design-front-middle-back-queue) — same pattern: Linked List
-- [Number of Recent Calls](https://leetcode.com/problems/number-of-recent-calls) — same pattern: Queue
-- [Design Snake Game](https://leetcode.com/problems/design-snake-game) — same pattern: Queue
-- [Zigzag Iterator](https://leetcode.com/problems/zigzag-iterator) — same pattern: Queue
+- [Number of Recent Calls](https://leetcode.com/problems/number-of-recent-calls) — queue-based sliding window
+- [Design Front Middle Back Queue](https://leetcode.com/problems/design-front-middle-back-queue) — advanced queue design
+- [Design Snake Game](https://leetcode.com/problems/design-snake-game) — queue for body tracking
+- [Sliding Window Maximum](https://leetcode.com/problems/sliding-window-maximum) — sliding window with deque
 - [Moving Average from Data Stream — LeetCode](https://leetcode.com/problems/moving-average-from-data-stream) — problem page

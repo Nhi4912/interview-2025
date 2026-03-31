@@ -7,57 +7,59 @@ tags: [Math, Greedy]
 leetcode_url: "https://leetcode.com/problems/max-difference-you-can-get-from-changing-an-integer"
 ---
 
-# Max Difference You Can Get From Changing an Integer / Max Difference You Can Get From Changing an Integer
+# Max Difference You Can Get From Changing an Integer / Hiệu Lớn Nhất Khi Thay Một Chữ Số
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Greedy (Digit Replacement)
 > **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Remove Colored Pieces if Both Neighbors are the Same Color](https://leetcode.com/problems/remove-colored-pieces-if-both-neighbors-are-the-same-color) | [Rabbits in Forest](https://leetcode.com/problems/rabbits-in-forest)
+> **See also**: [Remove Colored Pieces if Both Neighbors are the Same Color](https://leetcode.com/problems/remove-colored-pieces-if-both-neighbors-are-the-same-color) | [Largest Number](https://leetcode.com/problems/largest-number)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống ăn buffet — mỗi lần bạn chọn món ngon nhất hiện tại. Nếu chứng minh được rằng chọn tham lam từng bước vẫn tối ưu toàn cục, thì Greedy là đáp án.
+**Analogy:** Như chỉnh âm lượng — để max thì vặn hết cỡ (thay tất cả một chữ số thành 9), để min thì vặn nhỏ nhất (thay thành 1 hoặc 0, nhưng không được leading zero).
 
 **Pattern Recognition:**
 
-- Signal: "locally optimal → globally optimal" + "sorting + selection" → **Greedy**
-- Bài này thuộc dạng Greedy — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "maximize one version, minimize another" → **Greedy digit replacement**
+- Maximize `a`: tìm chữ số đầu tiên ≠ 9, thay tất cả occurrences thành 9
+- Minimize `b`: nếu chữ số đầu ≠ 1 → thay thành 1; nếu = 1 → tìm digit đầu tiên (≠ pos 0) không là 0 hoặc 1 → thay thành 0
 
-**Visual — Max Difference You Can Get From Changing an Integer example:**
+**Visual — num = 123456:**
 
 ```
-// TODO: Add step-by-step visual for Greedy
-// Show one complete example with state at each step
+Maximize: first non-9 is '1' → replace all '1' with '9': 923456
+Minimize: first digit '1' is already 1 →
+          find first digit (pos>0) not '0'/'1': pos=1 has '2'
+          replace all '2' with '0': 103456
+Answer: 923456 - 103456 = 820000 ✅
 ```
 
 ---
 
 ## Problem Description
 
-Max Difference You Can Get From Changing an Integer. ([LeetCode](https://leetcode.com/problems/max-difference-you-can-get-from-changing-an-integer))
+Given `num`, choose digit `d` and replacement `e`, replace all `d` with `e` to get `a`. Do the same independently to get `b`. Return max `a − b`. ([LeetCode #1432](https://leetcode.com/problems/max-difference-you-can-get-from-changing-an-integer))
 
 Difficulty: Medium | Acceptance: 49.0%
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+- **Example 1**: `num = 555` → `a = 999`, `b = 111` → `888`
+- **Example 2**: `num = 9` → `a = 9`, `b = 1` → `8`
+- **Example 3**: `num = 123456` → `a = 923456`, `b = 103456` → `820000`
 
 Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/max-difference-you-can-get-from-changing-an-integer) for full constraints
+
+- `1 ≤ num ≤ 10⁸`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **Clarify**: "Sau khi thay, số có được bắt đầu bằng 0 không?" / Leading zeros are forbidden in the result
+2. **Maximize**: "Tìm chữ số đầu tiên không phải 9, thay tất cả thành 9 — không lo leading zero vì 9 > 0" / First non-9 → replace with 9 globally
+3. **Minimize case 1**: "Chữ số đầu ≠ 1 → thay nó thành 1 (tất cả occurrences)" / If first digit != 1, replace first digit globally with 1
+4. **Minimize case 2**: "Chữ số đầu = 1 → tìm digit đầu tiên (từ pos 1) không phải 0 hay 1 → thay thành 0" / First digit = 1: find inner non-0/1 digit and replace with 0
+5. **Edge case**: "num = 10: max=90 (1→9), min=10 (first digit=1, no inner non-0/1) → 80" / When first digit is 1 and no replaceable inner digit
 
 ---
 
@@ -65,39 +67,55 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution: Greedy Digit String Replacement
+ * Time: O(d) — d = number of digits ≤ 9 for num ≤ 10^8
+ * Space: O(d) — string representation of num
  */
-function maxDifferenceYouCanGetFromChangingAnIntegerBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
-}
+function maxDiff(num: number): number {
+  const s = num.toString();
 
-/**
- * Solution 2: Optimized — Greedy
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function maxDifferenceYouCanGetFromChangingAnInteger(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Greedy
-  // Hint: Sort by key metric, make locally optimal choice at each step
-  throw new Error('Not implemented');
+  // --- Maximize: replace first non-9 digit globally with '9' ---
+  let maxStr = s;
+  for (const ch of s) {
+    if (ch !== "9") {
+      maxStr = s.split(ch).join("9");
+      break;
+    }
+  }
+
+  // --- Minimize: avoid leading zero ---
+  let minStr = s;
+  if (s[0] !== "1") {
+    // Replace all occurrences of first digit with '1'
+    minStr = s.split(s[0]).join("1");
+  } else {
+    // First digit is '1'; find first inner digit that's not '0' or '1'
+    for (let i = 1; i < s.length; i++) {
+      if (s[i] !== "0" && s[i] !== "1") {
+        minStr = s.split(s[i]).join("0");
+        break;
+      }
+    }
+  }
+
+  return parseInt(maxStr) - parseInt(minStr);
 }
 
 // === Test Cases ===
-// console.log(maxDifferenceYouCanGetFromChangingAnInteger(/* example 1 */)); // expected
-// console.log(maxDifferenceYouCanGetFromChangingAnInteger(/* example 2 */)); // expected
-// console.log(maxDifferenceYouCanGetFromChangingAnInteger(/* edge case */)); // expected
+console.log(maxDiff(555)); // 888   (999 - 111)
+console.log(maxDiff(9)); // 8     (9 - 1)
+console.log(maxDiff(123456)); // 820000 (923456 - 103456)
+console.log(maxDiff(10)); // 80    (90 - 10)
+console.log(maxDiff(1)); // 8     (9 - 1)
+console.log(maxDiff(99)); // 0     (already all 9s for max, 11 for min → 99 - 11 = 88)
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Remove Colored Pieces if Both Neighbors are the Same Color](https://leetcode.com/problems/remove-colored-pieces-if-both-neighbors-are-the-same-color) — same pattern: Greedy
-- [Rabbits in Forest](https://leetcode.com/problems/rabbits-in-forest) — same pattern: Greedy
-- [Smallest Missing Non-negative Integer After Operations](https://leetcode.com/problems/smallest-missing-non-negative-integer-after-operations) — same pattern: Greedy
-- [Minimize Length of Array Using Operations](https://leetcode.com/problems/minimize-length-of-array-using-operations) — same pattern: Greedy
-- [Max Difference You Can Get From Changing an Integer — LeetCode](https://leetcode.com/problems/max-difference-you-can-get-from-changing-an-integer) — problem page
+- [Largest Number](https://leetcode.com/problems/largest-number) — greedy digit ordering
+- [Remove Colored Pieces if Both Neighbors are the Same Color](https://leetcode.com/problems/remove-colored-pieces-if-both-neighbors-are-the-same-color) — greedy counting
+- [Maximum Swap](https://leetcode.com/problems/maximum-swap) — maximize number by swapping one pair of digits
+- [Next Greater Element III](https://leetcode.com/problems/next-greater-element-iii) — digit manipulation to get next permutation
+- [Smallest String With A Given Numeric Value](https://leetcode.com/problems/smallest-string-with-a-given-numeric-value) — greedy digit assignment

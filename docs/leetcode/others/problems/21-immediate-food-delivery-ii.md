@@ -7,97 +7,217 @@ tags: [Database]
 leetcode_url: "https://leetcode.com/problems/immediate-food-delivery-ii"
 ---
 
-# Immediate Food Delivery II / Immediate Food Delivery II
+# Immediate Food Delivery II / Giao Hàng Tức Thì II
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Ad-hoc
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: CTE + MIN + Conditional Aggregation
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [Second Highest Salary](https://leetcode.com/problems/second-highest-salary) | [Department Top Three Salaries](https://leetcode.com/problems/department-top-three-salaries)
+> **See also**: [Average Time of Process per Machine](https://leetcode.com/problems/average-time-of-process-per-machine) | [Students and Examinations](https://leetcode.com/problems/students-and-examinations)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Phân tích bài "Immediate Food Delivery II" — xác định pattern phù hợp dựa trên constraints và input/output.
+**Analogy (Vietnamese):** Bạn là quản lý một ứng dụng giao đồ ăn. Bạn muốn biết: trong số **đơn hàng đầu tiên** của mỗi khách, có bao nhiêu % là "giao tức thì" (ngày giao = ngày đặt). Chỉ tính đơn đầu tiên của mỗi khách, bỏ qua các đơn sau.
 
 **Pattern Recognition:**
 
-- Signal: "problem-specific signals" → **Ad-hoc**
-- Bài này thuộc dạng Ad-hoc — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "first order per customer" → **MIN(order_date) per customer_id**
+- Signal: "percentage of immediate" → `AVG(order_date = customer_pref_delivery_date) * 100`
+- Key insight: 2-step — first find each customer's earliest order, then check if it's immediate
 
-**Visual — Immediate Food Delivery II example:**
+**Visual:**
 
 ```
-// TODO: Add step-by-step visual for Ad-hoc
-// Show one complete example with state at each step
+Delivery table:
+delivery_id | customer_id | order_date | customer_pref_delivery_date
+1           | 1           | 2019-08-01 | 2019-08-02   ← scheduled
+2           | 2           | 2019-08-02 | 2019-08-02   ← immediate ✅ (first)
+3           | 1           | 2019-08-11 | 2019-08-11   ← immediate, but NOT first order
+4           | 3           | 2019-08-24 | 2019-08-26   ← scheduled (first)
+5           | 3           | 2019-08-21 | 2019-08-22   ← first! (MIN date for cust 3)
+6           | 2           | 2019-08-11 | 2019-08-13   ← not first order for cust 2
+
+First orders: cust1→delivery1(scheduled), cust2→delivery2(immediate), cust3→delivery5(scheduled)
+Immediate count: 1 out of 3 → 33.33%
 ```
 
 ---
 
 ## Problem Description
 
-Immediate Food Delivery II. ([LeetCode](https://leetcode.com/problems/immediate-food-delivery-ii))
+Given `Delivery(delivery_id, customer_id, order_date, customer_pref_delivery_date)`, compute the percentage of customers whose **first order** was "immediate" (order_date = customer_pref_delivery_date). Round to 2 decimal places.
 
-Difficulty: Medium | Acceptance: 54.3%
+**Example:** 3 customers, 1 has immediate first order → `33.33%`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/immediate-food-delivery-ii) for full constraints
+**Constraints:** `1 <= n <= 500`, each customer has at least one order.
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **First order = MIN(order_date)**: "Đơn đầu tiên là đơn có ngày order sớm nhất của mỗi khách" / First order per customer is the one with the earliest order_date
+2. **Two-step approach**: "Bước 1: tìm first order. Bước 2: tính % immediate" / Don't try to do it in one step — CTE makes this clear
+3. **Immediate definition**: "Immediate = order_date = customer_pref_delivery_date" / When preferred date equals order date
+4. **ROUND to 2 decimals**: "ROUND(AVG(...) \* 100, 2) — MySQL AVG của boolean expression 0/1" / In MySQL, `col1 = col2` evaluates to 1 or 0
+5. **Tie in order_date**: "Nếu khách có 2 đơn cùng ngày, cả hai đều là 'first' — dùng MIN rồi JOIN" / Use JOIN on MIN date, not just subquery ordering
+6. **Column name**: "Output column phải tên là 'immediate_percentage'" / Check the exact expected output column name
 
 ---
 
 ## Solutions
 
+### SQL Solution 1 — CTE + MIN + AVG (Clean)
+
+```sql
+-- Time: O(n) — two aggregation passes
+-- Space: O(c) — c distinct customers
+WITH FirstOrders AS (
+    SELECT customer_id, MIN(order_date) AS first_order_date
+    FROM Delivery
+    GROUP BY customer_id
+)
+SELECT ROUND(
+    100.0 * SUM(d.order_date = d.customer_pref_delivery_date) / COUNT(*),
+    2
+) AS immediate_percentage
+FROM Delivery d
+JOIN FirstOrders fo
+  ON d.customer_id = fo.customer_id
+ AND d.order_date  = fo.first_order_date;
+```
+
+### SQL Solution 2 — Subquery with IN
+
+```sql
+SELECT ROUND(
+    AVG(order_date = customer_pref_delivery_date) * 100,
+    2
+) AS immediate_percentage
+FROM Delivery
+WHERE (customer_id, order_date) IN (
+    SELECT customer_id, MIN(order_date)
+    FROM Delivery
+    GROUP BY customer_id
+);
+```
+
+### SQL Solution 3 — Window Function MIN
+
+```sql
+WITH ranked AS (
+    SELECT *,
+           MIN(order_date) OVER (PARTITION BY customer_id) AS first_date
+    FROM Delivery
+)
+SELECT ROUND(
+    100.0 * SUM(CASE WHEN order_date = customer_pref_delivery_date THEN 1 ELSE 0 END)
+    / COUNT(*),
+    2
+) AS immediate_percentage
+FROM ranked
+WHERE order_date = first_date;
+```
+
+### TypeScript Simulation
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Simulate: Immediate Food Delivery II
+ * Time: O(n) — two passes (find firsts, then aggregate)
+ * Space: O(c) — c customers
  */
-function immediateFoodDeliveryIiBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+interface Delivery {
+  delivery_id: number;
+  customer_id: number;
+  order_date: string;
+  customer_pref_delivery_date: string;
 }
 
-/**
- * Solution 2: Optimized — Ad-hoc
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function immediateFoodDeliveryIi(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Ad-hoc
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
+function immediateFoodDeliveryII(deliveries: Delivery[]): number {
+  // Step 1: Find first order date per customer
+  const firstOrderDate = new Map<number, string>();
+  for (const d of deliveries) {
+    const current = firstOrderDate.get(d.customer_id);
+    if (!current || d.order_date < current) {
+      firstOrderDate.set(d.customer_id, d.order_date);
+    }
+  }
+
+  // Step 2: Filter to first orders only, count immediate
+  const firstOrders = deliveries.filter((d) => d.order_date === firstOrderDate.get(d.customer_id));
+
+  const immediateCount = firstOrders.filter(
+    (d) => d.order_date === d.customer_pref_delivery_date,
+  ).length;
+
+  const percentage = (immediateCount / firstOrders.length) * 100;
+  return Math.round(percentage * 100) / 100; // round to 2 decimal places
 }
 
 // === Test Cases ===
-// console.log(immediateFoodDeliveryIi(/* example 1 */)); // expected
-// console.log(immediateFoodDeliveryIi(/* example 2 */)); // expected
-// console.log(immediateFoodDeliveryIi(/* edge case */)); // expected
+const deliveries = [
+  {
+    delivery_id: 1,
+    customer_id: 1,
+    order_date: "2019-08-01",
+    customer_pref_delivery_date: "2019-08-02",
+  },
+  {
+    delivery_id: 2,
+    customer_id: 2,
+    order_date: "2019-08-02",
+    customer_pref_delivery_date: "2019-08-02",
+  },
+  {
+    delivery_id: 3,
+    customer_id: 1,
+    order_date: "2019-08-11",
+    customer_pref_delivery_date: "2019-08-11",
+  },
+  {
+    delivery_id: 4,
+    customer_id: 3,
+    order_date: "2019-08-24",
+    customer_pref_delivery_date: "2019-08-26",
+  },
+  {
+    delivery_id: 5,
+    customer_id: 3,
+    order_date: "2019-08-21",
+    customer_pref_delivery_date: "2019-08-22",
+  },
+  {
+    delivery_id: 6,
+    customer_id: 2,
+    order_date: "2019-08-11",
+    customer_pref_delivery_date: "2019-08-13",
+  },
+];
+console.log(immediateFoodDeliveryII(deliveries)); // 33.33
+
+// All immediate first orders
+const allImmediate = [
+  {
+    delivery_id: 1,
+    customer_id: 1,
+    order_date: "2020-01-01",
+    customer_pref_delivery_date: "2020-01-01",
+  },
+  {
+    delivery_id: 2,
+    customer_id: 2,
+    order_date: "2020-01-02",
+    customer_pref_delivery_date: "2020-01-02",
+  },
+];
+console.log(immediateFoodDeliveryII(allImmediate)); // 100.00
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Second Highest Salary](https://leetcode.com/problems/second-highest-salary) — same pattern: Ad-hoc
-- [Department Top Three Salaries](https://leetcode.com/problems/department-top-three-salaries) — same pattern: Ad-hoc
-- [Managers with at Least 5 Direct Reports](https://leetcode.com/problems/managers-with-at-least-5-direct-reports) — same pattern: Ad-hoc
-- [Nth Highest Salary](https://leetcode.com/problems/nth-highest-salary) — same pattern: Ad-hoc
-- [Immediate Food Delivery II — LeetCode](https://leetcode.com/problems/immediate-food-delivery-ii) — problem page
+- [Average Time of Process per Machine](https://leetcode.com/problems/average-time-of-process-per-machine) — conditional aggregation per group
+- [Game Play Analysis II](https://leetcode.com/problems/game-play-analysis-ii) — first login per player
+- [Percentage of Users Attended a Contest](https://leetcode.com/problems/percentage-of-users-attended-a-contest) — percentage calculation
+- [Fraction of Players That Logged in Again](https://leetcode.com/problems/game-play-analysis-iv) — first event + follow-up pattern

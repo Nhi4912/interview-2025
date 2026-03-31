@@ -7,100 +7,214 @@ tags: [Linked List, Two Pointers, Divide and Conquer, Sorting, Merge Sort]
 leetcode_url: "https://leetcode.com/problems/sort-list"
 ---
 
-# Sort List / Sort List
+# Sort List / Sắp Xếp Danh Sách Liên Kết
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Two Pointers
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Divide & Conquer / Merge Sort
 > **Frequency**: 📘 Tier 3 — Gặp ở 6 companies
-> **See also**: [Sort an Array](https://leetcode.com/problems/sort-an-array) | [Kth Largest Element in an Array](https://leetcode.com/problems/kth-largest-element-in-an-array)
+> **See also**: [Sort an Array](https://leetcode.com/problems/sort-an-array) | [Merge Two Sorted Lists](https://leetcode.com/problems/merge-two-sorted-lists)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Hãy tưởng tượng hai người đi từ hai đầu con đường, tiến lại gần nhau. Mỗi bước, người nào ở vị trí "tốt hơn" sẽ đứng yên, người kia tiến. Khi họ gặp nhau, bài toán được giải.
+**Analogy:** Như chia đôi xấp bài, sắp xếp từng nửa rồi gộp lại. Với linked list, ta tìm điểm giữa bằng slow/fast pointer, chia đôi, đệ quy, rồi merge hai nửa đã sorted.
 
 **Pattern Recognition:**
 
-- Signal: "sorted array" + "find pair/triplet" → **Two Pointers**
-- Bài này thuộc dạng Two Pointers — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "sort linked list" + "O(n log n)" + "O(1) space" → **Bottom-Up Merge Sort**
+- Top-Down merge sort dùng O(log n) recursion stack; Bottom-Up dùng O(1) thực sự
+- Key insight: slow/fast pointer tìm middle → cut → merge hai sorted list là O(n)
 
-**Visual — Sort List example:**
+**Visual — Merge Sort on Linked List:**
 
 ```
-arr = [... sorted ...]
- L                 R
+Input: 4 → 2 → 1 → 3
 
-Step 1: check condition → move L or R
-Step 2: ...
-Step N: condition met ✅
+Split:   [4 → 2]    [1 → 3]
+Split:   [4] [2]    [1] [3]
+Merge:   [2 → 4]    [1 → 3]
+Merge:   1 → 2 → 3 → 4  ✅
+
+Bottom-Up: chunk size 1,2,4... iteratively merge runs
 ```
 
 ---
 
 ## Problem Description
 
-Sort List. ([LeetCode](https://leetcode.com/problems/sort-list))
+Sort a linked list in O(n log n) time and O(1) memory (space). ([LeetCode #148](https://leetcode.com/problems/sort-list))
 
 Difficulty: Medium | Acceptance: 61.8%
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+- **Example 1**: `[4,2,1,3]` → `[1,2,3,4]`
+- **Example 2**: `[-1,5,3,4,0]` → `[-1,0,3,4,5]`
+- **Example 3**: `[]` → `[]`
 
 Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/sort-list) for full constraints
+
+- Number of nodes: `[0, 5×10⁴]`
+- `-10⁵ ≤ Node.val ≤ 10⁵`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Mảng đã sorted chưa? Có duplicate không?" / Ask if array is sorted and if duplicates exist
-2. **Brute force**: "Dùng 2 vòng for O(n²)" → optimize with two pointers O(n) / Start with nested loops, then optimize
-3. **Optimize**: "Vì mảng sorted, dùng 2 con trỏ L/R tiến vào giữa" / Since sorted, use L/R pointers moving inward
-4. **Edge cases**: "Mảng rỗng, một phần tử, tất cả giống nhau" / Empty array, single element, all same values
+1. **Clarify**: "Yêu cầu O(1) space hay O(log n) stack được chấp nhận không?" / Is O(log n) recursion stack acceptable?
+2. **Brute force**: "Gom values vào array, sort, ghi lại — O(n log n), O(n)" / Collect values, sort, write back — simple but O(n) space
+3. **Top-Down**: "Slow/fast để tìm middle, đệ quy hai nửa, merge — O(log n) stack" / Classic recursive merge sort, O(log n) stack space
+4. **Bottom-Up**: "Lặp với chunk size 1,2,4... merge từng cặp — O(1) space thực sự" / Iterative, true O(1) space
+5. **Merge step**: "Dùng dummy head khi merge hai list — tránh edge cases" / Dummy head simplifies merge
+6. **Edge cases**: "List rỗng hoặc 1 node → return ngay" / Empty or single node — return immediately
 
 ---
 
 ## Solutions
 
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function sortListBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+class ListNode {
+  val: number;
+  next: ListNode | null;
+  constructor(val = 0, next: ListNode | null = null) {
+    this.val = val;
+    this.next = next;
+  }
+}
+function fromArr(a: number[]): ListNode | null {
+  const d = new ListNode(0);
+  let c = d;
+  for (const v of a) {
+    c.next = new ListNode(v);
+    c = c.next;
+  }
+  return d.next;
+}
+function toArr(h: ListNode | null): number[] {
+  const r: number[] = [];
+  while (h) {
+    r.push(h.val);
+    h = h.next;
+  }
+  return r;
 }
 
 /**
- * Solution 2: Optimized — Two Pointers
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Collect & Sort (Array)
+ * Time: O(n log n) — JS built-in sort
+ * Space: O(n) — values array
  */
-function sortList(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Two Pointers
-  // Hint: Use L/R pointers on sorted input, move based on comparison
-  throw new Error('Not implemented');
+function sortListArray(head: ListNode | null): ListNode | null {
+  if (!head) return null;
+  const vals: number[] = [];
+  for (let c: ListNode | null = head; c; c = c.next) vals.push(c.val);
+  vals.sort((a, b) => a - b);
+  let c: ListNode | null = head,
+    i = 0;
+  while (c) {
+    c.val = vals[i++];
+    c = c.next;
+  }
+  return head;
+}
+
+/**
+ * Solution 2: Top-Down Merge Sort (Recursive)
+ * Time: O(n log n) — log n levels, O(n) work per level
+ * Space: O(log n) — recursion stack depth
+ */
+function sortList(head: ListNode | null): ListNode | null {
+  if (!head || !head.next) return head;
+  // Find middle and split
+  let slow: ListNode = head,
+    fast: ListNode | null = head.next;
+  while (fast && fast.next) {
+    slow = slow.next!;
+    fast = fast.next.next;
+  }
+  const mid = slow.next;
+  slow.next = null;
+  return merge(sortList(head), sortList(mid));
+}
+
+function merge(a: ListNode | null, b: ListNode | null): ListNode | null {
+  const d = new ListNode(0);
+  let c = d;
+  while (a && b) {
+    if (a.val <= b.val) {
+      c.next = a;
+      a = a.next;
+    } else {
+      c.next = b;
+      b = b.next;
+    }
+    c = c.next;
+  }
+  c.next = a ?? b;
+  return d.next;
+}
+
+/**
+ * Solution 3: Bottom-Up Merge Sort (Iterative)
+ * Time: O(n log n) — log n passes, each O(n)
+ * Space: O(1) — no recursion, only pointers
+ */
+function sortListBottomUp(head: ListNode | null): ListNode | null {
+  if (!head || !head.next) return head;
+  let len = 0;
+  for (let c: ListNode | null = head; c; c = c.next) len++;
+  const dummy = new ListNode(0, head);
+  for (let sz = 1; sz < len; sz *= 2) {
+    let prev = dummy,
+      cur: ListNode | null = dummy.next;
+    while (cur) {
+      const left = cur;
+      const right = splitOff(left, sz);
+      cur = splitOff(right, sz);
+      const tail = mergeInto(prev, left, right);
+      tail.next = cur;
+      prev = tail;
+    }
+  }
+  return dummy.next;
+}
+
+function splitOff(node: ListNode | null, n: number): ListNode | null {
+  for (let i = 1; i < n && node?.next; i++) node = node.next;
+  if (!node) return null;
+  const rest = node.next;
+  node.next = null;
+  return rest;
+}
+
+function mergeInto(prev: ListNode, a: ListNode | null, b: ListNode | null): ListNode {
+  let c = prev;
+  while (a && b) {
+    if (a.val <= b.val) {
+      c.next = a;
+      a = a.next;
+    } else {
+      c.next = b;
+      b = b.next;
+    }
+    c = c.next!;
+  }
+  c.next = a ?? b;
+  while (c.next) c = c.next;
+  return c;
 }
 
 // === Test Cases ===
-// console.log(sortList(/* example 1 */)); // expected
-// console.log(sortList(/* example 2 */)); // expected
-// console.log(sortList(/* edge case */)); // expected
+console.log(toArr(sortList(fromArr([4, 2, 1, 3])))); // [1,2,3,4]
+console.log(toArr(sortList(fromArr([-1, 5, 3, 4, 0])))); // [-1,0,3,4,5]
+console.log(toArr(sortList(null))); // []
+console.log(toArr(sortListBottomUp(fromArr([4, 2, 1, 3])))); // [1,2,3,4]
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Sort an Array](https://leetcode.com/problems/sort-an-array) — same pattern: Heap / Priority Queue
-- [Kth Largest Element in an Array](https://leetcode.com/problems/kth-largest-element-in-an-array) — same pattern: Heap / Priority Queue
-- [Find Median from Data Stream](https://leetcode.com/problems/find-median-from-data-stream) — same pattern: Two Pointers
-- [4Sum](https://leetcode.com/problems/4sum) — same pattern: Two Pointers
-- [Sort List — LeetCode](https://leetcode.com/problems/sort-list) — problem page
+- [Sort an Array](https://leetcode.com/problems/sort-an-array) — merge sort on arrays, no pointer complexity
+- [Merge Two Sorted Lists](https://leetcode.com/problems/merge-two-sorted-lists) — the merge subroutine
+- [Merge k Sorted Lists](https://leetcode.com/problems/merge-k-sorted-lists) — generalized merge with heap
+- [Middle of the Linked List](https://leetcode.com/problems/middle-of-the-linked-list) — slow/fast pointer for midpoint
+- [Sort Colors](https://leetcode.com/problems/sort-colors) — in-place sort with 3 categories

@@ -7,104 +7,182 @@ tags: [Backtracking, Interactive]
 leetcode_url: "https://leetcode.com/problems/robot-room-cleaner"
 ---
 
-# Robot Room Cleaner / Robot Room Cleaner
+# Robot Room Cleaner / Robot Dọn Phòng
 
-> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Backtracking
+> **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Backtracking + DFS
 > **Frequency**: 📘 Tier 3 — Gặp ở 3 companies
-> **See also**: [Combination Sum II](https://leetcode.com/problems/combination-sum-ii) | [Word Break II](https://leetcode.com/problems/word-break-ii)
+> **See also**: [Walking Robot Simulation](https://leetcode.com/problems/walking-robot-simulation) | [Walls and Gates](https://leetcode.com/problems/walls-and-gates)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống thử đồ — bạn thử từng lựa chọn, nếu không phù hợp thì cởi ra thử cái khác. Quan trọng là biết khi nào nên dừng thử (pruning).
+**Analogy:** Robot không biết bản đồ — giống người mù đi trong mê cung. Dùng tọa độ tương đối `(r, c)` so với vị trí khởi đầu và hướng mặt. Sau mỗi nhánh DFS, quay lại vị trí cũ (backtrack bằng cách quay 180°, tiến 1 bước, quay 180°).
 
 **Pattern Recognition:**
 
-- Signal: "generate all valid combinations/permutations" → **Backtracking**
-- Bài này thuộc dạng Backtracking — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — Robot Room Cleaner example:**
+- Không biết bản đồ → **virtual coordinates** + `visited` set
+- 4 hướng với trạng thái quay robot → track `direction` + rotate relative
 
 ```
-                    []
-            /       |       \
-          [a]      [b]      [c]
-         / \        |
-      [a,b] [a,c]  [b,c]
-       |
-    [a,b,c]
+Directions: 0=Up(-1,0), 1=Right(0,1), 2=Down(1,0), 3=Left(0,-1)
+Rotate clockwise: dir = (dir + 1) % 4
+Go back: rotate 180°(twice), move(1), rotate 180°(twice)
 
-Choose → Explore → Un-choose (backtrack)
-Prune branches that violate constraints
+DFS(r=0,c=0,dir=0):
+  clean(0,0)
+  try all 4 dirs → if not visited & robot.move() → DFS(nr,nc,newDir)
+  backtrack: turnRight,turnRight,move,turnRight,turnRight
 ```
 
 ---
 
 ## Problem Description
 
-Robot Room Cleaner. ([LeetCode](https://leetcode.com/problems/robot-room-cleaner))
+A robot is in a grid with walls and open cells. It has API: `move()` (tries forward, returns bool), `turnLeft()`/`turnRight()` (90°), `clean()`. The robot starts in an open cell. Clean **all** reachable cells. You cannot read the grid directly.
 
-Difficulty: Hard | Acceptance: 77.5%
+**Constraints:**
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/robot-room-cleaner) for full constraints
+- `1 ≤ room.length ≤ 100`, `1 ≤ room[0].length ≤ 200`
+- No info about grid shape — must use robot's limited API
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần all solutions hay count? Có duplicate input không?" / All results or count? Duplicate elements?
-2. **Template**: "Choose → Explore → Un-choose" / Follow the standard backtracking template
-3. **Pruning**: "Skip nếu biết sớm branch này invalid" / Prune early to avoid TLE
-4. **Edge cases**: "Input rỗng, n=0, kết quả có thể rỗng" / Empty input, n=0, possibly empty result set
+- 🇻🇳 **Tọa độ ảo**: dùng `(row, col)` relative, không cần tọa độ thật — chỉ cần tránh ô đã thăm
+- 🇬🇧 Use virtual coordinates from start — encode as `"r,c"` in visited Set, no real map needed
+- 🇻🇳 **Quay về (backtrack)**: quay 180° → tiến 1 bước → quay 180° về hướng ban đầu
+- 🇬🇧 Return to parent: `turnRight × 2 → move → turnRight × 2` restores position and facing
+- 🇻🇳 Sau DFS một hướng, **xoay phải 1 lần** để thử hướng kế tiếp (4 hướng tổng cộng)
+- 🇬🇧 Try all 4 directions by rotating CW after each attempt — exactly 4 turns returns to start facing
 
 ---
 
 ## Solutions
 
+### Solution 1: Backtracking DFS with Virtual Coordinates
+
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function robotRoomCleanerBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+interface Robot {
+  move(): boolean;
+  turnLeft(): void;
+  turnRight(): void;
+  clean(): void;
 }
 
 /**
- * Solution 2: Optimized — Backtracking
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Clean all reachable cells using DFS + virtual coordinates
+ * Time: O(N - M) — N = open cells, M = obstacles (visit each open cell once)
+ * Space: O(N - M) — visited set + recursion depth
  */
-function robotRoomCleaner(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Backtracking
-  // Hint: Choose → Explore → Unchoose, prune invalid branches early
-  throw new Error('Not implemented');
+function cleanRoom(robot: Robot): void {
+  // Direction vectors: Up, Right, Down, Left (clockwise order)
+  const dirs = [
+    [-1, 0],
+    [0, 1],
+    [1, 0],
+    [0, -1],
+  ];
+  const visited = new Set<string>();
+
+  function goBack(): void {
+    // Reverse: face backward, step, face forward again
+    robot.turnRight();
+    robot.turnRight();
+    robot.move();
+    robot.turnRight();
+    robot.turnRight();
+  }
+
+  function dfs(row: number, col: number, facing: number): void {
+    robot.clean();
+    visited.add(`${row},${col}`);
+
+    for (let i = 0; i < 4; i++) {
+      const nextFacing = (facing + i) % 4;
+      const [dr, dc] = dirs[nextFacing];
+      const nr = row + dr;
+      const nc = col + dc;
+
+      if (!visited.has(`${nr},${nc}`) && robot.move()) {
+        dfs(nr, nc, nextFacing);
+        goBack();
+      }
+      robot.turnRight(); // rotate to next direction
+    }
+  }
+
+  dfs(0, 0, 0);
 }
 
-// === Test Cases ===
-// console.log(robotRoomCleaner(/* example 1 */)); // expected
-// console.log(robotRoomCleaner(/* example 2 */)); // expected
-// console.log(robotRoomCleaner(/* edge case */)); // expected
+// Simulation test (since Robot is an interface, we simulate):
+class MockRobot implements Robot {
+  private grid: number[][];
+  private r: number;
+  private c: number;
+  private dir: number;
+  private cleaned: Set<string> = new Set();
+  constructor(grid: number[][], startR: number, startC: number) {
+    this.grid = grid;
+    this.r = startR;
+    this.c = startC;
+    this.dir = 0;
+  }
+  private ds = [
+    [-1, 0],
+    [0, 1],
+    [1, 0],
+    [0, -1],
+  ];
+  move(): boolean {
+    const [dr, dc] = this.ds[this.dir];
+    const nr = this.r + dr,
+      nc = this.c + dc;
+    if (
+      nr < 0 ||
+      nr >= this.grid.length ||
+      nc < 0 ||
+      nc >= this.grid[0].length ||
+      !this.grid[nr][nc]
+    )
+      return false;
+    this.r = nr;
+    this.c = nc;
+    return true;
+  }
+  turnLeft(): void {
+    this.dir = (this.dir + 3) % 4;
+  }
+  turnRight(): void {
+    this.dir = (this.dir + 1) % 4;
+  }
+  clean(): void {
+    this.cleaned.add(`${this.r},${this.c}`);
+  }
+  getCleaned(): Set<string> {
+    return this.cleaned;
+  }
+}
+
+const grid = [
+  [1, 1, 1, 1, 1, 0, 1, 1],
+  [1, 1, 1, 1, 1, 0, 1, 1],
+  [1, 0, 1, 1, 1, 1, 1, 1],
+  [0, 0, 0, 1, 0, 0, 0, 0],
+  [1, 1, 1, 1, 1, 1, 1, 1],
+];
+const robot = new MockRobot(grid, 1, 3);
+cleanRoom(robot);
+console.log("Cleaned cells:", robot.getCleaned().size); // all reachable
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Combination Sum II](https://leetcode.com/problems/combination-sum-ii) — same pattern: Backtracking
-- [Word Break II](https://leetcode.com/problems/word-break-ii) — same pattern: Trie
-- [Permutations II](https://leetcode.com/problems/permutations-ii) — same pattern: Backtracking
-- [Subsets II](https://leetcode.com/problems/subsets-ii) — same pattern: Backtracking
-- [Robot Room Cleaner — LeetCode](https://leetcode.com/problems/robot-room-cleaner) — problem page
+- [489. Robot Room Cleaner](https://leetcode.com/problems/robot-room-cleaner) ← this
+- [79. Word Search](https://leetcode.com/problems/word-search) — DFS on grid
+- [200. Number of Islands](https://leetcode.com/problems/number-of-islands) — flood fill DFS
+- [694. Number of Distinct Islands](https://leetcode.com/problems/number-of-distinct-islands) — shape tracking
+- [874. Walking Robot Simulation](https://leetcode.com/problems/walking-robot-simulation) — directional movement

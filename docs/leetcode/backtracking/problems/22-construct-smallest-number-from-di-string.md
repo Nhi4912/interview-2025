@@ -7,64 +7,62 @@ tags: [String, Backtracking, Stack, Greedy]
 leetcode_url: "https://leetcode.com/problems/construct-smallest-number-from-di-string"
 ---
 
-# Construct Smallest Number From DI String / Construct Smallest Number From DI String
+# Construct Smallest Number From DI String / Xây Dựng Số Nhỏ Nhất Từ Chuỗi DI
 
-> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Backtracking
+> **Track**: Shared | **Difficulty**: 🟡 Medium | **Pattern**: Stack / Greedy
 > **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Remove K Digits](https://leetcode.com/problems/remove-k-digits) | [Remove Duplicate Letters](https://leetcode.com/problems/remove-duplicate-letters)
+> **See also**: [Remove K Digits](https://leetcode.com/problems/remove-k-digits) | [Next Permutation](https://leetcode.com/problems/next-permutation)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống thử đồ — bạn thử từng lựa chọn, nếu không phù hợp thì cởi ra thử cái khác. Quan trọng là biết khi nào nên dừng thử (pruning).
+**Analogy:** Giống xếp hàng — khi gặp 'D' (decrease) bạn biết phải "hoãn" việc đặt số lại. Dùng stack để tích lũy rồi xả ra theo thứ tự ngược khi gặp 'I' hoặc kết thúc.
 
 **Pattern Recognition:**
 
-- Signal: "generate all valid combinations/permutations" → **Backtracking**
-- Bài này thuộc dạng Backtracking — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "smallest permutation matching pattern" → **Monotonic Stack / Greedy**
+- Mỗi 'D' liên tiếp tạo thành một "run" cần reverse
+- Key insight: push 1..n vào stack, khi gặp 'I' (hoặc cuối) thì pop hết vào result
 
-**Visual — Construct Smallest Number From DI String example:**
+**Visual — Stack simulation for "IDID":**
 
 ```
-                    []
-            /       |       \
-          [a]      [b]      [c]
-         / \        |
-      [a,b] [a,c]  [b,c]
-       |
-    [a,b,c]
+Pattern: I D I D
+Digits:  1 2 3 4 5
 
-Choose → Explore → Un-choose (backtrack)
-Prune branches that violate constraints
+Step 0: push 1
+  'I': pop → result = [1]
+Step 1: push 2
+  'D': keep
+Step 2: push 3
+  'I': pop all → result = [1, 3, 2]
+Step 3: push 4
+  'D': keep
+End:    push 5, pop all → result = [1, 3, 2, 5, 4]
+Output: "13254"
 ```
 
 ---
 
 ## Problem Description
 
-Construct Smallest Number From DI String. ([LeetCode](https://leetcode.com/problems/construct-smallest-number-from-di-string))
+Given a string `pattern` of 'I' (increasing) and 'D' (decreasing) of length `n`, return the lexicographically smallest string of digits `1` to `n+1` (each used exactly once) such that consecutive pairs follow the pattern. ([LeetCode 2375](https://leetcode.com/problems/construct-smallest-number-from-di-string))
 
-Difficulty: Medium | Acceptance: 85.8%
+**Example 1:** `pattern = "IIIDIDDD"` → `"123549876"`
+**Example 2:** `pattern = "DDD"` → `"4321"`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
-
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/construct-smallest-number-from-di-string) for full constraints
+Constraints: `1 <= pattern.length <= 8`, pattern contains only 'I' and 'D'
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần all solutions hay count? Có duplicate input không?" / All results or count? Duplicate elements?
-2. **Template**: "Choose → Explore → Un-choose" / Follow the standard backtracking template
-3. **Pruning**: "Skip nếu biết sớm branch này invalid" / Prune early to avoid TLE
-4. **Edge cases**: "Input rỗng, n=0, kết quả có thể rỗng" / Empty input, n=0, possibly empty result set
+1. **Clarify**: "Digit 1-9 hay 1-(n+1)? Có dùng số lặp không?" / Digits 1 to n+1, each used exactly once
+2. **Stack key**: "'D' liên tiếp → số cần giảm dần → reverse → dùng stack" / Consecutive 'D's require reversing a segment
+3. **Greedy**: "Luôn push số nhỏ nhất có thể, defer quyết định khi gặp 'D'" / Defer placement during 'D' runs
+4. **Backtracking alt**: "Có thể dùng backtracking nhưng stack là O(n)" / Stack approach is optimal O(n)
+5. **Edge cases**: "All 'I' → "123...n+1", all 'D' → "n+1...21"" / All increasing or decreasing
 
 ---
 
@@ -72,39 +70,77 @@ Constraints:
 
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 1: Stack-based greedy (optimal)
+ * Time: O(n) — single pass
+ * Space: O(n) — stack storage
  */
-function constructSmallestNumberFromDiStringBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function smallestNumber(pattern: string): string {
+  const n = pattern.length;
+  const stack: number[] = [];
+  const result: number[] = [];
+
+  for (let i = 0; i <= n; i++) {
+    stack.push(i + 1); // push next digit (1-indexed)
+    // Pop stack whenever we hit 'I' or end of pattern
+    if (i === n || pattern[i] === "I") {
+      while (stack.length > 0) {
+        result.push(stack.pop()!);
+      }
+    }
+  }
+
+  return result.join("");
 }
 
 /**
- * Solution 2: Optimized — Backtracking
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Solution 2: Backtracking (explicit, for interview explanation)
+ * Time: O(n!) — worst case, but pruned heavily
+ * Space: O(n) — recursion + path
  */
-function constructSmallestNumberFromDiString(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Backtracking
-  // Hint: Choose → Explore → Unchoose, prune invalid branches early
-  throw new Error('Not implemented');
+function smallestNumberBacktrack(pattern: string): string {
+  const n = pattern.length;
+  const used = new Array(n + 2).fill(false);
+  let result = "";
+
+  function backtrack(pos: number, path: number[]): boolean {
+    if (pos === n + 1) {
+      result = path.join("");
+      return true;
+    }
+    for (let digit = 1; digit <= n + 1; digit++) {
+      if (used[digit]) continue;
+      if (path.length > 0) {
+        const prev = path[path.length - 1];
+        if (pattern[pos - 1] === "I" && digit <= prev) continue;
+        if (pattern[pos - 1] === "D" && digit >= prev) continue;
+      }
+      used[digit] = true;
+      path.push(digit);
+      if (backtrack(pos + 1, path)) return true; // take first valid (smallest)
+      path.pop();
+      used[digit] = false;
+    }
+    return false;
+  }
+
+  backtrack(0, []);
+  return result;
 }
 
 // === Test Cases ===
-// console.log(constructSmallestNumberFromDiString(/* example 1 */)); // expected
-// console.log(constructSmallestNumberFromDiString(/* example 2 */)); // expected
-// console.log(constructSmallestNumberFromDiString(/* edge case */)); // expected
+console.log(smallestNumber("IIIDIDDD")); // "123549876"
+console.log(smallestNumber("DDD")); // "4321"
+console.log(smallestNumber("I")); // "12"
+console.log(smallestNumber("D")); // "21"
+console.log(smallestNumberBacktrack("IIIDIDDD")); // "123549876"
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Remove K Digits](https://leetcode.com/problems/remove-k-digits) — same pattern: Monotonic Stack
-- [Remove Duplicate Letters](https://leetcode.com/problems/remove-duplicate-letters) — same pattern: Monotonic Stack
-- [Minimum Number of Swaps to Make the String Balanced](https://leetcode.com/problems/minimum-number-of-swaps-to-make-the-string-balanced) — same pattern: Two Pointers
-- [Valid Parenthesis String](https://leetcode.com/problems/valid-parenthesis-string) — same pattern: Dynamic Programming
+- [Remove K Digits](https://leetcode.com/problems/remove-k-digits) — monotonic stack for smallest number
+- [Next Permutation](https://leetcode.com/problems/next-permutation) — manipulating digit order
+- [Remove Duplicate Letters](https://leetcode.com/problems/remove-duplicate-letters) — stack-based lexicographic greedy
+- [Find the Most Competitive Subsequence](https://leetcode.com/problems/find-the-most-competitive-subsequence) — monotonic stack
 - [Construct Smallest Number From DI String — LeetCode](https://leetcode.com/problems/construct-smallest-number-from-di-string) — problem page

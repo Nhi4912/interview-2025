@@ -7,97 +7,115 @@ tags: [Database]
 leetcode_url: "https://leetcode.com/problems/invalid-tweets"
 ---
 
-# Invalid Tweets / Invalid Tweets
+# Invalid Tweets / Tweet Không Hợp Lệ
 
-> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: Ad-hoc
+> **Track**: Shared | **Difficulty**: 🟢 Easy | **Pattern**: SQL — Simple Filter
 > **Frequency**: 📘 Tier 3 — Gặp ở 2 companies
-> **See also**: [Second Highest Salary](https://leetcode.com/problems/second-highest-salary) | [Department Top Three Salaries](https://leetcode.com/problems/department-top-three-salaries)
+> **See also**: [Big Countries](https://leetcode.com/problems/big-countries) | [Recyclable and Low Fat Products](https://leetcode.com/problems/recyclable-and-low-fat-products)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Phân tích bài "Invalid Tweets" — xác định pattern phù hợp dựa trên constraints và input/output.
+**Analogy:** Giống bộ lọc spam — chỉ cần đo độ dài nội dung tweet và lọc ra những cái quá dài (> 15 ký tự).
 
 **Pattern Recognition:**
 
-- Signal: "problem-specific signals" → **Ad-hoc**
-- Bài này thuộc dạng Ad-hoc — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
+- Signal: "filter rows by string length condition" → **WHERE + LENGTH()**
+- Bài dễ nhất trong SQL category — chỉ cần biết `LENGTH()` hoặc `CHAR_LENGTH()`
+- Key insight: dùng `CHAR_LENGTH()` thay `LENGTH()` để xử lý multi-byte chars đúng
 
-**Visual — Invalid Tweets example:**
+**Visual — Filter pipeline:**
 
 ```
-// TODO: Add step-by-step visual for Ad-hoc
-// Show one complete example with state at each step
+Tweets table:
+tweet_id | content
+1        | "Let us Code"          → length=12 ✗
+2        | "More than fifteen.."  → length=17 ✓ INVALID
+
+SELECT tweet_id WHERE LENGTH(content) > 15
+Result: [2]
 ```
 
 ---
 
 ## Problem Description
 
-Invalid Tweets. ([LeetCode](https://leetcode.com/problems/invalid-tweets))
+Write SQL to find `tweet_id` of **invalid tweets** — tweets where the number of characters in `content` **strictly exceeds** 15. ([LeetCode 1683](https://leetcode.com/problems/invalid-tweets))
 
-Difficulty: Easy | Acceptance: 85.5%
+**Schema:** `Tweets(tweet_id INT, content VARCHAR)`
 
-```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
-```
+**Example:** `content = "Let us Code"` (12 chars) → valid; `content = "More than fifteen.."` (17 chars) → invalid → return `tweet_id`.
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/invalid-tweets) for full constraints
+Constraints: `tweet_id` is primary key; content is non-null.
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Xác nhận input constraints, edge cases" / Confirm input size, types, edge cases with interviewer
-2. **Brute force**: "Bắt đầu từ brute force, rồi optimize" / Always start with naive approach, then optimize
-3. **Optimize**: "Phân tích bottleneck của brute force, tìm cách giảm" / Identify the bottleneck and reduce it
-4. **Edge cases**: "Input rỗng, một phần tử, giá trị cực biên" / Empty input, single element, boundary values
-5. **Follow-up**: "Nếu input rất lớn? Nếu cần streaming?" / What if input is huge? What about streaming?
+1. **CHAR_LENGTH vs LENGTH**: "`LENGTH()` = bytes, `CHAR_LENGTH()` = characters — dùng CHAR_LENGTH cho Unicode" / Use CHAR_LENGTH for multi-byte safety
+2. **Strict inequality**: "Strictly greater than 15, NOT ≥ 15" / The threshold is exclusive: > 15
+3. **Indexing**: "In production, full-text filtering needs computed column or full scan" / No index on length
+4. **Follow-up**: "Nếu content có emoji/multi-byte? CHAR_LENGTH vẫn đếm đúng" / CHAR_LENGTH counts code points
+5. **Simplicity**: "Bài này chỉ cần một WHERE clause" / Single-condition filter
 
 ---
 
 ## Solutions
 
+```sql
+-- Solution 1: CHAR_LENGTH (recommended — correct for multi-byte)
+SELECT tweet_id
+FROM Tweets
+WHERE CHAR_LENGTH(content) > 15;
+
+-- Solution 2: LENGTH (works for ASCII-only content)
+SELECT tweet_id
+FROM Tweets
+WHERE LENGTH(content) > 15;
+
+-- Solution 3: Using LEN (SQL Server syntax)
+-- SELECT tweet_id FROM Tweets WHERE LEN(content) > 15;
+```
+
 ```typescript
-/**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
- */
-function invalidTweetsBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+// TypeScript simulation for logic verification
+interface Tweet {
+  tweet_id: number;
+  content: string;
 }
 
 /**
- * Solution 2: Optimized — Ad-hoc
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Find invalid tweets (content length > 15)
+ * Time: O(n) — single scan
+ * Space: O(k) — k = number of invalid tweets
  */
-function invalidTweets(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Ad-hoc
-  // Hint: Identify the key insight that reduces complexity
-  throw new Error('Not implemented');
+function invalidTweets(tweets: Tweet[]): number[] {
+  return tweets.filter((t) => t.content.length > 15).map((t) => t.tweet_id);
+}
+
+// Edge case: emoji counts as 2 chars in JS (surrogate pairs)
+// For true Unicode code points: [...content].length
+function invalidTweetsUnicode(tweets: Tweet[]): number[] {
+  return tweets.filter((t) => [...t.content].length > 15).map((t) => t.tweet_id);
 }
 
 // === Test Cases ===
-// console.log(invalidTweets(/* example 1 */)); // expected
-// console.log(invalidTweets(/* example 2 */)); // expected
-// console.log(invalidTweets(/* edge case */)); // expected
+const tweets: Tweet[] = [
+  { tweet_id: 1, content: "Let us Code" }, // 11 chars → valid
+  { tweet_id: 2, content: "More than fifteen.." }, // 19 chars → invalid
+  { tweet_id: 3, content: "Exactly fifteen!!" }, // 17 chars → invalid
+];
+console.log(invalidTweets(tweets)); // [2, 3]
+console.log(invalidTweets([{ tweet_id: 1, content: "Short" }])); // []
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Second Highest Salary](https://leetcode.com/problems/second-highest-salary) — same pattern: Ad-hoc
-- [Department Top Three Salaries](https://leetcode.com/problems/department-top-three-salaries) — same pattern: Ad-hoc
-- [Managers with at Least 5 Direct Reports](https://leetcode.com/problems/managers-with-at-least-5-direct-reports) — same pattern: Ad-hoc
-- [Nth Highest Salary](https://leetcode.com/problems/nth-highest-salary) — same pattern: Ad-hoc
+- [Big Countries](https://leetcode.com/problems/big-countries) — simple WHERE filter (area/population)
+- [Recyclable and Low Fat Products](https://leetcode.com/problems/recyclable-and-low-fat-products) — multi-condition filter
+- [Find Users With Valid E-Mails](https://leetcode.com/problems/find-users-with-valid-e-mails) — REGEXP filter
+- [Patients With a Condition](https://leetcode.com/problems/patients-with-a-condition) — string pattern matching
 - [Invalid Tweets — LeetCode](https://leetcode.com/problems/invalid-tweets) — problem page

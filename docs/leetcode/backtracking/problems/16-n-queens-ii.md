@@ -7,104 +7,157 @@ tags: [Backtracking]
 leetcode_url: "https://leetcode.com/problems/n-queens-ii"
 ---
 
-# N-Queens II / N-Queens II
+# N-Queens II / Đếm Số Cách Xếp N Hậu
 
 > **Track**: Shared | **Difficulty**: 🔴 Hard | **Pattern**: Backtracking
 > **Frequency**: 📘 Tier 3 — Gặp ở 7 companies
-> **See also**: [Combination Sum II](https://leetcode.com/problems/combination-sum-ii) | [Word Break II](https://leetcode.com/problems/word-break-ii)
+> **See also**: [N-Queens](https://leetcode.com/problems/n-queens) | [Grid Illumination](https://leetcode.com/problems/grid-illumination)
 
 ---
 
 ## 🧠 Intuition / Tư Duy
 
-**Analogy:** Giống thử đồ — bạn thử từng lựa chọn, nếu không phù hợp thì cởi ra thử cái khác. Quan trọng là biết khi nào nên dừng thử (pruning).
+**Analogy:** Mỗi hàng chỉ đặt được 1 quân hậu — xem như chọn cột cho từng hàng. Ba loại tấn công cần kiểm tra: cùng cột, đường chéo chính (`row - col = const`), đường chéo phụ (`row + col = const`).
 
 **Pattern Recognition:**
 
-- Signal: "generate all valid combinations/permutations" → **Backtracking**
-- Bài này thuộc dạng Backtracking — nhận diện qua keywords trong đề và constraints
-- Key insight: xác định state/transition phù hợp trước khi code
-
-**Visual — N-Queens II example:**
+- Đặt 1 phần tử mỗi hàng → iterate rows, backtrack on columns
+- Dùng bitmask hoặc sets để O(1) conflict check thay vì O(n) scan
 
 ```
-                    []
-            /       |       \
-          [a]      [b]      [c]
-         / \        |
-      [a,b] [a,c]  [b,c]
-       |
-    [a,b,c]
-
-Choose → Explore → Un-choose (backtrack)
-Prune branches that violate constraints
+n=4, row=0: try cols 0,1,2,3
+  col=1 → row=1: try cols 0,2,3 (col 1 blocked, diag 0, anti-diag 2)
+    col=3 → row=2: no valid col → backtrack
+  col=2 → row=1: try cols 0 (col 2,diag 1,anti-diag 3 blocked)
+    col=0 → row=2: try col 3
+      col=3 → row=3: try col 1 → ✓ solution!
+Total: 2
 ```
 
 ---
 
 ## Problem Description
 
-N-Queens II. ([LeetCode](https://leetcode.com/problems/n-queens-ii))
+The **n-queens** puzzle places `n` queens on an `n×n` board so no two attack each other. Return the **number of distinct solutions**.
 
-Difficulty: Hard | Acceptance: 76.7%
+**Example 1:**
 
 ```
-// TODO: Add concise problem statement (2-4 sentences)
-// Example 1: input → output
-// Example 2: input → output
+Input: n=4
+Output: 2
+Explanation: Two valid placements exist for a 4x4 board
 ```
 
-Constraints:
-- See [LeetCode problem page](https://leetcode.com/problems/n-queens-ii) for full constraints
+**Example 2:**
+
+```
+Input: n=1
+Output: 1
+```
+
+**Constraints:** `1 ≤ n ≤ 9`
 
 ---
 
 ## 📝 Interview Tips
 
-1. **Clarify**: "Cần all solutions hay count? Có duplicate input không?" / All results or count? Duplicate elements?
-2. **Template**: "Choose → Explore → Un-choose" / Follow the standard backtracking template
-3. **Pruning**: "Skip nếu biết sớm branch này invalid" / Prune early to avoid TLE
-4. **Edge cases**: "Input rỗng, n=0, kết quả có thể rỗng" / Empty input, n=0, possibly empty result set
+- 🇻🇳 **Ba loại attack**: cùng cột, chéo trái-phải (`row-col`), chéo phải-trái (`row+col`) — dùng Set để O(1) check
+- 🇬🇧 Track three conflict sets: `cols`, `diag1` (row-col), `diag2` (row+col) for O(1) validation
+- 🇻🇳 **Bitmask** phiên bản nhanh hơn: 3 integers thay Set, bitwise ops cho state
+- 🇬🇧 Bitmask approach: `cols | diag1 | diag2` shows all attacked positions in O(1)
+- 🇻🇳 Chỉ cần **đếm** (không cần lưu board) → simpler than N-Queens I
+- 🇬🇧 Counting only (not reconstructing) removes the O(n²) board copy overhead
 
 ---
 
 ## Solutions
 
+### Solution 1: Backtracking with Sets
+
 ```typescript
 /**
- * Solution 1: Brute Force
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Count distinct N-Queens solutions
+ * @param {number} n - board dimension
+ * @returns {number} count of valid placements
+ * Time: O(n!) — at most n! arrangements, pruned heavily
+ * Space: O(n) — recursion depth + three sets of size O(n)
  */
-function nQueensIiBruteForce(/* TODO: params */): unknown {
-  // TODO: Implement brute force approach
-  // Hint: Start with the most straightforward solution
-  throw new Error('Not implemented');
+function totalNQueens(n: number): number {
+  let count = 0;
+  const cols = new Set<number>();
+  const diag1 = new Set<number>(); // row - col (top-left to bottom-right)
+  const diag2 = new Set<number>(); // row + col (top-right to bottom-left)
+
+  function backtrack(row: number): void {
+    if (row === n) {
+      count++;
+      return;
+    }
+    for (let col = 0; col < n; col++) {
+      if (cols.has(col) || diag1.has(row - col) || diag2.has(row + col)) continue;
+      cols.add(col);
+      diag1.add(row - col);
+      diag2.add(row + col);
+      backtrack(row + 1);
+      cols.delete(col);
+      diag1.delete(row - col);
+      diag2.delete(row + col);
+    }
+  }
+
+  backtrack(0);
+  return count;
 }
 
+console.log(totalNQueens(4)); // 2
+console.log(totalNQueens(1)); // 1
+console.log(totalNQueens(8)); // 92
+```
+
+### Solution 2: Bitmask Backtracking (Fastest)
+
+```typescript
 /**
- * Solution 2: Optimized — Backtracking
- * Time: O(?) — TODO: analyze
- * Space: O(?) — TODO: analyze
+ * Bitmask N-Queens — all conflict checks are bitwise operations
+ * Time: O(n!) with strong pruning
+ * Space: O(n) recursion depth
  */
-function nQueensIi(/* TODO: params */): unknown {
-  // TODO: Implement optimal approach using Backtracking
-  // Hint: Choose → Explore → Unchoose, prune invalid branches early
-  throw new Error('Not implemented');
+function totalNQueensBitmask(n: number): number {
+  const full = (1 << n) - 1; // all n columns occupied
+  let count = 0;
+
+  function backtrack(cols: number, diag1: number, diag2: number): void {
+    if (cols === full) {
+      count++;
+      return;
+    }
+    // Available positions: columns not attacked by any queen
+    let available = full & ~(cols | diag1 | diag2);
+    while (available) {
+      const pos = available & -available; // lowest set bit = rightmost free col
+      available &= available - 1; // remove that bit
+      backtrack(
+        cols | pos,
+        (diag1 | pos) << 1, // shift left for next row
+        (diag2 | pos) >> 1, // shift right for next row
+      );
+    }
+  }
+
+  backtrack(0, 0, 0);
+  return count;
 }
 
-// === Test Cases ===
-// console.log(nQueensIi(/* example 1 */)); // expected
-// console.log(nQueensIi(/* example 2 */)); // expected
-// console.log(nQueensIi(/* edge case */)); // expected
+console.log(totalNQueensBitmask(4)); // 2
+console.log(totalNQueensBitmask(9)); // 352
 ```
 
 ---
 
 ## 🔗 Related Problems
 
-- [Combination Sum II](https://leetcode.com/problems/combination-sum-ii) — same pattern: Backtracking
-- [Word Break II](https://leetcode.com/problems/word-break-ii) — same pattern: Trie
-- [Permutations II](https://leetcode.com/problems/permutations-ii) — same pattern: Backtracking
-- [Subsets II](https://leetcode.com/problems/subsets-ii) — same pattern: Backtracking
-- [N-Queens II — LeetCode](https://leetcode.com/problems/n-queens-ii) — problem page
+- [52. N-Queens II](https://leetcode.com/problems/n-queens-ii) ← this
+- [51. N-Queens](https://leetcode.com/problems/n-queens) — return the actual boards
+- [37. Sudoku Solver](https://leetcode.com/problems/sudoku-solver) — same constraint-grid backtracking
+- [1001. Grid Illumination](https://leetcode.com/problems/grid-illumination) — diagonal tracking
+- [46. Permutations](https://leetcode.com/problems/permutations) — foundational backtracking
